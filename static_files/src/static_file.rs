@@ -11,6 +11,7 @@ use sha2::{Sha256, Digest};
 pub struct StaticFile {
     mime_type: String,
     path: String,
+    etag: String,
     content: Vec<u8>
 }
 
@@ -40,12 +41,28 @@ impl StaticFile {
     }
 
     ///
+    /// Creates an etag from the content for an item
+    ///
+    fn etag_from_content(content: &[u8]) -> String {
+        // Hash the content using SHA-256
+        let mut hasher = Sha256::default();
+        hasher.input(content);
+        let output = hasher.result();
+
+        // Use first few bytes to build a string
+        output.iter()
+            .take(8)
+            .fold(String::new(), |so_far, next_byte| so_far + &format!("{:02x}", next_byte))
+    }
+
+    ///
     /// Creates a new static file with an inferred MIME type
     ///
     pub fn new_with_type(mime_type: &str, path: &str, content: &[u8]) -> StaticFile {
         StaticFile {
             mime_type:  String::from(mime_type),
             path:       String::from(path),
+            etag:       StaticFile::etag_from_content(content),
             content:    Vec::from(content)
         }
     }
@@ -54,11 +71,11 @@ impl StaticFile {
     /// Creates a new static file with an explicit MIME type
     ///
     pub fn new(path: &str, content: &[u8]) -> StaticFile {
-        StaticFile {
-            mime_type:  String::from(StaticFile::infer_mime_type(path)),
-            path:       String::from(path),
-            content:    Vec::from(content)
-        }
+        StaticFile::new_with_type(
+            StaticFile::infer_mime_type(path),
+            path,
+            content
+        )
     }
 
     ///
@@ -98,15 +115,7 @@ impl StaticFile {
     /// Computes the etag for this file
     ///
     pub fn etag(&self) -> String {
-        // Hash the content using SHA-256
-        let mut hasher = Sha256::default();
-        hasher.input(self.content());
-        let output = hasher.result();
-
-        // Use first few bytes to build a string
-        output.iter()
-            .take(8)
-            .fold(String::new(), |so_far, next_byte| so_far + &format!("{:02x}", next_byte))
+        self.etag.clone()
     }
 }
 
