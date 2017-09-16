@@ -1,5 +1,5 @@
 [package]
-name        = "static_service"
+name        = "static_files"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 
