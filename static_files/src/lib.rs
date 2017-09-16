@@ -3,6 +3,7 @@
 //!
 
 extern crate iron;
+extern crate sha2;
 
 pub mod static_file;
 pub mod static_service;

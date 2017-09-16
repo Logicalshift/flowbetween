@@ -3,6 +3,8 @@ use iron::mime::*;
 use iron::headers::*;
 use iron::modifiers::*;
 
+use sha2::{Sha256, Digest};
+
 ///
 /// Represents a static file
 ///
@@ -91,6 +93,21 @@ impl StaticFile {
     pub fn mime_type<'a>(&'a self) -> &'a str {
         &self.mime_type
     }
+
+    ///
+    /// Computes the etag for this file
+    ///
+    pub fn etag(&self) -> String {
+        // Hash the content using SHA-256
+        let mut hasher = Sha256::default();
+        hasher.input(self.content());
+        let output = hasher.result();
+
+        // Use first few bytes to build a string
+        output.iter()
+            .take(8)
+            .fold(String::new(), |so_far, next_byte| so_far + &format!("{:02x}", next_byte))
+    }
 }
 
 impl Handler for StaticFile {
@@ -100,10 +117,13 @@ impl Handler for StaticFile {
     fn handle(&self, _req: &mut Request) -> IronResult<Response> {
         let content_type    = self.mime_type.parse::<Mime>().unwrap();
         let content         = Vec::from(self.content());
+        let etag            = self.etag();
 
         let response = Response::with((status::Ok, 
             Header(ContentType(content_type)),
             Header(ContentLength(content.len() as u64)),
+            Header(ETag(EntityTag::weak(etag))),
+            Header(CacheControl(vec![CacheDirective::Public, CacheDirective::MaxAge(3600)])),
             content));
 
         Ok(response)
