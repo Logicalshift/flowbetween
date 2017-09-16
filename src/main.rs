@@ -4,6 +4,7 @@
 
 extern crate hyper;
 extern crate futures;
+extern crate static_service;
 
 use hyper::header::ContentLength;
 use hyper::server::{Http, Request, Response, Service};

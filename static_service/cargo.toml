@@ -1,0 +1,8 @@
+[package]
+name        = "static_service"
+version     = "0.1.0"
+authors     = ["Andrew Hunter"]
+
+[dependencies]
+hyper       = "0.11.2"
+futures     = "0.1.14"
