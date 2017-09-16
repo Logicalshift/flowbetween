@@ -7,3 +7,4 @@ authors     = ["Andrew Hunter"]
 static_files    = { path = "static_files" }
 
 iron            = "0.5.1"
+mount           = { git = "https://github.com/iron/mount.git" }

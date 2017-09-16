@@ -55,9 +55,9 @@ impl Handler for StaticService {
 
         // Fold into a path string
         let mut path_string = path_components.iter()
-            .fold(String::from("/"), |so_far, next_item| so_far + "/" + next_item);
+            .fold(String::new(), |so_far, next_item| so_far + "/" + next_item);
 
-        if req.url.path().len() > 1 && req.url.path().last() == Some(&"") {
+        if req.url.path().last() == Some(&"") {
             path_string.push('/');
         }
 
