@@ -4,6 +4,4 @@ version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 
 [dependencies]
-hyper       = "0.11.2"
-futures     = "0.1.14"
-mime        = "0.3.2"
+iron        = "0.5.1"

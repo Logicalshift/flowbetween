@@ -34,10 +34,10 @@ impl StaticService {
 }
 
 impl Service for StaticService {
-    type Request = Request;
-    type Response = Response;
-    type Error = hyper::Error;
-    type Future = futures::future::FutureResult<Self::Response, Self::Error>;
+    type Request    = Request;
+    type Response   = Response;
+    type Error      = hyper::Error;
+    type Future     = futures::future::FutureResult<Self::Response, Self::Error>;
 
     fn call(&self, req: Request) -> Self::Future {
         // Prepare the response
