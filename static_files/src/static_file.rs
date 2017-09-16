@@ -1,5 +1,6 @@
 use iron::*;
 use iron::mime::*;
+use iron::method::*;
 use iron::headers::*;
 use iron::modifiers::*;
 
@@ -123,18 +124,27 @@ impl Handler for StaticFile {
     ///
     /// Serves a static file as a request (no caching)
     ///
-    fn handle(&self, _req: &mut Request) -> IronResult<Response> {
-        let content_type    = self.mime_type.parse::<Mime>().unwrap();
-        let content         = Vec::from(self.content());
-        let etag            = self.etag();
+    fn handle(&self, req: &mut Request) -> IronResult<Response> {
+        if req.method == Method::Get || req.method == Method::Head {
+            let content_type    = self.mime_type.parse::<Mime>().unwrap();
+            let etag            = self.etag();
 
-        let response = Response::with((status::Ok, 
-            Header(ContentType(content_type)),
-            Header(ContentLength(content.len() as u64)),
-            Header(ETag(EntityTag::weak(etag))),
-            Header(CacheControl(vec![CacheDirective::Public, CacheDirective::MaxAge(3600)])),
-            content));
+            // Create a response with some headers
+            let mut response = Response::with((status::Ok, 
+                Header(ContentType(content_type)),
+                Header(ContentLength(self.content().len() as u64)),
+                Header(ETag(EntityTag::weak(etag))),
+                Header(CacheControl(vec![CacheDirective::Public, CacheDirective::MaxAge(3600)]))));
+            
+            // If the request was not Head, then append the rest of the body
+            if req.method != Method::Head {
+                response = response.set(Vec::from(self.content()));
+            }
 
-        Ok(response)
+            Ok(response)
+        } else {
+            // Only Get or Head are allowed for static resources: posting, deleting etc are not
+            Ok(Response::with((status::BadRequest)))
+        }
     }
 }
