@@ -10,13 +10,13 @@ pub struct StaticFile {
 impl StaticFile {
     fn infer_mime_type<'a>(path: &str) -> &'a str {
         if path.ends_with("html") || path.ends_with("htm") {
-            "text/html"
+            "text/html; charset=utf-8"
         } else if path.ends_with("css") {
-            "text/css"
+            "text/css; charset=utf-8"
         } else if path.ends_with("js") {
-            "text/javascript"
+            "text/javascript; charset=utf-8"
         } else if path.ends_with("json") {
-            "application/json"
+            "application/json; charset=utf-8"
         } else if path.ends_with("png") {
             "image/png"
         } else if path.ends_with("gif") {
@@ -24,9 +24,9 @@ impl StaticFile {
         } else if path.ends_with("jpg") || path.ends_with("jpeg") {
             "image/jpeg"
         } else if path.ends_with("svg") {
-            "image/svg+xml"
+            "image/svg+xml; charset=utf-8"
         } else if path.ends_with("txt") {
-            "text/plain"
+            "text/plain; charset=utf-8"
         } else {
             "application/octet-stream"
         }
