@@ -1,14 +1,8 @@
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::sync::Arc;
 use std::iter::FromIterator;
 
-use hyper::{Method, StatusCode};
-use hyper::header::{ContentLength, ContentType};
-use hyper::server::{Request, Response, Service};
-
-extern crate hyper;
-extern crate futures;
-extern crate mime;
+use iron::*;
 
 use super::static_file::*;
 
@@ -17,14 +11,17 @@ use super::static_file::*;
 ///
 pub struct StaticService {
     /// File found in a particular path
-    file_for_path: HashMap<String, Rc<StaticFile>>
+    file_for_path: HashMap<String, Arc<StaticFile>>
 }
 
 impl StaticService {
+    ///
+    /// Creates a new static service
+    ///
     pub fn new(files: Vec<StaticFile>) -> StaticService {
         let paths_and_files = files
                 .into_iter()
-                .map(|file| Rc::new(file))
+                .map(|file| Arc::new(file))
                 .flat_map(|file| file.valid_paths().into_iter().map(move |path| (path, file.clone())));
 
         StaticService {
@@ -33,43 +30,46 @@ impl StaticService {
     }
 }
 
-impl Service for StaticService {
-    type Request    = Request;
-    type Response   = Response;
-    type Error      = hyper::Error;
-    type Future     = futures::future::FutureResult<Self::Response, Self::Error>;
+impl Handler for StaticService {
+    ///
+    /// Serves a static file as a request (no caching)
+    ///
+    fn handle(&self, req: &mut Request) -> IronResult<Response> {
+        // Canonicalize the path
+        let mut path_components = vec![];
 
-    fn call(&self, req: Request) -> Self::Future {
-        // Prepare the response
-        let mut response = Response::new();
-
-        if req.method() == &Method::Get {
-            // Try to retrieve a static file
-            let static_file = self.file_for_path.get(req.path());
-
-            if let Some(static_file) = static_file {
-                // File exists
-
-                // Get the MIME type and the file content
-                let mime_type   = static_file.mime_type().parse::<mime::Mime>().unwrap();
-                let content     = static_file.content();
-
-                // Set up the response
-                // TODO: the extra copy of the content may be unnecessary here
-                response.set_status(StatusCode::Ok);
-                response.headers_mut().set(ContentType(mime_type));
-                response.headers_mut().set(ContentLength(content.len() as u64));
-                response.set_body(Vec::from(static_file.content()));
+        for component in req.url.path().iter() {
+            if *component == "." {
+                // Ignore
+            } else if *component == "" {
+                // Also ignore; note that if this is at the end the final path should have a '/' at the end
+            } else if *component == ".." {
+                // Up a level
+                if path_components.len() > 0 {
+                    path_components.pop();
+                }
             } else {
-                // File not found
-                response.set_status(StatusCode::NotFound);
+                path_components.push(String::from(*component));
             }
-        } else {
-            // Only GET is supported for static files
-            response.set_status(StatusCode::BadRequest);
         }
 
-        // Response is available immediately
-        futures::future::ok(response)
+        // Fold into a path string
+        let mut path_string = path_components.iter()
+            .fold(String::from("/"), |so_far, next_item| so_far + "/" + next_item);
+
+        if req.url.path().len() > 1 && req.url.path().last() == Some(&"") {
+            path_string.push('/');
+        }
+
+        // Look up the file
+        let file = self.file_for_path.get(&path_string);
+
+        if let Some(file) = file {
+            // File can handle it
+            file.handle(req)
+        } else {
+            // 404 response
+            Ok(Response::with((status::NotFound)))
+        }
     }
 }

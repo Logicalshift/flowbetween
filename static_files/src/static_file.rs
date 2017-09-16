@@ -1,3 +1,8 @@
+use iron::*;
+use iron::mime::*;
+use iron::headers::*;
+use iron::modifiers::*;
+
 ///
 /// Represents a static file
 ///
@@ -85,5 +90,22 @@ impl StaticFile {
     ///
     pub fn mime_type<'a>(&'a self) -> &'a str {
         &self.mime_type
+    }
+}
+
+impl Handler for StaticFile {
+    ///
+    /// Serves a static file as a request (no caching)
+    ///
+    fn handle(&self, _req: &mut Request) -> IronResult<Response> {
+        let content_type    = self.mime_type.parse::<Mime>().unwrap();
+        let content         = Vec::from(self.content());
+
+        let response = Response::with((status::Ok, 
+            Header(ContentType(content_type)),
+            Header(ContentLength(content.len() as u64)),
+            content));
+
+        Ok(response)
     }
 }
