@@ -49,7 +49,7 @@ impl Bounds {
     ///
     /// Creates a bounding box that fills a container
     ///
-    pub fn fill() -> Bounds {
+    pub fn fill_all() -> Bounds {
         use Position::*;
         Bounds { x1: Start, y1: Start, x2: End, y2: End }
     }
@@ -68,5 +68,21 @@ impl Bounds {
     pub fn next_vert(height: f32) -> Bounds {
         use Position::*;
         Bounds { x1: Start, y1: After, x2: End, y2: Offset(height) }
+    }
+
+    ///
+    /// Bounding box that fills the remaining horizontal space
+    ///
+    pub fn fill_horiz() -> Bounds {
+        use Position::*;
+        Bounds { x1: After, y1: Start, x2: End, y2: End }
+    }
+
+    ///
+    /// Bounding box that fills the remaining vertical space
+    ///
+    pub fn fill_vert() -> Bounds {
+        use Position::*;
+        Bounds { x1: Start, y1: After, x2: End, y2: End }
     }
 }
