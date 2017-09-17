@@ -2,6 +2,9 @@
 ///
 /// Represents an instruction to perform an update in the web interface
 ///
+/// Events and other requests to the HTTP interface can return lists
+/// of updates that should be performed in response.
+///
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Update {
     ///
