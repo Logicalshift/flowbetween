@@ -4,6 +4,9 @@ version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 
 [dependencies]
+ui              = { path = "../ui" }
+
 serde           = "1.0.0"
 serde_json      = "1.0.0"
 serde_derive    = "1.0.0"
+svg             = "0.5.6"
