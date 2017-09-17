@@ -1,3 +1,5 @@
+use super::graphics::*;
+
 ///
 /// Represents a single frame in a layer of an animation
 ///
