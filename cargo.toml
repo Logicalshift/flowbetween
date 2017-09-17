@@ -5,6 +5,7 @@ authors     = ["Andrew Hunter"]
 
 [dependencies]
 static_files    = { path = "static_files" }
+animation       = { path = "animation" }
 
 iron            = "0.5.1"
 mount           = { git = "https://github.com/iron/mount.git" }
