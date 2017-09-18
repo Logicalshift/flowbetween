@@ -1,18 +1,39 @@
 ///
-/// Represents an element in the user interface
+/// Attribute attached to a control
 ///
-pub enum Control {
-    // Adds an ID to the contained control
-    Id(String, Box<Control>),
+pub enum ControlAttribute {
+    /// The bounding box for this control
+    BoundingBox(Bounds),
 
-    /// Control container
-    Container(Bounds, Vec<Control>),
+    /// The text for this control
+    Text(String),
 
-    /// Button containing a control
-    Button(Bounds, Box<Control>),
+    /// The unique ID for this control
+    Id(String),
 
-    /// Label with some particular text
-    Label(Bounds, String)
+    /// Subcomponents of this control
+    SubComponents(Vec<Control>)
+}
+
+///
+/// Possible types of control
+///
+pub enum ControlType {
+    /// Control that contains other controls
+    Container,
+
+    /// Clickable button
+    Button,
+
+    /// Label used to display some text
+    Label
+}
+
+///
+/// Represents a control
+///
+pub struct Control {
+
 }
 
 ///
