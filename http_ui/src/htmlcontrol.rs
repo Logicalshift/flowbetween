@@ -75,3 +75,23 @@ impl ToHtml for Control {
         result
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_convert_button_to_html() {
+        assert!(Control::button().to_html() == "<div class=\"flo-button\"></div>")
+    }
+
+    #[test]
+    fn can_convert_label_to_html() {
+        assert!(Control::label().with("Hello & goodbye").to_html() == "<div class=\"flo-label\">Hello &amp; goodbye</div>")
+    }
+
+    #[test]
+    fn can_convert_container_to_html() {
+        assert!(Control::container().with(vec![Control::button()]).to_html() == "<div class=\"flo-container\"><div class=\"flo-button\"></div></div>")
+    }
+}
