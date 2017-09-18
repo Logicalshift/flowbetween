@@ -56,15 +56,18 @@ impl ToHtml for Control {
         for attribute in self.attributes() {
             match attribute {
                 &SubComponents(ref subcomponents) => {
-                    // Convert any subcomponents to HTML
+                    // Subcomponents go inside the div
                     let subcomponent_html = subcomponents.iter()
                         .map(|control| control.to_html())
                         .fold(String::new(), |a, b| a + &b);
                     result.push_str(&subcomponent_html);
                 },
+
                 &Text(ref text) => {
+                    // Any text is just the text attached to the div
                     result.push_str(&quote_text(text))
                 },
+
                 _ => ()
             }
         }
