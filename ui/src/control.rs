@@ -1,7 +1,7 @@
 ///
 /// Attribute attached to a control
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum ControlAttribute {
     /// The bounding box for this control
     BoundingBox(Bounds),
@@ -88,7 +88,7 @@ impl ToControlAttributes for Vec<Control> {
 ///
 /// Possible types of control
 ///
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ControlType {
     /// Control that contains other controls
     Container,
@@ -105,7 +105,7 @@ use ControlType::*;
 ///
 /// Represents a control
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Control {
     /// Attributes for this control
     attributes: Vec<ControlAttribute>,
@@ -157,7 +157,7 @@ impl Control {
 ///
 /// Represents a position coordinate
 ///
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Position {
     /// Point located at a specific value
     At(f32),
@@ -178,7 +178,7 @@ pub enum Position {
 ///
 /// Represents the bounds of a particular control
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Bounds {
     pub x1: Position,
     pub y1: Position,
