@@ -9,6 +9,7 @@ extern crate bodyparser;
 
 pub mod session;
 pub mod session_state;
+pub mod null_session;
 pub mod update;
 pub mod event;
 pub mod htmlcontrol;
@@ -20,3 +21,4 @@ pub use self::update::*;
 pub use self::event::*;
 pub use self::htmlcontrol::*;
 pub use self::ui_handler::*;
+pub use self::null_session::*;
