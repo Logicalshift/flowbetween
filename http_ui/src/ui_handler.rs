@@ -25,10 +25,7 @@ use bodyparser::*;
 ///
 pub struct UiHandler<TSession: Session> {
     /// The sessions that are currently active for this handler
-    active_sessions: Mutex<HashMap<String, TSession>>,
-
-    /// The states for the currently active sessions
-    active_session_states: Mutex<HashMap<String, Arc<SessionState>>>
+    active_sessions: Mutex<HashMap<String, (Arc<SessionState>, TSession)>>,
 }
 
 impl<TSession: Session> UiHandler<TSession> {
@@ -37,8 +34,7 @@ impl<TSession: Session> UiHandler<TSession> {
     ///
     pub fn new() -> UiHandler<TSession> {
         UiHandler { 
-            active_sessions:        Mutex::new(HashMap::new()),  
-            active_session_states:  Mutex::new(HashMap::new())
+            active_sessions: Mutex::new(HashMap::new()),  
         }
     }
 
@@ -52,13 +48,57 @@ impl<TSession: Session> UiHandler<TSession> {
 
         // Store in the list of active sessions
         let mut active_sessions = self.active_sessions.lock().unwrap();
-        active_sessions.insert(String::from(new_state.id()), new_session);
-
-        let mut active_states = self.active_session_states.lock().unwrap();
-        active_states.insert(String::from(new_state.id()), new_state.clone());
+        active_sessions.insert(String::from(new_state.id()), (new_state.clone(), new_session));
 
         // Result is the session ID
         String::from(new_state.id())
+    }
+
+    ///
+    /// Fills in a response structure for a request with no session
+    ///
+    fn handle_no_session(&self, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
+        unimplemented!()
+    }
+
+    ///
+    /// Dispatches a response structure to a session
+    ///
+    fn handle_with_session(&self, state: Arc<SessionState>, session: &mut TSession, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
+        unimplemented!()
+    }
+
+    ///
+    /// Handles a UI handler request
+    ///
+    pub fn handle_request(&self, req: &UiHandlerRequest) -> Response {
+        // The response that we'll return for this request
+        let mut response = UiHandlerResponse { updates: vec![] };
+
+        // Dispatch depending on whether or not this request corresponds to an active session
+        match req.session_id {
+            None                    => self.handle_no_session(&mut response, req),
+            Some(ref session_id)    => {
+                // Try to fetch the session for this ID
+                let mut active_sessions = self.active_sessions.lock().unwrap();
+                let session             = active_sessions.get_mut(session_id);
+
+                // If the session ID is not presently registered, then we proceed as if the session is missing 
+                match session {
+                    Some(&mut (ref mut session_state, ref mut session)) => 
+                        self.handle_with_session(session_state.clone(), session, &mut response, req),
+                    _ => 
+                        self.handle_no_session(&mut response, req)
+                }
+            }
+        };
+
+        // Generate the final response
+        Response::with((
+            status::Ok,
+            Header(ContentType::json()),
+            serde_json::to_string(&response).unwrap()
+        ))
     }
 }
 
@@ -71,7 +111,7 @@ pub struct UiHandlerRequest {
     session_id: Option<String>,
 
     /// The events that the UI wishes to report with this request
-    Events: Vec<Event>
+    events: Vec<Event>
 }
 
 ///
@@ -99,9 +139,9 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
             let request = req.get::<Struct<UiHandlerRequest>>();
 
             match request {
-                Ok(Some(request)) => Ok(Response::with((status::NotFound))),
-                Ok(None) => Ok(Response::with((status::BadRequest))),
-                Err(_) => Ok(Response::with((status::BadRequest)))
+                Ok(Some(request))   => Ok(self.handle_request(&request)),
+                Ok(None)            => Ok(Response::with((status::BadRequest))),
+                Err(_)              => Ok(Response::with((status::BadRequest)))
             }
         }
     }

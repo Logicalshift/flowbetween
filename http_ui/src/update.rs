@@ -8,6 +8,11 @@
 #[derive(Clone, Serialize, Deserialize)]
 pub enum Update {
     ///
+    /// There is no session ID or the session is unknown
+    ///
+    MissingSession,
+
+    ///
     /// Replace the SVG element with the specified ID with the supplied SVG
     /// 
     /// Parameters are the ID and the replacement SVG data
