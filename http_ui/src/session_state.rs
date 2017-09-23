@@ -1,3 +1,5 @@
+use ui::*;
+
 use uuid::*;
 
 ///
@@ -23,5 +25,16 @@ impl SessionState {
     ///
     pub fn id(&self) -> String {
         self.session_id.clone()
+    }
+
+    ///
+    /// Retrieves the current state of the UI for this session
+    ///
+    pub fn entire_ui_tree(&self) -> Control {
+        // TODO: this is just a placeholder
+        let hello_world = Control::container()
+            .with(vec![Control::label().with("Hello, World")]);
+
+        hello_world.clone()
     }
 }
