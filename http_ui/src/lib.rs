@@ -5,6 +5,7 @@ extern crate serde_derive;
 extern crate ui;
 extern crate uuid;
 extern crate iron;
+extern crate bodyparser;
 
 pub mod session;
 pub mod session_state;

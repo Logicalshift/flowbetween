@@ -12,3 +12,4 @@ serde_derive    = "1.0.0"
 svg             = "0.5.6"
 uuid            = { version = "0.4", features = [ "v4" ] }
 iron            = "0.5.1"
+bodyparser      = { git = "https://github.com/iron/body-parser.git" }

@@ -18,6 +18,8 @@ use iron::method::*;
 use iron::headers::*;
 use iron::modifiers::*;
 
+use bodyparser::*;
+
 ///
 /// Handler that runs a particular UI through the HTTP interface
 ///
@@ -63,7 +65,7 @@ impl<TSession: Session> UiHandler<TSession> {
 ///
 /// Structure of a request sent to the UI handler
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct UiHandlerRequest {
     /// The session ID, if there is one
     session_id: Option<String>,
@@ -75,7 +77,7 @@ pub struct UiHandlerRequest {
 ///
 /// Structure of a UI handler response
 ///
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct UiHandlerResponse {
     /// Updates generated for this request
     updates: Vec<Update>
@@ -93,9 +95,14 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
             // Must be a JSON POST request
             Ok(Response::with((status::BadRequest)))
         } else {
-            // TODO!
-            let request: Option<UiHandlerRequest> = serde_json::from_reader(req.body).ok();
-            Ok(Response::with((status::NotFound)))
+            // Parse the request
+            let request = req.get::<Struct<UiHandlerRequest>>();
+
+            match request {
+                Ok(Some(request)) => Ok(Response::with((status::NotFound))),
+                Ok(None) => Ok(Response::with((status::BadRequest))),
+                Err(_) => Ok(Response::with((status::BadRequest)))
+            }
         }
     }
 }
