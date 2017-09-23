@@ -58,7 +58,18 @@ impl<TSession: Session> UiHandler<TSession> {
     /// Fills in a response structure for a request with no session
     ///
     fn handle_no_session(&self, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
-        unimplemented!()
+        for event in req.events.iter() {
+            match event.clone() {
+                // When there is no session, we can request that one be created
+                NewSession => {
+                    let session_id = self.new_session();
+                    response.updates.push(Update::NewSession(session_id));
+                },
+
+                // For any other event, a session is required, so we add a 'missing session' notification to the response
+                _ => response.updates.push(Update::MissingSession)
+            }
+        }
     }
 
     ///

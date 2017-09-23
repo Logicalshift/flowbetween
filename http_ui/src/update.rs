@@ -13,6 +13,11 @@ pub enum Update {
     MissingSession,
 
     ///
+    /// A new session has been created, and this is its ID
+    ///
+    NewSession(String),
+
+    ///
     /// Replace the SVG element with the specified ID with the supplied SVG
     /// 
     /// Parameters are the ID and the replacement SVG data
