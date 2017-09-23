@@ -179,6 +179,10 @@ function flowbetween() {
                     current_promise = current_promise.then(() => on_new_session(update[update_key]));
                     break;
 
+                case 'NewUserInterfaceHtml':
+                    console.log(update[update_key]);
+                    break;
+
                 default:
                     console.warn('Unknown update type', update_key);
                     break;

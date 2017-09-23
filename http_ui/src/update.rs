@@ -18,6 +18,11 @@ pub enum Update {
     NewSession(String),
 
     ///
+    /// Supplies a new user interface as HTML
+    ///
+    NewUserInterfaceHtml(String),
+
+    ///
     /// Replace the SVG element with the specified ID with the supplied SVG
     /// 
     /// Parameters are the ID and the replacement SVG data

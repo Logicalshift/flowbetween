@@ -55,13 +55,22 @@ impl<TSession: Session> UiHandler<TSession> {
     }
 
     ///
+    /// Generates a UI refresh response
+    ///
+    pub fn refresh_ui(&self, state: Arc<SessionState>, response: &mut UiHandlerResponse) {
+        let ui_html = state.entire_ui_tree().to_html();
+
+        response.updates.push(Update::NewUserInterfaceHtml(ui_html));
+    }
+
+    ///
     /// Fills in a response structure for a request with no session
     ///
     fn handle_no_session(&self, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
         for event in req.events.iter() {
             match event.clone() {
                 // When there is no session, we can request that one be created
-                NewSession => {
+                Event::NewSession => {
                     let session_id = self.new_session();
                     response.updates.push(Update::NewSession(session_id));
                 },
@@ -76,7 +85,18 @@ impl<TSession: Session> UiHandler<TSession> {
     /// Dispatches a response structure to a session
     ///
     fn handle_with_session(&self, state: Arc<SessionState>, session: &mut TSession, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
-        unimplemented!()
+        for event in req.events.iter() {
+            match event.clone() {
+                // Requesting a new session when there already is one is sort of pointless, but we allow it
+                Event::NewSession => {
+                    let session_id = self.new_session();
+                    response.updates.push(Update::NewSession(session_id));
+                },
+
+                // Refreshing the UI generates a new set of HTML from the abstract UI representation
+                RefreshUi => self.refresh_ui(state.clone(), response),
+            }
+        }
     }
 
     ///
