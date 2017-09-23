@@ -9,7 +9,7 @@ pub enum Event {
     NewSession,
 
     ///
-    /// The user clicked on a named SVG element (in a given spot)
+    /// Request a refresh of the UI
     ///
-    ClickSvg(String, f32, f32)
+    UiRefresh
 }
