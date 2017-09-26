@@ -162,6 +162,18 @@ function flowbetween() {
     }
 
     ///
+    /// The entire UI HTML should be replaced with a new version
+    ///
+    let on_new_html = (new_user_interface_html) => {
+        return new Promise((resolve) => {
+            let root = document.getElementById("root");
+            
+            root.innerHTML = new_user_interface_html;
+            resolve();
+        });
+    }
+
+    ///
     /// Dispatches updates in a request
     ///
     let dispatch_updates = (updates) => {
@@ -180,7 +192,7 @@ function flowbetween() {
                     break;
 
                 case 'NewUserInterfaceHtml':
-                    console.log(update[update_key]);
+                    current_promise = current_promise.then(() => on_new_html(update[update_key]));
                     break;
 
                 default:
