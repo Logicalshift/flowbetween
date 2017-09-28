@@ -9,7 +9,7 @@ use std::cell::*;
 ///
 /// Trait implemented by items with dependencies that need to be notified when they have changed
 ///
-pub trait Notifiable : Sync {
+pub trait Notifiable : Send {
     ///
     /// Indicates that a dependency of this object has changed
     ///
@@ -92,5 +92,11 @@ impl Changeable for BindingContext {
 impl Changeable for Option<BindingContext> {
     fn when_changed(&self, what: &Notifiable) {
         self.as_ref().map(move |ctx| ctx.when_changed(what));
+    }
+}
+
+impl Changeable for Fn(&Notifiable) -> () {
+    fn when_changed(&self, what: &Notifiable) {
+        self(what);
     }
 }
