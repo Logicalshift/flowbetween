@@ -17,7 +17,7 @@ pub trait Notifiable : Sync {
 }
 
 ///
-/// Trait implemented by items that can be changed
+/// Trait implemented by items that can notify something when they're changed
 ///
 pub trait Changeable {
     ///
@@ -33,7 +33,7 @@ pub trait Changeable {
 #[derive(Clone)]
 pub struct BindingContext {
     /// The item to notify if items in this context changes
-    what_to_notify: Arc<Mutex<Notifiable>>,
+    what_to_notify: Arc<Mutex<Changeable>>,
 
     /// None, or the binding context that this context was created within
     nested: Option<Box<BindingContext>>
@@ -59,8 +59,8 @@ impl BindingContext {
     ///
     /// Executes a function in a new binding context
     ///
-    pub fn bind<TNotify, TResult, TFn>(notify: TNotify, to_do: TFn) -> TResult 
-    where TNotify: 'static+Notifiable, TFn: FnOnce() -> TResult {
+    pub fn bind<TOnChange, TResult, TFn>(notify: TOnChange, to_do: TFn) -> TResult 
+    where TOnChange: 'static+Changeable, TFn: FnOnce() -> TResult {
         // Remember the previous context
         let previous_context = BindingContext::current();
 
@@ -85,7 +85,7 @@ impl BindingContext {
 
 impl Changeable for BindingContext {
     fn when_changed(&self, what: Arc<Mutex<Notifiable>>) {
-        unimplemented!()
+        self.what_to_notify.lock().unwrap().when_changed(what.clone());
     }
 }
 
