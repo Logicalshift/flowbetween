@@ -3,7 +3,7 @@
 //! application.
 //!
 
-use std::sync::*;
+use std::rc::*;
 use std::cell::*;
 
 ///
@@ -23,7 +23,7 @@ pub trait Changeable {
     ///
     /// Supplies an item to be notified when this item is changed
     ///
-    fn when_changed(&self, what: Arc<Mutex<Notifiable>>);
+    fn when_changed(&self, what: &Notifiable);
 }
 
 ///
@@ -33,7 +33,7 @@ pub trait Changeable {
 #[derive(Clone)]
 pub struct BindingContext {
     /// The item to notify if items in this context changes
-    what_to_notify: Arc<Mutex<Changeable>>,
+    what_to_notify: Rc<Changeable>,
 
     /// None, or the binding context that this context was created within
     nested: Option<Box<BindingContext>>
@@ -66,7 +66,7 @@ impl BindingContext {
 
         // Create a new context
         let new_context = BindingContext {
-            what_to_notify: Arc::new(Mutex::new(notify)),
+            what_to_notify: Rc::new(notify),
             nested:         previous_context.clone().map(|ctx| Box::new(ctx))
         };
 
@@ -84,13 +84,13 @@ impl BindingContext {
 }
 
 impl Changeable for BindingContext {
-    fn when_changed(&self, what: Arc<Mutex<Notifiable>>) {
-        self.what_to_notify.lock().unwrap().when_changed(what.clone());
+    fn when_changed(&self, what: &Notifiable) {
+        self.what_to_notify.when_changed(what.clone());
     }
 }
 
 impl Changeable for Option<BindingContext> {
-    fn when_changed(&self, what: Arc<Mutex<Notifiable>>) {
+    fn when_changed(&self, what: &Notifiable) {
         self.as_ref().map(move |ctx| ctx.when_changed(what));
     }
 }
