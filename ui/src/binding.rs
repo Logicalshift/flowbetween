@@ -94,9 +94,3 @@ impl Changeable for Option<BindingContext> {
         self.as_ref().map(move |ctx| ctx.when_changed(what));
     }
 }
-
-impl Changeable for Fn(&Notifiable) -> () {
-    fn when_changed(&self, what: &Notifiable) {
-        self(what);
-    }
-}
