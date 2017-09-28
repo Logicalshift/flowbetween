@@ -1,3 +1,5 @@
+use super::diff::*;
+
 ///
 /// Attribute attached to a control
 ///
@@ -14,6 +16,63 @@ pub enum ControlAttribute {
 
     /// Subcomponents of this control
     SubComponents(Vec<Control>)
+}
+
+impl ControlAttribute {
+    ///
+    /// The bounding box represented by this attribute
+    ///
+    pub fn bounding_box<'a>(&'a self) -> Option<&'a Bounds> {
+        match self {
+            &BoundingBox(ref bounds)    => Some(bounds),
+            _                           => None
+        }
+    }
+
+    ///
+    /// The text represented by this attribute
+    ///
+    pub fn text<'a>(&'a self) -> Option<&'a String> {
+        match self {
+            &Text(ref text) => Some(text),
+            _               => None
+        }
+    }
+
+    ///
+    /// The ID represented by this attribute
+    ///
+    pub fn id<'a>(&'a self) -> Option<&'a String> {
+        match self {
+            &Id(ref id) => Some(id),
+            _           => None
+        }
+    }
+
+    ///
+    /// The subcomponent represented by this attribute
+    ///
+    pub fn subcomponents<'a>(&'a self) -> Option<&'a Vec<Control>> {
+        match self {
+            &SubComponents(ref components)  => Some(components),
+            _                               => None
+        }
+    }
+
+    ///
+    /// Returns true if this attribute is different from another one
+    /// (non-recursively, so this won't check subcomoponents)
+    ///
+    pub fn is_different_flat(&self, compare_to: &ControlAttribute) -> bool {
+        match self {
+            &BoundingBox(ref bounds)        => Some(bounds) == compare_to.bounding_box(),
+            &Text(ref text)                 => Some(text) == compare_to.text(),
+            &Id(ref id)                     => Some(id) == compare_to.id(),
+
+            // For the subcomponents we only care about the number as we don't want to recurse
+            &SubComponents(ref components)  => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())
+        }
+    }
 }
 
 use ControlAttribute::*;
@@ -151,6 +210,31 @@ impl Control {
     /// The type of this control
     pub fn control_type(&self) -> ControlType {
         self.control_type
+    }
+
+    ///
+    /// True if any of the attributes of this control exactly match the specified attribute
+    /// (using the rules of is_different_flat, so no recursion when there are subcomponents)
+    ///
+    pub fn has_attribute_flat(&self, attr: &ControlAttribute) -> bool {
+        self.attributes.iter()
+            .any(|test_attr| !test_attr.is_different_flat(attr))
+    }
+}
+
+impl DiffableTree for Control {
+    fn child_nodes<'a>(&'a self) -> Vec<&'a Self> {
+        self.attributes
+            .iter()
+            .map(|attr| attr.subcomponents().map(|component| component.iter()))
+            .filter(|maybe_components| maybe_components.is_some())
+            .flat_map(|components| components.unwrap())
+            .collect()
+    }
+
+    fn is_different(&self, compare_to: &Self) -> bool {
+        self.control_type() != compare_to.control_type()
+            || self.attributes.iter().any(|attr| !compare_to.has_attribute_flat(attr))
     }
 }
 
