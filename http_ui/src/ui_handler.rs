@@ -1,4 +1,3 @@
-use std::io::*;
 use std::sync::*;
 use std::collections::*;
 
@@ -9,8 +8,6 @@ use super::htmlcontrol::*;
 use super::session_state::*;
 
 extern crate serde_json;
-use serde::*;
-use serde_json::*;
 
 use iron::*;
 use iron::mime::*;
@@ -85,16 +82,18 @@ impl<TSession: Session> UiHandler<TSession> {
     /// Dispatches a response structure to a session
     ///
     fn handle_with_session(&self, state: Arc<SessionState>, session: &mut TSession, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
+        use Event::*;
+
         for event in req.events.iter() {
             match event.clone() {
                 // Requesting a new session when there already is one is sort of pointless, but we allow it
-                Event::NewSession => {
+                NewSession => {
                     let session_id = self.new_session();
                     response.updates.push(Update::NewSession(session_id));
                 },
 
                 // Refreshing the UI generates a new set of HTML from the abstract UI representation
-                RefreshUi => self.refresh_ui(state.clone(), response),
+                UiRefresh => self.refresh_ui(state.clone(), response),
             }
         }
     }
