@@ -17,7 +17,7 @@ impl NullSession {
 
 impl Session for NullSession {
     /// Creates a new session
-    fn start_new(state: Arc<SessionState>) -> Self {
+    fn start_new(_state: Arc<SessionState>) -> Self {
         NullSession::new()
     }
 }
