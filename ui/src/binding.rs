@@ -28,6 +28,26 @@ pub trait Changeable {
 }
 
 ///
+/// Trait implemented by something that is bound to a value
+///
+pub trait Bound<Value> : Changeable {
+    ///
+    /// Retrieves the value stored by this binding
+    ///
+    fn get<'a>(&'a self) -> &'a Value;
+}
+
+///
+/// Trait implemented by something that is bound to a value that can be changed
+///
+pub trait MutableBound<Value> : Bound<Value> {
+    ///
+    /// Sets the value stored by this binding
+    ///
+    fn set(&mut self, new_value: Value);
+}
+
+///
 /// Represents the dependencies of a binding context
 ///
 #[derive(Clone)]
