@@ -27,13 +27,38 @@ pub trait Changeable {
 }
 
 ///
+/// Represents the dependencies of a binding context
+///
+#[derive(Clone)]
+pub struct BindingDependencies {
+    /// The list of changables that are dependent on this context
+    dependencies: Rc<RefCell<Vec<Box<Changeable>>>>
+}
+
+impl BindingDependencies {
+    ///
+    /// Creates a new binding dependencies object
+    ///
+    pub fn new() -> BindingDependencies {
+        BindingDependencies { dependencies: Rc::new(RefCell::new(vec![])) }
+    }
+
+    ///
+    /// Adds a new dependency to this object
+    ///
+    pub fn add_dependency<TChangeable: Changeable+'static>(&mut self, dependency: TChangeable) {
+        self.dependencies.borrow_mut().push(Box::new(dependency))
+    }
+}
+
+///
 /// Represents a binding context. Binding contexts are
 /// per-thread structures, used to track 
 ///
 #[derive(Clone)]
 pub struct BindingContext {
-    /// The item to notify if items in this context changes
-    what_to_notify: Rc<Changeable>,
+    /// The dependencies for this context
+    dependencies: BindingDependencies,
 
     /// None, or the binding context that this context was created within
     nested: Option<Box<BindingContext>>
@@ -59,14 +84,15 @@ impl BindingContext {
     ///
     /// Executes a function in a new binding context
     ///
-    pub fn bind<TOnChange, TResult, TFn>(notify: TOnChange, to_do: TFn) -> TResult 
-    where TOnChange: 'static+Changeable, TFn: FnOnce() -> TResult {
+    pub fn bind<TResult, TFn>(to_do: TFn) -> (TResult, BindingDependencies) 
+    where TFn: FnOnce() -> TResult {
         // Remember the previous context
         let previous_context = BindingContext::current();
 
         // Create a new context
-        let new_context = BindingContext {
-            what_to_notify: Rc::new(notify),
+        let dependencies    = BindingDependencies::new();
+        let new_context     = BindingContext {
+            dependencies:   dependencies.clone(),
             nested:         previous_context.clone().map(|ctx| Box::new(ctx))
         };
 
@@ -79,18 +105,6 @@ impl BindingContext {
         // Reset to the previous context
         CURRENT_CONTEXT.with(|current_context| *current_context.borrow_mut() = previous_context);
 
-        result
-    }
-}
-
-impl Changeable for BindingContext {
-    fn when_changed(&self, what: &Notifiable) {
-        self.what_to_notify.when_changed(what.clone());
-    }
-}
-
-impl Changeable for Option<BindingContext> {
-    fn when_changed(&self, what: &Notifiable) {
-        self.as_ref().map(move |ctx| ctx.when_changed(what));
+        (result, dependencies)
     }
 }
