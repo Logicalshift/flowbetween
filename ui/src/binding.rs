@@ -14,7 +14,7 @@ pub trait Notifiable : Send {
     ///
     /// Indicates that a dependency of this object has changed
     ///
-    fn mark_as_changed(&mut self);
+    fn mark_as_changed(&self);
 }
 
 ///
@@ -135,5 +135,117 @@ impl BindingContext {
         CURRENT_CONTEXT.with(|current_context| *current_context.borrow_mut() = previous_context);
 
         (result, dependencies)
+    }
+}
+
+///
+/// Creates a notifiable reference from a function
+///
+pub fn notify<TFn>(when_changed: TFn) -> Arc<Notifiable>
+where TFn: 'static+Send+Fn() -> () {
+    Arc::new(NotifyFn { when_changed: Mutex::new(when_changed) })
+}
+
+struct NotifyFn<TFn> {
+    when_changed: Mutex<TFn>
+}
+
+impl<TFn> Notifiable for NotifyFn<TFn>
+where TFn: Send+Fn() -> () {
+    fn mark_as_changed(&self) {
+        self.when_changed.lock().unwrap()()
+    }
+}
+
+///
+/// Represents a binding of a value
+///
+pub struct Binding<Value> {
+    /// The current value of this binding
+    value: Value,
+
+    /// What to call when the value changes
+    when_changed: Vec<Arc<Notifiable>>
+}
+
+impl<Value> Binding<Value> {
+    ///
+    /// Creates a new binding with the specified value
+    ///
+    pub fn new(val: Value) -> Binding<Value> {
+        Binding {
+            value:          val,
+            when_changed:   vec![]
+        }
+    }
+}
+
+impl<Value> Changeable for Binding<Value> {
+    fn when_changed(&mut self, what: Arc<Notifiable>) {
+        self.when_changed.push(what);
+    }
+}
+
+impl<Value> Bound<Value> for Binding<Value> {
+    fn get<'a>(&'a self) -> &'a Value {
+        &self.value
+    }
+}
+
+impl<Value> MutableBound<Value> for Binding<Value> {
+    fn set(&mut self, new_value: Value) {
+        self.value = new_value;
+
+        for notify in self.when_changed.iter() {
+            notify.mark_as_changed();
+        }
+    }
+}
+
+///
+/// Creates a simple bound value with the specified initial value
+///
+pub fn bind<Value>(val: Value) -> Binding<Value> {
+    Binding::new(val)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_create_binding() {
+        let bound = bind(1);
+        assert!(bound.get() == &1);
+    }
+
+    #[test]
+    fn can_update_binding() {
+        let mut bound = bind(1);
+
+        bound.set(2);
+        assert!(bound.get() == &2);
+    }
+
+    #[test]
+    fn notified_on_change() {
+        let mut bound   = bind(1);
+        let changed     = Arc::new(Mutex::new(RefCell::new(false)));
+
+        let notify_changed = changed.clone();
+        bound.when_changed(notify(move || {
+            let l = notify_changed.lock().unwrap();
+            *l.borrow_mut() = true;
+        }));
+
+        {
+            let l = changed.lock().unwrap();
+            assert!(*l.borrow() == false);
+        }
+        bound.set(2);
+        {
+            let l = changed.lock().unwrap();
+            assert!(*l.borrow() == true);
+        }
     }
 }
