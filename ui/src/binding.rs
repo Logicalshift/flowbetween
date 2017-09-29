@@ -3,6 +3,7 @@
 //! application.
 //!
 
+use std::sync::*;
 use std::rc::*;
 use std::cell::*;
 
@@ -23,7 +24,7 @@ pub trait Changeable {
     ///
     /// Supplies an item to be notified when this item is changed
     ///
-    fn when_changed(&self, what: &Notifiable);
+    fn when_changed(&mut self, what: Arc<Notifiable>);
 }
 
 ///
@@ -48,6 +49,14 @@ impl BindingDependencies {
     ///
     pub fn add_dependency<TChangeable: Changeable+'static>(&mut self, dependency: TChangeable) {
         self.dependencies.borrow_mut().push(Box::new(dependency))
+    }
+}
+
+impl Changeable for BindingDependencies {
+    fn when_changed(&mut self, what: Arc<Notifiable>) {
+        for dep in self.dependencies.borrow_mut().iter_mut() {
+            dep.when_changed(what.clone());
+        }
     }
 }
 
