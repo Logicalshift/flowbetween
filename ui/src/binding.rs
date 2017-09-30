@@ -437,6 +437,13 @@ where TFn: 'static+Fn() -> Value {
     }
 
     ///
+    /// Retrieves a copy of the list of notifiable items for this value
+    ///
+    pub fn get_notifiable_items(&self) -> Vec<ReleasableNotifiable> {
+        self.when_changed.clone()
+    }
+
+    ///
     /// Returns the current value (or 'None' if it needs recalculating)
     ///
     pub fn get(&self) -> Option<Value> {
@@ -484,7 +491,8 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     /// Marks this computed binding as having changed
     ///
     fn mark_changed(&mut self) {
-        let (actually_changed, mut releasable) = {
+        // We do the notifications and releasing while the lock is not retained
+        let (mut notifiable, mut releasable) = {
             // Get the core
             let lock = self.core.lock().unwrap();
             let mut core = lock.borrow_mut();
@@ -492,17 +500,29 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             // Mark it as changed
             let actually_changed = core.mark_changed();
 
+            // Get the items that need changing
+            let notifiable = if actually_changed {
+                core.get_notifiable_items()
+            } else {
+                vec![]
+            };
+
             // Extract the releasable so we can release it after the lock has gone
             let mut releasable = None;
             mem::swap(&mut releasable, &mut core.existing_notification);
 
             // These values are needed outside of the lock
-            (actually_changed, releasable)
+            (notifiable, releasable)
         };
 
         // Don't want any more notifications from this source
         // TODO: deadlock?
         // releasable.map(|mut releasable| releasable.done());
+
+        // Notify anything that needs to be notified that this has changed
+        for to_notify in notifiable {
+            to_notify.mark_as_changed();
+        }
     }
 
     ///
