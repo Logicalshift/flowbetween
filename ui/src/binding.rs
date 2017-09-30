@@ -554,6 +554,9 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             if let Some(to_notify) = to_notify.upgrade() {
                 let mut to_notify = ComputedBinding { core: to_notify };
                 to_notify.mark_changed();
+            } else if cfg!(debug_assertions) {
+                // We can carry on here, but this suggests a memory leak
+                panic!("The core of a computed is gone but its notifcations have been left behind");
             }
         }));
 
