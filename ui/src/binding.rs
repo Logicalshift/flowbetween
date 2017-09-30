@@ -535,6 +535,9 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
         // Monitor for changes
         let lifetime        = to_monitor.when_changed(notify(move || to_notify.mark_changed()));
+
+        // Store the lifetime
+        core.existing_notification = Some(lifetime);
     }
 }
 
