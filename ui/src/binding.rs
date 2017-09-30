@@ -534,11 +534,17 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     /// Core should already be locked
     ///
     fn monitor_changes(&self, core: &mut ComputedBindingCore<Value, TFn>, to_monitor: &mut Changeable) {
-        // Clone ourselves (some weirdness in that the derived clone() function won't work here)
-        let mut to_notify   = ComputedBinding { core: self.core.clone() };
+        // We only keep a week reference to the core here
+        let to_notify   = Arc::downgrade(&self.core);
 
         // Monitor for changes
-        let lifetime        = to_monitor.when_changed(notify(move || to_notify.mark_changed()));
+        let lifetime    = to_monitor.when_changed(notify(move || {
+            // If the reference is still active, reconstitute a computed binding in order to call the mark_changed method
+            if let Some(to_notify) = to_notify.upgrade() {
+                let mut to_notify = ComputedBinding { core: to_notify };
+                to_notify.mark_changed();
+            }
+        }));
 
         // Store the lifetime
         let mut last_notification = Some(lifetime);
