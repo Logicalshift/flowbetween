@@ -488,7 +488,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // We do the notifications and releasing while the lock is not retained
         let (mut notifiable, mut releasable) = {
             // Get the core
-            let mut core = self.core.lock().unwrap();
+            let core = self.core.lock().unwrap();
 
             // Mark it as changed
             let actually_changed = core.mark_changed();
@@ -793,7 +793,7 @@ mod test {
         let compute_counter     = counter.clone();
         let computed_from       = bound.clone();
         let computed            = computed(move || {
-            let mut counter = compute_counter.lock().unwrap();
+            let counter     = compute_counter.lock().unwrap();
             let mut counter = counter.borrow_mut();
             *counter = *counter + 1;
 
