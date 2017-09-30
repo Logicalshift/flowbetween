@@ -187,12 +187,14 @@ impl<Value: Clone> Bound<Value> for BoundValue<Value> {
     }
 }
 
-impl<Value: Clone> MutableBound<Value> for BoundValue<Value> {
+impl<Value: Clone+PartialEq> MutableBound<Value> for BoundValue<Value> {
     fn set(&mut self, new_value: Value) {
-        self.value = new_value;
+        if self.value != new_value {
+            self.value = new_value;
 
-        for notify in self.when_changed.iter() {
-            notify.mark_as_changed();
+            for notify in self.when_changed.iter() {
+                notify.mark_as_changed();
+            }
         }
     }
 }
@@ -230,7 +232,7 @@ impl<Value: Clone> Bound<Value> for Binding<Value> {
     }
 }
 
-impl<Value: Clone> MutableBound<Value> for Binding<Value> {
+impl<Value: Clone+PartialEq> MutableBound<Value> for Binding<Value> {
     fn set(&mut self, new_value: Value) {
         let cell = self.value.lock().unwrap();
         cell.borrow_mut().set(new_value);
@@ -281,5 +283,18 @@ mod test {
         assert!(changed.get() == false);
         bound.set(2);
         assert!(changed.get() == true);
+    }
+
+    #[test]
+    fn not_notified_on_no_change() {
+        let mut bound   = bind(1);
+        let changed     = bind(false);
+
+        let mut notify_changed = changed.clone();
+        bound.when_changed(notify(move || notify_changed.set(true)));
+
+        assert!(changed.get() == false);
+        bound.set(1);
+        assert!(changed.get() == false);
     }
 }
