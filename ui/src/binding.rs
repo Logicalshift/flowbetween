@@ -778,4 +778,30 @@ mod test {
         bound.set(4);
         assert!(changed.get() == true);
     }
+
+    #[test]
+    fn computed_stops_notifying_once_out_of_scope() {
+        let mut bound       = bind(1);
+        let mut changed     = bind(false);
+
+        {
+            let computed_from   = bound.clone();
+            let mut computed    = computed(move || computed_from.get() + 1);
+
+            let mut notify_changed = changed.clone();
+            computed.when_changed(notify(move || notify_changed.set(true)));
+
+            assert!(computed.get() == 2);
+            assert!(changed.get() == false);
+
+            bound.set(2);
+            assert!(changed.get() == true);
+            assert!(computed.get() == 3);
+        };
+
+        // The computed value should have been disposed of so we should get no more notifications once we reach here
+        changed.set(false);
+        bound.set(3);
+        assert!(changed.get() == false);
+    }
 }
