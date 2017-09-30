@@ -344,10 +344,7 @@ impl<Value: Clone+PartialEq> Binding<Value> {
 
 impl<Value> Changeable for Binding<Value> {
     fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
-        let mut cell    = self.value.lock().unwrap();
-        let releasable  = cell.when_changed(what);
-
-        releasable
+        self.value.lock().unwrap().when_changed(what)
     }
 }
 
@@ -355,10 +352,7 @@ impl<Value: 'static+Clone> Bound<Value> for Binding<Value> {
     fn get(&self) -> Value {
         BindingContext::add_dependency(self.clone());
 
-        let cell    = self.value.lock().unwrap();
-        let value   = cell.get();
-
-        value
+        self.value.lock().unwrap().get()
     }
 }
 
