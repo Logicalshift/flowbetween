@@ -7,6 +7,7 @@
 //! when any of these change.
 //!
 
+use std::mem;
 use std::sync::*;
 use std::rc::*;
 use std::cell::*;
@@ -483,19 +484,25 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     /// Marks this computed binding as having changed
     ///
     fn mark_changed(&mut self) {
-        // Get the core
-        let lock = self.core.lock().unwrap();
-        let mut core = lock.borrow_mut();
+        let (actually_changed, mut releasable) = {
+            // Get the core
+            let lock = self.core.lock().unwrap();
+            let mut core = lock.borrow_mut();
 
-        // Mark it as changed
-        let actually_changed = core.mark_changed();
+            // Mark it as changed
+            let actually_changed = core.mark_changed();
 
-        /* -- Deadlock if we do this while the core is locked
-        // Stop listening for further notifications
-        if let Some(ref mut last_notification) = core.existing_notification {
-            last_notification.done();
-        }
-        */
+            // Extract the releasable so we can release it after the lock has gone
+            let mut releasable = None;
+            mem::swap(&mut releasable, &mut core.existing_notification);
+
+            // These values are needed outside of the lock
+            (actually_changed, releasable)
+        };
+
+        // Don't want any more notifications from this source
+        // TODO: deadlock?
+        // releasable.map(|mut releasable| releasable.done());
     }
 
     ///
