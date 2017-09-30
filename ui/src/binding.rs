@@ -467,7 +467,7 @@ where TFn: 'static+Fn() -> Value {
 pub struct ComputedBinding<Value: 'static+Clone+PartialEq, TFn>
 where TFn: 'static+Fn() -> Value {
     /// The core where the binding data is stored
-    core: Arc<Mutex<RefCell<ComputedBindingCore<Value, TFn>>>>
+    core: Arc<Mutex<ComputedBindingCore<Value, TFn>>>
 }
 
 impl<Value: 'static+Clone+PartialEq+Send, TFn> ComputedBinding<Value, TFn>
@@ -477,7 +477,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     ///
     pub fn new(calculate_value: TFn) -> ComputedBinding<Value, TFn> {
         ComputedBinding {
-            core: Arc::new(Mutex::new(RefCell::new(ComputedBindingCore::new(calculate_value))))
+            core: Arc::new(Mutex::new(ComputedBindingCore::new(calculate_value)))
         }
     }
 
@@ -488,8 +488,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // We do the notifications and releasing while the lock is not retained
         let (mut notifiable, mut releasable) = {
             // Get the core
-            let lock = self.core.lock().unwrap();
-            let mut core = lock.borrow_mut();
+            let mut core = self.core.lock().unwrap();
 
             // Mark it as changed
             let actually_changed = core.mark_changed();
@@ -549,8 +548,8 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         let releasable = ReleasableNotifiable::new(what);
 
         // Lock the core and push this as a thing to perform when this value changes
-        let core = self.core.lock().unwrap();
-        (*core.borrow_mut()).when_changed.push(releasable.clone());
+        let mut core = self.core.lock().unwrap();
+        core.when_changed.push(releasable.clone());
 
         Box::new(releasable)
     }
@@ -560,8 +559,7 @@ impl<Value: 'static+Clone+PartialEq+Send, TFn> Bound<Value> for ComputedBinding<
 where TFn: 'static+Send+Sync+Fn() -> Value {
     fn get(&self) -> Value {
         // Borrow the core
-        let lock = self.core.lock().unwrap();
-        let mut core = lock.borrow_mut();
+        let mut core = self.core.lock().unwrap();
 
         if let Some(value) = core.get() {
             // The value already exists in this item
