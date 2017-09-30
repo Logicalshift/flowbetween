@@ -153,7 +153,7 @@ where TFn: Send+FnMut() -> () {
 }
 
 ///
-/// Represents a binding of a value
+/// An internal representation of a bound value
 ///
 struct BoundValue<Value> {
     /// The current value of this binding
@@ -163,7 +163,7 @@ struct BoundValue<Value> {
     when_changed: Vec<Arc<Notifiable>>
 }
 
-impl<Value> BoundValue<Value> {
+impl<Value: Clone+PartialEq> BoundValue<Value> {
     ///
     /// Creates a new binding with the specified value
     ///
@@ -172,6 +172,24 @@ impl<Value> BoundValue<Value> {
             value:          val,
             when_changed:   vec![]
         }
+    }
+
+    ///
+    /// Updates the value in this structure without calling the notifications, returns whether or not anything actually changed
+    ///
+    pub fn set_without_notifying(&mut self, new_value: Value) -> bool {
+        let changed = self.value != new_value;
+
+        self.value = new_value;
+
+        changed
+    }
+
+    ///
+    /// Retrieves a copy of the list of notifiable items for this value
+    ///
+    pub fn get_notifiable_items(&self) -> Vec<Arc<Notifiable>> {
+        self.when_changed.clone()
     }
 }
 
@@ -189,9 +207,7 @@ impl<Value: Clone> Bound<Value> for BoundValue<Value> {
 
 impl<Value: Clone+PartialEq> MutableBound<Value> for BoundValue<Value> {
     fn set(&mut self, new_value: Value) {
-        if self.value != new_value {
-            self.value = new_value;
-
+        if self.set_without_notifying(new_value) {
             for notify in self.when_changed.iter() {
                 notify.mark_as_changed();
             }
@@ -208,7 +224,7 @@ pub struct Binding<Value> {
     value: Arc<Mutex<RefCell<BoundValue<Value>>>>
 }
 
-impl<Value> Binding<Value> {
+impl<Value: Clone+PartialEq> Binding<Value> {
     fn new(value: Value) -> Binding<Value> {
         Binding {
             value: Arc::new(Mutex::new(RefCell::new(BoundValue::new(value))))
@@ -234,8 +250,22 @@ impl<Value: Clone> Bound<Value> for Binding<Value> {
 
 impl<Value: Clone+PartialEq> MutableBound<Value> for Binding<Value> {
     fn set(&mut self, new_value: Value) {
-        let cell = self.value.lock().unwrap();
-        cell.borrow_mut().set(new_value);
+        // Update the value with the lock held
+        let notifications = {
+            let cell    = self.value.lock().unwrap();
+            let changed = cell.borrow_mut().set_without_notifying(new_value);
+        
+            if changed {
+                cell.borrow().get_notifiable_items()
+            } else {
+                vec![]
+            }
+        };
+
+        // Call the notifications outside of the lock
+        for to_notify in notifications.into_iter() {
+            to_notify.mark_as_changed()
+        }
     }
 }
 
@@ -250,7 +280,7 @@ where TFn: 'static+Send+FnMut() -> () {
 ///
 /// Creates a simple bound value with the specified initial value
 ///
-pub fn bind<Value>(val: Value) -> Binding<Value> {
+pub fn bind<Value: Clone+PartialEq>(val: Value) -> Binding<Value> {
     Binding::new(val)
 }
 
