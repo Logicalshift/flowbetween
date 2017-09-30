@@ -535,12 +535,6 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
         // Monitor for changes
         let lifetime        = to_monitor.when_changed(notify(move || to_notify.mark_changed()));
-
-        // Store this as the lifetime being monitored by the core
-        let mut old_notification = Some(lifetime);
-        mem::swap(&mut old_notification, &mut core.existing_notification);
-
-        // old_notification.map(|mut releasable| releasable.done());
     }
 }
 
@@ -574,7 +568,10 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             // TODO: probably fine to return the out of date result rather than the newer one here
 
             // Stop responding to notifications
-            if let Some(ref mut last_notification) = core.existing_notification {
+            let mut old_notification = None;
+            mem::swap(&mut old_notification, &mut core.existing_notification);
+
+            if let Some(mut last_notification) = old_notification {
                 // TODO: this is never hit, so we never actually get the crash we get with releasing things elsewhere
                 panic!("Think we deadlock if we reach here");
 
