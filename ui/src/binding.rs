@@ -537,7 +537,11 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         let lifetime        = to_monitor.when_changed(notify(move || to_notify.mark_changed()));
 
         // Store the lifetime
-        core.existing_notification = Some(lifetime);
+        let mut last_notification = Some(lifetime);
+        mem::swap(&mut last_notification, &mut core.existing_notification);
+
+        // Any lifetime that was in the core before this one should be finished
+        last_notification.map(|mut last_notification| last_notification.done());
     }
 }
 
