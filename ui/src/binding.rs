@@ -400,6 +400,9 @@ where TFn: 'static+Fn() -> Value {
     /// Most recent cached value
     latest_value: RefCell<Option<Value>>,
 
+    /// If there's a notification attached to this item, this can be used to release it
+    existing_notification: Option<Box<Releasable>>,
+
     /// What to call when the value changes
     when_changed: Vec<ReleasableNotifiable>
 }
@@ -411,9 +414,10 @@ where TFn: 'static+Fn() -> Value {
     ///
     pub fn new(calculate_value: TFn) -> ComputedBindingCore<Value, TFn> {
         ComputedBindingCore {
-            calculate_value:    calculate_value,
-            latest_value:       RefCell::new(None),
-            when_changed:       vec![]
+            calculate_value:        calculate_value,
+            latest_value:           RefCell::new(None),
+            existing_notification:  None,
+            when_changed:           vec![]
         }
     }
 
@@ -460,6 +464,7 @@ where TFn: 'static+Fn() -> Value {
 #[derive(Clone)]
 pub struct ComputedBinding<Value: 'static+Clone+PartialEq, TFn>
 where TFn: 'static+Fn() -> Value {
+    /// The core where the binding data is stored
     core: Arc<Mutex<RefCell<ComputedBindingCore<Value, TFn>>>>
 }
 
@@ -471,6 +476,23 @@ where TFn: 'static+Fn() -> Value {
     pub fn new(calculate_value: TFn) -> ComputedBinding<Value, TFn> {
         ComputedBinding {
             core: Arc::new(Mutex::new(RefCell::new(ComputedBindingCore::new(calculate_value))))
+        }
+    }
+
+    ///
+    /// Marks this computed binding as having changed
+    ///
+    fn mark_changed(&mut self) {
+        // Get the core
+        let lock = self.core.lock().unwrap();
+        let mut core = lock.borrow_mut();
+
+        // Mark it as changed
+        core.mark_changed();
+
+        // Stop listening for further notifications
+        if let Some(ref mut last_notification) = core.existing_notification {
+            last_notification.done();
         }
     }
 }
@@ -493,7 +515,7 @@ where TFn: 'static+Fn() -> Value {
     fn get(&self) -> Value {
         // Borrow the core
         let lock = self.core.lock().unwrap();
-        let core = lock.borrow_mut();
+        let mut core = lock.borrow_mut();
 
         if let Some(value) = core.get() {
             // The value already exists in this item
@@ -504,10 +526,20 @@ where TFn: 'static+Fn() -> Value {
             // TODO: when we do recalculate without locking, we need to make sure that no extra invalidations arrived between when we started the calculation and when we stored the result
             // TODO: probably fine to return the out of date result rather than the newer one here
 
+            // Stop responding to notifications
+            if let Some(ref mut last_notification) = core.existing_notification {
+                last_notification.done();
+            }
+
             // Need to re-calculate the core
             let (value, _dependencies) = core.recalculate();
 
-            // TODO: need to unhook any previous dependencies and attach to the new set
+            // If any of the dependencies change, mark this item as changed too
+            //let to_notify = self.clone();
+            //dependencies.when_changed(notify(move || {
+            //    to_notify.mark_changed();
+            //}));
+
             // TODO: also need to make sure that any hooks we have are removed if we're only referenced via a hook
 
             // Return the value
