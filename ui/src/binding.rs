@@ -116,7 +116,7 @@ impl BindingContext {
     pub fn bind<TResult, TFn>(to_do: TFn) -> (TResult, BindingDependencies) 
     where TFn: FnOnce() -> TResult {
         // Remember the previous context
-        let previous_context = BindingContext::current();
+        let previous_context = Self::current();
 
         // Create a new context
         let dependencies    = BindingDependencies::new();
