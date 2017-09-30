@@ -22,6 +22,16 @@ pub trait Notifiable : Sync+Send {
 }
 
 ///
+/// Trait implemented by an object that can be released
+///
+pub trait Releasable {
+    ///
+    /// Indicates that this object is finished with and should be released
+    ///
+    fn done(&mut self);
+}
+
+///
 /// Trait implemented by items that can notify something when they're changed
 ///
 pub trait Changeable {
@@ -49,6 +59,44 @@ pub trait MutableBound<Value> : Bound<Value> {
     /// Sets the value stored by this binding
     ///
     fn set(&mut self, new_value: Value);
+}
+
+///
+/// A notifiable that can be released (and then tidied up later)
+///
+#[derive(Clone)]
+pub struct ReleasableNotifiable {
+    target: Arc<Mutex<RefCell<Option<Arc<Notifiable>>>>>
+}
+
+impl ReleasableNotifiable {
+    ///
+    /// Creates a new releasable notifiable object
+    ///
+    fn new(target: Arc<Notifiable>) -> ReleasableNotifiable {
+        ReleasableNotifiable {
+            target: Arc::new(Mutex::new(RefCell::new(Some(target))))
+        }
+    }
+}
+
+impl Releasable for ReleasableNotifiable {
+    fn done(&mut self) {
+        // Reset the optional item so that it's 'None'
+        let lock = self.target.lock().unwrap();
+
+        *lock.borrow_mut() = None;
+    }
+}
+
+impl Notifiable for ReleasableNotifiable {
+    fn mark_as_changed(&self) {
+        // Reset the optional item so that it's 'None'
+        let lock = self.target.lock().unwrap();
+
+        // Send to the target
+        lock.borrow().as_ref().map(|target| target.mark_as_changed());
+    }
 }
 
 ///
@@ -168,7 +216,7 @@ struct BoundValue<Value> {
     value: Value,
 
     /// What to call when the value changes
-    when_changed: Vec<Arc<Notifiable>>
+    when_changed: Vec<ReleasableNotifiable>
 }
 
 impl<Value: Clone+PartialEq> BoundValue<Value> {
@@ -196,14 +244,14 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     ///
     /// Retrieves a copy of the list of notifiable items for this value
     ///
-    pub fn get_notifiable_items(&self) -> Vec<Arc<Notifiable>> {
+    pub fn get_notifiable_items(&self) -> Vec<ReleasableNotifiable> {
         self.when_changed.clone()
     }
 }
 
 impl<Value> Changeable for BoundValue<Value> {
     fn when_changed(&mut self, what: Arc<Notifiable>) {
-        self.when_changed.push(what);
+        self.when_changed.push(ReleasableNotifiable::new(what));
     }
 }
 
