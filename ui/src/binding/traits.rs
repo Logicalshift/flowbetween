@@ -33,7 +33,7 @@ pub trait Changeable {
 ///
 /// Trait implemented by something that is bound to a value
 ///
-pub trait Bound<Value> : Changeable {
+pub trait Bound<Value> : Changeable+Send+Sync {
     ///
     /// Retrieves the value stored by this binding
     ///

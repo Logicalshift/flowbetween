@@ -50,36 +50,22 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     pub fn filter_unused_notifications(&mut self) {
         self.when_changed.retain(|releasable| releasable.is_in_use());
     }
-}
 
-impl<Value> Changeable for BoundValue<Value> {
+    ///
+    /// Retrieves the value of this item
+    ///
+    fn get(&self) -> Value {
+        self.value.clone()
+    }
+
+    ///
+    /// Adds something that will be notified when this item changes
+    ///
     fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
         let releasable = ReleasableNotifiable::new(what);
         self.when_changed.push(releasable.clone());
 
         Box::new(releasable)
-    }
-}
-
-impl<Value: Clone> Bound<Value> for BoundValue<Value> {
-    fn get(&self) -> Value {
-        self.value.clone()
-    }
-}
-
-impl<Value: Clone+PartialEq> MutableBound<Value> for BoundValue<Value> {
-    fn set(&mut self, new_value: Value) {
-        if self.set_without_notifying(new_value) {
-            let mut needs_filtering = false;
-
-            for notify in self.when_changed.iter() {
-                needs_filtering = !notify.mark_as_changed() || needs_filtering;
-            }
-
-            if needs_filtering {
-                self.filter_unused_notifications();
-            }
-        }
     }
 }
 
@@ -100,13 +86,13 @@ impl<Value: Clone+PartialEq> Binding<Value> {
     }
 }
 
-impl<Value> Changeable for Binding<Value> {
+impl<Value: 'static+Clone+PartialEq+Send> Changeable for Binding<Value> {
     fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
         self.value.lock().unwrap().when_changed(what)
     }
 }
 
-impl<Value: 'static+Clone> Bound<Value> for Binding<Value> {
+impl<Value: 'static+Clone+PartialEq+Send> Bound<Value> for Binding<Value> {
     fn get(&self) -> Value {
         BindingContext::add_dependency(self.clone());
 
@@ -114,7 +100,7 @@ impl<Value: 'static+Clone> Bound<Value> for Binding<Value> {
     }
 }
 
-impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
+impl<Value: 'static+Clone+PartialEq+Send> MutableBound<Value> for Binding<Value> {
     fn set(&mut self, new_value: Value) {
         // Update the value with the lock held
         let notifications = {
