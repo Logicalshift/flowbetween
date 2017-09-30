@@ -1,6 +1,10 @@
 //!
-//! This is a binding system that provides a way to build a data-driven
-//! application.
+//! # Bindings
+//!
+//! This provides a means for building data-driven applications. The
+//! basic model is similar to how spreadsheets work: we watch what
+//! items a particular calculation depends on and generate an event
+//! when any of these change.
 //!
 
 use std::sync::*;
