@@ -331,21 +331,21 @@ impl<Value: Clone+PartialEq> MutableBound<Value> for BoundValue<Value> {
 #[derive(Clone)]
 pub struct Binding<Value> {
     /// The value stored in this binding
-    value: Arc<Mutex<RefCell<BoundValue<Value>>>>
+    value: Arc<Mutex<BoundValue<Value>>>
 }
 
 impl<Value: Clone+PartialEq> Binding<Value> {
     fn new(value: Value) -> Binding<Value> {
         Binding {
-            value: Arc::new(Mutex::new(RefCell::new(BoundValue::new(value))))
+            value: Arc::new(Mutex::new(BoundValue::new(value)))
         }
     }
 }
 
 impl<Value> Changeable for Binding<Value> {
     fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
-        let cell        = self.value.lock().unwrap();
-        let releasable  = cell.borrow_mut().when_changed(what);
+        let mut cell    = self.value.lock().unwrap();
+        let releasable  = cell.when_changed(what);
 
         releasable
     }
@@ -356,7 +356,7 @@ impl<Value: 'static+Clone> Bound<Value> for Binding<Value> {
         BindingContext::add_dependency(self.clone());
 
         let cell    = self.value.lock().unwrap();
-        let value   = cell.borrow().get();
+        let value   = cell.get();
 
         value
     }
@@ -366,11 +366,11 @@ impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
     fn set(&mut self, new_value: Value) {
         // Update the value with the lock held
         let notifications = {
-            let cell    = self.value.lock().unwrap();
-            let changed = cell.borrow_mut().set_without_notifying(new_value);
+            let mut cell    = self.value.lock().unwrap();
+            let changed     = cell.set_without_notifying(new_value);
         
             if changed {
-                cell.borrow().get_notifiable_items()
+                cell.get_notifiable_items()
             } else {
                 vec![]
             }
@@ -384,8 +384,8 @@ impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
         }
 
         if needs_filtering {
-            let cell    = self.value.lock().unwrap();
-            cell.borrow_mut().filter_unused_notifications();
+            let mut cell = self.value.lock().unwrap();
+            cell.filter_unused_notifications();
         }
     }
 }
