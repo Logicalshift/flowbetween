@@ -276,6 +276,124 @@ impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
 }
 
 ///
+/// Core representation ofa computed binding
+///
+struct ComputedBindingCore<Value: 'static+Clone+PartialEq, TFn>
+where TFn: 'static+Fn() -> Value {
+    /// Function to call to recalculate this item
+    calculate_value: TFn,
+
+    /// Most recent cached value
+    latest_value: RefCell<Option<Value>>,
+
+    /// What to call when the value changes
+    when_changed: Vec<Arc<Notifiable>>
+}
+
+impl<Value: 'static+Clone+PartialEq, TFn> ComputedBindingCore<Value, TFn>
+where TFn: 'static+Fn() -> Value {
+    ///
+    /// Creates a new computed binding core item
+    ///
+    pub fn new(calculate_value: TFn) -> ComputedBindingCore<Value, TFn> {
+        ComputedBindingCore {
+            calculate_value:    calculate_value,
+            latest_value:       RefCell::new(None),
+            when_changed:       vec![]
+        }
+    }
+
+    ///
+    /// Marks the value as changed, returning true if the value was removed
+    ///
+    pub fn mark_changed(&self) -> bool {
+        let mut latest_value = self.latest_value.borrow_mut();
+
+        if *latest_value == None {
+            false
+        } else {
+            *latest_value = None;
+            true
+        }
+    }
+
+    ///
+    /// Returns the current value (or 'None' if it needs recalculating)
+    ///
+    pub fn get(&self) -> Option<Value> {
+        self.latest_value.borrow().clone()
+    }
+
+    ///
+    /// Recalculates the latest value
+    ///
+    pub fn recalculate(&self) -> (Value, BindingDependencies) {
+        // Perform the binding in a context to get the value and the dependencies
+        let (result, dependencies) = BindingContext::bind(|| (self.calculate_value)());
+
+        // Update the latest value
+        let mut latest_value = self.latest_value.borrow_mut();
+        *latest_value = Some(result.clone());
+
+        // Pass on the result
+        (result, dependencies)
+    }
+}
+
+///
+/// Represents a binding to a value that is computed by a function
+///
+#[derive(Clone)]
+pub struct ComputedBinding<Value: 'static+Clone+PartialEq, TFn>
+where TFn: 'static+Fn() -> Value {
+    core: Arc<Mutex<RefCell<ComputedBindingCore<Value, TFn>>>>
+}
+
+impl<Value: 'static+Clone+PartialEq, TFn> ComputedBinding<Value, TFn>
+where TFn: 'static+Fn() -> Value {
+    ///
+    /// Creates a new computable binding
+    ///
+    pub fn new(calculate_value: TFn) -> ComputedBinding<Value, TFn> {
+        ComputedBinding {
+            core: Arc::new(Mutex::new(RefCell::new(ComputedBindingCore::new(calculate_value))))
+        }
+    }
+}
+
+impl<Value: 'static+Clone+PartialEq, TFn> Changeable for ComputedBinding<Value, TFn>
+where TFn: 'static+Fn() -> Value {
+    fn when_changed(&mut self, what: Arc<Notifiable>) {
+        // Lock the core and push this as a thing to perform when this value changes
+        let core = self.core.lock().unwrap();
+        (*core.borrow_mut()).when_changed.push(what);
+    }
+}
+
+impl<Value: 'static+Clone+PartialEq, TFn> Bound<Value> for ComputedBinding<Value, TFn>
+where TFn: 'static+Fn() -> Value {
+    fn get(&self) -> Value {
+        // Borrow the core
+        let lock = self.core.lock().unwrap();
+        let core = lock.borrow_mut();
+
+        if let Some(value) = core.get() {
+            // The value already exists in this item
+            value
+        } else {
+            // Need to re-calculate the core
+            let (value, _dependencies) = core.recalculate();
+
+            // TODO: need to unhook any previous dependencies and attach to the new set
+            // TODO: also need to make sure that any hooks we have are removed if we're only referenced via a hook
+
+            // Return the value
+            value
+        }
+    }
+}
+
+///
 /// Creates a notifiable reference from a function
 ///
 pub fn notify<TFn>(when_changed: TFn) -> Arc<Notifiable>
@@ -288,6 +406,11 @@ where TFn: 'static+Send+FnMut() -> () {
 ///
 pub fn bind<Value: Clone+PartialEq>(val: Value) -> Binding<Value> {
     Binding::new(val)
+}
+
+pub fn computed<Value, TFn>(calculate_value: TFn) -> ComputedBinding<Value, TFn>
+where Value: Clone+PartialEq, TFn: 'static+Fn() -> Value {
+    ComputedBinding::new(calculate_value)
 }
 
 #[cfg(test)]
@@ -349,6 +472,47 @@ mod test {
 
         assert!(changed.get() == false);
         bound.set(3);
+        assert!(changed.get() == true);
+    }
+
+    #[test]
+    fn can_compute_value() {
+        let bound           = bind(1);
+
+        let computed_from   = bound.clone();
+        let computed        = computed(move || computed_from.get() + 1);
+
+        assert!(computed.get() == 2);
+    }
+
+    #[test]
+    fn can_recompute_value() {
+        let mut bound       = bind(1);
+
+        let computed_from   = bound.clone();
+        let computed        = computed(move || computed_from.get() + 1);
+
+        assert!(computed.get() == 2);
+
+        bound.set(2);
+        assert!(computed.get() == 3);
+    }
+
+    #[test]
+    fn computed_notifies_of_changes() {
+        let mut bound       = bind(1);
+
+        let computed_from   = bound.clone();
+        let mut computed    = computed(move || computed_from.get() + 1);
+
+        let changed = bind(false);
+        let mut notify_changed = changed.clone();
+        computed.when_changed(notify(move || notify_changed.set(true)));
+
+        assert!(computed.get() == 2);
+        assert!(changed.get() == false);
+
+        bound.set(2);
         assert!(changed.get() == true);
     }
 }
