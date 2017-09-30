@@ -202,6 +202,9 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 impl<Value: 'static+Clone+PartialEq+Send, TFn> Bound<Value> for ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
     fn get(&self) -> Value {
+        // This is a dependency of the current binding context
+        BindingContext::add_dependency(self.clone());
+
         // Borrow the core
         let mut core = self.core.lock().unwrap();
 
