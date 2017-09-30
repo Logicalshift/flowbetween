@@ -472,6 +472,17 @@ where TFn: 'static+Fn() -> Value {
     }
 }
 
+impl<Value: 'static+Clone+PartialEq, TFn> Drop for ComputedBindingCore<Value, TFn>
+where TFn: 'static+Fn() -> Value {
+    fn drop(&mut self) {
+        // No point receiving any notifications once the core has gone
+        // (The notification can still fire if it has a weak reference)
+        if let Some(ref mut existing_notification) = self.existing_notification {
+            existing_notification.done()
+        }
+    }
+}
+
 ///
 /// Represents a binding to a value that is computed by a function
 ///
@@ -498,7 +509,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     ///
     fn mark_changed(&mut self) {
         // We do the notifications and releasing while the lock is not retained
-        let (notifiable, mut releasable) = {
+        let (notifiable, releasable) = {
             // Get the core
             let mut core = self.core.lock().unwrap();
 
