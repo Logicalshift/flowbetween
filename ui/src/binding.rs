@@ -671,6 +671,27 @@ mod test {
     }
 
     #[test]
+    fn dispatches_multiple_notifications() {
+        let mut bound       = bind(1);
+        let change_count    = bind(0);
+
+        let mut notify_count = change_count.clone();
+        let mut notify_count2 = change_count.clone();
+        bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
+        bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) }));
+
+        assert!(change_count.get() == 0);
+        bound.set(2);
+        assert!(change_count.get() == 2);
+
+        bound.set(3);
+        assert!(change_count.get() == 4);
+
+        bound.set(4);
+        assert!(change_count.get() == 6);
+    }
+
+    #[test]
     fn stops_notifying_after_release() {
         let mut bound       = bind(1);
         let change_count    = bind(0);
@@ -686,6 +707,38 @@ mod test {
         assert!(change_count.get() == 1);
         bound.set(3);
         assert!(change_count.get() == 1);
+    }
+
+    #[test]
+    fn release_only_affects_one_notification() {
+        let mut bound       = bind(1);
+        let change_count    = bind(0);
+
+        let mut notify_count = change_count.clone();
+        let mut notify_count2 = change_count.clone();
+        let mut lifetime = bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
+        bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) }));
+
+        assert!(change_count.get() == 0);
+        bound.set(2);
+        assert!(change_count.get() == 2);
+
+        bound.set(3);
+        assert!(change_count.get() == 4);
+
+        bound.set(4);
+        assert!(change_count.get() == 6);
+
+        lifetime.done();
+
+        bound.set(5);
+        assert!(change_count.get() == 7);
+
+        bound.set(6);
+        assert!(change_count.get() == 8);
+
+        bound.set(7);
+        assert!(change_count.get() == 9);
     }
 
     #[test]
