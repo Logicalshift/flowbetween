@@ -501,16 +501,15 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             };
 
             // Extract the releasable so we can release it after the lock has gone
-            let mut releasable = None;
-            mem::swap(&mut releasable, &mut core.existing_notification);
+            let mut releasable: Option<Box<Releasable>> = None;
+            // mem::swap(&mut releasable, &mut core.existing_notification);
 
             // These values are needed outside of the lock
             (notifiable, releasable)
         };
 
         // Don't want any more notifications from this source
-        // TODO: deadlock?
-        // releasable.map(|mut releasable| releasable.done());
+        //releasable.map(|mut releasable| releasable.done());
 
         // Notify anything that needs to be notified that this has changed
         for to_notify in notifiable {
@@ -575,9 +574,6 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             mem::swap(&mut old_notification, &mut core.existing_notification);
 
             if let Some(mut last_notification) = old_notification {
-                // TODO: this is never hit, so we never actually get the crash we get with releasing things elsewhere
-                panic!("Think we deadlock if we reach here");
-
                 last_notification.done();
             }
 
