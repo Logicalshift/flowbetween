@@ -7,7 +7,10 @@ use uuid::*;
 ///
 pub struct SessionState {
     /// A string identifying this session
-    session_id: String
+    session_id: String,
+
+    /// The UI tree for this session
+    ui_tree: Box<Bound<Control>>
 }
 
 impl SessionState {
@@ -17,7 +20,10 @@ impl SessionState {
     pub fn new() -> SessionState {
         let session_id = Uuid::new_v4().simple().to_string();
 
-        SessionState { session_id: session_id }
+        SessionState { 
+            session_id: session_id,
+            ui_tree:    Box::new(bind(Control::container()))
+        }
     }
 
     ///
@@ -25,6 +31,13 @@ impl SessionState {
     ///
     pub fn id(&self) -> String {
         self.session_id.clone()
+    }
+
+    ///
+    /// Replaces the UI tree in this session
+    ///
+    pub fn set_ui_tree<TBinding: 'static+Bound<Control>>(&mut self, new_tree: TBinding) {
+        self.ui_tree = Box::new(new_tree);
     }
 
     ///
