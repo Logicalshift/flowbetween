@@ -88,8 +88,8 @@ impl ReleasableNotifiable {
         let lock = self.target.lock().unwrap();
 
         // Send to the target
-        if lock.is_some() {
-            lock.as_ref().unwrap().mark_as_changed();
+        if let Some(ref target) = *lock {
+            target.mark_as_changed();
             true
         } else {
             false
@@ -121,7 +121,9 @@ impl Notifiable for ReleasableNotifiable {
         let lock = self.target.lock().unwrap();
 
         // Send to the target
-        lock.as_ref().map(|target| target.mark_as_changed());
+        if let &Some(ref target) = &*lock {
+            target.mark_as_changed();
+        }
     }
 }
 
