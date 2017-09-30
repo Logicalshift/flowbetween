@@ -572,6 +572,9 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
             // Stop responding to notifications
             if let Some(ref mut last_notification) = core.existing_notification {
+                // TODO: this is never hit, so we never actually get the crash we get with releasing things elsewhere
+                panic!("Think we deadlock if we reach here");
+
                 last_notification.done();
             }
 
