@@ -748,4 +748,34 @@ mod test {
         bound.set(2);
         assert!(changed.get() == true);
     }
+
+    #[test]
+    fn computed_doesnt_notify_more_than_once() {
+        let mut bound       = bind(1);
+
+        let computed_from   = bound.clone();
+        let mut computed    = computed(move || computed_from.get() + 1);
+
+        let mut changed = bind(false);
+        let mut notify_changed = changed.clone();
+        computed.when_changed(notify(move || notify_changed.set(true)));
+
+        assert!(computed.get() == 2);
+        assert!(changed.get() == false);
+
+        // Setting the value marks the computed as changed
+        bound.set(2);
+        assert!(changed.get() == true);
+        changed.set(false);
+
+        // ... but when it's already changed we don't notify again
+        bound.set(3);
+        assert!(changed.get() == false);
+
+        assert!(computed.get() == 4);
+
+        // Once we've retrieved the value, we'll get notified of changes again
+        bound.set(4);
+        assert!(changed.get() == true);
+    }
 }
