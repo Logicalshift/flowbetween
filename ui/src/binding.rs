@@ -24,7 +24,7 @@ pub trait Notifiable : Sync+Send {
 ///
 /// Trait implemented by an object that can be released
 ///
-pub trait Releasable {
+pub trait Releasable : Send {
     ///
     /// Indicates that this object is finished with and should be released
     ///
@@ -468,8 +468,8 @@ where TFn: 'static+Fn() -> Value {
     core: Arc<Mutex<RefCell<ComputedBindingCore<Value, TFn>>>>
 }
 
-impl<Value: 'static+Clone+PartialEq, TFn> ComputedBinding<Value, TFn>
-where TFn: 'static+Fn() -> Value {
+impl<Value: 'static+Clone+PartialEq+Send, TFn> ComputedBinding<Value, TFn>
+where TFn: 'static+Send+Sync+Fn() -> Value {
     ///
     /// Creates a new computable binding
     ///
@@ -488,17 +488,34 @@ where TFn: 'static+Fn() -> Value {
         let mut core = lock.borrow_mut();
 
         // Mark it as changed
-        core.mark_changed();
+        let actually_changed = core.mark_changed();
 
+        /* -- Deadlock if we do this while the core is locked
         // Stop listening for further notifications
         if let Some(ref mut last_notification) = core.existing_notification {
             last_notification.done();
         }
+        */
+    }
+
+    ///
+    /// Mark this item as changed whenever 'to_monitor' is changed
+    /// Core should already be locked
+    ///
+    fn monitor_changes(&self, core: &mut ComputedBindingCore<Value, TFn>, to_monitor: &mut Changeable) {
+        // Clone ourselves (some weirdness in that the derived clone() function won't work here)
+        let mut to_notify   = ComputedBinding { core: self.core.clone() };
+
+        // Monitor for changes
+        let lifetime        = to_monitor.when_changed(notify(move || to_notify.mark_changed()));
+
+        // Store this as the lifetime being monitored by the core
+        core.existing_notification = Some(lifetime);
     }
 }
 
 impl<Value: 'static+Clone+PartialEq, TFn> Changeable for ComputedBinding<Value, TFn>
-where TFn: 'static+Fn() -> Value {
+where TFn: 'static+Send+Sync+Fn() -> Value {
     fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
         let releasable = ReleasableNotifiable::new(what);
 
@@ -510,8 +527,8 @@ where TFn: 'static+Fn() -> Value {
     }
 }
 
-impl<Value: 'static+Clone+PartialEq, TFn> Bound<Value> for ComputedBinding<Value, TFn>
-where TFn: 'static+Fn() -> Value {
+impl<Value: 'static+Clone+PartialEq+Send, TFn> Bound<Value> for ComputedBinding<Value, TFn>
+where TFn: 'static+Send+Sync+Fn() -> Value {
     fn get(&self) -> Value {
         // Borrow the core
         let lock = self.core.lock().unwrap();
@@ -532,13 +549,10 @@ where TFn: 'static+Fn() -> Value {
             }
 
             // Need to re-calculate the core
-            let (value, _dependencies) = core.recalculate();
+            let (value, mut dependencies) = core.recalculate();
 
             // If any of the dependencies change, mark this item as changed too
-            //let to_notify = self.clone();
-            //dependencies.when_changed(notify(move || {
-            //    to_notify.mark_changed();
-            //}));
+            self.monitor_changes(&mut core, &mut dependencies);
 
             // TODO: also need to make sure that any hooks we have are removed if we're only referenced via a hook
 
@@ -564,7 +578,7 @@ pub fn bind<Value: Clone+PartialEq>(val: Value) -> Binding<Value> {
 }
 
 pub fn computed<Value, TFn>(calculate_value: TFn) -> ComputedBinding<Value, TFn>
-where Value: Clone+PartialEq, TFn: 'static+Send+Sync+Fn() -> Value {
+where Value: Clone+PartialEq+Send, TFn: 'static+Send+Sync+Fn() -> Value {
     ComputedBinding::new(calculate_value)
 }
 
