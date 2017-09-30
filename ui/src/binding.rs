@@ -750,6 +750,32 @@ mod test {
     }
 
     #[test]
+    fn computed_stops_notifying_when_released() {
+        let mut bound       = bind(1);
+
+        let computed_from   = bound.clone();
+        let mut computed    = computed(move || computed_from.get() + 1);
+
+        let mut changed = bind(false);
+        let mut notify_changed = changed.clone();
+        let mut lifetime = computed.when_changed(notify(move || notify_changed.set(true)));
+
+        assert!(computed.get() == 2);
+        assert!(changed.get() == false);
+
+        bound.set(2);
+        assert!(changed.get() == true);
+        assert!(computed.get() == 3);
+
+        changed.set(false);
+        lifetime.done();
+
+        bound.set(3);
+        assert!(changed.get() == false);
+        assert!(computed.get() == 4);
+    }
+
+    #[test]
     fn computed_doesnt_notify_more_than_once() {
         let mut bound       = bind(1);
 
