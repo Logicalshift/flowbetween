@@ -339,7 +339,7 @@ where TFn: 'static+Fn() -> Value {
     latest_value: RefCell<Option<Value>>,
 
     /// What to call when the value changes
-    when_changed: Vec<Arc<Notifiable>>
+    when_changed: Vec<ReleasableNotifiable>
 }
 
 impl<Value: 'static+Clone+PartialEq, TFn> ComputedBindingCore<Value, TFn>
@@ -418,7 +418,7 @@ where TFn: 'static+Fn() -> Value {
     fn when_changed(&mut self, what: Arc<Notifiable>) {
         // Lock the core and push this as a thing to perform when this value changes
         let core = self.core.lock().unwrap();
-        (*core.borrow_mut()).when_changed.push(what);
+        (*core.borrow_mut()).when_changed.push(ReleasableNotifiable::new(what));
     }
 }
 
