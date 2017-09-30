@@ -1,6 +1,7 @@
 use ui::*;
 
 use uuid::*;
+use std::sync::*;
 
 ///
 /// The session state object represents the stored state of a particular session
@@ -10,7 +11,7 @@ pub struct SessionState {
     session_id: String,
 
     /// The UI tree for this session
-    ui_tree: Box<Bound<Control>>
+    ui_tree: Mutex<Box<Bound<Control>>>
 }
 
 impl SessionState {
@@ -22,7 +23,7 @@ impl SessionState {
 
         SessionState { 
             session_id: session_id,
-            ui_tree:    Box::new(bind(Control::container()))
+            ui_tree:    Mutex::new(Box::new(bind(Control::container())))
         }
     }
 
@@ -36,18 +37,14 @@ impl SessionState {
     ///
     /// Replaces the UI tree in this session
     ///
-    pub fn set_ui_tree<TBinding: 'static+Bound<Control>>(&mut self, new_tree: TBinding) {
-        self.ui_tree = Box::new(new_tree);
+    pub fn set_ui_tree<TBinding: 'static+Bound<Control>>(&self, new_tree: TBinding) {
+        *self.ui_tree.lock().unwrap() = Box::new(new_tree);
     }
 
     ///
     /// Retrieves the current state of the UI for this session
     ///
     pub fn entire_ui_tree(&self) -> Control {
-        // TODO: this is just a placeholder
-        let hello_world = Control::container()
-            .with(vec![Control::label().with("Hello, World")]);
-
-        hello_world.clone()
+        self.ui_tree.lock().unwrap().get()
     }
 }
