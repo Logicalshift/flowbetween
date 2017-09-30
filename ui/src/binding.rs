@@ -536,6 +536,43 @@ mod test {
     }
 
     #[test]
+    fn notifies_after_each_change() {
+        let mut bound       = bind(1);
+        let change_count    = bind(0);
+
+        let mut notify_count = change_count.clone();
+        bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
+
+        assert!(change_count.get() == 0);
+        bound.set(2);
+        assert!(change_count.get() == 1);
+
+        bound.set(3);
+        assert!(change_count.get() == 2);
+
+        bound.set(4);
+        assert!(change_count.get() == 3);
+    }
+
+    #[test]
+    fn stops_notifying_after_release() {
+        let mut bound       = bind(1);
+        let change_count    = bind(0);
+
+        let mut notify_count = change_count.clone();
+        let mut lifetime = bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
+
+        assert!(change_count.get() == 0);
+        bound.set(2);
+        assert!(change_count.get() == 1);
+
+        lifetime.done();
+        assert!(change_count.get() == 1);
+        bound.set(3);
+        assert!(change_count.get() == 1);
+    }
+
+    #[test]
     fn binding_context_is_notified() {
         let mut bound = bind(1);
 
