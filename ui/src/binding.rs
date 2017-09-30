@@ -138,14 +138,6 @@ impl BindingContext {
     }
 }
 
-///
-/// Creates a notifiable reference from a function
-///
-pub fn notify<TFn>(when_changed: TFn) -> Arc<Notifiable>
-where TFn: 'static+Send+FnMut() -> () {
-    Arc::new(NotifyFn { when_changed: Mutex::new(RefCell::new(when_changed)) })
-}
-
 struct NotifyFn<TFn> {
     when_changed: Mutex<RefCell<TFn>>
 }
@@ -243,6 +235,14 @@ impl<Value: Clone> MutableBound<Value> for Binding<Value> {
         let cell = self.value.lock().unwrap();
         cell.borrow_mut().set(new_value);
     }
+}
+
+///
+/// Creates a notifiable reference from a function
+///
+pub fn notify<TFn>(when_changed: TFn) -> Arc<Notifiable>
+where TFn: 'static+Send+FnMut() -> () {
+    Arc::new(NotifyFn { when_changed: Mutex::new(RefCell::new(when_changed)) })
 }
 
 ///
