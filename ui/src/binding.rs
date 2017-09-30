@@ -94,6 +94,15 @@ impl ReleasableNotifiable {
             false
         }
     }
+
+    ///
+    /// True if this item is still in use
+    ///
+    fn is_in_use(&self) -> bool {
+        let lock    = self.target.lock().unwrap();
+        let result  = lock.borrow().is_some();
+        result
+    }
 }
 
 impl Releasable for ReleasableNotifiable {
@@ -275,6 +284,13 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     pub fn get_notifiable_items(&self) -> Vec<ReleasableNotifiable> {
         self.when_changed.clone()
     }
+
+    ///
+    /// If there are any notifiables in this object that aren't in use, remove them
+    ///
+    pub fn filter_unused_notifications(&mut self) {
+        self.when_changed.retain(|releasable| releasable.is_in_use());
+    }
 }
 
 impl<Value> Changeable for BoundValue<Value> {
@@ -295,8 +311,14 @@ impl<Value: Clone> Bound<Value> for BoundValue<Value> {
 impl<Value: Clone+PartialEq> MutableBound<Value> for BoundValue<Value> {
     fn set(&mut self, new_value: Value) {
         if self.set_without_notifying(new_value) {
+            let mut needs_filtering = false;
+
             for notify in self.when_changed.iter() {
-                notify.mark_as_changed();
+                needs_filtering = needs_filtering || !notify.mark_as_changed();
+            }
+
+            if needs_filtering {
+                self.filter_unused_notifications();
             }
         }
     }
@@ -354,8 +376,15 @@ impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
         };
 
         // Call the notifications outside of the lock
+        let mut needs_filtering = false;
+
         for to_notify in notifications.into_iter() {
-            to_notify.mark_as_changed();
+            needs_filtering = needs_filtering || !to_notify.mark_as_changed();
+        }
+
+        if needs_filtering {
+            let cell    = self.value.lock().unwrap();
+            cell.borrow_mut().filter_unused_notifications();
         }
     }
 }
