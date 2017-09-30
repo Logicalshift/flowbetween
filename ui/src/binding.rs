@@ -65,7 +65,7 @@ pub trait MutableBound<Value> : Bound<Value> {
 /// A notifiable that can be released (and then tidied up later)
 ///
 #[derive(Clone)]
-pub struct ReleasableNotifiable {
+struct ReleasableNotifiable {
     target: Arc<Mutex<RefCell<Option<Arc<Notifiable>>>>>
 }
 
@@ -76,6 +76,22 @@ impl ReleasableNotifiable {
     fn new(target: Arc<Notifiable>) -> ReleasableNotifiable {
         ReleasableNotifiable {
             target: Arc::new(Mutex::new(RefCell::new(Some(target))))
+        }
+    }
+
+    ///
+    /// Marks this as changed and returns whether or not the notification was called
+    ///
+    fn mark_as_changed(&self) -> bool {
+        // Reset the optional item so that it's 'None'
+        let lock = self.target.lock().unwrap();
+
+        // Send to the target
+        if lock.borrow().is_some() {
+            lock.borrow().as_ref().unwrap().mark_as_changed();
+            true
+        } else {
+            false
         }
     }
 }
@@ -339,7 +355,7 @@ impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
 
         // Call the notifications outside of the lock
         for to_notify in notifications.into_iter() {
-            to_notify.mark_as_changed()
+            to_notify.mark_as_changed();
         }
     }
 }
