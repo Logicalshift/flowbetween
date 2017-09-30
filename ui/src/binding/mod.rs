@@ -217,6 +217,28 @@ mod test {
     }
 
     #[test]
+    fn can_recursively_compute_values() {
+        let mut bound           = bind(1);
+
+        let computed_from       = bound.clone();
+        let computed_val        = computed(move || computed_from.get() + 1);
+
+        let more_computed_from  = computed_val.clone();
+        let more_computed       = computed(move || more_computed_from.get() + 1);
+
+        assert!(computed_val.get() == 2);
+        assert!(more_computed.get() == 3);
+
+        bound.set(2);
+        assert!(computed_val.get() == 3);
+        assert!(more_computed.get() == 4);
+
+        bound.set(3);
+        assert!(computed_val.get() == 4);
+        assert!(more_computed.get() == 5);
+    }
+
+    #[test]
     fn computed_only_recomputes_as_needed() {
         let mut bound           = bind(1);
 
