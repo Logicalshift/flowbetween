@@ -67,7 +67,7 @@ pub trait MutableBound<Value> : Bound<Value> {
 ///
 #[derive(Clone)]
 struct ReleasableNotifiable {
-    target: Arc<Mutex<RefCell<Option<Arc<Notifiable>>>>>
+    target: Arc<Mutex<Option<Arc<Notifiable>>>>
 }
 
 impl ReleasableNotifiable {
@@ -76,7 +76,7 @@ impl ReleasableNotifiable {
     ///
     fn new(target: Arc<Notifiable>) -> ReleasableNotifiable {
         ReleasableNotifiable {
-            target: Arc::new(Mutex::new(RefCell::new(Some(target))))
+            target: Arc::new(Mutex::new(Some(target)))
         }
     }
 
@@ -88,8 +88,8 @@ impl ReleasableNotifiable {
         let lock = self.target.lock().unwrap();
 
         // Send to the target
-        if lock.borrow().is_some() {
-            lock.borrow().as_ref().unwrap().mark_as_changed();
+        if lock.is_some() {
+            lock.as_ref().unwrap().mark_as_changed();
             true
         } else {
             false
@@ -101,7 +101,7 @@ impl ReleasableNotifiable {
     ///
     fn is_in_use(&self) -> bool {
         let lock    = self.target.lock().unwrap();
-        let result  = lock.borrow().is_some();
+        let result  = lock.is_some();
         result
     }
 }
@@ -109,9 +109,9 @@ impl ReleasableNotifiable {
 impl Releasable for ReleasableNotifiable {
     fn done(&mut self) {
         // Reset the optional item so that it's 'None'
-        let lock = self.target.lock().unwrap();
+        let mut lock = self.target.lock().unwrap();
 
-        *lock.borrow_mut() = None;
+        *lock = None;
     }
 }
 
@@ -129,7 +129,7 @@ impl Notifiable for ReleasableNotifiable {
         let lock = self.target.lock().unwrap();
 
         // Send to the target
-        lock.borrow().as_ref().map(|target| target.mark_as_changed());
+        lock.as_ref().map(|target| target.mark_as_changed());
     }
 }
 
@@ -541,7 +541,11 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         mem::swap(&mut last_notification, &mut core.existing_notification);
 
         // Any lifetime that was in the core before this one should be finished
-        last_notification.map(|mut last_notification| last_notification.done());
+        last_notification.map(|mut last_notification| {
+            panic!("Deadlock?");
+
+            last_notification.done()
+        });
     }
 }
 
