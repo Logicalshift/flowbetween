@@ -533,11 +533,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         mem::swap(&mut last_notification, &mut core.existing_notification);
 
         // Any lifetime that was in the core before this one should be finished
-        last_notification.map(|mut last_notification| {
-            panic!("Deadlock?");
-
-            last_notification.done()
-        });
+        last_notification.map(|mut last_notification| last_notification.done());
     }
 }
 
