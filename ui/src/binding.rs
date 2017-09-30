@@ -742,6 +742,41 @@ mod test {
     }
 
     #[test]
+    fn computed_only_recomputes_as_needed() {
+        let mut bound           = bind(1);
+
+        let counter             = Arc::new(Mutex::new(RefCell::new(0)));
+        let compute_counter     = counter.clone();
+        let computed_from       = bound.clone();
+        let computed            = computed(move || {
+            let mut counter = compute_counter.lock().unwrap();
+            let mut counter = counter.borrow_mut();
+            *counter = *counter + 1;
+
+            computed_from.get() + 1
+        });
+
+        assert!(computed.get() == 2);
+        {
+            let counter = counter.lock().unwrap();
+            assert!(counter.borrow().clone() == 1);
+        }
+
+        assert!(computed.get() == 2);
+        {
+            let counter = counter.lock().unwrap();
+            assert!(counter.borrow().clone() == 1);
+        }
+
+        bound.set(2);
+        assert!(computed.get() == 3);
+        {
+            let counter = counter.lock().unwrap();
+            assert!(counter.borrow().clone() == 2);
+        }
+    }
+
+    #[test]
     fn computed_notifies_of_changes() {
         let mut bound       = bind(1);
 
