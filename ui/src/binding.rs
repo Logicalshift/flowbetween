@@ -84,11 +84,17 @@ impl ReleasableNotifiable {
     /// Marks this as changed and returns whether or not the notification was called
     ///
     fn mark_as_changed(&self) -> bool {
-        // Reset the optional item so that it's 'None'
-        let lock = self.target.lock().unwrap();
+        // Get a reference to the target via the lock
+        let target = {
+            // Reset the optional item so that it's 'None'
+            let target = self.target.lock().unwrap();
+
+            // Send to the target
+            target.clone()
+        };
 
         // Send to the target
-        if let Some(ref target) = *lock {
+        if let Some(ref target) = target {
             target.mark_as_changed();
             true
         } else {
@@ -107,19 +113,25 @@ impl ReleasableNotifiable {
 impl Releasable for ReleasableNotifiable {
     fn done(&mut self) {
         // Reset the optional item so that it's 'None'
-        let mut lock = self.target.lock().unwrap();
+        let mut target = self.target.lock().unwrap();
 
-        *lock = None;
+        *target = None;
     }
 }
 
 impl Notifiable for ReleasableNotifiable {
     fn mark_as_changed(&self) {
-        // Reset the optional item so that it's 'None'
-        let lock = self.target.lock().unwrap();
+        // Get a reference to the target via the lock
+        let target = {
+            // Reset the optional item so that it's 'None'
+            let target = self.target.lock().unwrap();
 
-        // Send to the target
-        if let &Some(ref target) = &*lock {
+            // Send to the target
+            target.clone()
+        };
+
+        // Make sure we're calling out to mark_as_changed outside of the lock
+        if let Some(target) = target {
             target.mark_as_changed();
         }
     }
@@ -486,9 +498,9 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     ///
     fn mark_changed(&mut self) {
         // We do the notifications and releasing while the lock is not retained
-        let (mut notifiable, mut releasable) = {
+        let (notifiable, mut releasable) = {
             // Get the core
-            let core = self.core.lock().unwrap();
+            let mut core = self.core.lock().unwrap();
 
             // Mark it as changed
             let actually_changed = core.mark_changed();
@@ -502,14 +514,14 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
             // Extract the releasable so we can release it after the lock has gone
             let mut releasable: Option<Box<Releasable>> = None;
-            // mem::swap(&mut releasable, &mut core.existing_notification);
+            mem::swap(&mut releasable, &mut core.existing_notification);
 
             // These values are needed outside of the lock
             (notifiable, releasable)
         };
 
         // Don't want any more notifications from this source
-        //releasable.map(|mut releasable| releasable.done());
+        releasable.map(|mut releasable| releasable.done());
 
         // Notify anything that needs to be notified that this has changed
         for to_notify in notifiable {
