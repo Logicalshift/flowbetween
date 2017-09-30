@@ -100,9 +100,7 @@ impl ReleasableNotifiable {
     /// True if this item is still in use
     ///
     fn is_in_use(&self) -> bool {
-        let lock    = self.target.lock().unwrap();
-        let result  = lock.is_some();
-        result
+        self.target.lock().unwrap().is_some()
     }
 }
 
@@ -317,7 +315,7 @@ impl<Value: Clone+PartialEq> MutableBound<Value> for BoundValue<Value> {
             let mut needs_filtering = false;
 
             for notify in self.when_changed.iter() {
-                needs_filtering = needs_filtering || !notify.mark_as_changed();
+                needs_filtering = !notify.mark_as_changed() || needs_filtering;
             }
 
             if needs_filtering {
@@ -376,7 +374,7 @@ impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
         let mut needs_filtering = false;
 
         for to_notify in notifications.into_iter() {
-            needs_filtering = needs_filtering || !to_notify.mark_as_changed();
+            needs_filtering = !to_notify.mark_as_changed() || needs_filtering;
         }
 
         if needs_filtering {
