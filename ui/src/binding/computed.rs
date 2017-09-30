@@ -97,7 +97,6 @@ where TFn: 'static+Fn() -> Value {
 ///
 /// Represents a binding to a value that is computed by a function
 ///
-#[derive(Clone)]
 pub struct ComputedBinding<Value: 'static+Clone+PartialEq, TFn>
 where TFn: 'static+Fn() -> Value {
     /// The core where the binding data is stored
@@ -177,6 +176,13 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
         // Any lifetime that was in the core before this one should be finished
         last_notification.map(|mut last_notification| last_notification.done());
+    }
+}
+
+impl<Value: 'static+Clone+PartialEq+Send, TFn> Clone for ComputedBinding<Value, TFn>
+where TFn: 'static+Send+Sync+Fn() -> Value {
+    fn clone(&self) -> Self {
+        ComputedBinding { core: self.core.clone() }
     }
 }
 
