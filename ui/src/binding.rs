@@ -385,6 +385,11 @@ where TFn: 'static+Fn() -> Value {
             // The value already exists in this item
             value
         } else {
+            // TODO: really want to recalculate without locking the core - can do this by moving the function out and doing the recalculation here
+            // TODO: locking the core and calling a function can result in deadlocks due to user code structure in particular against other bindings
+            // TODO: when we do recalculate without locking, we need to make sure that no extra invalidations arrived between when we started the calculation and when we stored the result
+            // TODO: probably fine to return the out of date result rather than the newer one here
+
             // Need to re-calculate the core
             let (value, _dependencies) = core.recalculate();
 
@@ -413,7 +418,7 @@ pub fn bind<Value: Clone+PartialEq>(val: Value) -> Binding<Value> {
 }
 
 pub fn computed<Value, TFn>(calculate_value: TFn) -> ComputedBinding<Value, TFn>
-where Value: Clone+PartialEq, TFn: 'static+Fn() -> Value {
+where Value: Clone+PartialEq, TFn: 'static+Send+Sync+Fn() -> Value {
     ComputedBinding::new(calculate_value)
 }
 
