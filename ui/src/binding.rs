@@ -115,14 +115,6 @@ impl Releasable for ReleasableNotifiable {
     }
 }
 
-impl Releasable for Vec<Box<Releasable>> {
-    fn done(&mut self) {
-        for item in self.iter_mut() {
-            item.done();
-        }
-    }
-}
-
 impl Notifiable for ReleasableNotifiable {
     fn mark_as_changed(&self) {
         // Reset the optional item so that it's 'None'
@@ -130,6 +122,14 @@ impl Notifiable for ReleasableNotifiable {
 
         // Send to the target
         lock.as_ref().map(|target| target.mark_as_changed());
+    }
+}
+
+impl Releasable for Vec<Box<Releasable>> {
+    fn done(&mut self) {
+        for item in self.iter_mut() {
+            item.done();
+        }
     }
 }
 
