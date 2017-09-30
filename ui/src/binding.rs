@@ -738,7 +738,7 @@ mod test {
         let computed_from   = bound.clone();
         let mut computed    = computed(move || computed_from.get() + 1);
 
-        let changed = bind(false);
+        let mut changed = bind(false);
         let mut notify_changed = changed.clone();
         computed.when_changed(notify(move || notify_changed.set(true)));
 
@@ -747,6 +747,12 @@ mod test {
 
         bound.set(2);
         assert!(changed.get() == true);
+        assert!(computed.get() == 3);
+
+        changed.set(false);
+        bound.set(3);
+        assert!(changed.get() == true);
+        assert!(computed.get() == 4);
     }
 
     #[test]
