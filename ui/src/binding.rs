@@ -327,4 +327,22 @@ mod test {
         bound.set(1);
         assert!(changed.get() == false);
     }
+
+    #[test]
+    fn binding_context_is_notified() {
+        let mut bound = bind(1);
+
+        bound.set(2);
+
+        let (value, mut context) = BindingContext::bind(|| bound.get());
+        assert!(value == 2);
+
+        let changed = bind(false);
+        let mut notify_changed = changed.clone();
+        context.when_changed(notify(move || notify_changed.set(true)));
+
+        assert!(changed.get() == false);
+        bound.set(3);
+        assert!(changed.get() == true);
+    }
 }
