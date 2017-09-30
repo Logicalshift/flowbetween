@@ -34,7 +34,7 @@ pub trait Bound<Value> : Changeable {
     ///
     /// Retrieves the value stored by this binding
     ///
-    fn get<'a>(&'a self) -> &'a Value;
+    fn get(&self) -> Value;
 }
 
 ///
@@ -160,7 +160,7 @@ where TFn: Send+Fn() -> () {
 ///
 /// Represents a binding of a value
 ///
-pub struct Binding<Value> {
+struct BoundValue<Value> {
     /// The current value of this binding
     value: Value,
 
@@ -168,37 +168,77 @@ pub struct Binding<Value> {
     when_changed: Vec<Arc<Notifiable>>
 }
 
-impl<Value> Binding<Value> {
+impl<Value> BoundValue<Value> {
     ///
     /// Creates a new binding with the specified value
     ///
-    pub fn new(val: Value) -> Binding<Value> {
-        Binding {
+    pub fn new(val: Value) -> BoundValue<Value> {
+        BoundValue {
             value:          val,
             when_changed:   vec![]
         }
     }
 }
 
-impl<Value> Changeable for Binding<Value> {
+impl<Value> Changeable for BoundValue<Value> {
     fn when_changed(&mut self, what: Arc<Notifiable>) {
         self.when_changed.push(what);
     }
 }
 
-impl<Value> Bound<Value> for Binding<Value> {
-    fn get<'a>(&'a self) -> &'a Value {
-        &self.value
+impl<Value: Clone> Bound<Value> for BoundValue<Value> {
+    fn get(&self) -> Value {
+        self.value.clone()
     }
 }
 
-impl<Value> MutableBound<Value> for Binding<Value> {
+impl<Value: Clone> MutableBound<Value> for BoundValue<Value> {
     fn set(&mut self, new_value: Value) {
         self.value = new_value;
 
         for notify in self.when_changed.iter() {
             notify.mark_as_changed();
         }
+    }
+}
+
+///
+/// Represents a thread-safe, sharable binding
+///
+#[derive(Clone)]
+pub struct Binding<Value> {
+    /// The value stored in this binding
+    value: Arc<Mutex<RefCell<BoundValue<Value>>>>
+}
+
+impl<Value> Binding<Value> {
+    fn new(value: Value) -> Binding<Value> {
+        Binding {
+            value: Arc::new(Mutex::new(RefCell::new(BoundValue::new(value))))
+        }
+    }
+}
+
+impl<Value> Changeable for Binding<Value> {
+    fn when_changed(&mut self, what: Arc<Notifiable>) {
+        let cell = self.value.lock().unwrap();
+        cell.borrow_mut().when_changed(what);
+    }
+}
+
+impl<Value: Clone> Bound<Value> for Binding<Value> {
+    fn get(&self) -> Value {
+        let cell    = self.value.lock().unwrap();
+        let value   = cell.borrow().get();
+
+        value
+    }
+}
+
+impl<Value: Clone> MutableBound<Value> for Binding<Value> {
+    fn set(&mut self, new_value: Value) {
+        let cell = self.value.lock().unwrap();
+        cell.borrow_mut().set(new_value);
     }
 }
 
@@ -216,7 +256,7 @@ mod test {
     #[test]
     fn can_create_binding() {
         let bound = bind(1);
-        assert!(bound.get() == &1);
+        assert!(bound.get() == 1);
     }
 
     #[test]
@@ -224,7 +264,7 @@ mod test {
         let mut bound = bind(1);
 
         bound.set(2);
-        assert!(bound.get() == &2);
+        assert!(bound.get() == 2);
     }
 
     #[test]
