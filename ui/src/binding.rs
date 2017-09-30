@@ -727,6 +727,9 @@ mod test {
 
         bound.set(2);
         assert!(computed.get() == 3);
+
+        bound.set(3);
+        assert!(computed.get() == 4);
     }
 
     #[test]
