@@ -10,7 +10,7 @@ use std::cell::*;
 ///
 /// Trait implemented by items with dependencies that need to be notified when they have changed
 ///
-pub trait Notifiable : Send {
+pub trait Notifiable : Sync+Send {
     ///
     /// Indicates that a dependency of this object has changed
     ///
@@ -142,18 +142,21 @@ impl BindingContext {
 /// Creates a notifiable reference from a function
 ///
 pub fn notify<TFn>(when_changed: TFn) -> Arc<Notifiable>
-where TFn: 'static+Send+Fn() -> () {
-    Arc::new(NotifyFn { when_changed: Mutex::new(when_changed) })
+where TFn: 'static+Send+FnMut() -> () {
+    Arc::new(NotifyFn { when_changed: Mutex::new(RefCell::new(when_changed)) })
 }
 
 struct NotifyFn<TFn> {
-    when_changed: Mutex<TFn>
+    when_changed: Mutex<RefCell<TFn>>
 }
 
 impl<TFn> Notifiable for NotifyFn<TFn>
-where TFn: Send+Fn() -> () {
+where TFn: Send+FnMut() -> () {
     fn mark_as_changed(&self) {
-        self.when_changed.lock().unwrap()()
+        let cell            = self.when_changed.lock().unwrap();
+        let mut on_changed  = &mut *cell.borrow_mut();
+        
+        on_changed()
     }
 }
 
@@ -270,22 +273,13 @@ mod test {
     #[test]
     fn notified_on_change() {
         let mut bound   = bind(1);
-        let changed     = Arc::new(Mutex::new(RefCell::new(false)));
+        let changed     = bind(false);
 
-        let notify_changed = changed.clone();
-        bound.when_changed(notify(move || {
-            let l = notify_changed.lock().unwrap();
-            *l.borrow_mut() = true;
-        }));
+        let mut notify_changed = changed.clone();
+        bound.when_changed(notify(move || notify_changed.set(true)));
 
-        {
-            let l = changed.lock().unwrap();
-            assert!(*l.borrow() == false);
-        }
+        assert!(changed.get() == false);
         bound.set(2);
-        {
-            let l = changed.lock().unwrap();
-            assert!(*l.borrow() == true);
-        }
+        assert!(changed.get() == true);
     }
 }
