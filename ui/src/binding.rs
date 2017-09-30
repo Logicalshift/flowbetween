@@ -773,6 +773,10 @@ mod test {
         bound.set(3);
         assert!(changed.get() == false);
         assert!(computed.get() == 4);
+
+        bound.set(4);
+        assert!(changed.get() == false);
+        assert!(computed.get() == 5);
     }
 
     #[test]
