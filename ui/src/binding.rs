@@ -136,6 +136,10 @@ impl BindingContext {
 
         (result, dependencies)
     }
+
+    pub fn add_dependency<TChangeable: Changeable+'static>(dependency: TChangeable) {
+        Self::current().map(|mut ctx| ctx.dependencies.add_dependency(dependency));
+    }
 }
 
 struct NotifyFn<TFn> {
@@ -239,8 +243,10 @@ impl<Value> Changeable for Binding<Value> {
     }
 }
 
-impl<Value: Clone> Bound<Value> for Binding<Value> {
+impl<Value: 'static+Clone> Bound<Value> for Binding<Value> {
     fn get(&self) -> Value {
+        BindingContext::add_dependency(self.clone());
+
         let cell    = self.value.lock().unwrap();
         let value   = cell.borrow().get();
 
@@ -248,7 +254,7 @@ impl<Value: Clone> Bound<Value> for Binding<Value> {
     }
 }
 
-impl<Value: Clone+PartialEq> MutableBound<Value> for Binding<Value> {
+impl<Value: 'static+Clone+PartialEq> MutableBound<Value> for Binding<Value> {
     fn set(&mut self, new_value: Value) {
         // Update the value with the lock held
         let notifications = {
