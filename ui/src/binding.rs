@@ -38,7 +38,7 @@ pub trait Changeable {
     ///
     /// Supplies an item to be notified when this item is changed
     ///
-    fn when_changed(&mut self, what: Arc<Notifiable>);
+    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable>;
 }
 
 ///
@@ -89,6 +89,14 @@ impl Releasable for ReleasableNotifiable {
     }
 }
 
+impl Releasable for Vec<Box<Releasable>> {
+    fn done(&mut self) {
+        for item in self.iter_mut() {
+            item.done();
+        }
+    }
+}
+
 impl Notifiable for ReleasableNotifiable {
     fn mark_as_changed(&self) {
         // Reset the optional item so that it's 'None'
@@ -125,10 +133,14 @@ impl BindingDependencies {
 }
 
 impl Changeable for BindingDependencies {
-    fn when_changed(&mut self, what: Arc<Notifiable>) {
+    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+        let mut to_release = vec![];
+
         for dep in self.dependencies.borrow_mut().iter_mut() {
-            dep.when_changed(what.clone());
+            to_release.push(dep.when_changed(what.clone()));
         }
+
+        Box::new(to_release)
     }
 }
 
@@ -250,8 +262,11 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
 }
 
 impl<Value> Changeable for BoundValue<Value> {
-    fn when_changed(&mut self, what: Arc<Notifiable>) {
-        self.when_changed.push(ReleasableNotifiable::new(what));
+    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+        let releasable = ReleasableNotifiable::new(what);
+        self.when_changed.push(releasable.clone());
+
+        Box::new(releasable)
     }
 }
 
@@ -289,9 +304,11 @@ impl<Value: Clone+PartialEq> Binding<Value> {
 }
 
 impl<Value> Changeable for Binding<Value> {
-    fn when_changed(&mut self, what: Arc<Notifiable>) {
-        let cell = self.value.lock().unwrap();
-        cell.borrow_mut().when_changed(what);
+    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+        let cell        = self.value.lock().unwrap();
+        let releasable  = cell.borrow_mut().when_changed(what);
+
+        releasable
     }
 }
 
@@ -415,10 +432,14 @@ where TFn: 'static+Fn() -> Value {
 
 impl<Value: 'static+Clone+PartialEq, TFn> Changeable for ComputedBinding<Value, TFn>
 where TFn: 'static+Fn() -> Value {
-    fn when_changed(&mut self, what: Arc<Notifiable>) {
+    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+        let releasable = ReleasableNotifiable::new(what);
+
         // Lock the core and push this as a thing to perform when this value changes
         let core = self.core.lock().unwrap();
-        (*core.borrow_mut()).when_changed.push(ReleasableNotifiable::new(what));
+        (*core.borrow_mut()).when_changed.push(releasable.clone());
+
+        Box::new(releasable)
     }
 }
 
