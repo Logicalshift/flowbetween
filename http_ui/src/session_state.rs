@@ -94,6 +94,19 @@ impl SessionState {
 
         core.ui_tree.get()
     }
+
+    ///
+    /// Returns the differences between the specified tree and the
+    /// active UI tree
+    ///
+    pub fn ui_differences(&self, compare_to: &Control) -> Vec<Diff<Control>> {
+        // Get the current state of the UI tree
+        let core            = self.core.lock().unwrap();
+        let current_tree    = core.ui_tree.get();
+
+        // Compare to the supplied tree
+        diff_tree(compare_to, &current_tree)
+    }
 }
 
 impl Drop for SessionState {
