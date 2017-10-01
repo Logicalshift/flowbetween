@@ -1,3 +1,26 @@
+///
+/// Describes a HTML node that should be changed
+///
+#[derive(Clone, Serialize, Deserialize)]
+pub struct HtmlDiff {
+    /// The address in the document of the node to be replaced
+    address: Vec<u32>,
+
+    /// The HTML that should replace this node
+    new_html: String
+}
+
+impl HtmlDiff {
+    ///
+    /// Creates a new HTML diff
+    ///
+    pub fn new(address: Vec<u32>, new_html: &str) -> HtmlDiff {
+        HtmlDiff {
+            address: address,
+            new_html: String::from(new_html)
+        }
+    }
+}
 
 ///
 /// Represents an instruction to perform an update in the web interface
@@ -21,6 +44,11 @@ pub enum Update {
     /// Supplies a new user interface as HTML
     ///
     NewUserInterfaceHtml(String),
+
+    ///
+    /// Specifies how the HTML should be updated
+    ///
+    UpdateHtml(Vec<HtmlDiff>),
 
     ///
     /// Replace the SVG element with the specified ID with the supplied SVG
