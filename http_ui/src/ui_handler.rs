@@ -7,6 +7,8 @@ use super::session::*;
 use super::htmlcontrol::*;
 use super::session_state::*;
 
+use ui::*;
+
 extern crate serde_json;
 
 use iron::*;
@@ -84,6 +86,10 @@ impl<TSession: Session> UiHandler<TSession> {
     fn handle_with_session(&self, state: Arc<SessionState>, session: &mut TSession, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
         use Event::*;
 
+        // Cache the UI state before the event is processed
+        let ui_before_event = state.entire_ui_tree();
+
+        // Dispatch the events
         for event in req.events.iter() {
             match event.clone() {
                 // Requesting a new session when there already is one is sort of pointless, but we allow it
@@ -95,6 +101,20 @@ impl<TSession: Session> UiHandler<TSession> {
                 // Refreshing the UI generates a new set of HTML from the abstract UI representation
                 UiRefresh => self.refresh_ui(state.clone(), response),
             }
+        }
+
+        // If the UI has changed, then add a HTML update to the response
+        let ui_after_event  = state.entire_ui_tree();
+        let ui_differences  = diff_tree(&ui_before_event, &ui_after_event);
+
+        if ui_differences.len() > 0 {
+            // Turn the control differences into HTML differences
+            let updates: Vec<HtmlDiff> = ui_differences.into_iter()
+                .map(|ui_diff| HtmlDiff::new(ui_diff.address().clone(), ui_diff.replacement().to_html()))
+                .collect();
+
+            // Add the new update to the response
+            response.updates.push(Update::UpdateHtml(updates));
         }
     }
 

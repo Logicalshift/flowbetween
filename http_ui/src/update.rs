@@ -14,7 +14,7 @@ impl HtmlDiff {
     ///
     /// Creates a new HTML diff
     ///
-    pub fn new(address: Vec<u32>, new_html: &str) -> HtmlDiff {
+    pub fn new(address: Vec<u32>, new_html: String) -> HtmlDiff {
         HtmlDiff {
             address: address,
             new_html: String::from(new_html)
