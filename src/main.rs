@@ -6,6 +6,10 @@ extern crate iron;
 extern crate mount;
 extern crate static_files;
 extern crate http_ui;
+extern crate ui;
+
+pub mod flowbetween;
+pub use self::flowbetween::*;
 
 use iron::*;
 use mount::*;
@@ -20,7 +24,7 @@ const SERVER_ADDR: &str     = "127.0.0.1:3000";
 fn main() {
     let mut mount = Mount::new();
     mount.mount("/", flowbetween_static_files());
-    mount.mount("/flowbetween/session", UiHandler::<NullSession>::new());
+    mount.mount("/flowbetween/session", UiHandler::<FlowBetweenSession>::new());
 
     println!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, SERVER_ADDR);
 

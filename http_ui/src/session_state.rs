@@ -71,14 +71,14 @@ impl SessionState {
     ///
     /// Replaces the UI tree in this session
     ///
-    pub fn set_ui_tree<TBinding: 'static+Bound<Control>>(&self, new_tree: TBinding) {
+    pub fn set_ui_tree(&self, new_tree: Box<Bound<Control>>) {
         let mut core = self.core.lock().unwrap();
 
         // Stop watching the old tree
         core.ui_tree_watcher_lifetime.done();
 
         // Store the new UI tree in this object
-        core.ui_tree = Box::new(new_tree);
+        core.ui_tree = new_tree;
 
         // Whenever the new tree is changed, set the has_changed binding
         let mut has_changed = core.tree_has_changed.clone();

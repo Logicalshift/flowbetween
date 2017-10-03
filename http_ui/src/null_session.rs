@@ -22,7 +22,7 @@ impl Session for NullSession {
     fn start_new(state: Arc<SessionState>) -> Self {
         let hello_world = Control::container()
             .with(vec![Control::label().with("Hello, World")]);
-        state.set_ui_tree(bind(hello_world));
+        state.set_ui_tree(Box::new(bind(hello_world)));
 
         NullSession::new()
     }
