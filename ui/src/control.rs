@@ -249,6 +249,9 @@ pub enum Position {
     /// Point at an offset from its counterpart (eg, width or height)
     Offset(f32),
 
+    /// As a final point, stretches with the specified ratio to other stretch controls
+    Stretch(f32),
+
     /// Point located at the start of the container (ie, left or top depending on if this is an x or y position)
     Start,
 

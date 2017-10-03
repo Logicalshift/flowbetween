@@ -29,11 +29,12 @@ impl PositionLayout {
         use Position::*;
 
         let next_pos = match pos {
-            &At(pos)        => pos,
-            &Offset(pos)    => self.last_pos + pos,
-            &Start          => self.start,
-            &End            => self.start + self.length,
-            &After          => self.last_pos
+            &At(pos)            => pos,
+            &Offset(pos)        => self.last_pos + pos,
+            &Stretch(_ratio)    => self.last_pos,
+            &Start              => self.start,
+            &End                => self.start + self.length,
+            &After              => self.last_pos
         };
 
         self.last_pos = next_pos;
