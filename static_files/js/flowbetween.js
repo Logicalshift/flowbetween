@@ -9,6 +9,71 @@ function flowbetween() {
     let utf8 = new TextEncoder('utf-8');
 
     ///
+    /// ===== INTERACTION
+    /// 
+
+    let commands = (function () {
+        let command_list = {};
+
+        ///
+        /// Adds a new command with a particular name and description
+        ///
+        let add_command = (name, description, action) => {
+            command_list[name] = {
+                description:    description,
+                action:         action
+            }
+        };
+
+        ///
+        /// Displays some help text
+        ///
+        let help = () => {
+            console.log('');
+            console.log('Functions available for FlowBetween');
+            
+            // Get the list of commands and find the length of the longest command
+            let commands        = Object.keys(command_list).sort();
+            let longest_command = commands.map((name) => name.length).reduce((a, b) => a>b ? a:b);
+
+            for (let command_index=0; command_index < commands.length; ++command_index) {
+                let command_name    = commands[command_index];
+                let name_padding    = ' '.repeat(longest_command-command_name.length);
+                let description     = command_list[command_name].description;
+
+                console.log('  %c' + command_name + '()%c' + name_padding + ' - ' + description, 'font-weight: bold; font-family: monospace', 'font-weight: normal; font-family: monospace');
+            }
+
+            console.log('');
+        };
+
+        ///
+        /// Enables any commands that might be defined
+        ///
+        let enable_commands = () => {
+            // Copy the commands into the window object so they're available
+            let commands = Object.keys(command_list);
+            commands.forEach((command_name) => {
+                window[command_name] = command_list[command_name].action;
+            });
+
+            // Tell the user that the functions are available
+            console.log('%cType %chelp()%c to see a list of functions for FlowBetween', 'font-family: monospace;', 'font-family: monospace; font-weight: bold', 'font-family: monospace; font-weight: normal;')
+        };
+        
+        // The help command should always be available
+        add_command('help', 'Displays this message', help);
+
+        return {
+            add_command:        add_command,
+            enable_commands:    enable_commands
+        }
+    })();
+
+    let add_command     = commands.add_command;
+    let enable_commands = commands.enable_commands;
+
+    ///
     /// ===== LOGGING
     ///
 
@@ -265,7 +330,7 @@ function flowbetween() {
             
             root.innerHTML = new_user_interface_html;
 
-            visit_dom(root.children[0], property_tree, (node, attributes) => console.log(node, attributes.all(), attributes.subcomponents()));
+            visit_dom(root.children[0], property_tree, (node, attributes) => {});
 
             resolve();
         });
@@ -341,6 +406,7 @@ function flowbetween() {
     // All set up, let's go
     console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
     new_session();
+    enable_commands();
 };
 
 flowbetween();
