@@ -105,6 +105,7 @@ impl<TSession: Session> UiHandler<TSession> {
         }
 
         // If the UI has changed, then add a HTML update to the response
+        // TODO: if we're handling requests in parallel we actually need to diff against the UI state in whatever the most recent known state sent was rather than the state at the start
         let ui_after_event  = state.entire_ui_tree();
         let ui_differences  = diff_tree(&ui_before_event, &ui_after_event);
 
