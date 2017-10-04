@@ -9,7 +9,7 @@ function flowbetween() {
     let utf8 = new TextEncoder('utf-8');
 
     ///
-    /// =====
+    /// ===== LOGGING
     ///
 
     ///
@@ -34,7 +34,7 @@ function flowbetween() {
     }
 
     ///
-    /// =====
+    /// ===== SENDING REQUESTS
     ///
 
     ///
@@ -124,7 +124,7 @@ function flowbetween() {
                     .then(() => start_op())
                     .catch((reason) => {
                         // Notify the callback the first time we do a retry
-                        if (pass == 0 && retrying_callback) {
+                        if (pass === 0 && retrying_callback) {
                             retrying_callback();
                         }
 
@@ -145,7 +145,77 @@ function flowbetween() {
     };
 
     ///
-    /// =====
+    /// ===== DOM MANIPULATION
+    ///
+
+    ///
+    /// Fetches the root of the UI
+    ///
+    let get_root = () => {
+        return document.getElementById('root');
+    }
+
+    ///
+    /// Fetches the attributes for a control node
+    ///
+    let get_attributes = (control_data) => {
+        // Fetch the raw attributes
+        let attributes = control_data.attributes;
+
+        // all() can be used to read all of the attributes
+        let all = () => attributes;
+
+        // get_attr(name) will retrieve the attribute with the given name (or null if it does not exist)
+        let get_attr = (name) => {
+            for (let attribute_index=0; attribute_index < attributes.length; ++attribute_index) {
+                let attr        = attributes[attribute_index];
+                let attr_name   = Object.keys(attr)[0];
+
+                if (attr_name === name) {
+                    return attr[attr_name];
+                }
+            }
+
+            return null;
+        };
+
+        // subcomponents() can be used to get the subcomponents of a control
+        let subcomponents = () => {
+            return get_attr('SubComponents');
+        }
+
+        // Return an object that can be used to get information about these attributes
+        return {
+            all:            all,
+            get_attr:       get_attr,
+            subcomponents:  subcomponents
+        };
+    }
+
+    ///
+    /// Visits the flo items in the DOM, passing in attributes from
+    /// the appropriate control data sections
+    ///
+    let visit_dom = (dom_node, control_data, visit_node) => {
+        let attributes = get_attributes(control_data);
+
+        // Visit the current node
+        visit_node(dom_node, attributes);
+
+        // Visit any subcomponents
+        let subcomponents   = attributes.subcomponents();
+
+        if (subcomponents !== null) {
+            let subnodes    = [].slice.apply(dom_node.children).filter((node) => node.nodeType == Node.ELEMENT_NODE);
+
+            for (let node_index=0; node_index<subcomponents.length; ++node_index) {
+                visit_dom(subnodes[node_index], subcomponents[node_index], visit_node);
+            }
+        }
+    }
+
+    ///
+    /// ===== HANDLING SERVER EVENTS
     ///
 
     ///
@@ -191,9 +261,12 @@ function flowbetween() {
     ///
     let on_new_html = (new_user_interface_html, property_tree) => {
         return new Promise((resolve) => {
-            let root = document.getElementById("root");
+            let root = get_root();
             
             root.innerHTML = new_user_interface_html;
+
+            visit_dom(root.children[0], property_tree, (node, attributes) => console.log(node, attributes.all(), attributes.subcomponents()));
+
             resolve();
         });
     }
