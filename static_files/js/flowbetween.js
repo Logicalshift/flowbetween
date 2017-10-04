@@ -1,3 +1,5 @@
+"use strict";
+
 // FlowBetween
 function flowbetween() {
     /// The ID of the running session
