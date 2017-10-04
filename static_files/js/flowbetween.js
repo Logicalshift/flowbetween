@@ -242,7 +242,7 @@ function flowbetween() {
     ///
 
     // All set up, let's go
-    console.log('=== F L O W B E T W E E N ===');
+    console.log('%c=== F L O W B E T W E E N ===', 'font-weight: bold; font-size: 150%;');
     new_session();
 };
 
