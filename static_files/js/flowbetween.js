@@ -7,7 +7,32 @@ function flowbetween() {
     let target_url = '/flowbetween/session';
 
     let utf8 = new TextEncoder('utf-8');
+
+    ///
+    /// =====
+    ///
+
+    ///
+    /// Note something
+    ///
+    let note = (msg) => {
+        console.log('%c==> ' + msg, 'font-size: 80%; color: gray;');
+    }
+
+    ///
+    /// Display a warning
+    ///
+    let warn = function() {
+        console.warn.apply(console, arguments);
+    }
     
+    ///
+    /// Display an error
+    ///
+    let error = function() {
+        console.error.apply(console, arguments);
+    }
+
     ///
     /// =====
     ///
@@ -56,7 +81,7 @@ function flowbetween() {
             });
             req.addEventListener('error', function() {
                 let evt = this;
-                console.error(evt);
+                error(evt);
                 reject(evt);
             });
 
@@ -154,7 +179,7 @@ function flowbetween() {
     ///
     let on_new_session = (new_session_id) => {
         return new Promise((resolve) => {
-            console.log('==> Session', new_session_id);
+            note('Session ' + new_session_id);
 
             running_session_id = new_session_id;
             resolve();
@@ -196,8 +221,7 @@ function flowbetween() {
                     break;
 
                 default:
-                    console.warn('Unknown update type', update_key);
-                    console.dir(update);
+                    warn('Unknown update type', update_key, update);
                     break;
             }
         });
@@ -209,11 +233,11 @@ function flowbetween() {
     /// Sends a request to the session URI and processes the result
     ///
     let send_request = (request) => {
-        return retry(() => http_post(request), () => console.warn('UI request failed - retrying'))
+        return retry(() => http_post(request), () => warn('UI request failed - retrying'))
         .then((response) => response_to_object(response))
         .then((ui_request) => dispatch_updates(ui_request.updates))
         .catch((err) => {
-            console.error('Could not refresh UI.', err);
+            error('Could not refresh UI.', err);
         });
     }
 
