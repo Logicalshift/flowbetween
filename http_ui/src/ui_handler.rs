@@ -57,9 +57,10 @@ impl<TSession: Session> UiHandler<TSession> {
     /// Generates a UI refresh response
     ///
     pub fn refresh_ui(&self, state: Arc<SessionState>, response: &mut UiHandlerResponse) {
-        let ui_html = state.entire_ui_tree().to_html();
+        let ui      = state.entire_ui_tree();
+        let ui_html = ui.to_html();
 
-        response.updates.push(Update::NewUserInterfaceHtml(ui_html));
+        response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui));
     }
 
     ///

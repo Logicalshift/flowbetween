@@ -1,3 +1,5 @@
+use ui::control::*;
+
 ///
 /// Describes a HTML node that should be changed
 ///
@@ -41,9 +43,9 @@ pub enum Update {
     NewSession(String),
 
     ///
-    /// Supplies a new user interface as HTML
+    /// Supplies a new user interface as HTML, alongside the corresponding UI control data
     ///
-    NewUserInterfaceHtml(String),
+    NewUserInterfaceHtml(String, Control),
 
     ///
     /// Specifies how the HTML should be updated

@@ -164,7 +164,7 @@ function flowbetween() {
     ///
     /// The entire UI HTML should be replaced with a new version
     ///
-    let on_new_html = (new_user_interface_html) => {
+    let on_new_html = (new_user_interface_html, property_tree) => {
         return new Promise((resolve) => {
             let root = document.getElementById("root");
             
@@ -192,11 +192,12 @@ function flowbetween() {
                     break;
 
                 case 'NewUserInterfaceHtml':
-                    current_promise = current_promise.then(() => on_new_html(update[update_key]));
+                    current_promise = current_promise.then(() => on_new_html(update[update_key][0], update[update_key][1]));
                     break;
 
                 default:
                     console.warn('Unknown update type', update_key);
+                    console.dir(update);
                     break;
             }
         });
