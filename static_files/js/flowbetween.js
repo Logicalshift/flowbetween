@@ -15,7 +15,8 @@ function flowbetween() {
     /// 
 
     let commands = (function () {
-        let command_list = {};
+        let command_list        = {};
+        let commands_enabled    = false;
 
         ///
         /// Adds a new command with a particular name and description
@@ -24,6 +25,10 @@ function flowbetween() {
             command_list[name] = {
                 description:    description,
                 action:         action
+            }
+
+            if (commands_enabled) {
+                window[name] = action;
             }
         };
 
@@ -58,6 +63,8 @@ function flowbetween() {
             commands.forEach((command_name) => {
                 window[command_name] = command_list[command_name].action;
             });
+
+            commands_enabled = true;
 
             // Tell the user that the functions are available
             console.log('%cType %chelp()%c to see a list of functions for FlowBetween', 'font-family: monospace;', 'font-family: monospace; font-weight: bold', 'font-family: monospace; font-weight: normal;')
