@@ -16,7 +16,7 @@ function flowbetween() {
     /// Note something
     ///
     let note = (msg) => {
-        console.log('%c==> ' + msg, 'font-size: 80%; color: gray;');
+        console.log('%c==> ' + msg, 'font-family: monospace; font-size: 80%; color: gray;');
     }
 
     ///
@@ -266,7 +266,7 @@ function flowbetween() {
     ///
 
     // All set up, let's go
-    console.log('%c=== F L O W B E T W E E N ===', 'font-weight: bold; font-size: 150%;');
+    console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
     new_session();
 };
 
