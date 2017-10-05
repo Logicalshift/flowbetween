@@ -1,7 +1,7 @@
 "use strict";
 
 // FlowBetween
-function flowbetween() {
+function flowbetween(root_node) {
     /// The ID of the running session
     let running_session_id = '';
 
@@ -226,7 +226,7 @@ function flowbetween() {
     /// Fetches the root of the UI
     ///
     let get_root = () => {
-        return document.getElementById('root');
+        return root_node;
     }
 
     ///
@@ -418,4 +418,4 @@ function flowbetween() {
     enable_commands();
 };
 
-flowbetween();
+document.addEventListener("DOMContentLoaded", () => flowbetween(document.getElementById('root')));
