@@ -564,11 +564,20 @@ function flowbetween(root_node) {
     ///
 
     // Whenever the document resizes, lay everything out again
+    let willResize = false;
     window.addEventListener('resize', () => {
-        if (root_control_data) {
-            layout_tree(get_root().children[0], root_control_data);
+        if (!willResize) {
+            willResize = true;
+
+            requestAnimationFrame(() => {
+                willResize = false;
+
+                if (root_control_data) {
+                    layout_tree(get_root().children[0], root_control_data);
+                }
+            });
         }
-    })
+    });
 
     // All set up, let's go
     console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
