@@ -5,6 +5,9 @@ function flowbetween(root_node) {
     /// The ID of the running session
     let running_session_id = '';
 
+    // Control data, starting at the root node
+    let root_control_data = null;
+
     /// URL where the flowbetween session resides
     let target_url = '/flowbetween/session';
 
@@ -469,15 +472,25 @@ function flowbetween(root_node) {
     }
 
     ///
+    /// Given a node and its control data, updates the layout
+    ///
+    let layout_tree = (dom_node, control_data) => {
+        visit_dom(dom_node, control_data, (node, attributes) => layout_subcomponents(node, attributes));
+    }
+
+    ///
     /// The entire UI HTML should be replaced with a new version
     ///
     let on_new_html = (new_user_interface_html, property_tree) => {
         return new Promise((resolve) => {
             let root = get_root();
             
-            root.innerHTML = new_user_interface_html;
+            // Update the DOM
+            root.innerHTML      = new_user_interface_html;
+            root_control_data   = property_tree;
 
-            visit_dom(root.children[0], property_tree, (node, attributes) => layout_subcomponents(node, attributes));
+            // Perform initial layout
+            layout_tree(root.children[0], root_control_data);
 
             resolve();
         });
@@ -549,6 +562,13 @@ function flowbetween(root_node) {
     ///
     /// =====
     ///
+
+    // Whenever the document resizes, lay everything out again
+    window.addEventListener('resize', () => {
+        if (root_control_data) {
+            layout_tree(get_root().children[0], root_control_data);
+        }
+    })
 
     // All set up, let's go
     console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
