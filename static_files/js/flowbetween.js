@@ -296,7 +296,7 @@ function flowbetween(root_node) {
     ///
     /// Computes a position, given a previous position and a position element
     ///
-    let layout_position = (next_pos_desc, last_pos_abs, max_extent) => {
+    let layout_position = (next_pos_desc, last_pos_abs, max_extent, total_stretch, stretch_extent) => {
         let pos_type;
         
         if (typeof(next_pos_desc) === 'string') {
@@ -308,11 +308,20 @@ function flowbetween(root_node) {
         switch (pos_type) {
             case 'At':      return next_pos_desc[pos_type];
             case 'Offset':  return last_pos_abs + next_pos_desc[pos_type];
-            case 'Stretch': return last_pos_abs;
             case 'Start':   return 0;
             case 'End':     return max_extent;
             case 'After':   return last_pos_abs;
 
+            case 'Stretch': {
+                let stretch = next_pos_desc[pos_type];
+                if (total_stretch > 0) {
+                    let ratio = stretch/total_stretch;
+                    return last_pos_abs + stretch_extent*ratio;
+                } else {
+                    return last_pos_abs;
+                }
+            }
+            
             default:
                 warn('Unknown position type', next_pos_desc);
                 return last_pos_abs;
@@ -334,8 +343,10 @@ function flowbetween(root_node) {
         }
 
         // First pass: position all of the nodes, assuming stretch nodes have 0 width/height
-        let xpos = 0;
-        let ypos = 0;
+        let xpos        = 0;
+        let ypos        = 0;
+        let stretch_x   = 0;
+        let stretch_y   = 0;
 
         let default_bounding_box = {
             x1: 'Start',
@@ -361,9 +372,45 @@ function flowbetween(root_node) {
             // The x2, y2 coordinate forms the coord for the next part
             xpos = abs_pos.x2;
             ypos = abs_pos.y2;
+
+            // Update the total amount of 'stretch' ratio across the whole collection
+            stretch_x += bounding_box.x1['Stretch'] || 0;
+            stretch_x += bounding_box.x2['Stretch'] || 0;
+            stretch_y += bounding_box.y1['Stretch'] || 0;
+            stretch_y += bounding_box.y2['Stretch'] || 0;
         }
 
-        // TODO: Second pass: lay out stretch nodes
+        // Second pass: lay out stretch nodes
+        if (stretch_x > 0 || stretch_y > 0) {
+            // Work out the amount of space we have to stretch into
+            let stretch_width   = total_width - xpos;
+            let stretch_height  = total_height - ypos;
+
+            // Clear the positions
+            positions = [];
+            xpos = 0;
+            ypos = 0;
+
+            // Relayout
+            for (let node_index=0; node_index<subcomponents.length; ++node_index) {
+                let component       = subcomponents[node_index];
+                let bounding_box    = get_attributes(component).bounding_box() || default_bounding_box;
+    
+                // Convert the bounding box into an absolute position
+                let abs_pos         = {
+                    x1: layout_position(bounding_box.x1, xpos, total_width, stretch_x, stretch_width),
+                    y1: layout_position(bounding_box.y1, ypos, total_height, stretch_y, stretch_height),
+                    x2: layout_position(bounding_box.x2, xpos, total_width, stretch_x, stretch_width),
+                    y2: layout_position(bounding_box.y2, ypos, total_height, stretch_y, stretch_height)
+                };
+    
+                positions.push(abs_pos);
+    
+                // The x2, y2 coordinate forms the coord for the next part
+                xpos = abs_pos.x2;
+                ypos = abs_pos.y2;
+            }
+        }
 
         // Final pass: finish the layout
         for (let node_index=0; node_index<subcomponents.length; ++node_index) {
