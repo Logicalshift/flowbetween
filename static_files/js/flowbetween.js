@@ -258,11 +258,16 @@ function flowbetween(root_node) {
             return get_attr('SubComponents');
         }
 
+        let bounding_box = () => {
+            return get_attr('BoundingBox');
+        }
+
         // Return an object that can be used to get information about these attributes
         return {
             all:            all,
             get_attr:       get_attr,
-            subcomponents:  subcomponents
+            subcomponents:  subcomponents,
+            bounding_box:   bounding_box
         };
     }
 
@@ -280,11 +285,97 @@ function flowbetween(root_node) {
         let subcomponents   = attributes.subcomponents();
 
         if (subcomponents !== null) {
-            let subnodes    = [].slice.apply(dom_node.children).filter((node) => node.nodeType == Node.ELEMENT_NODE);
+            let subnodes    = [].slice.apply(dom_node.children).filter((node) => node.nodeType === Node.ELEMENT_NODE);
 
             for (let node_index=0; node_index<subcomponents.length; ++node_index) {
                 visit_dom(subnodes[node_index], subcomponents[node_index], visit_node);
             }
+        }
+    }
+
+    ///
+    /// Computes a position, given a previous position and a position element
+    ///
+    let layout_position = (next_pos_desc, last_pos_abs, max_extent) => {
+        let pos_type;
+        
+        if (typeof(next_pos_desc) === 'string') {
+            pos_type = next_pos_desc;
+        } else {
+            pos_type = Object.keys(next_pos_desc)[0];            
+        }
+
+        switch (pos_type) {
+            case 'At':      return next_pos_desc[pos_type];
+            case 'Offset':  return last_pos_abs + next_pos_desc[pos_type];
+            case 'Stretch': return last_pos_abs;
+            case 'Start':   return 0;
+            case 'End':     return max_extent;
+            case 'After':   return last_pos_abs;
+
+            default:
+                warn('Unknown position type', next_pos_desc);
+                return last_pos_abs;
+        }
+    }
+
+    ///
+    /// Lays out the subcomponents associated with a particular node
+    ///
+    let layout_subcomponents = (parent_node, attributes) => {
+        let subcomponents   = attributes.subcomponents();
+        let subnodes        = parent_node.children;
+        let positions       = [];
+        let total_width     = parent_node.clientWidth;
+        let total_height    = parent_node.clientHeight;
+
+        if (subcomponents === null) {
+            return;
+        }
+
+        // First pass: position all of the nodes, assuming stretch nodes have 0 width/height
+        let xpos = 0;
+        let ypos = 0;
+
+        let default_bounding_box = {
+            x1: 'Start',
+            x2: 'Start',
+            y1: 'End',
+            y2: 'End'
+        };
+
+        for (let node_index=0; node_index<subcomponents.length; ++node_index) {
+            let component       = subcomponents[node_index];
+            let bounding_box    = get_attributes(component).bounding_box() || default_bounding_box;
+
+            // Convert the bounding box into an absolute position
+            let abs_pos         = {
+                x1: layout_position(bounding_box.x1, xpos, total_width),
+                y1: layout_position(bounding_box.y1, ypos, total_height),
+                x2: layout_position(bounding_box.x2, xpos, total_width),
+                y2: layout_position(bounding_box.y2, ypos, total_height)
+            };
+
+            positions.push(abs_pos);
+
+            // The x2, y2 coordinate forms the coord for the next part
+            xpos = abs_pos.x2;
+            ypos = abs_pos.y2;
+        }
+
+        // TODO: Second pass: lay out stretch nodes
+
+        // Final pass: finish the layout
+        for (let node_index=0; node_index<subcomponents.length; ++node_index) {
+            let element = subnodes[node_index];
+            let pos     = positions[node_index];
+
+            element.setAttribute('style', 
+                'left: ' + pos.x1 + 'px;' +
+                'top: ' + pos.y1 + 'px;' +
+                'width: ' + (pos.x2-pos.x1) + 'px;' +
+                'height: ' + (pos.y2-pos.y1) + 'px;'
+            );
         }
     }
 
@@ -339,7 +430,7 @@ function flowbetween(root_node) {
             
             root.innerHTML = new_user_interface_html;
 
-            visit_dom(root.children[0], property_tree, (node, attributes) => {});
+            visit_dom(root.children[0], property_tree, (node, attributes) => layout_subcomponents(node, attributes));
 
             resolve();
         });
