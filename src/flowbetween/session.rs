@@ -25,7 +25,7 @@ impl FlowBetweenSession {
         Box::new(computed(|| {
             Control::container()
                 .with(Bounds {
-                    x1: After,
+                    x1: Start,
                     y1: After,
                     x2: End,
                     y2: Offset(32.0)
@@ -42,7 +42,7 @@ impl FlowBetweenSession {
         Box::new(computed(|| {
             Control::container()
                 .with(Bounds {
-                    x1: After,
+                    x1: Start,
                     y1: After,
                     x2: End,
                     y2: Offset(256.0)
@@ -59,7 +59,7 @@ impl FlowBetweenSession {
         Box::new(computed(|| {
             Control::container()
                 .with(Bounds {
-                    x1: After,
+                    x1: Start,
                     y1: After,
                     x2: Offset(48.0),
                     y2: End                    
@@ -71,8 +71,16 @@ impl FlowBetweenSession {
     /// Creates the canvas control
     ///
     pub fn canvas(&self) -> Box<Bound<Control>> {
+        use ui::Position::*;
+
         Box::new(computed(|| {
             Control::container()
+                .with(Bounds {
+                    x1: After,
+                    y1: Start,
+                    x2: Stretch(1.0),
+                    y2: End
+                })
         }))
     }
 
@@ -80,6 +88,8 @@ impl FlowBetweenSession {
     /// Creates the UI tree for this session
     ///
     pub fn ui_tree(&self) -> Box<Bound<Control>> {
+        use ui::Position::*;
+
         let menu_bar    = self.menu_bar();
         let timeline    = self.timeline();
         let toolbar     = self.toolbar();
@@ -91,7 +101,8 @@ impl FlowBetweenSession {
                 .with(vec![
                     menu_bar.get(),
                     Control::container()
-                        .with(vec![toolbar.get(), canvas.get()]),
+                        .with((vec![toolbar.get(), canvas.get()],
+                            Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })),
                     timeline.get()])
         }))
     }
