@@ -420,12 +420,10 @@ function flowbetween(root_node) {
             let element = subnodes[node_index];
             let pos     = positions[node_index];
 
-            element.setAttribute('style', 
-                'left: ' + pos.x1 + 'px;' +
-                'top: ' + pos.y1 + 'px;' +
-                'width: ' + (pos.x2-pos.x1) + 'px;' +
-                'height: ' + (pos.y2-pos.y1) + 'px;'
-            );
+            element.style.left      = pos.x1 + 'px';
+            element.style.width     = (pos.x2-pos.x1) + 'px';
+            element.style.top       = pos.y1 + 'px';
+            element.style.height    = (pos.y2-pos.y1) + 'px';
         }
     }
 
