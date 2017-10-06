@@ -79,6 +79,12 @@ impl ToHtml for Control {
     }
 }
 
+impl ToHtml for () {
+    fn to_html(&self) -> String {
+        String::from("")
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
