@@ -14,6 +14,7 @@ pub mod update;
 pub mod event;
 pub mod htmlcontrol;
 pub mod ui_handler;
+pub mod json_controller;
 
 pub use self::session::*;
 pub use self::session_state::*;
@@ -22,3 +23,4 @@ pub use self::event::*;
 pub use self::htmlcontrol::*;
 pub use self::ui_handler::*;
 pub use self::null_session::*;
+pub use self::json_controller::*;
