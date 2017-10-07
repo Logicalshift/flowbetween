@@ -32,23 +32,22 @@ pub trait Controller {
 }
 
 ///
-/// Provides the generic controller interface for any controller
-/// along with a deref implementation so the 'native' interface
-/// is also available.
+/// Provides a controller interface where all the identifiers
+/// are JSON strings.
 ///
-pub struct StringController<TController: Controller>(TController);
+pub struct JsonController<TController: Controller>(TController);
 
-impl<TController: Controller> StringController<TController>
+impl<TController: Controller> JsonController<TController>
 where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
     ///
     /// Creates a new controller whose identifiers are strings
     ///
-    pub fn from(controller: TController) -> StringController<TController> {
-        StringController(controller)
+    pub fn from(controller: TController) -> JsonController<TController> {
+        JsonController(controller)
     }
 }
 
-impl<TController: Controller> Controller for StringController<TController>
+impl<TController: Controller> Controller for JsonController<TController>
 where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
     type SubControllerSpecifier = String;
 
@@ -65,7 +64,7 @@ where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
 
         if let Ok(real_id) = real_id {
             // Valid IDs are passed through
-            let StringController(ref real_controller) = *self;
+            let JsonController(ref real_controller) = *self;
             real_controller.get_subcontroller(real_id)
         } else {
             // Invalid IDs just produce no controller
@@ -74,7 +73,7 @@ where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
     }
 }
 
-impl<TController: Controller> Deref for StringController<TController> {
+impl<TController: Controller> Deref for JsonController<TController> {
     type Target = TController;
 
     fn deref(&self) -> &TController {
