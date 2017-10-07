@@ -12,7 +12,7 @@ use serde_json::*;
 pub struct JsonController<TController: Controller>(TController);
 
 impl<TController: Controller> JsonController<TController>
-where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
+where for<'de> TController::ControllerSpecifier: Serialize+Deserialize<'de> {
     ///
     /// Creates a new controller whose identifiers are strings
     ///
@@ -22,8 +22,8 @@ where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
 }
 
 impl<TController: Controller> Controller for JsonController<TController>
-where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
-    type SubControllerSpecifier = String;
+where for<'de> TController::ControllerSpecifier: Serialize+Deserialize<'de> {
+    type ControllerSpecifier = String;
 
     fn ui(&self) -> Box<Bound<Control>> {
         // UI is just passed straight through
@@ -34,7 +34,7 @@ where for<'de> TController::SubControllerSpecifier: Serialize+Deserialize<'de> {
 
     fn get_subcontroller(&self, id: &String) -> Option<Box<GenericController>> {
         // Need to deserialize the real ID and pass it through
-        let real_id = from_str::<TController::SubControllerSpecifier>(&id);
+        let real_id = from_str::<TController::ControllerSpecifier>(&id);
 
         if let Ok(real_id) = real_id {
             // Valid IDs are passed through

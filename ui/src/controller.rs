@@ -7,7 +7,7 @@ use std::any::Any;
 ///
 /// The generic controller is used to hide the types of sub-controllers
 ///
-pub type GenericController = Controller<SubControllerSpecifier=Box<Any>>;
+pub type GenericController = Controller<ControllerSpecifier=Box<Any>>;
 
 ///
 /// Controllers represent a portion of the UI and provide a hub for
@@ -20,13 +20,13 @@ pub type GenericController = Controller<SubControllerSpecifier=Box<Any>>;
 /// and deserialized by serde). 
 ///
 pub trait Controller {
-    type SubControllerSpecifier;
+    type ControllerSpecifier;
     
     /// Retrieves a Control representing the UI for this controller
     fn ui(&self) -> Box<Bound<Control>>;
 
     /// Attempts to retrieve a sub-controller of this controller
-    fn get_subcontroller(&self, id: &Self::SubControllerSpecifier) -> Option<Box<GenericController>>;
+    fn get_subcontroller(&self, id: &Self::ControllerSpecifier) -> Option<Box<GenericController>>;
 }
 
 ///
@@ -46,8 +46,8 @@ impl<TController: Controller> AnyController<TController> {
 }
 
 impl<TController: Controller> Controller for AnyController<TController>
-where TController::SubControllerSpecifier: 'static {
-    type SubControllerSpecifier = Box<Any>;
+where TController::ControllerSpecifier: 'static {
+    type ControllerSpecifier = Box<Any>;
 
     fn ui(&self) -> Box<Bound<Control>> {
         // UI is just passed straight through
@@ -57,7 +57,7 @@ where TController::SubControllerSpecifier: 'static {
     }
 
     fn get_subcontroller(&self, id: &Box<Any>) -> Option<Box<GenericController>> {
-        if let Some(real_id) = id.downcast_ref::<TController::SubControllerSpecifier>() {
+        if let Some(real_id) = id.downcast_ref::<TController::ControllerSpecifier>() {
             // Valid IDs are passed through
             let AnyController(ref real_controller) = *self;
             real_controller.get_subcontroller(real_id)
