@@ -149,6 +149,9 @@ impl ToControlAttributes for Vec<Control> {
 ///
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ControlType {
+    /// A control that does nothing
+    Empty,
+
     /// Control that contains other controls
     Container,
 
@@ -192,6 +195,11 @@ impl Control {
     /// Creates a new label control
     pub fn label() -> Control {
         Self::new(Label)
+    }
+
+    /// Create a new empty control
+    pub fn empty() -> Control {
+        Self::new(Empty)
     }
 
     /// Creates a control with some attributes added to it

@@ -75,3 +75,26 @@ impl<TController: Controller> Deref for AnyController<TController> {
         &self.0   
     }
 }
+
+///
+/// The null controller is the base controller, which controls nothing
+///
+pub struct NullController;
+
+impl NullController {
+    pub fn new() -> NullController {
+        NullController
+    }
+}
+
+impl Controller for NullController {
+    type ControllerSpecifier = ();
+
+    fn ui(&self) -> Box<Bound<Control>> {
+        Box::new(bind(Control::empty()))
+    }
+
+    fn get_subcontroller(&self, _id: &Self::ControllerSpecifier) -> Option<Box<GenericController>> {
+        None
+    }
+}
