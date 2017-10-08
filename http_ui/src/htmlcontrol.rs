@@ -18,6 +18,7 @@ fn control_class(ctrl: &Control) -> &str {
     use ui::ControlType::*;
 
     match ctrl.control_type() {
+        Empty       => "flo-empty",
         Container   => "flo-container",
         Button      => "flo-button",
         Label       => "flo-label"
