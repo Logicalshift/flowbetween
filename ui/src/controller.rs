@@ -23,7 +23,7 @@ pub trait Controller {
     type ControllerSpecifier;
     
     /// Retrieves a Control representing the UI for this controller
-    fn ui(&self) -> Box<Bound<Control>>;
+    fn ui(&self) -> Box<Bound<Control<Self>>>;
 
     /// Attempts to retrieve a sub-controller of this controller
     fn get_subcontroller(&self, id: &Self::ControllerSpecifier) -> Option<Box<GenericController>>;
@@ -49,7 +49,7 @@ impl<TController: Controller> Controller for AnyController<TController>
 where TController::ControllerSpecifier: 'static {
     type ControllerSpecifier = Box<Any>;
 
-    fn ui(&self) -> Box<Bound<Control>> {
+    fn ui(&self) -> Box<Bound<Control<Self>>> {
         // UI is just passed straight through
         let real_controller = &self.0;
 
@@ -90,7 +90,7 @@ impl NullController {
 impl Controller for NullController {
     type ControllerSpecifier = ();
 
-    fn ui(&self) -> Box<Bound<Control>> {
+    fn ui(&self) -> Box<Bound<Control<Self>>> {
         Box::new(bind(Control::empty()))
     }
 
