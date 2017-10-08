@@ -70,11 +70,11 @@ function flowbetween(root_node) {
             commands_enabled = true;
 
             // Tell the user that the functions are available
-            console.log('%cType %chelp()%c to see a list of functions for FlowBetween', 'font-family: monospace;', 'font-family: monospace; font-weight: bold', 'font-family: monospace; font-weight: normal;')
+            console.log('%cType %cflow_help()%c to see a list of functions for FlowBetween', 'font-family: monospace;', 'font-family: monospace; font-weight: bold', 'font-family: monospace; font-weight: normal;')
         };
         
         // The help command should always be available
-        add_command('help', 'Displays this message', help);
+        add_command('flow_help', 'Displays this message', help);
 
         return {
             add_command:        add_command,
