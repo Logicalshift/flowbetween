@@ -92,9 +92,47 @@ function flowbetween(root_node) {
     ///
     /// Note something
     ///
-    let note = (msg) => {
-        console.log('%c==> ' + msg, 'font-family: monospace; font-size: 80%; color: gray;');
-    }
+    let note = (function() {
+        let recent_notes    = [];
+        let show_notes      = false;
+
+        let note = (msg) => {
+            if (show_notes) {
+                console.log('%c==> ' + msg, 'font-family: monospace; font-size: 80%; color: gray;');
+            } else {
+                recent_notes.push(msg);
+
+                while (recent_notes.length > 100) {
+                    recent_notes.shift();
+                }
+            }
+        };
+
+        add_command('show_notes', 'Displays verbose log messages', () => {
+            if (!show_notes) {
+                show_notes = true;
+
+                recent_notes.forEach(msg => {
+                    note(msg);
+                });
+
+                recent_notes    = [];
+
+                note("Future notes will be displayed immediately");
+            } else {
+                note("Already showing notes");
+            }
+        });
+
+        add_command('hide_notes', 'Hides verbose log messages', () => {
+            if (show_notes) {
+                note("Hiding future notes");
+                show_notes = false;
+            }
+        });
+
+        return note;
+    })();
 
     ///
     /// Display a warning
