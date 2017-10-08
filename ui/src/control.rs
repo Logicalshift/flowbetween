@@ -1,6 +1,15 @@
 use super::diff::*;
 
 ///
+/// Description of what should trigger an action
+///
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub enum ActionTrigger {
+    /// User clicked this item (pressed down and released while over the same item)
+    Click
+}
+
+///
 /// Attribute attached to a control
 ///
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
@@ -18,7 +27,13 @@ pub enum ControlAttribute {
     SubComponents(Vec<Control>),
 
     /// Specifies the controller that manages the subcomponents of this control
-    Controller(String)
+    Controller(String),
+
+    ///
+    /// When the specified action occurs for this item, send the event 
+    /// denoted by the string to the controller
+    ///
+    Action(ActionTrigger, String)
 }
 
 impl ControlAttribute {
@@ -73,15 +88,26 @@ impl ControlAttribute {
     }
 
     ///
+    /// The action represented by this attribute
+    ///
+    pub fn action<'a>(&'a self) -> Option<(&'a ActionTrigger, &'a String)> {
+        match self {
+            &Action(ref trigger, ref action)    => Some((trigger, action)),
+            _                                   => None
+        }
+    }
+
+    ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
     ///
     pub fn is_different_flat(&self, compare_to: &ControlAttribute) -> bool {
         match self {
-            &BoundingBox(ref bounds)        => Some(bounds) == compare_to.bounding_box(),
-            &Text(ref text)                 => Some(text) == compare_to.text(),
-            &Id(ref id)                     => Some(id) == compare_to.id(),
-            &Controller(ref controller)     => Some(controller.as_ref()) == compare_to.controller(),
+            &BoundingBox(ref bounds)            => Some(bounds) == compare_to.bounding_box(),
+            &Text(ref text)                     => Some(text) == compare_to.text(),
+            &Id(ref id)                         => Some(id) == compare_to.id(),
+            &Controller(ref controller)         => Some(controller.as_ref()) == compare_to.controller(),
+            &Action(ref trigger, ref action)    => Some((trigger, action)) == compare_to.action(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)  => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())
@@ -113,6 +139,12 @@ impl<'a> ToControlAttributes for &'a str {
 impl ToControlAttributes for Bounds {
     fn attributes(&self) -> Vec<ControlAttribute> {
         vec![BoundingBox(self.clone())]
+    }
+}
+
+impl ToControlAttributes for (ActionTrigger, String) {
+    fn attributes(&self) -> Vec<ControlAttribute> {
+        vec![Action(self.0.clone(), self.1.clone())]
     }
 }
 
