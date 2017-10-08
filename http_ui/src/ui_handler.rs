@@ -24,10 +24,10 @@ use bodyparser::*;
 ///
 pub struct UiHandler<TSession: Session> {
     /// The sessions that are currently active for this handler
-    active_sessions: Mutex<HashMap<String, (Arc<SessionState>, TSession)>>,
+    active_sessions: Mutex<HashMap<String, (Arc<SessionState>, Arc<TSession>)>>,
 }
 
-impl<TSession: Session> UiHandler<TSession> {
+impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Creates a new UI handler
     ///
@@ -42,8 +42,11 @@ impl<TSession: Session> UiHandler<TSession> {
     ///
     pub fn new_session(&self) -> String {
         // Generate a new session
-        let new_state               = Arc::new(SessionState::new());
-        let new_session: TSession   = TSession::start_new(new_state.clone());
+        let new_state   = Arc::new(SessionState::new());
+        let new_session = Arc::new(TSession::start_new(new_state.clone()));
+
+        // Set the initial UI state
+        new_state.set_ui_tree(assemble_ui(new_session.clone()));
 
         // Store in the list of active sessions
         let mut active_sessions = self.active_sessions.lock().unwrap();
@@ -84,7 +87,7 @@ impl<TSession: Session> UiHandler<TSession> {
     ///
     /// Dispatches a response structure to a session
     ///
-    fn handle_with_session(&self, state: Arc<SessionState>, session: &mut TSession, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
+    fn handle_with_session(&self, state: Arc<SessionState>, session: &TSession, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
         use Event::*;
 
         // Cache the UI state before the event is processed

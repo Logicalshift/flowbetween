@@ -110,12 +110,19 @@ impl FlowBetweenSession {
 
 impl Session for FlowBetweenSession {
     /// Creates a new session
-    fn start_new(state: Arc<SessionState>) -> Self {
-        // Create the UI
+    fn start_new(_state: Arc<SessionState>) -> Self {
         let session = FlowBetweenSession::new();
 
-        state.set_ui_tree(session.ui_tree());
-
         session
+    }
+}
+
+impl Controller for FlowBetweenSession {
+    fn ui(&self) -> Box<Bound<Control>> {
+        self.ui_tree()
+    }
+
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+        None
     }
 }

@@ -19,11 +19,20 @@ impl NullSession {
 
 impl Session for NullSession {
     /// Creates a new session
-    fn start_new(state: Arc<SessionState>) -> Self {
-        let hello_world = Control::container()
-            .with(vec![Control::label().with("Hello, World")]);
-        state.set_ui_tree(Box::new(bind(hello_world)));
-
+    fn start_new(_state: Arc<SessionState>) -> Self {
         NullSession::new()
+    }
+}
+
+impl Controller for NullSession {
+    fn ui(&self) -> Box<Bound<Control>> {
+        Box::new(computed(|| {
+            Control::container()
+                .with(vec![Control::label().with("Hello, World")])
+        }))
+    }
+
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+        None
     }
 }
