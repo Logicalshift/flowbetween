@@ -15,7 +15,10 @@ pub enum ControlAttribute {
     Id(String),
 
     /// Subcomponents of this control
-    SubComponents(Vec<Control>)
+    SubComponents(Vec<Control>),
+
+    /// Specifies the controller that manages the subcomponents of this control
+    Controller(String)
 }
 
 impl ControlAttribute {
@@ -60,6 +63,16 @@ impl ControlAttribute {
     }
 
     ///
+    /// The controller represented by this attribute
+    ///
+    pub fn controller<'a>(&'a self) -> Option<&'a str> {
+        match self {
+            &Controller(ref controller) => Some(controller),
+            _                           => None
+        }
+    }
+
+    ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
     ///
@@ -68,6 +81,7 @@ impl ControlAttribute {
             &BoundingBox(ref bounds)        => Some(bounds) == compare_to.bounding_box(),
             &Text(ref text)                 => Some(text) == compare_to.text(),
             &Id(ref id)                     => Some(id) == compare_to.id(),
+            &Controller(ref controller)     => Some(controller.as_ref()) == compare_to.controller(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)  => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())
@@ -208,6 +222,13 @@ impl Control {
         new_attributes.append(&mut attributes.attributes());
 
         Control { attributes: new_attributes, control_type: self.control_type }
+    }
+
+    ///
+    /// Creates a control with an added controller
+    ///
+    pub fn with_controller(&self, controller: &str) -> Control {
+        self.with(ControlAttribute::Controller(String::from(controller)))
     }
 
     /// Returns an iterator over the attributes for this control
