@@ -1,11 +1,10 @@
 use super::diff::*;
-use super::controller::*;
 
 ///
 /// Attribute attached to a control
 ///
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
-pub enum ControlAttribute<TController: Controller> {
+pub enum ControlAttribute {
     /// The bounding box for this control
     BoundingBox(Bounds),
 
@@ -16,13 +15,10 @@ pub enum ControlAttribute<TController: Controller> {
     Id(String),
 
     /// Subcomponents of this control
-    SubComponents(Vec<Control<TController>>),
-
-    /// Subcomponents are controlled by a particular controller
-    ControlledBy(TController::ControllerSpecifier)
+    SubComponents(Vec<Control>)
 }
 
-impl<TController: Controller> ControlAttribute<TController> {
+impl ControlAttribute {
     ///
     /// The bounding box represented by this attribute
     ///
@@ -56,7 +52,7 @@ impl<TController: Controller> ControlAttribute<TController> {
     ///
     /// The subcomponent represented by this attribute
     ///
-    pub fn subcomponents<'a>(&'a self) -> Option<&'a Vec<Control<TController>>> {
+    pub fn subcomponents<'a>(&'a self) -> Option<&'a Vec<Control>> {
         match self {
             &SubComponents(ref components)  => Some(components),
             _                               => None
@@ -67,7 +63,7 @@ impl<TController: Controller> ControlAttribute<TController> {
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
     ///
-    pub fn is_different_flat(&self, compare_to: &ControlAttribute<TController>) -> bool {
+    pub fn is_different_flat(&self, compare_to: &ControlAttribute) -> bool {
         match self {
             &BoundingBox(ref bounds)        => Some(bounds) == compare_to.bounding_box(),
             &Text(ref text)                 => Some(text) == compare_to.text(),
@@ -84,36 +80,36 @@ use ControlAttribute::*;
 ///
 /// Trait implemented by things that can be converted into control attributes
 ///
-pub trait ToControlAttributes<TController: Controller> {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>>;
+pub trait ToControlAttributes {
+    fn attributes(&self) -> Vec<ControlAttribute>;
 }
 
-impl<TController: Controller> ToControlAttributes<TController> for ControlAttribute<TController> {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl ToControlAttributes for ControlAttribute {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         vec![self.clone()]
     }
 }
 
-impl<'a, TController: Controller> ToControlAttributes<TController> for &'a str {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl<'a> ToControlAttributes for &'a str {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         vec![Text(String::from(*self))]
     }
 }
 
-impl<TController: Controller> ToControlAttributes<TController> for Bounds {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl ToControlAttributes for Bounds {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         vec![BoundingBox(self.clone())]
     }
 }
 
-impl<TController: Controller> ToControlAttributes<TController> for Vec<ControlAttribute<TController>> {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl ToControlAttributes for Vec<ControlAttribute> {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         self.clone()
     }
 }
 
-impl<TController: Controller, A: ToControlAttributes<TController>, B: ToControlAttributes<TController>> ToControlAttributes<TController> for (A, B) {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl<A: ToControlAttributes, B: ToControlAttributes> ToControlAttributes for (A, B) {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         let mut res = self.0.attributes();
         res.append(&mut self.1.attributes());
 
@@ -121,8 +117,8 @@ impl<TController: Controller, A: ToControlAttributes<TController>, B: ToControlA
     }
 }
 
-impl<TController: Controller, A: ToControlAttributes<TController>, B: ToControlAttributes<TController>, C: ToControlAttributes<TController>> ToControlAttributes<TController> for (A, B, C) {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl<A: ToControlAttributes, B: ToControlAttributes, C: ToControlAttributes> ToControlAttributes for (A, B, C) {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         let mut res = self.0.attributes();
         res.append(&mut self.1.attributes());
         res.append(&mut self.2.attributes());
@@ -131,8 +127,8 @@ impl<TController: Controller, A: ToControlAttributes<TController>, B: ToControlA
     }
 }
 
-impl<TController: Controller, A: ToControlAttributes<TController>, B: ToControlAttributes<TController>, C: ToControlAttributes<TController>, D: ToControlAttributes<TController>> ToControlAttributes<TController> for (A, B, C, D) {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl<A: ToControlAttributes, B: ToControlAttributes, C: ToControlAttributes, D: ToControlAttributes> ToControlAttributes for (A, B, C, D) {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         let mut res = self.0.attributes();
         res.append(&mut self.1.attributes());
         res.append(&mut self.2.attributes());
@@ -142,8 +138,8 @@ impl<TController: Controller, A: ToControlAttributes<TController>, B: ToControlA
     }
 }
 
-impl<TController: Controller> ToControlAttributes<TController> for Vec<Control<TController>> {
-    fn attributes(&self) -> Vec<ControlAttribute<TController>> {
+impl ToControlAttributes for Vec<Control> {
+    fn attributes(&self) -> Vec<ControlAttribute> {
         vec![SubComponents(self.iter().cloned().collect())]
     }
 }
@@ -172,42 +168,42 @@ use ControlType::*;
 /// Represents a control
 ///
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
-pub struct Control<TController: Controller> {
+pub struct Control {
     /// Attributes for this control
-    attributes: Vec<ControlAttribute<TController>>,
+    attributes: Vec<ControlAttribute>,
 
     /// Type of this control
     control_type: ControlType
 }
 
-impl<TController: Controller> Control<TController> {
+impl Control {
     /// Creates a new control of a particular type
-    pub fn new(control_type: ControlType) -> Control<TController> {
+    pub fn new(control_type: ControlType) -> Control {
         Control { attributes: vec![], control_type: control_type }
     }
 
     /// Creates a new container control
-    pub fn container() -> Control<TController> {
+    pub fn container() -> Control {
         Self::new(Container)
     }
 
     /// Creates a new button control
-    pub fn button() -> Control<TController> {
+    pub fn button() -> Control {
         Self::new(Button)
     }
 
     /// Creates a new label control
-    pub fn label() -> Control<TController> {
+    pub fn label() -> Control {
         Self::new(Label)
     }
 
     /// Create a new empty control
-    pub fn empty() -> Control<TController> {
+    pub fn empty() -> Control {
         Self::new(Empty)
     }
 
     /// Creates a control with some attributes added to it
-    pub fn with<T: ToControlAttributes<TController>>(&self, attributes: T) -> Control<TController> {
+    pub fn with<T: ToControlAttributes>(&self, attributes: T) -> Control {
         let mut new_attributes = self.attributes.clone();
         new_attributes.append(&mut attributes.attributes());
 
@@ -215,7 +211,7 @@ impl<TController: Controller> Control<TController> {
     }
 
     /// Returns an iterator over the attributes for this control
-    pub fn attributes<'a>(&'a self) -> Box<Iterator<Item=&'a ControlAttribute<TController>>+'a> {
+    pub fn attributes<'a>(&'a self) -> Box<Iterator<Item=&'a ControlAttribute>+'a> {
         Box::new(self.attributes.iter())
     }
 
@@ -228,13 +224,13 @@ impl<TController: Controller> Control<TController> {
     /// True if any of the attributes of this control exactly match the specified attribute
     /// (using the rules of is_different_flat, so no recursion when there are subcomponents)
     ///
-    pub fn has_attribute_flat(&self, attr: &ControlAttribute<TController>) -> bool {
+    pub fn has_attribute_flat(&self, attr: &ControlAttribute) -> bool {
         self.attributes.iter()
             .any(|test_attr| !test_attr.is_different_flat(attr))
     }
 }
 
-impl<TController: Controller> DiffableTree for Control<TController> {
+impl DiffableTree for Control {
     fn child_nodes<'a>(&'a self) -> Vec<&'a Self> {
         self.attributes
             .iter()
