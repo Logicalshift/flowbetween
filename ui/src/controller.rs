@@ -7,7 +7,7 @@ use std::any::Any;
 ///
 /// The generic controller is used to hide the types of sub-controllers
 ///
-pub type GenericController = Controller<ControllerSpecifier=Box<Any>>;
+pub type GenericController = Controller<ControllerSpecifier=Box<Any>, Action=Box<Any>>;
 
 ///
 /// Controllers represent a portion of the UI and provide a hub for
@@ -20,6 +20,7 @@ pub type GenericController = Controller<ControllerSpecifier=Box<Any>>;
 /// and deserialized by serde). 
 ///
 pub trait Controller {
+    type Action;
     type ControllerSpecifier;
     
     /// Retrieves a Control representing the UI for this controller
@@ -47,7 +48,8 @@ impl<TController: Controller> AnyController<TController> {
 
 impl<TController: Controller> Controller for AnyController<TController>
 where TController::ControllerSpecifier: 'static {
-    type ControllerSpecifier = Box<Any>;
+    type ControllerSpecifier    = Box<Any>;
+    type Action                 = Box<Any>;
 
     fn ui(&self) -> Box<Bound<Control>> {
         // UI is just passed straight through
@@ -88,7 +90,8 @@ impl NullController {
 }
 
 impl Controller for NullController {
-    type ControllerSpecifier = ();
+    type ControllerSpecifier    = ();
+    type Action                 = ();
 
     fn ui(&self) -> Box<Bound<Control>> {
         Box::new(bind(Control::empty()))

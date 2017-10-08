@@ -23,7 +23,8 @@ where for<'de> TController::ControllerSpecifier: Serialize+Deserialize<'de> {
 
 impl<TController: Controller> Controller for JsonController<TController>
 where for<'de> TController::ControllerSpecifier: Serialize+Deserialize<'de> {
-    type ControllerSpecifier = String;
+    type ControllerSpecifier    = String;
+    type Action                 = String;
 
     fn ui(&self) -> Box<Bound<Control>> {
         // UI is just passed straight through
