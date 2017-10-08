@@ -126,7 +126,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             // Mark it as changed
             let actually_changed = core.mark_changed();
 
-            // Get the items that need changing
+            // Get the items that need changing (once we've notified our dependencies that we're changed, we don't need to notify them again until we get recalculated)
             let notifiable = if actually_changed {
                 core.get_notifiable_items()
             } else {

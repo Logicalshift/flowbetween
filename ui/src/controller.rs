@@ -37,30 +37,40 @@ pub trait Controller : Send+Sync {
 /// Returns a bound control that expands the content of any 
 /// sub-controllers that might be present.
 ///
+/// Note that this only maintains a weak reference to the
+/// controller, so if this is the last reference, it will
+/// return an empty UI instead.
+///
 pub fn assemble_ui(base_controller: Arc<Controller>) -> Box<Bound<Control>> {
     // Fetch the UI for the controller
-    let base_ui = base_controller.ui();
+    let base_ui         = base_controller.ui();
+    let weak_controller = Arc::downgrade(&base_controller);
 
     // Result is computed
     return Box::new(computed(move || {
-        base_ui.get().map(&|control| {
-            if let Some(controller_id) = control.controller() {
-                // Has a subcontroller
-                let subcontroller = base_controller.get_subcontroller(controller_id);
+        if let Some(base_controller) = weak_controller.upgrade() {
+            base_ui.get().map(&|control| {
+                if let Some(controller_id) = control.controller() {
+                    // Has a subcontroller
+                    let subcontroller = base_controller.get_subcontroller(controller_id);
 
-                if let Some(subcontroller) = subcontroller {
-                    // If we can look up the subcontroller then this control should have its UI as its subcomponents
-                    let subassembly = assemble_ui(subcontroller);
-                    control.with(vec![subassembly.get()])
+                    if let Some(subcontroller) = subcontroller {
+                        // If we can look up the subcontroller then this control should have its UI as its subcomponents
+                        let subassembly = assemble_ui(subcontroller);
+                        control.with(vec![subassembly.get()])
+                    } else {
+                        // No subcontroller
+                        control.clone()
+                    }
                 } else {
-                    // No subcontroller
+                    // Control is untouched
                     control.clone()
                 }
-            } else {
-                // Control is untouched
-                control.clone()
-            }
-        })
+            })
+        } else {
+            // Controller is no longer around, so it doesn't have a UI any more
+            Control::empty()
+        }
     }));
 }
 
@@ -89,8 +99,16 @@ impl Controller for NullController {
 mod test {
     use super::*;
 
-    struct TestController;
+    struct TestController {
+        label_controller: Arc<LabelController>
+    }
     struct LabelController;
+
+    impl TestController {
+        pub fn new() -> TestController {
+            TestController { label_controller: Arc::new(LabelController) }
+        }
+    }
 
     impl Controller for TestController {
         fn ui(&self) -> Box<Bound<Control>> {
@@ -98,7 +116,7 @@ mod test {
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
-            Some(Arc::new(LabelController))
+            Some(self.label_controller.clone())
         }
     }
 
@@ -115,15 +133,15 @@ mod test {
     #[test]
     fn can_assemble_simple_label() {
         let label_controller    = Arc::new(LabelController);
-        let assembly            = assemble_ui(label_controller);
+        let assembly            = assemble_ui(label_controller.clone());
 
         assert!(assembly.get() == Control::label());
     }
 
     #[test]
     fn can_assemble_with_subassembly() {
-        let test_controller = Arc::new(TestController);
-        let assembly        = assemble_ui(test_controller);
+        let test_controller = Arc::new(TestController::new());
+        let assembly        = assemble_ui(test_controller.clone());
 
         assert!(assembly.get() == Control::container()
             .with_controller("Test")
