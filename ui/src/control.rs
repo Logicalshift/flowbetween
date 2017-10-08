@@ -249,6 +249,52 @@ impl Control {
         self.attributes.iter()
             .any(|test_attr| !test_attr.is_different_flat(attr))
     }
+
+    ///
+    /// If this control has a controller attribute, finds it
+    ///
+    pub fn controller<'a>(&'a self) -> Option<&'a str> {
+        self.attributes.iter()
+            .map(|attr| attr.controller())
+            .find(|attr| attr.is_some())
+            .map(|attr| attr.unwrap())
+    }
+
+    ///
+    /// Visits the control tree and performs a mapping function on each item
+    ///
+    pub fn map<TFn: Fn(&Control) -> Control>(&self, map_fn: &TFn) -> Control {
+        // Map this control
+        let mut new_control = map_fn(self);
+
+        // Map any subcomponents that might exist
+        let num_attributes = new_control.attributes.len();
+        for index in 0..num_attributes {
+            // TODO: we really only want to update the attribute if 
+            // it's a subcomponents attribute but we end up with an 
+            // awkward code structure as there's no elegant way to 
+            // release the borrow caused by the subcomponents ref in 
+            // the if statement here before updating the value. This 
+            // construction looks better but clones all the attributes
+            // to leave them unupdated
+            new_control.attributes[index] =
+                if let SubComponents(ref subcomponents) = new_control.attributes[index] {
+                    // Map each of the subcomponents
+                    let mut new_subcomponents = vec![];
+
+                    for component in subcomponents.iter() {
+                        new_subcomponents.push(component.map(map_fn));
+                    }
+
+                    ControlAttribute::SubComponents(new_subcomponents)
+                } else {
+                    // Attribute remains the same
+                    new_control.attributes[index].clone()
+                };
+        }
+
+        new_control
+    }
 }
 
 impl DiffableTree for Control {
