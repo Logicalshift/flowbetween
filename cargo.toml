@@ -9,5 +9,9 @@ animation       = { path = "animation" }
 http_ui         = { path = "http_ui" }
 ui              = { path = "ui" }
 
+serde           = "1.0.0"
+serde_derive    = "1.0.0"
+serde_json      = "1.0.0"
+
 iron            = "0.5.1"
 mount           = { git = "https://github.com/iron/mount.git" }

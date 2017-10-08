@@ -30,7 +30,7 @@ pub trait Controller : Send+Sync {
     fn ui(&self) -> Box<Bound<Control>>;
 
     /// Attempts to retrieve a sub-controller of this controller
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>>;
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
 }
 
 ///

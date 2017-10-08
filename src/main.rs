@@ -2,6 +2,12 @@
 //! # FlowBetween HTTP server
 //!
 
+extern crate serde;
+extern crate serde_json;
+
+#[macro_use]
+extern crate serde_derive;
+
 extern crate iron;
 extern crate mount;
 extern crate static_files;

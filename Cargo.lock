@@ -6,6 +6,9 @@ dependencies = [
  "http_ui 0.1.0",
  "iron 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mount 0.3.0 (git+https://github.com/iron/mount.git)",
+ "serde 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "static_files 0.1.0",
  "ui 0.1.0",
 ]
