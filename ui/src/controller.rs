@@ -64,6 +64,27 @@ pub fn assemble_ui(base_controller: Arc<Controller>) -> Box<Bound<Control>> {
     }));
 }
 
+///
+/// A controller that does nothing
+///
+pub struct NullController;
+
+impl NullController {
+    pub fn new() -> NullController {
+        NullController
+    }
+}
+
+impl Controller for NullController {
+    fn ui(&self) -> Box<Bound<Control>> {
+        Box::new(bind(Control::empty()))
+    }
+
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
