@@ -281,18 +281,26 @@ function flowbetween(root_node) {
         let all = () => attributes;
 
         // get_attr(name) will retrieve the attribute with the given name (or null if it does not exist)
-        let get_attr = (name) => {
+        let get_attrs = (name) => {
+            let result = [];
+            
             for (let attribute_index=0; attribute_index < attributes.length; ++attribute_index) {
                 let attr        = attributes[attribute_index];
                 let attr_name   = Object.keys(attr)[0];
 
                 if (attr_name === name) {
-                    return attr[attr_name];
+                    result.push(attr[attr_name]);
                 }
             }
 
-            return null;
+            return result.length>0 ? result : null;
         };
+
+        // get_attr(name) will retrieve the attribute with the given name (or null if it does not exist)
+        let get_attr = (name) => {
+            let result = get_attrs(name);
+            return result ? result[0] : null;
+        }
 
         // subcomponents() can be used to get the subcomponents of a control
         let subcomponents = () => {
@@ -311,18 +319,7 @@ function flowbetween(root_node) {
 
         // actions returns the list of actions that apply to this control
         let actions = () => {
-            let result = [];
-
-            for (let attribute_index=0; attribute_index < attributes.length; ++attribute_index) {
-                let attr        = attributes[attribute_index];
-                let attr_name   = Object.keys(attr)[0];
-
-                if (attr_name === 'Action') {
-                    result.push(attr[attr_name]);
-                }
-            }
-
-            return result.length>0 ? result : null;
+            return get_attrs('Action');
         }
 
         // Return an object that can be used to get information about these attributes
