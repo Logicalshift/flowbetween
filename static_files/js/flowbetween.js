@@ -486,6 +486,12 @@ function flowbetween(root_node) {
     }
 
     ///
+    /// Wires up events for a component
+    ///
+    let wire_events = (node, attributes, controller_path) => {
+    }
+
+    ///
     /// ===== HANDLING SERVER EVENTS
     ///
 
@@ -535,6 +541,15 @@ function flowbetween(root_node) {
     }
 
     ///
+    /// Given a node and its control data, wires up any events
+    ///
+    /// TODO: this currently only tracks the controller path from the root so won't work when updating the tree
+    ///
+    let wire_tree = (dom_node, control_data) => {
+        visit_dom(dom_node, control_data, (node, attributes, controller_path) => wire_events(node, attributes, controller_path));
+    }
+
+    ///
     /// The entire UI HTML should be replaced with a new version
     ///
     let on_new_html = (new_user_interface_html, property_tree) => {
@@ -546,6 +561,7 @@ function flowbetween(root_node) {
             root_control_data   = property_tree;
 
             // Perform initial layout
+            wire_tree(root.children[0], root_control_data);
             layout_tree(root.children[0], root_control_data);
 
             resolve();
@@ -612,7 +628,7 @@ function flowbetween(root_node) {
 
         // Generate a new session and immediately request that the UI be updated
         return send_request(request)
-        .then(() => refresh_ui());
+            .then(() => refresh_ui());
     }
 
     ///
