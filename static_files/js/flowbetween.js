@@ -299,13 +299,31 @@ function flowbetween(root_node) {
             return get_attr('SubComponents');
         };
 
+        // bounding_box retrieves the bounding box
         let bounding_box = () => {
             return get_attr('BoundingBox');
         };
 
+        // controller retrieves the name of the controller for this subtree
         let controller = () => {
             return get_attr('Controller');
         };
+
+        // actions returns the list of actions that apply to this control
+        let actions = () => {
+            let result = [];
+
+            for (let attribute_index=0; attribute_index < attributes.length; ++attribute_index) {
+                let attr        = attributes[attribute_index];
+                let attr_name   = Object.keys(attr)[0];
+
+                if (attr_name === 'Action') {
+                    result.push(attr[attr_name]);
+                }
+            }
+
+            return result.length>0 ? result : null;
+        }
 
         // Return an object that can be used to get information about these attributes
         return {
@@ -313,6 +331,7 @@ function flowbetween(root_node) {
             get_attr:       get_attr,
             subcomponents:  subcomponents,
             controller:     controller,
+            actions:        actions,
             bounding_box:   bounding_box
         };
     }
@@ -483,13 +502,45 @@ function flowbetween(root_node) {
             element.style.top       = pos.y1 + 'px';
             element.style.height    = (pos.y2-pos.y1) + 'px';
         }
+    };
+
+    ///
+    /// Wires up a click action to a node
+    ///
+    let wire_click = (action_action, node, controller_path) => {
+        node.addEventListener("click", () => {
+            note("Click " + action_action + " --> " + controller_path);
+        });
     }
+
+    ///
+    /// Wires up an action to a node
+    ///
+    let wire_action = (action, node, controller_path) => {
+        let action_type     = action[0];
+        let action_action   = action[1];
+
+        switch (action_type) {
+            case 'Click':
+                wire_click(action_action, node, controller_path);
+                break;
+
+            default:
+                warn('Unknown action type: ' + action_type);
+                break;
+        }
+    };
 
     ///
     /// Wires up events for a component
     ///
     let wire_events = (node, attributes, controller_path) => {
-    }
+        let actions = attributes.actions();
+
+        if (actions) {
+            actions.forEach(action => wire_action(action, node, controller_path));
+        }
+    };
 
     ///
     /// ===== HANDLING SERVER EVENTS
