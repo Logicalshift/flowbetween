@@ -297,17 +297,22 @@ function flowbetween(root_node) {
         // subcomponents() can be used to get the subcomponents of a control
         let subcomponents = () => {
             return get_attr('SubComponents');
-        }
+        };
 
         let bounding_box = () => {
             return get_attr('BoundingBox');
-        }
+        };
+
+        let controller = () => {
+            return get_attr('Controller');
+        };
 
         // Return an object that can be used to get information about these attributes
         return {
             all:            all,
             get_attr:       get_attr,
             subcomponents:  subcomponents,
+            controller:     controller,
             bounding_box:   bounding_box
         };
     }
@@ -317,21 +322,36 @@ function flowbetween(root_node) {
     /// the appropriate control data sections
     ///
     let visit_dom = (dom_node, control_data, visit_node) => {
-        let attributes = get_attributes(control_data);
+        // visit_internal tracks the controller path for each node
+        let visit_internal = (dom_node, control_data, visit_node, controller_path) => {
+            let attributes = get_attributes(control_data);
+            
+            // Visit the current node
+            visit_node(dom_node, attributes, controller_path);
 
-        // Visit the current node
-        visit_node(dom_node, attributes);
+            // If this node has a controller, it's applied as part of the path for the child nodes
+            let child_node_path = controller_path;
+            let controller      = attributes.controller();
 
-        // Visit any subcomponents
-        let subcomponents   = attributes.subcomponents();
-
-        if (subcomponents !== null) {
-            let subnodes    = [].slice.apply(dom_node.children).filter((node) => node.nodeType === Node.ELEMENT_NODE);
-
-            for (let node_index=0; node_index<subcomponents.length; ++node_index) {
-                visit_dom(subnodes[node_index], subcomponents[node_index], visit_node);
+            if (controller) {
+                child_node_path = child_node_path.slice();
+                child_node_path.push(controller);
             }
-        }
+    
+            // Visit any subcomponents
+            let subcomponents   = attributes.subcomponents();
+    
+            if (subcomponents !== null) {
+                let subnodes    = [].slice.apply(dom_node.children).filter((node) => node.nodeType === Node.ELEMENT_NODE);
+    
+                for (let node_index=0; node_index<subcomponents.length; ++node_index) {
+                    visit_internal(subnodes[node_index], subcomponents[node_index], visit_node, child_node_path);
+                }
+            }
+        };
+
+        // Initial node has no controller path
+        visit_internal(dom_node, control_data, visit_node, []);
     }
 
     ///
