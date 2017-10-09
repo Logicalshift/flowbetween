@@ -507,9 +507,11 @@ function flowbetween(root_node) {
     ///
     /// Wires up a click action to a node
     ///
-    let wire_click = (action_action, node, controller_path) => {
+    let wire_click = (action_name, node, controller_path) => {
         node.addEventListener("click", () => {
-            note("Click " + action_action + " --> " + controller_path);
+            note("Click " + action_name + " --> " + controller_path);
+
+            perform_action(controller_path, action_name);
         });
     }
 
@@ -517,12 +519,12 @@ function flowbetween(root_node) {
     /// Wires up an action to a node
     ///
     let wire_action = (action, node, controller_path) => {
-        let action_type     = action[0];
-        let action_action   = action[1];
+        let action_type = action[0];
+        let action_name = action[1];
 
         switch (action_type) {
             case 'Click':
-                wire_click(action_action, node, controller_path);
+                wire_click(action_name, node, controller_path);
                 break;
 
             default:
@@ -680,6 +682,15 @@ function flowbetween(root_node) {
         // Generate a new session and immediately request that the UI be updated
         return send_request(request)
             .then(() => refresh_ui());
+    }
+
+    ///
+    /// Performs a particular action
+    ///
+    let perform_action = (controller_path, action_name) => {
+        let request = make_request([ make_event({ Action: [controller_path, action_name] })], running_session_id);
+
+        return send_request(request);
     }
 
     ///
