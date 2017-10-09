@@ -31,6 +31,9 @@ pub trait Controller : Send+Sync {
 
     /// Attempts to retrieve a sub-controller of this controller
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
+
+    /// Callback for when a control associated with this controller generates an action
+    fn action(&self, _action_id: &str) { }
 }
 
 ///
