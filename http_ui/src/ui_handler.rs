@@ -104,6 +104,9 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 
                 // Refreshing the UI generates a new set of HTML from the abstract UI representation
                 UiRefresh => self.refresh_ui(state.clone(), response),
+
+                // Actions are dispatched to the appropriate controller
+                Action(ref controller_path, ref action) => println!("{}", action) // TODO: or just printed out for now
             }
         }
 

@@ -11,5 +11,10 @@ pub enum Event {
     ///
     /// Request a refresh of the UI
     ///
-    UiRefresh
+    UiRefresh,
+
+    ///
+    /// Sends an action to the controller found along a certain path
+    ///
+    Action(Vec<String>, String)
 }
