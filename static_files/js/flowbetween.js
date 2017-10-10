@@ -502,10 +502,39 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Adds an action event to a node
+    ///
+    let add_action_event = (node, event_name, handler, options) => {
+        // Add the event
+        node.addEventListener(event_name, handler, options);
+
+        // Update the function that removes events from this node
+        let remove_more_events = node.flo_remove_actions;
+        node.flo_remove_actions = () => {
+            node.removeEventListener(event_name, handler);
+            if (remove_more_events) {
+                remove_more_events();
+            }
+        }
+    }
+
+    ///
+    /// Clears any events attached to a DOM node
+    ///
+    let remove_action_events_from_node = (node) => {
+        // The flo_remove_actions property attached to a DOM node is used to get rid of any events we might have attached to it
+        let remove_events       = node.flo_remove_actions;
+        node.flo_remove_actions = null;
+        if (remove_events) {
+            remove_events();
+        }
+    }
+
+    ///
     /// Wires up a click action to a node
     ///
     let wire_click = (action_name, node, controller_path) => {
-        node.addEventListener("click", () => {
+        add_action_event(node, "click", () => {
             note("Click " + action_name + " --> " + controller_path);
 
             perform_action(controller_path, action_name);
@@ -516,6 +545,10 @@ function flowbetween(root_node) {
     /// Wires up an action to a node
     ///
     let wire_action = (action, node, controller_path) => {
+        // If this node is already wired up, remove the events we added
+        remove_action_events_from_node(node);
+
+        // Store the actions for this event
         let action_type = action[0];
         let action_name = action[1];
 
@@ -596,7 +629,16 @@ function flowbetween(root_node) {
     /// TODO: this currently only tracks the controller path from the root so won't work when updating the tree
     ///
     let wire_tree = (dom_node, control_data) => {
-        visit_dom(dom_node, control_data, (node, attributes, controller_path) => wire_events(node, attributes, controller_path));
+        visit_dom(dom_node, control_data, (node, attributes, controller_path) => {
+            // Store the attributes for this node for convenience
+            node.flo = {
+                controller: controller_path,
+                attributes: attributes
+            };
+
+            // Attach any events that this node might require
+            wire_events(node, attributes, controller_path);
+        });
     }
 
     ///
