@@ -14,7 +14,6 @@ html, body {
 }
 
 #root * {
-    border:     1px solid black;
     box-sizing: border-box;
     position:   absolute;
 }
