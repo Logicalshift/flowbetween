@@ -22,3 +22,8 @@ html, body {
     width:  100%;
     height: 100%;
 }
+
+.flo-button {
+    background: no-repeat center url('../svg/controls/button.svg');
+    background-size: 100% 100%;
+}

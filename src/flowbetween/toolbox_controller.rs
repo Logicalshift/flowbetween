@@ -12,7 +12,7 @@ impl ToolboxController {
     pub fn new() -> ToolboxController {
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
-            .with(vec![Self::make_tool()]));
+            .with(vec![Self::make_tool(), Self::make_tool(), Self::make_tool(), Self::make_tool()]));
 
         ToolboxController {
             ui: ui
