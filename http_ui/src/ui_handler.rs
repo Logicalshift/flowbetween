@@ -67,6 +67,24 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     }
 
     ///
+    /// Dispatches an action to a controller
+    ///
+    pub fn dispatch_action(&self, session: Arc<TSession>, controller_path: &Vec<String>, action_name: &String) {
+        // Follow the controller path
+        let mut controller: Option<Arc<Controller>> = Some(session);
+
+        for step in controller_path.iter() {
+            controller = controller.map_or(None, |ctrl| ctrl.get_subcontroller(step));
+        }
+
+        // If there's a controller on this path, send the action to it
+        match controller {
+            Some(ref controller)    => controller.action(action_name),
+            None                    => ()   // TODO: report error/warning - controller does not exist? Might be possible if the UI is catching up with the server state.
+        };
+    }
+
+    ///
     /// Fills in a response structure for a request with no session
     ///
     fn handle_no_session(&self, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
@@ -87,7 +105,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Dispatches a response structure to a session
     ///
-    fn handle_with_session(&self, state: Arc<SessionState>, session: &TSession, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
+    fn handle_with_session(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
         use Event::*;
 
         // Cache the UI state before the event is processed
@@ -106,7 +124,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
                 UiRefresh => self.refresh_ui(state.clone(), response),
 
                 // Actions are dispatched to the appropriate controller
-                Action(ref controller_path, ref action) => println!("{}", action) // TODO: or just printed out for now
+                Action(ref controller_path, ref action) => self.dispatch_action(session.clone(), controller_path, action)
             }
         }
 
@@ -143,8 +161,8 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 
                 // If the session ID is not presently registered, then we proceed as if the session is missing 
                 match session {
-                    Some(&mut (ref mut session_state, ref mut session)) => 
-                        self.handle_with_session(session_state.clone(), session, &mut response, req),
+                    Some(&mut (ref session_state, ref session)) => 
+                        self.handle_with_session(session_state.clone(), session.clone(), &mut response, req),
                     _ => 
                         self.handle_no_session(&mut response, req)
                 }
