@@ -23,7 +23,7 @@ html, body {
     height: 100%;
 }
 
-.flo-button {
+flo-button {
     background: no-repeat center url('../svg/controls/button.svg');
     background-size: 100% 100%;
 }

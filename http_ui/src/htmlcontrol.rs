@@ -50,8 +50,8 @@ impl ToHtml for Control {
         use ui::ControlAttribute::*;
         let mut result = String::new();
 
-        // Start with the main div and its class
-        result.push_str(&format!("<div class=\"{}\">", control_class(self)));
+        // Start with the main element
+        result.push_str(&format!("<{}>", control_class(self)));
 
         // Add any subcomponents or text for this control
         for attribute in self.attributes() {
@@ -73,8 +73,8 @@ impl ToHtml for Control {
             }
         }
         
-        // Close out the div and finish up
-        result.push_str("</div>");
+        // Close out the element and finish up
+        result.push_str(&format!("</{}>", control_class(self)));
 
         result
     }
