@@ -288,19 +288,40 @@ function flowbetween(root_node) {
                     let templateNode = templateParent.children[nodeIndex];
                     let templateName = templateNode.tagName.toLowerCase();
 
-                    templates[templateName] = templateNode.children;
+                    templates[templateName] = [].slice.apply(templateNode.children);
                 }
             }
-        }
+        };
+
+        ///
+        /// Applies a template to a node if possible
+        ///
+        let apply_template = (node, attributes) => {
+            // Get the template elements for this node
+            let templateForNode = templates[node.tagName.toLowerCase()];
+
+            if (templateForNode) {
+                // Remove any existing template nodes
+                get_decorative_subnodes(node).forEach(decoration => node.removeChild(decoration));
+
+                // Copy each template element
+                let newNodes = templateForNode.map(templateNode => document.importNode(templateNode, true));
+
+                // Add the nodes to this node
+                newNodes.forEach(newNode => node.appendChild(newNode));
+            }
+        };
 
         add_command('show_templates', 'Displays the template nodes', () => console.log(templates));
 
         return {
-            reload_templates: reload_templates
+            reload_templates: reload_templates,
+            apply_template: apply_template
         };
     })();
 
     let reload_templates = templating.reload_templates;
+    let apply_template = templating.apply_template;
 
     ///
     /// Fetches the root of the UI
@@ -695,6 +716,13 @@ function flowbetween(root_node) {
     }
 
     ///
+    /// Applies the node templates to a DOM tree
+    ///
+    let apply_templates_to_tree = (dom_node, control_data) => {
+        visit_dom(dom_node, control_data, (node, attributes) => apply_template(node, attributes));
+    }
+
+    ///
     /// The entire UI HTML should be replaced with a new version
     ///
     let on_new_html = (new_user_interface_html, property_tree) => {
@@ -707,6 +735,7 @@ function flowbetween(root_node) {
 
             // Perform initial layout
             wire_tree(get_flo_subnodes(root)[0], root_control_data);
+            apply_templates_to_tree(get_flo_subnodes(root)[0], root_control_data);
             layout_tree(get_flo_subnodes(root)[0], root_control_data);
 
             resolve();
