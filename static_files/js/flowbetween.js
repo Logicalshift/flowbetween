@@ -264,6 +264,45 @@ function flowbetween(root_node) {
     ///
 
     ///
+    /// Functions related to templating
+    ///
+    let templating = (function() {
+        /// Template DOM nodes, ready to be applied
+        let templates = {};
+
+        ///
+        /// Loads the UI templates for a particular DOM node
+        ///
+        let reload_templates = (root_node) => {
+            // Clear the DOM nodes
+            templates = {};
+
+            // Find the template elements beneath the root node
+            let rootTemplates = root_node.getElementsByTagName('TEMPLATE');
+
+            // Each template can define the nodes we apply to flo-nodes, by example
+            for (let templateNumber=0; templateNumber<rootTemplates.length; ++templateNumber) {
+                let templateParent = rootTemplates[templateNumber].content;
+                
+                for (let nodeIndex=0; nodeIndex<templateParent.children.length; ++nodeIndex) {
+                    let templateNode = templateParent.children[nodeIndex];
+                    let templateName = templateNode.tagName.toLowerCase();
+
+                    templates[templateName] = templateNode.children;
+                }
+            }
+        }
+
+        add_command('show_templates', 'Displays the template nodes', () => console.log(templates));
+
+        return {
+            reload_templates: reload_templates
+        };
+    })();
+
+    let reload_templates = templating.reload_templates;
+
+    ///
     /// Fetches the root of the UI
     ///
     let get_root = () => {
@@ -768,6 +807,7 @@ function flowbetween(root_node) {
 
     // All set up, let's go
     console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
+    reload_templates(document.getRootNode());
     new_session();
     enable_commands();
 };
