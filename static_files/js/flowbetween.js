@@ -308,7 +308,9 @@ function flowbetween(root_node) {
                 let newNodes = templateForNode.map(templateNode => document.importNode(templateNode, true));
 
                 // Add the nodes to this node
-                newNodes.forEach(newNode => node.appendChild(newNode));
+                let firstNode = node.children.length > 0 ? node.children[0] : null;
+
+                newNodes.forEach(newNode => node.insertBefore(newNode, firstNode));
             }
         };
 
