@@ -271,6 +271,20 @@ function flowbetween(root_node) {
     }
 
     ///
+    /// Give a DOM node, returns the child nodes that represent flowbetween controls
+    ///
+    let get_flo_subnodes = (node) => {
+        return [].slice.apply(node.children).filter(element => element.nodeType === Node.ELEMENT_NODE && element.tagName.toLowerCase().startsWith("flo-"));
+    }
+
+    ///
+    /// Given a DOM node, returns the child nodes that represent decorative items
+    ///
+    let get_decorative_subnodes = (node) => {
+        return [].slice.apply(node.children).filter(element => element.nodeType === Node.ELEMENT_NODE && !element.tagName.toLowerCase().startsWith("flo-"));
+    }
+
+    ///
     /// Fetches the attributes for a control node
     ///
     let get_attributes = (control_data) => {
@@ -358,7 +372,7 @@ function flowbetween(root_node) {
             let subcomponents   = attributes.subcomponents();
     
             if (subcomponents !== null) {
-                let subnodes    = [].slice.apply(dom_node.children).filter((node) => node.nodeType === Node.ELEMENT_NODE);
+                let subnodes = get_flo_subnodes(dom_node);
     
                 for (let node_index=0; node_index<subcomponents.length; ++node_index) {
                     visit_internal(subnodes[node_index], subcomponents[node_index], visit_node, child_node_path);
@@ -410,7 +424,7 @@ function flowbetween(root_node) {
     ///
     let layout_subcomponents = (parent_node, attributes) => {
         let subcomponents   = attributes.subcomponents();
-        let subnodes        = parent_node.children;
+        let subnodes        = get_flo_subnodes(parent_node);
         let positions       = [];
         let total_width     = parent_node.clientWidth;
         let total_height    = parent_node.clientHeight;
@@ -653,8 +667,8 @@ function flowbetween(root_node) {
             root_control_data   = property_tree;
 
             // Perform initial layout
-            wire_tree(root.children[0], root_control_data);
-            layout_tree(root.children[0], root_control_data);
+            wire_tree(get_flo_subnodes(root)[0], root_control_data);
+            layout_tree(get_flo_subnodes(root)[0], root_control_data);
 
             resolve();
         });
@@ -746,7 +760,7 @@ function flowbetween(root_node) {
                 willResize = false;
 
                 if (root_control_data) {
-                    layout_tree(get_root().children[0], root_control_data);
+                    layout_tree(get_flo_subnodes(get_root())[0], root_control_data);
                 }
             });
         }
