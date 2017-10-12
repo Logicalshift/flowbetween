@@ -2,13 +2,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 400 400">
     <style>
         .background {
-
+            transition: fill 0.2s, stroke 0.2s;
+            stroke: rgba(0,0,0,0);
+            fill: rgba(67,78,89,0.2);
         }
 
         svg:hover .background {
-            fill: #aaafaf
+            transition: fill 0.2s, stroke 0.2s;
+            fill: rgba(67,78,89, 1);
+            stroke: rgba(0,0,0,1);
+        }
+
+        svg:active .background {
+            transition: fill 0.1s, stroke 0.5s;
+            fill: rgba(101,124,146, 1);
+            stroke: rgba(67,78,89,1);
+        }
+
+        svg .foreground {
+            opacity: 0.0;
+            transition: opacity .2s;
+        }
+
+        svg:hover .foreground {
+            opacity: 1.0;
+            transition: opacity 1s;
+            transition-delay: 1s;
         }
     </style>
 
-    <path class="background" fill="#777a7a" d="M25 25H375V375H25z" />
+    <g transform="matrix(0.953847,0,0,0.953847,12.2873,9.90789)">
+        <g id="Layer2">
+            <path class="background" id="Base" d="M380.263,52.001C380.263,32.033 364.052,15.822 344.085,15.822L49.506,15.822C29.539,15.822 13.328,32.033 13.328,52.001L13.328,346.579C13.328,366.547 29.539,382.758 49.506,382.758L344.085,382.758C364.052,382.758 380.263,366.547 380.263,346.579L380.263,52.001Z" style="stroke-width:16px;"/>
+        </g>
+    </g>
+    <g id="Shine">
+        <clipPath id="_clip1">
+            <path d="M367,65.931C367,47.756 352.244,33 334.069,33L65.931,33C47.756,33 33,47.756 33,65.931L33,334.069C33,352.244 47.756,367 65.931,367L334.069,367C352.244,367 367,352.244 367,334.069L367,65.931Z"/>
+        </clipPath>
+        <g clip-path="url(#_clip1)" class="foreground">
+            <g id="Shine2" transform="matrix(3.96839,-3.96839,0.40751,0.40751,-511.955,1026.85)">
+                <rect x="153.935" y="49.334" width="81.273" height="65.063" style="fill:rgb(101,124,146);"/>
+            </g>
+            <g id="Shine1" transform="matrix(3.96839,-3.96839,0.18813,0.18813,-466.746,1075.58)">
+                <rect x="153.935" y="49.334" width="81.273" height="65.063" style="fill:rgb(101,124,146);"/>
+            </g>
+        </g>
+    </g>
 </svg>
