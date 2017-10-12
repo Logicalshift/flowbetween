@@ -858,5 +858,3 @@ function flowbetween(root_node) {
     new_session();
     enable_commands();
 };
-
-document.addEventListener("DOMContentLoaded", () => flowbetween(document.getElementById('root')));
