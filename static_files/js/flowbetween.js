@@ -296,6 +296,10 @@ function flowbetween(root_node) {
         ///
         /// Applies a template to a node if possible
         ///
+        /// Note that if we've wired up events, we won't re-wire them
+        /// as part of this call, so that's something that needs to be
+        /// done.
+        ///
         let apply_template = (node, attributes) => {
             // Get the template elements for this node
             let templateForNode = templates[node.tagName.toLowerCase()];
@@ -322,8 +326,8 @@ function flowbetween(root_node) {
         };
     })();
 
-    let reload_templates = templating.reload_templates;
-    let apply_template = templating.apply_template;
+    let reload_templates    = templating.reload_templates;
+    let apply_template      = templating.apply_template;
 
     ///
     /// Fetches the root of the UI
@@ -578,16 +582,22 @@ function flowbetween(root_node) {
     };
 
     ///
-    /// Adds an action event to a node
+    /// Adds an action event to a flo node
     ///
     let add_action_event = (node, event_name, handler, options) => {
+        // We add action events to the node and any decorations it may have
+        let event_nodes = [node];
+        [].push.apply(event_nodes, get_decorative_subnodes(node));
+
         // Add the event
-        node.addEventListener(event_name, handler, options);
+        event_nodes.forEach(node => node.addEventListener(event_name, handler, options));
 
         // Update the function that removes events from this node
         let remove_more_events = node.flo_remove_actions;
         node.flo_remove_actions = () => {
-            node.removeEventListener(event_name, handler);
+            event_nodes.forEach(node => node.removeEventListener(event_name, handler));
+            event_nodes = [];
+
             if (remove_more_events) {
                 remove_more_events();
             }
@@ -643,6 +653,12 @@ function flowbetween(root_node) {
     /// Wires up events for a component
     ///
     let wire_events = (node, attributes, controller_path) => {
+        // Remove existing events, if any
+        if (node.flo_remove_actions) {
+            remove_action_events_from_node(node);
+        }
+
+        // Fetch actions
         let actions = attributes.actions();
 
         if (actions) {
