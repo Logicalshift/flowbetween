@@ -752,8 +752,8 @@ function flowbetween(root_node) {
             root_control_data   = property_tree;
 
             // Perform initial layout
-            wire_tree(get_flo_subnodes(root)[0], root_control_data);
             apply_templates_to_tree(get_flo_subnodes(root)[0], root_control_data);
+            wire_tree(get_flo_subnodes(root)[0], root_control_data);
             layout_tree(get_flo_subnodes(root)[0], root_control_data);
 
             resolve();
