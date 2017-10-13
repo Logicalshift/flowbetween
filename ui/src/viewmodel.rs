@@ -1,4 +1,5 @@
 use super::property::*;
+use super::binding::*;
 
 ///
 /// Represents a viewmodel for a control subtree. ViewModels are
@@ -7,7 +8,7 @@ use super::property::*;
 ///
 pub trait ViewModel {
     /// Retrieves a property
-    fn get_property(&self, property_name: &str) -> Property;
+    fn get_property(&self, property_name: &str) -> Box<Bound<Property>>;
 
     /// Updates a property
     fn set_property(&self, property_name: &str, new_value: Property);
@@ -25,8 +26,8 @@ impl NullViewModel {
 }
 
 impl ViewModel for NullViewModel {
-    fn get_property(&self, _property_name: &str) -> Property {
-        Property::Nothing
+    fn get_property(&self, _property_name: &str) -> Box<Bound<Property>> {
+        Box::new(bind(Property::Nothing))
     }
 
     fn set_property(&self, _property_name: &str, _new_value: Property) { 
