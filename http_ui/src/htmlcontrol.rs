@@ -66,7 +66,7 @@ impl ToHtml for Control {
 
                 &Text(ref text) => {
                     // Any text is just the text attached to the div
-                    result.push_str(&quote_text(text))
+                    result.push_str(&quote_text(&text.to_string()))
                 },
 
                 _ => ()
