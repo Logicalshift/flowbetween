@@ -15,3 +15,24 @@ pub trait ViewModel {
     /// Retrieves the names of all of the properties in this item
     fn get_property_names(&self) -> Vec<String>;
 }
+
+pub struct NullViewModel;
+
+impl NullViewModel {
+    pub fn new() -> NullViewModel {
+        NullViewModel
+    }
+}
+
+impl ViewModel for NullViewModel {
+    fn get_property(&self, _property_name: &str) -> Property {
+        Property::Nothing
+    }
+
+    fn set_property(&mut self, _property_name: &str, _new_value: Property) { 
+    }
+
+    fn get_property_names(&self) -> Vec<String> {
+        vec![]
+    }
+}
