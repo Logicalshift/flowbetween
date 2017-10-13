@@ -21,6 +21,9 @@ pub enum ControlAttribute {
     /// The text for this control
     Text(Property),
 
+    /// Whether or not this control is selected
+    Selected(Property),
+
     /// The unique ID for this control
     Id(String),
 
@@ -98,6 +101,13 @@ impl ControlAttribute {
         }
     }
 
+    pub fn selected<'a>(&'a self) -> Option<&'a Property> {
+        match self {
+            &Selected(ref is_selected)  => Some(is_selected),
+            _                           => None
+        }
+    }
+
     ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
@@ -109,6 +119,7 @@ impl ControlAttribute {
             &Id(ref id)                         => Some(id) == compare_to.id(),
             &Controller(ref controller)         => Some(controller.as_ref()) == compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) == compare_to.action(),
+            &Selected(ref is_selected)          => Some(is_selected) == compare_to.selected(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)  => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())
