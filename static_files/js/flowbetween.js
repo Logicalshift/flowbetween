@@ -744,6 +744,8 @@ function flowbetween(root_node) {
     /// The entire UI HTML should be replaced with a new version
     ///
     let on_new_html = (new_user_interface_html, property_tree) => {
+        note('Updating user interface');
+
         return new Promise((resolve) => {
             let root = get_root();
             
@@ -763,33 +765,43 @@ function flowbetween(root_node) {
     ///
     /// Dispatches updates in a request
     ///
-    let dispatch_updates = (updates) => {
-        // Each event generates a promise
-        let update_promise  = Promise.resolve();
-        let current_promise = update_promise;
-
-        // We build the promise as we go
-        updates.forEach((update) => {
-            // serde encodes enums as objects, so we can tell what is what by looking at the first key
-            let update_key = Object.keys(update)[0];
-
-            switch (update_key) {
-                case 'NewSession':
-                    current_promise = current_promise.then(() => on_new_session(update[update_key]));
-                    break;
-
-                case 'NewUserInterfaceHtml':
-                    current_promise = current_promise.then(() => on_new_html(update[update_key][0], update[update_key][1]));
-                    break;
-
-                default:
-                    warn('Unknown update type', update_key, update);
-                    break;
+    let dispatch_updates = (function() {
+        let show_updates = false;
+        add_command('show_update_events', 'Log the update objects from the server', () => show_updates = true);
+        add_command('hide_update_events', 'Stop logging the update objects from the server', () => show_updates = false);
+        
+        return (updates) => {
+            if (show_updates) {
+                console.log('Dispatching updates', updates);
             }
-        });
 
-        return update_promise;
-    }
+            // Each event generates a promise
+            let update_promise  = Promise.resolve();
+            let current_promise = update_promise;
+
+            // We build the promise as we go
+            updates.forEach((update) => {
+                // serde encodes enums as objects, so we can tell what is what by looking at the first key
+                let update_key = Object.keys(update)[0];
+
+                switch (update_key) {
+                    case 'NewSession':
+                        current_promise = current_promise.then(() => on_new_session(update[update_key]));
+                        break;
+
+                    case 'NewUserInterfaceHtml':
+                        current_promise = current_promise.then(() => on_new_html(update[update_key][0], update[update_key][1]));
+                        break;
+
+                    default:
+                        warn('Unknown update type', update_key, update);
+                        break;
+                }
+            });
+
+            return update_promise;
+        };
+    })();
 
     ///
     /// Sends a request to the session URI and processes the result
@@ -799,7 +811,7 @@ function flowbetween(root_node) {
         .then((response) => response_to_object(response))
         .then((ui_request) => dispatch_updates(ui_request.updates))
         .catch((err) => {
-            error('Could not refresh UI.', err);
+            error('Request failed.', err);
         });
     }
 
