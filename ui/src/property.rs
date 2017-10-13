@@ -1,10 +1,8 @@
-use serde::*;
-
 ///
 /// Represents a property (a control value that can either be a
 /// constant or a viewmodel value)
 ///
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum Property {
     Int(i32),
     Float(f64),
