@@ -9,11 +9,14 @@ use ui::*;
 /// An empty session type that can be used for testing in the absense of an actual implementation
 ///
 pub struct NullSession {
+    view_model: Arc<NullViewModel>
 }
 
 impl NullSession {
     pub fn new() -> NullSession {
-        NullSession {}
+        NullSession {
+            view_model: Arc::new(NullViewModel::new())
+        }
     }
 }
 
@@ -34,5 +37,9 @@ impl Controller for NullSession {
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
         None
+    }
+
+    fn get_viewmodel(&self) -> Arc<ViewModel> {
+        self.view_model.clone()
     }
 }

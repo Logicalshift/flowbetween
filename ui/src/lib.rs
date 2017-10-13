@@ -15,3 +15,5 @@ pub use self::layout::*;
 pub use self::diff::*;
 pub use self::binding::*;
 pub use self::controller::*;
+pub use self::property::*;
+pub use self::viewmodel::*;

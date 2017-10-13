@@ -21,6 +21,9 @@ enum SubController {
 /// The editor controller manages the editing of a single file
 ///
 pub struct EditorController {
+    /// The view model for the editor
+    view_model: Arc<NullViewModel>,
+
     /// The main editor UI
     ui: Binding<Control>,
 
@@ -45,7 +48,8 @@ impl EditorController {
 
         EditorController {
             ui:             ui,
-            subcontrollers: subcontrollers
+            subcontrollers: subcontrollers,
+            view_model:     Arc::new(NullViewModel::new()),
         }
     }
 
@@ -148,5 +152,9 @@ impl Controller for EditorController {
         } else {
             None
         }
+    }
+
+    fn get_viewmodel(&self) -> Arc<ViewModel> {
+        self.view_model.clone()
     }
 }

@@ -18,17 +18,19 @@ enum SubController {
 /// The main flowbetween session object
 ///
 pub struct FlowBetweenSession {
-    ui:             Binding<Control>,
-    editor: Arc<EditorController>
+    view_model: Arc<NullViewModel>,
+    ui:         Binding<Control>,
+    editor:     Arc<EditorController>
 }
 
 impl FlowBetweenSession {
     pub fn new() -> FlowBetweenSession {
         FlowBetweenSession {
-            ui: bind(Control::container()
-                    .with(Bounds::fill_all())
-                    .with_controller(&serde_json::to_string(&SubController::Editor).unwrap())),
-            editor: Arc::new(EditorController::new())
+            view_model: Arc::new(NullViewModel::new()),
+            ui:         bind(Control::container()
+                            .with(Bounds::fill_all())
+                            .with_controller(&serde_json::to_string(&SubController::Editor).unwrap())),
+            editor:     Arc::new(EditorController::new())
         }
     }
 }
@@ -57,5 +59,9 @@ impl Controller for FlowBetweenSession {
         } else {
             None
         }
+    }
+
+    fn get_viewmodel(&self) -> Arc<ViewModel> {
+        self.view_model.clone()
     }
 }

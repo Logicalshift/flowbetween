@@ -1,11 +1,14 @@
 use ui::*;
 
+use std::sync::*;
+
 ///
 /// The toolbox controller allows the user to pick which tool they
 /// are using to edit the canvas
 ///
 pub struct ToolboxController {
-    ui: Binding<Control>
+    view_model: Arc<NullViewModel>,
+    ui:         Binding<Control>
 }
 
 impl ToolboxController {
@@ -15,7 +18,8 @@ impl ToolboxController {
             .with(vec![Self::make_tool(), Self::make_tool(), Self::make_tool(), Self::make_tool()]));
 
         ToolboxController {
-            ui: ui
+            view_model: Arc::new(NullViewModel::new()),
+            ui:         ui
         }
     }
 
@@ -39,5 +43,9 @@ impl Controller for ToolboxController {
 
     fn action(&self, action_id: &str) {
         println!("Toolbox action is {}", action_id);
+    }
+
+    fn get_viewmodel(&self) -> Arc<ViewModel> {
+        self.view_model.clone()
     }
 }

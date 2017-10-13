@@ -1,10 +1,13 @@
 use ui::*;
 
+use std::sync::*;
+
 ///
 /// The canvas controller manages the main drawing canvas
 ///
 pub struct CanvasController {
-    ui: Binding<Control>
+    view_model: Arc<NullViewModel>,
+    ui:         Binding<Control>
 }
 
 impl CanvasController {
@@ -12,7 +15,8 @@ impl CanvasController {
         let ui = bind(Control::empty());
 
         CanvasController {
-            ui: ui
+            view_model: Arc::new(NullViewModel::new()),
+            ui:         ui
         }
     }
 }
@@ -20,5 +24,9 @@ impl CanvasController {
 impl Controller for CanvasController {
     fn ui(&self) -> Box<Bound<Control>> {
         Box::new(self.ui.clone())
+    }
+
+    fn get_viewmodel(&self) -> Arc<ViewModel> {
+        self.view_model.clone()
     }
 }
