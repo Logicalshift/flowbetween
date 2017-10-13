@@ -7,6 +7,8 @@ pub mod layout;
 pub mod diff;
 pub mod binding;
 pub mod controller;
+pub mod property;
+pub mod viewmodel;
 
 pub use self::control::*;
 pub use self::layout::*;
