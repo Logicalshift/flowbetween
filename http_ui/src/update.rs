@@ -25,6 +25,27 @@ impl HtmlDiff {
 }
 
 ///
+/// Describes an update to the view model
+///
+#[derive(Clone, Serialize, Deserialize)]
+pub struct ViewModelUpdate {
+    /// The controller that owns the view model being updated
+    controller_path: Vec<String>,
+
+    /// Key/value pairs of the updates to the view model for this controller
+    updates: Vec<(String, String)>
+}
+
+impl ViewModelUpdate {
+    pub fn new(controller_path: Vec<String>, updates: Vec<(String, String)>) -> ViewModelUpdate {
+        ViewModelUpdate {
+            controller_path:    controller_path,
+            updates:            updates
+        }
+    }
+}
+
+///
 /// Represents an instruction to perform an update in the web interface
 ///
 /// Events and other requests to the HTTP interface can return lists
@@ -46,6 +67,11 @@ pub enum Update {
     /// Supplies a new user interface as HTML, alongside the corresponding UI control data
     ///
     NewUserInterfaceHtml(String, Control),
+
+    ///
+    /// Specifies that the viewmodel should be updated
+    ///
+    UpdateViewModel,
 
     ///
     /// Specifies how the HTML should be updated
