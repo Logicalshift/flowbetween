@@ -1,5 +1,6 @@
 use super::binding::*;
 use super::control::*;
+use super::viewmodel::*;
 
 use std::sync::*;
 
@@ -31,6 +32,9 @@ pub trait Controller : Send+Sync {
 
     /// Attempts to retrieve a sub-controller of this controller
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
+
+    /// Retrieves the viewmodel for this controller
+    fn get_viewmodel(&self) -> Arc<ViewModel>;
 
     /// Callback for when a control associated with this controller generates an action
     fn action(&self, _action_id: &str) { }
@@ -80,11 +84,13 @@ pub fn assemble_ui(base_controller: Arc<Controller>) -> Box<Bound<Control>> {
 ///
 /// A controller that does nothing
 ///
-pub struct NullController;
+pub struct NullController {
+    view_model: Arc<NullViewModel>
+}
 
 impl NullController {
     pub fn new() -> NullController {
-        NullController
+        NullController { view_model: Arc::new(NullViewModel::new()) }
     }
 }
 
@@ -95,6 +101,10 @@ impl Controller for NullController {
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
         None
+    }
+
+    fn get_viewmodel(&self) -> Arc<ViewModel> {
+        self.view_model.clone()
     }
 }
 
