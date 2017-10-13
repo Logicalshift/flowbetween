@@ -1,4 +1,5 @@
 use super::diff::*;
+use super::property::*;
 
 ///
 /// Description of what should trigger an action
@@ -18,7 +19,7 @@ pub enum ControlAttribute {
     BoundingBox(Bounds),
 
     /// The text for this control
-    Text(String),
+    Text(Property),
 
     /// The unique ID for this control
     Id(String),
@@ -50,7 +51,7 @@ impl ControlAttribute {
     ///
     /// The text represented by this attribute
     ///
-    pub fn text<'a>(&'a self) -> Option<&'a String> {
+    pub fn text<'a>(&'a self) -> Option<&'a Property> {
         match self {
             &Text(ref text) => Some(text),
             _               => None
@@ -132,7 +133,7 @@ impl ToControlAttributes for ControlAttribute {
 
 impl<'a> ToControlAttributes for &'a str {
     fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![Text(String::from(*self))]
+        vec![Text(self.to_property())]
     }
 }
 
@@ -438,7 +439,7 @@ mod test {
         let label = Control::label().with("Hello");
 
         assert!(label.control_type() == ControlType::Label);
-        assert!(label.attributes().any(|attr| attr == &ControlAttribute::Text(String::from("Hello"))));
+        assert!(label.attributes().any(|attr| attr == &ControlAttribute::Text("Hello".to_property())));
     }
 
     #[test]
@@ -446,7 +447,7 @@ mod test {
         let label = Control::label().with(("Hello", Bounds::fill_all()));
 
         assert!(label.control_type() == ControlType::Label);
-        assert!(label.attributes().any(|attr| attr == &ControlAttribute::Text(String::from("Hello"))));
+        assert!(label.attributes().any(|attr| attr == &ControlAttribute::Text("Hello".to_property())));
         assert!(label.attributes().any(|attr| attr == &ControlAttribute::BoundingBox(Bounds::fill_all())));
     }
 
