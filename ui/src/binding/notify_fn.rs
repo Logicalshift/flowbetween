@@ -10,8 +10,8 @@ struct NotifyFn<TFn> {
 impl<TFn> Notifiable for NotifyFn<TFn>
 where TFn: Send+FnMut() -> () {
     fn mark_as_changed(&self) {
-        let cell            = self.when_changed.lock().unwrap();
-        let mut on_changed  = &mut *cell.borrow_mut();
+        let cell        = self.when_changed.lock().unwrap();
+        let on_changed  = &mut *cell.borrow_mut();
         
         on_changed()
     }
