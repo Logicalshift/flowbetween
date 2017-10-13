@@ -8,10 +8,10 @@ use super::binding::*;
 ///
 pub trait ViewModel {
     /// Retrieves a property
-    fn get_property(&self, property_name: &str) -> Box<Bound<Property>>;
+    fn get_property(&self, property_name: &str) -> Box<Bound<PropertyValue>>;
 
     /// Updates a property
-    fn set_property(&self, property_name: &str, new_value: Property);
+    fn set_property(&self, property_name: &str, new_value: PropertyValue);
 
     /// Retrieves the names of all of the properties in this item
     fn get_property_names(&self) -> Vec<String>;
@@ -26,11 +26,11 @@ impl NullViewModel {
 }
 
 impl ViewModel for NullViewModel {
-    fn get_property(&self, _property_name: &str) -> Box<Bound<Property>> {
-        Box::new(bind(Property::Nothing))
+    fn get_property(&self, _property_name: &str) -> Box<Bound<PropertyValue>> {
+        Box::new(bind(PropertyValue::Nothing))
     }
 
-    fn set_property(&self, _property_name: &str, _new_value: Property) { 
+    fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
     }
 
     fn get_property_names(&self) -> Vec<String> {

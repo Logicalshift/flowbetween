@@ -14,6 +14,18 @@ pub enum Property {
     Bind(String)
 }
 
+///
+/// Represents the value of a property
+///
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub enum PropertyValue {
+    Nothing,
+    Bool(bool),
+    Int(i32),
+    Float(f64),
+    String(String),
+}
+
 impl ToString for Property {
     fn to_string(&self) -> String {
         match self {
@@ -24,6 +36,18 @@ impl ToString for Property {
             &Property::String(ref s)        => s.clone(),
 
             &Property::Bind(ref binding)    => format!("<<bound to {}>>", binding)
+        }
+    }
+}
+
+impl ToString for PropertyValue {
+    fn to_string(&self) -> String {
+        match self {
+            &PropertyValue::Nothing         => String::from("<<nothing>>"),
+            &PropertyValue::Bool(ref b)     => b.to_string(),
+            &PropertyValue::Int(ref i)      => i.to_string(),
+            &PropertyValue::Float(ref f)    => f.to_string(),
+            &PropertyValue::String(ref s)   => s.clone()
         }
     }
 }
@@ -68,5 +92,17 @@ impl<'a> ToProperty for &'a f32 {
 impl<'a> ToProperty for &'a f64 {
     fn to_property(self) -> Property {
         Property::Float(*self)
+    }
+}
+
+impl<'a> ToProperty for &'a PropertyValue {
+    fn to_property(self) -> Property {
+        match self {
+            &PropertyValue::Nothing         => Property::Nothing,
+            &PropertyValue::Bool(ref b)     => Property::Bool(*b),
+            &PropertyValue::Int(ref i)      => Property::Int(*i),
+            &PropertyValue::Float(ref f)    => Property::Float(*f),
+            &PropertyValue::String(ref s)   => Property::String(s.clone())
+        }
     }
 }
