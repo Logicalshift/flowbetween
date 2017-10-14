@@ -113,13 +113,25 @@ mod test {
     use super::*;
 
     struct TestController {
-        label_controller: Arc<LabelController>
+        label_controller: Arc<LabelController>,
+        view_model: Arc<NullViewModel>
     }
-    struct LabelController;
+    struct LabelController {
+        view_model: Arc<NullViewModel>
+    }
 
     impl TestController {
         pub fn new() -> TestController {
-            TestController { label_controller: Arc::new(LabelController) }
+            TestController { 
+                label_controller: Arc::new(LabelController::new()), 
+                view_model: Arc::new(NullViewModel::new()) 
+            }
+        }
+    }
+
+    impl LabelController {
+        pub fn new() -> LabelController {
+            LabelController { view_model: Arc::new(NullViewModel::new()) }
         }
     }
 
@@ -131,6 +143,10 @@ mod test {
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
             Some(self.label_controller.clone())
         }
+
+        fn get_viewmodel(&self) -> Arc<ViewModel> {
+            self.view_model.clone()
+        }
     }
 
     impl Controller for LabelController {
@@ -141,11 +157,15 @@ mod test {
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
             None
         }
+
+        fn get_viewmodel(&self) -> Arc<ViewModel> {
+            self.view_model.clone()
+        }
     }
 
     #[test]
     fn can_assemble_simple_label() {
-        let label_controller    = Arc::new(LabelController);
+        let label_controller    = Arc::new(LabelController::new());
         let assembly            = assemble_ui(label_controller.clone());
 
         assert!(assembly.get() == Control::label());
