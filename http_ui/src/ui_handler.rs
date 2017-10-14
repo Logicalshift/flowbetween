@@ -4,6 +4,7 @@ use std::collections::*;
 use super::event::*;
 use super::update::*;
 use super::session::*;
+use super::viewmodel::*;
 use super::htmlcontrol::*;
 use super::session_state::*;
 
@@ -59,11 +60,12 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Generates a UI refresh response
     ///
-    pub fn refresh_ui(&self, state: Arc<SessionState>, response: &mut UiHandlerResponse) {
-        let ui      = state.entire_ui_tree();
-        let ui_html = ui.to_html();
+    pub fn refresh_ui(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse) {
+        let ui          = state.entire_ui_tree();
+        let ui_html     = ui.to_html();
+        let viewmodel   = viewmodel_update_controller_tree(&*session);
 
-        response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui, vec![]));
+        response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui, viewmodel));
     }
 
     ///
@@ -121,7 +123,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
                 },
 
                 // Refreshing the UI generates a new set of HTML from the abstract UI representation
-                UiRefresh => self.refresh_ui(state.clone(), response),
+                UiRefresh => self.refresh_ui(state.clone(), session.clone(), response),
 
                 // Actions are dispatched to the appropriate controller
                 Action(ref controller_path, ref action) => self.dispatch_action(session.clone(), controller_path, action)
