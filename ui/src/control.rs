@@ -509,4 +509,41 @@ mod test {
         assert!(container.control_type() == ControlType::Container);
         assert!(container.attributes().any(|attr| attr == &ControlAttribute::SubComponents(vec![Control::label().with("Hello")])));
     }
+
+    #[test]
+    fn can_find_all_subcontrollers() {
+        let container = Control::container()
+            .with(vec![
+                Control::empty().with_controller("Test1"),
+                Control::empty().with_controller("Test2"),
+                Control::container().with(vec![
+                    Control::empty().with_controller("Test3")
+                ])
+            ]);
+        
+        let subcontrollers = container.all_controllers();
+
+        assert!(subcontrollers.len() == 3);
+        assert!(subcontrollers.iter().any(|c| c == "Test1"));
+        assert!(subcontrollers.iter().any(|c| c == "Test2"));
+        assert!(subcontrollers.iter().any(|c| c == "Test3"));
+    }
+
+    #[test]
+    fn will_only_report_subcontrollers_once() {
+        let container = Control::container()
+            .with(vec![
+                Control::empty().with_controller("Test1"),
+                Control::empty().with_controller("Test2"),
+                Control::container().with(vec![
+                    Control::empty().with_controller("Test1")
+                ])
+            ]);
+        
+        let subcontrollers = container.all_controllers();
+
+        assert!(subcontrollers.len() == 2);
+        assert!(subcontrollers.iter().any(|c| c == "Test1"));
+        assert!(subcontrollers.iter().any(|c| c == "Test2"));
+    }
 }
