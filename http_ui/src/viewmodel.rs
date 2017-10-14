@@ -1,7 +1,5 @@
 use ui::*;
 
-use std::sync::*;
-
 ///
 /// Describes an update to the view model
 ///
@@ -58,12 +56,12 @@ pub fn viewmodel_update_all(controller_path: Vec<String>, viewmodel: &ViewModel)
 ///
 /// Generates the updates to set the viewmodel for an entire controller tree
 ///
-pub fn viewmodel_update_controller_tree(controller: &Arc<Controller>) -> Vec<ViewModelUpdate> {
+pub fn viewmodel_update_controller_tree(controller: &Controller) -> Vec<ViewModelUpdate> {
     let mut result = vec![];
 
     // Push the controllers to the result
     // Rust could probably capture the 'result' variable in the closure exactly liek this if it were smarter
-    fn add_controller_to_result(controller: &Arc<Controller>, path: &mut Vec<String>, result: &mut Vec<ViewModelUpdate>) {
+    fn add_controller_to_result(controller: &Controller, path: &mut Vec<String>, result: &mut Vec<ViewModelUpdate>) {
         // Fetch the update for the viewmodel for this controller
         let viewmodel           = controller.get_viewmodel();
         let viewmodel_update    = viewmodel_update_all(path.clone(), &*viewmodel);
@@ -81,7 +79,7 @@ pub fn viewmodel_update_controller_tree(controller: &Arc<Controller>) -> Vec<Vie
             if let Some(subcontroller) = controller.get_subcontroller(subcontroller_name) {
                 // Recursively process this subcontroller
                 path.push(subcontroller_name.clone());
-                add_controller_to_result(&subcontroller, path, result);
+                add_controller_to_result(&*subcontroller, path, result);
                 path.pop();
             }
         }
@@ -96,8 +94,63 @@ pub fn viewmodel_update_controller_tree(controller: &Arc<Controller>) -> Vec<Vie
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::sync::*;
 
     struct TestViewModel;
+
+    struct TestController {
+        model_controler: Arc<ModelController>,
+        view_model: Arc<NullViewModel>
+    }
+    struct ModelController {
+        view_model: Arc<TestViewModel>
+    }
+
+    impl TestController {
+        pub fn new() -> TestController {
+            TestController { 
+                model_controler: Arc::new(ModelController::new()), 
+                view_model: Arc::new(NullViewModel::new()) 
+            }
+        }
+    }
+
+    impl ModelController {
+        pub fn new() -> ModelController {
+            ModelController { view_model: Arc::new(TestViewModel) }
+        }
+    }
+
+    impl Controller for TestController {
+        fn ui(&self) -> Box<Bound<Control>> {
+            Box::new(bind(Control::container().with(vec![
+                Control::empty().with_controller("Model1"),
+                Control::empty().with_controller("Model2")
+            ])))
+        }
+
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+            Some(self.model_controler.clone())
+        }
+
+        fn get_viewmodel(&self) -> Arc<ViewModel> {
+            self.view_model.clone()
+        }
+    }
+
+    impl Controller for ModelController {
+        fn ui(&self) -> Box<Bound<Control>> {
+            Box::new(bind(Control::label()))
+        }
+
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+            None
+        }
+
+        fn get_viewmodel(&self) -> Arc<ViewModel> {
+            self.view_model.clone()
+        }
+    }
 
     impl ViewModel for TestViewModel {
         fn get_property(&self, property_name: &str) -> Box<Bound<PropertyValue>> {
@@ -119,6 +172,28 @@ mod test {
 
         assert!(update.controller_path() == &vec!["Test".to_string(), "Path".to_string()]);
         assert!(update.updates() == &vec![
+            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+    }
+    
+    #[test]
+    pub fn can_generate_controller_update_all() {
+        let controller  = Arc::new(TestController::new());
+        let update      = viewmodel_update_controller_tree(&*controller);
+
+        assert!(update.len() == 2);
+
+        assert!(update[0].controller_path() == &vec!["Model1".to_string()]);
+        assert!(update[0].updates() == &vec![
+            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+
+        assert!(update[1].controller_path() == &vec!["Model2".to_string()]);
+        assert!(update[1].updates() == &vec![
             ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
             ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
             ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
