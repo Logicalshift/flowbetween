@@ -92,16 +92,16 @@ mod test {
 
     #[test]
     fn can_convert_button_to_html() {
-        assert!(Control::button().to_html() == "<div class=\"flo-button\"></div>")
+        assert!(Control::button().to_html() == "<flo-button></flo-button>")
     }
 
     #[test]
     fn can_convert_label_to_html() {
-        assert!(Control::label().with("Hello & goodbye").to_html() == "<div class=\"flo-label\">Hello &amp; goodbye</div>")
+        assert!(Control::label().with("Hello & goodbye").to_html() == "<flo-label>Hello &amp; goodbye</flo-label>")
     }
 
     #[test]
     fn can_convert_container_to_html() {
-        assert!(Control::container().with(vec![Control::button()]).to_html() == "<div class=\"flo-container\"><div class=\"flo-button\"></div></div>")
+        assert!(Control::container().with(vec![Control::button()]).to_html() == "<flo-container><flo-button></flo-button></flo-container>")
     }
 }
