@@ -305,6 +305,45 @@ impl Control {
     }
 
     ///
+    /// If this control has a controller attribute, finds it
+    ///
+    pub fn subcomponents<'a>(&'a self) -> Option<&'a Vec<Control>> {
+        self.attributes.iter()
+            .map(|attr| attr.subcomponents())
+            .find(|attr| attr.is_some())
+            .map(|attr| attr.unwrap())
+    }
+
+    ///
+    /// Finds the names of all of the controllers referenced by this control and its subcontrols
+    ///
+    pub fn all_controllers(&self) -> Vec<String> {
+        let mut result = vec![];
+
+        fn all_controllers(ctrl: &Control, result: &mut Vec<String>) {
+            // Push the controller to the result if there is one
+            if let Some(controller_name) = ctrl.controller() {
+                result.push(String::from(controller_name));
+            }
+
+            // Go through the subcomponents as well
+            if let Some(subcomponents) = ctrl.subcomponents() {
+                for subcomponent in subcomponents.iter() {
+                    all_controllers(subcomponent, result);
+                }
+            }
+        }
+
+        all_controllers(self, &mut result);
+
+        // Remove duplicate controllers
+        result.sort();
+        result.dedup();
+
+        result
+    }
+
+    ///
     /// Visits the control tree and performs a mapping function on each item
     ///
     pub fn map<TFn: Fn(&Control) -> Control>(&self, map_fn: &TFn) -> Control {

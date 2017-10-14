@@ -63,7 +63,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         let ui      = state.entire_ui_tree();
         let ui_html = ui.to_html();
 
-        response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui));
+        response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui, vec![]));
     }
 
     ///

@@ -14,6 +14,7 @@ pub mod update;
 pub mod event;
 pub mod htmlcontrol;
 pub mod ui_handler;
+pub mod viewmodel;
 
 pub use self::session::*;
 pub use self::session_state::*;
