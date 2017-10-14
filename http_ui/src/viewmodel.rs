@@ -92,3 +92,36 @@ pub fn viewmodel_update_controller_tree(controller: &Arc<Controller>) -> Vec<Vie
 
     result
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    struct TestViewModel;
+
+    impl ViewModel for TestViewModel {
+        fn get_property(&self, property_name: &str) -> Box<Bound<PropertyValue>> {
+            Box::new(bind(PropertyValue::String(property_name.to_string())))
+        }
+
+        fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
+        }
+
+        fn get_property_names(&self) -> Vec<String> {
+            vec![ "Test1".to_string(), "Test2".to_string(), "Test3".to_string() ]
+        }
+    }
+    
+    #[test]
+    pub fn can_generate_viewmodel_update_all() {
+        let viewmodel   = TestViewModel;
+        let update      = viewmodel_update_all(vec!["Test".to_string(), "Path".to_string()], &viewmodel);
+
+        assert!(update.controller_path() == &vec!["Test".to_string(), "Path".to_string()]);
+        assert!(update.updates() == &vec![
+            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+    }
+}
