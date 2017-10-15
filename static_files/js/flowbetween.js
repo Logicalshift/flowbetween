@@ -667,6 +667,84 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// ===== VIEWMODEL
+    ///
+
+    let viewmodel = (function() {
+        let viewmodel = {
+            subcontrollers: {},
+            keys:           {}
+        };
+
+        ///
+        /// Returns the viewmodel for a particular controller
+        ///
+        let viewmodel_for_controller = (controller_path) => {
+            let viewmodel_for_controller = (controller_path, viewmodel) => {
+                // It's just the current viewmodel if there's no path remaining to folow
+                if (controller_path.length === 0) {
+                    return viewmodel;
+                }
+                
+                // Follow the path
+                let next_controller = controller_path[0];
+                let next_viewmodel  = viewmodel.subcontrollers[next_controller];
+
+                // We always ensure that there's a viewmodel for any requested path (so we create a new viewmodel as a side-effect)
+                if (!next_viewmodel) {
+                    next_viewmodel = {
+                        subcontrollers: {},
+                        keys:           {}
+                    }
+
+                    viewmodel.subcontrollers[next_controller] = next_viewmodel;
+                }
+
+                // Recursively follow the path to get the viewmodel for this controller
+                let remaining_path = controller_path.slice(1);
+                return viewmodel_for_controller(remaining_path, next_viewmodel);
+            }
+
+            return viewmodel_for_controller(controller_path, viewmodel);
+        }
+
+        ///
+        /// Sets a single value in a controller
+        ///
+        let set_viewmodel_value = (controller_path, key, value) => {
+            let viewmodel = viewmodel_for_controller(controller_path);
+            viewmodel.keys[key] = value;
+        }
+
+        ///
+        /// Retrieves a viewmodel value for a particular controller
+        ///
+        let get_viewmodel_value = (controller_path, key) => {
+            let viewmodel = viewmodel_for_controller(controller_path);
+            return viewmodel.keys[key] || "Nothing";
+        }
+
+        ///
+        /// Given a controller, replaces its entire view model
+        ///
+        let set_viewmodel = (controller_path, new_viewmodel_keys) => {
+            let viewmodel   = viewmodel_for_controller(controller_path);
+            viewmodel.keys  = new_viewmodel_keys;
+        }
+
+        return {
+            set_viewmodel_value:    set_viewmodel_value,
+            get_viewmodel_value:    get_viewmodel_value,
+            set_viewmodel:          set_viewmodel
+        }
+    })();
+
+    /// Sets a new view model for a controller
+    let set_viewmodel_value = viewmodel.set_viewmodel_value;
+    let get_viewmodel_value = viewmodel.get_viewmodel_value;
+    let set_viewmodel       = viewmodel.set_viewmodel;
+
+    ///
     /// ===== HANDLING SERVER EVENTS
     ///
 
@@ -845,7 +923,7 @@ function flowbetween(root_node) {
     }
 
     ///
-    /// =====
+    /// ===== STARTUP
     ///
 
     // Whenever the document resizes, lay everything out again
