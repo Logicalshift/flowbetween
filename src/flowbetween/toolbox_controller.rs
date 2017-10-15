@@ -20,10 +20,10 @@ impl ToolboxController {
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
             .with(vec![
-                Self::make_tool(), 
-                Self::make_tool(),
-                Self::make_tool(), 
-                Self::make_tool()
+                Self::make_tool("Select",   &viewmodel), 
+                Self::make_tool("Pan",      &viewmodel),
+                Self::make_tool("Pencil",   &viewmodel), 
+                Self::make_tool("Ink",      &viewmodel)
             ]));
 
         ToolboxController {
@@ -35,12 +35,18 @@ impl ToolboxController {
     ///
     /// Creates a new tool control
     ///
-    fn make_tool() -> Control {
+    fn make_tool(name: &str, viewmodel: &ToolboxViewModel) -> Control {
         use ui::ControlAttribute::*;
         use ui::ActionTrigger::*;
 
+        // The tool has a '-selected' binding that we use to cause it to highlight
+        let selected_property_name = format!("{}-selected", name);
+        viewmodel.set_property(&selected_property_name, PropertyValue::Bool(false));
+
+        // The control is just a button
         Control::button()
-            .with(Action(Click, String::from("ToolClick")))
+            .with(Action(Click, String::from(name)))
+            .with(Selected(Property::Bind(selected_property_name)))
             .with(Bounds::next_vert(48.0))
     }
 }
