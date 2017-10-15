@@ -44,15 +44,16 @@ impl ToolboxController {
         use ui::ControlAttribute::*;
         use ui::ActionTrigger::*;
 
-        // TOOD: the -selected binding would work really well as as computed binding...
-
         // Decide if this is the selected tool
-        let selected_tool   = viewmodel.get_property("SelectedTool").get().string().unwrap_or(String::from(""));
-        let is_selected     = selected_tool == name;
+        let selected_tool   = viewmodel.get_property("SelectedTool");
 
         // The tool has a '-selected' binding that we use to cause it to highlight
-        let selected_property_name = format!("{}-selected", name);
-        viewmodel.set_property(&selected_property_name, PropertyValue::Bool(is_selected));
+        let compare_name            = String::from(name);
+        let selected_property_name  = format!("{}-selected", name);
+        viewmodel.set_computed(&selected_property_name, move || {
+            let selected_tool = selected_tool.get().string().unwrap_or(String::from(""));
+            PropertyValue::Bool(selected_tool == compare_name)
+        });
 
         // The control is just a button
         Control::button()
