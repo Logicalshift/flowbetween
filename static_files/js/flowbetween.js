@@ -1,4 +1,7 @@
-"use strict";
+'use strict';
+
+/* exported flowbetween */
+/* exported propagate_object_events */
 
 // FlowBetween
 function flowbetween(root_node) {
@@ -28,7 +31,7 @@ function flowbetween(root_node) {
             command_list[name] = {
                 description:    description,
                 action:         action
-            }
+            };
 
             if (commands_enabled) {
                 window[name] = action;
@@ -70,7 +73,7 @@ function flowbetween(root_node) {
             commands_enabled = true;
 
             // Tell the user that the functions are available
-            console.log('%cType %cflow_help()%c to see a list of functions for FlowBetween', 'font-family: monospace;', 'font-family: monospace; font-weight: bold', 'font-family: monospace; font-weight: normal;')
+            console.log('%cType %cflow_help()%c to see a list of functions for FlowBetween', 'font-family: monospace;', 'font-family: monospace; font-weight: bold', 'font-family: monospace; font-weight: normal;');
         };
         
         // The help command should always be available
@@ -79,7 +82,7 @@ function flowbetween(root_node) {
         return {
             add_command:        add_command,
             enable_commands:    enable_commands
-        }
+        };
     })();
 
     let add_command     = commands.add_command;
@@ -118,15 +121,15 @@ function flowbetween(root_node) {
 
                 recent_notes    = [];
 
-                note("Future notes will be displayed immediately");
+                note('Future notes will be displayed immediately');
             } else {
-                note("Already showing notes");
+                note('Already showing notes');
             }
         });
 
         add_command('hide_notes', 'Hides verbose log messages', () => {
             if (show_notes) {
-                note("Hiding future notes");
+                note('Hiding future notes');
                 show_notes = false;
             }
         });
@@ -139,14 +142,14 @@ function flowbetween(root_node) {
     ///
     let warn = function() {
         console.warn.apply(console, arguments);
-    }
+    };
     
     ///
     /// Display an error
     ///
     let error = function() {
         console.error.apply(console, arguments);
-    }
+    };
 
     ///
     /// ===== SENDING REQUESTS
@@ -163,7 +166,7 @@ function flowbetween(root_node) {
                 setTimeout(() => resolve(), seconds * 1000.0);
             }
         });
-    }
+    };
 
     ///
     /// Performs an XmlHttpRequest to a particular url with a JSON
@@ -203,7 +206,7 @@ function flowbetween(root_node) {
             // Send the request
             req.send(utf8.encode(encoding));
         });
-    }
+    };
 
     /// Sends a POST request
     let http_post   = (obj, url) => xhr(obj, url, 'POST');
@@ -223,7 +226,7 @@ function flowbetween(root_node) {
                 resolve(JSON.parse(xmlRequest.response));
             }
         });
-    }
+    };
 
     ///
     /// Retries an operation if it fails
@@ -252,7 +255,7 @@ function flowbetween(root_node) {
                         }
                     })
                     .then(result => resolve(result));
-            }
+            };
             
             // Run the first try
             run_try(0);
@@ -300,7 +303,7 @@ function flowbetween(root_node) {
         /// as part of this call, so that's something that needs to be
         /// done.
         ///
-        let apply_template = (node, attributes) => {
+        let apply_template = (node) => {
             // Get the template elements for this node
             let templateForNode = templates[node.tagName.toLowerCase()];
 
@@ -334,21 +337,21 @@ function flowbetween(root_node) {
     ///
     let get_root = () => {
         return root_node;
-    }
+    };
 
     ///
     /// Give a DOM node, returns the child nodes that represent flowbetween controls
     ///
     let get_flo_subnodes = (node) => {
-        return [].slice.apply(node.children).filter(element => element.nodeType === Node.ELEMENT_NODE && element.tagName.toLowerCase().startsWith("flo-"));
-    }
+        return [].slice.apply(node.children).filter(element => element.nodeType === Node.ELEMENT_NODE && element.tagName.toLowerCase().startsWith('flo-'));
+    };
 
     ///
     /// Given a DOM node, returns the child nodes that represent decorative items
     ///
     let get_decorative_subnodes = (node) => {
-        return [].slice.apply(node.children).filter(element => element.nodeType === Node.ELEMENT_NODE && !element.tagName.toLowerCase().startsWith("flo-"));
-    }
+        return [].slice.apply(node.children).filter(element => element.nodeType === Node.ELEMENT_NODE && !element.tagName.toLowerCase().startsWith('flo-'));
+    };
 
     ///
     /// Fetches the attributes for a control node
@@ -380,7 +383,7 @@ function flowbetween(root_node) {
         let get_attr = (name) => {
             let result = get_attrs(name);
             return result ? result[0] : null;
-        }
+        };
 
         // subcomponents() can be used to get the subcomponents of a control
         let subcomponents = () => {
@@ -400,7 +403,7 @@ function flowbetween(root_node) {
         // actions returns the list of actions that apply to this control
         let actions = () => {
             return get_attrs('Action');
-        }
+        };
 
         // Return an object that can be used to get information about these attributes
         return {
@@ -411,7 +414,7 @@ function flowbetween(root_node) {
             actions:        actions,
             bounding_box:   bounding_box
         };
-    }
+    };
 
     ///
     /// Visits the flo items in the DOM, passing in attributes from
@@ -448,7 +451,7 @@ function flowbetween(root_node) {
 
         // Initial node has no controller path
         visit_internal(dom_node, control_data, visit_node, []);
-    }
+    };
 
     ///
     /// Computes a position, given a previous position and a position element
@@ -463,27 +466,27 @@ function flowbetween(root_node) {
         }
 
         switch (pos_type) {
-            case 'At':      return next_pos_desc[pos_type];
-            case 'Offset':  return last_pos_abs + next_pos_desc[pos_type];
-            case 'Start':   return 0;
-            case 'End':     return max_extent;
-            case 'After':   return last_pos_abs;
+        case 'At':      return next_pos_desc[pos_type];
+        case 'Offset':  return last_pos_abs + next_pos_desc[pos_type];
+        case 'Start':   return 0;
+        case 'End':     return max_extent;
+        case 'After':   return last_pos_abs;
 
-            case 'Stretch': {
-                let stretch = next_pos_desc[pos_type];
-                if (total_stretch > 0) {
-                    let ratio = stretch/total_stretch;
-                    return last_pos_abs + stretch_extent*ratio;
-                } else {
-                    return last_pos_abs;
-                }
-            }
-            
-            default:
-                warn('Unknown position type', next_pos_desc);
+        case 'Stretch': {
+            let stretch = next_pos_desc[pos_type];
+            if (total_stretch > 0) {
+                let ratio = stretch/total_stretch;
+                return last_pos_abs + stretch_extent*ratio;
+            } else {
                 return last_pos_abs;
+            }
         }
-    }
+        
+        default:
+            warn('Unknown position type', next_pos_desc);
+            return last_pos_abs;
+        }
+    };
 
     ///
     /// Lays out the subcomponents associated with a particular node
@@ -601,8 +604,8 @@ function flowbetween(root_node) {
             if (remove_more_events) {
                 remove_more_events();
             }
-        }
-    }
+        };
+    };
 
     ///
     /// Clears any events attached to a DOM node
@@ -614,18 +617,18 @@ function flowbetween(root_node) {
         if (remove_events) {
             remove_events();
         }
-    }
+    };
 
     ///
     /// Wires up a click action to a node
     ///
     let wire_click = (action_name, node, controller_path) => {
-        add_action_event(node, "click", () => {
-            note("Click " + action_name + " --> " + controller_path);
+        add_action_event(node, 'click', () => {
+            note('Click ' + action_name + ' --> ' + controller_path);
 
             perform_action(controller_path, action_name);
         });
-    }
+    };
 
     ///
     /// Wires up an action to a node
@@ -639,13 +642,13 @@ function flowbetween(root_node) {
         let action_name = action[1];
 
         switch (action_type) {
-            case 'Click':
-                wire_click(action_name, node, controller_path);
-                break;
+        case 'Click':
+            wire_click(action_name, node, controller_path);
+            break;
 
-            default:
-                warn('Unknown action type: ' + action_type);
-                break;
+        default:
+            warn('Unknown action type: ' + action_type);
+            break;
         }
     };
 
@@ -695,7 +698,7 @@ function flowbetween(root_node) {
                     next_viewmodel = {
                         subcontrollers: {},
                         keys:           {}
-                    }
+                    };
 
                     viewmodel.subcontrollers[next_controller] = next_viewmodel;
                 }
@@ -703,10 +706,10 @@ function flowbetween(root_node) {
                 // Recursively follow the path to get the viewmodel for this controller
                 let remaining_path = controller_path.slice(1);
                 return viewmodel_for_controller(remaining_path, next_viewmodel);
-            }
+            };
 
             return viewmodel_for_controller(controller_path, viewmodel);
-        }
+        };
 
         ///
         /// Sets a single value in a controller
@@ -714,15 +717,15 @@ function flowbetween(root_node) {
         let set_viewmodel_value = (controller_path, key, value) => {
             let viewmodel = viewmodel_for_controller(controller_path);
             viewmodel.keys[key] = value;
-        }
+        };
 
         ///
         /// Retrieves a viewmodel value for a particular controller
         ///
         let get_viewmodel_value = (controller_path, key) => {
             let viewmodel = viewmodel_for_controller(controller_path);
-            return viewmodel.keys[key] || "Nothing";
-        }
+            return viewmodel.keys[key] || 'Nothing';
+        };
 
         ///
         /// Given a controller, replaces its entire view model
@@ -730,13 +733,13 @@ function flowbetween(root_node) {
         let set_viewmodel = (controller_path, new_viewmodel_keys) => {
             let viewmodel   = viewmodel_for_controller(controller_path);
             viewmodel.keys  = new_viewmodel_keys;
-        }
+        };
 
         return {
             set_viewmodel_value:    set_viewmodel_value,
             get_viewmodel_value:    get_viewmodel_value,
             set_viewmodel:          set_viewmodel
-        }
+        };
     })();
 
     /// Sets a new view model for a controller
@@ -759,7 +762,7 @@ function flowbetween(root_node) {
             res[kind] = parameter;
             return res;
         }
-    }
+    };
 
     ///
     /// Creates a request for a particular session
@@ -772,7 +775,7 @@ function flowbetween(root_node) {
         }
 
         return res;
-    }
+    };
 
     ///
     /// A new session has started
@@ -784,14 +787,14 @@ function flowbetween(root_node) {
             running_session_id = new_session_id;
             resolve();
         });
-    }
+    };
 
     ///
     /// Given a node and its control data, updates the layout
     ///
     let layout_tree = (dom_node, control_data) => {
         visit_dom(dom_node, control_data, (node, attributes) => layout_subcomponents(node, attributes));
-    }
+    };
 
     ///
     /// Given a node and its control data, wires up any events
@@ -809,14 +812,14 @@ function flowbetween(root_node) {
             // Attach any events that this node might require
             wire_events(node, attributes, controller_path);
         });
-    }
+    };
 
     ///
     /// Applies the node templates to a DOM tree
     ///
     let apply_templates_to_tree = (dom_node, control_data) => {
         visit_dom(dom_node, control_data, (node, attributes) => apply_template(node, attributes));
-    }
+    };
 
     ///
     /// The entire UI HTML should be replaced with a new version
@@ -838,7 +841,7 @@ function flowbetween(root_node) {
 
             resolve();
         });
-    }
+    };
 
     ///
     /// Dispatches updates in a request
@@ -863,17 +866,17 @@ function flowbetween(root_node) {
                 let update_key = Object.keys(update)[0];
 
                 switch (update_key) {
-                    case 'NewSession':
-                        current_promise = current_promise.then(() => on_new_session(update[update_key]));
-                        break;
+                case 'NewSession':
+                    current_promise = current_promise.then(() => on_new_session(update[update_key]));
+                    break;
 
-                    case 'NewUserInterfaceHtml':
-                        current_promise = current_promise.then(() => on_new_html(update[update_key][0], update[update_key][1]));
-                        break;
+                case 'NewUserInterfaceHtml':
+                    current_promise = current_promise.then(() => on_new_html(update[update_key][0], update[update_key][1]));
+                    break;
 
-                    default:
-                        warn('Unknown update type', update_key, update);
-                        break;
+                default:
+                    warn('Unknown update type', update_key, update);
+                    break;
                 }
             });
 
@@ -886,32 +889,32 @@ function flowbetween(root_node) {
     ///
     let send_request = (request) => {
         return retry(() => http_post(request), () => warn('UI request failed - retrying'))
-        .then((response) => response_to_object(response))
-        .then((ui_request) => dispatch_updates(ui_request.updates))
-        .catch((err) => {
-            error('Request failed.', err);
-        });
-    }
+            .then((response) => response_to_object(response))
+            .then((ui_request) => dispatch_updates(ui_request.updates))
+            .catch((err) => {
+                error('Request failed.', err);
+            });
+    };
 
     ///
     /// Makes a request to refresh the current state of the UI
     ///
     let refresh_ui = () => {
-        let request = make_request([ make_event("UiRefresh") ], running_session_id);
+        let request = make_request([ make_event('UiRefresh') ], running_session_id);
 
         return send_request(request);
-    }
+    };
 
     ///
     /// Makes the new session request
     ///
     let new_session = () => {
-        let request = make_request([ make_event("NewSession") ]);
+        let request = make_request([ make_event('NewSession') ]);
 
         // Generate a new session and immediately request that the UI be updated
         return send_request(request)
             .then(() => refresh_ui());
-    }
+    };
 
     ///
     /// Performs a particular action
@@ -920,7 +923,7 @@ function flowbetween(root_node) {
         let request = make_request([ make_event({ Action: [controller_path, action_name] })], running_session_id);
 
         return send_request(request);
-    }
+    };
 
     ///
     /// ===== STARTUP
@@ -947,7 +950,7 @@ function flowbetween(root_node) {
     reload_templates(document.getRootNode());
     new_session();
     enable_commands();
-};
+}
 
 ///
 /// Declares a function that propagates events from the document of an
@@ -958,27 +961,27 @@ function flowbetween(root_node) {
 ///
 let propagate_object_events = (function() {
     let default_events = [
-        "blur",
-        "click",
-        "dblclick",
-        "input",
-        "mousedown",
-        "mousemove",
-        "mouseout",
-        "mouseover",
-        "mouseup",
-        "pointercancel", 
-        "pointerdown", 
-        "pointerenter", 
-        "pointerleave",
-        "pointermove",
-        "pointerout",
-        "pointerover",
-        "pointerup",
-        "touchcancel",
-        "touchmove",
-        "touchstart",
-        "wheel"
+        'blur',
+        'click',
+        'dblclick',
+        'input',
+        'mousedown',
+        'mousemove',
+        'mouseout',
+        'mouseover',
+        'mouseup',
+        'pointercancel',
+        'pointerdown',
+        'pointerenter', 
+        'pointerleave',
+        'pointermove',
+        'pointerout',
+        'pointerover',
+        'pointerup',
+        'touchcancel',
+        'touchmove',
+        'touchstart',
+        'wheel'
     ];
 
     return (object_node, events) => {
