@@ -26,6 +26,30 @@ pub enum PropertyValue {
     String(String),
 }
 
+impl PropertyValue {
+    ///
+    /// Returns the string value of this property, if it is one
+    ///
+    pub fn string(&self) -> Option<String> {
+        if let &PropertyValue::String(ref result) = self {
+            Some(result.clone())
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// Returns the string value of this property, if it is one
+    ///
+    pub fn str(&self) -> Option<&str> {
+        if let &PropertyValue::String(ref result) = self {
+            Some(&*result)
+        } else {
+            None
+        }
+    }
+}
+
 impl ToString for Property {
     fn to_string(&self) -> String {
         match self {

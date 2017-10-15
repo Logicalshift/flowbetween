@@ -15,8 +15,13 @@ pub struct ToolboxController {
 
 impl ToolboxController {
     pub fn new() -> ToolboxController {
+        // Create the viewmodel
         let viewmodel = Arc::new(ToolboxViewModel::new());
 
+        // There's a 'SelectedTool' key that describes the currently selected tool
+        viewmodel.set_property("SelectedTool", PropertyValue::String("Pencil".to_string()));
+
+        // Set up the tools
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
             .with(vec![
@@ -39,9 +44,15 @@ impl ToolboxController {
         use ui::ControlAttribute::*;
         use ui::ActionTrigger::*;
 
+        // TOOD: the -selected binding would work really well as as computed binding...
+
+        // Decide if this is the selected tool
+        let selected_tool   = viewmodel.get_property("SelectedTool").get().string().unwrap_or(String::from(""));
+        let is_selected     = selected_tool == name;
+
         // The tool has a '-selected' binding that we use to cause it to highlight
         let selected_property_name = format!("{}-selected", name);
-        viewmodel.set_property(&selected_property_name, PropertyValue::Bool(false));
+        viewmodel.set_property(&selected_property_name, PropertyValue::Bool(is_selected));
 
         // The control is just a button
         Control::button()
