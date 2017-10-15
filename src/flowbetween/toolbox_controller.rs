@@ -1,3 +1,5 @@
+use super::toolbox_viewmodel::*;
+
 use ui::*;
 
 use std::sync::*;
@@ -7,18 +9,25 @@ use std::sync::*;
 /// are using to edit the canvas
 ///
 pub struct ToolboxController {
-    view_model: Arc<NullViewModel>,
+    view_model: Arc<ToolboxViewModel>,
     ui:         Binding<Control>
 }
 
 impl ToolboxController {
     pub fn new() -> ToolboxController {
+        let viewmodel = Arc::new(ToolboxViewModel::new());
+
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
-            .with(vec![Self::make_tool(), Self::make_tool(), Self::make_tool(), Self::make_tool()]));
+            .with(vec![
+                Self::make_tool(), 
+                Self::make_tool(),
+                Self::make_tool(), 
+                Self::make_tool()
+            ]));
 
         ToolboxController {
-            view_model: Arc::new(NullViewModel::new()),
+            view_model: viewmodel,
             ui:         ui
         }
     }
