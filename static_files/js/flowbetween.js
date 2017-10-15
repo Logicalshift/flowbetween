@@ -750,6 +750,22 @@ function flowbetween(root_node) {
             set_viewmodel(controller_path, new_keys);
         };
 
+        ///
+        /// Convenience command to dump out the viewmodel
+        ///
+        add_command('show_viewmodel', 'Writes the viewmodel to the console', () => {
+            let display_controller = (controller_name, viewmodel) => {
+                console.group(controller_name);
+                console.log(viewmodel.keys);
+
+                Object.keys(viewmodel.subcontrollers)
+                    .forEach(subcontroller => display_controller(subcontroller, viewmodel.subcontrollers[subcontroller]));
+                console.groupEnd();
+            };
+
+            display_controller('Flowbetween', viewmodel);
+        });
+
         return {
             process_viewmodel_update:   process_viewmodel_update,
             set_viewmodel_value:        set_viewmodel_value,
