@@ -795,11 +795,13 @@ function flowbetween(root_node) {
             actions_for_key[action_index] = change_action;
 
             // Create the removal function
-            let removed = false;
-            let remove_action = () => {
+            let removed         = false;
+            let remove_action   = () => {
                 if (!removed) {
                     removed = true;
                     actions_for_key[action_index] = null;
+                } else {
+                    note('Double removal of action');
                 }
             };
 
