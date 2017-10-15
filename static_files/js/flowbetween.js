@@ -717,8 +717,22 @@ function flowbetween(root_node) {
         /// Sets a single value in a controller
         ///
         let set_viewmodel_value = (controller_path, key, value) => {
-            let viewmodel = viewmodel_for_controller(controller_path);
+            // Update the value in the viewmodel
+            let viewmodel   = viewmodel_for_controller(controller_path);
+            let changed     = viewmodel.keys[key] !== value;
             viewmodel.keys[key] = value;
+
+            // Fire any actions required by the change
+            if (changed) {
+                let actions = viewmodel.actions[key];
+                if (actions) {
+                    actions.forEach(action => {
+                        if (action) {
+                            action(value);
+                        }
+                    });
+                }
+            }
         };
 
         ///
