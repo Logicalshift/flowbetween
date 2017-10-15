@@ -42,6 +42,17 @@ impl ToolboxViewModel {
 
         computed.get(&String::from(property_name)).map(|arc| arc.clone())
     }
+
+    ///
+    /// Sets a binding to a computed value 
+    ///
+    pub fn set_computed<TFn>(&self, property_name: &str, calculate_value: TFn)
+    where TFn: 'static+Send+Sync+Fn() -> PropertyValue {
+        let new_binding = Arc::new(computed(calculate_value));
+
+        let mut computed = self.computed.lock().unwrap();
+        computed.insert(String::from(property_name), new_binding);
+    }
 }
 
 impl ViewModel for ToolboxViewModel {
