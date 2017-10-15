@@ -756,6 +756,9 @@ function flowbetween(root_node) {
         /// Performs an action when a viewmodel value changes. Returns a function
         /// that will disable this action.
         ///
+        /// The event will be invoked immediately with the current value of the
+        /// key, if it has one.
+        ///
         let on_viewmodel_change = (controller_path, key, change_action) => {
             // Get the actions for the viewmodel for this controller
             let viewmodel   = viewmodel_for_controller(controller_path);
@@ -785,6 +788,12 @@ function flowbetween(root_node) {
                     actions_for_key[action_index] = null;
                 }
             };
+
+            // Fire the event immediately if the key has a value
+            let key_value = viewmodel.keys[key];
+            if (key_value) {
+                change_action(key_value);
+            }
 
             return remove_action;
         };
