@@ -86,11 +86,28 @@ impl ViewModel for ToolboxViewModel {
     }
 
     fn get_property_names(&self) -> Vec<String> {
-        let bindings        = self.bindings.lock().unwrap();
-        let binding_keys    = bindings
-            .keys()
-            .map(|key| key.clone())
-            .collect();
+        // The keys for items with 'set' bindings
+        let mut binding_keys: Vec<String> = {
+            let bindings = self.bindings.lock().unwrap();
+            bindings
+                .keys()
+                .map(|key| key.clone())
+                .collect()
+        };
+
+        // Keys for items with computed bindings
+        let mut computed_keys: Vec<String> = {
+            let computed = self.computed.lock().unwrap();
+            computed
+                .keys()
+                .map(|key| key.clone())
+                .collect()
+        };
+
+        // Combine them and deduplicate for the final list of keys
+        binding_keys.append(&mut computed_keys);
+        binding_keys.sort();
+        binding_keys.dedup();
 
         binding_keys
     }
