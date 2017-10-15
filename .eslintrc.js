@@ -9,7 +9,7 @@ module.exports = {
             "error",
             4
         ],
-        /* --- shouldn't this work? ignores properties
+        /* --- shouldn't this work? In the docs, but ignores properties
         "camelcase": [
             "error",
             {"properties": "never"}

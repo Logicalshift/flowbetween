@@ -735,17 +735,33 @@ function flowbetween(root_node) {
             viewmodel.keys  = new_viewmodel_keys;
         };
 
+        ///
+        /// Processes a viewmodel update event
+        ///
+        let process_viewmodel_update = (update_data) => {
+            let controller_path = update_data.controller_path;
+            let updates         = update_data.updates;
+            
+            // Turn the updates into a key set
+            let new_keys = {};
+            updates.forEach(update => new_keys[update[0]] = update[1]);
+
+            // Update the appropriate viewmodel
+            set_viewmodel(controller_path, new_keys);
+        };
+
         return {
-            set_viewmodel_value:    set_viewmodel_value,
-            get_viewmodel_value:    get_viewmodel_value,
-            set_viewmodel:          set_viewmodel
+            process_viewmodel_update:   process_viewmodel_update,
+            set_viewmodel_value:        set_viewmodel_value,
+            get_viewmodel_value:        get_viewmodel_value,
+            set_viewmodel:              set_viewmodel
         };
     })();
 
-    /// Sets a new view model for a controller
-    let set_viewmodel_value = viewmodel.set_viewmodel_value;
-    let get_viewmodel_value = viewmodel.get_viewmodel_value;
-    let set_viewmodel       = viewmodel.set_viewmodel;
+    let process_viewmodel_update    = viewmodel.process_viewmodel_update;
+    let set_viewmodel_value         = viewmodel.set_viewmodel_value;
+    let get_viewmodel_value         = viewmodel.get_viewmodel_value;
+    let set_viewmodel               = viewmodel.set_viewmodel;
 
     ///
     /// ===== HANDLING SERVER EVENTS
@@ -844,6 +860,18 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// The entire viewmodel should be replaced with a new version
+    ///
+    let on_new_viewmodel = (viewmodel_update_list) => {
+        note('Replacing viewmodel');
+        
+        return new Promise((resolve) => {
+            viewmodel_update_list.forEach(update => process_viewmodel_update(update));
+            resolve();
+        });
+    };
+
+    ///
     /// Dispatches updates in a request
     ///
     let dispatch_updates = (function() {
@@ -867,11 +895,14 @@ function flowbetween(root_node) {
 
                 switch (update_key) {
                 case 'NewSession':
-                    current_promise = current_promise.then(() => on_new_session(update[update_key]));
+                    current_promise = current_promise
+                        .then(() => on_new_session(update[update_key]));
                     break;
 
                 case 'NewUserInterfaceHtml':
-                    current_promise = current_promise.then(() => on_new_html(update[update_key][0], update[update_key][1]));
+                    current_promise = current_promise
+                        .then(() => on_new_viewmodel(update[update_key][2]))
+                        .then(() => on_new_html(update[update_key][0], update[update_key][1]));
                     break;
 
                 default:
