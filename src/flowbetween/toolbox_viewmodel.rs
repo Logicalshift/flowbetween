@@ -5,7 +5,10 @@ use std::collections::HashMap;
 
 pub struct ToolboxViewModel {
     /// Maps bindings in this viewmodel to their values
-    bindings: Mutex<HashMap<String, Binding<PropertyValue>>>
+    bindings: Mutex<HashMap<String, Arc<Binding<PropertyValue>>>>,
+
+    /// Used for properties that don't exist in this model
+    nothing: Arc<Binding<PropertyValue>>
 }
 
 impl ToolboxViewModel {
@@ -13,18 +16,20 @@ impl ToolboxViewModel {
     /// Creates a new toolbox viewmodel
     /// 
     pub fn new() -> ToolboxViewModel {
-        ToolboxViewModel { bindings: Mutex::new(HashMap::new()) }
+        ToolboxViewModel { 
+            bindings: Mutex::new(HashMap::new()), 
+            nothing: Arc::new(bind(PropertyValue::Nothing)) }
     }
 }
 
 impl ViewModel for ToolboxViewModel {
-    fn get_property(&self, property_name: &str) -> Box<Bound<PropertyValue>> {
+    fn get_property(&self, property_name: &str) -> Arc<Bound<PropertyValue>> {
         let bindings = self.bindings.lock().unwrap();
 
         if let Some(value) = bindings.get(&String::from(property_name)) {
-            Box::new(value.clone())
+            value.clone()
         } else {
-            Box::new(bind(PropertyValue::Nothing))
+            self.nothing.clone()
         }
     }
 
@@ -32,7 +37,8 @@ impl ViewModel for ToolboxViewModel {
         let mut bindings = self.bindings.lock().unwrap();
 
         if let Some(value) = bindings.get(&String::from(property_name)) {
-            value.clone().set(new_value);
+            // Trick here is that while the bindings aren't mutable, their clones can be (and refer to the same place)
+            (**value).clone().set(new_value);
 
             // Awkward return because rust keeps the borrow in the else clause even though nothing can reference it
             return;
@@ -40,7 +46,7 @@ impl ViewModel for ToolboxViewModel {
 
         // Property does not exist in this viewmodel: create a new one
         let new_binding = bind(new_value);
-        bindings.insert(String::from(property_name), new_binding.clone());
+        bindings.insert(String::from(property_name), Arc::new(new_binding));
     }
 
     fn get_property_names(&self) -> Vec<String> {
