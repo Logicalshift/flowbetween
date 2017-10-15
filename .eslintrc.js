@@ -15,6 +15,7 @@ module.exports = {
             {"properties": "never"}
         ],
         */
+        "eqeqeq": "error",
         "no-console": "off",
         "linebreak-style": [
             "error",

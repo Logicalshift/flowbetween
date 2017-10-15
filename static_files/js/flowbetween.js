@@ -676,7 +676,8 @@ function flowbetween(root_node) {
     let viewmodel = (function() {
         let viewmodel = {
             subcontrollers: {},
-            keys:           {}
+            keys:           {},
+            actions:        {}
         };
 
         ///
@@ -697,7 +698,8 @@ function flowbetween(root_node) {
                 if (!next_viewmodel) {
                     next_viewmodel = {
                         subcontrollers: {},
-                        keys:           {}
+                        keys:           {},
+                        actions:        {}
                     };
 
                     viewmodel.subcontrollers[next_controller] = next_viewmodel;
@@ -751,6 +753,43 @@ function flowbetween(root_node) {
         };
 
         ///
+        /// Performs an action when a viewmodel value changes. Returns a function
+        /// that will disable this action.
+        ///
+        let on_viewmodel_change = (controller_path, key, change_action) => {
+            // Get the actions for the viewmodel for this controller
+            let viewmodel   = viewmodel_for_controller(controller_path);
+            let actions     = viewmodel.actions;
+
+            // Create or retrieve the list of actions for this path
+            let actions_for_key = actions[key];
+            if (!actions_for_key) {
+                actions_for_key = actions[key] = [];                
+            }
+
+            // Add in the change action
+            // It replaces a 'null' entry left by a previous action or is added to the end
+            let action_index = actions_for_key.findIndex(item => item === null);
+            if (action_index === -1) {
+                action_index = actions_for_key.length;
+                actions_for_key.push(null);
+            }
+
+            actions_for_key[action_index] = change_action;
+
+            // Create the removal function
+            let removed = false;
+            let remove_action = () => {
+                if (!removed) {
+                    removed = true;
+                    actions_for_key[action_index] = null;
+                }
+            };
+
+            return remove_action;
+        };
+
+        ///
         /// Convenience command to dump out the viewmodel
         ///
         add_command('show_viewmodel', 'Writes the viewmodel to the console', () => {
@@ -768,6 +807,7 @@ function flowbetween(root_node) {
 
         return {
             process_viewmodel_update:   process_viewmodel_update,
+            on_viewmodel_change:        on_viewmodel_change,
             set_viewmodel_value:        set_viewmodel_value,
             get_viewmodel_value:        get_viewmodel_value,
             set_viewmodel:              set_viewmodel
@@ -775,6 +815,7 @@ function flowbetween(root_node) {
     })();
 
     let process_viewmodel_update    = viewmodel.process_viewmodel_update;
+    let on_viewmodel_change         = viewmodel.on_viewmodel_change;
     let set_viewmodel_value         = viewmodel.set_viewmodel_value;
     let get_viewmodel_value         = viewmodel.get_viewmodel_value;
     let set_viewmodel               = viewmodel.set_viewmodel;
