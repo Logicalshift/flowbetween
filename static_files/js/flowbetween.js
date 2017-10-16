@@ -676,6 +676,8 @@ function flowbetween(root_node) {
         if (attribute['Selected']) {
             on_property_change(controller_path, attribute['Selected'], is_selected => {
                 console.log(node, is_selected);
+
+                return true;
             });
         }
     };
@@ -684,6 +686,7 @@ function flowbetween(root_node) {
     /// Binds any viemwodel attributes for a node
     ///
     let bind_viewmodel = (node, attributes, controller_path) => {
+        // Bind the attributes to this node
         attributes.all().forEach(attribute => bind_viewmodel_attribute(node, attribute, controller_path));
     };
 
@@ -789,12 +792,25 @@ function flowbetween(root_node) {
         /// that will disable this action.
         ///
         /// The event will be invoked immediately with the current value of the
-        /// key, if it has one.
+        /// key, if it has one. The event function should return true if it
+        /// wishes to process future events.
         ///
         let on_viewmodel_change = (controller_path, key, change_action) => {
             // Get the actions for the viewmodel for this controller
             let viewmodel   = viewmodel_for_controller(controller_path);
             let actions     = viewmodel.actions;
+
+            // Change action should disable itself if it returns false
+            let action_with_remove = (key_value) => {
+                if (change_action !== null) {
+                    let should_remove = !change_action(key_value);
+                    if (should_remove) {
+                        remove_action();
+                    }
+                } else {
+                    remove_action();
+                }
+            };
 
             // Create or retrieve the list of actions for this path
             let actions_for_key = actions[key];
@@ -810,7 +826,7 @@ function flowbetween(root_node) {
                 actions_for_key.push(null);
             }
 
-            actions_for_key[action_index] = change_action;
+            actions_for_key[action_index] = action_with_remove;
 
             // Create the removal function
             let removed         = false;
@@ -826,7 +842,7 @@ function flowbetween(root_node) {
             // Fire the event immediately if the key has a value
             let key_value = viewmodel.keys[key];
             if (key_value) {
-                change_action(key_value);
+                action_with_remove(key_value);
             }
 
             return remove_action;
