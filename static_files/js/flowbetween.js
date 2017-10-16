@@ -670,6 +670,24 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Binds a single attribute to a node
+    ///
+    let bind_viewmodel_attribute = (node, attribute, controller_path) => {
+        if (attribute['Selected']) {
+            on_property_change(controller_path, attribute['Selected'], is_selected => {
+                console.log(node, is_selected);
+            });
+        }
+    };
+
+    ///
+    /// Binds any viemwodel attributes for a node
+    ///
+    let bind_viewmodel = (node, attributes, controller_path) => {
+        attributes.all().forEach(attribute => bind_viewmodel_attribute(node, attribute, controller_path));
+    };
+
+    ///
     /// ===== VIEWMODEL
     ///
 
@@ -815,6 +833,31 @@ function flowbetween(root_node) {
         };
 
         ///
+        /// Calls an event when a property changes, returning a function that will
+        /// unbind the event and calling the action at least once on initialisation.
+        ///
+        let on_property_change = (controller_path, property, change_action) => {
+            if (property === 'Nothing') {
+                change_action(null);
+                return () => {};
+            } else if (property.hasOwnProperty('Bool')) {
+                change_action(property['Bool']);
+                return () => {};
+            } else if (property.hasOwnProperty('Int')) {
+                change_action(property['Int']);
+                return () => {};
+            } else if (property.hasOwnProperty('Float')) {
+                change_action(property['Float']);
+                return () => {};
+            } else if (property.hasOwnProperty('String')) {
+                change_action(property['String']);
+                return () => {};
+            } else if (property.hasOwnProperty('Bind')) {
+                return on_viewmodel_change(controller_path, property['Bind'], change_action);
+            }
+        };
+
+        ///
         /// Convenience command to dump out the viewmodel
         ///
         add_command('show_viewmodel', 'Writes the viewmodel to the console', () => {
@@ -833,6 +876,7 @@ function flowbetween(root_node) {
         return {
             process_viewmodel_update:   process_viewmodel_update,
             on_viewmodel_change:        on_viewmodel_change,
+            on_property_change:         on_property_change,
             set_viewmodel_value:        set_viewmodel_value,
             get_viewmodel_value:        get_viewmodel_value,
             set_viewmodel:              set_viewmodel
@@ -840,6 +884,7 @@ function flowbetween(root_node) {
     })();
 
     let process_viewmodel_update    = viewmodel.process_viewmodel_update;
+    let on_property_change          = viewmodel.on_property_change;
     let on_viewmodel_change         = viewmodel.on_viewmodel_change;
     let set_viewmodel_value         = viewmodel.set_viewmodel_value;
     let get_viewmodel_value         = viewmodel.get_viewmodel_value;
@@ -920,6 +965,13 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Binds the viewmodel to a DOM tree
+    ///
+    let bind_viewmodel_to_tree = (dom_node, control_data) => {
+        visit_dom(dom_node, control_data, (node, attributes, controller_path) => bind_viewmodel(node, attributes, controller_path));
+    };
+
+    ///
     /// The entire UI HTML should be replaced with a new version
     ///
     let on_new_html = (new_user_interface_html, property_tree) => {
@@ -934,6 +986,7 @@ function flowbetween(root_node) {
 
             // Perform initial layout
             apply_templates_to_tree(get_flo_subnodes(root)[0], root_control_data);
+            bind_viewmodel_to_tree(get_flo_subnodes(root)[0], root_control_data);
             wire_tree(get_flo_subnodes(root)[0], root_control_data);
             layout_tree(get_flo_subnodes(root)[0], root_control_data);
 
