@@ -417,6 +417,30 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Adds a class to the className of a DOM node
+    ///
+    let add_class = (dom_node, class_name) => {
+        let original_class_name     = dom_node.className;
+        let class_name_components   = original_class_name.split(' ');
+        let new_components          = class_name_components.filter(name => name !== class_name);
+
+        new_components.push(class_name);
+
+        dom_node.className = new_components.join(' ');
+    };
+
+    ///
+    /// Removes a class to the className of a DOM node
+    ///
+    let remove_class = (dom_node, class_name) => {
+        let original_class_name     = dom_node.className;
+        let class_name_components   = original_class_name.split(' ');
+        let new_components          = class_name_components.filter(name => name !== class_name);
+
+        dom_node.className = new_components.join(' ');
+    };
+
+    ///
     /// Visits the flo items in the DOM, passing in attributes from
     /// the appropriate control data sections
     ///
@@ -678,6 +702,12 @@ function flowbetween(root_node) {
         if (attribute['Selected']) {
             // The selected property updates the node class
             remove_action = on_property_change(controller_path, attribute['Selected'], is_selected => {
+                if (is_selected['Bool']) {
+                    add_class(node, 'selected');
+                } else {
+                    remove_class(node, 'selected');
+                }
+
                 console.log(node, is_selected);
 
                 return true;
@@ -871,23 +901,11 @@ function flowbetween(root_node) {
         /// unbind the event and calling the action at least once on initialisation.
         ///
         let on_property_change = (controller_path, property, change_action) => {
-            if (property === 'Nothing') {
-                change_action(null);
-                return () => {};
-            } else if (property.hasOwnProperty('Bool')) {
-                change_action(property['Bool']);
-                return () => {};
-            } else if (property.hasOwnProperty('Int')) {
-                change_action(property['Int']);
-                return () => {};
-            } else if (property.hasOwnProperty('Float')) {
-                change_action(property['Float']);
-                return () => {};
-            } else if (property.hasOwnProperty('String')) {
-                change_action(property['String']);
-                return () => {};
-            } else if (property.hasOwnProperty('Bind')) {
+            if (property.hasOwnProperty('Bind')) {
                 return on_viewmodel_change(controller_path, property['Bind'], change_action);
+            } else {
+                change_action(property);
+                return () => {};
             }
         };
 
