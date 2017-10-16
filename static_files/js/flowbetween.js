@@ -673,12 +673,26 @@ function flowbetween(root_node) {
     /// Binds a single attribute to a node
     ///
     let bind_viewmodel_attribute = (node, attribute, controller_path) => {
+        let remove_action = null;
+
         if (attribute['Selected']) {
-            on_property_change(controller_path, attribute['Selected'], is_selected => {
+            // The selected property updates the node class
+            remove_action = on_property_change(controller_path, attribute['Selected'], is_selected => {
                 console.log(node, is_selected);
 
                 return true;
             });
+        }
+
+        // Update the property that allows us to unbind the viewmodel
+        if (remove_action) {
+            let previous_unbind = node.flo_unbind_viewmodel;
+            node.flo_unbind_viewmodel = () => {
+                remove_action();
+                if (previous_unbind) {
+                    previous_unbind();
+                }
+            };
         }
     };
 
@@ -686,6 +700,10 @@ function flowbetween(root_node) {
     /// Binds any viemwodel attributes for a node
     ///
     let bind_viewmodel = (node, attributes, controller_path) => {
+        // Ensure that any previous viewmodel attached to this node is removed
+        let unbind_viewmodel = node.flo_unbind_viewmodel || (() => {});
+        unbind_viewmodel();
+        
         // Bind the attributes to this node
         attributes.all().forEach(attribute => bind_viewmodel_attribute(node, attribute, controller_path));
     };
