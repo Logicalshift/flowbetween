@@ -5,6 +5,11 @@
 
 // FlowBetween
 function flowbetween(root_node) {
+    // Find out where we're running
+    let doc_url = document.createElement('a');
+    doc_url.href = document.URL;
+    let base_url = doc_url.protocol + '//' + doc_url.host;
+
     /// The ID of the running session
     let running_session_id = '';
 
@@ -708,8 +713,6 @@ function flowbetween(root_node) {
                     remove_class(node, 'selected');
                 }
 
-                console.log(node, is_selected);
-
                 return true;
             });
         }
@@ -1164,6 +1167,7 @@ function flowbetween(root_node) {
     });
 
     // All set up, let's go
+    console.log('%c', 'background: url("' + base_url + '/png/Flo-Orb-small.png") no-repeat left center; background-size: 120px 142px; padding-left: 120px; padding-bottom: 71px; padding-top: 71px; line-height: 142px; font-size: 0%;"');
     console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
     reload_templates(document.getRootNode());
     new_session();
