@@ -188,7 +188,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
 impl<Value: 'static+Clone+PartialEq, TFn> Changeable for ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
-    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
         let releasable = ReleasableNotifiable::new(what);
 
         // Lock the core and push this as a thing to perform when this value changes

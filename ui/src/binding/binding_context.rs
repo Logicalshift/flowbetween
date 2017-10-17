@@ -34,7 +34,7 @@ impl BindingDependencies {
 }
 
 impl Changeable for BindingDependencies {
-    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
         let mut to_release = vec![];
 
         for dep in self.dependencies.borrow_mut().iter_mut() {

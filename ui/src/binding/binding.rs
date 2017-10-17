@@ -3,6 +3,7 @@ use super::releasable::*;
 use super::binding_context::*;
 
 use std::sync::*;
+use std::cell::*;
 
 ///
 /// An internal representation of a bound value
@@ -12,7 +13,7 @@ struct BoundValue<Value> {
     value: Value,
 
     /// What to call when the value changes
-    when_changed: Vec<ReleasableNotifiable>
+    when_changed: RefCell<Vec<ReleasableNotifiable>>
 }
 
 impl<Value: Clone+PartialEq> BoundValue<Value> {
@@ -22,7 +23,7 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     pub fn new(val: Value) -> BoundValue<Value> {
         BoundValue {
             value:          val,
-            when_changed:   vec![]
+            when_changed:   RefCell::new(vec![])
         }
     }
 
@@ -41,14 +42,14 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     /// Retrieves a copy of the list of notifiable items for this value
     ///
     pub fn get_notifiable_items(&self) -> Vec<ReleasableNotifiable> {
-        self.when_changed.clone()
+        self.when_changed.borrow().clone()
     }
 
     ///
     /// If there are any notifiables in this object that aren't in use, remove them
     ///
     pub fn filter_unused_notifications(&mut self) {
-        self.when_changed.retain(|releasable| releasable.is_in_use());
+        self.when_changed.borrow_mut().retain(|releasable| releasable.is_in_use());
     }
 
     ///
@@ -61,9 +62,9 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     ///
     /// Adds something that will be notified when this item changes
     ///
-    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
         let releasable = ReleasableNotifiable::new(what);
-        self.when_changed.push(releasable.clone());
+        self.when_changed.borrow_mut().push(releasable.clone());
 
         Box::new(releasable)
     }
@@ -87,7 +88,7 @@ impl<Value: Clone+PartialEq> Binding<Value> {
 }
 
 impl<Value: 'static+Clone+PartialEq+Send> Changeable for Binding<Value> {
-    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
         self.value.lock().unwrap().when_changed(what)
     }
 }
