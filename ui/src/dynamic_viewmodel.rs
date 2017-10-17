@@ -188,7 +188,7 @@ mod test {
     }
 
     #[test]
-    fn standard_value_notifies() {
+    fn standard_value_notifies_after_propagation() {
         let notified    = Arc::new(Mutex::new(false));
         let viewmodel   = DynamicViewModel::new();
 
@@ -225,9 +225,28 @@ mod test {
         let test_source = viewmodel.get_property("TestSource");
         viewmodel.set_computed("Test", move || test_source.get());
 
-        // TODO: we need to make a computed property like this to make when_changed work
-        // Really when_changed shouldn't require the target to be mutable, I think (computed
-        // needs to work around this too)
+        let test_value_notified = notified.clone();
+        viewmodel.get_property("Test").when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+        assert!((*notified.lock().unwrap()) == false);
+
+        viewmodel.set_property("TestSource", PropertyValue::Int(2));
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(2));
+        assert!((*notified.lock().unwrap()) == true);
+    }
+
+    #[test]
+    fn computed_value_notifies_after_propagation() {
+        let notified    = Arc::new(Mutex::new(false));
+        let viewmodel   = DynamicViewModel::new();
+
+        viewmodel.set_property("TestSource", PropertyValue::Int(1));
+
+        let test_source = viewmodel.get_property("TestSource");
+        viewmodel.set_computed("Test", move || test_source.get());
+
         let test = viewmodel.get_property("Test");
         let mut test_value = computed(move || test.get());
 
