@@ -204,7 +204,7 @@ mod test {
         test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
 
         // Initially unchanged
-        assert!(viewmodel.get_property("TestSource").get() == PropertyValue::Int(1));
+        assert!(test_value.get() == PropertyValue::Int(1));
         assert!((*notified.lock().unwrap()) == false);
 
         // Updating the value should cause the notification to fiew
@@ -234,7 +234,7 @@ mod test {
         let test_value_notified = notified.clone();
         test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
 
-        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+        assert!(test_value.get() == PropertyValue::Int(1));
         assert!((*notified.lock().unwrap()) == false);
 
         viewmodel.set_property("TestSource", PropertyValue::Int(2));
