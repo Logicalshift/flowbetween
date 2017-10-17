@@ -178,7 +178,7 @@ mod test {
 
         bound.set(2);
 
-        let (value, mut context) = BindingContext::bind(|| bound.get());
+        let (value, context) = BindingContext::bind(|| bound.get());
         assert!(value == 2);
 
         let changed = bind(false);
@@ -309,7 +309,7 @@ mod test {
         let mut bound       = bind(1);
 
         let computed_from   = bound.clone();
-        let mut computed    = computed(move || computed_from.get() + 1);
+        let computed        = computed(move || computed_from.get() + 1);
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
@@ -338,7 +338,7 @@ mod test {
         let computed_switch = switch.clone();
         let computed_val1   = val1.clone();
         let computed_val2   = val2.clone();
-        let mut computed    = computed(move || {
+        let computed        = computed(move || {
             // Use val1 when switch is false, and val2 when switch is true
             if computed_switch.get() {
                 computed_val2.get() + 1
@@ -391,7 +391,7 @@ mod test {
         let computed_from       = bound.clone();
         let propagates_from     = computed(move || computed_from.get() + 1);
         let computed_propagated = propagates_from.clone();
-        let mut computed        = computed(move || computed_propagated.get() + 1);
+        let computed            = computed(move || computed_propagated.get() + 1);
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
@@ -418,7 +418,7 @@ mod test {
         let mut bound       = bind(1);
 
         let computed_from   = bound.clone();
-        let mut computed    = computed(move || computed_from.get() + 1);
+        let computed        = computed(move || computed_from.get() + 1);
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
@@ -448,7 +448,7 @@ mod test {
         let mut bound       = bind(1);
 
         let computed_from   = bound.clone();
-        let mut computed    = computed(move || computed_from.get() + 1);
+        let computed        = computed(move || computed_from.get() + 1);
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
@@ -480,7 +480,7 @@ mod test {
 
         {
             let computed_from   = bound.clone();
-            let mut computed    = computed(move || computed_from.get() + 1);
+            let computed        = computed(move || computed_from.get() + 1);
 
             let mut notify_changed = changed.clone();
             computed.when_changed(notify(move || notify_changed.set(true)));

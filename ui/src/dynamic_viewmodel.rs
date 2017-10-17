@@ -173,7 +173,7 @@ mod test {
         let mut property_value      = bind(PropertyValue::Int(1));
 
         let computed_source_value   = property_value.clone();
-        let mut computed_property   = computed(move || computed_source_value.get());
+        let computed_property       = computed(move || computed_source_value.get());
 
         let test_value_notified = notified.clone();
         computed_property.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
@@ -197,7 +197,7 @@ mod test {
 
         // Computes a value equal to the current TestSource property
         let test_source = viewmodel.get_property("TestSource");
-        let mut test_value = computed(move || test_source.get());
+        let test_value  = computed(move || test_source.get());
 
         // Whenever it changes, set a flag
         let test_value_notified = notified.clone();
@@ -247,8 +247,8 @@ mod test {
         let test_source = viewmodel.get_property("TestSource");
         viewmodel.set_computed("Test", move || test_source.get());
 
-        let test = viewmodel.get_property("Test");
-        let mut test_value = computed(move || test.get());
+        let test        = viewmodel.get_property("Test");
+        let test_value  = computed(move || test.get());
 
         let test_value_notified = notified.clone();
         test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
