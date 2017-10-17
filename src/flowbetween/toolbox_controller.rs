@@ -69,7 +69,7 @@ impl Controller for ToolboxController {
     }
 
     fn action(&self, action_id: &str) {
-        println!("Toolbox action is {}", action_id);
+        self.view_model.set_property("SelectedTool", PropertyValue::String(String::from(action_id)));
     }
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {
