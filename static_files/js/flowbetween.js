@@ -1,6 +1,7 @@
 'use strict';
 
 /* exported flowbetween */
+/* exported replace_object_with_content */
 /* exported propagate_object_events */
 
 // FlowBetween
@@ -1173,6 +1174,27 @@ function flowbetween(root_node) {
     new_session();
     enable_commands();
 }
+
+///
+/// For behavioural reasons we'd like svgs to be inline but for general work reasons
+/// we'd like them to be objects. This lets us do an 'onload' on objects that causes
+/// their content to be loaded in to the main document.
+///
+/// This is very helpful for making sure events go to the right place, and for using
+/// CSS to style elements when they should be styled.
+///
+/// TODO: better yet would be to load this stuff into the actual template data, saving
+/// the object load event every time.
+///
+let replace_object_with_content = (object_node) => {
+    let parent      = object_node.parentNode;
+    let document    = object_node.contentDocument;
+    let content     = document.children[0];
+
+    document.removeChild(content);
+    parent.insertBefore(content, object_node.nextSibling);
+    parent.removeChild(object_node);
+};
 
 ///
 /// Declares a function that propagates events from the document of an
