@@ -119,3 +119,70 @@ impl ViewModel for DynamicViewModel {
         binding_keys
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn nonexistent_value_is_nothing() {
+        let viewmodel = DynamicViewModel::new();
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Nothing);
+    }
+
+    #[test]
+    fn can_set_value() {
+        let viewmodel = DynamicViewModel::new();
+
+        viewmodel.set_property("Test", PropertyValue::Int(2));
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(2));
+    }
+
+    #[test]
+    fn can_compute_value() {
+        let viewmodel = DynamicViewModel::new();
+
+        viewmodel.set_computed("Test", || PropertyValue::Int(2));
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(2));
+    }
+
+    #[test]
+    fn computed_value_updates() {
+        let viewmodel = DynamicViewModel::new();
+
+        viewmodel.set_property("TestSource", PropertyValue::Int(1));
+
+        let test_source = viewmodel.get_property("TestSource");
+        viewmodel.set_computed("Test", move || test_source.get());
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+
+        viewmodel.set_property("TestSource", PropertyValue::Int(2));
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(2));
+    }
+
+    #[test]
+    fn computed_value_notifies() {
+        let notified    = Arc::new(Mutex::new(false));
+        let viewmodel   = DynamicViewModel::new();
+
+        viewmodel.set_property("TestSource", PropertyValue::Int(1));
+
+        let test_source = viewmodel.get_property("TestSource");
+        viewmodel.set_computed("Test", move || test_source.get());
+
+        /*
+        viewmodel.get_property("Test").when_changed(notify(|| println!("Hi")));
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+
+        viewmodel.set_property("TestSource", PropertyValue::Int(2));
+
+        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(2));
+        */
+    }
+}
