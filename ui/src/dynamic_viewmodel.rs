@@ -175,14 +175,22 @@ mod test {
         let test_source = viewmodel.get_property("TestSource");
         viewmodel.set_computed("Test", move || test_source.get());
 
-        /*
-        viewmodel.get_property("Test").when_changed(notify(|| println!("Hi")));
+        // TODO: we need to make a computed property like this to make when_changed work
+        // Really when_changed shouldn't require the target to be mutable, I think (computed
+        // needs to work around this too)
+        let test = viewmodel.get_property("Test");
+        let mut test_value = computed(move || test.get());
+
+        let test_value_notified = notified.clone();
+        test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
 
         assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+        assert!((*notified.lock().unwrap()) == false);
 
         viewmodel.set_property("TestSource", PropertyValue::Int(2));
 
         assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(2));
-        */
+        assert!(test_value.get() == PropertyValue::Int(2));
+        assert!((*notified.lock().unwrap()) == true);
     }
 }
