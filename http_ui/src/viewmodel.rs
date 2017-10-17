@@ -153,8 +153,8 @@ mod test {
     }
 
     impl ViewModel for TestViewModel {
-        fn get_property(&self, property_name: &str) -> Box<Bound<PropertyValue>> {
-            Box::new(bind(PropertyValue::String(property_name.to_string())))
+        fn get_property(&self, property_name: &str) -> Arc<Bound<PropertyValue>> {
+            Arc::new(bind(PropertyValue::String(property_name.to_string())))
         }
 
         fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
