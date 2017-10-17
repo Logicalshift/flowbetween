@@ -2,7 +2,6 @@
 
 /* exported flowbetween */
 /* exported replace_object_with_content */
-/* exported propagate_object_events */
 
 // FlowBetween
 function flowbetween(root_node) {
@@ -1195,50 +1194,3 @@ let replace_object_with_content = (object_node) => {
     parent.insertBefore(content, object_node.nextSibling);
     parent.removeChild(object_node);
 };
-
-///
-/// Declares a function that propagates events from the document of an
-/// object node to the parent of the object node
-///
-/// This gets around the problem that the 'internal' document in an 
-/// object does not bubble events to the containing elements
-///
-let propagate_object_events = (function() {
-    let default_events = [
-        'blur',
-        'click',
-        'dblclick',
-        'input',
-        'mousedown',
-        'mousemove',
-        'mouseout',
-        'mouseover',
-        'mouseup',
-        'pointercancel',
-        'pointerdown',
-        'pointerenter', 
-        'pointerleave',
-        'pointermove',
-        'pointerout',
-        'pointerover',
-        'pointerup',
-        'touchcancel',
-        'touchmove',
-        'touchstart',
-        'wheel'
-    ];
-
-    return (object_node, events) => {
-        events = events || default_events;
-
-        let document        = object_node.contentDocument;
-        let root_element    = document.children[0];
-
-        events.forEach(event => {
-            root_element.addEventListener(event, e => {
-                // Can't dispatch the event while it's already being dispatched so we wait a frame
-                requestAnimationFrame(() => object_node.parentNode.dispatchEvent(e));
-            });
-        });
-    };
-})();
