@@ -26,6 +26,11 @@ pub trait Releasable : Send {
 pub trait Changeable {
     ///
     /// Supplies an item to be notified when this item is changed
+    /// 
+    /// This event is only fired after the value has been read since the most recent
+    /// change. Note that this means if the value is never read, this event may
+    /// never fire. This behaviour is desirable when deferring updates as it prevents
+    /// large cascades of 'changed' events occurring for complicated dependency trees.
     ///
     fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable>;
 }
