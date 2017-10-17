@@ -274,6 +274,37 @@ mod test {
     }
 
     #[test]
+    fn computed_caches_values() {
+        let update_count            = bind(0);
+        let mut bound               = bind(1);
+
+        let computed_update_count   = Mutex::new(update_count.clone());
+        let computed_from           = bound.clone();
+        let computed                = computed(move || {
+            let mut computed_update_count = computed_update_count.lock().unwrap();
+
+            let new_update_count = computed_update_count.get() + 1;
+            computed_update_count.set(new_update_count);
+            computed_from.get() + 1
+        });
+
+        assert!(computed.get() == 2);
+        assert!(update_count.get() == 1);
+
+        assert!(computed.get() == 2);
+        assert!(update_count.get() == 1);
+
+        bound.set(2);
+        assert!(computed.get() == 3);
+        assert!(update_count.get() == 2);
+
+        bound.set(3);
+        assert!(update_count.get() == 2);
+        assert!(computed.get() == 4);
+        assert!(update_count.get() == 3);
+    }
+
+    #[test]
     fn computed_notifies_of_changes() {
         let mut bound       = bind(1);
 
