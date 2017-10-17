@@ -1,9 +1,16 @@
-use ui::*;
+use super::property::*;
+use super::viewmodel::*;
+use super::binding::*;
 
 use std::sync::*;
 use std::collections::HashMap;
 
-pub struct ToolboxViewModel {
+///
+/// The dynamic viewmodel lets us define arbitrary properties as bound or
+/// computed values. A particular key can only be bound or computed: if it
+/// is set as both, the computed version 'wins'. 
+///
+pub struct DynamicViewModel {
     /// Maps bindings in this viewmodel to their values
     bindings: Mutex<HashMap<String, Arc<Binding<PropertyValue>>>>,
 
@@ -14,12 +21,12 @@ pub struct ToolboxViewModel {
     nothing: Arc<Binding<PropertyValue>>
 }
 
-impl ToolboxViewModel {
+impl DynamicViewModel {
     ///
-    /// Creates a new toolbox viewmodel
+    /// Creates a new dynamic viewmodel
     /// 
-    pub fn new() -> ToolboxViewModel {
-        ToolboxViewModel { 
+    pub fn new() -> DynamicViewModel {
+        DynamicViewModel { 
             bindings:   Mutex::new(HashMap::new()), 
             computed:   Mutex::new(HashMap::new()),
             nothing:    Arc::new(bind(PropertyValue::Nothing)) }
@@ -55,7 +62,7 @@ impl ToolboxViewModel {
     }
 }
 
-impl ViewModel for ToolboxViewModel {
+impl ViewModel for DynamicViewModel {
     fn get_property(&self, property_name: &str) -> Arc<Bound<PropertyValue>> {
         if let Some(result) = self.get_computed(property_name) {
             // Computed values are returned first, so these bindings cannot be set

@@ -9,6 +9,7 @@ pub mod binding;
 pub mod controller;
 pub mod property;
 pub mod viewmodel;
+pub mod dynamic_viewmodel;
 
 pub use self::control::*;
 pub use self::layout::*;
@@ -17,3 +18,4 @@ pub use self::binding::*;
 pub use self::controller::*;
 pub use self::property::*;
 pub use self::viewmodel::*;
+pub use self::dynamic_viewmodel::*;

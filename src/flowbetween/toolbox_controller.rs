@@ -1,5 +1,3 @@
-use super::toolbox_viewmodel::*;
-
 use ui::*;
 
 use std::sync::*;
@@ -9,14 +7,14 @@ use std::sync::*;
 /// are using to edit the canvas
 ///
 pub struct ToolboxController {
-    view_model: Arc<ToolboxViewModel>,
+    view_model: Arc<DynamicViewModel>,
     ui:         Binding<Control>
 }
 
 impl ToolboxController {
     pub fn new() -> ToolboxController {
         // Create the viewmodel
-        let viewmodel = Arc::new(ToolboxViewModel::new());
+        let viewmodel = Arc::new(DynamicViewModel::new());
 
         // There's a 'SelectedTool' key that describes the currently selected tool
         viewmodel.set_property("SelectedTool", PropertyValue::String("Pencil".to_string()));
@@ -40,7 +38,7 @@ impl ToolboxController {
     ///
     /// Creates a new tool control
     ///
-    fn make_tool(name: &str, viewmodel: &ToolboxViewModel) -> Control {
+    fn make_tool(name: &str, viewmodel: &DynamicViewModel) -> Control {
         use ui::ControlAttribute::*;
         use ui::ActionTrigger::*;
 
