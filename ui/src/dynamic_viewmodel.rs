@@ -166,6 +166,56 @@ mod test {
     }
 
     #[test]
+    fn property_value_notifies_without_viewmodel() {
+        let notified    = Arc::new(Mutex::new(false));
+
+        // For the viewmodel to work, we need property value changes to trigger a notification
+        let mut property_value      = bind(PropertyValue::Int(1));
+
+        let computed_source_value   = property_value.clone();
+        let mut computed_property   = computed(move || computed_source_value.get());
+
+        let test_value_notified = notified.clone();
+        computed_property.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
+
+        assert!(computed_property.get() == PropertyValue::Int(1));
+        assert!((*notified.lock().unwrap()) == false);
+
+        property_value.set(PropertyValue::Int(2));
+
+        assert!(computed_property.get() == PropertyValue::Int(2));
+        assert!((*notified.lock().unwrap()) == true);
+    }
+
+    #[test]
+    fn standard_value_notifies() {
+        let notified    = Arc::new(Mutex::new(false));
+        let viewmodel   = DynamicViewModel::new();
+
+        // Creates the 'TestSource' property
+        viewmodel.set_property("TestSource", PropertyValue::Int(1));
+
+        // Computes a value equal to the current TestSource property
+        let test_source = viewmodel.get_property("TestSource");
+        let mut test_value = computed(move || test_source.get());
+
+        // Whenever it changes, set a flag
+        let test_value_notified = notified.clone();
+        test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
+
+        // Initially unchanged
+        assert!(viewmodel.get_property("TestSource").get() == PropertyValue::Int(1));
+        assert!((*notified.lock().unwrap()) == false);
+
+        // Updating the value should cause the notification to fiew
+        viewmodel.set_property("TestSource", PropertyValue::Int(2));
+
+        assert!(viewmodel.get_property("TestSource").get() == PropertyValue::Int(2));
+        assert!(test_value.get() == PropertyValue::Int(2));
+        assert!((*notified.lock().unwrap()) == true);
+    }
+
+    #[test]
     fn computed_value_notifies() {
         let notified    = Arc::new(Mutex::new(false));
         let viewmodel   = DynamicViewModel::new();
