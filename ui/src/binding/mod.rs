@@ -298,6 +298,35 @@ mod test {
     }
 
     #[test]
+    fn computed_propagates_changes() {
+        let mut bound           = bind(1);
+
+        let computed_from       = bound.clone();
+        let propagates_from     = computed(move || computed_from.get() + 1);
+        let computed_propagated = propagates_from.clone();
+        let mut computed        = computed(move || computed_propagated.get() + 1);
+
+        let mut changed = bind(false);
+        let mut notify_changed = changed.clone();
+        computed.when_changed(notify(move || notify_changed.set(true)));
+
+        assert!(propagates_from.get() == 2);
+        assert!(computed.get() == 3);
+        assert!(changed.get() == false);
+
+        bound.set(2);
+        assert!(propagates_from.get() == 3);
+        assert!(computed.get() == 4);
+        assert!(changed.get() == true);
+
+        changed.set(false);
+        bound.set(3);
+        assert!(changed.get() == true);
+        assert!(propagates_from.get() == 4);
+        assert!(computed.get() == 5);
+    }
+
+    #[test]
     fn computed_stops_notifying_when_released() {
         let mut bound       = bind(1);
 
