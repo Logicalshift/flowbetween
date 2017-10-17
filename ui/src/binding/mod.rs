@@ -328,6 +328,62 @@ mod test {
         assert!(computed.get() == 4);
     }
 
+
+    #[test]
+    fn computed_switches_dependencies() {
+        let mut switch      = bind(false);
+        let mut val1        = bind(1);
+        let mut val2        = bind(2);
+
+        let computed_switch = switch.clone();
+        let computed_val1   = val1.clone();
+        let computed_val2   = val2.clone();
+        let mut computed    = computed(move || {
+            // Use val1 when switch is false, and val2 when switch is true
+            if computed_switch.get() {
+                computed_val2.get() + 1
+            } else {
+                computed_val1.get() + 1
+            }
+        });
+
+        let mut changed = bind(false);
+        let mut notify_changed = changed.clone();
+        computed.when_changed(notify(move || notify_changed.set(true)));
+
+        // Initial value of computed (first get 'arms' when_changed too)
+        assert!(computed.get() == 2);
+        assert!(changed.get() == false);
+
+        // Setting val2 shouldn't cause computed to become 'changed' initially
+        val2.set(3);
+        assert!(changed.get() == false);
+        assert!(computed.get() == 2);
+
+        // ... but setting val1 should
+        val1.set(2);
+        assert!(changed.get() == true);
+        assert!(computed.get() == 3);
+
+        // Flicking the switch will use the val2 value we set earlier
+        changed.set(false);
+        switch.set(true);
+        assert!(changed.get() == true);
+        assert!(computed.get() == 4);
+
+        // Updating val2 should now mark us as changed
+        changed.set(false);
+        val2.set(4);
+        assert!(changed.get() == true);
+        assert!(computed.get() == 5);
+        
+        // Updating val1 should not mark us as changed
+        changed.set(false);
+        val1.set(5);
+        assert!(changed.get() == false);
+        assert!(computed.get() == 5);
+    }
+
     #[test]
     fn computed_propagates_changes() {
         let mut bound           = bind(1);
