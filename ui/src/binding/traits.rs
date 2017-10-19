@@ -11,9 +11,15 @@ pub trait Notifiable : Sync+Send {
 }
 
 ///
-/// Trait implemented by an object that can be released
+/// Trait implemented by an object that can be released: for example to stop performing
+/// an action when it's no longer required.
 ///
 pub trait Releasable : Send {
+    ///
+    /// Indicates that this object should not be released on drop
+    ///
+    fn keep_alive(&mut self);
+
     ///
     /// Indicates that this object is finished with and should be released
     ///

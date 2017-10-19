@@ -57,7 +57,9 @@ where TFn: 'static+Fn() -> Value {
     /// Retrieves a copy of the list of notifiable items for this value
     ///
     pub fn get_notifiable_items(&self) -> Vec<ReleasableNotifiable> {
-        self.when_changed.clone()
+        self.when_changed.iter()
+            .map(|item| item.clone_for_inspection())
+            .collect()
     }
 
     ///
@@ -193,7 +195,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
         // Lock the core and push this as a thing to perform when this value changes
         let mut core = self.core.lock().unwrap();
-        core.when_changed.push(releasable.clone());
+        core.when_changed.push(releasable.clone_as_owned());
 
         Box::new(releasable)
     }

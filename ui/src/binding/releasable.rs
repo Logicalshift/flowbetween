@@ -2,11 +2,18 @@ use super::traits::*;
 
 use std::sync::*;
 
+// TODO: issue with new 'drop' behaviour is what to do when we clone, as if keep_alive is
+// false on the clone then dropping the clone will also drop this object. Sometimes we
+// want this behaviour and sometimes we don't.
+
 ///
 /// A notifiable that can be released (and then tidied up later)
 ///
-#[derive(Clone)]
 pub struct ReleasableNotifiable {
+    /// Set to true if this object should not release on drop
+    keep_alive: bool,
+
+    /// The notifiable object that should be released when it's done
     target: Arc<Mutex<Option<Arc<Notifiable>>>>
 }
 
@@ -16,7 +23,8 @@ impl ReleasableNotifiable {
     ///
     pub fn new(target: Arc<Notifiable>) -> ReleasableNotifiable {
         ReleasableNotifiable {
-            target: Arc::new(Mutex::new(Some(target)))
+            keep_alive: false,
+            target:     Arc::new(Mutex::new(Some(target)))
         }
     }
 
@@ -48,6 +56,27 @@ impl ReleasableNotifiable {
     pub fn is_in_use(&self) -> bool {
         self.target.lock().unwrap().is_some()
     }
+
+    ///
+    /// Creates a new 'owned' clone (which will expire this notifiable when dropped)
+    /// 
+    pub fn clone_as_owned(&self) -> ReleasableNotifiable {
+        ReleasableNotifiable {
+            keep_alive: self.keep_alive,
+            target:     self.target.clone()
+        }
+    }
+
+    ///
+    /// Creates a new 'inspection' clone (which can be dropped without ending
+    /// the lifetime of the releasable object)
+    ///
+    pub fn clone_for_inspection(&self) -> ReleasableNotifiable {
+        ReleasableNotifiable {
+            keep_alive: true,
+            target:     self.target.clone()
+        }
+    }
 }
 
 impl Releasable for ReleasableNotifiable {
@@ -56,6 +85,10 @@ impl Releasable for ReleasableNotifiable {
         let mut target = self.target.lock().unwrap();
 
         *target = None;
+    }
+
+    fn keep_alive(&mut self) {
+        self.keep_alive = true;
     }
 }
 
@@ -77,10 +110,24 @@ impl Notifiable for ReleasableNotifiable {
     }
 }
 
+impl Drop for ReleasableNotifiable {
+    fn drop(&mut self) {
+        if !self.keep_alive {
+            self.done();
+        }
+    }
+}
+
 impl Releasable for Vec<Box<Releasable>> {
     fn done(&mut self) {
         for item in self.iter_mut() {
             item.done();
+        }
+    }
+
+    fn keep_alive(&mut self) {
+        for item in self.iter_mut() {
+            item.keep_alive();
         }
     }
 }

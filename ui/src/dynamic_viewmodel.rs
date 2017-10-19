@@ -176,7 +176,7 @@ mod test {
         let computed_property       = computed(move || computed_source_value.get());
 
         let test_value_notified = notified.clone();
-        computed_property.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
+        computed_property.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true)).keep_alive();
 
         assert!(computed_property.get() == PropertyValue::Int(1));
         assert!((*notified.lock().unwrap()) == false);
@@ -201,7 +201,7 @@ mod test {
 
         // Whenever it changes, set a flag
         let test_value_notified = notified.clone();
-        test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
+        test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true)).keep_alive();
 
         // Initially unchanged
         assert!(test_value.get() == PropertyValue::Int(1));
@@ -226,7 +226,7 @@ mod test {
         viewmodel.set_computed("Test", move || test_source.get());
 
         let test_value_notified = notified.clone();
-        viewmodel.get_property("Test").when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
+        viewmodel.get_property("Test").when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true)).keep_alive();
 
         assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
         assert!((*notified.lock().unwrap()) == false);
@@ -251,7 +251,7 @@ mod test {
         let test_value  = computed(move || test.get());
 
         let test_value_notified = notified.clone();
-        test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true));
+        test_value.when_changed(notify(move || (*test_value_notified.lock().unwrap()) = true)).keep_alive();
 
         assert!(test_value.get() == PropertyValue::Int(1));
         assert!((*notified.lock().unwrap()) == false);

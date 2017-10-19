@@ -62,7 +62,7 @@ mod test {
         let changed     = bind(false);
 
         let mut notify_changed = changed.clone();
-        bound.when_changed(notify(move || notify_changed.set(true)));
+        bound.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(changed.get() == false);
         bound.set(2);
@@ -75,7 +75,7 @@ mod test {
         let changed     = bind(false);
 
         let mut notify_changed = changed.clone();
-        bound.when_changed(notify(move || notify_changed.set(true)));
+        bound.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(changed.get() == false);
         bound.set(1);
@@ -88,7 +88,7 @@ mod test {
         let change_count    = bind(0);
 
         let mut notify_count = change_count.clone();
-        bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
+        bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) })).keep_alive();
 
         assert!(change_count.get() == 0);
         bound.set(2);
@@ -108,8 +108,8 @@ mod test {
 
         let mut notify_count = change_count.clone();
         let mut notify_count2 = change_count.clone();
-        bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
-        bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) }));
+        bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) })).keep_alive();
+        bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) })).keep_alive();
 
         assert!(change_count.get() == 0);
         bound.set(2);
@@ -148,7 +148,7 @@ mod test {
         let mut notify_count = change_count.clone();
         let mut notify_count2 = change_count.clone();
         let mut lifetime = bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
-        bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) }));
+        bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) })).keep_alive();
 
         assert!(change_count.get() == 0);
         bound.set(2);
@@ -183,7 +183,7 @@ mod test {
 
         let changed = bind(false);
         let mut notify_changed = changed.clone();
-        context.when_changed(notify(move || notify_changed.set(true)));
+        context.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(changed.get() == false);
         bound.set(3);
@@ -313,7 +313,7 @@ mod test {
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
-        computed.when_changed(notify(move || notify_changed.set(true)));
+        computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(computed.get() == 2);
         assert!(changed.get() == false);
@@ -349,7 +349,7 @@ mod test {
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
-        computed.when_changed(notify(move || notify_changed.set(true)));
+        computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         // Initial value of computed (first get 'arms' when_changed too)
         assert!(computed.get() == 2);
@@ -395,7 +395,7 @@ mod test {
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
-        computed.when_changed(notify(move || notify_changed.set(true)));
+        computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(propagates_from.get() == 2);
         assert!(computed.get() == 3);
@@ -452,7 +452,7 @@ mod test {
 
         let mut changed = bind(false);
         let mut notify_changed = changed.clone();
-        computed.when_changed(notify(move || notify_changed.set(true)));
+        computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(computed.get() == 2);
         assert!(changed.get() == false);
@@ -483,7 +483,7 @@ mod test {
             let computed        = computed(move || computed_from.get() + 1);
 
             let mut notify_changed = changed.clone();
-            computed.when_changed(notify(move || notify_changed.set(true)));
+            computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
             assert!(computed.get() == 2);
             assert!(changed.get() == false);

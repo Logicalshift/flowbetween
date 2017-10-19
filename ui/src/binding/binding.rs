@@ -42,7 +42,10 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     /// Retrieves a copy of the list of notifiable items for this value
     ///
     pub fn get_notifiable_items(&self) -> Vec<ReleasableNotifiable> {
-        self.when_changed.borrow().clone()
+        self.when_changed.borrow()
+            .iter()
+            .map(|item| item.clone_for_inspection())
+            .collect()
     }
 
     ///
@@ -64,7 +67,7 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     ///
     fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
         let releasable = ReleasableNotifiable::new(what);
-        self.when_changed.borrow_mut().push(releasable.clone());
+        self.when_changed.borrow_mut().push(releasable.clone_as_owned());
 
         Box::new(releasable)
     }
