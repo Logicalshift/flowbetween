@@ -176,22 +176,42 @@ mod test {
     /// A controller that does nothing
     ///
     pub struct DynamicController {
-        view_model: Arc<DynamicViewModel>
+        controls: Arc<Binding<Control>>,
+        view_model: Arc<DynamicViewModel>,
+        subcontrollers: HashMap<String, Arc<DynamicController>>
     }
 
     impl DynamicController {
         pub fn new() -> DynamicController {
-            DynamicController { view_model: Arc::new(DynamicViewModel::new()) }
+            DynamicController { 
+                controls:       Arc::new(bind(Control::empty())),
+                view_model:     Arc::new(DynamicViewModel::new()),
+                subcontrollers: HashMap::new()
+            }
+        }
+
+        pub fn set_controls(&mut self, new_control: Control) {
+            (*self.controls).clone().set(new_control);
+        }
+
+        pub fn add_subcontroller(&mut self, name: String) {
+            self.subcontrollers.insert(name, Arc::new(DynamicController::new()));
         }
     }
 
     impl Controller for DynamicController {
         fn ui(&self) -> Arc<Bound<Control>> {
-            Arc::new(bind(Control::empty()))
+            self.controls.clone()
         }
 
-        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
-            None
+        fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+            let res = self.subcontrollers.get(id).map(|x| x.clone());
+
+            if let Some(res) = res {
+                Some(res)
+            } else {
+                None
+            }
         }
 
         fn get_viewmodel(&self) -> Arc<ViewModel> {
@@ -248,5 +268,28 @@ mod test {
         controller.get_viewmodel().set_property("NewValue", PropertyValue::Int(3));
 
         assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(2)), ("NewValue".to_string(), PropertyValue::Int(3))])]);
+    }
+
+    #[test]
+    fn subcontroller_changes_are_picked_up() {
+        let mut controller = DynamicController::new();
+        controller.set_controls(Control::container().with_controller("Subcontroller"));
+        controller.add_subcontroller("Subcontroller".to_string());
+
+        let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
+        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+
+        let controller = Arc::new(controller);
+
+        let diff_viewmodel  = DiffViewModel::new(controller.clone());
+        let watcher         = diff_viewmodel.watch();
+
+        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+
+        let updates = watcher.get_updates();
+
+        assert!(updates.len() == 1);
+        assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
+        assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(2))]);
     }
 }
