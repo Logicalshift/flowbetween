@@ -122,8 +122,8 @@ mod test {
     }
 
     impl Controller for TestController {
-        fn ui(&self) -> Box<Bound<Control>> {
-            Box::new(bind(Control::container().with(vec![
+        fn ui(&self) -> Arc<Bound<Control>> {
+            Arc::new(bind(Control::container().with(vec![
                 Control::empty().with_controller("Model1"),
                 Control::empty().with_controller("Model2")
             ])))
@@ -139,8 +139,8 @@ mod test {
     }
 
     impl Controller for ModelController {
-        fn ui(&self) -> Box<Bound<Control>> {
-            Box::new(bind(Control::label()))
+        fn ui(&self) -> Arc<Bound<Control>> {
+            Arc::new(bind(Control::label()))
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {

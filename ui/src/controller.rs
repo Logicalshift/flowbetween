@@ -136,8 +136,8 @@ mod test {
     }
 
     impl Controller for TestController {
-        fn ui(&self) -> Box<Bound<Control>> {
-            Box::new(bind(Control::container().with_controller("Test")))
+        fn ui(&self) -> Arc<Bound<Control>> {
+            Arc::new(bind(Control::container().with_controller("Test")))
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
@@ -150,8 +150,8 @@ mod test {
     }
 
     impl Controller for LabelController {
-        fn ui(&self) -> Box<Bound<Control>> {
-            Box::new(bind(Control::label()))
+        fn ui(&self) -> Arc<Bound<Control>> {
+            Arc::new(bind(Control::label()))
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
