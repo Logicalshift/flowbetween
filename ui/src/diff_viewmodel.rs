@@ -147,7 +147,7 @@ impl WatchViewModel {
         // Get the updates that apply to each subcontroller
         self.subcontroller_watchers.iter().for_each(|&(ref name, ref watcher)| {
             let mut updates = watcher.get_updates();
-            updates.iter_mut().for_each(|ref mut update| update.add_to_start_of_path(name.clone()));
+            updates.iter_mut().for_each(|update| update.add_to_start_of_path(name.clone()));
 
             all_updates.extend(updates);
         });
@@ -157,11 +157,16 @@ impl WatchViewModel {
     }
 }
 
+impl Drop for WatchViewModel {
+    fn drop(&mut self) {
+        self.watcher_lifetimes.iter_mut().for_each(|lifetime| lifetime.done());
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
-    use super::super::binding::*;
     use super::super::control::*;
     use super::super::property::*;
     use super::super::viewmodel::*;
