@@ -15,7 +15,7 @@ pub struct DiffViewModel {
 }
 
 // TODO: split this into two (one struct for watching the viewmodel for a single controller
-// and one for watching the whole tree)
+// and one for watching the whole tree). The DiffViewModel might be good for moderating this?
 
 ///
 /// Watches for changes in a viewmodel
