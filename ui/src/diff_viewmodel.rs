@@ -1,5 +1,6 @@
 use super::controller::*;
 use super::binding::*;
+use super::viewmodel_update::*;
 
 use std::collections::*;
 use std::sync::*;
@@ -11,6 +12,9 @@ pub struct DiffViewModel {
     /// The controller that owns the viewmodel (if it's still live)
     controller: Weak<Controller>,
 }
+
+// TODO: split this into two (one struct for watching the viewmodel for a single controller
+// and one for watching the whole tree)
 
 ///
 /// Watches for changes in a viewmodel
@@ -90,5 +94,45 @@ impl WatchViewModel {
 
             controller: controller.clone() 
         }
+    }
+
+    ///
+    /// Retrieves the updates for the viewmodel alone
+    ///
+    pub fn get_local_updates(&self) -> Option<ViewModelUpdate> {
+        if let Some(controller) = self.controller.upgrade() {
+            // Get the current state of the viewmodel
+            let viewmodel                   = controller.get_viewmodel();
+            let properties: HashSet<String> = viewmodel.get_property_names().into_iter().collect();
+
+            // Find the changed properties; a property that is no longer in the view model cannot be changed
+            let changed_properties          = self.changed_properties.iter()
+                .filter(|&(ref name, ref _is_changed)| properties.contains(*name))
+                .filter(|&(ref _name, ref is_changed)| *is_changed.lock().unwrap())
+                .map(|(name, is_changed)| name.clone());
+
+            // Find the new properties: properties that aren't in the existing hash set
+            let existing_properties: HashSet<String>    = self.changed_properties.keys().map(|name| name.clone()).collect();
+            let new_properties                          = properties.iter()
+                .filter(|property| !existing_properties.contains(*property))
+                .map(|name| name.clone());
+
+            // This is the list of properties and values to store in the result
+            let properties_and_values = changed_properties.chain(new_properties)
+                .map(|property_name| (property_name.clone(), viewmodel.get_property(&property_name).get()))
+                .collect();
+
+            Some(ViewModelUpdate::new(vec![], properties_and_values))
+        } else {
+            // Controller has been released since this was made
+            None
+        }
+    }
+
+    ///
+    /// Finds all of the updates for this viewmodel
+    ///
+    pub fn get_updates(&self) -> Vec<ViewModelUpdate> {
+        unimplemented!()
     }
 }
