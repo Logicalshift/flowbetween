@@ -28,8 +28,8 @@ impl Session for NullSession {
 }
 
 impl Controller for NullSession {
-    fn ui(&self) -> Box<Bound<Control>> {
-        Box::new(computed(|| {
+    fn ui(&self) -> Arc<Bound<Control>> {
+        Arc::new(computed(|| {
             Control::container()
                 .with(vec![Control::label().with("Hello, World")])
         }))

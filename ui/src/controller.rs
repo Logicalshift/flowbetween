@@ -28,7 +28,7 @@ use std::sync::*;
 ///
 pub trait Controller : Send+Sync {
     /// Retrieves a Control representing the UI for this controller
-    fn ui(&self) -> Box<Bound<Control>>;
+    fn ui(&self) -> Arc<Bound<Control>>;
 
     /// Attempts to retrieve a sub-controller of this controller
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
@@ -95,8 +95,8 @@ impl NullController {
 }
 
 impl Controller for NullController {
-    fn ui(&self) -> Box<Bound<Control>> {
-        Box::new(bind(Control::empty()))
+    fn ui(&self) -> Arc<Bound<Control>> {
+        Arc::new(bind(Control::empty()))
     }
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {

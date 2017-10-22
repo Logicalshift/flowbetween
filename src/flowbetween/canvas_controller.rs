@@ -22,8 +22,8 @@ impl CanvasController {
 }
 
 impl Controller for CanvasController {
-    fn ui(&self) -> Box<Bound<Control>> {
-        Box::new(self.ui.clone())
+    fn ui(&self) -> Arc<Bound<Control>> {
+        Arc::new(self.ui.clone())
     }
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {

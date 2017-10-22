@@ -62,8 +62,8 @@ impl ToolboxController {
 }
 
 impl Controller for ToolboxController {
-    fn ui(&self) -> Box<Bound<Control>> {
-        Box::new(self.ui.clone())
+    fn ui(&self) -> Arc<Bound<Control>> {
+        Arc::new(self.ui.clone())
     }
 
     fn action(&self, action_id: &str) {
