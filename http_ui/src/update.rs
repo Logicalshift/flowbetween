@@ -1,6 +1,4 @@
-use super::viewmodel::*;
-
-use ui::control::*;
+use ui::*;
 
 ///
 /// Describes a HTML node that should be changed

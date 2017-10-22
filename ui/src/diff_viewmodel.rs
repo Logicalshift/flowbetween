@@ -37,6 +37,19 @@ impl DiffViewModel {
         DiffViewModel { controller: Arc::downgrade(&controller) }
     }
 
+    ///
+    /// Reads the current state of the controller and creates a watcher for any changes that
+    /// might occur to it.
+    ///
+    pub fn watch(&self) -> WatchViewModel {
+        WatchViewModel::watch_controller(&self.controller)
+    }
+}
+
+impl WatchViewModel {
+    ///
+    /// Creates a new watcher that watches the contents of a controller
+    ///
     fn watch_controller(controller: &Weak<Controller>) -> WatchViewModel {
         // By default, the things we watch are empty
         let mut subcontroller_watchers      = vec![];
@@ -77,13 +90,5 @@ impl DiffViewModel {
 
             controller: controller.clone() 
         }
-    }
-
-    ///
-    /// Reads the current state of the controller and creates a watcher for any changes that
-    /// might occur to it.
-    ///
-    pub fn watch(&self) -> WatchViewModel {
-        Self::watch_controller(&self.controller)
     }
 }
