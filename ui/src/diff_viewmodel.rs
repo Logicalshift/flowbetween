@@ -2,7 +2,7 @@ use super::controller::*;
 use super::binding::*;
 use super::viewmodel_update::*;
 
-use std::collections::*;
+use std::collections::{HashSet, HashMap};
 use std::sync::*;
 
 ///
@@ -154,5 +154,94 @@ impl WatchViewModel {
 
         // Return all the updates we found
         all_updates
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use super::super::binding::*;
+    use super::super::control::*;
+    use super::super::property::*;
+    use super::super::viewmodel::*;
+    use super::super::dynamic_viewmodel::*;
+
+    ///
+    /// A controller that does nothing
+    ///
+    pub struct DynamicController {
+        view_model: Arc<DynamicViewModel>
+    }
+
+    impl DynamicController {
+        pub fn new() -> DynamicController {
+            DynamicController { view_model: Arc::new(DynamicViewModel::new()) }
+        }
+    }
+
+    impl Controller for DynamicController {
+        fn ui(&self) -> Arc<Bound<Control>> {
+            Arc::new(bind(Control::empty()))
+        }
+
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+            None
+        }
+
+        fn get_viewmodel(&self) -> Arc<ViewModel> {
+            self.view_model.clone()
+        }
+    }
+
+    #[test]
+    fn initially_no_changes() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+
+        let diff_viewmodel  = DiffViewModel::new(controller);
+        let watcher         = diff_viewmodel.watch();
+
+        assert!(watcher.get_updates() == vec![]);
+    }
+
+    #[test]
+    fn changes_are_picked_up() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+
+        let diff_viewmodel  = DiffViewModel::new(controller.clone());
+        let watcher         = diff_viewmodel.watch();
+
+        controller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+
+        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(2))])]);
+    }
+
+    #[test]
+    fn new_values_are_picked_up() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+
+        let diff_viewmodel  = DiffViewModel::new(controller.clone());
+        let watcher         = diff_viewmodel.watch();
+
+        controller.get_viewmodel().set_property("NewValue", PropertyValue::Int(2));
+
+        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("NewValue".to_string(), PropertyValue::Int(2))])]);
+    }
+
+    #[test]
+    fn new_values_are_picked_up_alongside_changes() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+
+        let diff_viewmodel  = DiffViewModel::new(controller.clone());
+        let watcher         = diff_viewmodel.watch();
+
+        controller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+        controller.get_viewmodel().set_property("NewValue", PropertyValue::Int(3));
+
+        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(2)), ("NewValue".to_string(), PropertyValue::Int(3))])]);
     }
 }
