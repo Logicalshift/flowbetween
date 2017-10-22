@@ -1,5 +1,6 @@
-use super::controller::*;
 use super::binding::*;
+use super::property::*;
+use super::controller::*;
 use super::viewmodel_update::*;
 
 use std::collections::{HashSet, HashMap};
@@ -121,12 +122,16 @@ impl WatchViewModel {
                 .map(|name| name.clone());
 
             // This is the list of properties and values to store in the result
-            let properties_and_values = changed_properties.chain(new_properties)
+            let properties_and_values: Vec<(String, PropertyValue)> = changed_properties.chain(new_properties)
                 .map(|property_name| (property_name.clone(), viewmodel.get_property(&property_name).get()))
                 .collect();
 
             // This is the list of updates
-            Some(ViewModelUpdate::new(vec![], properties_and_values))
+            if properties_and_values.len() > 0 {
+                Some(ViewModelUpdate::new(vec![], properties_and_values))
+            } else {
+                None
+            }
         } else {
             // Controller has been released since this was made
             None
@@ -168,7 +173,6 @@ mod test {
     use super::*;
 
     use super::super::control::*;
-    use super::super::property::*;
     use super::super::viewmodel::*;
     use super::super::dynamic_viewmodel::*;
 
@@ -224,7 +228,7 @@ mod test {
         let controller = Arc::new(DynamicController::new());
         controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
 
-        let diff_viewmodel  = DiffViewModel::new(controller);
+        let diff_viewmodel  = DiffViewModel::new(controller.clone());
         let watcher         = diff_viewmodel.watch();
 
         assert!(watcher.get_updates() == vec![]);

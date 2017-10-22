@@ -3,7 +3,7 @@ use super::property::*;
 ///
 /// Describes an update to the view model
 ///
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct ViewModelUpdate {
     /// The controller that owns the view model being updated
     controller_path: Vec<String>,

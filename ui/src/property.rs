@@ -2,7 +2,7 @@
 /// Represents a property (a control value that can either be a
 /// constant or a viewmodel value)
 ///
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub enum Property {
     Nothing,
     Bool(bool),
@@ -17,7 +17,7 @@ pub enum Property {
 ///
 /// Represents the value of a property
 ///
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub enum PropertyValue {
     Nothing,
     Bool(bool),
