@@ -100,6 +100,9 @@ impl WatchViewModel {
     /// Retrieves the updates for the viewmodel alone
     ///
     pub fn get_local_updates(&self) -> Option<ViewModelUpdate> {
+        // TODO: cycle the 'updates' for a new set so we can use this over and over?
+        // Need to lock against changes to do that, which is tricky with the current design
+
         if let Some(controller) = self.controller.upgrade() {
             // Get the current state of the viewmodel
             let viewmodel                   = controller.get_viewmodel();
@@ -109,7 +112,7 @@ impl WatchViewModel {
             let changed_properties          = self.changed_properties.iter()
                 .filter(|&(ref name, ref _is_changed)| properties.contains(*name))
                 .filter(|&(ref _name, ref is_changed)| *is_changed.lock().unwrap())
-                .map(|(name, is_changed)| name.clone());
+                .map(|(name, _is_changed)| name.clone());
 
             // Find the new properties: properties that aren't in the existing hash set
             let existing_properties: HashSet<String>    = self.changed_properties.keys().map(|name| name.clone()).collect();
@@ -122,6 +125,7 @@ impl WatchViewModel {
                 .map(|property_name| (property_name.clone(), viewmodel.get_property(&property_name).get()))
                 .collect();
 
+            // This is the list of updates
             Some(ViewModelUpdate::new(vec![], properties_and_values))
         } else {
             // Controller has been released since this was made
@@ -133,6 +137,22 @@ impl WatchViewModel {
     /// Finds all of the updates for this viewmodel
     ///
     pub fn get_updates(&self) -> Vec<ViewModelUpdate> {
-        unimplemented!()
+        let mut all_updates = vec![];
+
+        // Get the updates that apply to the root controller
+        if let Some(our_updates) = self.get_local_updates() {
+            all_updates.push(our_updates);
+        }
+
+        // Get the updates that apply to each subcontroller
+        self.subcontroller_watchers.iter().for_each(|&(ref name, ref watcher)| {
+            let mut updates = watcher.get_updates();
+            updates.iter_mut().for_each(|ref mut update| update.add_to_start_of_path(name.clone()));
+
+            all_updates.extend(updates);
+        });
+
+        // Return all the updates we found
+        all_updates
     }
 }
