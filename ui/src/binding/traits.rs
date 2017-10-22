@@ -37,6 +37,10 @@ pub trait Changeable {
     /// change. Note that this means if the value is never read, this event may
     /// never fire. This behaviour is desirable when deferring updates as it prevents
     /// large cascades of 'changed' events occurring for complicated dependency trees.
+    /// 
+    /// The releasable that's returned has keep_alive turned off by default, so
+    /// be sure to store it in a variable or call keep_alive() to keep it around
+    /// (if the event never seems to fire, this is likely to be the problem)
     ///
     fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable>;
 }

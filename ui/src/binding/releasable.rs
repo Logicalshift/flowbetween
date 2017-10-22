@@ -10,7 +10,9 @@ use std::sync::*;
 /// A notifiable that can be released (and then tidied up later)
 ///
 pub struct ReleasableNotifiable {
-    /// Set to true if this object should not release on drop
+    /// Set to true if this object should not release on drop. Note this is not shared,
+    /// so the first ReleasableNotifiable in a group to be dropped where keep_alive
+    /// is false will mark all the others as done.
     keep_alive: bool,
 
     /// The notifiable object that should be released when it's done
