@@ -49,6 +49,23 @@ impl DiffViewModel {
     pub fn watch(&self) -> WatchViewModel {
         WatchViewModel::watch_controller(&self.controller)
     }
+
+    ///
+    /// Reads the updates from a WatchViewModel and create a new one that will see future updates
+    ///
+    pub fn rotate_watch(&self, last_watch: WatchViewModel) -> (Vec<ViewModelUpdate>, WatchViewModel) {
+        // TODO: we might see the same update twice here as this version doesn't 'queue' updates that
+        // occur while we're reading the original. This should be harmless, however (worst case is
+        // getting a value that updates to the same value)
+
+        // TODO 2: resetting an existing view model will be faster as we only need reset existing flags
+        // and add/remove watches for items that no longer exist in the viewmodel. It's more
+        // complicated, though (hm, also need to handle the set of controllers changing)
+        let next_watch  = self.watch();
+        let updates     = last_watch.get_updates();
+
+        (updates, next_watch)
+    }
 }
 
 impl WatchViewModel {
@@ -101,9 +118,6 @@ impl WatchViewModel {
     /// Retrieves the updates for the viewmodel alone
     ///
     pub fn get_local_updates(&self) -> Option<ViewModelUpdate> {
-        // TODO: cycle the 'updates' for a new set so we can use this over and over?
-        // Need to lock against changes to do that, which is tricky with the current design
-
         if let Some(controller) = self.controller.upgrade() {
             // Get the current state of the viewmodel
             let viewmodel                   = controller.get_viewmodel();
