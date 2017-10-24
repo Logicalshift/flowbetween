@@ -37,7 +37,7 @@ where Value: Clone+PartialEq+Send, TFn: 'static+Send+Sync+Fn() -> Value {
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::binding_context::*;
+    use super::binding_context::*;
 
     use std::sync::*;
     use std::cell::*;

@@ -1,0 +1,4 @@
+[package]
+name        = "binding"
+version     = "0.1.0"
+authors     = ["Andrew Hunter"]
