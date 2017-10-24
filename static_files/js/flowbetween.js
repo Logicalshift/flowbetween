@@ -1081,23 +1081,24 @@ function flowbetween(root_node) {
             // We build the promise as we go
             updates.forEach((update) => {
                 // serde encodes enums as objects, so we can tell what is what by looking at the first key
-                let update_key = Object.keys(update)[0];
+                if (update['NewSession']) {
 
-                switch (update_key) {
-                case 'NewSession':
                     current_promise = current_promise
-                        .then(() => on_new_session(update[update_key]));
-                    break;
+                        .then(() => on_new_session(update['NewSession']));
 
-                case 'NewUserInterfaceHtml':
+                } else if (update['NewUserInterfaceHtml']) {
+
+                    let new_ui_html = update['NewUserInterfaceHtml'];
+                    let html        = new_ui_html[0];
+                    let controls    = new_ui_html[1];
+                    let viewmodel   = new_ui_html[2];
+
                     current_promise = current_promise
-                        .then(() => on_new_viewmodel(update[update_key][2]))
-                        .then(() => on_new_html(update[update_key][0], update[update_key][1]));
-                    break;
+                        .then(() => on_new_viewmodel(viewmodel))
+                        .then(() => on_new_html(html, controls));
 
-                default:
-                    warn('Unknown update type', update_key, update);
-                    break;
+                } else {
+                    warn('Unknown update type', Object.keys(update)[0], update);
                 }
             });
 
