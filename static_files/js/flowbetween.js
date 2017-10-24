@@ -786,44 +786,6 @@ function flowbetween(root_node) {
         };
 
         ///
-        /// Sets a single value in a controller
-        ///
-        let set_viewmodel_value = (controller_path, key, value) => {
-            // Update the value in the viewmodel
-            let viewmodel   = viewmodel_for_controller(controller_path);
-            let changed     = viewmodel.keys[key] !== value;
-            viewmodel.keys[key] = value;
-
-            // Fire any actions required by the change
-            if (changed) {
-                let actions = viewmodel.actions[key];
-                if (actions) {
-                    actions.forEach(action => {
-                        if (action) {
-                            action(value);
-                        }
-                    });
-                }
-            }
-        };
-
-        ///
-        /// Retrieves a viewmodel value for a particular controller
-        ///
-        let get_viewmodel_value = (controller_path, key) => {
-            let viewmodel = viewmodel_for_controller(controller_path);
-            return viewmodel.keys[key] || 'Nothing';
-        };
-
-        ///
-        /// Given a controller, replaces its entire view model
-        ///
-        let set_viewmodel = (controller_path, new_viewmodel_keys) => {
-            let viewmodel   = viewmodel_for_controller(controller_path);
-            viewmodel.keys  = new_viewmodel_keys;
-        };
-
-        ///
         /// Processes a viewmodel update event
         ///
         let process_viewmodel_update = (update_data) => {
@@ -944,20 +906,12 @@ function flowbetween(root_node) {
 
         return {
             process_viewmodel_update:   process_viewmodel_update,
-            on_viewmodel_change:        on_viewmodel_change,
-            on_property_change:         on_property_change,
-            set_viewmodel_value:        set_viewmodel_value,
-            get_viewmodel_value:        get_viewmodel_value,
-            set_viewmodel:              set_viewmodel
+            on_property_change:         on_property_change
         };
     })();
 
     let process_viewmodel_update    = viewmodel.process_viewmodel_update;
     let on_property_change          = viewmodel.on_property_change;
-    let on_viewmodel_change         = viewmodel.on_viewmodel_change;
-    let set_viewmodel_value         = viewmodel.set_viewmodel_value;
-    let get_viewmodel_value         = viewmodel.get_viewmodel_value;
-    let set_viewmodel               = viewmodel.set_viewmodel;
 
     ///
     /// ===== HANDLING SERVER EVENTS
