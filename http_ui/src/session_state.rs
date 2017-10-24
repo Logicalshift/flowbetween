@@ -2,6 +2,7 @@ use ui::*;
 
 use uuid::*;
 use std::sync::*;
+use std::mem;
 
 ///
 /// The core of the session state
@@ -17,7 +18,10 @@ struct SessionStateCore {
     ui_tree_watcher_lifetime: Box<Releasable>,
 
     /// Binding that specifies whether or not the tree has changed
-    tree_has_changed: Binding<bool>
+    tree_has_changed: Binding<bool>,
+
+    /// Tracks the differences for the current view model
+    viewmodel_diff: Option<(DiffViewModel, WatchViewModel)>
 }
 
 ///
@@ -45,7 +49,8 @@ impl SessionState {
             ui_tree:                    tree,
             previous_tree:              bind(None),
             ui_tree_watcher_lifetime:   watcher_lifetime,
-            tree_has_changed:           has_changed
+            tree_has_changed:           has_changed,
+            viewmodel_diff:             None
         };
 
         SessionState { 
@@ -107,6 +112,39 @@ impl SessionState {
         // Compare to the supplied tree
         diff_tree(compare_to, &current_tree)
     }
+
+    ///
+    /// Begins watching a particular controller's viewmodel for changes 
+    ///
+    pub fn watch_controller_viewmodel(&self, controller: Arc<Controller>) {
+        let new_diff        = DiffViewModel::new(controller);
+        let new_watcher     = new_diff.watch();
+        let mut core        = self.core.lock().unwrap();
+
+        core.viewmodel_diff = Some((new_diff, new_watcher));
+    }
+
+    ///
+    /// Cycles the current viewmodel watch and returns the updates to perform
+    ///
+    pub fn cycle_viewmodel_watch(&self) -> Vec<ViewModelUpdate> {
+        let mut core        = self.core.lock().unwrap();
+        let mut old_state   = None;
+
+        // Swap out the old state so we can cycle it
+        mem::swap(&mut old_state, &mut core.viewmodel_diff);
+
+        if let Some((diff, watcher)) = old_state {
+            // Cycle the watcher if we found one in the core
+            let (result, new_watcher) = diff.rotate_watch(watcher);
+            core.viewmodel_diff = Some((diff, new_watcher));
+
+            result
+        } else {
+            // No controller is being watched, so there's nothign to cycle
+            vec![]
+        }
+    }
 }
 
 impl Drop for SessionState {
@@ -115,4 +153,5 @@ impl Drop for SessionState {
 
         core.ui_tree_watcher_lifetime.done();
     }
+
 }

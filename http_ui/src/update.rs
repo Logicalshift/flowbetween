@@ -50,7 +50,7 @@ pub enum Update {
     ///
     /// Specifies that the viewmodel should be updated
     ///
-    UpdateViewModel(ViewModelUpdate),
+    UpdateViewModel(Vec<ViewModelUpdate>),
 
     ///
     /// Specifies how the HTML should be updated

@@ -310,4 +310,7 @@ mod test {
         assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
         assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(2))]);
     }
+
+    // TODO: detects new controller
+    // TODO: detects removed controller
 }

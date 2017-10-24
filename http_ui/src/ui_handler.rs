@@ -48,6 +48,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 
         // Set the initial UI state
         new_state.set_ui_tree(assemble_ui(new_session.clone()));
+        new_state.watch_controller_viewmodel(new_session.clone());
 
         // Store in the list of active sessions
         let mut active_sessions = self.active_sessions.lock().unwrap();
@@ -143,6 +144,12 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 
             // Add the new update to the response
             response.updates.push(Update::UpdateHtml(updates));
+        }
+
+        // If the viewmodel has changerd, these changes are next
+        let viewmodel_differences = state.cycle_viewmodel_watch();
+        if viewmodel_differences.len() > 0 {
+            response.updates.push(Update::UpdateViewModel(viewmodel_differences));
         }
     }
 
