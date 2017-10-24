@@ -1075,6 +1075,15 @@ function flowbetween(root_node) {
         });
     };
 
+    let on_update_viewmodel = (viewmodel_update_list) => {
+        note('Updating viewmodel');
+
+        return new Promise((resolve) => {
+            viewmodel_update_list.forEach(update => process_viewmodel_update(update));
+            resolve();
+        });
+    };
+
     ///
     /// Dispatches updates in a request
     ///
@@ -1102,14 +1111,21 @@ function flowbetween(root_node) {
 
                 } else if (update['NewUserInterfaceHtml']) {
 
-                    let new_ui_html = update['NewUserInterfaceHtml'];
-                    let html        = new_ui_html[0];
-                    let controls    = new_ui_html[1];
-                    let viewmodel   = new_ui_html[2];
+                    let new_ui_html     = update['NewUserInterfaceHtml'];
+                    let html            = new_ui_html[0];
+                    let property_tree   = new_ui_html[1];
+                    let viewmodel       = new_ui_html[2];
 
                     current_promise = current_promise
                         .then(() => on_new_viewmodel(viewmodel))
-                        .then(() => on_new_html(html, controls));
+                        .then(() => on_new_html(html, property_tree));
+
+                } else if (update['UpdateViewModel']) {
+
+                    let updates = update['UpdateViewModel'];
+
+                    current_promise = current_promise
+                        .then(() => on_update_viewmodel(updates));
 
                 } else {
                     warn('Unknown update type', Object.keys(update)[0], update);
