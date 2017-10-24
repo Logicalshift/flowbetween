@@ -830,12 +830,26 @@ function flowbetween(root_node) {
             let controller_path = update_data.controller_path;
             let updates         = update_data.updates;
             
-            // Turn the updates into a key set
-            let new_keys = {};
-            updates.forEach(update => new_keys[update[0]] = update[1]);
+            // Process the updates for this controller
+            let viewmodel = viewmodel_for_controller(controller_path);
+            if (!viewmodel.keys) {
+                viewmodel.keys = {};
+            }
 
-            // Update the appropriate viewmodel
-            set_viewmodel(controller_path, new_keys);
+            updates.forEach(update => viewmodel.keys[update[0]] = update[1]);
+
+            // Notify anything that's listening of the changes
+            updates.forEach(update => {
+                let key         = update[0];
+                let new_value   = update[1];
+                let actions     = viewmodel.actions[key] || [];
+
+                actions.forEach(action => {
+                    if (action) {
+                        action(new_value);
+                    }
+                });
+            });
         };
 
         ///
