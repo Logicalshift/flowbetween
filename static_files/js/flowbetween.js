@@ -21,6 +21,12 @@ function flowbetween(root_node) {
 
     let utf8 = new TextEncoder('utf-8');
 
+    // Some utility functions
+    Array.prototype.mapMany = function (map_fn) {
+        let self = this;
+        return Array.prototype.concat.apply([], self.map(map_fn));
+    };
+
     ///
     /// ===== INTERACTION
     /// 
@@ -209,7 +215,11 @@ function flowbetween(root_node) {
             });
 
             // Send the request
-            req.send(utf8.encode(encoding));
+            if (method !== 'GET') {
+                req.send(utf8.encode(encoding));
+            } else {
+                req.send();
+            }
         });
     };
 
@@ -217,7 +227,7 @@ function flowbetween(root_node) {
     let http_post   = (obj, url) => xhr(obj, url, 'POST');
 
     /// Sets a GET request
-    let http_get    = (obj, url) => xhr(obj, url, 'GET');
+    let http_get    = (url) => xhr({}, url, 'GET');
 
     /// Converts a XMLHttpRequest to a response object
     let response_to_object = (xmlRequest) => {
@@ -326,16 +336,78 @@ function flowbetween(root_node) {
             }
         };
 
+        ///
+        /// Finds all of the <object> nodes in templates underneath a root node and loads their content.
+        /// If they are inlinable (eg, they are SVG files, which is the expected case), then inline them.
+        ///
+        /// SVG files in particular can be in objects but have more useful properties outside of them
+        /// (eg, as they can be affected by CSS settings on their container this way). However, they are 
+        /// ugly to inline in HTML if they are of any complexity, so it's nice to be able to reference them 
+        /// externally. Loading them every time when a template is re-used is nefficient too, so this 
+        /// provides a slightly nicer way to deal with SVG UI elements.
+        ///
+        let inline_template_objects = (root_node) => {
+            return new Promise((resolve, reject) => {
+                // Find all of the objects in the document
+                let templates   = [].slice.apply(root_node.getElementsByTagName('TEMPLATE'));
+                let objects     = templates
+                    .map(template => template.content.children[0])
+                    .mapMany(template => [].slice.apply(template.getElementsByTagName('OBJECT')));
+
+                // Retrieves an absolute URL from a relative one for our document
+                let get_absolute_url = (relative_url) => {
+                    let a = document.createElement('a');
+                    a.href = relative_url;
+                    return a.href;
+                };
+
+                // Performs inlining of a SVG
+                let inline_svg = (obj_node, svg) => {
+                    // Generate a node from the SVG
+                    let fake_root = document.createElement('div');
+                    fake_root.innerHTML = svg;
+                    let svg_node = fake_root.children[0];
+
+                    // Splice in place of the obj node
+                    let parent = obj_node.parentNode;
+
+                    parent.insertBefore(svg_node, obj_node.nextSibling);
+                    parent.removeChild(obj_node);
+                };
+
+                // Try to load all of the objects
+                let load_objects    = objects.map(obj_node => {
+                    let object_url = get_absolute_url(obj_node.getAttribute('data'));
+
+                    return http_get(object_url).then(object_request => {
+                        let content_type = object_request.getResponseHeader('Content-Type');
+
+                        if (content_type.includes('image/svg+xml')) {
+                            let svg_content = object_request.response;
+                            inline_svg(obj_node, svg_content);
+                        }
+                    });
+                });
+
+                // Promise is done once all of the objects are loaded
+                Promise.all(load_objects)
+                    .then(() => resolve())
+                    .catch(ex => reject(ex));
+            });
+        };
+
         add_command('show_templates', 'Displays the template nodes', () => console.log(templates));
 
         return {
-            reload_templates: reload_templates,
-            apply_template: apply_template
+            reload_templates:           reload_templates,
+            apply_template:             apply_template,
+            inline_template_objects:    inline_template_objects
         };
     })();
 
-    let reload_templates    = templating.reload_templates;
-    let apply_template      = templating.apply_template;
+    let reload_templates        = templating.reload_templates;
+    let apply_template          = templating.apply_template;
+    let inline_template_objects = templating.inline_template_objects;
 
     ///
     /// Fetches the root of the UI
@@ -1154,9 +1226,12 @@ function flowbetween(root_node) {
     // All set up, let's go
     console.log('%c', 'background: url("' + base_url + '/png/Flo-Orb-small.png") no-repeat left center; background-size: 120px 142px; padding-left: 120px; padding-bottom: 71px; padding-top: 71px; line-height: 142px; font-size: 0%;"');
     console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
-    reload_templates(document.getRootNode());
-    new_session();
-    enable_commands();
+
+    inline_template_objects(document.getRootNode()).then(() => {
+        reload_templates(document.getRootNode());
+        new_session();
+        enable_commands();
+    });
 }
 
 ///
