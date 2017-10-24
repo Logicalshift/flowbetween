@@ -1,5 +1,6 @@
+use binding::*;
+
 use super::property::*;
-use super::binding::*;
 
 use std::sync::*;
 

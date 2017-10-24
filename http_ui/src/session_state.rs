@@ -1,3 +1,4 @@
+use binding::*;
 use ui::*;
 
 use uuid::*;

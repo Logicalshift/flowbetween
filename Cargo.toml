@@ -7,6 +7,7 @@ authors     = ["Andrew Hunter"]
 static_files    = { path = "static_files" }
 animation       = { path = "animation" }
 http_ui         = { path = "http_ui" }
+binding         = { path = "binding" }
 ui              = { path = "ui" }
 
 serde           = "1.0.0"

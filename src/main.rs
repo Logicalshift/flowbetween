@@ -13,6 +13,7 @@ extern crate mount;
 extern crate static_files;
 extern crate http_ui;
 extern crate ui;
+extern crate binding;
 
 pub mod flowbetween;
 pub use self::flowbetween::*;

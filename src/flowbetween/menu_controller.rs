@@ -1,4 +1,5 @@
 use ui::*;
+use binding::*;
 
 use std::sync::*;
 

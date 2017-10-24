@@ -1,6 +1,7 @@
 use super::editor_controller::*;
 
 use ui::*;
+use binding::*;
 use http_ui::*;
 
 use std::sync::*;

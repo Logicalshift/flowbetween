@@ -5,6 +5,7 @@ authors     = ["Andrew Hunter"]
 
 [dependencies]
 ui              = { path = "../ui" }
+binding         = { path = "../binding" }
 
 serde           = "1.0.0"
 serde_json      = "1.0.0"

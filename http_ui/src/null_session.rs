@@ -4,6 +4,7 @@ use super::session::*;
 use super::session_state::*;
 
 use ui::*;
+use binding::*;
 
 ///
 /// An empty session type that can be used for testing in the absense of an actual implementation

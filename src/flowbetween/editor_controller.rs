@@ -1,4 +1,5 @@
 use ui::*;
+use binding::*;
 use super::canvas_controller::*;
 use super::menu_controller::*;
 use super::timeline_controller::*;

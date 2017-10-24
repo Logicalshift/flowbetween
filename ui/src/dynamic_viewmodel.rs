@@ -1,6 +1,7 @@
+use binding::*;
+
 use super::property::*;
 use super::viewmodel::*;
-use super::binding::*;
 
 use std::sync::*;
 use std::collections::HashMap;
