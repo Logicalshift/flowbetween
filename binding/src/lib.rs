@@ -1,10 +1,43 @@
 //!
 //! # Bindings
 //!
-//! This provides a means for building data-driven applications. The
-//! basic model is similar to how spreadsheets work: we watch what
-//! items a particular calculation depends on and generate an event
-//! when any of these change.
+//! This library provides a mechansim for designing applications with a data-driven
+//! control flow. This is essentially the paradigm found in spreadsheets, where
+//! a formula will update automatically if its dependencies update. This is a
+//! convenient way to express how a user interface updates, as it eliminates the
+//! need to describe and manage events.
+//! 
+//! A simple binding can be created using `let binding = bind(X)`. This creates
+//! a simple mutable binding that can be updated using `binding.set(Y)` or
+//! retrieved using `binding.get()`.
+//! 
+//! This value can be monitored using `when_changed`, as in 
+//! `let lifetime = binding.when_changed(notify(|| println!("Changed!")))`.
+//! The lifetime value returned can be used to stop the notifications from firing.
+//! Unless `lifetime.keep_alive()` is called, it will also stop the notifications
+//! once it goes out of scope.
+//! 
+//! So far, this is very similar to traditional observables. What makes bindings
+//! different is the idea that they can be computed as well. Here's an example:
+//! 
+//! ```
+//! # use binding::*;
+//! let mut number      = bind(1);
+//! let number_clone    = number.clone();
+//! let plusone         = computed(move || number_clone.get() + 1);
+//! 
+//! let mut lifetime    = plusone.when_changed(notify(|| println!("Changed!")));
+//! 
+//! println!("{}", plusone.get());  // 2
+//! # assert!(plusone.get() == 2);
+//! number.set(2);                  // 'Changed!'
+//! println!("{}", plusone.get());  // 3
+//! # assert!(plusone.get() == 3);
+//! lifetime.done();
+//! ```
+//! 
+//! Computed values can be as complicated as necessary, and will notify the 
+//! specified function whenever their value changes.
 //!
 
 pub mod traits;

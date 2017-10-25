@@ -12,6 +12,7 @@ pub mod viewmodel;
 pub mod dynamic_viewmodel;
 pub mod diff_viewmodel;
 pub mod viewmodel_update;
+pub mod canvas;
 
 pub use self::control::*;
 pub use self::layout::*;
