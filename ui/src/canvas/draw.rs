@@ -61,6 +61,9 @@ pub enum Draw {
     /// Rectangle path between points
     Rect((f32, f32), (f32, f32)),
 
+    /// Fills the current clipping region with a single colour
+    Blit(Color),
+
     /// Fill the current path
     Fill,
 
@@ -104,8 +107,24 @@ pub enum Draw {
     MultiplyTransform(Transform2D),
 
     /// Unset the clipping path
-    ClearClip,
+    Unclip,
 
     /// Clip to the currently set path
-    Clip
+    Clip,
+
+    /// Push the current state of the canvas (line settings, stored image, current path - all state)
+    PushState,
+
+    /// Restore a state previously pushed
+    PopState,
+
+    /// Stores the content of the clipping path in a background buffer
+    Store,
+
+    /// Restores what was stored in the background buffer
+    /// (If the clipping path has changed since then, the restored image is clipped against the new path)
+    Restore,
+
+    /// Clears the canvas entirely
+    ClearCanvas
 }
