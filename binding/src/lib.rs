@@ -34,6 +34,9 @@
 //! println!("{}", plusone.get());  // 3
 //! # assert!(plusone.get() == 3);
 //! lifetime.done();
+//! 
+//! number.set(3);                  // Lifetime is done, so no notification
+//! println!("{}", plusone.get());  // 4
 //! ```
 //! 
 //! Computed values can be as complicated as necessary, and will notify the 
