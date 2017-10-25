@@ -6,4 +6,5 @@ authors     = ["Andrew Hunter"]
 [dependencies]
 serde           = "1.0.0"
 serde_derive    = "1.0.0"
+futures         = "0.1.16"
 binding         = { path = "../binding" }
