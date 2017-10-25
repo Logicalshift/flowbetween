@@ -38,6 +38,23 @@
 //! 
 //! Computed values can be as complicated as necessary, and will notify the 
 //! specified function whenever their value changes.
+//! 
+//! Cloning a binding creates a new binding that references the same location.
+//! This makes it easier to pass bindings into closures (though still a
+//! little awkward as Rust doesn't really have a shorthand way of doing this
+//! for philosophical reasons). They're similar in behaviour to an 
+//! `Arc<Mutex<X>>` object in this respect (and never really immutable given
+//! that cloning them creates a mutable object)
+//! 
+//! Computed bindings as demonstrated above are 'lazy'. They don't know their
+//! own value until they have been evaluated after a change (and start in this
+//! 'uncertain' state), so they will not notify of value changes until they
+//! have been read at least once and will not notify again until they have
+//! been read again. Reading the value from within the notification is possible
+//! but in general the idea is to queue up an update for later: being lazy in
+//! this way prevents repeated computations of intermediate values when many
+//! values are being updated. Knock-on effects are all accounted for, so if
+//! a future update is queued, it won't trigger further notifications.
 //!
 
 pub mod traits;
