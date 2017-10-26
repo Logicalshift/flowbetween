@@ -7,6 +7,14 @@ use super::viewmodel_update::*;
 use std::collections::{HashSet, HashMap};
 use std::sync::*;
 
+// TODO: needs improvement
+//  * The 'watch a viewmodel' and 'watch the controller tree' functions are lumped together here and should be separate
+//  * Recreating the watch every time rather than re-using the existing watchers where we can is inefficient
+//  * DiffViewModel doesn't really do all that much at the moment
+//  * This kind of feels like something that could be done with the futures library
+//  * Watching each item individually won't work well if the viewmodel gets complicated (though the
+//    current design discourages that)
+
 ///
 /// Tracks differences in the viewmodel attached to a controller and its subtree
 /// 
