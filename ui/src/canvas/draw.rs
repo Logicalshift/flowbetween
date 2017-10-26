@@ -8,6 +8,7 @@ use super::color::*;
 ///
 /// Possible way to join lines 
 ///
+#[derive(Clone, Copy, PartialEq)]
 pub enum LineJoin {
     Miter,
     Round,
@@ -17,6 +18,7 @@ pub enum LineJoin {
 ///
 /// How to cap lines
 ///
+#[derive(Clone, Copy, PartialEq)]
 pub enum LineCap {
     Butt,
     Round,
@@ -26,6 +28,7 @@ pub enum LineCap {
 ///
 /// Blend mode to use when drawing
 /// 
+#[derive(Clone, Copy, PartialEq)]
 pub enum BlendMode {
     SourceOver,
     SourceIn,
@@ -45,6 +48,7 @@ pub enum BlendMode {
 ///
 /// Instructions for drawing to a canvas
 ///
+#[derive(Clone, Copy, PartialEq)]
 pub enum Draw {
     /// Begins a new path
     NewPath,
@@ -79,8 +83,11 @@ pub enum Draw {
     /// The cap to use on lines
     LineCap(LineCap),
 
-    /// Sets the dash pattern
-    DashLengths(Vec<f32>),
+    /// Resets the dash pattern to empty (which is a solid line)
+    NewDashPattern,
+
+    /// Adds a dash to the current dash pattern
+    DashLength(f32),
 
     /// Sets the offset for the dash pattern
     DashOffset(f32),
