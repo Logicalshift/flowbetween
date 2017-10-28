@@ -2,9 +2,6 @@ use super::traits::*;
 
 use std::sync::{Arc, Mutex};
 use std::marker::PhantomData;
-use std::fmt::{Debug, Formatter};
-use std::fmt;
-
 use futures::{Stream, Poll};
 use futures::task;
 use futures::task::Task;
@@ -30,13 +27,6 @@ pub struct BindingStream<Value, Binding> where Binding: Bound<Value> {
 
     // How long the notification lasts
     ready_lifetime: Box<Releasable>
-}
-
-impl<Value, Binding> Debug for BindingStream<Value, Binding> where Binding: Bound<Value> {
-    fn fmt<'a>(&self, formatter: &mut Formatter<'a>) -> Result<(), fmt::Error> {
-        // So we can unwrap futures involving this easily without it moaning about errors
-        formatter.write_str("BindingStream")
-    }
 }
 
 ///
@@ -141,6 +131,8 @@ mod test {
     use super::*;
     use super::super::*;
 
+    use futures::executor;
+    use futures::executor::{Notify, NotifyHandle};
     use futures::future::*;
     use self::futures_cpupool::*;
     use std::thread::{spawn, sleep};
@@ -148,45 +140,54 @@ mod test {
     use std::result::*;
     use std::time::Instant;
 
+    struct NotifyNothing;
+    impl Notify for NotifyNothing {
+        fn notify(&self, _: usize) { }
+    }
+
     #[test]
     fn stream_returns_initial_value() {
         let binding     = bind(1);
-        let mut stream  = BindingStream::new(binding.clone()).peekable();
+        let mut stream  = executor::spawn(BindingStream::new(binding.clone()));
+        let notify      = NotifyHandle::from(&NotifyNothing);
 
-        assert!(stream.peek() == Ok(Ready(Some(&1))));
+        assert!(stream.poll_stream_notify(&notify, 0) == Ok(Ready(Some(1))));
     }
 
     #[test]
     fn stream_is_not_ready_after_reading() {
         let binding     = bind(1);
-        let mut stream  = BindingStream::new(binding.clone()).peekable();
+        let mut stream  = executor::spawn(BindingStream::new(binding.clone()));
+        let notify      = NotifyHandle::from(&NotifyNothing);
 
-        stream = stream.into_future().wait().unwrap().1;
-        assert!(stream.peek() == Ok(NotReady));
+        let _ = stream.poll_stream_notify(&notify, 0);
+        assert!(stream.poll_stream_notify(&notify, 0) == Ok(NotReady));
     }
 
     #[test]
     fn stream_stays_unready_if_change_does_not_affect_value() {
         let mut binding = bind(1);
-        let mut stream  = BindingStream::new(binding.clone());
+        let mut stream  = executor::spawn(BindingStream::new(binding.clone()));
+        let notify      = NotifyHandle::from(&NotifyNothing);
 
-        let _ = stream.poll();
-        let _ = stream.poll();
+        let _ = stream.poll_stream_notify(&notify, 0);
+        let _ = stream.poll_stream_notify(&notify, 0);
 
         binding.set(1);
-        assert!(stream.poll() == Ok(NotReady));
+        assert!(stream.poll_stream_notify(&notify, 0) == Ok(NotReady));
     }
 
     #[test]
     fn stream_becomes_ready_after_change() {
         let mut binding = bind(1);
-        let mut stream  = BindingStream::new(binding.clone());
+        let mut stream  = executor::spawn(BindingStream::new(binding.clone()));
+        let notify      = NotifyHandle::from(&NotifyNothing);
 
-        let _ = stream.poll();
-        let _ = stream.poll();
+        let _ = stream.poll_stream_notify(&notify, 0);
+        let _ = stream.poll_stream_notify(&notify, 0);
 
         binding.set(2);
-        assert!(stream.poll() == Ok(Ready(Some(2))));
+        assert!(stream.poll_stream_notify(&notify, 0) == Ok(Ready(Some(2))));
     }
 
     #[test]
@@ -194,6 +195,7 @@ mod test {
         let mut binding = bind(1);
         let mut stream  = BindingStream::new(binding.clone());
 
+        // As we don't return NotReady here, we won't panic with this direct call even though there's no current task
         assert!(stream.poll() == Ok(Ready(Some(1))));
 
         let pool    = CpuPool::new(2);
