@@ -3,7 +3,9 @@ use super::draw::*;
 use std::sync::*;
 use std::mem;
 
-use futures::task::*;
+use futures::task::Task;
+use futures::task;
+use futures::{Stream,Poll,Async};
 
 ///
 /// The core structure used to store details of a canvas 
@@ -16,7 +18,10 @@ struct CanvasCore {
     clear_count: u32,
 
     // Tasks to notify next time we add to the canvas
-    pending_tasks: Vec<Task>
+    pending_tasks: Vec<Task>,
+
+    /// True if the canvas has been dropped
+    dropped: bool
 }
 
 ///
@@ -38,7 +43,8 @@ impl Canvas {
         let core = CanvasCore { 
             drawing_since_last_clear:   vec![ Draw::ClearCanvas ],
             clear_count:                0,
-            pending_tasks:              vec![ ]
+            pending_tasks:              vec![ ],
+            dropped:                    false
         };
 
         Canvas {
@@ -77,10 +83,42 @@ impl Canvas {
                 pending_tasks
             };
 
-            // Tell everything about this task
+            // Notify everything that there are new drawing commands available
             pending_tasks.iter_mut().for_each(|task| task.notify());
         }
     }
+
+    ///
+    /// Creates a stream for reading the instructions from this canvas
+    ///
+    pub fn stream(&self) -> Box<Stream<Item=Draw,Error=()>> {
+        Box::new(CanvasStream { 
+            core:               self.core.clone(),
+            pos:                0,
+            active_clear_count: 0
+        })
+    }
+}
+
+impl Drop for Canvas {
+    fn drop(&mut self) {
+        let mut pending_tasks = {
+            // Unlock the core
+            let mut core            = self.core.lock().unwrap();
+            let mut pending_tasks   = vec![];
+
+            // Get the tasks we're going to notify about the new command
+            mem::swap(&mut core.pending_tasks, &mut pending_tasks);
+
+            // Mark the core as dropped
+            core.dropped = true;
+
+            pending_tasks
+        };
+
+        // Notify any tasks that are using the canvas that it has gone away
+        pending_tasks.iter_mut().for_each(|task| task.notify());
+   }
 }
 
 ///
@@ -88,5 +126,93 @@ impl Canvas {
 /// Unconsumed commands are cut off if the `Draw::ClearCanvas` command is issued.
 ///
 pub struct CanvasStream {
+    /// The core is shared amongst the canvas streams as well as used by the canvas itself
+    core: Arc<Mutex<CanvasCore>>,
 
+    /// Position in the canvas command list
+    pos: usize,
+
+    /// The clear count from the canvas (we reset the position if this doesn't match)
+    active_clear_count: u32
+}
+
+impl Stream for CanvasStream {
+    type Item = Draw;
+    type Error = ();
+
+   fn poll(&mut self) -> Poll<Option<Draw>, ()> {
+        use self::Async::*;
+        let mut core = self.core.lock().unwrap();
+
+        if core.clear_count != self.active_clear_count {
+            // The canvas has been cleared since the last read, so reset the position back to the beginning
+            self.active_clear_count = core.clear_count;
+            self.pos                = 0;
+        }
+
+        if self.pos < core.drawing_since_last_clear.len() {
+            // There are still values in the canvas that we haven't returned yet
+            let value = core.drawing_since_last_clear[self.pos];
+            self.pos = self.pos+1;
+
+            Ok(Ready(Some(value)))
+        } else if core.dropped {
+            // Once the core is dropped, the canvas stream is finished
+            Ok(Ready(None))
+        } else {
+            // Need to be notified when the canvas changes
+            core.pending_tasks.push(task::current());
+
+            Ok(NotReady)
+        }
+   }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use futures::executor;
+
+    use std::thread::*;
+    use std::time::*;
+
+    #[test]
+    fn can_draw_to_canvas() {
+        let mut canvas = Canvas::new();
+
+        canvas.draw(&[Draw::NewPath]);
+    }
+
+    #[test]
+    fn can_follow_canvas_stream() {
+        let mut canvas  = Canvas::new();
+        let mut stream  = executor::spawn(canvas.stream());
+        
+        // Thread to draw some stuff to the canvas
+        spawn(move || {
+            sleep(Duration::from_millis(50));
+
+            canvas.draw(&[
+                Draw::NewPath,
+                Draw::Move(0.0, 0.0),
+                Draw::Line(10.0, 0.0),
+                Draw::Line(10.0, 10.0),
+                Draw::Line(0.0, 10.0)
+            ]);
+        });
+
+        // TODO: if the canvas fails to notify, this will block forever :-/
+
+        // Check we can get the results via the stream
+        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Move(0.0, 0.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 0.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 10.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(0.0, 10.0))));
+
+        // When the thread goes away, it'll drop the canvas, so we should get the 'None' request here too
+        assert!(stream.wait_stream() == None);
+    }
 }

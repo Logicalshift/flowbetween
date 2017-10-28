@@ -96,7 +96,7 @@ where Binding: Bound<Value> {
    type Item=Value;
    type Error=();
 
-   fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
+   fn poll(&mut self) -> Poll<Option<Value>, ()> {
         // Find out if there's a new value ready, and flag it as consumed if there is
         let ready = {
            let was_ready = self.ready.ready.load(Ordering::Acquire);
