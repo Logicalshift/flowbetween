@@ -1,5 +1,4 @@
 use super::traits::*;
-use super::notify_fn::*;
 use super::releasable::*;
 use super::binding_context::*;
 
@@ -167,17 +166,8 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // We only keep a week reference to the core here
         let to_notify   = Arc::downgrade(&self.core);
 
-        // Monitor for changes
-        let lifetime    = to_monitor.when_changed(notify(move || {
-            // If the reference is still active, reconstitute a computed binding in order to call the mark_changed method
-            if let Some(to_notify) = to_notify.upgrade() {
-                let mut to_notify = ComputedBinding { core: to_notify };
-                to_notify.mark_changed();
-            } else if cfg!(debug_assertions) {
-                // We can carry on here, but this suggests a memory leak
-                panic!("The core of a computed is gone but its notifcations have been left behind");
-            }
-        }));
+        // Monitor for changes (see below for the implementation against to_notify's type)
+        let lifetime    = to_monitor.when_changed(Arc::new(to_notify));
 
         // Store the lifetime
         let mut last_notification = Some(lifetime);
@@ -185,6 +175,24 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
         // Any lifetime that was in the core before this one should be finished
         last_notification.map(|mut last_notification| last_notification.done());
+    }
+}
+
+///
+/// The weak reference to a core is generated in monitor_changes: this specifies what happens when a
+/// notification is generated for such a reference.
+///
+impl<Value, TFn> Notifiable for Weak<Mutex<ComputedBindingCore<Value, TFn>>>
+where Value: 'static+Clone+PartialEq+Send, TFn: 'static+Send+Sync+Fn() -> Value {
+    fn mark_as_changed(&self) {
+        // If the reference is still active, reconstitute a computed binding in order to call the mark_changed method
+        if let Some(to_notify) = self.upgrade() {
+            let mut to_notify = ComputedBinding { core: to_notify };
+            to_notify.mark_changed();
+        } else if cfg!(debug_assertions) {
+            // We can carry on here, but this suggests a memory leak - if the core has gone, then its owning object should have stopped this event from firing
+            panic!("The core of a computed is gone but its notifcations have been left behind");
+        }
     }
 }
 
