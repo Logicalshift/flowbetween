@@ -217,7 +217,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             // TODO: really want to recalculate without locking the core - can do this by moving the function out and doing the recalculation here
             // TODO: locking the core and calling a function can result in deadlocks due to user code structure in particular against other bindings
             // TODO: when we do recalculate without locking, we need to make sure that no extra invalidations arrived between when we started the calculation and when we stored the result
-            // TODO: probably fine to return the out of date result rather than the newer one here
+            // TODO: if multiple calculations do occur outside the lock, we need to return only the most recent result so when_changed is fired correctly
 
             // Stop responding to notifications
             let mut old_notification = None;
