@@ -4,7 +4,6 @@ use super::releasable::*;
 use super::binding_context::*;
 
 use std::sync::*;
-use std::cell::*;
 use std::mem;
 
 ///
@@ -16,7 +15,7 @@ where TFn: 'static+Fn() -> Value {
     calculate_value: TFn,
 
     /// Most recent cached value
-    latest_value: RefCell<Option<Value>>,
+    latest_value: Option<Value>,
 
     /// If there's a notification attached to this item, this can be used to release it
     existing_notification: Option<Box<Releasable>>,
@@ -33,7 +32,7 @@ where TFn: 'static+Fn() -> Value {
     pub fn new(calculate_value: TFn) -> ComputedBindingCore<Value, TFn> {
         ComputedBindingCore {
             calculate_value:        calculate_value,
-            latest_value:           RefCell::new(None),
+            latest_value:           None,
             existing_notification:  None,
             when_changed:           vec![]
         }
@@ -42,13 +41,11 @@ where TFn: 'static+Fn() -> Value {
     ///
     /// Marks the value as changed, returning true if the value was removed
     ///
-    pub fn mark_changed(&self) -> bool {
-        let mut latest_value = self.latest_value.borrow_mut();
-
-        if *latest_value == None {
+    pub fn mark_changed(&mut self) -> bool {
+        if self.latest_value == None {
             false
         } else {
-            *latest_value = None;
+            self.latest_value = None;
             true
         }
     }
@@ -66,19 +63,18 @@ where TFn: 'static+Fn() -> Value {
     /// Returns the current value (or 'None' if it needs recalculating)
     ///
     pub fn get(&self) -> Option<Value> {
-        self.latest_value.borrow().clone()
+        self.latest_value.clone()
     }
 
     ///
     /// Recalculates the latest value
     ///
-    pub fn recalculate(&self) -> (Value, BindingDependencies) {
+    pub fn recalculate(&mut self) -> (Value, BindingDependencies) {
         // Perform the binding in a context to get the value and the dependencies
         let (result, dependencies) = BindingContext::bind(|| (self.calculate_value)());
 
         // Update the latest value
-        let mut latest_value = self.latest_value.borrow_mut();
-        *latest_value = Some(result.clone());
+        self.latest_value = Some(result.clone());
 
         // Pass on the result
         (result, dependencies)
