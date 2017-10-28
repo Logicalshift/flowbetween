@@ -94,7 +94,6 @@ mod test {
     use super::binding_context::*;
 
     use std::sync::*;
-    use std::cell::*;
 
     #[test]
     fn can_create_binding() {
@@ -296,12 +295,11 @@ mod test {
     fn computed_only_recomputes_as_needed() {
         let mut bound           = bind(1);
 
-        let counter             = Arc::new(Mutex::new(RefCell::new(0)));
+        let counter             = Arc::new(Mutex::new(0));
         let compute_counter     = counter.clone();
         let computed_from       = bound.clone();
         let computed            = computed(move || {
-            let counter     = compute_counter.lock().unwrap();
-            let mut counter = counter.borrow_mut();
+            let mut counter = compute_counter.lock().unwrap();
             *counter = *counter + 1;
 
             computed_from.get() + 1
@@ -310,20 +308,20 @@ mod test {
         assert!(computed.get() == 2);
         {
             let counter = counter.lock().unwrap();
-            assert!(counter.borrow().clone() == 1);
+            assert!(counter.clone() == 1);
         }
 
         assert!(computed.get() == 2);
         {
             let counter = counter.lock().unwrap();
-            assert!(counter.borrow().clone() == 1);
+            assert!(counter.clone() == 1);
         }
 
         bound.set(2);
         assert!(computed.get() == 3);
         {
             let counter = counter.lock().unwrap();
-            assert!(counter.borrow().clone() == 2);
+            assert!(counter.clone() == 2);
         }
     }
 
