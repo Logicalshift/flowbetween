@@ -91,8 +91,17 @@ where Binding: Bound<Value> {
 
 #[cfg(test)]
 mod test {
+    extern crate futures_cpupool;
+
     use super::*;
     use super::super::*;
+
+    use futures::future::*;
+    use self::futures_cpupool::*;
+    use std::thread::{spawn, sleep};
+    use std::time::*;
+    use std::result::*;
+    use std::time::Instant;
 
     #[test]
     fn stream_returns_initial_value() {
@@ -133,5 +142,46 @@ mod test {
 
         binding.set(2);
         assert!(stream.poll() == Ok(Ready(Some(2))));
+    }
+
+    #[test]
+    fn will_wait_for_change() {
+        let mut binding = bind(1);
+        let mut stream  = BindingStream::new(binding.clone());
+
+        assert!(stream.poll() == Ok(Ready(Some(1))));
+
+        let pool    = CpuPool::new(2);
+
+        // Timeouts are in the full tokio library but we really don't want to be bringing that massive thing in just for this one test
+        let timeout = pool.spawn_fn(|| {
+            sleep(Duration::from_millis(2000));
+
+            // futures always have an error in them, which breaks rust's type inference in an annoying way
+            let res: Result<i32, ()> = Ok(0);
+            res
+        });
+
+        // Create a future that will update when the timeout runs out or when the binding notifies
+        // If both notify, then putting the timeout first here means it'll probably be the first returned
+        let timeout_or_stream = timeout
+            .select(stream.into_future()
+                .map(|(x, _)| x.unwrap())
+                .map_err(|_| ()))
+            .map_err(|_| ());
+
+        // Start a background thread that will update the binding first
+        spawn(move || {
+            sleep(Duration::from_millis(100));
+            binding.set(2);
+        });
+
+        // First notification should be from the binding
+        let start = Instant::now();
+        assert!(timeout_or_stream.wait().unwrap().0 == 2);
+
+        // Also as the binding was updated after 100ms, the total time shold be <1000ms
+        // (Needed because futures does poll again during the select and the binding is updated there)
+        assert!(start.elapsed() < Duration::from_millis(1000));
     }
 }
