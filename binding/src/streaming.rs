@@ -1,6 +1,7 @@
 use super::traits::*;
 
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::marker::PhantomData;
 use futures::{Stream, Poll};
 use futures::task;
@@ -34,7 +35,7 @@ pub struct BindingStream<Value, Binding> where Binding: Bound<Value> {
 ///
 struct ReadyNotification {
     /// Flag that is true if the binding has changed since the stream was last polled
-    ready: Mutex<bool>,
+    ready: AtomicBool,
 
     /// The tasks that have received a 'NotReady' notification for this stream
     notify: Mutex<Vec<Task>>
@@ -47,7 +48,7 @@ where Binding: Bound<Value> {
     ///
     pub fn new(binding: Binding) -> BindingStream<Value, Binding> {
         let ready = Arc::new(ReadyNotification { 
-            ready:  Mutex::new(true),
+            ready:  AtomicBool::new(true),
             notify: Mutex::new(vec![])
         });
 
@@ -76,11 +77,7 @@ impl ReadyNotification {
 ///
 impl Notifiable for ReadyNotification {
     fn mark_as_changed(&self) {
-        {
-            // Mark as ready
-            let mut ready_flag = self.ready.lock().unwrap();
-            *ready_flag = true;
-        }
+        self.ready.store(true, Ordering::Release);
 
         {
             // Notify the tasks. These are added as side-effects to a NotReady poll result
@@ -102,11 +99,8 @@ where Binding: Bound<Value> {
    fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         // Find out if there's a new value ready, and flag it as consumed if there is
         let ready = {
-           let mut is_ready = self.ready.ready.lock().unwrap();
-           let was_ready    = *is_ready;
-
-           *is_ready = false;
-
+           let was_ready = self.ready.ready.load(Ordering::Acquire);
+           self.ready.ready.store(false, Ordering::Release);
            was_ready
         };
         
