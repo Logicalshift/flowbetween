@@ -2,3 +2,6 @@
 name        = "binding"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
+
+[dependencies]
+futures     = "0.1.16"
