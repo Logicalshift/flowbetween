@@ -7,6 +7,17 @@ use std::sync::*;
 use std::mem;
 
 ///
+/// Represents a computed value
+///
+#[derive(Clone, PartialEq)]
+enum ComputedValue<Value: 'static+Clone+PartialEq> {
+    Unknown,
+    Cached(Value)
+}
+
+use self::ComputedValue::*;
+
+///
 /// Core representation ofa computed binding
 ///
 struct ComputedBindingCore<Value: 'static+Clone+PartialEq, TFn>
@@ -15,7 +26,7 @@ where TFn: 'static+Fn() -> Value {
     calculate_value: TFn,
 
     /// Most recent cached value
-    latest_value: Option<Value>,
+    latest_value: ComputedValue<Value>,
 
     /// If there's a notification attached to this item, this can be used to release it
     existing_notification: Option<Box<Releasable>>,
@@ -32,7 +43,7 @@ where TFn: 'static+Fn() -> Value {
     pub fn new(calculate_value: TFn) -> ComputedBindingCore<Value, TFn> {
         ComputedBindingCore {
             calculate_value:        calculate_value,
-            latest_value:           None,
+            latest_value:           Unknown,
             existing_notification:  None,
             when_changed:           vec![]
         }
@@ -42,10 +53,10 @@ where TFn: 'static+Fn() -> Value {
     /// Marks the value as changed, returning true if the value was removed
     ///
     pub fn mark_changed(&mut self) -> bool {
-        if self.latest_value == None {
+        if self.latest_value == Unknown {
             false
         } else {
-            self.latest_value = None;
+            self.latest_value = Unknown;
             true
         }
     }
@@ -60,9 +71,9 @@ where TFn: 'static+Fn() -> Value {
     }
 
     ///
-    /// Returns the current value (or 'None' if it needs recalculating)
+    /// Returns the current value (or 'Unknown' if it needs recalculating)
     ///
-    pub fn get(&self) -> Option<Value> {
+    pub fn get(&self) -> ComputedValue<Value> {
         self.latest_value.clone()
     }
 
@@ -74,7 +85,7 @@ where TFn: 'static+Fn() -> Value {
         let (result, dependencies) = BindingContext::bind(|| (self.calculate_value)());
 
         // Update the latest value
-        self.latest_value = Some(result.clone());
+        self.latest_value = Cached(result.clone());
 
         // Pass on the result
         (result, dependencies)
@@ -206,7 +217,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // Borrow the core
         let mut core = self.core.lock().unwrap();
 
-        if let Some(value) = core.get() {
+        if let Cached(value) = core.get() {
             // The value already exists in this item
             value
         } else {
