@@ -207,11 +207,11 @@ mod test {
 
         // Create a future that will update when the timeout runs out or when the binding notifies
         // If both notify, then putting the timeout first here means it'll probably be the first returned
-        let timeout_or_stream = timeout
+        let mut timeout_or_stream = executor::spawn(timeout
             .select(stream.into_future()
                 .map(|(x, _)| x.unwrap())
                 .map_err(|_| ()))
-            .map_err(|_| ());
+            .map_err(|_| ()));
 
         // Start a background thread that will update the binding first
         spawn(move || {
@@ -221,7 +221,7 @@ mod test {
 
         // First notification should be from the binding
         let start = Instant::now();
-        assert!(timeout_or_stream.wait().unwrap().0 == 2);
+        assert!(timeout_or_stream.wait_future().unwrap().0 == 2);
 
         // Also as the binding was updated after 100ms, the total time shold be <1000ms
         // (Needed because futures does poll again during the select and the binding is updated there)
