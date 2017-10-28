@@ -57,6 +57,7 @@ pub fn viewmodel_update_controller_tree(controller: &Controller) -> Vec<ViewMode
 mod test {
     use super::*;
     use std::sync::*;
+    use binding::*;
 
     struct TestViewModel;
 
