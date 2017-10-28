@@ -215,4 +215,90 @@ mod test {
         // When the thread goes away, it'll drop the canvas, so we should get the 'None' request here too
         assert!(stream.wait_stream() == None);
     }
+
+    #[test]
+    fn can_follow_many_streams() {
+        let mut canvas  = Canvas::new();
+        let mut stream  = executor::spawn(canvas.stream());
+        let mut stream2  = executor::spawn(canvas.stream());
+        
+        // Thread to draw some stuff to the canvas
+        spawn(move || {
+            sleep(Duration::from_millis(50));
+
+            canvas.draw(&[
+                Draw::NewPath,
+                Draw::Move(0.0, 0.0),
+                Draw::Line(10.0, 0.0),
+                Draw::Line(10.0, 10.0),
+                Draw::Line(0.0, 10.0)
+            ]);
+        });
+
+        // TODO: if the canvas fails to notify, this will block forever :-/
+
+        // Check we can get the results via the stream
+        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Move(0.0, 0.0))));
+
+        assert!(stream2.wait_stream() == Some(Ok(Draw::ClearCanvas)));
+        assert!(stream2.wait_stream() == Some(Ok(Draw::NewPath)));
+        assert!(stream2.wait_stream() == Some(Ok(Draw::Move(0.0, 0.0))));
+
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 0.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 10.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(0.0, 10.0))));
+
+        assert!(stream2.wait_stream() == Some(Ok(Draw::Line(10.0, 0.0))));
+        assert!(stream2.wait_stream() == Some(Ok(Draw::Line(10.0, 10.0))));
+        assert!(stream2.wait_stream() == Some(Ok(Draw::Line(0.0, 10.0))));
+
+        // When the thread goes away, it'll drop the canvas, so we should get the 'None' request here too
+        assert!(stream.wait_stream() == None);
+        assert!(stream2.wait_stream() == None);
+    }
+
+    #[test]
+    fn commands_after_clear_are_suppressed() {
+        let mut canvas  = Canvas::new();
+        let mut stream  = executor::spawn(canvas.stream());
+        
+        // Thread to draw some stuff to the canvas
+        spawn(move || {
+            sleep(Duration::from_millis(50));
+
+            canvas.draw(&[
+                Draw::NewPath,
+                Draw::Move(0.0, 0.0),
+                Draw::Line(10.0, 0.0),
+                Draw::Line(10.0, 10.0),
+                Draw::Line(0.0, 10.0)
+            ]);
+
+            // Enough time that we read the first few commands
+            sleep(Duration::from_millis(100));
+
+            canvas.draw(&[
+                Draw::ClearCanvas,
+                Draw::Move(200.0, 200.0),
+            ]);
+        });
+
+        // TODO: if the canvas fails to notify, this will block forever :-/
+
+        // Check we can get the results via the stream
+        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+
+        // Give the thread some time to clear the canvas
+        sleep(Duration::from_millis(120));
+
+        // Commands we sent before the flush are gone
+        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Move(200.0, 200.0))));
+
+        // When the thread goes away, it'll drop the canvas, so we should get the 'None' request here too
+        assert!(stream.wait_stream() == None);
+    }
 }
