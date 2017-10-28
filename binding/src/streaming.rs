@@ -2,6 +2,9 @@ use super::traits::*;
 
 use std::sync::{Arc, Mutex};
 use std::marker::PhantomData;
+use std::fmt::{Debug, Formatter};
+use std::fmt;
+
 use futures::{Stream, Poll};
 use futures::task;
 use futures::task::Task;
@@ -27,6 +30,13 @@ pub struct BindingStream<Value, Binding> where Binding: Bound<Value> {
 
     // How long the notification lasts
     ready_lifetime: Box<Releasable>
+}
+
+impl<Value, Binding> Debug for BindingStream<Value, Binding> where Binding: Bound<Value> {
+    fn fmt<'a>(&self, formatter: &mut Formatter<'a>) -> Result<(), fmt::Error> {
+        // So we can unwrap futures involving this easily without it moaning about errors
+        formatter.write_str("BindingStream")
+    }
 }
 
 ///
@@ -141,18 +151,18 @@ mod test {
     #[test]
     fn stream_returns_initial_value() {
         let binding     = bind(1);
-        let mut stream  = BindingStream::new(binding.clone());
+        let mut stream  = BindingStream::new(binding.clone()).peekable();
 
-        assert!(stream.poll() == Ok(Ready(Some(1))));
+        assert!(stream.peek() == Ok(Ready(Some(&1))));
     }
 
     #[test]
     fn stream_is_not_ready_after_reading() {
         let binding     = bind(1);
-        let mut stream  = BindingStream::new(binding.clone());
+        let mut stream  = BindingStream::new(binding.clone()).peekable();
 
-        let _ = stream.poll();
-        assert!(stream.poll() == Ok(NotReady));
+        stream = stream.into_future().wait().unwrap().1;
+        assert!(stream.peek() == Ok(NotReady));
     }
 
     #[test]
