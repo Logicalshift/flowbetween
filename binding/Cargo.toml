@@ -5,5 +5,3 @@ authors     = ["Andrew Hunter"]
 
 [dependencies]
 futures         = "0.1.16"
-futures-cpupool = "0.1"
-

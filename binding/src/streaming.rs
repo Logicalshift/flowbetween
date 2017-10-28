@@ -126,18 +126,15 @@ where Binding: Bound<Value> {
 
 #[cfg(test)]
 mod test {
-    extern crate futures_cpupool;
-
     use super::*;
     use super::super::*;
 
     use futures::executor;
     use futures::executor::{Notify, NotifyHandle};
     use futures::future::*;
-    use self::futures_cpupool::*;
+    use futures::sync::oneshot;
     use std::thread::{spawn, sleep};
     use std::time::*;
-    use std::result::*;
     use std::time::Instant;
 
     struct NotifyNothing;
@@ -191,23 +188,22 @@ mod test {
     }
 
     #[test]
-    fn will_wait_for_change() {
+    fn will_notify_change() {
         let mut binding = bind(1);
         let mut stream  = BindingStream::new(binding.clone());
 
         // As we don't return NotReady here, we won't panic with this direct call even though there's no current task
         assert!(stream.poll() == Ok(Ready(Some(1))));
 
-        let pool    = CpuPool::new(2);
+        // Simple one-shot timeout that waits in a separate thread. We use this to wake things up if our stream fails to notify
+        let (timeout_send, timeout_recv) = oneshot::channel::<i32>();
 
-        // Timeouts are in the full tokio library but we really don't want to be bringing that massive thing in just for this one test
-        let timeout = pool.spawn_fn(|| {
+        spawn(move || {
             sleep(Duration::from_millis(2000));
-
-            // futures always have an error in them, which breaks rust's type inference in an annoying way
-            let res: Result<i32, ()> = Ok(0);
-            res
+            timeout_send.send(0).unwrap();
         });
+
+        let timeout = timeout_recv.map_err(|_| ());
 
         // Create a future that will update when the timeout runs out or when the binding notifies
         // If both notify, then putting the timeout first here means it'll probably be the first returned
