@@ -3,6 +3,8 @@ use super::traits::*;
 use std::sync::{Arc, Mutex};
 use std::marker::PhantomData;
 use futures::{Stream, Poll};
+use futures::task;
+use futures::task::Task;
 use futures::Async::*;
 
 ///
@@ -31,7 +33,11 @@ pub struct BindingStream<Value, Binding> where Binding: Bound<Value> {
 /// Used as the notification target
 ///
 struct ReadyNotification {
-    ready: Mutex<bool>
+    /// Flag that is true if the binding has changed since the stream was last polled
+    ready: Mutex<bool>,
+
+    /// The tasks that have received a 'NotReady' notification for this stream
+    notify: Mutex<Vec<Task>>
 }
 
 impl<Value, Binding> BindingStream<Value, Binding>
@@ -41,7 +47,8 @@ where Binding: Bound<Value> {
     ///
     pub fn new(binding: Binding) -> BindingStream<Value, Binding> {
         let ready = Arc::new(ReadyNotification { 
-            ready: Mutex::new(true)
+            ready:  Mutex::new(true),
+            notify: Mutex::new(vec![])
         });
 
         let ready_lifetime = binding.when_changed(ready.clone());
@@ -55,12 +62,35 @@ where Binding: Bound<Value> {
     }
 }
 
+impl ReadyNotification {
+    ///
+    /// Adds the current task to the list to be notified when the change arrives
+    /// 
+    fn notify_current_task(&self) {
+        self.notify.lock().unwrap().push(task::current());
+    }
+}
+
 ///
 /// Set our mutex to true whenever the stream becomes 'ready'
 ///
 impl Notifiable for ReadyNotification {
     fn mark_as_changed(&self) {
-        (*self.ready.lock().unwrap()) = true;
+        {
+            // Mark as ready
+            let mut ready_flag = self.ready.lock().unwrap();
+            *ready_flag = true;
+        }
+
+        {
+            // Notify the tasks. These are added as side-effects to a NotReady poll result
+            let mut tasks = self.notify.lock().unwrap();
+
+            tasks.iter_mut().for_each(|task| task.notify());
+
+            // All notified
+            *tasks = vec![];
+        }
     }
 }
 
@@ -82,8 +112,13 @@ where Binding: Bound<Value> {
         
         // If this has changed since the last time we retrieved a value, then we can return the binding
         if ready {
+            // Return the result
             Ok(Ready(Some(self.binding.get())))
         } else {
+            // Black magic side-effect: notify the current task when the change comes in
+            self.ready.notify_current_task();
+
+            // Result is not ready
             Ok(NotReady)
         }
     }
