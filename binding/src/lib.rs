@@ -61,17 +61,21 @@
 //! a future update is queued, it won't trigger further notifications.
 //!
 
+extern crate futures;
+
 pub mod traits;
 pub mod binding_context;
 pub mod binding;
 pub mod computed;
 pub mod notify_fn;
+pub mod streaming;
 mod releasable;
 
 pub use self::traits::*;
 pub use self::binding::*;
 pub use self::computed::*;
 pub use self::notify_fn::*;
+pub use self::streaming::*;
 
 ///
 /// Creates a simple bound value with the specified initial value
