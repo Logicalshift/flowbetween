@@ -72,7 +72,7 @@ impl Canvas {
                     // Clearing the canvas empties the command list and updates the clear count
                     if let &Draw::ClearCanvas = draw {
                         core.drawing_since_last_clear   = vec![];
-                        core.clear_count                = core.clear_count+1;
+                        core.clear_count                = core.clear_count.wrapping_add(1);
                     }
 
                     // Add the command to the drawing list (there's always a clear at the start)
