@@ -1,5 +1,6 @@
 use super::draw::*;
 use super::color::*;
+use super::transform2d::*;
 
 use std::mem;
 
@@ -146,6 +147,15 @@ impl CanvasEncoding<String> for BlendMode {
     }
 }
 
+impl CanvasEncoding<String> for Transform2D {
+    fn encode_canvas(&self, append_to: &mut String) {
+        let Transform2D(a, b, c) = *self;
+        a.encode_canvas(append_to);
+        b.encode_canvas(append_to);
+        c.encode_canvas(append_to);   
+    }
+}
+
 impl CanvasEncoding<String> for Draw {
     fn encode_canvas(&self, append_to: &mut String) {
         use self::Draw::*;
@@ -170,7 +180,7 @@ impl CanvasEncoding<String> for Draw {
             &BlendMode(mode)                        => ('M', mode).encode_canvas(append_to),
             &IdentityTransform                      => ('T', 'i').encode_canvas(append_to),
             &CanvasHeight(height)                   => ('T', 'h', height).encode_canvas(append_to),
-            &MultiplyTransform(transform)           => unimplemented!(),
+            &MultiplyTransform(transform)           => ('T', 'm', transform).encode_canvas(append_to),
             &Unclip                                 => ('Z', 'n').encode_canvas(append_to),
             &Clip                                   => ('Z', 'c').encode_canvas(append_to),
             &Store                                  => ('Z', 's').encode_canvas(append_to),
