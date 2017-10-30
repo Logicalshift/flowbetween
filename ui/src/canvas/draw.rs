@@ -65,9 +65,6 @@ pub enum Draw {
     /// Rectangle path between points
     Rect((f32, f32), (f32, f32)),
 
-    /// Fills the current clipping region with a single colour
-    Blit(Color),
-
     /// Fill the current path
     Fill,
 

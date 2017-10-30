@@ -168,7 +168,6 @@ impl CanvasEncoding<String> for Draw {
             &Rect(p1, p2)                           => ('r', p1, p2).encode_canvas(append_to),
             &Fill                                   => 'F'.encode_canvas(append_to),
             &Stroke                                 => 'S'.encode_canvas(append_to),
-            &Blit(col)                              => ('B', col).encode_canvas(append_to),
             &LineWidth(width)                       => ('L', 'w', width).encode_canvas(append_to),
             &LineJoin(join)                         => ('L', 'j', join).encode_canvas(append_to),
             &LineCap(cap)                           => ('L', 'c', cap).encode_canvas(append_to),
@@ -242,8 +241,6 @@ mod test {
     fn can_encode_fill() { assert!(&encode_draw(Draw::Fill) == "F") }
     #[test]
     fn can_encode_stroke() { assert!(&encode_draw(Draw::Stroke) == "S") }
-    #[test]
-    fn can_encode_blit() { assert!(&encode_draw(Draw::Blit(Color::Rgba(1.0, 1.0, 1.0, 1.0))) == "BRAAAg/AAAAg/AAAAg/AAAAg/A") }
     #[test]
     fn can_encode_linewidth() { assert!(&encode_draw(Draw::LineWidth(20.0)) == "LwAAAoBB") }
     #[test]
