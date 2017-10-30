@@ -1,3 +1,6 @@
+use super::draw::*;
+use super::color::*;
+
 use std::mem;
 
 ///
@@ -15,6 +18,12 @@ const ENCODING_CHAR_SET: [char; 64] = [
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 ];
+
+impl CanvasEncoding<String> for char {
+    fn encode_canvas(&self, append_to: &mut String) {
+        append_to.push(*self)
+    }
+}
 
 impl CanvasEncoding<String> for u32 {
     fn encode_canvas(&self, append_to: &mut String) {
@@ -35,6 +44,92 @@ impl CanvasEncoding<String> for f32 {
     fn encode_canvas(&self, append_to: &mut String) {
         let transmuted: u32 = unsafe { mem::transmute(*self) };
         transmuted.encode_canvas(append_to)
+    }
+}
+
+//
+// Some convenience encodings for implementing the main canvas encoding
+//
+
+impl<A: CanvasEncoding<String>, B: CanvasEncoding<String>> CanvasEncoding<String> for (A, B) {
+    fn encode_canvas(&self, append_to: &mut String) {
+        self.0.encode_canvas(append_to);
+        self.1.encode_canvas(append_to);
+    }
+}
+
+impl<A: CanvasEncoding<String>, B: CanvasEncoding<String>, C: CanvasEncoding<String>> CanvasEncoding<String> for (A, B, C) {
+    fn encode_canvas(&self, append_to: &mut String) {
+        self.0.encode_canvas(append_to);
+        self.1.encode_canvas(append_to);
+        self.2.encode_canvas(append_to);
+    }
+}
+
+impl<A: CanvasEncoding<String>, B: CanvasEncoding<String>, C: CanvasEncoding<String>, D: CanvasEncoding<String>> CanvasEncoding<String> for (A, B, C, D) {
+    fn encode_canvas(&self, append_to: &mut String) {
+        self.0.encode_canvas(append_to);
+        self.1.encode_canvas(append_to);
+        self.2.encode_canvas(append_to);
+        self.3.encode_canvas(append_to);
+    }
+}
+
+impl<A: CanvasEncoding<String>, B: CanvasEncoding<String>, C: CanvasEncoding<String>, D: CanvasEncoding<String>, E: CanvasEncoding<String>> CanvasEncoding<String> for (A, B, C, D, E) {
+    fn encode_canvas(&self, append_to: &mut String) {
+        self.0.encode_canvas(append_to);
+        self.1.encode_canvas(append_to);
+        self.2.encode_canvas(append_to);
+        self.3.encode_canvas(append_to);
+        self.4.encode_canvas(append_to);
+    }
+}
+
+//
+// Main canvas encoding
+//
+
+impl CanvasEncoding<String> for Color {
+    fn encode_canvas(&self, append_to: &mut String) {
+        match self {
+            &Color::Rgba(r,g,b,a) => ('R', r, g, b, a).encode_canvas(append_to)
+        }
+    }
+}
+
+impl CanvasEncoding<String> for Draw {
+    fn encode_canvas(&self, append_to: &mut String) {
+        use self::Draw::*;
+
+        match self {
+            &NewPath                                => ('N', 'p').encode_canvas(append_to),
+            &Move(x, y)                             => ('m', x, y).encode_canvas(append_to),
+            &Line(x, y)                             => ('l', x, y).encode_canvas(append_to),
+            &BezierCurve(p1, p2, p3)                => ('c', p1, p2, p3).encode_canvas(append_to),
+            &Rect(p1, p2)                           => ('r', p1, p2).encode_canvas(append_to),
+            &Fill                                   => 'F'.encode_canvas(append_to),
+            &Stroke                                 => 'S'.encode_canvas(append_to),
+            &Blit(col)                              => ('B', col).encode_canvas(append_to),
+            &LineWidth(width)                       => ('W', width).encode_canvas(append_to),
+            &LineJoin(join)                         => unimplemented!(),
+            &LineCap(cap)                           => unimplemented!(),
+            &NewDashPattern                         => ('N', 'd').encode_canvas(append_to),
+            &DashLength(length)                     => ('D', 'l', length).encode_canvas(append_to),
+            &DashOffset(offset)                     => ('D', 'o', offset).encode_canvas(append_to),
+            &StrokeColor(col)                       => ('C', 's', col).encode_canvas(append_to),
+            &FillColor(col)                         => ('C', 'f', col).encode_canvas(append_to),
+            &BlendMode(mode)                        => unimplemented!(),
+            &IdentityTransform                      => ('T', 'i').encode_canvas(append_to),
+            &CanvasHeight(height)                   => ('T', 'h', height).encode_canvas(append_to),
+            &MultiplyTransform(transform)           => unimplemented!(),
+            &Unclip                                 => ('Z', 'n').encode_canvas(append_to),
+            &Clip                                   => ('Z', 'c').encode_canvas(append_to),
+            &Store                                  => ('Z', 's').encode_canvas(append_to),
+            &Restore                                => ('Z', 'r').encode_canvas(append_to),
+            &PushState                              => 'P'.encode_canvas(append_to),
+            &PopState                               => 'p'.encode_canvas(append_to),
+            &ClearCanvas                            => ('N', 'A').encode_canvas(append_to)
+        }
     }
 }
 

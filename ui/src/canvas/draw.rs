@@ -119,18 +119,18 @@ pub enum Draw {
     /// Clip to the currently set path
     Clip,
 
-    /// Push the current state of the canvas (line settings, stored image, current path - all state)
-    PushState,
-
-    /// Restore a state previously pushed
-    PopState,
-
     /// Stores the content of the clipping path in a background buffer
     Store,
 
     /// Restores what was stored in the background buffer
     /// (If the clipping path has changed since then, the restored image is clipped against the new path)
     Restore,
+
+    /// Push the current state of the canvas (line settings, stored image, current path - all state)
+    PushState,
+
+    /// Restore a state previously pushed
+    PopState,
 
     /// Clears the canvas entirely
     ClearCanvas
