@@ -192,6 +192,12 @@ impl CanvasEncoding<String> for Draw {
     }
 }
 
+impl CanvasEncoding<String> for Vec<Draw> {
+    fn encode_canvas(&self, append_to: &mut String) {
+        self.iter().for_each(|item| { item.encode_canvas(append_to); append_to.push('\n'); });
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
