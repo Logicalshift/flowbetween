@@ -3,11 +3,11 @@ use std::mem;
 ///
 /// Trait implemented by objects that can be encoded into a canvas
 ///
-pub trait CanvasEncoding {
+pub trait CanvasEncoding<Buffer> {
     ///
     /// Encodes this item by appending it to the specified string
     ///
-    fn encode_canvas(&self, append_to: &mut String);
+    fn encode_canvas(&self, append_to: &mut Buffer);
 }
 
 const ENCODING_CHAR_SET: [char; 64] = [
@@ -16,7 +16,7 @@ const ENCODING_CHAR_SET: [char; 64] = [
     '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 ];
 
-impl CanvasEncoding for u32 {
+impl CanvasEncoding<String> for u32 {
     fn encode_canvas(&self, append_to: &mut String) {
         // Base-64 wastes some bits but requires 2 less characters than hex for a 32-bit number
         let mut remaining = *self;
@@ -31,7 +31,7 @@ impl CanvasEncoding for u32 {
     }
 }
 
-impl CanvasEncoding for f32 {
+impl CanvasEncoding<String> for f32 {
     fn encode_canvas(&self, append_to: &mut String) {
         let transmuted: u32 = unsafe { mem::transmute(*self) };
         transmuted.encode_canvas(append_to)
