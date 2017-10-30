@@ -221,4 +221,65 @@ mod test {
 
         assert!(encoded == "lYQSAB".to_string());
     }
+
+    fn encode_draw(item: Draw) -> String {
+        let mut result = String::new();
+        item.encode_canvas(&mut result);
+        result
+    }
+
+    #[test]
+    fn can_encode_newpath() { assert!(&encode_draw(Draw::NewPath) == "Np") }
+    #[test]
+    fn can_encode_move() { assert!(&encode_draw(Draw::Move(20.0, 20.0)) == "mAAAoBBAAAoBB") }
+    #[test]
+    fn can_encode_line() { assert!(&encode_draw(Draw::Line(20.0, 20.0)) == "lAAAoBBAAAoBB") }
+    #[test]
+    fn can_encode_bezier() { assert!(&encode_draw(Draw::BezierCurve((20.0, 20.0), (20.0, 20.0), (20.0, 20.0))) == "cAAAoBBAAAoBBAAAoBBAAAoBBAAAoBBAAAoBB") }
+    #[test]
+    fn can_encode_rect() { assert!(&encode_draw(Draw::Rect((20.0, 20.0), (20.0, 20.0))) == "rAAAoBBAAAoBBAAAoBBAAAoBB") }
+    #[test]
+    fn can_encode_fill() { assert!(&encode_draw(Draw::Fill) == "F") }
+    #[test]
+    fn can_encode_stroke() { assert!(&encode_draw(Draw::Stroke) == "S") }
+    #[test]
+    fn can_encode_blit() { assert!(&encode_draw(Draw::Blit(Color::Rgba(1.0, 1.0, 1.0, 1.0))) == "BRAAAg/AAAAg/AAAAg/AAAAg/A") }
+    #[test]
+    fn can_encode_linewidth() { assert!(&encode_draw(Draw::LineWidth(20.0)) == "LwAAAoBB") }
+    #[test]
+    fn can_encode_linejoin() { assert!(&encode_draw(Draw::LineJoin(LineJoin::Bevel)) == "LjB") }
+    #[test]
+    fn can_encode_linecap() { assert!(&encode_draw(Draw::LineCap(LineCap::Butt)) == "LcB") }
+    #[test]
+    fn can_encode_newdashpattern() { assert!(&encode_draw(Draw::NewDashPattern) == "Dn") }
+    #[test]
+    fn can_encode_dashlength() { assert!(&encode_draw(Draw::DashLength(20.0)) == "DlAAAoBB") }
+    #[test]
+    fn can_encode_dashoffset() { assert!(&encode_draw(Draw::DashOffset(20.0)) == "DoAAAoBB") }
+    #[test]
+    fn can_encode_strokecolor() { assert!(&encode_draw(Draw::StrokeColor(Color::Rgba(1.0, 1.0, 1.0, 1.0))) == "CsRAAAg/AAAAg/AAAAg/AAAAg/A") }
+    #[test]
+    fn can_encode_fillcolor() { assert!(&encode_draw(Draw::FillColor(Color::Rgba(1.0, 1.0, 1.0, 1.0))) == "CfRAAAg/AAAAg/AAAAg/AAAAg/A") }
+    #[test]
+    fn can_encode_blendmode() { assert!(&encode_draw(Draw::BlendMode(BlendMode::SourceOver)) == "MSV") }
+    #[test]
+    fn can_encode_identity_transform() { assert!(&encode_draw(Draw::IdentityTransform) == "Ti") }
+    #[test]
+    fn can_encode_canvas_height() { assert!(&encode_draw(Draw::CanvasHeight(20.0)) == "ThAAAoBB") }
+    #[test]
+    fn can_encode_multiply_transform() { assert!(&encode_draw(Draw::MultiplyTransform(Transform2D((1.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 0.0, 0.0)))) == "TmAAAg/AAAAAAAAAAAAAAAAg/AAAAAAAAAAAAAAAAg/AAAAAAAAAAAAA") }
+    #[test]
+    fn can_encode_unclip() { assert!(&encode_draw(Draw::Unclip) == "Zn") }
+    #[test]
+    fn can_encode_clip() { assert!(&encode_draw(Draw::Clip) == "Zc") }
+    #[test]
+    fn can_encode_store() { assert!(&encode_draw(Draw::Store) == "Zs") }
+    #[test]
+    fn can_encode_restore() { assert!(&encode_draw(Draw::Restore) == "Zr") }
+    #[test]
+    fn can_encode_pushstate() { assert!(&encode_draw(Draw::PushState) == "P") }
+    #[test]
+    fn can_encode_popstate() { assert!(&encode_draw(Draw::PopState) == "p") }
+    #[test]
+    fn can_encode_clearcanvas() { assert!(&encode_draw(Draw::ClearCanvas) == "NA") }
 }
