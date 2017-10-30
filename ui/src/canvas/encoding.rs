@@ -1,3 +1,5 @@
+use std::mem;
+
 ///
 /// Trait implemented by objects that can be encoded into a canvas
 ///
@@ -29,6 +31,13 @@ impl CanvasEncoding for u32 {
     }
 }
 
+impl CanvasEncoding for f32 {
+    fn encode_canvas(&self, append_to: &mut String) {
+        let transmuted: u32 = unsafe { mem::transmute(*self) };
+        transmuted.encode_canvas(append_to)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -41,5 +50,15 @@ mod test {
         test_number.encode_canvas(&mut encoded);
 
         assert!(encoded == "0IRzrC".to_string());
+    }
+
+    #[test]
+    fn can_encode_f32() {
+        let test_number: f32 = 3.141;
+
+        let mut encoded = String::new();
+        test_number.encode_canvas(&mut encoded);
+
+        assert!(encoded == "lYQSAB".to_string());
     }
 }

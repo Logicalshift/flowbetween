@@ -2,7 +2,6 @@
 extern crate serde_derive;
 extern crate serde;
 extern crate futures;
-extern crate num;
 extern crate binding;
 
 pub mod control;

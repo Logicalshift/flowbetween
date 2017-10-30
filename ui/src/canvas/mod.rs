@@ -3,7 +3,6 @@
 //!
 
 extern crate futures;
-extern crate num;
 
 pub mod draw;
 pub mod color;
