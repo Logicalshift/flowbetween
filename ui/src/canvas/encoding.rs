@@ -124,6 +124,28 @@ impl CanvasEncoding<String> for LineCap {
     }
 }
 
+impl CanvasEncoding<String> for BlendMode {
+    fn encode_canvas(&self, append_to: &mut String) {
+        use self::BlendMode::*;
+
+        match self {
+            &SourceOver         => ('S', 'V'),
+            &SourceIn           => ('S', 'I'),
+            &SourceOut          => ('S', 'O'),
+            &DestinationOver    => ('D', 'V'),
+            &DestinationIn      => ('D', 'I'),
+            &DestinationOut     => ('D', 'O'),
+            &SourceAtop         => ('S', 'A'),
+            &DestinationAtop    => ('D', 'A'),
+
+            &Multiply           => ('E', 'M'),
+            &Screen             => ('E', 'S'),
+            &Darken             => ('E', 'D'),
+            &Lighten            => ('E', 'L')
+        }.encode_canvas(append_to)
+    }
+}
+
 impl CanvasEncoding<String> for Draw {
     fn encode_canvas(&self, append_to: &mut String) {
         use self::Draw::*;
@@ -140,12 +162,12 @@ impl CanvasEncoding<String> for Draw {
             &LineWidth(width)                       => ('L', 'w', width).encode_canvas(append_to),
             &LineJoin(join)                         => ('L', 'j', join).encode_canvas(append_to),
             &LineCap(cap)                           => ('L', 'c', cap).encode_canvas(append_to),
-            &NewDashPattern                         => ('N', 'd').encode_canvas(append_to),
+            &NewDashPattern                         => ('D', 'n').encode_canvas(append_to),
             &DashLength(length)                     => ('D', 'l', length).encode_canvas(append_to),
             &DashOffset(offset)                     => ('D', 'o', offset).encode_canvas(append_to),
             &StrokeColor(col)                       => ('C', 's', col).encode_canvas(append_to),
             &FillColor(col)                         => ('C', 'f', col).encode_canvas(append_to),
-            &BlendMode(mode)                        => unimplemented!(),
+            &BlendMode(mode)                        => ('M', mode).encode_canvas(append_to),
             &IdentityTransform                      => ('T', 'i').encode_canvas(append_to),
             &CanvasHeight(height)                   => ('T', 'h', height).encode_canvas(append_to),
             &MultiplyTransform(transform)           => unimplemented!(),
