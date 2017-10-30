@@ -20,12 +20,14 @@ const ENCODING_CHAR_SET: [char; 64] = [
 ];
 
 impl CanvasEncoding<String> for char {
+    #[inline]
     fn encode_canvas(&self, append_to: &mut String) {
         append_to.push(*self)
     }
 }
 
 impl CanvasEncoding<String> for u32 {
+    #[inline]
     fn encode_canvas(&self, append_to: &mut String) {
         // Base-64 wastes some bits but requires 2 less characters than hex for a 32-bit number
         let mut remaining = *self;
@@ -41,6 +43,7 @@ impl CanvasEncoding<String> for u32 {
 }
 
 impl CanvasEncoding<String> for f32 {
+    #[inline]
     fn encode_canvas(&self, append_to: &mut String) {
         let transmuted: u32 = unsafe { mem::transmute(*self) };
         transmuted.encode_canvas(append_to)
@@ -92,8 +95,32 @@ impl<A: CanvasEncoding<String>, B: CanvasEncoding<String>, C: CanvasEncoding<Str
 impl CanvasEncoding<String> for Color {
     fn encode_canvas(&self, append_to: &mut String) {
         match self {
-            &Color::Rgba(r,g,b,a) => ('R', r, g, b, a).encode_canvas(append_to)
-        }
+            &Color::Rgba(r,g,b,a) => ('R', r, g, b, a)
+        }.encode_canvas(append_to)
+    }
+}
+
+impl CanvasEncoding<String> for LineJoin {
+    fn encode_canvas(&self, append_to: &mut String) {
+        use self::LineJoin::*;
+
+        match self {
+            &Miter => 'M',
+            &Round => 'R',
+            &Bevel => 'B'
+        }.encode_canvas(append_to)
+    }
+}
+
+impl CanvasEncoding<String> for LineCap {
+    fn encode_canvas(&self, append_to: &mut String) {
+        use self::LineCap::*;
+
+        match self {
+            &Butt   => 'B',
+            &Round  => 'R',
+            &Square => 'S'
+        }.encode_canvas(append_to)
     }
 }
 
@@ -110,9 +137,9 @@ impl CanvasEncoding<String> for Draw {
             &Fill                                   => 'F'.encode_canvas(append_to),
             &Stroke                                 => 'S'.encode_canvas(append_to),
             &Blit(col)                              => ('B', col).encode_canvas(append_to),
-            &LineWidth(width)                       => ('W', width).encode_canvas(append_to),
-            &LineJoin(join)                         => unimplemented!(),
-            &LineCap(cap)                           => unimplemented!(),
+            &LineWidth(width)                       => ('L', 'w', width).encode_canvas(append_to),
+            &LineJoin(join)                         => ('L', 'j', join).encode_canvas(append_to),
+            &LineCap(cap)                           => ('L', 'c', cap).encode_canvas(append_to),
             &NewDashPattern                         => ('N', 'd').encode_canvas(append_to),
             &DashLength(length)                     => ('D', 'l', length).encode_canvas(append_to),
             &DashOffset(offset)                     => ('D', 'o', offset).encode_canvas(append_to),
