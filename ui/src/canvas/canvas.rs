@@ -3,6 +3,7 @@ use super::draw::*;
 use std::sync::*;
 use std::mem;
 
+use desync::*;
 use futures::task::Task;
 use futures::task;
 use futures::{Stream,Poll,Async};
@@ -31,7 +32,7 @@ struct CanvasCore {
 ///
 pub struct Canvas {
     /// The core is shared amongst the canvas streams as well as used by the canvas itself
-    core: Arc<Mutex<CanvasCore>>
+    core: Arc<Desync<CanvasCore>>
 }
 
 impl Canvas {
@@ -48,20 +49,17 @@ impl Canvas {
         };
 
         Canvas {
-            core: Arc::new(Mutex::new(core))
+            core: Arc::new(Desync::new(core))
         }
     }
 
     ///
     /// Sends some new drawing commands to this canvas
     ///
-    pub fn draw(&mut self, to_draw: &[Draw]) {
+    pub fn draw(&mut self, to_draw: Vec<Draw>) {
         // Only draw if there are any drawing commands
         if to_draw.len() != 0 {
-            // Draw with the core lock, but notify after the lock is released
-            let mut pending_tasks = {
-                // Unlock the core
-                let mut core            = self.core.lock().unwrap();
+            self.core.async(move |core| {
                 let mut pending_tasks   = vec![];
 
                 // Get the tasks we're going to notify about the new command
@@ -79,12 +77,9 @@ impl Canvas {
                     core.drawing_since_last_clear.push(*draw);
                 });
 
-                // Result is the set of pending tasks
-                pending_tasks
-            };
-
-            // Notify everything that there are new drawing commands available
-            pending_tasks.iter_mut().for_each(|task| task.notify());
+                // Notify the pending tasks that there are new drawing commands available
+                pending_tasks.iter_mut().for_each(|task| task.notify());
+            });
         }
     }
 
@@ -102,9 +97,7 @@ impl Canvas {
 
 impl Drop for Canvas {
     fn drop(&mut self) {
-        let mut pending_tasks = {
-            // Unlock the core
-            let mut core            = self.core.lock().unwrap();
+        self.core.async(|core| {
             let mut pending_tasks   = vec![];
 
             // Get the tasks we're going to notify about the new command
@@ -113,12 +106,10 @@ impl Drop for Canvas {
             // Mark the core as dropped
             core.dropped = true;
 
-            pending_tasks
-        };
-
-        // Notify any tasks that are using the canvas that it has gone away
-        pending_tasks.iter_mut().for_each(|task| task.notify());
-   }
+            // Notify any tasks that are using the canvas that it has gone away
+            pending_tasks.iter_mut().for_each(|task| task.notify());
+        });
+    }
 }
 
 ///
@@ -127,7 +118,7 @@ impl Drop for Canvas {
 ///
 pub struct CanvasStream {
     /// The core is shared amongst the canvas streams as well as used by the canvas itself
-    core: Arc<Mutex<CanvasCore>>,
+    core: Arc<Desync<CanvasCore>>,
 
     /// Position in the canvas command list
     pos: usize,
@@ -142,29 +133,38 @@ impl Stream for CanvasStream {
 
    fn poll(&mut self) -> Poll<Option<Draw>, ()> {
         use self::Async::*;
-        let mut core = self.core.lock().unwrap();
 
-        if core.clear_count != self.active_clear_count {
-            // The canvas has been cleared since the last read, so reset the position back to the beginning
-            self.active_clear_count = core.clear_count;
-            self.pos                = 0;
-        }
+        // v0.1 of desync requires a static lifetime on sync, which is a nuisance. Juggle some values to make it true.
+        let (mut active_clear_count, mut pos) = (self.active_clear_count, self.pos);
 
-        if self.pos < core.drawing_since_last_clear.len() {
-            // There are still values in the canvas that we haven't returned yet
-            let value = core.drawing_since_last_clear[self.pos];
-            self.pos = self.pos+1;
+        let (result, active_clear_count, pos) = self.core.sync(move |core| {
+            if core.clear_count != active_clear_count {
+                // The canvas has been cleared since the last read, so reset the position back to the beginning
+                active_clear_count  = core.clear_count;
+                pos                 = 0;
+            }
 
-            Ok(Ready(Some(value)))
-        } else if core.dropped {
-            // Once the core is dropped, the canvas stream is finished
-            Ok(Ready(None))
-        } else {
-            // Need to be notified when the canvas changes
-            core.pending_tasks.push(task::current());
+            if pos < core.drawing_since_last_clear.len() {
+                // There are still values in the canvas that we haven't returned yet
+                let value   = core.drawing_since_last_clear[pos];
+                pos         = pos+1;
 
-            Ok(NotReady)
-        }
+                (Ok(Ready(Some(value))), active_clear_count, pos)
+            } else if core.dropped {
+                // Once the core is dropped, the canvas stream is finished
+                (Ok(Ready(None)), active_clear_count, pos)
+            } else {
+                // Need to be notified when the canvas changes
+                core.pending_tasks.push(task::current());
+
+                (Ok(NotReady), active_clear_count, pos)
+            }
+        });
+
+        self.active_clear_count = active_clear_count;
+        self.pos                = pos;
+
+        result
    }
 }
 
@@ -181,7 +181,7 @@ mod test {
     fn can_draw_to_canvas() {
         let mut canvas = Canvas::new();
 
-        canvas.draw(&[Draw::NewPath]);
+        canvas.draw(vec![Draw::NewPath]);
     }
 
     #[test]
@@ -193,7 +193,7 @@ mod test {
         spawn(move || {
             sleep(Duration::from_millis(50));
 
-            canvas.draw(&[
+            canvas.draw(vec![
                 Draw::NewPath,
                 Draw::Move(0.0, 0.0),
                 Draw::Line(10.0, 0.0),
@@ -226,7 +226,7 @@ mod test {
         spawn(move || {
             sleep(Duration::from_millis(50));
 
-            canvas.draw(&[
+            canvas.draw(vec![
                 Draw::NewPath,
                 Draw::Move(0.0, 0.0),
                 Draw::Line(10.0, 0.0),
@@ -268,7 +268,7 @@ mod test {
         spawn(move || {
             sleep(Duration::from_millis(50));
 
-            canvas.draw(&[
+            canvas.draw(vec![
                 Draw::NewPath,
                 Draw::Move(0.0, 0.0),
                 Draw::Line(10.0, 0.0),
@@ -279,7 +279,7 @@ mod test {
             // Enough time that we read the first few commands
             sleep(Duration::from_millis(100));
 
-            canvas.draw(&[
+            canvas.draw(vec![
                 Draw::ClearCanvas,
                 Draw::Move(200.0, 200.0),
             ]);
