@@ -134,37 +134,32 @@ impl Stream for CanvasStream {
    fn poll(&mut self) -> Poll<Option<Draw>, ()> {
         use self::Async::*;
 
-        // v0.1 of desync requires a static lifetime on sync, which is a nuisance. Juggle some values to make it true.
-        let (mut active_clear_count, mut pos) = (self.active_clear_count, self.pos);
+        let active_clear_count  = &mut self.active_clear_count;
+        let pos                 = &mut self.pos;
 
-        let (result, active_clear_count, pos) = self.core.sync(move |core| {
-            if core.clear_count != active_clear_count {
+        self.core.sync(move |core| {
+            if core.clear_count != *active_clear_count {
                 // The canvas has been cleared since the last read, so reset the position back to the beginning
-                active_clear_count  = core.clear_count;
-                pos                 = 0;
+                *active_clear_count = core.clear_count;
+                *pos                = 0;
             }
 
-            if pos < core.drawing_since_last_clear.len() {
+            if *pos < core.drawing_since_last_clear.len() {
                 // There are still values in the canvas that we haven't returned yet
-                let value   = core.drawing_since_last_clear[pos];
-                pos         = pos+1;
+                let value   = core.drawing_since_last_clear[*pos];
+                *pos        = *pos+1;
 
-                (Ok(Ready(Some(value))), active_clear_count, pos)
+                Ok(Ready(Some(value)))
             } else if core.dropped {
                 // Once the core is dropped, the canvas stream is finished
-                (Ok(Ready(None)), active_clear_count, pos)
+                Ok(Ready(None))
             } else {
                 // Need to be notified when the canvas changes
                 core.pending_tasks.push(task::current());
 
-                (Ok(NotReady), active_clear_count, pos)
+                Ok(NotReady)
             }
-        });
-
-        self.active_clear_count = active_clear_count;
-        self.pos                = pos;
-
-        result
+        })
    }
 }
 
