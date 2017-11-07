@@ -8,4 +8,4 @@ serde           = "1.0.0"
 serde_derive    = "1.0.0"
 futures         = "0.1.16"
 binding         = { path = "../binding" }
-desync          = { git = "https://github.com/Logicalshift/desync", branch = "develop" }
+desync          = "0.1.1"
