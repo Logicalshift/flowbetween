@@ -66,7 +66,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         let ui_html     = ui.to_html();
         let viewmodel   = viewmodel_update_controller_tree(&*session);
 
-        response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui, viewmodel));
+        response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui.to_json(), viewmodel));
     }
 
     ///
