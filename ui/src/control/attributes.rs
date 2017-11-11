@@ -2,7 +2,9 @@ use super::bounds::*;
 use super::control::*;
 use super::actions::*;
 
+use super::super::image;
 use super::super::property::*;
+use super::super::resource_manager::*;
 
 ///
 /// Attribute attached to a control
@@ -31,7 +33,10 @@ pub enum ControlAttribute {
     /// When the specified action occurs for this item, send the event 
     /// denoted by the string to the controller
     ///
-    Action(ActionTrigger, String)
+    Action(ActionTrigger, String),
+
+    /// Specifies the image for this control
+    Image(Resource<image::Image>)
 }
 
 impl ControlAttribute {
@@ -95,10 +100,23 @@ impl ControlAttribute {
         }
     }
 
+    ///
+    /// Property representing whether or not this control is selected
+    ///
     pub fn selected<'a>(&'a self) -> Option<&'a Property> {
         match self {
             &Selected(ref is_selected)  => Some(is_selected),
             _                           => None
+        }
+    }
+
+    ///
+    /// The image resource for this control, if there is one
+    ///
+    pub fn image<'a>(&'a self) -> Option<&'a Resource<image::Image>> {
+        match self {
+            &Image(ref image)   => Some(image),
+            _                   => None
         }
     }
 
@@ -114,9 +132,10 @@ impl ControlAttribute {
             &Controller(ref controller)         => Some(controller.as_ref()) == compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) == compare_to.action(),
             &Selected(ref is_selected)          => Some(is_selected) == compare_to.selected(),
+            &Image(ref image_resource)          => Some(image_resource) == compare_to.image(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
-            &SubComponents(ref components)  => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())
+            &SubComponents(ref components)      => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())
         }
     }
 }

@@ -79,6 +79,12 @@ impl<T> Deref for Resource<T> {
     }
 }
 
+impl<T> PartialEq for Resource<T> {
+    fn eq(&self, other: &Resource<T>) -> bool {
+        other.id == self.id
+    }
+}
+
 impl<T: Send+Sync> ResourceManagerCore<T> {
     ///
     /// Registers a resource with this core

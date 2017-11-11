@@ -22,6 +22,15 @@ impl ToJsonValue for ControlAttribute {
                     .collect();
 
                 json!({ "SubComponents": json_components })
+            },
+
+            &Image(ref image_resource)          => {
+                // For images, we only store the ID: callers need to look it up from the resource manager in the controller that made this control
+                json!({ 
+                    "Image": {
+                        "id": image_resource.id()
+                    }
+                })
             }
         }
     }
