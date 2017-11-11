@@ -1,10 +1,12 @@
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
 extern crate serde;
 extern crate futures;
 extern crate binding;
 extern crate desync;
 
+pub mod json;
 pub mod control;
 pub mod layout;
 pub mod diff;
@@ -18,6 +20,7 @@ pub mod resource_manager;
 pub mod canvas;
 pub mod image;
 
+pub use self::json::*;
 pub use self::control::*;
 pub use self::layout::*;
 pub use self::diff::*;
