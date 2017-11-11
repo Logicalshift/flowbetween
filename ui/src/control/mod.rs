@@ -14,6 +14,7 @@ pub use self::attributes::*;
 
 #[cfg(test)]
 mod test {
+    use super::super::property::*;
     use super::*;
 
     #[test]
