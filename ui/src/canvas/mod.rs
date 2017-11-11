@@ -4,11 +4,11 @@
 
 extern crate futures;
 
-pub mod draw;
-pub mod color;
-pub mod canvas;
-pub mod encoding;
-pub mod transform2d;
+mod draw;
+mod color;
+mod canvas;
+mod encoding;
+mod transform2d;
 
 pub use self::draw::*;
 pub use self::color::*;
