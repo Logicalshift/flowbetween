@@ -21,4 +21,8 @@ pub trait ImageData : Send+Sync {
 }
 
 mod inmemory;
+mod static_data;
+mod shortcuts;
 pub use self::inmemory::*;
+pub use self::static_data::*;
+pub use self::shortcuts::*;
