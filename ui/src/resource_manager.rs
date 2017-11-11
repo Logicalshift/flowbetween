@@ -45,13 +45,20 @@ pub struct Resource<T> {
     /// Identifier for this resource
     id: u32,
 
+    /// The name of this resource, if it has one
+    name: Arc<Mutex<Option<String>>>,
+
     /// Data for the resource
     resource: Arc<T>
 }
 
 impl<T> Clone for Resource<T> {
     fn clone(&self) -> Resource<T> {
-        Resource { id: self.id, resource: self.resource.clone() }
+        Resource { 
+            id:         self.id,
+            resource:   self.resource.clone(), 
+            name:       self.name.clone()
+        }
     }
 }
 
@@ -61,6 +68,19 @@ impl<T> Resource<T> {
     /// 
     pub fn id(&self) -> u32 { 
         self.id
+    }
+
+    ///
+    /// Retrieves the name for this resource, if it has one
+    ///
+    pub fn name(&self) -> Option<String> {
+        let name = self.name.lock().unwrap();
+        
+        if let Some(ref name) = *name {
+            Some(name.clone())
+        } else {
+            None
+        }
     }
 
     ///
@@ -96,7 +116,8 @@ impl<T: Send+Sync> ResourceManagerCore<T> {
         // Create the resource object
         let resource = Resource {
             id:         id as u32,
-            resource:   Arc::new(resource)
+            resource:   Arc::new(resource),
+            name:       Arc::new(Mutex::new(None))
         };
 
         // Store it in the list of known resources
@@ -176,7 +197,11 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
                 let weak = &core.resources[id as usize];
                 if let Some(data_ref) = weak.resource.upgrade() {
                     // Generate a Resource<T> fro this
-                    Some(Resource { id: id, resource: data_ref })
+                    Some(Resource { 
+                        id:         id, 
+                        resource:   data_ref,
+                        name:       Arc::new(Mutex::new(None))  // TODO!
+                    })
                 } else {
                     // Resource is not in this manager
                     None
@@ -197,6 +222,11 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
         self.core.async(move |core| {
             core.named_resources.insert(name_string, to_name);
         });
+
+        // Store the name in the resource
+        *resource.name.lock().unwrap() = Some(String::from(name));
+
+        // TODO: remove the name from any resource that previously owned it
     }
 
     ///
@@ -222,6 +252,14 @@ mod test {
         let resource            = resource_manager.register(2);
 
         assert!(*resource == 2);
+    }
+
+    #[test]
+    fn resources_start_with_no_name() {
+        let resource_manager    = ResourceManager::new();
+        let resource            = resource_manager.register(2);
+
+        assert!(resource.name() == None);
     }
 
     #[test]
@@ -263,6 +301,16 @@ mod test {
         resource_manager.assign_name(&resource, "Mr Resource");
 
         assert!(resource_manager.get_named_resource("Mr Resource").map(|x| *x) == Some(2));
+    }
+
+    #[test]
+    fn can_get_name_from_resource() {
+        let resource_manager    = ResourceManager::new();
+        let resource            = resource_manager.register(2);
+
+        resource_manager.assign_name(&resource, "Mr Resource");
+
+        assert!(resource.name() == Some(String::from("Mr Resource")));
     }
 
     #[test]

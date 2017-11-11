@@ -28,7 +28,8 @@ impl ToJsonValue for ControlAttribute {
                 // For images, we only store the ID: callers need to look it up from the resource manager in the controller that made this control
                 json!({ 
                     "Image": {
-                        "id": image_resource.id()
+                        "id":   image_resource.id(),
+                        "name": image_resource.name()
                     }
                 })
             }
