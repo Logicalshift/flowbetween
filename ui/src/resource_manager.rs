@@ -62,6 +62,13 @@ impl<T> Resource<T> {
     pub fn id(&self) -> u32 { 
         self.id
     }
+
+    ///
+    /// Retrieves an Arc reference of the resource
+    ///
+    pub fn get_arc(&self) -> Arc<T> {
+        self.resource.clone()
+    }
 }
 
 impl<T> Deref for Resource<T> {
