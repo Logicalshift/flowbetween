@@ -1,10 +1,8 @@
-use serde::*;
-
 ///
 /// Represents a difference between two trees
 ///
 #[derive(Clone, PartialEq, Serialize)]
-pub struct Diff<TNode: Clone+Serialize> where for<'de> TNode: Deserialize<'de> {
+pub struct Diff<TNode: Clone> {
     /// The address of this difference
     ///
     /// This is the empty list to indicate the root node, otherwise it's a list
@@ -15,7 +13,7 @@ pub struct Diff<TNode: Clone+Serialize> where for<'de> TNode: Deserialize<'de> {
     replacement: TNode
 }
 
-impl<TNode: Clone+Serialize> Diff<TNode> where for<'de> TNode: Deserialize<'de> {
+impl<TNode: Clone> Diff<TNode> {
     ///
     /// Creates a new diff item
     ///
@@ -36,7 +34,7 @@ impl<TNode: Clone+Serialize> Diff<TNode> where for<'de> TNode: Deserialize<'de> 
 /// Trait implemented by tree structures that can describe how they
 /// differ from another structure.
 ///
-pub trait DiffableTree where for <'de> Self: Clone+Serialize+Deserialize<'de> {
+pub trait DiffableTree where Self: Clone {
     ///
     /// Retrieves the child nodes of this item
     ///
