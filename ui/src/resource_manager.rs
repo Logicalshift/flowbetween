@@ -304,6 +304,18 @@ mod test {
     }
 
     #[test]
+    fn can_replace_named_resources() {
+        let resource_manager    = ResourceManager::new();
+        let resource            = resource_manager.register(2);
+        let resource2           = resource_manager.register(3);
+
+        resource_manager.assign_name(&resource, "Mr Resource");
+        resource_manager.assign_name(&resource2, "Mr Resource");
+
+        assert!(resource_manager.get_named_resource("Mr Resource").map(|x| *x) == Some(3));
+    }
+
+    #[test]
     fn can_get_name_from_resource() {
         let resource_manager    = ResourceManager::new();
         let resource            = resource_manager.register(2);
@@ -311,6 +323,30 @@ mod test {
         resource_manager.assign_name(&resource, "Mr Resource");
 
         assert!(resource.name() == Some(String::from("Mr Resource")));
+    }
+
+    #[test]
+    fn can_get_name_after_retrieving_by_id() {
+        let resource_manager    = ResourceManager::new();
+        let resource            = resource_manager.register(2);
+
+        resource_manager.assign_name(&resource, "Mr Resource");
+
+        let id = resource.id();
+        assert!(resource_manager.get_resource_with_id(id).map(|x| x.name()).unwrap() == Some(String::from("Mr Resource")));
+    }
+
+    #[test]
+    fn name_expires_when_replaced() {
+        let resource_manager    = ResourceManager::new();
+        let resource            = resource_manager.register(2);
+        let resource2           = resource_manager.register(3);
+
+        resource_manager.assign_name(&resource, "Mr Resource");
+        resource_manager.assign_name(&resource2, "Mr Resource");
+
+        assert!(resource.name() == None);
+        assert!(resource2.name() == Some(String::from("Mr Resource")));
     }
 
     #[test]
