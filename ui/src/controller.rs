@@ -1,6 +1,7 @@
 use binding::*;
 
 use super::image::*;
+use super::canvas::*;
 use super::control::*;
 use super::viewmodel::*;
 use super::resource_manager::*;
@@ -42,8 +43,11 @@ pub trait Controller : Send+Sync {
     /// Callback for when a control associated with this controller generates an action
     fn action(&self, _action_id: &str) { }
 
-    /// Retrieves a resource manager containing the image used in the UI for this controller
+    /// Retrieves a resource manager containing the images used in the UI for this controller
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { None }
+
+    /// Retrieves a resource manager containing the canvases used in the UI for this controller
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<Canvas>>> { None }
 }
 
 ///
