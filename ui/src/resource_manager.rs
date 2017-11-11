@@ -11,6 +11,9 @@ struct ResourceManagerCore<T: Send+Sync> {
     /// Resources being managed by this object
     resources: Vec<WeakResource<T>>,
 
+    /// Stores the name for a particular ID
+    name_for_id: Vec<Arc<Mutex<Option<String>>>>,
+
     /// Locations of free slots within the resource list
     free_slots: Vec<usize>,
 
@@ -117,7 +120,7 @@ impl<T: Send+Sync> ResourceManagerCore<T> {
         let resource = Resource {
             id:         id as u32,
             resource:   Arc::new(resource),
-            name:       Arc::new(Mutex::new(None))
+            name:       self.set_name_for_id(id as u32, None)
         };
 
         // Store it in the list of known resources
@@ -129,6 +132,32 @@ impl<T: Send+Sync> ResourceManagerCore<T> {
         }
 
         resource
+    }
+
+    ///
+    /// Updates the name for a particular ID
+    ///
+    fn set_name_for_id(&mut self, id: u32, name: Option<String>) -> Arc<Mutex<Option<String>>> {
+        // Extend so we have enough slots in name_for_id
+        while self.name_for_id.len() <= id as usize {
+            self.name_for_id.push(Arc::new(Mutex::new(None)))
+        }
+
+        // Set the value in the specified slot to the value that was requested
+        let name_slot = &self.name_for_id[id as usize];
+        *name_slot.lock().unwrap() = name;
+        name_slot.clone()
+    }
+
+    ///
+    /// Retrieves the name for a particular ID
+    ///
+    fn get_name_for_id(&mut self, id: u32) -> Arc<Mutex<Option<String>>> {
+        if (id as usize) < self.name_for_id.len() as usize {
+            self.name_for_id[id as usize].clone()
+        } else {
+            self.set_name_for_id(id, None)
+        }
     }
 
     ///
@@ -161,6 +190,7 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
             core: Desync::new(ResourceManagerCore {
                 resources:          vec![],
                 named_resources:    HashMap::new(),
+                name_for_id:        vec![],
                 free_slots:         vec![],
                 clean_size:         1
             })
@@ -194,13 +224,14 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
                 None
             } else {
                 // Try to upgrade the weak ref with this ID
+                let name = core.get_name_for_id(id);
                 let weak = &core.resources[id as usize];
                 if let Some(data_ref) = weak.resource.upgrade() {
                     // Generate a Resource<T> fro this
                     Some(Resource { 
                         id:         id, 
                         resource:   data_ref,
-                        name:       Arc::new(Mutex::new(None))  // TODO!
+                        name:       name
                     })
                 } else {
                     // Resource is not in this manager
@@ -220,6 +251,7 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
 
         // Store the name in the core
         self.core.async(move |core| {
+            // Store as the resource with this name
             core.named_resources.insert(name_string, to_name);
         });
 
