@@ -13,7 +13,7 @@ pub enum ActionTrigger {
 ///
 /// Attribute attached to a control
 ///
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq)]
 pub enum ControlAttribute {
     /// The bounding box for this control
     BoundingBox(Bounds),
@@ -225,7 +225,7 @@ use ControlType::*;
 ///
 /// Represents a control
 ///
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq)]
 pub struct Control {
     /// Attributes for this control
     attributes: Vec<ControlAttribute>,
