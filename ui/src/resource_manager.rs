@@ -74,7 +74,10 @@ impl<T> Resource<T> {
     }
 
     ///
-    /// Retrieves the name for this resource, if it has one
+    /// Retrieves the name for this resource, if it has one.
+    /// 
+    /// Note that if another resource has been assigned the same name, this might return
+    /// the old name for a while (use the version in the resource manager if this matters)
     ///
     pub fn name(&self) -> Option<String> {
         let name = self.name.lock().unwrap();
@@ -251,14 +254,38 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
 
         // Store the name in the core
         self.core.async(move |core| {
+            // Remove the name from the previous owner
+            {
+                let previous_owner = core.named_resources.get(&name_string);
+                if let Some(previous_owner) = previous_owner {
+                    // We don't remove the name if we've re-assigned it to the same object
+                    if previous_owner.id != to_name.id {
+                        // Was owned by someone else...
+                        let mut previous_name = previous_owner.name.lock().unwrap();
+
+                        if *previous_name == Some(name_string.clone()) {
+                            // Still has its old name as the 'official' one
+                            *previous_name = None;
+                        }
+                    }
+                }
+            }
+
             // Store as the resource with this name
             core.named_resources.insert(name_string, to_name);
         });
 
         // Store the name in the resource
         *resource.name.lock().unwrap() = Some(String::from(name));
+    }
 
-        // TODO: remove the name from any resource that previously owned it
+    ///
+    /// Retrieves the name for a particular resource
+    ///
+    pub fn get_name(&self, resource: &Resource<T>) -> Option<String> {
+        self.core.sync(move |_core| {
+            resource.name()
+        })
     }
 
     ///
@@ -377,8 +404,9 @@ mod test {
         resource_manager.assign_name(&resource, "Mr Resource");
         resource_manager.assign_name(&resource2, "Mr Resource");
 
-        assert!(resource.name() == None);
-        assert!(resource2.name() == Some(String::from("Mr Resource")));
+        // The resource_manager.get_name() synchronises so removes the possibility of the old resource retaining its name for a while
+        assert!(resource_manager.get_name(&resource) == None);
+        assert!(resource_manager.get_name(&resource2) == Some(String::from("Mr Resource")));
     }
 
     #[test]
