@@ -1,3 +1,4 @@
+use std::str::*;
 use std::sync::*;
 use std::collections::*;
 
@@ -185,6 +186,101 @@ impl<TSession: Session+'static> UiHandler<TSession> {
             serde_json::to_string(&response).unwrap()
         ))
     }
+
+    ///
+    /// Attempts to retrieve an image from the session
+    ///
+    pub fn handle_image_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
+        // Not found if the path is empty
+        if relative_url.path().len() == 0 {
+            return Response::with((status::NotFound));
+        }
+
+        let path = relative_url.path();
+
+        // The first part of the path indicates the controller
+        let mut controller: Option<Arc<Controller>> = Some(session);
+
+        for path_component in 0..(path.len()-1) {
+            let next_controller_name = path[path_component];
+            controller = controller.map_or(None, move |controller| controller.get_subcontroller(next_controller_name));
+        }
+
+        let image_resources = controller.map_or(None, |controller| controller.get_image_resources());
+
+        // Final component is the image name (or id)
+        let image_name = path.last().unwrap();
+
+        let image = image_resources.map_or(None, |resources| {
+            if let Ok(id) = u32::from_str(image_name) {
+                resources.get_resource_with_id(id)
+            } else {
+                resources.get_named_resource(image_name)
+            }
+        });
+
+        // Either return the image data, or not found
+        if let Some(image) = image {
+            // Return the image
+            match *image {
+                Image::Png(ref data) => {
+                    let mut response = Response::with((
+                        status::Ok,
+                        Header(ContentType::png())
+                    ));
+                    response.body = Some(Box::new(data.read()));
+                    response
+                },
+
+                Image::Svg(ref data) => {
+                    let mut response = Response::with((
+                        status::Ok,
+                        Header(ContentType("image/svg+xml; charset=utf-8".parse::<Mime>().unwrap()))
+                    ));
+                    response.body = Some(Box::new(data.read()));
+                    response
+                }
+            }
+        } else {
+            // No image found
+            Response::with((status::NotFound))
+        }
+    }
+
+    ///
+    /// Handles a get resources request
+    /// 
+    pub fn handle_resource_request(&self, req: &mut Request) -> Response {
+        if req.url.path().len() < 2 {
+            // Path should be session_id/resource_type
+            return Response::with((status::NotFound));
+        }
+
+        let active_sessions = self.active_sessions.lock().unwrap();
+
+        // Try to retrieve the session
+        let session_id      = req.url.path()[0];
+        let resource_type   = req.url.path()[1];
+
+        let session         = active_sessions.get(session_id);
+
+        if let Some(&(ref _session_state, ref session)) = session {
+            let remaining_path  = req.url.path()[2..].join("/");
+            let mut partial_url = req.url.clone();
+
+            partial_url.as_mut().set_path(&remaining_path);
+
+            // Action depends on the resource type
+            match resource_type {
+                "image" => self.handle_image_get(session.clone(), partial_url),
+
+                _       => Response::with((status::NotFound))
+            }
+        } else {
+            // Session not found
+            Response::with((status::NotFound))
+        }
+    }
 }
 
 ///
@@ -234,7 +330,7 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
 
             Method::Get => {
                 // Resource fetch
-                Ok(Response::with((status::NotFound)))
+                Ok(self.handle_resource_request(req))
             },
 
             _ => {

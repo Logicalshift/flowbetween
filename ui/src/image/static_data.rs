@@ -1,5 +1,6 @@
 use super::*;
 
+use std::io::{Read, Result};
 use futures::*;
 
 #[derive(Clone)]
@@ -23,6 +24,24 @@ impl Iterator for ImageStreamIterator {
         } else {
             None
         }
+    }
+}
+
+impl Read for ImageStreamIterator {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        // Work out how many bytes to read
+        let mut num_to_read = buf.len();
+        if self.pos+num_to_read > self.bytes.len() {
+            num_to_read = self.bytes.len()-self.pos;
+        }
+
+        // Copy to the buffer
+        buf[..num_to_read].copy_from_slice(&self.bytes[self.pos..(self.pos+num_to_read)]);
+        
+        // Update the position
+        self.pos += num_to_read;
+
+        Ok(num_to_read)
     }
 }
 
@@ -54,8 +73,11 @@ impl StaticImageData {
 }
 
 impl ImageData for StaticImageData {
-    /// Reads the raw data for this image
-    fn read(&self) -> Box<Stream<Item=u8, Error=()>> {
+    fn read(&self) -> Box<Read+Send> {
+        Box::new(ImageStreamIterator { bytes: self.bytes, pos: 0 })
+    }
+
+    fn read_future(&self) -> Box<Stream<Item=u8, Error=()>> {
         Box::new(ImageStreamIterator { bytes: self.bytes, pos: 0 })
     }
 }
