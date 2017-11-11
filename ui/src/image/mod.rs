@@ -1,5 +1,4 @@
 use std::sync::*;
-
 use futures::stream::*;
 
 ///
@@ -20,3 +19,6 @@ pub trait ImageData : Send+Sync {
     /// Reads the raw data for this image
     fn read(&self) -> Box<Stream<Item=u8, Error=()>>;
 }
+
+mod inmemory;
+pub use self::inmemory::*;
