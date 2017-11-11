@@ -213,20 +213,33 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
     /// Handles a request for a UI session (or creates new sessions)
     ///
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        let is_post = req.method == Method::Post;
-        let is_json = match req.headers.get() { Some(&ContentType(Mime(TopLevel::Application, SubLevel::Json, _))) => true, _ => false };
+        match req.method {
+            Method::Post => {
+                let is_json = match req.headers.get() { Some(&ContentType(Mime(TopLevel::Application, SubLevel::Json, _))) => true, _ => false };
 
-        if !is_post || !is_json {
-            // Must be a JSON POST request
-            Ok(Response::with((status::BadRequest)))
-        } else {
-            // Parse the request
-            let request = req.get::<Struct<UiHandlerRequest>>();
+                if !is_json {
+                    // Must be a JSON POST request
+                    Ok(Response::with((status::BadRequest)))
+                } else {
+                    // Parse the request
+                    let request = req.get::<Struct<UiHandlerRequest>>();
 
-            match request {
-                Ok(Some(request))   => Ok(self.handle_request(&request)),
-                Ok(None)            => Ok(Response::with((status::BadRequest))),
-                Err(_)              => Ok(Response::with((status::BadRequest)))
+                    match request {
+                        Ok(Some(request))   => Ok(self.handle_request(&request)),
+                        Ok(None)            => Ok(Response::with((status::BadRequest))),
+                        Err(_)              => Ok(Response::with((status::BadRequest)))
+                    }
+                }
+            },
+
+            Method::Get => {
+                // Resource fetch
+                Ok(Response::with((status::NotFound)))
+            },
+
+            _ => {
+                // Unsupported method
+                Ok(Response::with((status::BadRequest)))
             }
         }
     }
