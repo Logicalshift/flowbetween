@@ -167,6 +167,12 @@ impl ToControlAttributes for Bounds {
     }
 }
 
+impl ToControlAttributes for Resource<image::Image> {
+    fn attributes(&self) -> Vec<ControlAttribute> {
+        vec![Image(self.clone())]
+    }
+}
+
 impl ToControlAttributes for (ActionTrigger, String) {
     fn attributes(&self) -> Vec<ControlAttribute> {
         vec![Action(self.0.clone(), self.1.clone())]
