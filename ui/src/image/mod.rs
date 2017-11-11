@@ -16,7 +16,7 @@ pub enum Image {
 ///
 /// Trait implemented by things that can provide data for an image
 ///
-pub trait ImageData {
+pub trait ImageData : Send+Sync {
     /// Reads the raw data for this image
     fn read(&self) -> Box<Stream<Item=u8, Error=()>>;
 }

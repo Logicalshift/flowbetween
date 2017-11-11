@@ -1,7 +1,9 @@
 use binding::*;
 
+use super::image::*;
 use super::control::*;
 use super::viewmodel::*;
+use super::resource_manager::*;
 
 use std::sync::*;
 
@@ -31,14 +33,17 @@ pub trait Controller : Send+Sync {
     /// Retrieves a Control representing the UI for this controller
     fn ui(&self) -> Arc<Bound<Control>>;
 
-    /// Attempts to retrieve a sub-controller of this controller
-    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
-
     /// Retrieves the viewmodel for this controller
     fn get_viewmodel(&self) -> Arc<ViewModel>;
 
+    /// Attempts to retrieve a sub-controller of this controller
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
+
     /// Callback for when a control associated with this controller generates an action
     fn action(&self, _action_id: &str) { }
+
+    /// Retrieves a resource manager containing the image used in the UI for this controller
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { None }
 }
 
 ///
