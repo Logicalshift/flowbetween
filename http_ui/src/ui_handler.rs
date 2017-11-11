@@ -156,7 +156,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Handles a UI handler request
     ///
-    pub fn handle_request(&self, req: &UiHandlerRequest) -> Response {
+    pub fn handle_ui_request(&self, req: &UiHandlerRequest) -> Response {
         // The response that we'll return for this request
         let mut response = UiHandlerResponse { updates: vec![] };
 
@@ -225,7 +225,7 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
                     let request = req.get::<Struct<UiHandlerRequest>>();
 
                     match request {
-                        Ok(Some(request))   => Ok(self.handle_request(&request)),
+                        Ok(Some(request))   => Ok(self.handle_ui_request(&request)),
                         Ok(None)            => Ok(Response::with((status::BadRequest))),
                         Err(_)              => Ok(Response::with((status::BadRequest)))
                     }
