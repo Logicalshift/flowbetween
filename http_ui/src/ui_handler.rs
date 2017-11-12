@@ -20,6 +20,7 @@ use iron::headers::*;
 use iron::modifiers::*;
 
 use bodyparser::*;
+use percent_encoding::*;
 
 ///
 /// Handler that runs a particular UI through the HTTP interface
@@ -204,7 +205,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         let mut controller: Option<Arc<Controller>> = Some(session);
 
         for path_component in 0..(path.len()-1) {
-            let next_controller_name = path[path_component];
+            let next_controller_name = &*percent_decode(path[path_component].as_bytes()).decode_utf8().unwrap();
             controller = controller.map_or(None, move |controller| controller.get_subcontroller(next_controller_name));
         }
 
