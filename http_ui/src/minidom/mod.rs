@@ -133,3 +133,11 @@ impl DomNodeData for DomNode {
         self.0.write().unwrap().append_child_node(new_node)
     }
 }
+
+impl ToString for DomNode {
+    fn to_string(&self) -> String {
+        let mut res = String::new();
+        self.append_fragment(&mut res);
+        res
+    }
+}
