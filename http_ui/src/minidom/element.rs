@@ -20,7 +20,28 @@ impl DomElement {
 
 impl DomNodeData for DomElement {
     fn append_fragment(&self, target: &mut String) {
-        unimplemented!()
+        // Start with '<Element'
+        target.push('<');
+        target.push_str(&self.name);
+
+        // Add any attributes next
+        for attr in self.content.iter().filter(|item| item.node_type() == DomNodeType::Attribute) {
+            target.push(' ');
+            attr.append_fragment(target);
+        }
+
+        // Finally, close the element
+        target.push('>');
+
+        // Append any child nodes
+        for child_node in self.content.iter().filter(|item| item.node_type() != DomNodeType::Attribute) {
+            child_node.append_fragment(target);
+        }
+
+        // Close the element
+        target.push_str("</");
+        target.push_str(&self.name);
+        target.push('>');
     }
 
     fn node_type(&self) -> DomNodeType {
@@ -118,5 +139,18 @@ mod test {
         assert!(element.content().len() > 0);
         assert!(element.get_attribute("foo").is_some());
         assert!(element.get_attribute("foo") == Some(String::from("bar")));
+    }
+
+    #[test]
+    pub fn can_write_element() {
+        let mut element = DomElement::new("test");
+
+        element.set_attribute("foo", "bar");
+        element.append_child_node(DomElement::new("test2"));
+
+        let mut text = String::new();
+        element.append_fragment(&mut text);
+
+        assert!(text == "<test foo=\"bar\"><test2></test2></test>");
     }
 }
