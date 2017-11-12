@@ -149,6 +149,10 @@ impl DomNodeData for DomNode {
         self.0.write().unwrap().insert_child_node(new_node, before)
     }
 
+    fn remove_child_node(&mut self, index: usize) { 
+        self.0.write().unwrap().remove_child_node(index);
+    }
+
     fn append_child_node(&mut self, new_node: DomNode) {
         self.0.write().unwrap().append_child_node(new_node)
     }
