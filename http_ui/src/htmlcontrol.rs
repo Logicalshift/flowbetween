@@ -5,6 +5,8 @@
 use ui::*;
 use super::minidom::*;
 
+use percent_encoding::*;
+
 ///
 /// Trait implemented by things that can be represented by HTML
 ///
@@ -36,7 +38,7 @@ impl ToHtml for Control {
         let mut subcomponent_path   = base_path;
 
         if let Some(subcontroller_name) = self.controller() {
-            new_path            = format!("{}/{}", base_path, subcontroller_name);
+            new_path            = format!("{}/{}", base_path, utf8_percent_encode(subcontroller_name, DEFAULT_ENCODE_SET));
             subcomponent_path   = &new_path;
         }
 
@@ -81,7 +83,7 @@ impl ToHtml for ControlAttribute {
                 };
 
                 // Build the URL from the base path
-                let image_url = format!("{}/{}", base_path, image_name);
+                let image_url = format!("{}/{}", base_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
 
                 // Style attribute to render this image as the background
                 DomAttribute::new("style", &format!("background: no-repeat center/100% url({});", image_url))

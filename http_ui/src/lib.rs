@@ -7,6 +7,7 @@ extern crate binding;
 extern crate uuid;
 extern crate iron;
 extern crate bodyparser;
+extern crate percent_encoding;
 
 mod session;
 mod session_state;
