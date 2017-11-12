@@ -62,17 +62,17 @@ pub trait DomNodeData {
     ///
     /// Retrieves an attribute value by name
     ///
-    fn get_attribute(&self, name: &str) -> Option<String> { None }
+    fn get_attribute(&self, _name: &str) -> Option<String> { None }
 
     ///
     /// Sets an attribute in this node 
     ///
-    fn set_attribute(&mut self, name: &str, value: &str) { }
+    fn set_attribute(&mut self, _name: &str, _value: &str) { }
 
     ///
     /// Inserts a child node
     ///
-    fn insert_child_node(&mut self, new_node: DomNode, before: usize) { }
+    fn insert_child_node(&mut self, _new_node: DomNode, _before: usize) { }
 
     ///
     /// Appends a child node to the end of this node
