@@ -11,7 +11,11 @@ use percent_encoding::*;
 /// Trait implemented by things that can be represented by HTML
 ///
 pub trait ToHtml {
-    fn to_html(&self, base_path: &str) -> DomNode;
+    fn to_html(&self, base_path: &str) -> DomNode {
+        self.to_html_subcomponent(base_path, "")
+    }
+
+    fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode;
 }
 
 ///
@@ -29,22 +33,22 @@ fn control_class(ctrl: &Control) -> &str {
 }
 
 impl ToHtml for Control {
-    fn to_html(&self, base_path: &str) -> DomNode {
+    fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode {
         // Start with the main element
         let mut result = DomElement::new(control_class(self));
 
         // The base path changes when the controller changes
         let new_path;
-        let mut subcomponent_path   = base_path;
+        let mut subcomponent_path   = controller_path;
 
         if let Some(subcontroller_name) = self.controller() {
-            new_path            = format!("{}/{}", base_path, utf8_percent_encode(subcontroller_name, DEFAULT_ENCODE_SET));
-            subcomponent_path   = &new_path;
+            new_path                = format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, DEFAULT_ENCODE_SET));
+            subcomponent_path       = &new_path;
         }
 
         // Add any subcomponents or text for this control
         for attribute in self.attributes() {
-            result.append_child_node(attribute.to_html(subcomponent_path));
+            result.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
         }
 
         result
@@ -52,7 +56,7 @@ impl ToHtml for Control {
 }
 
 impl ToHtml for ControlAttribute {
-    fn to_html(&self, base_path: &str) -> DomNode {
+    fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode {
         use ui::ControlAttribute::*;
 
         match self {
@@ -83,7 +87,7 @@ impl ToHtml for ControlAttribute {
                 };
 
                 // Build the URL from the base path
-                let image_url = format!("{}/{}", base_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
+                let image_url = format!("{}/image{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
 
                 // Style attribute to render this image as the background
                 DomAttribute::new("style", &format!("background: no-repeat center/100% url({});", image_url))
