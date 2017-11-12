@@ -63,6 +63,23 @@ impl ToHtml for ControlAttribute {
 
             &Text(ref text) => DomText::new(&text.to_string()),
 
+            &Image(ref image) => {
+                // Use the image's name if it has one, otherwise the ID
+                let image_name = {
+                    if let Some(name) = image.name() {
+                        name
+                    } else {
+                        image.id().to_string()
+                    }
+                };
+
+                // Build the URL from the base path
+                let image_url = format!("{}/{}", base_path, image_name);
+
+                // Style attribute to render this image as the background
+                DomAttribute::new("style", &format!("background: no-repeat center/100% url({});", image_url))
+            }
+
             _ => DomEmpty::new()
         }
     }
