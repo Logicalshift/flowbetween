@@ -8,14 +8,15 @@ extern crate uuid;
 extern crate iron;
 extern crate bodyparser;
 
-pub mod session;
-pub mod session_state;
+mod session;
+mod session_state;
+mod update;
+mod event;
+mod htmlcontrol;
+mod ui_handler;
 pub mod null_session;
-pub mod update;
-pub mod event;
-pub mod htmlcontrol;
-pub mod ui_handler;
 pub mod viewmodel;
+pub mod minidom;
 
 pub use self::session::*;
 pub use self::session_state::*;
