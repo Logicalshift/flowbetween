@@ -52,6 +52,8 @@ impl ToHtml for Control {
             result.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
         }
 
+        // Flatten to create a 'clean' DOM without collections or empty nodes
+        result.flatten();
         result
     }
 }
