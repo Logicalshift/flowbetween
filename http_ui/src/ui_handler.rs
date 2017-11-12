@@ -63,8 +63,9 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     /// Generates a UI refresh response
     ///
     pub fn refresh_ui(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse) {
+        let base_path   = format!("flowbetween/session/{}", state.id());
         let ui          = state.entire_ui_tree();
-        let ui_html     = ui.to_html();
+        let ui_html     = ui.to_html(&base_path);
         let viewmodel   = viewmodel_update_controller_tree(&*session);
 
         response.updates.push(Update::NewUserInterfaceHtml(ui_html, ui.to_json(), viewmodel));
@@ -111,6 +112,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     fn handle_with_session(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
         use Event::*;
+        let base_path = format!("flowbetween/session/{}", state.id());
 
         // Cache the UI state before the event is processed
         let ui_before_event = state.entire_ui_tree();
@@ -140,7 +142,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         if ui_differences.len() > 0 {
             // Turn the control differences into HTML differences
             let updates: Vec<HtmlDiff> = ui_differences.into_iter()
-                .map(|ui_diff| HtmlDiff::new(ui_diff.address().clone(), ui_diff.replacement().to_html()))
+                .map(|ui_diff| HtmlDiff::new(ui_diff.address().clone(), ui_diff.replacement().to_html(&base_path)))
                 .collect();
 
             // Add the new update to the response

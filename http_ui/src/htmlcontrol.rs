@@ -8,7 +8,7 @@ use ui::*;
 /// Trait implemented by things that can be represented by HTML
 ///
 pub trait ToHtml {
-    fn to_html(&self) -> String;
+    fn to_html(&self, base_path: &str) -> String;
 }
 
 ///
@@ -46,7 +46,7 @@ fn quote_text(text: &String) -> String {
 }
 
 impl ToHtml for Control {
-    fn to_html(&self) -> String {
+    fn to_html(&self, base_path: &str) -> String {
         use ui::ControlAttribute::*;
         let mut result = String::new();
 
@@ -59,7 +59,7 @@ impl ToHtml for Control {
                 &SubComponents(ref subcomponents) => {
                     // Subcomponents go inside the div
                     let subcomponent_html = subcomponents.iter()
-                        .map(|control| control.to_html())
+                        .map(|control| control.to_html(base_path))
                         .fold(String::new(), |a, b| a + &b);
                     result.push_str(&subcomponent_html);
                 },
@@ -81,7 +81,7 @@ impl ToHtml for Control {
 }
 
 impl ToHtml for () {
-    fn to_html(&self) -> String {
+    fn to_html(&self, base_url: &str) -> String {
         String::from("")
     }
 }
