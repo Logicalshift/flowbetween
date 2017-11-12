@@ -93,7 +93,11 @@ impl ToHtml for ControlAttribute {
                 DomAttribute::new("style", &format!("background: no-repeat center/contain url('{}');", image_url))
             }
 
-            _ => DomEmpty::new()
+            &BoundingBox(_) => DomEmpty::new(),
+            &Selected(_)    => DomEmpty::new(),
+            &Id(_)          => DomEmpty::new(),
+            &Controller(_)  => DomEmpty::new(),
+            &Action(_, _)   => DomEmpty::new()
         }
     }
 }
