@@ -31,9 +31,18 @@ impl ToHtml for Control {
         // Start with the main element
         let mut result = DomElement::new(control_class(self));
 
+        // The base path changes when the controller changes
+        let new_path;
+        let mut subcomponent_path   = base_path;
+
+        if let Some(subcontroller_name) = self.controller() {
+            new_path            = format!("{}/{}", base_path, subcontroller_name);
+            subcomponent_path   = &new_path;
+        }
+
         // Add any subcomponents or text for this control
         for attribute in self.attributes() {
-            result.append_child_node(attribute.to_html(base_path));
+            result.append_child_node(attribute.to_html(subcomponent_path));
         }
 
         result
