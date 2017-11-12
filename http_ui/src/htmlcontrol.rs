@@ -59,12 +59,6 @@ impl ToHtml for Control {
     }
 }
 
-impl ToHtml for () {
-    fn to_html(&self, base_url: &str) -> DomNode {
-        DomText::new("")
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
