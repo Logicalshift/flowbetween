@@ -32,6 +32,15 @@ impl ToJsonValue for ControlAttribute {
                         "name": image_resource.name()
                     }
                 })
+            },
+
+            &Canvas(ref canvas_resource)        => {
+                json!({
+                    "Image": {
+                        "id":   canvas_resource.id(),
+                        "name": canvas_resource.name()
+                    }
+                })
             }
         }
     }

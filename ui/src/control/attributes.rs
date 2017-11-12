@@ -3,9 +3,10 @@ use super::control::*;
 use super::actions::*;
 
 use super::super::image;
+use super::super::canvas;
 use super::super::property::*;
 use super::super::resource_manager::*;
-
+ 
 ///
 /// Attribute attached to a control
 ///
@@ -34,7 +35,10 @@ pub enum ControlAttribute {
     Action(ActionTrigger, String),
 
     /// Specifies the background image for this control
-    Image(Resource<image::Image>)
+    Image(Resource<image::Image>),
+
+    /// Specifies the canvas to use for this control (assuming it's a canvas control)
+    Canvas(Resource<canvas::Canvas>)
 }
 
 impl ControlAttribute {
@@ -119,6 +123,16 @@ impl ControlAttribute {
     }
 
     ///
+    /// The canvas resource for this control, if there is one
+    ///
+    pub fn canvas<'a>(&'a self) -> Option<&'a Resource<canvas::Canvas>> {
+        match self {
+            &Canvas(ref canvas) => Some(canvas),
+            _                   => None
+        }
+    }
+
+    ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
     ///
@@ -131,6 +145,7 @@ impl ControlAttribute {
             &Action(ref trigger, ref action)    => Some((trigger, action)) == compare_to.action(),
             &Selected(ref is_selected)          => Some(is_selected) == compare_to.selected(),
             &Image(ref image_resource)          => Some(image_resource) == compare_to.image(),
+            &Canvas(ref canvas_resource)        => Some(canvas_resource) == compare_to.canvas(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)      => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())

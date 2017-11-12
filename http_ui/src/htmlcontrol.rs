@@ -92,6 +92,28 @@ impl ToHtml for ControlAttribute {
 
                 // Style attribute to render this image as the background
                 DomAttribute::new("style", &format!("background: no-repeat center/contain url('{}');", image_url))
+            },
+
+
+            &Canvas(ref canvas) => {
+                // Use the canvas's name if it has one, otherwise the ID
+                let canvas_name = {
+                    if let Some(name) = canvas.name() {
+                        name
+                    } else {
+                        canvas.id().to_string()
+                    }
+                };
+
+                // Build the URL from the base path
+                let canvas_url = format!("{}/c{}/{}", base_path, controller_path, utf8_percent_encode(&canvas_name, DEFAULT_ENCODE_SET));
+
+                // We attach canvas details to the node when it has a canvas attached to it
+                DomCollection::new(vec![
+                    DomAttribute::new("flo-canvas",     &canvas_url),
+                    DomAttribute::new("flo-name",       &canvas_name),
+                    DomAttribute::new("flo-controller", controller_path)
+                ])
             }
 
             &BoundingBox(_) => DomEmpty::new(),
