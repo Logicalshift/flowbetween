@@ -28,8 +28,6 @@ fn control_class(ctrl: &Control) -> &str {
 
 impl ToHtml for Control {
     fn to_html(&self, base_path: &str) -> DomNode {
-        use ui::ControlAttribute::*;
-
         // Start with the main element
         let mut result = DomElement::new(control_class(self));
 

@@ -12,7 +12,7 @@ impl DomEmpty {
 }
 
 impl DomNodeData for DomEmpty {
-    fn append_fragment(&self, target: &mut String) {
+    fn append_fragment(&self, _target: &mut String) {
     }
 
     fn node_type(&self) -> DomNodeType {
