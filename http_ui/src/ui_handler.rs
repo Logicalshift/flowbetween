@@ -205,7 +205,10 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         let mut controller: Option<Arc<Controller>> = Some(session);
 
         for path_component in 0..(path.len()-1) {
-            let next_controller_name = &*percent_decode(path[path_component].as_bytes()).decode_utf8().unwrap();
+            let next_controller_name = &*percent_decode(path[path_component].as_bytes())
+                .decode_utf8()
+                .map(|cow| cow.into_owned())
+                .unwrap_or(String::from(path[path_component]));
             controller = controller.map_or(None, move |controller| controller.get_subcontroller(next_controller_name));
         }
 
