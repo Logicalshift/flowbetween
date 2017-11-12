@@ -127,6 +127,7 @@ impl ToHtml for ControlAttribute {
 
 #[cfg(test)]
 mod test {
+    use ui::canvas::*;
     use super::*;
 
     #[test]
@@ -142,5 +143,17 @@ mod test {
     #[test]
     fn can_convert_container_to_html() {
         assert!(Control::container().with(vec![Control::button()]).to_html("").to_string() == "<flo-container><flo-button></flo-button></flo-container>")
+    }
+
+    #[test]
+    fn can_convert_canvas_to_html() {
+        let resource_manager = ResourceManager::new();
+        let canvas = resource_manager.register(Canvas::new());
+        resource_manager.assign_name(&canvas, "test_canvas");
+
+        let control = Control::canvas().with(canvas.clone());
+
+        println!("{}", control.to_html("test/base").to_string());
+        assert!(control.to_html("test/base").to_string() == "<flo-canvas flo-canvas=\"test/base/c/test_canvas\" flo-name=\"test_canvas\" flo-controller=\"\"></flo-canvas>")
     }
 }

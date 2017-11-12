@@ -44,6 +44,11 @@ impl Control {
         Self::new(Empty)
     }
 
+    /// Creates a new canvas control
+    pub fn canvas() -> Control {
+        Self::new(ControlType::Canvas)
+    }
+
     /// Creates a control with some attributes added to it
     pub fn with<T: ToControlAttributes>(&self, attributes: T) -> Control {
         let mut new_attributes = self.attributes.clone();

@@ -186,6 +186,12 @@ impl ToControlAttributes for Resource<image::Image> {
     }
 }
 
+impl ToControlAttributes for Resource<canvas::Canvas> {
+    fn attributes(&self) -> Vec<ControlAttribute> {
+        vec![ControlAttribute::Canvas(self.clone())]
+    }
+}
+
 impl ToControlAttributes for (ActionTrigger, String) {
     fn attributes(&self) -> Vec<ControlAttribute> {
         vec![Action(self.0.clone(), self.1.clone())]
