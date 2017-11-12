@@ -28,7 +28,8 @@ fn control_class(ctrl: &Control) -> &str {
         Empty       => "flo-empty",
         Container   => "flo-container",
         Button      => "flo-button",
-        Label       => "flo-label"
+        Label       => "flo-label",
+        Canvas      => "flo-canvas"
     }
 }
 

@@ -13,5 +13,8 @@ pub enum ControlType {
     Button,
 
     /// Label used to display some text
-    Label
+    Label,
+
+    /// Allows arbitrary rendering using a canvas resource
+    Canvas
 }
