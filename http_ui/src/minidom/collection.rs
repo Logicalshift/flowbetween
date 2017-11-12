@@ -29,4 +29,8 @@ impl DomNodeData for DomCollection {
     fn insert_child_node(&mut self, new_node: DomNode, before: usize) {
         self.0.insert(before, new_node)
     }
+
+    fn remove_child_node(&mut self, index: usize) { 
+        self.0.remove(index);
+    }
 }

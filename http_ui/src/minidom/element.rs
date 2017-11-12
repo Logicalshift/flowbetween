@@ -105,6 +105,10 @@ impl DomNodeData for DomElement {
     fn insert_child_node(&mut self, new_node: DomNode, before: usize) {
         self.content.insert(before, new_node)
     }
+
+    fn remove_child_node(&mut self, index: usize) { 
+        self.content.remove(index);
+    }
 }
 
 #[cfg(test)]

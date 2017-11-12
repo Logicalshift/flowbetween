@@ -90,6 +90,11 @@ pub trait DomNodeData {
     fn insert_child_node(&mut self, _new_node: DomNode, _before: usize) { }
 
     ///
+    /// Removes a child node at a particular index
+    ///
+    fn remove_child_node(&mut self, _index: usize) { }
+
+    ///
     /// Appends a child node to the end of this node
     ///
     fn append_child_node(&mut self, new_node: DomNode) {
