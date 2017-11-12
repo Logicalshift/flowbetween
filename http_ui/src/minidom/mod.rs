@@ -3,11 +3,15 @@ use std::sync::*;
 mod element;
 mod attribute;
 mod text;
+mod collection;
+mod empty;
 mod quote;
 
 pub use self::element::*;
 pub use self::attribute::*;
 pub use self::text::*;
+pub use self::collection::*;
+pub use self::empty::*;
 
 ///
 /// Generic DOM node container
@@ -20,9 +24,20 @@ pub struct DomNode(Arc<RwLock<DomNodeData>>);
 ///
 #[derive(Clone, Copy, PartialEq)]
 pub enum DomNodeType {
+    /// Empty placeholder element
+    Empty,
+
+    /// <foo></foo> element
     Element,
+
+    /// Text node
     Text,
-    Attribute
+
+    /// a="b" attribute
+    Attribute,
+
+    /// Simple collection of elements/text
+    Collection
 }
 
 ///

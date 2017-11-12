@@ -35,27 +35,36 @@ impl ToHtml for Control {
 
         // Add any subcomponents or text for this control
         for attribute in self.attributes() {
-            match attribute {
-                &SubComponents(ref subcomponents) => {
-                    // Subcomponents go inside the div
-                    let subcomponent_nodes = subcomponents.iter()
-                        .map(|control| control.to_html(base_path));
-                    
-                    for node in subcomponent_nodes { 
-                        result.append_child_node(node);
-                    }
-                },
-
-                &Text(ref text) => {
-                    // Any text is just the text attached to the div
-                    result.append_child_node(DomText::new(&text.to_string()));
-                },
-
-                _ => ()
-            }
+            result.append_child_node(attribute.to_html(base_path));
         }
 
         result
+    }
+}
+
+impl ToHtml for ControlAttribute {
+    fn to_html(&self, base_path: &str) -> DomNode {
+        use ui::ControlAttribute::*;
+
+        match self {
+            &SubComponents(ref subcomponents) => {
+                let mut result = DomCollection::new(vec![]);
+
+                // Subcomponents go inside the div
+                let subcomponent_nodes = subcomponents.iter()
+                    .map(|control| control.to_html(base_path));
+                
+                for node in subcomponent_nodes { 
+                    result.append_child_node(node);
+                }
+
+                result
+            },
+
+            &Text(ref text) => DomText::new(&text.to_string()),
+
+            _ => DomEmpty::new()
+        }
     }
 }
 

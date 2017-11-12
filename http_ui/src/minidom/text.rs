@@ -26,7 +26,7 @@ impl DomNodeData for DomText {
 
     fn value(&self) -> Option<String> { 
         Some(self.0.clone())
-     }
+    }
 }
 
 #[cfg(test)]
