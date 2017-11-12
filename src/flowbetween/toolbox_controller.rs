@@ -9,7 +9,8 @@ use std::sync::*;
 ///
 pub struct ToolboxController {
     view_model: Arc<DynamicViewModel>,
-    ui:         Binding<Control>
+    ui:         Binding<Control>,
+    images:     Arc<ResourceManager<Image>>
 }
 
 impl ToolboxController {
@@ -20,26 +21,32 @@ impl ToolboxController {
         // There's a 'SelectedTool' key that describes the currently selected tool
         viewmodel.set_property("SelectedTool", PropertyValue::String("Pencil".to_string()));
 
+        // Some images for the root controller
+        let images  = Arc::new(ResourceManager::new());
+        let flo     = images.register(png_static(include_bytes!("../../static_files/png/Flo-Orb-small.png")));
+        images.assign_name(&flo, "flo");
+
         // Set up the tools
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
             .with(vec![
-                Self::make_tool("Select",   &viewmodel), 
-                Self::make_tool("Pan",      &viewmodel),
-                Self::make_tool("Pencil",   &viewmodel), 
-                Self::make_tool("Ink",      &viewmodel)
+                Self::make_tool("Select",   &viewmodel, flo.clone()), 
+                Self::make_tool("Pan",      &viewmodel, flo.clone()),
+                Self::make_tool("Pencil",   &viewmodel, flo.clone()), 
+                Self::make_tool("Ink",      &viewmodel, flo.clone())
             ]));
 
         ToolboxController {
             view_model: viewmodel,
-            ui:         ui
+            ui:         ui,
+            images:     images
         }
     }
 
     ///
     /// Creates a new tool control
     ///
-    fn make_tool(name: &str, viewmodel: &DynamicViewModel) -> Control {
+    fn make_tool(name: &str, viewmodel: &DynamicViewModel, image: Resource<Image>) -> Control {
         use ui::ControlAttribute::*;
         use ui::ActionTrigger::*;
 
@@ -59,6 +66,11 @@ impl ToolboxController {
             .with(Action(Click, String::from(name)))
             .with(Selected(Property::Bind(selected_property_name)))
             .with(Bounds::next_vert(48.0))
+            .with(vec![
+                Control::empty()
+                    .with(Bounds::fill_all())
+                    .with(image)
+            ])
     }
 }
 
@@ -73,5 +85,9 @@ impl Controller for ToolboxController {
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {
         self.view_model.clone()
+    }
+
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
+        Some(self.images.clone())
     }
 }
