@@ -29,13 +29,11 @@ pub enum ControlAttribute {
     /// Specifies the controller that manages the subcomponents of this control
     Controller(String),
 
-    ///
     /// When the specified action occurs for this item, send the event 
     /// denoted by the string to the controller
-    ///
     Action(ActionTrigger, String),
 
-    /// Specifies the image for this control
+    /// Specifies the background image for this control
     Image(Resource<image::Image>)
 }
 
