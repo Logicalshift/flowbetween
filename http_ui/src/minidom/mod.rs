@@ -101,6 +101,57 @@ pub trait DomNodeData {
         let len = self.content().len();
         self.insert_child_node(new_node, len);
     }
+
+    ///
+    /// Flattens this node (removing any sub-collections or empty nodes)
+    ///
+    fn flatten(&mut self) {
+        loop {
+            let content             = self.content();
+            let mut replace_indexes = vec![];
+
+            // Search the content of this node for empty or collection nodes
+            for index in 0..content.len() {
+                // Push this index to the appropriate collection
+                match content[index].node_type() {
+                    DomNodeType::Empty      => replace_indexes.push(index),
+                    DomNodeType::Collection => replace_indexes.push(index),
+                    _                       => ()
+                };
+            }
+
+            // No more work to do if the node is completely empty
+            if replace_indexes.len() == 0 {
+                break;
+            }
+
+            // Replace in reverse order (keeps indexes the same)
+            replace_indexes.reverse();
+            for index in replace_indexes.iter() {
+                // Get the item from the original content
+                let original = &content[*index];
+
+                // Remove it from this object
+                self.remove_child_node(*index);
+                
+                match original.node_type() {
+                    // Just remove empty nodes
+                    DomNodeType::Empty      => (),
+
+                    // Replace collection nodes with their content
+                    DomNodeType::Collection => {
+                        let mut collection_content = original.content();
+
+                        while let Some(node) = collection_content.pop() {
+                            self.insert_child_node(node, *index);
+                        }
+                    },
+
+                    _ => panic!("Was expecting an empty or a collection type")
+                }
+            }
+        }
+    }
 }
 
 impl DomNode {
@@ -155,6 +206,10 @@ impl DomNodeData for DomNode {
 
     fn append_child_node(&mut self, new_node: DomNode) {
         self.0.write().unwrap().append_child_node(new_node)
+    }
+
+    fn flatten(&mut self) {
+        self.0.write().unwrap().flatten();
     }
 }
 
