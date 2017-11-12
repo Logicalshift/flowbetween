@@ -278,7 +278,8 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 
             // Action depends on the resource type
             match resource_type {
-                "image" => self.handle_image_get(session.clone(), partial_url),
+                // 'i' is shorthand for 'image'
+                "i"     => self.handle_image_get(session.clone(), partial_url),
 
                 _       => Response::with((status::NotFound))
             }

@@ -87,7 +87,7 @@ impl ToHtml for ControlAttribute {
                 };
 
                 // Build the URL from the base path
-                let image_url = format!("{}/image{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
+                let image_url = format!("{}/i{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
 
                 // Style attribute to render this image as the background
                 DomAttribute::new("style", &format!("background: no-repeat center/100% url({});", image_url))
