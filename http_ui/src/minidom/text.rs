@@ -1,4 +1,5 @@
 use super::*;
+use super::quote::*;
 
 ///
 /// Represents a text element in the DOM
@@ -16,7 +17,7 @@ impl DomText {
 
 impl DomNodeData for DomText {
     fn append_fragment(&self, target: &mut String) {
-        unimplemented!()
+        target.push_str(&quote_text(&self.0))
     }
 
     fn node_type(&self) -> DomNodeType {
@@ -38,5 +39,15 @@ mod test {
 
         assert!(text.node_type() == DomNodeType::Text);
         assert!(text.value() == Some(String::from("test")));
+    }
+
+    #[test]
+    fn will_quote_fragment() {
+        let text = DomText::new("test&test");
+
+        let mut res = String::new();
+        text.append_fragment(&mut res);
+
+        assert!(res == "test&amp;test");
     }
 }

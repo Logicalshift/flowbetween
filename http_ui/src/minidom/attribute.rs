@@ -1,4 +1,5 @@
 use super::*;
+use super::quote::*;
 
 pub struct DomAttribute(String, String);
 
@@ -10,7 +11,7 @@ impl DomAttribute {
 
 impl DomNodeData for DomAttribute {
     fn append_fragment(&self, target: &mut String) {
-        unimplemented!()
+        target.push_str(&format!("{}=\"{}\"", self.0, quote_text(&self.1)));
     }
 
     fn node_type(&self) -> DomNodeType {
@@ -43,5 +44,15 @@ mod test {
     #[test]
     fn can_read_value() {
         assert!(DomAttribute::new("foo", "bar").value() == Some("bar".to_string()))
+    }
+
+    #[test]
+    fn can_generate_value() {
+        let attr = DomAttribute::new("foo", "bar");
+        let mut target = String::new();
+
+        attr.append_fragment(&mut target);
+
+        assert!(target == "foo=\"bar\"");
     }
 }

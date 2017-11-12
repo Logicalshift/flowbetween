@@ -3,6 +3,7 @@ use std::sync::*;
 mod element;
 mod attribute;
 mod text;
+mod quote;
 
 pub use self::element::*;
 pub use self::attribute::*;
