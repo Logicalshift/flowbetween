@@ -15,11 +15,12 @@ pub struct CanvasController {
 
 impl CanvasController {
     pub fn new() -> CanvasController {
-        let ui = bind(Control::empty());
         let canvases = ResourceManager::new();
 
         let test_canvas = canvases.register(Canvas::new());
         canvases.assign_name(&test_canvas, "test_canvas");
+
+        let ui = bind(Control::canvas().with(test_canvas.clone()));
 
         test_canvas.draw(|gc| {
             gc.new_path();
