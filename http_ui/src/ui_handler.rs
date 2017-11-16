@@ -7,9 +7,11 @@ use super::update::*;
 use super::session::*;
 use super::viewmodel::*;
 use super::htmlcontrol::*;
+use super::canvas_writer::*;
 use super::session_state::*;
 
 use ui::*;
+use ui::canvas::*;
 
 extern crate serde_json;
 
@@ -219,10 +221,40 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     }
 
     ///
+    /// Generates a response for a canvas
+    ///
+    fn canvas_response(&self, canvas: &Resource<Canvas>) -> Response {
+        let mut response = Response::with((
+            status::Ok,
+            Header(ContentType("application/flocanvas; charset=utf-8".parse::<Mime>().unwrap()))
+        ));
+        response.body = Some(Box::new(WriteCanvas::new(canvas)));
+        response
+    }
+
+    ///
     /// Attempts to retrieve a canvas from the session
     ///
     pub fn handle_canvas_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
-        unimplemented!()
+        if let Some((controller, canvas_name)) = self.decode_controller_path(session, relative_url) {
+            let canvas_resources    = controller.get_canvas_resources();
+            let canvas              = canvas_resources.map_or(None, |resources| {
+                if let Ok(id) = u32::from_str(&canvas_name) {
+                    resources.get_resource_with_id(id)
+                } else {
+                    resources.get_named_resource(&canvas_name)
+                }
+            });
+
+            if let Some(canvas) = canvas {
+                self.canvas_response(&canvas)
+            } else {
+                Response::with((status::NotFound))
+            }
+        } else {
+            // Not found
+            Response::with((status::NotFound))
+        }
     }
 
     ///

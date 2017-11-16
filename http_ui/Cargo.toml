@@ -15,3 +15,4 @@ uuid                = { version = "^0.4", features = [ "v4" ] }
 iron                = "^0.5.1"
 bodyparser          = { git = "https://github.com/iron/body-parser.git" }
 percent-encoding    = "^1.0.1"
+futures             = "^0.1.17"
