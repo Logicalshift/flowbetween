@@ -191,19 +191,12 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     }
 
     ///
-    /// Attempts to retrieve a canvas from the session
+    /// Returns the controller and the resource name for a URL containing a controller/resource path
     ///
-    pub fn handle_canvas_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
-        unimplemented!()
-    }
-
-    ///
-    /// Attempts to retrieve an image from the session
-    ///
-    pub fn handle_image_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
+    fn decode_controller_path(&self, session: Arc<TSession>, relative_url: Url) -> Option<(Arc<Controller>, String)> {
         // Not found if the path is empty
         if relative_url.path().len() == 0 {
-            return Response::with((status::NotFound));
+            return None;
         }
 
         let path = relative_url.path();
@@ -219,44 +212,62 @@ impl<TSession: Session+'static> UiHandler<TSession> {
             controller = controller.map_or(None, move |controller| controller.get_subcontroller(next_controller_name));
         }
 
-        let image_resources = controller.map_or(None, |controller| controller.get_image_resources());
+        // Final component is the resource name (or id)
+        let resource_name = String::from(*path.last().unwrap());
 
-        // Final component is the image name (or id)
-        let image_name = path.last().unwrap();
+        controller.map(move |controller| (controller, resource_name))
+    }
 
-        let image = image_resources.map_or(None, |resources| {
-            if let Ok(id) = u32::from_str(image_name) {
-                resources.get_resource_with_id(id)
-            } else {
-                resources.get_named_resource(image_name)
-            }
-        });
+    ///
+    /// Attempts to retrieve a canvas from the session
+    ///
+    pub fn handle_canvas_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
+        unimplemented!()
+    }
 
-        // Either return the image data, or not found
-        if let Some(image) = image {
-            // Return the image
-            match *image {
-                Image::Png(ref data) => {
-                    let mut response = Response::with((
-                        status::Ok,
-                        Header(ContentType::png())
-                    ));
-                    response.body = Some(Box::new(data.read()));
-                    response
-                },
-
-                Image::Svg(ref data) => {
-                    let mut response = Response::with((
-                        status::Ok,
-                        Header(ContentType("image/svg+xml; charset=utf-8".parse::<Mime>().unwrap()))
-                    ));
-                    response.body = Some(Box::new(data.read()));
-                    response
+    ///
+    /// Attempts to retrieve an image from the session
+    ///
+    pub fn handle_image_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
+        if let Some((controller, image_name)) = self.decode_controller_path(session, relative_url) {
+            // Final component is the image name (or id)
+            let image_resources = controller.get_image_resources();
+            let image           = image_resources.map_or(None, |resources| {
+                if let Ok(id) = u32::from_str(&image_name) {
+                    resources.get_resource_with_id(id)
+                } else {
+                    resources.get_named_resource(&image_name)
                 }
+            });
+
+            // Either return the image data, or not found
+            if let Some(image) = image {
+                // Return the image
+                match *image {
+                    Image::Png(ref data) => {
+                        let mut response = Response::with((
+                            status::Ok,
+                            Header(ContentType::png())
+                        ));
+                        response.body = Some(Box::new(data.read()));
+                        response
+                    },
+
+                    Image::Svg(ref data) => {
+                        let mut response = Response::with((
+                            status::Ok,
+                            Header(ContentType("image/svg+xml; charset=utf-8".parse::<Mime>().unwrap()))
+                        ));
+                        response.body = Some(Box::new(data.read()));
+                        response
+                    }
+                }
+            } else {
+                // No image found
+                Response::with((status::NotFound))
             }
         } else {
-            // No image found
-            Response::with((status::NotFound))
+            return Response::with((status::NotFound));
         }
     }
 
