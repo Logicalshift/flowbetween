@@ -114,7 +114,7 @@ impl ToHtml for ControlAttribute {
                 DomCollection::new(vec![
                     DomAttribute::new("flo-canvas",     &canvas_url),
                     DomAttribute::new("flo-name",       &canvas_name),
-                    DomAttribute::new("flo-controller", controller_path)
+                    DomAttribute::new("flo-controller", if controller_path.len() > 0 { &controller_path[1..] } else { "" })
                 ])
             }
 
