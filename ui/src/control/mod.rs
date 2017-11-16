@@ -16,8 +16,11 @@ pub use self::attributes::*;
 
 #[cfg(test)]
 mod test {
-    use super::super::property::*;
     use super::*;
+    use super::super::diff::*;
+    use super::super::canvas::*;
+    use super::super::property::*;
+    use super::super::resource_manager::*;
 
     #[test]
     fn can_create_button() {
@@ -87,5 +90,30 @@ mod test {
         assert!(subcontrollers.len() == 2);
         assert!(subcontrollers.iter().any(|c| c == "Test1"));
         assert!(subcontrollers.iter().any(|c| c == "Test2"));
+    }
+
+    #[test]
+    fn canvas_equals_self() {
+        let resources       = ResourceManager::new();
+        let canvas_resource = resources.register(Canvas::new());
+        let canvas1         = Control::canvas();
+        let canvas2         = Control::canvas()
+            .with(canvas_resource);
+
+        assert!(!canvas1.is_different(&canvas1));
+        assert!(!canvas2.is_different(&canvas2));
+    }
+
+    #[test]
+    fn different_canvases_are_different() {
+        let resources        = ResourceManager::new();
+        let canvas_resource1 = resources.register(Canvas::new());
+        let canvas_resource2 = resources.register(Canvas::new());
+        let canvas1          = Control::canvas()
+            .with(canvas_resource1);
+        let canvas2          = Control::canvas()
+            .with(canvas_resource2);
+
+        assert!(canvas1.is_different(&canvas2));
     }
 }
