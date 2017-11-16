@@ -115,6 +115,13 @@ impl Canvas {
             active_clear_count: 0
         })
     }
+
+    ///
+    /// Retrieves the list of drawing actions in this canvas
+    ///
+    pub fn get_drawing(&self) -> Vec<Draw> {
+        self.core.sync(|core| core.drawing_since_last_clear.clone())
+    }
 }
 
 impl Drop for Canvas {
