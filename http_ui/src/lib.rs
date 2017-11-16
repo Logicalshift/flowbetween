@@ -6,6 +6,7 @@ extern crate ui;
 extern crate binding;
 extern crate uuid;
 extern crate iron;
+extern crate mount;
 extern crate bodyparser;
 extern crate percent_encoding;
 extern crate futures;

@@ -20,6 +20,7 @@ use iron::mime::*;
 use iron::method::*;
 use iron::headers::*;
 use iron::modifiers::*;
+use mount::*;
 
 use bodyparser::*;
 use percent_encoding::*;
@@ -40,6 +41,41 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         UiHandler { 
             active_sessions: Mutex::new(HashMap::new()),  
         }
+    }
+
+    ///
+    /// Returns the base URL for a request
+    ///
+    fn base_url(req: &Request) -> Url {
+        // Get the original URL for this request
+        let original_url = req.extensions.get::<OriginalUrl>()
+            .map(|url| url.clone())
+            .unwrap_or(Url::parse("http://localhost/").unwrap());
+        
+        // Also need the request url
+        let request_url     = req.url.clone();
+
+        // Request URL path will be the last part of the original URL: remove enough parts that 
+        let original_path       = original_url.path();
+        let request_path        = request_url.path();
+
+        let original_path_len   = original_path.len();
+        let request_path_len    = {
+            if request_path.len() == 1 && request_path[0] == "" {
+                0
+            } else if request_path.len() > original_path.len() {
+                0
+            } else {
+                request_path.len()
+            }
+        };
+
+        let base_path           = original_url.path()[0..(original_path_len-request_path_len)].join("/");
+
+        let mut base_url = original_url.clone();
+        base_url.as_mut().set_path(&base_path);
+
+        base_url
     }
 
     ///
@@ -65,8 +101,8 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Generates a UI refresh response
     ///
-    pub fn refresh_ui(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse) {
-        let base_path   = format!("flowbetween/session/{}", state.id());
+    pub fn refresh_ui(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse, base_url: &str) {
+        let base_path   = format!("{}/{}", base_url, state.id());
         let ui          = state.entire_ui_tree();
         let ui_html     = ui.to_html(&base_path);
         let viewmodel   = viewmodel_update_controller_tree(&*session);
@@ -113,9 +149,9 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Dispatches a response structure to a session
     ///
-    fn handle_with_session(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse, req: &UiHandlerRequest) {
+    fn handle_with_session(&self, state: Arc<SessionState>, session: Arc<TSession>, response: &mut UiHandlerResponse, req: &UiHandlerRequest, base_url: &str) {
         use Event::*;
-        let base_path = format!("flowbetween/session/{}", state.id());
+        let base_path = format!("{}/{}", base_url, state.id());
 
         // Cache the UI state before the event is processed
         let ui_before_event = state.entire_ui_tree();
@@ -130,7 +166,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
                 },
 
                 // Refreshing the UI generates a new set of HTML from the abstract UI representation
-                UiRefresh => self.refresh_ui(state.clone(), session.clone(), response),
+                UiRefresh => self.refresh_ui(state.clone(), session.clone(), response, base_url),
 
                 // Actions are dispatched to the appropriate controller
                 Action(ref controller_path, ref action) => self.dispatch_action(session.clone(), controller_path, action)
@@ -162,7 +198,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Handles a UI handler request
     ///
-    pub fn handle_ui_request(&self, req: &UiHandlerRequest) -> Response {
+    pub fn handle_ui_request(&self, req: &UiHandlerRequest, base_url: &str) -> Response {
         // The response that we'll return for this request
         let mut response = UiHandlerResponse { updates: vec![] };
 
@@ -177,7 +213,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
                 // If the session ID is not presently registered, then we proceed as if the session is missing 
                 match session {
                     Some(&mut (ref session_state, ref session)) => 
-                        self.handle_with_session(session_state.clone(), session.clone(), &mut response, req),
+                        self.handle_with_session(session_state.clone(), session.clone(), &mut response, req, base_url),
                     _ => 
                         self.handle_no_session(&mut response, req)
                 }
@@ -376,7 +412,8 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         match req.method {
             Method::Post => {
-                let is_json = match req.headers.get() { Some(&ContentType(Mime(TopLevel::Application, SubLevel::Json, _))) => true, _ => false };
+                let is_json     = match req.headers.get() { Some(&ContentType(Mime(TopLevel::Application, SubLevel::Json, _))) => true, _ => false };
+                let base_url    = Self::base_url(req).path().join("/");
 
                 if !is_json {
                     // Must be a JSON POST request
@@ -386,7 +423,7 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
                     let request = req.get::<Struct<UiHandlerRequest>>();
 
                     match request {
-                        Ok(Some(request))   => Ok(self.handle_ui_request(&request)),
+                        Ok(Some(request))   => Ok(self.handle_ui_request(&request, &base_url)),
                         Ok(None)            => Ok(Response::with((status::BadRequest))),
                         Err(_)              => Ok(Response::with((status::BadRequest)))
                     }
