@@ -38,6 +38,7 @@ impl WriteBody for WriteCanvas {
             // Encode this comment
             let mut encoded = String::new();
             draw.encode_canvas(&mut encoded);
+            encoded.push('\n');
 
             // Send to the stream and check for errors
             let res = res.write(encoded.as_bytes());
