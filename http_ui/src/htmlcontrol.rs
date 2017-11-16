@@ -68,7 +68,7 @@ impl ToHtml for ControlAttribute {
 
                 // Subcomponents go inside the div
                 let subcomponent_nodes = subcomponents.iter()
-                    .map(|control| control.to_html(base_path));
+                    .map(|control| control.to_html_subcomponent(base_path, controller_path));
                 
                 for node in subcomponent_nodes { 
                     result.append_child_node(node);
