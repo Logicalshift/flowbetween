@@ -144,8 +144,8 @@ impl ControlAttribute {
             &Controller(ref controller)         => Some(controller.as_ref()) == compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) == compare_to.action(),
             &Selected(ref is_selected)          => Some(is_selected) == compare_to.selected(),
-            &Image(ref image_resource)          => Some(image_resource) == compare_to.image(),
-            &Canvas(ref canvas_resource)        => Some(canvas_resource) == compare_to.canvas(),
+            &Image(ref image_resource)          => Some(image_resource) != compare_to.image(),
+            &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)      => Some(components.len()) == compare_to.subcomponents().map(|components| components.len())
