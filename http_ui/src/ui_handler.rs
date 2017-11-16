@@ -412,8 +412,12 @@ impl<TSession: Session+'static> Handler for UiHandler<TSession> {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
         match req.method {
             Method::Post => {
-                let is_json     = match req.headers.get() { Some(&ContentType(Mime(TopLevel::Application, SubLevel::Json, _))) => true, _ => false };
-                let base_url    = Self::base_url(req).path().join("/");
+                let is_json         = match req.headers.get() { Some(&ContentType(Mime(TopLevel::Application, SubLevel::Json, _))) => true, _ => false };
+                let mut base_url    = Self::base_url(req).path().join("/");
+
+                if base_url.chars().nth(0) != Some('/') {
+                    base_url.insert(0, '/');
+                }
 
                 if !is_json {
                     // Must be a JSON POST request
