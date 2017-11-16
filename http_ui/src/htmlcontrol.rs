@@ -131,6 +131,7 @@ impl ToHtml for ControlAttribute {
 mod test {
     use ui::canvas::*;
     use super::*;
+    use std::sync::*;
 
     #[test]
     fn can_convert_button_to_html() {
@@ -149,13 +150,40 @@ mod test {
 
     #[test]
     fn can_convert_canvas_to_html() {
-        let resource_manager = ResourceManager::new();
-        let canvas = resource_manager.register(Canvas::new());
+        let resource_manager    = ResourceManager::new();
+        let canvas              = resource_manager.register(Canvas::new());
         resource_manager.assign_name(&canvas, "test_canvas");
 
         let control = Control::canvas().with(canvas.clone());
 
-        println!("{}", control.to_html("test/base").to_string());
         assert!(control.to_html("test/base").to_string() == "<flo-canvas flo-canvas=\"test/base/c/test_canvas\" flo-name=\"test_canvas\" flo-controller=\"\"></flo-canvas>")
+    }
+
+    #[test]
+    fn canvas_includes_controller() {
+        let resource_manager    = ResourceManager::new();
+        let canvas              = resource_manager.register(Canvas::new());
+        resource_manager.assign_name(&canvas, "test_canvas");
+
+        let control = Control::empty()
+            .with_controller("Test")
+            .with(vec![Control::canvas().with(canvas.clone())]);
+
+        println!("{}", control.to_html("test/base").to_string());
+        assert!(control.to_html("test/base").to_string() == "<flo-empty><flo-canvas flo-canvas=\"test/base/c/Test/test_canvas\" flo-name=\"test_canvas\" flo-controller=\"Test\"></flo-canvas></flo-empty>");
+    }
+
+    #[test]
+    fn image_includes_controller() {
+        let resource_manager    = ResourceManager::new();
+        let image               = resource_manager.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
+        resource_manager.assign_name(&image, "test_image");
+
+        let control = Control::empty()
+            .with_controller("Test")
+            .with(vec![Control::empty().with(image)]);
+
+        println!("{}", control.to_html("test/base").to_string());
+        assert!(control.to_html("test/base").to_string() == "<flo-empty><flo-empty style=\"background: no-repeat center/contain url(&quot;test/base/i/Test/test_image&quot;);\"></flo-empty></flo-empty>");
     }
 }
