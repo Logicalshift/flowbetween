@@ -18,9 +18,12 @@ pub use self::attributes::*;
 mod test {
     use super::*;
     use super::super::diff::*;
+    use super::super::image::*;
     use super::super::canvas::*;
     use super::super::property::*;
     use super::super::resource_manager::*;
+
+    use std::sync::*;
 
     #[test]
     fn can_create_button() {
@@ -90,6 +93,29 @@ mod test {
         assert!(subcontrollers.len() == 2);
         assert!(subcontrollers.iter().any(|c| c == "Test1"));
         assert!(subcontrollers.iter().any(|c| c == "Test2"));
+    }
+
+    #[test]
+    fn image_equals_self() {
+        let resources       = ResourceManager::new();
+        let image_resource  = resources.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
+        let image           = Control::empty()
+            .with(image_resource);
+
+        assert!(!image.is_different(&image));
+    }
+
+    #[test]
+    fn different_images_are_different() {
+        let resources       = ResourceManager::new();
+        let image_resource1 = resources.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
+        let image_resource2 = resources.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
+        let image1          = Control::empty()
+            .with(image_resource1);
+        let image2          = Control::empty()
+            .with(image_resource2);
+
+        assert!(image1.is_different(&image2));
     }
 
     #[test]
