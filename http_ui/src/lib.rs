@@ -20,7 +20,7 @@ mod ui_handler;
 pub mod null_session;
 pub mod viewmodel;
 pub mod minidom;
-pub mod canvas_writer;
+pub mod canvas_body;
 
 pub use self::session::*;
 pub use self::session_state::*;
@@ -29,4 +29,4 @@ pub use self::event::*;
 pub use self::htmlcontrol::*;
 pub use self::ui_handler::*;
 pub use self::null_session::*;
-pub use self::canvas_writer::*;
+pub use self::canvas_body::*;

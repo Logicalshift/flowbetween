@@ -7,7 +7,7 @@ use super::update::*;
 use super::session::*;
 use super::viewmodel::*;
 use super::htmlcontrol::*;
-use super::canvas_writer::*;
+use super::canvas_body::*;
 use super::session_state::*;
 
 use ui::*;
@@ -264,7 +264,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
             status::Ok,
             Header(ContentType("application/flocanvas; charset=utf-8".parse::<Mime>().unwrap()))
         ));
-        response.body = Some(Box::new(WriteCanvas::new(canvas)));
+        response.body = Some(Box::new(CanvasBody::new(canvas)));
         response
     }
 

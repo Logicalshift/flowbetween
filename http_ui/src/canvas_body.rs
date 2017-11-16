@@ -7,15 +7,15 @@ use std::io::*;
 ///
 /// Provides a WriteBody implementation for a canvas (writes the entire canvas up to now)
 ///
-pub struct WriteCanvas(Resource<Canvas>);
+pub struct CanvasBody(Resource<Canvas>);
 
-impl WriteCanvas {
-    pub fn new(canvas: &Resource<Canvas>) -> WriteCanvas {
-        WriteCanvas(canvas.clone())
+impl CanvasBody {
+    pub fn new(canvas: &Resource<Canvas>) -> CanvasBody {
+        CanvasBody(canvas.clone())
     }
 }
 
-impl WriteBody for WriteCanvas {
+impl WriteBody for CanvasBody {
     fn write_body(&mut self, res: &mut Write) -> Result<()> {
         // Stream everything that's ready from the canvas
         let canvas      = &*self.0;
