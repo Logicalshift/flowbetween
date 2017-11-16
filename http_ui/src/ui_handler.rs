@@ -226,6 +226,31 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     }
 
     ///
+    /// Generates a HTTP response containing image data
+    /// 
+    fn image_response(&self, image: Resource<Image>) -> Response {
+        match *image {
+            Image::Png(ref data) => {
+                let mut response = Response::with((
+                    status::Ok,
+                    Header(ContentType::png())
+                ));
+                response.body = Some(Box::new(data.read()));
+                response
+            },
+
+            Image::Svg(ref data) => {
+                let mut response = Response::with((
+                    status::Ok,
+                    Header(ContentType("image/svg+xml; charset=utf-8".parse::<Mime>().unwrap()))
+                ));
+                response.body = Some(Box::new(data.read()));
+                response
+            }
+        }
+    }
+
+    ///
     /// Attempts to retrieve an image from the session
     ///
     pub fn handle_image_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
@@ -243,25 +268,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
             // Either return the image data, or not found
             if let Some(image) = image {
                 // Return the image
-                match *image {
-                    Image::Png(ref data) => {
-                        let mut response = Response::with((
-                            status::Ok,
-                            Header(ContentType::png())
-                        ));
-                        response.body = Some(Box::new(data.read()));
-                        response
-                    },
-
-                    Image::Svg(ref data) => {
-                        let mut response = Response::with((
-                            status::Ok,
-                            Header(ContentType("image/svg+xml; charset=utf-8".parse::<Mime>().unwrap()))
-                        ));
-                        response.body = Some(Box::new(data.read()));
-                        response
-                    }
-                }
+                self.image_response(image)
             } else {
                 // No image found
                 Response::with((status::NotFound))
