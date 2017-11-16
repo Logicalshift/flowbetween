@@ -20,7 +20,9 @@ impl CanvasController {
         let test_canvas = canvases.register(Canvas::new());
         canvases.assign_name(&test_canvas, "test_canvas");
 
-        let ui = bind(Control::canvas().with(test_canvas.clone()));
+        let ui = bind(Control::canvas()
+            .with(test_canvas.clone())
+            .with(Bounds::fill_all()));
 
         test_canvas.draw(|gc| {
             gc.new_path();
