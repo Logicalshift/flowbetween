@@ -2,10 +2,6 @@ use ui::*;
 use ui::canvas::*;
 
 use iron::response::*;
-use futures::executor;
-use futures::executor::Notify;
-use futures::*;
-use std::sync::*;
 use std::io::*;
 
 ///
@@ -19,23 +15,15 @@ impl WriteCanvas {
     }
 }
 
-struct DontNotify;
-
-impl Notify for DontNotify {
-    fn notify(&self, _id: usize) { }
-}
-
 impl WriteBody for WriteCanvas {
     fn write_body(&mut self, res: &mut Write) -> Result<()> {
         // Stream everything that's ready from the canvas
         let canvas      = &*self.0;
-        let stream      = canvas.stream();
-        let mut stream  = executor::spawn(stream);
+        let drawing     = canvas.get_drawing();
 
         // Stream until there's nothing left
-        let dont_notify = Arc::new(DontNotify);
-        while let Ok(Async::Ready(Some(draw))) = stream.poll_stream_notify(&dont_notify, 0) {
-            // Encode this comment
+        for draw in drawing.into_iter() {
+            // Encode this command
             let mut encoded = String::new();
             draw.encode_canvas(&mut encoded);
             encoded.push('\n');
