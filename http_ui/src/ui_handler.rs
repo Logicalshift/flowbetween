@@ -191,6 +191,13 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     }
 
     ///
+    /// Attempts to retrieve a canvas from the session
+    ///
+    pub fn handle_canvas_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
+        unimplemented!()
+    }
+
+    ///
     /// Attempts to retrieve an image from the session
     ///
     pub fn handle_image_get(&self, session: Arc<TSession>, relative_url: Url) -> Response {
@@ -280,6 +287,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
             match resource_type {
                 // 'i' is shorthand for 'image'
                 "i"     => self.handle_image_get(session.clone(), partial_url),
+                "c"     => self.handle_canvas_get(session.clone(), partial_url),
 
                 _       => Response::with((status::NotFound))
             }
