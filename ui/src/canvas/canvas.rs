@@ -163,6 +163,7 @@ impl<'a> GraphicsContext for CoreContext<'a> {
     fn line_width(&mut self, width: f32)            { self.pending.push(Draw::LineWidth(width)); }
     fn line_join(&mut self, join: LineJoin)         { self.pending.push(Draw::LineJoin(join)); }
     fn line_cap(&mut self, cap: LineCap)            { self.pending.push(Draw::LineCap(cap)); }
+    fn new_dash_pattern(&mut self)                  { self.pending.push(Draw::NewDashPattern); }
     fn dash_length(&mut self, length: f32)          { self.pending.push(Draw::DashLength(length)); }
     fn dash_offset(&mut self, offset: f32)          { self.pending.push(Draw::DashOffset(offset)); }
     fn fill_color(&mut self, col: Color)            { self.pending.push(Draw::FillColor(col)); }
@@ -178,6 +179,8 @@ impl<'a> GraphicsContext for CoreContext<'a> {
     fn push_state(&mut self)                        { self.pending.push(Draw::PushState); }
     fn pop_state(&mut self)                         { self.pending.push(Draw::PopState); }
     fn clear_canvas(&mut self)                      { self.pending.push(Draw::ClearCanvas); }
+
+    fn draw(&mut self, d: Draw)                     { self.pending.push(d); }
 }
 
 impl<'a> GraphicsPrimitives for CoreContext<'a> { }

@@ -1,4 +1,6 @@
-use super::*;
+use super::draw::*;
+use super::color::*;
+use super::transform2d::*;
 
 ///
 /// A graphics context provides the basic set of graphics actions that can be performed 
@@ -13,6 +15,7 @@ pub trait GraphicsContext {
     fn line_width(&mut self, width: f32);
     fn line_join(&mut self, join: LineJoin);
     fn line_cap(&mut self, cap: LineCap);
+    fn new_dash_pattern(&mut self);
     fn dash_length(&mut self, length: f32);
     fn dash_offset(&mut self, offset: f32);
     fn fill_color(&mut self, col: Color);
@@ -28,6 +31,38 @@ pub trait GraphicsContext {
     fn push_state(&mut self);
     fn pop_state(&mut self);
     fn clear_canvas(&mut self);
+
+    fn draw(&mut self, d: Draw) {
+        use self::Draw::*;
+
+        match d {
+            NewPath                                     => self.new_path(),
+            Move(x, y)                                  => self.move_to(x, y),
+            Line(x, y)                                  => self.line_to(x, y),
+            BezierCurve((x1, y1), (x2, y2), (x3, y3))   => self.bezier_curve_to(x1, y1, x2, y2, x3, y3),
+            Fill                                        => self.fill(),
+            Stroke                                      => self.stroke(),
+            LineWidth(width)                            => self.line_width(width),
+            LineJoin(join)                              => self.line_join(join),
+            LineCap(cap)                                => self.line_cap(cap),
+            NewDashPattern                              => self.new_dash_pattern(),
+            DashLength(dash_length)                     => self.dash_length(dash_length),
+            DashOffset(dash_offset)                     => self.dash_offset(dash_offset),
+            FillColor(col)                              => self.fill_color(col),
+            StrokeColor(col)                            => self.stroke_color(col),
+            BlendMode(blendmode)                        => self.blend_mode(blendmode),
+            IdentityTransform                           => self.identity_transform(),
+            CanvasHeight(height)                        => self.canvas_height(height),
+            MultiplyTransform(transform)                => self.transform(transform),
+            Unclip                                      => self.unclip(),
+            Clip                                        => self.clip(),
+            Store                                       => self.store(),
+            Restore                                     => self.restore(),
+            PushState                                   => self.push_state(),
+            PopState                                    => self.pop_state(),
+            ClearCanvas                                 => self.clear_canvas()
+        }
+    }
 }
 
 ///
