@@ -94,7 +94,7 @@ impl Canvas {
     /// Provides a way to draw on this canvas via a GC
     /// 
     pub fn draw<FnAction>(&self, action: FnAction)
-    where FnAction: Send+FnOnce(&mut GraphicsContext) -> () {
+    where FnAction: Send+FnOnce(&mut GraphicsPrimitives) -> () {
         self.core.sync(move |core| {
             let mut graphics_context = CoreContext {
                 core:       core,
@@ -158,10 +158,6 @@ impl<'a> GraphicsContext for CoreContext<'a> {
         self.pending.push(Draw::BezierCurve((x1, y1), (x2, y2), (x3, y3)));
     }
 
-    fn rect(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
-        self.pending.push(Draw::Rect((x1, y1), (x2, y2)));
-    }
-
     fn fill(&mut self)                              { self.pending.push(Draw::Fill); }
     fn stroke(&mut self)                            { self.pending.push(Draw::Stroke); }
     fn line_width(&mut self, width: f32)            { self.pending.push(Draw::LineWidth(width)); }
@@ -183,6 +179,8 @@ impl<'a> GraphicsContext for CoreContext<'a> {
     fn pop_state(&mut self)                         { self.pending.push(Draw::PopState); }
     fn clear_canvas(&mut self)                      { self.pending.push(Draw::ClearCanvas); }
 }
+
+impl<'a> GraphicsPrimitives for CoreContext<'a> { }
 
 impl<'a> Drop for CoreContext<'a> {
     fn drop(&mut self) {

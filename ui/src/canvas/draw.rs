@@ -62,9 +62,6 @@ pub enum Draw {
     /// Bezier curve to point
     BezierCurve((f32, f32), (f32, f32), (f32, f32)),
 
-    /// Rectangle path between points
-    Rect((f32, f32), (f32, f32)),
-
     /// Fill the current path
     Fill,
 
