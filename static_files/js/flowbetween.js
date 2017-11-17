@@ -8,6 +8,7 @@
 
 /* exported flowbetween */
 /* exported replace_object_with_content */
+/* global flo_canvas */
 
 function flowbetween(root_node) {
     // Find out where we're running
@@ -1062,6 +1063,7 @@ function flowbetween(root_node) {
     ///
     let apply_templates_to_tree = (dom_node, control_data) => {
         visit_dom(dom_node, control_data, (node, attributes) => apply_template(node, attributes));
+        visit_dom(dom_node, control_data, (node) => { if (node.tagName.toLowerCase() === 'flo-canvas') flo_canvas.start(node); });
     };
 
     ///
