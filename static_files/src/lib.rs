@@ -18,6 +18,7 @@ pub fn flowbetween_static_files() -> StaticService {
         StaticFile::new("/css/flowbetween.css",     include_bytes!("../css/flowbetween.css")),
 
         StaticFile::new("/js/flowbetween.js",       include_bytes!("../js/flowbetween.js")),
+        StaticFile::new("/js/canvas.js",            include_bytes!("../js/canvas.js")),
 
         StaticFile::new("/svg/controls/button.svg", include_bytes!("../svg/controls/button.svg")),
         StaticFile::new("/png/Flo-Orb-small.png",   include_bytes!("../png/Flo-Orb-small.png")),
