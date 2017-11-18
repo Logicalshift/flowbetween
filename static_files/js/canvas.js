@@ -115,6 +115,7 @@ let flo_canvas = (function() {
                 requestAnimationFrame(() => {
                     resizing = false;
 
+                    remove_inactive_canvases();
                     active_canvases.forEach(canvas => {
                         canvas.resize_canvas();
                     });
