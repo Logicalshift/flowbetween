@@ -9,6 +9,22 @@
 /* exported flo_canvas */
 
 let flo_canvas = (function() {
+    // List of active canvases
+    let active_canvases = [];
+
+    ///
+    /// Remove any canvas from the list of active canvases that no longer have a parent
+    ///
+    function remove_inactive_canvases() {
+        // Remove any canvas element that has a null parent
+        for (let index=0; index<active_canvases.length; ++index) {
+            if (!active_canvases.is_active()) {
+                active_canvases.removeAt(index);
+                --index;
+            }
+        }
+    }
+
     ///
     /// Attaches a new canvas to a HTML element
     ///
@@ -52,39 +68,60 @@ let flo_canvas = (function() {
     /// Watches a canvas for events
     ///
     function monitor_canvas_events(canvas) {
-        let resizing = false;
+        // Add this canvas to the list of active canvases
+        remove_inactive_canvases();
+        active_canvases.push({
+            is_active:      is_active,
+            resize_canvas:  resize_canvas
+        });
+
+        ///
+        /// Returns true if this canvas is active
+        ///
+        function is_active() {
+            return canvas.parentNode !== null;
+        }
 
         ///
         /// Updates the content size of the canvas
         ///
         function resize_canvas() {
-            // Queue a resize on the next animation frame
+            // Resize if the canvas's size has changed
+            var ratio           = window.devicePixelRatio || 1;
+            let target_width    = canvas.clientWidth * ratio;
+            let target_height   = canvas.clientHeight * ratio;
+
+            if (canvas.width !== target_width || canvas.height !== target_height) {
+                // Actually resize the canvas
+                canvas.width    = canvas.clientWidth * ratio;
+                canvas.height   = canvas.clientHeight * ratio;
+            }
+        }
+
+        // Run through the initial set of events
+        requestAnimationFrame(() => resize_canvas());
+    }
+
+    ///
+    /// Event callback that resizes any active canvas
+    ///
+    let resize_active_canvases = (function() {
+        let resizing = false;
+
+        return function() {
+            // When the resize request comes in, defer it to the next animation frame
             if (!resizing) {
                 resizing = true;
                 requestAnimationFrame(() => {
                     resizing = false;
 
-                    // Resize if the canvas's size has changed
-                    var ratio           = window.devicePixelRatio || 1;
-                    let target_width    = canvas.clientWidth * ratio;
-                    let target_height   = canvas.clientHeight * ratio;
-
-                    if (canvas.width !== target_width || canvas.height !== target_height) {
-                        // Actually resize the canvas
-                        canvas.width    = canvas.clientWidth * ratio;
-                        canvas.height   = canvas.clientHeight * ratio;
-                    }
+                    active_canvases.forEach(canvas => {
+                        canvas.resize_canvas();
+                    });
                 });
             }
-        }
-
-        // Register events
-        // TODO: as resize events are on the window we'll wind up firing this event even if the canvas element is removed
-        window.addEventListener('resize', resize_canvas, false);
-
-        // Run through the initial set of events
-        resize_canvas();
-    }
+        };
+    })();
 
     ///
     /// Creates a canvas for an element
@@ -102,12 +139,12 @@ let flo_canvas = (function() {
         // Create a new canvas element
         let canvas = document.createElement('canvas');
 
+        // Add it to the DOM
+        parent.appendChild(canvas);
+
         // Set up the element
         apply_canvas_style(canvas);
         monitor_canvas_events(canvas);
-
-        // Add it to the DOM
-        parent.appendChild(canvas);
         
         // Return the properties to attach to the parent element
         return {
@@ -115,6 +152,9 @@ let flo_canvas = (function() {
             canvas: canvas
         };
     }
+
+    // Register global event handlers
+    window.addEventListener('resize', resize_active_canvases, false);    
 
     // The final flo_canvas object
     return {
