@@ -58,12 +58,17 @@ let flo_canvas = (function() {
     function create_drawing_functions(canvas) {
         // The replay log will replay the actions that draw this canvas (for example when resizing)
         let replay  = [ clear_canvas ];
-        let context = canvas.getContext('2d');
 
-        function new_path()                             { context.beginPath(); }
-        function move_to(x,y)                           { context.moveTo(x, y); }
-        function line_to(x,y)                           { context.lineTo(x, y); }
-        function bezier_curve(x1, y1, x2, y2, x3, y3)   { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); }
+        let context         = canvas.getContext('2d');
+        let current_path    = [];
+        let context_stack   = [];
+        let clip_stack      = [];
+        let clipped         = false;
+
+        function new_path()                             { context.beginPath(); current_path = []; }
+        function move_to(x,y)                           { context.moveTo(x, y); current_path.push(() => context.moveTo(x, y) ); }
+        function line_to(x,y)                           { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); }
+        function bezier_curve(x1, y1, x2, y2, x3, y3)   { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); current_path.push(() => context.bezierCurveTo(x2, y2, x3, y3, x1, y1) ); }
         function fill()                                 { context.fill(); }
         function stroke()                               { context.stroke(); }
 
@@ -134,12 +139,46 @@ let flo_canvas = (function() {
             context.transform(transform[0], transform[3], transform[1], transform[4], transform[2], transform[5]);
         }
 
+        ///
+        /// Removes the clipping path if one is applied
+        ///
+        function remove_clip() {
+            if (clipped) {
+                clipped = false;
+                context.restore();
+            }
+        }
+
+        ///
+        /// Restores the clipping path if it's missing
+        ///
+        function restore_clip() {
+            if (!clipped) {
+                clipped = true;
+                context.save();
+                clip_stack.forEach(fn => fn());
+            }
+        }
+
         function unclip() {
-            throw 'Not implemented';
+            // Stop clipping and clear the stack
+            remove_clip();
+            clip_stack = [];
         }
 
         function clip() {
-            throw 'Not implemented';
+            // Make sure the clipping path is turned on
+            restore_clip();
+
+            // Need to be able to restore the clipping path
+            let clip_path = current_path.slice();
+            clip_stack.push(() => {
+                clip_path.forEach(fn => fn());
+                context.clip();
+            });
+
+            // Add the current path to the context
+            context.clip();
         }
 
         function store() {
@@ -151,11 +190,30 @@ let flo_canvas = (function() {
         }
 
         function push_state() {
-            throw 'Not implemented';
+            // Push the current clipping path
+            let restore_clip_stack = clip_stack.slice();
+            context_stack.push(() => {
+                clip_stack = restore_clip_stack;
+            });
+
+            // Save the context with no clipping path (so we can unclip)
+            remove_clip();
+            context.save();
+            restore_clip();
         }
 
         function pop_state() {
-            throw 'Not implemented';
+            // Remove any clipping we have
+            remove_clip();
+
+            // Restore state not saved in context
+            context_stack.pop()();
+
+            // Restore context state
+            context.restore();
+
+            // Reinstate the clipping
+            restore_clip();
         }
 
         function clear_canvas() {
@@ -164,6 +222,9 @@ let flo_canvas = (function() {
             context.clearRect(0, 0, canvas.width, canvas.height);
 
             // Reset the transformation and state
+            current_path    = [];
+            clip_stack      = [];
+
             identity_transform();
             fill_color(0,0,0,1);
             stroke_color(0,0,0,1);
@@ -374,10 +435,17 @@ let flo_canvas = (function() {
                     break;
                 }
             };
+
+            let decode_clip = () => {
+                switch (read_char()) {
+                case 'c':   draw.clip();    break;
+                case 'n':   draw.unclip();  break;
+                case 's':   draw.store();   break;
+                case 'r':   draw.restore(); break;
+                }
+            };
             
             let decode_dash         = () => { throw 'Not implemented'; };
-            let decode_clip         = () => { throw 'Not implemented'; };
-            let decode_state        = () => { throw 'Not implemented'; };
             
             for(;;) {
                 let instruction = read_char();
@@ -401,7 +469,8 @@ let flo_canvas = (function() {
                 case 'M':   decode_blend_mode();                        break;
                 case 'T':   decode_transform();                         break;
                 case 'Z':   decode_clip();                              break;
-                case 'P':   decode_state();                             break;
+                case 'P':   draw.push_state();                          break;
+                case 'p':   draw.pop_state();                           break;
 
                 default:    throw 'Unknown instruction \'' + instruction + '\'';
                 }
