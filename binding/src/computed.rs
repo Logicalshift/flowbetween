@@ -254,4 +254,8 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             value
         }
     }
+
+    fn clone_box(&self) -> Box<Bound<Value>> {
+        Box::new(self.clone())
+    }
 }
