@@ -100,7 +100,7 @@ pub enum Draw {
 
     /// Sets a transformation such that:
     /// (0,0) is the center point of the canvas
-    /// (0,height/2) is the bottom of the canvas
+    /// (0,height/2) is the top of the canvas
     /// Pixels are square
     CanvasHeight(f32),
 

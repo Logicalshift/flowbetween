@@ -113,11 +113,20 @@ let flo_canvas = (function() {
         }
 
         function identity_transform() {
-            throw 'Not implemented';
+            canvas_height(2.0);
         }
 
         function canvas_height(height) {
-            throw 'Not implemented';
+            let pixel_width     = canvas.width;
+            let pixel_height    = canvas.height;
+
+            let ratio           = pixel_height/height;
+
+            context.setTransform(
+                ratio,              0, 
+                0,                  -ratio, 
+                pixel_width/2.0,    pixel_height/2.0
+            );
         }
 
         function multiply_transform(transform) {
@@ -149,11 +158,15 @@ let flo_canvas = (function() {
         }
 
         function clear_canvas() {
-            // TODO!
-            console.log('Clear canvas');
-            return;
+            // Clear
+            context.resetTransform();
+            context.clearRect(0, 0, canvas.width, canvas.height);
 
+            // Reset the transformation and state
             identity_transform();
+            fill_color(0,0,0,1);
+            stroke_color(0,0,0,1);
+            line_width(1.0);
         }
 
         function replay_drawing() {
@@ -294,12 +307,13 @@ let flo_canvas = (function() {
         canvas.flo_draw     = draw;
 
         // Test drawing
+        draw.clear_canvas();
         draw.fill_color(1, 0, 0, 0.5);
-        draw.move_to(0,0);
-        draw.line_to(0, 100);
-        draw.line_to(100, 100);
-        draw.line_to(50, 0);
-        draw.line_to(0,0);
+        draw.move_to(-0.5,-0.5);
+        draw.line_to(-0.5, 0.5);
+        draw.line_to(1.0, 1.0);
+        draw.line_to(0.5, -0.5);
+        draw.line_to(-0.5,-0.5);
         draw.fill();
 
         apply_canvas_style(canvas);
