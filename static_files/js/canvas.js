@@ -571,27 +571,6 @@ let flo_canvas = (function() {
         canvas.flo_draw             = draw;
         canvas.flo_canvas_decoder   = decoder;
 
-        // Test drawing
-        draw.clear_canvas();
-        draw.fill_color(1, 0, 0, 0.5);
-        draw.move_to(-0.5,-0.5);
-        draw.line_to(-0.5, 0.5);
-        draw.line_to(1.0, 1.0);
-        draw.line_to(0.5, -0.5);
-        draw.line_to(-0.5,-0.5);
-        draw.fill();
-
-        draw.line_width(0.01);
-        decoder('\
-            Np\
-            mAAAA/CAAAA/C\
-            lAAAA/CAAAA/A\
-            lAAAA/AAAAA/A\
-            lAAAA/AAAAA/C\
-            lAAAA/CAAAA/C\
-            S\
-        ');
-
         apply_canvas_style(canvas);
         monitor_canvas_events(canvas);
         
