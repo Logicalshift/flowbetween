@@ -57,34 +57,35 @@ let flo_canvas = (function() {
     ///
     function drawing_functions(canvas) {
         // The replay log will replay the actions that draw this canvas (for example when resizing)
-        let replay = [ clear_canvas ];
+        let replay  = [ clear_canvas ];
+        let context = canvas.getContext('2d');
 
-        function new_path() {
-            throw 'Not implemented';
+        function new_path()                             { context.beginPath(); }
+        function move_to(x,y)                           { context.moveTo(x, y); }
+        function line_to(x,y)                           { context.lineTo(x, y); }
+        function bezier_curve(x1, y1, x2, y2, x3, y3)   { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); }
+        function fill()                                 { context.fill(); }
+        function stroke()                               { context.stroke(); }
+
+        function fill_color(r, g, b, a) {
+            r = Math.floor(r*255.0);
+            g = Math.floor(g*255.0);
+            b = Math.floor(b*255.0);
+
+            context.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
         }
 
-        function move_to(x,y) {
-            throw 'Not implemented';
-        }
+        function stroke_color(r, g, b, a) {
+            r = Math.floor(r*255.0);
+            g = Math.floor(g*255.0);
+            b = Math.floor(b*255.0);
 
-        function line_to(x,y) {
-            throw 'Not implemented';
-        }
-
-        function bezier_curve(x1, y1, x2, y2, x3, y3) {
-            throw 'Not implemented';
-        }
-
-        function fill() {
-            throw 'Not implemented';
-        }
-
-        function stroke() {
-            throw 'Not implemented';
+            context.strokeStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
         }
 
         function line_width(width) {
-            throw 'Not implemented';
+            // TODO: scale to transform?
+            context.line_width = width;
         }
 
         function line_join(join) {
@@ -107,15 +108,7 @@ let flo_canvas = (function() {
             throw 'Not implemented';
         }
 
-        function fill_color(r, g, b, a) {
-            throw 'Not implemented';
-        }
-
-        function stroke_color(r, g, b, a) {
-            throw 'Not implemented';
-        }
-
-        function blend_mdoe(blend_mode) {
+        function blend_mode(blend_mode) {
             throw 'Not implemented';
         }
 
@@ -168,28 +161,31 @@ let flo_canvas = (function() {
         }
 
         return {
-            new_path:           ()              => { replay.push(new_path); new_path(); },
-            move_to:            (x, y)          => { replay.push(() => move_to(x, y)); move_to(x, y); },
-            line_to:            (x, y)          => { replay.push(() => line_to(x, y)); line_to(x, y); },
+            new_path:           ()              => { replay.push(new_path);                             new_path();                     },
+            move_to:            (x, y)          => { replay.push(() => move_to(x, y));                  move_to(x, y);                  },
+            line_to:            (x, y)          => { replay.push(() => line_to(x, y));                  line_to(x, y);                  },
             bezier_curve:       (x1, y1, x2, y2, x3, y3) => { replay.push(() => bezier_curve(x1, y1, x2, y2, x3, y3)); bezier_curve(x1, y1, x2, x2, y3, y3); },
-            line_width:         (width)         => { replay.push(() => line_width(width)); line_width(width); },
-            line_join:          (join)          => { replay.push(() => line_join(join)); line_join(join); },
-            line_cap:           (cap)           => { replay.push(() => line_cap(cap)); line_cap(cap); },
-            new_dash_pattern:   ()              => { replay.push(new_dash_pattern); new_dash_pattern(); },
-            dash_length:        (length)        => { replay.push(() => dash_length(length)); dash_length(length); },
-            dash_offset:        (offset)        => { replay.push(() => dash_offset(offset)); dash_length(offset); },
-            fill_color:         (r, g, b, a)    => { replay.push(() => fill_color(r, g, b, a)); fill_color(r, g, b, a); },
-            stroke_color:       (r, g, b, a)    => { replay.push(() => stroke_color(r, g, b, a)); stroke_color(r, g, b, a); },
-            blend_mode:         (blend_mode)    => { replay.push(() => blend_mode(blend_mode)); blend_mode(blend_mode); },
-            identity_transform: ()              => { replay.push(identity_transform); identity_transform(); },
-            canvas_height:      (height)        => { replay.push(() => canvas_height(height)); canvas_height(height); },
-            multiply_transform: (transform)     => { replay.push(() => multiply_transform(transform)); multiply_transform(transform); },
-            unclip:             ()              => { replay.push(unclip); unclip(); },
-            clip:               ()              => { replay.push(clip); clip(); },
-            store:              ()              => { replay.push(store); store(); },
-            push_state:         ()              => { replay.push(push_state); push_state(); },
-            pop_state:          ()              => { replay.push(pop_state); pop_state(); },
-            clear_canvas:       ()              => { replay = [ clear_canvas ]; clear_canvas(); },
+            fill:               ()              => { replay.push(fill);                                 fill();                         },
+            stroke:             ()              => { replay.push(stroke);                               stroke();                       },
+            line_width:         (width)         => { replay.push(() => line_width(width));              line_width(width);              },
+            line_join:          (join)          => { replay.push(() => line_join(join));                line_join(join);                },
+            line_cap:           (cap)           => { replay.push(() => line_cap(cap));                  line_cap(cap);                  },
+            new_dash_pattern:   ()              => { replay.push(new_dash_pattern);                     new_dash_pattern();             },
+            dash_length:        (length)        => { replay.push(() => dash_length(length));            dash_length(length);            },
+            dash_offset:        (offset)        => { replay.push(() => dash_offset(offset));            dash_length(offset);            },
+            fill_color:         (r, g, b, a)    => { replay.push(() => fill_color(r, g, b, a));         fill_color(r, g, b, a);         },
+            stroke_color:       (r, g, b, a)    => { replay.push(() => stroke_color(r, g, b, a));       stroke_color(r, g, b, a);       },
+            blend_mode:         (mode)          => { replay.push(() => blend_mode(mode));                blend_mode(mode);              },
+            identity_transform: ()              => { replay.push(identity_transform);                   identity_transform();           },
+            canvas_height:      (height)        => { replay.push(() => canvas_height(height));          canvas_height(height);          },
+            multiply_transform: (transform)     => { replay.push(() => multiply_transform(transform));  multiply_transform(transform);  },
+            unclip:             ()              => { replay.push(unclip);                               unclip();                       },
+            clip:               ()              => { replay.push(clip);                                 clip();                         },
+            store:              ()              => { replay.push(store);                                store();                        },
+            restore:            ()              => { replay.push(restore);                              restore();                      },
+            push_state:         ()              => { replay.push(push_state);                           push_state();                   },
+            pop_state:          ()              => { replay.push(pop_state);                            pop_state();                    },
+            clear_canvas:       ()              => { replay = [ clear_canvas ];                         clear_canvas();                 },
 
             replay_drawing:     replay_drawing
         };
@@ -293,7 +289,18 @@ let flo_canvas = (function() {
         parent.appendChild(canvas);
 
         // Set up the element
-        canvas.flo_draw = drawing_functions();
+        let draw            = drawing_functions(canvas);
+        element.flo_draw    = draw;
+        canvas.flo_draw     = draw;
+
+        // Test drawing
+        draw.fill_color(1, 0, 0, 0.5);
+        draw.move_to(0,0);
+        draw.line_to(0, 100);
+        draw.line_to(100, 100);
+        draw.line_to(50, 0);
+        draw.line_to(0,0);
+        draw.fill();
 
         apply_canvas_style(canvas);
         monitor_canvas_events(canvas);
