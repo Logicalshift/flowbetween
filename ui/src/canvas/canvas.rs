@@ -108,7 +108,7 @@ impl Canvas {
     ///
     /// Creates a stream for reading the instructions from this canvas
     ///
-    pub fn stream(&self) -> Box<Stream<Item=Draw,Error=()>> {
+    pub fn stream(&self) -> Box<Stream<Item=Draw,Error=()>+Send> {
         Box::new(CanvasStream { 
             core:               self.core.clone(),
             pos:                0,
