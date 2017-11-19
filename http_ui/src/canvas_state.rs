@@ -7,6 +7,7 @@ use desync::*;
 use futures::*;
 use futures::executor::*;
 
+use std::sync::*;
 use std::collections::HashMap;
 
 ///
@@ -14,7 +15,10 @@ use std::collections::HashMap;
 ///
 pub struct CanvasState {
     /// Stores information about the canvases used by this item
-    core: Desync<CanvasStateCore>
+    core: Arc<Desync<CanvasStateCore>>,
+
+    /// Releasable that monitors the lifetime of the control watcher
+    control_watch_lifetime: Box<Releasable>
 }
 
 ///
@@ -27,7 +31,6 @@ struct CanvasPath {
 
     /// The name of the canvas within the controller
     canvas_name: String,
-
 }
 
 ///
@@ -58,18 +61,25 @@ impl CanvasState {
     /// 
     pub fn new(control: &Box<Bound<Control>>) -> CanvasState {
         // Clone the control so we can watch it ourselves
-        let control: Box<Bound<Control>> = control.clone_box();
+        let control = control.clone_box();
 
         // Create the core
-        let core = CanvasStateCore {
+        let core = Arc::new(Desync::new(CanvasStateCore {
             root_control:       control,
             controls_updated:   true,
             canvases:           HashMap::new()
-        };
+        }));
+
+        // Mark the core as changed whenever the controls change
+        let watch_core              = core.clone();
+        let control_watch_lifetime  = core.sync(move |core| {
+            core.root_control.when_changed(notify(move || watch_core.async(|core| core.controls_updated = true)))
+        });
 
         // State is just a wrapper for the core
         CanvasState {
-            core: Desync::new(core)
+            core:                   core,
+            control_watch_lifetime: control_watch_lifetime
         }
     }
 }
