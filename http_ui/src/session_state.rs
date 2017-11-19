@@ -154,5 +154,4 @@ impl Drop for SessionState {
 
         core.ui_tree_watcher_lifetime.done();
     }
-
 }
