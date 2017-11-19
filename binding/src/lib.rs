@@ -63,12 +63,12 @@
 
 extern crate futures;
 
-pub mod traits;
+mod traits;
 pub mod binding_context;
-pub mod binding;
-pub mod computed;
-pub mod notify_fn;
-pub mod streaming;
+mod binding;
+mod computed;
+mod notify_fn;
+mod streaming;
 mod releasable;
 
 pub use self::traits::*;
