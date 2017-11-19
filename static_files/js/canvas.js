@@ -89,7 +89,6 @@ let flo_canvas = (function() {
         }
 
         function line_width(width) {
-            // TODO: scale to transform?
             context.lineWidth = width;
         }
 
