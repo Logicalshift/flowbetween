@@ -211,9 +211,6 @@ let flo_canvas = (function() {
         // Fill the parent node
         canvas.style.width  = '100%';
         canvas.style.height = '100%';
-
-        // Background colour so we can see the canvas
-        canvas.style['background-color'] = 'rgba(255,255,255,1.0)';
     }
 
     ///
