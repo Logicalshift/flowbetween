@@ -18,7 +18,7 @@ let flo_canvas = (function() {
     function remove_inactive_canvases() {
         // Remove any canvas element that has a null parent
         for (let index=0; index<active_canvases.length; ++index) {
-            if (!active_canvases.is_active()) {
+            if (!active_canvases[index].is_active()) {
                 active_canvases.removeAt(index);
                 --index;
             }
@@ -53,6 +53,149 @@ let flo_canvas = (function() {
     }
 
     ///
+    /// Creates the drawing functions for a canvas
+    ///
+    function drawing_functions(canvas) {
+        // The replay log will replay the actions that draw this canvas (for example when resizing)
+        let replay = [ clear_canvas ];
+
+        function new_path() {
+            throw 'Not implemented';
+        }
+
+        function move_to(x,y) {
+            throw 'Not implemented';
+        }
+
+        function line_to(x,y) {
+            throw 'Not implemented';
+        }
+
+        function bezier_curve(x1, y1, x2, y2, x3, y3) {
+            throw 'Not implemented';
+        }
+
+        function fill() {
+            throw 'Not implemented';
+        }
+
+        function stroke() {
+            throw 'Not implemented';
+        }
+
+        function line_width(width) {
+            throw 'Not implemented';
+        }
+
+        function line_join(join) {
+            throw 'Not implemented';
+        }
+
+        function line_cap(join) {
+            throw 'Not implemented';
+        }
+
+        function new_dash_pattern() {
+            throw 'Not implemented';
+        }
+
+        function dash_length(length) {
+            throw 'Not implemented';
+        }
+
+        function dash_offset(offset) {
+            throw 'Not implemented';
+        }
+
+        function fill_color(r, g, b, a) {
+            throw 'Not implemented';
+        }
+
+        function stroke_color(r, g, b, a) {
+            throw 'Not implemented';
+        }
+
+        function blend_mdoe(blend_mode) {
+            throw 'Not implemented';
+        }
+
+        function identity_transform() {
+            throw 'Not implemented';
+        }
+
+        function canvas_height(height) {
+            throw 'Not implemented';
+        }
+
+        function multiply_transform(transform) {
+            throw 'Not implemented';
+        }
+
+        function unclip() {
+            throw 'Not implemented';
+        }
+
+        function clip() {
+            throw 'Not implemented';
+        }
+
+        function store() {
+            throw 'Not implemented';
+        }
+
+        function restore() {
+            throw 'Not implemented';
+        }
+
+        function push_state() {
+            throw 'Not implemented';
+        }
+
+        function pop_state() {
+            throw 'Not implemented';
+        }
+
+        function clear_canvas() {
+            // TODO!
+            console.log('Clear canvas');
+            return;
+
+            identity_transform();
+        }
+
+        function replay_drawing() {
+            replay.forEach(item => item());
+        }
+
+        return {
+            new_path:           ()              => { replay.push(new_path); new_path(); },
+            move_to:            (x, y)          => { replay.push(() => move_to(x, y)); move_to(x, y); },
+            line_to:            (x, y)          => { replay.push(() => line_to(x, y)); line_to(x, y); },
+            bezier_curve:       (x1, y1, x2, y2, x3, y3) => { replay.push(() => bezier_curve(x1, y1, x2, y2, x3, y3)); bezier_curve(x1, y1, x2, x2, y3, y3); },
+            line_width:         (width)         => { replay.push(() => line_width(width)); line_width(width); },
+            line_join:          (join)          => { replay.push(() => line_join(join)); line_join(join); },
+            line_cap:           (cap)           => { replay.push(() => line_cap(cap)); line_cap(cap); },
+            new_dash_pattern:   ()              => { replay.push(new_dash_pattern); new_dash_pattern(); },
+            dash_length:        (length)        => { replay.push(() => dash_length(length)); dash_length(length); },
+            dash_offset:        (offset)        => { replay.push(() => dash_offset(offset)); dash_length(offset); },
+            fill_color:         (r, g, b, a)    => { replay.push(() => fill_color(r, g, b, a)); fill_color(r, g, b, a); },
+            stroke_color:       (r, g, b, a)    => { replay.push(() => stroke_color(r, g, b, a)); stroke_color(r, g, b, a); },
+            blend_mode:         (blend_mode)    => { replay.push(() => blend_mode(blend_mode)); blend_mode(blend_mode); },
+            identity_transform: ()              => { replay.push(identity_transform); identity_transform(); },
+            canvas_height:      (height)        => { replay.push(() => canvas_height(height)); canvas_height(height); },
+            multiply_transform: (transform)     => { replay.push(() => multiply_transform(transform)); multiply_transform(transform); },
+            unclip:             ()              => { replay.push(unclip); unclip(); },
+            clip:               ()              => { replay.push(clip); clip(); },
+            store:              ()              => { replay.push(store); store(); },
+            push_state:         ()              => { replay.push(push_state); push_state(); },
+            pop_state:          ()              => { replay.push(pop_state); pop_state(); },
+            clear_canvas:       ()              => { replay = [ clear_canvas ]; clear_canvas(); },
+
+            replay_drawing:     replay_drawing
+        };
+    }
+
+    ///
     /// Applies a style to canvas
     ///
     function apply_canvas_style(canvas) {
@@ -72,8 +215,11 @@ let flo_canvas = (function() {
         remove_inactive_canvases();
         active_canvases.push({
             is_active:      is_active,
-            resize_canvas:  resize_canvas
+            resize_canvas:  resize_canvas,
+            draw:           canvas.flo_draw
         });
+
+        let draw = canvas.flo_draw;
 
         ///
         /// Returns true if this canvas is active
@@ -95,6 +241,9 @@ let flo_canvas = (function() {
                 // Actually resize the canvas
                 canvas.width    = canvas.clientWidth * ratio;
                 canvas.height   = canvas.clientHeight * ratio;
+
+                // Redraw the canvas contents at the new size
+                draw.replay_drawing();
             }
         }
 
@@ -144,13 +293,16 @@ let flo_canvas = (function() {
         parent.appendChild(canvas);
 
         // Set up the element
+        canvas.flo_draw = drawing_functions();
+
         apply_canvas_style(canvas);
         monitor_canvas_events(canvas);
         
         // Return the properties to attach to the parent element
         return {
             shadow: shadow,
-            canvas: canvas
+            canvas: canvas,
+            draw:   canvas.flo_draw
         };
     }
 
