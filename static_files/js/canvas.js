@@ -89,11 +89,11 @@ let flo_canvas = (function() {
         }
 
         function line_join(join) {
-            throw 'Not implemented';
+            context.lineJoin = join;
         }
 
-        function line_cap(join) {
-            throw 'Not implemented';
+        function line_cap(cap) {
+            context.lineCap = cap;
         }
 
         function new_dash_pattern() {
@@ -109,7 +109,7 @@ let flo_canvas = (function() {
         }
 
         function blend_mode(blend_mode) {
-            throw 'Not implemented';
+            context.globalCompositeOperation = blend_mode;
         }
 
         function identity_transform() {
@@ -130,7 +130,8 @@ let flo_canvas = (function() {
         }
 
         function multiply_transform(transform) {
-            throw 'Not implemented';
+            // Rotated transformation matrix
+            context.transform(transform[0], transform[3], transform[1], transform[4], transform[2], transform[5]);
         }
 
         function unclip() {
@@ -314,14 +315,67 @@ let flo_canvas = (function() {
             let decode_line = () => {
                 switch (read_char()) {
                 case 'w':   draw.line_width(read_float());  break;
-                case 'j':   throw 'Not implemented'; break;
-                case 'c':   throw 'Not implemented'; break;
+                case 'j':
+                    switch (read_char()) {
+                    case 'M':   draw.line_join('miter'); break;
+                    case 'R':   draw.line_join('round'); break;
+                    case 'B':   draw.line_join('bevel'); break;
+                    }
+                    break;
+                case 'c':
+                    switch (read_char()) {
+                    case 'B':   draw.line_cap('butt');      break;
+                    case 'R':   draw.line_cap('round');     break;
+                    case 'S':   draw.line_cap('square');    break;
+                    }
+                    break;
                 }
             };
 
+            let decode_blend_mode = () => {
+                switch (read_char()) {
+                case 'S':
+                    switch (read_char()) {
+                    case 'V':   draw.blend_mode('source-over'); break;
+                    case 'I':   draw.blend_mode('source-in');   break;
+                    case 'O':   draw.blend_mode('source-out');  break;
+                    case 'A':   draw.blend_mode('source-atop'); break;
+                    }
+                    break;
+                case 'D':
+                    switch (read_char()) {
+                    case 'V':   draw.blend_mode('destination-over');    break;
+                    case 'I':   draw.blend_mode('destination-in');      break;
+                    case 'O':   draw.blend_mode('destination-out');     break;
+                    case 'A':   draw.blend_mode('destination-atop');    break;
+                    }
+                    break;
+                case 'E':
+                    switch (read_char()) {
+                    case 'M':   draw.blend_mode('multiply');    break;
+                    case 'S':   draw.blend_mode('screen');      break;
+                    case 'D':   draw.blend_mode('darken');      break;
+                    case 'L':   draw.blend_mode('lighten');     break;
+                    }
+                    break;
+                }
+            };
+
+            let decode_transform    = () => {
+                switch (read_char()) {
+                case 'i':   draw.identity_transform(); break;
+                case 'h':   draw.canvas_height(read_float()); break;
+                case 'm':   
+                    {
+                        let transform = [ 1,0,0, 0,1,0, 0,0,1 ];
+                        for (let p=0; p<9; ++p) transform[p] = read_float();
+                        draw.multiply_transform(transform);
+                    }
+                    break;
+                }
+            };
+            
             let decode_dash         = () => { throw 'Not implemented'; };
-            let decode_blend_mode   = () => { throw 'Not implemented'; };
-            let decode_transform    = () => { throw 'Not implemented'; };
             let decode_clip         = () => { throw 'Not implemented'; };
             let decode_state        = () => { throw 'Not implemented'; };
             
