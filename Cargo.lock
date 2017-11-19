@@ -151,6 +151,7 @@ version = "0.1.0"
 dependencies = [
  "binding 0.1.0",
  "bodyparser 0.7.0 (git+https://github.com/iron/body-parser.git)",
+ "desync 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mount 0.3.0 (git+https://github.com/iron/mount.git?rev=1b55413)",

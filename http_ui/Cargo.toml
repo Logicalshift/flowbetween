@@ -17,3 +17,4 @@ mount               = { git = "https://github.com/iron/mount.git", rev="1b55413"
 bodyparser          = { git = "https://github.com/iron/body-parser.git" }
 percent-encoding    = "^1.0.1"
 futures             = "^0.1.17"
+desync              = "^0.1.1"
