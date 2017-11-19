@@ -58,11 +58,4 @@ pub enum Update {
     /// Specifies how the HTML should be updated
     ///
     UpdateHtml(Vec<HtmlDiff>),
-
-    ///
-    /// Replace the SVG element with the specified ID with the supplied SVG
-    /// 
-    /// Parameters are the ID and the replacement SVG data
-    ///
-    ReplaceSvg(String, String)
 }
