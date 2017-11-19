@@ -1226,6 +1226,8 @@ function flowbetween(root_node) {
                 if (root_control_data) {
                     layout_tree(get_flo_subnodes(get_root())[0], root_control_data);
                 }
+
+                flo_canvas.resize_canvases();
             });
         }
     });

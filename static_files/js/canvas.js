@@ -261,26 +261,15 @@ let flo_canvas = (function() {
     }
 
     ///
-    /// Event callback that resizes any active canvas
+    /// Causes all of the canvases to adjust their size (can be hooked up to the
+    /// window resize event to ensure that all canvases are the right size)
     ///
-    let resize_active_canvases = (function() {
-        let resizing = false;
-
-        return function() {
-            // When the resize request comes in, defer it to the next animation frame
-            if (!resizing) {
-                resizing = true;
-                requestAnimationFrame(() => {
-                    resizing = false;
-
-                    remove_inactive_canvases();
-                    active_canvases.forEach(canvas => {
-                        canvas.resize_canvas();
-                    });
-                });
-            }
-        };
-    })();
+    function resize_active_canvases() {
+        remove_inactive_canvases();
+        active_canvases.forEach(canvas => {
+            canvas.resize_canvas();
+        });
+    }
 
     ///
     /// Creates a canvas for an element
@@ -327,11 +316,9 @@ let flo_canvas = (function() {
         };
     }
 
-    // Register global event handlers
-    window.addEventListener('resize', resize_active_canvases, false);    
-
     // The final flo_canvas object
     return {
-        start: start
+        start:              start,
+        resize_canvases:    resize_active_canvases
     };
 })();
