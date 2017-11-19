@@ -43,11 +43,33 @@ struct CanvasTracker {
 ///
 struct CanvasStateCore {
     /// The controls that we're tracking
-    controls: Box<Bound<Control>>,
+    root_control: Box<Bound<Control>>,
 
     /// Set to true if the controls in this canvas have changed since they were last updated
     controls_updated: bool,
 
     /// The canvases that are being tracked by this state object
     canvases: HashMap<CanvasPath, CanvasTracker>
+}
+
+impl CanvasState {
+    ///
+    /// Creates a new canvas state
+    /// 
+    pub fn new(control: &Box<Bound<Control>>) -> CanvasState {
+        // Clone the control so we can watch it ourselves
+        let control: Box<Bound<Control>> = control.clone_box();
+
+        // Create the core
+        let core = CanvasStateCore {
+            root_control:       control,
+            controls_updated:   true,
+            canvases:           HashMap::new()
+        };
+
+        // State is just a wrapper for the core
+        CanvasState {
+            core: Desync::new(core)
+        }
+    }
 }
