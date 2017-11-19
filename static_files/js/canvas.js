@@ -55,7 +55,7 @@ let flo_canvas = (function() {
     ///
     /// Creates the drawing functions for a canvas
     ///
-    function drawing_functions(canvas) {
+    function create_drawing_functions(canvas) {
         // The replay log will replay the actions that draw this canvas (for example when resizing)
         let replay  = [ clear_canvas ];
         let context = canvas.getContext('2d');
@@ -85,7 +85,7 @@ let flo_canvas = (function() {
 
         function line_width(width) {
             // TODO: scale to transform?
-            context.line_width = width;
+            context.lineWidth = width;
         }
 
         function line_join(join) {
@@ -205,6 +205,159 @@ let flo_canvas = (function() {
     }
 
     ///
+    /// Creates a decoder that will accept a string of serialized canvas data and
+    /// draw it using the provided set of drawing functions
+    ///
+    function create_decoder(draw) {
+        let decoder = (serialized_instructions) => {
+            // Position in the instruction set
+            let pos             = 0;
+
+            // DataView for decoding floats
+            let float_buffer    = new ArrayBuffer(24);
+            let float_bytes     = new Uint8Array(float_buffer);
+            let float_data      = new DataView(float_buffer);
+
+            ///
+            /// Reads a single character from the instructions
+            ///
+            let read_char = () => {
+                let result = null;
+
+                if (pos < serialized_instructions.length) {
+                    result = serialized_instructions[pos];
+                }
+                ++pos;
+
+                return result;
+            };
+
+            ///
+            /// Returns the value for a particular character fragment
+            ///
+            let char_code_A = 'A'.charCodeAt(0);
+            let char_code_a = 'a'.charCodeAt(0);
+            let char_code_0 = '0'.charCodeAt(0);
+            let fragment_val = (fragment_char) => {
+                let char_code = fragment_char.charCodeAt(0);
+                if (fragment_char >= 'A' && fragment_char <= 'Z') {
+                    return char_code - char_code_A;
+                } else if (fragment_char >= 'a' && fragment_char <= 'z') {
+                    return char_code - char_code_a + 26;
+                } else if (fragment_char >= '0' && fragment_char <= '9') {
+                    return char_code - char_code_0 + 52;
+                } else if (fragment_char === '+') {
+                    return 62;
+                } else if (fragment_char === '/') {
+                    return 63;
+                } else {
+                    return 0;
+                }
+            };
+
+            ///
+            /// Reads a 4-byte word into the buffer at the specified offset
+            ///
+            let buffer_word = (offset) => {
+                // Do nothing if we overrun the end of the buffer
+                if (pos + 6 > serialized_instructions.length) {
+                    return;
+                }
+                
+                // Read a fragment
+                let fragment = serialized_instructions.substring(pos, pos+6);
+                pos += 6;
+
+                // Decode it
+                let code_point = [ 0,0,0,0,0,0 ];
+                for (let p = 0; p<6; ++p) {
+                    code_point[p] = fragment_val(fragment[p]);
+                }
+
+                float_bytes[offset+3] = (code_point[0])     | ((code_point[1]&0x3)<<6);
+                float_bytes[offset+2] = (code_point[1]>>2)  | ((code_point[2]&0xf)<<4);
+                float_bytes[offset+1] = (code_point[2]>>4)  | (code_point[3]<<2);
+                float_bytes[offset+0] = (code_point[4])     | ((code_point[5]&0x3)<<6);
+            };
+
+            ///
+            /// Reads a floating point value
+            ///
+            let read_float = () => {
+                buffer_word(0);
+                return float_data.getFloat32(0);
+            };
+
+            ///
+            /// Decodes a 'new' instruction
+            ///
+            let decode_new = () => {
+                switch (read_char()) {
+                case 'p':   draw.new_path();        break;
+                case 'A':   draw.clear_canvas();    break;
+                }
+            };
+
+            ///
+            /// Decodes a colour operation
+            ///
+            let decode_color = () => {
+                switch (read_char()) {
+                case 's':   draw.stroke_color(read_float(), read_float(), read_float(), read_float());  break;
+                case 'f':   draw.fill_color(read_float(), read_float(), read_float(), read_float());    break;
+                }
+            };
+
+            ///
+            /// Decodes a line properties command
+            ///
+            let decode_line = () => {
+                switch (read_char()) {
+                case 'w':   draw.line_width(read_float());  break;
+                case 'j':   throw 'Not implemented'; break;
+                case 'c':   throw 'Not implemented'; break;
+                }
+            };
+
+            let decode_dash         = () => { throw 'Not implemented'; };
+            let decode_blend_mode   = () => { throw 'Not implemented'; };
+            let decode_transform    = () => { throw 'Not implemented'; };
+            let decode_clip         = () => { throw 'Not implemented'; };
+            let decode_state        = () => { throw 'Not implemented'; };
+            
+            for(;;) {
+                let instruction = read_char();
+
+                if (instruction === null) break;
+
+                switch (instruction) {
+                case ' ':
+                case '\n':
+                    break;
+                
+                case 'N':   decode_new();                               break;
+                case 'm':   draw.move_to(read_float(), read_float());   break;
+                case 'l':   draw.line_to(read_float(), read_float());   break;
+                case 'c':   draw.bezier_curve(read_float(), read_float(), read_float(), read_float(), read_float(), read_float()); break;
+                case 'F':   draw.fill();                                break;
+                case 'S':   draw.stroke();                              break;
+                case 'L':   decode_line();                              break;
+                case 'D':   decode_dash();                              break;
+                case 'C':   decode_color();                             break;
+                case 'M':   decode_blend_mode();                        break;
+                case 'T':   decode_transform();                         break;
+                case 'Z':   decode_clip();                              break;
+                case 'P':   decode_state();                             break;
+
+                default:    throw 'Unknown instruction \'' + instruction + '\'';
+                }
+            }
+        };
+
+        return decoder;
+    }
+        
+    ///
     /// Applies a style to canvas
     ///
     function apply_canvas_style(canvas) {
@@ -288,9 +441,12 @@ let flo_canvas = (function() {
         parent.appendChild(canvas);
 
         // Set up the element
-        let draw            = drawing_functions(canvas);
-        element.flo_draw    = draw;
-        canvas.flo_draw     = draw;
+        let draw                    = create_drawing_functions(canvas);
+        let decoder                 = create_decoder(draw);
+        element.flo_canvas_decoder  = decoder;
+        element.flo_draw            = draw;
+        canvas.flo_draw             = draw;
+        canvas.flo_canvas_decoder   = decoder;
 
         // Test drawing
         draw.clear_canvas();
@@ -301,6 +457,17 @@ let flo_canvas = (function() {
         draw.line_to(0.5, -0.5);
         draw.line_to(-0.5,-0.5);
         draw.fill();
+
+        draw.line_width(0.01);
+        decoder('\
+            Np\
+            mAAAA/CAAAA/C\
+            lAAAA/CAAAA/A\
+            lAAAA/AAAAA/A\
+            lAAAA/AAAAA/C\
+            lAAAA/CAAAA/C\
+            S\
+        ');
 
         apply_canvas_style(canvas);
         monitor_canvas_events(canvas);
