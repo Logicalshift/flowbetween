@@ -17,10 +17,11 @@ mod update;
 mod event;
 mod htmlcontrol;
 mod ui_handler;
-pub mod null_session;
+mod null_session;
 pub mod viewmodel;
 pub mod minidom;
 pub mod canvas_body;
+mod canvas_update;
 
 pub use self::session::*;
 pub use self::session_state::*;
@@ -30,3 +31,4 @@ pub use self::htmlcontrol::*;
 pub use self::ui_handler::*;
 pub use self::null_session::*;
 pub use self::canvas_body::*;
+pub use self::canvas_update::*;

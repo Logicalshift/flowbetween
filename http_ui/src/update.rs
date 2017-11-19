@@ -1,3 +1,5 @@
+use super::canvas_update::*;
+
 use ui::*;
 
 use serde_json::*;
@@ -58,4 +60,9 @@ pub enum Update {
     /// Specifies how the HTML should be updated
     ///
     UpdateHtml(Vec<HtmlDiff>),
+
+    ///
+    /// Specifies that a canvas should be updated
+    ///
+    UpdateCanvas(Vec<CanvasUpdate>)
 }
