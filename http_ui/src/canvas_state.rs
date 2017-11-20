@@ -215,6 +215,12 @@ impl CanvasState {
     }
 }
 
+impl Drop for CanvasState {
+    fn drop(&mut self) {
+        self.control_watch_lifetime.done();
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
