@@ -214,3 +214,41 @@ impl CanvasState {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_create_canvas_state()  {
+        let resource_manager    = ResourceManager::new();
+        let canvas              = resource_manager.register(Canvas::new());
+        let control: Box<Bound<Control>> = Box::new(Binding::new(Control::canvas().with(canvas)));
+
+        let canvas_state        = CanvasState::new(&control);
+
+        assert!(canvas_state.latest_updates().len() == 1);
+        assert!(canvas_state.latest_updates().len() == 0);
+    }
+
+    #[test]
+    fn canvas_updates_when_control_changes()  {
+        let resource_manager    = ResourceManager::new();
+        let canvas              = resource_manager.register(Canvas::new());
+        let mut control         = Binding::new(Control::canvas().with(canvas));
+
+        let box_control: Box<Bound<Control>> = Box::new(control.clone());
+        let canvas_state        = CanvasState::new(&box_control);
+
+        assert!(canvas_state.latest_updates().len() == 1);
+        assert!(canvas_state.latest_updates().len() == 0);
+
+        let canvas2 = resource_manager.register(Canvas::new());
+        control.set(Control::canvas().with(canvas2));
+
+        assert!(canvas_state.latest_updates().len() == 1);
+        assert!(canvas_state.latest_updates().len() == 0);
+    }
+
+    // TODO: do we have issues if the resource manager re-uses an ID?
+}
