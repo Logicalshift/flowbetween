@@ -1,3 +1,6 @@
+use super::canvas_state::*;
+use super::canvas_update::*;
+
 use binding::*;
 use ui::*;
 
@@ -22,7 +25,10 @@ struct SessionStateCore {
     tree_has_changed: Binding<bool>,
 
     /// Tracks the differences for the current view model
-    viewmodel_diff: Option<(DiffViewModel, WatchViewModel)>
+    viewmodel_diff: Option<(DiffViewModel, WatchViewModel)>,
+
+    /// Tracks the state of the canvases used by this object
+    canvas_state: CanvasState
 }
 
 ///
@@ -45,13 +51,15 @@ impl SessionState {
         let mut tree: Box<Bound<Control>>   = Box::new(bind(Control::container()));
         let has_changed                     = bind(false);
         let watcher_lifetime                = Self::watch_tree(&mut tree, has_changed.clone());
+        let canvas_state                    = CanvasState::new(&tree);
 
         let core = SessionStateCore {
             ui_tree:                    tree,
             previous_tree:              bind(None),
             ui_tree_watcher_lifetime:   watcher_lifetime,
             tree_has_changed:           has_changed,
-            viewmodel_diff:             None
+            viewmodel_diff:             None,
+            canvas_state:               canvas_state
         };
 
         SessionState { 
@@ -90,6 +98,9 @@ impl SessionState {
         let mut has_changed = core.tree_has_changed.clone();
         has_changed.set(true);
         core.ui_tree_watcher_lifetime = Self::watch_tree(&mut core.ui_tree, has_changed);
+
+        // Watch for canvas changes
+        core.canvas_state = CanvasState::new(&core.ui_tree);
     }
 
     ///
@@ -145,6 +156,13 @@ impl SessionState {
             // No controller is being watched, so there's nothign to cycle
             vec![]
         }
+    }
+
+    ///
+    /// Retrieves the canvas updates since the last time this was called 
+    ///
+    pub fn latest_canvas_updates(&self) -> Vec<CanvasUpdate> {
+        self.core.lock().unwrap().canvas_state.latest_updates()
     }
 }
 

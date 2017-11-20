@@ -193,6 +193,12 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         if viewmodel_differences.len() > 0 {
             response.updates.push(Update::UpdateViewModel(viewmodel_differences));
         }
+
+        // Add in any canvas updates
+        let canvas_differences = state.latest_canvas_updates();
+        if canvas_differences.len() > 0 {
+            response.updates.push(Update::UpdateCanvas(canvas_differences));
+        }
     }
 
     ///
