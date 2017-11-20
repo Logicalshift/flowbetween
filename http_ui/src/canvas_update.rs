@@ -18,3 +18,13 @@ pub struct CanvasUpdate {
     ///
     updates: String
 }
+
+impl CanvasUpdate {
+    pub fn new(controller_path: Vec<String>, canvas_id: String, updates: String) -> CanvasUpdate {
+        CanvasUpdate {
+            controller_path:    controller_path,
+            canvas_id:          canvas_id,
+            updates:            updates
+        }
+    }
+}

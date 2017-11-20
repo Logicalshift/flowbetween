@@ -1,3 +1,5 @@
+use super::canvas_update::*;
+
 use ui::*;
 use ui::canvas::*;
 use binding::*;
@@ -6,7 +8,7 @@ use desync::*;
 
 use futures::*;
 use futures::executor;
-use futures::executor::Spawn;
+use futures::executor::{Spawn, Notify};
 
 use std::sync::*;
 use std::collections::{HashMap, HashSet};
@@ -54,6 +56,11 @@ struct CanvasStateCore {
 
     /// The canvases that are being tracked by this state object
     canvases: HashMap<CanvasPath, CanvasTracker>
+}
+
+struct NotifyNothing;
+impl Notify for NotifyNothing {
+    fn notify(&self, _: usize) { }
 }
 
 impl CanvasStateCore {
@@ -125,6 +132,42 @@ impl CanvasStateCore {
             }
         }
     }
+
+    ///
+    /// Polls for updates available in a particular canvas tracker
+    /// 
+    fn updates_for(tracker: &mut CanvasTracker) -> Vec<Draw> {
+        let mut result = vec![];
+
+        while let Ok(Async::Ready(Some(command))) = tracker.command_stream.poll_stream_notify(&Arc::new(NotifyNothing), 0) {
+            result.push(command);
+        }
+
+        result
+    }
+
+    ///
+    /// Polls the canvases in this object for their latest updates
+    /// 
+    fn latest_updates(&mut self) -> Vec<CanvasUpdate> {
+        // Get the updates for all of the canvases
+        let mut updates = vec![];
+
+        for (path, mut canvas) in self.canvases.iter_mut() {
+            let canvas_updates = Self::updates_for(&mut canvas);
+
+            if canvas_updates.len() > 0 {
+                // If this canvas has changed, encode its updates
+                let mut encoded_updates = String::new();
+                canvas_updates.encode_canvas(&mut encoded_updates);
+
+                // Turn into an update struct and put on the list of the latest updates
+                updates.push(CanvasUpdate::new(path.controller_path.clone(), path.canvas_name.clone(), encoded_updates));
+            }
+        }
+
+        updates
+    }
 }
 
 impl CanvasState {
@@ -153,5 +196,21 @@ impl CanvasState {
             core:                   core,
             control_watch_lifetime: control_watch_lifetime
         }
+    }
+
+    ///
+    /// Finds the latest updates for this canvas
+    ///
+    pub fn latest_updates(&self) -> Vec<CanvasUpdate> {
+        self.core.sync(|core| {
+            // Update the set of canvases that need to be checked
+            if core.controls_updated {
+                core.controls_updated = false;
+                core.update_canvases();
+            }
+
+            // Return any updates we can find
+            core.latest_updates()
+        })
     }
 }
