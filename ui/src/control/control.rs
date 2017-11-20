@@ -1,7 +1,9 @@
 use super::types::*;
 use super::attributes::*;
 
+use super::super::canvas;
 use super::super::diff::*;
+use super::super::resource_manager::*;
 
 use ControlType::*;
 use ControlAttribute::*;
@@ -99,6 +101,16 @@ impl Control {
     pub fn subcomponents<'a>(&'a self) -> Option<&'a Vec<Control>> {
         self.attributes.iter()
             .map(|attr| attr.subcomponents())
+            .find(|attr| attr.is_some())
+            .map(|attr| attr.unwrap())
+    }
+
+    ///
+    /// If this control has a canvas attribute, finds it
+    ///
+    pub fn canvas_resource<'a>(&'a self) -> Option<&Resource<canvas::Canvas>> {
+        self.attributes.iter()
+            .map(|attr| attr.canvas())
             .find(|attr| attr.is_some())
             .map(|attr| attr.unwrap())
     }

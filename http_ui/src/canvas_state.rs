@@ -5,10 +5,11 @@ use binding::*;
 use desync::*;
 
 use futures::*;
-use futures::executor::*;
+use futures::executor;
+use futures::executor::Spawn;
 
 use std::sync::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 ///
 /// The canvas state is used to monitor updates to canvases stored in a control hierarchy
@@ -53,6 +54,77 @@ struct CanvasStateCore {
 
     /// The canvases that are being tracked by this state object
     canvases: HashMap<CanvasPath, CanvasTracker>
+}
+
+impl CanvasStateCore {
+    ///
+    /// Find the canvases in the controls attached to this canvas and add any new
+    /// ones to the ones being tracked, and removes any canvases that are in the
+    /// list but which are not present in the control any more.
+    ///
+    fn update_canvases(&mut self) {
+        let control             = self.root_control.get();
+        let mut found_canvases  = HashSet::new();
+
+        // Update the list of canvases found in the control
+        self.update_control(&control, &vec![], &mut found_canvases);
+
+        // Find the canvases that are missing from this control
+        let missing_canvases: Vec<CanvasPath> = self.canvases.keys()
+            .filter(|canvas_path| !found_canvases.contains(canvas_path))
+            .map(|missing_path| missing_path.clone())
+            .collect();
+
+        // Remove all of the missing canvases
+        for canvas_path in missing_canvases.into_iter() {
+            self.canvases.remove(&canvas_path);
+        }
+    }
+
+    ///
+    /// Updates the list of canvases in this control
+    ///
+    fn update_control(&mut self, control: &Control, controller_path: &Vec<String>, found_canvases: &mut HashSet<CanvasPath>) {
+        // If this control has an attached canvas, then watch it if it's not already being watched
+        if let Some(canvas) = control.canvas_resource() {
+            // Make the canvas name...
+            let canvas_name = if let Some(name) = canvas.name() {
+                String::from(name)
+            } else {
+                canvas.id().to_string()
+            };
+
+            // ...and the path
+            let path = CanvasPath { controller_path: controller_path.clone(), canvas_name: canvas_name };
+
+            // Create a new tracker if this canvas is not already being watched
+            if !self.canvases.contains_key(&path) {
+                let stream  = executor::spawn((*canvas).stream());
+                let tracker = CanvasTracker { command_stream: stream };
+
+                found_canvases.insert(path.clone());
+                self.canvases.insert(path, tracker);
+            }
+        }
+
+        // Extend the controller path if this control has a controller
+        let mut our_controller_path;
+        let mut next_controller_path = controller_path;
+
+        if let Some(controller) = control.controller() {
+            our_controller_path = controller_path.clone();
+            our_controller_path.push(String::from(controller));
+
+            next_controller_path = &our_controller_path;
+        }
+
+        // Recurse into the subcomponents
+        if let Some(subcomponents) = control.subcomponents() {
+            for subcomponent in subcomponents {
+                self.update_control(subcomponent, next_controller_path, found_canvases);
+            }
+        }
+    }
 }
 
 impl CanvasState {
