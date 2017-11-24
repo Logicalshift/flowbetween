@@ -512,7 +512,7 @@ let flo_canvas = (function() {
                 case 'P':   draw.push_state();                          break;
                 case 'p':   draw.pop_state();                           break;
 
-                default:    throw 'Unknown instruction \'' + instruction + '\'';
+                default:    throw 'Unknown instruction \'' + instruction + '\' at ' + pos;
                 }
             }
         };
@@ -606,7 +606,7 @@ let flo_canvas = (function() {
     ///
     /// Updates the canvas with the specified path a particular
     ///
-    function update_canvas(controller_path, canvas_name, encoded_updated) {
+    function update_canvas(controller_path, canvas_name, encoded_update) {
         // Fetch the canvas with this name
         let canvas = get_canvas(controller_path, canvas_name);
 
@@ -615,7 +615,12 @@ let flo_canvas = (function() {
             console.error('Canvas ' + controller_path + '/' + canvas_name + ' could not be found during update');
         } else {
             // Send the update to the canvas decoder
-            canvas.decoder(encoded_updated);
+            try {
+                canvas.decoder(encoded_update);
+            } catch (e) {
+                console.error('Could not decode ', encoded_update);
+                throw e;
+            }
         }
     }
 
