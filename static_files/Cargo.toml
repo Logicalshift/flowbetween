@@ -4,5 +4,5 @@ version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 
 [dependencies]
-iron        = "0.5"
+iron        = "0.6.0"
 sha2        = "0.6.0"
