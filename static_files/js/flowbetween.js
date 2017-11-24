@@ -1108,11 +1108,33 @@ function flowbetween(root_node) {
         });
     };
 
+    ///
+    /// Handles a viewmodel update event
+    ///
     let on_update_viewmodel = (viewmodel_update_list) => {
         note('Updating viewmodel');
 
         return new Promise((resolve) => {
             viewmodel_update_list.forEach(update => process_viewmodel_update(update));
+            resolve();
+        });
+    };
+
+    ///
+    /// Handles a canvas update event
+    ///
+    let on_update_canvas = (canvas_update_list) => {
+        note('Updating canvases');
+
+        return new Promise((resolve) => {
+            canvas_update_list.forEach(update => {
+                let controller  = update['controller'];
+                let canvas_name = update['canvas_name'];
+                let updates     = update['updates'];
+
+                flo_canvas.update_canvas(controller, canvas_name, updates);
+            });
+
             resolve();
         });
     };
@@ -1159,6 +1181,13 @@ function flowbetween(root_node) {
 
                     current_promise = current_promise
                         .then(() => on_update_viewmodel(updates));
+                
+                } else if (update['UpdateCanvas']) {
+
+                    let updates = update['UpdateCanvas'];
+
+                    current_promise = current_promise
+                        .then(() => on_update_canvas(updates));
 
                 } else {
                     warn('Unknown update type', Object.keys(update)[0], update);

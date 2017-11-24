@@ -12,6 +12,12 @@ let flo_canvas = (function() {
     // List of active canvases
     let active_canvases = [];
 
+    // Maps controller_path + canvas_name to the list of active canvases
+    let canvas_map      = {};
+
+    // True if the canvas map is outdated
+    let canvas_map_outdated = true;
+
     ///
     /// Remove any canvas from the list of active canvases that no longer have a parent
     ///
@@ -21,7 +27,42 @@ let flo_canvas = (function() {
             if (!active_canvases[index].is_active()) {
                 active_canvases.removeAt(index);
                 --index;
+                mark_canvases_outdated();
             }
+        }
+    }
+
+    ///
+    /// Updates the canvas map from the list of active canvases
+    ///
+    function update_canvas_map() {
+        // Ensure that only active canvases are considered
+        remove_inactive_canvases();
+
+        // Generate a new canvas map from the list of active canvases
+        let new_canvas_map = {};
+
+        active_canvases.forEach(canvas => {
+            let address = canvas.flo_controller + '/' + canvas.flo_name;
+            new_canvas_map[address] = canvas;
+        });
+        
+        // Store as the canvas map
+        canvas_map          = new_canvas_map;
+        canvas_map_outdated = false;
+    }
+
+    ///
+    /// Indicates that the canvases are outdated
+    ///
+    function mark_canvases_outdated() {
+        if (!canvas_map_outdated) {
+            canvas_map_outdated = true;
+            requestAnimationFrame(() => {
+                if (canvas_map_outdated) {
+                    update_canvas_map();
+                }
+            });
         }
     }
 
@@ -492,12 +533,17 @@ let flo_canvas = (function() {
     /// Watches a canvas for events
     ///
     function monitor_canvas_events(canvas) {
+        // The canvas map will need to be updated before we can look up canvases by name
+        mark_canvases_outdated();
+
         // Add this canvas to the list of active canvases
-        remove_inactive_canvases();
         active_canvases.push({
             is_active:      is_active,
             resize_canvas:  resize_canvas,
-            draw:           canvas.flo_draw
+            draw:           canvas.flo_draw,
+            flo_name:       canvas.flo_name,
+            flo_controller: canvas.flo_controller,
+            decoder:        canvas.flo_canvas_decoder
         });
 
         let draw = canvas.flo_draw;
@@ -544,6 +590,36 @@ let flo_canvas = (function() {
     }
 
     ///
+    /// Returns the canvas with the specified path
+    ///
+    function get_canvas(controller_path, canvas_name) {
+        // Need the canvas map to be up to date
+        if (canvas_map_outdated) {
+            update_canvas_map();
+        }
+
+        // Return the canvas at this address
+        let address = controller_path + '/' + canvas_name;
+        return canvas_map[address];
+    }
+
+    ///
+    /// Updates the canvas with the specified path a particular
+    ///
+    function update_canvas(controller_path, canvas_name, encoded_updated) {
+        // Fetch the canvas with this name
+        let canvas = get_canvas(controller_path, canvas_name);
+
+        if (!canvas) {
+            // Error if the canvas doesn't exist
+            console.error('Canvas ' + controller_path + '/' + canvas_name + ' could not be found during update');
+        } else {
+            // Send the update to the canvas decoder
+            canvas.decoder(encoded_updated);
+        }
+    }
+
+    ///
     /// Creates a canvas for an element
     ///
     function create_canvas(element) {
@@ -555,6 +631,10 @@ let flo_canvas = (function() {
             shadow = element.attachShadow({mode: 'open'});
             parent = shadow;
         }
+
+        // Read the canvas attributes
+        let flo_controller  = element.getAttribute('flo-controller');
+        let flo_name        = element.getAttribute('flo-name');
 
         // Create a new canvas element
         let canvas = document.createElement('canvas');
@@ -569,6 +649,8 @@ let flo_canvas = (function() {
         element.flo_draw            = draw;
         canvas.flo_draw             = draw;
         canvas.flo_canvas_decoder   = decoder;
+        canvas.flo_name             = flo_name;
+        canvas.flo_controller       = flo_controller;
 
         apply_canvas_style(canvas);
         monitor_canvas_events(canvas);
@@ -584,6 +666,7 @@ let flo_canvas = (function() {
     // The final flo_canvas object
     return {
         start:              start,
-        resize_canvases:    resize_active_canvases
+        resize_canvases:    resize_active_canvases,
+        update_canvas:      update_canvas
     };
 })();
