@@ -25,8 +25,13 @@ impl CanvasController {
             .with(Bounds::fill_all()));
 
         test_canvas.draw(|gc| {
+            gc.line_width(0.01);
+            gc.fill_color(Color::Rgba(0.5,0.0,0.0, 1.0));
+            gc.stroke_color(Color::Rgba(0.0,0.0,0.0, 1.0));
+
             gc.new_path();
             gc.rect(-0.5, -0.5, 0.5, 0.5);
+            gc.fill();
             gc.stroke();
         });
 
