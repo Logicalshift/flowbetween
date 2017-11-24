@@ -161,6 +161,7 @@ impl<'a> GraphicsContext for CoreContext<'a> {
     fn fill(&mut self)                              { self.pending.push(Draw::Fill); }
     fn stroke(&mut self)                            { self.pending.push(Draw::Stroke); }
     fn line_width(&mut self, width: f32)            { self.pending.push(Draw::LineWidth(width)); }
+    fn line_width_pixels(&mut self, width: f32)     { self.pending.push(Draw::LineWidthPixels(width)); }
     fn line_join(&mut self, join: LineJoin)         { self.pending.push(Draw::LineJoin(join)); }
     fn line_cap(&mut self, cap: LineCap)            { self.pending.push(Draw::LineCap(cap)); }
     fn new_dash_pattern(&mut self)                  { self.pending.push(Draw::NewDashPattern); }

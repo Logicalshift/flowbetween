@@ -168,6 +168,7 @@ impl CanvasEncoding<String> for Draw {
             &Fill                                   => 'F'.encode_canvas(append_to),
             &Stroke                                 => 'S'.encode_canvas(append_to),
             &LineWidth(width)                       => ('L', 'w', width).encode_canvas(append_to),
+            &LineWidthPixels(width)                 => ('L', 'p', width).encode_canvas(append_to),
             &LineJoin(join)                         => ('L', 'j', join).encode_canvas(append_to),
             &LineCap(cap)                           => ('L', 'c', cap).encode_canvas(append_to),
             &NewDashPattern                         => ('D', 'n').encode_canvas(append_to),
@@ -240,6 +241,8 @@ mod test {
     fn can_encode_stroke() { assert!(&encode_draw(Draw::Stroke) == "S") }
     #[test]
     fn can_encode_linewidth() { assert!(&encode_draw(Draw::LineWidth(20.0)) == "LwAAAoBB") }
+    #[test]
+    fn can_encode_linewidthpixels() { assert!(&encode_draw(Draw::LineWidthPixels(20.0)) == "LpAAAoBB") }
     #[test]
     fn can_encode_linejoin() { assert!(&encode_draw(Draw::LineJoin(LineJoin::Bevel)) == "LjB") }
     #[test]

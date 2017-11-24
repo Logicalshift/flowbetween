@@ -13,6 +13,7 @@ pub trait GraphicsContext {
     fn fill(&mut self);
     fn stroke(&mut self);
     fn line_width(&mut self, width: f32);
+    fn line_width_pixels(&mut self, width: f32);
     fn line_join(&mut self, join: LineJoin);
     fn line_cap(&mut self, cap: LineCap);
     fn new_dash_pattern(&mut self);
@@ -43,6 +44,7 @@ pub trait GraphicsContext {
             Fill                                        => self.fill(),
             Stroke                                      => self.stroke(),
             LineWidth(width)                            => self.line_width(width),
+            LineWidthPixels(width)                      => self.line_width_pixels(width),
             LineJoin(join)                              => self.line_join(join),
             LineCap(cap)                                => self.line_cap(cap),
             NewDashPattern                              => self.new_dash_pattern(),

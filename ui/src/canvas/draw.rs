@@ -71,6 +71,9 @@ pub enum Draw {
     /// Set the line width
     LineWidth(f32),
 
+    /// Set the line width in pixels
+    LineWidthPixels(f32),
+
     /// Line join
     LineJoin(LineJoin),
 

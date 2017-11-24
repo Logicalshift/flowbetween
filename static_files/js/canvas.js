@@ -105,6 +105,38 @@ let flo_canvas = (function() {
         let context_stack   = [];
         let clip_stack      = [];
         let clipped         = false;
+        let transform       = [1,0,0, 0,1,0, 0,0,1];
+
+        ///
+        /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
+        ///
+        function transform_set(new_transform) {
+            transform = new_transform;
+        }
+        
+        ///
+        /// Multiplies the transformation matrix (lack of browser support again)
+        ///
+        function transform_multiply(new_transform) {
+            let t1 = transform;
+            let t2 = new_transform;
+
+            let res = [
+                t1[0]*t2[0] + t1[1]*t2[3] + t1[2]*t2[6],
+                t1[0]*t2[1] + t1[1]*t2[4] + t1[2]*t2[7],
+                t1[0]*t2[2] + t1[1]*t2[5] + t1[2]*t2[8],
+
+                t1[3]*t2[0] + t1[4]*t2[3] + t1[5]*t2[6],
+                t1[3]*t2[1] + t1[4]*t2[4] + t1[5]*t2[7],
+                t1[3]*t2[2] + t1[4]*t2[5] + t1[5]*t2[8],
+
+                t1[6]*t2[0] + t1[7]*t2[3] + t1[8]*t2[6],
+                t1[6]*t2[1] + t1[7]*t2[4] + t1[8]*t2[7],
+                t1[6]*t2[2] + t1[7]*t2[5] + t1[8]*t2[8],
+            ];
+
+            transform = res;
+        }
 
         function new_path()                             { context.beginPath(); current_path = []; }
         function move_to(x,y)                           { context.moveTo(x, y); current_path.push(() => context.moveTo(x, y) ); }
@@ -131,6 +163,16 @@ let flo_canvas = (function() {
 
         function line_width(width) {
             context.lineWidth = width;
+        }
+
+        function line_width_pixels(width) {
+            // Length of the first column of the transformation matrix is the scale factor (for the width)
+            let scale = Math.sqrt(transform[0]*transform[0] + transform[3]*transform[3]);
+            if (scale === 0) scale = 1;
+            scale /= window.devicePixelRatio || 1;
+
+            // Scale the width down according to this factor (we'll always use the horizontal scale factor)
+            context.lineWidth = width / scale;
         }
 
         function line_join(join) {
@@ -172,11 +214,18 @@ let flo_canvas = (function() {
                 0,                  -ratio, 
                 pixel_width/2.0,    pixel_height/2.0
             );
+
+            transform_set([ 
+                ratio,  0,      pixel_width/2.0,
+                0,      -ratio, pixel_height/2.0, 
+                0,      0,      1
+            ]);
         }
 
         function multiply_transform(transform) {
             // Rotated transformation matrix
             context.transform(transform[0], transform[3], transform[1], transform[4], transform[2], transform[5]);
+            transform_multiply(transform);
         }
 
         ///
@@ -258,6 +307,7 @@ let flo_canvas = (function() {
 
         function clear_canvas() {
             // Clear
+            context.setTransform(1,0, 0,1, 0,0);
             context.resetTransform();
             context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -283,6 +333,7 @@ let flo_canvas = (function() {
             fill:               ()              => { replay.push(fill);                                 fill();                         },
             stroke:             ()              => { replay.push(stroke);                               stroke();                       },
             line_width:         (width)         => { replay.push(() => line_width(width));              line_width(width);              },
+            line_width_pixels:  (width)         => { replay.push(() => line_width_pixels(width));       line_width_pixels(width);       },
             line_join:          (join)          => { replay.push(() => line_join(join));                line_join(join);                },
             line_cap:           (cap)           => { replay.push(() => line_cap(cap));                  line_cap(cap);                  },
             new_dash_pattern:   ()              => { replay.push(new_dash_pattern);                     new_dash_pattern();             },
@@ -431,7 +482,8 @@ let flo_canvas = (function() {
             ///
             let decode_line = () => {
                 switch (read_char()) {
-                case 'w':   draw.line_width(read_float());  break;
+                case 'w':   draw.line_width(read_float());          break;
+                case 'p':   draw.line_width_pixels(read_float());   break;
                 case 'j':
                     switch (read_char()) {
                     case 'M':   draw.line_join('miter'); break;
