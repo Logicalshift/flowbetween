@@ -10,6 +10,7 @@ extern crate iron;
 extern crate mount;
 extern crate bodyparser;
 extern crate percent_encoding;
+extern crate itertools;
 extern crate futures;
 extern crate desync;
 

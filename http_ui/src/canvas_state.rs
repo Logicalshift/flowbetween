@@ -5,6 +5,8 @@ use ui::canvas::*;
 use binding::*;
 
 use desync::*;
+use itertools::join;
+use percent_encoding::*;
 
 use futures::*;
 use futures::executor;
@@ -162,7 +164,12 @@ impl CanvasStateCore {
                 canvas_updates.encode_canvas(&mut encoded_updates);
 
                 // Turn into an update struct and put on the list of the latest updates
-                updates.push(CanvasUpdate::new(path.controller_path.clone(), path.canvas_name.clone(), encoded_updates));
+                let canvas_name     = utf8_percent_encode(&path.canvas_name, DEFAULT_ENCODE_SET).to_string();
+                let controller_path = join(path.controller_path.iter()
+                    .map(|component| utf8_percent_encode(&*component, DEFAULT_ENCODE_SET)),
+                    "/");
+
+                updates.push(CanvasUpdate::new(controller_path, canvas_name, encoded_updates));
             }
         }
 
