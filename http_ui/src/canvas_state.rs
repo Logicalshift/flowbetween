@@ -264,4 +264,5 @@ mod test {
     }
 
     // TODO: do we have issues if the resource manager re-uses an ID?
+    // TODO: test encoding of canvas path, canvas name
 }
