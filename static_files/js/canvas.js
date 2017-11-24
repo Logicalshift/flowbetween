@@ -391,6 +391,18 @@ let flo_canvas = (function() {
             };
 
             ///
+            /// Reads a RGBA colour
+            ///
+            let read_rgba = () => {
+                let color_type = read_char();
+
+                switch (color_type) {
+                case 'R':   return [ read_float(), read_float(), read_float(), read_float() ];
+                default:    throw 'Unknown color type: \'' + color_type + '\'';
+                }
+            };
+
+            ///
             /// Decodes a 'new' instruction
             ///
             let decode_new = () => {
@@ -404,9 +416,13 @@ let flo_canvas = (function() {
             /// Decodes a colour operation
             ///
             let decode_color = () => {
-                switch (read_char()) {
-                case 's':   draw.stroke_color(read_float(), read_float(), read_float(), read_float());  break;
-                case 'f':   draw.fill_color(read_float(), read_float(), read_float(), read_float());    break;
+                let color_target    = read_char();
+                let color           = read_rgba();
+
+                switch (color_target) {
+                case 's':   draw.stroke_color(color[0], color[1], color[2], color[3]);  break;
+                case 'f':   draw.fill_color(color[0], color[1], color[2], color[3]);    break;
+                default:    throw 'Unknown color target: \'' + color_target + '\'';
                 }
             };
 
