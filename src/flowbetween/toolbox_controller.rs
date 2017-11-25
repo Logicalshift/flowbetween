@@ -23,6 +23,8 @@ impl ToolboxController {
 
         // Some images for the root controller
         let images  = Arc::new(ResourceManager::new());
+        let select  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/select.svg")));
+        let adjust  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/adjust.svg")));
         let flo     = images.register(png_static(include_bytes!("../../static_files/png/Flo-Orb-small.png")));
         images.assign_name(&flo, "flo");
 
@@ -30,8 +32,10 @@ impl ToolboxController {
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
             .with(vec![
-                Self::make_tool("Select",   &viewmodel, flo.clone()), 
+                Self::make_tool("Select",   &viewmodel, select.clone()), 
+                Self::make_tool("Adjust",   &viewmodel, adjust.clone()),
                 Self::make_tool("Pan",      &viewmodel, flo.clone()),
+                Self::make_separator(),
                 Self::make_tool("Pencil",   &viewmodel, flo.clone()), 
                 Self::make_tool("Ink",      &viewmodel, flo.clone())
             ]));
@@ -41,6 +45,14 @@ impl ToolboxController {
             ui:         ui,
             images:     images
         }
+    }
+
+    ///
+    /// Creates a separator between controls
+    /// 
+    fn make_separator() -> Control {
+        Control::empty()
+            .with(Bounds::next_vert(12.0))
     }
 
     ///
