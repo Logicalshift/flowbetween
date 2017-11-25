@@ -21,3 +21,10 @@ pub trait HasAttributes {
     ///
     fn attributes(&self) -> Box<Iterator<Item = AnimationAttribute>>;
 }
+
+impl HasAttributes for () {
+    fn attributes(&self) -> Box<Iterator<Item = AnimationAttribute>> {
+        // TODO: return an empty iterator
+        unimplemented!()
+    }
+}

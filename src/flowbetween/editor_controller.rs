@@ -1,5 +1,6 @@
 use ui::*;
 use binding::*;
+use animation::*;
 use super::canvas_controller::*;
 use super::menu_controller::*;
 use super::timeline_controller::*;
@@ -21,19 +22,24 @@ enum SubController {
 ///
 /// The editor controller manages the editing of a single file
 ///
-pub struct EditorController {
+pub struct EditorController<Animation: EditableAnimation> {
     /// The view model for the editor
     view_model: Arc<NullViewModel>,
 
     /// The main editor UI
     ui: Binding<Control>,
 
+    /// The animation that this will edit
+    animation: Arc<Animation>,
+
     /// The subcontrollers for this editor
     subcontrollers: HashMap<SubController, Arc<Controller>>
 }
 
-impl EditorController {
-    pub fn new() -> EditorController {
+impl<Animation: EditableAnimation> EditorController<Animation> {
+    pub fn new(animation: Animation) -> EditorController<Animation> {
+        let animation   = Arc::new(animation);
+
         let canvas      = Arc::new(CanvasController::new());
         let menu        = Arc::new(MenuController::new());
         let timeline    = Arc::new(TimelineController::new());
@@ -51,6 +57,7 @@ impl EditorController {
             ui:             ui,
             subcontrollers: subcontrollers,
             view_model:     Arc::new(NullViewModel::new()),
+            animation:      animation
         }
     }
 
@@ -140,7 +147,7 @@ impl EditorController {
     }
 }
 
-impl Controller for EditorController {
+impl<Animation: EditableAnimation> Controller for EditorController<Animation> {
     fn ui(&self) -> Arc<Bound<Control>> {
         Arc::new(self.ui.clone())
     }

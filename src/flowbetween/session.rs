@@ -22,7 +22,7 @@ enum SubController {
 pub struct FlowBetweenSession {
     view_model: Arc<NullViewModel>,
     ui:         Binding<Control>,
-    editor:     Arc<EditorController>,
+    editor:     Arc<Controller>,
     images:     Arc<ResourceManager<Image>>
 }
 
@@ -40,7 +40,7 @@ impl FlowBetweenSession {
             ui:         bind(Control::container()
                             .with(Bounds::fill_all())
                             .with_controller(&serde_json::to_string(&SubController::Editor).unwrap())),
-            editor:     Arc::new(EditorController::new()),
+            editor:     Arc::new(EditorController::new(())),
             images:     images
         }
     }
