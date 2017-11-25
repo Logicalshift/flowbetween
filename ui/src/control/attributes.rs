@@ -1,6 +1,7 @@
 use super::bounds::*;
 use super::control::*;
 use super::actions::*;
+use super::modifier::*;
 
 use super::super::image;
 use super::super::canvas;
@@ -155,87 +156,46 @@ impl ControlAttribute {
 
 use ControlAttribute::*;
 
-///
-/// Trait implemented by things that can be converted into control attributes
-///
-pub trait ToControlAttributes {
-    fn attributes(&self) -> Vec<ControlAttribute>;
-}
-
-impl ToControlAttributes for ControlAttribute {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![self.clone()]
+impl<'a> ControlModifier for &'a str {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(Text(self.to_property()))
     }
 }
 
-impl<'a> ToControlAttributes for &'a str {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![Text(self.to_property())]
+impl ControlModifier for Bounds {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(BoundingBox(self))
     }
 }
 
-impl ToControlAttributes for Bounds {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![BoundingBox(self.clone())]
+impl ControlModifier for Resource<image::Image> {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(Image(self))
     }
 }
 
-impl ToControlAttributes for Resource<image::Image> {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![Image(self.clone())]
+impl ControlModifier for Resource<canvas::Canvas> {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(ControlAttribute::Canvas(self))
     }
 }
 
-impl ToControlAttributes for Resource<canvas::Canvas> {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![ControlAttribute::Canvas(self.clone())]
+impl ControlModifier for (ActionTrigger, String) {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(Action(self.0, self.1))
     }
 }
 
-impl ToControlAttributes for (ActionTrigger, String) {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![Action(self.0.clone(), self.1.clone())]
+impl ControlModifier for Vec<ControlAttribute> {
+    fn modify(self, control: &mut Control) {
+        for attr in self.into_iter() {
+            control.add_attribute(attr);
+        }
     }
 }
 
-impl ToControlAttributes for Vec<ControlAttribute> {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        self.clone()
-    }
-}
-
-impl<A: ToControlAttributes, B: ToControlAttributes> ToControlAttributes for (A, B) {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        let mut res = self.0.attributes();
-        res.append(&mut self.1.attributes());
-
-        res
-    }
-}
-
-impl<A: ToControlAttributes, B: ToControlAttributes, C: ToControlAttributes> ToControlAttributes for (A, B, C) {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        let mut res = self.0.attributes();
-        res.append(&mut self.1.attributes());
-        res.append(&mut self.2.attributes());
-
-        res
-    }
-}
-
-impl<A: ToControlAttributes, B: ToControlAttributes, C: ToControlAttributes, D: ToControlAttributes> ToControlAttributes for (A, B, C, D) {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        let mut res = self.0.attributes();
-        res.append(&mut self.1.attributes());
-        res.append(&mut self.2.attributes());
-        res.append(&mut self.3.attributes());
-
-        res
-    }
-}
-
-impl ToControlAttributes for Vec<Control> {
-    fn attributes(&self) -> Vec<ControlAttribute> {
-        vec![SubComponents(self.iter().cloned().collect())]
+impl ControlModifier for Vec<Control> {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(SubComponents(self))
     }
 }

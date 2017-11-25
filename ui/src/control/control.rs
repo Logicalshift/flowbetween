@@ -58,8 +58,8 @@ impl Control {
     }
 
     /// Creates a control with some attributes added to it
-    pub fn with<T: ToControlAttributes>(mut self, attributes: T) -> Control {
-        self.attributes.append(&mut attributes.attributes());
+    pub fn with<T: ControlModifier>(mut self, modifier: T) -> Control {
+        modifier.modify(&mut self);
 
         self
     }
@@ -67,7 +67,7 @@ impl Control {
     ///
     /// Creates a control with an added controller
     ///
-    pub fn with_controller(mut self, controller: &str) -> Control {
+    pub fn with_controller(self, controller: &str) -> Control {
         self.with(ControlAttribute::Controller(String::from(controller)))
     }
 
