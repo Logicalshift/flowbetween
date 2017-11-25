@@ -31,6 +31,13 @@ impl ToolboxController {
         let pencil  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pencil.svg")));
         let ink     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/ink.svg")));
 
+        images.assign_name(&select, "select");
+        images.assign_name(&adjust, "adjust");
+        images.assign_name(&pan, "pan");
+
+        images.assign_name(&pencil, "pencil");
+        images.assign_name(&ink, "ink");
+
         // Set up the tools
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
