@@ -1,6 +1,6 @@
-use super::frame_parameter::*;
 use super::frame::*;
 use super::attributes::*;
+use super::frame_parameter::*;
 
 ///
 /// A layer represents a renderable plane in an animation

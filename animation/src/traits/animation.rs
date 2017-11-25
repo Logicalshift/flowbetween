@@ -1,9 +1,10 @@
 use super::layer::*;
+use super::attributes::*;
 
 ///
 /// Represents an animation
 ///
-pub trait Animation {
+pub trait Animation : HasAttributes {
     ///
     /// Retrieves the size of this animation
     ///
