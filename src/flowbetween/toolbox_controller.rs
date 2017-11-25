@@ -22,32 +22,18 @@ impl ToolboxController {
         viewmodel.set_property("SelectedTool", PropertyValue::String("Pencil".to_string()));
 
         // Some images for the root controller
-        let images  = Arc::new(ResourceManager::new());
-
-        let select  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/select.svg")));
-        let adjust  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/adjust.svg")));
-        let pan     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pan.svg")));
-
-        let pencil  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pencil.svg")));
-        let ink     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/ink.svg")));
-
-        images.assign_name(&select, "select");
-        images.assign_name(&adjust, "adjust");
-        images.assign_name(&pan, "pan");
-
-        images.assign_name(&pencil, "pencil");
-        images.assign_name(&ink, "ink");
+        let images  = Arc::new(Self::create_images());
 
         // Set up the tools
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
             .with(vec![
-                Self::make_tool("Select",   &viewmodel, select.clone()), 
-                Self::make_tool("Adjust",   &viewmodel, adjust.clone()),
-                Self::make_tool("Pan",      &viewmodel, pan.clone()),
+                Self::make_tool("Select",   &viewmodel, images.get_named_resource("select")), 
+                Self::make_tool("Adjust",   &viewmodel, images.get_named_resource("adjust")),
+                Self::make_tool("Pan",      &viewmodel, images.get_named_resource("pan")),
                 Self::make_separator(),
-                Self::make_tool("Pencil",   &viewmodel, pencil.clone()), 
-                Self::make_tool("Ink",      &viewmodel, ink.clone())
+                Self::make_tool("Pencil",   &viewmodel, images.get_named_resource("pencil")), 
+                Self::make_tool("Ink",      &viewmodel, images.get_named_resource("ink"))
             ]));
 
         ToolboxController {
@@ -55,6 +41,31 @@ impl ToolboxController {
             ui:         ui,
             images:     images
         }
+    }
+
+    ///
+    /// Creates the image resources for this controller 
+    ///
+    fn create_images() -> ResourceManager<Image> {
+        let images  = ResourceManager::new();
+
+        // Load the tool images
+        let select  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/select.svg")));
+        let adjust  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/adjust.svg")));
+        let pan     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pan.svg")));
+
+        let pencil  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pencil.svg")));
+        let ink     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/ink.svg")));
+
+        // Assign names to them
+        images.assign_name(&select, "select");
+        images.assign_name(&adjust, "adjust");
+        images.assign_name(&pan, "pan");
+
+        images.assign_name(&pencil, "pencil");
+        images.assign_name(&ink, "ink");
+
+        images
     }
 
     ///
@@ -68,7 +79,7 @@ impl ToolboxController {
     ///
     /// Creates a new tool control
     ///
-    fn make_tool(name: &str, viewmodel: &DynamicViewModel, image: Resource<Image>) -> Control {
+    fn make_tool(name: &str, viewmodel: &DynamicViewModel, image: Option<Resource<Image>>) -> Control {
         use ui::ControlAttribute::*;
         use ui::ActionTrigger::*;
 
