@@ -74,7 +74,7 @@ pub fn assemble_ui(base_controller: Arc<Controller>) -> Box<Bound<Control>> {
                     if let Some(subcontroller) = subcontroller {
                         // If we can look up the subcontroller then this control should have its UI as its subcomponents
                         let subassembly = assemble_ui(subcontroller);
-                        control.with(vec![subassembly.get()])
+                        control.clone().with(vec![subassembly.get()])
                     } else {
                         // No subcontroller
                         control.clone()

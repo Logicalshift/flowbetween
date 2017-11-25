@@ -3,6 +3,7 @@ mod types;
 mod bounds;
 mod actions;
 mod control;
+mod modifier;
 mod position;
 mod attributes;
 
@@ -11,6 +12,7 @@ pub use self::types::*;
 pub use self::bounds::*;
 pub use self::actions::*;
 pub use self::control::*;
+pub use self::modifier::*;
 pub use self::position::*;
 pub use self::attributes::*;
 
