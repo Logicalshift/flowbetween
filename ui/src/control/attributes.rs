@@ -1,12 +1,13 @@
 use super::bounds::*;
 use super::control::*;
 use super::actions::*;
-use super::modifier::*;
 
 use super::super::image;
 use super::super::canvas;
 use super::super::property::*;
 use super::super::resource_manager::*;
+
+use modifier::*;
  
 ///
 /// Attribute attached to a control
@@ -156,37 +157,37 @@ impl ControlAttribute {
 
 use ControlAttribute::*;
 
-impl<'a> ControlModifier for &'a str {
+impl<'a> Modifier<Control> for &'a str {
     fn modify(self, control: &mut Control) {
         control.add_attribute(Text(self.to_property()))
     }
 }
 
-impl ControlModifier for Bounds {
+impl Modifier<Control> for Bounds {
     fn modify(self, control: &mut Control) {
         control.add_attribute(BoundingBox(self))
     }
 }
 
-impl ControlModifier for Resource<image::Image> {
+impl Modifier<Control> for Resource<image::Image> {
     fn modify(self, control: &mut Control) {
         control.add_attribute(Image(self))
     }
 }
 
-impl ControlModifier for Resource<canvas::Canvas> {
+impl Modifier<Control> for Resource<canvas::Canvas> {
     fn modify(self, control: &mut Control) {
         control.add_attribute(ControlAttribute::Canvas(self))
     }
 }
 
-impl ControlModifier for (ActionTrigger, String) {
+impl Modifier<Control> for (ActionTrigger, String) {
     fn modify(self, control: &mut Control) {
         control.add_attribute(Action(self.0, self.1))
     }
 }
 
-impl ControlModifier for Vec<ControlAttribute> {
+impl Modifier<Control> for Vec<ControlAttribute> {
     fn modify(self, control: &mut Control) {
         for attr in self.into_iter() {
             control.add_attribute(attr);
@@ -194,7 +195,7 @@ impl ControlModifier for Vec<ControlAttribute> {
     }
 }
 
-impl ControlModifier for Vec<Control> {
+impl Modifier<Control> for Vec<Control> {
     fn modify(self, control: &mut Control) {
         control.add_attribute(SubComponents(self))
     }

@@ -1,48 +1,28 @@
 use super::control::*;
 use super::attributes::*;
 
-///
-/// Represents an object that can be used to modify a control
-/// 
+use modifier::*;
+
 pub trait ControlModifier {
-    /// Applies this modifier to a control
-    fn modify(self, control: &mut Control);
+    fn modify(self, control: &mut Control);    
 }
 
-impl ControlModifier for ControlAttribute {
+impl Modifier<Control> for ControlAttribute {
     fn modify(self, control: &mut Control) {
         control.add_attribute(self);
     }
 }
 
-impl<A: ControlModifier> ControlModifier for Option<A> {
+impl<A: Modifier<Control>> ControlModifier for Option<A> {
     fn modify(self, control: &mut Control) {
         if let Some(modifier) = self {
-            modifier.modify(control)
+            modifier.modify(control);
         }
     }
 }
 
-impl<A: ControlModifier, B: ControlModifier> ControlModifier for (A, B) {
+impl<A: Modifier<Control>> ControlModifier for A {
     fn modify(self, control: &mut Control) {
-        self.0.modify(control);
-        self.1.modify(control);
-    }
-}
-
-impl<A: ControlModifier, B: ControlModifier, C: ControlModifier> ControlModifier for (A, B, C) {
-    fn modify(self, control: &mut Control) {
-        self.0.modify(control);
-        self.1.modify(control);
-        self.2.modify(control);
-    }
-}
-
-impl<A: ControlModifier, B: ControlModifier, C: ControlModifier, D: ControlModifier> ControlModifier for (A, B, C, D) {
-    fn modify(self, control: &mut Control) {
-        self.0.modify(control);
-        self.1.modify(control);
-        self.2.modify(control);
-        self.3.modify(control);
+        self.modify(control)
     }
 }
