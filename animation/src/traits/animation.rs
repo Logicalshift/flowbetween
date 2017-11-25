@@ -6,12 +6,7 @@ use super::attributes::*;
 ///
 pub trait Animation : HasAttributes {
     ///
-    /// Retrieves the size of this animation
-    ///
-    fn size() -> (f32, f32);
-
-    ///
     /// Retrieves the layers for this animation
     ///
-    fn layers(&self) -> Box<Iterator<Item = Layer>>;
+    fn layers<'a>(&'a self) -> Box<Iterator<Item = &'a Layer>>;
 }

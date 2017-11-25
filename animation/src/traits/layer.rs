@@ -16,5 +16,5 @@ pub trait Layer : Any+HasAttributes {
     ///
     /// Retrieves the key frames in this layer
     ///
-    fn get_key_frames(&self) -> Box<Iterator<Item = Frame>>;
+    fn get_key_frames<'a>(&'a self) -> Box<Iterator<Item = &'a Frame>>;
 }
