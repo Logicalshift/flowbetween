@@ -7,3 +7,4 @@ authors     = ["Andrew Hunter"]
 ui                  = { path = "../ui" }
 
 typemap             = "^0.3.3"
+modifier            = "^0.1.0"

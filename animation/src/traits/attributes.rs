@@ -1,12 +1,15 @@
+use ui::canvas::*;
+
+use std::any::*;
+
 ///
-/// Attributes can be attached to animations and frames in order to
-/// provide additional information about them. Attributes are generally
-/// optional, and provide an easily extensible way to add extra properties
-/// to something.
-///
-pub enum Attribute {
-    /// Attribute representing the name of this item
-    Name(String)
+/// Implementation of an attribute attached to an animation item
+/// 
+pub trait AnimationAttribute : Any {
+    ///
+    /// Renders the contents of this attribute to the specified animation context
+    ///
+    fn render(&self, context: &mut GraphicsContext);
 }
 
 ///
@@ -16,5 +19,5 @@ pub trait HasAttributes {
     ///
     /// Retrieves the attributes attached to this item
     ///
-    fn attributes(&self) -> Box<Iterator<Item = Attribute>>;
+    fn attributes(&self) -> Box<Iterator<Item = AnimationAttribute>>;
 }
