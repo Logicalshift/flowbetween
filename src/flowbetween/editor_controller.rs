@@ -36,11 +36,11 @@ pub struct EditorController<Animation: EditableAnimation> {
     subcontrollers: HashMap<SubController, Arc<Controller>>
 }
 
-impl<Animation: EditableAnimation> EditorController<Animation> {
+impl<Animation: 'static+EditableAnimation> EditorController<Animation> {
     pub fn new(animation: Animation) -> EditorController<Animation> {
         let animation   = Arc::new(animation);
 
-        let canvas      = Arc::new(CanvasController::new());
+        let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new());
         let timeline    = Arc::new(TimelineController::new());
         let toolbox     = Arc::new(ToolboxController::new());

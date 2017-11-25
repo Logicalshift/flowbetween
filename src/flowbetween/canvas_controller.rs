@@ -1,20 +1,22 @@
 use ui::*;
 use ui::canvas::*;
 use binding::*;
+use animation::*;
 
 use std::sync::*;
 
 ///
 /// The canvas controller manages the main drawing canvas
 ///
-pub struct CanvasController {
+pub struct CanvasController<Anim: EditableAnimation> {
     view_model: Arc<NullViewModel>,
     ui:         Binding<Control>,
-    canvases:   Arc<ResourceManager<Canvas>>
+    canvases:   Arc<ResourceManager<Canvas>>,
+    animation:  Arc<Anim>
 }
 
-impl CanvasController {
-    pub fn new() -> CanvasController {
+impl<Anim: EditableAnimation> CanvasController<Anim> {
+    pub fn new(animation: &Arc<Anim>) -> CanvasController<Anim> {
         let canvases = ResourceManager::new();
 
         let test_canvas = canvases.register(Canvas::new());
@@ -38,12 +40,13 @@ impl CanvasController {
         CanvasController {
             view_model: Arc::new(NullViewModel::new()),
             ui:         ui,
-            canvases:   Arc::new(canvases)
+            canvases:   Arc::new(canvases),
+            animation:  animation.clone()
         }
     }
 }
 
-impl Controller for CanvasController {
+impl<Anim: EditableAnimation> Controller for CanvasController<Anim> {
     fn ui(&self) -> Arc<Bound<Control>> {
         Arc::new(self.ui.clone())
     }
