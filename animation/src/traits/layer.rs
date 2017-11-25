@@ -2,10 +2,12 @@ use super::frame::*;
 use super::attributes::*;
 use super::frame_parameter::*;
 
+use std::any::*;
+
 ///
 /// A layer represents a renderable plane in an animation
 ///
-pub trait Layer : HasAttributes {
+pub trait Layer : Any+HasAttributes {
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
