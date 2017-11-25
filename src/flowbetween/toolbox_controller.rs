@@ -29,9 +29,7 @@ impl ToolboxController {
         let pan     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pan.svg")));
 
         let pencil  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pencil.svg")));
-
-        let flo     = images.register(png_static(include_bytes!("../../static_files/png/Flo-Orb-small.png")));
-        images.assign_name(&flo, "flo");
+        let ink     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/ink.svg")));
 
         // Set up the tools
         let ui = bind(Control::container()
@@ -42,7 +40,7 @@ impl ToolboxController {
                 Self::make_tool("Pan",      &viewmodel, pan.clone()),
                 Self::make_separator(),
                 Self::make_tool("Pencil",   &viewmodel, pencil.clone()), 
-                Self::make_tool("Ink",      &viewmodel, flo.clone())
+                Self::make_tool("Ink",      &viewmodel, ink.clone())
             ]));
 
         ToolboxController {
