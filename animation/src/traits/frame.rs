@@ -1,11 +1,11 @@
-use super::graphics::*;
+use ui::canvas::*;
 
 ///
 /// Represents a single frame in a layer of an animation
 ///
 pub trait Frame {
     ///
-    /// Retrieves the rendering commands required to render this layer
+    /// Renders this frame to a particular graphics context
     ///
-    fn render_commands(&self) -> Box<Iterator<Item = GraphicsCommand>>;
+    fn render_to(&self, gc: &mut GraphicsContext);
 }

@@ -1,6 +1,10 @@
 [[package]]
 name = "animation"
 version = "0.1.0"
+dependencies = [
+ "typemap 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ui 0.1.0",
+]
 
 [[package]]
 name = "base64"
