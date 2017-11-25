@@ -15,6 +15,14 @@ impl ControlModifier for ControlAttribute {
     }
 }
 
+impl<A: ControlModifier> ControlModifier for Option<A> {
+    fn modify(self, control: &mut Control) {
+        if let Some(modifier) = self {
+            modifier.modify(control)
+        }
+    }
+}
+
 impl<A: ControlModifier, B: ControlModifier> ControlModifier for (A, B) {
     fn modify(self, control: &mut Control) {
         self.0.modify(control);
