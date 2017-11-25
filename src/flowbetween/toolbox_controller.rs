@@ -23,9 +23,13 @@ impl ToolboxController {
 
         // Some images for the root controller
         let images  = Arc::new(ResourceManager::new());
+
         let select  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/select.svg")));
         let adjust  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/adjust.svg")));
         let pan     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pan.svg")));
+
+        let pencil  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pencil.svg")));
+
         let flo     = images.register(png_static(include_bytes!("../../static_files/png/Flo-Orb-small.png")));
         images.assign_name(&flo, "flo");
 
@@ -37,7 +41,7 @@ impl ToolboxController {
                 Self::make_tool("Adjust",   &viewmodel, adjust.clone()),
                 Self::make_tool("Pan",      &viewmodel, pan.clone()),
                 Self::make_separator(),
-                Self::make_tool("Pencil",   &viewmodel, flo.clone()), 
+                Self::make_tool("Pencil",   &viewmodel, pencil.clone()), 
                 Self::make_tool("Ink",      &viewmodel, flo.clone())
             ]));
 
