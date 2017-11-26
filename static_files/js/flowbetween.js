@@ -1195,6 +1195,12 @@ function flowbetween(root_node) {
 
         // Register for the pointer down event
         add_action_event(node, 'pointerdown', pointer_down);
+
+        // If touch events are also supported, disable them for this control so gestures are disabled
+        if (supports_touch_events) {
+            // Touch & pointer events fight each other :-(
+            add_action_event(node, 'touchstart', ev => ev.preventDefault());
+        }
     };
 
     ///
