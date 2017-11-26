@@ -819,7 +819,13 @@ function flowbetween(root_node) {
         }
 
         // The device that we're currently tracking
-        let pointer_device = '';
+        let pointer_device  = '';
+
+        // The in-flight event is used to queue events while we wait for FlowBetween to process existing events
+        let in_flight_event = new Promise((resolve) => resolve());
+
+        // The waiting events are move events that have arrived before the in-flight event finished
+        let waiting_events  = [];
 
         // Declare our event handlers
         let pointer_down = pointer_event => {
@@ -846,7 +852,8 @@ function flowbetween(root_node) {
                             [ pointer_event_to_paint_event(pointer_event, 'Start') ]
                         ]
                     };
-                    perform_action(controller_path, action_name, start_parameter);
+
+                    in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, start_parameter));
                 }
             } else {
                 note('Ignoring pointer down event due to incorrect device ' + pointer_event.pointerType);
@@ -862,13 +869,21 @@ function flowbetween(root_node) {
 
                 if (pointer_device === pointer_event.pointerType) {
                     // This move event is directed to this item
-                    let move_parameter = {
-                        Paint: [
-                            target_device,
-                            [ pointer_event_to_paint_event(pointer_event, 'Continue') ]
-                        ]
-                    };
-                    perform_action(controller_path, action_name, move_parameter);
+                    waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue'));
+
+                    // Send the move event as soon as the in-flight events have finished processing
+                    in_flight_event = in_flight_event.then(() => {
+                        if (waiting_events.length > 0) {
+                            let move_parameter = {
+                                Paint: [
+                                    target_device,
+                                    waiting_events
+                                ]
+                            };
+                            waiting_events = [];
+                            return perform_action(controller_path, action_name, move_parameter);
+                        }
+                    });
                 }
             }
         };
@@ -886,7 +901,7 @@ function flowbetween(root_node) {
                             [ pointer_event_to_paint_event(pointer_event, 'Finish') ]
                         ]
                     };
-                    perform_action(controller_path, action_name, finish_parameter);
+                    in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
 
                     // Release the device
                     pointer_device = '';
