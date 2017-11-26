@@ -730,12 +730,28 @@ function flowbetween(root_node) {
     /// Adds an action event to a flo node
     ///
     let add_action_event = (node, event_name, handler, options) => {
+        // addEventListener can only add a single handler for a particular event, but we want to be able to support multiple
+        let event_property  = 'flo_event_' + event_name;
+        let current_event   = node[event_property];
+
+        if (current_event) {
+            let original_handler = handler;
+            handler = event => {
+                current_event(event);
+                original_handler(event);
+            };
+        }
+
         // We add action events to the node and any decorations it may have
         let event_nodes = [node];
         [].push.apply(event_nodes, get_decorative_subnodes(node));
 
         // Add the event
+        if (current_event) {
+            event_nodes.forEach(node => node.removeEventListener(event_name, current_event));
+        }
         event_nodes.forEach(node => node.addEventListener(event_name, handler, options));
+        node[event_property] = handler;
 
         // Update the function that removes events from this node
         let remove_more_events = node.flo_remove_actions;
