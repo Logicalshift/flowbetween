@@ -869,7 +869,11 @@ function flowbetween(root_node) {
 
                 if (pointer_device === pointer_event.pointerType) {
                     // This move event is directed to this item
-                    waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue'));
+                    if (pointer_event.getCoalescedEvents) {
+                        pointer_event.getCoalescedEvents().forEach(pointer_event => waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue')));
+                    } else {
+                        waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue'));
+                    }
 
                     // Send the move event as soon as the in-flight events have finished processing
                     in_flight_event = in_flight_event.then(() => {
