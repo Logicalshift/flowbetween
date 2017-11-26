@@ -5,6 +5,7 @@
 extern crate modifier;
 extern crate ui;
 
-pub mod traits;
+mod traits;
+pub mod inmemory;
 
 pub use self::traits::*;

@@ -1,5 +1,6 @@
 use super::layer::*;
 use super::attributes::*;
+use super::super::inmemory::*;
 
 ///
 /// Represents an animation
@@ -13,7 +14,7 @@ pub trait Animation : HasAttributes+Send+Sync {
     ///
     /// Retrieves the layers for this animation
     ///
-    fn layers<'a>(&'a self) -> Box<Iterator<Item = &'a Layer>>;
+    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Layer>>;
 }
 
 ///
@@ -32,7 +33,6 @@ impl Animation for () {
     }
 
     fn layers<'a>(&'a self) -> Box<Iterator<Item = &'a Layer>> {
-        // TODO: return an empty iterator
-        unimplemented!()
+        Box::new(EmptyIterator::new())
     }
 }

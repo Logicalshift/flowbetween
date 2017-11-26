@@ -11,10 +11,10 @@ pub trait Layer : Any+HasAttributes {
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
-    fn get_frame(&self, Box<Iterator<Item = FrameParameter>>) -> Box<Frame>;
+    fn get_frame(&self, parameters: &mut Iterator<Item = FrameParameter>) -> Box<Frame>;
 
     ///
     /// Retrieves the key frames in this layer
     ///
-    fn get_key_frames<'a>(&'a self) -> Box<Iterator<Item = &'a Frame>>;
+    fn get_key_frames<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Frame>>;
 }

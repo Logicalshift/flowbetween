@@ -1,3 +1,5 @@
+use super::super::inmemory::*;
+
 use ui::canvas::*;
 
 use std::any::*;
@@ -19,12 +21,11 @@ pub trait HasAttributes {
     ///
     /// Retrieves the attributes attached to this item
     ///
-    fn attributes(&self) -> Box<Iterator<Item = AnimationAttribute>>;
+    fn attributes<'a>(&'a self) -> Box<'a+Iterator<Item = &'a AnimationAttribute>>;
 }
 
 impl HasAttributes for () {
-    fn attributes(&self) -> Box<Iterator<Item = AnimationAttribute>> {
-        // TODO: return an empty iterator
-        unimplemented!()
+    fn attributes<'a>(&'a self) -> Box<'a+Iterator<Item = &'a AnimationAttribute>> {
+        Box::new(EmptyIterator::new())
     }
 }
