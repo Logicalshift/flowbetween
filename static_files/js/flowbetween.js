@@ -697,6 +697,39 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Converts a TouchEvent to a Paint object.
+    ///
+    /// Action should be 'Start', 'Continue' or 'Finish'
+    ///
+    let touch_event_to_paint_event = (touch_event, action) => {
+        // We always just track the first touch here
+        let touch = touch_event.touches[0];
+
+        // Get the coordinates of this event
+        let x = touch.clientX;
+        let y = touch.clientY;
+
+        // Get the target element
+        let target_element = touch.target;
+
+        // Re-map the coordinates if the target element has any to map
+        if (target_element.flo_map_coords) {
+            let coords = target_element.flo_map_coords(x, y);
+            x = coords[0];
+            y = coords[1];
+        }
+
+        // Generate the final event
+        return {
+            action:     action,
+            location:   [x, y],
+            pressure:   touch.force || 0.5,
+            tilt_x:     0,
+            tilt_y:     0
+        };
+    };
+
+    ///
     /// Converts a PointerEvent to a Paint object.
     ///
     /// Action should be 'Start', 'Continue' or 'Finish'
@@ -790,9 +823,81 @@ function flowbetween(root_node) {
     };
 
     ///
-    /// Wires up a paint action to a node
+    /// Wires up a paint action to a node using the touch events API
     ///
-    let wire_paint = (target_device, action_name, node, controller_path) => {
+    let wire_paint_touch_events = (target_device, action_name, node, controller_path) => {
+        // We only wire for 'mouse' events when using the touch API
+        // (This is because we can't distinguish what device is used so we wire for the most generic)
+        // TODO: will need to support gestures like scrolling & so on
+        if (target_device !== 'Mouse') {
+            return;
+        }
+
+        // The in-flight event is used to queue events while we wait for FlowBetween to process existing events
+        let in_flight_event = new Promise((resolve) => resolve());
+
+        // The waiting events are move events that have arrived before the in-flight event finished
+        let waiting_events  = [];
+
+        // Declare our event handlers
+        let touch_start = touch_event => {
+            // Start tracking this touch event
+            document.addEventListener('touchmove', touch_move, true);
+            document.addEventListener('touchend', touch_end, true);
+
+            touch_event.preventDefault();
+
+            // Create the 'start' event
+            let start_parameter = {
+                Paint: [
+                    target_device,
+                    [ touch_event_to_paint_event(touch_event, 'Start') ]
+                ]
+            };
+
+            in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, start_parameter));
+        };
+
+        let touch_move = touch_event => {
+            waiting_events.push(touch_event_to_paint_event(touch_event, 'Continue'));
+
+            // Send the move event as soon as the in-flight events have finished processing
+            in_flight_event = in_flight_event.then(() => {
+                if (waiting_events.length > 0) {
+                    let move_parameter = {
+                        Paint: [
+                            target_device,
+                            waiting_events
+                        ]
+                    };
+                    waiting_events = [];
+                    return perform_action(controller_path, action_name, move_parameter);
+                }
+            });
+        };
+
+        let touch_end = touch_event => {
+            let finish_parameter = {
+                Paint: [
+                    target_device,
+                    [ touch_event_to_paint_event(touch_event, 'Finish') ]
+                ]
+            };
+            in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
+
+            // Release the device
+            document.removeEventListener('touchmove', touch_move);
+            document.removeEventListener('touchend', touch_end);
+        };
+
+        // Register for the pointer down event
+        add_action_event(node, 'touchstart', touch_start);
+    };
+
+    ///
+    /// Wires up a paint action to a node using the pointerevents API
+    ///
+    let wire_paint_pointer_events = (target_device, action_name, node, controller_path) => {
         // Function to check if a pointer event is for the right device
         let check_device = () => true;
         if (target_device === 'Pen')        { check_device = pointer_event => pointer_event.pointerType === 'pen'; }
@@ -918,6 +1023,24 @@ function flowbetween(root_node) {
 
         // Register for the pointer down event
         add_action_event(node, 'pointerdown', pointer_down);
+    };
+
+    ///
+    /// Wires up the 'paint' events to a node
+    ///
+    let wire_paint = (target_device, action_name, node, controller_path) => {
+        if (supports_pointer_events) {
+            // Pointer events are the most general way of tracking what's going on with an event
+            wire_paint_pointer_events(target_device, action_name, node, controller_path);
+        } else if (supports_touch_events) {
+            // Touch events are supported in things like Safari on iOS so we need to support those too
+            // They lack the multi-device support of pointer events and some of the extra parameters
+            wire_paint_touch_events(target_device, action_name, node, controller_path);
+        } else {
+            // Mouse events are supported everywhere.
+            // Firefox supports pressure sensitivity via a browser-specific field.
+            // Desktop Safari cannot support pressure-sensitivity.
+        }
     };
 
     ///
