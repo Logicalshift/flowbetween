@@ -172,6 +172,7 @@ impl<'a> GraphicsContext for CoreContext<'a> {
     fn blend_mode(&mut self, mode: BlendMode)       { self.pending.push(Draw::BlendMode(mode)); }
     fn identity_transform(&mut self)                { self.pending.push(Draw::IdentityTransform); }
     fn canvas_height(&mut self, height: f32)        { self.pending.push(Draw::CanvasHeight(height)); }
+    fn center_region(&mut self, minx: f32, miny: f32, maxx: f32, maxy: f32) { self.pending.push(Draw::CenterRegion((minx, miny), (maxx, maxy))); }
     fn transform(&mut self, transform: Transform2D) { self.pending.push(Draw::MultiplyTransform(transform)); }
     fn unclip(&mut self)                            { self.pending.push(Draw::Unclip); }
     fn clip(&mut self)                              { self.pending.push(Draw::Clip); }

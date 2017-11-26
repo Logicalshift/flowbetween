@@ -234,6 +234,35 @@ let flo_canvas = (function() {
             ]);
         }
 
+        function center_region(minx, miny, maxx, maxy) {
+            let pixel_width     = canvas.width;
+            let pixel_height    = canvas.height;
+
+            // Get the current scaling of this canvas
+            let xscale = Math.sqrt(transform[0]*transform[0] + transform[3]*transform[3]);
+            let yscale = Math.sqrt(transform[1]*transform[1] + transform[4]*transform[4]);
+            if (xscale === 0) xscale = 1;
+            if (yscale === 0) yscale = 1;
+
+            // Current X, Y coordinates (centered)
+            let cur_x = (transform[2]-(pixel_width/2.0))/xscale;
+            let cur_y = (transform[3]-(pixel_width/2.0))/yscale + (pixel_height/2.0);
+
+            // New center coordinates
+            let center_x = (minx+maxy)/2.0;
+            let center_y = (miny+maxy)/2.0;
+
+            // Compute the offsets and transform the canvas
+            let x_offset = cur_x - center_x;
+            let y_offset = cur_y - center_y;
+
+            multiply_transform([
+                1, 0, x_offset,
+                0, 1, y_offset,
+                0, 0, 1
+            ]);
+        }
+
         function multiply_transform(transform) {
             // Rotated transformation matrix
             context.transform(transform[0], transform[3], transform[1], transform[4], transform[2], transform[5]);
@@ -359,6 +388,7 @@ let flo_canvas = (function() {
             blend_mode:         (mode)          => { replay.push(() => blend_mode(mode));                blend_mode(mode);              },
             identity_transform: ()              => { replay.push(identity_transform);                   identity_transform();           },
             canvas_height:      (height)        => { replay.push(() => canvas_height(height));          canvas_height(height);          },
+            center_region:      (x1, y1, x2, y2) => { replay.push(() => center_region(x1, y1, x2, y2)); center_region(x1, y1, x2, y2);  },
             multiply_transform: (transform)     => { replay.push(() => multiply_transform(transform));  multiply_transform(transform);  },
             unclip:             ()              => { replay.push(unclip);                               unclip();                       },
             clip:               ()              => { replay.push(clip);                                 clip();                         },
@@ -549,6 +579,7 @@ let flo_canvas = (function() {
                 switch (read_char()) {
                 case 'i':   draw.identity_transform(); break;
                 case 'h':   draw.canvas_height(read_float()); break;
+                case 'c':   draw.center_region(read_float(), read_float(), read_float(), read_float()); break;
                 case 'm':   
                     {
                         let transform = [ 1,0,0, 0,1,0, 0,0,1 ];

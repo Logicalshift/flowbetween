@@ -179,6 +179,7 @@ impl CanvasEncoding<String> for Draw {
             &BlendMode(mode)                        => ('M', mode).encode_canvas(append_to),
             &IdentityTransform                      => ('T', 'i').encode_canvas(append_to),
             &CanvasHeight(height)                   => ('T', 'h', height).encode_canvas(append_to),
+            &CenterRegion(min, max)                 => ('T', 'c', min, max).encode_canvas(append_to),
             &MultiplyTransform(transform)           => ('T', 'm', transform).encode_canvas(append_to),
             &Unclip                                 => ('Z', 'n').encode_canvas(append_to),
             &Clip                                   => ('Z', 'c').encode_canvas(append_to),

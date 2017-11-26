@@ -107,6 +107,9 @@ pub enum Draw {
     /// Pixels are square
     CanvasHeight(f32),
 
+    /// Moves a particular region to the center of the canvas (coordinates are minx, miny, maxx, maxy)
+    CenterRegion((f32, f32), (f32, f32)),
+
     /// Multiply a 2D transform into the canvas
     MultiplyTransform(Transform2D),
 

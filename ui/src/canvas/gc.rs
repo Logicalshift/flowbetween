@@ -24,6 +24,7 @@ pub trait GraphicsContext {
     fn blend_mode(&mut self, mode: BlendMode);
     fn identity_transform(&mut self);
     fn canvas_height(&mut self, height: f32);
+    fn center_region(&mut self, minx: f32, miny: f32, maxx: f32, maxy: f32);
     fn transform(&mut self, transform: Transform2D);
     fn unclip(&mut self);
     fn clip(&mut self);
@@ -55,6 +56,7 @@ pub trait GraphicsContext {
             BlendMode(blendmode)                        => self.blend_mode(blendmode),
             IdentityTransform                           => self.identity_transform(),
             CanvasHeight(height)                        => self.canvas_height(height),
+            CenterRegion((minx, miny), (maxx, maxy))    => self.center_region(minx, miny, maxx, maxy),
             MultiplyTransform(transform)                => self.transform(transform),
             Unclip                                      => self.unclip(),
             Clip                                        => self.clip(),
