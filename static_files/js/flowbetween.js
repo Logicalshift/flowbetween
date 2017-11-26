@@ -789,7 +789,7 @@ function flowbetween(root_node) {
         // Update the function that removes events from this node
         let remove_more_events = node.flo_remove_actions;
         node.flo_remove_actions = () => {
-            event_nodes.forEach(node => node.removeEventListener(event_name, handler));
+            event_nodes.forEach(node => node.removeEventListener(event_name, handler, options));
             event_nodes = [];
 
             if (remove_more_events) {
@@ -904,9 +904,9 @@ function flowbetween(root_node) {
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
 
             // Release the device
-            document.removeEventListener('touchmove', touch_move);
-            document.removeEventListener('touchend', touch_end);
-            document.removeEventListener('touchcancel', touch_end);
+            document.removeEventListener('touchmove', touch_move, true);
+            document.removeEventListener('touchend', touch_end, true);
+            document.removeEventListener('touchcancel', touch_end, true);
         };
 
         let touch_cancel = () => {
@@ -920,9 +920,9 @@ function flowbetween(root_node) {
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
 
             // Release the device
-            document.removeEventListener('touchmove', touch_move);
-            document.removeEventListener('touchend', touch_end);
-            document.removeEventListener('touchcancel', touch_end);
+            document.removeEventListener('touchmove', touch_move, true);
+            document.removeEventListener('touchend', touch_end, true);
+            document.removeEventListener('touchcancel', touch_end, true);
         };
 
         // Register for the pointer down event
@@ -1045,8 +1045,8 @@ function flowbetween(root_node) {
                 // Release the device
                 pointer_device = '';
 
-                document.removeEventListener('pointermove', pointer_move);
-                document.removeEventListener('pointerup', pointer_up);
+                document.removeEventListener('pointermove', pointer_move, true);
+                document.removeEventListener('pointerup', pointer_up, true);
             }
         };
 
