@@ -11,22 +11,27 @@
 /* global flo_canvas */
 
 function flowbetween(root_node) {
-    // Find out where we're running
-    let doc_url = document.createElement('a');
-    doc_url.href = document.URL;
-    let base_url = doc_url.protocol + '//' + doc_url.host;
-
     /// The ID of the running session
     let running_session_id = '';
 
     // Control data, starting at the root node
     let root_control_data = null;
 
-    /// URL where the flowbetween session resides
+    // URL where the flowbetween session resides
     let target_url = '/flowbetween/session';
 
+    // UTF encoder
     let utf8 = new TextEncoder('utf-8');
 
+    // Find out where we're running
+    let doc_url  = document.createElement('a');
+    doc_url.href = document.URL;
+    let base_url = doc_url.protocol + '//' + doc_url.host;
+
+    // Test for browser functionality
+    let supports_pointer_events = 'onpointerdown' in window;
+    let supports_touch_events   = 'ontouchstart' in window;
+    
     // Some utility functions
     Array.prototype.mapMany = function (map_fn) {
         let self = this;
@@ -866,6 +871,9 @@ function flowbetween(root_node) {
 
         // Register for the pointer down event
         add_action_event(node, 'pointerdown', pointer_down);
+        add_action_event(node, 'mousedown', (mouse_event) => {
+            console.log('Mouse event: ', mouse_event);
+        });
     };
 
     ///
@@ -1395,6 +1403,15 @@ function flowbetween(root_node) {
     // All set up, let's go
     console.log('%c', 'background: url("' + base_url + '/png/Flo-Orb-small.png") no-repeat left center; background-size: 120px 142px; padding-left: 120px; padding-bottom: 71px; padding-top: 71px; line-height: 142px; font-size: 0%;"');
     console.log('%c=== F L O W B E T W E E N ===', 'font-family: monospace; font-weight: bold; font-size: 150%;');
+
+    if (supports_pointer_events) {
+        note('Will use pointer events for painting (modern browser)');
+    } else if (supports_touch_events) {
+        note('Will use touch events for painting (browser is a bit out of date)');
+    } else {
+        note('Using mouse events for painting (browser is old, pressure sensitivity may not be available)');
+        warn('Browser is old and broken: pressure and tilt sensitivity may not work');
+    }
 
     inline_template_objects(document.getRootNode()).then(() => {
         reload_templates(document.getRootNode());
