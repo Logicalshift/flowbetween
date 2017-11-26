@@ -27,7 +27,7 @@ use http_ui::*;
 
 const PACKAGE_NAME: &str    = env!("CARGO_PKG_NAME");
 const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
-const SERVER_ADDR: &str     = "127.0.0.1:3000";
+const SERVER_ADDR: &str     = "0.0.0.0:3000";
 
 fn main() {
     let mut mount = Mount::new();
