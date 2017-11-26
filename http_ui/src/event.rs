@@ -1,3 +1,5 @@
+use ui::ActionParameter;
+
 ///
 /// Represents details of an event from the browser side
 ///
@@ -16,5 +18,5 @@ pub enum Event {
     ///
     /// Sends an action to the controller found along a certain path
     ///
-    Action(Vec<String>, String)
+    Action(Vec<String>, String, ActionParameter)
 }

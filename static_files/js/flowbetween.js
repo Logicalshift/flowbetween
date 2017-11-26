@@ -733,7 +733,7 @@ function flowbetween(root_node) {
         add_action_event(node, 'click', () => {
             note('Click ' + action_name + ' --> ' + controller_path);
 
-            perform_action(controller_path, action_name);
+            perform_action(controller_path, action_name, null);
         });
     };
 
@@ -1233,8 +1233,8 @@ function flowbetween(root_node) {
     ///
     /// Performs a particular action
     ///
-    let perform_action = (controller_path, action_name) => {
-        let request = make_request([ make_event({ Action: [controller_path, action_name] })], running_session_id);
+    let perform_action = (controller_path, action_name, action_parameter) => {
+        let request = make_request([ make_event({ Action: [controller_path, action_name, action_parameter || 'None'] })], running_session_id);
 
         return send_request(request);
     };

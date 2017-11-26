@@ -41,7 +41,7 @@ pub trait Controller : Send+Sync {
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
 
     /// Callback for when a control associated with this controller generates an action
-    fn action(&self, _action_id: &str) { }
+    fn action(&self, _action_id: &str, _action_data: &ActionParameter) { }
 
     /// Retrieves a resource manager containing the images used in the UI for this controller
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { None }

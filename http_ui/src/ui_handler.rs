@@ -113,7 +113,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Dispatches an action to a controller
     ///
-    pub fn dispatch_action(&self, session: Arc<TSession>, controller_path: &Vec<String>, action_name: &String) {
+    pub fn dispatch_action(&self, session: Arc<TSession>, controller_path: &Vec<String>, action_name: &str, action_parameter: &ActionParameter) {
         // Follow the controller path
         let mut controller: Option<Arc<Controller>> = Some(session);
 
@@ -123,7 +123,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 
         // If there's a controller on this path, send the action to it
         match controller {
-            Some(ref controller)    => controller.action(action_name),
+            Some(ref controller)    => controller.action(action_name, action_parameter),
             None                    => ()   // TODO: report error/warning - controller does not exist? Might be possible if the UI is catching up with the server state.
         };
     }
@@ -169,7 +169,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
                 UiRefresh => self.refresh_ui(state.clone(), session.clone(), response, base_url),
 
                 // Actions are dispatched to the appropriate controller
-                Action(ref controller_path, ref action) => self.dispatch_action(session.clone(), controller_path, action)
+                Action(ref controller_path, ref action, ref action_parameter) => self.dispatch_action(session.clone(), controller_path, action, action_parameter)
             }
         }
 

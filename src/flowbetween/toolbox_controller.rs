@@ -112,7 +112,7 @@ impl Controller for ToolboxController {
         Arc::new(self.ui.clone())
     }
 
-    fn action(&self, action_id: &str) {
+    fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         self.view_model.set_property("SelectedTool", PropertyValue::String(String::from(action_id)));
     }
 
