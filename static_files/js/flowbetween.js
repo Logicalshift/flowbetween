@@ -875,6 +875,8 @@ function flowbetween(root_node) {
         };
 
         let touch_move = touch_event => {
+            touch_event.preventDefault();
+
             last_event = touch_event;
             waiting_events.push(touch_event_to_paint_event(touch_event, 'Continue'));
 
@@ -893,7 +895,9 @@ function flowbetween(root_node) {
             });
         };
 
-        let touch_end = () => {
+        let touch_end = touch_event => {
+            touch_event.preventDefault();
+
             // We finish using the last event as the 'end' event will have 0 touches
             let finish_parameter = {
                 Paint: [
@@ -909,7 +913,9 @@ function flowbetween(root_node) {
             document.removeEventListener('touchcancel', touch_end, true);
         };
 
-        let touch_cancel = () => {
+        let touch_cancel = touch_event => {
+            touch_event.preventDefault();
+
             // We finish using the last event as the 'end' event will have 0 touches
             let finish_parameter = {
                 Paint: [
