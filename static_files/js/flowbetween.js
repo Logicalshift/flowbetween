@@ -798,7 +798,6 @@ function flowbetween(root_node) {
                 } else {
                     // Start tracking this pointer event
                     pointer_device = pointer_event.pointerType + '.' + pointer_event.button;
-                    node.setCapture();
 
                     // Pointer down on the right device
                     pointer_event.preventDefault();
@@ -853,7 +852,6 @@ function flowbetween(root_node) {
 
                     // Release the device
                     pointer_device = '';
-                    document.releaseCapture();
                 }
             }
         });
