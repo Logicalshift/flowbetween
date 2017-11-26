@@ -23,7 +23,10 @@ pub enum PaintAction {
     Continue,
 
     /// End of a paint stroke (mouse/stylus/touch up)
-    Finish
+    Finish,
+
+    /// Paint stroke was cancelled
+    Cancel
 }
 
 ///

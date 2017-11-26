@@ -858,7 +858,8 @@ function flowbetween(root_node) {
             // Start tracking this touch event
             document.addEventListener('touchmove', touch_move, true);
             document.addEventListener('touchend', touch_end, true);
-
+            document.addEventListener('touchcancel', touch_cancel, true);
+            
             touch_event.preventDefault();
 
             // Create the 'start' event
@@ -905,6 +906,23 @@ function flowbetween(root_node) {
             // Release the device
             document.removeEventListener('touchmove', touch_move);
             document.removeEventListener('touchend', touch_end);
+            document.removeEventListener('touchcancel', touch_end);
+        };
+
+        let touch_cancel = () => {
+            // We finish using the last event as the 'end' event will have 0 touches
+            let finish_parameter = {
+                Paint: [
+                    target_device,
+                    [ touch_event_to_paint_event(last_event, 'Cancel') ]
+                ]
+            };
+            in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
+
+            // Release the device
+            document.removeEventListener('touchmove', touch_move);
+            document.removeEventListener('touchend', touch_end);
+            document.removeEventListener('touchcancel', touch_end);
         };
 
         // Register for the pointer down event
