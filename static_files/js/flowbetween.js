@@ -720,6 +720,7 @@ function flowbetween(root_node) {
         }
 
         // Generate the final event
+        // TODO: can get tilt_x and tilt_y from azimuthAngle and altitudeAngle (but they aren't a direct mapping)
         return {
             action:     action,
             location:   [x, y],
