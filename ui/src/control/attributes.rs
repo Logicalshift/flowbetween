@@ -187,6 +187,12 @@ impl Modifier<Control> for (ActionTrigger, String) {
     }
 }
 
+impl<'a> Modifier<Control> for (ActionTrigger, &'a str) {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(Action(self.0, String::from(self.1)))
+    }
+}
+
 impl Modifier<Control> for Vec<ControlAttribute> {
     fn modify(self, control: &mut Control) {
         for attr in self.into_iter() {
