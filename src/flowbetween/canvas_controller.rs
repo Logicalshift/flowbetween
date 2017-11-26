@@ -33,7 +33,13 @@ impl<Anim: EditableAnimation> CanvasController<Anim> {
 
         controller.ui.set(Control::canvas()
             .with(background_canvas)
-            .with(Bounds::fill_all()));
+            .with(Bounds::fill_all())
+            .with((
+                (ActionTrigger::Paint(PaintDevice::Pen),                        "Paint"),
+                (ActionTrigger::Paint(PaintDevice::Touch),                      "Paint"),
+                (ActionTrigger::Paint(PaintDevice::Other),                      "Paint"),
+                (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   "Paint")
+            )));
 
         controller
     }
