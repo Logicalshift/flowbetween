@@ -987,7 +987,8 @@ function flowbetween(root_node) {
 
                     document.addEventListener('pointermove', pointer_move, true);
                     document.addEventListener('pointerup', pointer_up, true);
-
+                    document.addEventListener('pointercancel', pointer_cancel, true);
+                    
                     // Pointer down on the right device
                     pointer_event.preventDefault();
                     note('Paint ' + target_device + ' (' + action_name + ') --> ' + controller_path);
@@ -1054,6 +1055,30 @@ function flowbetween(root_node) {
 
                 document.removeEventListener('pointermove', pointer_move, true);
                 document.removeEventListener('pointerup', pointer_up, true);
+                document.removeEventListener('pointercancel', pointer_cancel, true);
+            }
+        };
+
+        let pointer_cancel = pointer_event => {
+            // Prevent the pointer event from firing
+            pointer_event.preventDefault();
+
+            if (pointer_device === pointer_event.pointerType) {
+                // This up event is directed to this item
+                let finish_parameter = {
+                    Paint: [
+                        target_device,
+                        [ pointer_event_to_paint_event(pointer_event, 'Cancel') ]
+                    ]
+                };
+                in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
+
+                // Release the device
+                pointer_device = '';
+
+                document.removeEventListener('pointermove', pointer_move, true);
+                document.removeEventListener('pointerup', pointer_up, true);
+                document.removeEventListener('pointercancel', pointer_cancel, true);
             }
         };
 
