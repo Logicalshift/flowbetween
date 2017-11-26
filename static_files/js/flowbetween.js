@@ -827,9 +827,10 @@ function flowbetween(root_node) {
     ///
     let wire_paint_touch_events = (target_device, action_name, node, controller_path) => {
         // We only wire for 'touch' events when using the touch API
-        if (target_device !== 'Touch') {
+        if (target_device !== 'Touch' && target_device !== 'Pen') {
             return;
         }
+        let needs_stylus = target_device === 'Pen';
 
         // The in-flight event is used to queue events while we wait for FlowBetween to process existing events
         let in_flight_event = new Promise((resolve) => resolve());
@@ -842,6 +843,18 @@ function flowbetween(root_node) {
 
         // Declare our event handlers
         let touch_start = touch_event => {
+            let touch = touch_event.touches[0];
+
+            if (touch.touchType === 'stylus') {
+                if (!needs_stylus) {
+                    return;
+                }
+            } else {
+                if (needs_stylus) {
+                    return;
+                }
+            }
+
             // Start tracking this touch event
             document.addEventListener('touchmove', touch_move, true);
             document.addEventListener('touchend', touch_end, true);
