@@ -871,9 +871,6 @@ function flowbetween(root_node) {
 
         // Register for the pointer down event
         add_action_event(node, 'pointerdown', pointer_down);
-        add_action_event(node, 'mousedown', (mouse_event) => {
-            console.log('Mouse event: ', mouse_event);
-        });
     };
 
     ///
