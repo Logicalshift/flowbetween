@@ -826,10 +826,8 @@ function flowbetween(root_node) {
     /// Wires up a paint action to a node using the touch events API
     ///
     let wire_paint_touch_events = (target_device, action_name, node, controller_path) => {
-        // We only wire for 'mouse' events when using the touch API
-        // (This is because we can't distinguish what device is used so we wire for the most generic)
-        // TODO: will need to support gestures like scrolling & so on
-        if (target_device !== 'Mouse') {
+        // We only wire for 'touch' events when using the touch API
+        if (target_device !== 'Touch') {
             return;
         }
 
