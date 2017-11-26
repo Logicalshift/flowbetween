@@ -730,7 +730,8 @@ function flowbetween(root_node) {
     /// Wires up a click action to a node
     ///
     let wire_click = (action_name, node, controller_path) => {
-        add_action_event(node, 'click', () => {
+        add_action_event(node, 'click', event => {
+            event.preventDefault();
             note('Click ' + action_name + ' --> ' + controller_path);
 
             perform_action(controller_path, action_name, null);
