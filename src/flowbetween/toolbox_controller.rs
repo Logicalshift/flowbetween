@@ -96,7 +96,7 @@ impl ToolboxController {
 
         // The control is just a button
         Control::button()
-            .with(Action(Click, String::from(name)))
+            .with((Click, name))
             .with(Selected(Property::Bind(selected_property_name)))
             .with(Bounds::next_vert(48.0))
             .with(vec![
