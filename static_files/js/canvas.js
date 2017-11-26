@@ -100,12 +100,14 @@ let flo_canvas = (function() {
         // The replay log will replay the actions that draw this canvas (for example when resizing)
         let replay  = [ clear_canvas ];
 
-        let context         = canvas.getContext('2d');
-        let current_path    = [];
-        let context_stack   = [];
-        let clip_stack      = [];
-        let clipped         = false;
-        let transform       = [1,0,0, 0,1,0, 0,0,1];
+        let context             = canvas.getContext('2d');
+        let current_path        = [];
+        let context_stack       = [];
+        let clip_stack          = [];
+        let clipped             = false;
+        let transform           = [1,0,0, 0,1,0, 0,0,1];
+        let dash_pattern        = [];
+        let set_dash_pattern    = true;
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -143,7 +145,15 @@ let flo_canvas = (function() {
         function line_to(x,y)                           { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); }
         function bezier_curve(x1, y1, x2, y2, x3, y3)   { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); current_path.push(() => context.bezierCurveTo(x2, y2, x3, y3, x1, y1) ); }
         function fill()                                 { context.fill(); }
-        function stroke()                               { context.stroke(); }
+
+        function stroke() {
+            if (set_dash_pattern) {
+                set_dash_pattern = false;
+                context.setLineDash(dash_pattern);
+            }
+
+            context.stroke(); 
+        }
 
         function fill_color(r, g, b, a) {
             r = Math.floor(r*255.0);
@@ -184,15 +194,17 @@ let flo_canvas = (function() {
         }
 
         function new_dash_pattern() {
-            throw 'Not implemented';
+            dash_pattern        = [];
+            set_dash_pattern    = true;
         }
 
         function dash_length(length) {
-            throw 'Not implemented';
+            context.lineDashOffset = length;
         }
 
         function dash_offset(offset) {
-            throw 'Not implemented';
+            dash_pattern.push(offset);
+            set_dash_pattern = true;
         }
 
         function blend_mode(blend_mode) {
@@ -279,10 +291,13 @@ let flo_canvas = (function() {
         }
 
         function push_state() {
-            // Push the current clipping path
-            let restore_clip_stack = clip_stack.slice();
+            // Push the current clipping path and dash pattern
+            let restore_clip_stack      = clip_stack.slice();
+            let restore_dash_pattern    = dash_pattern.slice();
             context_stack.push(() => {
-                clip_stack = restore_clip_stack;
+                clip_stack          = restore_clip_stack;
+                dash_pattern        = restore_dash_pattern;
+                set_dash_pattern    = true;
             });
 
             // Save the context with no clipping path (so we can unclip)
