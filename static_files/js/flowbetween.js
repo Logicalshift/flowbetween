@@ -1121,8 +1121,6 @@ function flowbetween(root_node) {
 
                     in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, start_parameter));
                 }
-            } else {
-                note('Ignoring pointer down event due to incorrect device ' + pointer_event.pointerType);
             }
         };
 
