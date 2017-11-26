@@ -1202,6 +1202,7 @@ function flowbetween(root_node) {
             // Touch events are supported in things like Safari on iOS so we need to support those too
             // They lack the multi-device support of pointer events and some of the extra parameters
             wire_paint_touch_events(target_device, action_name, node, controller_path);
+            wire_paint_mouse_events(target_device, action_name, node, controller_path);
         } else {
             // Mouse events are supported everywhere.
             // Firefox supports pressure sensitivity via a browser-specific field.
