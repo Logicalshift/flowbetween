@@ -246,10 +246,10 @@ let flo_canvas = (function() {
 
             // Current X, Y coordinates (centered)
             let cur_x = (transform[2]-(pixel_width/2.0))/xscale;
-            let cur_y = (transform[3]-(pixel_width/2.0))/yscale + (pixel_height/2.0);
-
+            let cur_y = (transform[5]-(pixel_height/2.0))/yscale;
+            
             // New center coordinates
-            let center_x = (minx+maxy)/2.0;
+            let center_x = (minx+maxx)/2.0;
             let center_y = (miny+maxy)/2.0;
 
             // Compute the offsets and transform the canvas
