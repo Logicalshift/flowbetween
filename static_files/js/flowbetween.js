@@ -788,8 +788,8 @@ function flowbetween(root_node) {
         // The device that we're currently tracking
         let pointer_device = '';
 
-        // Register for up, down and move events
-        add_action_event(node, 'pointerdown', pointer_event => {
+        // Declare our event handlers
+        let pointer_down = pointer_event => {
             if (check_device(pointer_event)) {
                 if (pointer_device !== '') {
                     // Already painting
@@ -797,7 +797,10 @@ function flowbetween(root_node) {
                     note('Ignoring paint event as already painting');
                 } else {
                     // Start tracking this pointer event
-                    pointer_device = pointer_event.pointerType + '.' + pointer_event.button;
+                    pointer_device = pointer_event.pointerType;
+
+                    document.addEventListener('pointermove', pointer_move);
+                    document.addEventListener('pointerup', pointer_up);
 
                     // Pointer down on the right device
                     pointer_event.preventDefault();
@@ -815,14 +818,16 @@ function flowbetween(root_node) {
             } else {
                 note('Ignoring pointer down event due to incorrect device ' + pointer_event.pointerType);
             }
-        });
+        };
 
-        add_action_event(node, 'pointermove', pointer_event => {
-            if (check_device(pointer_event)) {
+        let pointer_move = pointer_event => {
+            // Can't call check_device here as the mouse button is set to -1 in the move event even when it's being held down
+            // We rely on the move event only being registered after starting a paint operation
+            if (pointer_device === pointer_event.pointerType) {
                 // Prevent the pointer event from firing
                 pointer_event.preventDefault();
 
-                if (pointer_device === pointer_event.pointerType + '.' + pointer_event.button) {
+                if (pointer_device === pointer_event.pointerType) {
                     // This move event is directed to this item
                     let move_parameter = {
                         Paint: [
@@ -833,14 +838,14 @@ function flowbetween(root_node) {
                     perform_action(controller_path, action_name, move_parameter);
                 }
             }
-        });
+        };
 
-        add_action_event(node, 'pointerup', pointer_event => {
+        let pointer_up = pointer_event => {
             if (check_device(pointer_event)) {
                 // Prevent the pointer event from firing
                 pointer_event.preventDefault();
 
-                if (pointer_device === pointer_event.pointerType + '.' + pointer_event.button) {
+                if (pointer_device === pointer_event.pointerType) {
                     // This up event is directed to this item
                     let finish_parameter = {
                         Paint: [
@@ -852,9 +857,15 @@ function flowbetween(root_node) {
 
                     // Release the device
                     pointer_device = '';
+
+                    document.removeEventListener('pointermove', pointer_move);
+                    document.removeEventListener('pointerup', pointer_up);
                 }
             }
-        });
+        };
+
+        // Register for the pointer down event
+        add_action_event(node, 'pointerdown', pointer_down);
     };
 
     ///
