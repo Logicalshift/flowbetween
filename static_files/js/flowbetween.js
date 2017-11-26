@@ -889,7 +889,7 @@ function flowbetween(root_node) {
         };
 
         // Register for the pointer down event
-        add_action_event(node, 'touchstart', touch_start);
+        add_action_event(node, 'touchstart', touch_start, true);
     };
 
     ///
