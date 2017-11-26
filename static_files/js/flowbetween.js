@@ -970,58 +970,52 @@ function flowbetween(root_node) {
         };
 
         let pointer_move = pointer_event => {
-            // Can't call check_device here as the mouse button is set to -1 in the move event even when it's being held down
-            // We rely on the move event only being registered after starting a paint operation
+            // Prevent the pointer event from firing
+            pointer_event.preventDefault();
+
             if (pointer_device === pointer_event.pointerType) {
-                // Prevent the pointer event from firing
-                pointer_event.preventDefault();
-
-                if (pointer_device === pointer_event.pointerType) {
-                    // This move event is directed to this item
-                    if (pointer_event.getCoalescedEvents) {
-                        pointer_event.getCoalescedEvents().forEach(pointer_event => waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue')));
-                    } else {
-                        waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue'));
-                    }
-
-                    // Send the move event as soon as the in-flight events have finished processing
-                    in_flight_event = in_flight_event.then(() => {
-                        if (waiting_events.length > 0) {
-                            let move_parameter = {
-                                Paint: [
-                                    target_device,
-                                    waiting_events
-                                ]
-                            };
-                            waiting_events = [];
-                            return perform_action(controller_path, action_name, move_parameter);
-                        }
-                    });
+                // This move event is directed to this item
+                if (pointer_event.getCoalescedEvents) {
+                    pointer_event.getCoalescedEvents().forEach(pointer_event => waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue')));
+                } else {
+                    waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue'));
                 }
+
+                // Send the move event as soon as the in-flight events have finished processing
+                in_flight_event = in_flight_event.then(() => {
+                    if (waiting_events.length > 0) {
+                        let move_parameter = {
+                            Paint: [
+                                target_device,
+                                waiting_events
+                            ]
+                        };
+                        waiting_events = [];
+                        return perform_action(controller_path, action_name, move_parameter);
+                    }
+                });
             }
         };
 
         let pointer_up = pointer_event => {
-            if (check_device(pointer_event)) {
-                // Prevent the pointer event from firing
-                pointer_event.preventDefault();
+            // Prevent the pointer event from firing
+            pointer_event.preventDefault();
 
-                if (pointer_device === pointer_event.pointerType) {
-                    // This up event is directed to this item
-                    let finish_parameter = {
-                        Paint: [
-                            target_device,
-                            [ pointer_event_to_paint_event(pointer_event, 'Finish') ]
-                        ]
-                    };
-                    in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
+            if (pointer_device === pointer_event.pointerType) {
+                // This up event is directed to this item
+                let finish_parameter = {
+                    Paint: [
+                        target_device,
+                        [ pointer_event_to_paint_event(pointer_event, 'Finish') ]
+                    ]
+                };
+                in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
 
-                    // Release the device
-                    pointer_device = '';
+                // Release the device
+                pointer_device = '';
 
-                    document.removeEventListener('pointermove', pointer_move);
-                    document.removeEventListener('pointerup', pointer_up);
-                }
+                document.removeEventListener('pointermove', pointer_move);
+                document.removeEventListener('pointerup', pointer_up);
             }
         };
 
