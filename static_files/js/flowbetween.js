@@ -837,6 +837,9 @@ function flowbetween(root_node) {
         // The waiting events are move events that have arrived before the in-flight event finished
         let waiting_events  = [];
 
+        // The last event is used to finish a touch
+        let last_event      = null;
+
         // Declare our event handlers
         let touch_start = touch_event => {
             // Start tracking this touch event
@@ -846,6 +849,7 @@ function flowbetween(root_node) {
             touch_event.preventDefault();
 
             // Create the 'start' event
+            last_event = touch_event;
             let start_parameter = {
                 Paint: [
                     target_device,
@@ -857,6 +861,7 @@ function flowbetween(root_node) {
         };
 
         let touch_move = touch_event => {
+            last_event = touch_event;
             waiting_events.push(touch_event_to_paint_event(touch_event, 'Continue'));
 
             // Send the move event as soon as the in-flight events have finished processing
@@ -874,11 +879,12 @@ function flowbetween(root_node) {
             });
         };
 
-        let touch_end = touch_event => {
+        let touch_end = () => {
+            // We finish using the last event as the 'end' event will have 0 touches
             let finish_parameter = {
                 Paint: [
                     target_device,
-                    [ touch_event_to_paint_event(touch_event, 'Finish') ]
+                    [ touch_event_to_paint_event(last_event, 'Finish') ]
                 ]
             };
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
