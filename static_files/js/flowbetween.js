@@ -862,6 +862,14 @@ function flowbetween(root_node) {
             return;
         }
 
+        let check_device = () => true;
+        switch (target_device['Mouse']) {
+        case 'Left':    check_device = mouse_event => mouse_event.button === 0; break;
+        case 'Middle':  check_device = mouse_event => mouse_event.button === 1; break;
+        case 'Right':   check_device = mouse_event => mouse_event.button === 2; break;
+        case 'Other':   check_device = mouse_event => mouse_event.button > 2; break;
+        }
+        
         // The in-flight event is used to queue events while we wait for FlowBetween to process existing events
         let in_flight_event = new Promise((resolve) => resolve());
 
@@ -870,6 +878,11 @@ function flowbetween(root_node) {
 
         // Declare our event handlers
         let mouse_down = mouse_event => {
+            // Must be the right mouse button
+            if (!check_device(mouse_event)) {
+                return;
+            }
+
             // Start tracking this touch event
             document.addEventListener('mousemove', mouse_move, true);
             document.addEventListener('mouseup', mouse_up, true);
