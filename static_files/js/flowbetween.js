@@ -692,6 +692,36 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Converts a PointerEvent to a Paint object.
+    ///
+    /// Action should be 'Start', 'Continue' or 'Finish'
+    ///
+    let pointer_event_to_paint_event = (pointer_event, action) => {
+        // Get the coordinates of this event
+        let x = pointer_event.clientX;
+        let y = pointer_event.clientY;
+
+        // Get the target element
+        let target_element = pointer_event.target;
+
+        // Re-map the coordinates if the target element has any to map
+        if (target_element.flo_map_coords) {
+            let coords = target_element.flo_map_coords(x, y);
+            x = coords[0];
+            y = coords[1];
+        }
+
+        // Generate the final event
+        return {
+            action:     action,
+            location:   [x, y],
+            pressure:   pointer_event.pressure,
+            tilt_x:     pointer_event.tiltX,
+            tilt_y:     pointer_event.tiltY
+        };
+    };
+
+    ///
     /// Adds an action event to a flo node
     ///
     let add_action_event = (node, event_name, handler, options) => {
@@ -739,6 +769,82 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Wires up a paint action to a node
+    ///
+    let wire_paint = (target_device, action_name, node, controller_path) => {
+        // Function to check if a pointer event is for the right device
+        let check_device = () => true;
+        if (target_device === 'Pen')        { check_device = pointer_event => pointer_event.pointerType === 'pen'; }
+        else if (target_device === 'Touch') { check_device = pointer_event => pointer_event.pointerType === 'touch'; }
+        else if (target_device['Mouse']) {
+            switch (target_device['Mouse']) {
+            case 'Left':    check_device = pointer_event => pointer_event.pointerType === 'mouse' && pointer_event.button === 0; break;
+            case 'Middle':  check_device = pointer_event => pointer_event.pointerType === 'mouse' && pointer_event.button === 1; break;
+            case 'Right':   check_device = pointer_event => pointer_event.pointerType === 'mouse' && pointer_event.button === 2; break;
+            case 'Other':   check_device = pointer_event => pointer_event.pointerType === 'mouse' && pointer_event.button > 2; break;
+            }
+        }
+
+        // The device that we're currently tracking
+        let pointer_device = '';
+
+        // Register for up, down and move events
+        add_action_event(node, 'pointerdown', pointer_event => {
+            if (check_device(pointer_event)) {
+                if (pointer_device !== '') {
+                    // Already painting
+                    pointer_event.preventDefault();
+                    note('Ignoring paint event as already painting');
+                } else {
+                    // Start tracking this pointer event
+                    pointer_device = pointer_event.pointerType + '.' + pointer_event.button;
+                    node.setCapture();
+
+                    // Pointer down on the right device
+                    pointer_event.preventDefault();
+                    note('Paint ' + action_name + ' --> ' + controller_path);
+
+                    // Create the 'start' event
+                    let start_parameter = pointer_event_to_paint_event(pointer_event, 'Start');
+                    perform_action(controller_path, action_name, start_parameter);
+                }
+            } else {
+                note('Ignoring pointer down event due to incorrect device ' + pointer_event.pointerType);
+            }
+        });
+
+        add_action_event(node, 'pointermove', pointer_event => {
+            if (check_device(pointer_event)) {
+                // Prevent the pointer event from firing
+                pointer_event.preventDefault();
+
+                if (pointer_device === pointer_event.pointerType + '.' + pointer_event.button) {
+                    // This move event is directed to this item
+                    let move_parameter = pointer_event_to_paint_event(pointer_event, 'Continue');
+                    perform_action(controller_path, action_name, move_parameter);
+                }
+            }
+        });
+
+        add_action_event(node, 'pointerup', pointer_event => {
+            if (check_device(pointer_event)) {
+                // Prevent the pointer event from firing
+                pointer_event.preventDefault();
+
+                if (pointer_device === pointer_event.pointerType + '.' + pointer_event.button) {
+                    // This up event is directed to this item
+                    let move_parameter = pointer_event_to_paint_event(pointer_event, 'Finish');
+                    perform_action(controller_path, action_name, move_parameter);
+
+                    // Release the device
+                    pointer_device = '';
+                    document.releaseCapture();
+                }
+            }
+        });
+    };
+
+    ///
     /// Wires up an action to a node
     ///
     let wire_action = (action, node, controller_path) => {
@@ -749,14 +855,14 @@ function flowbetween(root_node) {
         let action_type = action[0];
         let action_name = action[1];
 
-        switch (action_type) {
-        case 'Click':
+        if (action_type === 'Click') {
             wire_click(action_name, node, controller_path);
-            break;
 
-        default:
+        } else if (action_type['Paint']) {
+            wire_paint(action_type['Paint'], action_name, node, controller_path);
+
+        } else {
             warn('Unknown action type: ' + action_type);
-            break;
         }
     };
 

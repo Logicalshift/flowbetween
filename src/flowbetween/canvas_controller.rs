@@ -108,6 +108,10 @@ impl<Anim: EditableAnimation> Controller for CanvasController<Anim> {
         self.view_model.clone()
     }
 
+    fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
+        println!("{:?} {:?}", action_id, action_parameter);
+    }
+
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<Canvas>>> {
         Some(self.canvases.clone())
     }

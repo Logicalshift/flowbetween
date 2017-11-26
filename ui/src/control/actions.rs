@@ -18,7 +18,7 @@ pub enum ActionTrigger {
 ///
 /// Data that can be sent alongside an action
 ///
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub enum ActionParameter {
     /// Action has no extra data
     None,
