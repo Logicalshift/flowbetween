@@ -697,6 +697,37 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Converts a MouseEvent to a Paint object.
+    ///
+    /// Action should be 'Start', 'Continue' or 'Finish'
+    ///
+    let mouse_event_to_paint_event = (mouse_event, action) => {
+        // Get the coordinates of this event
+        let x = mouse_event.clientX;
+        let y = mouse_event.clientY;
+
+        // Get the target element
+        let target_element = mouse_event.target;
+
+        // Re-map the coordinates if the target element has any to map
+        if (target_element.flo_map_coords) {
+            let coords = target_element.flo_map_coords(x, y);
+            x = coords[0];
+            y = coords[1];
+        }
+
+        // Generate the final event
+        // TODO: can get tilt_x and tilt_y from azimuthAngle and altitudeAngle (but they aren't a direct mapping)
+        return {
+            action:     action,
+            location:   [x, y],
+            pressure:   mouse_event.mozPressure || 0.5,
+            tilt_x:     0,
+            tilt_y:     0
+        };
+    };
+
+    ///
     /// Converts a TouchEvent to a Paint object.
     ///
     /// Action should be 'Start', 'Continue' or 'Finish'
@@ -821,6 +852,80 @@ function flowbetween(root_node) {
 
             perform_action(controller_path, action_name, null);
         });
+    };
+
+    ///
+    /// Wires up a paint action to a node using the mouse events API
+    ///
+    let wire_paint_mouse_events = (target_device, action_name, node, controller_path) => {
+        if (!target_device['Mouse']) {
+            return;
+        }
+
+        // The in-flight event is used to queue events while we wait for FlowBetween to process existing events
+        let in_flight_event = new Promise((resolve) => resolve());
+
+        // The waiting events are move events that have arrived before the in-flight event finished
+        let waiting_events  = [];
+
+        // Declare our event handlers
+        let mouse_down = mouse_event => {
+            // Start tracking this touch event
+            document.addEventListener('mousemove', mouse_move, true);
+            document.addEventListener('mouseup', mouse_up, true);
+            
+            mouse_event.preventDefault();
+
+            // Create the 'start' event
+            let start_parameter = {
+                Paint: [
+                    target_device,
+                    [ mouse_event_to_paint_event(mouse_event, 'Start') ]
+                ]
+            };
+
+            in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, start_parameter));
+        };
+
+        let mouse_move = mouse_event => {
+            mouse_event.preventDefault();
+
+            waiting_events.push(mouse_event_to_paint_event(mouse_event, 'Continue'));
+
+            // Send the move event as soon as the in-flight events have finished processing
+            in_flight_event = in_flight_event.then(() => {
+                if (waiting_events.length > 0) {
+                    let move_parameter = {
+                        Paint: [
+                            target_device,
+                            waiting_events
+                        ]
+                    };
+                    waiting_events = [];
+                    return perform_action(controller_path, action_name, move_parameter);
+                }
+            });
+        };
+
+        let mouse_up = mouse_event => {
+            mouse_event.preventDefault();
+
+            // We finish using the last event as the 'end' event will have 0 touches
+            let finish_parameter = {
+                Paint: [
+                    target_device,
+                    [ mouse_event_to_paint_event(mouse_event, 'Finish') ]
+                ]
+            };
+            in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
+
+            // Release the device
+            document.removeEventListener('mousemove', mouse_move, true);
+            document.removeEventListener('mouseup', mouse_up, true);
+        };
+
+        // Register for the pointer down event
+        add_action_event(node, 'mousedown', mouse_down, true);
     };
 
     ///
@@ -1101,6 +1206,7 @@ function flowbetween(root_node) {
             // Mouse events are supported everywhere.
             // Firefox supports pressure sensitivity via a browser-specific field.
             // Desktop Safari cannot support pressure-sensitivity.
+            wire_paint_mouse_events(target_device, action_name, node, controller_path);
         }
     };
 
