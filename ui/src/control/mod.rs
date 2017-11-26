@@ -1,5 +1,7 @@
 mod json;
 mod types;
+mod paint;
+mod mouse;
 mod bounds;
 mod actions;
 mod control;
@@ -9,6 +11,8 @@ mod attributes;
 
 pub use self::json::*;
 pub use self::types::*;
+pub use self::paint::*;
+pub use self::mouse::*;
 pub use self::bounds::*;
 pub use self::actions::*;
 pub use self::control::*;

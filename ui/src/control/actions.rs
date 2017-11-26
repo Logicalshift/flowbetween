@@ -1,3 +1,5 @@
+use super::paint::*;
+
 ///
 /// Description of what should trigger an action
 ///
@@ -6,6 +8,21 @@ pub enum ActionTrigger {
     /// User clicked this item (pressed down and released while over the same item)
     Click,
 
-    /// Tracks all user clicks and drags over this item
-    Paint
+    /// Tracks all user clicks and drags over this item with a particular device
+    /// In the event a control has multiple devices associated with it, we only track
+    /// paint strokes from a single device (ie, you have to finish a paint stroke before
+    /// you can begin a new one with a different input method)
+    Paint(PaintDevice)
+}
+
+///
+/// Data that can be sent alongside an action
+///
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub enum ActionParameter {
+    /// Action has no extra data
+    None,
+
+    /// Painting information
+    Paint(PaintDevice, Vec<Painting>)
 }
