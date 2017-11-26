@@ -799,8 +799,8 @@ function flowbetween(root_node) {
                     // Start tracking this pointer event
                     pointer_device = pointer_event.pointerType;
 
-                    document.addEventListener('pointermove', pointer_move);
-                    document.addEventListener('pointerup', pointer_up);
+                    document.addEventListener('pointermove', pointer_move, true);
+                    document.addEventListener('pointerup', pointer_up, true);
 
                     // Pointer down on the right device
                     pointer_event.preventDefault();
