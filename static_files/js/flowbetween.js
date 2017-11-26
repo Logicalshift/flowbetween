@@ -805,7 +805,12 @@ function flowbetween(root_node) {
                     note('Paint ' + action_name + ' --> ' + controller_path);
 
                     // Create the 'start' event
-                    let start_parameter = pointer_event_to_paint_event(pointer_event, 'Start');
+                    let start_parameter = {
+                        Paint: [
+                            target_device,
+                            [ pointer_event_to_paint_event(pointer_event, 'Start') ]
+                        ]
+                    };
                     perform_action(controller_path, action_name, start_parameter);
                 }
             } else {
@@ -820,7 +825,12 @@ function flowbetween(root_node) {
 
                 if (pointer_device === pointer_event.pointerType + '.' + pointer_event.button) {
                     // This move event is directed to this item
-                    let move_parameter = pointer_event_to_paint_event(pointer_event, 'Continue');
+                    let move_parameter = {
+                        Paint: [
+                            target_device,
+                            [ pointer_event_to_paint_event(pointer_event, 'Continue') ]
+                        ]
+                    };
                     perform_action(controller_path, action_name, move_parameter);
                 }
             }
@@ -833,8 +843,13 @@ function flowbetween(root_node) {
 
                 if (pointer_device === pointer_event.pointerType + '.' + pointer_event.button) {
                     // This up event is directed to this item
-                    let move_parameter = pointer_event_to_paint_event(pointer_event, 'Finish');
-                    perform_action(controller_path, action_name, move_parameter);
+                    let finish_parameter = {
+                        Paint: [
+                            target_device,
+                            [ pointer_event_to_paint_event(pointer_event, 'Finish') ]
+                        ]
+                    };
+                    perform_action(controller_path, action_name, finish_parameter);
 
                     // Release the device
                     pointer_device = '';
