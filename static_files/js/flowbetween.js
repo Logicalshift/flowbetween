@@ -1158,46 +1158,41 @@ function flowbetween(root_node) {
             // Prevent the pointer event from firing
             pointer_event.preventDefault();
 
-            if (pointer_device === pointer_event.pointerType) {
-                // This up event is directed to this item
-                let finish_parameter = {
-                    Paint: [
-                        target_device,
-                        [ pointer_event_to_paint_event(pointer_event, 'Finish') ]
-                    ]
-                };
-                in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
+            let finish_parameter = {
+                Paint: [
+                    target_device,
+                    [ pointer_event_to_paint_event(pointer_event, 'Finish') ]
+                ]
+            };
+            in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
 
-                // Release the device
-                pointer_device = '';
+            // Release the device
+            pointer_device = '';
 
-                document.removeEventListener('pointermove', pointer_move, true);
-                document.removeEventListener('pointerup', pointer_up, true);
-                document.removeEventListener('pointercancel', pointer_cancel, true);
-            }
+            document.removeEventListener('pointermove', pointer_move, true);
+            document.removeEventListener('pointerup', pointer_up, true);
+            document.removeEventListener('pointercancel', pointer_cancel, true);
         };
 
         let pointer_cancel = pointer_event => {
             // Prevent the pointer event from firing
             pointer_event.preventDefault();
 
-            if (pointer_device === pointer_event.pointerType) {
-                // This up event is directed to this item
-                let finish_parameter = {
-                    Paint: [
-                        target_device,
-                        [ pointer_event_to_paint_event(pointer_event, 'Cancel') ]
-                    ]
-                };
-                in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
+            // This up event is directed to this item
+            let finish_parameter = {
+                Paint: [
+                    target_device,
+                    [ pointer_event_to_paint_event(pointer_event, 'Cancel') ]
+                ]
+            };
+            in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
 
-                // Release the device
-                pointer_device = '';
+            // Release the device
+            pointer_device = '';
 
-                document.removeEventListener('pointermove', pointer_move, true);
-                document.removeEventListener('pointerup', pointer_up, true);
-                document.removeEventListener('pointercancel', pointer_cancel, true);
-            }
+            document.removeEventListener('pointermove', pointer_move, true);
+            document.removeEventListener('pointerup', pointer_up, true);
+            document.removeEventListener('pointercancel', pointer_cancel, true);
         };
 
         // Register for the pointer down event
