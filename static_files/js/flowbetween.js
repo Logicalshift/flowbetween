@@ -801,7 +801,7 @@ function flowbetween(root_node) {
 
                     // Pointer down on the right device
                     pointer_event.preventDefault();
-                    note('Paint ' + action_name + ' --> ' + controller_path);
+                    note('Paint ' + target_device + ' (' + action_name + ') --> ' + controller_path);
 
                     // Create the 'start' event
                     let start_parameter = {
