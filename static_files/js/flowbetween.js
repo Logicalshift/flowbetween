@@ -804,6 +804,18 @@ function flowbetween(root_node) {
             case 'Right':   check_device = pointer_event => pointer_event.pointerType === 'mouse' && pointer_event.button === 2; break;
             case 'Other':   check_device = pointer_event => pointer_event.pointerType === 'mouse' && pointer_event.button > 2; break;
             }
+        } else if (target_device === 'Other') {
+            check_device = pointer_event => {
+                switch (pointer_event.pointerType) {
+                case 'pen':
+                case 'touch':
+                case 'mouse':
+                    return false;
+                
+                default:
+                    return true;
+                }
+            };
         }
 
         // The device that we're currently tracking
