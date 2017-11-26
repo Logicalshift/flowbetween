@@ -51,11 +51,12 @@ impl<Anim: EditableAnimation> CanvasController<Anim> {
     /// Clears a canvas and sets it up for rendering
     /// 
     fn clear_canvas(&self, canvas: &Resource<Canvas>) {
-        let (_width, height) = self.animation.size();
+        let (width, height) = self.animation.size();
 
         canvas.draw(move |gc| {
             gc.clear_canvas();
             gc.canvas_height((height*1.05) as f32);
+            gc.center_region(0.0,0.0, width as f32, height as f32);
         });
     }
 
@@ -68,10 +69,6 @@ impl<Anim: EditableAnimation> CanvasController<Anim> {
 
         canvas.draw(move |gc| {
             let (width, height)             = (width as f32, height as f32);
-            let (minx, miny, maxx, maxy)    = (
-                -width/2.0, -height/2.0,
-                width/2.0, height/2.0
-            );
 
             gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
             gc.line_width_pixels(1.0);
@@ -81,13 +78,13 @@ impl<Anim: EditableAnimation> CanvasController<Anim> {
 
             gc.fill_color(Color::Rgba(0.1, 0.1, 0.1, 0.4));
             gc.new_path();
-            gc.rect(minx, miny-offset, maxx+offset, maxy);
+            gc.rect(0.0, 0.0-offset, width+offset, height);
             gc.fill();
 
             // Draw the canvas background
             gc.fill_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
             gc.new_path();
-            gc.rect(minx, miny, maxx, maxy);
+            gc.rect(0.0, 0.0, width, height);
             gc.fill();
             gc.stroke();
         });
