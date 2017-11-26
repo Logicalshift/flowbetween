@@ -789,7 +789,7 @@ function flowbetween(root_node) {
         // Update the function that removes events from this node
         let remove_more_events = node.flo_remove_actions;
         node.flo_remove_actions = () => {
-            event_nodes.forEach(node => node.removeEventListener(event_name, handler, options));
+            event_nodes.forEach(node => node.removeEventListener(event_name, handler));
             event_nodes = [];
 
             if (remove_more_events) {
