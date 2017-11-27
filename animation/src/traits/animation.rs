@@ -17,16 +17,6 @@ pub trait Animation : HasAttributes+Send+Sync {
     fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Layer>>;
 }
 
-///
-/// Represents an animation that can be edited
-/// 
-pub trait EditableAnimation : Animation {
-
-}
-
-impl EditableAnimation for () {
-}
-
 impl Animation for () {
     fn size(&self) -> (f64, f64) {
         (1980.0, 1080.0)

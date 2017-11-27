@@ -22,7 +22,7 @@ enum SubController {
 ///
 /// The editor controller manages the editing of a single file
 ///
-pub struct EditorController<Animation: EditableAnimation> {
+pub struct EditorController<Anim: Animation> {
     /// The view model for the editor
     view_model: Arc<NullViewModel>,
 
@@ -30,14 +30,14 @@ pub struct EditorController<Animation: EditableAnimation> {
     ui: Binding<Control>,
 
     /// The animation that this will edit
-    animation: Arc<Animation>,
+    animation: Arc<Anim>,
 
     /// The subcontrollers for this editor
     subcontrollers: HashMap<SubController, Arc<Controller>>
 }
 
-impl<Animation: 'static+EditableAnimation> EditorController<Animation> {
-    pub fn new(animation: Animation) -> EditorController<Animation> {
+impl<Anim: 'static+Animation> EditorController<Anim> {
+    pub fn new(animation: Anim) -> EditorController<Anim> {
         let animation   = Arc::new(animation);
 
         let canvas      = Arc::new(CanvasController::new(&animation));
@@ -147,7 +147,7 @@ impl<Animation: 'static+EditableAnimation> EditorController<Animation> {
     }
 }
 
-impl<Animation: EditableAnimation> Controller for EditorController<Animation> {
+impl<Anim: Animation> Controller for EditorController<Anim> {
     fn ui(&self) -> Arc<Bound<Control>> {
         Arc::new(self.ui.clone())
     }

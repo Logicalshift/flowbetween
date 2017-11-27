@@ -8,14 +8,14 @@ use std::sync::*;
 ///
 /// The canvas controller manages the main drawing canvas
 ///
-pub struct CanvasController<Anim: EditableAnimation> {
+pub struct CanvasController<Anim: Animation> {
     view_model: Arc<NullViewModel>,
     ui:         Binding<Control>,
     canvases:   Arc<ResourceManager<Canvas>>,
     animation:  Arc<Anim>
 }
 
-impl<Anim: EditableAnimation> CanvasController<Anim> {
+impl<Anim: Animation> CanvasController<Anim> {
     pub fn new(animation: &Arc<Anim>) -> CanvasController<Anim> {
         // Create the resources
         let canvases = ResourceManager::new();
@@ -99,7 +99,7 @@ impl<Anim: EditableAnimation> CanvasController<Anim> {
     }
 }
 
-impl<Anim: EditableAnimation> Controller for CanvasController<Anim> {
+impl<Anim: Animation> Controller for CanvasController<Anim> {
     fn ui(&self) -> Arc<Bound<Control>> {
         Arc::new(self.ui.clone())
     }
