@@ -89,6 +89,8 @@ impl ToolboxController {
         // The tool has a '-selected' binding that we use to cause it to highlight
         let compare_name            = String::from(name);
         let selected_property_name  = format!("{}-selected", name);
+
+        // When the selected tool is set to the name of this tool, the selected property should be set to true
         viewmodel.set_computed(&selected_property_name, move || {
             let selected_tool = selected_tool.get().string().unwrap_or(String::from(""));
             PropertyValue::Bool(selected_tool == compare_name)
