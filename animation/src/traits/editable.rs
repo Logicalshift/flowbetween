@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 ///
 /// Represents an item that can be edited
 ///
-pub trait Editable<T> {
+pub trait Editable<T: ?Sized> {
     ///
     /// Opens this item for editing, if an editor is available
     ///
@@ -18,19 +18,19 @@ pub trait Editable<T> {
 ///
 /// Represents a reader for type T
 /// 
-pub struct Reader<'a, T: 'a> {
+pub struct Reader<'a, T: ?Sized+'a> {
     target: Box<'a+Deref<Target=T>>
 }
 
 ///
 /// Represents an editor for type T
 ///
-pub struct Editor<'a, T: 'a> {
+pub struct Editor<'a, T: ?Sized+'a> {
     /// The target that is being edited
     target: Box<'a+DerefMut<Target=T>>,
 }
 
-impl<'a, T: 'a> Reader<'a, T> {
+impl<'a, T: ?Sized+'a> Reader<'a, T> {
     ///
     /// Creates a new reader from something that can be dereferenced as the specified type
     ///
@@ -39,7 +39,7 @@ impl<'a, T: 'a> Reader<'a, T> {
     }
 }
 
-impl<'a, T: 'a> Editor<'a, T> {
+impl<'a, T: ?Sized+'a> Editor<'a, T> {
     ///
     /// Creates a new editor from something that can be dereferenced as the specified type
     ///
@@ -48,7 +48,7 @@ impl<'a, T: 'a> Editor<'a, T> {
     }
 }
 
-impl<'a, T: 'a> Deref for Reader<'a, T> {
+impl<'a, T: ?Sized+'a> Deref for Reader<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -56,7 +56,7 @@ impl<'a, T: 'a> Deref for Reader<'a, T> {
     }
 }
 
-impl<'a, T: 'a> Deref for Editor<'a, T> {
+impl<'a, T: ?Sized+'a> Deref for Editor<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -64,13 +64,13 @@ impl<'a, T: 'a> Deref for Editor<'a, T> {
     }
 }
 
-impl<'a, T: 'a> DerefMut for Editor<'a, T> {
+impl<'a, T: ?Sized+'a> DerefMut for Editor<'a, T> {
     fn deref_mut(&mut self) -> &mut T {
         self.target.deref_mut()
     }
 }
 
-impl<T> Editable<T> for () {
+impl<T: ?Sized> Editable<T> for () {
     fn open(&self) -> Option<Editor<T>> { None }
     fn read(&self) -> Option<Reader<T>> { None }
 }
