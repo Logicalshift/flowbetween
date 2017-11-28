@@ -78,14 +78,14 @@ impl<T: ?Sized> Editable<T> for () {
 ///
 /// Opens an editable object for reading if possible
 /// 
-pub fn open_read<'a, EditorType>(editable: &'a Editable<EditorType>) -> Option<Reader<'a, EditorType>> {
+pub fn open_read<'a, EditorType: ?Sized>(editable: &'a Editable<EditorType>) -> Option<Reader<'a, EditorType>> {
     editable.read()
 }
 
 ///
 /// Opens an editable object for editing if possible
 /// 
-pub fn open_edit<'a, EditorType>(editable: &'a Editable<EditorType>) -> Option<Editor<'a, EditorType>> {
+pub fn open_edit<'a, EditorType: ?Sized>(editable: &'a Editable<EditorType>) -> Option<Editor<'a, EditorType>> {
     editable.open()
 }
 

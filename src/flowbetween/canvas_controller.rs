@@ -57,7 +57,9 @@ impl<Anim: Animation> CanvasController<Anim> {
     /// Clears a canvas and sets it up for rendering
     /// 
     fn clear_canvas(&self, canvas: &Resource<Canvas>) {
-        let (width, height) = self.animation.size();
+        let (width, height) = open_read::<AnimationSize>(&*self.animation)
+            .map(|size| size.size())
+            .unwrap_or((1920.0, 1080.0));
 
         canvas.draw(move |gc| {
             gc.clear_canvas();
@@ -71,7 +73,9 @@ impl<Anim: Animation> CanvasController<Anim> {
     ///
     fn create_background_canvas(&self) -> Resource<Canvas> {
         let canvas          = self.create_canvas();
-        let (width, height) = self.animation.size();
+        let (width, height) = open_read::<AnimationSize>(&*self.animation)
+            .map(|size| size.size())
+            .unwrap_or((1920.0, 1080.0));
 
         canvas.draw(move |gc| {
             let (width, height)             = (width as f32, height as f32);

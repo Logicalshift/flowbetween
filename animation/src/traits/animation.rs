@@ -7,15 +7,6 @@ use super::super::inmemory::*;
 /// Represents an animation
 ///
 pub trait Animation : Editable<AnimationLayers>+Editable<AnimationSize>+HasAttributes+Send+Sync {
-    ///
-    /// Returns the dimensions of this animation
-    /// 
-    fn size(&self) -> (f64, f64);
-
-    ///
-    /// Retrieves the layers for this animation
-    ///
-    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Layer>>;
 }
 
 ///
@@ -30,7 +21,7 @@ pub trait AnimationSize {
     ///
     /// Updates the frame size of this animation
     ///
-    fn set_size(&self, (f64, f64));
+    fn set_size(&mut self, (f64, f64));
 }
 
 ///
@@ -54,11 +45,4 @@ pub trait AnimationLayers {
 }
 
 impl Animation for () {
-    fn size(&self) -> (f64, f64) {
-        (1980.0, 1080.0)
-    }
-
-    fn layers<'a>(&'a self) -> Box<Iterator<Item = &'a Layer>> {
-        Box::new(EmptyIterator::new())
-    }
 }
