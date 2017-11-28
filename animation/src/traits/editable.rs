@@ -41,6 +41,10 @@ impl<'a, T: ?Sized+'a> DerefMut for Editor<'a, T> {
     }
 }
 
+impl<T> Editable<T> for () {
+    fn open(&self) -> Option<Editor<T>> { None }
+}
+
 ///
 /// Opens an editable object for editing if possible
 /// 
