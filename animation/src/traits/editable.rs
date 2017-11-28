@@ -8,6 +8,18 @@ pub trait Editable<T> {
     /// Opens this item for editing, if an editor is available
     ///
     fn open(&self) -> Option<Editor<T>>;
+
+    ///
+    /// Opens this item for reading, if a reader is available
+    ///
+    fn read(&self) -> Option<Reader<T>>;
+}
+
+///
+/// Represents a reader for type T
+/// 
+pub struct Reader<'a, T: 'a> {
+    target: Box<'a+Deref<Target=T>>
 }
 
 ///
@@ -18,12 +30,29 @@ pub struct Editor<'a, T: 'a> {
     target: Box<'a+DerefMut<Target=T>>,
 }
 
+impl<'a, T: 'a> Reader<'a, T> {
+    ///
+    /// Creates a new reader from something that can be dereferenced as the specified type
+    ///
+    pub fn new<Owner: 'a+Deref<Target=T>>(target: Owner) -> Reader<'a, T> {
+        Reader { target: Box::new(target) }
+    }
+}
+
 impl<'a, T: 'a> Editor<'a, T> {
     ///
     /// Creates a new editor from something that can be dereferenced as the specified type
     ///
     pub fn new<Owner: 'a+DerefMut<Target=T>>(target: Owner) -> Editor<'a, T> {
         Editor { target: Box::new(target) }
+    }
+}
+
+impl<'a, T: 'a> Deref for Reader<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        self.target.deref()
     }
 }
 
@@ -43,12 +72,20 @@ impl<'a, T: 'a> DerefMut for Editor<'a, T> {
 
 impl<T> Editable<T> for () {
     fn open(&self) -> Option<Editor<T>> { None }
+    fn read(&self) -> Option<Reader<T>> { None }
+}
+
+///
+/// Opens an editable object for reading if possible
+/// 
+pub fn open_read<'a, EditorType>(editable: &'a Editable<EditorType>) -> Option<Reader<'a, EditorType>> {
+    editable.read()
 }
 
 ///
 /// Opens an editable object for editing if possible
 /// 
-pub fn edit<'a, EditorType>(editable: &'a Editable<EditorType>) -> Option<Editor<'a, EditorType>> {
+pub fn open_edit<'a, EditorType>(editable: &'a Editable<EditorType>) -> Option<Editor<'a, EditorType>> {
     editable.open()
 }
 
@@ -56,6 +93,22 @@ pub fn edit<'a, EditorType>(editable: &'a Editable<EditorType>) -> Option<Editor
 mod test {
     use super::*;
     use std::sync::*;
+
+    #[test]
+    fn can_create_reader_for_mutex() {
+        let mutex = Mutex::new(1);
+
+        {
+            // Lock the mutex and turn the lock into a reader
+            let reader = {
+                let locked = mutex.lock().unwrap();
+                Reader::new(locked)
+            };
+
+            // Can use the reader like it was the lock
+            assert!(*reader == 1);
+        }
+    }
 
     #[test]
     fn can_create_editor_for_mutex() {
@@ -81,17 +134,19 @@ mod test {
 
     impl Editable<i32> for TestEditable {
         fn open(&self) -> Option<Editor<i32>> { None }
+        fn read(&self) -> Option<Reader<i32>> { None }
     }
 
     impl Editable<bool> for TestEditable {
         fn open(&self) -> Option<Editor<bool>> { None }
+        fn read(&self) -> Option<Reader<bool>> { None }
     }
 
     #[test]
     fn can_have_multiple_editable_items() {
         let test = TestEditable;
         let edit_i32:Option<Editor<i32>>    = test.open();
-        let edit_bool                       = edit::<bool>(&test);
+        let edit_bool                       = open_edit::<bool>(&test);
 
         assert!(edit_i32.is_none());
         assert!(edit_bool.is_none());
