@@ -41,6 +41,13 @@ impl<'a, T: ?Sized+'a> DerefMut for Editor<'a, T> {
     }
 }
 
+///
+/// Opens an editable object for editing if possible
+/// 
+pub fn edit<'a, EditorType>(editable: &'a Editable<EditorType>) -> Option<Editor<'a, EditorType>> {
+    editable.open()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -80,7 +87,7 @@ mod test {
     fn can_have_multiple_editable_items() {
         let test = TestEditable;
         let edit_i32:Option<Editor<i32>>    = test.open();
-        let edit_bool                       = (&test as &Editable<bool>).open();
+        let edit_bool                       = edit::<bool>(&test);
 
         assert!(edit_i32.is_none());
         assert!(edit_bool.is_none());
