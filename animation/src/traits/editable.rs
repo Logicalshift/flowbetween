@@ -13,12 +13,12 @@ pub trait Editable<T> {
 ///
 /// Represents an editor for type T
 ///
-pub struct Editor<'a, T: ?Sized+'a> {
+pub struct Editor<'a, T: 'a> {
     /// The target that is being edited
     target: Box<'a+DerefMut<Target=T>>,
 }
 
-impl<'a, T: ?Sized+'a> Editor<'a, T> {
+impl<'a, T: 'a> Editor<'a, T> {
     ///
     /// Creates a new editor from something that can be dereferenced as the specified type
     ///
@@ -27,7 +27,7 @@ impl<'a, T: ?Sized+'a> Editor<'a, T> {
     }
 }
 
-impl<'a, T: ?Sized+'a> Deref for Editor<'a, T> {
+impl<'a, T: 'a> Deref for Editor<'a, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -35,7 +35,7 @@ impl<'a, T: ?Sized+'a> Deref for Editor<'a, T> {
     }
 }
 
-impl<'a, T: ?Sized+'a> DerefMut for Editor<'a, T> {
+impl<'a, T: 'a> DerefMut for Editor<'a, T> {
     fn deref_mut(&mut self) -> &mut T {
         self.target.deref_mut()
     }
