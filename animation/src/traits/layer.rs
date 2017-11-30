@@ -1,5 +1,6 @@
 use super::frame::*;
 
+use std::sync::*;
 use std::time::Duration;
 
 ///
@@ -14,7 +15,7 @@ pub trait Layer {
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
-    fn get_frame_at_time(&self, time_index: Duration);
+    fn get_frame_at_time<'a>(&self, time_index: Duration) -> &'a Frame;
 
     ///
     /// Retrieves the key frames in this layer
