@@ -1,12 +1,17 @@
-use super::frame::*;
+mod paint;
 
-use std::sync::*;
+pub use self::paint::*;
+
+use super::frame::*;
+use super::editable::*;
 use std::time::Duration;
 
 ///
 /// A layer represents a renderable plane in an animation
 ///
-pub trait Layer {
+pub trait Layer : 
+    Editable<PaintLayer>+
+    Send+Sync {
     ///
     /// The ID associated with this layer
     /// 
