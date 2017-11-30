@@ -1,13 +1,15 @@
 use ui::canvas::*;
 
+use std::time::Duration;
+
 ///
 /// Represents a single frame in a layer of an animation
 ///
 pub trait Frame {
     ///
-    /// Time index of this frame, in nanoseconds
+    /// Time index of this frame
     /// 
-    fn time_index(&self) -> u64;
+    fn time_index(&self) -> Duration;
 
     ///
     /// Renders this frame to a particular graphics context
