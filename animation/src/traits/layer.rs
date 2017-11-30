@@ -1,16 +1,18 @@
 use super::frame::*;
-use super::frame_parameter::*;
-
-use std::any::*;
 
 ///
 /// A layer represents a renderable plane in an animation
 ///
-pub trait Layer : Any {
+pub trait Layer {
+    ///
+    /// The ID associated with this layer
+    /// 
+    fn id(&self) -> u64;
+
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
-    fn get_frame(&self, parameters: &mut Iterator<Item = FrameParameter>) -> Box<Frame>;
+    fn get_frame_at_time(&self, time_index_nanos: u64);
 
     ///
     /// Retrieves the key frames in this layer
