@@ -1,11 +1,9 @@
-pub mod attributes;
 pub mod editable;
 pub mod animation;
 pub mod frame;
 pub mod layer;
 pub mod frame_parameter;
 
-pub use self::attributes::*;
 pub use self::editable::*;
 pub use self::animation::*;
 pub use self::frame::*;

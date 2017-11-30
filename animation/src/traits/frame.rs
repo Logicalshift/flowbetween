@@ -1,10 +1,9 @@
 use ui::canvas::*;
-use super::attributes::*;
 
 ///
 /// Represents a single frame in a layer of an animation
 ///
-pub trait Frame : HasAttributes {
+pub trait Frame {
     ///
     /// Time index of this frame, in nanoseconds
     /// 

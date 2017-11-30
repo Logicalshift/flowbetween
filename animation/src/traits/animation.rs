@@ -1,12 +1,14 @@
 use super::layer::*;
 use super::editable::*;
-use super::attributes::*;
 use super::super::inmemory::*;
 
 ///
 /// Represents an animation
 ///
-pub trait Animation : Editable<AnimationLayers>+Editable<AnimationSize>+HasAttributes+Send+Sync {
+pub trait Animation : 
+    Editable<AnimationLayers>+
+    Editable<AnimationSize>+
+    Send+Sync {
 }
 
 ///
