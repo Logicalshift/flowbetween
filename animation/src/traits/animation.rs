@@ -23,7 +23,7 @@ pub trait AnimationSize {
     ///
     /// Updates the frame size of this animation
     ///
-    fn set_size(&mut self, (f64, f64));
+    fn set_size(&mut self, new_size: (f64, f64));
 }
 
 ///
