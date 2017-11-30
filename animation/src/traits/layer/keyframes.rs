@@ -10,4 +10,9 @@ pub trait KeyFrameLayer {
     /// animation.
     /// 
     fn add_key_frame(&mut self, time_offset: Duration);
+
+    ///
+    /// Moves a key frame from a point in time to a new point in time
+    /// 
+    fn move_key_frame(&mut self, from: Duration, to: Duration);
 }
