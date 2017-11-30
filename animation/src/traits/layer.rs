@@ -1,5 +1,7 @@
 use super::frame::*;
 
+use std::time::Duration;
+
 ///
 /// A layer represents a renderable plane in an animation
 ///
@@ -12,7 +14,7 @@ pub trait Layer {
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
-    fn get_frame_at_time(&self, time_index_nanos: u64);
+    fn get_frame_at_time(&self, time_index: Duration);
 
     ///
     /// Retrieves the key frames in this layer
