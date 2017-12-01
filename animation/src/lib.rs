@@ -7,5 +7,6 @@ extern crate ui;
 
 mod traits;
 pub mod inmemory;
+pub mod brushes;
 
 pub use self::traits::*;
