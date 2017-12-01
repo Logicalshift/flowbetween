@@ -18,6 +18,7 @@ struct AnimationCore {
 /// Represents an animation that's stored entirely in memory 
 ///
 pub struct InMemoryAnimation {
+    /// The core contains the actual animation data
     core: RwLock<AnimationCore>
 }
 
