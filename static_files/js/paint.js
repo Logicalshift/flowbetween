@@ -33,7 +33,11 @@ let flo_paint = (function() {
         let y = mouse_event.clientY;
 
         // Get the target element
-        let target_element = mouse_event.target;
+        let target_element  = mouse_event.target;
+        let client_rect     = target_element.getBoundingClientRect();
+
+        x -= client_rect.left;
+        y -= client_rect.top;
 
         // Re-map the coordinates if the target element has any to map
         if (target_element.flo_map_coords) {
@@ -67,8 +71,12 @@ let flo_paint = (function() {
         let y = touch.clientY;
 
         // Get the target element
-        let target_element = touch.target;
-
+        let target_element  = touch.target;
+        let client_rect     = target_element.getBoundingClientRect();
+        
+        x -= client_rect.left;
+        y -= client_rect.top;
+        
         // Re-map the coordinates if the target element has any to map
         if (target_element.flo_map_coords) {
             let coords = target_element.flo_map_coords(x, y);
@@ -98,8 +106,12 @@ let flo_paint = (function() {
         let y = pointer_event.clientY;
 
         // Get the target element
-        let target_element = pointer_event.target;
-
+        let target_element  = pointer_event.target;
+        let client_rect     = target_element.getBoundingClientRect();
+        
+        x -= client_rect.left;
+        y -= client_rect.top;
+        
         // Re-map the coordinates if the target element has any to map
         if (target_element.flo_map_coords) {
             let coords = target_element.flo_map_coords(x, y);
