@@ -430,7 +430,7 @@ let flo_paint = (function() {
             let finish_parameter = {
                 Paint: [
                     target_device,
-                    [ pointer_event_to_paint_event(pointer_event, 'Finish') ]
+                    [ pointer_event_to_paint_event(pointer_event, 'Finish', node) ]
                 ]
             };
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
