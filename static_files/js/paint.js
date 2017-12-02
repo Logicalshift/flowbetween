@@ -27,14 +27,13 @@ let flo_paint = (function() {
     ///
     /// Action should be 'Start', 'Continue' or 'Finish'
     ///
-    let mouse_event_to_paint_event = (mouse_event, action) => {
+    let mouse_event_to_paint_event = (mouse_event, action, target_element) => {
         // Get the coordinates of this event
         let x = mouse_event.clientX;
         let y = mouse_event.clientY;
 
         // Get the target element
-        let target_element  = mouse_event.target;
-        let client_rect     = target_element.getBoundingClientRect();
+        let client_rect = target_element.getBoundingClientRect();
 
         x -= client_rect.left;
         y -= client_rect.top;
@@ -62,7 +61,7 @@ let flo_paint = (function() {
     ///
     /// Action should be 'Start', 'Continue' or 'Finish'
     ///
-    let touch_event_to_paint_event = (touch_event, action) => {
+    let touch_event_to_paint_event = (touch_event, action, target_element) => {
         // We always just track the first touch here
         let touch = touch_event.touches[0];
 
@@ -71,8 +70,7 @@ let flo_paint = (function() {
         let y = touch.clientY;
 
         // Get the target element
-        let target_element  = touch.target;
-        let client_rect     = target_element.getBoundingClientRect();
+        let client_rect = target_element.getBoundingClientRect();
         
         x -= client_rect.left;
         y -= client_rect.top;
@@ -100,14 +98,13 @@ let flo_paint = (function() {
     ///
     /// Action should be 'Start', 'Continue' or 'Finish'
     ///
-    let pointer_event_to_paint_event = (pointer_event, action) => {
+    let pointer_event_to_paint_event = (pointer_event, action, target_element) => {
         // Get the coordinates of this event
         let x = pointer_event.clientX;
         let y = pointer_event.clientY;
 
         // Get the target element
-        let target_element  = pointer_event.target;
-        let client_rect     = target_element.getBoundingClientRect();
+        let client_rect = target_element.getBoundingClientRect();
         
         x -= client_rect.left;
         y -= client_rect.top;
@@ -169,7 +166,7 @@ let flo_paint = (function() {
             let start_parameter = {
                 Paint: [
                     target_device,
-                    [ mouse_event_to_paint_event(mouse_event, 'Start') ]
+                    [ mouse_event_to_paint_event(mouse_event, 'Start', node) ]
                 ]
             };
 
@@ -179,7 +176,7 @@ let flo_paint = (function() {
         let mouse_move = mouse_event => {
             mouse_event.preventDefault();
 
-            waiting_events.push(mouse_event_to_paint_event(mouse_event, 'Continue'));
+            waiting_events.push(mouse_event_to_paint_event(mouse_event, 'Continue', node));
 
             // Send the move event as soon as the in-flight events have finished processing
             in_flight_event = in_flight_event.then(() => {
@@ -203,7 +200,7 @@ let flo_paint = (function() {
             let finish_parameter = {
                 Paint: [
                     target_device,
-                    [ mouse_event_to_paint_event(mouse_event, 'Finish') ]
+                    [ mouse_event_to_paint_event(mouse_event, 'Finish', node) ]
                 ]
             };
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
@@ -262,7 +259,7 @@ let flo_paint = (function() {
             let start_parameter = {
                 Paint: [
                     target_device,
-                    [ touch_event_to_paint_event(touch_event, 'Start') ]
+                    [ touch_event_to_paint_event(touch_event, 'Start', node) ]
                 ]
             };
 
@@ -273,7 +270,7 @@ let flo_paint = (function() {
             touch_event.preventDefault();
 
             last_event = touch_event;
-            waiting_events.push(touch_event_to_paint_event(touch_event, 'Continue'));
+            waiting_events.push(touch_event_to_paint_event(touch_event, 'Continue', node));
 
             // Send the move event as soon as the in-flight events have finished processing
             in_flight_event = in_flight_event.then(() => {
@@ -297,7 +294,7 @@ let flo_paint = (function() {
             let finish_parameter = {
                 Paint: [
                     target_device,
-                    [ touch_event_to_paint_event(last_event, 'Finish') ]
+                    [ touch_event_to_paint_event(last_event, 'Finish', node) ]
                 ]
             };
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
@@ -315,7 +312,7 @@ let flo_paint = (function() {
             let finish_parameter = {
                 Paint: [
                     target_device,
-                    [ touch_event_to_paint_event(last_event, 'Cancel') ]
+                    [ touch_event_to_paint_event(last_event, 'Cancel', node) ]
                 ]
             };
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
@@ -389,7 +386,7 @@ let flo_paint = (function() {
                     let start_parameter = {
                         Paint: [
                             target_device,
-                            [ pointer_event_to_paint_event(pointer_event, 'Start') ]
+                            [ pointer_event_to_paint_event(pointer_event, 'Start', node) ]
                         ]
                     };
 
@@ -405,9 +402,9 @@ let flo_paint = (function() {
             if (pointer_device === pointer_event.pointerType) {
                 // This move event is directed to this item
                 if (pointer_event.getCoalescedEvents) {
-                    pointer_event.getCoalescedEvents().forEach(pointer_event => waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue')));
+                    pointer_event.getCoalescedEvents().forEach(pointer_event => waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue', node)));
                 } else {
-                    waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue'));
+                    waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue', node));
                 }
 
                 // Send the move event as soon as the in-flight events have finished processing
@@ -454,7 +451,7 @@ let flo_paint = (function() {
             let finish_parameter = {
                 Paint: [
                     target_device,
-                    [ pointer_event_to_paint_event(pointer_event, 'Cancel') ]
+                    [ pointer_event_to_paint_event(pointer_event, 'Cancel', node) ]
                 ]
             };
             in_flight_event = in_flight_event.then(() => perform_action(controller_path, action_name, finish_parameter));
