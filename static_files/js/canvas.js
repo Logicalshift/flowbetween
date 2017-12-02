@@ -369,6 +369,10 @@ let flo_canvas = (function() {
             replay.forEach(item => item());
         }
 
+        function map_coords(x, y) {
+            return [0, 0];
+        }
+
         return {
             new_path:           ()              => { replay.push(new_path);                             new_path();                     },
             move_to:            (x, y)          => { replay.push(() => move_to(x, y));                  move_to(x, y);                  },
@@ -398,7 +402,8 @@ let flo_canvas = (function() {
             pop_state:          ()              => { replay.push(pop_state);                            pop_state();                    },
             clear_canvas:       ()              => { replay = [ clear_canvas ];                         clear_canvas();                 },
 
-            replay_drawing:     replay_drawing
+            replay_drawing:     replay_drawing,
+            map_coords:         map_coords
         };
     }
 
@@ -766,10 +771,12 @@ let flo_canvas = (function() {
         let decoder                 = create_decoder(draw);
         element.flo_canvas_decoder  = decoder;
         element.flo_draw            = draw;
+        element.flo_map_coords      = draw.map_coords;
         canvas.flo_draw             = draw;
         canvas.flo_canvas_decoder   = decoder;
         canvas.flo_name             = flo_name;
         canvas.flo_controller       = flo_controller;
+        canvas.flo_map_coords       = draw.map_coords;
 
         apply_canvas_style(canvas);
         monitor_canvas_events(canvas);
