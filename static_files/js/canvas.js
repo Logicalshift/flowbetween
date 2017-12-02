@@ -379,8 +379,11 @@ let flo_canvas = (function() {
                 inverse_transform = flo_matrix.invert3(transform);
             }
 
+            // Assuming square pixels, map x,y to internal canvas coords
+            let ratio = canvas.width / canvas.clientWidth;
+
             // Use the inverse matrix to map the coordinates
-            return flo_matrix.mulvec3(inverse_transform, [x, y, 1]);
+            return flo_matrix.mulvec3(inverse_transform, [x*ratio, y*ratio, 1]);
         }
 
         return {
