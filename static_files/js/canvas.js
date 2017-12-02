@@ -6,6 +6,7 @@
 // |_| |_\___/   \__\__,_|_||_\_/\__,_/__/
 //
 
+/* global flo_matrix */
 /* exported flo_canvas */
 
 let flo_canvas = (function() {
@@ -106,6 +107,7 @@ let flo_canvas = (function() {
         let clip_stack          = [];
         let clipped             = false;
         let transform           = [1,0,0, 0,1,0, 0,0,1];
+        let inverse_transform   = null;
         let dash_pattern        = [];
         let set_dash_pattern    = true;
 
@@ -113,7 +115,8 @@ let flo_canvas = (function() {
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
         ///
         function transform_set(new_transform) {
-            transform = new_transform;
+            transform           = new_transform;
+            inverse_transform   = null;
         }
         
         ///
@@ -137,7 +140,8 @@ let flo_canvas = (function() {
                 t1[6]*t2[2] + t1[7]*t2[5] + t1[8]*t2[8],
             ];
 
-            transform = res;
+            transform           = res;
+            inverse_transform   = null;
         }
 
         function new_path()                             { context.beginPath(); current_path = []; }
@@ -370,7 +374,13 @@ let flo_canvas = (function() {
         }
 
         function map_coords(x, y) {
-            return [0, 0];
+            // Invert the active transformation matrix if it's not already inverted
+            if (inverse_transform === null) {
+                inverse_transform = flo_matrix.invert3(transform);
+            }
+
+            // Use the inverse matrix to map the coordinates
+            return flo_matrix.mulvec3(inverse_transform, [x, y, 1]);
         }
 
         return {
