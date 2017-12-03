@@ -9,4 +9,6 @@ mod traits;
 pub mod inmemory;
 pub mod brushes;
 
+mod deref_map;
+
 pub use self::traits::*;

@@ -1,6 +1,8 @@
 use super::super::traits::*;
+use super::super::deref_map::*;
 
 use std::time::Duration;
+use std::ops::Deref;
 use std::sync::*;
 
 ///
@@ -37,13 +39,13 @@ impl VectorKeyFrame {
     ///
     /// Retrieves the elements in this keyframe
     /// 
-    pub fn elements<'a>(&'a self) -> Box<'a+Iterator<Item=Vector>> {
+    pub fn elements<'a>(&'a self) -> Box<'a+Deref<Target=Vec<Vector>>> {
         let core            = self.core.read().unwrap();
         let range           = 0..core.elements.len();
 
-        let iterator = range.into_iter().map(move |index| core.elements[index].clone());
+        let elements = DerefMap::map(core, |core| &core.elements);
 
-        Box::new(iterator)
+        Box::new(elements)
     }
 }
 
