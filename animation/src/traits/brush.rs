@@ -3,6 +3,7 @@ use ui::canvas::*;
 ///
 /// Represents a segment of a brush stroke
 /// 
+#[derive(Clone, Copy)]
 pub struct BrushPoint {
     /// Position of this segment
     pub position: (f32, f32),

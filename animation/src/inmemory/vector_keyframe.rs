@@ -14,7 +14,7 @@ impl VectorKeyFrame {
     /// 
     pub fn new(start_time: Duration) -> VectorKeyFrame {
         VectorKeyFrame {
-            start_time: Duration
+            start_time: start_time
         }
     }
 }
