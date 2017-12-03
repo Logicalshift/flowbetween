@@ -116,6 +116,7 @@ impl<Anim: Animation> CanvasController<Anim> {
 
                 if rng.gen() {
                     gc.restore();
+                    gc.store();
                 }
             }
         });

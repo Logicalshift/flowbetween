@@ -110,6 +110,7 @@ let flo_canvas = (function() {
         let inverse_transform   = null;
         let dash_pattern        = [];
         let set_dash_pattern    = true;
+        let stored_pixels       = null;
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -316,20 +317,30 @@ let flo_canvas = (function() {
         }
 
         function store() {
-            throw 'Not implemented';
+            // Retrieve the image data for the current canvas state
+            let width       = canvas.width;
+            let height      = canvas.height;
+
+            stored_pixels   = context.getImageData(0,0, width,height);
         }
 
         function restore() {
-            throw 'Not implemented';
+            // Reset the image data to how it was at the last point it was used
+            if (stored_pixels) {
+                context.putImageData(stored_pixels, 0,0);
+                stored_pixels = null;
+            }
         }
 
         function push_state() {
             // Push the current clipping path and dash pattern
             let restore_clip_stack      = clip_stack.slice();
             let restore_dash_pattern    = dash_pattern.slice();
+            let restore_stored_pixels   = stored_pixels;
             context_stack.push(() => {
                 clip_stack          = restore_clip_stack;
                 dash_pattern        = restore_dash_pattern;
+                stored_pixels       = restore_stored_pixels;
                 set_dash_pattern    = true;
             });
 
@@ -362,6 +373,7 @@ let flo_canvas = (function() {
             // Reset the transformation and state
             current_path    = [];
             clip_stack      = [];
+            stored_pixels   = [];
 
             identity_transform();
             fill_color(0,0,0,1);
