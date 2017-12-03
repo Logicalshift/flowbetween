@@ -103,6 +103,8 @@ impl<Anim: Animation> CanvasController<Anim> {
             gc.stroke();
 
             // Draw some random crap
+            gc.store();
+
             let mut rng = rand::thread_rng();
             for _ in 0..100 {
                 gc.new_path();
@@ -111,6 +113,10 @@ impl<Anim: Animation> CanvasController<Anim> {
                 gc.rect(rng.gen_range(0.0, 1920.0), rng.gen_range(0.0, 1080.0), rng.gen_range(0.0, 1920.0), rng.gen_range(0.0, 1080.0));
 
                 gc.fill();
+
+                if rng.gen() {
+                    gc.restore();
+                }
             }
         });
 
