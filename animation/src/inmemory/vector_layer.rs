@@ -1,3 +1,4 @@
+use super::vector_keyframe::*;
 use super::super::traits::*;
 
 use ui::canvas::*;
@@ -15,7 +16,13 @@ pub struct VectorLayer {
 
 struct VectorLayerCore {
     // The ID assigned to this layer
-    id: u64
+    id: u64,
+
+    /// The key frames for this vector, in order
+    keyframes: Vec<VectorKeyFrame>,
+
+    /// The brush stroke that is currently being drawn
+    active_brush_stroke: Option<BrushElement>
 }
 
 impl VectorLayer {
@@ -24,7 +31,9 @@ impl VectorLayer {
     /// 
     pub fn new(id: u64) -> VectorLayer {
         let core = VectorLayerCore {
-            id: id
+            id:                     id,
+            keyframes:              vec![],
+            active_brush_stroke:    None
         };
 
         VectorLayer { 
@@ -33,13 +42,28 @@ impl VectorLayer {
     }
 }
 
-impl PaintLayer for VectorLayerCore {
-    fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: (f64, f64), pressure: f64) {
+impl VectorLayerCore {
+    ///
+    /// Sorts the keyframes in order
+    /// 
+    fn sort_key_frames(&mut self) {
+        self.keyframes.sort_by(|a, b| a.start_time().cmp(&b.start_time()));
+    }
+}
 
+impl PaintLayer for VectorLayerCore {
+    fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint) {
+        // Start a new brush stroke, at a time relative to 0
+        let element = BrushElement::new(start_time, initial_pos);
+
+        self.active_brush_stroke = Some(element);
     }
 
-    fn continue_brush_stroke(&mut self, next_point: (f64, f64), pressure: f64){
-
+    fn continue_brush_stroke(&mut self, point: BrushPoint) {
+        // Add points to the active brush stroke
+        if let Some(ref mut brush_stroke) = self.active_brush_stroke {
+            brush_stroke.add_point(point);
+        }
     }
 
     fn finish_brush_stroke(&mut self) {
@@ -47,17 +71,27 @@ impl PaintLayer for VectorLayerCore {
     }
 
     fn cancel_brush_stroke(&mut self) {
-
+        self.active_brush_stroke = None;
     }
 
     fn draw_current_brush_stroke(&self, gc: &mut GraphicsContext) {
-
+        // Just pass the buck to the current brush stroke
+        if let Some(ref brush_stroke) = self.active_brush_stroke {
+            brush_stroke.render(gc);
+        }
     }
 }
 
 impl KeyFrameLayer for VectorLayerCore {
     fn add_key_frame(&mut self, time_offset: Duration) {
+        // TODO: do nothing if the keyframe is already created
 
+        // Generate a new keyframe
+        let new_keyframe = VectorKeyFrame::new(time_offset);
+
+        // Add in order to the existing keyframes
+        self.keyframes.push(new_keyframe);
+        self.sort_key_frames();
     }
 
     fn move_key_frame(&mut self, from: Duration, to: Duration) {

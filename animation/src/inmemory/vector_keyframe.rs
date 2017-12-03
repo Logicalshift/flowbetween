@@ -23,4 +23,11 @@ impl VectorKeyFrame {
             elements:   vec![]
         }
     }
+
+    ///
+    /// The start time of this key frame
+    /// 
+    pub fn start_time(&self) -> Duration {
+        self.start_time
+    }
 }

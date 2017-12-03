@@ -1,3 +1,6 @@
+use super::super::brush::*;
+use super::super::vector::*;
+
 use ui::canvas::*;
 
 use std::time::Duration;
@@ -13,12 +16,12 @@ pub trait PaintLayer {
     /// It's valid for it not to fall on a key frame (in which case the brush stroke will
     /// be added to the existing frame after the specified time period has passed)
     ///
-    fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: (f64, f64), pressure: f64);
+    fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint);
 
     ///
     /// Continues a brush stroke on this layer
     /// 
-    fn continue_brush_stroke(&mut self, next_point: (f64, f64), pressure: f64);
+    fn continue_brush_stroke(&mut self, point: BrushPoint);
 
     ///
     /// Finishes the current brush stroke

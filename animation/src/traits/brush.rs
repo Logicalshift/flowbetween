@@ -15,7 +15,7 @@ pub struct BrushPoint {
 ///
 /// Trait implemented by things that can draw brush strokes
 /// 
-pub trait Brush {
+pub trait Brush : Send+Sync {
     ///
     /// Renders a brush stroke to the specified graphics context
     ///
