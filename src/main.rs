@@ -15,6 +15,7 @@ extern crate http_ui;
 extern crate ui;
 extern crate binding;
 extern crate animation;
+extern crate rand;
 
 pub mod flowbetween;
 pub use self::flowbetween::*;
