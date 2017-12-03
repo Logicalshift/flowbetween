@@ -12,6 +12,7 @@ use std::time::Duration;
 ///
 /// Element representing a brush stroke
 ///
+#[derive(Clone)]
 pub struct BrushElement {
     /// When this element is drawn relative to the start of the frame
     appearance_time: Duration,
