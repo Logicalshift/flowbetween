@@ -4,8 +4,11 @@ use ui::*;
 use ui::Image;
 use binding::*;
 use http_ui::*;
+use animation::*;
+use animation::inmemory::*;
 
 use std::sync::*;
+use std::time::Duration;
 use serde_json;
 
 ///
@@ -27,8 +30,14 @@ pub struct FlowBetweenSession {
 }
 
 impl FlowBetweenSession {
+    ///
+    /// Creates a new FlowBetween session
+    ///
     pub fn new() -> FlowBetweenSession {
         let images = Arc::new(ResourceManager::new());
+
+        // Create a new animation
+        let animation = Self::create_inmemory_animation();
 
         // Some images for the root controller
         let flo = images.register(png_static(include_bytes!("../../static_files/png/Flo-Orb-small.png")));
@@ -40,9 +49,25 @@ impl FlowBetweenSession {
             ui:         bind(Control::container()
                             .with(Bounds::fill_all())
                             .with_controller(&serde_json::to_string(&SubController::Editor).unwrap())),
-            editor:     Arc::new(EditorController::new(())),
+            editor:     Arc::new(EditorController::new(animation)),
             images:     images
         }
+    }
+
+    fn create_inmemory_animation() -> InMemoryAnimation {
+        // Create a new animation
+        let animation = InMemoryAnimation::new();
+
+        {
+            // Add a single layer and an initial keyframe
+            let mut layers = open_edit::<AnimationLayers>(&animation).unwrap();
+            let layer = layers.add_new_layer();
+
+            let mut keyframes: Editor<KeyFrameLayer> = layer.edit().unwrap();
+            keyframes.add_key_frame(Duration::from_millis(0));
+        }
+        
+        animation
     }
 }
 
