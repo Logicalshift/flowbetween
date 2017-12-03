@@ -1,5 +1,4 @@
 use super::super::brush::*;
-use super::super::vector::*;
 
 use ui::canvas::*;
 

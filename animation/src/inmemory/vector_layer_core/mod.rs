@@ -1,0 +1,138 @@
+use super::super::traits::*;
+use super::vector_keyframe::*;
+
+use ui::canvas::*;
+
+use std::mem;
+use std::time::Duration;
+
+///
+/// The core of the vector layer
+/// 
+pub struct VectorLayerCore {
+    // The ID assigned to this layer
+    id: u64,
+
+    /// The key frames for this vector, in order
+    keyframes: Vec<VectorKeyFrame>,
+
+    /// The brush stroke that is currently being drawn
+    active_brush_stroke: Option<BrushElement>
+}
+
+impl VectorLayerCore {
+    ///
+    /// Creates a new vector layer core
+    /// 
+    pub fn new(id: u64) -> VectorLayerCore {
+        VectorLayerCore {
+            id:                     id,
+            keyframes:              vec![],
+            active_brush_stroke:    None
+        }
+    }
+
+    ///
+    /// Returns the ID for this layer
+    /// 
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+
+    ///
+    /// Sorts the keyframes in order
+    /// 
+    fn sort_key_frames(&mut self) {
+        self.keyframes.sort_by(|a, b| a.start_time().cmp(&b.start_time()));
+    }
+
+    fn find_nearest_keyframe<'a>(&'a mut self, time: Duration) -> Option<&'a mut VectorKeyFrame> {
+        // Binary search for the key frame
+        let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time));
+
+        match search_result {
+            Ok(exact_frame)         => Some(&mut self.keyframes[exact_frame]),
+            Err(following_frame)    => if following_frame == 0 {
+                None
+            } else {
+                Some(&mut self.keyframes[following_frame-1])
+            }
+        }
+    }
+}
+
+//
+// == PAINTLAYER ==
+//
+
+impl PaintLayer for VectorLayerCore {
+    fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint) {
+        // Start a new brush stroke, at a time relative to 0
+        let element = BrushElement::new(start_time, initial_pos);
+
+        self.active_brush_stroke = Some(element);
+    }
+
+    fn continue_brush_stroke(&mut self, point: BrushPoint) {
+        // Add points to the active brush stroke
+        if let Some(ref mut brush_stroke) = self.active_brush_stroke {
+            brush_stroke.add_point(point);
+        }
+    }
+
+    fn finish_brush_stroke(&mut self) {
+        // Copy out the active brush stroke and reset the original
+        let mut final_brush_stroke = None;
+        mem::swap(&mut final_brush_stroke, &mut self.active_brush_stroke);
+
+        // Add to the appropriate keyframe, if we can find it
+        if let Some(mut final_brush_stroke) = final_brush_stroke {
+            if let Some(keyframe) = self.find_nearest_keyframe(final_brush_stroke.appearance_time()) {
+                // Adjust the time so it's relative to the frame
+                let original_appearance = final_brush_stroke.appearance_time();
+                let frame_start         = keyframe.start_time();
+                final_brush_stroke.set_appearance_time(original_appearance - frame_start);
+
+                // Add to the key frame
+                keyframe.add_element(Vector::Brush(final_brush_stroke));
+            }
+        }
+    }
+
+    fn cancel_brush_stroke(&mut self) {
+        // Reset the brush stroke
+        self.active_brush_stroke = None;
+    }
+
+    fn draw_current_brush_stroke(&self, gc: &mut GraphicsContext) {
+        // Just pass the buck to the current brush stroke
+        if let Some(ref brush_stroke) = self.active_brush_stroke {
+            brush_stroke.render(gc);
+        }
+    }
+}
+
+//
+// == KEYFRAMELAYER ==
+//
+
+impl KeyFrameLayer for VectorLayerCore {
+    fn add_key_frame(&mut self, time_offset: Duration) {
+        // TODO: do nothing if the keyframe is already created
+
+        // Generate a new keyframe
+        let new_keyframe = VectorKeyFrame::new(time_offset);
+
+        // Add in order to the existing keyframes
+        self.keyframes.push(new_keyframe);
+        self.sort_key_frames();
+    }
+
+    fn move_key_frame(&mut self, from: Duration, to: Duration) {
+        unimplemented!()
+    }
+
+    fn remove_key_frame(&mut self, time_offset: Duration) {
+        unimplemented!()
+    }
+}
