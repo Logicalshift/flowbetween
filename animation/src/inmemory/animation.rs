@@ -170,15 +170,19 @@ mod test {
 
         // Add a keyframe
         let mut keyframes: Editor<KeyFrameLayer> = layer.edit().unwrap();
+
         keyframes.add_key_frame(Duration::from_millis(0));
+
         mem::drop(keyframes);
 
         // Draw a brush stroke
         let mut brush: Editor<PaintLayer> = layer.edit().unwrap();
+
         brush.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
         brush.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
         brush.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
         brush.finish_brush_stroke();
+
         mem::drop(brush);
     }
 }
