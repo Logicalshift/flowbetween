@@ -26,3 +26,53 @@ impl KeyFrameLayer for VectorLayerCore {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_add_key_frame() {
+        let mut core = VectorLayerCore::new(0);
+
+        assert!(core.keyframes.len() == 0);
+        core.add_key_frame(Duration::from_millis(1000));
+
+        assert!(core.keyframes.len() == 1);
+        assert!(core.keyframes[0].start_time() == Duration::from_millis(1000));
+    }
+
+    #[test]
+    fn can_remove_key_frame() {
+        let mut core = VectorLayerCore::new(0);
+
+        core.add_key_frame(Duration::from_millis(1000));
+        core.add_key_frame(Duration::from_millis(2000));
+        core.add_key_frame(Duration::from_millis(200));
+        core.add_key_frame(Duration::from_millis(3000));
+
+        assert!(core.keyframes.len() == 4);
+
+        core.remove_key_frame(Duration::from_millis(1000));
+        assert!(core.keyframes.len() == 3);
+
+        assert!(core.keyframes[0].start_time() == Duration::from_millis(200));
+        assert!(core.keyframes[1].start_time() == Duration::from_millis(2000));
+        assert!(core.keyframes[2].start_time() == Duration::from_millis(3000));
+    }
+
+    #[test]
+    fn inexact_time_does_not_remove_key_frame() {
+        let mut core = VectorLayerCore::new(0);
+
+        core.add_key_frame(Duration::from_millis(3000));
+        core.add_key_frame(Duration::from_millis(200));
+        core.add_key_frame(Duration::from_millis(1000));
+        core.add_key_frame(Duration::from_millis(2000));
+
+        assert!(core.keyframes.len() == 4);
+
+        core.remove_key_frame(Duration::from_millis(1001));
+        assert!(core.keyframes.len() == 4);
+    }
+}
