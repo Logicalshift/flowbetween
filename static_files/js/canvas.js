@@ -101,18 +101,19 @@ let flo_canvas = (function() {
         // The replay log will replay the actions that draw this canvas (for example when resizing)
         let replay  = [ clear_canvas ];
 
-        let context             = canvas.getContext('2d');
-        let current_path        = [];
-        let context_stack       = [];
-        let clip_stack          = [];
-        let clipped             = false;
-        let transform           = [1,0,0, 0,1,0, 0,0,1];
-        let inverse_transform   = null;
-        let dash_pattern        = [];
-        let set_dash_pattern    = true;
-        let stored_pixels       = document.createElement('canvas');
-        let have_stored_image   = false;
-        let last_store_pos      = null;
+        let context                     = canvas.getContext('2d');
+        let current_path                = [];
+        let context_stack               = [];
+        let clip_stack                  = [];
+        let clipped                     = false;
+        let transform                   = [1,0,0, 0,1,0, 0,0,1];
+        let inverse_transform           = null;
+        let dash_pattern                = [];
+        let set_dash_pattern            = true;
+        let stored_pixels               = document.createElement('canvas');
+        let generate_buffer_on_store    = false;
+        let have_stored_image           = false;
+        let last_store_pos              = null;
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -319,6 +320,10 @@ let flo_canvas = (function() {
         }
 
         function store() {
+            if (generate_buffer_on_store) {
+                stored_pixels = document.createElement('canvas');
+            }
+
             // Update the size of the backing buffer
             let width       = canvas.width;
             let height      = canvas.height;
@@ -348,17 +353,26 @@ let flo_canvas = (function() {
             let restore_clip_stack      = clip_stack.slice();
             let restore_dash_pattern    = dash_pattern.slice();
             let restore_stored_pixels   = stored_pixels;
+            let restore_gen_buffer      = generate_buffer_on_store;
+            let restore_have_image      = have_stored_image;
             let restore_last_store_pos  = last_store_pos;
             context_stack.push(() => {
-                clip_stack          = restore_clip_stack;
-                dash_pattern        = restore_dash_pattern;
-                stored_pixels       = restore_stored_pixels;
-                last_store_pos      = restore_last_store_pos;
-                set_dash_pattern    = true;
+                clip_stack                  = restore_clip_stack;
+                dash_pattern                = restore_dash_pattern;
+                stored_pixels               = restore_stored_pixels;
+                generate_buffer_on_store    = restore_gen_buffer;
+                have_stored_image           = restore_have_image;
+                last_store_pos              = restore_last_store_pos;
+                set_dash_pattern            = true;
             });
 
             // Cannot rewind the replay if we restore pixels pushed before this state (while the state is in effect)
             last_store_pos = null;
+            
+            // If we store a new buffered image while a state is pushed, then we need a new canvas to store it in
+            if (have_stored_image) {
+                generate_buffer_on_store = true;
+            }
 
             // Save the context with no clipping path (so we can unclip)
             remove_clip();
