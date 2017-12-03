@@ -80,4 +80,64 @@ mod test {
             assert!(false);
         }
     }
+
+    #[test]
+    fn can_generate_brush_stroke_on_keyframe() {
+        let mut core = VectorLayerCore::new(0);
+
+        // Add a bunch of keyframes
+        core.add_key_frame(Duration::from_millis(400));
+        core.add_key_frame(Duration::from_millis(600));
+        core.add_key_frame(Duration::from_millis(0));
+        core.add_key_frame(Duration::from_millis(200));
+        core.add_key_frame(Duration::from_millis(800));
+        core.add_key_frame(Duration::from_millis(1000));
+
+        // Draw a simple brush stroke in the 400ms keyframe
+        core.start_brush_stroke(Duration::from_millis(400), BrushPoint::from((0.0, 0.0)));
+        core.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
+        core.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
+        core.finish_brush_stroke();
+
+        let keyframe = &core.keyframes[2];  // the 400ms keyframe
+        let elements = keyframe.elements();
+
+        assert!(elements.len() == 1);
+
+        if let Vector::Brush(ref brush_stroke) = elements[0] {
+            assert!(brush_stroke.appearance_time() == Duration::from_millis(0));
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn can_generate_offset_brush_stroke() {
+        let mut core = VectorLayerCore::new(0);
+
+        // Add a bunch of keyframes
+        core.add_key_frame(Duration::from_millis(400));
+        core.add_key_frame(Duration::from_millis(600));
+        core.add_key_frame(Duration::from_millis(0));
+        core.add_key_frame(Duration::from_millis(200));
+        core.add_key_frame(Duration::from_millis(800));
+        core.add_key_frame(Duration::from_millis(1000));
+
+        // Draw a simple brush stroke in the 400ms keyframe with a 42ms offset
+        core.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
+        core.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
+        core.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
+        core.finish_brush_stroke();
+
+        let keyframe = &core.keyframes[2];  // the 400ms keyframe
+        let elements = keyframe.elements();
+
+        assert!(elements.len() == 1);
+
+        if let Vector::Brush(ref brush_stroke) = elements[0] {
+            assert!(brush_stroke.appearance_time() == Duration::from_millis(42));
+        } else {
+            assert!(false);
+        }
+    }
 }
