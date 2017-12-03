@@ -108,7 +108,7 @@ impl<Anim: Animation> CanvasController<Anim> {
                 gc.new_path();
                 gc.fill_color(Color::Rgba(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), 1.0));
 
-                gc.rect(rng.gen_range(0.0, 1920.0), rng.gen_range(0.0, 1080.0), rng.gen_range(0.0, 200.0), rng.gen_range(0.0, 200.0));
+                gc.rect(rng.gen_range(0.0, 1920.0), rng.gen_range(0.0, 1080.0), rng.gen_range(0.0, 1920.0), rng.gen_range(0.0, 1080.0));
 
                 gc.fill();
             }
