@@ -7,6 +7,7 @@ use super::vector_keyframe::*;
 use ui::canvas::*;
 
 use std::mem;
+use std::sync::*;
 use std::time::Duration;
 
 ///
@@ -17,7 +18,7 @@ pub struct VectorLayerCore {
     id: u64,
 
     /// The key frames for this vector, in order
-    keyframes: Vec<VectorKeyFrame>,
+    keyframes: Vec<Arc<VectorKeyFrame>>,
 
     /// The brush stroke that is currently being drawn
     active_brush_stroke: Option<BrushElement>
@@ -49,16 +50,19 @@ impl VectorLayerCore {
         self.keyframes.sort_by(|a, b| a.start_time().cmp(&b.start_time()));
     }
 
-    fn find_nearest_keyframe<'a>(&'a mut self, time: Duration) -> Option<&'a mut VectorKeyFrame> {
+    ///
+    /// Finds the keyframe closest to the specified time
+    /// 
+    fn find_nearest_keyframe<'a>(&'a mut self, time: Duration) -> Option<&'a VectorKeyFrame> {
         // Binary search for the key frame
         let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time));
 
         match search_result {
-            Ok(exact_frame)         => Some(&mut self.keyframes[exact_frame]),
+            Ok(exact_frame)         => Some(&self.keyframes[exact_frame]),
             Err(following_frame)    => if following_frame == 0 {
                 None
             } else {
-                Some(&mut self.keyframes[following_frame-1])
+                Some(&self.keyframes[following_frame-1])
             }
         }
     }

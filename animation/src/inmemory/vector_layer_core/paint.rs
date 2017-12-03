@@ -65,7 +65,7 @@ mod test {
         core.finish_brush_stroke();
 
         let keyframe = &core.keyframes[0];
-        let elements = keyframe.elements();
+        let elements: Vec<Vector> = keyframe.elements().collect();
 
         assert!(elements.len() == 1);
 
@@ -100,7 +100,7 @@ mod test {
         core.finish_brush_stroke();
 
         let keyframe = &core.keyframes[2];  // the 400ms keyframe
-        let elements = keyframe.elements();
+        let elements: Vec<Vector> = keyframe.elements().collect();
 
         assert!(elements.len() == 1);
 
@@ -130,7 +130,7 @@ mod test {
         core.finish_brush_stroke();
 
         let keyframe = &core.keyframes[2];  // the 400ms keyframe
-        let elements = keyframe.elements();
+        let elements: Vec<Vector> = keyframe.elements().collect();
 
         assert!(elements.len() == 1);
 

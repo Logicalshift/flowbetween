@@ -8,7 +8,7 @@ impl KeyFrameLayer for VectorLayerCore {
         let new_keyframe = VectorKeyFrame::new(time_offset);
 
         // Add in order to the existing keyframes
-        self.keyframes.push(new_keyframe);
+        self.keyframes.push(Arc::new(new_keyframe));
         self.sort_key_frames();
     }
 
