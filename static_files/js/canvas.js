@@ -110,7 +110,8 @@ let flo_canvas = (function() {
         let inverse_transform   = null;
         let dash_pattern        = [];
         let set_dash_pattern    = true;
-        let stored_pixels       = null;
+        let stored_pixels       = document.createElement('canvas');
+        let have_stored_image   = false;
         let last_store_pos      = null;
 
         ///
@@ -318,22 +319,27 @@ let flo_canvas = (function() {
         }
 
         function store() {
-            // Remember where the store was in the replay (so we can rewind)
-            last_store_pos  = replay.length;
-
-            // Retrieve the image data for the current canvas state
+            // Update the size of the backing buffer
             let width       = canvas.width;
             let height      = canvas.height;
 
-            stored_pixels   = context.getImageData(0,0, width,height);
+            if (width !== stored_pixels.width)      { stored_pixels.width = canvas.width; }
+            if (height !== stored_pixels.height)    { stored_pixels.height = canvas.height; }
+            
+            // Remember where the store was in the replay (so we can rewind)
+            last_store_pos  = replay.length;
+
+            // Draw the canvas to the backing buffer (we use a backing canvas because getImageData is very slow on all browsers)
+            stored_pixels.getContext('2d').drawImage(canvas, 0, 0);
+            have_stored_image = true;
         }
 
         function restore() {
             // Reset the image data to how it was at the last point it was used
-            if (stored_pixels) {
-                context.putImageData(stored_pixels, 0,0);
-                stored_pixels   = null;
-                last_store_pos  = null;
+            if (have_stored_image) {
+                context.drawImage(stored_pixels, 0, 0);
+                last_store_pos      = null;
+                have_stored_image   = false;
             }
         }
 
@@ -383,7 +389,9 @@ let flo_canvas = (function() {
             // Reset the transformation and state
             current_path    = [];
             clip_stack      = [];
-            stored_pixels   = [];
+
+            stored_pixels.width  = 1;
+            stored_pixels.height = 1;
 
             identity_transform();
             fill_color(0,0,0,1);
