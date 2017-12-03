@@ -46,3 +46,38 @@ impl PaintLayer for VectorLayerCore {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_generate_brush_stroke() {
+        let mut core = VectorLayerCore::new(0);
+
+        // Add the key frame that this brush stroke will be for
+        core.add_key_frame(Duration::from_millis(0));
+
+        // Draw a simple brush stroke
+        core.start_brush_stroke(Duration::from_millis(0), BrushPoint::from((0.0, 0.0)));
+        core.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
+        core.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
+        core.finish_brush_stroke();
+
+        let keyframe = &core.keyframes[0];
+        let elements = keyframe.elements();
+
+        assert!(elements.len() == 1);
+
+        if let Vector::Brush(ref brush_stroke) = elements[0] {
+            assert!(brush_stroke.appearance_time() == Duration::from_millis(0));
+            assert!(brush_stroke.points() == &vec![
+                BrushPoint::from((0.0, 0.0)),
+                BrushPoint::from((10.0, 10.0)),
+                BrushPoint::from((20.0, 5.0))
+            ]);
+        } else {
+            assert!(false);
+        }
+    }
+}

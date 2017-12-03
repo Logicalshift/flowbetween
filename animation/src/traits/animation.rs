@@ -1,6 +1,5 @@
 use super::layer::*;
 use super::editable::*;
-use super::super::inmemory::*;
 
 ///
 /// Represents an animation

@@ -30,6 +30,12 @@ pub struct Path {
     pub elements: Vec<PathElement>
 }
 
+impl Path {
+    pub fn new() -> Path {
+        Path { elements: vec![] }
+    }
+}
+
 impl From<BrushPoint> for PathPoint {
     fn from(point: BrushPoint) -> PathPoint {
         PathPoint {

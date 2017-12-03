@@ -37,4 +37,11 @@ impl VectorKeyFrame {
     pub fn add_element(&mut self, new_element: Vector) {
         self.elements.push(new_element);
     }
+
+    ///
+    /// Retrieves the elements in this keyframe
+    /// 
+    pub fn elements<'a>(&'a self) -> &'a Vec<Vector> {
+        &self.elements
+    }
 }

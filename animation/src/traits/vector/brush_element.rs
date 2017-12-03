@@ -49,6 +49,13 @@ impl BrushElement {
     pub fn set_appearance_time(&mut self, new_time: Duration) {
         self.appearance_time = new_time;
     }
+
+    ///
+    /// Retrieves the points in this brush element
+    /// 
+    pub fn points<'a>(&'a self) -> &'a Vec<BrushPoint> {
+        &self.points
+    }
 }
 
 impl VectorElement for BrushElement {
