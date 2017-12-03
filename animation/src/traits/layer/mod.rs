@@ -23,7 +23,7 @@ pub trait Layer :
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
-    fn get_frame_at_time<'a>(&self, time_index: Duration) -> &'a Frame;
+    fn get_frame_at_time(&self, time_index: Duration) -> Box<Frame>;
 
     ///
     /// Retrieves the times where key frames exist

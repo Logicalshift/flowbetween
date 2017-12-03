@@ -58,7 +58,7 @@ impl Layer for VectorLayer {
         self.core.read().unwrap().id()
     }
 
-    fn get_frame_at_time<'a>(&self, time_index: Duration) -> &'a Frame {
+    fn get_frame_at_time(&self, time_index: Duration) -> Box<Frame> {
         unimplemented!()
     }
 
