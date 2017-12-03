@@ -111,6 +111,7 @@ let flo_canvas = (function() {
         let dash_pattern        = [];
         let set_dash_pattern    = true;
         let stored_pixels       = null;
+        let last_store_pos      = null;
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -317,6 +318,9 @@ let flo_canvas = (function() {
         }
 
         function store() {
+            // Remember where the store was in the replay (so we can rewind)
+            last_store_pos  = replay.length;
+
             // Retrieve the image data for the current canvas state
             let width       = canvas.width;
             let height      = canvas.height;
@@ -328,7 +332,8 @@ let flo_canvas = (function() {
             // Reset the image data to how it was at the last point it was used
             if (stored_pixels) {
                 context.putImageData(stored_pixels, 0,0);
-                stored_pixels = null;
+                stored_pixels   = null;
+                last_store_pos  = null;
             }
         }
 
@@ -337,12 +342,17 @@ let flo_canvas = (function() {
             let restore_clip_stack      = clip_stack.slice();
             let restore_dash_pattern    = dash_pattern.slice();
             let restore_stored_pixels   = stored_pixels;
+            let restore_last_store_pos  = last_store_pos;
             context_stack.push(() => {
                 clip_stack          = restore_clip_stack;
                 dash_pattern        = restore_dash_pattern;
                 stored_pixels       = restore_stored_pixels;
+                last_store_pos      = restore_last_store_pos;
                 set_dash_pattern    = true;
             });
+
+            // Cannot rewind the replay if we restore pixels pushed before this state (while the state is in effect)
+            last_store_pos = null;
 
             // Save the context with no clipping path (so we can unclip)
             remove_clip();
@@ -379,6 +389,14 @@ let flo_canvas = (function() {
             fill_color(0,0,0,1);
             stroke_color(0,0,0,1);
             line_width(1.0);
+        }
+
+        function rewind_to_last_store() {
+            if (last_store_pos !== null) {
+                while (replay.length >= last_store_pos) {
+                    replay.pop();
+                }
+            }
         }
 
         function replay_drawing() {
@@ -422,7 +440,7 @@ let flo_canvas = (function() {
             unclip:             ()              => { replay.push(unclip);                               unclip();                       },
             clip:               ()              => { replay.push(clip);                                 clip();                         },
             store:              ()              => { replay.push(store);                                store();                        },
-            restore:            ()              => { replay.push(restore);                              restore();                      },
+            restore:            ()              => { replay.push(restore); rewind_to_last_store();      restore();                      },
             push_state:         ()              => { replay.push(push_state);                           push_state();                   },
             pop_state:          ()              => { replay.push(pop_state);                            pop_state();                    },
             clear_canvas:       ()              => { replay = [ clear_canvas ];                         clear_canvas();                 },
