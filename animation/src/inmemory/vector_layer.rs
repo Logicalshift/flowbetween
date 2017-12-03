@@ -103,7 +103,11 @@ impl KeyFrameLayer for VectorLayerCore {
     }
 
     fn move_key_frame(&mut self, from: Duration, to: Duration) {
+        unimplemented!()
+    }
 
+    fn remove_key_frame(&mut self, time_offset: Duration) {
+        unimplemented!()
     }
 }
 

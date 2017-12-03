@@ -15,4 +15,9 @@ pub trait KeyFrameLayer {
     /// Moves a key frame from a point in time to a new point in time
     /// 
     fn move_key_frame(&mut self, from: Duration, to: Duration);
+
+    ///
+    /// Removes a key frame from a point in time
+    /// 
+    fn remove_key_frame(&mut self, time_offset: Duration);
 }
