@@ -38,17 +38,12 @@ impl VectorKeyFrame {
     /// Retrieves the elements in this keyframe
     /// 
     pub fn elements<'a>(&'a self) -> Box<'a+Iterator<Item=Vector>> {
-        let range           = 0..self.core.read().unwrap().elements.len();
+        let core            = self.core.read().unwrap();
+        let range           = 0..core.elements.len();
         let empty_element   = Vector::Empty;
 
         let iterator = range.into_iter().map(move |index| {
-            let core = self.core.read().unwrap();
-
-            if index < core.elements.len() {
-                core.elements[index].clone()
-            } else {
-                Vector::Empty
-            }
+            core.elements[index].clone()
         });
 
         Box::new(iterator)
