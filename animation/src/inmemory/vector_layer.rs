@@ -51,6 +51,10 @@ impl VectorLayerCore {
     }
 }
 
+//
+// == PAINTLAYER ==
+//
+
 impl PaintLayer for VectorLayerCore {
     fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint) {
         // Start a new brush stroke, at a time relative to 0
@@ -82,6 +86,10 @@ impl PaintLayer for VectorLayerCore {
     }
 }
 
+//
+// == KEYFRAMELAYER ==
+//
+
 impl KeyFrameLayer for VectorLayerCore {
     fn add_key_frame(&mut self, time_offset: Duration) {
         // TODO: do nothing if the keyframe is already created
@@ -98,6 +106,10 @@ impl KeyFrameLayer for VectorLayerCore {
 
     }
 }
+
+//
+// == EDITING VIEWS ==
+//
 
 impl Editable<PaintLayer+'static> for VectorLayer {
     fn open(&self) -> Option<Editor<PaintLayer+'static>> {
