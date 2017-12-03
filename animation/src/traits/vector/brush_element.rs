@@ -42,6 +42,13 @@ impl BrushElement {
     pub fn add_point(&mut self, point: BrushPoint) {
         self.points.push(point);
     }
+
+    ///
+    /// Updates the appearance time of this item
+    /// 
+    pub fn set_appearance_time(&mut self, new_time: Duration) {
+        self.appearance_time = new_time;
+    }
 }
 
 impl VectorElement for BrushElement {

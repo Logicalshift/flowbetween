@@ -5,6 +5,7 @@ use ui::canvas::*;
 
 use std::sync::*;
 use std::time::Duration;
+use std::mem;
 
 ///
 /// Represents a vector layer. Vector layers support brush and vector objects.
@@ -49,6 +50,20 @@ impl VectorLayerCore {
     fn sort_key_frames(&mut self) {
         self.keyframes.sort_by(|a, b| a.start_time().cmp(&b.start_time()));
     }
+
+    fn find_nearest_keyframe<'a>(&'a mut self, time: Duration) -> Option<&'a mut VectorKeyFrame> {
+        // Binary search for the key frame
+        let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time));
+
+        match search_result {
+            Ok(exact_frame)         => Some(&mut self.keyframes[exact_frame]),
+            Err(following_frame)    => if following_frame == 0 {
+                None
+            } else {
+                Some(&mut self.keyframes[following_frame-1])
+            }
+        }
+    }
 }
 
 //
@@ -71,10 +86,26 @@ impl PaintLayer for VectorLayerCore {
     }
 
     fn finish_brush_stroke(&mut self) {
+        // Copy out the active brush stroke and reset the original
+        let mut final_brush_stroke = None;
+        mem::swap(&mut final_brush_stroke, &mut self.active_brush_stroke);
 
+        // Add to the appropriate keyframe, if we can find it
+        if let Some(mut final_brush_stroke) = final_brush_stroke {
+            if let Some(keyframe) = self.find_nearest_keyframe(final_brush_stroke.appearance_time()) {
+                // Adjust the time so it's relative to the frame
+                let original_appearance = final_brush_stroke.appearance_time();
+                let frame_start         = keyframe.start_time();
+                final_brush_stroke.set_appearance_time(original_appearance - frame_start);
+
+                // Add to the key frame
+                keyframe.add_element(Vector::Brush(final_brush_stroke));
+            }
+        }
     }
 
     fn cancel_brush_stroke(&mut self) {
+        // Reset the brush stroke
         self.active_brush_stroke = None;
     }
 

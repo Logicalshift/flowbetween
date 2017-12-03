@@ -9,7 +9,7 @@ pub struct VectorKeyFrame {
     /// When this frame starts
     start_time: Duration,
 
-    /// The elements in this key frame (ordered from front to back)
+    /// The elements in this key frame (ordered from back to front)
     elements: Vec<Vector>
 }
 
@@ -29,5 +29,12 @@ impl VectorKeyFrame {
     /// 
     pub fn start_time(&self) -> Duration {
         self.start_time
+    }
+
+    ///
+    /// Adds a new element to the front of the vector
+    /// 
+    pub fn add_element(&mut self, new_element: Vector) {
+        self.elements.push(new_element);
     }
 }
