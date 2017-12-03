@@ -121,3 +121,66 @@ impl AnimationLayers for AnimationCore {
         &**self.layers.last().unwrap()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::mem;
+
+    #[test]
+    fn can_add_layer() {
+        let animation = InMemoryAnimation::new();
+        let mut layers = open_edit::<AnimationLayers>(&animation).unwrap();
+
+        assert!(layers.layers().count() == 0);
+
+        layers.add_new_layer();
+        assert!(layers.layers().count() == 1);
+    }
+
+    #[test]
+    fn can_remove_layer() {
+        let animation = InMemoryAnimation::new();
+        let mut layers = open_edit::<AnimationLayers>(&animation).unwrap();
+
+        assert!(layers.layers().count() == 0);
+
+        let keep1       = layers.add_new_layer().id();
+        let keep2       = layers.add_new_layer().id();
+        let to_remove   = layers.add_new_layer().id();
+        let keep3       = layers.add_new_layer().id();
+
+        let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
+        assert!(ids == vec![keep1, keep2, to_remove, keep3]);
+
+        layers.remove_layer(to_remove);
+
+        let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
+        assert!(ids == vec![keep1, keep2, keep3]);
+    }
+
+    /*
+    #[test]
+    fn can_draw_brush_stroke() {
+        let animation = InMemoryAnimation::new();
+        let mut layers = open_edit::<AnimationLayers>(&animation).unwrap();
+
+        assert!(layers.layers().count() == 0);
+
+        let layer = layers.add_new_layer();
+
+        // Add a keyframe
+        let keyframes = open_edit::<KeyFrameLayer>(layer).unwrap();
+        keyframes.add_key_frame(Duration::from_millis(0));
+        mem::drop(keyframes);
+
+        // Draw a brush stroke
+        let brush = open_edit::<PaintLayer>(layer).unwrap();
+        brush.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
+        brush.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
+        brush.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
+        brush.finish_brush_stroke();
+        mem::drop(brush);
+    }
+    */
+}
