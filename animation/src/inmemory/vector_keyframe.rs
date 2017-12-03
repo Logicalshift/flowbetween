@@ -40,11 +40,8 @@ impl VectorKeyFrame {
     pub fn elements<'a>(&'a self) -> Box<'a+Iterator<Item=Vector>> {
         let core            = self.core.read().unwrap();
         let range           = 0..core.elements.len();
-        let empty_element   = Vector::Empty;
 
-        let iterator = range.into_iter().map(move |index| {
-            core.elements[index].clone()
-        });
+        let iterator = range.into_iter().map(move |index| core.elements[index].clone());
 
         Box::new(iterator)
     }
