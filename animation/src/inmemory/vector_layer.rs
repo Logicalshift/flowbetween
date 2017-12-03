@@ -30,7 +30,7 @@ impl VectorLayer {
 //
 
 impl Editable<PaintLayer+'static> for VectorLayer {
-    fn open(&self) -> Option<Editor<PaintLayer+'static>> {
+    fn edit(&self) -> Option<Editor<PaintLayer+'static>> {
         let core: &RwLock<PaintLayer> = &self.core;
         Some(Editor::new(core.write().unwrap())) 
     }
@@ -42,7 +42,7 @@ impl Editable<PaintLayer+'static> for VectorLayer {
 }
 
 impl Editable<KeyFrameLayer+'static> for VectorLayer {
-    fn open(&self) -> Option<Editor<KeyFrameLayer+'static>> { 
+    fn edit(&self) -> Option<Editor<KeyFrameLayer+'static>> { 
         let core: &RwLock<KeyFrameLayer> = &self.core;
         Some(Editor::new(core.write().unwrap())) 
     }

@@ -46,7 +46,7 @@ impl InMemoryAnimation {
 impl Animation for InMemoryAnimation { }
 
 impl Editable<AnimationSize+'static> for InMemoryAnimation {
-    fn open(&self) -> Option<Editor<AnimationSize+'static>> {
+    fn edit(&self) -> Option<Editor<AnimationSize+'static>> {
         // (Need the explicit typing here as rust can't figure it out implicitly)
         let core: &RwLock<AnimationSize>    = &self.core;
         let core                            = core.write().unwrap();
@@ -63,7 +63,7 @@ impl Editable<AnimationSize+'static> for InMemoryAnimation {
 }
 
 impl Editable<AnimationLayers+'static> for InMemoryAnimation {
-    fn open(&self) -> Option<Editor<AnimationLayers+'static>> { 
+    fn edit(&self) -> Option<Editor<AnimationLayers+'static>> { 
         let core: &RwLock<AnimationLayers>  = &self.core;
 
         Some(Editor::new(core.write().unwrap()))
@@ -169,12 +169,12 @@ mod test {
         let layer = layers.add_new_layer();
 
         // Add a keyframe
-        let mut keyframes: Editor<KeyFrameLayer> = layer.open().unwrap();
+        let mut keyframes: Editor<KeyFrameLayer> = layer.edit().unwrap();
         keyframes.add_key_frame(Duration::from_millis(0));
         mem::drop(keyframes);
 
         // Draw a brush stroke
-        let mut brush: Editor<PaintLayer> = layer.open().unwrap();
+        let mut brush: Editor<PaintLayer> = layer.edit().unwrap();
         brush.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
         brush.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
         brush.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));

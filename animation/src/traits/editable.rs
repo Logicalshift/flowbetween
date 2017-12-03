@@ -7,7 +7,7 @@ pub trait Editable<T: ?Sized> {
     ///
     /// Opens this item for editing, if an editor is available
     ///
-    fn open(&self) -> Option<Editor<T>>;
+    fn edit(&self) -> Option<Editor<T>>;
 
     ///
     /// Opens this item for reading, if a reader is available
@@ -71,7 +71,7 @@ impl<'a, T: ?Sized+'a> DerefMut for Editor<'a, T> {
 }
 
 impl<T: ?Sized> Editable<T> for () {
-    fn open(&self) -> Option<Editor<T>> { None }
+    fn edit(&self) -> Option<Editor<T>> { None }
     fn read(&self) -> Option<Reader<T>> { None }
 }
 
@@ -86,7 +86,7 @@ pub fn open_read<'a, EditorType: ?Sized>(editable: &'a Editable<EditorType>) -> 
 /// Opens an editable object for editing if possible
 /// 
 pub fn open_edit<'a, EditorType: ?Sized>(editable: &'a Editable<EditorType>) -> Option<Editor<'a, EditorType>> {
-    editable.open()
+    editable.edit()
 }
 
 #[cfg(test)]
@@ -133,19 +133,19 @@ mod test {
     struct TestEditable;
 
     impl Editable<i32> for TestEditable {
-        fn open(&self) -> Option<Editor<i32>> { None }
+        fn edit(&self) -> Option<Editor<i32>> { None }
         fn read(&self) -> Option<Reader<i32>> { None }
     }
 
     impl Editable<bool> for TestEditable {
-        fn open(&self) -> Option<Editor<bool>> { None }
+        fn edit(&self) -> Option<Editor<bool>> { None }
         fn read(&self) -> Option<Reader<bool>> { None }
     }
 
     #[test]
     fn can_have_multiple_editable_items() {
         let test = TestEditable;
-        let edit_i32:Option<Editor<i32>>    = test.open();
+        let edit_i32:Option<Editor<i32>>    = test.edit();
         let edit_bool                       = open_edit::<bool>(&test);
 
         assert!(edit_i32.is_none());
