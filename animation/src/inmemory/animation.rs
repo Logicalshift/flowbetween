@@ -159,7 +159,6 @@ mod test {
         assert!(ids == vec![keep1, keep2, keep3]);
     }
 
-    /*
     #[test]
     fn can_draw_brush_stroke() {
         let animation = InMemoryAnimation::new();
@@ -170,17 +169,16 @@ mod test {
         let layer = layers.add_new_layer();
 
         // Add a keyframe
-        let keyframes = open_edit::<KeyFrameLayer>(layer).unwrap();
+        let mut keyframes: Editor<KeyFrameLayer> = layer.open().unwrap();
         keyframes.add_key_frame(Duration::from_millis(0));
         mem::drop(keyframes);
 
         // Draw a brush stroke
-        let brush = open_edit::<PaintLayer>(layer).unwrap();
+        let mut brush: Editor<PaintLayer> = layer.open().unwrap();
         brush.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
         brush.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
         brush.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
         brush.finish_brush_stroke();
         mem::drop(brush);
     }
-    */
 }
