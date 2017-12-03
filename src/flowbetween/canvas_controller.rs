@@ -1,3 +1,5 @@
+use super::viewmodel::*;
+
 use ui::*;
 use ui::canvas::*;
 use binding::*;
@@ -9,23 +11,23 @@ use std::sync::*;
 /// The canvas controller manages the main drawing canvas
 ///
 pub struct CanvasController<Anim: Animation> {
-    view_model: Arc<NullViewModel>,
-    ui:         Binding<Control>,
-    canvases:   Arc<ResourceManager<Canvas>>,
-    animation:  Arc<Anim>
+    ui_view_model:      Arc<NullViewModel>,
+    ui:                 Binding<Control>,
+    canvases:           Arc<ResourceManager<Canvas>>,
+    anim_view_model:    AnimationViewModel<Anim>
 }
 
 impl<Anim: Animation> CanvasController<Anim> {
-    pub fn new(animation: &Arc<Anim>) -> CanvasController<Anim> {
+    pub fn new(view_model: &AnimationViewModel<Anim>) -> CanvasController<Anim> {
         // Create the resources
         let canvases = ResourceManager::new();
 
         // Create the controller
         let mut controller = CanvasController {
-            view_model: Arc::new(NullViewModel::new()),
-            ui:         bind(Control::empty()),
-            canvases:   Arc::new(canvases),
-            animation:  animation.clone()
+            ui_view_model:      Arc::new(NullViewModel::new()),
+            ui:                 bind(Control::empty()),
+            canvases:           Arc::new(canvases),
+            anim_view_model:    view_model.clone()
         };
 
         // Set up the UI
@@ -57,7 +59,7 @@ impl<Anim: Animation> CanvasController<Anim> {
     /// Clears a canvas and sets it up for rendering
     /// 
     fn clear_canvas(&self, canvas: &Resource<Canvas>) {
-        let (width, height) = open_read::<AnimationSize>(&*self.animation)
+        let (width, height) = open_read::<AnimationSize>(self.anim_view_model.animation())
             .map(|size| size.size())
             .unwrap_or((1920.0, 1080.0));
 
@@ -73,7 +75,7 @@ impl<Anim: Animation> CanvasController<Anim> {
     ///
     fn create_background_canvas(&self) -> Resource<Canvas> {
         let canvas          = self.create_canvas();
-        let (width, height) = open_read::<AnimationSize>(&*self.animation)
+        let (width, height) = open_read::<AnimationSize>(self.anim_view_model.animation())
             .map(|size| size.size())
             .unwrap_or((1920.0, 1080.0));
 
@@ -109,7 +111,7 @@ impl<Anim: Animation> Controller for CanvasController<Anim> {
     }
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
+        self.ui_view_model.clone()
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {

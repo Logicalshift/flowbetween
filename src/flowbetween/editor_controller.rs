@@ -5,6 +5,7 @@ use super::canvas_controller::*;
 use super::menu_controller::*;
 use super::timeline_controller::*;
 use super::toolbox_controller::*;
+use super::viewmodel::*;
 
 use std::sync::*;
 use std::collections::HashMap;
@@ -22,23 +23,20 @@ enum SubController {
 ///
 /// The editor controller manages the editing of a single file
 ///
-pub struct EditorController<Anim: Animation> {
+pub struct EditorController {
     /// The view model for the editor
-    view_model: Arc<NullViewModel>,
+    ui_view_model: Arc<NullViewModel>,
 
     /// The main editor UI
     ui: Binding<Control>,
-
-    /// The animation that this will edit
-    animation: Arc<Anim>,
 
     /// The subcontrollers for this editor
     subcontrollers: HashMap<SubController, Arc<Controller>>
 }
 
-impl<Anim: 'static+Animation> EditorController<Anim> {
-    pub fn new(animation: Anim) -> EditorController<Anim> {
-        let animation   = Arc::new(animation);
+impl EditorController {
+    pub fn new<Anim: 'static+Animation>(animation: Anim) -> EditorController {
+        let animation   = AnimationViewModel::new(animation);
 
         let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new());
@@ -56,8 +54,7 @@ impl<Anim: 'static+Animation> EditorController<Anim> {
         EditorController {
             ui:             ui,
             subcontrollers: subcontrollers,
-            view_model:     Arc::new(NullViewModel::new()),
-            animation:      animation
+            ui_view_model:  Arc::new(NullViewModel::new())
         }
     }
 
@@ -147,7 +144,7 @@ impl<Anim: 'static+Animation> EditorController<Anim> {
     }
 }
 
-impl<Anim: Animation> Controller for EditorController<Anim> {
+impl Controller for EditorController {
     fn ui(&self) -> Arc<Bound<Control>> {
         Arc::new(self.ui.clone())
     }
@@ -163,6 +160,6 @@ impl<Anim: Animation> Controller for EditorController<Anim> {
     }
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
+        self.ui_view_model.clone()
     }
 }
