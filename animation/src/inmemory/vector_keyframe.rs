@@ -41,7 +41,6 @@ impl VectorKeyFrame {
     /// 
     pub fn elements<'a>(&'a self) -> Box<'a+Deref<Target=Vec<Vector>>> {
         let core            = self.core.read().unwrap();
-        let range           = 0..core.elements.len();
 
         let elements = DerefMap::map(core, |core| &core.elements);
 

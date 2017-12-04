@@ -53,7 +53,7 @@ impl VectorLayerCore {
     ///
     /// Finds the keyframe closest to the specified time
     /// 
-    fn find_nearest_keyframe<'a>(&'a mut self, time: Duration) -> Option<&'a VectorKeyFrame> {
+    pub fn find_nearest_keyframe<'a>(&'a self, time: Duration) -> Option<&'a Arc<VectorKeyFrame>> {
         // Binary search for the key frame
         let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time));
 

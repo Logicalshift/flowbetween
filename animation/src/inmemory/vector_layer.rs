@@ -1,3 +1,5 @@
+use super::empty_frame::*;
+use super::vector_frame::*;
 use super::vector_layer_core::*;
 use super::super::traits::*;
 
@@ -59,7 +61,17 @@ impl Layer for VectorLayer {
     }
 
     fn get_frame_at_time(&self, time_index: Duration) -> Box<Frame> {
-        unimplemented!()
+        let core = self.core.read().unwrap();
+
+        // Look up the keyframe in the core
+        let keyframe = core.find_nearest_keyframe(time_index);
+        if let Some(keyframe) = keyframe {
+            // Found a keyframe: return a vector frame from it
+            Box::new(VectorFrame::new(keyframe.clone(), time_index - keyframe.start_time()))
+        } else {
+            // No keyframe at this point in time
+            Box::new(EmptyFrame::new(time_index))
+        }
     }
 
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
