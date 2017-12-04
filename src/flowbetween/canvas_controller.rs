@@ -6,8 +6,6 @@ use binding::*;
 use animation::*;
 
 use std::sync::*;
-use rand;
-use rand::Rng;
 
 ///
 /// The canvas controller manages the main drawing canvas
@@ -101,24 +99,6 @@ impl<Anim: Animation> CanvasController<Anim> {
             gc.rect(0.0, 0.0, width, height);
             gc.fill();
             gc.stroke();
-
-            // Draw some random crap
-            gc.store();
-
-            let mut rng = rand::thread_rng();
-            for _ in 0..100 {
-                gc.new_path();
-                gc.fill_color(Color::Rgba(rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), rng.gen_range(0.0, 1.0), 1.0));
-
-                gc.rect(rng.gen_range(0.0, 1920.0), rng.gen_range(0.0, 1080.0), rng.gen_range(0.0, 1920.0), rng.gen_range(0.0, 1080.0));
-
-                gc.fill();
-
-                if rng.gen() {
-                    gc.restore();
-                    gc.store();
-                }
-            }
         });
 
         canvas
