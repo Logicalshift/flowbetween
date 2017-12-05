@@ -124,7 +124,7 @@ impl<Value: 'static+Clone+PartialEq+Send> MutableBound<Value> for Binding<Value>
         // Call the notifications outside of the lock
         let mut needs_filtering = false;
 
-        for to_notify in notifications.into_iter() {
+        for to_notify in notifications {
             needs_filtering = !to_notify.mark_as_changed() || needs_filtering;
         }
 

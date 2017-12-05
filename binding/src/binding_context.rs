@@ -38,7 +38,7 @@ impl Changeable for BindingDependencies {
         let mut to_release = vec![];
 
         for dep in self.dependencies.borrow_mut().iter_mut() {
-            to_release.push(dep.when_changed(what.clone()));
+            to_release.push(dep.when_changed(Arc::clone(&what)));
         }
 
         Box::new(to_release)
@@ -67,7 +67,7 @@ impl BindingContext {
             current_context
                 .borrow()
                 .as_ref()
-                .map(|rc| rc.clone())
+                .cloned()
         })
     }
 
@@ -83,7 +83,7 @@ impl BindingContext {
         let dependencies    = BindingDependencies::new();
         let new_context     = BindingContext {
             dependencies:   dependencies.clone(),
-            nested:         previous_context.clone().map(|ctx| Box::new(ctx))
+            nested:         previous_context.clone().map(Box::new)
         };
 
         // Make the current context the same as the new context

@@ -65,7 +65,7 @@ impl ReleasableNotifiable {
     pub fn clone_as_owned(&self) -> ReleasableNotifiable {
         ReleasableNotifiable {
             keep_alive: self.keep_alive,
-            target:     self.target.clone()
+            target:     Arc::clone(&self.target)
         }
     }
 
@@ -76,7 +76,7 @@ impl ReleasableNotifiable {
     pub fn clone_for_inspection(&self) -> ReleasableNotifiable {
         ReleasableNotifiable {
             keep_alive: true,
-            target:     self.target.clone()
+            target:     Arc::clone(&self.target)
         }
     }
 }

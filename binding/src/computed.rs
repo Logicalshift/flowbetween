@@ -179,7 +179,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 }
 
 ///
-/// The weak reference to a core is generated in monitor_changes: this specifies what happens when a
+/// The weak reference to a core is generated in `monitor_changes`: this specifies what happens when a
 /// notification is generated for such a reference.
 ///
 impl<Value, TFn> Notifiable for Weak<Mutex<ComputedBindingCore<Value, TFn>>>
@@ -199,7 +199,7 @@ where Value: 'static+Clone+PartialEq+Send, TFn: 'static+Send+Sync+Fn() -> Value 
 impl<Value: 'static+Clone+PartialEq+Send, TFn> Clone for ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
     fn clone(&self) -> Self {
-        ComputedBinding { core: self.core.clone() }
+        ComputedBinding { core: Arc::clone(&self.core) }
     }
 }
 
