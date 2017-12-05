@@ -187,7 +187,9 @@ impl CanvasEncoding<String> for Draw {
             &Restore                                => ('Z', 'r').encode_canvas(append_to),
             &PushState                              => 'P'.encode_canvas(append_to),
             &PopState                               => 'p'.encode_canvas(append_to),
-            &ClearCanvas                            => ('N', 'A').encode_canvas(append_to)
+            &ClearCanvas                            => ('N', 'A').encode_canvas(append_to),
+            &Layer(layer_id)                        => ('N', 'l', layer_id).encode_canvas(append_to),
+            &LayerBlend(layer_id, blend_mode)       => ('N', 'b', layer_id, blend_mode).encode_canvas(append_to)
         }
     }
 }

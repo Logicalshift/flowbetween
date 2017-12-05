@@ -181,6 +181,8 @@ impl<'a> GraphicsContext for CoreContext<'a> {
     fn push_state(&mut self)                        { self.pending.push(Draw::PushState); }
     fn pop_state(&mut self)                         { self.pending.push(Draw::PopState); }
     fn clear_canvas(&mut self)                      { self.pending.push(Draw::ClearCanvas); }
+    fn layer(&mut self, layer_id: u32)              { self.pending.push(Draw::Layer(layer_id)); }
+    fn layer_blend(&mut self, layer_id: u32, blend_mode: BlendMode) { self.pending.push(Draw::LayerBlend(layer_id, blend_mode)); }
 
     fn draw(&mut self, d: Draw)                     { self.pending.push(d); }
 }

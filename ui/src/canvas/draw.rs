@@ -133,5 +133,13 @@ pub enum Draw {
     PopState,
 
     /// Clears the canvas entirely
-    ClearCanvas
+    ClearCanvas,
+
+    /// Selects a particular layer for drawing
+    /// Layer 0 is selected initially. Layers are drawn in order starting from 0.
+    /// Layer IDs don't have to be sequential.
+    Layer(u32),
+
+    /// Sets how a particular layer is blended with the underlying layer
+    LayerBlend(u32, BlendMode)
 }
