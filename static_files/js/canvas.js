@@ -335,14 +335,21 @@ let flo_canvas = (function() {
             last_store_pos  = replay.length;
 
             // Draw the canvas to the backing buffer (we use a backing canvas because getImageData is very slow on all browsers)
-            stored_pixels.getContext('2d').drawImage(canvas, 0, 0);
+            let stored_context = stored_pixels.getContext('2d');
+            stored_context.globalCompositeOperation = 'copy';
+            stored_context.drawImage(canvas, 0, 0);
             have_stored_image = true;
         }
 
         function restore() {
             // Reset the image data to how it was at the last point it was used
             if (have_stored_image) {
+                let last_composite_operation = context.globalCompositeOperation;
+
+                context.globalCompositeOperation = 'copy';
                 context.drawImage(stored_pixels, 0, 0);
+                context.globalCompositeOperation = last_composite_operation;
+
                 last_store_pos      = null;
                 have_stored_image   = false;
             }
