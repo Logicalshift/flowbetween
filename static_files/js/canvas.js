@@ -344,11 +344,17 @@ let flo_canvas = (function() {
         function restore() {
             // Reset the image data to how it was at the last point it was used
             if (have_stored_image) {
-                let last_composite_operation = context.globalCompositeOperation;
+                context.save();
 
                 context.globalCompositeOperation = 'copy';
+                context.setTransform(
+                    1,  0, 
+                    0,  1, 
+                    0,  0
+                );
                 context.drawImage(stored_pixels, 0, 0);
-                context.globalCompositeOperation = last_composite_operation;
+
+                context.restore();
 
                 last_store_pos      = null;
                 have_stored_image   = false;
