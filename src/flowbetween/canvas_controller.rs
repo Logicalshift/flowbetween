@@ -29,7 +29,7 @@ struct FrameLayer {
 /// 
 struct CanvasCore {
     /// The layers in the current frame
-    frame_layers: HashMap<u32, FrameLayer>
+    frame_layers: HashMap<u64, FrameLayer>
 }
 
 ///
@@ -174,7 +174,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
                     let layer_frame = layer.get_frame_at_time(time);
                     
                     // Assign a layer ID to this frame and store
-                    core.frame_layers.insert(next_layer_id, FrameLayer {
+                    core.frame_layers.insert(layer.id(), FrameLayer {
                         layer_id:       next_layer_id,
                         layer_frame:    layer_frame
                     });
@@ -210,7 +210,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     ///
     /// Retrieves the currently selected layer
     ///
-    fn get_selected_layer<'a>(&'a self) -> Option<&'a Layer> {
+    fn get_selected_layer(&self) -> Option<Arc<Layer>> {
         // Reading the layers from the animation
         let layers = open_read::<AnimationLayers>(self.anim_view_model.animation()).unwrap();
         
@@ -225,7 +225,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
                     .filter(|layer| layer.id() == selected_layer_id)
                     .nth(0)
             },
-            None        => {
+            None => {
                 // Use the first layer
                 let first_layer = layers.layers()
                     .nth(0);
@@ -237,19 +237,82 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             }
         };
 
-        unimplemented!()
-        // selected_layer
+        selected_layer.cloned()
     }
 
     ///
-    /// Performs a painting action on the canvas
+    /// Performs a single painting action on the canvas
     /// 
-    fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
+    fn paint_action(&self, layer_id: u64, layer: &mut PaintLayer, action: &Painting) {
         // Get when this paint stroke is being made
         let current_time = self.anim_view_model.timeline().current_time.get();
 
+        // Find the canvas
+        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+
+        // Get the canvas layer ID
+        let canvas_layer_id = self.core.sync(|core| core.frame_layers.get(&layer_id).map(|layer| layer.layer_id));
+        let canvas_layer_id = canvas_layer_id.unwrap_or(1);
+
+        canvas.draw(move |gc| {
+            // Perform the action
+            match action.action {
+                PaintAction::Start       => {
+                    // Select the layer and store the current image state
+                    gc.layer(canvas_layer_id);
+                    gc.store();
+
+                    // Begin the brush stroke
+                    layer.start_brush_stroke(current_time, BrushPoint::from(action));
+
+                    // Render it so far
+                    layer.draw_current_brush_stroke(gc);
+                },
+
+                PaintAction::Continue    => {
+                    // Append to the brush stroke
+                    layer.continue_brush_stroke(BrushPoint::from(action));
+
+                    // Re-render
+                    gc.restore();
+                    layer.draw_current_brush_stroke(gc);
+                },
+
+                PaintAction::Finish      => {
+                    // Finish the brush stroke
+                    layer.finish_brush_stroke();
+
+                    // TODO: need to draw it 'properly'
+                },
+
+                PaintAction::Cancel      => {
+                    // Cancel the brush stroke
+                    layer.cancel_brush_stroke();
+                    gc.restore();
+                }
+            }
+        });
+    }
+
+    ///
+    /// Performs a series of painting actions on the canvas
+    /// 
+    fn paint(&self, _device: &PaintDevice, actions: &Vec<Painting>) {
         // Get the selected layer
         let selected_layer = self.get_selected_layer();
+
+        // ... as a paint layer
+        if let Some(selected_layer) = selected_layer {
+            let layer_id                                            = selected_layer.id();
+            let selected_layer: Option<Editor<PaintLayer+'static>>  = selected_layer.edit();
+
+            // Perform the paint actions on the selected layer if we can
+            if let Some(mut selected_layer) = selected_layer {
+                for action in actions {
+                    self.paint_action(layer_id, &mut *selected_layer, action);
+                }
+            }
+        }
     }
 }
 
