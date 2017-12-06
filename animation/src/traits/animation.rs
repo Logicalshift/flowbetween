@@ -1,6 +1,8 @@
 use super::layer::*;
 use super::editable::*;
 
+use std::sync::*;
+
 ///
 /// Represents an animation
 ///
@@ -32,7 +34,7 @@ pub trait AnimationLayers {
     ///
     /// Retrieves the layers for this animation
     ///
-    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Layer>>;
+    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>>;
 
     ///
     /// Removes the layer with the specified ID

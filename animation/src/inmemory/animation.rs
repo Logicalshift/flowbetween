@@ -85,8 +85,8 @@ impl AnimationSize for AnimationCore {
 }
 
 impl AnimationLayers for AnimationCore {
-    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Layer>> {
-        Box::new(self.layers.iter().map(|x| &**x))
+    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>> {
+        Box::new(self.layers.iter())
     }
 
     fn remove_layer(&mut self, layer_id: u64) {
