@@ -60,17 +60,17 @@ impl Layer for VectorLayer {
         self.core.read().unwrap().id()
     }
 
-    fn get_frame_at_time(&self, time_index: Duration) -> Box<Frame> {
+    fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
         let core = self.core.read().unwrap();
 
         // Look up the keyframe in the core
         let keyframe = core.find_nearest_keyframe(time_index);
         if let Some(keyframe) = keyframe {
             // Found a keyframe: return a vector frame from it
-            Box::new(VectorFrame::new(keyframe.clone(), time_index - keyframe.start_time()))
+            Arc::new(VectorFrame::new(keyframe.clone(), time_index - keyframe.start_time()))
         } else {
             // No keyframe at this point in time
-            Box::new(EmptyFrame::new(time_index))
+            Arc::new(EmptyFrame::new(time_index))
         }
     }
 

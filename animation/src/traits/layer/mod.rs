@@ -6,6 +6,8 @@ pub use self::keyframes::*;
 
 use super::frame::*;
 use super::editable::*;
+
+use std::sync::*;
 use std::time::Duration;
 
 ///
@@ -23,7 +25,7 @@ pub trait Layer :
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
-    fn get_frame_at_time(&self, time_index: Duration) -> Box<Frame>;
+    fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame>;
 
     ///
     /// Retrieves the times where key frames exist
