@@ -1,3 +1,4 @@
+use ui::*;
 use ui::canvas::*;
 
 ///
@@ -27,6 +28,15 @@ impl From<(f32, f32)> for BrushPoint {
         BrushPoint {
             position: pos,
             pressure: 1.0
+        }
+    }
+}
+
+impl<'a> From<&'a Painting> for BrushPoint {
+    fn from(painting: &'a Painting) -> BrushPoint {
+        BrushPoint {
+            position: painting.location,
+            pressure: painting.pressure
         }
     }
 }
