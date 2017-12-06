@@ -7,6 +7,8 @@ use animation::*;
 
 use std::sync::*;
 
+const MAIN_CANVAS: &str = "main";
+
 ///
 /// The canvas controller manages the main drawing canvas
 ///
@@ -30,11 +32,11 @@ impl<Anim: Animation> CanvasController<Anim> {
             anim_view_model:    view_model.clone()
         };
 
-        // Set up the UI
-        let background_canvas = controller.create_background_canvas();
+        // The main canvas is where the current frame is rendered
+        let main_canvas = controller.create_main_canvas();
 
         controller.ui.set(Control::canvas()
-            .with(background_canvas)
+            .with(main_canvas)
             .with(Bounds::fill_all())
             .with((
                 (ActionTrigger::Paint(PaintDevice::Pen),                        "Paint"),
@@ -71,10 +73,11 @@ impl<Anim: Animation> CanvasController<Anim> {
     }
 
     ///
-    /// Create the background canvas for this controller
+    /// Create the canvas for this controller
     ///
-    fn create_background_canvas(&self) -> Resource<Canvas> {
+    fn create_main_canvas(&self) -> Resource<Canvas> {
         let canvas          = self.create_canvas();
+        self.canvases.assign_name(&canvas, MAIN_CANVAS);
 
         canvas.draw(move |gc| self.draw_background(gc));
 
