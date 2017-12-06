@@ -7,7 +7,7 @@ use std::time::Duration;
 ///
 /// Represents a layer that can be painted upon
 /// 
-pub trait PaintLayer {
+pub trait PaintLayer : Send+Sync {
     ///
     /// Starts a new brush stroke on this layer
     /// 
