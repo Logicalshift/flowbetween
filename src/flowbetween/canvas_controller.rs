@@ -75,33 +75,42 @@ impl<Anim: Animation> CanvasController<Anim> {
     ///
     fn create_background_canvas(&self) -> Resource<Canvas> {
         let canvas          = self.create_canvas();
+
+        canvas.draw(move |gc| self.draw_background(gc));
+
+        canvas
+    }
+
+    ///
+    /// Draws the canvas background to a context
+    /// 
+    fn draw_background(&self, gc: &mut GraphicsPrimitives) {
+        // Work out the width, height to draw the animation to draw
         let (width, height) = open_read::<AnimationSize>(self.anim_view_model.animation())
             .map(|size| size.size())
             .unwrap_or((1920.0, 1080.0));
+        let (width, height) = (width as f32, height as f32);
+        
+        // Background always goes on layer 0
+        gc.layer(0);
 
-        canvas.draw(move |gc| {
-            let (width, height)             = (width as f32, height as f32);
+        gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+        gc.line_width_pixels(1.0);
 
-            gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
-            gc.line_width_pixels(1.0);
+        // Draw the shadow
+        let offset = height * 0.015;
 
-            // Draw the shadow
-            let offset = height * 0.015;
+        gc.fill_color(Color::Rgba(0.1, 0.1, 0.1, 0.4));
+        gc.new_path();
+        gc.rect(0.0, 0.0-offset, width+offset, height);
+        gc.fill();
 
-            gc.fill_color(Color::Rgba(0.1, 0.1, 0.1, 0.4));
-            gc.new_path();
-            gc.rect(0.0, 0.0-offset, width+offset, height);
-            gc.fill();
-
-            // Draw the canvas background
-            gc.fill_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
-            gc.new_path();
-            gc.rect(0.0, 0.0, width, height);
-            gc.fill();
-            gc.stroke();
-        });
-
-        canvas
+        // Draw the canvas background
+        gc.fill_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
+        gc.new_path();
+        gc.rect(0.0, 0.0, width, height);
+        gc.fill();
+        gc.stroke();
     }
 }
 
