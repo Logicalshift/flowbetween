@@ -407,6 +407,12 @@ let flo_canvas = (function() {
             restore_clip();
         }
 
+        function layer(layer_id) {
+        }
+
+        function layer_blend(layer_id, blend_mode) {
+        }
+
         function clear_canvas() {
             // Clear
             context.setTransform(1,0, 0,1, 0,0);
@@ -478,6 +484,8 @@ let flo_canvas = (function() {
             restore:            ()              => { replay.push(restore); rewind_to_last_store();      restore();                      },
             push_state:         ()              => { replay.push(push_state);                           push_state();                   },
             pop_state:          ()              => { replay.push(pop_state);                            pop_state();                    },
+            layer:              (layer_id)      => { replay.push(() => layer(layer_id));                layer(layer_id);                },
+            layer_blend:        (layer_id, blend_mode) => { replay.push(() => layer_blend(layer_id, blend_mode)); layer_blend(layer_id, blend_mode); },
             clear_canvas:       ()              => { replay = [ clear_canvas ];                         clear_canvas();                 },
 
             replay_drawing:     replay_drawing,
@@ -570,6 +578,14 @@ let flo_canvas = (function() {
             };
 
             ///
+            /// Reads an unsigned int value
+            ///
+            let read_u32 = () => {
+                buffer_word(0);
+                return float_data.getUint32(0);
+            };
+
+            ///
             /// Reads a RGBA colour
             ///
             let read_rgba = () => {
@@ -588,6 +604,8 @@ let flo_canvas = (function() {
                 switch (read_char()) {
                 case 'p':   draw.new_path();        break;
                 case 'A':   draw.clear_canvas();    break;
+                case 'l':   draw.layer(read_u32()); break;
+                case 'b':   draw.layer_blend(read_u32(), decode_blend_mode()); break;
                 }
             };
 
