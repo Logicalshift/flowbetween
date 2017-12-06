@@ -10,7 +10,8 @@ use std::sync::*;
 use std::time::Duration;
 use std::collections::HashMap;
 
-const MAIN_CANVAS: &str = "main";
+const MAIN_CANVAS: &str     = "main";
+const PAINT_ACTION: &str    = "Paint";
 
 ///
 /// Represents a layer in the current frame
@@ -68,10 +69,10 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             .with(main_canvas)
             .with(Bounds::fill_all())
             .with((
-                (ActionTrigger::Paint(PaintDevice::Pen),                        "Paint"),
-                (ActionTrigger::Paint(PaintDevice::Touch),                      "Paint"),
-                (ActionTrigger::Paint(PaintDevice::Other),                      "Paint"),
-                (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   "Paint")
+                (ActionTrigger::Paint(PaintDevice::Pen),                        PAINT_ACTION),
+                (ActionTrigger::Paint(PaintDevice::Touch),                      PAINT_ACTION),
+                (ActionTrigger::Paint(PaintDevice::Other),                      PAINT_ACTION),
+                (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   PAINT_ACTION)
             )));
 
         // Load the initial set of frame layers
@@ -205,9 +206,54 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             });
         });
     }
+
+    ///
+    /// Retrieves the currently selected layer
+    ///
+    fn get_selected_layer<'a>(&'a self) -> Option<&'a Layer> {
+        // Reading the layers from the animation
+        let layers = open_read::<AnimationLayers>(self.anim_view_model.animation()).unwrap();
+        
+        // Find the selected layer
+        let selected_layer_id = self.anim_view_model.timeline().selected_layer.get();
+
+        // Either use the currently selected layer, or try to selecte done
+        let selected_layer = match selected_layer_id {
+            Some(selected_layer_id) => {
+                // Use the layer with the matching ID
+                layers.layers()
+                    .filter(|layer| layer.id() == selected_layer_id)
+                    .nth(0)
+            },
+            None        => {
+                // Use the first layer
+                let first_layer = layers.layers()
+                    .nth(0);
+                
+                // Mark it as the selected layer
+                self.anim_view_model.timeline().selected_layer.clone().set(first_layer.map(|layer| layer.id()));
+
+                first_layer
+            }
+        };
+
+        unimplemented!()
+        // selected_layer
+    }
+
+    ///
+    /// Performs a painting action on the canvas
+    /// 
+    fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
+        // Get when this paint stroke is being made
+        let current_time = self.anim_view_model.timeline().current_time.get();
+
+        // Get the selected layer
+        let selected_layer = self.get_selected_layer();
+    }
 }
 
-impl<Anim: Animation> Controller for CanvasController<Anim> {
+impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
     fn ui(&self) -> Arc<Bound<Control>> {
         Arc::new(self.ui.clone())
     }
@@ -217,7 +263,12 @@ impl<Anim: Animation> Controller for CanvasController<Anim> {
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
-        println!("{:?} {:?}", action_id, action_parameter);
+        use ui::ActionParameter::*;
+
+        match (action_id, action_parameter) {
+            (PAINT_ACTION, &Paint(ref device, ref painting))    => self.paint(device, painting),
+            _                                                   => ()
+        };
     }
 
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<Canvas>>> {
