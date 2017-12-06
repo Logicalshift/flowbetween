@@ -5,7 +5,7 @@ use std::time::Duration;
 ///
 /// Represents a single frame in a layer of an animation
 ///
-pub trait Frame {
+pub trait Frame : Send+Sync {
     ///
     /// Time index of this frame
     /// 
