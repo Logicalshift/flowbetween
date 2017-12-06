@@ -114,6 +114,8 @@ let flo_canvas = (function() {
         let generate_buffer_on_store    = false;
         let have_stored_image           = false;
         let last_store_pos              = null;
+        let layer_canvases              = null;
+        let blend_for_layer             = {};
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -407,13 +409,71 @@ let flo_canvas = (function() {
             restore_clip();
         }
 
+        function create_layer() {
+            let new_layer       = document.createElement('canvas');
+            new_layer.width     = canvas.width;
+            new_layer.height    = canvas.height;
+
+            return new_layer;
+        }
+
+        function copy_canvas(src_canvas, target_canvas) {
+            let target_context = target_canvas.getContext('2d');
+
+            target_context.save();
+            target_context.setTransform(1,0, 0,1, 0,0);
+            target_context.globalCompositeOperation = 'copy';
+
+            target_context.drawImage(src_canvas, 0,0, src_canvas.width, src_canvas.height);
+
+            target_context.restore();
+        }
+
         function layer(layer_id) {
+            // Clear any existing clipping rect
+            unclip();
+
+            // Set up layers if none are defined
+            if (!layer_canvases) {
+                layer_canvases = {};
+
+                // Create the initial layer
+                layer_canvases[0] = create_layer();
+                copy_canvas(canvas, layer_canvases[0]);
+
+                // Clear the main context
+                context.setTransform(1,0, 0,1, 0,0);
+                context.resetTransform();
+                context.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Create a new layer if this ID doesn't exist
+            let existing_layer = layer_canvases[layer_id];
+            if (!existing_layer) {
+                existing_layer = layer_canvases[layer_id] = create_layer();
+            }
+
+            // Set the context to this layer
+            context = existing_layer.getContext('2d');
+
+            // Copy the transform to this layer
+            context.setTransform(
+                transform[0],transform[3], 
+                transform[1],transform[4], 
+                transform[2],transform[5]
+            );
         }
 
         function layer_blend(layer_id, blend_mode) {
+            blend_for_layer[layer_id] = blend_mode;
         }
 
         function clear_canvas() {
+            // Clear layers
+            layer_canvases  = null;
+            context         = canvas.getContext('2d');
+            blend_for_layer = {};
+
             // Clear
             context.setTransform(1,0, 0,1, 0,0);
             context.resetTransform();
@@ -457,6 +517,25 @@ let flo_canvas = (function() {
             return flo_matrix.mulvec3(inverse_transform, [x*ratio, y*ratio, 1]);
         }
 
+        function draw_layers() {
+            // If we're using layers, then this must be called to update the canvas (if layers are not in use, it'll update directly)
+            // (This is a bit awkward if we're updating the canvas manually: we want to avoid calling this too often, though)
+            if (layer_canvases) {
+                // Draw on the main canvas
+                let layer_context = canvas.getContext('2d');
+                layer_context.setTransform(1,0, 0,1, 0,0);
+
+                let width   = canvas.width;
+                let height  = canvas.height;
+
+                // Draw each of the layers
+                Object.keys(layer_canvases).forEach(layer_id => {
+                    layer_context.globalCompositeOperation = blend_for_layer[layer_id] || 'source-over';
+                    layer_context.drawImage(layer_canvases[layer_id], 0,0, width,height);
+                });
+            }
+        }
+
         return {
             new_path:           ()              => { replay.push(new_path);                             new_path();                     },
             move_to:            (x, y)          => { replay.push(() => move_to(x, y));                  move_to(x, y);                  },
@@ -489,7 +568,8 @@ let flo_canvas = (function() {
             clear_canvas:       ()              => { replay = [ clear_canvas ];                         clear_canvas();                 },
 
             replay_drawing:     replay_drawing,
-            map_coords:         map_coords
+            map_coords:         map_coords,
+            draw_layers:        draw_layers
         };
     }
 
@@ -730,6 +810,8 @@ let flo_canvas = (function() {
                 default:    throw 'Unknown instruction \'' + instruction + '\' at ' + pos;
                 }
             }
+
+            draw.draw_layers();
         };
 
         return decoder;
@@ -786,6 +868,7 @@ let flo_canvas = (function() {
 
                 // Redraw the canvas contents at the new size
                 draw.replay_drawing();
+                draw.draw_layers();
             }
         }
 
