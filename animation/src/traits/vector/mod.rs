@@ -36,7 +36,7 @@ impl VectorElement for Vector {
         }
     }
 
-    fn render(&self, gc: &mut GraphicsContext) {
+    fn render(&self, gc: &mut GraphicsPrimitives) {
         match self {
             &Vector::Empty              => (),
             &Vector::Brush(ref elem)    => elem.render(gc)

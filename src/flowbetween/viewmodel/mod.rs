@@ -36,6 +36,13 @@ impl<Anim: Animation> AnimationViewModel<Anim> {
     }
 
     ///
+    /// Retrieves a reference to the animation being edited by this viewmodel
+    /// 
+    pub fn animation_ref(&self) -> Arc<Anim> {
+        Arc::clone(&self.animation)
+    }
+
+    ///
     /// Retrieves the viewmodel of the timeline for this animation
     /// 
     pub fn timeline(&self) -> &TimelineViewModel {

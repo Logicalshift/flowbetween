@@ -22,5 +22,5 @@ pub trait VectorElement : Any {
     ///
     /// Renders this vector element
     /// 
-    fn render(&self, gc: &mut GraphicsContext);
+    fn render(&self, gc: &mut GraphicsPrimitives);
 }

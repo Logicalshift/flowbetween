@@ -34,7 +34,7 @@ impl Frame for VectorFrame {
         self.keyframe.start_time() + self.offset
     }
 
-    fn render_to(&self, gc: &mut GraphicsContext) {
+    fn render_to(&self, gc: &mut GraphicsPrimitives) {
         let offset = self.offset;
 
         self.keyframe.elements().iter().for_each(move |element| {

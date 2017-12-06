@@ -39,7 +39,7 @@ impl PaintLayer for VectorLayerCore {
         self.active_brush_stroke = None;
     }
 
-    fn draw_current_brush_stroke(&self, gc: &mut GraphicsContext) {
+    fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives) {
         // Just pass the buck to the current brush stroke
         if let Some(ref brush_stroke) = self.active_brush_stroke {
             brush_stroke.render(gc);

@@ -2,12 +2,34 @@ use super::viewmodel::*;
 
 use ui::*;
 use ui::canvas::*;
+use desync::*;
 use binding::*;
 use animation::*;
 
 use std::sync::*;
+use std::time::Duration;
+use std::collections::HashMap;
 
 const MAIN_CANVAS: &str = "main";
+
+///
+/// Represents a layer in the current frame
+/// 
+struct FrameLayer {
+    /// The ID of the layer to draw on the canvas
+    layer_id:       u32,
+
+    /// The frame data for this layer
+    layer_frame:    Arc<Frame>
+}
+
+///
+/// The core of the canvas
+/// 
+struct CanvasCore {
+    /// The layers in the current frame
+    frame_layers: HashMap<u32, FrameLayer>
+}
 
 ///
 /// The canvas controller manages the main drawing canvas
@@ -16,10 +38,12 @@ pub struct CanvasController<Anim: Animation> {
     ui_view_model:      Arc<NullViewModel>,
     ui:                 Binding<Control>,
     canvases:           Arc<ResourceManager<Canvas>>,
-    anim_view_model:    AnimationViewModel<Anim>
+    anim_view_model:    AnimationViewModel<Anim>,
+
+    core:               Desync<CanvasCore>
 }
 
-impl<Anim: Animation> CanvasController<Anim> {
+impl<Anim: Animation+'static> CanvasController<Anim> {
     pub fn new(view_model: &AnimationViewModel<Anim>) -> CanvasController<Anim> {
         // Create the resources
         let canvases = ResourceManager::new();
@@ -29,12 +53,17 @@ impl<Anim: Animation> CanvasController<Anim> {
             ui_view_model:      Arc::new(NullViewModel::new()),
             ui:                 bind(Control::empty()),
             canvases:           Arc::new(canvases),
-            anim_view_model:    view_model.clone()
+            anim_view_model:    view_model.clone(),
+
+            core:               Desync::new(CanvasCore {
+                frame_layers: HashMap::new()
+            })
         };
 
         // The main canvas is where the current frame is rendered
         let main_canvas = controller.create_main_canvas();
 
+        // UI is just the canvas
         controller.ui.set(Control::canvas()
             .with(main_canvas)
             .with(Bounds::fill_all())
@@ -44,6 +73,10 @@ impl<Anim: Animation> CanvasController<Anim> {
                 (ActionTrigger::Paint(PaintDevice::Other),                      "Paint"),
                 (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   "Paint")
             )));
+
+        // Load the initial set of frame layers
+        controller.update_layers_to_frame_at_time(view_model.timeline().current_time.get());
+        controller.draw_frame_layers();
 
         controller
     }
@@ -114,6 +147,63 @@ impl<Anim: Animation> CanvasController<Anim> {
         gc.rect(0.0, 0.0, width, height);
         gc.fill();
         gc.stroke();
+    }
+
+    ///
+    /// Computes the frames for all the layers in the animation
+    /// 
+    fn update_layers_to_frame_at_time(&self, time: Duration) {
+        // Get the animation for the update
+        let animation = self.anim_view_model.animation_ref();
+
+        // Update the layers in the core
+        self.core.async(move |core| {
+            // Open the animation layers
+            let animation   = &*animation;
+            let layers      = open_read::<AnimationLayers>(animation);
+
+            // Generate the frame for each layer and assign an ID
+            core.frame_layers.clear();
+
+            if let Some(layers) = layers {
+                let mut next_layer_id = 1;
+
+                for layer in layers.layers() {
+                    // Create the frame for this layer
+                    let layer_frame = layer.get_frame_at_time(time);
+                    
+                    // Assign a layer ID to this frame and store
+                    core.frame_layers.insert(next_layer_id, FrameLayer {
+                        layer_id:       next_layer_id,
+                        layer_frame:    layer_frame
+                    });
+
+                    next_layer_id += 1;
+                }
+            }
+        });
+    }
+
+    ///
+    /// Draws the current set of frame layers
+    /// 
+    fn draw_frame_layers(&self) {
+        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+
+        // Clear the canvas and redraw the background
+        self.clear_canvas(&canvas);
+        canvas.draw(|gc| self.draw_background(gc));
+
+        // Draw the active set of layers
+        self.core.sync(move |core| {
+            canvas.draw(move |gc| {
+                // Draw the layers
+                for layer in core.frame_layers.values() {
+                    gc.layer(layer.layer_id);
+                    layer.layer_frame.render_to(gc);
+                }
+            });
+        });
     }
 }
 

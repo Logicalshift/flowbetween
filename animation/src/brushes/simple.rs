@@ -15,7 +15,7 @@ impl SimpleBrush {
 }
 
 impl Brush for SimpleBrush {
-    fn render_brush(&self, gc: &mut GraphicsContext, points: &Vec<BrushPoint>) {
+    fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 1 {
             return;

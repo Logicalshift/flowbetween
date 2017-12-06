@@ -72,7 +72,7 @@ impl VectorElement for BrushElement {
         }
     }
 
-    fn render(&self, gc: &mut GraphicsContext) {
+    fn render(&self, gc: &mut GraphicsPrimitives) {
         self.brush.render_brush(gc, &self.points)
     }
 }
