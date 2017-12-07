@@ -73,9 +73,20 @@ impl CanvasCore {
         });
 
         // Send the new drawing commands to the streams
-        self.pending_streams.iter().for_each(|stream| {
-            stream.send_drawing(&new_drawing, clear_pending);
-        });
+        let mut to_remove = vec![];
+
+        for stream_index in 0..self.pending_streams.len() {
+            // Send commands to this stream
+            if !self.pending_streams[stream_index].send_drawing(&new_drawing, clear_pending) {
+                // If it returns false then the stream has been dropped and we should remove it from this object
+                to_remove.push(stream_index);
+            }
+        }
+
+        // Remove streams (in reverse order so the indexes don't get messed up)
+        for remove_index in to_remove.into_iter().rev() {
+            self.pending_streams.remove(remove_index);
+        }
     }
 }
 
