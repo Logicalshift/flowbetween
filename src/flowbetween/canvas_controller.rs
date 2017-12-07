@@ -280,10 +280,12 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
                 },
 
                 PaintAction::Finish      => {
+                    // Draw the 'final' brush stroke
+                    gc.restore();
+                    layer.draw_current_brush_stroke(gc);
+
                     // Finish the brush stroke
                     layer.finish_brush_stroke();
-
-                    // TODO: need to draw it 'properly'
                 },
 
                 PaintAction::Cancel      => {
