@@ -171,7 +171,7 @@ impl Canvas {
 
         // Register it and send the current set of pending commands to it
         let add_stream = Arc::clone(&new_stream);
-        self.core.async(move |core| {
+        self.core.sync(move |core| {
             // Send the data we've received since the last clear
             add_stream.send_drawing(&core.drawing_since_last_clear, true);
 
