@@ -49,7 +49,8 @@ impl CanvasCore {
     /// 
     fn write(&mut self, to_draw: Vec<Draw>) {
         // Build up the list of new drawing commands
-        let mut new_drawing = vec![];
+        let mut new_drawing     = vec![];
+        let mut clear_pending   = false;
 
         // Process the drawing commands
         to_draw.iter().for_each(|draw| {
@@ -57,6 +58,7 @@ impl CanvasCore {
                 &Draw::ClearCanvas => {
                     // Clearing the canvas empties the command list and updates the clear count
                     self.drawing_since_last_clear   = vec![];
+                    clear_pending                   = true;
 
                     new_drawing = vec![];
                 },
@@ -74,7 +76,9 @@ impl CanvasCore {
         });
 
         // Send the new drawing commands to the streams
-        self.pending_streams.iter().for_each(|stream| stream.send_drawing(&new_drawing));
+        self.pending_streams.iter().for_each(|stream| {
+            stream.send_drawing(&new_drawing, clear_pending);
+        });
     }
 }
 
@@ -131,7 +135,7 @@ impl Canvas {
         let add_stream = Arc::clone(&new_stream);
         self.core.async(move |core| {
             // Send the data we've received since the last clear
-            add_stream.send_drawing(&core.drawing_since_last_clear);
+            add_stream.send_drawing(&core.drawing_since_last_clear, true);
 
             // Store the stream in the core so future notifications get sent there
             core.pending_streams.push(add_stream);
@@ -271,14 +275,21 @@ impl CanvasStream {
     ///
     /// Sends some drawing commands to this stream
     /// 
-    fn send_drawing(&self, drawing: &Vec<Draw>) {
+    fn send_drawing(&self, drawing: &Vec<Draw>, clear_pending: bool) {
         if drawing.len() > 0 {
             let mut core = self.core.lock().unwrap();
 
+            // Clear out any pending commands if they're hidden by a clear
+            if clear_pending {
+                core.queue.clear();
+            }
+
+            // Push the drawing commands
             for draw in drawing {
                 core.queue.push_back(*draw);
             }
 
+            // If a task needs waking up, wake it
             if let Some(ref task) = core.waiting_task {
                 task.notify();
             }
