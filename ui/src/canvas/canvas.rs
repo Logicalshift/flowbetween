@@ -35,10 +35,34 @@ pub struct Canvas {
 
 impl CanvasCore {
     ///
-    /// On restore, rewinds the canvas to the last store operation
+    /// On restore, rewinds the canvas to before the last store operation
     /// 
     fn rewind_to_last_store(&mut self) {
+        let mut last_store = None;
 
+        // Search backwards in the drawing commands for the last store command
+        for draw_index in (0..self.drawing_since_last_clear.len()).rev() {
+            match self.drawing_since_last_clear[draw_index] {
+                // Commands that might cause the store/restore to not undo perfectly break the sequence
+                Draw::Clip      => break,
+                Draw::Unclip    => break,
+                Draw::PushState => break,
+                Draw::PopState  => break,
+
+                // If we find no sequence breaks and a store, this is where we want to rewind to
+                Draw::Store     => {
+                    last_store = Some(draw_index);
+                    break;
+                },
+
+                _               => ()
+            };
+        }
+
+        // Remove everything up to the last store position
+        if let Some(last_store) = last_store {
+            self.drawing_since_last_clear.truncate(last_store);
+        }
     }
 
     ///
@@ -58,17 +82,24 @@ impl CanvasCore {
                     clear_pending                   = true;
 
                     new_drawing = vec![];
+
+                    // Start the new drawing with the 'clear' command
+                    self.drawing_since_last_clear.push(*draw);
                 },
 
                 &Draw::Restore => {
+                    // Have to push the restore in case it can't be cleared
+                    self.drawing_since_last_clear.push(*draw);
+
+                    // On a 'restore' command we clear out everything since the 'store' if we can (so we don't build a backlog)
                     self.rewind_to_last_store();
                 }
 
-                _ => ()
+                // Default is to add to the current drawing
+                _ => self.drawing_since_last_clear.push(*draw)
             }
 
-            // Add the command to the drawing list (there's always a clear at the start)
-            self.drawing_since_last_clear.push(*draw);
+            // Send everything to the streams
             new_drawing.push(*draw);
         });
 
@@ -429,6 +460,73 @@ mod test {
         assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 0.0))));
         assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 10.0))));
         assert!(stream.wait_stream() == Some(Ok(Draw::Line(0.0, 10.0))));
+    }
+
+    #[test]
+    fn restore_rewinds_canvas() {
+        let canvas      = Canvas::new();
+        
+        // Draw using a graphics context
+        canvas.draw(|gc| {
+            gc.new_path();
+            gc.move_to(0.0, 0.0);
+            gc.line_to(10.0, 0.0);
+            gc.line_to(10.0, 10.0);
+            gc.line_to(0.0, 10.0);
+
+            gc.store();
+            gc.new_path();
+            gc.rect(0.0,0.0, 100.0,100.0);
+            gc.restore();
+
+            gc.stroke();
+        });
+
+        // Only the commands before the 'store' should be present
+        let mut stream  = executor::spawn(canvas.stream());
+
+        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Move(0.0, 0.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 0.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 10.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(0.0, 10.0))));
+
+        assert!(stream.wait_stream() == Some(Ok(Draw::Stroke)));
+    }
+
+    #[test]
+    fn clip_interrupts_rewind() {
+        let canvas      = Canvas::new();
+        
+        // Draw using a graphics context
+        canvas.draw(|gc| {
+            gc.new_path();
+            gc.move_to(0.0, 0.0);
+            gc.line_to(10.0, 0.0);
+            gc.line_to(10.0, 10.0);
+            gc.line_to(0.0, 10.0);
+
+            gc.store();
+            gc.clip();
+            gc.new_path();
+            gc.restore();
+        });
+
+        // Only the commands before the 'store' should be present
+        let mut stream  = executor::spawn(canvas.stream());
+
+        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Move(0.0, 0.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 0.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(10.0, 10.0))));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Line(0.0, 10.0))));
+
+        assert!(stream.wait_stream() == Some(Ok(Draw::Store)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Clip)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        assert!(stream.wait_stream() == Some(Ok(Draw::Restore)));
     }
 
     #[test]
