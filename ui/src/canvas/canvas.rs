@@ -30,7 +30,7 @@ struct CanvasCore {
 ///
 pub struct Canvas {
     /// The core is shared amongst the canvas streams as well as used by the canvas itself
-    core: Arc<Desync<CanvasCore>>
+    core: Desync<CanvasCore>
 }
 
 impl CanvasCore {
@@ -91,7 +91,7 @@ impl Canvas {
         };
 
         Canvas {
-            core: Arc::new(Desync::new(core))
+            core: Desync::new(core)
         }
     }
 
