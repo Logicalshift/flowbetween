@@ -21,9 +21,6 @@ struct CanvasCore {
 
     // Tasks to notify next time we add to the canvas
     pending_streams: Vec<Arc<CanvasStream>>,
-
-    /// True if the canvas has been dropped
-    dropped: bool
 }
 
 ///
@@ -90,8 +87,7 @@ impl Canvas {
         // A canvas is initially just a clear command
         let core = CanvasCore { 
             drawing_since_last_clear:   vec![ Draw::ClearCanvas ],
-            pending_streams:            vec![ ],
-            dropped:                    false
+            pending_streams:            vec![ ]
         };
 
         Canvas {
@@ -156,10 +152,7 @@ impl Canvas {
 impl Drop for Canvas {
     fn drop(&mut self) {
         self.core.async(|core| {
-            // Mark the core as dropped
-            core.dropped = true;
-
-            // Notify any tasks that are using the canvas that it has gone away
+            // Notify any streams that are using the canvas that it has gone away
             core.pending_streams.iter_mut().for_each(|stream| stream.notify_dropped());
         });
     }
@@ -232,7 +225,10 @@ struct CanvasStreamCore {
     waiting_task: Option<Task>,
 
     /// Set to true when the canvas is dropped
-    dropped: bool
+    canvas_dropped: bool,
+
+    /// Set to true if the stream is dropped
+    stream_dropped: bool
 }
 
 ///
@@ -253,7 +249,8 @@ impl CanvasStream {
             core: Mutex::new(CanvasStreamCore {
                 queue:          VecDeque::new(),
                 waiting_task:   None,
-                dropped:        false
+                canvas_dropped: false,
+                stream_dropped: false
             })
         }
     }
@@ -264,7 +261,7 @@ impl CanvasStream {
     fn notify_dropped(&self) {
         let mut core = self.core.lock().unwrap();
 
-        core.dropped = true;
+        core.canvas_dropped = true;
 
         if let Some(ref task) = core.waiting_task {
             task.notify();
@@ -273,9 +270,9 @@ impl CanvasStream {
     }
 
     ///
-    /// Sends some drawing commands to this stream
+    /// Sends some drawing commands to this stream (returning true if this stream wants more commands)
     /// 
-    fn send_drawing(&self, drawing: &Vec<Draw>, clear_pending: bool) {
+    fn send_drawing(&self, drawing: &Vec<Draw>, clear_pending: bool) -> bool {
         if drawing.len() > 0 {
             let mut core = self.core.lock().unwrap();
 
@@ -294,6 +291,11 @@ impl CanvasStream {
                 task.notify();
             }
             core.waiting_task = None;
+
+            // We want more commands if the stream is not dropped
+            !core.stream_dropped
+        } else {
+            !self.core.lock().unwrap().stream_dropped
         }
     }
 }
@@ -306,7 +308,7 @@ impl CanvasStream {
 
         if let Some(value) = core.queue.pop_front() {
             Ok(Ready(Some(value)))
-        } else if core.dropped {
+        } else if core.canvas_dropped {
             Ok(Ready(None))
         } else {
             core.waiting_task = Some(task::current());
@@ -327,6 +329,14 @@ struct FragileCanvasStream {
 impl FragileCanvasStream {
     pub fn new(stream: Arc<CanvasStream>) -> FragileCanvasStream {
         FragileCanvasStream { stream: stream }
+    }
+}
+
+impl Drop for FragileCanvasStream {
+    fn drop(&mut self) {
+        let mut core = self.stream.core.lock().unwrap();
+
+        core.stream_dropped = true;
     }
 }
 
