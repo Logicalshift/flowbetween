@@ -153,7 +153,7 @@ impl SessionState {
 
             result
         } else {
-            // No controller is being watched, so there's nothign to cycle
+            // No controller is being watched, so there's nothing to cycle
             vec![]
         }
     }
