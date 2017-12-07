@@ -116,6 +116,7 @@ let flo_canvas = (function() {
         let last_store_pos              = null;
         let layer_canvases              = null;
         let blend_for_layer             = {};
+        let current_layer_id            = 0;
 
         ///
         /// Sets the current transform (lack of browser support for currentTransform means we have to track this independently)
@@ -332,6 +333,11 @@ let flo_canvas = (function() {
 
             if (width !== stored_pixels.width)      { stored_pixels.width = canvas.width; }
             if (height !== stored_pixels.height)    { stored_pixels.height = canvas.height; }
+
+            let source_canvas = canvas;
+            if (layer_canvases) {
+                source_canvas = layer_canvases[current_layer_id];
+            }
             
             // Remember where the store was in the replay (so we can rewind)
             last_store_pos  = replay.length;
@@ -339,7 +345,7 @@ let flo_canvas = (function() {
             // Draw the canvas to the backing buffer (we use a backing canvas because getImageData is very slow on all browsers)
             let stored_context = stored_pixels.getContext('2d');
             stored_context.globalCompositeOperation = 'copy';
-            stored_context.drawImage(canvas, 0, 0);
+            stored_context.drawImage(source_canvas, 0, 0);
             have_stored_image = true;
         }
 
@@ -370,6 +376,7 @@ let flo_canvas = (function() {
             let restore_stored_pixels   = stored_pixels;
             let restore_gen_buffer      = generate_buffer_on_store;
             let restore_have_image      = have_stored_image;
+            let restore_layer_id        = current_layer_id;
             let restore_last_store_pos  = last_store_pos;
             context_stack.push(() => {
                 clip_stack                  = restore_clip_stack;
@@ -377,6 +384,7 @@ let flo_canvas = (function() {
                 stored_pixels               = restore_stored_pixels;
                 generate_buffer_on_store    = restore_gen_buffer;
                 have_stored_image           = restore_have_image;
+                current_layer_id            = restore_layer_id;
                 last_store_pos              = restore_last_store_pos;
                 set_dash_pattern            = true;
             });
@@ -454,7 +462,8 @@ let flo_canvas = (function() {
             }
 
             // Set the context to this layer
-            context = existing_layer.getContext('2d');
+            context             = existing_layer.getContext('2d');
+            current_layer_id    = layer_id;
 
             // Copy the transform to this layer
             context.setTransform(
@@ -470,9 +479,10 @@ let flo_canvas = (function() {
 
         function clear_canvas() {
             // Clear layers
-            layer_canvases  = null;
-            context         = canvas.getContext('2d');
-            blend_for_layer = {};
+            layer_canvases      = null;
+            context             = canvas.getContext('2d');
+            blend_for_layer     = {};
+            current_layer_id    = 0;
 
             // Clear
             context.setTransform(1,0, 0,1, 0,0);
