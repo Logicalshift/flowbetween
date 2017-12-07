@@ -275,6 +275,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
                     // Re-render
                     gc.restore();
+                    gc.store();
                     layer.draw_current_brush_stroke(gc);
                 },
 
