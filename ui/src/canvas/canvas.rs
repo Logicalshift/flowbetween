@@ -57,6 +57,9 @@ impl CanvasCore {
             self.drawing_since_last_clear.push(*draw);
         });
 
+        // TODO: whenever we get a 'restore' drawing command we can rewind the drawing instructions to that point (and should because memory gets ridiculous without this)
+        // TODO: need to make sure that streams know about this
+
         // Notify the pending tasks that there are new drawing commands available
         pending_tasks.iter_mut().for_each(|task| task.notify());
     }
