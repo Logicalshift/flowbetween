@@ -1258,6 +1258,21 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// ====== DEBUGGING AND INTROSPECTION
+    ///
+
+    add_command('canvas_stats', 'Display statistics about the canvases in this window', () => {
+        let canvases = [].slice.apply(document.getElementsByTagName('flo-canvas'));
+
+        canvases.forEach(canvas => {
+            if (canvas.flo_draw) {
+                console.log(canvas);
+                console.log(canvas.flo_draw.stats());
+            }
+        });
+    });
+
+    ///
     /// ===== STARTUP
     ///
 
