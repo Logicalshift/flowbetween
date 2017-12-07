@@ -39,6 +39,16 @@ pub struct Canvas {
 }
 
 impl CanvasCore {
+    ///
+    /// On restore, rewinds the canvas to the last store operation
+    /// 
+    fn rewind_to_last_store(&mut self) {
+
+    }
+
+    ///
+    /// Writes some drawing commands to this core
+    /// 
     fn write(&mut self, to_draw: Vec<Draw>) {
         let mut pending_tasks   = vec![];
 
@@ -47,10 +57,18 @@ impl CanvasCore {
 
         // Process the drawing commands
         to_draw.iter().for_each(|draw| {
-            // Clearing the canvas empties the command list and updates the clear count
-            if let &Draw::ClearCanvas = draw {
-                self.drawing_since_last_clear   = vec![];
-                self.clear_count                = self.clear_count.wrapping_add(1);
+            match draw {
+                &Draw::ClearCanvas => {
+                    // Clearing the canvas empties the command list and updates the clear count
+                    self.drawing_since_last_clear   = vec![];
+                    self.clear_count                = self.clear_count.wrapping_add(1);
+                },
+
+                &Draw::Restore => {
+                    rewind_to_last_store();
+                }
+
+                _ => ()
             }
 
             // Add the command to the drawing list (there's always a clear at the start)
