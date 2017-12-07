@@ -19,9 +19,6 @@ struct CanvasCore {
     /// What was drawn since the last clear command was sent to this canvas
     drawing_since_last_clear: Vec<Draw>,
 
-    // The number of times the canvas has been cleared
-    clear_count: u32,
-
     // Tasks to notify next time we add to the canvas
     pending_streams: Vec<Arc<CanvasStream>>,
 
@@ -60,7 +57,6 @@ impl CanvasCore {
                 &Draw::ClearCanvas => {
                     // Clearing the canvas empties the command list and updates the clear count
                     self.drawing_since_last_clear   = vec![];
-                    self.clear_count                = self.clear_count.wrapping_add(1);
 
                     new_drawing = vec![];
                 },
@@ -90,7 +86,6 @@ impl Canvas {
         // A canvas is initially just a clear command
         let core = CanvasCore { 
             drawing_since_last_clear:   vec![ Draw::ClearCanvas ],
-            clear_count:                0,
             pending_streams:            vec![ ],
             dropped:                    false
         };
