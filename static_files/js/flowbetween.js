@@ -1272,6 +1272,23 @@ function flowbetween(root_node) {
         });
     });
 
+    add_command('canvas_replay', 'Replays all of the canvases and reports timings', () => {
+        let canvases = [].slice.apply(document.getElementsByTagName('flo-canvas'));
+
+        canvases.forEach(canvas => {
+            if (canvas.flo_draw) {
+                let start_time = Date.now();
+                for (let iter=0; iter<10; ++iter) {
+                    canvas.flo_draw.replay_drawing();
+                    canvas.flo_draw.draw_layers();
+                }
+                let total_time = Date.now() - start_time;
+
+                console.log(canvas.flo_controller + '/' + canvas.flo_name + ': ' + total_time/10 + 'ms');
+            }
+        });
+    });
+
     ///
     /// ===== STARTUP
     ///

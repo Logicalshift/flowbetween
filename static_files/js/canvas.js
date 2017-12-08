@@ -582,9 +582,9 @@ let flo_canvas = (function() {
             draw_layers:        draw_layers,
 
             stats:              ()              => { 
-                let result = { 
-                    replay_length: replay.length, 
-                    num_layers: (layer_canvases ? Object.keys(layer_canvases).length : 1)
+                let result = {
+                    replay_length:      replay.length, 
+                    num_layers:         (layer_canvases ? Object.keys(layer_canvases).length : 1)
                 };
                 return result;
             }
@@ -969,6 +969,8 @@ let flo_canvas = (function() {
         element.flo_canvas_decoder  = decoder;
         element.flo_draw            = draw;
         element.flo_map_coords      = draw.map_coords;
+        element.flo_controller      = flo_controller;
+        element.flo_name            = flo_name;
         canvas.flo_draw             = draw;
         canvas.flo_canvas_decoder   = decoder;
         canvas.flo_name             = flo_name;
