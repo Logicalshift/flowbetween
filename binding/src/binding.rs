@@ -68,6 +68,8 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
         let releasable = ReleasableNotifiable::new(what);
         self.when_changed.push(releasable.clone_as_owned());
 
+        self.filter_unused_notifications();
+
         Box::new(releasable)
     }
 }

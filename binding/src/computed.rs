@@ -70,6 +70,13 @@ where TFn: 'static+Fn() -> Value {
     }
 
     ///
+    /// If there are any notifiables in this object that aren't in use, remove them
+    ///
+    pub fn filter_unused_notifications(&mut self) {
+        self.when_changed.retain(|releasable| releasable.is_in_use());
+    }
+
+    ///
     /// Returns the current value (or 'Unknown' if it needs recalculating)
     ///
     pub fn get(&self) -> ComputedValue<Value> {
@@ -133,6 +140,8 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
             // Mark it as changed
             let actually_changed = core.mark_changed();
+
+            core.filter_unused_notifications();
 
             // Get the items that need changing (once we've notified our dependencies that we're changed, we don't need to notify them again until we get recalculated)
             let notifiable = if actually_changed {
@@ -211,6 +220,8 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // Lock the core and push this as a thing to perform when this value changes
         let mut core = self.core.lock().unwrap();
         core.when_changed.push(releasable.clone_as_owned());
+
+        core.filter_unused_notifications();
 
         Box::new(releasable)
     }
