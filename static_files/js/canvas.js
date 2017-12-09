@@ -99,7 +99,7 @@ let flo_canvas = (function() {
     ///
     function create_drawing_functions(canvas) {
         // The replay log will replay the actions that draw this canvas (for example when resizing)
-        let replay  = [ clear_canvas ];
+        let replay  = [ [ clear_canvas, [] ] ];
 
         let context                     = canvas.getContext('2d');
         let current_path                = [];
@@ -511,7 +511,7 @@ let flo_canvas = (function() {
         }
 
         function replay_drawing() {
-            replay.forEach(item => item());
+            replay.forEach(item => item[0].apply(null, item[1]));
         }
 
         function map_coords(x, y) {
@@ -547,35 +547,35 @@ let flo_canvas = (function() {
         }
 
         return {
-            new_path:           ()              => { replay.push(new_path);                             new_path();                     },
-            move_to:            (x, y)          => { replay.push(() => move_to(x, y));                  move_to(x, y);                  },
-            line_to:            (x, y)          => { replay.push(() => line_to(x, y));                  line_to(x, y);                  },
-            bezier_curve:       (x1, y1, x2, y2, x3, y3) => { replay.push(() => bezier_curve(x1, y1, x2, y2, x3, y3)); bezier_curve(x1, y1, x2, x2, y3, y3); },
-            fill:               ()              => { replay.push(fill);                                 fill();                         },
-            stroke:             ()              => { replay.push(stroke);                               stroke();                       },
-            line_width:         (width)         => { replay.push(() => line_width(width));              line_width(width);              },
-            line_width_pixels:  (width)         => { replay.push(() => line_width_pixels(width));       line_width_pixels(width);       },
-            line_join:          (join)          => { replay.push(() => line_join(join));                line_join(join);                },
-            line_cap:           (cap)           => { replay.push(() => line_cap(cap));                  line_cap(cap);                  },
-            new_dash_pattern:   ()              => { replay.push(new_dash_pattern);                     new_dash_pattern();             },
-            dash_length:        (length)        => { replay.push(() => dash_length(length));            dash_length(length);            },
-            dash_offset:        (offset)        => { replay.push(() => dash_offset(offset));            dash_length(offset);            },
-            fill_color:         (r, g, b, a)    => { replay.push(() => fill_color(r, g, b, a));         fill_color(r, g, b, a);         },
-            stroke_color:       (r, g, b, a)    => { replay.push(() => stroke_color(r, g, b, a));       stroke_color(r, g, b, a);       },
-            blend_mode:         (mode)          => { replay.push(() => blend_mode(mode));                blend_mode(mode);              },
-            identity_transform: ()              => { replay.push(identity_transform);                   identity_transform();           },
-            canvas_height:      (height)        => { replay.push(() => canvas_height(height));          canvas_height(height);          },
-            center_region:      (x1, y1, x2, y2) => { replay.push(() => center_region(x1, y1, x2, y2)); center_region(x1, y1, x2, y2);  },
-            multiply_transform: (transform)     => { replay.push(() => multiply_transform(transform));  multiply_transform(transform);  },
-            unclip:             ()              => { replay.push(unclip);                               unclip();                       },
-            clip:               ()              => { replay.push(clip);                                 clip();                         },
-            store:              ()              => { replay.push(store);                                store();                        },
-            restore:            ()              => { replay.push(restore); rewind_to_last_store();      restore();                      },
-            push_state:         ()              => { replay.push(push_state);                           push_state();                   },
-            pop_state:          ()              => { replay.push(pop_state);                            pop_state();                    },
-            layer:              (layer_id)      => { replay.push(() => layer(layer_id));                layer(layer_id);                },
-            layer_blend:        (layer_id, blend_mode) => { replay.push(() => layer_blend(layer_id, blend_mode)); layer_blend(layer_id, blend_mode); },
-            clear_canvas:       ()              => { replay = [ clear_canvas ];                         clear_canvas();                 },
+            new_path:           ()              => { replay.push([new_path, []]);                       new_path();                     },
+            move_to:            (x, y)          => { replay.push([move_to, [x, y]]);                    move_to(x, y);                  },
+            line_to:            (x, y)          => { replay.push([line_to, [x, y]]);                    line_to(x, y);                  },
+            bezier_curve:       (x1, y1, x2, y2, x3, y3) => { replay.push([bezier_curve, [x1, y1, x2, y2, x3, y3]]); bezier_curve(x1, y1, x2, y2, x3, y3); },
+            fill:               ()              => { replay.push([fill, []]);                           fill();                         },
+            stroke:             ()              => { replay.push([stroke, []]);                         stroke();                       },
+            line_width:         (width)         => { replay.push([line_width, [width]]);                line_width(width);              },
+            line_width_pixels:  (width)         => { replay.push([line_width_pixels, [width]]);         line_width_pixels(width);       },
+            line_join:          (join)          => { replay.push([line_join, [join]]);                  line_join(join);                },
+            line_cap:           (cap)           => { replay.push([line_cap, [cap]]);                    line_cap(cap);                  },
+            new_dash_pattern:   ()              => { replay.push([new_dash_pattern, []]);               new_dash_pattern();             },
+            dash_length:        (length)        => { replay.push([dash_length, [length]]);              dash_length(length);            },
+            dash_offset:        (offset)        => { replay.push([dash_offset, [offset]]);              dash_length(offset);            },
+            fill_color:         (r, g, b, a)    => { replay.push([fill_color, [r, g, b, a]]);           fill_color(r, g, b, a);         },
+            stroke_color:       (r, g, b, a)    => { replay.push([stroke_color, [r, g, b, a]]);         stroke_color(r, g, b, a);       },
+            blend_mode:         (mode)          => { replay.push([blend_mode, [mode]]);                 blend_mode(mode);              },
+            identity_transform: ()              => { replay.push([identity_transform, []]);             identity_transform();           },
+            canvas_height:      (height)        => { replay.push([canvas_height, [height]]);            canvas_height(height);          },
+            center_region:      (x1, y1, x2, y2) => { replay.push([center_region, [x1, y1, x2, y2]]);   center_region(x1, y1, x2, y2);  },
+            multiply_transform: (transform)     => { replay.push([multiply_transform, [transform]]);    multiply_transform(transform);  },
+            unclip:             ()              => { replay.push([unclip, []]);                         unclip();                       },
+            clip:               ()              => { replay.push([clip, []]);                           clip();                         },
+            store:              ()              => { replay.push([store, []]);                          store();                        },
+            restore:            ()              => { replay.push([restore, []]); rewind_to_last_store(); restore();                     },
+            push_state:         ()              => { replay.push([push_state, []]);                     push_state();                   },
+            pop_state:          ()              => { replay.push([pop_state, []]);                      pop_state();                    },
+            layer:              (layer_id)      => { replay.push([layer, [layer_id]]);                  layer(layer_id);                },
+            layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode]]); layer_blend(layer_id, blend_mode); },
+            clear_canvas:       ()              => { replay = [ [clear_canvas, []] ];                   clear_canvas();                 },
 
             replay_drawing:     replay_drawing,
             map_coords:         map_coords,
