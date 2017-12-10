@@ -1,8 +1,10 @@
 mod basis;
 mod subdivide;
+mod derivative;
 
 pub use self::basis::*;
 pub use self::subdivide::*;
+pub use self::derivative::*;
 
 use super::coordinate::*;
 

@@ -3,7 +3,7 @@ use std::ops::*;
 ///
 /// Represents a value that can be used as a coordinate in a bezier curve
 /// 
-pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self> {
+pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+Sub<Self, Output=Self> {
 }
 
 impl Coordinate for f32 {
@@ -19,6 +19,15 @@ impl Add<Coord2> for Coord2 {
     #[inline]
     fn add(self, rhs: Coord2) -> Coord2 {
         Coord2(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+
+impl Sub<Coord2> for Coord2 {
+    type Output=Coord2;
+
+    #[inline]
+    fn sub(self, rhs: Coord2) -> Coord2 {
+        Coord2(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
 
