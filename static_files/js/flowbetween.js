@@ -1280,11 +1280,18 @@ function flowbetween(root_node) {
                 let start_time = Date.now();
                 for (let iter=0; iter<10; ++iter) {
                     canvas.flo_draw.replay_drawing();
-                    canvas.flo_draw.draw_layers();
                 }
                 let total_time = Date.now() - start_time;
 
-                console.log(canvas.flo_controller + '/' + canvas.flo_name + ': ' + total_time/10 + 'ms');
+                console.log('Redraw: ' + canvas.flo_controller + '/' + canvas.flo_name + ': ' + total_time/10 + 'ms');
+
+                start_time = Date.now();
+                for (let iter=0; iter<10; ++iter) {
+                    canvas.flo_draw.draw_layers();
+                }
+                total_time = Date.now() - start_time;
+
+                console.log('Draw layers: ' + canvas.flo_controller + '/' + canvas.flo_name + ': ' + total_time/10 + 'ms');
             }
         });
     });
