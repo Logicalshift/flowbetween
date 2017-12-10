@@ -23,10 +23,10 @@ pub fn basis<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point, w4: Poi
 /// de Casteljau's algorithm for cubic bezier curves
 /// 
 #[inline]
-pub fn de_casteljau4(t: f32, w1: f32, w2: f32, w3: f32, w4: f32) -> f32 {
-    let wn1 = (1.0-t)*w1 + t*w2;
-    let wn2 = (1.0-t)*w2 + t*w3;
-    let wn3 = (1.0-t)*w3 + t*w4;
+pub fn de_casteljau4<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point, w4: Point) -> Point {
+    let wn1 = w1*(1.0-t) + w2*t;
+    let wn2 = w2*(1.0-t) + w3*t;
+    let wn3 = w3*(1.0-t) + w4*t;
 
     de_casteljau3(t, wn1, wn2, wn3)
 }
@@ -35,9 +35,9 @@ pub fn de_casteljau4(t: f32, w1: f32, w2: f32, w3: f32, w4: f32) -> f32 {
 /// de Casteljau's algorithm for quadratic bezier curves
 /// 
 #[inline]
-pub fn de_casteljau3(t: f32, w1: f32, w2: f32, w3: f32) -> f32 {
-    let wn1 = (1.0-t)*w1 + t*w2;
-    let wn2 = (1.0-t)*w2 + t*w3;
+pub fn de_casteljau3<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point) -> Point {
+    let wn1 = w1*(1.0-t) + w2*t;
+    let wn2 = w2*(1.0-t) + w3*t;
 
     de_casteljau2(t, wn1, wn2)
 }
@@ -46,6 +46,6 @@ pub fn de_casteljau3(t: f32, w1: f32, w2: f32, w3: f32) -> f32 {
 /// de Casteljau's algorithm for lines
 /// 
 #[inline]
-pub fn de_casteljau2(t: f32, w1: f32, w2: f32) -> f32 {
-    (1.0-t)*w1 + t*w2
+pub fn de_casteljau2<Point: Coordinate>(t: f32, w1: Point, w2: Point) -> Point {
+    w1*(1.0-t) + w2*t
 }

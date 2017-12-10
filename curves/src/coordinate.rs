@@ -3,13 +3,14 @@ use std::ops::*;
 ///
 /// Represents a value that can be used as a coordinate in a bezier curve
 /// 
-pub trait Coordinate : Sized+Add<Self, Output=Self>+Mul<f32, Output=Self> {
+pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self> {
 }
 
 impl Coordinate for f32 {
 }
 
 /// Represents a 2D point
+#[derive(Copy, Clone)]
 pub struct Coord2(pub f32, pub f32);
 
 impl Add<Coord2> for Coord2 {
