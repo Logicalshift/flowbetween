@@ -10,7 +10,7 @@ impl Coordinate for f32 {
 }
 
 /// Represents a 2D point
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct Coord2(pub f32, pub f32);
 
 impl Add<Coord2> for Coord2 {
