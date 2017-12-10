@@ -60,6 +60,10 @@ version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "curves"
+version = "0.1.0"
+
+[[package]]
 name = "desync"
 version = "0.1.2"
 source = "git+https://github.com/logicalshift/desync?branch=develop#d371f081e848c1a3ba7c2394c16895e2d3010957"
@@ -98,6 +102,7 @@ version = "0.1.0"
 dependencies = [
  "animation 0.1.0",
  "binding 0.1.0",
+ "curves 0.1.0",
  "desync 0.1.2 (git+https://github.com/logicalshift/desync?branch=develop)",
  "http_ui 0.1.0",
  "iron 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
