@@ -2,7 +2,7 @@ use super::basis::*;
 use super::super::Coordinate;
 
 ///
-/// Finds the upper and lower points in this curve's bounding box
+/// Finds the upper and lower points in a cubic curve's bounding box
 /// 
 pub fn bounding_box4<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> (Point, Point) {
     // The 't' values where this curve has extremities we need to examine
