@@ -56,3 +56,7 @@ impl BezierCurve for Curve {
         self.control_points
     }
 }
+
+mod basis;
+
+pub use self::basis::*;
