@@ -5,6 +5,7 @@ use curves::bezier::*;
 mod basis;
 mod subdivide;
 mod derivative;
+mod tangent;
 
 pub fn approx_equal(a: f32, b: f32) -> bool {
     f32::floor(f32::abs(a-b)*10000.0) == 0.0

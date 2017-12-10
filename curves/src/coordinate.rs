@@ -13,6 +13,24 @@ impl Coordinate for f32 {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Coord2(pub f32, pub f32);
 
+impl Coord2 {
+    ///
+    /// X component of this coordinate
+    /// 
+    #[inline]
+    pub fn x(&self) -> f32 {
+        self.0
+    }
+
+    ///
+    /// Y component of this coordinate
+    /// 
+    #[inline]
+    pub fn y(&self) -> f32 {
+        self.1
+    }
+}
+
 impl Add<Coord2> for Coord2 {
     type Output=Coord2;
 
