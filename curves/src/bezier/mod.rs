@@ -1,9 +1,15 @@
+mod basis;
+mod subdivide;
+
+pub use self::basis::*;
+pub use self::subdivide::*;
+
 use super::coordinate::*;
 
 ///
 /// Trait implemented by things representing a cubic bezier curve
 /// 
-pub trait BezierCurve<Point: Coordinate> {
+pub trait BezierCurve<Point: Coordinate> : Sized {
     ///
     /// Creates a new bezier curve of the same type from some points
     /// 
@@ -23,6 +29,27 @@ pub trait BezierCurve<Point: Coordinate> {
     /// The control points in this curve
     /// 
     fn control_points(&self) -> (Point, Point);
+
+    ///
+    /// Given a value t from 0 to 1, returns a point on this curve
+    /// 
+    #[inline]
+    fn point_at_pos(&self, t: f32) -> Point {
+        let control_points = self.control_points();
+        de_casteljau4(t, self.start_point(), control_points.0, control_points.1, self.end_point())
+    }
+
+    ///
+    /// Given a value t from 0 to 1, finds a point on this curve and subdivides it, returning the two resulting curves
+    /// 
+    #[inline]
+    fn subdivide(&self, t: f32) -> (Self, Self) {
+        let control_points              = self.control_points();
+        let (first_curve, second_curve) = subdivide4(t, self.start_point(), control_points.0, control_points.1, self.end_point());
+
+        (Self::from_points(first_curve.0, first_curve.3, first_curve.1, first_curve.2),
+            Self::from_points(second_curve.0, second_curve.3, second_curve.1, second_curve.2))
+    }
 }
 
 ///
@@ -58,9 +85,3 @@ impl BezierCurve<Coord2> for Curve {
         self.control_points
     }
 }
-
-mod basis;
-mod subdivide;
-
-pub use self::basis::*;
-pub use self::subdivide::*;
