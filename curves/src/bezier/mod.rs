@@ -11,32 +11,34 @@ use super::coordinate::*;
 ///
 /// Trait implemented by things representing a cubic bezier curve
 /// 
-pub trait BezierCurve<Point: Coordinate> : Sized {
+pub trait BezierCurve: Sized {
+    type Point: Coordinate;
+
     ///
     /// Creates a new bezier curve of the same type from some points
     /// 
-    fn from_points(start: Point, end: Point, control_point1: Point, control_point2: Point) -> Self;
+    fn from_points(start: Self::Point, end: Self::Point, control_point1: Self::Point, control_point2: Self::Point) -> Self;
 
     ///
     /// The start point of this curve
     /// 
-    fn start_point(&self) -> Point;
+    fn start_point(&self) -> Self::Point;
 
     ///
     /// The end point of this curve
     /// 
-    fn end_point(&self) -> Point;
+    fn end_point(&self) -> Self::Point;
 
     ///
     /// The control points in this curve
     /// 
-    fn control_points(&self) -> (Point, Point);
+    fn control_points(&self) -> (Self::Point, Self::Point);
 
     ///
     /// Given a value t from 0 to 1, returns a point on this curve
     /// 
     #[inline]
-    fn point_at_pos(&self, t: f32) -> Point {
+    fn point_at_pos(&self, t: f32) -> Self::Point {
         let control_points = self.control_points();
         de_casteljau4(t, self.start_point(), control_points.0, control_points.1, self.end_point())
     }
@@ -63,7 +65,9 @@ pub struct Curve {
     pub control_points: (Coord2, Coord2)
 }
 
-impl BezierCurve<Coord2> for Curve {
+impl BezierCurve for Curve {
+    type Point = Coord2;
+
     fn from_points(start: Coord2, end: Coord2, control_point1: Coord2, control_point2: Coord2) -> Curve {
         Curve {
             start_point:    start,
