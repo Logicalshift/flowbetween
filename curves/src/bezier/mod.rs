@@ -2,11 +2,13 @@ mod basis;
 mod subdivide;
 mod derivative;
 mod tangent;
+mod bounds;
 
 pub use self::basis::*;
 pub use self::subdivide::*;
 pub use self::derivative::*;
 pub use self::tangent::*;
+pub use self::bounds::*;
 
 use super::coordinate::*;
 
@@ -55,6 +57,18 @@ pub trait BezierCurve: Sized {
 
         (Self::from_points(first_curve.0, first_curve.3, first_curve.1, first_curve.2),
             Self::from_points(second_curve.0, second_curve.3, second_curve.1, second_curve.2))
+    }
+
+    ///
+    /// Computes the bounds of this bezier curve
+    /// 
+    fn bounding_box(&self) -> (Self::Point, Self::Point) {
+        // Fetch the various points and the derivative of this curve
+        let start           = self.start_point();
+        let end             = self.end_point();
+        let control_points  = self.control_points();
+
+        bounding_box4(start, control_points.0, control_points.1, end)
     }
 }
 
