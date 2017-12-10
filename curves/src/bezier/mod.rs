@@ -58,5 +58,7 @@ impl BezierCurve for Curve {
 }
 
 mod basis;
+mod subdivide;
 
 pub use self::basis::*;
+pub use self::subdivide::*;

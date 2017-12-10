@@ -2,6 +2,11 @@ use curves::bezier;
 use curves::bezier::*;
 
 mod basis;
+mod subdivide;
+
+pub fn approx_equal(a: f32, b: f32) -> bool {
+    f32::floor(f32::abs(a-b)*10000.0) == 0.0
+}
 
 #[test]
 fn can_read_curve_points() {

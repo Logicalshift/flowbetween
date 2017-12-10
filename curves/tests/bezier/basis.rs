@@ -1,3 +1,4 @@
+use super::*;
 use curves::bezier;
 
 #[test]
@@ -18,6 +19,6 @@ fn basis_agrees_with_de_casteljau() {
         let basis           = bezier::basis(t, 2.0, 3.0, 4.0, 5.0);
         let de_casteljau    = bezier::de_casteljau4(t, 2.0, 3.0, 4.0, 5.0);
 
-        assert!(f32::floor(f32::abs(basis - de_casteljau)*10000.0) == 0.0);
+        assert!(approx_equal(basis, de_casteljau));
     }
 }
