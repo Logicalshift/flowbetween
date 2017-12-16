@@ -16,6 +16,7 @@ extern crate ui;
 extern crate binding;
 extern crate animation;
 extern crate desync;
+extern crate curves;
 
 pub mod flowbetween;
 pub use self::flowbetween::*;
