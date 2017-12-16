@@ -17,6 +17,14 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
     fn from_smallest_components(p1: Self, p2: Self) -> Self;
 }
 
+///
+/// Represents a coordinate with a 2D position
+/// 
+pub trait Coordinate2D {
+    fn x(&self) -> f32;
+    fn y(&self) -> f32;
+}
+
 impl Coordinate for f32 {
     #[inline] fn len() -> usize { 1 }
     #[inline] fn get(&self, _index: usize) -> f32 { *self }
@@ -44,12 +52,12 @@ impl Coordinate for f32 {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Coord2(pub f32, pub f32);
 
-impl Coord2 {
+impl Coordinate2D for Coord2 {
     ///
     /// X component of this coordinate
     /// 
     #[inline]
-    pub fn x(&self) -> f32 {
+    fn x(&self) -> f32 {
         self.0
     }
 
@@ -57,7 +65,7 @@ impl Coord2 {
     /// Y component of this coordinate
     /// 
     #[inline]
-    pub fn y(&self) -> f32 {
+    fn y(&self) -> f32 {
         self.1
     }
 }
