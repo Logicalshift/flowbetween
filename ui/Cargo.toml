@@ -9,5 +9,6 @@ serde_derive    = "^1.0.0"
 serde_json      = "^1.0.0"
 futures         = "^0.1.17"
 binding         = { path = "../binding" }
+curves          = { path = "../curves" }
 modifier        = "^0.1.0"
 desync          = { git = "https://github.com/logicalshift/desync", branch = "develop" }

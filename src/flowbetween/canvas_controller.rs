@@ -201,16 +201,12 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
         // TEST: code for a bezier curve
         canvas.draw(|gc| {
-            let curve       = bezier::Curve::from_points(Coord2(100.0, 500.0), Coord2(1800.0, 400.0), Coord2(300.0,0.0), Coord2(1700.0, 1000.0));
-            let (cp1, cp2)  = curve.control_points();
+            let curve = bezier::Curve::from_points(Coord2(100.0, 500.0), Coord2(1800.0, 400.0), Coord2(300.0,0.0), Coord2(1700.0, 1000.0));
 
             gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
             gc.new_path();
             gc.move_to(curve.start_point().x(), curve.start_point().y());
-            gc.bezier_curve_to(
-                curve.end_point().x(), curve.end_point().y(), 
-                cp1.x(), cp1.y(),
-                cp2.x(), cp2.y());
+            gc_draw_bezier(gc, &curve);
             gc.stroke();
 
             gc.stroke_color(Color::Rgba(0.0, 0.0, 1.0, 1.0));

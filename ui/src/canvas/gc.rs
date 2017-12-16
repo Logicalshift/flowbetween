@@ -2,6 +2,9 @@ use super::draw::*;
 use super::color::*;
 use super::transform2d::*;
 
+use curves::*;
+use curves::bezier::BezierCurve;
+
 ///
 /// A graphics context provides the basic set of graphics actions that can be performed 
 ///
@@ -77,6 +80,9 @@ pub trait GraphicsContext {
 /// GraphicsPrimitives adds new primitives that can be built directly from a graphics context
 ///
 pub trait GraphicsPrimitives : GraphicsContext {
+    ///
+    /// Draws a rectangle between particular coordinates
+    /// 
     fn rect(&mut self, x1: f32, y1: f32, x2: f32, y2: f32) {
         self.move_to(x1, y1);
         self.line_to(x1, y2);
@@ -85,3 +91,14 @@ pub trait GraphicsPrimitives : GraphicsContext {
         self.line_to(x1, y1);
     }
 }
+
+///
+/// Draws the specified bezier curve in a graphics context (assuming we're already at the start position) 
+///
+pub fn gc_draw_bezier<Gc: GraphicsContext+?Sized, Coord: Coordinate2D+Coordinate, Curve: BezierCurve<Point=Coord>>(gc: &mut Gc, curve: &Curve) {
+    let end         = curve.end_point();
+    let (cp1, cp2)  = curve.control_points();
+
+    gc.bezier_curve_to(end.x(), end.y(), cp1.x(), cp1.y(), cp2.x(), cp2.y());
+}
+
