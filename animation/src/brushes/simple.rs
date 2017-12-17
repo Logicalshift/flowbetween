@@ -40,7 +40,7 @@ impl Brush for SimpleBrush {
         }
 
         // Fit these points to a curve
-        let curve = bezier::Curve::fit_from_points(&distant_coords, 1.0);
+        let curve = bezier::Curve::fit_from_points(&distant_coords, 2.0);
         
         // Draw a simple line for this brush
         if let Some(curve) = curve {
