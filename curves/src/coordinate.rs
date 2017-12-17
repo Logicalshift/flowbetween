@@ -4,6 +4,9 @@ use std::ops::*;
 /// Represents a value that can be used as a coordinate in a bezier curve
 /// 
 pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+Sub<Self, Output=Self> {
+    /// Returns the origin coordinate
+    fn origin() -> Self;
+
     /// The number of components in this coordinate
     fn len() -> usize;
 
@@ -17,6 +20,7 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
     fn from_smallest_components(p1: Self, p2: Self) -> Self;
 
     /// Computes the distance between this coordinate and another of the same type
+    #[inline]
     fn distance_to(&self, target: &Self) -> f32 {
         let mut squared_distance = 0.0;
 
@@ -26,6 +30,18 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
         }
 
         f32::sqrt(squared_distance)
+    }
+
+    /// Computes the magnitude of this vector
+    #[inline]
+    fn magnitude(&self) -> f32 {
+        self.distance_to(&Self::origin())
+    }
+
+    /// Treating this as a vector, returns a unit vector in the same direction
+    #[inline]
+    fn normalize(&self) -> Self {
+        *self * (1.0/self.magnitude())
     }
 }
 
@@ -38,6 +54,7 @@ pub trait Coordinate2D {
 }
 
 impl Coordinate for f32 {
+    #[inline] fn origin() -> f32 { 0.0 }
     #[inline] fn len() -> usize { 1 }
     #[inline] fn get(&self, _index: usize) -> f32 { *self }
 
@@ -57,6 +74,11 @@ impl Coordinate for f32 {
         } else {
             p2
         }
+    }
+
+    #[inline]
+    fn distance_to(&self, target: &f32) -> f32 {
+        f32::abs(self-target)
     }
 }
 
@@ -111,6 +133,11 @@ impl Mul<f32> for Coord2 {
 
 impl Coordinate for Coord2 {
     #[inline]
+    fn origin() -> Coord2 {
+        Coord2(0.0, 0.0)
+    }
+
+    #[inline]
     fn len() -> usize { 2 }
 
     #[inline]
@@ -128,5 +155,13 @@ impl Coordinate for Coord2 {
 
     fn from_smallest_components(p1: Coord2, p2: Coord2) -> Coord2 {
         Coord2(f32::from_smallest_components(p1.0, p2.0), f32::from_smallest_components(p1.1, p2.1))
+    }
+
+    #[inline]
+    fn distance_to(&self, target: &Coord2) -> f32 {
+        let dist_x = target.0-self.0;
+        let dist_y = target.1-self.1;
+
+        f32::sqrt(dist_x*dist_x + dist_y*dist_y)
     }
 }
