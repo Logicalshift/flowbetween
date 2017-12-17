@@ -217,14 +217,14 @@ fn max_error_for_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
 ///
 /// Returns the unit tangent at the start of the curve
 /// 
-fn start_tangent<Point: Coordinate>(points: &Vec<Point>) -> Point {
+fn start_tangent<Point: Coordinate>(points: &[Point]) -> Point {
     (points[1]-points[0]).normalize()
 }
 
 ///
 /// Returns the unit tangent at the end of the curve
 /// 
-fn end_tangent<Point: Coordinate>(points: &Vec<Point>) -> Point {
+fn end_tangent<Point: Coordinate>(points: &[Point]) -> Point {
     (points[points.len()-2]-points[points.len()-1]).normalize()
 }
 
