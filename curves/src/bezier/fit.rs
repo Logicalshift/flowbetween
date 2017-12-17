@@ -52,7 +52,7 @@ pub fn fit_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[P
             let end_tangent     = end_tangent(block_points);
 
             let fit = fit_curve_cubic(block_points, &start_tangent, &end_tangent, max_error);
-            for curve in fit.into_iter() {
+            for curve in fit {
                 curves.push(curve);
             }
         }
@@ -234,14 +234,11 @@ fn max_error_for_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
     let mut biggest_error_squared = 0.0;
     let mut biggest_error_offset  = 0;
 
-    let mut current_point = 0;
-    for error_squared in errors {
+    for (current_point, error_squared) in errors.enumerate() {
         if error_squared > biggest_error_squared {
             biggest_error_squared = error_squared;
             biggest_error_offset  = current_point;
         }
-
-        current_point += 1;
     }
     
     // Indicate the biggest error and where it was 
