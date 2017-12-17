@@ -7,10 +7,20 @@ const MAX_ITERATIONS: usize = 4;
 // How far out of the error bounds we can be (as a ratio of the maximum error) and still attempt to fit the curve
 const FIT_ATTEMPT_RATIO: f32 = 4.0;
 
+/// Maximum number of points to fit at once (curves with more points are divided before fitting)
+const MAX_POINTS_TO_FIT: usize = 100;
+
 ///
 /// Creates a bezier curve that fits a set of points with a particular error
 /// 
 /// Algorithm from Philip J. Schdeiner, Graphics Gems
+/// 
+/// There are a few modifications from the original algorithm:
+/// 
+///   * The 'small' error used to determine if we should use Newton-Raphson is now 
+///     just a multiplier of the max error
+///   * We only try to fit a certain number of points at once as the algorithm runs
+///     in quadratic time otherwise
 /// 
 pub fn fit_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &Vec<Point>, max_error: f32) -> Option<Vec<Curve>> {
     // Need at least 2 points to fit anything
@@ -18,12 +28,36 @@ pub fn fit_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &Ve
         // Insufficient points for this curve
         None
     } else {
-        // Need the start and end tangents so we know how the curve continues
-        let start_tangent   = start_tangent(points);
-        let end_tangent     = end_tangent(points);
+        let mut curves = vec![];
 
-        // Pass on to the main curve fitting algorithm
-        Some(fit_curve_cubic(&points[0..points.len()], &start_tangent, &end_tangent, max_error))
+        // Divide up the points into blocks containing MAX_POINTS_TO_FIT items
+        let num_blocks = ((points.len()-1) / MAX_POINTS_TO_FIT)+1;
+
+        for point_block in 0..num_blocks {
+            // Pick the set of points that will be in this block
+            let start_point     = point_block * MAX_POINTS_TO_FIT;
+            let mut num_points  = MAX_POINTS_TO_FIT;
+
+            if start_point+num_points > points.len() {
+                num_points = points.len() - start_point;
+            }
+
+            // Edge case: one point outside of a block (we ignore these blocks)
+            if num_points < 2 { continue; }
+
+            // Need the start and end tangents so we know how the curve continues
+            let block_points = &points[start_point..start_point+num_points];
+
+            let start_tangent   = start_tangent(block_points);
+            let end_tangent     = end_tangent(block_points);
+
+            let fit = fit_curve_cubic(block_points, &start_tangent, &end_tangent, max_error);
+            for curve in fit.into_iter() {
+                curves.push(curve);
+            }
+        }
+
+        Some(curves)
     }
 }
 
