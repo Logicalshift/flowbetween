@@ -14,3 +14,8 @@ fn can_normalize() {
 
     assert!(f32::abs(Coord2(4.0, 2.0).normalize().distance_to(&Coord2(0.0, 0.0))-1.0) < 0.01);
 }
+
+#[test]
+fn can_get_dot_product() {
+    assert!(Coord2(2.0,1.0).dot(&Coord2(3.0, 4.0)) == 10.0);
+}

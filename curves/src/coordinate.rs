@@ -32,6 +32,18 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
         f32::sqrt(squared_distance)
     }
 
+    /// Computes the dot product for this vector along with another vector
+    #[inline]
+    fn dot(&self, target: &Self) -> f32 {
+        let mut dot_product = 0.0;
+
+        for component_index in 0..Self::len() {
+            dot_product += self.get(component_index) * target.get(component_index);
+        }
+
+        dot_product
+    }
+
     /// Computes the magnitude of this vector
     #[inline]
     fn magnitude(&self) -> f32 {
@@ -79,6 +91,10 @@ impl Coordinate for f32 {
     #[inline]
     fn distance_to(&self, target: &f32) -> f32 {
         f32::abs(self-target)
+    }
+
+    fn dot(&self, target: &f32) -> f32 {
+        self * target
     }
 }
 
@@ -163,5 +179,10 @@ impl Coordinate for Coord2 {
         let dist_y = target.1-self.1;
 
         f32::sqrt(dist_x*dist_x + dist_y*dist_y)
+    }
+
+    #[inline]
+    fn dot(&self, target: &Self) -> f32 {
+        self.0*target.0 + self.1*target.1
     }
 }
