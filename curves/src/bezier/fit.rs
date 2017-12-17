@@ -1,4 +1,5 @@
 use super::*;
+use super::basis::*;
 
 ///
 /// Creates a bezier curve that fits a set of points with a particular error
@@ -190,12 +191,66 @@ fn max_error_for_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
 /// Returns the unit tangent at the start of the curve
 /// 
 fn start_tangent<Point: Coordinate>(points: &Vec<Point>) -> Point {
-    (points[0]-points[1]).normalize()
+    (points[1]-points[0]).normalize()
 }
 
 ///
 /// Returns the unit tangent at the end of the curve
 /// 
 fn end_tangent<Point: Coordinate>(points: &Vec<Point>) -> Point {
-    (points[points.len()-1]-points[points.len()-2]).normalize()
+    (points[points.len()-2]-points[points.len()-1]).normalize()
+}
+
+///
+/// Estimates the tangent between three points 
+///
+fn tangent_between<Point: Coordinate>(p1: &Point, p2: &Point, p3: &Point) -> Point {
+    let v1 = *p1 - *p2;
+    let v2 = *p2 - *p3;
+
+    ((v1+v2)*0.5).normalize()
+}
+
+///
+/// Applies the newton-raphson method in order to improve the t values of a curve
+/// 
+fn reparameterize<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], chords: &[f32], curve: &Curve) -> Vec<f32> {
+    points.iter().zip(chords.iter())
+        .map(|(point, chord)| newton_raphson_root_find(curve, point, *chord))
+        .collect()
+}
+
+///
+/// Uses newton-raphson to find a root for a curve
+/// 
+fn newton_raphson_root_find<Point: Coordinate, Curve: BezierCurve<Point=Point>>(curve: &Curve, point: &Point, estimated_t: f32) -> f32 {
+    let start       = curve.start_point();
+    let end         = curve.end_point();
+    let (cp1, cp2)  = curve.control_points();
+
+    // Compute Q(t) (where Q is our curve)
+    let qt          = curve.point_at_pos(estimated_t);
+    
+    // Generate control vertices
+    let qn1         = (cp1-start)*3.0;
+    let qn2         = (cp2-cp1)*3.0;
+    let qn3         = (end-cp2)*3.0;
+
+    let qnn1        = (qn2-qn1)*2.0;
+    let qnn2        = (qn3-qn2)*2.0;
+
+    // Compute Q'(t) and Q''(t)
+    let qnt         = de_casteljau3(estimated_t, qn1, qn2, qn3);
+    let qnnt        = de_casteljau2(estimated_t, qnn1, qnn2);
+
+    // Compute f(u)/f'(u)
+    let numerator   = (qt-*point).dot(&qnt);
+    let denominator = qnt.dot(&qnt) + (qt-*point).dot(&qnnt);
+
+    // u = u - f(u)/f'(u)
+    if denominator == 0.0 {
+        estimated_t
+    } else {
+        estimated_t - (numerator/denominator)
+    }
 }
