@@ -30,7 +30,7 @@ pub fn bounding_box4<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Poi
     let mut min_pos = de_casteljau4(0.0, w1, w2, w3, w4);
     let mut max_pos = min_pos;
 
-    for t in t_extremes.into_iter() {
+    for t in t_extremes {
         let point = de_casteljau4(t, w1, w2, w3, w4);
 
         min_pos = Point::from_smallest_components(min_pos, point);
