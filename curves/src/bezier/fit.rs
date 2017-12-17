@@ -28,9 +28,26 @@ pub fn fit_curve_cubic<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
         // 2 points is a line (less than 2 points is an error here)
         fit_line(&points[0], &points[1])
     } else {
+        // Find the initial set of chords (estimates for where the t values for each of the points are)
         let chords = chords_for_points(points);
 
-        unimplemented!()
+        // Use the least-squares method to fit against the initial set of chords
+        let initial_curve: Curve = generate_bezier(points, &chords, start_tangent, end_tangent);
+
+        // Just use this curve if we got a good fit
+        let (initial_error, _) = max_error_for_curve(points, &chords, &initial_curve);
+
+        if initial_error < max_error {
+            // Return the initial curve if the error is small enough
+            vec![initial_curve]
+        } else {
+            // Try iterating if we're not too far out
+
+            // If error still too large, split the points and create two curves
+
+            // TODO: actually do that stuff
+            vec![initial_curve]
+        }
     }
 }
 
@@ -68,6 +85,105 @@ fn chords_for_points<Point: Coordinate>(points: &[Point]) -> Vec<f32> {
     }
 
     distances
+}
+
+///
+/// Generates a bezier curve using the least-squares method
+/// 
+fn generate_bezier<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], chords: &[f32], start_tangent: &Point, end_tangent: &Point) -> Curve {
+    // Precompute the RHS as 'a'
+    let a: Vec<(Point, Point)> = chords.iter().map(|chord| {
+        let inverse_chord   = 1.0 - chord;
+
+        let b1              = 3.0 * chord * (inverse_chord*inverse_chord);
+        let b2              = 3.0 * chord * chord * inverse_chord;
+
+        (*start_tangent*b1, *end_tangent*b2)
+    }).collect();
+
+    // Create the 'C' and 'X' matrices
+    let mut c = [[ 0.0, 0.0 ], [ 0.0, 0.0 ]];
+    let mut x = [0.0, 0.0];
+
+    let last_point = points[points.len()-1];
+
+    for point in 0..points.len() {
+        c[0][0] += a[point].0.dot(&a[point].0);
+        c[0][1] += a[point].0.dot(&a[point].1);
+        c[1][0] = c[0][1];
+        c[1][1] += a[point].1.dot(&a[point].1);
+
+        let chord           = chords[point];
+        let inverse_chord   = 1.0 - chord;
+        let b0              = inverse_chord*inverse_chord*inverse_chord;
+        let b1              = 3.0 * chord * (inverse_chord*inverse_chord);
+        let b2              = 3.0 * chord * chord * inverse_chord;
+        let b3              = chord*chord*chord;
+
+        let tmp = points[point] - 
+            ((points[0] * b0) + (points[0] * b1) + (last_point*b2) + (last_point*b3));
+
+        x[0] += a[point].0.dot(&tmp);
+        x[1] += a[point].1.dot(&tmp);
+    }
+
+    // Compute their determinants
+    let det_c0_c1   = c[0][0]*c[1][1] - c[1][0]*c[0][1];
+    let det_c0_x    = c[0][0]*x[1]    - c[1][0]*x[0];
+    let det_x_c1    = x[0]*c[1][1]    - x[1]*c[0][1];
+
+    // Derive alpha values
+    let alpha_l = if det_c0_c1==0.0 { 0.0 } else { det_x_c1/det_c0_c1 };
+    let alpha_r = if det_c0_c1==0.0 { 0.0 } else { det_c0_x/det_c0_c1 };
+
+    // Use the Wu/Barsky heuristic if alpha-negative
+    let seg_length   = points[0].distance_to(&last_point);
+    let epsilon     = 1.0e-6*seg_length;
+
+    if alpha_l < epsilon || alpha_r < epsilon {
+        // Much less accurate means of estimating a curve
+        let dist = seg_length/3.0;
+        Curve::from_points(points[0], last_point, points[0]+(*start_tangent*dist), last_point+(*end_tangent*dist))
+    } else {
+        // The control points are positioned an alpha distance out along the tangent vectors
+        Curve::from_points(points[0], last_point, points[0]+(*start_tangent*alpha_l), last_point+(*end_tangent*alpha_r))
+    }
+}
+
+///
+/// Computes the maximum error for a curve fit against a given set of points
+/// 
+/// The chords indicate the estimated t-values corresponding to the points.
+/// 
+/// Returns the maximum error and the index of the point with that error.
+/// 
+fn max_error_for_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], chords: &[f32], curve: &Curve) -> (f32, usize) {
+    let errors = points.iter().zip(chords.iter())
+        .map(|(point, chord)| {
+            // Get the actual position of this point and the offset
+            let actual = curve.point_at_pos(*chord);
+            let offset = *point - actual;
+
+            // The dot product of an item with itself is the square of the distance
+            offset.dot(&offset)
+        });
+    
+    // Search the errors for the biggest one
+    let mut biggest_error_squared = 0.0;
+    let mut biggest_error_offset  = 0;
+
+    let mut current_point = 0;
+    for error_squared in errors {
+        if error_squared > biggest_error_squared {
+            biggest_error_squared = error_squared;
+            biggest_error_offset  = current_point;
+        }
+
+        current_point += 1;
+    }
+    
+    // Indicate the biggest error and where it was 
+    (f32::sqrt(biggest_error_squared), biggest_error_offset)
 }
 
 ///
