@@ -199,6 +199,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         self.clear_canvas(&canvas);
         canvas.draw(|gc| self.draw_background(gc));
 
+        /*
         // TEST: code for a bezier curve
         canvas.draw(|gc| {
             // Try fitting a curve to some points
@@ -263,6 +264,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
             gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
         });
+        */
 
         // Draw the active set of layers
         self.core.sync(move |core| {
