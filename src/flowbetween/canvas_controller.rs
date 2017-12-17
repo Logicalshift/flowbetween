@@ -335,19 +335,11 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
                     // Begin the brush stroke
                     layer.start_brush_stroke(current_time, BrushPoint::from(action));
-
-                    // Render it so far
-                    layer.draw_current_brush_stroke(gc);
                 },
 
                 PaintAction::Continue    => {
                     // Append to the brush stroke
                     layer.continue_brush_stroke(BrushPoint::from(action));
-
-                    // Re-render
-                    gc.restore();
-                    gc.store();
-                    layer.draw_current_brush_stroke(gc);
                 },
 
                 PaintAction::Finish      => {
@@ -384,6 +376,21 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             if let Some(mut selected_layer) = selected_layer {
                 for action in actions {
                     self.paint_action(layer_id, &mut *selected_layer, action);
+                }
+
+                // If there's a brush stroke waiting, render it
+                // Starting a brush stroke selects the layer and creates a save state, which 
+                // we assume is still present for the canvas (this is fragile!)
+                if selected_layer.has_pending_brush_stroke() {
+                    let canvas              = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+                    let layer: &PaintLayer  = &*selected_layer;
+
+                    canvas.draw(|gc| {
+                        // Re-render the current brush stroke
+                        gc.restore();
+                        gc.store();
+                        layer.draw_current_brush_stroke(gc);
+                    });
                 }
             }
         }
