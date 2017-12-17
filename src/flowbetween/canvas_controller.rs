@@ -201,6 +201,37 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
         // TEST: code for a bezier curve
         canvas.draw(|gc| {
+            // Try fitting a curve to some points
+            let fit_points = vec![
+                Coord2(100.0, 800.0),
+                Coord2(120.0, 760.0),
+                Coord2(200.0, 790.0),
+                Coord2(340.0, 820.0),
+                Coord2(410.0, 840.0),
+                Coord2(490.0, 830.0),
+                Coord2(720.0, 860.0),
+                Coord2(800.0, 880.0),
+                Coord2(900.0, 800.0)
+            ];
+
+            let fit_curves = bezier::Curve::fit_from_points(&fit_points, 20.0).unwrap();
+
+            gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+            gc.new_path();
+            gc.move_to(fit_curves[0].start_point().x(), fit_curves[0].start_point().y());
+            for fit_curve in fit_curves {
+                gc_draw_bezier(gc, &fit_curve);
+            }
+            gc.stroke();
+
+            gc.stroke_color(Color::Rgba(0.0, 0.5, 1.0, 1.0));
+            for point in fit_points {
+                gc.new_path();
+                gc.rect(point.x() - 2.0, point.y() - 2.0, point.x() + 2.0, point.y() + 2.0);
+                gc.stroke();
+            }
+
+            // Draw a curve, split and its bounding box
             let curve               = bezier::Curve::from_points(Coord2(100.0, 500.0), Coord2(1800.0, 400.0), Coord2(300.0,0.0), Coord2(1700.0, 1000.0));
             let (curve1, curve2)    = curve.subdivide(0.33);
             let (_curve, curve3)    = curve.subdivide(0.66);
