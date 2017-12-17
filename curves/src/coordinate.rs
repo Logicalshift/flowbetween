@@ -15,6 +15,18 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
 
     /// Returns a point made up of the smallest components of the two points
     fn from_smallest_components(p1: Self, p2: Self) -> Self;
+
+    /// Computes the distance between this coordinate and another of the same type
+    fn distance_to(&self, target: &Self) -> f32 {
+        let mut squared_distance = 0.0;
+
+        for component_index in 0..Self::len() {
+            let component_distance = target.get(component_index) - self.get(component_index);
+            squared_distance += component_distance * component_distance;
+        }
+
+        f32::sqrt(squared_distance)
+    }
 }
 
 ///

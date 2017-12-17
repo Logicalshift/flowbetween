@@ -1,3 +1,4 @@
+use curves::*;
 use curves::bezier::BezierCurve;
 use curves::bezier;
 use curves::Coord2;
