@@ -6,10 +6,6 @@ use desync::*;
 use binding::*;
 use animation::*;
 
-use curves::*;
-use curves::bezier;
-use curves::bezier::{BezierCurve};
-
 use std::sync::*;
 use std::time::Duration;
 use std::collections::HashMap;
