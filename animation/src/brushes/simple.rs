@@ -53,7 +53,31 @@ impl Brush for SimpleBrush {
                 gc_draw_bezier(gc, curve_section);
             }
 
-            gc.stroke();        
+            gc.stroke();
+
+            // Debugging code: show the CPs for the curves
+            gc.stroke_color(Color::Rgba(0.5, 0.0, 0.0, 0.5));
+            for curve_section in curve.iter() {
+                let (cp1, cp2) = curve_section.control_points();
+                let (x1, y1) = (cp1.x(), cp1.y());
+                let (x2, y2) = (cp2.x(), cp2.y());
+
+                gc.new_path();
+                gc.move_to(curve_section.start_point().x(), curve_section.start_point().y());
+                gc.line_to(x1, y1);
+                gc.move_to(curve_section.end_point().x(), curve_section.end_point().y());
+                gc.line_to(x2, y2);
+                gc.stroke();
+            }
+
+            gc.stroke_color(Color::Rgba(0.0, 0.5, 1.0, 1.0));
+            for curve_section in curve.iter() {
+                let (x, y) = (curve_section.end_point().x(), curve_section.end_point().y());
+
+                gc.new_path();
+                gc.rect(x-2.0, y-2.0, x+2.0, y+2.0);
+                gc.stroke();
+            }
         }
     }
 }
