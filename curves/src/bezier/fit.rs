@@ -1,6 +1,9 @@
 use super::*;
 use super::basis::*;
 
+/// Maximum number of iterations to perform when trying to improve the curve fit
+const MAX_ITERATIONS: usize = 4;
+
 ///
 /// Creates a bezier curve that fits a set of points with a particular error
 /// 
@@ -30,24 +33,45 @@ pub fn fit_curve_cubic<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
         fit_line(&points[0], &points[1])
     } else {
         // Find the initial set of chords (estimates for where the t values for each of the points are)
-        let chords = chords_for_points(points);
+        let mut chords = chords_for_points(points);
 
         // Use the least-squares method to fit against the initial set of chords
-        let initial_curve: Curve = generate_bezier(points, &chords, start_tangent, end_tangent);
+        let mut curve: Curve = generate_bezier(points, &chords, start_tangent, end_tangent);
 
         // Just use this curve if we got a good fit
-        let (initial_error, _) = max_error_for_curve(points, &chords, &initial_curve);
+        let (mut error, mut split_pos) = max_error_for_curve(points, &chords, &curve);
 
-        if initial_error < max_error {
-            // Return the initial curve if the error is small enough
-            vec![initial_curve]
+        // Try iterating to improve the fit if we're not too far out
+        if error > max_error && error < max_error*4.0 {
+            for _iteration in 0..MAX_ITERATIONS {
+                // Recompute the chords and the curve
+                chords = reparameterize(points, &chords, &curve);
+                curve  = generate_bezier(points, &chords, start_tangent, end_tangent);
+
+                // Recompute the error
+                let (new_error, new_split_pos) = max_error_for_curve(points, &chords, &curve);
+                error       = new_error;
+                split_pos   = new_split_pos;
+
+                if error < max_error {
+                    break;
+                }
+            }
+        }
+
+        if error <= max_error {
+            // We've generated a curve within the error bounds
+            vec![curve]
         } else {
-            // Try iterating if we're not too far out
-
             // If error still too large, split the points and create two curves
+            let center_tangent = tangent_between(&points[split_pos-1], &points[split_pos], &points[split_pos+1]);
 
-            // TODO: actually do that stuff
-            vec![initial_curve]
+            // Fit the two sides
+            let lhs = fit_curve_cubic(&points[0..split_pos+1], start_tangent, &center_tangent, max_error);
+            let rhs = fit_curve_cubic(&points[split_pos..points.len()], &(center_tangent*-1.0), end_tangent, max_error);
+
+            // Collect the result
+            lhs.into_iter().chain(rhs.into_iter()).collect()
         }
     }
 }
