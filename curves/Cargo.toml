@@ -4,3 +4,4 @@ version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 
 [dependencies]
+rulinalg    = "0.4.2"
