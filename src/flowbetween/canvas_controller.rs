@@ -209,6 +209,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
                 Coord2(340.0, 820.0),
                 Coord2(410.0, 840.0),
                 Coord2(490.0, 830.0),
+                Coord2(550.0, 830.0),
                 Coord2(720.0, 860.0),
                 Coord2(800.0, 880.0),
                 Coord2(900.0, 800.0)
