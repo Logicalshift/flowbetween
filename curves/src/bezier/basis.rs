@@ -12,10 +12,10 @@ pub fn basis<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point, w4: Poi
     let one_minus_t_squared = one_minus_t*one_minus_t;
     let one_minus_t_cubed   = one_minus_t_squared*one_minus_t;
 
-    return w1*one_minus_t_cubed 
+    w1*one_minus_t_cubed 
         + w2*3.0*one_minus_t_squared*t
         + w3*3.0*one_minus_t*t_squared
-        + w4*t_cubed;
+        + w4*t_cubed
 }
 
 
