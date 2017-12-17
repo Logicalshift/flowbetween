@@ -24,9 +24,23 @@ impl Brush for SimpleBrush {
             return;
         }
 
-        // Fit a curve to the points
-        let coords  = points.iter().map(|point| Coord2(point.position.0, point.position.1)).collect();
-        let curve   = bezier::Curve::fit_from_points(&coords, 2.0);
+        // Map to coordinates
+        let coords: Vec<Coord2> = points.iter().map(|point| Coord2(point.position.0, point.position.1)).collect();
+
+        // Pick points that are at least a certain distance apart to use for the fitting algorithm
+        let mut distant_coords = vec![];
+        let mut last_point = coords[0];
+
+        distant_coords.push(last_point);
+        for x in 1..coords.len() {
+            if last_point.distance_to(&coords[x]) >= 2.0 {
+                last_point = coords[x];
+                distant_coords.push(last_point);
+            }
+        }
+
+        // Fit these points to a curve
+        let curve = bezier::Curve::fit_from_points(&distant_coords, 2.0);
         
         // Draw a simple line for this brush
         if let Some(curve) = curve {
