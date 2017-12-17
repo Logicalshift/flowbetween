@@ -4,6 +4,9 @@ use super::basis::*;
 /// Maximum number of iterations to perform when trying to improve the curve fit
 const MAX_ITERATIONS: usize = 4;
 
+// How far out of the error bounds we can be (as a ratio of the maximum error) and still attempt to fit the curve
+const FIT_ATTEMPT_RATIO: f32 = 4.0;
+
 ///
 /// Creates a bezier curve that fits a set of points with a particular error
 /// 
@@ -42,7 +45,7 @@ pub fn fit_curve_cubic<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
         let (mut error, mut split_pos) = max_error_for_curve(points, &chords, &curve);
 
         // Try iterating to improve the fit if we're not too far out
-        if error > max_error && error < max_error*4.0 {
+        if error > max_error && error < max_error*FIT_ATTEMPT_RATIO {
             for _iteration in 0..MAX_ITERATIONS {
                 // Recompute the chords and the curve
                 chords = reparameterize(points, &chords, &curve);
