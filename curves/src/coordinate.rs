@@ -22,12 +22,8 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
     /// Computes the distance between this coordinate and another of the same type
     #[inline]
     fn distance_to(&self, target: &Self) -> f32 {
-        let mut squared_distance = 0.0;
-
-        for component_index in 0..Self::len() {
-            let component_distance = target.get(component_index) - self.get(component_index);
-            squared_distance += component_distance * component_distance;
-        }
+        let offset              = *self - *target;
+        let squared_distance    = offset.dot(&offset);
 
         f32::sqrt(squared_distance)
     }
@@ -47,7 +43,7 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
     /// Computes the magnitude of this vector
     #[inline]
     fn magnitude(&self) -> f32 {
-        self.distance_to(&Self::origin())
+        f32::sqrt(self.dot(self))
     }
 
     /// Treating this as a vector, returns a unit vector in the same direction

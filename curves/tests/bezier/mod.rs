@@ -1,6 +1,5 @@
 use curves::*;
 use curves::bezier;
-use curves::bezier::*;
 
 mod basis;
 mod subdivide;
