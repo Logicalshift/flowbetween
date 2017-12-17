@@ -45,6 +45,10 @@ impl PaintLayer for VectorLayerCore {
             brush_stroke.render(gc);
         }
     }
+
+    fn has_pending_brush_stroke(&self) -> bool {
+        self.active_brush_stroke.is_some()
+    }
 }
 
 #[cfg(test)]

@@ -36,4 +36,9 @@ pub trait PaintLayer : Send+Sync {
     /// Draws the in-progress brush stroke to the specified graphics context
     /// 
     fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives);
+
+    ///
+    /// Returns true if this item has an active brush stroke (not cancelled or finished)
+    /// 
+    fn has_pending_brush_stroke(&self) -> bool;
 }
