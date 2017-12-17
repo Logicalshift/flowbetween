@@ -53,7 +53,7 @@ pub fn fit_curve_cubic<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
                 error       = new_error;
                 split_pos   = new_split_pos;
 
-                if error < max_error {
+                if error <= max_error {
                     break;
                 }
             }
