@@ -28,6 +28,8 @@ pub fn fit_curve_cubic<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
         // 2 points is a line (less than 2 points is an error here)
         fit_line(&points[0], &points[1])
     } else {
+        let chords = chords_for_points(points);
+
         unimplemented!()
     }
 }
@@ -42,6 +44,30 @@ fn fit_line<Point: Coordinate, Curve: BezierCurve<Point=Point>>(p1: &Point, p2: 
     let cp2         = *p1 + (direction * 0.66);
 
     vec![Curve::from_points(*p1, *p2, cp1, cp2)]
+}
+
+///
+/// Chord-length parameterizes a set of points
+/// 
+/// This is an estimate of the 't' value for these points on the final curve.
+/// 
+fn chords_for_points<Point: Coordinate>(points: &[Point]) -> Vec<f32> {
+    let mut distances       = vec![];
+    let mut total_distance  = 0.0;
+
+    // Compute the distances for each point
+    distances.push(total_distance);
+    for p in 1..points.len() {
+        total_distance += points[p-1].distance_to(&points[p]);
+        distances.push(total_distance);
+    }
+
+    // Normalize to the range 0..1
+    for p in 0..points.len() {
+        distances[p] /= total_distance;
+    }
+
+    distances
 }
 
 ///
