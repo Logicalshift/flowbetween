@@ -3,6 +3,7 @@
 //!
 
 extern crate modifier;
+extern crate curves;
 extern crate ui;
 
 mod traits;

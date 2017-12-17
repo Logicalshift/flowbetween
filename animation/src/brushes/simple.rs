@@ -1,6 +1,9 @@
 use super::super::traits::*;
 use ui::canvas::*;
 
+use curves::*;
+use curves::bezier;
+
 ///
 /// Simple brush, which renders a brush stroke as a straight series of line segments
 /// 
@@ -20,17 +23,23 @@ impl Brush for SimpleBrush {
         if points.len() <= 1 {
             return;
         }
+
+        // Fit a curve to the points
+        let coords  = points.iter().map(|point| Coord2(point.position.0, point.position.1)).collect();
+        let curve   = bezier::Curve::fit_from_points(&coords, 2.0);
         
         // Draw a simple line for this brush
-        gc.new_path();
-        
-        let (x, y) = points[0].position;
-        gc.move_to(x, y);
-        for point in points.iter().skip(1) {
-            let (x, y) = point.position;
-            gc.line_to(x, y);
-        }
+        if let Some(curve) = curve {
+            gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+            gc.new_path();
+            
+            let Coord2(x, y) = curve[0].start_point();
+            gc.move_to(x, y);
+            for curve_section in curve.iter() {
+                gc_draw_bezier(gc, curve_section);
+            }
 
-        gc.stroke();        
+            gc.stroke();        
+        }
     }
 }

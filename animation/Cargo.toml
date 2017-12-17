@@ -5,6 +5,7 @@ authors     = ["Andrew Hunter"]
 
 [dependencies]
 ui                  = { path = "../ui" }
+curves              = { path = "../curves" }
 
 typemap             = "^0.3.3"
 modifier            = "^0.1.0"
