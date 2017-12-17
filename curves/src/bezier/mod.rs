@@ -72,6 +72,14 @@ pub trait BezierCurve: Sized {
 
         bounding_box4(start, control_points.0, control_points.1, end)
     }
+
+    ///
+    /// Generates a curve by attempting to find a best fit against a set of points
+    /// 
+    #[inline]
+    fn fit_from_points(points: &Vec<Self::Point>, max_error: f32) -> Option<Vec<Self>> {
+        fit_curve(points, max_error)
+    }
 }
 
 ///
