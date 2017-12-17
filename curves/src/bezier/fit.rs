@@ -22,7 +22,7 @@ const MAX_POINTS_TO_FIT: usize = 100;
 ///   * We only try to fit a certain number of points at once as the algorithm runs
 ///     in quadratic time otherwise
 /// 
-pub fn fit_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &Vec<Point>, max_error: f32) -> Option<Vec<Curve>> {
+pub fn fit_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], max_error: f32) -> Option<Vec<Curve>> {
     // Need at least 2 points to fit anything
     if points.len() < 2 {
         // Insufficient points for this curve
