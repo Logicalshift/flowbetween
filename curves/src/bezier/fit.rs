@@ -158,11 +158,11 @@ fn generate_bezier<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &
     let det_x_c1    = x[0]*c[1][1]    - x[1]*c[0][1];
 
     // Derive alpha values
-    let alpha_l = if det_c0_c1==0.0 { 0.0 } else { det_x_c1/det_c0_c1 };
-    let alpha_r = if det_c0_c1==0.0 { 0.0 } else { det_c0_x/det_c0_c1 };
+    let alpha_l = if f32::abs(det_c0_c1)<1.0e-4 { 0.0 } else { det_x_c1/det_c0_c1 };
+    let alpha_r = if f32::abs(det_c0_c1)<1.0e-4 { 0.0 } else { det_c0_x/det_c0_c1 };
 
     // Use the Wu/Barsky heuristic if alpha-negative
-    let seg_length   = points[0].distance_to(&last_point);
+    let seg_length  = points[0].distance_to(&last_point);
     let epsilon     = 1.0e-6*seg_length;
 
     if alpha_l < epsilon || alpha_r < epsilon {
