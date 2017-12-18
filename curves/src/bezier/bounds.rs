@@ -2,9 +2,10 @@ use super::basis::*;
 use super::super::Coordinate;
 
 ///
-/// Finds the upper and lower points in a cubic curve's bounding box
+/// Finds the t values of the extremeties of a curve (these are the points at which
+/// the x or y value is at a minimum or maximum)
 /// 
-pub fn bounding_box4<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> (Point, Point) {
+pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> Vec<f32> {
     // The 't' values where this curve has extremities we need to examine
     let mut t_extremes = vec![1.0];
 
@@ -25,6 +26,16 @@ pub fn bounding_box4<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Poi
         if root1 > 0.0 && root1 < 1.0 { t_extremes.push(root1); }
         if root2 > 0.0 && root2 < 1.0 { t_extremes.push(root2); }
     }
+
+    t_extremes
+}
+
+///
+/// Finds the upper and lower points in a cubic curve's bounding box
+/// 
+pub fn bounding_box4<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> (Point, Point) {
+    // The 't' values where this curve has extremities we need to examine
+    let t_extremes = find_extremities(w1, w2, w3, w4);
 
     // Start with the point at 0,0 as the minimum position
     let mut min_pos = de_casteljau4(0.0, w1, w2, w3, w4);
