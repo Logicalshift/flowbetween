@@ -48,7 +48,7 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
 
     /// Treating this as a vector, returns a unit vector in the same direction
     #[inline]
-    fn normalize(&self) -> Self {
+    fn to_unit_vector(&self) -> Self {
         let magnitude = self.magnitude();
         if magnitude == 0.0 {
             Self::origin()

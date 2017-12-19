@@ -8,11 +8,16 @@ fn can_get_distance_between_points() {
 }
 
 #[test]
-fn can_normalize() {
-    assert!(Coord2(0.0, 1.0).normalize() == Coord2(0.0, 1.0));
-    assert!(Coord2(0.0, 2.0).normalize() == Coord2(0.0, 1.0));
+fn can_find_unit_vector() {
+    assert!(Coord2(0.0, 1.0).to_unit_vector() == Coord2(0.0, 1.0));
+    assert!(Coord2(0.0, 2.0).to_unit_vector() == Coord2(0.0, 1.0));
 
-    assert!(f32::abs(Coord2(4.0, 2.0).normalize().distance_to(&Coord2(0.0, 0.0))-1.0) < 0.01);
+    assert!(f32::abs(Coord2(4.0, 2.0).to_unit_vector().distance_to(&Coord2(0.0, 0.0))-1.0) < 0.01);
+}
+
+#[test]
+fn unit_vector_of_0_0_is_0_0() {
+    assert!(Coord2(0.0, 0.0).to_unit_vector() == Coord2(0.0, 0.0));
 }
 
 #[test]
