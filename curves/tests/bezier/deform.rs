@@ -61,15 +61,15 @@ fn deform_curve_at_many_other_points() {
         let t           = (0.9*t)+0.05;
 
         let curve       = bezier::Curve::from_points(Coord2(5.0, 23.0), Coord2(22.0, 17.0), Coord2(-10.0, 15.0), Coord2(26.0, 30.0));
-        let deformed    = bezier::move_point(&curve, t, Coord2(3.0, 4.0));
+        let deformed    = bezier::move_point(&curve, t, Coord2(6.0, -4.0));
 
         let original_point  = curve.point_at_pos(t);
         let new_point       = deformed.point_at_pos(t);
 
         let offset          = new_point - original_point;
 
-        assert!((offset.x()-3.0).abs() < 0.01);
-        assert!((offset.y()-4.0).abs() < 0.01);
+        assert!((offset.x()-6.0).abs() < 0.01);
+        assert!((offset.y()- -4.0).abs() < 0.01);
 
         assert!(curve.point_at_pos(0.0).distance_to(&deformed.point_at_pos(0.0)) < 0.01);
         assert!(curve.point_at_pos(1.0).distance_to(&deformed.point_at_pos(1.0)) < 0.01);
