@@ -3,6 +3,7 @@ mod subdivide;
 mod derivative;
 mod tangent;
 mod bounds;
+mod deform;
 mod fit;
 
 pub use self::basis::*;
@@ -10,6 +11,7 @@ pub use self::subdivide::*;
 pub use self::derivative::*;
 pub use self::tangent::*;
 pub use self::bounds::*;
+pub use self::deform::*;
 pub use self::fit::*;
 
 use super::coordinate::*;
