@@ -1,7 +1,5 @@
 use curves::*;
-use curves::bezier::BezierCurve;
 use curves::bezier;
-use curves::Coord2;
 
 #[test]
 fn can_calculate_tangent_for_straight_line() {

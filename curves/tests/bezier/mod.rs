@@ -5,6 +5,7 @@ mod basis;
 mod subdivide;
 mod derivative;
 mod tangent;
+mod normal;
 mod bounds;
 mod deform;
 

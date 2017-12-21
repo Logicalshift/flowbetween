@@ -4,6 +4,9 @@ use std::ops::*;
 /// Represents a value that can be used as a coordinate in a bezier curve
 /// 
 pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+Sub<Self, Output=Self> {
+    /// Creates a new coordinate from the specified set of components
+    fn from_components(components: &[f32]) -> Self;
+
     /// Returns the origin coordinate
     fn origin() -> Self;
 
@@ -76,6 +79,10 @@ pub trait Coordinate3D {
 }
 
 impl Coordinate for f32 {
+    fn from_components(components: &[f32]) -> f32 {
+        components[0]
+    }
+
     #[inline] fn origin() -> f32 { 0.0 }
     #[inline] fn len() -> usize { 1 }
     #[inline] fn get(&self, _index: usize) -> f32 { *self }
@@ -158,6 +165,11 @@ impl Mul<f32> for Coord2 {
 }
 
 impl Coordinate for Coord2 {
+    #[inline]
+    fn from_components(components: &[f32]) -> Coord2 {
+        Coord2(components[0], components[1])
+    }
+
     #[inline]
     fn origin() -> Coord2 {
         Coord2(0.0, 0.0)
