@@ -21,4 +21,3 @@ fn normal_at_start_of_curve_matches_control_points() {
     assert!(normal.x() < 0.0);
     assert!(normal.y().abs() < 0.01);
 }
-

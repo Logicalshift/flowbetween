@@ -18,6 +18,8 @@ pub use self::fit::*;
 
 use super::coordinate::*;
 
+const LENGTH_SUBDIVISIONS: usize = 16;
+
 ///
 /// Trait implemented by things representing a cubic bezier curve
 /// 
@@ -83,6 +85,24 @@ pub trait BezierCurve: Sized {
     #[inline]
     fn fit_from_points(points: &[Self::Point], max_error: f32) -> Option<Vec<Self>> {
         fit_curve(points, max_error)
+    }
+
+    ///
+    /// Attempts to estimate the length of this curve
+    /// 
+    fn estimate_length(&self) -> f32 {
+        let mut last_pos = self.point_at_pos(0.0);
+        let mut length   = 0.0;
+
+        for t in 1..LENGTH_SUBDIVISIONS {
+            let t           = (t as f32) / (LENGTH_SUBDIVISIONS as f32);
+            let next_pos    = self.point_at_pos(t);
+
+            length += last_pos.distance_to(&next_pos);
+            last_pos = next_pos;
+        }
+
+        length
     }
 }
 
