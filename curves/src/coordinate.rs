@@ -66,6 +66,15 @@ pub trait Coordinate2D {
     fn y(&self) -> f32;
 }
 
+///
+/// Represents a coordinate with a 3D position
+/// 
+pub trait Coordinate3D {
+    fn x(&self) -> f32;
+    fn y(&self) -> f32;
+    fn z(&self) -> f32;
+}
+
 impl Coordinate for f32 {
     #[inline] fn origin() -> f32 { 0.0 }
     #[inline] fn len() -> usize { 1 }
