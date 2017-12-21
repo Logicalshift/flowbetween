@@ -8,18 +8,20 @@ pub struct Tangent<Curve: BezierCurve> {
     derivative: (Curve::Point, Curve::Point, Curve::Point)
 }
 
-impl<Curve: BezierCurve> Tangent<Curve> {
+impl<'a, Curve: BezierCurve> From<&'a Curve> for Tangent<Curve> {
     ///
     /// Creates a structure that can computes the tangents for a bezier curve
     /// 
-    pub fn from(curve: &Curve) -> Tangent<Curve> {
+    fn from(curve: &'a Curve) -> Tangent<Curve> {
         let control_points = curve.control_points();
 
         Tangent {
             derivative: derivative4(curve.start_point(), control_points.0, control_points.1, curve.end_point())
         }
     }
+}
 
+impl<Curve: BezierCurve> Tangent<Curve> {
     ///
     /// Calculates the tangent at a particular point
     /// 
