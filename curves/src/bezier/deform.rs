@@ -1,5 +1,4 @@
 use super::*;
-use std::fmt::Debug;
 
 ///
 /// Moves the point at 't' on the curve by the offset vector
@@ -7,7 +6,7 @@ use std::fmt::Debug;
 /// This recomputes the control points such that the point at t on the original curve
 /// is moved by the vector specified by `offset`.
 /// 
-pub fn move_point<Point: Coordinate+Debug, Curve: BezierCurve<Point=Point>>(curve: &Curve, t: f32, offset: Point) -> Curve {
+pub fn move_point<Point: Coordinate, Curve: BezierCurve<Point=Point>>(curve: &Curve, t: f32, offset: Point) -> Curve {
     // Fetch the points from the curve
     let w1          = curve.start_point();
     let w4          = curve.end_point();
