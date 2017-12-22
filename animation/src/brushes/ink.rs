@@ -225,14 +225,14 @@ impl Brush for InkBrush {
 
         distant_coords.push(last_point);
         for x in 1..ink_points.len() {
-            if last_point.distance_to(&ink_points[x]) >= 4.0 {
+            if last_point.distance_to(&ink_points[x]) >= 2.0 {
                 last_point = ink_points[x];
                 distant_coords.push(last_point);
             }
         }
 
         // Fit these points to a curve
-        let curve = InkCurve::fit_from_points(&distant_coords, 2.0);
+        let curve = InkCurve::fit_from_points(&distant_coords, 3.0);
         
         // Draw a variable width line for this curve
         if let Some(curve) = curve {
