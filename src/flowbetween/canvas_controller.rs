@@ -10,6 +10,9 @@ use std::sync::*;
 use std::time::Duration;
 use std::collections::HashMap;
 
+use curves::*;
+use curves::bezier;
+
 const MAIN_CANVAS: &str     = "main";
 const PAINT_ACTION: &str    = "Paint";
 
@@ -194,6 +197,35 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         // Clear the canvas and redraw the background
         self.clear_canvas(&canvas);
         canvas.draw(|gc| self.draw_background(gc));
+
+        // TEST: code for a bezier curve
+        canvas.draw(|gc| {
+            let curve           = bezier::Curve::from_points(Coord2(100.0, 100.0), Coord2(300.0, 150.0), Coord2(150.0, 200.0), Coord2(250.0, 350.0));
+            let offset_curve1   = bezier::offset(curve, 0.0, 40.0);
+            let offset_curve2   = bezier::offset(curve, 0.0, -40.0);
+
+            gc.stroke_color(Color::Rgba(0.0, 0.0, 1.0, 1.0));
+
+            gc.new_path();
+            gc.move_to(curve.start_point().x(), curve.start_point().y());
+            gc_draw_bezier(gc, &curve);
+            gc.stroke();
+
+            gc.stroke_color(Color::Rgba(1.0, 0.0, 0.0, 1.0));
+
+            gc.new_path();
+            gc.move_to(offset_curve1[0].start_point().x(), offset_curve1[0].start_point().y());
+            for c in offset_curve1 {
+                gc_draw_bezier(gc, &c);
+            }
+
+            gc.move_to(offset_curve2[0].start_point().x(), offset_curve2[0].start_point().y());
+            for c in offset_curve2 {
+                gc_draw_bezier(gc, &c);
+            }
+
+            gc.stroke();
+        });
 
         /*
         // TEST: code for a bezier curve
