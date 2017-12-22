@@ -32,7 +32,7 @@ impl BrushElement {
         BrushElement {
             appearance_time:    appearance_time,
             points:             vec![start_pos],
-            brush:              Arc::new(SimpleBrush::new())
+            brush:              Arc::new(InkBrush::new())
         }
     }
 
