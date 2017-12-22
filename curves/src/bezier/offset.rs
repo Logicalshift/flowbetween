@@ -80,21 +80,29 @@ fn simple_offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<
     let normal_end      = curve.normal_at_pos(1.0).to_unit_vector();
 
     // Offset start & end by the specified amounts to create the first approximation of a curve
+    // TODO: scale rather than just move for better accuracy
     let new_start   = start + (normal_start * initial_offset);
     let new_cp1     = cp1 + (normal_start * initial_offset);
     let new_cp2     = cp2 + (normal_end * final_offset);
     let new_end     = end + (normal_end * final_offset);
 
-    // Work out how much we need to offset the mid-point
-    let midpoint_offset     = (final_offset - initial_offset) * (curve.estimate_length(0.5)/curve.estimate_length(1.0)) + initial_offset;
-    let midpoint_normal     = curve.normal_at_pos(0.5).to_unit_vector();
-    let original_midpoint   = curve.point_at_pos(0.5);
-    let new_midpoint        = de_casteljau4(0.5, new_start, new_cp1, new_cp2, new_end);
+    let mut offset_curve = Curve::from_points(new_start, new_end, new_cp1, new_cp2);
 
-    let target_pos          = original_midpoint + midpoint_normal*midpoint_offset;
-    let move_offset         = target_pos - new_midpoint;
+    // Tweak the curve at some sample points to improve the accuracy of our guess
+    for sample_t in [0.5, 0.25, 0.75].into_iter() {
+        let sample_t = *sample_t;
 
-    // Generate a curve and move its mid-point by the error
-    let curve = Curve::from_points(new_start, new_end, new_cp1, new_cp2);
-    move_point(&curve, 0.5, move_offset)
+        // Work out how much we need to offset the mid-point
+        let midpoint_offset     = (final_offset - initial_offset) * (curve.estimate_length(sample_t)/curve.estimate_length(1.0)) + initial_offset;
+        let midpoint_normal     = curve.normal_at_pos(sample_t).to_unit_vector();
+        let original_midpoint   = curve.point_at_pos(sample_t);
+        let new_midpoint        = offset_curve.point_at_pos(sample_t);
+        let target_pos          = original_midpoint + midpoint_normal*midpoint_offset;
+        let move_offset         = target_pos - new_midpoint;
+
+        // Adjust the curve by the offset
+        offset_curve = move_point(&offset_curve, sample_t, move_offset);
+    }
+
+    offset_curve
 }
