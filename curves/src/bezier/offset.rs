@@ -87,7 +87,7 @@ fn simple_offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<
 
     // Work out how much we need to offset the mid-point
     let midpoint_offset     = (final_offset - initial_offset) * (curve.estimate_length(0.5)/curve.estimate_length(1.0)) + initial_offset;
-    let midpoint_normal     = curve.normal_at_pos(0.5);
+    let midpoint_normal     = curve.normal_at_pos(0.5).to_unit_vector();
     let original_midpoint   = curve.point_at_pos(0.5);
     let new_midpoint        = de_casteljau4(0.5, new_start, new_cp1, new_cp2, new_end);
 
