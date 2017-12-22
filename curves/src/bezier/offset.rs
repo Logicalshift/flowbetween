@@ -3,7 +3,7 @@ use super::*;
 ///
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
 /// 
-pub fn offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: Curve, initial_offset: f32, final_offset: f32) -> Vec<Curve> {
+pub fn offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f32, final_offset: f32) -> Vec<Curve> {
     // Split the curve at its extremities to generate a set of simpler curves
     let extremities = curve.find_extremities();
     let curves      = split_offsets(curve, initial_offset, final_offset, &extremities);
@@ -30,7 +30,7 @@ pub fn offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Cur
 /// Splits a curve at a given set of ordered offsets, returning a list of curves and
 /// their final offsets
 /// 
-fn split_offsets<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: Curve, initial_offset: f32, final_offset: f32, split_points: &[f32]) -> Vec<(Curve, f32)> {
+fn split_offsets<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f32, final_offset: f32, split_points: &[f32]) -> Vec<(Curve, f32)> {
     let mut curves_and_offsets  = vec![];
     let mut remaining           = curve.clone();
     let mut remaining_t         = 0.0;
