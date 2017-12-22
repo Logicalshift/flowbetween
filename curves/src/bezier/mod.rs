@@ -6,6 +6,7 @@ mod normal;
 mod bounds;
 mod deform;
 mod fit;
+mod offset;
 
 pub use self::basis::*;
 pub use self::subdivide::*;
@@ -15,6 +16,7 @@ pub use self::normal::*;
 pub use self::bounds::*;
 pub use self::deform::*;
 pub use self::fit::*;
+pub use self::offset::*;
 
 use super::coordinate::*;
 
@@ -23,7 +25,7 @@ const LENGTH_SUBDIVISIONS: usize = 16;
 ///
 /// Trait implemented by things representing a cubic bezier curve
 /// 
-pub trait BezierCurve: Sized {
+pub trait BezierCurve: Clone+Sized {
     type Point: Coordinate;
 
     ///
@@ -72,11 +74,23 @@ pub trait BezierCurve: Sized {
     /// 
     fn bounding_box(&self) -> (Self::Point, Self::Point) {
         // Fetch the various points and the derivative of this curve
-        let start           = self.start_point();
-        let end             = self.end_point();
-        let control_points  = self.control_points();
+        let start       = self.start_point();
+        let end         = self.end_point();
+        let (cp1, cp2)  = self.control_points();
 
-        bounding_box4(start, control_points.0, control_points.1, end)
+        bounding_box4(start, cp1, cp2, end)
+    }
+
+    ///
+    /// Finds the t values where this curve has extremities
+    /// 
+    #[inline]
+    fn find_extremities(&self) -> Vec<f32> {
+        let start       = self.start_point();
+        let end         = self.end_point();
+        let (cp1, cp2)  = self.control_points();
+
+        find_extremities(start, cp1, cp2, end)
     }
 
     ///
@@ -90,12 +104,12 @@ pub trait BezierCurve: Sized {
     ///
     /// Attempts to estimate the length of this curve
     /// 
-    fn estimate_length(&self) -> f32 {
+    fn estimate_length(&self, max_t: f32) -> f32 {
         let mut last_pos = self.point_at_pos(0.0);
         let mut length   = 0.0;
 
         for t in 1..LENGTH_SUBDIVISIONS {
-            let t           = (t as f32) / (LENGTH_SUBDIVISIONS as f32);
+            let t           = (t as f32) / (LENGTH_SUBDIVISIONS as f32) * max_t;
             let next_pos    = self.point_at_pos(t);
 
             length += last_pos.distance_to(&next_pos);
@@ -109,6 +123,7 @@ pub trait BezierCurve: Sized {
 ///
 /// Represents a Bezier curve
 /// 
+#[derive(Clone, Copy)]
 pub struct Curve {
     pub start_point:    Coord2,
     pub end_point:      Coord2,

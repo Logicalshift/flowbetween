@@ -2,7 +2,7 @@ use super::basis::*;
 use super::super::Coordinate;
 
 ///
-/// Finds the t values of the extremeties of a curve (these are the points at which
+/// Finds the t values of the extremities of a curve (these are the points at which
 /// the x or y value is at a minimum or maximum)
 /// 
 pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> Vec<f32> {
