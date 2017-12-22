@@ -23,8 +23,8 @@ impl InkBrush {
     /// 
     pub fn new() -> InkBrush {
         InkBrush { 
-            min_width: 2.0,
-            max_width: 10.0
+            min_width: 0.25,
+            max_width: 5.0
         }
     }
 }
@@ -40,10 +40,6 @@ struct InkCoord {
 }
 
 impl InkCoord {
-    pub fn x(&self) -> f32 { self.x }
-    pub fn y(&self) -> f32 { self.y }
-    pub fn pressure(&self) -> f32 { self.pressure }
-
     pub fn to_coord2(&self) -> (Coord2, f32) {
         (Coord2(self.x, self.y), self.pressure)
     }
@@ -164,8 +160,25 @@ struct InkCurve {
 }
 
 impl InkCurve {
-    pub fn to_curve(&self) -> bezier::Curve {
-        bezier::Curve::from_points(self.start_point.to_coord2().0, self.end_point.to_coord2().0, self.control_points.0.to_coord2().0, self.control_points.1.to_coord2().0)
+    ///
+    /// Converts to a pair of offset curves
+    /// 
+    pub fn to_offset_curves(&self, min_width: f32, max_width: f32) -> (Vec<bezier::Curve>, Vec<bezier::Curve>) {
+        // Fetch the coordinates for the offset curve
+        let (start, start_pressure) = self.start_point().to_coord2();
+        let (end, end_pressure)     = self.end_point().to_coord2();
+        let cp1                     = self.control_points.0.to_coord2().0;
+        let cp2                     = self.control_points.1.to_coord2().0;
+
+        // Create the top and bottom offsets
+        let start_offset    = start_pressure*(max_width-min_width) + min_width;
+        let end_offset      = end_pressure*(max_width-min_width) + min_width;
+        let base_curve      = bezier::Curve::from_points(start, end, cp1, cp2);
+
+        let offset_up       = bezier::offset(&base_curve, start_offset, end_offset);
+        let offset_down     = bezier::offset(&base_curve, -start_offset, -end_offset);
+
+        (offset_up, offset_down)
     }
 }
 
@@ -221,18 +234,39 @@ impl Brush for InkBrush {
         // Fit these points to a curve
         let curve = InkCurve::fit_from_points(&distant_coords, 2.0);
         
-        // Draw a simple line for this brush
+        // Draw a variable width line for this curve
         if let Some(curve) = curve {
-            gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+            let offset_curves: Vec<(Vec<bezier::Curve>, Vec<bezier::Curve>)> 
+                = curve.iter().map(|ink_curve| ink_curve.to_offset_curves(self.min_width, self.max_width)).collect();
+
+            gc.fill_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
             gc.new_path();
             
-            let Coord2(x, y) = curve[0].start_point().to_coord2().0;
+            // Upper portion
+            let Coord2(x, y) = offset_curves[0].0[0].start_point();
             gc.move_to(x, y);
-            for curve_section in curve.iter().map(|section| section.to_curve()) {
-                gc_draw_bezier(gc, &curve_section);
+            for curve_list in offset_curves.iter() {
+                for curve_section in curve_list.0.iter() {
+                    gc_draw_bezier(gc, curve_section);
+                }
             }
 
-            gc.stroke();
+            // Lower portion (reverse everything)
+            let last_section    = &offset_curves[offset_curves.len()-1].1;
+            let last_curve      = &last_section[last_section.len()-1];
+            let Coord2(x, y)    = last_curve.end_point();
+            gc.line_to(x, y);
+
+            for curve_list in offset_curves.iter().rev() {
+                for curve_section in curve_list.1.iter().rev() {
+                    let start       = curve_section.start_point();
+                    let (cp1, cp2)  = curve_section.control_points();
+
+                    gc.bezier_curve_to(start.x(), start.y(), cp2.x(), cp2.y(), cp1.x(), cp1.y());
+                }
+            }
+
+            gc.fill();
         }
     }
 }

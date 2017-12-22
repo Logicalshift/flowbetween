@@ -199,6 +199,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         canvas.draw(|gc| self.draw_background(gc));
 
         // TEST: code for a bezier curve
+        /*
         canvas.draw(|gc| {
             let curve           = bezier::Curve::from_points(Coord2(100.0, 100.0), Coord2(300.0, 150.0), Coord2(50.0, 200.0), Coord2(250.0, 350.0));
             let offset_curve1   = bezier::offset(&curve, 10.0, 40.0);
@@ -226,6 +227,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
             gc.stroke();
         });
+        */
 
         /*
         // TEST: code for a bezier curve
