@@ -39,7 +39,7 @@ fn split_offsets<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Po
 
     for point in split_points {
         // Don't subdivide at point 0 (it doesn't produce a curve) or point 1 (this is just the remaining curve we add at the end)
-        if point <= &0.0 || point >= &1.0 { continue; }
+        if point <= &0.01 || point >= &0.99 { continue; }
 
         // The offset is between remaining_t and 1
         let t = (point - remaining_t) / (1.0-remaining_t);
