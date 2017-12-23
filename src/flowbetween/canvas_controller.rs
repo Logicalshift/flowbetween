@@ -10,9 +10,6 @@ use std::sync::*;
 use std::time::Duration;
 use std::collections::HashMap;
 
-use curves::*;
-use curves::bezier;
-
 const MAIN_CANVAS: &str     = "main";
 const PAINT_ACTION: &str    = "Paint";
 
