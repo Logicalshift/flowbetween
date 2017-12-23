@@ -15,6 +15,9 @@ pub struct InkBrush {
 
     /// Width at pressure 100%
     max_width: f32,
+
+    // Distance to scale up at the start of the brush stroke
+    scale_up_distance: f32
 }
 
 impl InkBrush {
@@ -24,7 +27,8 @@ impl InkBrush {
     pub fn new() -> InkBrush {
         InkBrush { 
             min_width: 0.25,
-            max_width: 5.0
+            max_width: 5.0,
+            scale_up_distance: 20.0
         }
     }
 }
@@ -40,6 +44,11 @@ struct InkCoord {
 }
 
 impl InkCoord {
+    pub fn pressure(&self) -> f32 { self.pressure }
+    pub fn set_pressure(&mut self, new_pressure: f32) {
+        self.pressure = new_pressure;
+    }
+
     pub fn to_coord2(&self) -> (Coord2, f32) {
         (Coord2(self.x, self.y), self.pressure)
     }
@@ -220,7 +229,22 @@ impl Brush for InkBrush {
 
         // Convert points to ink points
         let ink_points: Vec<InkCoord> = points.iter().map(|point| InkCoord::from(point)).collect();
-        let ink_points = InkCoord::smooth(&ink_points, &[0.1, 0.25, 0.3, 0.25, 0.1]);
+        let mut ink_points = InkCoord::smooth(&ink_points, &[0.1, 0.25, 0.3, 0.25, 0.1]);
+
+        // Scale up the pressure at the start of the brush stroke
+        let mut distance    = 0.0;
+        let mut last_point  = ink_points[0];
+        for point in ink_points.iter_mut() {
+            // Compute the current distnace
+            distance += last_point.distance_to(point);
+            last_point = *point;
+
+            // Scale the pressure by the distance
+            if distance > self.scale_up_distance { break; }
+
+            let pressure = point.pressure();
+            point.set_pressure(pressure * (distance/self.scale_up_distance));
+        }
 
         // Fit these points to a curve
         let curve = InkCurve::fit_from_points(&ink_points, 1.0);
