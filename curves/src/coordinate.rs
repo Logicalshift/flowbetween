@@ -4,25 +4,39 @@ use std::ops::*;
 /// Represents a value that can be used as a coordinate in a bezier curve
 /// 
 pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+Sub<Self, Output=Self> {
+    ///
     /// Creates a new coordinate from the specified set of components
+    /// 
     fn from_components(components: &[f32]) -> Self;
 
+    ///
     /// Returns the origin coordinate
+    /// 
     fn origin() -> Self;
 
+    ///
     /// The number of components in this coordinate
+    /// 
     fn len() -> usize;
 
+    ///
     /// Retrieves the component at the specified index
+    /// 
     fn get(&self, index: usize) -> f32;
 
+    ///
     /// Returns a point made up of the biggest components of the two points
+    /// 
     fn from_biggest_components(p1: Self, p2: Self) -> Self;
 
+    ///
     /// Returns a point made up of the smallest components of the two points
+    /// 
     fn from_smallest_components(p1: Self, p2: Self) -> Self;
 
+    ///
     /// Computes the distance between this coordinate and another of the same type
+    /// 
     #[inline]
     fn distance_to(&self, target: &Self) -> f32 {
         let offset              = *self - *target;
@@ -31,7 +45,9 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
         f32::sqrt(squared_distance)
     }
 
+    ///
     /// Computes the dot product for this vector along with another vector
+    /// 
     #[inline]
     fn dot(&self, target: &Self) -> f32 {
         let mut dot_product = 0.0;
@@ -43,13 +59,17 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
         dot_product
     }
 
+    ///
     /// Computes the magnitude of this vector
+    /// 
     #[inline]
     fn magnitude(&self) -> f32 {
         f32::sqrt(self.dot(self))
     }
 
+    ///
     /// Treating this as a vector, returns a unit vector in the same direction
+    /// 
     #[inline]
     fn to_unit_vector(&self) -> Self {
         let magnitude = self.magnitude();
@@ -69,6 +89,45 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
         }
 
         return false;
+    }
+
+    ///
+    /// Generates a smoothed version of a set of coordinates, using the specified weights
+    /// (weights should add up to 1.0).
+    /// 
+    /// A suggested set of weights might be '[0.25, 0.5, 0.25]', which will slightly
+    /// adjust each point according to its neighbours (the central weight is what's
+    /// applied to the 'current' point)
+    /// 
+    fn smooth(points: &[Self], weights: &[f32]) -> Vec<Self> {
+        let mut smoothed    = vec![];
+        let points_len      = points.len() as i32;
+        let weight_len      = weights.len() as i32;
+        let weight_offset   = weight_len/2;
+        
+        for index in 0..points_len {
+            let mut res     = Self::origin();
+            let initial_pos = index - weight_offset;
+
+            for weight_pos in 0..weight_len {
+                let weight      = weights[weight_pos as usize];
+                let source_pos  = initial_pos + weight_pos;
+
+                let source_val  = if source_pos < 0 {
+                    &points[0]
+                } else if source_pos >= points_len {
+                    &points[(points_len-1) as usize]
+                } else {
+                    &points[source_pos as usize]
+                };
+
+                res = res + (*source_val * weight);
+            }
+
+            smoothed.push(res);
+        }
+
+        smoothed
     }
 }
 
