@@ -222,20 +222,8 @@ impl Brush for InkBrush {
         let ink_points: Vec<InkCoord> = points.iter().map(|point| InkCoord::from(point)).collect();
         let ink_points = InkCoord::smooth(&ink_points, &[0.1, 0.25, 0.3, 0.25, 0.1]);
 
-        // Pick points that are at least a certain distance apart to use for the fitting algorithm
-        let mut distant_coords  = vec![];
-        let mut last_point      = ink_points[0];
-
-        distant_coords.push(last_point);
-        for x in 1..ink_points.len() {
-            if last_point.distance_to(&ink_points[x]) >= 2.0 {
-                last_point = ink_points[x];
-                distant_coords.push(last_point);
-            }
-        }
-
         // Fit these points to a curve
-        let curve = InkCurve::fit_from_points(&distant_coords, 1.0);
+        let curve = InkCurve::fit_from_points(&ink_points, 1.0);
         
         // Draw a variable width line for this curve
         if let Some(curve) = curve {
