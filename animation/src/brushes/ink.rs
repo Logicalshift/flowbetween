@@ -234,7 +234,7 @@ impl Brush for InkBrush {
         }
 
         // Fit these points to a curve
-        let curve = InkCurve::fit_from_points(&distant_coords, 3.0);
+        let curve = InkCurve::fit_from_points(&distant_coords, 1.0);
         
         // Draw a variable width line for this curve
         if let Some(curve) = curve {
