@@ -59,6 +59,17 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f32, Output=Self>+S
             *self * (1.0/magnitude)
         }
     }
+
+    #[inline]
+    fn is_nan(&self) -> bool {
+        for component in 0..Self::len() {
+            if self.get(component).is_nan() {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
 
 ///
