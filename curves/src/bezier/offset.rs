@@ -3,7 +3,7 @@ use super::*;
 ///
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
 /// 
-pub fn offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f32, final_offset: f32) -> Vec<Curve> {
+pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f32, final_offset: f32) -> Vec<Curve> {
     // Split the curve at its extremities to generate a set of simpler curves
     let extremities = curve.find_extremities();
     let curves      = split_offsets(curve, initial_offset, final_offset, &extremities);
@@ -30,7 +30,7 @@ pub fn offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Cur
 /// Splits a curve at a given set of ordered offsets, returning a list of curves and
 /// their final offsets
 /// 
-fn split_offsets<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f32, final_offset: f32, split_points: &[f32]) -> Vec<(Curve, f32)> {
+fn split_offsets<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f32, final_offset: f32, split_points: &[f32]) -> Vec<(Curve, f32)> {
     let mut curves_and_offsets  = vec![];
     let mut remaining           = curve.clone();
     let mut remaining_t         = 0.0;
@@ -70,14 +70,17 @@ fn split_offsets<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself
 /// 
-fn simple_offset<Point: Coordinate, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: Curve, initial_offset: f32, final_offset: f32) -> Curve {
+fn simple_offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: Curve, initial_offset: f32, final_offset: f32) -> Curve {
     // Fetch the original points
     let start       = curve.start_point();
     let end         = curve.end_point();
     let (cp1, cp2)  = curve.control_points();
 
-    let normal_start    = curve.normal_at_pos(0.0).to_unit_vector();
-    let normal_end      = curve.normal_at_pos(1.0).to_unit_vector();
+    // The start and end CPs define the curve tangents at the start and end
+    let normal_start    = Point::to_normal(&start, &(cp1-start));
+    let normal_end      = Point::to_normal(&end, &(end-cp2));
+    let normal_start    = Point::from_components(&normal_start).to_unit_vector();
+    let normal_end      = Point::from_components(&normal_end).to_unit_vector();
 
     // Offset start & end by the specified amounts to create the first approximation of a curve
     // TODO: scale rather than just move for better accuracy
