@@ -220,6 +220,7 @@ impl Brush for InkBrush {
 
         // Convert points to ink points
         let ink_points: Vec<InkCoord> = points.iter().map(|point| InkCoord::from(point)).collect();
+        let ink_points = InkCoord::smooth(&ink_points, &[0.1, 0.25, 0.3, 0.25, 0.1]);
 
         // Pick points that are at least a certain distance apart to use for the fitting algorithm
         let mut distant_coords  = vec![];
