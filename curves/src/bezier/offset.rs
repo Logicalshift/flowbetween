@@ -76,6 +76,22 @@ fn split_offsets<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Po
 }
 
 ///
+/// Computes the offset error between a curve and a proposed offset curve at a given t value
+/// 
+#[inline]
+fn offset_error<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(original_curve: &Curve, offset_curve: &Curve, t: f32, initial_offset: f32, final_offset: f32) -> Point {
+    // Work out how much we need to offset the mid-point
+    let midpoint_offset     = (final_offset - initial_offset) * (original_curve.estimate_length(t)/original_curve.estimate_length(1.0)) + initial_offset;
+    let midpoint_normal     = original_curve.normal_at_pos(t).to_unit_vector();
+    let original_midpoint   = original_curve.point_at_pos(t);
+    let new_midpoint        = offset_curve.point_at_pos(t);
+    let target_pos          = original_midpoint + midpoint_normal*midpoint_offset;
+    let offset_error        = target_pos - new_midpoint;
+
+    offset_error
+}
+
+///
 /// Offsets the endpoints and mid-point of a curve by the specified amounts without subdividing
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself
@@ -105,13 +121,8 @@ fn simple_offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Po
     for sample_t in [0.5, 0.25, 0.75].into_iter() {
         let sample_t = *sample_t;
 
-        // Work out how much we need to offset the mid-point
-        let midpoint_offset     = (final_offset - initial_offset) * (curve.estimate_length(sample_t)/curve.estimate_length(1.0)) + initial_offset;
-        let midpoint_normal     = curve.normal_at_pos(sample_t).to_unit_vector();
-        let original_midpoint   = curve.point_at_pos(sample_t);
-        let new_midpoint        = offset_curve.point_at_pos(sample_t);
-        let target_pos          = original_midpoint + midpoint_normal*midpoint_offset;
-        let move_offset         = target_pos - new_midpoint;
+        // Work out th error at this point
+        let move_offset = offset_error(&curve, &offset_curve, sample_t, initial_offset, final_offset);
 
         // Adjust the curve by the offset
         offset_curve = move_point(&offset_curve, sample_t, move_offset);
