@@ -20,6 +20,9 @@ pub enum ControlAttribute {
     /// The text for this control
     Text(Property),
 
+    /// Specifies the font size in pixels
+    FontSize(f32),
+
     /// Whether or not this control is selected
     Selected(Property),
 
@@ -63,6 +66,16 @@ impl ControlAttribute {
     pub fn text<'a>(&'a self) -> Option<&'a Property> {
         match self {
             &Text(ref text) => Some(text),
+            _               => None
+        }
+    }
+
+    ///
+    /// The font size represented by this attribute
+    /// 
+    pub fn font_size(&self) -> Option<f32> {
+        match self {
+            &FontSize(size) => Some(size),
             _               => None
         }
     }
@@ -155,6 +168,7 @@ impl ControlAttribute {
         match self {
             &BoundingBox(ref bounds)            => Some(bounds) != compare_to.bounding_box(),
             &Text(ref text)                     => Some(text) != compare_to.text(),
+            &FontSize(size)                     => Some(size) != compare_to.font_size(),
             &Id(ref id)                         => Some(id) != compare_to.id(),
             &Controller(ref controller)         => Some(controller.as_ref()) != compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),

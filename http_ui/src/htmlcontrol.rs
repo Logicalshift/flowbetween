@@ -125,6 +125,10 @@ impl ToHtml for ControlAttribute {
                 DomAttribute::new("style", &format!("background-color: rgba({}, {}, {}, {});", r, g, b, a))
             },
 
+            &FontSize(size) => {
+                DomAttribute::new("style", &format!("font-size: {}px;", size))
+            },
+
             &BoundingBox(_) => DomEmpty::new(),
             &Selected(_)    => DomEmpty::new(),
             &Id(_)          => DomEmpty::new(),
