@@ -40,7 +40,10 @@ pub enum ControlAttribute {
     Image(Resource<image::Image>),
 
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
-    Canvas(Resource<canvas::Canvas>)
+    Canvas(Resource<canvas::Canvas>),
+
+    /// Specifies the background colour of this control
+    Background(canvas::Color)
 }
 
 impl ControlAttribute {
@@ -133,7 +136,17 @@ impl ControlAttribute {
             _                   => None
         }
     }
-
+    
+    ///
+    /// The background colour for this control, if there is one
+    /// 
+    pub fn background_color<'a>(&'a self) -> Option<&'a canvas::Color> {
+        match self {
+            &Background(ref color)  => Some(color),
+            _                       => None
+        }
+    }
+    
     ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
@@ -148,6 +161,7 @@ impl ControlAttribute {
             &Selected(ref is_selected)          => Some(is_selected) != compare_to.selected(),
             &Image(ref image_resource)          => Some(image_resource) != compare_to.image(),
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
+            &Background(ref background_color)   => Some(background_color) != compare_to.background_color(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)      => Some(components.len()) != compare_to.subcomponents().map(|components| components.len())

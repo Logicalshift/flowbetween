@@ -34,6 +34,8 @@ impl ToJsonValue for ControlAttribute {
                 })
             },
 
+            &Background(ref color)              => json!({ "Background": color.to_rgba() }),
+
             &Canvas(ref canvas_resource)        => {
                 json!({
                     "Image": {
