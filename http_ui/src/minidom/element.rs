@@ -157,4 +157,20 @@ mod test {
 
         assert!(text == "<test foo=\"bar\"><test2></test2></test>");
     }
+
+    #[test]
+    pub fn merge_elements() {
+        let mut element = DomElement::new("test");
+
+        element.append_child_node(DomAttribute::new("foo", "bar"));
+        element.append_child_node(DomAttribute::new("foo", "baz"));
+        element.append_child_node(DomElement::new("test2"));
+
+        let mut text = String::new();
+        element.append_fragment(&mut text);
+
+        println!("{}", text);
+
+        assert!(text == "<test foo=\"bar baz\"><test2></test2></test>");
+    }
 }
