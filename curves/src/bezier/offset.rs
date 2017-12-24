@@ -23,12 +23,8 @@ pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point
 
     for (curve, next_offset) in curves {
         // Offset this curve
-        let (offset_curve, error) = simple_offset(curve, previous_offset, next_offset);
+        let (offset_curve, _error) = simple_offset(curve, previous_offset, next_offset);
         offset_curves.push(offset_curve);
-
-        if error > 0.5 {
-            println!("{:?}", error);
-        }
 
         // This is the initial offset of the next curve
         previous_offset = next_offset;
