@@ -4,6 +4,15 @@ use super::*;
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
 /// 
 pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f32, final_offset: f32) -> Vec<Curve> {
+    // Pass through the curve if it's 0-length
+    let start       = curve.start_point();
+    let end         = curve.end_point();
+    let (cp1, cp2)  = curve.control_points();
+
+    if start.distance_to(&cp1) < 0.00001 && cp1.distance_to(&cp2) < 0.00001 && cp2.distance_to(&end) < 0.00001 {
+        return vec![curve.clone()];
+    }
+
     // Split the curve at its extremities to generate a set of simpler curves
     let extremities = curve.find_extremities();
     let curves      = split_offsets(curve, initial_offset, final_offset, &extremities);
