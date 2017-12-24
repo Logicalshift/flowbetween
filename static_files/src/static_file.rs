@@ -36,6 +36,8 @@ impl StaticFile {
             "image/svg+xml; charset=utf-8"
         } else if path.ends_with("txt") {
             "text/plain; charset=utf-8"
+        } else if path.ends_with("woff2") {
+            "font/woff2"            
         } else {
             "application/octet-stream"
         }
