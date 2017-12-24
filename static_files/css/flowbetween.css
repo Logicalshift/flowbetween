@@ -50,7 +50,9 @@ flo-button flo-label {
 }
 
 flo-label {
-    vertical-align:         middle;
+    display:                flex;
+    flex-direction:         row;
+    align-items:            center;
     user-select:            none;
     -moz-user-select:       none;
     -webkit-user-select:    none;
