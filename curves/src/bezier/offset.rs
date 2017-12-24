@@ -14,8 +14,8 @@ pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point
     }
 
     // Split the curve at its extremities to generate a set of simpler curves
-    let extremities = curve.find_extremities();
-    let curves      = split_offsets(curve, initial_offset, final_offset, &extremities);
+    let split_points    = curve.find_extremities();
+    let curves          = split_offsets(curve, initial_offset, final_offset, &split_points);
 
     // Offset the curves
     let mut offset_curves   = vec![];
@@ -31,6 +31,7 @@ pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point
     }
 
     // TODO: check the offset curve against an error bound and subdivide further if it doesn't make it
+    // TODO: we sometimes generate NaN curves (though not very often)
     // This is the final result
     offset_curves
 }
