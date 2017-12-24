@@ -125,6 +125,13 @@ impl ToHtml for ControlAttribute {
                 DomAttribute::new("style", &format!("background-color: rgba({}, {}, {}, {});", r, g, b, a))
             },
 
+            &Foreground(ref col) => {
+                let (r, g, b, a)    = col.to_rgba();
+                let (r, g, b)       = ((r*255.0).floor() as i32, (g*255.0).floor() as i32, (b*255.0).floor() as i32);
+
+                DomAttribute::new("style", &format!("color: rgba({}, {}, {}, {});", r, g, b, a))
+            },
+
             &FontSize(size) => {
                 DomAttribute::new("style", &format!("font-size: {}px;", size))
             },

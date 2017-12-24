@@ -45,6 +45,9 @@ pub enum ControlAttribute {
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
     Canvas(Resource<canvas::Canvas>),
 
+    /// Specifies the foreground colour of this control
+    Foreground(canvas::Color),
+
     /// Specifies the background colour of this control
     Background(canvas::Color)
 }
@@ -153,6 +156,16 @@ impl ControlAttribute {
     ///
     /// The background colour for this control, if there is one
     /// 
+    pub fn foreground_color<'a>(&'a self) -> Option<&'a canvas::Color> {
+        match self {
+            &Foreground(ref color)  => Some(color),
+            _                       => None
+        }
+    }
+    
+    ///
+    /// The background colour for this control, if there is one
+    /// 
     pub fn background_color<'a>(&'a self) -> Option<&'a canvas::Color> {
         match self {
             &Background(ref color)  => Some(color),
@@ -168,13 +181,14 @@ impl ControlAttribute {
         match self {
             &BoundingBox(ref bounds)            => Some(bounds) != compare_to.bounding_box(),
             &Text(ref text)                     => Some(text) != compare_to.text(),
-            &FontSize(size)                     => Some(size) != compare_to.font_size(),
+            &FontSize(font_size)                => Some(font_size) != compare_to.font_size(),
             &Id(ref id)                         => Some(id) != compare_to.id(),
             &Controller(ref controller)         => Some(controller.as_ref()) != compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),
             &Selected(ref is_selected)          => Some(is_selected) != compare_to.selected(),
             &Image(ref image_resource)          => Some(image_resource) != compare_to.image(),
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
+            &Foreground(ref foreground_color)   => Some(foreground_color) != compare_to.foreground_color(),
             &Background(ref background_color)   => Some(background_color) != compare_to.background_color(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
