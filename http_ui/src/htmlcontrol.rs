@@ -162,6 +162,16 @@ mod test {
     }
 
     #[test]
+    fn can_combine_style_attributes() {
+        let ctrl = Control::label()
+            .with(ControlAttribute::Foreground(Color::Rgba(1.0, 0.0, 0.0, 1.0)))
+            .with(ControlAttribute::Background(Color::Rgba(0.0, 1.0, 0.0, 1.0)));
+
+        println!("{:?}", ctrl.to_html("").to_string());
+        assert!(ctrl.to_html("").to_string() == "<flo-label style=\"color: rgba(255, 0, 0, 1); background-color: rgba(0, 255, 0, 1);\"></flo-label>");
+    }
+
+    #[test]
     fn can_convert_container_to_html() {
         assert!(Control::container().with(vec![Control::button()]).to_html("").to_string() == "<flo-container><flo-button></flo-button></flo-container>")
     }
