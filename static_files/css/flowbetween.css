@@ -1,21 +1,41 @@
+@font-face {
+    font-family: "lato";
+    src: url("../fonts/lato/Lato-Regular.woff2");
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "lato";
+    src: url("../fonts/lato/Lato-Thin.woff2");
+    font-weight: 100;
+}
+
+@font-face {
+    font-family: "lato";
+    src: url("../fonts/lato/Lato-Bold.woff2");
+    font-weight: bold;
+}
+
 html, body {
-    margin:     0;
-    padding:    0;
-    background: #333333;
-    width:      100%;
-    height:     100%;
-    overflow:   hidden;
+    margin:         0;
+    padding:        0;
+    background:     #333333;
+    width:          100%;
+    height:         100%;
+    overflow:       hidden;
+    font-family:    "lato", "helvetica", sans-serif;
+    font-weight:    100
 }
 
 #root {
-    width:      100%;
-    height:     100%;
-    overflow:   hidden;
+    width:          100%;
+    height:         100%;
+    overflow:       hidden;
 }
 
 #root * {
-    box-sizing: border-box;
-    position:   absolute;
+    box-sizing:     border-box;
+    position:       absolute;
 }
 
 #root > * {
@@ -27,4 +47,8 @@ flo-button flo-empty,
 flo-button flo-container,
 flo-button flo-label {
     pointer-events: none;
+}
+
+flo-label {
+    vertical-align: middle;
 }
