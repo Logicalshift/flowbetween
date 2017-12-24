@@ -17,6 +17,17 @@ impl MenuController {
     pub fn new() -> MenuController {
         let ui = bind(Control::empty()
             .with(Bounds::fill_all())
+            .with(vec![
+                Control::empty()
+                    .with(Bounds::next_horiz(6.0))
+                    .with(ControlAttribute::Background(MENU_BACKGROUND_ALT)),
+                Control::empty()
+                    .with(Bounds::next_horiz(2.0)),
+                Control::label()
+                    .with("FlowBetween")
+                    .with(ControlAttribute::FontSize(17.0))
+                    .with(Bounds::next_horiz(160.0))
+            ])
             .with(ControlAttribute::Background(MENU_BACKGROUND)));
 
         MenuController {
