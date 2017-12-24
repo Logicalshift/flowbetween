@@ -5,9 +5,19 @@ use super::mouse::*;
 /// 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum PaintDevice {
+    /// Unknown paint device
     Other,
+
+    /// Mouse with a particular button held down
     Mouse(MouseButton),
+
+    /// Pen (with a particular stylus ID in case the user has multiple styluses)
     Pen,
+
+    /// Eraser (with a particular stylus ID in case the user has multiple styluses)
+    Eraser,
+
+    /// Finger input on a touch display
     Touch
 }
 
@@ -36,7 +46,10 @@ pub enum PaintAction {
 pub struct Painting {
     /// Action for this painting event
     pub action: PaintAction,
-
+    
+    /// In the event the user has multiple pointers (eg, multiple styluses on a tablet), this is the ID of the stylus that the user is using
+    pub pointer_id: f32,
+    
     /// Coordinates relative to the control that was painted upon
     pub location: (f32, f32),
 

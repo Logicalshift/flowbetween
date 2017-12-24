@@ -49,6 +49,7 @@ let flo_paint = (function() {
         // TODO: can get tilt_x and tilt_y from azimuthAngle and altitudeAngle (but they aren't a direct mapping)
         return {
             action:     action,
+            pointer_id: 0,
             location:   [x, y],
             pressure:   mouse_event.mozPressure || 0.5,
             tilt_x:     0,
@@ -86,6 +87,7 @@ let flo_paint = (function() {
         // TODO: can get tilt_x and tilt_y from azimuthAngle and altitudeAngle (but they aren't a direct mapping)
         return {
             action:     action,
+            pointer_id: 0,
             location:   [x, y],
             pressure:   touch.force || 0.5,
             tilt_x:     0,
@@ -119,6 +121,7 @@ let flo_paint = (function() {
         // Generate the final event
         return {
             action:     action,
+            pointer_id: pointer_event.pointerId,
             location:   [x, y],
             pressure:   pointer_event.pressure,
             tilt_x:     pointer_event.tiltX,
@@ -333,8 +336,9 @@ let flo_paint = (function() {
     let wire_paint_pointer_events = (target_device, action_name, node, controller_path) => {
         // Function to check if a pointer event is for the right device
         let check_device = () => true;
-        if (target_device === 'Pen')        { check_device = pointer_event => pointer_event.pointerType === 'pen'; }
-        else if (target_device === 'Touch') { check_device = pointer_event => pointer_event.pointerType === 'touch'; }
+        if (target_device === 'Pen')            { check_device = pointer_event => pointer_event.pointerType === 'pen' && pointer_event.button !== 5; }
+        else if (target_device === 'Eraser')    { check_device = pointer_event => pointer_event.pointerType === 'pen' && pointer_event.button === 5; }
+        else if (target_device === 'Touch')     { check_device = pointer_event => pointer_event.pointerType === 'touch'; }
         else if (target_device['Mouse']) {
             switch (target_device['Mouse']) {
             case 'Left':    check_device = pointer_event => pointer_event.pointerType === 'mouse' && pointer_event.button === 0; break;
