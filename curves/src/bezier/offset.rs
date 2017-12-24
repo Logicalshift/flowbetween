@@ -23,8 +23,12 @@ pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point
 
     for (curve, next_offset) in curves {
         // Offset this curve
-        let offset_curve = simple_offset(curve, previous_offset, next_offset);
+        let (offset_curve, error) = simple_offset(curve, previous_offset, next_offset);
         offset_curves.push(offset_curve);
+
+        if error > 0.5 {
+            println!("{:?}", error);
+        }
 
         // This is the initial offset of the next curve
         previous_offset = next_offset;
@@ -94,9 +98,9 @@ fn offset_error<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Poi
 ///
 /// Offsets the endpoints and mid-point of a curve by the specified amounts without subdividing
 /// 
-/// This won't produce an accurate offset if the curve doubles back on itself
+/// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
 /// 
-fn simple_offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: Curve, initial_offset: f32, final_offset: f32) -> Curve {
+fn simple_offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: Curve, initial_offset: f32, final_offset: f32) -> (Curve, f32) {
     // Fetch the original points
     let start       = curve.start_point();
     let end         = curve.end_point();
@@ -128,5 +132,9 @@ fn simple_offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Po
         offset_curve = move_point(&offset_curve, sample_t, move_offset);
     }
 
-    offset_curve
+    // Use the offset at the curve's midway point as the error
+    let error_offset    = offset_error(&curve, &offset_curve, 0.5, initial_offset, final_offset);
+    let error           = Point::origin().distance_to(&error_offset);
+
+    (offset_curve, error)
 }
