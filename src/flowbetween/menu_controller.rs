@@ -1,3 +1,5 @@
+use super::style::*;
+
 use ui::*;
 use binding::*;
 
@@ -13,7 +15,9 @@ pub struct MenuController {
 
 impl MenuController {
     pub fn new() -> MenuController {
-        let ui = bind(Control::empty());
+        let ui = bind(Control::empty()
+            .with(Bounds::fill_all())
+            .with(ControlAttribute::Background(MENU_BACKGROUND)));
 
         MenuController {
             view_model: Arc::new(NullViewModel::new()),

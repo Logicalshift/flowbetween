@@ -1,3 +1,5 @@
+use super::style::*;
+
 use ui::*;
 use binding::*;
 
@@ -27,6 +29,7 @@ impl ToolboxController {
         // Set up the tools
         let ui = bind(Control::container()
             .with(Bounds::fill_all())
+            .with(ControlAttribute::Background(TOOLS_BACKGROUND))
             .with(vec![
                 Self::make_tool("Select",   &viewmodel, images.get_named_resource("select")), 
                 Self::make_tool("Adjust",   &viewmodel, images.get_named_resource("adjust")),
