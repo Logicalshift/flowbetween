@@ -1,6 +1,8 @@
 use super::*;
 use super::attribute::*;
 
+use itertools::*;
+
 pub struct DomElement {
     /// The name of this element
     name: String,
@@ -24,8 +26,22 @@ impl DomNodeData for DomElement {
         target.push('<');
         target.push_str(&self.name);
 
+        // Merge any attributes that have the same name
+        let attributes = self.content.iter().filter(|item| item.node_type() == DomNodeType::Attribute);
+        let attributes = attributes.group_by(|attr| attr.element_name().unwrap());
+        let attributes = attributes.into_iter().map(|(name, attributes)| {
+            let mut value = String::new();
+
+            for attr in attributes {
+                if value.len() > 0 { value.push_str(" "); }
+                value.push_str(&attr.value().unwrap());
+            }
+
+            DomAttribute::new(&name, &value)
+        });
+
         // Add any attributes next
-        for attr in self.content.iter().filter(|item| item.node_type() == DomNodeType::Attribute) {
+        for attr in attributes {
             target.push(' ');
             attr.append_fragment(target);
         }
