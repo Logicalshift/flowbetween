@@ -1,4 +1,6 @@
 use super::*;
+
+use binding::*;
 use animation::*;
 
 ///
@@ -18,15 +20,17 @@ impl Ink {
     /// Performs a single painting action on the canvas
     /// 
     fn paint_action<'a, Anim: Animation>(&self, model: &ToolModel<'a, Anim>, layer_id: u64, layer: &mut PaintLayer, action: &Painting) {
-        /*
         // Get when this paint stroke is being made
-        let current_time = self.anim_view_model.timeline().current_time.get();
+        let current_time = model.anim_view_model.timeline().current_time.get();
 
         // Get the canvas layer ID
+        /*
         let canvas_layer_id = self.core.sync(|core| core.frame_layers.get(&layer_id).map(|layer| layer.layer_id));
         let canvas_layer_id = canvas_layer_id.unwrap_or(1);
+        */
+        let canvas_layer_id = 1; // TODO
 
-        canvas.draw(move |gc| {
+        model.canvas.draw(move |gc| {
             // Perform the action
             match action.action {
                 PaintAction::Start       => {
@@ -59,7 +63,6 @@ impl Ink {
                 }
             }
         });
-        */
     }
 }
 
