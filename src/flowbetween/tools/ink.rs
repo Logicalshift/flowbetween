@@ -24,11 +24,7 @@ impl Ink {
         let current_time = model.anim_view_model.timeline().current_time.get();
 
         // Get the canvas layer ID
-        /*
-        let canvas_layer_id = self.core.sync(|core| core.frame_layers.get(&layer_id).map(|layer| layer.layer_id));
-        let canvas_layer_id = canvas_layer_id.unwrap_or(1);
-        */
-        let canvas_layer_id = 1; // TODO
+        let canvas_layer_id = model.selected_layer_id;
 
         model.canvas.draw(move |gc| {
             // Perform the action

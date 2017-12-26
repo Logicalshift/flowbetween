@@ -16,5 +16,8 @@ pub struct ToolModel<'a, Anim: 'a+Animation> {
     pub anim_view_model: &'a AnimationViewModel<Anim>,
 
     /// The currently selected layer
-    pub selected_layer: Arc<Layer>
+    pub selected_layer: Arc<Layer>,
+
+    /// The layer ID of the currently selected layer in the canvas
+    pub selected_layer_id: u32
 }
