@@ -1,14 +1,17 @@
 use ui::*;
+use ui::canvas::*;
 use animation::*;
 
 use std::sync::*;
 
+mod tool_model;
 mod select;
 mod adjust;
 mod pan;
 mod pencil;
 mod ink;
 
+use self::tool_model::*;
 use self::select::*;
 use self::adjust::*;
 use self::pan::*;
@@ -32,5 +35,5 @@ pub trait Tool : Send+Sync {
     ///
     /// User is painting with this tool selected alongside a particular layer
     /// 
-    fn paint(&self, selected_layer: Arc<Layer>, device: &PaintDevice, actions: &Vec<Painting>);
+    fn paint(&self, canvas: &Canvas, selected_layer: Arc<Layer>, device: &PaintDevice, actions: &Vec<Painting>);
 }

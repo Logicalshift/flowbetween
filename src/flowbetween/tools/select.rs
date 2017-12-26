@@ -19,7 +19,7 @@ impl Tool for Select {
 
     fn image_name(&self) -> String { "select".to_string() }
 
-    fn paint(&self, _selected_layer: Arc<Layer>, _device: &PaintDevice, _actions: &Vec<Painting>) {
+    fn paint(&self, canvas: &Canvas, _selected_layer: Arc<Layer>, _device: &PaintDevice, _actions: &Vec<Painting>) {
         
     }
 }

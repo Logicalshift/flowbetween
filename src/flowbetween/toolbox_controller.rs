@@ -16,6 +16,9 @@ pub struct ToolboxController {
 }
 
 impl ToolboxController {
+    ///
+    /// Creates a new toolbox controller
+    /// 
     pub fn new() -> ToolboxController {
         // Create the viewmodel
         let viewmodel = Arc::new(DynamicViewModel::new());
