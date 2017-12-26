@@ -1,9 +1,5 @@
 use super::*;
 
-use animation::*;
-
-use std::sync::*;
-
 ///
 /// The selection toolset
 /// 

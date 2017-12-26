@@ -1,5 +1,4 @@
 use ui::*;
-use ui::canvas::*;
 use animation::*;
 
 use std::sync::*;
