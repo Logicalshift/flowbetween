@@ -1,4 +1,5 @@
 use super::*;
+use animation::*;
 
 ///
 /// The Pan tool (Pans control points of existing objects)
@@ -14,12 +15,12 @@ impl Pan {
     }
 }
 
-impl Tool for Pan {
+impl<Anim: Animation> Tool<Anim> for Pan {
     fn tool_name(&self) -> String { "Pan".to_string() }
 
     fn image_name(&self) -> String { "pan".to_string() }
 
-    fn paint(&self, canvas: &Canvas, _selected_layer: Arc<Layer>, _device: &PaintDevice, _actions: &Vec<Painting>) {
+    fn paint<'a>(&self, model: &ToolModel<'a, Anim>, device: &PaintDevice, actions: &Vec<Painting>) {
         
     }
 }

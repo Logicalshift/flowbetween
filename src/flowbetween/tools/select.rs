@@ -1,4 +1,5 @@
 use super::*;
+use animation::*;
 
 ///
 /// The Select tool (Selects control points of existing objects)
@@ -14,12 +15,12 @@ impl Select {
     }
 }
 
-impl Tool for Select {
+impl<Anim: Animation> Tool<Anim> for Select {
     fn tool_name(&self) -> String { "Select".to_string() }
 
     fn image_name(&self) -> String { "select".to_string() }
 
-    fn paint(&self, canvas: &Canvas, _selected_layer: Arc<Layer>, _device: &PaintDevice, _actions: &Vec<Painting>) {
+    fn paint<'a>(&self, model: &ToolModel<'a, Anim>, device: &PaintDevice, actions: &Vec<Painting>) {
         
     }
 }

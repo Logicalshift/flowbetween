@@ -21,7 +21,7 @@ use self::ink::*;
 ///
 /// Trait implemented by tool objects
 /// 
-pub trait Tool : Send+Sync {
+pub trait Tool<Anim: Animation> : Send+Sync {
     ///
     /// Retrieves the name of this tool
     /// 
@@ -35,5 +35,5 @@ pub trait Tool : Send+Sync {
     ///
     /// User is painting with this tool selected alongside a particular layer
     /// 
-    fn paint(&self, canvas: &Canvas, selected_layer: Arc<Layer>, device: &PaintDevice, actions: &Vec<Painting>);
+    fn paint<'a>(&self, model: &ToolModel<'a, Anim>, device: &PaintDevice, actions: &Vec<Painting>);
 }

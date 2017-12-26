@@ -1,4 +1,5 @@
 use super::*;
+use animation::*;
 
 ///
 /// The Ink tool (Inks control points of existing objects)
@@ -16,7 +17,7 @@ impl Ink {
     ///
     /// Performs a single painting action on the canvas
     /// 
-    fn paint_action(&self, canvas: &Canvas, layer_id: u64, layer: &mut PaintLayer, action: &Painting) {
+    fn paint_action<'a, Anim: Animation>(&self, model: &ToolModel<'a, Anim>, layer_id: u64, layer: &mut PaintLayer, action: &Painting) {
         /*
         // Get when this paint stroke is being made
         let current_time = self.anim_view_model.timeline().current_time.get();
@@ -62,19 +63,19 @@ impl Ink {
     }
 }
 
-impl Tool for Ink {
+impl<Anim: Animation> Tool<Anim> for Ink {
     fn tool_name(&self) -> String { "Ink".to_string() }
 
     fn image_name(&self) -> String { "ink".to_string() }
 
-    fn paint(&self, canvas: &Canvas, selected_layer: Arc<Layer>, _device: &PaintDevice, actions: &Vec<Painting>) {
-        let layer_id                                            = selected_layer.id();
-        let selected_layer: Option<Editor<PaintLayer+'static>>  = selected_layer.edit();
+    fn paint<'a>(&self, model: &ToolModel<'a, Anim>, device: &PaintDevice, actions: &Vec<Painting>) {
+        let layer_id                                            = model.selected_layer.id();
+        let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
         // Perform the paint actions on the selected layer if we can
         if let Some(mut selected_layer) = selected_layer {
             for action in actions {
-                self.paint_action(canvas, layer_id, &mut *selected_layer, action);
+                self.paint_action(model, layer_id, &mut *selected_layer, action);
             }
 
             // If there's a brush stroke waiting, render it
@@ -83,7 +84,7 @@ impl Tool for Ink {
             if selected_layer.has_pending_brush_stroke() {
                 let layer: &PaintLayer  = &*selected_layer;
 
-                canvas.draw(|gc| {
+                model.canvas.draw(|gc| {
                     // Re-render the current brush stroke
                     gc.restore();
                     gc.store();

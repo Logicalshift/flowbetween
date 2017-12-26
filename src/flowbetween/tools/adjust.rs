@@ -1,4 +1,5 @@
 use super::*;
+use animation::*;
 
 ///
 /// The Adjust tool (adjusts control points of existing objects)
@@ -14,12 +15,12 @@ impl Adjust {
     }
 }
 
-impl Tool for Adjust {
+impl<Anim: Animation> Tool<Anim> for Adjust {
     fn tool_name(&self) -> String { "Adjust".to_string() }
 
     fn image_name(&self) -> String { "adjust".to_string() }
 
-    fn paint(&self, canvas: &Canvas, _selected_layer: Arc<Layer>, _device: &PaintDevice, _actions: &Vec<Painting>) {
+    fn paint<'a>(&self, model: &ToolModel<'a, Anim>, device: &PaintDevice, actions: &Vec<Painting>) {
 
     }
 }
