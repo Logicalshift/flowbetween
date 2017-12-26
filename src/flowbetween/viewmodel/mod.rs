@@ -2,6 +2,9 @@ mod timeline;
 
 pub use self::timeline::*;
 
+use super::tools::*;
+
+use binding::*;
 use animation::*;
 
 use std::sync::*;
@@ -13,6 +16,9 @@ pub struct AnimationViewModel<Anim: Animation> {
     /// The animation that is being edited
     animation: Arc<Anim>,
 
+    /// The currently selected tool
+    current_tool: Binding<Option<Arc<Tool<Anim>>>>,
+
     /// The timeline view model
     timeline: TimelineViewModel
 }
@@ -23,8 +29,9 @@ impl<Anim: Animation> AnimationViewModel<Anim> {
     /// 
     pub fn new(animation: Anim) -> AnimationViewModel<Anim> {
         AnimationViewModel {
-            animation:  Arc::new(animation),
-            timeline:   TimelineViewModel::new()
+            animation:      Arc::new(animation),
+            current_tool:   bind(None),
+            timeline:       TimelineViewModel::new()
         }
     }
 
@@ -54,8 +61,9 @@ impl<Anim: Animation> AnimationViewModel<Anim> {
 impl<Anim: Animation> Clone for AnimationViewModel<Anim> {
     fn clone(&self) -> AnimationViewModel<Anim> {
         AnimationViewModel {
-            animation:  self.animation.clone(),
-            timeline:   self.timeline.clone()
+            animation:      self.animation.clone(),
+            current_tool:   self.current_tool.clone(),
+            timeline:       self.timeline.clone()
         }
     }
 }

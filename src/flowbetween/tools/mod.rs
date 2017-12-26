@@ -37,3 +37,9 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     /// 
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, device: &PaintDevice, actions: &Vec<Painting>);
 }
+
+impl<Anim: Animation> PartialEq for Tool<Anim> {
+    fn eq(&self, other: &Tool<Anim>) -> bool {
+        self.tool_name() == other.tool_name()
+    }
+}
