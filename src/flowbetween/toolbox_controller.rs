@@ -36,6 +36,9 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         // Set up the tools
         let ui = Self::create_ui(view_model.tool_sets(), Arc::clone(&viewmodel), Arc::clone(&images));
 
+        // TODO: when the current tool is updated in the view model, update the selected tool here
+        // TODO: also want a 'temporary' tool (like the eraser when it's in use, for example)
+
         ToolboxController {
             view_model:         viewmodel,
             ui:                 ui,
@@ -141,13 +144,27 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     }
 }
 
-impl<Anim: Animation> Controller for ToolboxController<Anim> {
+impl<Anim: 'static+Animation> Controller for ToolboxController<Anim> {
     fn ui(&self) -> Arc<Bound<Control>> {
         self.ui.clone()
     }
 
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
+        // Set the selected tool in the UI view model
         self.view_model.set_property("SelectedTool", PropertyValue::String(String::from(action_id)));
+
+        // Update the animation view model with the newly selected tool
+        let mut selected_tool = None;
+
+        for tool_set in self.anim_view_model.tool_sets().get() {
+            for tool in tool_set.tools() {
+                if &tool.tool_name() == action_id {
+                    selected_tool = Some(tool);
+                }
+            }
+        }
+
+        self.anim_view_model.current_tool().set(selected_tool)
     }
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {

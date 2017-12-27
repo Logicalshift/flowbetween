@@ -71,6 +71,13 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     pub fn tool_sets(&self) -> Binding<Vec<Arc<ToolSet<Anim>>>> {
         Binding::clone(&self.tool_sets)
     }
+
+    ///
+    /// Retrieves the currently selected tool binding
+    /// 
+    pub fn current_tool(&self) -> Binding<Option<Arc<Tool<Anim>>>> {
+        Binding::clone(&self.current_tool)
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
