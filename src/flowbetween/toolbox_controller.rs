@@ -49,17 +49,29 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     /// 
     fn create_ui(tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> Arc<Bound<Control>> {
         Arc::new(computed(move || {
+            // Convert the tool sets into tools (with separators between each individual set)
+            let tools_for_sets: Vec<Control> = tool_sets.get().iter()
+                .map(|toolset| {
+                    let tools: Vec<Control> = toolset.tools().iter()
+                        .map(|tool| Self::make_tool(&tool.tool_name(), &viewmodel, images.get_named_resource(&tool.image_name())))
+                        .collect();
+                    
+                    tools
+                }).fold(vec![], |mut result, new_items| {
+                    // Separator between toolsets after the first set
+                    if result.len() > 0 { result.push(Self::make_separator()); }
+
+                    // Add the new items
+                    result.extend(new_items.into_iter());
+
+                    result
+                });
+
+            // Put the controls into a container
             Control::container()
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Background(TOOLS_BACKGROUND))
-                .with(vec![
-                    Self::make_tool("Select",   &viewmodel, images.get_named_resource("select")), 
-                    Self::make_tool("Adjust",   &viewmodel, images.get_named_resource("adjust")),
-                    Self::make_tool("Pan",      &viewmodel, images.get_named_resource("pan")),
-                    Self::make_separator(),
-                    Self::make_tool("Pencil",   &viewmodel, images.get_named_resource("pencil")), 
-                    Self::make_tool("Ink",      &viewmodel, images.get_named_resource("ink"))
-                ])
+                .with(tools_for_sets)
         }))
     }
 
