@@ -3,7 +3,7 @@ use super::*;
 ///
 /// The selection toolset
 /// 
-pub struct SelectionTools<Anim: Animation> {
+pub struct SelectionTools<Anim: 'static+Animation> {
     select: Arc<Tool<Anim>>,
     adjust: Arc<Tool<Anim>>,
     pan:    Arc<Tool<Anim>>
@@ -12,7 +12,7 @@ pub struct SelectionTools<Anim: Animation> {
 ///
 /// The paint toolset
 /// 
-pub struct PaintTools<Anim: Animation> {
+pub struct PaintTools<Anim: 'static+Animation> {
     pencil: Arc<Tool<Anim>>,
     ink:    Arc<Tool<Anim>>
 }

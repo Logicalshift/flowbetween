@@ -19,18 +19,27 @@ pub struct AnimationViewModel<Anim: Animation> {
     /// The currently selected tool
     current_tool: Binding<Option<Arc<Tool<Anim>>>>,
 
+    /// The tool sets available for selection
+    tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>,
+
     /// The timeline view model
     timeline: TimelineViewModel
 }
 
-impl<Anim: Animation> AnimationViewModel<Anim> {
+impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     ///
     /// Creates a new view model
     /// 
     pub fn new(animation: Anim) -> AnimationViewModel<Anim> {
+        let default_tool_sets: Vec<Arc<ToolSet<Anim>>> = vec![
+            Arc::new(SelectionTools::new()),
+            Arc::new(PaintTools::new())
+        ];
+
         AnimationViewModel {
             animation:      Arc::new(animation),
             current_tool:   bind(None),
+            tool_sets:      bind(default_tool_sets),
             timeline:       TimelineViewModel::new()
         }
     }
@@ -63,6 +72,7 @@ impl<Anim: Animation> Clone for AnimationViewModel<Anim> {
         AnimationViewModel {
             animation:      self.animation.clone(),
             current_tool:   self.current_tool.clone(),
+            tool_sets:      self.tool_sets.clone(),
             timeline:       self.timeline.clone()
         }
     }

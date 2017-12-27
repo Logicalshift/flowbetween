@@ -18,7 +18,7 @@ impl Ink {
     ///
     /// Performs a single painting action on the canvas
     /// 
-    fn paint_action<'a, Anim: Animation>(&self, model: &ToolModel<'a, Anim>, layer: &mut PaintLayer, action: &Painting) {
+    fn paint_action<'a, Anim: 'static+Animation>(&self, model: &ToolModel<'a, Anim>, layer: &mut PaintLayer, action: &Painting) {
         // Get when this paint stroke is being made
         let current_time = model.anim_view_model.timeline().current_time.get();
 
@@ -61,7 +61,7 @@ impl Ink {
     }
 }
 
-impl<Anim: Animation> Tool<Anim> for Ink {
+impl<Anim: 'static+Animation> Tool<Anim> for Ink {
     fn tool_name(&self) -> String { "Ink".to_string() }
 
     fn image_name(&self) -> String { "ink".to_string() }
