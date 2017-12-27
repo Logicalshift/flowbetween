@@ -1,3 +1,4 @@
+use super::tools::*;
 use super::style::*;
 use super::viewmodel::*;
 
@@ -18,7 +19,7 @@ pub struct ToolboxController<Anim: Animation> {
     anim_view_model:    AnimationViewModel<Anim>
 }
 
-impl<Anim: Animation> ToolboxController<Anim> {
+impl<Anim: 'static+Animation> ToolboxController<Anim> {
     ///
     /// Creates a new toolbox controller
     /// 
@@ -33,17 +34,7 @@ impl<Anim: Animation> ToolboxController<Anim> {
         let images  = Arc::new(Self::create_images());
 
         // Set up the tools
-        let ui = Arc::new(bind(Control::container()
-            .with(Bounds::fill_all())
-            .with(ControlAttribute::Background(TOOLS_BACKGROUND))
-            .with(vec![
-                Self::make_tool("Select",   &viewmodel, images.get_named_resource("select")), 
-                Self::make_tool("Adjust",   &viewmodel, images.get_named_resource("adjust")),
-                Self::make_tool("Pan",      &viewmodel, images.get_named_resource("pan")),
-                Self::make_separator(),
-                Self::make_tool("Pencil",   &viewmodel, images.get_named_resource("pencil")), 
-                Self::make_tool("Ink",      &viewmodel, images.get_named_resource("ink"))
-            ])));
+        let ui = Self::create_ui(view_model.tool_sets(), Arc::clone(&viewmodel), Arc::clone(&images));
 
         ToolboxController {
             view_model:         viewmodel,
@@ -51,6 +42,25 @@ impl<Anim: Animation> ToolboxController<Anim> {
             anim_view_model:    view_model.clone(),
             images:             images
         }
+    }
+
+    ///
+    /// Creates the UI binding
+    /// 
+    fn create_ui(tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> Arc<Bound<Control>> {
+        Arc::new(computed(move || {
+            Control::container()
+                .with(Bounds::fill_all())
+                .with(ControlAttribute::Background(TOOLS_BACKGROUND))
+                .with(vec![
+                    Self::make_tool("Select",   &viewmodel, images.get_named_resource("select")), 
+                    Self::make_tool("Adjust",   &viewmodel, images.get_named_resource("adjust")),
+                    Self::make_tool("Pan",      &viewmodel, images.get_named_resource("pan")),
+                    Self::make_separator(),
+                    Self::make_tool("Pencil",   &viewmodel, images.get_named_resource("pencil")), 
+                    Self::make_tool("Ink",      &viewmodel, images.get_named_resource("ink"))
+                ])
+        }))
     }
 
     ///

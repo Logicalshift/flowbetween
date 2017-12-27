@@ -64,6 +64,13 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     pub fn timeline(&self) -> &TimelineViewModel {
         &self.timeline
     }
+
+    ///
+    /// Retrieves the tool sets binding
+    /// 
+    pub fn tool_sets(&self) -> Binding<Vec<Arc<ToolSet<Anim>>>> {
+        Binding::clone(&self.tool_sets)
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
