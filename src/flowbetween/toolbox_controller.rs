@@ -13,7 +13,7 @@ use std::sync::*;
 ///
 pub struct ToolboxController<Anim: Animation> {
     view_model:         Arc<DynamicViewModel>,
-    ui:                 Binding<Control>,
+    ui:                 Arc<Bound<Control>>,
     images:             Arc<ResourceManager<Image>>,
     anim_view_model:    AnimationViewModel<Anim>
 }
@@ -33,7 +33,7 @@ impl<Anim: Animation> ToolboxController<Anim> {
         let images  = Arc::new(Self::create_images());
 
         // Set up the tools
-        let ui = bind(Control::container()
+        let ui = Arc::new(bind(Control::container()
             .with(Bounds::fill_all())
             .with(ControlAttribute::Background(TOOLS_BACKGROUND))
             .with(vec![
@@ -43,7 +43,7 @@ impl<Anim: Animation> ToolboxController<Anim> {
                 Self::make_separator(),
                 Self::make_tool("Pencil",   &viewmodel, images.get_named_resource("pencil")), 
                 Self::make_tool("Ink",      &viewmodel, images.get_named_resource("ink"))
-            ]));
+            ])));
 
         ToolboxController {
             view_model:         viewmodel,
@@ -121,7 +121,7 @@ impl<Anim: Animation> ToolboxController<Anim> {
 
 impl<Anim: Animation> Controller for ToolboxController<Anim> {
     fn ui(&self) -> Arc<Bound<Control>> {
-        Arc::new(self.ui.clone())
+        self.ui.clone()
     }
 
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
