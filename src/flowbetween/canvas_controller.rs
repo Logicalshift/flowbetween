@@ -1,4 +1,5 @@
 use super::viewmodel::*;
+use super::tools::*;
 
 use ui::*;
 use ui::canvas::*;
@@ -339,87 +340,31 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     }
 
     ///
-    /// Performs a single painting action on the canvas
-    /// 
-    fn paint_action(&self, layer_id: u64, layer: &mut PaintLayer, action: &Painting) {
-        // Get when this paint stroke is being made
-        let current_time = self.anim_view_model.timeline().current_time.get();
-
-        // Find the canvas
-        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-
-        // Get the canvas layer ID
-        let canvas_layer_id = self.core.sync(|core| core.frame_layers.get(&layer_id).map(|layer| layer.layer_id));
-        let canvas_layer_id = canvas_layer_id.unwrap_or(1);
-
-        canvas.draw(move |gc| {
-            // Perform the action
-            match action.action {
-                PaintAction::Start       => {
-                    // Select the layer and store the current image state
-                    gc.layer(canvas_layer_id);
-                    gc.store();
-
-                    // Begin the brush stroke
-                    layer.start_brush_stroke(current_time, BrushPoint::from(action));
-                },
-
-                PaintAction::Continue    => {
-                    // Append to the brush stroke
-                    layer.continue_brush_stroke(BrushPoint::from(action));
-                },
-
-                PaintAction::Finish      => {
-                    // Draw the 'final' brush stroke
-                    gc.restore();
-                    layer.draw_current_brush_stroke(gc);
-
-                    // Finish the brush stroke
-                    layer.finish_brush_stroke();
-                },
-
-                PaintAction::Cancel      => {
-                    // Cancel the brush stroke
-                    layer.cancel_brush_stroke();
-                    gc.restore();
-                }
-            }
-        });
-    }
-
-    ///
     /// Performs a series of painting actions on the canvas
     /// 
-    fn paint(&self, _device: &PaintDevice, actions: &Vec<Painting>) {
+    fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
+        // Get the active tool
+        let current_tool = self.anim_view_model.current_tool().get();
+
         // Get the selected layer
         let selected_layer = self.get_selected_layer();
 
-        // ... as a paint layer
-        if let Some(selected_layer) = selected_layer {
-            let layer_id                                            = selected_layer.id();
-            let selected_layer: Option<Editor<PaintLayer+'static>>  = selected_layer.edit();
+        if let (Some(selected_layer), Some(current_tool)) = (selected_layer, current_tool) {
+            // Create the tool model for this action
+            let canvas              = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+            let selected_layer_id   = selected_layer.id();
+            let canvas_layer_id     = self.core.sync(|core| core.frame_layers.get(&selected_layer_id).map(|layer| layer.layer_id));
+            let canvas_layer_id     = canvas_layer_id.unwrap_or(1);
 
-            // Perform the paint actions on the selected layer if we can
-            if let Some(mut selected_layer) = selected_layer {
-                for action in actions {
-                    self.paint_action(layer_id, &mut *selected_layer, action);
-                }
+            let tool_model = ToolModel {
+                canvas:             &canvas,
+                anim_view_model:    &self.anim_view_model,
+                selected_layer:     selected_layer,
+                canvas_layer_id:    canvas_layer_id
+            };
 
-                // If there's a brush stroke waiting, render it
-                // Starting a brush stroke selects the layer and creates a save state, which 
-                // we assume is still present for the canvas (this is fragile!)
-                if selected_layer.has_pending_brush_stroke() {
-                    let canvas              = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-                    let layer: &PaintLayer  = &*selected_layer;
-
-                    canvas.draw(|gc| {
-                        // Re-render the current brush stroke
-                        gc.restore();
-                        gc.store();
-                        layer.draw_current_brush_stroke(gc);
-                    });
-                }
-            }
+            // Pass the action on to the current tool
+            current_tool.paint(&tool_model, device, actions);
         }
     }
 }

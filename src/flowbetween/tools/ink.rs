@@ -23,7 +23,7 @@ impl Ink {
         let current_time = model.anim_view_model.timeline().current_time.get();
 
         // Get the canvas layer ID
-        let canvas_layer_id = model.selected_layer_id;
+        let canvas_layer_id = model.canvas_layer_id;
 
         model.canvas.draw(move |gc| {
             // Perform the action
