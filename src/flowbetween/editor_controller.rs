@@ -41,7 +41,7 @@ impl EditorController {
         let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new());
         let timeline    = Arc::new(TimelineController::new());
-        let toolbox     = Arc::new(ToolboxController::new());
+        let toolbox     = Arc::new(ToolboxController::new(&animation));
 
         let ui          = bind(Self::ui());
         let mut subcontrollers: HashMap<SubController, Arc<Controller>> = HashMap::new();

@@ -1,7 +1,9 @@
 use super::style::*;
+use super::viewmodel::*;
 
 use ui::*;
 use binding::*;
+use animation::*;
 
 use std::sync::*;
 
@@ -9,17 +11,18 @@ use std::sync::*;
 /// The toolbox controller allows the user to pick which tool they
 /// are using to edit the canvas
 ///
-pub struct ToolboxController {
-    view_model: Arc<DynamicViewModel>,
-    ui:         Binding<Control>,
-    images:     Arc<ResourceManager<Image>>
+pub struct ToolboxController<Anim: Animation> {
+    view_model:         Arc<DynamicViewModel>,
+    ui:                 Binding<Control>,
+    images:             Arc<ResourceManager<Image>>,
+    anim_view_model:    AnimationViewModel<Anim>
 }
 
-impl ToolboxController {
+impl<Anim: Animation> ToolboxController<Anim> {
     ///
     /// Creates a new toolbox controller
     /// 
-    pub fn new() -> ToolboxController {
+    pub fn new(view_model: &AnimationViewModel<Anim>) -> ToolboxController<Anim> {
         // Create the viewmodel
         let viewmodel = Arc::new(DynamicViewModel::new());
 
@@ -43,9 +46,10 @@ impl ToolboxController {
             ]));
 
         ToolboxController {
-            view_model: viewmodel,
-            ui:         ui,
-            images:     images
+            view_model:         viewmodel,
+            ui:                 ui,
+            anim_view_model:    view_model.clone(),
+            images:             images
         }
     }
 
@@ -115,7 +119,7 @@ impl ToolboxController {
     }
 }
 
-impl Controller for ToolboxController {
+impl<Anim: Animation> Controller for ToolboxController<Anim> {
     fn ui(&self) -> Arc<Bound<Control>> {
         Arc::new(self.ui.clone())
     }
