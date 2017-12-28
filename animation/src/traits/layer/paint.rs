@@ -1,5 +1,6 @@
 use super::super::brush::*;
 use super::super::brush_definition::*;
+use super::super::brush_drawing_style::*;
 
 use ui::canvas::*;
 
@@ -12,7 +13,7 @@ pub trait PaintLayer : Send+Sync {
     ///
     /// Selects the brush that will be used for future brush strokes
     /// 
-    fn select_brush(&mut self, brush: &BrushDefinition);
+    fn select_brush(&mut self, brush: &BrushDefinition, drawing_style: BrushDrawingStyle);
 
     ///
     /// Starts a new brush stroke on this layer

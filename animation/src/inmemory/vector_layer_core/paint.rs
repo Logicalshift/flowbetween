@@ -2,8 +2,8 @@ use super::*;
 use super::super::super::brushes::*;
 
 impl PaintLayer for VectorLayerCore {
-    fn select_brush(&mut self, brush: &BrushDefinition) {
-        self.current_brush = create_brush_from_definition(brush);
+    fn select_brush(&mut self, brush: &BrushDefinition, drawing_style: BrushDrawingStyle) {
+        self.current_brush = create_brush_from_definition(brush, drawing_style);
     }
 
     fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint) {

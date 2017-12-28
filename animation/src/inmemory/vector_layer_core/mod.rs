@@ -36,7 +36,7 @@ impl VectorLayerCore {
         VectorLayerCore {
             id:                     id,
             keyframes:              vec![],
-            current_brush:          Arc::new(InkBrush::new(&InkDefinition::default(), false)),
+            current_brush:          Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
             active_brush_stroke:    None
         }
     }

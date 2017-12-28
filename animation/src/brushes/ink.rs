@@ -27,11 +27,12 @@ impl InkBrush {
     ///
     /// Creates a new ink brush with the default settings
     /// 
-    pub fn new(definition: &InkDefinition, erase: bool) -> InkBrush {
-        let blend_mode = if erase {
-            BlendMode::DestinationOut
-        } else {
-            BlendMode::SourceOver
+    pub fn new(definition: &InkDefinition, drawing_style: BrushDrawingStyle) -> InkBrush {
+        use BrushDrawingStyle::*;
+
+        let blend_mode = match drawing_style {
+            Draw    => BlendMode::SourceOver,
+            Erase   => BlendMode::DestinationOut
         };
 
         InkBrush {

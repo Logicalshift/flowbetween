@@ -10,21 +10,10 @@ use std::sync::*;
 ///
 /// Creates a brush from a brush definition
 /// 
-pub fn create_brush_from_definition(definition: &BrushDefinition) -> Arc<Brush> {
+pub fn create_brush_from_definition(definition: &BrushDefinition, drawing_style: BrushDrawingStyle) -> Arc<Brush> {
     use BrushDefinition::*;
 
     match definition {
-        &Ink(ref ink_definition) => Arc::new(InkBrush::new(ink_definition, false))
-    }
-}
-
-///
-/// Creates an eraser from a brush definition
-/// 
-pub fn create_eraser_from_definition(definition: &BrushDefinition) -> Arc<Brush> {
-    use BrushDefinition::*;
-
-    match definition {
-        &Ink(ref ink_definition) => Arc::new(InkBrush::new(ink_definition, true))
+        &Ink(ref ink_definition) => Arc::new(InkBrush::new(ink_definition, drawing_style))
     }
 }
