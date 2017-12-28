@@ -37,7 +37,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         let images  = Arc::new(Self::create_images());
 
         // Set up the tools
-        let ui = Self::create_ui(anim_view_model.tools().tool_sets(), Arc::clone(&viewmodel), Arc::clone(&images));
+        let ui = Self::create_ui(anim_view_model.tools().tool_sets.clone(), Arc::clone(&viewmodel), Arc::clone(&images));
 
         // TODO: when the current tool is updated in the view model, update the selected tool here
         // TODO: also want a 'temporary' tool (like the eraser when it's in use, for example)

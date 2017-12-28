@@ -246,7 +246,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// 
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
         // Get the active tool
-        let current_tool = self.anim_view_model.tools().current_tool().get();
+        let current_tool = self.anim_view_model.tools().current_tool.get();
 
         // Get the selected layer
         let selected_layer = self.get_selected_layer();

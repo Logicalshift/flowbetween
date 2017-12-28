@@ -93,20 +93,6 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
         // Set as the current tool
         self.current_tool.clone().set(tool_with_name)
     }
-
-    ///
-    /// Retrieves the tool sets binding
-    /// 
-    pub fn tool_sets(&self) -> Binding<Vec<Arc<ToolSet<Anim>>>> {
-        Binding::clone(&self.tool_sets)
-    }
-
-    ///
-    /// Retrieves the currently selected tool binding
-    /// 
-    pub fn current_tool(&self) -> Binding<Option<Arc<Tool<Anim>>>> {
-        Binding::clone(&self.current_tool)
-    }
 }
 
 impl<Anim: Animation> Clone for ToolViewModel<Anim> {
