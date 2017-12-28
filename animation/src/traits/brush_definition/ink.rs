@@ -3,7 +3,7 @@
 /// Ink brushes are solid lines of varying width. This defines how they behave.
 /// The actual behaviour is implemented by the `InkBrush` structure.
 /// 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct InkDefinition {
     /// Width at pressure 0%
     pub min_width: f32,
