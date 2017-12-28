@@ -27,9 +27,15 @@ impl InkBrush {
     ///
     /// Creates a new ink brush with the default settings
     /// 
-    pub fn new(definition: &InkDefinition) -> InkBrush {
+    pub fn new(definition: &InkDefinition, erase: bool) -> InkBrush {
+        let blend_mode = if erase {
+            BlendMode::DestinationOut
+        } else {
+            BlendMode::SourceOver
+        };
+
         InkBrush {
-            blend_mode:         BlendMode::SourceOver,
+            blend_mode:         blend_mode,
             min_width:          definition.min_width,
             max_width:          definition.max_width,
             scale_up_distance:  definition.scale_up_distance
