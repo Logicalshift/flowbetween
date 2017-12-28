@@ -27,12 +27,12 @@ impl InkBrush {
     ///
     /// Creates a new ink brush with the default settings
     /// 
-    pub fn new() -> InkBrush {
+    pub fn new(definition: &InkDefinition) -> InkBrush {
         InkBrush {
             blend_mode:         BlendMode::SourceOver,
-            min_width:          0.25,
-            max_width:          5.0,
-            scale_up_distance:  20.0
+            min_width:          definition.min_width,
+            max_width:          definition.max_width,
+            scale_up_distance:  definition.scale_up_distance
         }
     }
 }
