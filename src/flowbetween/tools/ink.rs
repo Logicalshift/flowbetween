@@ -1,7 +1,5 @@
 use super::*;
 
-use binding::*;
-
 ///
 /// The Ink tool (Inks control points of existing objects)
 /// 
@@ -66,13 +64,24 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
 
     fn image_name(&self) -> String { "ink".to_string() }
 
-    fn activate<'a>(&self, model: &ToolModel<'a, Anim>) { 
+    fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> Box<Bound<ToolActivationState>> { 
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
         if let Some(mut selected_layer) = selected_layer {
             // Pick the ink brush in the current layer
             selected_layer.select_brush(&BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw);
         }
+
+        // If the selected layer is different, we need re-activation
+        let activated_layer_id  = model.anim_view_model.timeline().selected_layer.get();
+        let selected_layer      = Binding::clone(&model.anim_view_model.timeline().selected_layer);
+        Box::new(computed(move || {
+            if activated_layer_id == selected_layer.get() {
+                ToolActivationState::Activated
+            } else {
+                ToolActivationState::NeedsReactivation
+            }
+        }))
     }
 
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, _device: &PaintDevice, actions: &Vec<Painting>) {

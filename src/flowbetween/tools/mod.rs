@@ -1,4 +1,5 @@
 use ui::*;
+use binding::*;
 use animation::*;
 
 use std::sync::*;
@@ -22,6 +23,18 @@ pub use self::ink::*;
 pub use self::eraser::*;
 
 ///
+/// Trait indicating the current activation state of a tool
+///
+#[derive(Clone, Copy, PartialEq)]
+pub enum ToolActivationState {
+    /// Tool is currently activated and doesn't need reactivation
+    Activated,
+
+    /// Tool needs to be reactivated before it can be re-used
+    NeedsReactivation
+}
+
+///
 /// Trait implemented by tool objects
 /// 
 pub trait Tool<Anim: Animation> : Send+Sync {
@@ -37,8 +50,13 @@ pub trait Tool<Anim: Animation> : Send+Sync {
 
     ///
     /// Activates this tool (called before this tool performs any other actions like paint)
+    /// 
+    /// The return value is a binding that indicates whether or not this tool
+    /// needs reactivating.
     ///
-    fn activate<'a>(&self, _model: &ToolModel<'a, Anim>) { }
+    fn activate<'a>(&self, _model: &ToolModel<'a, Anim>) -> Box<Bound<ToolActivationState>> {
+        Box::new(bind(ToolActivationState::Activated))
+    }
 
     ///
     /// User is painting with this tool selected alongside a particular layer
