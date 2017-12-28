@@ -2,7 +2,6 @@ use super::path::*;
 use super::element::*;
 
 use super::super::brush::*;
-use super::super::super::brushes::*;
 
 use ui::canvas::*;
 
@@ -28,11 +27,11 @@ impl BrushElement {
     ///
     /// Begins a new brush stroke at a particular position
     /// 
-    pub fn new(appearance_time: Duration, start_pos: BrushPoint) -> BrushElement {
+    pub fn new(brush: &Arc<Brush>, appearance_time: Duration, start_pos: BrushPoint) -> BrushElement {
         BrushElement {
             appearance_time:    appearance_time,
             points:             vec![start_pos],
-            brush:              Arc::new(InkBrush::new())
+            brush:              Arc::clone(brush)
         }
     }
 

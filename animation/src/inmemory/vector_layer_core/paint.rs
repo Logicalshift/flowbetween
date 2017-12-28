@@ -1,9 +1,11 @@
 use super::*;
+use super::super::super::brushes::*;
 
 impl PaintLayer for VectorLayerCore {
     fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint) {
         // Start a new brush stroke, at a time relative to 0
-        let element = BrushElement::new(start_time, initial_pos);
+        let brush:Arc<Brush> = Arc::new(InkBrush::new());
+        let element = BrushElement::new(&brush, start_time, initial_pos);
 
         self.active_brush_stroke = Some(element);
     }
