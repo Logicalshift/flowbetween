@@ -26,4 +26,15 @@ impl InkDefinition {
             scale_up_distance:  20.0
         }
     }
+
+    ///
+    /// Creates the default ink definition for the eraser brush
+    /// 
+    pub fn default_eraser() -> InkDefinition {
+        InkDefinition {
+            min_width:          3.0,
+            max_width:          20.0,
+            scale_up_distance:  5.0
+        }
+    }
 }
