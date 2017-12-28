@@ -1,6 +1,7 @@
 mod keyframes;
 mod paint;
 
+use super::super::brushes::*;
 use super::super::traits::*;
 use super::vector_keyframe::*;
 
@@ -20,6 +21,9 @@ pub struct VectorLayerCore {
     /// The key frames for this vector, in order
     keyframes: Vec<Arc<VectorKeyFrame>>,
 
+    /// The currently selected brush
+    current_brush: Arc<Brush>,
+
     /// The brush stroke that is currently being drawn
     active_brush_stroke: Option<BrushElement>
 }
@@ -32,6 +36,7 @@ impl VectorLayerCore {
         VectorLayerCore {
             id:                     id,
             keyframes:              vec![],
+            current_brush:          Arc::new(InkBrush::new(&InkDefinition::default(), false)),
             active_brush_stroke:    None
         }
     }

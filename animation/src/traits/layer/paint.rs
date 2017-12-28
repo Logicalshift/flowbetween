@@ -12,7 +12,7 @@ pub trait PaintLayer : Send+Sync {
     ///
     /// Selects the brush that will be used for future brush strokes
     /// 
-    fn select_brush(&mut self, brush: BrushDefinition);
+    fn select_brush(&mut self, brush: &BrushDefinition);
 
     ///
     /// Starts a new brush stroke on this layer

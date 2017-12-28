@@ -2,13 +2,13 @@ use super::*;
 use super::super::super::brushes::*;
 
 impl PaintLayer for VectorLayerCore {
-    fn select_brush(&mut self, brush: BrushDefinition) {
-        // TODO: implement me
+    fn select_brush(&mut self, brush: &BrushDefinition) {
+        self.current_brush = create_brush_from_definition(brush);
     }
 
     fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint) {
         // Start a new brush stroke, at a time relative to 0
-        let brush:Arc<Brush> = Arc::new(InkBrush::new(&InkDefinition::default(), false));
+        let brush   = Arc::clone(&self.current_brush);
         let element = BrushElement::new(&brush, start_time, initial_pos);
 
         self.active_brush_stroke = Some(element);
