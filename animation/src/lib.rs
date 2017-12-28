@@ -2,6 +2,9 @@
 //! Library for describing and editing FlowBetween animations
 //!
 
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 extern crate modifier;
 extern crate curves;
 extern crate ui;

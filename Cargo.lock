@@ -4,6 +4,8 @@ version = "0.1.0"
 dependencies = [
  "curves 0.1.0",
  "modifier 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.25 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "typemap 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "ui 0.1.0",
 ]
