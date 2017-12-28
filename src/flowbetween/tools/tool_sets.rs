@@ -14,7 +14,8 @@ pub struct SelectionTools<Anim: 'static+Animation> {
 /// 
 pub struct PaintTools<Anim: 'static+Animation> {
     pencil: Arc<Tool<Anim>>,
-    ink:    Arc<Tool<Anim>>
+    ink:    Arc<Tool<Anim>>,
+    eraser: Arc<Tool<Anim>>
 }
 
 impl<Anim: Animation> SelectionTools<Anim> {
@@ -31,7 +32,8 @@ impl<Anim: Animation> PaintTools<Anim> {
     pub fn new() -> PaintTools<Anim> {
         PaintTools {
             pencil: Arc::new(Pencil::new()),
-            ink:    Arc::new(Ink::new())
+            ink:    Arc::new(Ink::new()),
+            eraser: Arc::new(Eraser::new())
         }
     }
 }
@@ -55,6 +57,7 @@ impl<Anim: Animation> ToolSet<Anim> for PaintTools<Anim> {
         vec![
             Arc::clone(&self.pencil),
             Arc::clone(&self.ink),
+            Arc::clone(&self.eraser)
         ]
     }
 }

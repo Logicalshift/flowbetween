@@ -91,6 +91,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
 
         let pencil  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pencil.svg")));
         let ink     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/ink.svg")));
+        let eraser  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/eraser.svg")));
 
         // Assign names to them
         images.assign_name(&select, "select");
@@ -99,6 +100,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
 
         images.assign_name(&pencil, "pencil");
         images.assign_name(&ink, "ink");
+        images.assign_name(&eraser, "eraser");
 
         images
     }
