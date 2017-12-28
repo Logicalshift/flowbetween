@@ -18,7 +18,7 @@ impl Ink {
     ///
     /// Performs a single painting action on the canvas
     /// 
-    fn paint_action<'a, Anim: 'static+Animation>(&self, model: &ToolModel<'a, Anim>, layer: &mut PaintLayer, action: &Painting) {
+    pub fn paint_action<'a, Anim: 'static+Animation>(model: &ToolModel<'a, Anim>, layer: &mut PaintLayer, action: &Painting) {
         // Get when this paint stroke is being made
         let current_time = model.anim_view_model.timeline().current_time.get();
 
@@ -81,7 +81,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
         // Perform the paint actions on the selected layer if we can
         if let Some(mut selected_layer) = selected_layer {
             for action in actions {
-                self.paint_action(model, &mut *selected_layer, action);
+                Self::paint_action(model, &mut *selected_layer, action);
             }
 
             // If there's a brush stroke waiting, render it
