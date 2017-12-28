@@ -36,6 +36,11 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     fn image_name(&self) -> String;
 
     ///
+    /// Activates this tool (called before this tool performs any other actions like paint)
+    ///
+    fn activate<'a>(&self, _model: &ToolModel<'a, Anim>) { }
+
+    ///
     /// User is painting with this tool selected alongside a particular layer
     /// 
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, device: &PaintDevice, actions: &Vec<Painting>);

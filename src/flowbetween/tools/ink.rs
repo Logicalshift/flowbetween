@@ -66,6 +66,15 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
 
     fn image_name(&self) -> String { "ink".to_string() }
 
+    fn activate<'a>(&self, model: &ToolModel<'a, Anim>) { 
+        let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
+
+        if let Some(mut selected_layer) = selected_layer {
+            // Pick the ink brush in the current layer
+            selected_layer.select_brush(&BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw);
+        }
+    }
+
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, _device: &PaintDevice, actions: &Vec<Painting>) {
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
