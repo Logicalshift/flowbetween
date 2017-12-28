@@ -1,4 +1,5 @@
 use super::super::brush::*;
+use super::super::brush_definition::*;
 
 use ui::canvas::*;
 
@@ -8,6 +9,11 @@ use std::time::Duration;
 /// Represents a layer that can be painted upon
 /// 
 pub trait PaintLayer : Send+Sync {
+    ///
+    /// Selects the brush that will be used for future brush strokes
+    /// 
+    fn select_brush(&mut self, brush: BrushDefinition);
+
     ///
     /// Starts a new brush stroke on this layer
     /// 
