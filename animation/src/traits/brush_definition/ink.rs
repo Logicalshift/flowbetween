@@ -14,3 +14,16 @@ pub struct InkDefinition {
     // Distance to scale up at the start of the brush stroke
     pub scale_up_distance: f32
 }
+
+impl InkDefinition {
+    ///
+    /// Creates the default ink definition
+    /// 
+    pub fn default() -> InkDefinition {
+        InkDefinition {
+            min_width:          0.25,
+            max_width:          5.0,
+            scale_up_distance:  20.0
+        }
+    }
+}
