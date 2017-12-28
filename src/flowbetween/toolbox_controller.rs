@@ -23,18 +23,21 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     ///
     /// Creates a new toolbox controller
     /// 
-    pub fn new(view_model: &AnimationViewModel<Anim>) -> ToolboxController<Anim> {
+    pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> ToolboxController<Anim> {
         // Create the viewmodel
         let viewmodel = Arc::new(DynamicViewModel::new());
 
         // There's a 'SelectedTool' key that describes the currently selected tool
         viewmodel.set_property("SelectedTool", PropertyValue::String("Pencil".to_string()));
 
+        // Make sure that the tool selected in this controller matches the one in the main view model
+        anim_view_model.tools().choose_tool_with_name(&viewmodel.get_property("SelectedTool").get().string().unwrap_or("".to_string()));
+
         // Some images for the root controller
         let images  = Arc::new(Self::create_images());
 
         // Set up the tools
-        let ui = Self::create_ui(view_model.tools().tool_sets(), Arc::clone(&viewmodel), Arc::clone(&images));
+        let ui = Self::create_ui(anim_view_model.tools().tool_sets(), Arc::clone(&viewmodel), Arc::clone(&images));
 
         // TODO: when the current tool is updated in the view model, update the selected tool here
         // TODO: also want a 'temporary' tool (like the eraser when it's in use, for example)
@@ -42,7 +45,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         ToolboxController {
             view_model:         viewmodel,
             ui:                 ui,
-            anim_view_model:    view_model.clone(),
+            anim_view_model:    anim_view_model.clone(),
             images:             images
         }
     }
