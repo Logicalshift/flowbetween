@@ -18,6 +18,12 @@ pub struct BrushPoint {
 /// 
 pub trait Brush : Send+Sync {
     ///
+    /// One or more brush strokes of this type are about to be rendered.
+    /// This brush should set up the graphics context appropriately.
+    /// 
+    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives);
+
+    ///
     /// Renders a brush stroke to the specified graphics context
     ///
     fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>);

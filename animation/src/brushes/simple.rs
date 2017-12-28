@@ -18,6 +18,11 @@ impl SimpleBrush {
 }
 
 impl Brush for SimpleBrush {
+    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives) {
+        gc.blend_mode(BlendMode::SourceOver);
+        gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+    }
+
     fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 1 {
@@ -44,7 +49,6 @@ impl Brush for SimpleBrush {
         
         // Draw a simple line for this brush
         if let Some(curve) = curve {
-            gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
             gc.new_path();
             
             let Coord2(x, y) = curve[0].start_point();

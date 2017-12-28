@@ -10,6 +10,9 @@ use curves::bezier;
 /// The ink brush draws a solid line with width based on pressure
 /// 
 pub struct InkBrush {
+    /// The blend mode that this brush will use
+    blend_mode: BlendMode,
+
     /// Width at pressure 0%
     min_width: f32,
 
@@ -25,10 +28,11 @@ impl InkBrush {
     /// Creates a new ink brush with the default settings
     /// 
     pub fn new() -> InkBrush {
-        InkBrush { 
-            min_width: 0.25,
-            max_width: 5.0,
-            scale_up_distance: 20.0
+        InkBrush {
+            blend_mode:         BlendMode::SourceOver,
+            min_width:          0.25,
+            max_width:          5.0,
+            scale_up_distance:  20.0
         }
     }
 }
@@ -219,6 +223,14 @@ impl BezierCurve for InkCurve {
 }
 
 impl Brush for InkBrush {
+    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives) {
+        // Set the blend mode (mainly so we can act as an eraser as well as a primary brush)
+        gc.blend_mode(self.blend_mode);
+
+        // Set the fill colour
+        gc.fill_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+    }
+
     fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {
         // TODO: somewhat glitchy, not sure why (lines disappear sometimes, or sometimes end up with a line to infinity)
 
@@ -254,7 +266,6 @@ impl Brush for InkBrush {
             let offset_curves: Vec<(Vec<bezier::Curve>, Vec<bezier::Curve>)> 
                 = curve.iter().map(|ink_curve| ink_curve.to_offset_curves(self.min_width, self.max_width)).collect();
 
-            gc.fill_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
             gc.new_path();
             
             // Upper portion
