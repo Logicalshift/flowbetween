@@ -27,6 +27,6 @@ impl Frame for EmptyFrame {
         self.time_index
     }
 
-    fn render_to(&self, gc: &mut GraphicsPrimitives) {
+    fn render_to(&self, _gc: &mut GraphicsPrimitives) {
     }
 }
