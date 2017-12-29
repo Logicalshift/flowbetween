@@ -831,9 +831,9 @@ function flowbetween(root_node) {
             // The badged property updates the node class
             remove_action = on_property_change(controller_path, attribute['Badged'], is_badged => {
                 if (is_badged['Bool']) {
-                    add_class(node, 'badge');
+                    add_class(node, 'badged');
                 } else {
-                    remove_class(node, 'badge');
+                    remove_class(node, 'badged');
                 }
 
                 return true;

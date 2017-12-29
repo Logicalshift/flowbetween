@@ -44,10 +44,11 @@
         }
 
         .badge {
+            transition: fill 0.3s;
             fill: rgba(0,0,0,0);
         }
 
-        .secondary svg .badge {
+        .badged svg .badge {
             transition: fill 0.3s;
             fill: rgba(100,200,255, 1);
         }
