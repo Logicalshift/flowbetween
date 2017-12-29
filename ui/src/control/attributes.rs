@@ -26,6 +26,9 @@ pub enum ControlAttribute {
     /// Whether or not this control is selected
     Selected(Property),
 
+    /// Whether or not this control has a badge attached to it
+    Badged(Property),
+
     /// The unique ID for this control
     Id(String),
 
@@ -134,6 +137,16 @@ impl ControlAttribute {
     }
 
     ///
+    /// Property representing whether or not this control has a badge
+    ///
+    pub fn badged<'a>(&'a self) -> Option<&'a Property> {
+        match self {
+            &Badged(ref is_badged)  => Some(is_badged),
+            _                       => None
+        }
+    }
+
+    ///
     /// The image resource for this control, if there is one
     ///
     pub fn image<'a>(&'a self) -> Option<&'a Resource<image::Image>> {
@@ -186,6 +199,7 @@ impl ControlAttribute {
             &Controller(ref controller)         => Some(controller.as_ref()) != compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),
             &Selected(ref is_selected)          => Some(is_selected) != compare_to.selected(),
+            &Badged(ref is_badged)              => Some(is_badged) != compare_to.badged(),
             &Image(ref image_resource)          => Some(image_resource) != compare_to.image(),
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
             &Foreground(ref foreground_color)   => Some(foreground_color) != compare_to.foreground_color(),

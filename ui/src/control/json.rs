@@ -13,6 +13,7 @@ impl ToJsonValue for ControlAttribute {
             &Text(ref property)                 => json!({ "Text": property }),
             &FontSize(size)                     => json!({ "FontSize": size }),
             &Selected(ref property)             => json!({ "Selected": property }),
+            &Badged(ref property)               => json!({ "Badged": property }),
             &Id(ref id)                         => json!({ "Id": id }),
             &Controller(ref name)               => json!({ "Controller": name }),
             &Action(ref trigger, ref action)    => json!({ "Action": (trigger, action) }),

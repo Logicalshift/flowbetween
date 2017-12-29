@@ -827,6 +827,17 @@ function flowbetween(root_node) {
 
                 return true;
             });
+        } else if (attribute['Badged']) {
+            // The badged property updates the node class
+            remove_action = on_property_change(controller_path, attribute['Badged'], is_badged => {
+                if (is_badged['Bool']) {
+                    add_class(node, 'badge');
+                } else {
+                    remove_class(node, 'badge');
+                }
+
+                return true;
+            });
         }
 
         // Update the property that allows us to unbind the viewmodel
