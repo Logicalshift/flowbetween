@@ -125,6 +125,120 @@ mod test {
     }
 
     #[test]
+    fn text_attributes_are_different() {
+        let text1   = ControlAttribute::Text("Text1".to_property());
+        let text2   = ControlAttribute::Text("Text2".to_property());
+
+        assert!(text1 != text2);
+    }
+
+    #[test]
+    fn controls_with_text_attributes_are_not_equal() {
+        let text1   = Control::empty()
+            .with("Text1");
+        let text2   = Control::empty()
+            .with("Text2");
+
+        assert!(text1 != text2);
+    }
+
+    #[test]
+    fn controls_with_text_attributes_and_other_attributes_are_not_equal() {
+        let text1   = Control::empty()
+            .with(ControlAttribute::FontSize(12.0))
+            .with("Text1")
+            .with(Bounds::next_horiz(80.0));
+        let text2   = Control::empty()
+            .with(ControlAttribute::FontSize(12.0))
+            .with("Text2")
+            .with(Bounds::next_horiz(80.0));
+
+        assert!(text1 != text2);
+    }
+
+    #[test]
+    fn controls_with_text_attributes_and_other_attributes_are_same() {
+        let text1   = Control::empty()
+            .with(ControlAttribute::FontSize(12.0))
+            .with("Text1")
+            .with(Bounds::next_horiz(80.0));
+        let text2   = Control::empty()
+            .with(ControlAttribute::FontSize(12.0))
+            .with("Text1")
+            .with(Bounds::next_horiz(80.0));
+
+        assert!(text1 == text2);
+    }
+
+    #[test]
+    fn different_text_is_different() {
+        let text1   = Control::empty()
+            .with("Text1");
+        let text2   = Control::empty()
+            .with("Text2");
+
+        assert!(text1.is_different(&text2));
+    }
+
+    #[test]
+    fn different_text_in_subtree_are_not_equal() {
+        let text1   = Control::empty()
+            .with(vec![
+                Control::empty()
+                    .with("Text1")
+            ]);
+        let text2   = Control::empty()
+            .with(vec![
+                Control::empty()
+                    .with("Text2")
+            ]);
+
+        assert!(text1 != text2);
+    }
+
+    #[test]
+    fn different_text_in_subtree_are_not_different() {
+        let text1   = Control::empty()
+            .with(vec![
+                Control::empty()
+                    .with("Text1")
+            ]);
+        let text2   = Control::empty()
+            .with(vec![
+                Control::empty()
+                    .with("Text2")
+            ]);
+
+        assert!(!text1.is_different(&text2));
+    }
+
+    #[test]
+    fn same_text_in_subtree_are_equal() {
+        let text1   = Control::empty()
+            .with(vec![
+                Control::empty()
+                    .with("Text1")
+            ]);
+        let text2   = Control::empty()
+            .with(vec![
+                Control::empty()
+                    .with("Text1")
+            ]);
+
+        assert!(text1 == text2);
+    }
+
+    #[test]
+    fn different_text_is_different_with_other_attributes() {
+        let text1   = Control::empty()
+            .with("Text1");
+        let text2   = Control::empty()
+            .with("Text2");
+
+        assert!(text1.is_different(&text2));
+    }
+
+    #[test]
     fn canvas_equals_self() {
         let resources       = ResourceManager::new();
         let canvas_resource = resources.register(Canvas::new());
