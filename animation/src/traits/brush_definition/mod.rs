@@ -7,6 +7,9 @@ pub use self::ink::*;
 /// 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum BrushDefinition {
-    /// Represents the definition of an ink brush
+    /// The simple brush is usually only used for testing
+    Simple,
+
+    /// An ink brush with a particular definition
     Ink(InkDefinition)
 }

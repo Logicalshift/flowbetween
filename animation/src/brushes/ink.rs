@@ -302,4 +302,22 @@ impl Brush for InkBrush {
             gc.fill();
         }
     }
+
+    ///
+    /// Retrieves the definition for this brush
+    /// 
+    fn to_definition(&self) -> (BrushDefinition, BrushDrawingStyle) {
+        let definition = BrushDefinition::Ink(InkDefinition {
+            min_width:          self.min_width,
+            max_width:          self.max_width,
+            scale_up_distance:  self.scale_up_distance
+        });
+        
+        let drawing_style = match self.blend_mode {
+            BlendMode::DestinationOut   => BrushDrawingStyle::Erase,
+            _                           => BrushDrawingStyle::Draw
+        };
+
+        (definition, drawing_style)
+    }
 }

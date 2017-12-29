@@ -14,6 +14,7 @@ pub fn create_brush_from_definition(definition: &BrushDefinition, drawing_style:
     use BrushDefinition::*;
 
     match definition {
-        &Ink(ref ink_definition) => Arc::new(InkBrush::new(ink_definition, drawing_style))
+        &Simple                     => Arc::new(SimpleBrush::new()),
+        &Ink(ref ink_definition)    => Arc::new(InkBrush::new(ink_definition, drawing_style))
     }
 }

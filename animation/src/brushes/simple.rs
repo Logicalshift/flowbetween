@@ -23,6 +23,13 @@ impl Brush for SimpleBrush {
         gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
     }
 
+    ///
+    /// Retrieves the definition for this brush
+    /// 
+    fn to_definition(&self) -> (BrushDefinition, BrushDrawingStyle) {
+        (BrushDefinition::Simple, BrushDrawingStyle::Draw)
+    }
+
     fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 1 {

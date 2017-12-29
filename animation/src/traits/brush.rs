@@ -1,3 +1,6 @@
+use super::brush_definition::*;
+use super::brush_drawing_style::*;
+
 use ui::*;
 use ui::canvas::*;
 
@@ -27,6 +30,11 @@ pub trait Brush : Send+Sync {
     /// Renders a brush stroke to the specified graphics context
     ///
     fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>);
+
+    ///
+    /// Retrieves the definition for this brush
+    /// 
+    fn to_definition(&self) -> (BrushDefinition, BrushDrawingStyle);
 }
 
 impl From<(f32, f32)> for BrushPoint {
