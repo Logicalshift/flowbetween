@@ -6,6 +6,9 @@ use std::ops::*;
 use curves::*;
 use curves::bezier;
 
+// Minimum distance between points to use to fit to a curve
+const MIN_DISTANCE: f32 = 2.0;
+
 ///
 /// The ink brush draws a solid line with width based on pressure
 /// 
@@ -242,13 +245,46 @@ impl Brush for InkBrush {
         // TODO: somewhat glitchy, not sure why (lines disappear sometimes, or sometimes end up with a line to infinity)
 
         // Nothing to draw if there are no points in the brush stroke (or only one point)
-        if points.len() <= 1 {
+        if points.len() <= 2 {
             return;
         }
 
         // Convert points to ink points
         let ink_points: Vec<InkCoord> = points.iter().map(|point| InkCoord::from(point)).collect();
-        let mut ink_points = InkCoord::smooth(&ink_points, &[0.1, 0.25, 0.3, 0.25, 0.1]);
+
+        // Average points that are very close together so we don't overdo 
+        // the curve fitting
+        let mut averaged_points = vec![];
+        let mut last_point      = ink_points[0];
+        averaged_points.push(last_point);
+
+        for point in ink_points.iter().skip(1) {
+            // If the distance between this point and the last one is below a 
+            // threshold, average them together
+            let distance = last_point.distance_to(point);
+
+            if distance < MIN_DISTANCE {
+                // Average this point with the previous average
+                // TODO: (We should really total up the number of points we're 
+                // averaging over)
+                let num_averaged    = averaged_points.len();
+                let current_average = averaged_points[num_averaged-1];
+                let averaged_point  = (current_average + last_point) * 0.5;
+
+                // Update the earlier point (and don't update last_point: we'll 
+                // keep averaging until we find a new point far enough away)
+                averaged_points[num_averaged-1] = averaged_point;
+            } else {
+                // Keep this point
+                averaged_points.push(*point);
+
+                // Update the last point
+                last_point = *point;
+            }
+        }
+
+        // Smooth out the points to remove any jitteryness
+        let mut ink_points = InkCoord::smooth(&averaged_points, &[0.1, 0.25, 0.3, 0.25, 0.1]);
 
         // Scale up the pressure at the start of the brush stroke
         let mut distance    = 0.0;
