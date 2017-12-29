@@ -1,0 +1,33 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (lldb)",
+            "type": "lldb",
+            "request": "launch",
+            "cwd": "${workspaceRoot}",
+            "program": "./target/debug/flow_between",
+            "sourceLanguages": [
+                "rust"
+            ],
+        },
+        {
+            "name": "Debug (Rust-gdb)",
+            "type": "gdb",
+            "request": "launch",
+            "target": "./target/debug/flow_between",
+            "cwd": "${workspaceRoot}",
+            "gdbpath": "rust-gdb"
+        },
+        {
+            "name": "Debug (System gdb)",
+            "type": "gdb",
+            "request": "launch",
+            "target": "./target/debug/flow_between",
+            "cwd": "${workspaceRoot}"
+        }
+    ]
+}
