@@ -1,7 +1,7 @@
 ///
 /// A particular mouse button
 /// 
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
+#[derive(Clone, Copy, PartialEq, Hash, Serialize, Deserialize, Debug)]
 pub enum MouseButton {
     Left,
     Middle,
