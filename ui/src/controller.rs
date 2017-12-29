@@ -127,6 +127,7 @@ mod test {
         view_model: Arc<NullViewModel>
     }
     struct LabelController {
+        pub label_text: Binding<String>,
         view_model: Arc<NullViewModel>
     }
 
@@ -141,7 +142,10 @@ mod test {
 
     impl LabelController {
         pub fn new() -> LabelController {
-            LabelController { view_model: Arc::new(NullViewModel::new()) }
+            LabelController { 
+                label_text: bind("Test".to_string()),
+                view_model: Arc::new(NullViewModel::new()) 
+            }
         }
     }
 
@@ -161,7 +165,8 @@ mod test {
 
     impl Controller for LabelController {
         fn ui(&self) -> Arc<Bound<Control>> {
-            Arc::new(bind(Control::label()))
+            let text = self.label_text.clone();
+            Arc::new(computed(move || Control::label().with(text.get())))
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
@@ -178,7 +183,7 @@ mod test {
         let label_controller    = Arc::new(LabelController::new());
         let assembly            = assemble_ui(label_controller.clone());
 
-        assert!(assembly.get() == Control::label());
+        assert!(assembly.get() == Control::label().with("Test"));
     }
 
     #[test]
@@ -189,7 +194,7 @@ mod test {
         assert!(assembly.get() == Control::container()
             .with_controller("Test")
             .with(vec![
-                Control::label()
+                Control::label().with("Test")
             ]));
     }
 }
