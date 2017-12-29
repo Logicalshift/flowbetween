@@ -111,9 +111,11 @@ impl CanvasStateCore {
                 let stream  = executor::spawn((*canvas).stream());
                 let tracker = CanvasTracker { command_stream: stream };
 
-                found_canvases.insert(path.clone());
-                self.canvases.insert(path, tracker);
+                self.canvases.insert(path.clone(), tracker);
             }
+
+            // Mark this as a 'found canvas' so it's not removed from this object
+            found_canvases.insert(path);
         }
 
         // Extend the controller path if this control has a controller
