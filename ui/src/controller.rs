@@ -123,7 +123,7 @@ mod test {
     use super::*;
 
     struct TestController {
-        label_controller: Arc<LabelController>,
+        pub label_controller: Arc<LabelController>,
         view_model: Arc<NullViewModel>
     }
     struct LabelController {
@@ -195,6 +195,37 @@ mod test {
             .with_controller("Test")
             .with(vec![
                 Control::label().with("Test")
+            ]));
+    }
+
+    #[test]
+    fn label_binding_updates() {
+        let label_controller    = Arc::new(LabelController::new());
+        let assembly            = assemble_ui(label_controller.clone());
+
+        assert!(assembly.get() == Control::label().with("Test"));
+
+        label_controller.label_text.clone().set("Changed".to_string());
+        assert!(assembly.get() == Control::label().with("Changed"));
+    }
+
+    #[test]
+    fn subassembly_binding_updates() {
+        let test_controller = Arc::new(TestController::new());
+        let assembly        = assemble_ui(test_controller.clone());
+
+        assert!(assembly.get() == Control::container()
+            .with_controller("Test")
+            .with(vec![
+                Control::label().with("Test")
+            ]));
+
+        test_controller.label_controller.label_text.clone().set("Changed".to_string());
+
+        assert!(assembly.get() == Control::container()
+            .with_controller("Test")
+            .with(vec![
+                Control::label().with("Changed")
             ]));
     }
 }
