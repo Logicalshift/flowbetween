@@ -331,6 +331,27 @@ mod test {
     }
 
     #[test]
+    fn can_recursively_compute_values_with_generated_computed() {
+        let mut bound           = bind(1);
+
+        let computed_from       = bound.clone();
+        let computed_val        = computed(move || computed_from.get() + 1);
+        let even_more_computed  = computed(move || {
+            let computed_val = computed_val.clone();
+            let more_computed = computed(move || computed_val.get() + 1);
+            more_computed.get() + 1
+        });
+
+        assert!(even_more_computed.get() == 4);
+
+        bound.set(2);
+        assert!(even_more_computed.get() == 5);
+
+        bound.set(3);
+        assert!(even_more_computed.get() == 6);
+    }
+
+    #[test]
     fn computed_only_recomputes_as_needed() {
         let mut bound           = bind(1);
 
