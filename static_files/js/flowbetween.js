@@ -1118,9 +1118,13 @@ function flowbetween(root_node) {
         
         note('Updating HTML');
 
-        console.log(updates);
+        return new Promise((resolve) => {
+            console.log(updates);
 
-        error('HTML update not implemented yet');
+            error('HTML update not implemented yet');
+
+            resolve();
+        });
 
     };
 
