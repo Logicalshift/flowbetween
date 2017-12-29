@@ -30,6 +30,11 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         // There's a 'SelectedTool' key that describes the currently selected tool
         viewmodel.set_property("SelectedTool", PropertyValue::String("Pencil".to_string()));
 
+        // Update the viewmodel whenever the effective tool changes
+        let effective_tool = anim_view_model.tools().effective_tool.clone();
+        viewmodel.set_computed("EffectiveTool", move || 
+            PropertyValue::String(effective_tool.get().map(|tool| tool.tool_name()).unwrap_or("".to_string())));
+
         // Make sure that the tool selected in this controller matches the one in the main view model
         anim_view_model.tools().choose_tool_with_name(&viewmodel.get_property("SelectedTool").get().string().unwrap_or("".to_string()));
 
@@ -129,6 +134,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         // The tool has a '-selected' binding that we use to cause it to highlight
         let compare_name            = String::from(name);
         let selected_property_name  = format!("{}-selected", name);
+        let badged_property_name    = format!("{}-badged", name);
 
         // When the selected tool is set to the name of this tool, the selected property should be set to true
         viewmodel.set_computed(&selected_property_name, move || {
@@ -136,9 +142,22 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
             PropertyValue::Bool(selected_tool == compare_name)
         });
 
+        // When the effective tool is different from the selected tool, it displays a badge
+        let selected_tool   = viewmodel.get_property("SelectedTool");
+        let effective_tool  = viewmodel.get_property("EffectiveTool");
+        let compare_name    = String::from(name);
+
+        viewmodel.set_computed(&badged_property_name, move || {
+            let selected_tool   = selected_tool.get().string().unwrap_or(String::from(""));
+            let effective_tool  = effective_tool.get().string().unwrap_or(String::from(""));
+
+            PropertyValue::Bool(selected_tool != effective_tool && effective_tool == compare_name)
+        });        
+
         // The control is just a button
         Control::button()
             .with((Click, name))
+            .with(Badged(Property::Bind(badged_property_name)))
             .with(Selected(Property::Bind(selected_property_name)))
             .with(Bounds::next_vert(48.0))
             .with(vec![
