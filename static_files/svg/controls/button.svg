@@ -43,6 +43,15 @@
             stroke: rgba(67,78,89, 1);
         }
 
+        .badge {
+            fill: rgba(0,0,0,0);
+        }
+
+        .secondary svg .badge {
+            transition: fill 0.3s;
+            fill: rgba(100,200,255, 1);
+        }
+
         svg:hover .foreground {
             opacity: 1.0;
             transition: opacity 1s;
@@ -65,6 +74,11 @@
             </g>
             <g id="Shine1" transform="matrix(3.96839,-3.96839,0.18813,0.18813,-466.746,1075.58)">
                 <rect x="153.935" y="49.334" width="81.273" height="65.063" style="fill:rgb(101,124,146);"/>
+            </g>
+        </g>
+        <g transform="matrix(1.65678,0,0,1.65678,-30.5949,-21.5873)">
+            <g id="Badge">
+                <circle cx="68.931" cy="63.494" r="46.5" class="badge"/>
             </g>
         </g>
     </g>
