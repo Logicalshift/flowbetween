@@ -100,7 +100,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
 
         // If the tool has not been activated, mark it as active
         if activation_state != ToolActivationState::Activated {
-            let current_tool    = self.current_tool.get();
+            let current_tool    = self.effective_tool.get();
 
             // Mark the current tool as active
             let tool_activation = current_tool.map(|tool| tool.activate(model));
