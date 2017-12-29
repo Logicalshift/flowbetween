@@ -525,6 +525,22 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Finds the flo node at the specified address
+    ///
+    let node_at_address = (address) => {
+        let current_node = root_node;
+
+        // The root node is the div containing the document. The root control node should be it's only child.
+        current_node = get_flo_subnodes(current_node)[0];
+
+        // Follow the address
+        address.forEach(index => current_node = get_flo_subnodes(current_node)[index]);
+
+        // This is the node at this address
+        return current_node;
+    };
+
+    ///
     /// Visits the flo items in the DOM, passing in attributes from
     /// the appropriate control data sections
     ///
@@ -1114,11 +1130,39 @@ function flowbetween(root_node) {
         });
     };
 
+    ///
+    /// A portion of the HTML tree has been updated
+    ///
     let on_update_html = (updates) => {
         
         note('Updating HTML');
 
         return new Promise((resolve) => {
+            // Find the original nodes for each update
+            updates.forEach(update => {
+                update.original_node = node_at_address(update.address);
+            });
+
+            // TODO: disable any updtes for the HTML
+
+            // Replace the HTML for each element involved in the update
+            updates.forEach(update => {
+                // Generate the replacement HTML element
+                let template        = document.createElement('template');
+                template.innerHTML  = update.new_html;
+                let new_element     = template.content.childNodes[0];
+
+                // Replace the original node
+                let parent_node     = update.original_node.parentNode;
+                if (parent_node) {
+                    parent_node.replaceChild(new_element, update.original_node);
+                }
+
+                update.new_element  = new_element;
+            });
+
+            // TODO: reformat/bind/wire the new HTML
+
             console.log(updates);
 
             error('HTML update not implemented yet');
