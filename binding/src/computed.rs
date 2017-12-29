@@ -124,6 +124,17 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     /// Creates a new computable binding
     ///
     pub fn new(calculate_value: TFn) -> ComputedBinding<Value, TFn> {
+        // Computed bindings created in a binding context will likely not be 
+        // retained, so things won't update as you expect.
+        //
+        // We could add some special logic to retain them here, or we could 
+        // just panic. Panicking is probably better as really what should be 
+        // done is to evaluate the content of the computed value directly. 
+        // This can happen if we call a function that returns a binding and 
+        // it creates one rather than returning an existing one.
+        BindingContext::panic_if_in_binding_context("Cannot create computed bindings in a computed value calculation function (you should evaluate the value directly rather than create bindings)");
+
+        // Create the binding
         ComputedBinding {
             core: Arc::new(Mutex::new(ComputedBindingCore::new(calculate_value)))
         }

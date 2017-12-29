@@ -331,7 +331,8 @@ mod test {
     }
 
     #[test]
-    fn can_recursively_compute_values_with_generated_computed() {
+    #[should_panic]
+    fn panics_if_computed_generated_during_binding() {
         let mut bound           = bind(1);
 
         let computed_from       = bound.clone();

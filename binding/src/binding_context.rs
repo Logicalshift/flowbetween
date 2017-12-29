@@ -72,6 +72,15 @@ impl BindingContext {
     }
 
     ///
+    /// Panics if we're trying to create a binding, with a particular message
+    /// 
+    pub fn panic_if_in_binding_context(msg: &str) {
+        if CURRENT_CONTEXT.with(|context| context.borrow().is_some()) {
+            panic!("Not possible when binding: {}", msg);
+        }
+    }
+
+    ///
     /// Executes a function in a new binding context
     ///
     pub fn bind<TResult, TFn>(to_do: TFn) -> (TResult, BindingDependencies) 
