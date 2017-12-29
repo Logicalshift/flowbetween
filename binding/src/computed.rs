@@ -172,7 +172,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     /// Core should already be locked
     ///
     fn monitor_changes(&self, core: &mut ComputedBindingCore<Value, TFn>, to_monitor: &mut Changeable) {
-        // We only keep a week reference to the core here
+        // We only keep a weak reference to the core here
         let to_notify   = Arc::downgrade(&self.core);
 
         // Monitor for changes (see below for the implementation against to_notify's type)
