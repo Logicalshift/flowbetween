@@ -2,7 +2,7 @@ use super::canvas_update::*;
 
 use ui::*;
 
-use serde_json::*;
+use serde_json;
 
 ///
 /// Describes a HTML node that should be changed
@@ -49,7 +49,7 @@ pub enum Update {
     ///
     /// Supplies a new user interface as HTML, alongside the corresponding UI control data
     ///
-    NewUserInterfaceHtml(String, Value, Vec<ViewModelUpdate>),
+    NewUserInterfaceHtml(String, serde_json::Value, Vec<ViewModelUpdate>),
 
     ///
     /// Specifies that the viewmodel should be updated
