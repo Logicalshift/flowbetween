@@ -107,6 +107,30 @@ impl BindingContext {
         (result, dependencies)
     }
 
+    ///
+    /// Performs an action outside of the binding context (dependencies 
+    /// will not be tracked for anything the supplied function does)
+    /// 
+    pub fn out_of_context<TResult, TFn>(to_do: TFn) -> TResult
+    where TFn: FnOnce() -> TResult {
+        // Remember the previous context
+        let previous_context = Self::current();
+
+        // Unset the context
+        CURRENT_CONTEXT.with(|current_context| *current_context.borrow_mut() = None);
+
+        // Perform the operations without a binding context
+        let result = to_do();
+
+        // Reset to the previous context
+        CURRENT_CONTEXT.with(|current_context| *current_context.borrow_mut() = previous_context);
+
+        result
+    }
+
+    ///
+    /// Adds a dependency to the current context (if one is found)
+    /// 
     pub fn add_dependency<TChangeable: Changeable+'static>(dependency: TChangeable) {
         Self::current().map(|mut ctx| ctx.dependencies.add_dependency(dependency));
     }

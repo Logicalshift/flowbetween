@@ -1,4 +1,5 @@
 use binding::*;
+use binding::binding_context::*;
 
 use super::property::*;
 use super::viewmodel::*;
@@ -56,10 +57,13 @@ impl DynamicViewModel {
     ///
     pub fn set_computed<TFn>(&self, property_name: &str, calculate_value: TFn)
     where TFn: 'static+Send+Sync+Fn() -> PropertyValue {
-        let new_binding = Arc::new(computed(calculate_value));
+        // If this is done while computing the UI, we don't want our computed to attach to the current context
+        BindingContext::out_of_context(move || {
+            let new_binding = Arc::new(computed(calculate_value));
 
-        let mut computed = self.computed.lock().unwrap();
-        computed.insert(String::from(property_name), new_binding);
+            let mut computed = self.computed.lock().unwrap();
+            computed.insert(String::from(property_name), new_binding);
+        });
     }
 }
 
