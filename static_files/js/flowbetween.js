@@ -1095,7 +1095,7 @@ function flowbetween(root_node) {
     /// The entire UI HTML should be replaced with a new version
     ///
     let on_new_html = (new_user_interface_html, property_tree) => {
-        note('Updating user interface');
+        note('Replacing user interface');
 
         return new Promise((resolve) => {
             let root = get_root();
@@ -1112,6 +1112,16 @@ function flowbetween(root_node) {
 
             resolve();
         });
+    };
+
+    let on_update_html = (updates) => {
+        
+        note('Updating HTML');
+
+        console.log(updates);
+
+        error('HTML update not implemented yet');
+
     };
 
     ///
@@ -1206,6 +1216,13 @@ function flowbetween(root_node) {
 
                     current_promise = current_promise
                         .then(() => on_update_canvas(updates));
+
+                } else if (update['UpdateHtml']) {
+
+                    let updates = update['UpdateHtml'];
+
+                    current_promise = current_promise
+                        .then(() => on_update_html(updates));
 
                 } else {
                     warn('Unknown update type', Object.keys(update)[0], update);
