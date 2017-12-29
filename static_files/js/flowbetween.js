@@ -854,6 +854,33 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Removes any events and other attachments from a node and its children
+    ///
+    let unwire_node = (node) => {
+        // Unwires a single node
+        let unwire = (node) => {
+            let unbind_viewmodel = node.flo_unbind_viewmodel;
+            if (unbind_viewmodel) { unbind_viewmodel(); }
+
+            remove_action_events_from_node(node);
+        };
+
+        // Recursively unwires a node
+        let unwire_recursive = (node) => {
+            if (node) {
+                // Unwire the subnodes
+                get_flo_subnodes(node).forEach((sub_node) => unwire_recursive(sub_node));
+
+                // Unwire the node itself
+                unwire(node);
+            }
+        };
+
+        // Start at the first node
+        unwire_recursive(node);
+    };
+
+    ///
     /// ===== VIEWMODEL
     ///
 
@@ -1143,7 +1170,10 @@ function flowbetween(root_node) {
                 update.original_node = node_at_address(update.address);
             });
 
-            // TODO: disable any updtes for the HTML
+            // Unwire the original DOM
+            updates.forEach(update => {
+                unwire_node(update.original_node);
+            });
 
             // Replace the HTML for each element involved in the update
             updates.forEach(update => {
