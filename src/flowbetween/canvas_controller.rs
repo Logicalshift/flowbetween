@@ -73,6 +73,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
                 (ActionTrigger::Paint(PaintDevice::Pen),                        PAINT_ACTION),
                 (ActionTrigger::Paint(PaintDevice::Touch),                      PAINT_ACTION),
                 (ActionTrigger::Paint(PaintDevice::Other),                      PAINT_ACTION),
+                (ActionTrigger::Paint(PaintDevice::Eraser),                     PAINT_ACTION),
                 (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   PAINT_ACTION)
             )));
 
