@@ -867,6 +867,10 @@ function flowbetween(root_node) {
             if (node.flo_remove_actions) {
                 remove_action_events_from_node(node);
             }
+
+            if (node.tagName.toLowerCase() === 'flo-canvas') {
+                flo_canvas.stop(node); 
+            }        
         };
 
         // Recursively unwires a node
@@ -1206,6 +1210,9 @@ function flowbetween(root_node) {
             if (root_control_data) {
                 layout_tree(get_flo_subnodes(get_root())[0], root_control_data);
             }
+
+            // Tidy canvases if necessary
+            flo_canvas.update_canvas_map();
 
             resolve();
         });

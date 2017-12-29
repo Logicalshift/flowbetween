@@ -82,6 +82,22 @@ let flo_canvas = (function() {
     }
 
     ///
+    /// Detaches a canvas from an HTML element
+    ///
+    function stop(element) {
+        let existing_canvas = element.flo_canvas;
+
+        if (existing_canvas) {
+            // Remove the existing canvas from the element
+            element.flo_canvas = null;
+            existing_canvas.canvas.remove();
+
+            // Make sure we know that the canvases are outdated
+            mark_canvases_outdated();
+        }
+    }
+
+    ///
     /// Ensures the canvas element is still part of the item
     ///
     function restart(element, flo_canvas) {
@@ -920,7 +936,7 @@ let flo_canvas = (function() {
     }
 
     ///
-    /// Updates the canvas with the specified path a particular
+    /// Updates the canvas with the specified path using an encoded update
     ///
     function update_canvas(controller_path, canvas_name, encoded_update) {
         // Fetch the canvas with this name
@@ -990,8 +1006,11 @@ let flo_canvas = (function() {
 
     // The final flo_canvas object
     return {
-        start:              start,
-        resize_canvases:    resize_active_canvases,
-        update_canvas:      update_canvas
+        start:                      start,
+        stop:                       stop,
+        resize_canvases:            resize_active_canvases,
+        update_canvas:              update_canvas,
+        remove_inactive_canvases:   remove_inactive_canvases,
+        update_canvas_map:          update_canvas_map
     };
 })();
