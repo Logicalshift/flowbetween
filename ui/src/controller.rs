@@ -51,6 +51,32 @@ pub trait Controller : Send+Sync {
 }
 
 ///
+/// Returns the full UI tree for the current state of a controller
+/// 
+fn get_full_ui_tree(base_controller: &Arc<Controller>) -> Control {
+    let base_ui = base_controller.ui();
+
+    base_ui.get().map(&|control| {
+        if let Some(controller_id) = control.controller() {
+            // Has a subcontroller
+            let subcontroller = base_controller.get_subcontroller(controller_id);
+
+            if let Some(subcontroller) = subcontroller {
+                // If we can look up the subcontroller then this control should have its UI as its subcomponents
+                let subassembly = get_full_ui_tree(&subcontroller);
+                control.clone().with(vec![subassembly])
+            } else {
+                // No subcontroller
+                control.clone()
+            }
+        } else {
+            // Control is untouched
+            control.clone()
+        }
+    })
+}
+
+///
 /// Returns a bound control that expands the content of any 
 /// sub-controllers that might be present.
 ///
@@ -59,31 +85,13 @@ pub trait Controller : Send+Sync {
 /// return an empty UI instead.
 ///
 pub fn assemble_ui(base_controller: Arc<Controller>) -> Box<Bound<Control>> {
-    // Fetch the UI for the controller
-    let base_ui         = base_controller.ui();
+    // We keep a weak reference to the controller so the binding will not hold on to it
     let weak_controller = Arc::downgrade(&base_controller);
 
     // Result is computed
     return Box::new(computed(move || {
         if let Some(base_controller) = weak_controller.upgrade() {
-            base_ui.get().map(&|control| {
-                if let Some(controller_id) = control.controller() {
-                    // Has a subcontroller
-                    let subcontroller = base_controller.get_subcontroller(controller_id);
-
-                    if let Some(subcontroller) = subcontroller {
-                        // If we can look up the subcontroller then this control should have its UI as its subcomponents
-                        let subassembly = assemble_ui(subcontroller);
-                        control.clone().with(vec![subassembly.get()])
-                    } else {
-                        // No subcontroller
-                        control.clone()
-                    }
-                } else {
-                    // Control is untouched
-                    control.clone()
-                }
-            })
+            get_full_ui_tree(&base_controller)
         } else {
             // Controller is no longer around, so it doesn't have a UI any more
             Control::empty()
@@ -124,34 +132,45 @@ mod test {
 
     struct TestController {
         pub label_controller: Arc<LabelController>,
-        view_model: Arc<NullViewModel>
+        view_model: Arc<NullViewModel>,
+        ui: Arc<Bound<Control>>
     }
     struct LabelController {
         pub label_text: Binding<String>,
-        view_model: Arc<NullViewModel>
+        view_model: Arc<NullViewModel>,
+        ui: Arc<Bound<Control>>
     }
 
     impl TestController {
         pub fn new() -> TestController {
             TestController { 
                 label_controller: Arc::new(LabelController::new()), 
-                view_model: Arc::new(NullViewModel::new()) 
+                view_model: Arc::new(NullViewModel::new()),
+                ui: Arc::new(bind(Control::container().with_controller("Test")))
             }
         }
     }
 
     impl LabelController {
         pub fn new() -> LabelController {
+            let text = bind("Test".to_string());
+            let label_text = text.clone();
+
             LabelController { 
-                label_text: bind("Test".to_string()),
-                view_model: Arc::new(NullViewModel::new()) 
+                label_text: label_text,
+                view_model: Arc::new(NullViewModel::new()),
+                ui: Arc::new(computed(move || {
+                    let text = text.get();
+
+                    Control::label().with(text)
+                }))
             }
         }
     }
 
     impl Controller for TestController {
         fn ui(&self) -> Arc<Bound<Control>> {
-            Arc::new(bind(Control::container().with_controller("Test")))
+            Arc::clone(&self.ui)
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
@@ -165,12 +184,7 @@ mod test {
 
     impl Controller for LabelController {
         fn ui(&self) -> Arc<Bound<Control>> {
-            let text = self.label_text.clone();
-            Arc::new(computed(move || {
-                let text = text.get();
-
-                Control::label().with(text)
-            }))
+            Arc::clone(&self.ui)
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
