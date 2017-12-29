@@ -1,7 +1,9 @@
 use desync::*;
 
+use std::fmt;
 use std::ops::*;
 use std::sync::*;
+use std::fmt::Debug;
 use std::collections::*;
 
 ///
@@ -108,6 +110,18 @@ impl<T> Deref for Resource<T> {
 impl<T> PartialEq for Resource<T> {
     fn eq(&self, other: &Resource<T>) -> bool {
         other.id == self.id
+    }
+}
+
+impl<T> Debug for Resource<T> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        let name = self.name.lock().unwrap().clone();
+
+        if let Some(name) = name {
+            fmt.write_fmt(format_args!("{} \"{}\"", self.id, name))
+        } else {
+            fmt.write_fmt(format_args!("{}", self.id))
+        }
     }
 }
 

@@ -12,7 +12,7 @@ use ControlAttribute::*;
 ///
 /// Represents a control
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct Control {
     /// Attributes for this control
     attributes: Vec<ControlAttribute>,

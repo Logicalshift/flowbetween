@@ -3,7 +3,7 @@ use super::position::*;
 ///
 /// Represents the bounds of a particular control
 ///
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct Bounds {
     pub x1: Position,
     pub y1: Position,

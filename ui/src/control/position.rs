@@ -1,7 +1,7 @@
 ///
 /// Represents a position coordinate
 ///
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Position {
     /// Point located at a specific value
     At(f32),

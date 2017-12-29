@@ -12,7 +12,7 @@ use modifier::*;
 ///
 /// Attribute attached to a control
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum ControlAttribute {
     /// The bounding box for this control
     BoundingBox(Bounds),
