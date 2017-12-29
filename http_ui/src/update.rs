@@ -12,6 +12,9 @@ pub struct HtmlDiff {
     /// The address in the document of the node to be replaced
     address: Vec<u32>,
 
+    /// The UI tree corresponding to the new HTML
+    ui_tree: serde_json::Value,
+
     /// The HTML that should replace this node
     new_html: String
 }
@@ -20,10 +23,11 @@ impl HtmlDiff {
     ///
     /// Creates a new HTML diff
     ///
-    pub fn new(address: Vec<u32>, new_html: String) -> HtmlDiff {
+    pub fn new(address: Vec<u32>, ui_tree: &Control, new_html: String) -> HtmlDiff {
         HtmlDiff {
-            address: address,
-            new_html: String::from(new_html)
+            address:    address,
+            ui_tree:    ui_tree.to_json(),
+            new_html:   String::from(new_html)
         }
     }
 }
@@ -48,6 +52,7 @@ pub enum Update {
 
     ///
     /// Supplies a new user interface as HTML, alongside the corresponding UI control data
+    /// and view model.
     ///
     NewUserInterfaceHtml(String, serde_json::Value, Vec<ViewModelUpdate>),
 

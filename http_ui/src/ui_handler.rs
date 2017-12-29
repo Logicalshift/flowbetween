@@ -181,7 +181,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
         if ui_differences.len() > 0 {
             // Turn the control differences into HTML differences
             let updates: Vec<HtmlDiff> = ui_differences.into_iter()
-                .map(|ui_diff| HtmlDiff::new(ui_diff.address().clone(), ui_diff.replacement().to_html(&base_path).to_string()))
+                .map(|ui_diff| HtmlDiff::new(ui_diff.address().clone(), ui_diff.replacement(), ui_diff.replacement().to_html(&base_path).to_string()))
                 .collect();
 
             // Add the new update to the response
