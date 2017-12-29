@@ -1161,11 +1161,15 @@ function flowbetween(root_node) {
                 update.new_element  = new_element;
             });
 
-            // TODO: reformat/bind/wire the new HTML
+            // Reformat/bind/wire the new HTML
+            updates.forEach(update => {
+                apply_templates_to_tree(update.new_element, update.ui_tree);
+                bind_viewmodel_to_tree(update.new_element, update.ui_tree);
+                wire_tree(update.new_element, update.ui_tree);
+                layout_tree(update.new_element, update.ui_tree);
+            });
 
             console.log(updates);
-
-            error('HTML update not implemented yet');
 
             resolve();
         });
