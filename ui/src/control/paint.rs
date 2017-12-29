@@ -48,7 +48,7 @@ pub struct Painting {
     pub action: PaintAction,
     
     /// In the event the user has multiple pointers (eg, multiple styluses on a tablet), this is the ID of the stylus that the user is using
-    pub pointer_id: f32,
+    pub pointer_id: i32,
     
     /// Coordinates relative to the control that was painted upon
     pub location: (f32, f32),

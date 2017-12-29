@@ -22,7 +22,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     /// 
     pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> MenuController<Anim> {
         // Generate the UI for the menu
-        let selected_tool = anim_view_model.tools().current_tool.clone();
+        let selected_tool = anim_view_model.tools().effective_tool.clone();
 
         let ui = computed(move || {
             // Get properties

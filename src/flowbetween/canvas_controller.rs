@@ -246,8 +246,12 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// Performs a series of painting actions on the canvas
     /// 
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
+        // Set the current pointer
+        let pointer_id = actions.first().map(|first_action| first_action.pointer_id).unwrap_or(0);
+        self.anim_view_model.tools().current_pointer.clone().set((*device, pointer_id));
+
         // Get the active tool
-        let current_tool = self.anim_view_model.tools().current_tool.get();
+        let current_tool = self.anim_view_model.tools().effective_tool.get();
 
         // Get the selected layer
         let selected_layer = self.get_selected_layer();
