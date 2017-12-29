@@ -25,6 +25,10 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
         let selected_tool = anim_view_model.tools().current_tool.clone();
 
         let ui = computed(move || {
+            // Get properties
+            let tool_name = selected_tool.get().map(|tool| tool.tool_name()).unwrap_or("No tool".to_string());
+
+            // The control tree for the menu
             Control::empty()
                 .with(Bounds::fill_all())
                 .with(vec![
@@ -42,7 +46,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(Bounds::stretch_horiz(1.0)),
                     
                     Control::label()
-                        .with(selected_tool.get().map(|tool| tool.tool_name()).unwrap_or("No tool".to_string()))
+                        .with(tool_name)
                         .with(ControlAttribute::FontSize(14.0))
                         .with(Bounds::next_horiz(80.0))
                 ])
