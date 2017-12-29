@@ -339,6 +339,9 @@ mod test {
         let computed_val        = computed(move || computed_from.get() + 1);
         let even_more_computed  = computed(move || {
             let computed_val = computed_val.clone();
+
+            // This computed binding would be dropped after the first evaluation, which would result in the binding never updating.
+            // We should panic here.
             let more_computed = computed(move || computed_val.get() + 1);
             more_computed.get() + 1
         });
