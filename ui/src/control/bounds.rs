@@ -45,6 +45,14 @@ impl Bounds {
     }
 
     ///
+    /// Bounding box that stretchs to occupy the remaining horizontal space
+    ///
+    pub fn stretch_horiz(ratio: f32) -> Bounds {
+        use Position::*;
+        Bounds { x1: After, y1: Start, x2: Stretch(ratio), y2: End }
+    }
+
+    ///
     /// Bounding box that fills the remaining vertical space
     ///
     pub fn fill_vert() -> Bounds {
