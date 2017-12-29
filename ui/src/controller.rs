@@ -166,7 +166,11 @@ mod test {
     impl Controller for LabelController {
         fn ui(&self) -> Arc<Bound<Control>> {
             let text = self.label_text.clone();
-            Arc::new(computed(move || Control::label().with(text.get())))
+            Arc::new(computed(move || {
+                let text = text.get();
+
+                Control::label().with(text)
+            }))
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
