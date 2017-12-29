@@ -860,9 +860,13 @@ function flowbetween(root_node) {
         // Unwires a single node
         let unwire = (node) => {
             let unbind_viewmodel = node.flo_unbind_viewmodel;
-            if (unbind_viewmodel) { unbind_viewmodel(); }
+            if (unbind_viewmodel) { 
+                unbind_viewmodel(); 
+            }
 
-            remove_action_events_from_node(node);
+            if (node.flo_remove_actions) {
+                remove_action_events_from_node(node);
+            }
         };
 
         // Recursively unwires a node
