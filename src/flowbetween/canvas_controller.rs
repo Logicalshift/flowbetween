@@ -251,12 +251,12 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         self.anim_view_model.tools().current_pointer.clone().set((*device, pointer_id));
 
         // Get the active tool
-        let current_tool = self.anim_view_model.tools().effective_tool.get();
+        let effective_tool = self.anim_view_model.tools().effective_tool.get();
 
         // Get the selected layer
         let selected_layer = self.get_selected_layer();
 
-        if let (Some(selected_layer), Some(current_tool)) = (selected_layer, current_tool) {
+        if let (Some(selected_layer), Some(effective_tool)) = (selected_layer, effective_tool) {
             // Create the tool model for this action
             let canvas              = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
             let selected_layer_id   = selected_layer.id();
@@ -272,7 +272,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
             // Pass the action on to the current tool
             self.anim_view_model.tools().activate_tool(&tool_model);
-            current_tool.paint(&tool_model, device, actions);
+            effective_tool.paint(&tool_model, device, actions);
         }
     }
 }
