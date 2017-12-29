@@ -1166,10 +1166,12 @@ function flowbetween(root_node) {
                 apply_templates_to_tree(update.new_element, update.ui_tree);
                 bind_viewmodel_to_tree(update.new_element, update.ui_tree);
                 wire_tree(update.new_element, update.ui_tree);
-                layout_tree(update.new_element, update.ui_tree);
             });
 
-            console.log(updates);
+            // Update the layout of everything once we're done
+            if (root_control_data) {
+                layout_tree(get_flo_subnodes(get_root())[0], root_control_data);
+            }
 
             resolve();
         });
