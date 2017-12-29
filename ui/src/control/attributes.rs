@@ -205,6 +205,17 @@ impl<'a> Modifier<Control> for &'a str {
     }
 }
 
+impl Modifier<Control> for String {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(Text(self.to_property()))
+    }
+}
+
+impl<'a> Modifier<Control> for &'a String {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(Text(self.to_property()))
+    }
+}
 impl Modifier<Control> for Bounds {
     fn modify(self, control: &mut Control) {
         control.add_attribute(BoundingBox(self))
