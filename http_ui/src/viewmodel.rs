@@ -65,6 +65,7 @@ mod test {
         model_controler: Arc<ModelController>,
         view_model: Arc<NullViewModel>
     }
+    
     struct ModelController {
         view_model: Arc<TestViewModel>
     }
