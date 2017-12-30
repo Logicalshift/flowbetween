@@ -7,12 +7,12 @@ use super::*;
 /// 
 pub trait Normalize<Point: ?Sized> {
     /// Computes the normal at a point, given its tangent
-    fn to_normal(point: &Point, tangent: &Point) -> Vec<f32>;
+    fn to_normal(point: &Point, tangent: &Point) -> Vec<f64>;
 }
 
 impl<Point: Coordinate2D> Normalize<Point> for Point {
     #[inline]
-    fn to_normal(_point: &Point, tangent: &Point) -> Vec<f32> {
+    fn to_normal(_point: &Point, tangent: &Point) -> Vec<f64> {
         vec![-tangent.y(), tangent.x()]
     }
 }
@@ -20,7 +20,7 @@ impl<Point: Coordinate2D> Normalize<Point> for Point {
 /* -- TODO: we'd like to do the same as above but for 3D coordinates but can't figure out a good way in Rust's type system...
 impl Normalize<Coordinate3D> for Coordinate3D {
     #[inline]
-    fn to_normal(point: &Coordinate3D, tangent: &Coordinate3D) -> Vec<f32> {
+    fn to_normal(point: &Coordinate3D, tangent: &Coordinate3D) -> Vec<f64> {
         // Extract the coordinates from the points
         let (px, py, pz) = (point.x(), point.y(), point.z());
         let (tx, ty, tz) = (tangent.x(), tangent.y(), tangent.z());
@@ -56,11 +56,11 @@ pub trait NormalCurve<Curve: BezierCurve> {
     ///
     /// Computes the normal vector to the curve at the specified t value
     ///
-    fn normal_at_pos(&self, t: f32) -> Curve::Point;
+    fn normal_at_pos(&self, t: f64) -> Curve::Point;
 }
 
 impl<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>> NormalCurve<Curve> for Curve {
-    fn normal_at_pos(&self, t: f32) -> Curve::Point {
+    fn normal_at_pos(&self, t: f64) -> Curve::Point {
         // Extract the points that make up this curve
         let w1          = self.start_point();
         let (w2, w3)    = self.control_points();

@@ -1,6 +1,7 @@
 use curves::bezier::BezierCurve;
 use curves::bezier;
 use curves::Coord2;
+use curves::Coordinate;
 
 #[test]
 fn can_get_straight_line_bounds() {
@@ -17,5 +18,6 @@ fn can_get_curved_line_bounds() {
 
     let bounds = straight_line.bounding_box();
 
-    assert!(bounds == (Coord2(-0.3, 1.0), Coord2(2.0, 3.0)));
+    assert!(bounds.0.distance_to(&Coord2(-0.3, 1.0)) < 0.0001);
+    assert!(bounds.1.distance_to(&Coord2(2.0, 3.0)) < 0.0001);
 }

@@ -5,7 +5,7 @@ use super::super::coordinate::*;
 /// Subdivides a cubic bezier curve at a particular point, returning the weights of
 /// the two component curves
 /// 
-pub fn subdivide4<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point, w4: Point) -> 
+pub fn subdivide4<Point: Coordinate>(t: f64, w1: Point, w2: Point, w3: Point, w4: Point) -> 
     ((Point, Point, Point, Point), (Point, Point, Point, Point)) {
     // Weights (from de casteljau)
     let wn1 = w1*(1.0-t) + w2*t;

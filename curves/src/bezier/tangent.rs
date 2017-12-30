@@ -25,7 +25,7 @@ impl<Curve: BezierCurve> Tangent<Curve> {
     ///
     /// Calculates the tangent at a particular point
     /// 
-    pub fn tangent(&self, t: f32) -> Curve::Point {
+    pub fn tangent(&self, t: f64) -> Curve::Point {
         de_casteljau3(t, self.derivative.0, self.derivative.1, self.derivative.2)
     }
 }

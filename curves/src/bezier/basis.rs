@@ -4,7 +4,7 @@ use super::super::coordinate::*;
 /// The cubic bezier weighted basis function
 /// 
 #[inline]
-pub fn basis<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point, w4: Point) -> Point {
+pub fn basis<Point: Coordinate>(t: f64, w1: Point, w2: Point, w3: Point, w4: Point) -> Point {
     let t_squared           = t*t;
     let t_cubed             = t_squared*t;
 
@@ -23,7 +23,7 @@ pub fn basis<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point, w4: Poi
 /// de Casteljau's algorithm for cubic bezier curves
 /// 
 #[inline]
-pub fn de_casteljau4<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point, w4: Point) -> Point {
+pub fn de_casteljau4<Point: Coordinate>(t: f64, w1: Point, w2: Point, w3: Point, w4: Point) -> Point {
     let wn1 = w1*(1.0-t) + w2*t;
     let wn2 = w2*(1.0-t) + w3*t;
     let wn3 = w3*(1.0-t) + w4*t;
@@ -35,7 +35,7 @@ pub fn de_casteljau4<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point,
 /// de Casteljau's algorithm for quadratic bezier curves
 /// 
 #[inline]
-pub fn de_casteljau3<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point) -> Point {
+pub fn de_casteljau3<Point: Coordinate>(t: f64, w1: Point, w2: Point, w3: Point) -> Point {
     let wn1 = w1*(1.0-t) + w2*t;
     let wn2 = w2*(1.0-t) + w3*t;
 
@@ -46,6 +46,6 @@ pub fn de_casteljau3<Point: Coordinate>(t: f32, w1: Point, w2: Point, w3: Point)
 /// de Casteljau's algorithm for lines
 /// 
 #[inline]
-pub fn de_casteljau2<Point: Coordinate>(t: f32, w1: Point, w2: Point) -> Point {
+pub fn de_casteljau2<Point: Coordinate>(t: f64, w1: Point, w2: Point) -> Point {
     w1*(1.0-t) + w2*t
 }

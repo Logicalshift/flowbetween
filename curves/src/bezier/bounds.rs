@@ -5,7 +5,7 @@ use super::super::Coordinate;
 /// Finds the t values of the extremities of a curve (these are the points at which
 /// the x or y value is at a minimum or maximum)
 /// 
-pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> Vec<f32> {
+pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> Vec<f64> {
     // The 't' values where this curve has extremities we need to examine
     let mut t_extremes = vec![1.0];
 
@@ -20,8 +20,8 @@ pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: 
         let b = (p1 - p2*2.0 + p3)*6.0;
         let c = (p2 - p1)*3.0;
 
-        let root1 = (-b + f32::sqrt(b*b - a*c*4.0)) / (a*2.0);
-        let root2 = (-b - f32::sqrt(b*b - a*c*4.0)) / (a*2.0);
+        let root1 = (-b + f64::sqrt(b*b - a*c*4.0)) / (a*2.0);
+        let root2 = (-b - f64::sqrt(b*b - a*c*4.0)) / (a*2.0);
 
         if root1 > 0.0 && root1 < 1.0 { t_extremes.push(root1); }
         if root2 > 0.0 && root2 < 1.0 { t_extremes.push(root2); }

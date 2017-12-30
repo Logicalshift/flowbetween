@@ -12,7 +12,7 @@ fn can_subdivide_1() {
 
     // Check that the original curve corresponds to the basis function for wa
     for x in 0..100 {
-        let t = (x as f32)/100.0;
+        let t = (x as f64)/100.0;
 
         let original    = bezier::basis(t*0.33, w1, w2, w3, w4);
         let subdivision = bezier::basis(t, wa1, wa2, wa3, wa4);
@@ -31,7 +31,7 @@ fn can_subdivide_2() {
 
     // Check that the original curve corresponds to the basis function for wb
     for x in 0..100 {
-        let t = (x as f32)/100.0;
+        let t = (x as f64)/100.0;
 
         let original    = bezier::basis(0.33+(t*(1.0-0.33)), w1, w2, w3, w4);
         let subdivision = bezier::basis(t, wb1, wb2, wb3, wb4);

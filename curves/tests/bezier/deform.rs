@@ -57,7 +57,7 @@ fn deform_curve_at_other_point() {
 fn deform_curve_at_many_other_points() {
     for t in 0..100 {
         // Won't work at 0 or 1 as these are the start and end points and don't move
-        let t           = (t as f32)/100.0;
+        let t           = (t as f64)/100.0;
         let t           = (0.9*t)+0.05;
 
         let curve       = bezier::Curve::from_points(Coord2(5.0, 23.0), Coord2(22.0, 17.0), Coord2(-10.0, 15.0), Coord2(26.0, 30.0));
