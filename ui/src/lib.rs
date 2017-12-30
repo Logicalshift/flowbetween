@@ -21,6 +21,7 @@ pub mod dynamic_viewmodel;
 pub mod diff_viewmodel;
 pub mod viewmodel_update;
 pub mod resource_manager;
+pub mod binding_canvas;
 pub mod image;
 
 pub use self::json::*;
@@ -34,4 +35,5 @@ pub use self::dynamic_viewmodel::*;
 pub use self::diff_viewmodel::*;
 pub use self::viewmodel_update::*;
 pub use self::resource_manager::*;
+pub use self::binding_canvas::*;
 pub use self::image::*;
