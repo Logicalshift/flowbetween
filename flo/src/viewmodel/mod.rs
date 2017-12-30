@@ -1,7 +1,9 @@
 mod timeline;
+mod brush;
 mod tools;
 
 pub use self::timeline::*;
+pub use self::brush::*;
 pub use self::tools::*;
 
 use animation::*;
@@ -19,7 +21,10 @@ pub struct AnimationViewModel<Anim: Animation> {
     tools: ToolViewModel<Anim>,
 
     /// The timeline view model
-    timeline: TimelineViewModel
+    timeline: TimelineViewModel,
+
+    /// The brush view model
+    brush: BrushViewModel
 }
 
 impl<Anim: Animation+'static> AnimationViewModel<Anim> {
@@ -27,10 +32,16 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     /// Creates a new view model
     /// 
     pub fn new(animation: Anim) -> AnimationViewModel<Anim> {
+        let animation   = Arc::new(animation);
+        let tools       = ToolViewModel::new();
+        let timeline    = TimelineViewModel::new();
+        let brush       = BrushViewModel::new();
+
         AnimationViewModel {
-            animation:      Arc::new(animation),
-            tools:          ToolViewModel::new(),
-            timeline:       TimelineViewModel::new()
+            animation:      animation,
+            tools:          tools,
+            timeline:       timeline,
+            brush:          brush
         }
     }
 
@@ -61,6 +72,13 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     pub fn timeline(&self) -> &TimelineViewModel {
         &self.timeline
     }
+
+    ///
+    /// Retrieves the viewmodel of the brush settings for this animation
+    /// 
+    pub fn brush(&self) -> &BrushViewModel {
+        &self.brush
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
@@ -69,7 +87,8 @@ impl<Anim: Animation> Clone for AnimationViewModel<Anim> {
         AnimationViewModel {
             animation:      self.animation.clone(),
             tools:          self.tools.clone(),
-            timeline:       self.timeline.clone()
+            timeline:       self.timeline.clone(),
+            brush:          self.brush.clone()
         }
     }
 }
