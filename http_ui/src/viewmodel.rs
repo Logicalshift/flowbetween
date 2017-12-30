@@ -58,7 +58,6 @@ pub fn viewmodel_update_controller_tree(controller: &Controller) -> Vec<ViewMode
 mod test {
     use super::*;
     use std::sync::*;
-    use binding::*;
 
     struct TestViewModel;
 
@@ -119,7 +118,7 @@ mod test {
 
     impl ViewModel for TestViewModel {
         fn get_property(&self, property_name: &str) -> BindRef<PropertyValue> {
-            Arc::new(bind(PropertyValue::String(property_name.to_string())))
+            BindRef::from(bind(PropertyValue::String(property_name.to_string())))
         }
 
         fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 

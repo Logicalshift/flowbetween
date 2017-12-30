@@ -159,7 +159,7 @@ mod test {
             LabelController { 
                 label_text: label_text,
                 view_model: Arc::new(NullViewModel::new()),
-                ui: Arc::new(computed(move || {
+                ui: BindRef::from(computed(move || {
                     let text = text.get();
 
                     Control::label().with(text)
