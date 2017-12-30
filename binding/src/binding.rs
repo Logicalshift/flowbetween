@@ -103,10 +103,6 @@ impl<Value: 'static+Clone+PartialEq+Send> Bound<Value> for Binding<Value> {
 
         self.value.lock().unwrap().get()
     }
-
-    fn clone_box(&self) -> Box<Bound<Value>> {
-        Box::new(self.clone())
-    }
 }
 
 impl<Value: 'static+Clone+PartialEq+Send> MutableBound<Value> for Binding<Value> {

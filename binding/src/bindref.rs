@@ -20,11 +20,6 @@ impl<Value> Bound<Value> for BindRef<Value> {
     fn get(&self) -> Value {
         self.reference.get()
     }
-
-    #[inline]
-    fn clone_box(&self) -> Box<Bound<Value>> {
-        self.reference.clone_box()
-    }
 }
 
 impl<Value> Changeable for BindRef<Value> {

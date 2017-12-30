@@ -53,11 +53,6 @@ pub trait Bound<Value> : Changeable+Send+Sync {
     /// Retrieves the value stored by this binding
     ///
     fn get(&self) -> Value;
-
-    ///
-    /// Creates a boxed clone of this item
-    ///
-    fn clone_box(&self) -> Box<Bound<Value>>;
 }
 
 ///
