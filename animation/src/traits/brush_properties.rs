@@ -10,6 +10,9 @@ pub struct BrushProperties {
     /// The size of the brush stroke
     pub size: f32,
 
+    /// The opacity of the brush stroke
+    pub opacity: f32,
+
     /// The colour of the brush stroke
     pub color: Color
 }
