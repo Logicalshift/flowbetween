@@ -36,8 +36,19 @@ impl<Value> Changeable for BindRef<Value> {
 
 impl<Value> BindRef<Value> {
     ///
+    /// Creates a new BindRef from a reference to an existing binding
+    /// 
+    #[inline]
+    pub fn new<Binding: 'static+Clone+Bound<Value>>(binding: &Binding) -> BindRef<Value> {
+        BindRef {
+            reference: Arc::new(binding.clone())
+        }
+    }
+
+    ///
     /// Creates a new BindRef from an existing binding
     /// 
+    #[inline]
     pub fn from<Binding: 'static+Bound<Value>>(binding: Binding) -> BindRef<Value> {
         BindRef {
             reference: Arc::new(binding)
@@ -53,6 +64,18 @@ mod test {
     fn bindref_matches_core_value() {
         let mut bind    = bind(1);
         let bind_ref    = BindRef::from(bind.clone());
+
+        assert!(bind_ref.get() == 1);
+
+        bind.set(2);
+
+        assert!(bind_ref.get() == 2);
+    }
+
+    #[test]
+    fn bindref_matches_core_value_when_created_from_ref() {
+        let mut bind    = bind(1);
+        let bind_ref    = BindRef::new(&bind);
 
         assert!(bind_ref.get() == 1);
 
