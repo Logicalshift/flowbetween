@@ -1,5 +1,5 @@
 use ui::*;
-use ui::canvas::*;
+use canvas::*;
 
 use iron::response::*;
 use std::io::*;

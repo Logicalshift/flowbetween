@@ -1,7 +1,7 @@
 use super::super::traits::*;
 use super::vector_keyframe::*;
 
-use ui::canvas::*;
+use canvas::*;
 
 use std::sync::*;
 use std::time::Duration;

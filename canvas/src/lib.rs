@@ -3,6 +3,8 @@
 //!
 
 extern crate futures;
+extern crate curves;
+extern crate desync;
 
 mod gc;
 mod draw;

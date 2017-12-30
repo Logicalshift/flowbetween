@@ -5,6 +5,7 @@ authors     = ["Andrew Hunter"]
 
 [dependencies]
 ui                  = { path = "../ui" }
+canvas              = { path = "../canvas" }
 curves              = { path = "../curves" }
 
 typemap             = "^0.3.3"

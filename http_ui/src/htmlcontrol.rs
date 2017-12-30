@@ -148,7 +148,7 @@ impl ToHtml for ControlAttribute {
 
 #[cfg(test)]
 mod test {
-    use ui::canvas::*;
+    use canvas::*;
     use super::*;
     use std::sync::*;
 

@@ -2,21 +2,21 @@
 //! # FlowBetween HTTP server
 //!
 
-extern crate serde;
-extern crate serde_json;
-
-#[macro_use]
-extern crate serde_derive;
-
-extern crate iron;
-extern crate mount;
-extern crate static_files;
-extern crate http_ui;
 extern crate ui;
+extern crate curves;
+extern crate canvas;
+extern crate http_ui;
 extern crate binding;
 extern crate animation;
+extern crate static_files;
+
+extern crate serde;
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
+extern crate iron;
+extern crate mount;
 extern crate desync;
-extern crate curves;
 
 pub mod flowbetween;
 pub use self::flowbetween::*;

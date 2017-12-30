@@ -1,4 +1,5 @@
 extern crate ui;
+extern crate canvas;
 extern crate binding;
 
 extern crate serde;

@@ -2,9 +2,10 @@ use super::types::*;
 use super::modifier::*;
 use super::attributes::*;
 
-use super::super::canvas;
 use super::super::diff::*;
 use super::super::resource_manager::*;
+
+use canvas;
 
 use ControlType::*;
 use ControlAttribute::*;

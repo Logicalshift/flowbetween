@@ -3,7 +3,7 @@ use super::element::*;
 
 use super::super::brush::*;
 
-use ui::canvas::*;
+use canvas::*;
 
 use std::sync::*;
 use std::time::Duration;

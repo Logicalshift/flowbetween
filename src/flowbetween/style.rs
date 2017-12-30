@@ -1,4 +1,4 @@
-use ui::canvas::*;
+use canvas::*;
 
 pub const DEFAULT_TEXT:         Color = Color::Rgba(0.85, 0.95, 0.9, 1.0);
 

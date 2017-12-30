@@ -5,7 +5,7 @@ use super::super::brushes::*;
 use super::super::traits::*;
 use super::vector_keyframe::*;
 
-use ui::canvas::*;
+use canvas::*;
 
 use std::mem;
 use std::sync::*;

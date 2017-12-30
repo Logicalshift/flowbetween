@@ -2,7 +2,7 @@ use super::super::brush::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 
-use ui::canvas::*;
+use canvas::*;
 
 use std::time::Duration;
 

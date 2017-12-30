@@ -2,7 +2,7 @@ use super::brush_definition::*;
 use super::brush_drawing_style::*;
 
 use ui::*;
-use ui::canvas::*;
+use canvas::*;
 
 ///
 /// Represents a segment of a brush stroke

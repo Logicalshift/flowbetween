@@ -1,12 +1,13 @@
+extern crate canvas;
+extern crate binding;
+
 #[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate serde_json;
 extern crate serde;
-extern crate futures;
-extern crate binding;
-extern crate curves;
 extern crate modifier;
+extern crate futures;
 extern crate desync;
 
 pub mod json;
@@ -20,7 +21,6 @@ pub mod dynamic_viewmodel;
 pub mod diff_viewmodel;
 pub mod viewmodel_update;
 pub mod resource_manager;
-pub mod canvas;
 pub mod image;
 
 pub use self::json::*;

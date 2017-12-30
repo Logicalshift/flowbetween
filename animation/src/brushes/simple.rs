@@ -1,8 +1,8 @@
 use super::super::traits::*;
-use ui::canvas::*;
 
 use curves::*;
 use curves::bezier;
+use canvas::*;
 
 ///
 /// Simple brush, which renders a brush stroke as a straight series of line segments

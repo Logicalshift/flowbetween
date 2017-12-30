@@ -11,7 +11,7 @@ use super::canvas_body::*;
 use super::session_state::*;
 
 use ui::*;
-use ui::canvas::*;
+use canvas::*;
 
 extern crate serde_json;
 

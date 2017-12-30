@@ -1,6 +1,6 @@
 use super::path::*;
 
-use ui::canvas::*;
+use canvas::*;
 
 use std::time::Duration;
 use std::any::*;

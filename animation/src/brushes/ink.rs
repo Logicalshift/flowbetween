@@ -1,10 +1,10 @@
 use super::super::traits::*;
-use ui::canvas::*;
 
 use std::ops::*;
 
 use curves::*;
 use curves::bezier;
+use canvas::*;
 
 // Minimum distance between points to use to fit to a curve
 const MIN_DISTANCE: f64 = 2.0;

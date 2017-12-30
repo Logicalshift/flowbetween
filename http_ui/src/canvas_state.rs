@@ -1,7 +1,7 @@
 use super::canvas_update::*;
 
 use ui::*;
-use ui::canvas::*;
+use canvas::*;
 use binding::*;
 
 use desync::*;

@@ -1,4 +1,4 @@
-use ui::canvas::*;
+use canvas::*;
 use std::time::Duration;
 
 mod path;

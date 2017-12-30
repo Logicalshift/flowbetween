@@ -1,7 +1,7 @@
 use super::super::viewmodel::*;
 
 use animation::*;
-use ui::canvas::*;
+use canvas::*;
 
 use std::sync::*;
 

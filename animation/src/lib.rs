@@ -1,13 +1,14 @@
 //!
 //! Library for describing and editing FlowBetween animations
 //!
+extern crate ui;
+extern crate curves;
+extern crate canvas;
 
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
 extern crate modifier;
-extern crate curves;
-extern crate ui;
 
 mod traits;
 pub mod inmemory;

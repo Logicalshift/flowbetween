@@ -25,10 +25,10 @@ mod test {
     use super::*;
     use super::super::diff::*;
     use super::super::image::*;
-    use super::super::canvas::*;
     use super::super::property::*;
     use super::super::resource_manager::*;
 
+    use canvas::*;
     use std::sync::*;
 
     #[test]

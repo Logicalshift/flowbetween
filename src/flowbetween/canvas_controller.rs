@@ -2,7 +2,7 @@ use super::viewmodel::*;
 use super::tools::*;
 
 use ui::*;
-use ui::canvas::*;
+use canvas::*;
 use desync::*;
 use binding::*;
 use animation::*;

@@ -1,6 +1,6 @@
 use super::super::traits::*;
 
-use ui::canvas::*;
+use canvas::*;
 
 use std::time::Duration;
 

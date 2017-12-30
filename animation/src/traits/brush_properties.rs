@@ -1,4 +1,4 @@
-use ui::canvas::*;
+use canvas::*;
 
 ///
 /// Standard properties for a brush stroke

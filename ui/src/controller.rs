@@ -1,7 +1,7 @@
+use canvas::*;
 use binding::*;
 
 use super::image::*;
-use super::canvas::*;
 use super::control::*;
 use super::viewmodel::*;
 use super::resource_manager::*;

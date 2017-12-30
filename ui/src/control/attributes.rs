@@ -3,11 +3,11 @@ use super::control::*;
 use super::actions::*;
 
 use super::super::image;
-use super::super::canvas;
 use super::super::property::*;
 use super::super::resource_manager::*;
 
 use modifier::*;
+use canvas;
  
 ///
 /// Attribute attached to a control
