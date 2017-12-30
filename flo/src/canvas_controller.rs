@@ -39,7 +39,7 @@ struct CanvasCore {
 pub struct CanvasController<Anim: Animation> {
     ui_view_model:      Arc<NullViewModel>,
     ui:                 Binding<Control>,
-    canvases:           Arc<ResourceManager<Canvas>>,
+    canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_view_model:    AnimationViewModel<Anim>,
 
     core:               Desync<CanvasCore>
@@ -87,8 +87,8 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     ///
     /// Creates a canvas for this object
     /// 
-    fn create_canvas(&self) -> Resource<Canvas> {
-        let canvas = self.canvases.register(Canvas::new());
+    fn create_canvas(&self) -> Resource<BindingCanvas> {
+        let canvas = self.canvases.register(BindingCanvas::new());
         self.clear_canvas(&canvas);
         canvas
     }
@@ -96,7 +96,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     ///
     /// Clears a canvas and sets it up for rendering
     /// 
-    fn clear_canvas(&self, canvas: &Resource<Canvas>) {
+    fn clear_canvas(&self, canvas: &Resource<BindingCanvas>) {
         let (width, height) = open_read::<AnimationSize>(self.anim_view_model.animation())
             .map(|size| size.size())
             .unwrap_or((1920.0, 1080.0));
@@ -111,7 +111,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     ///
     /// Create the canvas for this controller
     ///
-    fn create_main_canvas(&self) -> Resource<Canvas> {
+    fn create_main_canvas(&self) -> Resource<BindingCanvas> {
         let canvas          = self.create_canvas();
         self.canvases.assign_name(&canvas, MAIN_CANVAS);
 
@@ -295,7 +295,7 @@ impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
         };
     }
 
-    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<Canvas>>> {
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(self.canvases.clone())
     }
 }

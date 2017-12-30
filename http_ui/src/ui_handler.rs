@@ -11,7 +11,6 @@ use super::canvas_body::*;
 use super::session_state::*;
 
 use ui::*;
-use canvas::*;
 
 extern crate serde_json;
 
@@ -265,7 +264,7 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     ///
     /// Generates a response for a canvas
     ///
-    fn canvas_response(&self, canvas: &Resource<Canvas>) -> Response {
+    fn canvas_response(&self, canvas: &Resource<BindingCanvas>) -> Response {
         let mut response = Response::with((
             status::Ok,
             Header(ContentType("application/flocanvas; charset=utf-8".parse::<Mime>().unwrap()))

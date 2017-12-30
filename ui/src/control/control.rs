@@ -3,9 +3,8 @@ use super::modifier::*;
 use super::attributes::*;
 
 use super::super::diff::*;
+use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
-
-use canvas;
 
 use ControlType::*;
 use ControlAttribute::*;
@@ -114,7 +113,7 @@ impl Control {
     ///
     /// If this control has a canvas attribute, finds it
     ///
-    pub fn canvas_resource<'a>(&'a self) -> Option<&Resource<canvas::Canvas>> {
+    pub fn canvas_resource<'a>(&'a self) -> Option<&Resource<BindingCanvas>> {
         self.attributes.iter()
             .map(|attr| attr.canvas())
             .find(|attr| attr.is_some())

@@ -7,10 +7,10 @@ use std::io::*;
 ///
 /// Provides a WriteBody implementation for a canvas (writes the entire canvas up to now)
 ///
-pub struct CanvasBody(Resource<Canvas>);
+pub struct CanvasBody(Resource<BindingCanvas>);
 
 impl CanvasBody {
-    pub fn new(canvas: &Resource<Canvas>) -> CanvasBody {
+    pub fn new(canvas: &Resource<BindingCanvas>) -> CanvasBody {
         CanvasBody(canvas.clone())
     }
 }

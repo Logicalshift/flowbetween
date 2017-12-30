@@ -4,6 +4,7 @@ use super::actions::*;
 
 use super::super::image;
 use super::super::property::*;
+use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
 use modifier::*;
@@ -46,7 +47,7 @@ pub enum ControlAttribute {
     Image(Resource<image::Image>),
 
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
-    Canvas(Resource<canvas::Canvas>),
+    Canvas(Resource<BindingCanvas>),
 
     /// Specifies the foreground colour of this control
     Foreground(canvas::Color),
@@ -159,7 +160,7 @@ impl ControlAttribute {
     ///
     /// The canvas resource for this control, if there is one
     ///
-    pub fn canvas<'a>(&'a self) -> Option<&'a Resource<canvas::Canvas>> {
+    pub fn canvas<'a>(&'a self) -> Option<&'a Resource<BindingCanvas>> {
         match self {
             &Canvas(ref canvas) => Some(canvas),
             _                   => None
@@ -242,7 +243,7 @@ impl Modifier<Control> for Resource<image::Image> {
     }
 }
 
-impl Modifier<Control> for Resource<canvas::Canvas> {
+impl Modifier<Control> for Resource<BindingCanvas> {
     fn modify(self, control: &mut Control) {
         control.add_attribute(ControlAttribute::Canvas(self))
     }
