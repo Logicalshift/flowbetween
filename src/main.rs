@@ -19,7 +19,7 @@ extern crate iron;
 extern crate mount;
 extern crate desync;
 
-mod session;
+mod http_session;
 
 use iron::*;
 use mount::*;
@@ -27,7 +27,7 @@ use mount::*;
 use static_files::*;
 use http_ui::*;
 
-use self::session::*;
+use self::http_session::*;
 
 const PACKAGE_NAME: &str    = env!("CARGO_PKG_NAME");
 const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
