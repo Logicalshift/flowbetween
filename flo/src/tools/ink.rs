@@ -64,7 +64,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
 
     fn image_name(&self) -> String { "ink".to_string() }
 
-    fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> Box<Bound<ToolActivationState>> { 
+    fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> { 
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
         if let Some(mut selected_layer) = selected_layer {
@@ -75,7 +75,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
         // If the selected layer is different, we need re-activation
         let activated_layer_id  = model.anim_view_model.timeline().selected_layer.get();
         let selected_layer      = Binding::clone(&model.anim_view_model.timeline().selected_layer);
-        Box::new(computed(move || {
+        BindRef::from(computed(move || {
             if activated_layer_id == selected_layer.get() {
                 ToolActivationState::Activated
             } else {

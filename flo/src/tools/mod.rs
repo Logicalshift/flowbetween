@@ -64,8 +64,8 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     /// The return value is a binding that indicates whether or not this tool
     /// needs reactivating.
     ///
-    fn activate<'a>(&self, _model: &ToolModel<'a, Anim>) -> Box<Bound<ToolActivationState>> {
-        Box::new(bind(ToolActivationState::Activated))
+    fn activate<'a>(&self, _model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> {
+        BindRef::from(bind(ToolActivationState::Activated))
     }
 
     ///

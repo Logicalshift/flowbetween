@@ -51,7 +51,7 @@ struct CanvasTracker {
 ///
 struct CanvasStateCore {
     /// The controls that we're tracking
-    root_control: Box<Bound<Control>>,
+    root_control: BindRef<Control>,
 
     /// Set to true if the controls in this canvas have changed since they were last updated
     controls_updated: bool,
@@ -183,9 +183,9 @@ impl CanvasState {
     ///
     /// Creates a new canvas state
     /// 
-    pub fn new(control: &Box<Bound<Control>>) -> CanvasState {
+    pub fn new(control: &BindRef<Control>) -> CanvasState {
         // Clone the control so we can watch it ourselves
-        let control = control.clone_box();
+        let control = control.clone();
 
         // Create the core
         let core = Arc::new(Desync::new(CanvasStateCore {
@@ -238,7 +238,7 @@ mod test {
     fn can_create_canvas_state()  {
         let resource_manager    = ResourceManager::new();
         let canvas              = resource_manager.register(Canvas::new());
-        let control: Box<Bound<Control>> = Box::new(Binding::new(Control::canvas().with(canvas)));
+        let control: BindRef<Control> = BindRef::from(bind(Control::canvas().with(canvas)));
 
         let canvas_state        = CanvasState::new(&control);
 
@@ -252,7 +252,7 @@ mod test {
         let canvas              = resource_manager.register(Canvas::new());
         let mut control         = Binding::new(Control::canvas().with(canvas));
 
-        let box_control: Box<Bound<Control>> = Box::new(control.clone());
+        let box_control: BindRef<Control> = BindRef::new(&control);
         let canvas_state        = CanvasState::new(&box_control);
 
         assert!(canvas_state.latest_updates().len() == 1);

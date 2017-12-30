@@ -84,12 +84,12 @@ fn get_full_ui_tree(base_controller: &Arc<Controller>) -> Control {
 /// controller, so if this is the last reference, it will
 /// return an empty UI instead.
 ///
-pub fn assemble_ui(base_controller: Arc<Controller>) -> Box<Bound<Control>> {
+pub fn assemble_ui(base_controller: Arc<Controller>) -> BindRef<Control> {
     // We keep a weak reference to the controller so the binding will not hold on to it
     let weak_controller = Arc::downgrade(&base_controller);
 
     // Result is computed
-    return Box::new(computed(move || {
+    return BindRef::from(computed(move || {
         if let Some(base_controller) = weak_controller.upgrade() {
             get_full_ui_tree(&base_controller)
         } else {

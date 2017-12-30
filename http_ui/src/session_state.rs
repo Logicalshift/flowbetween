@@ -13,7 +13,7 @@ use std::mem;
 ///
 struct SessionStateCore {
     /// The tree attached to this state
-    ui_tree: Box<Bound<Control>>,
+    ui_tree: BindRef<Control>,
 
     /// The previous state of the tree
     previous_tree: Binding<Option<Control>>,
@@ -48,7 +48,7 @@ impl SessionState {
     ///
     pub fn new() -> SessionState {
         let session_id                      = Uuid::new_v4().simple().to_string();
-        let mut tree: Box<Bound<Control>>   = Box::new(bind(Control::container()));
+        let mut tree                        = BindRef::from(bind(Control::container()));
         let has_changed                     = bind(false);
         let watcher_lifetime                = Self::watch_tree(&mut tree, has_changed.clone());
         let canvas_state                    = CanvasState::new(&tree);
@@ -71,7 +71,7 @@ impl SessionState {
     ///
     /// Sets has_changed to true when the ui_tree changes
     ///
-    fn watch_tree(ui_tree: &mut Box<Bound<Control>>, mut has_changed: Binding<bool>) -> Box<Releasable> {
+    fn watch_tree(ui_tree: &BindRef<Control>, mut has_changed: Binding<bool>) -> Box<Releasable> {
         ui_tree.when_changed(notify(move || has_changed.set(true)))
     }
 
@@ -85,7 +85,7 @@ impl SessionState {
     ///
     /// Replaces the UI tree in this session
     ///
-    pub fn set_ui_tree(&self, new_tree: Box<Bound<Control>>) {
+    pub fn set_ui_tree(&self, new_tree: BindRef<Control>) {
         let mut core = self.core.lock().unwrap();
 
         // Stop watching the old tree

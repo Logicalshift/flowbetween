@@ -11,7 +11,7 @@ use std::sync::*;
 /// 
 pub struct ToolViewModel<Anim: Animation> {
     // Binding that tracks the current tool activation state (changes to whatever the current tool uses)
-    effective_tool_activated: Arc<Mutex<Box<Bound<ToolActivationState>>>>,
+    effective_tool_activated: Arc<Mutex<BindRef<ToolActivationState>>>,
 
     /// The currently selected tool
     pub selected_tool: Binding<Option<Arc<Tool<Anim>>>>,
@@ -49,7 +49,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
             selected_tool:              selected_tool,
             tool_sets:                  tool_sets,
             current_pointer:            current_pointer,
-            effective_tool_activated:   Arc::new(Mutex::new(Box::new(effective_tool_activated)))
+            effective_tool_activated:   Arc::new(Mutex::new(BindRef::from(effective_tool_activated)))
         }
     }
 
@@ -118,7 +118,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
                 });
 
                 // Re-activate the effective tool if this state changes
-                *self.effective_tool_activated.lock().unwrap() = Box::new(tool_activation);
+                *self.effective_tool_activated.lock().unwrap() = BindRef::from(tool_activation);
             }
         }
     }
