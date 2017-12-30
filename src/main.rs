@@ -3,6 +3,7 @@
 //!
 
 extern crate ui;
+extern crate flo;
 extern crate curves;
 extern crate canvas;
 extern crate http_ui;
@@ -18,14 +19,15 @@ extern crate iron;
 extern crate mount;
 extern crate desync;
 
-pub mod flowbetween;
-pub use self::flowbetween::*;
+mod session;
 
 use iron::*;
 use mount::*;
 
 use static_files::*;
 use http_ui::*;
+
+use self::session::*;
 
 const PACKAGE_NAME: &str    = env!("CARGO_PKG_NAME");
 const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
