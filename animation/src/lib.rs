@@ -1,7 +1,6 @@
 //!
 //! Library for describing and editing FlowBetween animations
 //!
-extern crate ui;
 extern crate curves;
 extern crate canvas;
 

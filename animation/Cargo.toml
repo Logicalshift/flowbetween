@@ -4,7 +4,6 @@ version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 
 [dependencies]
-ui                  = { path = "../ui" }
 canvas              = { path = "../canvas" }
 curves              = { path = "../curves" }
 

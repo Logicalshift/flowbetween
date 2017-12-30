@@ -23,6 +23,16 @@ pub use self::ink::*;
 pub use self::eraser::*;
 
 ///
+/// Converts a UI Painting struct to a BrushPoint
+/// 
+pub fn brush_point_from_painting(painting: &Painting) -> BrushPoint {
+        BrushPoint {
+            position: painting.location,
+            pressure: painting.pressure
+        }
+}
+
+///
 /// Trait indicating the current activation state of a tool
 ///
 #[derive(Clone, Copy, PartialEq)]

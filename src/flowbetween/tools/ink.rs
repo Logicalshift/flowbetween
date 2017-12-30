@@ -32,12 +32,12 @@ impl Ink {
                     gc.store();
 
                     // Begin the brush stroke
-                    layer.start_brush_stroke(current_time, BrushPoint::from(action));
+                    layer.start_brush_stroke(current_time, brush_point_from_painting(action));
                 },
 
                 PaintAction::Continue    => {
                     // Append to the brush stroke
-                    layer.continue_brush_stroke(BrushPoint::from(action));
+                    layer.continue_brush_stroke(brush_point_from_painting(action));
                 },
 
                 PaintAction::Finish      => {
