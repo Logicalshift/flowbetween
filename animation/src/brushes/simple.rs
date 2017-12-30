@@ -37,7 +37,7 @@ impl Brush for SimpleBrush {
         }
 
         // Map to coordinates
-        let coords: Vec<Coord2> = points.iter().map(|point| Coord2(point.position.0, point.position.1)).collect();
+        let coords: Vec<Coord2> = points.iter().map(|point| Coord2(point.position.0 as f64, point.position.1 as f64)).collect();
 
         // Pick points that are at least a certain distance apart to use for the fitting algorithm
         let mut distant_coords  = vec![];
@@ -59,7 +59,7 @@ impl Brush for SimpleBrush {
             gc.new_path();
             
             let Coord2(x, y) = curve[0].start_point();
-            gc.move_to(x, y);
+            gc.move_to(x as f32, y as f32);
             for curve_section in curve.iter() {
                 gc_draw_bezier(gc, curve_section);
             }

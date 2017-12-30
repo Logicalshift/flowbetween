@@ -99,6 +99,6 @@ pub fn gc_draw_bezier<Gc: GraphicsContext+?Sized, Coord: Coordinate2D+Coordinate
     let end         = curve.end_point();
     let (cp1, cp2)  = curve.control_points();
 
-    gc.bezier_curve_to(end.x(), end.y(), cp1.x(), cp1.y(), cp2.x(), cp2.y());
+    gc.bezier_curve_to(end.x() as f32, end.y() as f32, cp1.x() as f32, cp1.y() as f32, cp2.x() as f32, cp2.y() as f32);
 }
 
