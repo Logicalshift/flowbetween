@@ -84,8 +84,8 @@ impl Session for FlowBetweenSession {
 }
 
 impl Controller for FlowBetweenSession {
-    fn ui(&self) -> Arc<Bound<Control>> {
-        Arc::new(self.ui.clone())
+    fn ui(&self) -> BindRef<Control> {
+        BindRef::new(&self.ui)
     }
 
     fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {

@@ -20,7 +20,7 @@ pub struct ToolViewModel<Anim: Animation> {
     pub current_pointer: Binding<(PaintDevice, i32)>,
 
     /// The tool that is in effect at the current moment (might change if the user chooses a different pointer)
-    pub effective_tool: Arc<Bound<Option<Arc<Tool<Anim>>>>>,
+    pub effective_tool: BindRef<Option<Arc<Tool<Anim>>>>,
 
     /// The tool sets available for selection
     pub tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>,
@@ -56,7 +56,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
     ///
     /// Returns a binding for the 'effective tool'
     /// 
-    fn effective_tool(selected_tool: Binding<Option<Arc<Tool<Anim>>>>, current_pointer: Binding<(PaintDevice, i32)>, tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>) -> Arc<Bound<Option<Arc<Tool<Anim>>>>> {
+    fn effective_tool(selected_tool: Binding<Option<Arc<Tool<Anim>>>>, current_pointer: Binding<(PaintDevice, i32)>, tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>) -> BindRef<Option<Arc<Tool<Anim>>>> {
         let effective_tool = computed(move || {
             let (device, _pointer_id) = current_pointer.get();
 
@@ -88,7 +88,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
             }
         });
 
-        Arc::new(effective_tool)
+        BindRef::from(effective_tool)
     }
 
     ///
@@ -108,7 +108,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
             if let Some(tool_activation) = tool_activation {
                 // Tool needs reactivation if a different tool is selected
                 let effective_tool_name = self.effective_tool.get().map(|tool| tool.tool_name()).unwrap_or("".to_string());
-                let effective_tool      = Arc::clone(&self.effective_tool);
+                let effective_tool      = BindRef::clone(&self.effective_tool);
                 let tool_activation     = computed(move || {
                     if effective_tool.get().map(|tool| tool.tool_name()).as_ref() != Some(&effective_tool_name) {
                         ToolActivationState::NeedsReactivation
@@ -150,7 +150,7 @@ impl<Anim: Animation> Clone for ToolViewModel<Anim> {
             selected_tool:              Binding::clone(&self.selected_tool),
             tool_sets:                  Binding::clone(&self.tool_sets),
             current_pointer:            Binding::clone(&self.current_pointer),
-            effective_tool:             Arc::clone(&self.effective_tool)
+            effective_tool:             BindRef::clone(&self.effective_tool)
         }
     }
 }

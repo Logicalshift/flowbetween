@@ -2,8 +2,6 @@ use canvas::*;
 use binding::*;
 use animation::*;
 
-use std::sync::*;
-
 ///
 /// View model for the brush properties
 /// 
@@ -19,7 +17,7 @@ pub struct BrushViewModel {
     pub color: Binding<Color>,
 
     /// The brush properties for the current brush view model
-    pub brush_properties: Arc<Bound<BrushProperties>>
+    pub brush_properties: BindRef<BrushProperties>
 }
 
 impl BrushViewModel {
@@ -41,7 +39,7 @@ impl BrushViewModel {
         }
     }
 
-    fn brush_properties(size: Binding<f32>, opacity: Binding<f32>, color: Binding<Color>) -> Arc<Bound<BrushProperties>> {
+    fn brush_properties(size: Binding<f32>, opacity: Binding<f32>, color: Binding<Color>) -> BindRef<BrushProperties> {
         let brush_properties = computed(move || {
             BrushProperties {
                 size:       size.get(),
@@ -50,6 +48,6 @@ impl BrushViewModel {
             }
         });
 
-        Arc::new(brush_properties)
+        BindRef::from(brush_properties)
     }
 }

@@ -32,7 +32,7 @@ use std::sync::*;
 ///
 pub trait Controller : Send+Sync {
     /// Retrieves a Control representing the UI for this controller
-    fn ui(&self) -> Arc<Bound<Control>>;
+    fn ui(&self) -> BindRef<Control>;
 
     /// Retrieves the viewmodel for this controller
     fn get_viewmodel(&self) -> Arc<ViewModel>;
@@ -113,8 +113,8 @@ impl NullController {
 }
 
 impl Controller for NullController {
-    fn ui(&self) -> Arc<Bound<Control>> {
-        Arc::new(bind(Control::empty()))
+    fn ui(&self) -> BindRef<Control> {
+        BindRef::from(bind(Control::empty()))
     }
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
@@ -133,12 +133,12 @@ mod test {
     struct TestController {
         pub label_controller: Arc<LabelController>,
         view_model: Arc<NullViewModel>,
-        ui: Arc<Bound<Control>>
+        ui: BindRef<Control>
     }
     struct LabelController {
         pub label_text: Binding<String>,
         view_model: Arc<NullViewModel>,
-        ui: Arc<Bound<Control>>
+        ui: BindRef<Control>
     }
 
     impl TestController {
@@ -146,7 +146,7 @@ mod test {
             TestController { 
                 label_controller: Arc::new(LabelController::new()), 
                 view_model: Arc::new(NullViewModel::new()),
-                ui: Arc::new(bind(Control::container().with_controller("Test")))
+                ui: BindRef::from(bind(Control::container().with_controller("Test")))
             }
         }
     }
@@ -169,8 +169,8 @@ mod test {
     }
 
     impl Controller for TestController {
-        fn ui(&self) -> Arc<Bound<Control>> {
-            Arc::clone(&self.ui)
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::clone(&self.ui)
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
@@ -183,8 +183,8 @@ mod test {
     }
 
     impl Controller for LabelController {
-        fn ui(&self) -> Arc<Bound<Control>> {
-            Arc::clone(&self.ui)
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::clone(&self.ui)
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {

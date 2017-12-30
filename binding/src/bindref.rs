@@ -54,6 +54,16 @@ impl<Value> BindRef<Value> {
             reference: Arc::new(binding)
         }
     }
+
+    ///
+    /// Creates a new BindRef from an existing binding
+    /// 
+    #[inline]
+    pub fn from_arc<Binding: 'static+Bound<Value>>(binding_ref: Arc<Binding>) -> BindRef<Value> {
+        BindRef {
+            reference: binding_ref
+        }
+    }
 }
 
 #[cfg(test)]

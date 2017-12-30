@@ -227,8 +227,8 @@ mod test {
     }
 
     impl Controller for DynamicController {
-        fn ui(&self) -> Arc<Bound<Control>> {
-            self.controls.clone()
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::new(&self.controls)
         }
 
         fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {

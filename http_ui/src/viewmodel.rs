@@ -1,4 +1,5 @@
 use ui::*;
+use binding::*;
 
 ///
 /// Returns an update for all of the keys in a particular viewmodel
@@ -86,8 +87,8 @@ mod test {
     }
 
     impl Controller for TestController {
-        fn ui(&self) -> Arc<Bound<Control>> {
-            Arc::new(bind(Control::container().with(vec![
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::from(bind(Control::container().with(vec![
                 Control::empty().with_controller("Model1"),
                 Control::empty().with_controller("Model2")
             ])))
@@ -103,8 +104,8 @@ mod test {
     }
 
     impl Controller for ModelController {
-        fn ui(&self) -> Arc<Bound<Control>> {
-            Arc::new(bind(Control::label()))
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::from(bind(Control::label()))
         }
 
         fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
@@ -117,7 +118,7 @@ mod test {
     }
 
     impl ViewModel for TestViewModel {
-        fn get_property(&self, property_name: &str) -> Arc<Bound<PropertyValue>> {
+        fn get_property(&self, property_name: &str) -> BindRef<PropertyValue> {
             Arc::new(bind(PropertyValue::String(property_name.to_string())))
         }
 

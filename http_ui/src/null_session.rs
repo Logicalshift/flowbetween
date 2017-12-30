@@ -11,14 +11,14 @@ use binding::*;
 ///
 pub struct NullSession {
     view_model: Arc<NullViewModel>,
-    ui:         Arc<Bound<Control>>
+    ui:         BindRef<Control>
 }
 
 impl NullSession {
     pub fn new() -> NullSession {
         NullSession {
             view_model: Arc::new(NullViewModel::new()),
-            ui:         Arc::new(computed(|| {
+            ui:         BindRef::from(computed(|| {
                 Control::container()
                     .with(vec![Control::label().with("Hello, World")])
             }))
@@ -34,8 +34,8 @@ impl Session for NullSession {
 }
 
 impl Controller for NullSession {
-    fn ui(&self) -> Arc<Bound<Control>> {
-        Arc::clone(&self.ui)
+    fn ui(&self) -> BindRef<Control> {
+        BindRef::clone(&self.ui)
     }
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {

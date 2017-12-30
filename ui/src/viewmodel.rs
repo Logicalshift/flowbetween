@@ -2,8 +2,6 @@ use binding::*;
 
 use super::property::*;
 
-use std::sync::*;
-
 ///
 /// Represents a viewmodel for a control subtree. ViewModels are
 /// used for controls which can be edited and need to have values
@@ -11,7 +9,7 @@ use std::sync::*;
 ///
 pub trait ViewModel {
     /// Retrieves a property
-    fn get_property(&self, property_name: &str) -> Arc<Bound<PropertyValue>>;
+    fn get_property(&self, property_name: &str) -> BindRef<PropertyValue>;
 
     /// Updates a property
     fn set_property(&self, property_name: &str, new_value: PropertyValue);
@@ -21,17 +19,17 @@ pub trait ViewModel {
 }
 
 pub struct NullViewModel {
-    nothing: Arc<Binding<PropertyValue>>
+    nothing: BindRef<PropertyValue>
 }
 
 impl NullViewModel {
     pub fn new() -> NullViewModel {
-        NullViewModel { nothing: Arc::new(bind(PropertyValue::Nothing)) }
+        NullViewModel { nothing: BindRef::from(bind(PropertyValue::Nothing)) }
     }
 }
 
 impl ViewModel for NullViewModel {
-    fn get_property(&self, _property_name: &str) -> Arc<Bound<PropertyValue>> {
+    fn get_property(&self, _property_name: &str) -> BindRef<PropertyValue> {
         self.nothing.clone()
     }
 

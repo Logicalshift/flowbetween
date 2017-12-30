@@ -13,7 +13,7 @@ use std::sync::*;
 pub struct MenuController<Anim: Animation> {
     view_model:         Arc<NullViewModel>,
     _anim_view_model:   AnimationViewModel<Anim>,
-    ui:                 Arc<Bound<Control>>
+    ui:                 BindRef<Control>
 }
 
 impl<Anim: 'static+Animation> MenuController<Anim> {
@@ -57,14 +57,14 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
         MenuController {
             view_model:         Arc::new(NullViewModel::new()),
             _anim_view_model:   anim_view_model.clone(),
-            ui:                 Arc::new(ui)
+            ui:                 BindRef::from(ui)
         }
     }
 }
 
 impl<Anim: Animation>  Controller for MenuController<Anim>  {
-    fn ui(&self) -> Arc<Bound<Control>> {
-        Arc::clone(&self.ui)
+    fn ui(&self) -> BindRef<Control> {
+        BindRef::clone(&self.ui)
     }
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {

@@ -14,7 +14,7 @@ use std::sync::*;
 ///
 pub struct ToolboxController<Anim: Animation> {
     view_model:         Arc<DynamicViewModel>,
-    ui:                 Arc<Bound<Control>>,
+    ui:                 BindRef<Control>,
     images:             Arc<ResourceManager<Image>>,
     anim_view_model:    AnimationViewModel<Anim>
 }
@@ -58,8 +58,8 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     ///
     /// Creates the UI binding
     /// 
-    fn create_ui(tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> Arc<Bound<Control>> {
-        Arc::new(computed(move || {
+    fn create_ui(tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
+        BindRef::from(computed(move || {
             // Convert the tool sets into tools (with separators between each individual set)
             let tools_for_sets: Vec<Control> = tool_sets.get().iter()
                 .map(|toolset| {
@@ -169,7 +169,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
 }
 
 impl<Anim: 'static+Animation> Controller for ToolboxController<Anim> {
-    fn ui(&self) -> Arc<Bound<Control>> {
+    fn ui(&self) -> BindRef<Control> {
         self.ui.clone()
     }
 
