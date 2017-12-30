@@ -6,13 +6,10 @@ authors     = ["Andrew Hunter"]
 [dependencies]
 static_files    = { path = "static_files" }
 animation       = { path = "animation" }
-curves          = { path = "curves" }
 http_ui         = { path = "http_ui" }
 binding         = { path = "binding" }
 ui              = { path = "ui" }
-canvas          = { path = "canvas" }
 flo             = { path = "flo" }
-desync          = { git = "https://github.com/logicalshift/desync", branch = "develop" }
 
 serde           = "^1.0.0"
 serde_derive    = "^1.0.0"

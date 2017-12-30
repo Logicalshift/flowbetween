@@ -137,9 +137,6 @@ version = "0.1.0"
 dependencies = [
  "animation 0.1.0",
  "binding 0.1.0",
- "canvas 0.1.0",
- "curves 0.1.0",
- "desync 0.1.2 (git+https://github.com/logicalshift/desync?branch=develop)",
  "flo 0.1.0",
  "http_ui 0.1.0",
  "iron 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",

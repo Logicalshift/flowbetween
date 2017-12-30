@@ -4,8 +4,6 @@
 
 extern crate ui;
 extern crate flo;
-extern crate curves;
-extern crate canvas;
 extern crate http_ui;
 extern crate binding;
 extern crate animation;
@@ -17,7 +15,6 @@ extern crate serde_json;
 extern crate serde_derive;
 extern crate iron;
 extern crate mount;
-extern crate desync;
 
 mod http_session;
 
