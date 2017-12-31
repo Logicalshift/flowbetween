@@ -148,7 +148,7 @@ impl BindingCanvas {
     ///
     /// Creates a new BindingCanvas with a drawing function
     /// 
-    pub fn with_drawing<DrawingFn: 'static+Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) -> BindingCanvas {
+    pub fn with_drawing<DrawingFn: 'static+Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>(draw: DrawingFn) -> BindingCanvas {
         let canvas = Self::new();
         canvas.on_redraw(draw);
 

@@ -30,8 +30,13 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
         let ui          = Self::create_ui(&anim_view_model.tools().effective_tool, &anim_view_model.menu().controller);
 
         // Create the controllers for the different menu modes
+        let brush       = anim_view_model.brush();
+        let size        = &brush.size;
+        let opacity     = &brush.opacity;
+        let color       = &brush.color;
+
         let empty_menu  = Arc::new(EmptyMenuController::new());
-        let ink_menu    = Arc::new(InkMenuController::new());
+        let ink_menu    = Arc::new(InkMenuController::new(size, opacity, color));
 
         // Create the controller
         MenuController {
