@@ -541,6 +541,25 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Finds the control data at a particular address, and its parent node
+    ///
+    let data_at_address = (address) => {
+        let parent_node     = null;
+        let current_data    = root_control_data;
+
+        address.forEach(index => {
+            let attributes  = get_attributes(current_data);
+            parent_node     = current_data;
+            current_data    = attributes.subcomponents()[index];
+        });
+
+        return {
+            data:   current_data, 
+            parent: parent_node
+        };
+    };
+
+    ///
     /// Visits the flo items in the DOM, passing in attributes from
     /// the appropriate control data sections
     ///
@@ -1186,12 +1205,32 @@ function flowbetween(root_node) {
         return new Promise((resolve) => {
             // Find the original nodes for each update
             updates.forEach(update => {
-                update.original_node = node_at_address(update.address);
+                update.original_node    = node_at_address(update.address);
+                update.original_data    = data_at_address(update.address);
+
+                console.log(update.original_data);
             });
 
             // Unwire the original DOM
             updates.forEach(update => {
                 unwire_node(update.original_node);
+            });
+
+            // Replace the data for each element involved in the update
+            updates.forEach(update => {
+                let address = update.address;
+
+                if (address.length === 0) {
+                    // 0-length addresses replace the root node
+                    root_control_data = update.ui_tree;
+                } else {
+                    // Other attribute replace the subcomponents
+                    let node_index  = address[address.length-1];
+                    let parent_node = update.original_data.parent;
+                    let attributes  = get_attributes(parent_node);
+
+                    attributes.subcomponents()[node_index] = update.ui_tree;
+                }
             });
 
             // Replace the HTML for each element involved in the update
