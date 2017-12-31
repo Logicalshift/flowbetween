@@ -262,7 +262,7 @@ mod test {
     #[test]
     fn can_create_canvas_state()  {
         let resource_manager    = ResourceManager::new();
-        let canvas              = resource_manager.register(Canvas::new());
+        let canvas              = resource_manager.register(BindingCanvas::new());
         let control: BindRef<Control> = BindRef::from(bind(Control::canvas().with(canvas)));
 
         let canvas_state        = CanvasState::new(&control);
@@ -274,7 +274,7 @@ mod test {
     #[test]
     fn canvas_updates_when_control_changes()  {
         let resource_manager    = ResourceManager::new();
-        let canvas              = resource_manager.register(Canvas::new());
+        let canvas              = resource_manager.register(BindingCanvas::new());
         let mut control         = Binding::new(Control::canvas().with(canvas));
 
         let box_control: BindRef<Control> = BindRef::new(&control);
@@ -283,7 +283,7 @@ mod test {
         assert!(canvas_state.latest_updates().len() == 1);
         assert!(canvas_state.latest_updates().len() == 0);
 
-        let canvas2 = resource_manager.register(Canvas::new());
+        let canvas2 = resource_manager.register(BindingCanvas::new());
         control.set(Control::canvas().with(canvas2));
 
         assert!(canvas_state.latest_updates().len() == 1);

@@ -26,9 +26,9 @@ mod test {
     use super::super::diff::*;
     use super::super::image::*;
     use super::super::property::*;
+    use super::super::binding_canvas::*;
     use super::super::resource_manager::*;
 
-    use canvas::*;
     use std::sync::*;
 
     #[test]
@@ -241,7 +241,7 @@ mod test {
     #[test]
     fn canvas_equals_self() {
         let resources       = ResourceManager::new();
-        let canvas_resource = resources.register(Canvas::new());
+        let canvas_resource = resources.register(BindingCanvas::new());
         let canvas1         = Control::canvas();
         let canvas2         = Control::canvas()
             .with(canvas_resource);
@@ -253,8 +253,8 @@ mod test {
     #[test]
     fn different_canvases_are_different() {
         let resources        = ResourceManager::new();
-        let canvas_resource1 = resources.register(Canvas::new());
-        let canvas_resource2 = resources.register(Canvas::new());
+        let canvas_resource1 = resources.register(BindingCanvas::new());
+        let canvas_resource2 = resources.register(BindingCanvas::new());
         let canvas1          = Control::canvas()
             .with(canvas_resource1);
         let canvas2          = Control::canvas()

@@ -180,7 +180,7 @@ mod test {
     #[test]
     fn can_convert_canvas_to_html() {
         let resource_manager    = ResourceManager::new();
-        let canvas              = resource_manager.register(Canvas::new());
+        let canvas              = resource_manager.register(BindingCanvas::new());
         resource_manager.assign_name(&canvas, "test_canvas");
 
         let control = Control::canvas().with(canvas.clone());
@@ -191,7 +191,7 @@ mod test {
     #[test]
     fn canvas_includes_controller() {
         let resource_manager    = ResourceManager::new();
-        let canvas              = resource_manager.register(Canvas::new());
+        let canvas              = resource_manager.register(BindingCanvas::new());
         resource_manager.assign_name(&canvas, "test_canvas");
 
         let control = Control::empty()
