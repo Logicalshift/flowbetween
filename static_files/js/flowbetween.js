@@ -881,6 +881,8 @@ function flowbetween(root_node) {
     ///
     /// Binds any viemwodel attributes for a node
     ///
+    /// TODO: controller_path will be wrong during a HTML update
+    ///
     let bind_viewmodel = (node, attributes, controller_path) => {
         // Ensure that any previous viewmodel attached to this node is removed
         let unbind_viewmodel = node.flo_unbind_viewmodel || (() => {});
