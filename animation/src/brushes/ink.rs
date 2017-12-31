@@ -242,8 +242,6 @@ impl Brush for InkBrush {
     }
 
     fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {
-        // TODO: somewhat glitchy, not sure why (lines disappear sometimes, or sometimes end up with a line to infinity)
-
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 2 {
             return;
