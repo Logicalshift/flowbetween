@@ -546,16 +546,23 @@ function flowbetween(root_node) {
     let data_at_address = (address) => {
         let parent_node     = null;
         let current_data    = root_control_data;
+        let controller_path = [];
 
         address.forEach(index => {
             let attributes  = get_attributes(current_data);
             parent_node     = current_data;
             current_data    = attributes.subcomponents()[index];
+
+            let controller = attributes.controller();
+            if (controller) {
+                controller_path.push(controller);
+            }
         });
 
         return {
-            data:   current_data, 
-            parent: parent_node
+            data:               current_data, 
+            parent:             parent_node,
+            controller_path:    controller_path
         };
     };
 
@@ -1142,15 +1149,18 @@ function flowbetween(root_node) {
     ///
     /// Given a node and its control data, wires up any events
     ///
-    /// TODO: this currently only tracks the controller path from the root so won't work when updating the tree
-    ///
-    let wire_tree = (dom_node, control_data) => {
+    let wire_tree = (dom_node, control_data, initial_controller_path) => {
         visit_dom(dom_node, control_data, (node, attributes, controller_path) => {
             // Store the attributes for this node for convenience
             node.flo = {
                 controller: controller_path,
                 attributes: attributes
             };
+
+            // Add the initial path to the start of the controller path, if it exists
+            if (initial_controller_path) {
+                controller_path = initial_controller_path.concat(controller_path);
+            }
 
             // Attach any events that this node might require
             wire_events(node, attributes, controller_path);
@@ -1207,8 +1217,6 @@ function flowbetween(root_node) {
             updates.forEach(update => {
                 update.original_node    = node_at_address(update.address);
                 update.original_data    = data_at_address(update.address);
-
-                console.log(update.original_data);
             });
 
             // Unwire the original DOM
@@ -1253,7 +1261,7 @@ function flowbetween(root_node) {
             updates.forEach(update => {
                 apply_templates_to_tree(update.new_element, update.ui_tree);
                 bind_viewmodel_to_tree(update.new_element, update.ui_tree);
-                wire_tree(update.new_element, update.ui_tree);
+                wire_tree(update.new_element, update.ui_tree, update.original_data.controller_path);
             });
 
             // Update the layout of everything once we're done
