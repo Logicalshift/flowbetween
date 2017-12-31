@@ -553,6 +553,7 @@ function flowbetween(root_node) {
             parent_node     = current_data;
             current_data    = attributes.subcomponents()[index];
 
+            // TODO: if this is the last node and it has a controller, this path will be the path for the subnodes rather than the node being replaced
             let controller = attributes.controller();
             if (controller) {
                 controller_path.push(controller);
@@ -570,7 +571,7 @@ function flowbetween(root_node) {
     /// Visits the flo items in the DOM, passing in attributes from
     /// the appropriate control data sections
     ///
-    let visit_dom = (dom_node, control_data, visit_node) => {
+    let visit_dom = (dom_node, control_data, visit_node, initial_controller_path) => {
         // visit_internal tracks the controller path for each node
         let visit_internal = (dom_node, control_data, visit_node, controller_path) => {
             let attributes = get_attributes(control_data);
@@ -600,7 +601,7 @@ function flowbetween(root_node) {
         };
 
         // Initial node has no controller path
-        visit_internal(dom_node, control_data, visit_node, []);
+        visit_internal(dom_node, control_data, visit_node, initial_controller_path || []);
     };
 
     ///
@@ -881,8 +882,6 @@ function flowbetween(root_node) {
     ///
     /// Binds any viemwodel attributes for a node
     ///
-    /// TODO: controller_path will be wrong during a HTML update
-    ///
     let bind_viewmodel = (node, attributes, controller_path) => {
         // Ensure that any previous viewmodel attached to this node is removed
         let unbind_viewmodel = node.flo_unbind_viewmodel || (() => {});
@@ -1159,14 +1158,9 @@ function flowbetween(root_node) {
                 attributes: attributes
             };
 
-            // Add the initial path to the start of the controller path, if it exists
-            if (initial_controller_path) {
-                controller_path = initial_controller_path.concat(controller_path);
-            }
-
             // Attach any events that this node might require
             wire_events(node, attributes, controller_path);
-        });
+        }, initial_controller_path);
     };
 
     ///
@@ -1180,8 +1174,8 @@ function flowbetween(root_node) {
     ///
     /// Binds the viewmodel to a DOM tree
     ///
-    let bind_viewmodel_to_tree = (dom_node, control_data) => {
-        visit_dom(dom_node, control_data, (node, attributes, controller_path) => bind_viewmodel(node, attributes, controller_path));
+    let bind_viewmodel_to_tree = (dom_node, control_data, initial_controller_path) => {
+        visit_dom(dom_node, control_data, (node, attributes, controller_path) => bind_viewmodel(node, attributes, controller_path), initial_controller_path);
     };
 
     ///
@@ -1262,7 +1256,7 @@ function flowbetween(root_node) {
             // Reformat/bind/wire the new HTML
             updates.forEach(update => {
                 apply_templates_to_tree(update.new_element, update.ui_tree);
-                bind_viewmodel_to_tree(update.new_element, update.ui_tree);
+                bind_viewmodel_to_tree(update.new_element, update.ui_tree, update.original_data.controller_path);
                 wire_tree(update.new_element, update.ui_tree, update.original_data.controller_path);
             });
 
