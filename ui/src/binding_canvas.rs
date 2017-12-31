@@ -223,7 +223,7 @@ mod test {
         let mut stream  = executor::spawn(canvas.stream());
         
         // Set a bound function
-        canvas.set_drawing_fn(|gc| {
+        canvas.on_redraw(|gc| {
             gc.new_path();
         });
 
@@ -243,7 +243,7 @@ mod test {
         
         // Set a bound function
         let draw_binding = binding.clone();
-        canvas.set_drawing_fn(move |gc| {
+        canvas.on_redraw(move |gc| {
             let (x, y) = draw_binding.get();
 
             gc.new_path();
