@@ -1,3 +1,5 @@
+use super::menu::*;
+use super::tools::*;
 use super::style::*;
 use super::viewmodel::*;
 
@@ -13,7 +15,10 @@ use std::sync::*;
 pub struct MenuController<Anim: Animation> {
     view_model:         Arc<NullViewModel>,
     _anim_view_model:   AnimationViewModel<Anim>,
-    ui:                 BindRef<Control>
+    ui:                 BindRef<Control>,
+
+    empty_menu:         Arc<EmptyMenuController>,
+    ink_menu:           Arc<InkMenuController>
 }
 
 impl<Anim: 'static+Animation> MenuController<Anim> {
@@ -21,13 +26,34 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     /// Creates a new menu controller
     /// 
     pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> MenuController<Anim> {
-        // Generate the UI for the menu
-        let selected_tool   = anim_view_model.tools().effective_tool.clone();
-        let tool_controller = anim_view_model.menu().controller.clone();
+        // Create the UI
+        let ui          = Self::create_ui(&anim_view_model.tools().effective_tool, &anim_view_model.menu().controller);
 
-        let ui = computed(move || {
+        // Create the controllers for the different menu modes
+        let empty_menu  = Arc::new(EmptyMenuController::new());
+        let ink_menu    = Arc::new(InkMenuController::new());
+
+        // Create the controller
+        MenuController {
+            view_model:         Arc::new(NullViewModel::new()),
+            _anim_view_model:   anim_view_model.clone(),
+            ui:                 BindRef::from(ui),
+
+            empty_menu:         empty_menu,
+            ink_menu:           ink_menu
+        }
+    }
+
+    ///
+    /// Creates the UI binding for this controller
+    /// 
+    fn create_ui(effective_tool: &BindRef<Option<Arc<Tool<Anim>>>>, tool_controller: &BindRef<String>) -> BindRef<Control> {
+        let effective_tool  = effective_tool.clone();
+        let tool_controller = tool_controller.clone();
+
+        BindRef::from(computed(move || {
             // Get properties
-            let tool_name       = selected_tool.get().map(|tool| tool.tool_name()).unwrap_or("No tool".to_string());
+            let tool_name       = effective_tool.get().map(|tool| tool.tool_name()).unwrap_or("No tool".to_string());
             let tool_controller = tool_controller.get();
 
             // The control tree for the menu
@@ -55,14 +81,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(Bounds::next_horiz(80.0))
                 ])
                 .with(ControlAttribute::Background(MENU_BACKGROUND))
-        });
-
-        // Create the controller
-        MenuController {
-            view_model:         Arc::new(NullViewModel::new()),
-            _anim_view_model:   anim_view_model.clone(),
-            ui:                 BindRef::from(ui)
-        }
+        }))
     }
 }
 
@@ -73,5 +92,12 @@ impl<Anim: Animation> Controller for MenuController<Anim>  {
 
     fn get_viewmodel(&self) -> Arc<ViewModel> {
         self.view_model.clone()
+    }
+
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+        match id {
+            INKMENUCONTROLLER   => Some(self.ink_menu.clone()),
+            _                   => Some(self.empty_menu.clone())
+        }
     }
 }

@@ -1,4 +1,5 @@
 use super::*;
+use super::super::menu::*;
 
 ///
 /// The Ink tool (Inks control points of existing objects)
@@ -64,7 +65,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
 
     fn image_name(&self) -> String { "ink".to_string() }
 
-    fn menu_controller_name(&self) -> String { "InkMenu".to_string() }
+    fn menu_controller_name(&self) -> String { INKMENUCONTROLLER.to_string() }
 
     fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> { 
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();

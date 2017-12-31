@@ -17,6 +17,7 @@ pub mod timeline_controller;
 pub mod toolbox_controller;
 pub mod style;
 pub mod tools;
+pub mod menu;
 
 mod viewmodel;
 
