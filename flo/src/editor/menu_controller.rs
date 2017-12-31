@@ -1,7 +1,7 @@
-use super::menu::*;
-use super::tools::*;
-use super::style::*;
-use super::viewmodel::*;
+use super::super::menu::*;
+use super::super::tools::*;
+use super::super::style::*;
+use super::super::viewmodel::*;
 
 use ui::*;
 use binding::*;

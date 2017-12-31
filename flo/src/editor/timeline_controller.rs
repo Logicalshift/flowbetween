@@ -1,4 +1,4 @@
-use super::style::*;
+use super::super::style::*;
 
 use ui::*;
 use binding::*;

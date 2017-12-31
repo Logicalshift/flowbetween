@@ -1,5 +1,5 @@
-use super::viewmodel::*;
-use super::tools::*;
+use super::super::viewmodel::*;
+use super::super::tools::*;
 
 use ui::*;
 use canvas::*;

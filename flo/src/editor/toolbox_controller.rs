@@ -1,6 +1,6 @@
-use super::tools::*;
-use super::style::*;
-use super::viewmodel::*;
+use super::super::tools::*;
+use super::super::style::*;
+use super::super::viewmodel::*;
 
 use ui::*;
 use binding::*;
@@ -93,13 +93,13 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         let images  = ResourceManager::new();
 
         // Load the tool images
-        let select  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/select.svg")));
-        let adjust  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/adjust.svg")));
-        let pan     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pan.svg")));
+        let select  = images.register(svg_static(include_bytes!("../../../static_files/svg/tools/select.svg")));
+        let adjust  = images.register(svg_static(include_bytes!("../../../static_files/svg/tools/adjust.svg")));
+        let pan     = images.register(svg_static(include_bytes!("../../../static_files/svg/tools/pan.svg")));
 
-        let pencil  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/pencil.svg")));
-        let ink     = images.register(svg_static(include_bytes!("../../static_files/svg/tools/ink.svg")));
-        let eraser  = images.register(svg_static(include_bytes!("../../static_files/svg/tools/eraser.svg")));
+        let pencil  = images.register(svg_static(include_bytes!("../../../static_files/svg/tools/pencil.svg")));
+        let ink     = images.register(svg_static(include_bytes!("../../../static_files/svg/tools/ink.svg")));
+        let eraser  = images.register(svg_static(include_bytes!("../../../static_files/svg/tools/eraser.svg")));
 
         // Assign names to them
         images.assign_name(&select, "select");

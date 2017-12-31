@@ -1,10 +1,16 @@
+mod canvas_controller;
+mod menu_controller;
+mod timeline_controller;
+mod toolbox_controller;
+
+pub use self::canvas_controller::*;
+pub use self::menu_controller::*;
+pub use self::timeline_controller::*;
+pub use self::toolbox_controller::*;
+
 use ui::*;
 use binding::*;
 use animation::*;
-use super::canvas_controller::*;
-use super::menu_controller::*;
-use super::timeline_controller::*;
-use super::toolbox_controller::*;
 use super::viewmodel::*;
 
 use std::sync::*;

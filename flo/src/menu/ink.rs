@@ -14,6 +14,9 @@ pub struct InkMenuController {
 }
 
 impl InkMenuController {
+    ///
+    /// Creates a new ink menu controller
+    /// 
     pub fn new() -> InkMenuController {
         InkMenuController { 
             ui:         BindRef::from(bind(Control::label()
