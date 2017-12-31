@@ -26,7 +26,7 @@ let flo_canvas = (function() {
         // Remove any canvas element that has a null parent
         for (let index=0; index<active_canvases.length; ++index) {
             if (!active_canvases[index].is_active()) {
-                active_canvases.removeAt(index);
+                active_canvases.splice(index, 1);
                 --index;
                 mark_canvases_outdated();
             }
