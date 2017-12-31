@@ -91,6 +91,24 @@ impl CanvasStateCore {
     }
 
     ///
+    /// Redraws any canvases attached to a particular control
+    /// 
+    fn redraw_control(&mut self, control: &Control) {
+        // If the control contains a canvas...
+        if let Some(canvas) = control.canvas_resource() {
+            // Perform any redrawing action that the control might require
+            canvas.redraw_if_invalid();
+        }
+
+        // Recurse into subcomponents
+        if let Some(subcomponents) = control.subcomponents() {
+            for subcomponent in subcomponents {
+                self.redraw_control(subcomponent);
+            }
+        }
+    }
+
+    ///
     /// Updates the list of canvases in this control
     ///
     fn update_control(&mut self, control: &Control, controller_path: &Vec<String>, found_canvases: &mut HashSet<CanvasPath>) {
@@ -211,6 +229,13 @@ impl CanvasState {
     /// Finds the latest updates for this canvas
     ///
     pub fn latest_updates(&self) -> Vec<CanvasUpdate> {
+        // First redraw any canvases that might be in the control tree and out of date
+        self.core.sync(|core| {
+            let root_control = core.root_control.get();
+            core.redraw_control(&root_control);
+        });
+
+        // Then find the latest updates
         self.core.sync(|core| {
             // Update the set of canvases that need to be checked
             if core.controls_updated {
