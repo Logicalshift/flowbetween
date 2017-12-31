@@ -146,6 +146,16 @@ impl BindingCanvas {
     }
 
     ///
+    /// Creates a new BindingCanvas with a drawing function
+    /// 
+    pub fn with_drawing<DrawingFn: 'static+Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) -> BindingCanvas {
+        let canvas = Self::new();
+        canvas.on_redraw(draw);
+
+        canvas
+    }
+
+    ///
     /// Sets the drawing function for the canvas
     /// 
     /// Canvases don't have a drawing function by default, so it's safe
@@ -154,8 +164,10 @@ impl BindingCanvas {
     /// cause it to become invalidated if they change. Additionally,
     /// setting a drawing function will invalidate the canvas.
     /// 
-    pub fn set_drawing_fn<DrawingFn: 'static+Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) {
+    pub fn on_redraw<DrawingFn: 'static+Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) {
         self.core.async(move |core| {
+            core.done_with_notifications();
+
             core.invalidated    = true;
             core.draw_fn        = Some(Box::new(draw));
         });
