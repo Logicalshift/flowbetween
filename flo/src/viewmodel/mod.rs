@@ -1,10 +1,12 @@
 mod timeline;
 mod brush;
 mod tools;
+mod menu;
 
 pub use self::timeline::*;
 pub use self::brush::*;
 pub use self::tools::*;
+pub use self::menu::*;
 
 use animation::*;
 
@@ -24,7 +26,10 @@ pub struct AnimationViewModel<Anim: Animation> {
     timeline: TimelineViewModel,
 
     /// The brush view model
-    brush: BrushViewModel
+    brush: BrushViewModel,
+
+    /// The view model for the menu bar
+    menu: MenuViewModel
 }
 
 impl<Anim: Animation+'static> AnimationViewModel<Anim> {
@@ -36,12 +41,14 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
         let tools       = ToolViewModel::new();
         let timeline    = TimelineViewModel::new();
         let brush       = BrushViewModel::new();
+        let menu        = MenuViewModel::new(&tools.effective_tool);
 
         AnimationViewModel {
             animation:      animation,
             tools:          tools,
             timeline:       timeline,
-            brush:          brush
+            brush:          brush,
+            menu:           menu
         }
     }
 
@@ -79,6 +86,13 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     pub fn brush(&self) -> &BrushViewModel {
         &self.brush
     }
+
+    ///
+    /// Retrieves the viewmodel for the menu for this animation
+    /// 
+    pub fn menu(&self) -> &MenuViewModel {
+        &self.menu
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
@@ -88,7 +102,8 @@ impl<Anim: Animation> Clone for AnimationViewModel<Anim> {
             animation:      self.animation.clone(),
             tools:          self.tools.clone(),
             timeline:       self.timeline.clone(),
-            brush:          self.brush.clone()
+            brush:          self.brush.clone(),
+            menu:           self.menu.clone()
         }
     }
 }

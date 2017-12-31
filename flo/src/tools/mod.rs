@@ -59,6 +59,11 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     fn image_name(&self) -> String;
 
     ///
+    /// Retrieves the menu controller to use for adjusting this tool
+    /// 
+    fn menu_controller_name(&self) -> String { "".to_string() }
+
+    ///
     /// Activates this tool (called before this tool performs any other actions like paint)
     /// 
     /// The return value is a binding that indicates whether or not this tool

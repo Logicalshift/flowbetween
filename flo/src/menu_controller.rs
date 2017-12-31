@@ -22,11 +22,13 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     /// 
     pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> MenuController<Anim> {
         // Generate the UI for the menu
-        let selected_tool = anim_view_model.tools().effective_tool.clone();
+        let selected_tool   = anim_view_model.tools().effective_tool.clone();
+        let tool_controller = anim_view_model.menu().controller.clone();
 
         let ui = computed(move || {
             // Get properties
-            let tool_name = selected_tool.get().map(|tool| tool.tool_name()).unwrap_or("No tool".to_string());
+            let tool_name       = selected_tool.get().map(|tool| tool.tool_name()).unwrap_or("No tool".to_string());
+            let tool_controller = tool_controller.get();
 
             // The control tree for the menu
             Control::empty()
@@ -43,7 +45,9 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(Bounds::next_horiz(160.0)),
                     
                     Control::empty()
-                        .with(Bounds::stretch_horiz(1.0)),
+                        .with(Bounds::stretch_horiz(1.0))
+                        .with(ControlAttribute::FontSize(13.0))
+                        .with_controller(&tool_controller),
                     
                     Control::label()
                         .with(tool_name)
@@ -62,7 +66,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     }
 }
 
-impl<Anim: Animation>  Controller for MenuController<Anim>  {
+impl<Anim: Animation> Controller for MenuController<Anim>  {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
