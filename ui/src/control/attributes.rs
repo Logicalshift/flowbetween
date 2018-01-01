@@ -21,9 +21,11 @@ pub enum ControlAttribute {
     /// The text for this control
     Text(Property),
 
+    // TODO: font attribute
     /// Specifies the font size in pixels
     FontSize(f32),
 
+    // TODO: state attribute
     /// Whether or not this control is selected
     Selected(Property),
 
@@ -43,12 +45,14 @@ pub enum ControlAttribute {
     /// denoted by the string to the controller
     Action(ActionTrigger, String),
 
+    // TODO: content attribute (maybe with text?). Image might be appearance though
     /// Specifies the background image for this control
     Image(Resource<image::Image>),
 
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
     Canvas(Resource<BindingCanvas>),
 
+    // TODO: appearance attribute
     /// Specifies the foreground colour of this control
     Foreground(canvas::Color),
 
