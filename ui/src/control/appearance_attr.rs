@@ -26,6 +26,12 @@ impl Modifier<Control> for Appearance {
     }
 }
 
+impl<'a> Modifier<Control> for &'a Appearance {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(ControlAttribute::AppearanceAttr(self.clone()))
+    }
+}
+
 impl Modifier<Control> for Resource<image::Image> {
     fn modify(self, control: &mut Control) {
         control.add_attribute(ControlAttribute::AppearanceAttr(Appearance::Image(self)))

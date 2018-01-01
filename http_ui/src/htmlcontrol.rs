@@ -127,12 +127,10 @@ impl ToHtml for ControlAttribute {
             }
 
             &AppearanceAttr(ref appearance) => appearance.to_html_subcomponent(base_path, controller_path),
-
             &FontAttr(ref font_attribute)   => font_attribute.to_html_subcomponent(base_path, controller_path),
+            &StateAttr(ref state)           => state.to_html_subcomponent(base_path, controller_path),
 
             &BoundingBox(_) => DomEmpty::new(),
-            &Selected(_)    => DomEmpty::new(),
-            &Badged(_)      => DomEmpty::new(),
             &Id(_)          => DomEmpty::new(),
             &Controller(_)  => DomEmpty::new(),
             &Action(_, _)   => DomEmpty::new()
@@ -176,6 +174,12 @@ impl ToHtml for Appearance {
                 DomAttribute::new("style", &format!("background: no-repeat center/contain url('{}');", image_url))
             }
         }
+    }
+}
+
+impl ToHtml for State {
+    fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+        DomEmpty::new()
     }
 }
 

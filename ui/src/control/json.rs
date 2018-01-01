@@ -8,13 +8,14 @@ impl ToJsonValue for ControlAttribute {
     fn to_json(&self) -> Value {
         use ControlAttribute::*;
         use Appearance::*;
+        use State::*;
 
         match self {
             &BoundingBox(ref bounds)            => json!({ "BoundingBox": bounds }),
             &Text(ref property)                 => json!({ "Text": property }),
             &FontAttr(attr)                     => json!({ "Font": attr }),
-            &Selected(ref property)             => json!({ "Selected": property }),
-            &Badged(ref property)               => json!({ "Badged": property }),
+            &StateAttr(Selected(ref property))  => json!({ "Selected": property }),
+            &StateAttr(Badged(ref property))    => json!({ "Badged": property }),
             &Id(ref id)                         => json!({ "Id": id }),
             &Controller(ref name)               => json!({ "Controller": name }),
             &Action(ref trigger, ref action)    => json!({ "Action": (trigger, action) }),

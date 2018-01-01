@@ -2,6 +2,7 @@ use super::bounds::*;
 use super::control::*;
 use super::actions::*;
 use super::font_attr::*;
+use super::state_attr::*;
 use super::appearance_attr::*;
 
 use super::super::property::*;
@@ -24,15 +25,11 @@ pub enum ControlAttribute {
     /// Specifies the font properties of this control
     FontAttr(Font),
 
+    /// Specifies the state of this control
+    StateAttr(State),
+
     /// Specifies the appearance of this control
     AppearanceAttr(Appearance),
-
-    // TODO: state attribute
-    /// Whether or not this control is selected
-    Selected(Property),
-
-    /// Whether or not this control has a badge attached to it
-    Badged(Property),
 
     /// The unique ID for this control
     Id(String),
@@ -124,21 +121,11 @@ impl ControlAttribute {
     }
 
     ///
-    /// Property representing whether or not this control is selected
-    ///
-    pub fn selected<'a>(&'a self) -> Option<&'a Property> {
+    /// The control state represented by this attribute
+    /// 
+    pub fn state<'a>(&'a self) -> Option<&'a State> {
         match self {
-            &Selected(ref is_selected)  => Some(is_selected),
-            _                           => None
-        }
-    }
-
-    ///
-    /// Property representing whether or not this control has a badge
-    ///
-    pub fn badged<'a>(&'a self) -> Option<&'a Property> {
-        match self {
-            &Badged(ref is_badged)  => Some(is_badged),
+            &StateAttr(ref state)   => Some(state),
             _                       => None
         }
     }
@@ -175,8 +162,7 @@ impl ControlAttribute {
             &Id(ref id)                         => Some(id) != compare_to.id(),
             &Controller(ref controller)         => Some(controller.as_ref()) != compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),
-            &Selected(ref is_selected)          => Some(is_selected) != compare_to.selected(),
-            &Badged(ref is_badged)              => Some(is_badged) != compare_to.badged(),
+            &StateAttr(ref state)               => Some(state) != compare_to.state(),
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
             &AppearanceAttr(ref appearance)     => Some(appearance) != compare_to.appearance(),
 

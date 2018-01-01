@@ -125,7 +125,6 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     /// Creates a new tool control
     ///
     fn make_tool(name: &str, viewmodel: &DynamicViewModel, image: Option<Resource<Image>>) -> Control {
-        use ui::ControlAttribute::*;
         use ui::ActionTrigger::*;
 
         // Decide if this is the selected tool
@@ -157,8 +156,8 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         // The control is just a button
         Control::button()
             .with((Click, name))
-            .with(Badged(Property::Bind(badged_property_name)))
-            .with(Selected(Property::Bind(selected_property_name)))
+            .with(State::Badged(Property::Bind(badged_property_name)))
+            .with(State::Selected(Property::Bind(selected_property_name)))
             .with(Bounds::next_vert(48.0))
             .with(vec![
                 Control::empty()
