@@ -206,7 +206,7 @@ mod test {
 
     #[test]
     fn can_convert_label_to_html() {
-        assert!(Control::label().with("Hello & goodbye").to_html("").to_string() == "<flo-label>Hello &amp; goodbye</flo-label>")
+        assert!(Control::label().with("Hello & goodbye").to_html("").to_string() == "<flo-label><div class=\"text\">Hello &amp; goodbye</div></flo-label>")
     }
 
     #[test]
