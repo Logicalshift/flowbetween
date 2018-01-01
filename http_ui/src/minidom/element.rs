@@ -188,8 +188,6 @@ mod test {
         let mut text = String::new();
         element.append_fragment(&mut text);
 
-        println!("{}", text);
-
         assert!(text == "<test foo=\"bar baz\"><test2></test2></test>");
     }
 }

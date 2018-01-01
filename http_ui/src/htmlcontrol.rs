@@ -258,7 +258,6 @@ mod test {
             .with_controller("Test")
             .with(vec![Control::canvas().with(canvas.clone())]);
 
-        println!("{}", control.to_html("test/base").to_string());
         assert!(control.to_html("test/base").to_string() == "<flo-empty><flo-canvas flo-canvas=\"test/base/c/Test/test_canvas\" flo-name=\"test_canvas\" flo-controller=\"Test\"></flo-canvas></flo-empty>");
     }
 
@@ -272,7 +271,6 @@ mod test {
             .with_controller("Test")
             .with(vec![Control::empty().with(image)]);
 
-        println!("{}", control.to_html("test/base").to_string());
         assert!(control.to_html("test/base").to_string() == "<flo-empty><flo-empty style=\"background: no-repeat center/contain url(&quot;test/base/i/Test/test_image&quot;);\"></flo-empty></flo-empty>");
     }
 }
