@@ -168,13 +168,24 @@ impl ToHtml for ControlAttribute {
 }
 
 impl ToHtml for FontAttr {
-    fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+    fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode {
         use ui::FontAttr::*;
 
         match self {
-            &Size(size) => {
-                DomAttribute::new("style", &format!("font-size: {}px;", size))
-            }
+            &Size(size)     => DomAttribute::new("style", &format!("font-size: {}px;", size)),
+            &Align(align)   => align.to_html_subcomponent(base_path, controller_path)
+        }
+    }
+}
+
+impl ToHtml for TextAlign {
+    fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+        use ui::TextAlign::*;
+
+        match self {
+            &Left   => DomAttribute::new("style", &format!("text-align: left;")),
+            &Center => DomAttribute::new("style", &format!("text-align: center;")),
+            &Right  => DomAttribute::new("style", &format!("text-align: right;"))
         }
     }
 }

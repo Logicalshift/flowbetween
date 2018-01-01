@@ -83,6 +83,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                     Control::label()
                         .with(tool_name)
                         .with(FontAttr::Size(14.0))
+                        .with(TextAlign::Center)
                         .with(Bounds::next_horiz(80.0))
                 ])
                 .with(ControlAttribute::Background(MENU_BACKGROUND))
