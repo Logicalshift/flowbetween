@@ -14,6 +14,7 @@ pub const INKMENUCONTROLLER: &str = "InkMenu";
 /// 
 pub struct InkMenuController {
     size:       Binding<f32>,
+    opacity:    Binding<f32>,
 
     canvases:   Arc<ResourceManager<BindingCanvas>>,
     ui:         BindRef<Control>,
@@ -28,8 +29,11 @@ impl InkMenuController {
         // Set up the view model
         let view_model = Arc::new(DynamicViewModel::new());
 
-        let vm_size = size.clone();
+        let vm_size     = size.clone();
+        let vm_opacity  = opacity.clone();
+
         view_model.set_computed("Size", move || PropertyValue::Float(vm_size.get() as f64));
+        view_model.set_computed("Opacity", move || PropertyValue::Float(vm_opacity.get() as f64));
 
         // Create the canvases
         let canvases = Arc::new(ResourceManager::new());
@@ -41,6 +45,10 @@ impl InkMenuController {
         let size_preview    = Self::size_preview(size);
         let size_preview    = canvases.register(size_preview);
         canvases.assign_name(&size_preview, "SizePreview");
+
+        let opacity_preview = Self::opacity_preview(opacity);
+        let opacity_preview = canvases.register(opacity_preview);
+        canvases.assign_name(&size_preview, "OpacityPreview");
 
         // Generate the UI
         let ui = BindRef::from(bind(Control::container()
@@ -57,7 +65,7 @@ impl InkMenuController {
                         .with(Bounds::next_horiz(64.0)),
 
                     Control::empty()
-                        .with(Bounds::next_horiz(8.0)),
+                        .with(Bounds::next_horiz(12.0)),
 
                     Control::canvas()
                         .with(size_preview)
@@ -69,12 +77,28 @@ impl InkMenuController {
                         .with(State::Value(Property::Bind("Size".to_string())))
                         .with(Bounds::next_horiz(96.0))
                         .with((ActionTrigger::EditValue, "ChangeSize".to_string()))
-                        .with((ActionTrigger::SetValue, "ChangeSize".to_string()))
+                        .with((ActionTrigger::SetValue, "ChangeSize".to_string())),
+
+                    Control::empty()
+                        .with(Bounds::next_horiz(12.0)),
+
+                    Control::canvas()
+                        .with(opacity_preview)
+                        .with(Bounds::next_horiz(32.0)),
+                    Control::empty()
+                        .with(Bounds::next_horiz(4.0)),
+                    Control::slider()
+                        .with(State::Range((0.0.to_property(), 1.0.to_property())))
+                        .with(State::Value(Property::Bind("Opacity".to_string())))
+                        .with(Bounds::next_horiz(96.0))
+                        .with((ActionTrigger::EditValue, "ChangeOpacity".to_string()))
+                        .with((ActionTrigger::SetValue, "ChangeOpacity".to_string()))
                 ])));
 
         // Finalize the control
         InkMenuController {
             size:       size.clone(),
+            opacity:    opacity.clone(),
 
             canvases:   canvases, 
             ui:         ui,
@@ -99,6 +123,29 @@ impl InkMenuController {
             gc.new_path();
             gc.rect(-size/2.0, -size/2.0, size/2.0, size/2.0);
             gc.fill();
+        })
+    }
+
+    ///
+    /// Creates the opacity preview canvas
+    /// 
+    pub fn opacity_preview(opacity: &Binding<f32>) -> BindingCanvas {
+        let opacity         = opacity.clone();
+        let control_height  = 32.0;
+
+        BindingCanvas::with_drawing(move |gc| {
+            let size = control_height - 8.0;
+
+            gc.canvas_height(control_height);
+            gc.line_width(2.0);
+            gc.stroke_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
+            gc.fill_color(Color::Rgba(0.8, 0.8, 0.8, opacity.get()));
+
+            // TODO: make this a circle rather than a rect
+            gc.new_path();
+            gc.rect(-size/2.0, -size/2.0, size/2.0, size/2.0);
+            gc.fill();
+            gc.stroke();
         })
     }
 
@@ -161,6 +208,10 @@ impl Controller for InkMenuController {
         match (action_id, action_parameter) {
             ("ChangeSize", &Value(PropertyValue::Float(new_size))) => {
                 self.size.clone().set(new_size as f32);
+            },
+
+            ("ChangeOpacity", &Value(PropertyValue::Float(new_opacity))) => {
+                self.opacity.clone().set(new_opacity as f32);
             },
 
             _ => ()
