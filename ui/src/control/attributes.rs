@@ -2,14 +2,13 @@ use super::bounds::*;
 use super::control::*;
 use super::actions::*;
 use super::font_attr::*;
+use super::appearance_attr::*;
 
-use super::super::image;
 use super::super::property::*;
 use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
 use modifier::*;
-use canvas;
  
 ///
 /// Attribute attached to a control
@@ -24,6 +23,9 @@ pub enum ControlAttribute {
 
     /// Specifies the font properties of this control
     FontAttribute(FontAttr),
+
+    /// Specifies the appearance of this control
+    AppearanceAttr(Appearance),
 
     // TODO: state attribute
     /// Whether or not this control is selected
@@ -46,18 +48,8 @@ pub enum ControlAttribute {
     Action(ActionTrigger, String),
 
     // TODO: content attribute (maybe with text?). Image might be appearance though
-    /// Specifies the background image for this control
-    Image(Resource<image::Image>),
-
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
     Canvas(Resource<BindingCanvas>),
-
-    // TODO: appearance attribute
-    /// Specifies the foreground colour of this control
-    Foreground(canvas::Color),
-
-    /// Specifies the background colour of this control
-    Background(canvas::Color)
 }
 
 impl ControlAttribute {
@@ -152,16 +144,6 @@ impl ControlAttribute {
     }
 
     ///
-    /// The image resource for this control, if there is one
-    ///
-    pub fn image<'a>(&'a self) -> Option<&'a Resource<image::Image>> {
-        match self {
-            &Image(ref image)   => Some(image),
-            _                   => None
-        }
-    }
-
-    ///
     /// The canvas resource for this control, if there is one
     ///
     pub fn canvas<'a>(&'a self) -> Option<&'a Resource<BindingCanvas>> {
@@ -172,22 +154,12 @@ impl ControlAttribute {
     }
     
     ///
-    /// The background colour for this control, if there is one
+    /// The appearance assigned by this attribute, if there is one
     /// 
-    pub fn foreground_color<'a>(&'a self) -> Option<&'a canvas::Color> {
+    pub fn appearance<'a>(&'a self) -> Option<&'a Appearance> {
         match self {
-            &Foreground(ref color)  => Some(color),
-            _                       => None
-        }
-    }
-    
-    ///
-    /// The background colour for this control, if there is one
-    /// 
-    pub fn background_color<'a>(&'a self) -> Option<&'a canvas::Color> {
-        match self {
-            &Background(ref color)  => Some(color),
-            _                       => None
+            &AppearanceAttr(ref appearance) => Some(appearance),
+            _                               => None
         }
     }
     
@@ -205,10 +177,8 @@ impl ControlAttribute {
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),
             &Selected(ref is_selected)          => Some(is_selected) != compare_to.selected(),
             &Badged(ref is_badged)              => Some(is_badged) != compare_to.badged(),
-            &Image(ref image_resource)          => Some(image_resource) != compare_to.image(),
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
-            &Foreground(ref foreground_color)   => Some(foreground_color) != compare_to.foreground_color(),
-            &Background(ref background_color)   => Some(background_color) != compare_to.background_color(),
+            &AppearanceAttr(ref appearance)     => Some(appearance) != compare_to.appearance(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)      => Some(components.len()) != compare_to.subcomponents().map(|components| components.len())
@@ -238,12 +208,6 @@ impl<'a> Modifier<Control> for &'a String {
 impl Modifier<Control> for Bounds {
     fn modify(self, control: &mut Control) {
         control.add_attribute(BoundingBox(self))
-    }
-}
-
-impl Modifier<Control> for Resource<image::Image> {
-    fn modify(self, control: &mut Control) {
-        control.add_attribute(Image(self))
     }
 }
 

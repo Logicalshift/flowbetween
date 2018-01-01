@@ -7,6 +7,7 @@ use serde_json::*;
 impl ToJsonValue for ControlAttribute {
     fn to_json(&self) -> Value {
         use ControlAttribute::*;
+        use Appearance::*;
 
         match self {
             &BoundingBox(ref bounds)            => json!({ "BoundingBox": bounds }),
@@ -26,7 +27,7 @@ impl ToJsonValue for ControlAttribute {
                 json!({ "SubComponents": json_components })
             },
 
-            &Image(ref image_resource)          => {
+            &AppearanceAttr(Image(ref image_resource))  => {
                 // For images, we only store the ID: callers need to look it up from the resource manager in the controller that made this control
                 json!({ 
                     "Image": {
@@ -36,8 +37,8 @@ impl ToJsonValue for ControlAttribute {
                 })
             },
 
-            &Background(ref color)              => json!({ "Background": color.to_rgba() }),
-            &Foreground(ref color)              => json!({ "Foreground": color.to_rgba() }),
+            &AppearanceAttr(Background(ref color))  => json!({ "Background": color.to_rgba() }),
+            &AppearanceAttr(Foreground(ref color))  => json!({ "Foreground": color.to_rgba() }),
 
             &Canvas(ref canvas_resource)        => {
                 json!({

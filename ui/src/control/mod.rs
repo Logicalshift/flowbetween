@@ -9,6 +9,7 @@ mod modifier;
 mod position;
 mod font_attr;
 mod attributes;
+mod appearance_attr;
 
 pub use self::json::*;
 pub use self::types::*;
@@ -21,6 +22,7 @@ pub use self::modifier::*;
 pub use self::position::*;
 pub use self::font_attr::*;
 pub use self::attributes::*;
+pub use self::appearance_attr::*;
 
 #[cfg(test)]
 mod test {

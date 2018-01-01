@@ -81,7 +81,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
             // Put the controls into a container
             Control::container()
                 .with(Bounds::fill_all())
-                .with(ControlAttribute::Background(TOOLS_BACKGROUND))
+                .with(Appearance::Background(TOOLS_BACKGROUND))
                 .with(tools_for_sets)
         }))
     }

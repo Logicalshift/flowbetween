@@ -105,24 +105,6 @@ impl ToHtml for ControlAttribute {
                 DomText::new(&text.to_string())
             ]),
 
-            &Image(ref image) => {
-                // Use the image's name if it has one, otherwise the ID
-                let image_name = {
-                    if let Some(name) = image.name() {
-                        name
-                    } else {
-                        image.id().to_string()
-                    }
-                };
-
-                // Build the URL from the base path
-                let image_url = format!("{}/i{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
-
-                // Style attribute to render this image as the background
-                DomAttribute::new("style", &format!("background: no-repeat center/contain url('{}');", image_url))
-            },
-
-
             &Canvas(ref canvas) => {
                 // Use the canvas's name if it has one, otherwise the ID
                 let canvas_name = {
@@ -144,6 +126,25 @@ impl ToHtml for ControlAttribute {
                 ])
             }
 
+            &AppearanceAttr(ref appearance) => appearance.to_html_subcomponent(base_path, controller_path),
+
+            &FontAttribute(ref font_attribute) => font_attribute.to_html_subcomponent(base_path, controller_path),
+
+            &BoundingBox(_) => DomEmpty::new(),
+            &Selected(_)    => DomEmpty::new(),
+            &Badged(_)      => DomEmpty::new(),
+            &Id(_)          => DomEmpty::new(),
+            &Controller(_)  => DomEmpty::new(),
+            &Action(_, _)   => DomEmpty::new()
+        }
+    }
+}
+
+impl ToHtml for Appearance {
+    fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode {
+        use ui::Appearance::*;
+
+        match self {
             &Background(ref col) => {
                 let (r, g, b, a)    = col.to_rgba();
                 let (r, g, b)       = ((r*255.0).floor() as i32, (g*255.0).floor() as i32, (b*255.0).floor() as i32);
@@ -158,14 +159,22 @@ impl ToHtml for ControlAttribute {
                 DomAttribute::new("style", &format!("color: rgba({}, {}, {}, {});", r, g, b, a))
             },
 
-            &FontAttribute(ref font_attribute) => font_attribute.to_html_subcomponent(base_path, controller_path),
+            &Image(ref image) => {
+                // Use the image's name if it has one, otherwise the ID
+                let image_name = {
+                    if let Some(name) = image.name() {
+                        name
+                    } else {
+                        image.id().to_string()
+                    }
+                };
 
-            &BoundingBox(_) => DomEmpty::new(),
-            &Selected(_)    => DomEmpty::new(),
-            &Badged(_)      => DomEmpty::new(),
-            &Id(_)          => DomEmpty::new(),
-            &Controller(_)  => DomEmpty::new(),
-            &Action(_, _)   => DomEmpty::new()
+                // Build the URL from the base path
+                let image_url = format!("{}/i{}/{}", base_path, controller_path, utf8_percent_encode(&image_name, DEFAULT_ENCODE_SET));
+
+                // Style attribute to render this image as the background
+                DomAttribute::new("style", &format!("background: no-repeat center/contain url('{}');", image_url))
+            }
         }
     }
 }
@@ -212,10 +221,9 @@ mod test {
     #[test]
     fn can_combine_style_attributes() {
         let ctrl = Control::label()
-            .with(ControlAttribute::Foreground(Color::Rgba(1.0, 0.0, 0.0, 1.0)))
-            .with(ControlAttribute::Background(Color::Rgba(0.0, 1.0, 0.0, 1.0)));
+            .with(Appearance::Foreground(Color::Rgba(1.0, 0.0, 0.0, 1.0)))
+            .with(Appearance::Background(Color::Rgba(0.0, 1.0, 0.0, 1.0)));
 
-        println!("{:?}", ctrl.to_html("").to_string());
         assert!(ctrl.to_html("").to_string() == "<flo-label style=\"color: rgba(255, 0, 0, 1); background-color: rgba(0, 255, 0, 1);\"></flo-label>");
     }
 

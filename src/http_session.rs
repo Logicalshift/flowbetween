@@ -49,8 +49,8 @@ impl FlowBetweenSession {
             view_model: Arc::new(NullViewModel::new()),
             ui:         bind(Control::container()
                             .with(Bounds::fill_all())
-                            .with(ControlAttribute::Foreground(DEFAULT_TEXT))
-                            .with(ControlAttribute::Background(MAIN_BACKGROUND))
+                            .with(Appearance::Foreground(DEFAULT_TEXT))
+                            .with(Appearance::Background(MAIN_BACKGROUND))
                             .with_controller(&serde_json::to_string(&SubController::Editor).unwrap())),
             editor:     Arc::new(EditorController::new(animation)),
             images:     images

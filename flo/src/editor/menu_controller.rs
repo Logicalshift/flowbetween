@@ -67,7 +67,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                 .with(vec![
                     Control::empty()
                         .with(Bounds::next_horiz(6.0))
-                        .with(ControlAttribute::Background(MENU_BACKGROUND_ALT)),
+                        .with(Appearance::Background(MENU_BACKGROUND_ALT)),
                     Control::empty()
                         .with(Bounds::next_horiz(2.0)),
                     Control::label()
@@ -86,7 +86,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(TextAlign::Center)
                         .with(Bounds::next_horiz(80.0))
                 ])
-                .with(ControlAttribute::Background(MENU_BACKGROUND))
+                .with(Appearance::Background(MENU_BACKGROUND))
         }))
     }
 }

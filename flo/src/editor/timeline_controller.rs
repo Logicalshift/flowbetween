@@ -17,7 +17,7 @@ impl TimelineController {
     pub fn new() -> TimelineController {
         let ui = bind(Control::empty()
             .with(Bounds::fill_all())
-            .with(ControlAttribute::Background(TIMELINE_BACKGROUND)));
+            .with(Appearance::Background(TIMELINE_BACKGROUND)));
 
         TimelineController {
             view_model: Arc::new(NullViewModel::new()),
