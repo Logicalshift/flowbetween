@@ -875,6 +875,7 @@ function flowbetween(root_node) {
 
                 return true;
             });
+
         } else if (attribute['Badged']) {
             // The badged property updates the node class
             remove_action = on_property_change(controller_path, attribute['Badged'], is_badged => {
@@ -886,6 +887,30 @@ function flowbetween(root_node) {
 
                 return true;
             });
+
+        } else if (attribute['Value']) {
+            // Value just updates the flo_value property
+            remove_action = on_property_change(controller_path, attribute['Value'], new_value => {
+                node.flo_value = new_value;
+                return true;
+            });
+
+        } else if (attribute['Range']) {
+            // Range updates the min value and max value properties
+            let remove_action1 = on_property_change(controller_path, attribute['Range'][0], new_value => {
+                node.flo_min_value = new_value;
+                return true;
+            });
+            let remove_action2 = on_property_change(controller_path, attribute['Range'][1], new_value => {
+                node.flo_max_value = new_value;
+                return true;
+            });
+
+            remove_action = () => {
+                remove_action1();
+                remove_action2();
+            };
+
         }
 
         // Update the property that allows us to unbind the viewmodel
