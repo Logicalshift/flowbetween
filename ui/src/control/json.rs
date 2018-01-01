@@ -11,7 +11,7 @@ impl ToJsonValue for ControlAttribute {
         match self {
             &BoundingBox(ref bounds)            => json!({ "BoundingBox": bounds }),
             &Text(ref property)                 => json!({ "Text": property }),
-            &FontSize(size)                     => json!({ "FontSize": size }),
+            &FontAttribute(attr)                => json!({ "Font": attr }),
             &Selected(ref property)             => json!({ "Selected": property }),
             &Badged(ref property)               => json!({ "Badged": property }),
             &Id(ref id)                         => json!({ "Id": id }),

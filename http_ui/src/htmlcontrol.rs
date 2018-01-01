@@ -155,9 +155,7 @@ impl ToHtml for ControlAttribute {
                 DomAttribute::new("style", &format!("color: rgba({}, {}, {}, {});", r, g, b, a))
             },
 
-            &FontSize(size) => {
-                DomAttribute::new("style", &format!("font-size: {}px;", size))
-            },
+            &FontAttribute(ref font_attribute) => font_attribute.to_html_subcomponent(base_path, controller_path),
 
             &BoundingBox(_) => DomEmpty::new(),
             &Selected(_)    => DomEmpty::new(),
@@ -165,6 +163,18 @@ impl ToHtml for ControlAttribute {
             &Id(_)          => DomEmpty::new(),
             &Controller(_)  => DomEmpty::new(),
             &Action(_, _)   => DomEmpty::new()
+        }
+    }
+}
+
+impl ToHtml for FontAttr {
+    fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+        use ui::FontAttr::*;
+
+        match self {
+            &Size(size) => {
+                DomAttribute::new("style", &format!("font-size: {}px;", size))
+            }
         }
     }
 }

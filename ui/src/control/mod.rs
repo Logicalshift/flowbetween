@@ -7,6 +7,7 @@ mod actions;
 mod control;
 mod modifier;
 mod position;
+mod font_attr;
 mod attributes;
 
 pub use self::json::*;
@@ -18,6 +19,7 @@ pub use self::actions::*;
 pub use self::control::*;
 pub use self::modifier::*;
 pub use self::position::*;
+pub use self::font_attr::*;
 pub use self::attributes::*;
 
 #[cfg(test)]
@@ -145,11 +147,11 @@ mod test {
     #[test]
     fn controls_with_text_attributes_and_other_attributes_are_not_equal() {
         let text1   = Control::empty()
-            .with(ControlAttribute::FontSize(12.0))
+            .with(FontAttr::Size(12.0))
             .with("Text1")
             .with(Bounds::next_horiz(80.0));
         let text2   = Control::empty()
-            .with(ControlAttribute::FontSize(12.0))
+            .with(FontAttr::Size(12.0))
             .with("Text2")
             .with(Bounds::next_horiz(80.0));
 
@@ -159,11 +161,11 @@ mod test {
     #[test]
     fn controls_with_text_attributes_and_other_attributes_are_same() {
         let text1   = Control::empty()
-            .with(ControlAttribute::FontSize(12.0))
+            .with(FontAttr::Size(12.0))
             .with("Text1")
             .with(Bounds::next_horiz(80.0));
         let text2   = Control::empty()
-            .with(ControlAttribute::FontSize(12.0))
+            .with(FontAttr::Size(12.0))
             .with("Text1")
             .with(Bounds::next_horiz(80.0));
 

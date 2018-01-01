@@ -1,6 +1,7 @@
 use super::bounds::*;
 use super::control::*;
 use super::actions::*;
+use super::font_attr::*;
 
 use super::super::image;
 use super::super::property::*;
@@ -21,9 +22,8 @@ pub enum ControlAttribute {
     /// The text for this control
     Text(Property),
 
-    // TODO: font attribute
-    /// Specifies the font size in pixels
-    FontSize(f32),
+    /// Specifies the font properties of this control
+    FontAttribute(FontAttr),
 
     // TODO: state attribute
     /// Whether or not this control is selected
@@ -82,12 +82,12 @@ impl ControlAttribute {
     }
 
     ///
-    /// The font size represented by this attribute
+    /// The font atrributes represented by this attribute
     /// 
-    pub fn font_size(&self) -> Option<f32> {
+    pub fn font<'a>(&'a self) -> Option<&'a FontAttr> {
         match self {
-            &FontSize(size) => Some(size),
-            _               => None
+            &FontAttribute(ref attr)    => Some(attr),
+            _                           => None
         }
     }
 
@@ -199,7 +199,7 @@ impl ControlAttribute {
         match self {
             &BoundingBox(ref bounds)            => Some(bounds) != compare_to.bounding_box(),
             &Text(ref text)                     => Some(text) != compare_to.text(),
-            &FontSize(font_size)                => Some(font_size) != compare_to.font_size(),
+            &FontAttribute(ref font)            => Some(font) != compare_to.font(),
             &Id(ref id)                         => Some(id) != compare_to.id(),
             &Controller(ref controller)         => Some(controller.as_ref()) != compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),

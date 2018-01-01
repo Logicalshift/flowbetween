@@ -72,17 +72,17 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(Bounds::next_horiz(2.0)),
                     Control::label()
                         .with("FlowBetween")
-                        .with(ControlAttribute::FontSize(17.0))
+                        .with(FontAttr::Size(17.0))
                         .with(Bounds::next_horiz(160.0)),
                     
                     Control::empty()
                         .with(Bounds::stretch_horiz(1.0))
-                        .with(ControlAttribute::FontSize(13.0))
+                        .with(FontAttr::Size(13.0))
                         .with_controller(&tool_controller),
                     
                     Control::label()
                         .with(tool_name)
-                        .with(ControlAttribute::FontSize(14.0))
+                        .with(FontAttr::Size(14.0))
                         .with(Bounds::next_horiz(80.0))
                 ])
                 .with(ControlAttribute::Background(MENU_BACKGROUND))
