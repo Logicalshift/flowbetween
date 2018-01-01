@@ -5,12 +5,19 @@
 <script src="js/matrix.js"></script>
 <script src="js/canvas.js"></script>
 <script src="js/paint.js"></script>
+<script src="js/control.js"></script>
 <script src="js/flowbetween.js"></script>
 
 <template>
     <flo-button>
         <object data="/svg/controls/button.svg" onload="replace_object_with_content(this)" />
     </flo-button>
+</template>
+
+<template>
+    <flo-slider onload="flo_control.load_slider(this)">
+        <input type="range" class="flo-slider-input" min="0" max="100" value="50">
+    </flo-slider>
 </template>
 
 <div id="root"></div>

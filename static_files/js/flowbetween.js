@@ -293,7 +293,8 @@ function flowbetween(root_node) {
     ///
     let templating = (function() {
         /// Template DOM nodes, ready to be applied
-        let templates = {};
+        let templates           = {};
+        let template_on_load    = {};
 
         ///
         /// Loads the UI templates for a particular DOM node
@@ -303,17 +304,24 @@ function flowbetween(root_node) {
             templates = {};
 
             // Find the template elements beneath the root node
-            let rootTemplates = root_node.getElementsByTagName('TEMPLATE');
+            let root_templates = root_node.getElementsByTagName('TEMPLATE');
 
             // Each template can define the nodes we apply to flo-nodes, by example
-            for (let templateNumber=0; templateNumber<rootTemplates.length; ++templateNumber) {
-                let templateParent = rootTemplates[templateNumber].content;
+            for (let template_number=0; template_number<root_templates.length; ++template_number) {
+                let template_parent = root_templates[template_number].content;
                 
-                for (let nodeIndex=0; nodeIndex<templateParent.children.length; ++nodeIndex) {
-                    let templateNode = templateParent.children[nodeIndex];
-                    let templateName = templateNode.tagName.toLowerCase();
+                for (let nodeIndex=0; nodeIndex<template_parent.children.length; ++nodeIndex) {
+                    let template_node = template_parent.children[nodeIndex];
+                    let template_name = template_node.tagName.toLowerCase();
 
-                    templates[templateName] = [].slice.apply(templateNode.children);
+                    templates[template_name]        = [].slice.apply(template_node.children);
+                    template_on_load[template_name] = null;
+
+                    // There is an onload attribute but it's set to null regardless for things that don't normally support onload
+                    let on_load = template_node.getAttribute('onload');
+                    if (on_load) {
+                        template_on_load[template_name] = new Function(on_load);
+                    }
                 }
             }
         };
@@ -327,19 +335,25 @@ function flowbetween(root_node) {
         ///
         let apply_template = (node) => {
             // Get the template elements for this node
-            let templateForNode = templates[node.tagName.toLowerCase()];
+            let template_for_node   = templates[node.tagName.toLowerCase()];
+            let load_node           = template_on_load[node.tagName.toLowerCase()];
 
-            if (templateForNode) {
+            if (template_for_node) {
                 // Remove any existing template nodes
                 get_decorative_subnodes(node).forEach(decoration => node.removeChild(decoration));
 
-                // Copy each template element
-                let newNodes = templateForNode.map(templateNode => document.importNode(templateNode, true));
+                // Copy each template element into the document
+                let new_nodes = template_for_node.map(template_node => document.importNode(template_node, true));
 
                 // Add the nodes to this node
-                let firstNode = node.children.length > 0 ? node.children[0] : null;
+                let first_node = node.children.length > 0 ? node.children[0] : null;
 
-                newNodes.forEach(newNode => node.insertBefore(newNode, firstNode));
+                new_nodes.forEach(newNode => node.insertBefore(newNode, first_node));
+
+                // Call the load function with our newly set up node
+                if (load_node) {
+                    load_node.apply(node);
+                }
             }
         };
 
