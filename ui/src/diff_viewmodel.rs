@@ -346,5 +346,34 @@ mod test {
         assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(2))]);
     }
 
+    #[test]
+    fn changes_after_new_controller_are_picked_up() {
+        let controller = DynamicController::new();
+        controller.set_controls(Control::container());
+
+        let controller = Arc::new(controller);
+
+        let diff_viewmodel  = DiffViewModel::new(controller.clone());
+        let watcher         = diff_viewmodel.watch();
+
+        let updates = watcher.get_updates();
+        assert!(updates.len() == 0);
+
+        controller.set_controls(Control::container().with_controller("Subcontroller"));
+        controller.add_subcontroller("Subcontroller".to_string());
+        let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
+
+        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+
+        let (_updates, watcher) = diff_viewmodel.rotate_watch(watcher);
+
+        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(3));
+        let updates = watcher.get_updates();
+
+        assert!(updates.len() == 1);
+        assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
+        assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(3))]);
+    }
+
     // TODO: detects removed controller
 }
