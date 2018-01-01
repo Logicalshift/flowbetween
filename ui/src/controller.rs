@@ -354,9 +354,6 @@ mod test {
                             ])
                     ])
             ]);
-
-        println!("{:?}", controller_path_for_address(&control, &vec![1, 2]));
-        println!("{:?}", controller_path_for_address(&control, &vec![1, 2, 0]));
         
         assert!(controller_path_for_address(&control, &vec![1, 2]) == vec!["Test1", "Test2"]);
         assert!(controller_path_for_address(&control, &vec![1, 2, 0]) == vec!["Test1", "Test2", "Test3"]);

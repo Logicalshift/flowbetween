@@ -11,11 +11,34 @@ use percent_encoding::*;
 /// Trait implemented by things that can be represented by HTML
 ///
 pub trait ToHtml {
+    ///
+    /// Converts this object to HTML. The base path specifies where resources can be found.
+    /// 
     fn to_html(&self, base_path: &str) -> DomNode {
         self.to_html_subcomponent(base_path, "")
     }
 
+    ///
+    /// Converts this object to HTML, when it's a subcomponent. The controller path is a
+    /// string indicating where the controller for this item can be found.
+    /// 
     fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode;
+}
+
+///
+/// Appends a sub-controller to a controller path, returning the new controller path
+/// 
+pub fn append_component_to_controller_path<'a>(controller_path: &str, subcontroller_name: &str) -> String {
+    format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, DEFAULT_ENCODE_SET))
+}
+
+///
+/// Given a UI tree and an address, returns the controller path for that component
+/// 
+pub fn html_controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>) -> String {
+    let controller_path = controller_path_for_address(ui_tree, address);
+
+    controller_path.iter().fold(String::new(), |path, &component| append_component_to_controller_path(&path, component))
 }
 
 ///
