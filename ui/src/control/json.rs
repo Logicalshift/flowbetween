@@ -2,6 +2,7 @@ use super::control::*;
 use super::attributes::*;
 use super::super::json::*;
 
+use serde_json;
 use serde_json::*;
 
 impl ToJsonValue for ControlAttribute {
@@ -11,17 +12,19 @@ impl ToJsonValue for ControlAttribute {
         use State::*;
 
         match self {
-            &BoundingBox(ref bounds)            => json!({ "BoundingBox": bounds }),
-            &Text(ref property)                 => json!({ "Text": property }),
-            &FontAttr(attr)                     => json!({ "Font": attr }),
-            &StateAttr(Selected(ref property))  => json!({ "Selected": property }),
-            &StateAttr(Badged(ref property))    => json!({ "Badged": property }),
-            &Id(ref id)                         => json!({ "Id": id }),
-            &Controller(ref name)               => json!({ "Controller": name }),
-            &Action(ref trigger, ref action)    => json!({ "Action": (trigger, action) }),
+            &BoundingBox(ref bounds)                => json!({ "BoundingBox": bounds }),
+            &Text(ref property)                     => json!({ "Text": property }),
+            &FontAttr(attr)                         => json!({ "Font": attr }),
+            &StateAttr(Selected(ref property))      => json!({ "Selected": property }),
+            &StateAttr(Badged(ref property))        => json!({ "Badged": property }),
+            &StateAttr(Value(ref property))         => json!({ "Value": property }),
+            &StateAttr(Range((ref min, ref max)))   => json!({ "Range": [min, max] }),
+            &Id(ref id)                             => json!({ "Id": id }),
+            &Controller(ref name)                   => json!({ "Controller": name }),
+            &Action(ref trigger, ref action)        => json!({ "Action": (trigger, action) }),
 
-            &SubComponents(ref components)      => {
-                let json_components: Vec<Value> = components.iter()
+            &SubComponents(ref components)          => {
+                let json_components: Vec<serde_json::Value> = components.iter()
                     .map(|component| component.to_json())
                     .collect();
 
@@ -41,7 +44,7 @@ impl ToJsonValue for ControlAttribute {
             &AppearanceAttr(Background(ref color))  => json!({ "Background": color.to_rgba() }),
             &AppearanceAttr(Foreground(ref color))  => json!({ "Foreground": color.to_rgba() }),
 
-            &Canvas(ref canvas_resource)        => {
+            &Canvas(ref canvas_resource)            => {
                 json!({
                     "Image": {
                         "id":   canvas_resource.id(),

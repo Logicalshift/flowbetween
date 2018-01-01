@@ -12,7 +12,13 @@ pub enum State {
     Selected(Property),
 
     /// Whether or not this control has a badge attached to it
-    Badged(Property)
+    Badged(Property),
+
+    /// The value of this control (when it is not being edited)
+    Value(Property),
+
+    /// The range values that this control can be set to
+    Range((Property, Property))
 }
 
 impl Modifier<Control> for State {
