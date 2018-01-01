@@ -1,5 +1,4 @@
 use super::super::menu::*;
-use super::super::tools::*;
 use super::super::style::*;
 use super::super::viewmodel::*;
 
@@ -27,7 +26,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     /// 
     pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> MenuController<Anim> {
         // Create the UI
-        let ui          = Self::create_ui(&anim_view_model.tools().effective_tool, &anim_view_model.menu().controller);
+        let ui          = Self::create_ui(&anim_view_model.menu().controller);
 
         // Create the controllers for the different menu modes
         let brush       = anim_view_model.brush();
@@ -52,13 +51,11 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     ///
     /// Creates the UI binding for this controller
     /// 
-    fn create_ui(effective_tool: &BindRef<Option<Arc<Tool<Anim>>>>, tool_controller: &BindRef<String>) -> BindRef<Control> {
-        let effective_tool  = effective_tool.clone();
+    fn create_ui(tool_controller: &BindRef<String>) -> BindRef<Control> {
         let tool_controller = tool_controller.clone();
 
         BindRef::from(computed(move || {
             // Get properties
-            let tool_name       = effective_tool.get().map(|tool| tool.tool_name()).unwrap_or("No tool".to_string());
             let tool_controller = tool_controller.get();
 
             // The control tree for the menu
@@ -79,12 +76,6 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(Bounds::stretch_horiz(1.0))
                         .with(Font::Size(13.0))
                         .with_controller(&tool_controller),
-                    
-                    Control::label()
-                        .with(tool_name)
-                        .with(Font::Size(14.0))
-                        .with(TextAlign::Center)
-                        .with(Bounds::next_horiz(80.0))
                 ])
                 .with(Appearance::Background(MENU_BACKGROUND))
         }))

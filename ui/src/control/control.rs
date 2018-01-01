@@ -52,6 +52,11 @@ impl Control {
         Self::new(ControlType::Canvas)
     }
 
+    /// Creates a new slider control
+    pub fn slider() -> Control {
+        Self::new(ControlType::Slider)
+    }
+
     /// Adds an attribute to this control
     pub fn add_attribute(&mut self, attribute: ControlAttribute) {
         self.attributes.push(attribute);

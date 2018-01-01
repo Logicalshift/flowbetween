@@ -13,9 +13,11 @@ pub const INKMENUCONTROLLER: &str = "InkMenu";
 /// Controller used for the ink tool
 /// 
 pub struct InkMenuController {
+    size:       Binding<f32>,
+
     canvases:   Arc<ResourceManager<BindingCanvas>>,
     ui:         BindRef<Control>,
-    view_model: Arc<NullViewModel>
+    view_model: Arc<DynamicViewModel>
 }
 
 impl InkMenuController {
@@ -23,28 +25,81 @@ impl InkMenuController {
     /// Creates a new ink menu controller
     /// 
     pub fn new(size: &Binding<f32>, opacity: &Binding<f32>, color: &Binding<Color>) -> InkMenuController {
+        // Set up the view model
+        let view_model = Arc::new(DynamicViewModel::new());
+
+        let vm_size = size.clone();
+        view_model.set_computed("Size", move || PropertyValue::Float(vm_size.get() as f64));
+
         // Create the canvases
         let canvases = Arc::new(ResourceManager::new());
 
-        let preview = Self::brush_preview(size, opacity, color);
-        let preview = canvases.register(preview);
-        canvases.assign_name(&preview, "Preview");
+        let brush_preview   = Self::brush_preview(size, opacity, color);
+        let brush_preview   = canvases.register(brush_preview);
+        canvases.assign_name(&brush_preview, "BrushPreview");
+
+        let size_preview    = Self::size_preview(size);
+        let size_preview    = canvases.register(size_preview);
+        canvases.assign_name(&size_preview, "SizePreview");
 
         // Generate the UI
         let ui = BindRef::from(bind(Control::container()
                 .with(Bounds::fill_all())
                 .with(vec![
+                    Control::label()
+                        .with("Ink:")
+                        .with(TextAlign::Right)
+                        .with(Bounds::next_horiz(48.0)),
+                    Control::empty()
+                        .with(Bounds::next_horiz(8.0)),
                     Control::canvas()
-                        .with(preview)
-                        .with(Bounds::next_horiz(64.0))
+                        .with(brush_preview)
+                        .with(Bounds::next_horiz(64.0)),
+
+                    Control::empty()
+                        .with(Bounds::next_horiz(8.0)),
+
+                    Control::canvas()
+                        .with(size_preview)
+                        .with(Bounds::next_horiz(32.0)),
+                    Control::empty()
+                        .with(Bounds::next_horiz(4.0)),
+                    Control::slider()
+                        .with(State::Range((0.0.to_property(), 100.0.to_property())))
+                        .with(State::Value(Property::Bind("Size".to_string())))
+                        .with(Bounds::next_horiz(96.0))
+                        .with((ActionTrigger::EditValue, "ChangeSize".to_string()))
+                        .with((ActionTrigger::SetValue, "ChangeSize".to_string()))
                 ])));
 
         // Finalize the control
         InkMenuController {
+            size:       size.clone(),
+
             canvases:   canvases, 
             ui:         ui,
-            view_model: Arc::new(NullViewModel::new())
+            view_model: view_model
         }
+    }
+
+    ///
+    /// Creates the size preview canvas
+    /// 
+    pub fn size_preview(size: &Binding<f32>) -> BindingCanvas {
+        let size            = size.clone();
+        let control_height  = 32.0;
+
+        BindingCanvas::with_drawing(move |gc| {
+            let size = size.get();
+
+            gc.canvas_height(control_height);
+            gc.fill_color(Color::Rgba(0.8, 0.8, 0.8, 1.0));
+
+            // TODO: make this a circle rather than a rect
+            gc.new_path();
+            gc.rect(-size/2.0, -size/2.0, size/2.0, size/2.0);
+            gc.fill();
+        })
     }
 
     ///
@@ -98,5 +153,17 @@ impl Controller for InkMenuController {
 
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
         Some(self.canvases.clone())
+    }
+
+    fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
+        use ui::ActionParameter::*;
+
+        match (action_id, action_parameter) {
+            ("ChangeSize", &Value(PropertyValue::Float(new_size))) => {
+                self.size.clone().set(new_size as f32);
+            },
+
+            _ => ()
+        }
     }
 }

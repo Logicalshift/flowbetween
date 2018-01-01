@@ -34,5 +34,5 @@ pub enum ActionParameter {
     Paint(PaintDevice, Vec<Painting>),
 
     /// The new value for an item
-    Value(Property)
+    Value(PropertyValue)
 }
