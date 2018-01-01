@@ -149,11 +149,11 @@ mod test {
     #[test]
     fn controls_with_text_attributes_and_other_attributes_are_not_equal() {
         let text1   = Control::empty()
-            .with(FontAttr::Size(12.0))
+            .with(Font::Size(12.0))
             .with("Text1")
             .with(Bounds::next_horiz(80.0));
         let text2   = Control::empty()
-            .with(FontAttr::Size(12.0))
+            .with(Font::Size(12.0))
             .with("Text2")
             .with(Bounds::next_horiz(80.0));
 
@@ -163,11 +163,11 @@ mod test {
     #[test]
     fn controls_with_text_attributes_and_other_attributes_are_same() {
         let text1   = Control::empty()
-            .with(FontAttr::Size(12.0))
+            .with(Font::Size(12.0))
             .with("Text1")
             .with(Bounds::next_horiz(80.0));
         let text2   = Control::empty()
-            .with(FontAttr::Size(12.0))
+            .with(Font::Size(12.0))
             .with("Text1")
             .with(Bounds::next_horiz(80.0));
 

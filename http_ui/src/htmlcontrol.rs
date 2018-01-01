@@ -128,7 +128,7 @@ impl ToHtml for ControlAttribute {
 
             &AppearanceAttr(ref appearance) => appearance.to_html_subcomponent(base_path, controller_path),
 
-            &FontAttribute(ref font_attribute) => font_attribute.to_html_subcomponent(base_path, controller_path),
+            &FontAttr(ref font_attribute)   => font_attribute.to_html_subcomponent(base_path, controller_path),
 
             &BoundingBox(_) => DomEmpty::new(),
             &Selected(_)    => DomEmpty::new(),
@@ -179,9 +179,9 @@ impl ToHtml for Appearance {
     }
 }
 
-impl ToHtml for FontAttr {
+impl ToHtml for Font {
     fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode {
-        use ui::FontAttr::*;
+        use ui::Font::*;
 
         match self {
             &Size(size)     => DomAttribute::new("style", &format!("font-size: {}px;", size)),

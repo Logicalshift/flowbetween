@@ -22,7 +22,7 @@ pub enum ControlAttribute {
     Text(Property),
 
     /// Specifies the font properties of this control
-    FontAttribute(FontAttr),
+    FontAttr(Font),
 
     /// Specifies the appearance of this control
     AppearanceAttr(Appearance),
@@ -76,10 +76,10 @@ impl ControlAttribute {
     ///
     /// The font atrributes represented by this attribute
     /// 
-    pub fn font<'a>(&'a self) -> Option<&'a FontAttr> {
+    pub fn font<'a>(&'a self) -> Option<&'a Font> {
         match self {
-            &FontAttribute(ref attr)    => Some(attr),
-            _                           => None
+            &FontAttr(ref attr) => Some(attr),
+            _                   => None
         }
     }
 
@@ -171,7 +171,7 @@ impl ControlAttribute {
         match self {
             &BoundingBox(ref bounds)            => Some(bounds) != compare_to.bounding_box(),
             &Text(ref text)                     => Some(text) != compare_to.text(),
-            &FontAttribute(ref font)            => Some(font) != compare_to.font(),
+            &FontAttr(ref font)                 => Some(font) != compare_to.font(),
             &Id(ref id)                         => Some(id) != compare_to.id(),
             &Controller(ref controller)         => Some(controller.as_ref()) != compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),
