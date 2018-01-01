@@ -53,15 +53,17 @@ impl InkMenuController {
     pub fn brush_preview(_size: &Binding<f32>, _opacity: &Binding<f32>, _color: &Binding<Color>) -> BindingCanvas {
         let control_height  = 32.0;
         let control_width   = 64.0;
+        let preview_width   = control_width - 8.0;
+        let preview_height  = control_height - 12.0;
 
         BindingCanvas::with_drawing(move |gc| {
             // Canvas height should match the control height
             gc.canvas_height(control_height);
-            gc.center_region(0.0, 0.0, control_width, control_height);
+            gc.center_region(-control_width/2.0, -control_height/2.0, control_width/2.0, control_height/2.0);
 
             // Clear the background
             gc.fill_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
-            gc.rect(0.0, 0.0, control_width, control_height);
+            gc.rect(-control_width/2.0, -control_height/2.0, control_width/2.0, control_height/2.0);
             gc.fill();
 
             // Create an ink brush
@@ -71,10 +73,10 @@ impl InkMenuController {
             let mut points = vec![];
             for point in 0..100 {
                 let point   = (point as f32)/100.0;
-                let offset  = (point*f32::consts::PI).cos();
+                let offset  = -(point*f32::consts::PI*1.5).cos();
 
                 points.push(BrushPoint {
-                    position: (point*control_height, (offset*control_height/2.0)+(control_height/2.0)),
+                    position: (point*preview_width-(preview_width/2.0), offset*preview_height/2.0),
                     pressure: point
                 })
             }
