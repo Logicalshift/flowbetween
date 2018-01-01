@@ -22,7 +22,6 @@ mod event;
 mod htmlcontrol;
 mod ui_handler;
 mod null_session;
-pub mod viewmodel;
 pub mod minidom;
 pub mod canvas_body;
 pub mod canvas_state;

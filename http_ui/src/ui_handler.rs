@@ -5,7 +5,6 @@ use std::collections::*;
 use super::event::*;
 use super::update::*;
 use super::session::*;
-use super::viewmodel::*;
 use super::htmlcontrol::*;
 use super::canvas_body::*;
 use super::session_state::*;

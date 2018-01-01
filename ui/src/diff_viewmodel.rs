@@ -1,6 +1,7 @@
 use binding::*;
 
 use super::property::*;
+use super::viewmodel::*;
 use super::controller::*;
 use super::viewmodel_update::*;
 
@@ -30,6 +31,9 @@ pub struct DiffViewModel {
 /// Watches for changes in a viewmodel
 ///
 pub struct WatchViewModel {
+    /// The subcontrollers that were watched by this call
+    subcontrollers: Vec<String>,
+
     /// The controller to watch
     controller: Weak<Controller>,
 
@@ -85,6 +89,7 @@ impl WatchViewModel {
         // By default, the things we watch are empty
         let mut subcontroller_watchers      = vec![];
         let mut watcher_lifetimes           = vec![];
+        let mut subcontrollers              = vec![];
         let mut changed_properties          = HashMap::new();
 
         if let Some(controller) = controller.upgrade() {
@@ -92,7 +97,7 @@ impl WatchViewModel {
             let ui              = controller.ui().get();
             let viewmodel       = controller.get_viewmodel();
             let properties      = viewmodel.get_property_names();
-            let subcontrollers  = ui.all_controllers();
+            subcontrollers      = ui.all_controllers();
 
             // Create a 'changed' value for each property
             changed_properties = properties.iter()
@@ -114,7 +119,8 @@ impl WatchViewModel {
         }
 
         // Result is a new watch view model
-        WatchViewModel { 
+        WatchViewModel {
+            subcontrollers:         subcontrollers,
             subcontroller_watchers: subcontroller_watchers,
             changed_properties:     changed_properties,
             watcher_lifetimes:      watcher_lifetimes,
@@ -162,6 +168,41 @@ impl WatchViewModel {
     }
 
     ///
+    /// Retrieves any updates caused by new subcontrollers being added to the UI 
+    /// 
+    pub fn get_new_controller_updates(&self) -> Vec<ViewModelUpdate> {
+        if let Some(controller) = self.controller.upgrade() {
+            // Get the current set of subcontrollers
+            let ui              = controller.ui().get();
+            let subcontrollers  = ui.all_controllers();
+
+            // Find any subcontrollers that were not in the list
+            let existing_controllers: HashSet<&String>  = self.subcontrollers.iter().collect();
+            let new_controllers: Vec<&String>           = subcontrollers.iter().filter(|controller| !existing_controllers.contains(controller)).collect();
+
+            // For any new controller, the entire viewmodel is different
+            let mut result = vec![];
+            for controller_name in new_controllers {
+                let new_controller  = controller.get_subcontroller(controller_name);
+
+                if let Some(new_controller) = new_controller {
+                    let tree_updates    = viewmodel_update_controller_tree(&*new_controller);
+
+                    for mut update in tree_updates {
+                        update.add_to_start_of_path(controller_name.clone());
+                        result.push(update);
+                    }
+                }
+            }
+
+            result
+        } else {
+            // Controller has been released since this was made
+            vec![]
+        }
+    }
+
+    ///
     /// Finds all of the updates for this viewmodel
     ///
     pub fn get_updates(&self) -> Vec<ViewModelUpdate> {
@@ -180,6 +221,9 @@ impl WatchViewModel {
             all_updates.extend(updates);
         });
 
+        // If there are any new subcontrollers, add them to the update list
+        all_updates.extend(self.get_new_controller_updates());
+
         // Return all the updates we found
         all_updates
     }
@@ -191,12 +235,64 @@ impl Drop for WatchViewModel {
     }
 }
 
+///
+/// Returns an update for all of the keys in a particular viewmodel
+///
+pub fn viewmodel_update_all(controller_path: Vec<String>, viewmodel: &ViewModel) -> ViewModelUpdate {
+    let keys        = viewmodel.get_property_names();
+    let mut updates = vec![];
+
+    for property_name in keys.iter() {
+        let value = viewmodel.get_property(&*property_name);
+        updates.push(((*property_name).clone(), value.get()));
+    }
+
+    return ViewModelUpdate::new(controller_path, updates);
+}
+
+///
+/// Generates the updates to set the viewmodel for an entire controller tree
+///
+pub fn viewmodel_update_controller_tree(controller: &Controller) -> Vec<ViewModelUpdate> {
+    let mut result = vec![];
+
+    // Push the controllers to the result
+    // Rust could probably capture the 'result' variable in the closure exactly liek this if it were smarter
+    fn add_controller_to_result(controller: &Controller, path: &mut Vec<String>, result: &mut Vec<ViewModelUpdate>) {
+        // Fetch the update for the viewmodel for this controller
+        let viewmodel           = controller.get_viewmodel();
+        let viewmodel_update    = viewmodel_update_all(path.clone(), &*viewmodel);
+
+        // Add to the result if there are any entries in this viewmodel
+        if viewmodel_update.updates().len() > 0 {
+            result.push(viewmodel_update);
+        }
+
+        // Visit any subcontrollers found in this controllers UI
+        let controller_ui   = controller.ui().get();
+        let subcontrollers  = controller_ui.all_controllers();
+
+        for subcontroller_name in subcontrollers.iter() {
+            if let Some(subcontroller) = controller.get_subcontroller(subcontroller_name) {
+                // Recursively process this subcontroller
+                path.push(subcontroller_name.clone());
+                add_controller_to_result(&*subcontroller, path, result);
+                path.pop();
+            }
+        }
+    }
+
+    // Recursively add the controllers starting at the current one
+    add_controller_to_result(controller, &mut vec![], &mut result);
+
+    result
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     use super::super::control::*;
-    use super::super::viewmodel::*;
     use super::super::dynamic_viewmodel::*;
 
     ///
@@ -373,6 +469,111 @@ mod test {
         assert!(updates.len() == 1);
         assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
         assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(3))]);
+    }
+
+    struct TestViewModel;
+
+    struct TestController {
+        model_controler: Arc<ModelController>,
+        view_model: Arc<NullViewModel>
+    }
+    
+    struct ModelController {
+        view_model: Arc<TestViewModel>
+    }
+
+    impl TestController {
+        pub fn new() -> TestController {
+            TestController { 
+                model_controler: Arc::new(ModelController::new()), 
+                view_model: Arc::new(NullViewModel::new()) 
+            }
+        }
+    }
+
+    impl ModelController {
+        pub fn new() -> ModelController {
+            ModelController { view_model: Arc::new(TestViewModel) }
+        }
+    }
+
+    impl Controller for TestController {
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::from(bind(Control::container().with(vec![
+                Control::empty().with_controller("Model1"),
+                Control::empty().with_controller("Model2")
+            ])))
+        }
+
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+            Some(self.model_controler.clone())
+        }
+
+        fn get_viewmodel(&self) -> Arc<ViewModel> {
+            self.view_model.clone()
+        }
+    }
+
+    impl Controller for ModelController {
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::from(bind(Control::label()))
+        }
+
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+            None
+        }
+
+        fn get_viewmodel(&self) -> Arc<ViewModel> {
+            self.view_model.clone()
+        }
+    }
+
+    impl ViewModel for TestViewModel {
+        fn get_property(&self, property_name: &str) -> BindRef<PropertyValue> {
+            BindRef::from(bind(PropertyValue::String(property_name.to_string())))
+        }
+
+        fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
+        }
+
+        fn get_property_names(&self) -> Vec<String> {
+            vec![ "Test1".to_string(), "Test2".to_string(), "Test3".to_string() ]
+        }
+    }
+    
+    #[test]
+    pub fn can_generate_viewmodel_update_all() {
+        let viewmodel   = TestViewModel;
+        let update      = viewmodel_update_all(vec!["Test".to_string(), "Path".to_string()], &viewmodel);
+
+        assert!(update.controller_path() == &vec!["Test".to_string(), "Path".to_string()]);
+        assert!(update.updates() == &vec![
+            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+    }
+    
+    #[test]
+    pub fn can_generate_controller_update_all() {
+        let controller  = Arc::new(TestController::new());
+        let update      = viewmodel_update_controller_tree(&*controller);
+
+        assert!(update.len() == 2);
+
+        assert!(update[0].controller_path() == &vec!["Model1".to_string()]);
+        assert!(update[0].updates() == &vec![
+            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+
+        assert!(update[1].controller_path() == &vec!["Model2".to_string()]);
+        assert!(update[1].updates() == &vec![
+            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
     }
 
     // TODO: detects removed controller
