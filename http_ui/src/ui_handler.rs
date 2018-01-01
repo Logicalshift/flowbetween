@@ -179,9 +179,15 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 
         if ui_differences.len() > 0 {
             // Turn the control differences into HTML differences
-            // TODO: the UI diffs need to know the controller path
             let updates: Vec<HtmlDiff> = ui_differences.into_iter()
-                .map(|ui_diff| HtmlDiff::new(ui_diff.address().clone(), ui_diff.replacement(), ui_diff.replacement().to_html(&base_path).to_string()))
+                .map(|ui_diff| {
+                    let address         = ui_diff.address().clone();
+                    let replacement     = ui_diff.replacement();
+                    let controller_path = html_controller_path_for_address(&ui_after_event, &address);
+                    let html            = replacement.to_html_subcomponent(&base_path, &controller_path);
+
+                    HtmlDiff::new(address, replacement, html.to_string())
+                })
                 .collect();
 
             // Add the new update to the response
