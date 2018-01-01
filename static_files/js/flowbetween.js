@@ -547,7 +547,6 @@ function flowbetween(root_node) {
         let parent_node             = null;
         let current_data            = root_control_data;
         let controller_path         = [];
-        let next_controller_path    = [];
 
         address.forEach(index => {
             // Find the data for the subcomponent at this address
@@ -556,13 +555,9 @@ function flowbetween(root_node) {
             current_data    = attributes.subcomponents()[index];
 
             // If this component has a controller associated with it, that's the controller for any subcomponents
-            // (We need to juggle the next_controller_path to avoid an 'off by one' error here: the node that specifies the controller does not have that controller)
-            controller_path = next_controller_path;
-
             let controller = attributes.controller();
             if (controller) {
-                next_controller_path = controller_path.slice();
-                next_controller_path.push(controller);
+                controller_path.push(controller);
             }
         });
 

@@ -77,6 +77,30 @@ fn get_full_ui_tree(base_controller: &Arc<Controller>) -> Control {
 }
 
 ///
+/// Given an address (a list of subcomponent node indices), finds the
+/// path through the controllers that will supply the controller that
+/// owns that node.
+/// 
+pub fn controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>) -> Vec<&'a str> {
+    let mut result          = vec![];
+    let mut current_node    = ui_tree;
+
+    for index in address.iter() {
+        // Append the controller to the path
+        if let Some(controller) = current_node.controller() {
+            result.push(controller);
+        }
+
+        // Move to the next node along this address
+        if let Some(subcomponents) = current_node.subcomponents() {
+            current_node = &subcomponents[*index as usize];
+        }
+    }
+
+    result
+}
+
+///
 /// Returns a bound control that expands the content of any 
 /// sub-controllers that might be present.
 ///
@@ -266,5 +290,75 @@ mod test {
             .with(vec![
                 Control::label().with("Changed")
             ]));
+    }
+
+    #[test]
+    fn controller_path_for_empty_address_is_empty() {
+        let control = Control::container()
+            .with_controller("Test1")
+            .with(vec![
+                Control::empty(),
+                Control::container()
+                    .with_controller("Test2")
+                    .with(vec![
+                        Control::empty(),
+                        Control::empty(),
+                        Control::container()
+                            .with_controller("Test3")
+                            .with(vec![
+                                Control::empty()
+                            ])
+                    ])
+            ]);
+        
+        assert!(controller_path_for_address(&control, &vec![]).len() == 0);
+    }
+
+    #[test]
+    fn controller_path_for_specific_control_is_right() {
+        let control = Control::container()
+            .with_controller("Test1")
+            .with(vec![
+                Control::empty(),
+                Control::container()
+                    .with_controller("Test2")
+                    .with(vec![
+                        Control::empty(),
+                        Control::empty(),
+                        Control::container()
+                            .with_controller("Test3")
+                            .with(vec![
+                                Control::empty()
+                            ])
+                    ])
+            ]);
+        
+        assert!(controller_path_for_address(&control, &vec![0]) == vec!["Test1"]);
+    }
+
+    #[test]
+    fn controller_path_for_control_with_controller_skips_controller() {
+        let control = Control::container()
+            .with_controller("Test1")
+            .with(vec![
+                Control::empty(),
+                Control::container()
+                    .with_controller("Test2")
+                    .with(vec![
+                        Control::empty(),
+                        Control::empty(),
+                        Control::container()
+                            .with_controller("Test3")
+                            .with(vec![
+                                Control::empty()
+                            ])
+                    ])
+            ]);
+
+        println!("{:?}", controller_path_for_address(&control, &vec![1, 2]));
+        println!("{:?}", controller_path_for_address(&control, &vec![1, 2, 0]));
+        
+        assert!(controller_path_for_address(&control, &vec![1, 2]) == vec!["Test1", "Test2"]);
+        assert!(controller_path_for_address(&control, &vec![1, 2, 0]) == vec!["Test1", "Test2", "Test3"]);
     }
 }
