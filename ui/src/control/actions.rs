@@ -1,4 +1,5 @@
 use super::paint::*;
+use super::super::property::*;
 
 ///
 /// Description of what should trigger an action
@@ -12,7 +13,10 @@ pub enum ActionTrigger {
     /// In the event a control has multiple devices associated with it, we only track
     /// paint strokes from a single device (ie, you have to finish a paint stroke before
     /// you can begin a new one with a different input method)
-    Paint(PaintDevice)
+    Paint(PaintDevice),
+
+    /// The value of an item has been edited and should be updated
+    SetValue
 }
 
 ///
@@ -24,5 +28,8 @@ pub enum ActionParameter {
     None,
 
     /// Painting information
-    Paint(PaintDevice, Vec<Painting>)
+    Paint(PaintDevice, Vec<Painting>),
+
+    /// The new value for an item
+    Value(Property)
 }
