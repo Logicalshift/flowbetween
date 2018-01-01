@@ -43,6 +43,10 @@ html, body {
     height: 100%;
 }
 
+#root .text {
+    width: 100%
+}
+
 flo-button flo-empty,
 flo-button flo-container,
 flo-button flo-label {

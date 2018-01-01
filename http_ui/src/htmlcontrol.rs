@@ -100,7 +100,10 @@ impl ToHtml for ControlAttribute {
                 result
             },
 
-            &Text(ref text) => DomText::new(&text.to_string()),
+            &Text(ref text) => DomElement::new("div").with(vec![
+                DomAttribute::new("class", "text"),
+                DomText::new(&text.to_string())
+            ]),
 
             &Image(ref image) => {
                 // Use the image's name if it has one, otherwise the ID

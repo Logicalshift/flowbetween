@@ -12,6 +12,9 @@ pub struct DomElement {
 }
 
 impl DomElement {
+    ///
+    /// Creates a new DOM element with the specified name
+    /// 
     pub fn new(name: &str) -> DomNode {
         DomNode::new(DomElement {
             name:       String::from(name),

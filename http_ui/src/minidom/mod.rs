@@ -161,6 +161,16 @@ impl DomNode {
     pub fn new<T: 'static+DomNodeData>(data: T) -> DomNode {
         DomNode(Arc::new(RwLock::new(data)))
     }
+
+    ///
+    /// Creates a new DOM node with the specified child nodes appended
+    /// 
+    pub fn with(mut self, new_child_nodes: Vec<DomNode>) -> DomNode {
+        for node in new_child_nodes {
+            self.append_child_node(node)
+        }
+        self
+    }
 }
 
 impl DomNodeData for DomNode {
