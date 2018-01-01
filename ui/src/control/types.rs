@@ -16,5 +16,8 @@ pub enum ControlType {
     Label,
 
     /// Allows arbitrary rendering using a canvas resource
-    Canvas
+    Canvas,
+
+    /// Allows picking a value by dragging left or right
+    Slider
 }
