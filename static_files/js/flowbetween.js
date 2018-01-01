@@ -829,6 +829,12 @@ function flowbetween(root_node) {
 
         } else if (action_type['Paint']) {
             flo_paint.wire_paint(action_type['Paint'], action_name, node, controller_path);
+        
+        } else if (action_type === 'EditValue') {
+            node.flo_edit_value = new_property_value => perform_action(controller_path, action_name, { 'Value': new_property_value });
+
+        } else if (action_type === 'SetValue') {
+            node.flo_set_value = new_property_value => perform_action(controller_path, action_name, { 'Value': new_property_value });
 
         } else {
             warn('Unknown action type: ' + action_type);
