@@ -65,7 +65,7 @@ impl InkMenuController {
                     Control::empty()
                         .with(Bounds::next_horiz(4.0)),
                     Control::slider()
-                        .with(State::Range((0.0.to_property(), 100.0.to_property())))
+                        .with(State::Range((0.0.to_property(), 50.0.to_property())))
                         .with(State::Value(Property::Bind("Size".to_string())))
                         .with(Bounds::next_horiz(96.0))
                         .with((ActionTrigger::EditValue, "ChangeSize".to_string()))
