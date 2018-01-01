@@ -119,7 +119,7 @@ impl WatchViewModel {
             changed_properties:     changed_properties,
             watcher_lifetimes:      watcher_lifetimes,
 
-            controller: controller.clone() 
+            controller:             controller.clone() 
         }
     }
 
@@ -205,7 +205,7 @@ mod test {
     pub struct DynamicController {
         controls: Arc<Binding<Control>>,
         view_model: Arc<DynamicViewModel>,
-        subcontrollers: HashMap<String, Arc<DynamicController>>
+        subcontrollers: Mutex<HashMap<String, Arc<DynamicController>>>
     }
 
     impl DynamicController {
@@ -213,16 +213,16 @@ mod test {
             DynamicController { 
                 controls:       Arc::new(bind(Control::empty())),
                 view_model:     Arc::new(DynamicViewModel::new()),
-                subcontrollers: HashMap::new()
+                subcontrollers: Mutex::new(HashMap::new())
             }
         }
 
-        pub fn set_controls(&mut self, new_control: Control) {
+        pub fn set_controls(&self, new_control: Control) {
             (*self.controls).clone().set(new_control);
         }
 
-        pub fn add_subcontroller(&mut self, name: String) {
-            self.subcontrollers.insert(name, Arc::new(DynamicController::new()));
+        pub fn add_subcontroller(&self, name: String) {
+            self.subcontrollers.lock().unwrap().insert(name, Arc::new(DynamicController::new()));
         }
     }
 
@@ -232,7 +232,7 @@ mod test {
         }
 
         fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
-            let res = self.subcontrollers.get(id).map(|x| x.clone());
+            let res = self.subcontrollers.lock().unwrap().get(id).map(|x| x.clone());
 
             if let Some(res) = res {
                 Some(res)
@@ -299,7 +299,7 @@ mod test {
 
     #[test]
     fn subcontroller_changes_are_picked_up() {
-        let mut controller = DynamicController::new();
+        let controller = DynamicController::new();
         controller.set_controls(Control::container().with_controller("Subcontroller"));
         controller.add_subcontroller("Subcontroller".to_string());
 
@@ -320,6 +320,31 @@ mod test {
         assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(2))]);
     }
 
-    // TODO: detects new controller
+    #[test]
+    fn new_controller_is_picked_up() {
+        let controller = DynamicController::new();
+        controller.set_controls(Control::container());
+
+        let controller = Arc::new(controller);
+
+        let diff_viewmodel  = DiffViewModel::new(controller.clone());
+        let watcher         = diff_viewmodel.watch();
+
+        let updates = watcher.get_updates();
+        assert!(updates.len() == 0);
+
+        controller.set_controls(Control::container().with_controller("Subcontroller"));
+        controller.add_subcontroller("Subcontroller".to_string());
+        let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
+
+        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+
+        let updates = watcher.get_updates();
+
+        assert!(updates.len() == 1);
+        assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
+        assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(2))]);
+    }
+
     // TODO: detects removed controller
 }
