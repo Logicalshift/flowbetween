@@ -15,6 +15,9 @@ pub enum ActionTrigger {
     /// you can begin a new one with a different input method)
     Paint(PaintDevice),
 
+    /// The value of an item is being edited and has a new intermediate value
+    EditValue,
+
     /// The value of an item has been edited and should be updated
     SetValue
 }
