@@ -17,3 +17,16 @@ pub struct BrushProperties {
     /// The colour of the brush stroke
     pub color: Color
 }
+
+impl BrushProperties {
+    ///
+    /// Creates a new brush properties object with the settings at their defaults
+    /// 
+    pub fn new() -> BrushProperties {
+        BrushProperties {
+            size:       10.0,
+            opacity:    1.0,
+            color:      Color::Rgba(0.0, 0.0, 0.0, 1.0)
+        }
+    }
+}

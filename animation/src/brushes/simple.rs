@@ -18,9 +18,9 @@ impl SimpleBrush {
 }
 
 impl Brush for SimpleBrush {
-    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives) {
+    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties) {
         gc.blend_mode(BlendMode::SourceOver);
-        gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+        gc.stroke_color(properties.color);
     }
 
     ///

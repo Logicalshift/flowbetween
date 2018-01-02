@@ -24,6 +24,9 @@ pub struct VectorLayerCore {
     /// The currently selected brush
     current_brush: Arc<Brush>,
 
+    /// The properties that are currently set
+    brush_properties: BrushProperties,
+
     /// The brush stroke that is currently being drawn
     active_brush_stroke: Option<BrushElement>
 }
@@ -37,6 +40,7 @@ impl VectorLayerCore {
             id:                     id,
             keyframes:              vec![],
             current_brush:          Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
+            brush_properties:       BrushProperties::new(),
             active_brush_stroke:    None
         }
     }

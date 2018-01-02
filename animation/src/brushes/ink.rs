@@ -233,12 +233,12 @@ impl BezierCurve for InkCurve {
 }
 
 impl Brush for InkBrush {
-    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives) {
+    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties) {
         // Set the blend mode (mainly so we can act as an eraser as well as a primary brush)
         gc.blend_mode(self.blend_mode);
 
-        // Set the fill colour
-        gc.fill_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+        // Set the fill colour & opacity
+        gc.fill_color(properties.color.with_alpha(properties.opacity));
     }
 
     fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {

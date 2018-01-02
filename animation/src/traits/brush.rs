@@ -1,3 +1,4 @@
+use super::brush_properties::*;
 use super::brush_definition::*;
 use super::brush_drawing_style::*;
 
@@ -23,7 +24,7 @@ pub trait Brush : Send+Sync {
     /// One or more brush strokes of this type are about to be rendered.
     /// This brush should set up the graphics context appropriately.
     /// 
-    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives);
+    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties);
 
     ///
     /// Renders a brush stroke to the specified graphics context

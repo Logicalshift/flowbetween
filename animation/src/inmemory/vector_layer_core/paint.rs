@@ -6,10 +6,14 @@ impl PaintLayer for VectorLayerCore {
         self.current_brush = create_brush_from_definition(brush, drawing_style);
     }
 
+    fn set_brush_properties(&mut self, properties: &BrushProperties) {
+        self.brush_properties = *properties;
+    }
+
     fn start_brush_stroke(&mut self, start_time: Duration, initial_pos: BrushPoint) {
         // Start a new brush stroke, at a time relative to 0
         let brush   = Arc::clone(&self.current_brush);
-        let element = BrushElement::new(&brush, start_time, initial_pos);
+        let element = BrushElement::new(&brush, start_time, initial_pos, &self.brush_properties);
 
         self.active_brush_stroke = Some(element);
     }

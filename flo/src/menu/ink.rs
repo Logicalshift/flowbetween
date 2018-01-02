@@ -150,7 +150,11 @@ impl InkMenuController {
     ///
     /// Creates the brush preview canvas
     /// 
-    pub fn brush_preview(_size: &Binding<f32>, _opacity: &Binding<f32>, _color: &Binding<Color>) -> BindingCanvas {
+    pub fn brush_preview(size: &Binding<f32>, opacity: &Binding<f32>, color: &Binding<Color>) -> BindingCanvas {
+        let size    = size.clone();
+        let opacity = opacity.clone();
+        let color   = color.clone();
+
         let control_height  = 32.0;
         let control_width   = 64.0;
         let preview_width   = control_width - 8.0;
@@ -181,7 +185,14 @@ impl InkMenuController {
                 })
             }
 
-            brush.prepare_to_render(gc);
+            // Create the properties
+            let brush_properties = BrushProperties {
+                size:       size.get(),
+                opacity:    opacity.get(),
+                color:      color.get()
+            };
+
+            brush.prepare_to_render(gc, &brush_properties);
             brush.render_brush(gc, &points);
         })
     }
