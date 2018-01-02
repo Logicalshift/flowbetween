@@ -119,9 +119,8 @@ impl InkMenuController {
             gc.canvas_height(control_height);
             gc.fill_color(Color::Rgba(0.8, 0.8, 0.8, 1.0));
 
-            // TODO: make this a circle rather than a rect
             gc.new_path();
-            gc.rect(-size/2.0, -size/2.0, size/2.0, size/2.0);
+            gc.circle(0.0, 0.0, size/2.0);
             gc.fill();
         })
     }
@@ -141,9 +140,8 @@ impl InkMenuController {
             gc.stroke_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
             gc.fill_color(Color::Rgba(0.8, 0.8, 0.8, opacity.get()));
 
-            // TODO: make this a circle rather than a rect
             gc.new_path();
-            gc.rect(-size/2.0, -size/2.0, size/2.0, size/2.0);
+            gc.circle(0.0, 0.0, size/2.0);
             gc.fill();
             gc.stroke();
         })
