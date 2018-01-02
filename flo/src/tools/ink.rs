@@ -33,6 +33,7 @@ impl Ink {
                     gc.store();
 
                     // Begin the brush stroke
+                    layer.set_brush_properties(&model.anim_view_model.brush().brush_properties.get());
                     layer.start_brush_stroke(current_time, brush_point_from_painting(action));
                 },
 
