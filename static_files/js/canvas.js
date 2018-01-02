@@ -171,6 +171,7 @@ let flo_canvas = (function() {
         function move_to(x,y)                           { context.moveTo(x, y); current_path.push(() => context.moveTo(x, y) ); }
         function line_to(x,y)                           { context.lineTo(x, y); current_path.push(() => context.lineTo(x, y) ); }
         function bezier_curve(x1, y1, x2, y2, x3, y3)   { context.bezierCurveTo(x2, y2, x3, y3, x1, y1); current_path.push(() => context.bezierCurveTo(x2, y2, x3, y3, x1, y1) ); }
+        function close_path()                           { context.closePath(); }
         function fill()                                 { context.fill(); }
 
         function stroke() {
@@ -567,6 +568,7 @@ let flo_canvas = (function() {
             move_to:            (x, y)          => { replay.push([move_to, [x, y]]);                    move_to(x, y);                  },
             line_to:            (x, y)          => { replay.push([line_to, [x, y]]);                    line_to(x, y);                  },
             bezier_curve:       (x1, y1, x2, y2, x3, y3) => { replay.push([bezier_curve, [x1, y1, x2, y2, x3, y3]]); bezier_curve(x1, y1, x2, y2, x3, y3); },
+            close_path:         ()              => { replay.push([close_path, []]);                     close_path();                   },
             fill:               ()              => { replay.push([fill, []]);                           fill();                         },
             stroke:             ()              => { replay.push([stroke, []]);                         stroke();                       },
             line_width:         (width)         => { replay.push([line_width, [width]]);                line_width(width);              },
@@ -830,6 +832,7 @@ let flo_canvas = (function() {
                 case 'm':   draw.move_to(read_float(), read_float());   break;
                 case 'l':   draw.line_to(read_float(), read_float());   break;
                 case 'c':   draw.bezier_curve(read_float(), read_float(), read_float(), read_float(), read_float(), read_float()); break;
+                case '.':   draw.close_path();                          break;
                 case 'F':   draw.fill();                                break;
                 case 'S':   draw.stroke();                              break;
                 case 'L':   decode_line();                              break;
