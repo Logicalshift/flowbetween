@@ -8,6 +8,7 @@ This repo contains some neat technolgy that was used to build FlowBetween and
 may be useful in other projects. Here are some highlights:
 
  * The UI library provides a data-only description of an application's UI.
+ * The canvas library provides a data-only description of drawing.
  * The binding library provides a data-driven approach to event handling.
  * The curves library provides a lot of useful functions for dealing with 
    bezier curves.
