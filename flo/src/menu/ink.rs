@@ -25,7 +25,7 @@ impl InkMenuController {
     ///
     /// Creates a new ink menu controller
     /// 
-    pub fn new(size: &Binding<f32>, opacity: &Binding<f32>, color: &Binding<Color>) -> InkMenuController {
+    pub fn new(size: &Binding<f32>, opacity: &Binding<f32>, colour: &Binding<Color>) -> InkMenuController {
         // Set up the view model
         let view_model = Arc::new(DynamicViewModel::new());
 
@@ -38,7 +38,7 @@ impl InkMenuController {
         // Create the canvases
         let canvases = Arc::new(ResourceManager::new());
 
-        let brush_preview   = Self::brush_preview(size, opacity, color);
+        let brush_preview   = Self::brush_preview(size, opacity, colour);
         let brush_preview   = canvases.register(brush_preview);
         canvases.assign_name(&brush_preview, "BrushPreview");
 
@@ -48,7 +48,11 @@ impl InkMenuController {
 
         let opacity_preview = Self::opacity_preview(opacity);
         let opacity_preview = canvases.register(opacity_preview);
-        canvases.assign_name(&size_preview, "OpacityPreview");
+        canvases.assign_name(&opacity_preview, "OpacityPreview");
+
+        let colour_preview = Self::colour_preview(colour);
+        let colour_preview = canvases.register(colour_preview);
+        canvases.assign_name(&colour_preview, "ColourPreview");
 
         // Generate the UI
         let ui = BindRef::from(bind(Control::container()
@@ -63,6 +67,13 @@ impl InkMenuController {
                     Control::canvas()
                         .with(brush_preview)
                         .with(Bounds::next_horiz(64.0)),
+
+                    Control::empty()
+                        .with(Bounds::next_horiz(12.0)),
+
+                    Control::canvas()
+                        .with(colour_preview)
+                        .with(Bounds::next_horiz(32.0)),
 
                     Control::empty()
                         .with(Bounds::next_horiz(12.0)),
@@ -139,6 +150,28 @@ impl InkMenuController {
             gc.line_width(2.0);
             gc.stroke_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
             gc.fill_color(Color::Rgba(0.8, 0.8, 0.8, opacity.get()));
+
+            gc.new_path();
+            gc.circle(0.0, 0.0, size/2.0);
+            gc.fill();
+            gc.stroke();
+        })
+    }
+
+    ///
+    /// Creates the colour preview canvas
+    /// 
+    pub fn colour_preview(colour: &Binding<Color>) -> BindingCanvas {
+        let colour          = colour.clone();
+        let control_height  = 32.0;
+
+        BindingCanvas::with_drawing(move |gc| {
+            let size = control_height - 8.0;
+
+            gc.canvas_height(control_height);
+            gc.line_width(2.0);
+            gc.stroke_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
+            gc.fill_color(colour.get().with_alpha(1.0));
 
             gc.new_path();
             gc.circle(0.0, 0.0, size/2.0);
