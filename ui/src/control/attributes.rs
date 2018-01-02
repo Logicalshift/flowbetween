@@ -19,6 +19,9 @@ pub enum ControlAttribute {
     /// The bounding box for this control
     BoundingBox(Bounds),
 
+    // The z-index of this item. Items with higher z-indexes are displayed over the top of those with lower z-indexes
+    ZIndex(u32),
+
     /// The text for this control
     Text(Property),
 
@@ -46,7 +49,7 @@ pub enum ControlAttribute {
 
     // TODO: content attribute (maybe with text?). Image might be appearance though
     /// Specifies the canvas to use for this control (assuming it's a canvas control)
-    Canvas(Resource<BindingCanvas>),
+    Canvas(Resource<BindingCanvas>)
 }
 
 impl ControlAttribute {
@@ -57,6 +60,16 @@ impl ControlAttribute {
         match self {
             &BoundingBox(ref bounds)    => Some(bounds),
             _                           => None
+        }
+    }
+
+    ///
+    /// The Z-Index represented by this attribute
+    /// 
+    pub fn z_index(&self) -> Option<u32> {
+        match self {
+            &ZIndex(zindex) => Some(zindex),
+            _               => None
         }
     }
 
@@ -157,6 +170,7 @@ impl ControlAttribute {
     pub fn is_different_flat(&self, compare_to: &ControlAttribute) -> bool {
         match self {
             &BoundingBox(ref bounds)            => Some(bounds) != compare_to.bounding_box(),
+            &ZIndex(zindex)                     => Some(zindex) != compare_to.z_index(),
             &Text(ref text)                     => Some(text) != compare_to.text(),
             &FontAttr(ref font)                 => Some(font) != compare_to.font(),
             &Id(ref id)                         => Some(id) != compare_to.id(),

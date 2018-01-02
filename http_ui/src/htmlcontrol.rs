@@ -127,6 +127,7 @@ impl ToHtml for ControlAttribute {
                 ])
             }
 
+            &ZIndex(zindex)                 => DomAttribute::new("style", &format!("z-index: {};", zindex)),
             &AppearanceAttr(ref appearance) => appearance.to_html_subcomponent(base_path, controller_path),
             &FontAttr(ref font_attribute)   => font_attribute.to_html_subcomponent(base_path, controller_path),
             &StateAttr(ref state)           => state.to_html_subcomponent(base_path, controller_path),
@@ -235,6 +236,11 @@ mod test {
     #[test]
     fn can_convert_container_to_html() {
         assert!(Control::container().with(vec![Control::button()]).to_html("").to_string() == "<flo-container><flo-button></flo-button></flo-container>")
+    }
+
+    #[test]
+    fn can_convert_zindex_to_html() {
+        assert!(Control::empty().with(ControlAttribute::ZIndex(23)).to_html("").to_string() == "<flo-empty style=\"z-index: 23;\"></flo-empty>");
     }
 
     #[test]
