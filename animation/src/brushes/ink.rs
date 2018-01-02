@@ -241,7 +241,7 @@ impl Brush for InkBrush {
         gc.fill_color(properties.color.with_alpha(properties.opacity));
     }
 
-    fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {
+    fn render_brush(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties, points: &Vec<BrushPoint>) {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 2 {
             return;
@@ -249,6 +249,8 @@ impl Brush for InkBrush {
 
         // Convert points to ink points
         let ink_points: Vec<InkCoord> = points.iter().map(|point| InkCoord::from(point)).collect();
+
+        let size_ratio = properties.size / self.max_width;
 
         // Average points that are very close together so we don't overdo 
         // the curve fitting
@@ -306,7 +308,7 @@ impl Brush for InkBrush {
         // Draw a variable width line for this curve
         if let Some(curve) = curve {
             let offset_curves: Vec<(Vec<bezier::Curve>, Vec<bezier::Curve>)> 
-                = curve.iter().map(|ink_curve| ink_curve.to_offset_curves(self.min_width as f64, self.max_width as f64)).collect();
+                = curve.iter().map(|ink_curve| ink_curve.to_offset_curves((self.min_width*size_ratio) as f64, (self.max_width*size_ratio) as f64)).collect();
 
             gc.new_path();
             

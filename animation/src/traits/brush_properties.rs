@@ -24,7 +24,7 @@ impl BrushProperties {
     /// 
     pub fn new() -> BrushProperties {
         BrushProperties {
-            size:       10.0,
+            size:       5.0,
             opacity:    1.0,
             color:      Color::Rgba(0.0, 0.0, 0.0, 1.0)
         }

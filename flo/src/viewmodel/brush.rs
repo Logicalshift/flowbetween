@@ -25,7 +25,7 @@ impl BrushViewModel {
     /// Creates a new brush view model
     /// 
     pub fn new() -> BrushViewModel {
-        let size                = bind(10.0);
+        let size                = bind(5.0);
         let opacity             = bind(1.0);
         let color               = bind(Color::Rgba(0.0, 0.0, 0.0, 1.0));
 

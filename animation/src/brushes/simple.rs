@@ -30,7 +30,7 @@ impl Brush for SimpleBrush {
         (BrushDefinition::Simple, BrushDrawingStyle::Draw)
     }
 
-    fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>) {
+    fn render_brush(&self, gc: &mut GraphicsPrimitives, _properties: &BrushProperties, points: &Vec<BrushPoint>) {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 1 {
             return;

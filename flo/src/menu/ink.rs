@@ -193,7 +193,7 @@ impl InkMenuController {
             };
 
             brush.prepare_to_render(gc, &brush_properties);
-            brush.render_brush(gc, &points);
+            brush.render_brush(gc, &brush_properties, &points);
         })
     }
 }

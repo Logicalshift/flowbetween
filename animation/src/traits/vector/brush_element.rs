@@ -79,6 +79,6 @@ impl VectorElement for BrushElement {
     fn render(&self, gc: &mut GraphicsPrimitives) {
         // TODO: find a way to only prepare to render once per brush
         self.brush.prepare_to_render(gc, &self.properties);
-        self.brush.render_brush(gc, &self.points)
+        self.brush.render_brush(gc, &self.properties, &self.points)
     }
 }

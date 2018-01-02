@@ -29,7 +29,7 @@ pub trait Brush : Send+Sync {
     ///
     /// Renders a brush stroke to the specified graphics context
     ///
-    fn render_brush(&self, gc: &mut GraphicsPrimitives, points: &Vec<BrushPoint>);
+    fn render_brush(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties, points: &Vec<BrushPoint>);
 
     ///
     /// Retrieves the definition for this brush
