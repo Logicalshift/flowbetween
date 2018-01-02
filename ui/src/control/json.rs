@@ -42,8 +42,8 @@ impl ToJsonValue for ControlAttribute {
                 })
             },
 
-            &AppearanceAttr(Background(ref color))  => json!({ "Background": color.to_rgba() }),
-            &AppearanceAttr(Foreground(ref color))  => json!({ "Foreground": color.to_rgba() }),
+            &AppearanceAttr(Background(ref color))  => json!({ "Background": color.to_rgba_components() }),
+            &AppearanceAttr(Foreground(ref color))  => json!({ "Foreground": color.to_rgba_components() }),
 
             &Canvas(ref canvas_resource)            => {
                 json!({
