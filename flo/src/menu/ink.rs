@@ -74,6 +74,7 @@ impl InkMenuController {
                     Control::canvas()
                         .with(colour_preview)
                         .with(Bounds::next_horiz(32.0))
+                        .with(State::Badged(Property::Bool(true)))
                         .with(vec![
                             Control::popup()
                                 .with(Popup::IsOpen(Property::Bool(true)))

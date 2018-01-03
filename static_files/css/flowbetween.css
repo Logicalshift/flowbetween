@@ -53,6 +53,10 @@ html, body {
     width:      100%;
 }
 
+#root .badged {
+    box-shadow:     0px 0px 4px rgba(180, 200, 220, 0.9);
+}
+
 flo-button flo-empty,
 flo-button flo-container,
 flo-button flo-label {
