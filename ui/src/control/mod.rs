@@ -9,6 +9,7 @@ mod modifier;
 mod position;
 mod font_attr;
 mod state_attr;
+mod popup_attr;
 mod attributes;
 mod appearance_attr;
 
@@ -23,6 +24,7 @@ pub use self::modifier::*;
 pub use self::position::*;
 pub use self::font_attr::*;
 pub use self::state_attr::*;
+pub use self::popup_attr::*;
 pub use self::attributes::*;
 pub use self::appearance_attr::*;
 
