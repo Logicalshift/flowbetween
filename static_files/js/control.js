@@ -9,7 +9,9 @@
 /* exported flo_control */
 
 let flo_control = (function () {
-    // Sets up a control as a slider, with the specified event as an update event
+    ///
+    /// Sets up a control as a slider, with the specified event as an update event
+    ///
     let load_slider = (element) => {
         // Find the input element
         let input_element = element.getElementsByTagName('input')[0];
@@ -108,7 +110,22 @@ let flo_control = (function () {
         input_element.addEventListener('change', on_change);
     };
 
+    ///
+    /// Performs layout on a popup control
+    ///
+    let layout_popup = (popup_node) => {
+        console.log(popup_node);
+
+        return {
+            x1: 0,
+            y1: 0,
+            x2: 400,
+            y2: 100
+        };
+    };
+
     return {
-        load_slider: load_slider
+        load_slider: load_slider,
+        layout_popup: layout_popup
     };
 })();

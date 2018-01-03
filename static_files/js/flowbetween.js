@@ -327,7 +327,8 @@ function flowbetween(root_node) {
                     // Template nodes can specify a custom layout algorithm if they want to override our standard one
                     let flo_layout = template_node.getAttribute('flo-layout');
                     if (flo_layout) {
-                        flo_layout = new Function(flo_layout);
+                        let layout_fn = new Function(flo_layout);
+                        flo_layout = (node) => layout_fn.apply(node);
                     } else {
                         flo_layout = null;
                     }
@@ -700,7 +701,7 @@ function flowbetween(root_node) {
         for (let node_index=0; node_index<subcomponents.length; ++node_index) {
             let component       = subcomponents[node_index];
             let bounding_box    = get_attributes(component).bounding_box() || default_bounding_box;
-            let layout_override = component.flo_layout;
+            let layout_override = subnodes[node_index].flo_layout;
 
             if (!layout_override) {
                 // Convert the bounding box into an absolute position
@@ -724,7 +725,7 @@ function flowbetween(root_node) {
                 stretch_y += bounding_box.y2['Stretch'] || 0;
             } else {
                 // Node has custom layout behaviour: call the flo_layout property to get the position
-                positions.push(layout_override(component));
+                positions.push(layout_override(subnodes[node_index], component));
             }
         }
 
