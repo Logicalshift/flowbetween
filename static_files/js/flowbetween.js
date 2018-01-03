@@ -937,6 +937,13 @@ function flowbetween(root_node) {
                 remove_action2();
             };
 
+        } else if (attribute['Popup'] && attribute['Popup']['IsOpen']) {
+            // Updates the popup open property
+            remove_action = on_property_change(controller_path, attribute['Popup']['IsOpen'], new_value => {
+                node.flo_popup_open = new_value;
+                return true;
+            });
+
         }
 
         // Update the property that allows us to unbind the viewmodel
