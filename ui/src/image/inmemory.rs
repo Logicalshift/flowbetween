@@ -65,9 +65,34 @@ pub struct InMemoryImageData {
 }
 
 impl InMemoryImageData {
+    ///
+    /// Creates a new image data object from a set of bytes
+    /// 
     pub fn new(bytes: Vec<u8>) -> InMemoryImageData {
         InMemoryImageData {
             bytes: Arc::new(bytes)
+        }
+    }
+}
+
+impl From<Vec<u8>> for InMemoryImageData {
+    fn from(bytes: Vec<u8>) -> InMemoryImageData {
+        InMemoryImageData::new(bytes)
+    }
+}
+
+impl From<Arc<Vec<u8>>> for InMemoryImageData {
+    fn from(bytes: Arc<Vec<u8>>) -> InMemoryImageData {
+        InMemoryImageData {
+            bytes: bytes
+        }
+    }
+}
+
+impl<'a> From<&'a Arc<Vec<u8>>> for InMemoryImageData {
+    fn from(bytes: &'a Arc<Vec<u8>>) -> InMemoryImageData {
+        InMemoryImageData {
+            bytes: Arc::clone(bytes)
         }
     }
 }
