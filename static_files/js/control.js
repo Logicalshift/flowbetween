@@ -292,8 +292,30 @@ let flo_control = (function () {
             y2: target_area.y2+translate[1]
         };
 
-        // TODO: for left, right, above, below, position the 'beak' so it points at the parent
-        // TODO: for others, hide it
+        // Position the beak
+        let beak = popup_node.getElementsByTagName('deco-beak')[0];
+        if (beak) {
+            // Beak class is based on the direction
+            beak.className = direction.toLowerCase();
+
+            // Set the beak left/top position so that it centers on the parent element
+            let parent_xpos = (target_area.x2 - target_area.x1)/2.0 - translate[0] - popup_node.clientLeft;
+            let parent_ypos = (target_area.y2 - target_area.y1)/2.0 - translate[1] - popup_node.clientTop;
+
+            switch (direction) {
+            case 'Left':
+            case 'Right':
+                beak.style.top  = parent_ypos + 'px';
+                beak.style.left = null;
+                break;
+
+            case 'Above':
+            case 'Below':
+                beak.style.left = parent_xpos + 'px';
+                beak.style.top  = null;
+                break;
+            }
+        }
 
         // Got the target area
         return target_area;
