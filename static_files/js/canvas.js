@@ -967,7 +967,8 @@ let flo_canvas = (function() {
         let parent = element;
 
         // Put the canvas in the shadow DOM if we can
-        if (element.attachShadow) {
+        // TODO: interferes with subcomponents, so this is disabled for now
+        if (element.attachShadow && false) {
             shadow = element.attachShadow({mode: 'open'});
             parent = shadow;
         }
