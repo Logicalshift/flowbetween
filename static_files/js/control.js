@@ -111,11 +111,33 @@ let flo_control = (function () {
     };
 
     ///
+    /// Sets up a control as a popup
+    ///
+    let load_popup = (popup_node) => {
+        // Set the initial state
+        let is_open = popup_node.flo_popup_open || false;
+
+        // Function to set whether or not the popup is open or not
+        function set_is_open(new_open) {
+            is_open = new_open;
+
+            popup_node.style.visibility = is_open ? 'visible' : 'hidden';
+        }
+
+        // Set the initial visibility
+        set_is_open(is_open);
+
+        // Replace the flo_popup_open property with one that updates the style
+        Object.defineProperty(popup_node, 'flo_popup_open', {
+            get: () => is_open,
+            set: new_value => set_is_open(new_value)
+        });
+    };
+
+    ///
     /// Performs layout on a popup control
     ///
     let layout_popup = (popup_node, attributes) => {
-        console.log(popup_node, attributes);
-
         return {
             x1: 0,
             y1: 0,
@@ -125,7 +147,8 @@ let flo_control = (function () {
     };
 
     return {
-        load_slider: load_slider,
-        layout_popup: layout_popup
+        load_slider:    load_slider,
+        load_popup:     load_popup,
+        layout_popup:   layout_popup
     };
 })();
