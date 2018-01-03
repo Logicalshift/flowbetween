@@ -88,7 +88,7 @@ flo-popup {
     box-shadow:             0px 1px 4px rgba(24, 32, 32, 0.8);
 }
 
-flo-popup > div.beak {
+flo-popup > deco-beak {
     position:       absolute;
     top:            -16px;
     height:         16px;
@@ -98,7 +98,7 @@ flo-popup > div.beak {
     overflow:       hidden;
 }
 
-flo-popup > div.beak:after {
+flo-popup > deco-beak:after {
     background-color:       rgba(24, 32, 32, 0.97);
     border-style:           solid;
     border-width:           2px;
