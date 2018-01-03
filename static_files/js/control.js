@@ -135,12 +135,71 @@ let flo_control = (function () {
     };
 
     ///
+    /// Determines if a document element is the root element or not
+    ///
+    let is_root = (element) => {
+        if (!element) {
+            return true;
+        } else if (element.id === 'root') {
+            return true;
+        } else {
+            return false;
+        }
+    };
+
+    ///
+    /// Determines the top-left coordinate of an element relative to its parent
+    ///
+    let position_in_parent = (element) => {
+        return { 
+            x: element.offsetLeft+element.clientLeft,
+            y: element.offsetTop+element.clientTop
+        };
+    };
+
+    ///
+    /// Given a node, finds the coordinates of the total client area
+    /// it can be placed in.
+    ///
+    let total_client_area = (element) => {
+        // Start with the client area of the initial node
+        let current_element = element;
+        let current_rect    = { x1: 0, y1: 0, x2: element.clientWidth, y2: element.clientHeight };
+
+        // Move upwards until we hit the root node
+        while (!is_root(current_element)) {
+            // Fetch the parent element
+            let parent_element = current_element.parentNode;
+
+            // Move the top-left corner of the rect to the parent position
+            let position = position_in_parent(current_element);
+            current_rect.x1 -= position.x;
+            current_rect.y1 -= position.y;
+            
+            // Area corresponds to the client area of the parent element
+            current_rect.x2 = current_rect.x1 + parent_element.clientWidth;
+            current_rect.y2 = current_rect.y1 + parent_element.clientHeight;
+
+            // Check the parent node next
+            current_element = parent_element;
+        }
+
+        // current rect is now the 'screen' bounds for the element
+        return current_rect;
+    };
+
+    ///
     /// Performs layout on a popup control
     ///
     let layout_popup = (popup_node, attributes) => {
+        // Get the area in which we're laying out our popup node
+        let layout_area = total_client_area(popup_node);
+
+        console.log(layout_area);
+
         return {
-            x1: 0,
-            y1: 0,
+            x1: layout_area.x1,
+            y1: layout_area.y1,
             x2: 400,
             y2: 100
         };
