@@ -32,6 +32,11 @@ impl Control {
         Self::new(Container)
     }
 
+    /// Creates a new popup control
+    pub fn popup() -> Control {
+        Self::new(Popup)
+    }
+
     /// Creates a new button control
     pub fn button() -> Control {
         Self::new(Button)

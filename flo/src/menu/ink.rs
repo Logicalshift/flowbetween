@@ -73,7 +73,18 @@ impl InkMenuController {
 
                     Control::canvas()
                         .with(colour_preview)
-                        .with(Bounds::next_horiz(32.0)),
+                        .with(Bounds::next_horiz(32.0))
+                        .with(vec![
+                            Control::popup()
+                                .with(Popup::IsOpen(Property::Bool(true)))
+                                .with(Popup::Size(400, 100))
+                                .with(PopupDirection::Below)
+                                .with(vec![
+                                    Control::label()
+                                        .with("Hello, popup")
+                                        .with(Bounds::fill_all())
+                                ])
+                        ]),
 
                     Control::empty()
                         .with(Bounds::next_horiz(12.0)),
