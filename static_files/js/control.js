@@ -192,17 +192,111 @@ let flo_control = (function () {
     /// Performs layout on a popup control
     ///
     let layout_popup = (popup_node, attributes) => {
+        // Fetch the popup attributes
+        let popup       = attributes.popup();
+
+        let direction   = popup['Direction'] || 'Right';
+        let size        = popup['Size'] || [100, 100];
+        let offset      = popup['Offset'] || 0.0;
+
         // Get the area in which we're laying out our popup node
-        let layout_area = total_client_area(popup_node);
+        let layout_area = total_client_area(popup_node.parentNode);
 
-        console.log(layout_area);
-
-        return {
-            x1: layout_area.x1,
-            y1: layout_area.y1,
-            x2: 400,
-            y2: 100
+        // Get the area occupied by our parent node (popup is relative to this node)
+        let parent_area = {
+            x1: 0,
+            y1: 0,
+            x2: popup_node.parentNode.clientWidth,
+            y2: popup_node.parentNode.clientHeight
         };
+
+        // Create the 'preferred' area based on the direction and the parent position
+        let target_area = {};
+
+        switch (direction) {
+        case 'OnTop':
+            target_area = {
+                x1: (parent_area.x1+parent_area.x2)/2.0 - size[0]/2.0,
+                x2: (parent_area.x1+parent_area.x2)/2.0 + size[0]/2.0,
+                y1: (parent_area.y1+parent_area.y2)/2.0 - size[1]/2.0,
+                y2: (parent_area.y1+parent_area.y2)/2.0 - size[1]/2.0
+            };
+            break;
+
+        case 'Left':
+            target_area = {
+                x1: parent_area.x1 - size[0] - offset,
+                x2: parent_area.x1 - offset,
+                y1: (parent_area.y1+parent_area.y2)/2.0 - size[1]/2.0,
+                y2: (parent_area.y1+parent_area.y2)/2.0 - size[1]/2.0
+            };
+            break;
+
+        case 'Right':
+            target_area = {
+                x1: parent_area.x2 + offset,
+                x2: parent_area.x2 + size[0] + offset,
+                y1: (parent_area.y1+parent_area.y2)/2.0 - size[1]/2.0,
+                y2: (parent_area.y1+parent_area.y2)/2.0 - size[1]/2.0
+            };
+            break;
+
+        case 'Above':
+            target_area = {
+                x1: (parent_area.x1+parent_area.x2)/2.0 - size[0]/2.0,
+                x2: (parent_area.x1+parent_area.x2)/2.0 + size[0]/2.0,
+                y1: parent_area.y1 - size[1] - offset,
+                y2: parent_area.y1 - offset
+            };
+            break;
+
+        case 'Below':
+            target_area = {
+                x1: (parent_area.x1+parent_area.x2)/2.0 - size[0]/2.0,
+                x2: (parent_area.x1+parent_area.x2)/2.0 + size[0]/2.0,
+                y1: parent_area.y2 + offset,
+                y2: parent_area.y2 + size[1] + offset
+            };
+            break;
+
+        case 'WindowCentered':
+            target_area = {
+                x1: (layout_area.x1+layout_area.x2)/2.0 - size[0]/2.0,
+                x2: (layout_area.x1+layout_area.x2)/2.0 + size[0]/2.0,
+                y1: (layout_area.y1+layout_area.y2)/2.0 - size[1]/2.0,
+                y2: (layout_area.y1+layout_area.y2)/2.0 - size[1]/2.0
+            };
+            break;
+
+        case 'WindowTop':
+            target_area = {
+                x1: (layout_area.x1+layout_area.x2)/2.0 - size[0]/2.0,
+                x2: (layout_area.x1+layout_area.x2)/2.0 + size[0]/2.0,
+                y1: layout_area.y1 + offset,
+                y2: layout_area.y1 + offset + size[1]
+            };
+            break;
+        }
+
+        // Push the target area inside the window
+        let translate = [0,0];
+        if (target_area.x2 > layout_area.x2) { translate[0] = layout_area.x2 - target_area.x2; }
+        if (target_area.y2 > layout_area.y2) { translate[1] = layout_area.y2 - target_area.y2; }
+        if (target_area.x1 < layout_area.x1) { translate[0] = layout_area.x1 - target_area.x1; }
+        if (target_area.y1 < layout_area.y1) { translate[1] = layout_area.y1 - target_area.y1; }
+
+        target_area = {
+            x1: target_area.x1+translate[0],
+            x2: target_area.x2+translate[0],
+            y1: target_area.y1+translate[1],
+            y2: target_area.y2+translate[1]
+        };
+
+        // TODO: for left, right, above, below, position the 'beak' so it points at the parent
+        // TODO: for others, hide it
+
+        // Got the target area
+        return target_area;
     };
 
     return {

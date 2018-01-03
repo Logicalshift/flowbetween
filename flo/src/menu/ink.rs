@@ -79,6 +79,7 @@ impl InkMenuController {
                             Control::popup()
                                 .with(Popup::IsOpen(Property::Bool(true)))
                                 .with(Popup::Size(400, 100))
+                                .with(Popup::Offset(8))
                                 .with(PopupDirection::Below)
                                 .with(ControlAttribute::ZIndex(100))
                                 .with(vec![

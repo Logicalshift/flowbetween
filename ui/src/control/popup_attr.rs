@@ -26,17 +26,8 @@ pub enum PopupDirection {
     /// Popup appears centered in the window
     WindowCentered,
 
-    /// Popup appears to the left of the window
-    WindowLeft,
-
-    /// Popup appears to the right of the window
-    WindowRight,
-
     /// Popup appears at the top of the window
     WindowTop,
-
-    /// Popup appears at the bottom of the window
-    WindowBottom
 }
 
 ///
@@ -51,7 +42,10 @@ pub enum Popup {
     Direction(PopupDirection),
 
     /// The size in pixels of this popup
-    Size(u32, u32)
+    Size(u32, u32),
+
+    /// The offset in pixels for the popup along the direction it's opening in
+    Offset(u32)
 }
 
 impl Modifier<Control> for Popup {

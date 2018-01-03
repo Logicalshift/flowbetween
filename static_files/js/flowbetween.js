@@ -520,6 +520,12 @@ function flowbetween(root_node) {
             return get_attrs('Action');
         };
 
+        // popup returns the list of popup attributes (combined into a single object)
+        let popup = () => {
+            let popups = get_attrs('Popup');
+            return Object.assign.apply(null, [{}].concat(popups));
+        };
+
         // Return an object that can be used to get information about these attributes
         return {
             all:            all,
@@ -527,7 +533,8 @@ function flowbetween(root_node) {
             subcomponents:  subcomponents,
             controller:     controller,
             actions:        actions,
-            bounding_box:   bounding_box
+            bounding_box:   bounding_box,
+            popup:          popup
         };
     };
 

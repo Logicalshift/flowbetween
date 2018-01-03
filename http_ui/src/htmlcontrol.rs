@@ -217,7 +217,8 @@ impl ToHtml for Popup {
         match self {
             &IsOpen(_)      => DomEmpty::new(),
             &Direction(_)   => DomEmpty::new(),
-            &Size(_, _)     => DomEmpty::new()
+            &Size(_, _)     => DomEmpty::new(),
+            &Offset(_)      => DomEmpty::new()
         }
     }
 }
