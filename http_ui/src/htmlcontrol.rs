@@ -50,6 +50,7 @@ fn control_class(ctrl: &Control) -> &str {
     match ctrl.control_type() {
         Empty       => "flo-empty",
         Container   => "flo-container",
+        Popup       => "flo-popup",
         Button      => "flo-button",
         Label       => "flo-label",
         Canvas      => "flo-canvas",

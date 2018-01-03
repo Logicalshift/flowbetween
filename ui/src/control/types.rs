@@ -9,6 +9,10 @@ pub enum ControlType {
     /// Control that contains other controls
     Container,
 
+    /// Control that 'pops up' from its parent, usually a temporary
+    /// dialog box of some description
+    Popup,
+
     /// Clickable button
     Button,
 
