@@ -129,6 +129,7 @@ impl ToHtml for ControlAttribute {
             }
 
             &ZIndex(zindex)                 => DomAttribute::new("style", &format!("z-index: {};", zindex)),
+            &Padding(_, _)                  => DomEmpty::new(),
             &AppearanceAttr(ref appearance) => appearance.to_html_subcomponent(base_path, controller_path),
             &FontAttr(ref font_attribute)   => font_attribute.to_html_subcomponent(base_path, controller_path),
             &StateAttr(ref state)           => state.to_html_subcomponent(base_path, controller_path),

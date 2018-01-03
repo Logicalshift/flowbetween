@@ -82,6 +82,7 @@ impl InkMenuController {
                                 .with(Popup::Offset(8))
                                 .with(PopupDirection::Below)
                                 .with(ControlAttribute::ZIndex(100))
+                                .with(ControlAttribute::Padding((8, 8), (8, 8)))
                                 .with(vec![
                                     Control::label()
                                         .with("Hello, popup")

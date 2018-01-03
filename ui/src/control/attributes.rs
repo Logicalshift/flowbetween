@@ -17,11 +17,15 @@ use modifier::*;
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum ControlAttribute {
+    // TODO: layout attribute for bounding box, zindex and padding
     /// The bounding box for this control
     BoundingBox(Bounds),
 
     // The z-index of this item. Items with higher z-indexes are displayed over the top of those with lower z-indexes
     ZIndex(u32),
+
+    // The padding to surround the subcomponents of this control with. Values are 'left top' and 'right bottom'.
+    Padding((u32, u32), (u32, u32)),
 
     /// The text for this control
     Text(Property),
@@ -74,6 +78,16 @@ impl ControlAttribute {
         match self {
             &ZIndex(zindex) => Some(zindex),
             _               => None
+        }
+    }
+
+    ///
+    /// The padding represented by this attribute
+    /// 
+    pub fn padding(&self) -> Option<((u32, u32), (u32, u32))> {
+        match self {
+            &Padding(left_top, right_bottom)    => Some((left_top, right_bottom)),
+            _                                   => None
         }
     }
 
@@ -185,6 +199,7 @@ impl ControlAttribute {
         match self {
             &BoundingBox(ref bounds)            => Some(bounds) != compare_to.bounding_box(),
             &ZIndex(zindex)                     => Some(zindex) != compare_to.z_index(),
+            &Padding(lt, rb)                    => Some((lt, rb)) != compare_to.padding(),
             &Text(ref text)                     => Some(text) != compare_to.text(),
             &FontAttr(ref font)                 => Some(font) != compare_to.font(),
             &Id(ref id)                         => Some(id) != compare_to.id(),

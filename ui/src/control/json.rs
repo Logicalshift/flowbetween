@@ -15,6 +15,7 @@ impl ToJsonValue for ControlAttribute {
             &BoundingBox(ref bounds)                => json!({ "BoundingBox": bounds }),
             &Text(ref property)                     => json!({ "Text": property }),
             &ZIndex(zindex)                         => json!({ "ZIndex": zindex }),
+            &Padding((left, top), (right, bottom))  => json!({ "Padding": { "left": left, "top": top, "right": right, "bottom": bottom } }),
             &FontAttr(attr)                         => json!({ "Font": attr }),
             &StateAttr(Selected(ref property))      => json!({ "Selected": property }),
             &StateAttr(Badged(ref property))        => json!({ "Badged": property }),
