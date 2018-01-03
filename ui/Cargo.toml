@@ -6,10 +6,11 @@ authors     = ["Andrew Hunter"]
 [dependencies]
 binding         = { path = "../binding" }
 canvas          = { path = "../canvas" }
+desync          = { git = "https://github.com/logicalshift/desync", branch = "develop" }
 
 serde           = "^1.0.0"
 serde_derive    = "^1.0.0"
 serde_json      = "^1.0.0"
 modifier        = "^0.1.0"
 futures         = "^0.1.17"
-desync          = { git = "https://github.com/logicalshift/desync", branch = "develop" }
+png             = "0.11.0"

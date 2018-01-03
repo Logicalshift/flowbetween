@@ -8,6 +8,7 @@ extern crate serde_json;
 extern crate serde;
 extern crate modifier;
 extern crate futures;
+extern crate png;
 extern crate desync;
 
 pub mod json;
