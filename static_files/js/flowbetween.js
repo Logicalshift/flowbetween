@@ -510,6 +510,11 @@ function flowbetween(root_node) {
             return get_attr('BoundingBox');
         };
 
+        // padding retrieves the padding, if any
+        let padding = () => {
+            return get_attr('Padding');
+        };
+
         // controller retrieves the name of the controller for this subtree
         let controller = () => {
             return get_attr('Controller');
@@ -534,6 +539,7 @@ function flowbetween(root_node) {
             controller:     controller,
             actions:        actions,
             bounding_box:   bounding_box,
+            padding:        padding,
             popup:          popup
         };
     };
@@ -692,6 +698,12 @@ function flowbetween(root_node) {
             return;
         }
 
+        // Take account of the padding
+        let padding = attributes.padding() || { top: 0, left: 0, right: 0, bottom: 0 };
+
+        total_width     -= padding.left+padding.right;
+        total_height    -= padding.top+padding.bottom;
+
         // First pass: position all of the nodes, assuming stretch nodes have 0 width/height
         let xpos        = 0;
         let ypos        = 0;
@@ -776,9 +788,9 @@ function flowbetween(root_node) {
             let element = subnodes[node_index];
             let pos     = positions[node_index];
 
-            element.style.left      = pos.x1 + 'px';
+            element.style.left      = (pos.x1+padding.left) + 'px';
             element.style.width     = (pos.x2-pos.x1) + 'px';
-            element.style.top       = pos.y1 + 'px';
+            element.style.top       = (pos.y1+padding.top) + 'px';
             element.style.height    = (pos.y2-pos.y1) + 'px';
         }
     };
