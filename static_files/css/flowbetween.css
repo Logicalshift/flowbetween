@@ -76,5 +76,10 @@ flo-slider {
 }
 
 flo-popup {
-    background-color:       rgba(162, 160, 160, 0.7);
+    background-color:       rgba(48, 64, 64, 0.97);
+    border-style:           solid;
+    border-radius:          20px;
+    border-width:           2px;
+    border-color:           rgba(200, 220, 220, 1.0);
+    box-shadow:             0px 1px 4px rgba(24, 32, 32, 0.8);
 }
