@@ -295,6 +295,7 @@ function flowbetween(root_node) {
         /// Template DOM nodes, ready to be applied
         let templates           = {};
         let template_on_load    = {};
+        let template_layout     = {};
 
         ///
         /// Loads the UI templates for a particular DOM node
@@ -322,6 +323,16 @@ function flowbetween(root_node) {
                     if (on_load) {
                         template_on_load[template_name] = new Function(on_load);
                     }
+
+                    // Template nodes can specify a custom layout algorithm if they want to override our standard one
+                    let flo_layout = template_node.getAttribute('flo-layout');
+                    if (flo_layout) {
+                        flo_layout = new Function(flo_layout);
+                    } else {
+                        flo_layout = null;
+                    }
+
+                    template_layout[template_name] = flo_layout;
                 }
             }
         };
@@ -335,8 +346,10 @@ function flowbetween(root_node) {
         ///
         let apply_template = (node) => {
             // Get the template elements for this node
-            let template_for_node   = templates[node.tagName.toLowerCase()];
-            let load_node           = template_on_load[node.tagName.toLowerCase()];
+            let template_name       = node.tagName.toLowerCase();
+            let template_for_node   = templates[template_name];
+            let load_node           = template_on_load[template_name];
+            let layout_node         = template_layout[template_name];
 
             if (template_for_node) {
                 // Remove any existing template nodes
@@ -354,6 +367,9 @@ function flowbetween(root_node) {
                 if (load_node) {
                     load_node.apply(node);
                 }
+
+                // The layout engine will use the flo_layout property if it exists to lay out a node
+                node.flo_layout = layout_node;
             }
         };
 
@@ -684,26 +700,32 @@ function flowbetween(root_node) {
         for (let node_index=0; node_index<subcomponents.length; ++node_index) {
             let component       = subcomponents[node_index];
             let bounding_box    = get_attributes(component).bounding_box() || default_bounding_box;
+            let layout_override = component.flo_layout;
 
-            // Convert the bounding box into an absolute position
-            let abs_pos         = {
-                x1: layout_position(bounding_box.x1, xpos, total_width),
-                y1: layout_position(bounding_box.y1, ypos, total_height),
-                x2: layout_position(bounding_box.x2, xpos, total_width),
-                y2: layout_position(bounding_box.y2, ypos, total_height)
-            };
+            if (!layout_override) {
+                // Convert the bounding box into an absolute position
+                let abs_pos         = {
+                    x1: layout_position(bounding_box.x1, xpos, total_width),
+                    y1: layout_position(bounding_box.y1, ypos, total_height),
+                    x2: layout_position(bounding_box.x2, xpos, total_width),
+                    y2: layout_position(bounding_box.y2, ypos, total_height)
+                };
 
-            positions.push(abs_pos);
+                positions.push(abs_pos);
 
-            // The x2, y2 coordinate forms the coord for the next part
-            xpos = abs_pos.x2;
-            ypos = abs_pos.y2;
+                // The x2, y2 coordinate forms the coord for the next part
+                xpos = abs_pos.x2;
+                ypos = abs_pos.y2;
 
-            // Update the total amount of 'stretch' ratio across the whole collection
-            stretch_x += bounding_box.x1['Stretch'] || 0;
-            stretch_x += bounding_box.x2['Stretch'] || 0;
-            stretch_y += bounding_box.y1['Stretch'] || 0;
-            stretch_y += bounding_box.y2['Stretch'] || 0;
+                // Update the total amount of 'stretch' ratio across the whole collection
+                stretch_x += bounding_box.x1['Stretch'] || 0;
+                stretch_x += bounding_box.x2['Stretch'] || 0;
+                stretch_y += bounding_box.y1['Stretch'] || 0;
+                stretch_y += bounding_box.y2['Stretch'] || 0;
+            } else {
+                // Node has custom layout behaviour: call the flo_layout property to get the position
+                positions.push(layout_override(component));
+            }
         }
 
         // Second pass: lay out stretch nodes
@@ -721,20 +743,22 @@ function flowbetween(root_node) {
             for (let node_index=0; node_index<subcomponents.length; ++node_index) {
                 let component       = subcomponents[node_index];
                 let bounding_box    = get_attributes(component).bounding_box() || default_bounding_box;
-    
-                // Convert the bounding box into an absolute position
-                let abs_pos         = {
-                    x1: layout_position(bounding_box.x1, xpos, total_width, stretch_x, stretch_width),
-                    y1: layout_position(bounding_box.y1, ypos, total_height, stretch_y, stretch_height),
-                    x2: layout_position(bounding_box.x2, xpos, total_width, stretch_x, stretch_width),
-                    y2: layout_position(bounding_box.y2, ypos, total_height, stretch_y, stretch_height)
-                };
-    
-                positions.push(abs_pos);
-    
-                // The x2, y2 coordinate forms the coord for the next part
-                xpos = abs_pos.x2;
-                ypos = abs_pos.y2;
+
+                if (!component.flo_layout) {
+                    // Convert the bounding box into an absolute position
+                    let abs_pos         = {
+                        x1: layout_position(bounding_box.x1, xpos, total_width, stretch_x, stretch_width),
+                        y1: layout_position(bounding_box.y1, ypos, total_height, stretch_y, stretch_height),
+                        x2: layout_position(bounding_box.x2, xpos, total_width, stretch_x, stretch_width),
+                        y2: layout_position(bounding_box.y2, ypos, total_height, stretch_y, stretch_height)
+                    };
+        
+                    positions.push(abs_pos);
+        
+                    // The x2, y2 coordinate forms the coord for the next part
+                    xpos = abs_pos.x2;
+                    ypos = abs_pos.y2;
+                }
             }
         }
 
