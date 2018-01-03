@@ -113,8 +113,8 @@ let flo_control = (function () {
     ///
     /// Performs layout on a popup control
     ///
-    let layout_popup = (popup_node) => {
-        console.log(popup_node);
+    let layout_popup = (popup_node, attributes) => {
+        console.log(popup_node, attributes);
 
         return {
             x1: 0,
