@@ -79,6 +79,7 @@ impl InkMenuController {
                                 .with(Popup::IsOpen(Property::Bool(true)))
                                 .with(Popup::Size(400, 100))
                                 .with(PopupDirection::Below)
+                                .with(ControlAttribute::ZIndex(100))
                                 .with(vec![
                                     Control::label()
                                         .with("Hello, popup")
