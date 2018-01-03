@@ -14,6 +14,7 @@ pub mod editor;
 pub mod style;
 pub mod tools;
 pub mod menu;
+pub mod color;
 
 mod viewmodel;
 
