@@ -80,10 +80,37 @@ flo-slider {
 }
 
 flo-popup {
-    background-color:       rgba(48, 64, 64, 0.97);
+    background-color:       rgba(24, 32, 32, 0.97);
     border-style:           solid;
-    border-radius:          20px;
+    border-radius:          16px;
     border-width:           2px;
     border-color:           rgba(200, 220, 220, 1.0);
     box-shadow:             0px 1px 4px rgba(24, 32, 32, 0.8);
+}
+
+flo-popup > div.beak {
+    position:       absolute;
+    top:            -16px;
+    height:         16px;
+    left:           50%;
+    width:          29px;
+    margin-left:    -14px;
+    overflow:       hidden;
+}
+
+flo-popup > div.beak:after {
+    background-color:       rgba(24, 32, 32, 0.97);
+    border-style:           solid;
+    border-width:           2px;
+    border-color:           rgba(200, 220, 220, 1.0);
+    box-shadow:             0px 1px 4px rgba(24, 32, 32, 0.8);
+
+    content:                "";
+    display:                block;
+    position:               absolute;
+    transform:              rotate(45deg);
+    width:                  20px;
+    height:                 20px;
+    left:                   2px;
+    top:                    5px;
 }
