@@ -132,6 +132,7 @@ impl ToHtml for ControlAttribute {
             &AppearanceAttr(ref appearance) => appearance.to_html_subcomponent(base_path, controller_path),
             &FontAttr(ref font_attribute)   => font_attribute.to_html_subcomponent(base_path, controller_path),
             &StateAttr(ref state)           => state.to_html_subcomponent(base_path, controller_path),
+            &PopupAttr(ref popup)           => popup.to_html_subcomponent(base_path, controller_path),
 
             &BoundingBox(_) => DomEmpty::new(),
             &Id(_)          => DomEmpty::new(),
@@ -205,6 +206,18 @@ impl ToHtml for TextAlign {
             &Left   => DomAttribute::new("style", &format!("text-align: left;")),
             &Center => DomAttribute::new("style", &format!("text-align: center;")),
             &Right  => DomAttribute::new("style", &format!("text-align: right;"))
+        }
+    }
+}
+
+impl ToHtml for Popup {
+    fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+        use ui::Popup::*;
+
+        match self {
+            &IsOpen(_)      => DomEmpty::new(),
+            &Direction(_)   => DomEmpty::new(),
+            &Size(_, _)     => DomEmpty::new()
         }
     }
 }

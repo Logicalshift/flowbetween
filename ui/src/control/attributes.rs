@@ -3,6 +3,7 @@ use super::control::*;
 use super::actions::*;
 use super::font_attr::*;
 use super::state_attr::*;
+use super::popup_attr::*;
 use super::appearance_attr::*;
 
 use super::super::property::*;
@@ -30,6 +31,9 @@ pub enum ControlAttribute {
 
     /// Specifies the state of this control
     StateAttr(State),
+
+    /// Specifies the popup state of this control (meaningless if this is not a popup control)
+    PopupAttr(Popup),
 
     /// Specifies the appearance of this control
     AppearanceAttr(Appearance),
@@ -144,6 +148,16 @@ impl ControlAttribute {
     }
 
     ///
+    /// The popup attribute represented by this attribute
+    /// 
+    pub fn popup<'a>(&'a self) -> Option<&'a Popup> {
+        match self {
+            &PopupAttr(ref popup)   => Some(popup),
+            _                       => None
+        }
+    }
+
+    ///
     /// The canvas resource for this control, if there is one
     ///
     pub fn canvas<'a>(&'a self) -> Option<&'a Resource<BindingCanvas>> {
@@ -177,6 +191,7 @@ impl ControlAttribute {
             &Controller(ref controller)         => Some(controller.as_ref()) != compare_to.controller(),
             &Action(ref trigger, ref action)    => Some((trigger, action)) != compare_to.action(),
             &StateAttr(ref state)               => Some(state) != compare_to.state(),
+            &PopupAttr(ref popup)               => Some(popup) != compare_to.popup(),
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
             &AppearanceAttr(ref appearance)     => Some(appearance) != compare_to.appearance(),
 

@@ -53,3 +53,21 @@ pub enum Popup {
     /// The size in pixels of this popup
     Size(u32, u32)
 }
+
+impl Modifier<Control> for Popup {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(ControlAttribute::PopupAttr(self))
+    }
+}
+
+impl Modifier<Control> for PopupDirection {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(ControlAttribute::PopupAttr(Popup::Direction(self)))
+    }
+}
+
+impl<'a> Modifier<Control> for &'a Popup {
+    fn modify(self, control: &mut Control) {
+        control.add_attribute(ControlAttribute::PopupAttr(self.clone()))
+    }
+}
