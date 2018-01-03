@@ -5,6 +5,7 @@ use futures::stream::*;
 ///
 /// Represents a static image
 ///
+#[derive(Clone)]
 pub enum Image {
     /// Represents an image containing PNG data
     Png(Arc<ImageData>),
