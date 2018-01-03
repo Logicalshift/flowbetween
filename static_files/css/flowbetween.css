@@ -90,12 +90,44 @@ flo-popup {
 
 flo-popup > deco-beak {
     position:       absolute;
+    overflow:       hidden;
+    visibility:     hidden;
+}
+
+flo-popup > deco-beak.below {
     top:            -16px;
     height:         16px;
     left:           50%;
     width:          29px;
     margin-left:    -14px;
-    overflow:       hidden;
+    visibility:     visible;
+}
+
+flo-popup > deco-beak.above {
+    bottom:         -16px;
+    height:         16px;
+    left:           50%;
+    width:          29px;
+    margin-left:    -14px;
+    visibility:     visible;
+}
+
+flo-popup > deco-beak.right {
+    left:           -16px;
+    width:          16px;
+    top:            50%;
+    height:         29px;
+    margin-top:     -14px;
+    visibility:     visible;
+}
+
+flo-popup > deco-beak.left {
+    right:          -16px;
+    width:          16px;
+    top:            50%;
+    height:         29px;
+    margin-top:     -14px;
+    visibility:     visible;
 }
 
 flo-popup > deco-beak:after {
@@ -111,6 +143,24 @@ flo-popup > deco-beak:after {
     transform:              rotate(45deg);
     width:                  20px;
     height:                 20px;
+}
+
+flo-popup > deco-beak.below:after {
     left:                   2px;
     top:                    5px;
+}
+
+flo-popup > deco-beak.above:after {
+    left:                   2px;
+    top:                    -13px;
+}
+
+flo-popup > deco-beak.right:after {
+    top:                    2px;
+    left:                   5px;
+}
+
+flo-popup > deco-beak.left:after {
+    left:                   -13px;
+    top:                    2px;
 }
