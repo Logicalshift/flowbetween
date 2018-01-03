@@ -9,6 +9,9 @@ pub enum ActionTrigger {
     /// User clicked this item (pressed down and released while over the same item)
     Click,
 
+    /// User began an interaction outside of this item (usually means that a popup should be dismissed)
+    Dismiss,
+
     /// Tracks all user clicks and drags over this item with a particular device
     /// In the event a control has multiple devices associated with it, we only track
     /// paint strokes from a single device (ie, you have to finish a paint stroke before
