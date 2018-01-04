@@ -24,5 +24,5 @@ fn hsluv_pixel(ratio: f64) -> (u8, u8, u8, u8) {
 
 lazy_static! {
     /// An image representing the HSLUV colour wheel
-    pub static ref HSLUV_COLOR_WHEEL: Image = image_for_wheel_fn(hsluv_pixel, 512, 140);
+    pub static ref HSLUV_COLOR_WHEEL: Image = image_for_wheel_fn(hsluv_pixel, 512, 140, 180.0);
 }
