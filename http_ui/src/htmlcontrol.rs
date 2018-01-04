@@ -74,7 +74,19 @@ impl ToHtml for Control {
 
         // Add any subcomponents or text for this control
         for attribute in self.attributes() {
-            result.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
+            use ui::ControlAttribute::*;
+
+            match attribute {
+                &SubComponents(_) => {
+                    // Subcomponents get the subcomponent controller path
+                    result.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
+                },
+                
+                _ => {
+                    // Other attributes are for the current control so they keep the current controller path
+                    result.append_child_node(attribute.to_html_subcomponent(base_path, controller_path));
+                }
+            }
         }
 
         // Flatten to create a 'clean' DOM without collections or empty nodes
