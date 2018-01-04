@@ -1,4 +1,5 @@
 use super::traits::*;
+use super::binding::*;
 
 use std::sync::*;
 
@@ -10,7 +11,6 @@ use std::sync::*;
 /// 
 /// Cloning a `BindRef` will create another reference to the same binding.
 /// 
-#[derive(Clone)]
 pub struct BindRef<Target> {
     reference: Arc<Bound<Target>>
 }
@@ -26,6 +26,14 @@ impl<Value> Changeable for BindRef<Value> {
     #[inline]
     fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
         self.reference.when_changed(what)
+    }
+}
+
+impl<Value> Clone for BindRef<Value> {
+    fn clone(&self) -> Self {
+        BindRef {
+            reference: Arc::clone(&self.reference)
+        }
     }
 }
 
@@ -57,6 +65,29 @@ impl<Value> BindRef<Value> {
     pub fn from_arc<Binding: 'static+Bound<Value>>(binding_ref: Arc<Binding>) -> BindRef<Value> {
         BindRef {
             reference: binding_ref
+        }
+    }
+}
+
+impl<'a, Value> From<&'a BindRef<Value>> for BindRef<Value> {
+    #[inline]
+    fn from(val: &'a BindRef<Value>) -> Self {
+        BindRef::clone(val)
+    }
+}
+
+impl<Value: 'static+Clone+Send+PartialEq> From<Binding<Value>> for BindRef<Value> {
+    fn from(val: Binding<Value>) -> Self {
+        BindRef {
+            reference: Arc::new(val)
+        }
+    }
+}
+
+impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for BindRef<Value> {
+    fn from(val: &'a Binding<Value>) -> Self {
+        BindRef {
+            reference: Arc::new(val.clone())
         }
     }
 }
