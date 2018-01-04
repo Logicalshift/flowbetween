@@ -62,6 +62,18 @@ impl HsluvPickerController {
                     y2: Position::At(wheel_size/2.0)
                 })
                 .with(hsluv_wheel.clone());
+            
+            // LHS is the luminance control
+            let lhs = vec![
+                Control::slider()
+                    .with(Bounds::next_vert(24.0))
+            ];
+
+            // RHS is the saturation control
+            let rhs = vec![
+                Control::slider()
+                    .with(Bounds::next_vert(24.0))
+            ];
 
             // Put together the final colour selector
             let color_selector = Control::container()
@@ -69,7 +81,9 @@ impl HsluvPickerController {
                 .with(vec![
                     // LHS controls
                     Control::container()
-                        .with(Bounds::stretch_horiz(1.0)),
+                        .with(Bounds::stretch_horiz(1.0))
+                        .with(ControlAttribute::Padding((0, 0), (8, 0)))
+                        .with(lhs),
                     
                     // Main colour wheel
                     Control::cropping_container()
@@ -79,8 +93,10 @@ impl HsluvPickerController {
                         ]),
 
                     // RHS controls
-                    Control::empty()
+                    Control::container()
                         .with(Bounds::stretch_horiz(1.0))
+                        .with(ControlAttribute::Padding((8, 0), (0, 0)))
+                        .with(rhs)
                 ]);
 
             // Lay out the control
