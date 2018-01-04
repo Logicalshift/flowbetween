@@ -100,7 +100,7 @@ flo-popup > deco-beak.below {
     left:           50%;
     width:          29px;
     margin-left:    -14px;
-    visibility:     visible;
+    visibility:     inherit;
 }
 
 flo-popup > deco-beak.above {
@@ -109,7 +109,7 @@ flo-popup > deco-beak.above {
     left:           50%;
     width:          29px;
     margin-left:    -14px;
-    visibility:     visible;
+    visibility:     inherit;
 }
 
 flo-popup > deco-beak.right {
@@ -118,7 +118,7 @@ flo-popup > deco-beak.right {
     top:            50%;
     height:         29px;
     margin-top:     -14px;
-    visibility:     visible;
+    visibility:     inherit;
 }
 
 flo-popup > deco-beak.left {
@@ -127,7 +127,7 @@ flo-popup > deco-beak.left {
     top:            50%;
     height:         29px;
     margin-top:     -14px;
-    visibility:     visible;
+    visibility:     inherit;
 }
 
 flo-popup > deco-beak:after {
