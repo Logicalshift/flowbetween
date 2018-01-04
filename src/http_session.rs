@@ -24,7 +24,6 @@ enum SubController {
 /// The main flowbetween session object
 ///
 pub struct FlowBetweenSession {
-    view_model: Arc<NullViewModel>,
     ui:         Binding<Control>,
     editor:     Arc<Controller>,
     images:     Arc<ResourceManager<Image>>
@@ -46,7 +45,6 @@ impl FlowBetweenSession {
 
         // Create the session
         FlowBetweenSession {
-            view_model: Arc::new(NullViewModel::new()),
             ui:         bind(Control::container()
                             .with(Bounds::fill_all())
                             .with(Appearance::Foreground(DEFAULT_TEXT))
@@ -98,10 +96,6 @@ impl Controller for FlowBetweenSession {
         } else {
             None
         }
-    }
-
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
     }
 
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {

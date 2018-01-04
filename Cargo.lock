@@ -659,6 +659,7 @@ dependencies = [
  "canvas 0.1.0",
  "desync 0.1.2 (git+https://github.com/logicalshift/desync?branch=develop)",
  "futures 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "modifier 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "png 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",

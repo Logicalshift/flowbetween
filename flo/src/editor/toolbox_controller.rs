@@ -180,8 +180,8 @@ impl<Anim: 'static+Animation> Controller for ToolboxController<Anim> {
         self.anim_view_model.tools().choose_tool_with_name(action_id);
     }
 
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
+    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        Some(self.view_model.clone())
     }
 
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {

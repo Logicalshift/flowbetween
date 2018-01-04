@@ -35,7 +35,7 @@ pub trait Controller : Send+Sync {
     fn ui(&self) -> BindRef<Control>;
 
     /// Retrieves the viewmodel for this controller
-    fn get_viewmodel(&self) -> Arc<ViewModel>;
+    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> { None }
 
     /// Attempts to retrieve a sub-controller of this controller
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
@@ -127,12 +127,11 @@ pub fn assemble_ui(base_controller: Arc<Controller>) -> BindRef<Control> {
 /// A controller that does nothing
 ///
 pub struct NullController {
-    view_model: Arc<NullViewModel>
 }
 
 impl NullController {
     pub fn new() -> NullController {
-        NullController { view_model: Arc::new(NullViewModel::new()) }
+        NullController { }
     }
 }
 
@@ -143,10 +142,6 @@ impl Controller for NullController {
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
         None
-    }
-
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
     }
 }
 
@@ -201,8 +196,8 @@ mod test {
             Some(self.label_controller.clone())
         }
 
-        fn get_viewmodel(&self) -> Arc<ViewModel> {
-            self.view_model.clone()
+        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+            Some(self.view_model.clone())
         }
     }
 
@@ -215,8 +210,8 @@ mod test {
             None
         }
 
-        fn get_viewmodel(&self) -> Arc<ViewModel> {
-            self.view_model.clone()
+        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+            Some(self.view_model.clone())
         }
     }
 

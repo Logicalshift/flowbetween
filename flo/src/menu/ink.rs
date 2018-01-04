@@ -251,8 +251,8 @@ impl Controller for InkMenuController {
         self.ui.clone()
     }
 
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
+    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        Some(self.view_model.clone())
     }
 
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 

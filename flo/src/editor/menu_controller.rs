@@ -12,7 +12,6 @@ use std::sync::*;
 /// The menu controller handles the menbu at the top of the UI
 ///
 pub struct MenuController<Anim: Animation> {
-    view_model:         Arc<NullViewModel>,
     _anim_view_model:   AnimationViewModel<Anim>,
     ui:                 BindRef<Control>,
 
@@ -39,7 +38,6 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
 
         // Create the controller
         MenuController {
-            view_model:         Arc::new(NullViewModel::new()),
             _anim_view_model:   anim_view_model.clone(),
             ui:                 BindRef::from(ui),
 
@@ -85,10 +83,6 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
 impl<Anim: Animation> Controller for MenuController<Anim>  {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
-    }
-
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
     }
 
     fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {

@@ -10,15 +10,13 @@ use binding::*;
 /// An empty session type that can be used for testing in the absense of an actual implementation
 ///
 pub struct NullSession {
-    view_model: Arc<NullViewModel>,
     ui:         BindRef<Control>
 }
 
 impl NullSession {
     pub fn new() -> NullSession {
         NullSession {
-            view_model: Arc::new(NullViewModel::new()),
-            ui:         BindRef::from(computed(|| {
+            ui: BindRef::from(computed(|| {
                 Control::container()
                     .with(vec![Control::label().with("Hello, World")])
             }))
@@ -40,9 +38,5 @@ impl Controller for NullSession {
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
         None
-    }
-
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.view_model.clone()
     }
 }

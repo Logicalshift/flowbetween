@@ -37,7 +37,6 @@ struct CanvasCore {
 /// The canvas controller manages the main drawing canvas
 ///
 pub struct CanvasController<Anim: Animation> {
-    ui_view_model:      Arc<NullViewModel>,
     ui:                 Binding<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_view_model:    AnimationViewModel<Anim>,
@@ -52,7 +51,6 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
         // Create the controller
         let mut controller = CanvasController {
-            ui_view_model:      Arc::new(NullViewModel::new()),
             ui:                 bind(Control::empty()),
             canvases:           Arc::new(canvases),
             anim_view_model:    view_model.clone(),
@@ -280,10 +278,6 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::new(&self.ui)
-    }
-
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        self.ui_view_model.clone()
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {

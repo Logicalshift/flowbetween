@@ -8,6 +8,11 @@ use super::viewmodel_update::*;
 use std::collections::{HashSet, HashMap};
 use std::sync::*;
 
+lazy_static! {
+    // View model used when there is no view model
+    pub static ref NULL_VIEW_MODEL: Arc<NullViewModel> = Arc::new(NullViewModel::new());
+}
+
 // TODO: needs improvement
 //  * The 'watch a viewmodel' and 'watch the controller tree' functions are lumped together here and should be separate
 //  * Recreating the watch every time rather than re-using the existing watchers where we can is inefficient
@@ -95,7 +100,7 @@ impl WatchViewModel {
         if let Some(controller) = controller.upgrade() {
             // Fetch the various components of the controller
             let ui              = controller.ui().get();
-            let viewmodel       = controller.get_viewmodel();
+            let viewmodel       = controller.get_viewmodel().unwrap_or_else(|| NULL_VIEW_MODEL.clone());
             let properties      = viewmodel.get_property_names();
             subcontrollers      = ui.all_controllers();
 
@@ -135,7 +140,7 @@ impl WatchViewModel {
     pub fn get_local_updates(&self) -> Option<ViewModelUpdate> {
         if let Some(controller) = self.controller.upgrade() {
             // Get the current state of the viewmodel
-            let viewmodel                   = controller.get_viewmodel();
+            let viewmodel                   = controller.get_viewmodel().unwrap_or_else(|| NULL_VIEW_MODEL.clone());
             let properties: HashSet<String> = viewmodel.get_property_names().into_iter().collect();
 
             // Find the changed properties; a property that is no longer in the view model cannot be changed
@@ -260,7 +265,7 @@ pub fn viewmodel_update_controller_tree(controller: &Controller) -> Vec<ViewMode
     // Rust could probably capture the 'result' variable in the closure exactly liek this if it were smarter
     fn add_controller_to_result(controller: &Controller, path: &mut Vec<String>, result: &mut Vec<ViewModelUpdate>) {
         // Fetch the update for the viewmodel for this controller
-        let viewmodel           = controller.get_viewmodel();
+        let viewmodel           = controller.get_viewmodel().unwrap_or_else(|| NULL_VIEW_MODEL.clone());
         let viewmodel_update    = viewmodel_update_all(path.clone(), &*viewmodel);
 
         // Add to the result if there are any entries in this viewmodel
@@ -337,15 +342,15 @@ mod test {
             }
         }
 
-        fn get_viewmodel(&self) -> Arc<ViewModel> {
-            self.view_model.clone()
+        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+            Some(self.view_model.clone())
         }
     }
 
     #[test]
     fn initially_no_changes() {
         let controller = Arc::new(DynamicController::new());
-        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
         let diff_viewmodel  = DiffViewModel::new(controller.clone());
         let watcher         = diff_viewmodel.watch();
@@ -356,12 +361,12 @@ mod test {
     #[test]
     fn changes_are_picked_up() {
         let controller = Arc::new(DynamicController::new());
-        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
         let diff_viewmodel  = DiffViewModel::new(controller.clone());
         let watcher         = diff_viewmodel.watch();
 
-        controller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
         assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(2))])]);
     }
@@ -369,12 +374,12 @@ mod test {
     #[test]
     fn new_values_are_picked_up() {
         let controller = Arc::new(DynamicController::new());
-        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
         let diff_viewmodel  = DiffViewModel::new(controller.clone());
         let watcher         = diff_viewmodel.watch();
 
-        controller.get_viewmodel().set_property("NewValue", PropertyValue::Int(2));
+        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
 
         assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("NewValue".to_string(), PropertyValue::Int(2))])]);
     }
@@ -382,13 +387,13 @@ mod test {
     #[test]
     fn new_values_are_picked_up_alongside_changes() {
         let controller = Arc::new(DynamicController::new());
-        controller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
         let diff_viewmodel  = DiffViewModel::new(controller.clone());
         let watcher         = diff_viewmodel.watch();
 
-        controller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
-        controller.get_viewmodel().set_property("NewValue", PropertyValue::Int(3));
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
 
         assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(2)), ("NewValue".to_string(), PropertyValue::Int(3))])]);
     }
@@ -400,14 +405,14 @@ mod test {
         controller.add_subcontroller("Subcontroller".to_string());
 
         let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
-        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(1));
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
         let controller = Arc::new(controller);
 
         let diff_viewmodel  = DiffViewModel::new(controller.clone());
         let watcher         = diff_viewmodel.watch();
 
-        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
         let updates = watcher.get_updates();
 
@@ -433,7 +438,7 @@ mod test {
         controller.add_subcontroller("Subcontroller".to_string());
         let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
 
-        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
         let updates = watcher.get_updates();
 
@@ -459,11 +464,11 @@ mod test {
         controller.add_subcontroller("Subcontroller".to_string());
         let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
 
-        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(2));
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
         let (_updates, watcher) = diff_viewmodel.rotate_watch(watcher);
 
-        subcontroller.get_viewmodel().set_property("Test", PropertyValue::Int(3));
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(3));
         let updates = watcher.get_updates();
 
         assert!(updates.len() == 1);
@@ -509,8 +514,8 @@ mod test {
             Some(self.model_controler.clone())
         }
 
-        fn get_viewmodel(&self) -> Arc<ViewModel> {
-            self.view_model.clone()
+        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+            Some(self.view_model.clone())
         }
     }
 
@@ -523,8 +528,8 @@ mod test {
             None
         }
 
-        fn get_viewmodel(&self) -> Arc<ViewModel> {
-            self.view_model.clone()
+        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+            Some(self.view_model.clone())
         }
     }
 

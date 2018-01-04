@@ -1,8 +1,6 @@
 use ui::*;
 use binding::*;
 
-use std::sync::*;
-
 ///
 /// Controller that makes it possible to pick a colour
 /// 
@@ -35,10 +33,5 @@ impl Controller for ColorPickerController {
     /// Retrieves a Control representing the UI for this controller
     fn ui(&self) -> BindRef<Control> {
         self.ui.clone()
-    }
-
-    /// Retrieves the viewmodel for this controller
-    fn get_viewmodel(&self) -> Arc<ViewModel> {
-        Arc::new(NullViewModel::new())
     }
 }
