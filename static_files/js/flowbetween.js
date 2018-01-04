@@ -324,7 +324,7 @@ function flowbetween(root_node) {
                     // There is an onload attribute but it's set to null regardless for things that don't normally support onload
                     let on_load = template_node.getAttribute('onload');
                     if (on_load) {
-                        template_on_load[template_name] = new Function(on_load);
+                        template_on_load[template_name] = new Function('flowbetween', on_load);
                     }
 
                     // Template nodes can specify a custom layout algorithm if they want to override our standard one
@@ -369,7 +369,13 @@ function flowbetween(root_node) {
 
                 // Call the load function with our newly set up node
                 if (load_node) {
-                    load_node.apply(node);
+                    // onload events get a 'flowbetween' parameter that can be used to access some internal functions
+                    // add_action_event is an important one if they want to set up event handlers
+                    // action events added during load are 'intrinsic' and stick around
+                    let flowbetween = {
+                        add_action_event: add_intrinsic_action_event
+                    };
+                    load_node.apply(node, [flowbetween]);
                 }
 
                 // The layout engine will use the flo_layout property if it exists to lay out a node
@@ -838,6 +844,25 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Adds an action event that's 'intrinsic' to the node (kept even when
+    /// we want to rewire the events)
+    ///
+    let add_intrinsic_action_event = (node, event_name, handler, options) => {
+        // Works just like add_action_event...
+        add_action_event(node, event_name, handler, options);
+        
+        // ...except we also record a function for re-registering these
+        let also_intrinsic = node.flo_register_intrinsic_events;
+        node.flo_register_intrinsic_events = () => {
+            if (also_intrinsic) {
+                also_intrinsic();
+            }
+
+            add_action_event(node, event_name, handler, options);
+        };
+    };
+
+    ///
     /// Clears any events attached to a DOM node
     ///
     let remove_action_events_from_node = (node) => {
@@ -862,6 +887,17 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Rewires any intrinsic events that might have been removed by a
+    /// call to remove_action_events_from_node
+    ///
+    let rewire_intrinsic_events = (node) => {
+        let register_intrinsic = node.flo_register_intrinsic_events;
+        if (register_intrinsic) {
+            register_intrinsic();
+        }
+    };
+
+    ///
     /// Wires up an action to a node
     ///
     let wire_action = (action, node, controller_path) => {
@@ -869,6 +905,7 @@ function flowbetween(root_node) {
 
         // If this node is already wired up, remove the events we added
         remove_action_events_from_node(node);
+        rewire_intrinsic_events(node);
 
         // Store the actions for this event
         let action_type = action[0];
@@ -924,9 +961,10 @@ function flowbetween(root_node) {
         // Remove existing events, if any
         if (node.flo_remove_actions) {
             remove_action_events_from_node(node);
+            rewire_intrinsic_events(node);
         }
 
-        // Fetch actions
+        // Fetch and wire actions
         let actions = attributes.actions();
 
         if (actions) {
