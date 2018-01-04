@@ -14,7 +14,8 @@ pub struct HsluvPickerController {
     images:     Arc<ResourceManager<Image>>,
     canvases:   Arc<ResourceManager<BindingCanvas>>,
 
-    viewmodel:  Arc<DynamicViewModel>
+    viewmodel:  Arc<DynamicViewModel>,
+    color:      Binding<Color>
 }
 
 impl HsluvPickerController {
@@ -26,6 +27,20 @@ impl HsluvPickerController {
         let canvases    = ResourceManager::new();
         let color       = color.clone();
         let viewmodel   = DynamicViewModel::new();
+
+        // Viewmodel contains the H, S, L values
+        let col = color.clone();
+        viewmodel.set_computed("H", move || {
+            PropertyValue::Float(col.get().to_hsluv_components().0 as f64)
+        });
+        let col = color.clone();
+        viewmodel.set_computed("S", move || {
+            PropertyValue::Float(col.get().to_hsluv_components().1 as f64)
+        });
+        let col = color.clone();
+        viewmodel.set_computed("L", move || {
+            PropertyValue::Float(col.get().to_hsluv_components().2 as f64)
+        });
 
         // Set up the images
         let hsluv_wheel = HSLUV_COLOR_WHEEL.clone();
@@ -43,7 +58,8 @@ impl HsluvPickerController {
             ui:         ui,
             images:     Arc::new(images),
             canvases:   Arc::new(canvases),
-            viewmodel:  Arc::new(viewmodel)
+            viewmodel:  Arc::new(viewmodel),
+            color:      color
         }
     }
 
@@ -79,14 +95,18 @@ impl HsluvPickerController {
 
         BindRef::from(computed(move || {
             // The hue selector is designed to be cropped at the top of the screen
-            let hue_selector = Control::empty()
+            let hue_selector = Control::rotor()
                 .with(Bounds { 
                     x1: Position::At(0.0), 
                     y1: Position::At(-wheel_size/2.0), 
                     x2: Position::At(wheel_size), 
                     y2: Position::At(wheel_size/2.0)
                 })
-                .with(hsluv_wheel.clone());
+                .with(hsluv_wheel.clone())
+                .with(State::Range((0.0.to_property(), 360.0.to_property())))
+                .with(State::Value(Property::Bind("H".to_string())))
+                .with((ActionTrigger::EditValue, "SetHue"))
+                .with((ActionTrigger::SetValue, "SetHue"));
             
             // The preview control is in the same container as the hue selector
             let preview_control = Control::canvas()
@@ -102,12 +122,20 @@ impl HsluvPickerController {
             let lhs = vec![
                 Control::slider()
                     .with(Bounds::next_vert(24.0))
+                    .with(State::Range((0.0.to_property(), 100.0.to_property())))
+                    .with(State::Value(Property::Bind("L".to_string())))
+                    .with((ActionTrigger::EditValue, "SetLum"))
+                    .with((ActionTrigger::SetValue, "SetLum"))
             ];
 
             // RHS is the saturation control
             let rhs = vec![
                 Control::slider()
                     .with(Bounds::next_vert(24.0))
+                    .with(State::Range((0.0.to_property(), 100.0.to_property())))
+                    .with(State::Value(Property::Bind("S".to_string())))
+                    .with((ActionTrigger::EditValue, "SetSat"))
+                    .with((ActionTrigger::SetValue, "SetSat"))
             ];
 
             // Put together the final colour selector
@@ -156,8 +184,28 @@ impl Controller for HsluvPickerController {
 
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
 
-    fn action(&self, _action_id: &str, _action_data: &ActionParameter) {
+    fn action(&self, action_id: &str, action_data: &ActionParameter) {
+        use ui::ActionParameter::*;
+        use ui::PropertyValue::*;
 
+        match (action_id, action_data) {
+            ("SetHue", &Value(Float(new_hue))) => {
+                let (_, s, l, a) = self.color.get().to_hsluv_components();
+                self.color.clone().set(Color::Hsluv(new_hue as f32, s, l, a));
+            },
+
+            ("SetSat", &Value(Float(new_sat))) => {
+                let (h, _, l, a) = self.color.get().to_hsluv_components();
+                self.color.clone().set(Color::Hsluv(h, new_sat as f32, l, a));
+            },
+
+            ("SetLum", &Value(Float(new_lum))) => {
+                let (h, s, _, a) = self.color.get().to_hsluv_components();
+                self.color.clone().set(Color::Hsluv(h, s, new_lum as f32, a));
+            },
+
+            _ => ()
+        }
     }
 
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { 
