@@ -6,6 +6,8 @@ use std::sync::*;
 ///
 /// Controller that provides standard behaviour for popups.
 /// Supply this as a controller for a control that needs a popup.
+/// This will supply the popup container and suppress the popup
+/// UI while the popup is not visible.
 /// 
 pub struct PopupController<ContentController: Controller> {
     /// Controller that provides the main content for the popup
@@ -123,6 +125,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
                     .with(Popup::Direction(direction))
                     .with(Popup::Size(width, height))
                     .with(Popup::Offset(offset))
+                    .with((ActionTrigger::Dismiss, "DismissPopup"))
                     .with(vec![
                         content.get()
                     ])
@@ -145,6 +148,12 @@ impl<ContentController: Controller> Controller for PopupController<ContentContro
     }
 
     fn action(&self, action_id: &str, action_data: &ActionParameter) {
+        // Hide the popup if our DismissPopup action is fired
+        if action_id == "DismissPopup" {
+            self.open.clone().set(false);
+        }
+
+        // Pass the action on to the main controller
         self.content_controller.action(action_id, action_data);
     }
 
