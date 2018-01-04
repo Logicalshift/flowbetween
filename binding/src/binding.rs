@@ -140,3 +140,16 @@ impl<Value: 'static+Clone+PartialEq+Send> From<Value> for Binding<Value> {
     }
 }
 
+impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for Binding<Value> {
+    #[inline]
+    fn from(val: &'a Binding<Value>) -> Binding<Value> {
+        Binding::clone(val)
+    }
+}
+
+impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Value> for Binding<Value> {
+    #[inline]
+    fn from(val: &'a Value) -> Binding<Value> {
+        Binding::new(val.clone())
+    }
+}
