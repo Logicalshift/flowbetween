@@ -45,11 +45,51 @@ impl HsluvPickerController {
     /// Creates the UI for this controller
     /// 
     fn create_ui(color: &Binding<Color>, hsluv_wheel: &Resource<Image>) -> BindRef<Control> {
-        let color = color.clone();
+        // Constants
+        let wheel_size  = 200.0;
 
-        BindRef::from(&Control::empty()
-            .with(Bounds::fill_all())
-            .with(hsluv_wheel.clone()))
+        // Bindings and images
+        let color       = color.clone();
+        let hsluv_wheel = hsluv_wheel.clone();
+
+        BindRef::from(computed(move || {
+            // The hue selector is designed to be cropped at the top of the screen
+            let hue_selector = Control::empty()
+                .with(Bounds { 
+                    x1: Position::At(0.0), 
+                    y1: Position::At(-wheel_size/2.0), 
+                    x2: Position::At(wheel_size), 
+                    y2: Position::At(wheel_size/2.0)
+                })
+                .with(hsluv_wheel.clone());
+
+            // Put together the final colour selector
+            let color_selector = Control::container()
+                .with(Bounds::next_vert(wheel_size/2.0))
+                .with(vec![
+                    // LHS controls
+                    Control::container()
+                        .with(Bounds::stretch_horiz(1.0)),
+                    
+                    // Main colour wheel
+                    Control::cropping_container()
+                        .with(Bounds::next_horiz(wheel_size))
+                        .with(vec![
+                            hue_selector
+                        ]),
+
+                    // RHS controls
+                    Control::empty()
+                        .with(Bounds::stretch_horiz(1.0))
+                ]);
+
+            // Lay out the control
+            Control::container()
+                .with(vec![
+                    color_selector
+                ])
+                .with(Bounds::fill_all())
+        }))
     }
 }
 

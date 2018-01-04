@@ -32,6 +32,11 @@ impl Control {
         Self::new(Container)
     }
 
+    /// Creates a new cropping container control
+    pub fn cropping_container() -> Control {
+        Self::new(CroppingContainer)
+    }
+
     /// Creates a new popup control
     pub fn popup() -> Control {
         Self::new(Popup)
