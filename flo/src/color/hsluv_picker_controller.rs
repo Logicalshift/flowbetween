@@ -77,6 +77,7 @@ impl HsluvPickerController {
             gc.stroke_color(Color::Rgba(0.8, 0.9, 1.0, 0.8));
             gc.fill_color(color);
             gc.line_width(0.04);
+            gc.new_path();
             gc.circle(0.0, 0.0, 1.0-0.02);
             gc.fill();
             gc.stroke();
