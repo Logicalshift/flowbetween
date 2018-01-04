@@ -115,11 +115,11 @@ let flo_control = (function () {
     ///
     let load_popup = (popup_node) => {
         // Set the initial state
-        let is_open = popup_node.flo_popup_open || false;
+        let is_open = popup_node.flo_popup_open || { 'Bool': false };
 
         // Function to set whether or not the popup is open or not
         function set_is_open(new_open) {
-            is_open = new_open;
+            is_open = new_open['Bool'] || false;
 
             popup_node.style.visibility = is_open ? 'visible' : 'hidden';
         }
