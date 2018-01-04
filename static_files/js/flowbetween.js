@@ -17,6 +17,9 @@ function flowbetween(root_node) {
     // Control data, starting at the root node
     let root_control_data = null;
 
+    // Nodes that are waiting for dismiss events
+    let waiting_for_dismissal = [];
+
     // URL where the flowbetween session resides
     let target_url = '/flowbetween/session';
 
@@ -862,6 +865,8 @@ function flowbetween(root_node) {
     /// Wires up an action to a node
     ///
     let wire_action = (action, node, controller_path) => {
+        let remove_action = null;
+
         // If this node is already wired up, remove the events we added
         remove_action_events_from_node(node);
 
@@ -881,8 +886,34 @@ function flowbetween(root_node) {
         } else if (action_type === 'SetValue') {
             node.flo_set_value = new_property_value => perform_action(controller_path, action_name, { 'Value': new_property_value });
 
+        } else if (action_type === 'Dismiss') {
+            node.flo_dismiss = () => perform_action(controller_path, action_name, null);
+
+            waiting_for_dismissal.push(node);
+            remove_action = () => {
+                node.flo_dismiss        = null;
+                waiting_for_dismissal   = waiting_for_dismissal.filter(dismiss_node => dismiss_node !== node);
+            };
+
         } else {
             warn('Unknown action type: ' + action_type);
+        }
+
+        // If the action requires unwiring, store how in the node
+        if (remove_action) {
+            let remove_more = node.flo_remove_actions;
+
+            node.flo_remove_actions = () => {
+                if (remove_action) {
+                    remove_action();
+                    if (remove_more) {
+                        remove_more();
+                    }
+
+                    remove_action   = null;
+                    remove_more     = null;
+                }
+            };
         }
     };
 
@@ -1022,6 +1053,41 @@ function flowbetween(root_node) {
 
         // Start at the first node
         unwire_recursive(node);
+    };
+
+    ///
+    /// Sends dismiss events to anything that's waiting for one and is
+    /// not a parent of the specified node.
+    ///
+    let dismiss_others = (event_node) => {
+        // Nothing to do if nothing is waiting for a dismiss event
+        if (waiting_for_dismissal.length <= 0) {
+            return;
+        }
+
+        // The target nodes are the nodes along the path for this event
+        // If this is an interaction with a dismissable control, it won't be dismissed
+        let target_nodes = [];
+        let current_node = event_node;
+
+        while (current_node !== null && current_node !== root_node) {
+            target_nodes.push(current_node);
+            current_node = current_node.parentNode;
+        }
+
+        // Dismiss any waiting node that isn't in the 'target' list
+        let to_dismiss = waiting_for_dismissal.filter(dismiss_node => {
+            if (target_nodes.find(node => node === dismiss_node)) {
+                return false;
+            } else {
+                return true;
+            }
+        });
+
+        // When the event was wired, the flo_dismiss property was added
+        to_dismiss.forEach(dismiss_node => {
+            dismiss_node.flo_dismiss();
+        });
     };
 
     ///
@@ -1522,7 +1588,7 @@ function flowbetween(root_node) {
     };
 
     ///
-    /// ====== DEBUGGING AND INTROSPECTION
+    /// ===== DEBUGGING AND INTROSPECTION
     ///
 
     add_command('canvas_stats', 'Display statistics about the canvases in this window', () => {
@@ -1582,6 +1648,29 @@ function flowbetween(root_node) {
         }
     });
 
+    // Interacting outside 'dismiss' nodes should fire the 'dismiss' event
+    root_node.addEventListener('pointerdown', ev => {
+        dismiss_others(ev.target);
+    }, {
+        capture: true,
+        passive: true
+    });
+
+    root_node.addEventListener('touchdown', ev => {
+        dismiss_others(ev.target);
+    }, {
+        capture: true,
+        passive: true
+    });
+
+    root_node.addEventListener('mousedown', ev => {
+        dismiss_others(ev.target);
+    }, {
+        capture: true,
+        passive: true
+    });
+
+    // Prepare for painting
     flo_paint.initialise(add_action_event, perform_action);
 
     // All set up, let's go
