@@ -51,7 +51,7 @@ impl HsluvPickerController {
         let color_preview = canvases.register(color_preview);
 
         // Set up the UI
-        let ui          = Self::create_ui(&color, &hsluv_wheel, &color_preview);
+        let ui          = Self::create_ui(&hsluv_wheel, &color_preview);
         
         // Controller is ready to go
         HsluvPickerController {
@@ -83,13 +83,12 @@ impl HsluvPickerController {
     ///
     /// Creates the UI for this controller
     /// 
-    fn create_ui(color: &Binding<Color>, hsluv_wheel: &Resource<Image>, preview: &Resource<BindingCanvas>) -> BindRef<Control> {
+    fn create_ui(hsluv_wheel: &Resource<Image>, preview: &Resource<BindingCanvas>) -> BindRef<Control> {
         // Constants
         let wheel_size      = 200.0;
         let preview_size    = f32::floor((140.0/256.0) * wheel_size)+2.0;
 
         // Bindings and images
-        let color       = color.clone();
         let hsluv_wheel = hsluv_wheel.clone();
         let preview     = preview.clone();
 
