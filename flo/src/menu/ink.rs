@@ -45,7 +45,7 @@ impl InkMenuController {
         let color_picker        = ColorPickerController::new(colour);
         let color_picker        = PopupController::new(color_picker, &color_picker_open)
             .with_direction(&PopupDirection::Below)
-            .with_size(&(500, 300));
+            .with_size(&(500, 124));
 
         let vm_color_picker_open = color_picker_open.clone();
         view_model.set_computed("ColorPickerOpen", move || PropertyValue::Bool(vm_color_picker_open.get()));

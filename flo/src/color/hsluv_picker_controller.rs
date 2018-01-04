@@ -185,7 +185,12 @@ impl HsluvPickerController {
                     .with(State::Range((0.0.to_property(), 100.0.to_property())))
                     .with(State::Value(Property::Bind("L".to_string())))
                     .with((ActionTrigger::EditValue, "SetLum"))
-                    .with((ActionTrigger::SetValue, "SetLum"))
+                    .with((ActionTrigger::SetValue, "SetLum")),
+                Control::label()
+                    .with("Luminance")
+                    .with(TextAlign::Center)
+                    .with(Font::Size(12.0))
+                    .with(Bounds::next_vert(16.0))
             ];
 
             // RHS is the saturation control
@@ -195,7 +200,12 @@ impl HsluvPickerController {
                     .with(State::Range((0.0.to_property(), 100.0.to_property())))
                     .with(State::Value(Property::Bind("S".to_string())))
                     .with((ActionTrigger::EditValue, "SetSat"))
-                    .with((ActionTrigger::SetValue, "SetSat"))
+                    .with((ActionTrigger::SetValue, "SetSat")),
+                Control::label()
+                    .with("Saturation")
+                    .with(TextAlign::Center)
+                    .with(Font::Size(12.0))
+                    .with(Bounds::next_vert(16.0))
             ];
 
             // Put together the final colour selector
