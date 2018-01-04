@@ -214,7 +214,7 @@ let flo_paint = (function() {
         };
 
         // Register for the pointer down event
-        add_action_event(node, 'mousedown', mouse_down, true);
+        add_action_event(node, 'mousedown', mouse_down, false);
     };
 
     ///
@@ -327,7 +327,7 @@ let flo_paint = (function() {
         };
 
         // Register for the pointer down event
-        add_action_event(node, 'touchstart', touch_start, true);
+        add_action_event(node, 'touchstart', touch_start, false);
     };
 
     ///
@@ -469,12 +469,12 @@ let flo_paint = (function() {
         };
 
         // Register for the pointer down event
-        add_action_event(node, 'pointerdown', pointer_down);
+        add_action_event(node, 'pointerdown', pointer_down, false);
 
         // If touch events are also supported, disable them for this control so gestures are disabled
         if (supports_touch_events) {
             // Touch & pointer events fight each other :-(
-            add_action_event(node, 'touchstart', ev => ev.preventDefault());
+            add_action_event(node, 'touchstart', ev => ev.preventDefault(), false);
         }
     };
 
