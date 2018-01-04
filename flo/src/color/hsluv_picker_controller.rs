@@ -71,10 +71,29 @@ impl HsluvPickerController {
 
         // Just a circle with the colour in the center
         BindingCanvas::with_drawing(move |gc| {
+            let color = color.get();
+
+            // Colour preview
             gc.stroke_color(Color::Rgba(0.8, 0.9, 1.0, 0.8));
+            gc.fill_color(color);
             gc.line_width(0.04);
-            gc.fill_color(color.get());
             gc.circle(0.0, 0.0, 1.0-0.02);
+            gc.fill();
+            gc.stroke();
+
+            // Hue indicator arrow
+            let (hue, _, _, _)  = color.to_hsluv_components();
+            let indicator_color = Color::Hsluv(hue, 100.0, 65.0, 1.0);
+
+            gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 0.7));
+            gc.fill_color(indicator_color);
+            gc.line_width_pixels(0.5);
+
+            gc.new_path();
+            gc.move_to(0.0, -0.99);
+            gc.line_to(0.1, -0.80);
+            gc.line_to(-0.1, -0.80);
+            gc.close_path();
             gc.fill();
             gc.stroke();
         })
