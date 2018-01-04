@@ -118,6 +118,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
                     .with(Popup::Direction(direction))
                     .with(Popup::Size(width, height))
                     .with(Popup::Offset(offset))
+                    .with(ControlAttribute::Padding((8,8), (8,8)))
                     .with(ControlAttribute::ZIndex(1000))
             } else {
                 // Bind the UI only when the controller is open
@@ -126,6 +127,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
                     .with(Popup::Direction(direction))
                     .with(Popup::Size(width, height))
                     .with(Popup::Offset(offset))
+                    .with(ControlAttribute::Padding((8,8), (8,8)))
                     .with(ControlAttribute::ZIndex(1000))
                     .with((ActionTrigger::Dismiss, "DismissPopup"))
                     .with(vec![
