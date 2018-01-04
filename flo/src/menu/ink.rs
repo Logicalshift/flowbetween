@@ -1,3 +1,5 @@
+use super::super::color::*;
+
 use ui::*;
 use canvas::*;
 use binding::*;
@@ -13,12 +15,15 @@ pub const INKMENUCONTROLLER: &str = "InkMenu";
 /// Controller used for the ink tool
 /// 
 pub struct InkMenuController {
-    size:       Binding<f32>,
-    opacity:    Binding<f32>,
+    size:               Binding<f32>,
+    opacity:            Binding<f32>,
 
-    canvases:   Arc<ResourceManager<BindingCanvas>>,
-    ui:         BindRef<Control>,
-    view_model: Arc<DynamicViewModel>
+    canvases:           Arc<ResourceManager<BindingCanvas>>,
+    ui:                 BindRef<Control>,
+    view_model:         Arc<DynamicViewModel>,
+
+    color_picker_open:  Binding<bool>,
+    color_picker:       Arc<PopupController<ColorPickerController>>
 }
 
 impl InkMenuController {
@@ -34,6 +39,16 @@ impl InkMenuController {
 
         view_model.set_computed("Size", move || PropertyValue::Float(vm_size.get() as f64));
         view_model.set_computed("Opacity", move || PropertyValue::Float(vm_opacity.get() as f64));
+
+        // Create the colour picker popup
+        let color_picker_open   = Binding::new(false);
+        let color_picker        = ColorPickerController::new();
+        let color_picker        = PopupController::new(color_picker, &color_picker_open)
+            .with_direction(&PopupDirection::Below)
+            .with_size(&(500, 300));
+
+        let vm_color_picker_open = color_picker_open.clone();
+        view_model.set_computed("ColorPickerOpen", move || PropertyValue::Bool(vm_color_picker_open.get()));
 
         // Create the canvases
         let canvases = Arc::new(ResourceManager::new());
@@ -74,21 +89,9 @@ impl InkMenuController {
                     Control::canvas()
                         .with(colour_preview)
                         .with(Bounds::next_horiz(32.0))
-                        .with(State::Badged(Property::Bool(true)))
-                        .with(vec![
-                            Control::popup()
-                                .with(Popup::IsOpen(Property::Bool(true)))
-                                .with(Popup::Size(400, 100))
-                                .with(Popup::Offset(8))
-                                .with(PopupDirection::Below)
-                                .with(ControlAttribute::ZIndex(100))
-                                .with(ControlAttribute::Padding((8, 8), (8, 8)))
-                                .with(vec![
-                                    Control::label()
-                                        .with("Hello, popup")
-                                        .with(Bounds::fill_all())
-                                ])
-                        ]),
+                        .with(State::Badged(Property::Bind("ColorPickerOpen".to_string())))
+                        .with((ActionTrigger::Click, "ShowColorPopup"))
+                        .with_controller("ColorPopup"),
 
                     Control::empty()
                         .with(Bounds::next_horiz(12.0)),
@@ -123,12 +126,15 @@ impl InkMenuController {
 
         // Finalize the control
         InkMenuController {
-            size:       size.clone(),
-            opacity:    opacity.clone(),
+            size:               size.clone(),
+            opacity:            opacity.clone(),
 
-            canvases:   canvases, 
-            ui:         ui,
-            view_model: view_model
+            canvases:           canvases, 
+            ui:                 ui,
+            view_model:         view_model,
+
+            color_picker_open:  color_picker_open,
+            color_picker:       Arc::new(color_picker)
         }
     }
 
@@ -255,6 +261,13 @@ impl Controller for InkMenuController {
         Some(self.view_model.clone())
     }
 
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+        match id {
+            "ColorPopup"        => Some(self.color_picker.clone()),
+            _                   => None
+        }
+    }
+
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
         Some(self.canvases.clone())
     }
@@ -264,12 +277,19 @@ impl Controller for InkMenuController {
 
         match (action_id, action_parameter) {
             ("ChangeSize", &Value(PropertyValue::Float(new_size))) => {
+                // User has dragged the 'size' property
                 self.size.clone().set(new_size as f32);
             },
 
             ("ChangeOpacity", &Value(PropertyValue::Float(new_opacity))) => {
+                // User has dragged the 'opacity' property
                 self.opacity.clone().set(new_opacity as f32);
             },
+
+            ("ShowColorPopup", _) => {
+                // User has clicked the colour icon
+                self.color_picker_open.clone().set(true)
+            }
 
             _ => ()
         }
