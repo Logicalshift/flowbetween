@@ -233,14 +233,15 @@ let flo_control = (function () {
                 // Really want to project a line onto the circle, then make the 
                 // extra angle be the distance from the rotor. This has a 
                 // similar effect but isn't quite as accurate.
-                // Also kind of weird if you drag directly away from the center
-                // rather than along a tangent.
                 let angle           = (Math.atan2(y, x) / (2*Math.PI) * 360.0);
                 let circumference   = Math.PI*2*radius;
-                let extra_distance  = Math.sqrt((x*x) + (y*y)) - radius;
-
-                if (angle < 90 || angle > 270) {
-                    extra_distance = -extra_distance;
+                let extra_distance  = -x;
+                if (x < -radius) {
+                    extra_distance -= radius;
+                } else if (x > radius) {
+                    extra_distance += radius;
+                } else {
+                    extra_distance = 0;
                 }
 
                 return angle + ((extra_distance/circumference)*360);
