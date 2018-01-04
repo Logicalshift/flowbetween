@@ -24,6 +24,7 @@ pub mod viewmodel_update;
 pub mod resource_manager;
 pub mod binding_canvas;
 pub mod image;
+pub mod controllers;
 
 pub use self::json::*;
 pub use self::control::*;
@@ -38,3 +39,4 @@ pub use self::viewmodel_update::*;
 pub use self::resource_manager::*;
 pub use self::binding_canvas::*;
 pub use self::image::*;
+pub use self::controllers::*;
