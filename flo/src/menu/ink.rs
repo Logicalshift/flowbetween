@@ -42,7 +42,7 @@ impl InkMenuController {
 
         // Create the colour picker popup
         let color_picker_open   = Binding::new(false);
-        let color_picker        = ColorPickerController::new();
+        let color_picker        = ColorPickerController::new(colour);
         let color_picker        = PopupController::new(color_picker, &color_picker_open)
             .with_direction(&PopupDirection::Below)
             .with_size(&(500, 300));
