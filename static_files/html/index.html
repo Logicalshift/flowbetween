@@ -21,6 +21,11 @@
 </template>
 
 <template>
+    <flo-rotor onload="flo_control.load_rotor(this, flowbetween.add_action_event)">
+    </flo-rotor>
+</template>
+
+<template>
     <flo-popup onload="flo_control.load_popup(this)" flo-layout="return flo_control.layout_popup(this, attributes)">
         <deco-beak />
     </flo-popup>

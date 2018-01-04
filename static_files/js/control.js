@@ -25,7 +25,9 @@ let flo_control = (function () {
         input_element.min = 0.0;
         input_element.max = 1000.0;
 
+        ///
         /// The 'input' event is fired while the user is changing the slider
+        ///
         function on_input() {
             // If the node has the range property set, we'll return values in that range
             let flo_min = flo_min_value['Float'] || 0.0;
@@ -41,7 +43,9 @@ let flo_control = (function () {
             input_handler({ 'Float': value });
         }
 
-        /// The 'change' event is fired when the user 
+        ///
+        /// The 'change' event is fired when the user drags the slider
+        ///
         function on_change() {
             // If the node has the range property set, we'll return values in that range
             let flo_min = flo_min_value['Float'] || 0.0;
@@ -108,6 +112,229 @@ let flo_control = (function () {
         // Register event handlers
         input_element.addEventListener('input', on_input);
         input_element.addEventListener('change', on_change);
+    };
+
+    ///
+    /// Adds drag event handling to a node
+    ///
+    let on_drag = (node, add_action_event, start_drag, continue_drag, finish_drag) => {
+        start_drag          = start_drag || (() => {});
+        continue_drag       = continue_drag || (() => {});
+        finish_drag         = finish_drag || (() => {});
+
+        // Handles the mouse down event (this starts dragging immediately)
+        // Starting dragging immediately prevents other kinds of actions
+        let mouse_down = event => {
+            // Only drag with the left mouse button
+            if (event.button !== 0) {
+                return;
+            }
+
+            // Add the event listeners to the document (so we receive everything that happens during the drag)
+            document.addEventListener('mousemove', mouse_move, true);
+            document.addEventListener('mouseup', mouse_up, true);
+
+            // Stop the usual handling
+            event.preventDefault();
+
+            // Work out the location of the click in the target node
+            let x = event.clientX;
+            let y = event.clientY;
+
+            // This slightly odd way of calculating node position partially deals 
+            // with the fact that event.clientX does not take account of the 
+            // transform but getBoundingClientRect does and we want the value
+            // relative to the original rect
+            let client_rect = node.parentNode.getBoundingClientRect();
+
+            x -= client_rect.left + node.offsetLeft;
+            y -= client_rect.top + node.offsetTop;
+            x += node.scrollLeft;
+            y += node.scrollTop;
+    
+            // Flag that the drag event is starting
+            start_drag(x, y);
+        };
+
+        // Moving the mouse continues the drag operation
+        let mouse_move = event => {
+            event.preventDefault();
+
+            // Work out the location of the click in the target node
+            let x = event.clientX;
+            let y = event.clientY;
+
+            let client_rect = node.parentNode.getBoundingClientRect();
+
+            x -= client_rect.left + node.offsetLeft;
+            y -= client_rect.top + node.offsetTop;
+            x += node.scrollLeft;
+            y += node.scrollTop;
+
+            // Continue the drag operation
+            continue_drag(x, y);
+        };
+
+        // Releasing the mouse finishes the drag
+        let mouse_up = event => {
+            event.preventDefault();
+
+            // Release the device
+            document.removeEventListener('mousemove', mouse_move, true);
+            document.removeEventListener('mouseup', mouse_up, true);
+
+            // Dragging has finished
+            finish_drag();
+        };
+
+        // Register for the mouse down event
+        add_action_event(node, 'mousedown', mouse_down, false);
+    };
+
+    ///
+    /// Sets up a control as a rotor
+    ///
+    let load_rotor = (rotor_node, add_action_event) => {
+        // Retrieve the current property values from the object
+        let flo_min_value   = rotor_node.flo_min_value || { 'Float': 0.0 };
+        let flo_max_value   = rotor_node.flo_max_value || { 'Float': 100.0 };
+        let flo_value       = rotor_node.flo_value || { 'Float': 0.0 };
+
+        ///
+        /// Updates the value displayed by the rotor
+        ///
+        let set_value = (new_value) => {
+            // Get the values as floats
+            let value   = new_value['Float'] || 0.0;
+            let min     = flo_min_value['Float'] || 0.0;
+            let max     = flo_max_value['Float'] || 100.0;
+
+            // Angle goes from 0-360
+            let angle = (value-min)/(max-min) * 360.0;
+
+            // Transform through the node style
+            rotor_node.style.transform = 'rotate(' + angle + 'deg)';
+        };
+
+        ///
+        /// Computes the angle for a point near the node
+        ///
+        let angle_for_point = (x, y) => {
+            // Assume that the node is a circle around its center
+            let radius = rotor_node.clientWidth/2.0;
+
+            x -= rotor_node.clientWidth/2.0;
+            y -= rotor_node.clientHeight/2.0;
+
+            if ((x*x + y*y) < (radius*radius)) {
+                // If the point is within the main radius, then the angle is just the angle relative to the center
+                return (Math.atan2(y, x) / (2*Math.PI) * 360.0);
+            } else {
+                // Really want to project a line onto the circle, then make the 
+                // extra angle be the distance from the rotor. This has a 
+                // similar effect but isn't quite as accurate.
+                // Also kind of weird if you drag directly away from the center
+                // rather than along a tangent.
+                let angle           = (Math.atan2(y, x) / (2*Math.PI) * 360.0);
+                let circumference   = Math.PI*2*radius;
+                let extra_distance  = Math.sqrt((x*x) + (y*y)) - radius;
+
+                if (angle < 90 || angle > 270) {
+                    extra_distance = -extra_distance;
+                }
+
+                return angle + ((extra_distance/circumference)*360);
+            }
+        };
+
+        // Angle of an active dragging operation
+        let drag_initial_angle  = 0.0;
+        let initial_value       = flo_value;
+
+        ///
+        /// Event fired when a drag starts
+        ///
+        let start_drag = (x, y) => {
+            // Store the initial angle and value
+            drag_initial_angle  = angle_for_point(x, y);
+            initial_value       = flo_value;
+        };
+
+        ///
+        /// Event fired as a drag operation continues
+        ///
+        let continue_drag = (x, y) => {
+            // Get the current values as floats
+            let value   = initial_value['Float'] || 0.0;
+            let min     = flo_min_value['Float'] || 0.0;
+            let max     = flo_max_value['Float'] || 100.0;
+
+            // Work out the angle difference
+            let new_angle   = angle_for_point(x, y);
+            let diff        = new_angle - drag_initial_angle;
+
+            // Convert diff to a value over our range
+            diff = (diff/360.0) * (max-min);
+
+            // Compute a new value and clip to the range
+            let new_value = value + diff;
+            while (new_value > max) { new_value -= (max-min); }
+            while (new_value < min) { new_value += (max-min); }
+
+            // Set the new value
+            flo_value = { 'Float': new_value };
+            set_value(flo_value);
+
+            // Fire the input event
+            let input_handler = rotor_node.flo_edit_value || (() => {});
+            input_handler({ 'Float': new_value });
+        };
+
+        ///
+        /// Event fired as a drag operation finishes
+        ///
+        let end_drag = () => {
+            // Fire the final event
+            let input_handler = rotor_node.flo_set_value || (() => {});
+            input_handler(flo_value);
+        };
+
+        // Set the initial value for the rotor
+        set_value(flo_value);
+
+        // Make the flo_min, flo_max and flo_value items dynamic properties by replacing them
+        Object.defineProperty(rotor_node, 'flo_value', {
+            get: () => flo_value,
+            set: new_value => {
+                if (new_value !== flo_value) {
+                    flo_value = new_value;
+                    set_value(new_value);
+                }
+            }
+        });
+
+        Object.defineProperty(rotor_node, 'flo_min_value', {
+            get: () => flo_min_value,
+            set: new_value => {
+                if (new_value !== flo_min_value) {
+                    flo_min_value = new_value;
+                    set_value(flo_value);
+                }
+            }
+        });
+
+        Object.defineProperty(rotor_node, 'flo_max_value', {
+            get: () => flo_max_value,
+            set: new_value => {
+                if (new_value !== flo_max_value) {
+                    flo_max_value = new_value;
+                    set_value(flo_value);
+                }
+            }
+        });
+
+        // Register event handlers
+        on_drag(rotor_node, add_action_event, start_drag, continue_drag, end_drag);
     };
 
     ///
@@ -323,6 +550,7 @@ let flo_control = (function () {
 
     return {
         load_slider:    load_slider,
+        load_rotor:     load_rotor,
         load_popup:     load_popup,
         layout_popup:   layout_popup
     };
