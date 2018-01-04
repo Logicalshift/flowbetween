@@ -48,13 +48,14 @@ fn control_class(ctrl: &Control) -> &str {
     use ui::ControlType::*;
 
     match ctrl.control_type() {
-        Empty       => "flo-empty",
-        Container   => "flo-container",
-        Popup       => "flo-popup",
-        Button      => "flo-button",
-        Label       => "flo-label",
-        Canvas      => "flo-canvas",
-        Slider      => "flo-slider"
+        Empty               => "flo-empty",
+        Container           => "flo-container",
+        CroppingContainer   => "flo-cropping-container",
+        Popup               => "flo-popup",
+        Button              => "flo-button",
+        Label               => "flo-label",
+        Canvas              => "flo-canvas",
+        Slider              => "flo-slider"
     }
 }
 

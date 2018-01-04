@@ -164,3 +164,7 @@ flo-popup > deco-beak.left:after {
     left:                   -13px;
     top:                    2px;
 }
+
+flo-cropping-container {
+    overflow: hidden;
+}
