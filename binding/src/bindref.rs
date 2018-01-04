@@ -53,16 +53,6 @@ impl<Value> BindRef<Value> {
     /// Creates a new BindRef from an existing binding
     /// 
     #[inline]
-    pub fn from<Binding: 'static+Bound<Value>>(binding: Binding) -> BindRef<Value> {
-        BindRef {
-            reference: Arc::new(binding)
-        }
-    }
-
-    ///
-    /// Creates a new BindRef from an existing binding
-    /// 
-    #[inline]
     pub fn from_arc<Binding: 'static+Bound<Value>>(binding_ref: Arc<Binding>) -> BindRef<Value> {
         BindRef {
             reference: binding_ref
@@ -114,6 +104,17 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         }
     }
 }
+
+/*
+impl<'a, Value: 'static+Clone+PartialEq+Send, IntoBinding: Into<Binding<Value>>> From<&'a IntoBinding> for BindRef<Value> 
+where Binding<Value>: From<&'a IntoBinding> {
+    #[inline]
+    fn from(val: &'a IntoBinding) -> BindRef<Value> {
+        let binding: Binding<Value> = val.into();
+        BindRef::from(binding)
+    }
+}
+*/
 
 #[cfg(test)]
 mod test {
