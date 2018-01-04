@@ -1,5 +1,6 @@
 use super::traits::*;
 use super::binding::*;
+use super::computed::*;
 
 use std::sync::*;
 
@@ -88,6 +89,26 @@ impl<Value: 'static+Clone+Send+PartialEq> From<Binding<Value>> for BindRef<Value
 impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for BindRef<Value> {
     #[inline]
     fn from(val: &'a Binding<Value>) -> Self {
+        BindRef {
+            reference: Arc::new(val.clone())
+        }
+    }
+}
+
+impl<Value: 'static+Clone+PartialEq+Send, TFn> From<ComputedBinding<Value, TFn>> for BindRef<Value> 
+where TFn: 'static+Send+Sync+Fn() -> Value {
+    #[inline]
+    fn from(val: ComputedBinding<Value, TFn>) -> Self {
+        BindRef {
+            reference: Arc::new(val)
+        }
+    }
+}
+
+impl<'a, Value: 'static+Clone+PartialEq+Send, TFn> From<&'a ComputedBinding<Value, TFn>> for BindRef<Value> 
+where TFn: 'static+Send+Sync+Fn() -> Value {
+    #[inline]
+    fn from(val: &'a ComputedBinding<Value, TFn>) -> Self {
         BindRef {
             reference: Arc::new(val.clone())
         }
