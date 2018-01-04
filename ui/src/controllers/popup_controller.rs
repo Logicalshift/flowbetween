@@ -1,6 +1,7 @@
 use super::super::*;
 
 use binding::*;
+use std::sync::*;
 
 ///
 /// Controller that provides standard behaviour for popups.
@@ -127,5 +128,31 @@ impl<ContentController: Controller> PopupController<ContentController> {
                     ])
             }
         }))
+    }
+}
+
+impl<ContentController: Controller> Controller for PopupController<ContentController> {
+    fn ui(&self) -> BindRef<Control> {
+        self.ui.clone()
+    }
+
+    fn get_viewmodel(&self) -> Arc<ViewModel> {
+        self.content_controller.get_viewmodel()
+    }
+
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> { 
+        self.content_controller.get_subcontroller(id)
+    }
+
+    fn action(&self, action_id: &str, action_data: &ActionParameter) {
+        self.content_controller.action(action_id, action_data);
+    }
+
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { 
+        self.content_controller.get_image_resources()
+    }
+
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
+        self.content_controller.get_canvas_resources()
     }
 }
