@@ -1078,6 +1078,10 @@ function flowbetween(root_node) {
         // Dismiss any waiting node that isn't in the 'target' list
         let to_dismiss = waiting_for_dismissal.filter(dismiss_node => {
             if (target_nodes.find(node => node === dismiss_node)) {
+                // Node is a child of the item that wants the dismiss event (doesn't cause a dismiss)
+                return false;
+            } else if (target_nodes.find(node => node === dismiss_node.parentNode)) {
+                // Node is the parent of the item that wants the dismiss event
                 return false;
             } else {
                 return true;
