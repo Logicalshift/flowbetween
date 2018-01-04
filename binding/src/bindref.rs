@@ -76,6 +76,7 @@ impl<Value: 'static+Clone+Send+PartialEq> From<Binding<Value>> for BindRef<Value
     }
 }
 
+/*
 impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for BindRef<Value> {
     #[inline]
     fn from(val: &'a Binding<Value>) -> Self {
@@ -84,6 +85,7 @@ impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for BindR
         }
     }
 }
+*/
 
 impl<Value: 'static+Clone+PartialEq+Send, TFn> From<ComputedBinding<Value, TFn>> for BindRef<Value> 
 where TFn: 'static+Send+Sync+Fn() -> Value {
@@ -105,16 +107,13 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     }
 }
 
-/*
-impl<'a, Value: 'static+Clone+PartialEq+Send, IntoBinding: Into<Binding<Value>>> From<&'a IntoBinding> for BindRef<Value> 
-where Binding<Value>: From<&'a IntoBinding> {
+impl<'a, Value: 'static+Clone+PartialEq+Send+Into<Binding<Value>>> From<&'a Value> for BindRef<Value> {
     #[inline]
-    fn from(val: &'a IntoBinding) -> BindRef<Value> {
+    fn from(val: &'a Value) -> BindRef<Value> {
         let binding: Binding<Value> = val.into();
         BindRef::from(binding)
     }
 }
-*/
 
 #[cfg(test)]
 mod test {
@@ -130,6 +129,20 @@ mod test {
         bind.set(2);
 
         assert!(bind_ref.get() == 2);
+    }
+
+    #[test]
+    fn bind_ref_from_value() {
+        let bind_ref    = BindRef::from(&1);
+
+        assert!(bind_ref.get() == 1);
+    }
+
+    #[test]
+    fn bind_ref_from_computed() {
+        let bind_ref    = BindRef::from(computed(|| 1));
+
+        assert!(bind_ref.get() == 1);
     }
 
     #[test]
