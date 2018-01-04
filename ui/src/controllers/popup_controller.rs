@@ -43,24 +43,24 @@ impl<ContentController: Controller> PopupController<ContentController> {
     ///
     /// Returns a modified controller with a different size
     /// 
-    pub fn with_size(mut self, size: &BindRef<(u32, u32)>) -> PopupController<ContentController> {
-        self.popup_size = size.clone();
+    pub fn with_size<T: Into<BindRef<(u32, u32)>>>(mut self, size: T) -> PopupController<ContentController> {
+        self.popup_size = size.into();
         self
     }
 
     ///
     /// Returns a modified controller with a different direction
     /// 
-    pub fn with_direction(mut self, direction: &BindRef<PopupDirection>) -> PopupController<ContentController> {
-        self.popup_direction = direction.clone();
+    pub fn with_direction<T: Into<BindRef<PopupDirection>>>(mut self, direction: T) -> PopupController<ContentController> {
+        self.popup_direction = direction.into();
         self
     }
 
     ///
     /// Returns a modified controller with a different offset
     /// 
-    pub fn with_offset(mut self, offset: &BindRef<u32>) -> PopupController<ContentController> {
-        self.offset = offset.clone();
+    pub fn with_offset<T: Into<BindRef<u32>>>(mut self, offset: T) -> PopupController<ContentController> {
+        self.offset = offset.into();
         self
     }
 }
