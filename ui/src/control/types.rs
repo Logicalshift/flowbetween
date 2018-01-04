@@ -26,5 +26,8 @@ pub enum ControlType {
     Canvas,
 
     /// Allows picking a value by dragging left or right
-    Slider
+    Slider,
+
+    /// A circular slider that represents its value by how much it is rotated
+    Rotor
 }

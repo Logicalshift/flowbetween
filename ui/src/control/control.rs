@@ -45,7 +45,7 @@ impl Control {
     /// Creates a new button control
     pub fn button() -> Control {
         Self::new(Button)
-    }
+    } 
 
     /// Creates a new label control
     pub fn label() -> Control {
@@ -65,6 +65,11 @@ impl Control {
     /// Creates a new slider control
     pub fn slider() -> Control {
         Self::new(ControlType::Slider)
+    }
+
+    /// Creates a new rotor control
+    pub fn rotor() -> Control {
+        Self::new(ControlType::Rotor)
     }
 
     /// Adds an attribute to this control
