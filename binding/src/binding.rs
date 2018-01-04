@@ -132,3 +132,11 @@ impl<Value: 'static+Clone+PartialEq+Send> MutableBound<Value> for Binding<Value>
         }
     }
 }
+
+impl<Value: 'static+Clone+PartialEq+Send> From<Value> for Binding<Value> {
+    #[inline]
+    fn from(val: Value) -> Binding<Value> {
+        Binding::new(val)
+    }
+}
+

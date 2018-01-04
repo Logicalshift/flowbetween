@@ -77,6 +77,7 @@ impl<'a, Value> From<&'a BindRef<Value>> for BindRef<Value> {
 }
 
 impl<Value: 'static+Clone+Send+PartialEq> From<Binding<Value>> for BindRef<Value> {
+    #[inline]
     fn from(val: Binding<Value>) -> Self {
         BindRef {
             reference: Arc::new(val)
@@ -85,6 +86,7 @@ impl<Value: 'static+Clone+Send+PartialEq> From<Binding<Value>> for BindRef<Value
 }
 
 impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for BindRef<Value> {
+    #[inline]
     fn from(val: &'a Binding<Value>) -> Self {
         BindRef {
             reference: Arc::new(val.clone())
