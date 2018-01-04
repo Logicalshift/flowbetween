@@ -4,6 +4,7 @@ use ui::*;
 use canvas::*;
 use binding::*;
 
+use std::f32;
 use std::sync::*;
 
 ///
@@ -47,11 +48,14 @@ impl HsluvPickerController {
         let hsluv_wheel = images.register(hsluv_wheel);
         images.assign_name(&hsluv_wheel, "Wheel");
 
-        let color_preview = Self::create_color_preview_canvas(&color);
-        let color_preview = canvases.register(color_preview);
+        let color_preview   = Self::create_color_preview_canvas(&color);
+        let color_preview   = canvases.register(color_preview);
+
+        let checkmarks      = Self::create_checkmark_canvas();
+        let checkmarks      = canvases.register(checkmarks);
 
         // Set up the UI
-        let ui          = Self::create_ui(&hsluv_wheel, &color_preview);
+        let ui          = Self::create_ui(&hsluv_wheel, &color_preview, &checkmarks);
         
         // Controller is ready to go
         HsluvPickerController {
@@ -101,9 +105,40 @@ impl HsluvPickerController {
     }
 
     ///
+    /// Creates the 'checkmark' canvas that we overlay on top of the rotor
+    ///
+    fn create_checkmark_canvas() -> BindingCanvas {
+        BindingCanvas::with_drawing(move |gc| {
+            let pi              = f32::consts::PI;
+            let inner_radius    = 140.0/256.0;
+
+            gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 0.3));
+            gc.line_width_pixels(1.0);
+
+            gc.new_path();
+            gc.circle(0.0, 0.0, 1.0);
+
+            for check in 0..64 {
+                let theta       = ((check as f32)/32.0) * pi;
+                let distance    = if (check%8)==0 { 0.90 } else { 0.95 };
+
+                gc.move_to(theta.sin(), theta.cos());
+                gc.line_to(theta.sin() * distance, theta.cos()*distance);
+
+                if (check%2)==0 {
+                    gc.move_to(theta.sin() * inner_radius, theta.cos() * inner_radius);
+                    gc.line_to(theta.sin() * (inner_radius+0.05), theta.cos()*(inner_radius+0.05));
+                }
+            }
+
+            gc.stroke();
+        })
+    }
+
+    ///
     /// Creates the UI for this controller
     /// 
-    fn create_ui(hsluv_wheel: &Resource<Image>, preview: &Resource<BindingCanvas>) -> BindRef<Control> {
+    fn create_ui(hsluv_wheel: &Resource<Image>, preview: &Resource<BindingCanvas>, checkmarks: &Resource<BindingCanvas>) -> BindRef<Control> {
         // Constants
         let wheel_size      = 200.0;
         let preview_size    = f32::floor((140.0/256.0) * wheel_size)+2.0;
@@ -111,6 +146,7 @@ impl HsluvPickerController {
         // Bindings and images
         let hsluv_wheel = hsluv_wheel.clone();
         let preview     = preview.clone();
+        let checkmarks  = checkmarks.clone();
 
         BindRef::from(computed(move || {
             // The hue selector is designed to be cropped at the top of the screen
@@ -121,6 +157,11 @@ impl HsluvPickerController {
                     x2: Position::At(wheel_size), 
                     y2: Position::At(wheel_size/2.0)
                 })
+                .with(vec![
+                    Control::canvas()
+                        .with(Bounds::fill_all())
+                        .with(checkmarks.clone())
+                ])
                 .with(hsluv_wheel.clone())
                 .with(State::Range((0.0.to_property(), 360.0.to_property())))
                 .with(State::Value(Property::Bind("H".to_string())))
