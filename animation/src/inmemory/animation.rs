@@ -46,22 +46,9 @@ impl InMemoryAnimation {
     }
 }
 
-impl Animation for InMemoryAnimation { }
-
-impl Editable<AnimationSize+'static> for InMemoryAnimation {
-    fn edit(&self) -> Option<Editor<AnimationSize+'static>> {
-        // (Need the explicit typing here as rust can't figure it out implicitly)
-        let core: &RwLock<AnimationSize>    = &self.core;
-        let core                            = core.write().unwrap();
-
-        Some(Editor::new(core))
-    }
-
-    fn read(&self) -> Option<Reader<AnimationSize+'static>> {
-        let core: &RwLock<AnimationSize>    = &self.core;
-        let core                            = core.read().unwrap();
-
-        Some(Reader::new(core))
+impl Animation for InMemoryAnimation { 
+    fn size(&self) -> (f64, f64) {
+        self.core.read().unwrap().size
     }
 }
 
@@ -174,10 +161,6 @@ impl EditLog<AnimationEdit> for AnimationCore {
 
         commit_range
     }
-}
-
-impl AnimationSize for AnimationCore {
-    fn size(&self) -> (f64, f64) { self.size }
 }
 
 impl AnimationLayers for AnimationCore {

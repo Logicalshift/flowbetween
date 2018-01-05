@@ -9,15 +9,8 @@ use std::sync::*;
 ///
 pub trait Animation : 
     Editable<AnimationLayers>+
-    Editable<AnimationSize>+
     Editable<EditLog<AnimationEdit>>+
     Send+Sync {
-}
-
-///
-/// Represents the size properties of an animation
-/// 
-pub trait AnimationSize {
     ///
     /// Retrieves the frame size of this animation
     /// 
@@ -35,4 +28,7 @@ pub trait AnimationLayers {
 }
 
 impl Animation for () {
+    fn size(&self) -> (f64, f64) {
+        (1980.0, 1080.0)
+    }
 }
