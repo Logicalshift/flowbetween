@@ -31,6 +31,10 @@ impl VectorLayerEditLog {
 }
 
 impl MutableEditLog<LayerEdit> for VectorLayerEditLog {
+    fn pending(&self) -> Vec<LayerEdit> {
+        self.pending_edits.clone()
+    }
+
     fn set_pending(&mut self, edits: &[LayerEdit]) {
         // Collect the edits into a vector
         self.pending_edits = edits.iter()

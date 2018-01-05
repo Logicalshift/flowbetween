@@ -42,13 +42,13 @@ impl<Edit, SourceLog: EditLog<Edit>> EditLog<Edit> for SliceEditLog<Edit, Source
         
         self.source_log.read(&mut source_indices)
     }
-
-    fn pending(&self) -> Vec<Edit> {
-        self.source_log.pending()
-    }
 }
 
 impl<Edit, SourceLog: MutableEditLog<Edit>> MutableEditLog<Edit> for SliceEditLog<Edit, SourceLog> {
+    fn pending(&self) -> Vec<Edit> {
+        self.source_log.pending()
+    }
+
     fn set_pending(&mut self, edits: &[Edit]) {
         self.source_log.set_pending(edits)
     }

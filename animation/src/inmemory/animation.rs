@@ -147,13 +147,13 @@ impl EditLog<AnimationEdit> for AnimationCore {
     fn read(&self, indices: &mut Iterator<Item=usize>) -> Vec<AnimationEdit> {
         self.edit_log.read(indices)
     }
-
-    fn pending(&self) -> Vec<AnimationEdit> {
-        self.edit_log.pending()
-    }
 }
 
 impl MutableEditLog<AnimationEdit> for AnimationCore {
+    fn pending(&self) -> Vec<AnimationEdit> {
+        self.edit_log.pending()
+    }
+
     fn set_pending(&mut self, edits: &[AnimationEdit]) {
         // TODO: the layers probably want to know about pending stuff that affects them
         self.edit_log.set_pending(edits)

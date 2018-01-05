@@ -50,7 +50,11 @@ where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
             .map(|theirs| (self.theirs_to_ours)(&theirs))
             .collect()
     }
+}
 
+impl<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog: MutableEditLog<TheirEdit>> MutableEditLog<OurEdit> for MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
+where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
+        OursToTheirs: Fn(&OurEdit) -> TheirEdit {
     fn pending(&self) -> Vec<OurEdit> {
         self.source_log
             .pending()
@@ -58,11 +62,7 @@ where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
             .map(|theirs| (self.theirs_to_ours)(&theirs))
             .collect()
     }
-}
 
-impl<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog: MutableEditLog<TheirEdit>> MutableEditLog<OurEdit> for MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
-where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
-        OursToTheirs: Fn(&OurEdit) -> TheirEdit {
     fn set_pending(&mut self, edits: &[OurEdit]) {
         let their_pending: Vec<TheirEdit> = edits.iter()
             .map(|ours| (self.ours_to_theirs)(ours))
