@@ -60,7 +60,7 @@ impl FlowBetweenSession {
         let animation = InMemoryAnimation::new();
 
         // Add a single layer and an initial keyframe
-        animation.perform_edits(&vec![
+        animation.perform_edits(vec![
             AnimationEdit::SetSize(1980.0, 1080.0),
             AnimationEdit::AddNewLayer(0)
         ]);

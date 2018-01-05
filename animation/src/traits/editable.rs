@@ -94,17 +94,19 @@ pub fn open_edit<'a, EditorType: ?Sized>(editable: &'a Editable<EditorType>) -> 
 /// Convenience trait that makes it easier to edit an object that uses an EditLog
 /// 
 pub trait PerformEdits<Edit> {
-    fn perform_edits(&self, edits: &[Edit]);
+    fn perform_edits<Iter: IntoIterator<Item=Edit>>(&self, edits: Iter);
     fn set_pending(&self, pending: &[Edit]);
     fn commit_pending(&self);
 }
 
 impl<Edit, T: Editable<EditLog<Edit>>> PerformEdits<Edit> for T {
     #[inline]
-    fn perform_edits(&self, edits: &[Edit]) {
+    fn perform_edits<Iter: IntoIterator<Item=Edit>>(&self, edits: Iter) {
         let mut editor = open_edit::<EditLog<Edit>>(self).unwrap();
 
-        editor.set_pending(edits);
+        let edits: Vec<Edit> = edits.into_iter().collect();
+
+        editor.set_pending(&edits);
         editor.commit_pending();
     }
 

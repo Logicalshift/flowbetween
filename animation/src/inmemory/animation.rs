@@ -200,7 +200,7 @@ mod test {
             assert!(layers.layers().count() == 0);
         }
 
-        animation.perform_edits(&vec![
+        animation.perform_edits(vec![
             AnimationEdit::AddNewLayer(0)
         ]);
 
@@ -219,7 +219,7 @@ mod test {
         let to_remove   = 2;
         let keep3       = 3;
 
-        animation.perform_edits(&vec![
+        animation.perform_edits(vec![
             AnimationEdit::AddNewLayer(keep1),
             AnimationEdit::AddNewLayer(keep2),
             AnimationEdit::AddNewLayer(to_remove),
@@ -232,7 +232,7 @@ mod test {
             assert!(ids == vec![keep1, keep2, to_remove, keep3]);
         }
 
-        animation.perform_edits(&vec![
+        animation.perform_edits(vec![
             AnimationEdit::RemoveLayer(to_remove)
         ]);
 
@@ -247,7 +247,7 @@ mod test {
     fn can_draw_brush_stroke() {
         let animation = InMemoryAnimation::new();
 
-        animation.perform_edits(&vec![
+        animation.perform_edits(vec![
             AnimationEdit::AddNewLayer(0),
         ]);
 
