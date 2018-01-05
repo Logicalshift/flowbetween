@@ -1,4 +1,5 @@
 use std::ops::{Deref, DerefMut};
+use super::edit::*;
 
 ///
 /// Represents an item that can be edited
@@ -87,6 +88,39 @@ pub fn open_read<'a, EditorType: ?Sized>(editable: &'a Editable<EditorType>) -> 
 /// 
 pub fn open_edit<'a, EditorType: ?Sized>(editable: &'a Editable<EditorType>) -> Option<Editor<'a, EditorType>> {
     editable.edit()
+}
+
+///
+/// Convenience trait that makes it easier to edit an object that uses an EditLog
+/// 
+pub trait PerformEdits<Edit> {
+    fn perform_edits(&self, edits: &[Edit]);
+    fn set_pending(&self, pending: &[Edit]);
+    fn commit_pending(&self);
+}
+
+impl<Edit, T: Editable<EditLog<Edit>>> PerformEdits<Edit> for T {
+    #[inline]
+    fn perform_edits(&self, edits: &[Edit]) {
+        let mut editor = open_edit::<EditLog<Edit>>(self).unwrap();
+
+        editor.set_pending(edits);
+        editor.commit_pending();
+    }
+
+    #[inline]
+    fn set_pending(&self, edits: &[Edit]) {
+        let mut editor = open_edit::<EditLog<Edit>>(self).unwrap();
+
+        editor.set_pending(edits);
+    }
+
+    #[inline]
+    fn commit_pending(&self) {
+        let mut editor = open_edit::<EditLog<Edit>>(self).unwrap();
+
+        editor.commit_pending();
+    }
 }
 
 #[cfg(test)]

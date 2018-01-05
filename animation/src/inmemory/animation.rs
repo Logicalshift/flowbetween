@@ -21,8 +21,6 @@ struct AnimationCore {
 
     /// The layers in this animation
     layers: Vec<Arc<Layer>>,
-
-    next_layer_id: u64
 }
 
 ///
@@ -40,8 +38,7 @@ impl InMemoryAnimation {
             edit_log:       InMemoryEditLog::new(),
             size:           (1980.0, 1080.0),
             frame_duration: Duration::from_millis(1000/30),
-            layers:         vec![],
-            next_layer_id:  0
+            layers:         vec![]
         };
 
         // Create the final animation
@@ -203,13 +200,9 @@ mod test {
             assert!(layers.layers().count() == 0);
         }
 
-        {
-            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
-            edit.set_pending(&vec![
-                AnimationEdit::AddNewLayer(0)
-            ]);
-            edit.commit_pending();
-        }
+        animation.perform_edits(&vec![
+            AnimationEdit::AddNewLayer(0)
+        ]);
 
         {
             let layers = open_read::<AnimationLayers>(&animation).unwrap();
@@ -226,16 +219,12 @@ mod test {
         let to_remove   = 2;
         let keep3       = 3;
 
-        {
-            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
-            edit.set_pending(&vec![
-                AnimationEdit::AddNewLayer(keep1),
-                AnimationEdit::AddNewLayer(keep2),
-                AnimationEdit::AddNewLayer(to_remove),
-                AnimationEdit::AddNewLayer(keep3),
-            ]);
-            edit.commit_pending();
-        }
+        animation.perform_edits(&vec![
+            AnimationEdit::AddNewLayer(keep1),
+            AnimationEdit::AddNewLayer(keep2),
+            AnimationEdit::AddNewLayer(to_remove),
+            AnimationEdit::AddNewLayer(keep3),
+        ]);
 
         {
             let layers = open_read::<AnimationLayers>(&animation).unwrap();
@@ -243,13 +232,9 @@ mod test {
             assert!(ids == vec![keep1, keep2, to_remove, keep3]);
         }
 
-        {
-            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
-            edit.set_pending(&vec![
-                AnimationEdit::RemoveLayer(to_remove)
-            ]);
-            edit.commit_pending();
-        }
+        animation.perform_edits(&vec![
+            AnimationEdit::RemoveLayer(to_remove)
+        ]);
 
         {
             let layers = open_read::<AnimationLayers>(&animation).unwrap();
@@ -262,13 +247,9 @@ mod test {
     fn can_draw_brush_stroke() {
         let animation = InMemoryAnimation::new();
 
-        {
-            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
-            edit.set_pending(&vec![
-                AnimationEdit::AddNewLayer(0),
-            ]);
-            edit.commit_pending();
-        }
+        animation.perform_edits(&vec![
+            AnimationEdit::AddNewLayer(0),
+        ]);
 
         let layers = open_edit::<AnimationLayers>(&animation).unwrap();
         assert!(layers.layers().count() == 1);

@@ -59,18 +59,11 @@ impl FlowBetweenSession {
         // Create a new animation
         let animation = InMemoryAnimation::new();
 
-        {
-            // Add a single layer and an initial keyframe
-            let mut animation_log = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
-
-            animation_log.set_pending(&vec![
-                AnimationEdit::SetSize(1980.0, 1080.0),
-                AnimationEdit::AddNewLayer(0)
-            ]);
-            animation_log.commit_pending();
-
-            // TODO: keyframe needs to go through the edit log
-        }
+        // Add a single layer and an initial keyframe
+        animation.perform_edits(&vec![
+            AnimationEdit::SetSize(1980.0, 1080.0),
+            AnimationEdit::AddNewLayer(0)
+        ]);
 
         {
             // TODO: this is not using the edit log method...
