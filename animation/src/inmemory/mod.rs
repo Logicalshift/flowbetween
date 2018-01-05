@@ -7,6 +7,7 @@ mod vector_keyframe;
 mod vector_layer_core;
 pub mod edit_log;
 mod map_edit_log;
+mod slice_edit_log;
 
 pub use self::animation::*;
 pub use self::empty_iterator::*;
