@@ -1,6 +1,7 @@
 use super::super::traits::*;
 
 use std::mem;
+use std::ops::Range;
 
 ///
 /// An in-memory edit log implementation
@@ -44,13 +45,17 @@ impl<Edit: Clone> EditLog<Edit> for InMemoryEditLog<Edit> {
             .collect();
     }
 
-    fn commit_pending(&mut self) {
+    fn commit_pending(&mut self) -> Range<usize> {
         // Get the list of pending edits
         let mut pending = vec![];
         mem::swap(&mut pending, &mut self.pending);
 
         // Move them into the edit list
+        let start_pos = self.edits.len();
         self.edits.extend(pending);
+
+        // Range is from the old edit length to the now current length
+        start_pos..self.edits.len()
     }
 
     fn cancel_pending(&mut self) {
@@ -82,11 +87,13 @@ mod test {
         log.set_pending(&[1, 2, 3, 4]);
         assert!(log.length() == 0);
 
-        log.commit_pending();
+        let commit_range = log.commit_pending();
+        assert!(commit_range == 0..4);
         assert!(log.length() == 4);
 
         log.set_pending(&[7,8,9,10]);
-        log.commit_pending();
+        let commit_range = log.commit_pending();
+        assert!(commit_range == 4..8);
         assert!(log.length() == 8);
 
         assert!(log.read(2, 6) == vec![&3, &4, &7, &8]);
@@ -121,8 +128,9 @@ mod test {
 
         log.set_pending(&[7,8,9,10]);
         log.cancel_pending();
-        log.commit_pending();
+        let commit_range = log.commit_pending();
         assert!(log.length() == 4);
+        assert!(commit_range == 4..4);
 
         assert!(log.read(2, 4) == vec![&3, &4]);
     }

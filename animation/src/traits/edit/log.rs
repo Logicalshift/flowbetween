@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 ///
 /// Trait implemented by things that can be edited (or described) by sequences
 /// of commands
@@ -25,9 +27,10 @@ pub trait EditLog<Edit> {
     fn set_pending(&mut self, edits: &[Edit]);
 
     ///
-    /// Commits any pending edits for this log
+    /// Commits any pending edits for this log. Returns the
+    /// range where the edits were committed.
     /// 
-    fn commit_pending(&mut self);
+    fn commit_pending(&mut self) -> Range<usize>;
 
     ///
     /// Cancels any pending edits for this log
