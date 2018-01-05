@@ -1,4 +1,5 @@
 mod editable;
+mod edit;
 mod animation;
 mod frame;
 mod layer;
@@ -9,6 +10,7 @@ mod brush_drawing_style;
 mod vector;
 
 pub use self::editable::*;
+pub use self::edit::*;
 pub use self::animation::*;
 pub use self::frame::*;
 pub use self::layer::*;
