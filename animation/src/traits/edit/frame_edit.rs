@@ -1,6 +1,8 @@
 use super::super::brush::*;
 use super::super::brush_properties::*;
 
+use std::sync::*;
+
 ///
 /// Represents an edit involving painting
 ///
@@ -13,5 +15,5 @@ pub enum PaintEdit {
     BrushProperties(BrushProperties),
 
     /// Draws a brush stroke using the current brush and the specified set of input points
-    BrushStroke(Vec<BrushPoint>)
+    BrushStroke(Arc<Vec<BrushPoint>>)
 }
