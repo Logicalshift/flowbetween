@@ -28,11 +28,13 @@ impl<Edit: Clone> EditLog<Edit> for InMemoryEditLog<Edit> {
         self.edits.len()
     }
 
-    fn read<'a>(&'a self, start: usize, end: usize) -> Vec<&'a Edit> {
-        let start   = if start > self.edits.len() { self.edits.len() } else { start };
-        let end     = if end > self.edits.len() { self.edits.len() } else { end };
+    fn read<'a>(&'a self, indices: &mut Iterator<Item=usize>) -> Vec<&'a Edit> {
+        let len = self.edits.len();
 
-        self.edits[start..end].iter().collect()
+        indices
+            .filter(|index| *index < len)
+            .map(|index| &self.edits[index])
+            .collect()
     }
 
     fn pending(&self) -> Vec<Edit> {
@@ -78,6 +80,7 @@ mod test {
         // (More of a 'this should be valid as an object' test)
         let log = Box::new(InMemoryEditLog::<i32>::new());
         assert!(log.length() == 0);
+        assert!(log.read_iter(0..4).len() == 0);
     }
 
     #[test]
@@ -88,15 +91,15 @@ mod test {
         assert!(log.length() == 0);
 
         let commit_range = log.commit_pending();
-        assert!(commit_range == 0..4);
+        assert!(commit_range == (0..4));
         assert!(log.length() == 4);
 
         log.set_pending(&[7,8,9,10]);
         let commit_range = log.commit_pending();
-        assert!(commit_range == 4..8);
+        assert!(commit_range == (4..8));
         assert!(log.length() == 8);
 
-        assert!(log.read(2, 6) == vec![&3, &4, &7, &8]);
+        assert!(log.read_iter(2..6) == vec![&3, &4, &7, &8]);
     }
 
     #[test]
@@ -113,7 +116,7 @@ mod test {
         log.cancel_pending();
         assert!(log.length() == 4);
 
-        assert!(log.read(2, 4) == vec![&3, &4]);
+        assert!(log.read_iter(2..4) == vec![&3, &4]);
     }
 
     #[test]
@@ -130,9 +133,9 @@ mod test {
         log.cancel_pending();
         let commit_range = log.commit_pending();
         assert!(log.length() == 4);
-        assert!(commit_range == 4..4);
+        assert!(commit_range == (4..4));
 
-        assert!(log.read(2, 4) == vec![&3, &4]);
+        assert!(log.read_iter(2..4) == vec![&3, &4]);
     }
 
     #[test]
@@ -142,7 +145,7 @@ mod test {
         log.set_pending(&[1, 2, 3, 4]);
         log.commit_pending();
 
-        assert!(log.read(2, 6) == vec![&3, &4]);
-        assert!(log.read(100, 300).len() == 0);
+        assert!(log.read_iter(2..6) == vec![&3, &4]);
+        assert!(log.read_iter(100..300).len() == 0);
     }
 }

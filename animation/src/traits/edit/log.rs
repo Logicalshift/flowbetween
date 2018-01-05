@@ -13,7 +13,7 @@ pub trait EditLog<Edit> {
     ///
     /// Reads a range of edits from this log
     /// 
-    fn read<'a>(&'a self, start: usize, end: usize) -> Vec<&'a Edit>;
+    fn read<'a>(&'a self, indices: &mut Iterator<Item=usize>) -> Vec<&'a Edit>;
 
     ///
     /// The current set of pending edits
@@ -38,4 +38,18 @@ pub trait EditLog<Edit> {
     fn cancel_pending(&mut self);
 
     // TODO: undos, redos?
+}
+
+pub trait EditLogUtils<Edit> {
+    ///
+    /// Convenience version of read that works on an IntoIterator type
+    /// 
+    fn read_iter<'a, ToIterator: IntoIterator<Item=usize>>(&'a self, items: ToIterator) -> Vec<&'a Edit>;
+}
+
+impl<TEditLog: EditLog<Edit>, Edit> EditLogUtils<Edit> for TEditLog {
+    #[inline]
+    fn read_iter<'a, ToIterator: IntoIterator<Item=usize>>(&'a self, items: ToIterator) -> Vec<&'a Edit> {
+        self.read(&mut items.into_iter())
+    }
 }
