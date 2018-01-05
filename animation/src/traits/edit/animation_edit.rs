@@ -11,7 +11,7 @@ pub enum AnimationEdit {
     DefineBrush(u32, BrushDefinition),
 
     /// Edit to an existing layer
-    Layer(u32, LayerEdit),
+    Layer(u64, LayerEdit),
 
     /// Sets the canvas size for this animation
     SetSize(f64, f64),

@@ -1,4 +1,3 @@
-mod keyframes;
 mod paint;
 
 use super::super::brushes::*;
@@ -73,6 +72,46 @@ impl VectorLayerCore {
             } else {
                 Some(&self.keyframes[following_frame-1])
             }
+        }
+    }
+
+    ///
+    /// Adds a new key frame to this core 
+    /// 
+    fn add_key_frame(&mut self, time_offset: Duration) {
+        // TODO: do nothing if the keyframe is already created
+
+        // Generate a new keyframe
+        let new_keyframe = VectorKeyFrame::new(time_offset);
+
+        // Add in order to the existing keyframes
+        self.keyframes.push(Arc::new(new_keyframe));
+        self.sort_key_frames();
+    }
+
+    ///
+    /// Removes a keyframe from this core
+    /// 
+    fn remove_key_frame(&mut self, time_offset: Duration) {
+        // Binary search for the key frame
+        let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time_offset));
+
+        // Remove only if we found an exact match
+        if let Ok(frame_number) = search_result {
+            self.keyframes.remove(frame_number);
+        }
+    }
+
+    ///
+    /// Applies an edit command to this layer
+    /// 
+    pub fn apply_edit(&mut self, edit: &LayerEdit) {
+        use LayerEdit::*;
+
+        match edit {
+            &Paint(_, _)                        => unimplemented!(),
+            &AddKeyFrame(ref time_offset)       => self.add_key_frame(*time_offset),
+            &RemoveKeyFrame(ref time_offset)    => self.remove_key_frame(*time_offset)
         }
     }
 }

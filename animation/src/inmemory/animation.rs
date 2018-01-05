@@ -5,6 +5,7 @@ use super::super::traits::*;
 use std::sync::*;
 use std::ops::Range;
 use std::time::Duration;
+use std::collections::*;
 
 ///
 /// Core values associated with an animation
@@ -19,8 +20,8 @@ struct AnimationCore {
     /// The duration of a frame in the animation
     frame_duration: Duration,
 
-    /// The layers in this animation
-    layers: Vec<Arc<Layer>>,
+    /// The layers in this animation, as an object and as a vector layer
+    layers: Vec<(Arc<Layer>, Arc<VectorLayer>)>,
 }
 
 ///
@@ -28,7 +29,7 @@ struct AnimationCore {
 ///
 pub struct InMemoryAnimation {
     /// The core contains the actual animation data
-    core: RwLock<AnimationCore>
+    core: Arc<RwLock<AnimationCore>>
 }
 
 impl InMemoryAnimation {
@@ -42,25 +43,25 @@ impl InMemoryAnimation {
         };
 
         // Create the final animation
-        InMemoryAnimation { core: RwLock::new(core) }
+        InMemoryAnimation { core: Arc::new(RwLock::new(core)) }
     }
 }
 
 impl Animation for InMemoryAnimation { 
     fn size(&self) -> (f64, f64) {
-        self.core.read().unwrap().size
+        (*self.core).read().unwrap().size
     }
 }
 
 impl Editable<AnimationLayers+'static> for InMemoryAnimation {
     fn edit(&self) -> Option<Editor<AnimationLayers+'static>> { 
-        let core: &RwLock<AnimationLayers>  = &self.core;
+        let core: &RwLock<AnimationLayers>  = &*self.core;
 
         Some(Editor::new(core.write().unwrap()))
     }
 
     fn read(&self) -> Option<Reader<AnimationLayers+'static>> { 
-        let core: &RwLock<AnimationLayers>  = &self.core;
+        let core: &RwLock<AnimationLayers>  = &*self.core;
 
         Some(Reader::new(core.read().unwrap()))
     }
@@ -68,13 +69,13 @@ impl Editable<AnimationLayers+'static> for InMemoryAnimation {
 
 impl Editable<EditLog<AnimationEdit>> for InMemoryAnimation {
     fn edit(&self) -> Option<Editor<EditLog<AnimationEdit>+'static>> { 
-        let core: &RwLock<EditLog<AnimationEdit>>  = &self.core;
+        let core: &RwLock<EditLog<AnimationEdit>>  = &*self.core;
 
         Some(Editor::new(core.write().unwrap()))
     }
 
     fn read(&self) -> Option<Reader<EditLog<AnimationEdit>+'static>> { 
-        let core: &RwLock<EditLog<AnimationEdit>>  = &self.core;
+        let core: &RwLock<EditLog<AnimationEdit>>  = &*self.core;
 
         Some(Reader::new(core.read().unwrap()))
     }
@@ -87,7 +88,7 @@ impl AnimationCore {
             let mut remove_index = None;
 
             for index in 0..self.layers.len() {
-                if self.layers[index].id() == layer_id {
+                if self.layers[index].1.id() == layer_id {
                     remove_index = Some(index);
                 }
             }
@@ -105,10 +106,10 @@ impl AnimationCore {
 
         // Generate the layer
         let new_layer = Arc::new(VectorLayer::new(layer_id));
-        self.layers.push(new_layer);
+        self.layers.push((new_layer.clone(), new_layer));
 
         // Result is a reference to the layer
-        &**self.layers.last().unwrap()
+        &*self.layers.last().unwrap().0
     }
 
     fn set_size(&mut self, new_size: (f64, f64)) {
@@ -145,17 +146,30 @@ impl EditLog<AnimationEdit> for AnimationCore {
         // Commit the pending items to the log
         let commit_range = self.edit_log.commit_pending();
 
-        // Perform any actions required by the pending items
+        let mut layer_edits: HashMap<u64, Vec<LayerEdit>> = HashMap::new();
+
+        // Perform the animation edits
         for action in to_process {
             use AnimationEdit::*;
             
             match action {
-                DefineBrush(_, _)   => { unimplemented!(); },
-                Layer(_, _)         => { unimplemented!(); },
+                DefineBrush(_, _)       => { unimplemented!(); },
 
-                SetSize(x, y)       => { self.set_size((x, y)); },
-                AddNewLayer(id)     => { self.add_new_layer(id); },
-                RemoveLayer(id)     => { self.remove_layer(id); }
+                Layer(layer_id, edit)   => { 
+                    let edits = layer_edits.entry(layer_id).or_insert(vec![]);
+                    edits.push(edit); 
+                },
+
+                SetSize(x, y)           => { self.set_size((x, y)); },
+                AddNewLayer(id)         => { self.add_new_layer(id); },
+                RemoveLayer(id)         => { self.remove_layer(id); }
+            }
+        }
+
+        // Finish the layer edits independently
+        for (layer_id, edits) in layer_edits {
+            if let Some(layer) = self.layers.iter().find(|layer| layer.1.id() == layer_id) {
+                layer.1.apply_new_edits(&edits);
             }
         }
 
@@ -165,7 +179,7 @@ impl EditLog<AnimationEdit> for AnimationCore {
 
 impl AnimationLayers for AnimationCore {
     fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>> {
-        Box::new(self.layers.iter())
+        Box::new(self.layers.iter().map(|&(ref layer, _)| layer))
     }
 }
 
@@ -234,26 +248,29 @@ mod test {
             AnimationEdit::AddNewLayer(0),
         ]);
 
-        let layers = open_edit::<AnimationLayers>(&animation).unwrap();
-        assert!(layers.layers().count() == 1);
-
-        let layer = layers.layers().nth(0).unwrap();
+        {
+            let layers = open_edit::<AnimationLayers>(&animation).unwrap();
+            assert!(layers.layers().count() == 1);
+        }
 
         // Add a keyframe
-        let mut keyframes: Editor<KeyFrameLayer> = layer.edit().unwrap();
+        animation.perform_edits(vec![
+            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        ]);
 
-        keyframes.add_key_frame(Duration::from_millis(0));
+        {
+            let layers = open_edit::<AnimationLayers>(&animation).unwrap();
+            let layer = layers.layers().nth(0).unwrap();
 
-        mem::drop(keyframes);
+            // Draw a brush stroke
+            let mut brush: Editor<PaintLayer> = layer.edit().unwrap();
 
-        // Draw a brush stroke
-        let mut brush: Editor<PaintLayer> = layer.edit().unwrap();
+            brush.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
+            brush.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
+            brush.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
+            brush.finish_brush_stroke();
 
-        brush.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
-        brush.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
-        brush.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
-        brush.finish_brush_stroke();
-
-        mem::drop(brush);
+            mem::drop(brush);
+        }
     }
 }

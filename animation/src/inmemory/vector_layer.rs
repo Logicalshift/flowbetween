@@ -25,6 +25,17 @@ impl VectorLayer {
             core: RwLock::new(core)
         }
     }
+
+    ///
+    /// Applies new edits for this layer
+    /// 
+    pub fn apply_new_edits(&self, edits: &[LayerEdit]) {
+        let mut core = self.core.write().unwrap();
+
+        for edit in edits {
+            core.apply_edit(edit);
+        }
+    }
 }
 
 //
@@ -39,18 +50,6 @@ impl Editable<PaintLayer+'static> for VectorLayer {
 
     fn read(&self) -> Option<Reader<PaintLayer+'static>> {
         let core: &RwLock<PaintLayer> = &self.core;
-        Some(Reader::new(core.read().unwrap())) 
-    }
-}
-
-impl Editable<KeyFrameLayer+'static> for VectorLayer {
-    fn edit(&self) -> Option<Editor<KeyFrameLayer+'static>> { 
-        let core: &RwLock<KeyFrameLayer> = &self.core;
-        Some(Editor::new(core.write().unwrap())) 
-    }
-
-    fn read(&self) -> Option<Reader<KeyFrameLayer+'static>> { 
-        let core: &RwLock<KeyFrameLayer> = &self.core;
         Some(Reader::new(core.read().unwrap())) 
     }
 }

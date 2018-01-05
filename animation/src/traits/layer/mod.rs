@@ -1,8 +1,6 @@
 mod paint;
-mod keyframes;
 
 pub use self::paint::*;
-pub use self::keyframes::*;
 
 use super::frame::*;
 use super::editable::*;
@@ -15,7 +13,6 @@ use std::time::Duration;
 ///
 pub trait Layer : 
     Editable<PaintLayer>+
-    Editable<KeyFrameLayer>+
     Send+Sync {
     ///
     /// The ID associated with this layer

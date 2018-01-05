@@ -62,21 +62,9 @@ impl FlowBetweenSession {
         // Add a single layer and an initial keyframe
         animation.perform_edits(vec![
             AnimationEdit::SetSize(1980.0, 1080.0),
-            AnimationEdit::AddNewLayer(0)
+            AnimationEdit::AddNewLayer(0),
+            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0)))
         ]);
-
-        {
-            // TODO: this is not using the edit log method...
-            // Add a single layer and an initial keyframe
-            let layers = open_edit::<AnimationLayers>(&animation).unwrap();
-            let layer = layers.layers()
-                .filter(|layer| layer.id() == 0)
-                .nth(0)
-                .unwrap();
-
-            let mut keyframes: Editor<KeyFrameLayer> = layer.edit().unwrap();
-            keyframes.add_key_frame(Duration::from_millis(0));
-        }
         
         animation
     }
