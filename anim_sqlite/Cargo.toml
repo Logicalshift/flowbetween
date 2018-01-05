@@ -1,0 +1,10 @@
+[package]
+name = "anim_sqlite"
+version = "0.1.0"
+authors = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
+
+[dependencies]
+canvas              = { path = "../canvas" }
+animation           = { path = "../animation" }
+
+rusqlite            = { version = "0.11.0", features = ["bundled"] }
