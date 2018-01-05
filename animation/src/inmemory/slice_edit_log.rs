@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 ///
 /// Represents an edit log that corresponds to a slice from another edit log
 /// 
-pub struct SliceEditLog<Edit, SourceLog: EditLog<Edit>> {
+pub struct SliceEditLog<Edit, SourceLog> {
     /// The log that is the source of this slice
     source_log: SourceLog,
 
@@ -16,7 +16,7 @@ pub struct SliceEditLog<Edit, SourceLog: EditLog<Edit>> {
     phantom_edit: PhantomData<Edit>
 }
 
-impl<Edit, SourceLog: EditLog<Edit>> SliceEditLog<Edit, SourceLog> {
+impl<Edit, SourceLog> SliceEditLog<Edit, SourceLog> {
     ///
     /// Creates an edit log representing a slice of another edit log
     /// 
@@ -46,7 +46,9 @@ impl<Edit, SourceLog: EditLog<Edit>> EditLog<Edit> for SliceEditLog<Edit, Source
     fn pending(&self) -> Vec<Edit> {
         self.source_log.pending()
     }
+}
 
+impl<Edit, SourceLog: MutableEditLog<Edit>> MutableEditLog<Edit> for SliceEditLog<Edit, SourceLog> {
     fn set_pending(&mut self, edits: &[Edit]) {
         self.source_log.set_pending(edits)
     }

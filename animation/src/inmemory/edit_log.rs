@@ -40,7 +40,9 @@ impl<Edit: Clone> EditLog<Edit> for InMemoryEditLog<Edit> {
     fn pending(&self) -> Vec<Edit> {
         self.pending.clone()
     }
+}
 
+impl<Edit: Clone> MutableEditLog<Edit> for InMemoryEditLog<Edit> {
     fn set_pending(&mut self, edits: &[Edit]) {
         self.pending = edits.iter()
             .map(|edit| edit.clone())

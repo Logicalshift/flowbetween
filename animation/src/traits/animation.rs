@@ -10,6 +10,7 @@ use std::sync::*;
 pub trait Animation : 
     Editable<AnimationLayers>+
     Editable<EditLog<AnimationEdit>>+
+    Editable<MutableEditLog<AnimationEdit>>+
     Send+Sync {
     ///
     /// Retrieves the frame size of this animation

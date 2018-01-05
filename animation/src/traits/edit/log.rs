@@ -20,7 +20,12 @@ pub trait EditLog<Edit> {
     /// The current set of pending edits
     /// 
     fn pending(&self) -> Vec<Edit>;
+}
 
+///
+/// Trait implemented by things that can receive editing commands
+/// 
+pub trait MutableEditLog<Edit> {
     ///
     /// Sets the pending edits for this log (replacing any existing
     /// pending edits)
@@ -79,7 +84,9 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for &'a mut Log {
     fn pending(&self) -> Vec<Edit> {
         (**self).pending()
     }
+}
 
+impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for &'a mut Log {
     #[inline]
     fn set_pending(&mut self, edits: &[Edit]) {
         (**self).set_pending(edits)
@@ -111,21 +118,6 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for RwLockReadGuard<'a, Log> {
     fn pending(&self) -> Vec<Edit> {
         (**self).pending()
     }
-
-    #[inline]
-    fn set_pending(&mut self, _edits: &[Edit]) {
-        panic!("Can't write to a read lock")
-    }
-
-    #[inline]
-    fn commit_pending(&mut self) -> Range<usize> {
-        panic!("Can't write to a read lock")
-    }
-
-    #[inline]
-    fn cancel_pending(&mut self) {
-        panic!("Can't write to a read lock")
-    }
 }
 
 impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for RwLockWriteGuard<'a, Log> {
@@ -143,7 +135,9 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for RwLockWriteGuard<'a, Log> {
     fn pending(&self) -> Vec<Edit> {
         (**self).pending()
     }
+}
 
+impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for RwLockWriteGuard<'a, Log> {
     #[inline]
     fn set_pending(&mut self, edits: &[Edit]) {
         (**self).set_pending(edits)
@@ -175,7 +169,9 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for RwLock<Log> {
     fn pending(&self) -> Vec<Edit> {
         self.read().unwrap().pending()
     }
+}
 
+impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for RwLock<Log> {
     #[inline]
     fn set_pending(&mut self, edits: &[Edit]) {
         // TODO: race condition if multiple threads are calling set/commit pending (as we release the write lock)
@@ -210,7 +206,9 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for Arc<RwLock<Log>> {
     fn pending(&self) -> Vec<Edit> {
         (**self).read().unwrap().pending()
     }
+}
 
+impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for Arc<RwLock<Log>> {
     #[inline]
     fn set_pending(&mut self, edits: &[Edit]) {
         // TODO: race condition if multiple threads are calling set/commit pending (as we release the write lock)

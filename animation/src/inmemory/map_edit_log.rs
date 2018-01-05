@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 ///
 /// Edit log that maps a range of edits from a source edit type to a target
 /// 
-pub struct MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog: EditLog<TheirEdit>>
+pub struct MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
 where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
         OursToTheirs: Fn(&OurEdit) -> TheirEdit
 {
@@ -18,7 +18,7 @@ where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
     their_phantom:  PhantomData<TheirEdit>
 }
 
-impl<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog: EditLog<TheirEdit>> MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
+impl<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog> MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
 where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
         OursToTheirs: Fn(&OurEdit) -> TheirEdit {
     ///
@@ -58,7 +58,11 @@ where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
             .map(|theirs| (self.theirs_to_ours)(&theirs))
             .collect()
     }
+}
 
+impl<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog: MutableEditLog<TheirEdit>> MutableEditLog<OurEdit> for MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
+where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
+        OursToTheirs: Fn(&OurEdit) -> TheirEdit {
     fn set_pending(&mut self, edits: &[OurEdit]) {
         let their_pending: Vec<TheirEdit> = edits.iter()
             .map(|ours| (self.ours_to_theirs)(ours))

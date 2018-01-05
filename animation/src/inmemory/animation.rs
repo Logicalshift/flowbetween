@@ -68,16 +68,26 @@ impl Editable<AnimationLayers+'static> for InMemoryAnimation {
 }
 
 impl Editable<EditLog<AnimationEdit>> for InMemoryAnimation {
-    fn edit(&self) -> Option<Editor<EditLog<AnimationEdit>+'static>> { 
-        let core: &RwLock<EditLog<AnimationEdit>>  = &*self.core;
-
-        Some(Editor::new(core.write().unwrap()))
+    fn edit(&self) -> Option<Editor<EditLog<AnimationEdit>+'static>> {
+        None
     }
 
     fn read(&self) -> Option<Reader<EditLog<AnimationEdit>+'static>> { 
         let core: &RwLock<EditLog<AnimationEdit>>  = &*self.core;
 
         Some(Reader::new(core.read().unwrap()))
+    }
+}
+
+impl Editable<MutableEditLog<AnimationEdit>> for InMemoryAnimation {
+    fn edit(&self) -> Option<Editor<MutableEditLog<AnimationEdit>+'static>> { 
+        let core: &RwLock<MutableEditLog<AnimationEdit>>  = &*self.core;
+
+        Some(Editor::new(core.write().unwrap()))
+    }
+
+    fn read(&self) -> Option<Reader<MutableEditLog<AnimationEdit>+'static>> { 
+        None
     }
 }
 
@@ -129,7 +139,9 @@ impl EditLog<AnimationEdit> for AnimationCore {
     fn pending(&self) -> Vec<AnimationEdit> {
         self.edit_log.pending()
     }
+}
 
+impl MutableEditLog<AnimationEdit> for AnimationCore {
     fn set_pending(&mut self, edits: &[AnimationEdit]) {
         // TODO: the layers probably want to know about pending stuff that affects them
         self.edit_log.set_pending(edits)
