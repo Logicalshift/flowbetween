@@ -49,6 +49,7 @@ impl MutableEditLog<LayerEdit> for VectorLayerEditLog {
             .map(|layer_edit| AnimationEdit::Layer(self.layer_id, layer_edit))
             .collect();
 
+        // This will clobber any existing pending edits in the animation log
         let mut animation_log = self.animation_log.write().unwrap();
         animation_log.set_pending(&pending_edits);
         animation_log.commit_pending()
