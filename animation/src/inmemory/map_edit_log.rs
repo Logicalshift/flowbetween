@@ -43,11 +43,11 @@ where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
         self.source_log.length()
     }
 
-    fn read<'a>(&'a self, indices: &mut Iterator<Item=usize>) -> Vec<&'a OurEdit> {
+    fn read(&self, indices: &mut Iterator<Item=usize>) -> Vec<OurEdit> {
         self.source_log
             .read(indices)
             .into_iter()
-            .map(|theirs| (self.theirs_to_ours)(theirs))
+            .map(|theirs| (self.theirs_to_ours)(&theirs))
             .collect()
     }
 
@@ -73,5 +73,21 @@ where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
 
     fn cancel_pending(&mut self) {
         self.source_log.cancel_pending()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::super::edit_log::*;
+    use super::*;
+
+    #[test]
+    fn map_from_int_edit_log() {
+        let mut integers = InMemoryEditLog::new();
+        integers.set_pending(&[1, 2, 3, 4]);
+        integers.commit_pending();
+
+        let add_one = MapEditLog::new(integers, |i| i+1, |i| i-1);
+        assert!(add_one.read_iter(0..4) == vec![2,3,4,5]);
     }
 }

@@ -28,12 +28,12 @@ impl<Edit: Clone> EditLog<Edit> for InMemoryEditLog<Edit> {
         self.edits.len()
     }
 
-    fn read<'a>(&'a self, indices: &mut Iterator<Item=usize>) -> Vec<&'a Edit> {
+    fn read(&self, indices: &mut Iterator<Item=usize>) -> Vec<Edit> {
         let len = self.edits.len();
 
         indices
             .filter(|index| *index < len)
-            .map(|index| &self.edits[index])
+            .map(|index| self.edits[index].clone())
             .collect()
     }
 
@@ -101,7 +101,7 @@ mod test {
         assert!(commit_range == (4..8));
         assert!(log.length() == 8);
 
-        assert!(log.read_iter(2..6) == vec![&3, &4, &7, &8]);
+        assert!(log.read_iter(2..6) == vec![3, 4, 7, 8]);
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod test {
         log.cancel_pending();
         assert!(log.length() == 4);
 
-        assert!(log.read_iter(2..4) == vec![&3, &4]);
+        assert!(log.read_iter(2..4) == vec![3, 4]);
     }
 
     #[test]
@@ -137,7 +137,7 @@ mod test {
         assert!(log.length() == 4);
         assert!(commit_range == (4..4));
 
-        assert!(log.read_iter(2..4) == vec![&3, &4]);
+        assert!(log.read_iter(2..4) == vec![3, 4]);
     }
 
     #[test]
@@ -147,7 +147,7 @@ mod test {
         log.set_pending(&[1, 2, 3, 4]);
         log.commit_pending();
 
-        assert!(log.read_iter(2..6) == vec![&3, &4]);
+        assert!(log.read_iter(2..6) == vec![3, 4]);
         assert!(log.read_iter(100..300).len() == 0);
     }
 }
