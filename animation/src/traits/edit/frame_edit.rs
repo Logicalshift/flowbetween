@@ -16,5 +16,5 @@ pub enum PaintEdit {
     BrushProperties(BrushProperties),
 
     /// Draws a brush stroke using the current brush and the specified set of input points
-    BrushStroke(BrushPoint)
+    BrushStroke(Vec<BrushPoint>)
 }
