@@ -2,6 +2,7 @@ mod paint;
 
 pub use self::paint::*;
 
+use super::edit::*;
 use super::frame::*;
 use super::editable::*;
 
@@ -12,6 +13,7 @@ use std::time::Duration;
 /// A layer represents a renderable plane in an animation
 ///
 pub trait Layer : 
+    Editable<MutableEditLog<LayerEdit>>+
     Editable<PaintLayer>+
     Send+Sync {
     ///

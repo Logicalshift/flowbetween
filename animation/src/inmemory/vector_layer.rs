@@ -10,7 +10,10 @@ use std::time::Duration;
 /// Represents a vector layer. Vector layers support brush and vector objects.
 /// 
 pub struct VectorLayer {
-    /// The core of this layer
+    /// The edit log where edits to this layer should be committed
+    // edit_log: Weak<RwLock<MutableEditLog<AnimationEdit>>>,
+
+    /// The core data for this layer
     core: RwLock<VectorLayerCore>
 }
 
@@ -18,11 +21,12 @@ impl VectorLayer {
     ///
     /// Cretes a new vector layer
     /// 
-    pub fn new(id: u64) -> VectorLayer {
+    pub fn new(id: u64, edit_log: &Arc<RwLock<MutableEditLog<AnimationEdit>>>) -> VectorLayer {
         let core = VectorLayerCore::new(id);
 
         VectorLayer { 
-            core: RwLock::new(core)
+            // edit_log:   Arc::downgrade(edit_log),
+            core:       RwLock::new(core)
         }
     }
 
@@ -51,6 +55,26 @@ impl Editable<PaintLayer+'static> for VectorLayer {
     fn read(&self) -> Option<Reader<PaintLayer+'static>> {
         let core: &RwLock<PaintLayer> = &self.core;
         Some(Reader::new(core.read().unwrap())) 
+    }
+}
+
+impl Editable<MutableEditLog<LayerEdit>+'static> for VectorLayer {
+    fn edit(&self) -> Option<Editor<MutableEditLog<LayerEdit>+'static>> {
+        /*
+        self.edit_log.upgrade()
+            .map(|edit_log| VectorLayerEditLog::new(edit_log))
+            .map(|editor| Editor::new(Arc::new(editor)))
+        */
+        None
+    }
+
+    fn read(&self) -> Option<Reader<MutableEditLog<LayerEdit>+'static>> {
+        /*
+        self.edit_log.upgrade()
+            .map(|edit_log| VectorLayerEditLog::new(edit_log))
+            .map(|editor| Reader::new(Arc::new(editor)))
+        */
+        None
     }
 }
 

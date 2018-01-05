@@ -11,6 +11,9 @@ use std::collections::*;
 /// Core values associated with an animation
 /// 
 struct AnimationCore {
+    /// A weak reference back to this core (used when we need to pass it around for editing purposes)
+    self_reference: Weak<RwLock<AnimationCore>>,
+
     /// The edit log for this animation
     edit_log: InMemoryEditLog<AnimationEdit>,
 
@@ -20,7 +23,7 @@ struct AnimationCore {
     /// The duration of a frame in the animation
     frame_duration: Duration,
 
-    /// The layers in this animation, as an object and as a vector layer
+    /// The layers in this animation, as an object and as a vector layer (we need to return references to the layer object and rust can't downgrade for us)
     layers: Vec<(Arc<Layer>, Arc<VectorLayer>)>,
 }
 
@@ -35,15 +38,22 @@ pub struct InMemoryAnimation {
 impl InMemoryAnimation {
     pub fn new() -> InMemoryAnimation {
         // Create the core (30fps by default)
-        let core = AnimationCore { 
-            edit_log:       InMemoryEditLog::new(),
-            size:           (1980.0, 1080.0),
-            frame_duration: Duration::from_millis(1000/30),
-            layers:         vec![]
+        let core = AnimationCore {
+            self_reference:     Weak::default(),
+            edit_log:           InMemoryEditLog::new(),
+            size:               (1980.0, 1080.0),
+            frame_duration:     Duration::from_millis(1000/30),
+            layers:             vec![]
         };
 
+        // Core needs a self-reference so it can supply itself as the edit log for layers
+        let core            = Arc::new(RwLock::new(core));
+        let self_reference  = Arc::downgrade(&core);
+
+        core.write().unwrap().self_reference = self_reference;
+
         // Create the final animation
-        InMemoryAnimation { core: Arc::new(RwLock::new(core)) }
+        InMemoryAnimation { core: core }
     }
 }
 
@@ -111,15 +121,17 @@ impl AnimationCore {
         }
     }
 
-    fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> &'a Layer {
+    fn add_new_layer(&mut self, layer_id: u64) {
         // TODO: do nothing if the layer does not exist
 
-        // Generate the layer
-        let new_layer = Arc::new(VectorLayer::new(layer_id));
-        self.layers.push((new_layer.clone(), new_layer));
+        // We need a self-reference to act as the edit log
+        if let Some(edit_log) = self.self_reference.upgrade() {
+            let edit_log: Arc<RwLock<MutableEditLog<AnimationEdit>>> = edit_log.clone();
 
-        // Result is a reference to the layer
-        &*self.layers.last().unwrap().0
+            // Generate the layer
+            let new_layer = Arc::new(VectorLayer::new(layer_id, &edit_log));
+            self.layers.push((new_layer.clone(), new_layer));
+        }
     }
 
     fn set_size(&mut self, new_size: (f64, f64)) {

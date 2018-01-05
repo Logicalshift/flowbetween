@@ -1,4 +1,5 @@
 mod paint;
+mod edit_log;
 
 use super::super::brushes::*;
 use super::super::traits::*;
@@ -9,6 +10,8 @@ use canvas::*;
 use std::mem;
 use std::sync::*;
 use std::time::Duration;
+
+pub use self::edit_log::*;
 
 ///
 /// The core of the vector layer
