@@ -76,6 +76,16 @@ impl Editable<AnimationLayers+'static> for InMemoryAnimation {
     }
 }
 
+impl Editable<EditLog<AnimationEdit>> for InMemoryAnimation {
+    fn edit(&self) -> Option<Editor<EditLog<AnimationEdit>+'static>> { 
+        None
+    }
+
+    fn read(&self) -> Option<Reader<EditLog<AnimationEdit>+'static>> { 
+        None
+    }
+}
+
 impl AnimationSize for AnimationCore {
     fn size(&self) -> (f64, f64) { self.size }
 

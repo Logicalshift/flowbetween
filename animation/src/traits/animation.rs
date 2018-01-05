@@ -1,3 +1,4 @@
+use super::edit::*;
 use super::layer::*;
 use super::editable::*;
 
@@ -9,6 +10,7 @@ use std::sync::*;
 pub trait Animation : 
     Editable<AnimationLayers>+
     Editable<AnimationSize>+
+    Editable<EditLog<AnimationEdit>>+
     Send+Sync {
 }
 
