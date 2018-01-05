@@ -80,7 +80,7 @@ mod test {
         integers.set_pending(&[1,2,3,4,5,6,7,8]);
         integers.commit_pending();
 
-        let slice = SliceEditLog::new(integers, vec![2,4,6,8]);
+        let slice = SliceEditLog::new(&mut integers, vec![2,4,6,8]);
 
         assert!(slice.length() == 4);
         assert!(slice.read_iter(1..3) == vec![5,7]);
@@ -92,7 +92,7 @@ mod test {
         integers.set_pending(&[1,2,3,4,5,6,7,8]);
         integers.commit_pending();
 
-        let mut slice = SliceEditLog::new(integers, vec![2,4,6,8]);
+        let mut slice = SliceEditLog::new(&mut integers, vec![2,4,6,8]);
 
         slice.set_pending(&[9, 10, 11]);
         let committed_range = slice.commit_pending();
