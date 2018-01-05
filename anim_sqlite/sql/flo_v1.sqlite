@@ -1,0 +1,55 @@
+/***
+ **
+ ** FlowBetween File format version 1
+ **
+ ***/
+
+/*
+ * The FlowBetween table indicates version information for this file and
+ * contains a single record.
+ */
+CREATE TABLE FlowBetween (
+    /* Data format version */
+    DataVersion     INTEGER NOT NULL,
+
+    /* Description of the version of FlowBetween that created this animation */
+    FloVersion      TEXT NOT NULL,
+
+    /* 1 if this was generating using a stable schema, 0 if generated using an unstable one */
+    Stable          INTEGER NOT NULL
+);
+
+/*
+ *  ===== Enumeration descriptions
+ */
+
+/*
+ * Provides information about what enumerable values mean
+ */
+CREATE TABLE EnumerationDescriptions (
+    /* Name of the field containing an enumeration */
+    FieldName   TEXT NOT NULL,
+
+    /* Value of the field */
+    Value       INTEGER NOT NULL,
+
+    /* Name of this enumerable value as used in the API */
+    ApiName     TEXT NOT NULL,
+
+    /* Comment */
+    Comment     TEXT,
+
+    PRIMARY KEY (FieldName, Value)
+);
+
+/* The stable/unstable enumeration */
+INSERT INTO EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("Stable", 0, "Unstable", "File was created with a development version of FlowBetween and may not conform to the final schema for this version"),
+            ("Stable", 1, "Stable", "File was created using a stable version of the schema");
+
+/*
+ *  ===== DEFAULT DATA
+ */
+
+INSERT INTO FlowBetween(DataVersion, FloVersion, Stable)
+     VALUES (1, "Unknown", 0);
