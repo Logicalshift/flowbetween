@@ -4,6 +4,7 @@ use super::super::brush_properties::*;
 ///
 /// Represents an edit involving painting
 ///
+#[derive(Clone, PartialEq, Debug)]
 pub enum PaintEdit {
     /// Selects the brush with the specified ID for painting
     SelectBrush(u32),

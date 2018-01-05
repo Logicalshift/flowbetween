@@ -6,7 +6,7 @@ use canvas::*;
 /// These are the properties that are independent of the brush type.
 /// Properties that define a brush can be found in brush_definition.
 ///
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct BrushProperties {
     /// The size of the brush stroke
     pub size: f32,
