@@ -11,5 +11,5 @@ pub enum AnimationEdit {
     DefineBrush(u32, BrushDefinition),
 
     /// Edit to an existing layer
-    Layer(LayerEdit)
+    Layer(u32, LayerEdit)
 }

@@ -11,7 +11,12 @@ pub trait EditLog<Edit> {
     ///
     /// Reads a range of edits from this log
     /// 
-    fn read(&self, start: usize, end: usize) -> Vec<Edit>;
+    fn read<'a>(&'a self, start: usize, end: usize) -> Vec<&'a Edit>;
+
+    ///
+    /// The current set of pending edits
+    /// 
+    fn pending(&self) -> Vec<Edit>;
 
     ///
     /// Sets the pending edits for this log (replacing any existing
@@ -27,7 +32,7 @@ pub trait EditLog<Edit> {
     ///
     /// Cancels any pending edits for this log
     /// 
-    fn cancel_panding(&mut self);
+    fn cancel_pending(&mut self);
 
     // TODO: undos, redos?
 }
