@@ -1,13 +1,18 @@
+use super::edit_log::*;
 use super::vector_layer::*;
 use super::super::traits::*;
 
 use std::sync::*;
+use std::ops::Range;
 use std::time::Duration;
 
 ///
 /// Core values associated with an animation
 /// 
 struct AnimationCore {
+    /// The edit log for this animation
+    edit_log: InMemoryEditLog<AnimationEdit>,
+
     /// The size of the animation canvas
     size: (f64, f64),
 
@@ -32,6 +37,7 @@ impl InMemoryAnimation {
     pub fn new() -> InMemoryAnimation {
         // Create the core (30fps by default)
         let core = AnimationCore { 
+            edit_log:       InMemoryEditLog::new(),
             size:           (1980.0, 1080.0),
             frame_duration: Duration::from_millis(1000/30),
             layers:         vec![],
@@ -78,27 +84,19 @@ impl Editable<AnimationLayers+'static> for InMemoryAnimation {
 
 impl Editable<EditLog<AnimationEdit>> for InMemoryAnimation {
     fn edit(&self) -> Option<Editor<EditLog<AnimationEdit>+'static>> { 
-        None
+        let core: &RwLock<EditLog<AnimationEdit>>  = &self.core;
+
+        Some(Editor::new(core.write().unwrap()))
     }
 
     fn read(&self) -> Option<Reader<EditLog<AnimationEdit>+'static>> { 
-        None
+        let core: &RwLock<EditLog<AnimationEdit>>  = &self.core;
+
+        Some(Reader::new(core.read().unwrap()))
     }
 }
 
-impl AnimationSize for AnimationCore {
-    fn size(&self) -> (f64, f64) { self.size }
-
-    fn set_size(&mut self, new_size: (f64, f64)) {
-        self.size = new_size;
-    }
-}
-
-impl AnimationLayers for AnimationCore {
-    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>> {
-        Box::new(self.layers.iter())
-    }
-
+impl AnimationCore {
     fn remove_layer(&mut self, layer_id: u64) {
         // Find the index of the layer with this ID
         let remove_index = {
@@ -118,10 +116,8 @@ impl AnimationLayers for AnimationCore {
         }
     }
 
-    fn add_new_layer<'a>(&'a mut self) -> &'a Layer {
-        // Pick an ID for this layer
-        let layer_id = self.next_layer_id;
-        self.next_layer_id += 1;
+    fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> &'a Layer {
+        // TODO: do nothing if the layer does not exist
 
         // Generate the layer
         let new_layer = Arc::new(VectorLayer::new(layer_id));
@@ -129,6 +125,67 @@ impl AnimationLayers for AnimationCore {
 
         // Result is a reference to the layer
         &**self.layers.last().unwrap()
+    }
+
+    fn set_size(&mut self, new_size: (f64, f64)) {
+        self.size = new_size;
+    }
+}
+
+impl EditLog<AnimationEdit> for AnimationCore {
+    fn length(&self) -> usize {
+        self.edit_log.length()
+    }
+
+    fn read(&self, indices: &mut Iterator<Item=usize>) -> Vec<AnimationEdit> {
+        self.edit_log.read(indices)
+    }
+
+    fn pending(&self) -> Vec<AnimationEdit> {
+        self.edit_log.pending()
+    }
+
+    fn set_pending(&mut self, edits: &[AnimationEdit]) {
+        // TODO: the layers probably want to know about pending stuff that affects them
+        self.edit_log.set_pending(edits)
+    }
+
+    fn cancel_pending(&mut self) {
+        self.edit_log.cancel_pending()
+    }
+
+    fn commit_pending(&mut self) -> Range<usize> {
+        // Get the items that are currently pending
+        let to_process = self.edit_log.pending();
+
+        // Commit the pending items to the log
+        let commit_range = self.edit_log.commit_pending();
+
+        // Perform any actions required by the pending items
+        for action in to_process {
+            use AnimationEdit::*;
+            
+            match action {
+                DefineBrush(_, _)   => { unimplemented!(); },
+                Layer(_, _)         => { unimplemented!(); },
+
+                SetSize(x, y)       => { self.set_size((x, y)); },
+                AddNewLayer(id)     => { self.add_new_layer(id); },
+                RemoveLayer(id)     => { self.remove_layer(id); }
+            }
+        }
+
+        commit_range
+    }
+}
+
+impl AnimationSize for AnimationCore {
+    fn size(&self) -> (f64, f64) { self.size }
+}
+
+impl AnimationLayers for AnimationCore {
+    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>> {
+        Box::new(self.layers.iter())
     }
 }
 

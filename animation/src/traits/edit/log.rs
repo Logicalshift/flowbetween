@@ -113,7 +113,7 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for RwLockReadGuard<'a, Log> {
     }
 
     #[inline]
-    fn set_pending(&mut self, edits: &[Edit]) {
+    fn set_pending(&mut self, _edits: &[Edit]) {
         panic!("Can't write to a read lock")
     }
 

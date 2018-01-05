@@ -11,5 +11,15 @@ pub enum AnimationEdit {
     DefineBrush(u32, BrushDefinition),
 
     /// Edit to an existing layer
-    Layer(u32, LayerEdit)
+    Layer(u32, LayerEdit),
+
+    /// Sets the canvas size for this animation
+    SetSize(f64, f64),
+
+    /// Adds a new layer and assigns it the specified ID
+    /// Has no effect if a layer with that ID already exists
+    AddNewLayer(u64),
+
+    /// Removes the layer with the specified ID
+    RemoveLayer(u64)
 }
