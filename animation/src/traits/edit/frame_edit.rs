@@ -1,14 +1,10 @@
 use super::super::brush::*;
 use super::super::brush_properties::*;
-use super::super::brush_definition::*;
 
 ///
 /// Represents an edit involving painting
 ///
 pub enum PaintEdit {
-    /// Defines the brush with the specified ID
-    DefineBrush(u32, BrushDefinition),
-
     /// Selects the brush with the specified ID for painting
     SelectBrush(u32),
 
