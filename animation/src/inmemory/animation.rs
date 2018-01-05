@@ -197,43 +197,83 @@ mod test {
     #[test]
     fn can_add_layer() {
         let animation = InMemoryAnimation::new();
-        let mut layers = open_edit::<AnimationLayers>(&animation).unwrap();
 
-        assert!(layers.layers().count() == 0);
+        {
+            let layers = open_read::<AnimationLayers>(&animation).unwrap();
+            assert!(layers.layers().count() == 0);
+        }
 
-        layers.add_new_layer();
-        assert!(layers.layers().count() == 1);
+        {
+            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
+            edit.set_pending(&vec![
+                AnimationEdit::AddNewLayer(0)
+            ]);
+            edit.commit_pending();
+        }
+
+        {
+            let layers = open_read::<AnimationLayers>(&animation).unwrap();
+            assert!(layers.layers().count() == 1);
+        }
     }
 
     #[test]
     fn can_remove_layer() {
         let animation = InMemoryAnimation::new();
-        let mut layers = open_edit::<AnimationLayers>(&animation).unwrap();
 
-        assert!(layers.layers().count() == 0);
+        let keep1       = 0;
+        let keep2       = 1;
+        let to_remove   = 2;
+        let keep3       = 3;
 
-        let keep1       = layers.add_new_layer().id();
-        let keep2       = layers.add_new_layer().id();
-        let to_remove   = layers.add_new_layer().id();
-        let keep3       = layers.add_new_layer().id();
+        {
+            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
+            edit.set_pending(&vec![
+                AnimationEdit::AddNewLayer(keep1),
+                AnimationEdit::AddNewLayer(keep2),
+                AnimationEdit::AddNewLayer(to_remove),
+                AnimationEdit::AddNewLayer(keep3),
+            ]);
+            edit.commit_pending();
+        }
 
-        let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
-        assert!(ids == vec![keep1, keep2, to_remove, keep3]);
+        {
+            let layers = open_read::<AnimationLayers>(&animation).unwrap();
+            let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
+            assert!(ids == vec![keep1, keep2, to_remove, keep3]);
+        }
 
-        layers.remove_layer(to_remove);
+        {
+            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
+            edit.set_pending(&vec![
+                AnimationEdit::RemoveLayer(to_remove)
+            ]);
+            edit.commit_pending();
+        }
 
-        let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
-        assert!(ids == vec![keep1, keep2, keep3]);
+        {
+            let layers = open_read::<AnimationLayers>(&animation).unwrap();
+            let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
+            assert!(ids == vec![keep1, keep2, keep3]);
+        }
     }
 
     #[test]
     fn can_draw_brush_stroke() {
         let animation = InMemoryAnimation::new();
-        let mut layers = open_edit::<AnimationLayers>(&animation).unwrap();
 
-        assert!(layers.layers().count() == 0);
+        {
+            let mut edit = open_edit::<EditLog<AnimationEdit>>(&animation).unwrap();
+            edit.set_pending(&vec![
+                AnimationEdit::AddNewLayer(0),
+            ]);
+            edit.commit_pending();
+        }
 
-        let layer = layers.add_new_layer();
+        let layers = open_edit::<AnimationLayers>(&animation).unwrap();
+        assert!(layers.layers().count() == 1);
+
+        let layer = layers.layers().nth(0).unwrap();
 
         // Add a keyframe
         let mut keyframes: Editor<KeyFrameLayer> = layer.edit().unwrap();
