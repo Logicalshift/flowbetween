@@ -32,5 +32,5 @@ pub trait Animation :
     ///
     /// Retrieves an edit log that can be used to edit a layer in this animation
     /// 
-    fn edit_layer<'a>(&'a self) -> Editor<'a, PendingEditLog<LayerEdit>>;
+    fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>>;
 }
