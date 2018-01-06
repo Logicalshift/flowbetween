@@ -27,9 +27,3 @@ pub trait AnimationLayers {
     ///
     fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>>;
 }
-
-impl Animation for () {
-    fn size(&self) -> (f64, f64) {
-        (1980.0, 1080.0)
-    }
-}
