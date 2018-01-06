@@ -17,11 +17,8 @@ struct AnimationCore {
     /// The size of the animation canvas
     size: (f64, f64),
 
-    /// The duration of a frame in the animation
-    frame_duration: Duration,
-
     /// The layers in this animation, as an object and as a vector layer (we need to return references to the layer object and rust can't downgrade for us)
-    layers: Vec<(Arc<Layer>, Arc<VectorLayer>)>,
+    layers: HashMap<u64, (Arc<Layer>, Arc<VectorLayer>)>
 }
 
 ///
@@ -38,8 +35,7 @@ impl InMemoryAnimation {
         let core = AnimationCore {
             edit_log:           InMemoryEditLog::new(),
             size:               (1980.0, 1080.0),
-            frame_duration:     Duration::from_millis(1000/30),
-            layers:             vec![]
+            layers:             HashMap::new(),
         };
 
         // Create the final animation
@@ -47,7 +43,34 @@ impl InMemoryAnimation {
     }
 }
 
-impl AnimationCore {
+impl Animation for InMemoryAnimation {
+    fn size(&self) -> (f64, f64) {
+        (*self.core).read().unwrap().size
+    }
+
+    fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<Layer>> {
+        let core = (*self.core).read().unwrap();
+
+        let layer = core.layers
+            .get(&layer_id)
+            .map(|&(ref layer, ref _vectorlayer)| Arc::clone(layer));
+        
+        layer
+    }
+
+    fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>> {
+        let core: &RwLock<EditLog<AnimationEdit>> = &*self.core;
+
+        Reader::new(core.read().unwrap())
+    }
+
+    fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
+        unimplemented!()
+    }
+
+    fn edit_layer<'a>(&'a self) -> Editor<'a, PendingEditLog<LayerEdit>> {
+        unimplemented!()
+    }
 }
 
 impl EditLog<AnimationEdit> for AnimationCore {
