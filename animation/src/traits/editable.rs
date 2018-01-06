@@ -99,10 +99,10 @@ pub trait PerformEdits<Edit> {
     fn commit_pending(&self);
 }
 
-impl<Edit, T: Editable<MutableEditLog<Edit>>> PerformEdits<Edit> for T {
+impl<Edit, T: Editable<PendingEditLog<Edit>>> PerformEdits<Edit> for T {
     #[inline]
     fn perform_edits<Iter: IntoIterator<Item=Edit>>(&self, edits: Iter) {
-        let mut editor = open_edit::<MutableEditLog<Edit>>(self).unwrap();
+        let mut editor = open_edit::<PendingEditLog<Edit>>(self).unwrap();
 
         let edits: Vec<Edit> = edits.into_iter().collect();
 
@@ -112,14 +112,14 @@ impl<Edit, T: Editable<MutableEditLog<Edit>>> PerformEdits<Edit> for T {
 
     #[inline]
     fn set_pending(&self, edits: &[Edit]) {
-        let mut editor = open_edit::<MutableEditLog<Edit>>(self).unwrap();
+        let mut editor = open_edit::<PendingEditLog<Edit>>(self).unwrap();
 
         editor.set_pending(edits);
     }
 
     #[inline]
     fn commit_pending(&self) {
-        let mut editor = open_edit::<MutableEditLog<Edit>>(self).unwrap();
+        let mut editor = open_edit::<PendingEditLog<Edit>>(self).unwrap();
 
         editor.commit_pending();
     }

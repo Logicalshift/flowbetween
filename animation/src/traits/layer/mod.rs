@@ -13,7 +13,7 @@ use std::time::Duration;
 /// A layer represents a renderable plane in an animation
 ///
 pub trait Layer : 
-    Editable<MutableEditLog<LayerEdit>>+
+    Editable<PendingEditLog<LayerEdit>>+
     Editable<PaintLayer>+
     Send+Sync {
     ///

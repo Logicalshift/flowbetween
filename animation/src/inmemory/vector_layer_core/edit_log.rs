@@ -15,7 +15,7 @@ pub struct VectorLayerEditLog {
     layer_id: u64,
 
     /// The animation edit log (where final edits are comitted)
-    animation_log: Arc<RwLock<MutableEditLog<AnimationEdit>>>,
+    animation_log: Arc<RwLock<PendingEditLog<AnimationEdit>>>,
 
     /// The edits pending for this edit log
     pending_edits: Vec<LayerEdit>
@@ -25,7 +25,7 @@ impl VectorLayerEditLog {
     ///
     /// Creates a new vector layer edit log
     /// 
-    pub fn new(layer_id: u64, animation_log: Arc<RwLock<MutableEditLog<AnimationEdit>>>) -> VectorLayerEditLog {
+    pub fn new(layer_id: u64, animation_log: Arc<RwLock<PendingEditLog<AnimationEdit>>>) -> VectorLayerEditLog {
         VectorLayerEditLog {
             layer_id:       layer_id,
             animation_log:  animation_log,
@@ -34,7 +34,7 @@ impl VectorLayerEditLog {
     }
 }
 
-impl MutableEditLog<LayerEdit> for VectorLayerEditLog {
+impl PendingEditLog<LayerEdit> for VectorLayerEditLog {
     fn pending(&self) -> Vec<LayerEdit> {
         self.pending_edits.clone()
     }

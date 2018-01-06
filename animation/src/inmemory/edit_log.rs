@@ -38,7 +38,7 @@ impl<Edit: Clone> EditLog<Edit> for InMemoryEditLog<Edit> {
     }
 }
 
-impl<Edit: Clone> MutableEditLog<Edit> for InMemoryEditLog<Edit> {
+impl<Edit: Clone> PendingEditLog<Edit> for InMemoryEditLog<Edit> {
     fn pending(&self) -> Vec<Edit> {
         self.pending.clone()
     }

@@ -44,7 +44,7 @@ impl<Edit, SourceLog: EditLog<Edit>> EditLog<Edit> for SliceEditLog<Edit, Source
     }
 }
 
-impl<Edit, SourceLog: MutableEditLog<Edit>> MutableEditLog<Edit> for SliceEditLog<Edit, SourceLog> {
+impl<Edit, SourceLog: PendingEditLog<Edit>> PendingEditLog<Edit> for SliceEditLog<Edit, SourceLog> {
     fn pending(&self) -> Vec<Edit> {
         self.source_log.pending()
     }

@@ -52,7 +52,7 @@ where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
     }
 }
 
-impl<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog: MutableEditLog<TheirEdit>> MutableEditLog<OurEdit> for MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
+impl<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog: PendingEditLog<TheirEdit>> PendingEditLog<OurEdit> for MapEditLog<OurEdit, TheirEdit, TheirsToOurs, OursToTheirs, SourceLog>
 where   TheirsToOurs: Fn(&TheirEdit) -> OurEdit,
         OursToTheirs: Fn(&OurEdit) -> TheirEdit {
     fn pending(&self) -> Vec<OurEdit> {

@@ -27,10 +27,10 @@ pub trait Animation :
     ///
     /// Retrieves an edit log that can be used to alter this animation
     /// 
-    fn edit<'a>(&'a self) -> Editor<'a, MutableEditLog<AnimationEdit>>;
+    fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>>;
 
     ///
     /// Retrieves an edit log that can be used to edit a layer in this animation
     /// 
-    fn edit_layer<'a>(&'a self) -> Editor<'a, MutableEditLog<LayerEdit>>;
+    fn edit_layer<'a>(&'a self) -> Editor<'a, PendingEditLog<LayerEdit>>;
 }

@@ -20,7 +20,7 @@ pub trait EditLog<Edit> {
 ///
 /// Trait implemented by things that can receive editing commands
 /// 
-pub trait MutableEditLog<Edit> {
+pub trait PendingEditLog<Edit> {
     ///
     /// The current set of pending edits
     /// 
@@ -81,7 +81,7 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for &'a mut Log {
     }
 }
 
-impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for &'a mut Log {
+impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for &'a mut Log {
     #[inline]
     fn pending(&self) -> Vec<Edit> {
         (**self).pending()
@@ -127,7 +127,7 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for RwLockWriteGuard<'a, Log> {
     }
 }
 
-impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for RwLockWriteGuard<'a, Log> {
+impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for RwLockWriteGuard<'a, Log> {
     #[inline]
     fn pending(&self) -> Vec<Edit> {
         (**self).pending()
@@ -161,7 +161,7 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for RwLock<Log> {
     }
 }
 
-impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for RwLock<Log> {
+impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for RwLock<Log> {
     #[inline]
     fn pending(&self) -> Vec<Edit> {
         self.read().unwrap().pending()
@@ -198,7 +198,7 @@ impl<'a, Edit, Log: EditLog<Edit>> EditLog<Edit> for Arc<RwLock<Log>> {
     }
 }
 
-impl<'a, Edit, Log: MutableEditLog<Edit>> MutableEditLog<Edit> for Arc<RwLock<Log>> {
+impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for Arc<RwLock<Log>> {
     #[inline]
     fn pending(&self) -> Vec<Edit> {
         (**self).read().unwrap().pending()

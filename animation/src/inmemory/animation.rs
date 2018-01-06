@@ -89,14 +89,14 @@ impl Editable<EditLog<AnimationEdit>> for InMemoryAnimation {
     }
 }
 
-impl Editable<MutableEditLog<AnimationEdit>> for InMemoryAnimation {
-    fn edit(&self) -> Option<Editor<MutableEditLog<AnimationEdit>+'static>> { 
-        let core: &RwLock<MutableEditLog<AnimationEdit>>  = &*self.core;
+impl Editable<PendingEditLog<AnimationEdit>> for InMemoryAnimation {
+    fn edit(&self) -> Option<Editor<PendingEditLog<AnimationEdit>+'static>> { 
+        let core: &RwLock<PendingEditLog<AnimationEdit>>  = &*self.core;
 
         Some(Editor::new(core.write().unwrap()))
     }
 
-    fn read(&self) -> Option<Reader<MutableEditLog<AnimationEdit>+'static>> { 
+    fn read(&self) -> Option<Reader<PendingEditLog<AnimationEdit>+'static>> { 
         None
     }
 }
@@ -126,7 +126,7 @@ impl AnimationCore {
 
         // We need a self-reference to act as the edit log
         if let Some(edit_log) = self.self_reference.upgrade() {
-            let edit_log: Arc<RwLock<MutableEditLog<AnimationEdit>+Send+Sync>> = edit_log.clone();
+            let edit_log: Arc<RwLock<PendingEditLog<AnimationEdit>+Send+Sync>> = edit_log.clone();
 
             // Generate the layer
             let new_layer = Arc::new(VectorLayer::new(layer_id, &edit_log));
@@ -149,7 +149,7 @@ impl EditLog<AnimationEdit> for AnimationCore {
     }
 }
 
-impl MutableEditLog<AnimationEdit> for AnimationCore {
+impl PendingEditLog<AnimationEdit> for AnimationCore {
     fn pending(&self) -> Vec<AnimationEdit> {
         self.edit_log.pending()
     }

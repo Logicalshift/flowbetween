@@ -11,7 +11,7 @@ use std::time::Duration;
 /// 
 pub struct VectorLayer {
     /// The edit log where edits to this layer should be committed
-    edit_log: Weak<RwLock<MutableEditLog<AnimationEdit>+Send+Sync>>,
+    edit_log: Weak<RwLock<PendingEditLog<AnimationEdit>+Send+Sync>>,
 
     /// The core data for this layer
     core: RwLock<VectorLayerCore>
@@ -21,7 +21,7 @@ impl VectorLayer {
     ///
     /// Cretes a new vector layer
     /// 
-    pub fn new(id: u64, edit_log: &Arc<RwLock<MutableEditLog<AnimationEdit>+Send+Sync>>) -> VectorLayer {
+    pub fn new(id: u64, edit_log: &Arc<RwLock<PendingEditLog<AnimationEdit>+Send+Sync>>) -> VectorLayer {
         let core = VectorLayerCore::new(id);
 
         VectorLayer { 
@@ -58,25 +58,25 @@ impl Editable<PaintLayer+'static> for VectorLayer {
     }
 }
 
-impl Editable<MutableEditLog<LayerEdit>+'static> for VectorLayer {
-    fn edit(&self) -> Option<Editor<MutableEditLog<LayerEdit>+'static>> {
+impl Editable<PendingEditLog<LayerEdit>+'static> for VectorLayer {
+    fn edit(&self) -> Option<Editor<PendingEditLog<LayerEdit>+'static>> {
         let id = self.core.read().unwrap().id();
 
         self.edit_log.upgrade()
             .map(|edit_log| VectorLayerEditLog::new(id, edit_log))
             .map(|editor| {
-                let editor: Box<MutableEditLog<LayerEdit>+'static> = Box::new(editor);
+                let editor: Box<PendingEditLog<LayerEdit>+'static> = Box::new(editor);
                 Editor::new(editor)
             })
     }
 
-    fn read(&self) -> Option<Reader<MutableEditLog<LayerEdit>+'static>> {
+    fn read(&self) -> Option<Reader<PendingEditLog<LayerEdit>+'static>> {
         let id = self.core.read().unwrap().id();
 
         self.edit_log.upgrade()
             .map(|edit_log| VectorLayerEditLog::new(id, edit_log))
             .map(|editor| {
-                let editor: Box<MutableEditLog<LayerEdit>+'static> = Box::new(editor);
+                let editor: Box<PendingEditLog<LayerEdit>+'static> = Box::new(editor);
                 Reader::new(editor)
             })
     }
