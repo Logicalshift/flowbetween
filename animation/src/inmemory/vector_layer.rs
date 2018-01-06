@@ -12,9 +12,6 @@ use std::time::Duration;
 /// Represents a vector layer. Vector layers support brush and vector objects.
 /// 
 pub struct VectorLayer {
-    /// The edit log where edits to this layer should be committed
-    edit_log: Weak<RwLock<PendingEditLog<AnimationEdit>+Send+Sync>>,
-
     /// The core data for this layer
     core: RwLock<VectorLayerCore>
 }
@@ -23,11 +20,10 @@ impl VectorLayer {
     ///
     /// Cretes a new vector layer
     /// 
-    pub fn new(id: u64, edit_log: &Arc<RwLock<PendingEditLog<AnimationEdit>+Send+Sync>>) -> VectorLayer {
+    pub fn new(id: u64) -> VectorLayer {
         let core = VectorLayerCore::new(id);
 
         VectorLayer { 
-            edit_log:   Arc::downgrade(edit_log),
             core:       RwLock::new(core)
         }
     }
@@ -35,12 +31,10 @@ impl VectorLayer {
     ///
     /// Applies new edits for this layer
     /// 
-    pub fn apply_new_edits(&self, edits: &[LayerEdit]) {
+    pub fn apply_edit(&self, edit: &LayerEdit) {
         let mut core = self.core.write().unwrap();
 
-        for edit in edits {
-            core.apply_edit(edit);
-        }
+        core.apply_edit(edit);
     }
 }
 

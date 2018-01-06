@@ -1,10 +1,10 @@
 use super::edit_log::*;
+use super::pending_log::*;
 use super::vector_layer::*;
 use super::super::traits::*;
 
 use std::sync::*;
 use std::ops::Range;
-use std::time::Duration;
 use std::collections::*;
 
 ///
@@ -30,6 +30,9 @@ pub struct InMemoryAnimation {
 }
 
 impl InMemoryAnimation {
+    ///
+    /// Creates a new animation
+    /// 
     pub fn new() -> InMemoryAnimation {
         // Create the core (30fps by default)
         let core = AnimationCore {
@@ -65,11 +68,69 @@ impl Animation for InMemoryAnimation {
     }
 
     fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
-        unimplemented!()
+        let core = self.core.clone();
+
+        // Create an edit log that will commit to this object's log
+        let edit_log = InMemoryPendingLog::new(move |edits| core.write().unwrap().commit_edits(edits));
+
+        // Turn it into an editor
+        let edit_log: Box<'a+PendingEditLog<AnimationEdit>> = Box::new(edit_log);
+        Editor::new(edit_log)
     }
 
     fn edit_layer<'a>(&'a self) -> Editor<'a, PendingEditLog<LayerEdit>> {
         unimplemented!()
+    }
+}
+
+impl AnimationCore {
+    ///
+    /// Commits a set of edits to this animation
+    /// 
+    fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&mut self, edits: I) -> Range<usize> {
+        // Process the edits in the core
+        let mut to_commit = vec![];
+        for edit in edits.into_iter() {
+            self.commit_edit(&edit);
+            to_commit.push(edit);
+        }
+
+        // Commit to the main log
+        self.edit_log.commit_edits(to_commit)
+    }
+
+    ///
+    /// Performs an edit to this core
+    /// 
+    fn commit_edit(&mut self, edit: &AnimationEdit) {
+        use AnimationEdit::*;
+
+        match edit {
+            &DefineBrush(_, _)                  => { unimplemented!(); },
+            &Layer(layer_id, ref layer_edit)    => { self.layers.get(&layer_id).map(|&(ref _layer, ref vector_layer)| vector_layer.apply_edit(layer_edit)); },
+            &SetSize(x, y)                      => { self.size = (x, y); },
+            &AddNewLayer(layer_id)              => { self.add_new_layer(layer_id); },
+            &RemoveLayer(layer_id)              => { self.remove_layer(layer_id); }
+        }
+    }
+
+    ///
+    /// Adds a new layer to this core
+    /// 
+    fn add_new_layer(&mut self, layer_id: u64) {
+        self.layers.entry(layer_id)
+            .or_insert_with(|| {
+                let layer = Arc::new(VectorLayer::new(layer_id));
+
+                (layer.clone(), layer)
+            });
+    }
+
+    ///
+    /// Removes a layer from this core
+    /// 
+    fn remove_layer(&mut self, layer_id: u64) {
+        self.layers.remove(&layer_id);
     }
 }
 
