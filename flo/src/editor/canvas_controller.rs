@@ -157,15 +157,15 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         self.core.async(move |core| {
             // Open the animation layers
             let animation   = &*animation;
-            let layers      = open_read::<AnimationLayers>(animation);
+            let layers      = animation.get_layer_ids();
 
             // Generate the frame for each layer and assign an ID
             core.frame_layers.clear();
 
-            if let Some(layers) = layers {
-                let mut next_layer_id = 1;
+            let mut next_layer_id = 1;
 
-                for layer in layers.layers() {
+            for layer_id in layers {
+                if let Some(layer) = animation.get_layer_with_id(layer_id) {
                     // Create the frame for this layer
                     let layer_frame = layer.get_frame_at_time(time);
                     
@@ -207,33 +207,32 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// Retrieves the currently selected layer
     ///
     fn get_selected_layer(&self) -> Option<Arc<Layer>> {
-        // Reading the layers from the animation
-        let layers = open_read::<AnimationLayers>(self.anim_view_model.animation()).unwrap();
-        
+        let animation = self.anim_view_model.animation_ref();
+
         // Find the selected layer
         let selected_layer_id = self.anim_view_model.timeline().selected_layer.get();
 
         // Either use the currently selected layer, or try to selecte done
         let selected_layer = match selected_layer_id {
             Some(selected_layer_id) => {
-                // Use the layer with the matching ID
-                layers.layers()
-                    .filter(|layer| layer.id() == selected_layer_id)
-                    .nth(0)
+                animation.get_layer_with_id(selected_layer_id)
             },
+
             None => {
                 // Use the first layer
-                let first_layer = layers.layers()
+                let first_layer_id = animation.get_layer_ids()
+                    .into_iter()
                     .nth(0);
                 
                 // Mark it as the selected layer
-                self.anim_view_model.timeline().selected_layer.clone().set(first_layer.map(|layer| layer.id()));
+                self.anim_view_model.timeline().selected_layer.clone().set(first_layer_id);
 
-                first_layer
+                // Fetch the layer from the animation
+                first_layer_id.and_then(|first_layer_id| animation.get_layer_with_id(first_layer_id))
             }
         };
 
-        selected_layer.cloned()
+        selected_layer
     }
 
     ///
