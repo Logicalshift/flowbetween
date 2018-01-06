@@ -43,8 +43,6 @@ pub trait PendingEditLog<Edit> {
     /// Cancels any pending edits for this log
     /// 
     fn cancel_pending(&mut self);
-
-    // TODO: undos, redos?
 }
 
 ///

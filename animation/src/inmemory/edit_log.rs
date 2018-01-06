@@ -1,6 +1,5 @@
 use super::super::traits::*;
 
-use std::mem;
 use std::ops::Range;
 
 ///
@@ -24,8 +23,12 @@ impl<Edit> InMemoryEditLog<Edit> {
     ///
     /// Commits some edits to this log
     /// 
-    pub fn commit_edits<EditIterator: IntoIterator<Item=Edit>>(&mut self, new_edits: EditIterator) {
-        self.edits.extend(new_edits.into_iter())
+    pub fn commit_edits<EditIterator: IntoIterator<Item=Edit>>(&mut self, new_edits: EditIterator) -> Range<usize> {
+        let start = self.edits.len();
+        self.edits.extend(new_edits.into_iter());
+        let end = self.edits.len();
+
+        start..end
     }
 }
 
