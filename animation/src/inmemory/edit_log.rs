@@ -67,9 +67,6 @@ impl<Edit: Clone> PendingEditLog<Edit> for InMemoryEditLog<Edit> {
     }
 }
 
-pub use super::map_edit_log::*;
-pub use super::slice_edit_log::*;
-
 #[cfg(test)]
 mod test {
     use super::*;
