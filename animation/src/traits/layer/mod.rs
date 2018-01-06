@@ -13,13 +13,21 @@ use std::time::Duration;
 /// A layer represents a renderable plane in an animation
 ///
 pub trait Layer : 
-    Editable<PendingEditLog<LayerEdit>>+
-    Editable<PaintLayer>+
     Send+Sync {
     ///
     /// The ID associated with this layer
     /// 
     fn id(&self) -> u64;
+
+    ///
+    /// Retrieves the definition of this layer as a paint layer
+    /// 
+    fn as_paint_layer<'a>(&'a self) -> Option<&'a PaintLayer>;
+
+    ///
+    /// Renders the result of the specified set of actions to the given graphics primitives
+    /// 
+    fn draw_pending_actions(&self, gc: &mut GraphicsPrimitives, pending: &MutableEditLog<LayerEdit>);    
 
     ///
     /// Retrieves a frame from this layer with the specified parameters
