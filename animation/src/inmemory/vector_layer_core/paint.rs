@@ -2,6 +2,7 @@ use super::*;
 use super::super::super::brushes::*;
 
 impl PaintLayer for VectorLayerCore {
+    /*
     fn select_brush(&mut self, brush: &BrushDefinition, drawing_style: BrushDrawingStyle) {
         self.current_brush = create_brush_from_definition(brush, drawing_style);
     }
@@ -59,6 +60,7 @@ impl PaintLayer for VectorLayerCore {
     fn has_pending_brush_stroke(&self) -> bool {
         self.active_brush_stroke.is_some()
     }
+    */
 }
 
 #[cfg(test)]

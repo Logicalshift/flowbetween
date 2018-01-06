@@ -11,9 +11,6 @@ use std::collections::*;
 /// Core values associated with an animation
 /// 
 struct AnimationCore {
-    /// A weak reference back to this core (used when we need to pass it around for editing purposes)
-    self_reference: Weak<RwLock<AnimationCore>>,
-
     /// The edit log for this animation
     edit_log: InMemoryEditLog<AnimationEdit>,
 
@@ -39,104 +36,18 @@ impl InMemoryAnimation {
     pub fn new() -> InMemoryAnimation {
         // Create the core (30fps by default)
         let core = AnimationCore {
-            self_reference:     Weak::default(),
             edit_log:           InMemoryEditLog::new(),
             size:               (1980.0, 1080.0),
             frame_duration:     Duration::from_millis(1000/30),
             layers:             vec![]
         };
 
-        // Core needs a self-reference so it can supply itself as the edit log for layers
-        let core            = Arc::new(RwLock::new(core));
-        let self_reference  = Arc::downgrade(&core);
-
-        core.write().unwrap().self_reference = self_reference;
-
         // Create the final animation
-        InMemoryAnimation { core: core }
-    }
-}
-
-impl Animation for InMemoryAnimation { 
-    fn size(&self) -> (f64, f64) {
-        (*self.core).read().unwrap().size
-    }
-}
-
-impl Editable<AnimationLayers+'static> for InMemoryAnimation {
-    fn edit(&self) -> Option<Editor<AnimationLayers+'static>> { 
-        let core: &RwLock<AnimationLayers>  = &*self.core;
-
-        Some(Editor::new(core.write().unwrap()))
-    }
-
-    fn read(&self) -> Option<Reader<AnimationLayers+'static>> { 
-        let core: &RwLock<AnimationLayers>  = &*self.core;
-
-        Some(Reader::new(core.read().unwrap()))
-    }
-}
-
-impl Editable<EditLog<AnimationEdit>> for InMemoryAnimation {
-    fn edit(&self) -> Option<Editor<EditLog<AnimationEdit>+'static>> {
-        None
-    }
-
-    fn read(&self) -> Option<Reader<EditLog<AnimationEdit>+'static>> { 
-        let core: &RwLock<EditLog<AnimationEdit>>  = &*self.core;
-
-        Some(Reader::new(core.read().unwrap()))
-    }
-}
-
-impl Editable<PendingEditLog<AnimationEdit>> for InMemoryAnimation {
-    fn edit(&self) -> Option<Editor<PendingEditLog<AnimationEdit>+'static>> { 
-        let core: &RwLock<PendingEditLog<AnimationEdit>>  = &*self.core;
-
-        Some(Editor::new(core.write().unwrap()))
-    }
-
-    fn read(&self) -> Option<Reader<PendingEditLog<AnimationEdit>+'static>> { 
-        None
+        InMemoryAnimation { core: Arc::new(RwLock::new(core)) }
     }
 }
 
 impl AnimationCore {
-    fn remove_layer(&mut self, layer_id: u64) {
-        // Find the index of the layer with this ID
-        let remove_index = {
-            let mut remove_index = None;
-
-            for index in 0..self.layers.len() {
-                if self.layers[index].1.id() == layer_id {
-                    remove_index = Some(index);
-                }
-            }
-            remove_index
-        };
-
-        // Remove this layer
-        if let Some(remove_index) = remove_index {
-            self.layers.remove(remove_index);
-        }
-    }
-
-    fn add_new_layer(&mut self, layer_id: u64) {
-        // TODO: do nothing if the layer does not exist
-
-        // We need a self-reference to act as the edit log
-        if let Some(edit_log) = self.self_reference.upgrade() {
-            let edit_log: Arc<RwLock<PendingEditLog<AnimationEdit>+Send+Sync>> = edit_log.clone();
-
-            // Generate the layer
-            let new_layer = Arc::new(VectorLayer::new(layer_id, &edit_log));
-            self.layers.push((new_layer.clone(), new_layer));
-        }
-    }
-
-    fn set_size(&mut self, new_size: (f64, f64)) {
-        self.size = new_size;
-    }
 }
 
 impl EditLog<AnimationEdit> for AnimationCore {
@@ -146,64 +57,6 @@ impl EditLog<AnimationEdit> for AnimationCore {
 
     fn read(&self, indices: &mut Iterator<Item=usize>) -> Vec<AnimationEdit> {
         self.edit_log.read(indices)
-    }
-}
-
-impl PendingEditLog<AnimationEdit> for AnimationCore {
-    fn pending(&self) -> Vec<AnimationEdit> {
-        self.edit_log.pending()
-    }
-
-    fn set_pending(&mut self, edits: &[AnimationEdit]) {
-        // TODO: the layers probably want to know about pending stuff that affects them
-        self.edit_log.set_pending(edits)
-    }
-
-    fn cancel_pending(&mut self) {
-        self.edit_log.cancel_pending()
-    }
-
-    fn commit_pending(&mut self) -> Range<usize> {
-        // Get the items that are currently pending
-        let to_process = self.edit_log.pending();
-
-        // Commit the pending items to the log
-        let commit_range = self.edit_log.commit_pending();
-
-        let mut layer_edits: HashMap<u64, Vec<LayerEdit>> = HashMap::new();
-
-        // Perform the animation edits
-        for action in to_process {
-            use AnimationEdit::*;
-            
-            match action {
-                DefineBrush(_, _)       => { unimplemented!(); },
-
-                Layer(layer_id, edit)   => { 
-                    let edits = layer_edits.entry(layer_id).or_insert(vec![]);
-                    edits.push(edit); 
-                },
-
-                SetSize(x, y)           => { self.set_size((x, y)); },
-                AddNewLayer(id)         => { self.add_new_layer(id); },
-                RemoveLayer(id)         => { self.remove_layer(id); }
-            }
-        }
-
-        // Finish the layer edits independently
-        for (layer_id, edits) in layer_edits {
-            if let Some(layer) = self.layers.iter().find(|layer| layer.1.id() == layer_id) {
-                layer.1.apply_new_edits(&edits);
-            }
-        }
-
-        commit_range
-    }
-}
-
-impl AnimationLayers for AnimationCore {
-    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>> {
-        Box::new(self.layers.iter().map(|&(ref layer, _)| layer))
     }
 }
 

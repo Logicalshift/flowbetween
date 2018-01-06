@@ -3,6 +3,8 @@ use super::vector_frame::*;
 use super::vector_layer_core::*;
 use super::super::traits::*;
 
+use canvas::*;
+
 use std::sync::*;
 use std::time::Duration;
 
@@ -42,46 +44,6 @@ impl VectorLayer {
     }
 }
 
-//
-// == EDITING VIEWS ==
-//
-
-impl Editable<PaintLayer+'static> for VectorLayer {
-    fn edit(&self) -> Option<Editor<PaintLayer+'static>> {
-        let core: &RwLock<PaintLayer> = &self.core;
-        Some(Editor::new(core.write().unwrap())) 
-    }
-
-    fn read(&self) -> Option<Reader<PaintLayer+'static>> {
-        let core: &RwLock<PaintLayer> = &self.core;
-        Some(Reader::new(core.read().unwrap())) 
-    }
-}
-
-impl Editable<PendingEditLog<LayerEdit>+'static> for VectorLayer {
-    fn edit(&self) -> Option<Editor<PendingEditLog<LayerEdit>+'static>> {
-        let id = self.core.read().unwrap().id();
-
-        self.edit_log.upgrade()
-            .map(|edit_log| VectorLayerEditLog::new(id, edit_log))
-            .map(|editor| {
-                let editor: Box<PendingEditLog<LayerEdit>+'static> = Box::new(editor);
-                Editor::new(editor)
-            })
-    }
-
-    fn read(&self) -> Option<Reader<PendingEditLog<LayerEdit>+'static>> {
-        let id = self.core.read().unwrap().id();
-
-        self.edit_log.upgrade()
-            .map(|edit_log| VectorLayerEditLog::new(id, edit_log))
-            .map(|editor| {
-                let editor: Box<PendingEditLog<LayerEdit>+'static> = Box::new(editor);
-                Reader::new(editor)
-            })
-    }
-}
-
 impl Layer for VectorLayer {
     fn id(&self) -> u64 {
         self.core.read().unwrap().id()
@@ -102,6 +64,18 @@ impl Layer for VectorLayer {
     }
 
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
+        unimplemented!()
+    }
+
+    fn supported_edit_types(&self) -> Vec<LayerEditType> {
+        unimplemented!()
+    }
+
+    fn as_paint_layer<'a>(&'a self) -> Option<&'a PaintLayer> {
+        unimplemented!()
+    }
+
+    fn draw_pending_actions(&self, gc: &mut GraphicsPrimitives, pending: &PendingEditLog<LayerEdit>) {
         unimplemented!()
     }
 }
