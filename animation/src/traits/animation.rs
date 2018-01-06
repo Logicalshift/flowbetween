@@ -8,22 +8,29 @@ use std::sync::*;
 /// Represents an animation
 ///
 pub trait Animation : 
-    Editable<AnimationLayers>+
-    Editable<EditLog<AnimationEdit>>+
-    Editable<MutableEditLog<AnimationEdit>>+
     Send+Sync {
     ///
     /// Retrieves the frame size of this animation
     /// 
     fn size(&self) -> (f64, f64);
-}
 
-///
-/// Represents the layers associated with an animation
-/// 
-pub trait AnimationLayers {
     ///
-    /// Retrieves the layers for this animation
+    /// Retrieves the layer with the specified ID from this animation
+    /// 
+    fn get_layer_with_id(&self, layer_id: u64) -> Arc<Layer>;
+
     ///
-    fn layers<'a>(&'a self) -> Box<'a+Iterator<Item = &'a Arc<Layer>>>;
+    /// Retrieves the log for this animation
+    /// 
+    fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>>;
+
+    ///
+    /// Retrieves an edit log that can be used to alter this animation
+    /// 
+    fn edit<'a>(&'a self) -> Editor<'a, MutableEditLog<AnimationEdit>>;
+
+    ///
+    /// Retrieves an edit log that can be used to edit a layer in this animation
+    /// 
+    fn edit_layer<'a>(&'a self) -> Editor<'a, MutableEditLog<LayerEdit>>;
 }
