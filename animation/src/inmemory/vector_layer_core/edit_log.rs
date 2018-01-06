@@ -4,6 +4,10 @@ use std::mem;
 use std::sync::*;
 use std::ops::Range;
 
+// TODO: create this directly from the animation trait rather than
+// via the layer (the current implementation requires weak refs and
+// other crazy things)
+
 ///
 /// Supplies the log editor for the vector layer
 /// 
