@@ -15,6 +15,11 @@ pub trait Animation :
     fn size(&self) -> (f64, f64);
 
     ///
+    /// Retrieves the IDs of the layers in this object
+    /// 
+    fn get_layer_ids(&self) -> Vec<u64>;
+
+    ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
     fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<Layer>>;

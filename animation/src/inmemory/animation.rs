@@ -51,6 +51,11 @@ impl Animation for InMemoryAnimation {
         (*self.core).read().unwrap().size
     }
 
+    fn get_layer_ids(&self) -> Vec<u64> {
+        (*self.core).read().unwrap()
+            .layers.keys().cloned().collect()
+    }
+
     fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<Layer>> {
         let core = (*self.core).read().unwrap();
 
