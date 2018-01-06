@@ -3,6 +3,17 @@ use super::frame_edit::*;
 use std::time::Duration;
 
 ///
+/// Represents a type of layer edit
+/// 
+/// Layers may have different types, so this can be used to check what
+/// types of action a particular layer might support.
+/// 
+#[derive(Clone, PartialEq, Debug)]
+pub enum LayerEditType {
+    Paint
+}
+
+///
 /// Represents an edit to a layer
 ///
 #[derive(Clone, PartialEq, Debug)]

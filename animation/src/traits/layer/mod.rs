@@ -4,7 +4,8 @@ pub use self::paint::*;
 
 use super::edit::*;
 use super::frame::*;
-use super::editable::*;
+
+use canvas::*;
 
 use std::sync::*;
 use std::time::Duration;
@@ -20,6 +21,11 @@ pub trait Layer :
     fn id(&self) -> u64;
 
     ///
+    /// The types of edit that are supported by this layer
+    /// 
+    fn supported_edit_types(&self) -> Vec<LayerEditType>;
+
+    ///
     /// Retrieves the definition of this layer as a paint layer
     /// 
     fn as_paint_layer<'a>(&'a self) -> Option<&'a PaintLayer>;
@@ -27,7 +33,7 @@ pub trait Layer :
     ///
     /// Renders the result of the specified set of actions to the given graphics primitives
     /// 
-    fn draw_pending_actions(&self, gc: &mut GraphicsPrimitives, pending: &MutableEditLog<LayerEdit>);    
+    fn draw_pending_actions(&self, gc: &mut GraphicsPrimitives, pending: &PendingEditLog<LayerEdit>);    
 
     ///
     /// Retrieves a frame from this layer with the specified parameters
