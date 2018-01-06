@@ -8,18 +8,24 @@ use std::ops::Range;
 /// 
 pub struct InMemoryEditLog<Edit> {
     /// The edits stored in this log
-    edits: Vec<Edit>,
-
-    /// The non-committed edits
-    pending: Vec<Edit>
+    edits: Vec<Edit>
 }
 
 impl<Edit> InMemoryEditLog<Edit> {
+    ///
+    /// Creates a new in-memory edit log
+    /// 
     pub fn new() -> InMemoryEditLog<Edit> {
         InMemoryEditLog {
             edits:      vec![],
-            pending:    vec![]
         }
+    }
+
+    ///
+    /// Commits some edits to this log
+    /// 
+    pub fn commit_edits<EditIterator: IntoIterator<Item=Edit>>(&mut self, new_edits: EditIterator) {
+        self.edits.extend(new_edits.into_iter())
     }
 }
 
@@ -35,35 +41,6 @@ impl<Edit: Clone> EditLog<Edit> for InMemoryEditLog<Edit> {
             .filter(|index| *index < len)
             .map(|index| self.edits[index].clone())
             .collect()
-    }
-}
-
-impl<Edit: Clone> PendingEditLog<Edit> for InMemoryEditLog<Edit> {
-    fn pending(&self) -> Vec<Edit> {
-        self.pending.clone()
-    }
-
-    fn set_pending(&mut self, edits: &[Edit]) {
-        self.pending = edits.iter()
-            .map(|edit| edit.clone())
-            .collect();
-    }
-
-    fn commit_pending(&mut self) -> Range<usize> {
-        // Get the list of pending edits
-        let mut pending = vec![];
-        mem::swap(&mut pending, &mut self.pending);
-
-        // Move them into the edit list
-        let start_pos = self.edits.len();
-        self.edits.extend(pending);
-
-        // Range is from the old edit length to the now current length
-        start_pos..self.edits.len()
-    }
-
-    fn cancel_pending(&mut self) {
-        self.pending = vec![];
     }
 }
 
