@@ -18,7 +18,8 @@ pub trait EditLog<Edit> {
 }
 
 ///
-/// Trait implemented by things that can receive editing commands
+/// Trait implemented by edit logs representing a set of edits
+/// waiting to be committed to another edit log.
 /// 
 pub trait PendingEditLog<Edit> {
     ///
