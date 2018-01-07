@@ -206,7 +206,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     ///
     /// Retrieves the currently selected layer
     ///
-    fn get_selected_layer(&self) -> Option<Arc<Layer>> {
+    fn get_selected_layer<'a>(&'a self) -> Option<Reader<'a, Layer>> {
         let animation = self.anim_view_model.animation_ref();
 
         // Find the selected layer
