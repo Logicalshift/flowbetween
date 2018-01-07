@@ -65,10 +65,14 @@ impl Layer for InMemoryVectorLayer {
     }
 
     fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {
-        unimplemented!()
+        let core: &Mutex<VectorLayer> = &self.core;
+
+        Some(Reader::new(core.lock().unwrap()))
     }
 
     fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
-        unimplemented!()
+        let core: &Mutex<VectorLayer> = &self.core;
+
+        Some(Editor::new(core.lock().unwrap()))
     }
 }
