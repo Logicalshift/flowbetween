@@ -12,5 +12,5 @@ pub trait VectorLayer : Send+Sync {
     ///
     /// Adds a new vector element to this layer
     /// 
-    fn add_element(&mut self, new_element: VectorElement);   
+    fn add_element(&mut self, new_element: Box<VectorElement>);
 }
