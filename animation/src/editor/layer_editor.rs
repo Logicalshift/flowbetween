@@ -23,7 +23,10 @@ impl LayerEditor {
         use PaintEdit::*;
 
         match paint {
-            SelectBrush(_brush_id)              => unimplemented!(),
+            SelectBrush(definition, draw_style) => {
+                target.edit_vectors().unwrap()
+                    .add_element(when, Box::new(BrushDefinitionElement::new(definition, draw_style)));
+            },
 
             BrushProperties(new_properties)     => {
                 target.edit_vectors().unwrap()

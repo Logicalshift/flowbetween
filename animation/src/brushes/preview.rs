@@ -83,6 +83,14 @@ impl BrushPreview {
     }
 
     ///
+    /// Creates the definition element for the current brush stroke
+    /// 
+    pub fn brush_definition_element(&self) -> BrushDefinitionElement {
+        let (defn, drawing_style) = self.current_brush.to_definition();
+        BrushDefinitionElement::new(defn, drawing_style)
+    }
+
+    ///
     /// Creates the properties element for the current brush stroke
     /// 
     pub fn brush_properties_element(&self) -> BrushPropertiesElement {
@@ -102,13 +110,19 @@ impl BrushPreview {
     pub fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives) {
         let mut vector_properties = VectorProperties::default();
 
-        // TODO: create a brush picking element?
+        // Set the brush to use in the vector properties
         vector_properties.brush = self.current_brush.clone();
 
-        // Apply brush properties if they've changed
+        // Render them to the canvas if they're marked as changed
+        if self.brush_changed {
+            self.brush_definition_element().render(gc, &vector_properties)
+        }
+
+        // Apply brush to the vector properties
         let new_properties = self.brush_properties_element();
         new_properties.update_properties(&mut vector_properties);
 
+        // Render them to the canvas if they're marked as changed
         if self.properties_changed {
             new_properties.render(gc, &vector_properties);
         }
@@ -130,7 +144,9 @@ impl BrushPreview {
 
         // Select the brush
         if self.brush_changed {
-            // TODO: implement me
+            let (defn, drawing_style) = self.current_brush.to_definition();
+
+            actions.push(Paint(when, SelectBrush(defn, drawing_style)));
             self.brush_changed = false
         }
 
