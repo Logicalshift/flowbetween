@@ -41,9 +41,23 @@ impl BrushPreview {
     ///
     /// Sets the properties for the current brush
     /// 
+    /// (Always sets the 'changed' flag)
+    /// 
     pub fn set_brush_properties(&mut self, properties: &BrushProperties) {
         self.brush_properties = *properties;
         self.properties_changed = true;
+    }
+
+    ///
+    /// Updates the properties for the current brush
+    /// 
+    /// (Won't mark them as changed if they're the same as the current properties)
+    /// 
+    pub fn update_brush_properties(&mut self, properties: &BrushProperties) {
+        if properties != &self.brush_properties {
+            self.brush_properties = *properties;
+            self.properties_changed = true;
+        }
     }
 
     ///

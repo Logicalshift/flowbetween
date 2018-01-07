@@ -40,7 +40,7 @@ impl Ink {
                     gc.store();
 
                     // Begin the brush stroke
-                    preview.set_brush_properties(&model.anim_view_model.brush().brush_properties.get());
+                    preview.update_brush_properties(&model.anim_view_model.brush().brush_properties.get());
                     preview.start_brush_stroke(brush_point_from_painting(action));
                 },
 
