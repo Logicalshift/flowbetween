@@ -59,7 +59,7 @@ pub trait EditableAnimation
     /// 
     /// Has no effect if the layer ID is already in use
     /// 
-    fn create_layer(&mut self, new_layer_id: u64);
+    fn add_layer(&mut self, new_layer_id: u64);
 
     ///
     /// Removes the layer with the specified ID

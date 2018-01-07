@@ -2,6 +2,7 @@ use super::edit_log::*;
 use super::pending_log::*;
 use super::vector_layer::*;
 use super::super::traits::*;
+use super::super::editor::*;
 
 use std::sync::*;
 use std::ops::Range;
@@ -18,7 +19,7 @@ struct AnimationCore {
     size: (f64, f64),
 
     /// The layers in this animation, as an object and as a vector layer (we need to return references to the layer object and rust can't downgrade for us)
-    layers: HashMap<u64, (Arc<Layer>, Arc<InMemoryVectorLayer>)>
+    layers: HashMap<u64, (Arc<Layer>, Arc<InMemoryVectorLayer>)>,
 }
 
 ///
@@ -26,7 +27,7 @@ struct AnimationCore {
 ///
 pub struct InMemoryAnimation {
     /// The core contains the actual animation data
-    core: Arc<RwLock<AnimationCore>>
+    core: Arc<RwLock<AnimationCore>>,
 }
 
 impl InMemoryAnimation {
@@ -38,11 +39,13 @@ impl InMemoryAnimation {
         let core = AnimationCore {
             edit_log:           InMemoryEditLog::new(),
             size:               (1980.0, 1080.0),
-            layers:             HashMap::new(),
+            layers:             HashMap::new()
         };
 
         // Create the final animation
-        InMemoryAnimation { core: Arc::new(RwLock::new(core)) }
+        InMemoryAnimation { 
+            core:   Arc::new(RwLock::new(core)),
+        }
     }
 }
 
@@ -105,49 +108,54 @@ impl AnimationCore {
     /// Commits a set of edits to this animation
     /// 
     fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&mut self, edits: I) -> Range<usize> {
+        // The animation editor is what actually applies these edits to this object
+        let editor = AnimationEditor::new();
+
+        // Collect the edits into a vec so we can inspect them multiple times
+        let edits: Vec<AnimationEdit> = edits.into_iter().collect();
+
         // Process the edits in the core
-        let mut to_commit = vec![];
-        for edit in edits.into_iter() {
-            self.commit_edit(&edit);
-            to_commit.push(edit);
-        }
+        editor.perform(self, edits.iter().cloned());
 
         // Commit to the main log
-        self.edit_log.commit_edits(to_commit)
+        self.edit_log.commit_edits(edits)
+    }
+}
+
+impl EditableAnimation for AnimationCore {
+    ///
+    /// Sets the canvas size of this animation
+    ///
+    fn set_size(&mut self, size: (f64, f64)) {
+        self.size = size;
     }
 
     ///
-    /// Performs an edit to this core
+    /// Creates a new layer with a particular ID
     /// 
-    fn commit_edit(&mut self, edit: &AnimationEdit) {
-        use AnimationEdit::*;
-
-        match edit {
-            &DefineBrush(_, _)                  => { unimplemented!(); },
-            &Layer(layer_id, ref layer_edit)    => { self.layers.get(&layer_id).map(|&(ref _layer, ref vector_layer)| vector_layer.apply_edit(layer_edit)); },
-            &SetSize(x, y)                      => { self.size = (x, y); },
-            &AddNewLayer(layer_id)              => { self.add_new_layer(layer_id); },
-            &RemoveLayer(layer_id)              => { self.remove_layer(layer_id); }
-        }
-    }
-
-    ///
-    /// Adds a new layer to this core
+    /// Has no effect if the layer ID is already in use
     /// 
-    fn add_new_layer(&mut self, layer_id: u64) {
-        self.layers.entry(layer_id)
+    fn add_layer(&mut self, new_layer_id: u64) {
+        self.layers.entry(new_layer_id)
             .or_insert_with(|| {
-                let layer = Arc::new(InMemoryVectorLayer::new(layer_id));
+                let layer = Arc::new(InMemoryVectorLayer::new(new_layer_id));
 
                 (layer.clone(), layer)
             });
     }
 
     ///
-    /// Removes a layer from this core
+    /// Removes the layer with the specified ID
     /// 
-    fn remove_layer(&mut self, layer_id: u64) {
-        self.layers.remove(&layer_id);
+    fn remove_layer(&mut self, old_layer_id: u64) {
+        self.layers.remove(&old_layer_id);
+    }
+
+    ///
+    /// Opens a particular layer for editing
+    /// 
+    fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Editor<'a, Layer> {
+        unimplemented!()
     }
 }
 
