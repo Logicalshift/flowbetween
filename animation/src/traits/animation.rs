@@ -22,7 +22,7 @@ pub trait Animation :
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<Layer>>;
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>>;
 
     ///
     /// Retrieves the log for this animation

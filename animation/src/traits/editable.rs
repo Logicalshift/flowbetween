@@ -1,5 +1,6 @@
-use std::ops::{Deref, DerefMut};
 use super::edit::*;
+
+use std::ops::{Deref, DerefMut};
 
 ///
 /// Represents an item that can be edited

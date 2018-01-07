@@ -5,8 +5,9 @@ use super::super::traits::*;
 use super::super::editor::*;
 
 use std::sync::*;
-use std::ops::Range;
 use std::collections::*;
+use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut, Range};
 
 ///
 /// Core values associated with an animation
@@ -19,7 +20,7 @@ struct AnimationCore {
     size: (f64, f64),
 
     /// The layers in this animation, as an object and as a vector layer (we need to return references to the layer object and rust can't downgrade for us)
-    layers: HashMap<u64, (Arc<Layer>, Arc<InMemoryVectorLayer>)>,
+    layers: HashMap<u64, Box<Layer>>,
 }
 
 ///
@@ -49,6 +50,28 @@ impl InMemoryAnimation {
     }
 }
 
+///
+/// Creates a reference to a layer within the animation core
+/// 
+/// Rust won't infer that the target lifetime is 'a without the phantomdata
+/// (or let us specify it in the impl)
+/// 
+struct CoreLayerRef<'a, CoreRef: 'a>(CoreRef, u64, PhantomData<&'a CoreRef>);
+
+impl<'a, CoreRef: Deref<Target=AnimationCore>> Deref for CoreLayerRef<'a, CoreRef> {
+    type Target = Layer+'a;
+
+    fn deref(&self) -> &Self::Target {
+        &**self.0.layers.get(&self.1).unwrap()
+    }
+}
+
+impl<'a, CoreRef: Deref<Target=AnimationCore>+DerefMut> DerefMut for CoreLayerRef<'a, CoreRef> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut **self.0.layers.get_mut(&self.1).unwrap()
+    }
+}
+
 impl Animation for InMemoryAnimation {
     fn size(&self) -> (f64, f64) {
         (*self.core).read().unwrap().size
@@ -59,14 +82,17 @@ impl Animation for InMemoryAnimation {
             .layers.keys().cloned().collect()
     }
 
-    fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<Layer>> {
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
         let core = (*self.core).read().unwrap();
 
-        let layer = core.layers
-            .get(&layer_id)
-            .map(|&(ref layer, ref _vectorlayer)| Arc::clone(layer));
-        
-        layer
+        if core.layers.contains_key(&layer_id) {
+            let layer_ref   = CoreLayerRef(core, layer_id, PhantomData);
+            let reader      = Reader::new(layer_ref);
+
+            Some(reader)
+        } else {
+            None
+        }
     }
 
     fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>> {
@@ -138,9 +164,9 @@ impl MutableAnimation for AnimationCore {
     fn add_layer(&mut self, new_layer_id: u64) {
         self.layers.entry(new_layer_id)
             .or_insert_with(|| {
-                let layer = Arc::new(InMemoryVectorLayer::new(new_layer_id));
+                let layer = InMemoryVectorLayer::new(new_layer_id);
 
-                (layer.clone(), layer)
+                Box::new(layer)
             });
     }
 
