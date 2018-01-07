@@ -4,6 +4,7 @@ use ui::*;
 use binding::*;
 use animation::*;
 
+use typemap::*;
 use std::sync::*;
 
 ///
@@ -101,6 +102,9 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
         // If the tool has not been activated, mark it as active
         if activation_state != ToolActivationState::Activated {
             let effective_tool  = self.effective_tool.get();
+
+            // Clear the tool state
+            *model.tool_state.lock().unwrap() = SendMap::custom();
 
             // Mark the effective tool as active
             let tool_activation = effective_tool.map(|tool| tool.activate(model));

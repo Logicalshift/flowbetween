@@ -3,6 +3,8 @@ use super::super::viewmodel::*;
 use animation::*;
 use canvas::*;
 
+use typemap::*;
+use std::sync::*;
 use std::time::Duration;
 
 ///
@@ -22,5 +24,8 @@ pub struct ToolModel<'a, Anim: 'a+Animation> {
     pub selected_layer_id: u64,
 
     /// The layer ID of the currently selected layer in the canvas
-    pub canvas_layer_id: u32
+    pub canvas_layer_id: u32,
+
+    /// A type map that tools can use to store state (tools should initialise their state in the activate call)
+    pub tool_state: Arc<Mutex<SendMap>>
 }

@@ -20,6 +20,8 @@ impl<Anim: 'static+Animation> Tool<Anim> for Eraser {
     fn image_name(&self) -> String { "eraser".to_string() }
 
     fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> { 
+        BindRef::from(bind(ToolActivationState::NeedsReactivation))
+
         /*
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 

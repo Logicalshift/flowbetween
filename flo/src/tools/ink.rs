@@ -17,7 +17,8 @@ impl Ink {
     ///
     /// Performs a single painting action on the canvas
     /// 
-    pub fn paint_action<'a, Anim: 'static+Animation>(model: &ToolModel<'a, Anim>, layer: &mut PaintLayer, action: &Painting) {
+    pub fn paint_action<'a, Anim: 'static+Animation>(model: &ToolModel<'a, Anim>, layer: &mut u64, action: &Painting) {
+        /*
         // Get when this paint stroke is being made
         let current_time = model.anim_view_model.timeline().current_time.get();
 
@@ -58,6 +59,7 @@ impl Ink {
                 }
             }
         });
+        */
     }
 }
 
@@ -69,6 +71,9 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
     fn menu_controller_name(&self) -> String { INKMENUCONTROLLER.to_string() }
 
     fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> { 
+        BindRef::from(bind(ToolActivationState::NeedsReactivation))
+        
+        /*
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
         if let Some(mut selected_layer) = selected_layer {
@@ -86,9 +91,11 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
                 ToolActivationState::NeedsReactivation
             }
         }))
+        */
     }
 
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, _device: &PaintDevice, actions: &Vec<Painting>) {
+        /*
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
         // Perform the paint actions on the selected layer if we can
@@ -111,5 +118,6 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
                 });
             }
         }
+        */
     }
 }

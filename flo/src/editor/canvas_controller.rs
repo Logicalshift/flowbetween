@@ -7,6 +7,7 @@ use desync::*;
 use binding::*;
 use animation::*;
 
+use typemap::*;
 use std::sync::*;
 use std::time::Duration;
 use std::collections::HashMap;
@@ -40,6 +41,7 @@ pub struct CanvasController<Anim: Animation> {
     ui:                 Binding<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_view_model:    AnimationViewModel<Anim>,
+    tool_state:         Arc<Mutex<SendMap>>,
 
     core:               Desync<CanvasCore>
 }
@@ -54,6 +56,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             ui:                 bind(Control::empty()),
             canvases:           Arc::new(canvases),
             anim_view_model:    view_model.clone(),
+            tool_state:         Arc::new(Mutex::new(SendMap::custom())),
 
             core:               Desync::new(CanvasCore {
                 frame_layers: HashMap::new()
@@ -204,38 +207,6 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     }
 
     ///
-    /// Retrieves the currently selected layer
-    ///
-    fn get_selected_layer<'a>(&'a self) -> Option<Reader<'a, Layer>> {
-        let animation = self.anim_view_model.animation_ref();
-
-        // Find the selected layer
-        let selected_layer_id = self.anim_view_model.timeline().selected_layer.get();
-
-        // Either use the currently selected layer, or try to selecte done
-        let selected_layer = match selected_layer_id {
-            Some(selected_layer_id) => {
-                animation.get_layer_with_id(selected_layer_id)
-            },
-
-            None => {
-                // Use the first layer
-                let first_layer_id = animation.get_layer_ids()
-                    .into_iter()
-                    .nth(0);
-                
-                // Mark it as the selected layer
-                self.anim_view_model.timeline().selected_layer.clone().set(first_layer_id);
-
-                // Fetch the layer from the animation
-                first_layer_id.and_then(|first_layer_id| animation.get_layer_with_id(first_layer_id))
-            }
-        };
-
-        selected_layer
-    }
-
-    ///
     /// Performs a series of painting actions on the canvas
     /// 
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
@@ -260,7 +231,8 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
                 canvas:             &canvas,
                 anim_view_model:    &self.anim_view_model,
                 selected_layer_id:  selected_layer_id,
-                canvas_layer_id:    canvas_layer_id
+                canvas_layer_id:    canvas_layer_id,
+                tool_state:         self.tool_state.clone()
             };
 
             // Pass the action on to the current tool
