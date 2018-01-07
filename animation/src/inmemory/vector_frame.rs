@@ -39,8 +39,10 @@ impl Frame for VectorFrame {
         let mut properties = VectorProperties::default();
 
         self.keyframe.elements().iter().for_each(move |&(appearance_time, ref element)| {
+            // Properties always update regardless of the time they're at (so the display is consistent)
+            element.update_properties(&mut properties);
+
             if appearance_time <= offset {
-                element.update_properties(&mut properties);
                 element.render(gc, &properties);
             }
         })
