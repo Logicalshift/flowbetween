@@ -1,4 +1,4 @@
-use super::layer::*;
+use super::layer_editor::*;
 use super::super::traits::*;
 
 ///
