@@ -1,3 +1,4 @@
+use super::super::style::*;
 use super::super::color::*;
 
 use ui::*;
@@ -72,11 +73,15 @@ impl InkMenuController {
         // Generate the UI
         let ui = BindRef::from(bind(Control::container()
                 .with(Bounds::fill_all())
+                .with(ControlAttribute::Padding((0, 3), (0, 3)))
                 .with(vec![
+                    Self::divider(),
+
                     Control::label()
-                        .with("Ink:")
+                        .with("Brush:")
                         .with(FontWeight::Light)
                         .with(TextAlign::Right)
+                        .with(Font::Size(14.0))
                         .with(Bounds::next_horiz(48.0)),
                     Control::empty()
                         .with(Bounds::next_horiz(8.0)),
@@ -84,9 +89,13 @@ impl InkMenuController {
                         .with(brush_preview)
                         .with(Bounds::next_horiz(64.0)),
 
-                    Control::empty()
-                        .with(Bounds::next_horiz(12.0)),
+                    Self::divider(),
 
+                    Control::label()
+                        .with("Color:")
+                        .with(TextAlign::Right)
+                        .with(Bounds::next_horiz(40.0)),
+                    Control::empty().with(Bounds::next_horiz(4.0)),
                     Control::canvas()
                         .with(colour_preview)
                         .with(Bounds::next_horiz(32.0))
@@ -94,35 +103,45 @@ impl InkMenuController {
                         .with((ActionTrigger::Click, "ShowColorPopup"))
                         .with_controller("ColorPopup"),
 
-                    Control::empty()
-                        .with(Bounds::next_horiz(12.0)),
+                    Self::divider(),
 
-                    Control::canvas()
-                        .with(size_preview)
-                        .with(Bounds::next_horiz(32.0)),
-                    Control::empty()
-                        .with(Bounds::next_horiz(4.0)),
+                    Control::label()
+                        .with("Size:")
+                        .with(TextAlign::Right)
+                        .with(Bounds::next_horiz(36.0)),
+                    Control::empty().with(Bounds::next_horiz(6.0)),
                     Control::slider()
                         .with(State::Range((0.0.to_property(), 50.0.to_property())))
                         .with(State::Value(Property::Bind("Size".to_string())))
                         .with(Bounds::next_horiz(96.0))
                         .with((ActionTrigger::EditValue, "ChangeSize".to_string()))
                         .with((ActionTrigger::SetValue, "ChangeSize".to_string())),
-
-                    Control::empty()
-                        .with(Bounds::next_horiz(12.0)),
-
+                    Control::empty().with(Bounds::next_horiz(4.0)),
                     Control::canvas()
-                        .with(opacity_preview)
+                        .with(size_preview)
                         .with(Bounds::next_horiz(32.0)),
-                    Control::empty()
-                        .with(Bounds::next_horiz(4.0)),
+
+                    Self::divider(),
+
+                    Control::label()
+                        .with("Opacity:")
+                        .with(TextAlign::Right)
+                        .with(Bounds::next_horiz(56.0)),
+                    Control::empty().with(Bounds::next_horiz(6.0)),
                     Control::slider()
                         .with(State::Range((0.0.to_property(), 1.0.to_property())))
                         .with(State::Value(Property::Bind("Opacity".to_string())))
                         .with(Bounds::next_horiz(96.0))
                         .with((ActionTrigger::EditValue, "ChangeOpacity".to_string()))
-                        .with((ActionTrigger::SetValue, "ChangeOpacity".to_string()))
+                        .with((ActionTrigger::SetValue, "ChangeOpacity".to_string())),
+                    Control::empty().with(Bounds::next_horiz(4.0)),
+                    Control::canvas()
+                        .with(opacity_preview)
+                        .with(Bounds::next_horiz(32.0)),
+
+                    Control::empty()
+                        .with(Bounds::next_horiz(16.0)),
+                    Self::divider()
                 ])));
 
         // Finalize the control
@@ -139,12 +158,26 @@ impl InkMenuController {
         }
     }
 
+    pub fn divider() -> Control {
+        Control::container()
+            .with(vec![
+                Control::empty()
+                    .with(Bounds::next_horiz(5.0)),
+                Control::empty()
+                    .with(Bounds::next_horiz(2.0))
+                    .with(Appearance::Background(MENU_BACKGROUND_ALT)),
+                Control::empty()
+                    .with(Bounds::next_horiz(5.0)),
+            ])
+            .with(Bounds::next_horiz(12.0))
+    }
+
     ///
     /// Creates the size preview canvas
     /// 
     pub fn size_preview(size: &Binding<f32>) -> BindingCanvas {
         let size            = size.clone();
-        let control_height  = 32.0;
+        let control_height  = 32.0 - 6.0;
 
         BindingCanvas::with_drawing(move |gc| {
             let size = size.get();
@@ -163,7 +196,7 @@ impl InkMenuController {
     /// 
     pub fn opacity_preview(opacity: &Binding<f32>) -> BindingCanvas {
         let opacity         = opacity.clone();
-        let control_height  = 32.0;
+        let control_height  = 32.0 - 6.0;
 
         BindingCanvas::with_drawing(move |gc| {
             let size = control_height - 8.0;
@@ -185,7 +218,7 @@ impl InkMenuController {
     /// 
     pub fn colour_preview(colour: &Binding<Color>) -> BindingCanvas {
         let colour          = colour.clone();
-        let control_height  = 32.0;
+        let control_height  = 32.0 - 6.0;
 
         BindingCanvas::with_drawing(move |gc| {
             let size = control_height - 8.0;
@@ -210,7 +243,7 @@ impl InkMenuController {
         let opacity = opacity.clone();
         let color   = color.clone();
 
-        let control_height  = 32.0;
+        let control_height  = 32.0 - 6.0;
         let control_width   = 64.0;
         let preview_width   = control_width - 8.0;
         let preview_height  = control_height - 12.0;

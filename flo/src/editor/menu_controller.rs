@@ -73,7 +73,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                     
                     Control::empty()
                         .with(Bounds::stretch_horiz(1.0))
-                        .with(Font::Size(13.0))
+                        .with(Font::Size(12.0))
                         .with_controller(&tool_controller),
                 ])
                 .with(Appearance::Background(MENU_BACKGROUND))
