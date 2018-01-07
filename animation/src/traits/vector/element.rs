@@ -8,7 +8,7 @@ use std::any::*;
 ///
 /// Represents an element in a vector layer
 ///
-pub trait VectorElement : Any {
+pub trait VectorElement : Send+Any {
     ///
     /// When this element should be drawn on the layer (relative to the start of the key frame)
     /// 

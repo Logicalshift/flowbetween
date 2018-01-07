@@ -11,7 +11,7 @@ use std::time::Duration;
 /// 
 pub struct InMemoryVectorLayer {
     /// The core data for this layer
-    core: RwLock<VectorLayerCore>
+    core: Mutex<VectorLayerCore>
 }
 
 impl InMemoryVectorLayer {
@@ -22,7 +22,7 @@ impl InMemoryVectorLayer {
         let core = VectorLayerCore::new(id);
 
         InMemoryVectorLayer { 
-            core:       RwLock::new(core)
+            core:       Mutex::new(core)
         }
     }
 
@@ -30,7 +30,7 @@ impl InMemoryVectorLayer {
     /// Applies new edits for this layer
     /// 
     pub fn apply_edit(&self, edit: &LayerEdit) {
-        let mut core = self.core.write().unwrap();
+        let mut core = self.core.lock().unwrap();
 
         core.apply_edit(edit);
     }
@@ -38,11 +38,11 @@ impl InMemoryVectorLayer {
 
 impl Layer for InMemoryVectorLayer {
     fn id(&self) -> u64 {
-        self.core.read().unwrap().id()
+        self.core.lock().unwrap().id()
     }
 
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
-        let core = self.core.read().unwrap();
+        let core = self.core.lock().unwrap();
 
         // Look up the keyframe in the core
         let keyframe = core.find_nearest_keyframe(time_index);
@@ -56,7 +56,7 @@ impl Layer for InMemoryVectorLayer {
     }
 
     fn add_key_frame(&mut self, when: Duration) {
-        self.core.write().unwrap().add_key_frame(when);
+        self.core.lock().unwrap().add_key_frame(when);
     }
 
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {

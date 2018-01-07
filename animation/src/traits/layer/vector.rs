@@ -3,7 +3,7 @@ use super::super::vector::*;
 ///
 /// Represents a layer that contains vector elements
 /// 
-pub trait VectorLayer : Send+Sync {
+pub trait VectorLayer : Send {
     ///
     /// Retrieves the elements from this layer
     /// 

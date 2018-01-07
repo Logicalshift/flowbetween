@@ -1,10 +1,12 @@
 mod edit_log;
+mod vectors;
 
 use super::super::brushes::*;
 use super::super::traits::*;
 use super::vector_keyframe::*;
 
 use std::sync::*;
+use std::collections::*;
 use std::time::Duration;
 
 pub use self::edit_log::*;
@@ -19,14 +21,8 @@ pub struct VectorLayerCore {
     /// The key frames for this vector, in order
     keyframes: Vec<Arc<VectorKeyFrame>>,
 
-    /// The currently selected brush
-    current_brush: Arc<Brush>,
-
-    /// The properties that are currently set
-    brush_properties: BrushProperties,
-
-    /// The brush stroke that is currently being drawn
-    active_brush_stroke: Option<BrushElement>
+    /// The elements in this tree
+    elements: BTreeMap<Duration, Vec<Box<VectorElement>>>
 }
 
 impl VectorLayerCore {
@@ -37,9 +33,7 @@ impl VectorLayerCore {
         VectorLayerCore {
             id:                     id,
             keyframes:              vec![],
-            current_brush:          Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
-            brush_properties:       BrushProperties::new(),
-            active_brush_stroke:    None
+            elements:               BTreeMap::new()
         }
     }
 
