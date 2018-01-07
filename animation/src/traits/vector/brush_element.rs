@@ -1,4 +1,3 @@
-use super::path::*;
 use super::element::*;
 use super::properties::*;
 
@@ -58,15 +57,6 @@ impl BrushElement {
 impl VectorElement for BrushElement {
     fn appearance_time(&self) -> Duration {
         self.appearance_time
-    }
-
-    fn path(&self) -> Path {
-        let move_element    = vec![PathElement::Move(PathPoint::from(self.points[0]))];
-        let line_elements   = self.points.iter().skip(1).map(|point| PathElement::Line(PathPoint::from(point)));
-
-        Path {
-            elements: move_element.into_iter().chain(line_elements).collect()
-        }
     }
 
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {

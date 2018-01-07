@@ -1,4 +1,3 @@
-use super::path::*;
 use super::properties::*;
 
 use canvas::*;
@@ -14,11 +13,6 @@ pub trait VectorElement : Send+Any {
     /// When this element should be drawn on the layer (relative to the start of the key frame)
     /// 
     fn appearance_time(&self) -> Duration;
-
-    ///
-    /// Retrieves the path associated with this element
-    /// 
-    fn path(&self) -> Path;
 
     ///
     /// Renders this vector element

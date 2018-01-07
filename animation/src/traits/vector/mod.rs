@@ -1,15 +1,18 @@
 use canvas::*;
-use std::time::Duration;
 
 mod properties;
 mod path;
 mod element;
 mod brush_element;
+mod brush_properties_element;
+
+use std::time::Duration;
 
 pub use self::properties::*;
 pub use self::path::*;
 pub use self::element::*;
 pub use self::brush_element::*;
+pub use self::brush_properties_element::*;
 
 ///
 /// Possible types of vector element
@@ -31,17 +34,17 @@ impl VectorElement for Vector {
         }
     }
 
-    fn path(&self) -> Path {
-        match self {
-            &Vector::Empty              => Path::new(),
-            &Vector::Brush(ref elem)    => elem.path()
-        }
-    }
-
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
         match self {
             &Vector::Empty              => (),
             &Vector::Brush(ref elem)    => elem.render(gc, properties)
+        }
+    }
+
+    fn update_properties(&self, properties: &mut VectorProperties) { 
+        match self {
+            &Vector::Empty              => (),
+            &Vector::Brush(ref elem)    => elem.update_properties(properties)
         }
     }
 }
