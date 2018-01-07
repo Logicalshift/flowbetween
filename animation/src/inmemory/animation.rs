@@ -245,14 +245,16 @@ mod test {
             AnimationEdit::AddNewLayer(keep3),
         ]);
 
-        let ids = animation.get_layer_ids();
+        let mut ids = animation.get_layer_ids();
+        ids.sort();
         assert!(ids == vec![keep1, keep2, to_remove, keep3]);
 
         animation.perform_edits(vec![
             AnimationEdit::RemoveLayer(to_remove)
         ]);
 
-        let ids = animation.get_layer_ids();
+        let mut ids = animation.get_layer_ids();
+        ids.sort();
         assert!(ids == vec![keep1, keep2, keep3]);
     }
 
