@@ -67,11 +67,11 @@ impl Layer for InMemoryVectorLayer {
         unimplemented!()
     }
 
-    fn as_vector_layer<'a>(&'a self) -> Option<&'a VectorLayer> {
+    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {
         unimplemented!()
     }
 
-    fn edit_vectors<'a>(&'a mut self) -> Option<&'a mut VectorLayer> {
+    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
         unimplemented!()
     }
 }

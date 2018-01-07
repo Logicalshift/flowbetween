@@ -25,11 +25,6 @@ pub trait Layer :
     fn supported_edit_types(&self) -> Vec<LayerEditType>;
 
     ///
-    /// Retrieves the definition of this layer as a vector layer
-    /// 
-    fn as_vector_layer<'a>(&'a self) -> Option<&'a VectorLayer>;
-
-    ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame>;
@@ -45,7 +40,12 @@ pub trait Layer :
     fn add_key_frame(&mut self, when: Duration);
 
     ///
+    /// Retrieves the definition of this layer as a vector layer
+    /// 
+    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>>;
+
+    ///
     /// Retrieves an editor for the vector layer
     /// 
-    fn edit_vectors<'a>(&'a mut self) -> Option<&'a mut VectorLayer>;
+    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>>;
 }
