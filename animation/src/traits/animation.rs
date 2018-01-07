@@ -48,7 +48,7 @@ pub trait Animation :
 /// with an animation.
 /// 
 pub trait MutableAnimation
-    : Send+Sync {
+    : Send {
     ///
     /// Sets the canvas size of this animation
     ///

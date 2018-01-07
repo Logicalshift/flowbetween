@@ -28,7 +28,7 @@ struct AnimationCore {
 ///
 pub struct InMemoryAnimation {
     /// The core contains the actual animation data
-    core: Arc<RwLock<AnimationCore>>,
+    core: Arc<Mutex<AnimationCore>>,
 }
 
 impl InMemoryAnimation {
@@ -45,7 +45,7 @@ impl InMemoryAnimation {
 
         // Create the final animation
         InMemoryAnimation { 
-            core:   Arc::new(RwLock::new(core)),
+            core:   Arc::new(Mutex::new(core)),
         }
     }
 }
@@ -74,16 +74,16 @@ impl<'a, CoreRef: Deref<Target=AnimationCore>+DerefMut> DerefMut for CoreLayerRe
 
 impl Animation for InMemoryAnimation {
     fn size(&self) -> (f64, f64) {
-        (*self.core).read().unwrap().size
+        (*self.core).lock().unwrap().size
     }
 
     fn get_layer_ids(&self) -> Vec<u64> {
-        (*self.core).read().unwrap()
+        (*self.core).lock().unwrap()
             .layers.keys().cloned().collect()
     }
 
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
-        let core = (*self.core).read().unwrap();
+        let core = (*self.core).lock().unwrap();
 
         if core.layers.contains_key(&layer_id) {
             let layer_ref   = CoreLayerRef(core, layer_id, PhantomData);
@@ -96,16 +96,16 @@ impl Animation for InMemoryAnimation {
     }
 
     fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>> {
-        let core: &RwLock<EditLog<AnimationEdit>> = &*self.core;
+        let core: &Mutex<EditLog<AnimationEdit>> = &*self.core;
 
-        Reader::new(core.read().unwrap())
+        Reader::new(core.lock().unwrap())
     }
 
     fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
         let core = self.core.clone();
 
         // Create an edit log that will commit to this object's log
-        let edit_log = InMemoryPendingLog::new(move |edits| core.write().unwrap().commit_edits(edits));
+        let edit_log = InMemoryPendingLog::new(move |edits| core.lock().unwrap().commit_edits(edits));
 
         // Turn it into an editor
         let edit_log: Box<'a+PendingEditLog<AnimationEdit>> = Box::new(edit_log);
@@ -120,7 +120,7 @@ impl Animation for InMemoryAnimation {
             let edits = edits.into_iter()
                 .map(|edit| AnimationEdit::Layer(layer_id, edit));
 
-            core.write().unwrap().commit_edits(edits)
+            core.lock().unwrap().commit_edits(edits)
         });
 
         // Turn it into an editor
