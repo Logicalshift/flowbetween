@@ -1,15 +1,11 @@
-mod edit_log;
 mod vectors;
 
-use super::super::brushes::*;
 use super::super::traits::*;
 use super::vector_keyframe::*;
 
 use std::sync::*;
 use std::collections::*;
 use std::time::Duration;
-
-pub use self::edit_log::*;
 
 ///
 /// The core of the vector layer

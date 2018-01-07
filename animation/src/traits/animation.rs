@@ -2,8 +2,6 @@ use super::edit::*;
 use super::layer::*;
 use super::editable::*;
 
-use std::sync::*;
-
 ///
 /// Represents an animation
 ///
@@ -47,8 +45,8 @@ pub trait Animation :
 /// `Animation`. This used to edit the actual data structure associated
 /// with an animation.
 /// 
-pub trait MutableAnimation
-    : Send {
+pub trait MutableAnimation :
+    Send {
     ///
     /// Sets the canvas size of this animation
     ///

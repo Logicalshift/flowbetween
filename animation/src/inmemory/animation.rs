@@ -48,6 +48,15 @@ impl InMemoryAnimation {
             core:   Arc::new(Mutex::new(core)),
         }
     }
+
+    ///
+    /// Convenience method that performs some edits on this animation
+    /// 
+    pub fn perform_edits(&self, edits: Vec<AnimationEdit>) {
+        let mut editor = self.edit();
+        editor.set_pending(&edits);
+        editor.commit_pending();
+    }
 }
 
 ///
@@ -205,25 +214,19 @@ impl EditLog<AnimationEdit> for AnimationCore {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::mem;
+    use std::time::Duration;
 
     #[test]
     fn can_add_layer() {
         let animation = InMemoryAnimation::new();
 
-        {
-            let layers = open_read::<AnimationLayers>(&animation).unwrap();
-            assert!(layers.layers().count() == 0);
-        }
+        assert!(animation.get_layer_ids().len() == 0);
 
         animation.perform_edits(vec![
             AnimationEdit::AddNewLayer(0)
         ]);
 
-        {
-            let layers = open_read::<AnimationLayers>(&animation).unwrap();
-            assert!(layers.layers().count() == 1);
-        }
+        assert!(animation.get_layer_ids().len() == 1);
     }
 
     #[test]
@@ -242,21 +245,15 @@ mod test {
             AnimationEdit::AddNewLayer(keep3),
         ]);
 
-        {
-            let layers = open_read::<AnimationLayers>(&animation).unwrap();
-            let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
-            assert!(ids == vec![keep1, keep2, to_remove, keep3]);
-        }
+        let ids = animation.get_layer_ids();
+        assert!(ids == vec![keep1, keep2, to_remove, keep3]);
 
         animation.perform_edits(vec![
             AnimationEdit::RemoveLayer(to_remove)
         ]);
 
-        {
-            let layers = open_read::<AnimationLayers>(&animation).unwrap();
-            let ids: Vec<u64> = layers.layers().map(|layer| layer.id()).collect();
-            assert!(ids == vec![keep1, keep2, keep3]);
-        }
+        let ids = animation.get_layer_ids();
+        assert!(ids == vec![keep1, keep2, keep3]);
     }
 
     #[test]
@@ -267,29 +264,24 @@ mod test {
             AnimationEdit::AddNewLayer(0),
         ]);
 
-        {
-            let layers = open_edit::<AnimationLayers>(&animation).unwrap();
-            assert!(layers.layers().count() == 1);
-        }
+        assert!(animation.get_layer_ids().len() == 1);
 
         // Add a keyframe
         animation.perform_edits(vec![
             AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
         ]);
 
+        // Draw a brush stroke
         {
-            let layers = open_edit::<AnimationLayers>(&animation).unwrap();
-            let layer = layers.layers().nth(0).unwrap();
+            let mut layer_edit = animation.edit_layer(0);
 
-            // Draw a brush stroke
-            let mut brush: Editor<PaintLayer> = layer.edit().unwrap();
-
-            brush.start_brush_stroke(Duration::from_millis(442), BrushPoint::from((0.0, 0.0)));
-            brush.continue_brush_stroke(BrushPoint::from((10.0, 10.0)));
-            brush.continue_brush_stroke(BrushPoint::from((20.0, 5.0)));
-            brush.finish_brush_stroke();
-
-            mem::drop(brush);
+            layer_edit.set_pending(&vec![
+                LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    BrushPoint::from((10.0, 10.0)),
+                    BrushPoint::from((20.0, 5.0))
+                ])))
+            ]);
+            layer_edit.commit_pending();
         }
     }
 }

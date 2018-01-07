@@ -50,6 +50,7 @@ impl<Edit: Clone> EditLog<Edit> for InMemoryEditLog<Edit> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use super::super::pending_log::*;
 
     #[test]
     fn initial_edit_length_is_zero() {
@@ -68,55 +69,55 @@ mod test {
     #[test]
     fn can_commit_pending_and_read_them_back() {
         let mut log = InMemoryEditLog::<i32>::new();
-
-        log.set_pending(&[1, 2, 3, 4]);
         assert!(log.length() == 0);
 
-        let commit_range = log.commit_pending();
-        assert!(commit_range == (0..4));
+        {
+            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
+
+            pending.set_pending(&[1, 2, 3, 4]);
+
+            let commit_range = pending.commit_pending();
+            assert!(commit_range == (0..4));
+        }
         assert!(log.length() == 4);
 
-        log.set_pending(&[7,8,9,10]);
-        let commit_range = log.commit_pending();
-        assert!(commit_range == (4..8));
+        {
+            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
+
+            pending.set_pending(&[7,8,9,10]);
+
+            let commit_range = pending.commit_pending();
+            assert!(commit_range == (4..8));
+        }
         assert!(log.length() == 8);
 
         assert!(log.read_iter(2..6) == vec![3, 4, 7, 8]);
     }
 
     #[test]
-    fn can_cancel_pending() {
-        let mut log = InMemoryEditLog::<i32>::new();
-
-        log.set_pending(&[1, 2, 3, 4]);
-        assert!(log.length() == 0);
-
-        log.commit_pending();
-        assert!(log.length() == 4);
-
-        log.set_pending(&[7,8,9,10]);
-        log.cancel_pending();
-        assert!(log.length() == 4);
-
-        assert!(log.read_iter(2..4) == vec![3, 4]);
-    }
-
-    #[test]
     fn committing_after_cancel_commits_nothing() {
         let mut log = InMemoryEditLog::<i32>::new();
 
-        log.set_pending(&[1, 2, 3, 4]);
-        assert!(log.length() == 0);
 
-        log.commit_pending();
+        {
+            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
+
+            pending.set_pending(&[1, 2, 3, 4]);
+            pending.commit_pending();
+        }
         assert!(log.length() == 4);
 
-        log.set_pending(&[7,8,9,10]);
-        log.cancel_pending();
-        let commit_range = log.commit_pending();
-        assert!(log.length() == 4);
-        assert!(commit_range == (4..4));
+        {
+            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
 
+            pending.set_pending(&[7,8,9,10]);
+            pending.cancel_pending();
+
+            let commit_range = pending.commit_pending();
+            assert!(commit_range == (4..4));
+        }
+
+        assert!(log.length() == 4);
         assert!(log.read_iter(2..4) == vec![3, 4]);
     }
 
@@ -124,8 +125,7 @@ mod test {
     fn can_read_outside_of_bounds() {
         let mut log = InMemoryEditLog::<i32>::new();
 
-        log.set_pending(&[1, 2, 3, 4]);
-        log.commit_pending();
+        log.commit_edits(vec![1, 2, 3, 4]);
 
         assert!(log.read_iter(2..6) == vec![3, 4]);
         assert!(log.read_iter(100..300).len() == 0);
