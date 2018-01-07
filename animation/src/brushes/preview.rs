@@ -19,6 +19,16 @@ pub struct BrushPreview {
 }
 
 impl BrushPreview {
+    pub fn new() -> BrushPreview {
+        BrushPreview {
+            current_brush:      create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw),
+            brush_properties:   BrushProperties::new(),
+            points:             vec![],
+            brush_changed:      false,
+            properties_changed: false
+        }
+    }
+
     ///
     /// Chooses the brush that we should draw with
     /// 
@@ -49,6 +59,13 @@ impl BrushPreview {
     pub fn continue_brush_stroke(&mut self, point: BrushPoint) {
         // Add points to the active brush stroke
         self.points.push(point);
+    }
+
+    ///
+    /// Clears the preview
+    /// 
+    pub fn cancel_brush_stroke(&mut self) {
+        self.points = vec![];
     }
 
     ///

@@ -1,6 +1,12 @@
 use super::*;
 use super::super::menu::*;
 
+use animation::brushes::*;
+
+use typemap::*;
+
+impl Key for Ink { type Value = BrushPreview; }
+
 ///
 /// The Ink tool (Inks control points of existing objects)
 /// 
@@ -17,10 +23,9 @@ impl Ink {
     ///
     /// Performs a single painting action on the canvas
     /// 
-    pub fn paint_action<'a, Anim: 'static+Animation>(model: &ToolModel<'a, Anim>, layer: &mut u64, action: &Painting) {
-        /*
+    pub fn paint_action<'a, Anim: 'static+Animation>(model: &ToolModel<'a, Anim>, layer: &mut BrushPreview, action: &Painting) {
         // Get when this paint stroke is being made
-        let current_time = model.anim_view_model.timeline().current_time.get();
+        let current_time = model.current_time;
 
         // Get the canvas layer ID
         let canvas_layer_id = model.canvas_layer_id;
@@ -35,7 +40,7 @@ impl Ink {
 
                     // Begin the brush stroke
                     layer.set_brush_properties(&model.anim_view_model.brush().brush_properties.get());
-                    layer.start_brush_stroke(current_time, brush_point_from_painting(action));
+                    layer.start_brush_stroke(brush_point_from_painting(action));
                 },
 
                 PaintAction::Continue    => {
@@ -48,8 +53,9 @@ impl Ink {
                     gc.restore();
                     layer.draw_current_brush_stroke(gc);
 
+                    // Commit the brush stroke to the animation
                     // Finish the brush stroke
-                    layer.finish_brush_stroke();
+                    //layer.finish_brush_stroke();
                 },
 
                 PaintAction::Cancel      => {
@@ -59,7 +65,6 @@ impl Ink {
                 }
             }
         });
-        */
     }
 }
 
@@ -71,15 +76,13 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
     fn menu_controller_name(&self) -> String { INKMENUCONTROLLER.to_string() }
 
     fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> { 
-        BindRef::from(bind(ToolActivationState::NeedsReactivation))
-        
-        /*
-        let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
+        // Create the brush preview
+        let mut brush_preview = BrushPreview::new();
+        brush_preview.select_brush(&BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw);
+        brush_preview.set_brush_properties(&model.anim_view_model.brush().brush_properties.get());
 
-        if let Some(mut selected_layer) = selected_layer {
-            // Pick the ink brush in the current layer
-            selected_layer.select_brush(&BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw);
-        }
+        // Store the preview in the state
+        model.tool_state.lock().unwrap().insert::<Ink>(brush_preview);
 
         // If the selected layer is different, we need re-activation
         let activated_layer_id  = model.anim_view_model.timeline().selected_layer.get();
@@ -91,33 +94,25 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
                 ToolActivationState::NeedsReactivation
             }
         }))
-        */
     }
 
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, _device: &PaintDevice, actions: &Vec<Painting>) {
-        /*
-        let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
+        // Should be a brush preview in the state
+        let tool_state      = model.tool_state.clone();
+        let mut tool_state  = tool_state.lock().unwrap();
+        let brush_preview   = tool_state.get_mut::<Ink>().unwrap();
 
-        // Perform the paint actions on the selected layer if we can
-        if let Some(mut selected_layer) = selected_layer {
-            for action in actions {
-                Self::paint_action(model, &mut *selected_layer, action);
-            }
-
-            // If there's a brush stroke waiting, render it
-            // Starting a brush stroke selects the layer and creates a save state, which 
-            // we assume is still present for the canvas (this is fragile!)
-            if selected_layer.has_pending_brush_stroke() {
-                let layer: &PaintLayer  = &*selected_layer;
-
-                model.canvas.draw(|gc| {
-                    // Re-render the current brush stroke
-                    gc.restore();
-                    gc.store();
-                    layer.draw_current_brush_stroke(gc);
-                });
-            }
+        // Perform the paint actions
+        for action in actions {
+            Self::paint_action(model, brush_preview, action);
         }
-        */
+
+        // The start action will set us up for rendering the preview by setting up a stored state
+        model.canvas.draw(|gc| {
+            // Re-render the current brush stroke
+            gc.restore();
+            gc.store();
+            brush_preview.draw_current_brush_stroke(gc);
+        });
     }
 }
