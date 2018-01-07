@@ -47,7 +47,7 @@ pub trait Animation :
 /// `Animation`. This used to edit the actual data structure associated
 /// with an animation.
 /// 
-pub trait EditableAnimation
+pub trait MutableAnimation
     : Send+Sync {
     ///
     /// Sets the canvas size of this animation

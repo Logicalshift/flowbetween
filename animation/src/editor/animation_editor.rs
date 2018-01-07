@@ -21,7 +21,7 @@ impl AnimationEditor {
     ///
     /// Performs some edits on the specified editable animation
     /// 
-    pub fn perform<Edits: IntoIterator<Item=AnimationEdit>>(&self, target: &mut EditableAnimation, edits: Edits) {
+    pub fn perform<Edits: IntoIterator<Item=AnimationEdit>>(&self, target: &mut MutableAnimation, edits: Edits) {
         use AnimationEdit::*;
 
         for edit in edits {

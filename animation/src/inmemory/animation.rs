@@ -122,7 +122,7 @@ impl AnimationCore {
     }
 }
 
-impl EditableAnimation for AnimationCore {
+impl MutableAnimation for AnimationCore {
     ///
     /// Sets the canvas size of this animation
     ///
