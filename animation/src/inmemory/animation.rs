@@ -181,7 +181,14 @@ impl MutableAnimation for AnimationCore {
     /// Opens a particular layer for editing
     /// 
     fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>> {
-        unimplemented!()
+        if self.layers.contains_key(&layer_id) {
+            let layer_ref   = CoreLayerRef(self, layer_id, PhantomData);
+            let reader      = Editor::new(layer_ref);
+
+            Some(reader)
+        } else {
+            None
+        }
     }
 }
 
