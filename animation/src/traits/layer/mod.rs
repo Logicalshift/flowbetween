@@ -47,5 +47,5 @@ pub trait Layer :
     ///
     /// Retrieves an editor for the vector layer
     /// 
-    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>>;
+    fn edit_vectors<'a>(&'a mut self) -> Option<&'a mut VectorLayer>;
 }
