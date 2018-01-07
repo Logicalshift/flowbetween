@@ -69,5 +69,5 @@ pub trait MutableAnimation
     ///
     /// Opens a particular layer for editing
     /// 
-    fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Editor<'a, Layer>;
+    fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>>;
 }

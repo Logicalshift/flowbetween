@@ -31,8 +31,9 @@ impl AnimationEditor {
                 RemoveLayer(layer_id)       => { target.remove_layer(layer_id); },
 
                 Layer(layer_id, layer_edit)   => {
-                    let mut edit_layer = target.edit_layer(layer_id);
-                    self.layer_editor.perform(&mut *edit_layer, vec![layer_edit]);
+                    if let Some(mut edit_layer) = target.edit_layer(layer_id) {
+                        self.layer_editor.perform(&mut *edit_layer, vec![layer_edit]);
+                    }
                 }
             }
         }
