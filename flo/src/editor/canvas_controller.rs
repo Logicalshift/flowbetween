@@ -256,6 +256,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             let canvas_layer_id     = canvas_layer_id.unwrap_or(1);
 
             let tool_model = ToolModel {
+                current_time:       self.anim_view_model.timeline().current_time.get(),
                 canvas:             &canvas,
                 anim_view_model:    &self.anim_view_model,
                 selected_layer_id:  selected_layer_id,

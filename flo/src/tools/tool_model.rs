@@ -3,10 +3,15 @@ use super::super::viewmodel::*;
 use animation::*;
 use canvas::*;
 
+use std::time::Duration;
+
 ///
 /// Information that is passed to the tools for particular actions
 /// 
 pub struct ToolModel<'a, Anim: 'a+Animation> {
+    /// The current timeline time
+    pub current_time: Duration,
+
     /// The canvas that we are drawing on
     pub canvas: &'a Canvas,
 
