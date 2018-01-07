@@ -279,8 +279,8 @@ mod test {
 
             layer_edit.set_pending(&vec![
                 LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
-                    BrushPoint::from((10.0, 10.0)),
-                    BrushPoint::from((20.0, 5.0))
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
                 ])))
             ]);
             layer_edit.commit_pending();
