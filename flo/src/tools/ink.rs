@@ -41,12 +41,12 @@ impl Ink {
 
                     // Begin the brush stroke
                     preview.update_brush_properties(&model.anim_view_model.brush().brush_properties.get());
-                    preview.start_brush_stroke(brush_point_from_painting(action));
+                    preview.start_brush_stroke(raw_point_from_painting(action));
                 },
 
                 PaintAction::Continue    => {
                     // Append to the brush stroke
-                    preview.continue_brush_stroke(brush_point_from_painting(action));
+                    preview.continue_brush_stroke(raw_point_from_painting(action));
                 },
 
                 PaintAction::Finish      => {

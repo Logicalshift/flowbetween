@@ -1,4 +1,4 @@
-use super::super::brush::*;
+use super::super::raw_point::*;
 use super::super::brush_properties::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
@@ -17,5 +17,5 @@ pub enum PaintEdit {
     BrushProperties(BrushProperties),
 
     /// Draws a brush stroke using the current brush and the specified set of input points
-    BrushStroke(Arc<Vec<BrushPoint>>)
+    BrushStroke(Arc<Vec<RawPoint>>)
 }

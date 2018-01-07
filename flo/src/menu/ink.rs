@@ -233,9 +233,10 @@ impl InkMenuController {
                 let point   = (point as f32)/100.0;
                 let offset  = -(point*f32::consts::PI*1.5).cos();
 
-                points.push(BrushPoint {
-                    position: (point*preview_width-(preview_width/2.0), offset*preview_height/2.0),
-                    pressure: point
+                points.push(RawPoint {
+                    position:   (point*preview_width-(preview_width/2.0), offset*preview_height/2.0),
+                    tilt:       (0.0, 0.0),
+                    pressure:   point
                 })
             }
 
@@ -245,6 +246,8 @@ impl InkMenuController {
                 opacity:    opacity.get(),
                 color:      color.get()
             };
+
+            let points = brush.brush_points_for_raw_points(&points);
 
             brush.prepare_to_render(gc, &brush_properties);
             brush.render_brush(gc, &brush_properties, &points);

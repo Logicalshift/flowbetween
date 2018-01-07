@@ -46,6 +46,14 @@ impl VectorKeyFrame {
 
         Box::new(elements)
     }
+
+    ///
+    /// Retrieves the properties that will be applied to the next element added to this keyframe
+    /// 
+    #[inline]
+    pub fn active_properties(&self) -> VectorProperties {
+        self.core.lock().unwrap().active_properties().clone()
+    }
 }
 
 ///
@@ -56,7 +64,10 @@ struct VectorKeyFrameCore {
     start_time: Duration,
 
     /// The elements in this key frame (ordered from back to front)
-    elements: Vec<(Duration, Box<VectorElement>)>
+    elements: Vec<(Duration, Box<VectorElement>)>,
+
+    /// The properties that will apply to the next element added to this core
+    active_properties: VectorProperties
 }
 
 impl VectorKeyFrameCore {
@@ -65,22 +76,34 @@ impl VectorKeyFrameCore {
     /// 
     pub fn new(start_time: Duration) -> VectorKeyFrameCore {
         VectorKeyFrameCore {
-            start_time: start_time,
-            elements:   vec![]
+            start_time:         start_time,
+            elements:           vec![],
+            active_properties:  VectorProperties::default()
         }
     }
 
     ///
     /// The start time of this key frame
     /// 
+    #[inline]
     pub fn start_time(&self) -> Duration {
         self.start_time
     }
 
     ///
+    /// Retrieves the properties that will be applied to the next element added to this keyframe
+    /// 
+    #[inline]
+    pub fn active_properties<'a>(&'a self) -> &'a VectorProperties {
+        &self.active_properties
+    }
+
+    ///
     /// Adds a new element to the front of the vector
     /// 
+    #[inline]
     pub fn add_element(&mut self, when: Duration, new_element: Box<VectorElement>) {
+        new_element.update_properties(&mut self.active_properties);
         self.elements.push((when, new_element));
     }
 }

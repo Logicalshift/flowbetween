@@ -12,7 +12,7 @@ use std::time::Duration;
 pub struct BrushPreview {
     current_brush:          Arc<Brush>,
     brush_properties:       BrushProperties,
-    points:                 Vec<BrushPoint>,
+    points:                 Vec<RawPoint>,
 
     brush_changed:          bool,
     properties_changed:     bool,
@@ -65,7 +65,7 @@ impl BrushPreview {
     ///
     /// Starts a new brush stroke
     /// 
-    pub fn start_brush_stroke(&mut self, initial_pos: BrushPoint) {
+    pub fn start_brush_stroke(&mut self, initial_pos: RawPoint) {
         self.finished = false;
         self.points = vec![initial_pos];
     }
@@ -73,7 +73,7 @@ impl BrushPreview {
     ///
     /// Continues the current brush stroke
     /// 
-    pub fn continue_brush_stroke(&mut self, point: BrushPoint) {
+    pub fn continue_brush_stroke(&mut self, point: RawPoint) {
         // Add points to the active brush stroke
         self.points.push(point);
     }
@@ -105,7 +105,9 @@ impl BrushPreview {
     /// Creates the brush element for the current brush stroke
     /// 
     pub fn brush_element(&self) -> BrushElement {
-        BrushElement::new(Arc::new(self.points.clone()))
+        let brush_points = self.current_brush.brush_points_for_raw_points(&self.points);
+
+        BrushElement::new(Arc::new(brush_points))
     }
 
     ///

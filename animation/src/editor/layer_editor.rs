@@ -1,6 +1,7 @@
 use super::super::traits::*;
 
 use std::time::Duration;
+use std::sync::*;
 
 ///
 /// Performs edits on a layer
@@ -34,8 +35,12 @@ impl LayerEditor {
             },
             
             BrushStroke(points)                 => {
-                target.edit_vectors().unwrap()
-                    .add_element(when, Box::new(BrushElement::new(points)));
+                let mut vectors     = target.edit_vectors().unwrap();
+                let brush           = vectors.active_brush(when);
+
+                let brush_points    = brush.brush_points_for_raw_points(&points);
+
+                vectors.add_element(when, Box::new(BrushElement::new(Arc::new(brush_points))));
             }
         }
     }

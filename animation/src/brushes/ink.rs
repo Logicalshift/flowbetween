@@ -68,12 +68,22 @@ impl InkCoord {
     }
 }
 
+impl<'a> From<&'a RawPoint> for InkCoord {
+    fn from(src: &'a RawPoint) -> InkCoord {
+        InkCoord {
+            x: src.position.0 as f64,
+            y: src.position.1 as f64,
+            pressure: src.pressure as f64
+        }
+    }
+}
+
 impl<'a> From<&'a BrushPoint> for InkCoord {
     fn from(src: &'a BrushPoint) -> InkCoord {
         InkCoord {
             x: src.position.0 as f64,
             y: src.position.1 as f64,
-            pressure: src.pressure as f64
+            pressure: src.width as f64
         }
     }
 }
@@ -184,6 +194,20 @@ struct InkCurve {
 
 impl InkCurve {
     ///
+    /// Creates an ink curve from brush points
+    /// 
+    pub fn from_brush_points(last_point: &BrushPoint, next_point: &BrushPoint) -> InkCurve {
+        InkCurve {
+            start_point:    InkCoord { x: last_point.position.0 as f64, y: last_point.position.1 as f64, pressure: last_point.width as f64 },
+            end_point:      InkCoord { x: next_point.position.0 as f64, y: next_point.position.1 as f64, pressure: next_point.width as f64 },
+            control_points: (
+                InkCoord { x: next_point.cp1.0 as f64, y: next_point.cp1.1 as f64, pressure: next_point.width as f64 },
+                InkCoord { x: next_point.cp2.0 as f64, y: next_point.cp2.1 as f64, pressure: next_point.width as f64 }
+            )
+        }
+    }
+
+    ///
     /// Converts to a pair of offset curves
     /// 
     pub fn to_offset_curves(&self, min_width: f64, max_width: f64) -> (Vec<bezier::Curve>, Vec<bezier::Curve>) {
@@ -233,24 +257,14 @@ impl BezierCurve for InkCurve {
 }
 
 impl Brush for InkBrush {
-    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties) {
-        // Set the blend mode (mainly so we can act as an eraser as well as a primary brush)
-        gc.blend_mode(self.blend_mode);
-
-        // Set the fill colour & opacity
-        gc.fill_color(properties.color.with_alpha(properties.opacity));
-    }
-
-    fn render_brush(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties, points: &Vec<BrushPoint>) {
+    fn brush_points_for_raw_points(&self, points: &[RawPoint]) -> Vec<BrushPoint> {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 2 {
-            return;
+            return vec![];
         }
 
         // Convert points to ink points
         let ink_points: Vec<InkCoord> = points.iter().map(|point| InkCoord::from(point)).collect();
-
-        let size_ratio = properties.size / self.max_width;
 
         // Average points that are very close together so we don't overdo 
         // the curve fitting
@@ -304,40 +318,93 @@ impl Brush for InkBrush {
 
         // Fit these points to a curve
         let curve = InkCurve::fit_from_points(&ink_points, 1.0);
+
+        // Turn into brush points
+        let mut brush_points = vec![];
+
+        if let Some(curve) = curve {
+            // First point is the start point, the control points don't matter for this
+            let start = curve[0].start_point();;
+            brush_points.push(BrushPoint {
+                position:   (start.x as f32, start.y as f32),
+                cp1:        (0.0, 0.0),
+                cp2:        (0.0, 0.0),
+                width:      start.pressure as f32
+            });
+
+            // Convert the remaining curve segments
+            for segment in curve {
+                let end             = segment.end_point();
+                let (cp1, cp2)      = segment.control_points();
+
+                brush_points.push(BrushPoint {
+                    position:   (end.x as f32, end.y as f32),
+                    cp1:        (cp1.x as f32, cp1.y as f32),
+                    cp2:        (cp2.x as f32, cp2.y as f32),
+                    width:      end.pressure as f32
+                });
+            }
+        }
+
+        brush_points
+    }
+
+    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties) {
+        // Set the blend mode (mainly so we can act as an eraser as well as a primary brush)
+        gc.blend_mode(self.blend_mode);
+
+        // Set the fill colour & opacity
+        gc.fill_color(properties.color.with_alpha(properties.opacity));
+    }
+
+    fn render_brush(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties, points: &Vec<BrushPoint>) {
+        let size_ratio = properties.size / self.max_width;
+        
+        // Nothing to do if there are too few points
+        if points.len() < 2 {
+            return;
+        }
+
+        // Create an ink curve from the brush points
+        let mut curve       = vec![];
+        let mut last_point  = &points[0];
+
+        for brush_point in points.iter().skip(1) {
+            curve.push(InkCurve::from_brush_points(last_point, brush_point));
+            last_point = brush_point;
+        }
         
         // Draw a variable width line for this curve
-        if let Some(curve) = curve {
-            let offset_curves: Vec<(Vec<bezier::Curve>, Vec<bezier::Curve>)> 
-                = curve.iter().map(|ink_curve| ink_curve.to_offset_curves((self.min_width*size_ratio) as f64, (self.max_width*size_ratio) as f64)).collect();
+        let offset_curves: Vec<(Vec<bezier::Curve>, Vec<bezier::Curve>)> 
+            = curve.iter().map(|ink_curve| ink_curve.to_offset_curves((self.min_width*size_ratio) as f64, (self.max_width*size_ratio) as f64)).collect();
 
-            gc.new_path();
-            
-            // Upper portion
-            let Coord2(x, y) = offset_curves[0].0[0].start_point();
-            gc.move_to(x as f32, y as f32);
-            for curve_list in offset_curves.iter() {
-                for curve_section in curve_list.0.iter() {
-                    gc_draw_bezier(gc, curve_section);
-                }
+        gc.new_path();
+        
+        // Upper portion
+        let Coord2(x, y) = offset_curves[0].0[0].start_point();
+        gc.move_to(x as f32, y as f32);
+        for curve_list in offset_curves.iter() {
+            for curve_section in curve_list.0.iter() {
+                gc_draw_bezier(gc, curve_section);
             }
-
-            // Lower portion (reverse everything)
-            let last_section    = &offset_curves[offset_curves.len()-1].1;
-            let last_curve      = &last_section[last_section.len()-1];
-            let Coord2(x, y)    = last_curve.end_point();
-            gc.line_to(x as f32, y as f32);
-
-            for curve_list in offset_curves.iter().rev() {
-                for curve_section in curve_list.1.iter().rev() {
-                    let start       = curve_section.start_point();
-                    let (cp1, cp2)  = curve_section.control_points();
-
-                    gc.bezier_curve_to(start.x() as f32, start.y() as f32, cp2.x() as f32, cp2.y() as f32, cp1.x() as f32, cp1.y() as f32);
-                }
-            }
-
-            gc.fill();
         }
+
+        // Lower portion (reverse everything)
+        let last_section    = &offset_curves[offset_curves.len()-1].1;
+        let last_curve      = &last_section[last_section.len()-1];
+        let Coord2(x, y)    = last_curve.end_point();
+        gc.line_to(x as f32, y as f32);
+
+        for curve_list in offset_curves.iter().rev() {
+            for curve_section in curve_list.1.iter().rev() {
+                let start       = curve_section.start_point();
+                let (cp1, cp2)  = curve_section.control_points();
+
+                gc.bezier_curve_to(start.x() as f32, start.y() as f32, cp2.x() as f32, cp2.y() as f32, cp1.x() as f32, cp1.y() as f32);
+            }
+        }
+
+        gc.fill();
     }
 
     ///

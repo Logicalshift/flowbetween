@@ -1,5 +1,3 @@
-use super::super::brush::*;
-
 ///
 /// A point in a path
 /// 
@@ -33,23 +31,5 @@ pub struct Path {
 impl Path {
     pub fn new() -> Path {
         Path { elements: vec![] }
-    }
-}
-
-impl From<BrushPoint> for PathPoint {
-    fn from(point: BrushPoint) -> PathPoint {
-        PathPoint {
-            position: point.position,
-            pressure: point.pressure
-        }
-    }
-}
-
-impl<'a> From<&'a BrushPoint> for PathPoint {
-    fn from(point: &'a BrushPoint) -> PathPoint {
-        PathPoint {
-            position: point.position,
-            pressure: point.pressure
-        }
     }
 }

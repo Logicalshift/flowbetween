@@ -13,6 +13,7 @@ use std::sync::*;
 /// This saves some space in that properties don't need to be encoded with
 /// each element.
 /// 
+#[derive(Clone)]
 pub struct VectorProperties {
     /// The active brush
     pub brush: Arc<Brush>,
