@@ -107,13 +107,15 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
             Self::paint_action(model, brush_preview, action);
         }
 
-        // The start action will set us up for rendering the preview by setting up a stored state
-        // We render here so we don't render repeatedly when there are multiple actions
-        model.canvas.draw(|gc| {
-            // Re-render the current brush stroke
-            gc.restore();
-            gc.store();
-            brush_preview.draw_current_brush_stroke(gc);
-        });
+        if !brush_preview.is_finished() {
+            // The start action will set us up for rendering the preview by setting up a stored state
+            // We render here so we don't render repeatedly when there are multiple actions
+            model.canvas.draw(|gc| {
+                // Re-render the current brush stroke
+                gc.restore();
+                gc.store();
+                brush_preview.draw_current_brush_stroke(gc);
+            });
+        }
     }
 }

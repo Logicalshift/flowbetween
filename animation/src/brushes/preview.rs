@@ -15,7 +15,8 @@ pub struct BrushPreview {
     points:                 Vec<BrushPoint>,
 
     brush_changed:          bool,
-    properties_changed:     bool
+    properties_changed:     bool,
+    finished:               bool
 }
 
 impl BrushPreview {
@@ -25,7 +26,8 @@ impl BrushPreview {
             brush_properties:   BrushProperties::new(),
             points:             vec![],
             brush_changed:      false,
-            properties_changed: false
+            properties_changed: false,
+            finished:           true
         }
     }
 
@@ -64,6 +66,7 @@ impl BrushPreview {
     /// Starts a new brush stroke
     /// 
     pub fn start_brush_stroke(&mut self, initial_pos: BrushPoint) {
+        self.finished = false;
         self.points = vec![initial_pos];
     }
 
@@ -79,6 +82,7 @@ impl BrushPreview {
     /// Clears the preview
     /// 
     pub fn cancel_brush_stroke(&mut self) {
+        self.finished = true;
         self.points = vec![];
     }
 
@@ -142,6 +146,8 @@ impl BrushPreview {
 
         let mut actions = vec![];
 
+        self.finished = true;
+
         // Select the brush
         if self.brush_changed {
             let (defn, drawing_style) = self.current_brush.to_definition();
@@ -166,5 +172,12 @@ impl BrushPreview {
 
         edit.set_pending(&actions);
         edit.commit_pending();
+    }
+
+    ///
+    /// True if this brush stroke has been cancelled or committed
+    /// 
+    pub fn is_finished(&self) -> bool {
+        self.finished
     }
 }
