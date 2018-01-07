@@ -15,7 +15,7 @@ pub struct InMemoryPendingLog<Edit, CommitFn> {
 }
 
 impl<Edit, CommitFn> InMemoryPendingLog<Edit, CommitFn>
-where CommitFn: Fn(Vec<Edit>) -> Range<usize> {
+where CommitFn: FnMut(Vec<Edit>) -> Range<usize> {
     ///
     /// Creates a new in-memory pending log
     /// 
@@ -28,7 +28,7 @@ where CommitFn: Fn(Vec<Edit>) -> Range<usize> {
 }
 
 impl<Edit: Clone, CommitFn> PendingEditLog<Edit> for InMemoryPendingLog<Edit, CommitFn>
-where CommitFn: Fn(Vec<Edit>) -> Range<usize> {
+where CommitFn: FnMut(Vec<Edit>) -> Range<usize> {
     fn pending(&self) -> Vec<Edit> {
         self.pending.clone()
     }

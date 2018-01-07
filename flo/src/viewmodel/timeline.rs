@@ -18,7 +18,7 @@ impl TimelineViewModel {
     pub fn new() -> TimelineViewModel {
         TimelineViewModel {
             current_time:   bind(Duration::from_millis(0)),
-            selected_layer: bind(None)
+            selected_layer: bind(Some(0))
         }
     }
 }

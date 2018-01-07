@@ -3,48 +3,37 @@ use super::vector_frame::*;
 use super::vector_layer_core::*;
 use super::super::traits::*;
 
-use canvas::*;
-
 use std::sync::*;
 use std::time::Duration;
 
 ///
 /// Represents a vector layer. Vector layers support brush and vector objects.
 /// 
-pub struct VectorLayer {
+pub struct InMemoryVectorLayer {
     /// The core data for this layer
-    core: RwLock<VectorLayerCore>
+    core: Mutex<VectorLayerCore>
 }
 
-impl VectorLayer {
+impl InMemoryVectorLayer {
     ///
     /// Cretes a new vector layer
     /// 
-    pub fn new(id: u64) -> VectorLayer {
+    pub fn new(id: u64) -> InMemoryVectorLayer {
         let core = VectorLayerCore::new(id);
 
-        VectorLayer { 
-            core:       RwLock::new(core)
+        InMemoryVectorLayer { 
+            core:       Mutex::new(core)
         }
-    }
-
-    ///
-    /// Applies new edits for this layer
-    /// 
-    pub fn apply_edit(&self, edit: &LayerEdit) {
-        let mut core = self.core.write().unwrap();
-
-        core.apply_edit(edit);
     }
 }
 
-impl Layer for VectorLayer {
+impl Layer for InMemoryVectorLayer {
     fn id(&self) -> u64 {
-        self.core.read().unwrap().id()
+        self.core.lock().unwrap().id()
     }
 
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
-        let core = self.core.read().unwrap();
+        let core = self.core.lock().unwrap();
 
         // Look up the keyframe in the core
         let keyframe = core.find_nearest_keyframe(time_index);
@@ -57,19 +46,33 @@ impl Layer for VectorLayer {
         }
     }
 
+    fn add_key_frame(&mut self, when: Duration) {
+        self.core.lock().unwrap().add_key_frame(when);
+    }
+
+    fn remove_key_frame(&mut self, when: Duration) {
+        self.core.lock().unwrap().remove_key_frame(when);
+    }
+
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
         unimplemented!()
     }
 
     fn supported_edit_types(&self) -> Vec<LayerEditType> {
-        unimplemented!()
+        return vec![
+            LayerEditType::Vector
+        ];
     }
 
-    fn as_paint_layer<'a>(&'a self) -> Option<&'a PaintLayer> {
-        unimplemented!()
+    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {
+        let core: &Mutex<VectorLayer> = &self.core;
+
+        Some(Reader::new(core.lock().unwrap()))
     }
 
-    fn draw_pending_actions(&self, gc: &mut GraphicsPrimitives, pending: &PendingEditLog<LayerEdit>) {
-        unimplemented!()
+    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
+        let core: &Mutex<VectorLayer> = &self.core;
+
+        Some(Editor::new(core.lock().unwrap()))
     }
 }

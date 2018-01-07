@@ -26,10 +26,10 @@ pub use self::eraser::*;
 /// Converts a UI Painting struct to a BrushPoint
 /// 
 pub fn brush_point_from_painting(painting: &Painting) -> BrushPoint {
-        BrushPoint {
-            position: painting.location,
-            pressure: painting.pressure
-        }
+    BrushPoint {
+        position: painting.location,
+        pressure: painting.pressure
+    }
 }
 
 ///

@@ -10,6 +10,7 @@ extern crate serde;
 extern crate modifier;
 
 mod traits;
+pub mod editor;
 pub mod inmemory;
 pub mod brushes;
 

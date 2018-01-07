@@ -1,17 +1,10 @@
-mod paint;
-mod edit_log;
+mod vectors;
 
-use super::super::brushes::*;
 use super::super::traits::*;
 use super::vector_keyframe::*;
 
-use canvas::*;
-
-use std::mem;
 use std::sync::*;
 use std::time::Duration;
-
-pub use self::edit_log::*;
 
 ///
 /// The core of the vector layer
@@ -22,15 +15,6 @@ pub struct VectorLayerCore {
 
     /// The key frames for this vector, in order
     keyframes: Vec<Arc<VectorKeyFrame>>,
-
-    /// The currently selected brush
-    current_brush: Arc<Brush>,
-
-    /// The properties that are currently set
-    brush_properties: BrushProperties,
-
-    /// The brush stroke that is currently being drawn
-    active_brush_stroke: Option<BrushElement>
 }
 
 impl VectorLayerCore {
@@ -41,9 +25,6 @@ impl VectorLayerCore {
         VectorLayerCore {
             id:                     id,
             keyframes:              vec![],
-            current_brush:          Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
-            brush_properties:       BrushProperties::new(),
-            active_brush_stroke:    None
         }
     }
 
@@ -81,7 +62,7 @@ impl VectorLayerCore {
     ///
     /// Adds a new key frame to this core 
     /// 
-    fn add_key_frame(&mut self, time_offset: Duration) {
+    pub fn add_key_frame(&mut self, time_offset: Duration) {
         // TODO: do nothing if the keyframe is already created
 
         // Generate a new keyframe
@@ -95,26 +76,13 @@ impl VectorLayerCore {
     ///
     /// Removes a keyframe from this core
     /// 
-    fn remove_key_frame(&mut self, time_offset: Duration) {
+    pub fn remove_key_frame(&mut self, time_offset: Duration) {
         // Binary search for the key frame
         let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time_offset));
 
         // Remove only if we found an exact match
         if let Ok(frame_number) = search_result {
             self.keyframes.remove(frame_number);
-        }
-    }
-
-    ///
-    /// Applies an edit command to this layer
-    /// 
-    pub fn apply_edit(&mut self, edit: &LayerEdit) {
-        use LayerEdit::*;
-
-        match edit {
-            &Paint(_, _)                        => unimplemented!(),
-            &AddKeyFrame(ref time_offset)       => self.add_key_frame(*time_offset),
-            &RemoveKeyFrame(ref time_offset)    => self.remove_key_frame(*time_offset)
         }
     }
 }

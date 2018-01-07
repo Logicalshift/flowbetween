@@ -36,10 +36,14 @@ impl Frame for VectorFrame {
 
     fn render_to(&self, gc: &mut GraphicsPrimitives) {
         let offset = self.offset;
+        let mut properties = VectorProperties::default();
 
-        self.keyframe.elements().iter().for_each(move |element| {
-            if element.appearance_time() <= offset {
-                element.render(gc);
+        self.keyframe.elements().iter().for_each(move |&(appearance_time, ref element)| {
+            // Properties always update regardless of the time they're at (so the display is consistent)
+            element.update_properties(&mut properties);
+
+            if appearance_time <= offset {
+                element.render(gc, &properties);
             }
         })
     }

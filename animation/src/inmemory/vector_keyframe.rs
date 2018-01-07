@@ -9,7 +9,7 @@ use std::sync::*;
 /// A keyframe in a vector layer
 /// 
 pub struct VectorKeyFrame {
-    core: RwLock<VectorKeyFrameCore>
+    core: Mutex<VectorKeyFrameCore>
 }
 
 impl VectorKeyFrame {
@@ -18,7 +18,7 @@ impl VectorKeyFrame {
     /// 
     pub fn new(start_time: Duration) -> VectorKeyFrame {
         VectorKeyFrame {
-            core: RwLock::new(VectorKeyFrameCore::new(start_time))
+            core: Mutex::new(VectorKeyFrameCore::new(start_time))
         }
     }
 
@@ -26,21 +26,21 @@ impl VectorKeyFrame {
     /// The start time of this key frame
     /// 
     pub fn start_time(&self) -> Duration {
-        self.core.read().unwrap().start_time()
+        self.core.lock().unwrap().start_time()
     }
 
     ///
     /// Adds a new element to the front of the vector
     /// 
-    pub fn add_element(&self, new_element: Vector) {
-        self.core.write().unwrap().add_element(new_element);
+    pub fn add_element(&self, when: Duration, new_element: Box<VectorElement>) {
+        self.core.lock().unwrap().add_element(when, new_element);
     }
 
     ///
     /// Retrieves the elements in this keyframe
     /// 
-    pub fn elements<'a>(&'a self) -> Box<'a+Deref<Target=Vec<Vector>>> {
-        let core            = self.core.read().unwrap();
+    pub fn elements<'a>(&'a self) -> Box<'a+Deref<Target=Vec<(Duration, Box<VectorElement>)>>> {
+        let core            = self.core.lock().unwrap();
 
         let elements = DerefMap::map(core, |core| &core.elements);
 
@@ -56,7 +56,7 @@ struct VectorKeyFrameCore {
     start_time: Duration,
 
     /// The elements in this key frame (ordered from back to front)
-    elements: Vec<Vector>
+    elements: Vec<(Duration, Box<VectorElement>)>
 }
 
 impl VectorKeyFrameCore {
@@ -80,7 +80,7 @@ impl VectorKeyFrameCore {
     ///
     /// Adds a new element to the front of the vector
     /// 
-    pub fn add_element(&mut self, new_element: Vector) {
-        self.elements.push(new_element);
+    pub fn add_element(&mut self, when: Duration, new_element: Box<VectorElement>) {
+        self.elements.push((when, new_element));
     }
 }
