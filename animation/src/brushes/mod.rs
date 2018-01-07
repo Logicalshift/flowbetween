@@ -1,8 +1,10 @@
 mod simple;
 mod ink;
+mod preview;
 
 pub use self::simple::*;
 pub use self::ink::*;
+pub use self::preview::*;
 
 use super::traits::*;
 use std::sync::*;
