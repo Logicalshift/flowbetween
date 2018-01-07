@@ -85,17 +85,4 @@ impl VectorLayerCore {
             self.keyframes.remove(frame_number);
         }
     }
-
-    ///
-    /// Applies an edit command to this layer
-    /// 
-    pub fn apply_edit(&mut self, edit: &LayerEdit) {
-        use LayerEdit::*;
-
-        match edit {
-            &Paint(_, _)                        => unimplemented!(),
-            &AddKeyFrame(ref time_offset)       => self.add_key_frame(*time_offset),
-            &RemoveKeyFrame(ref time_offset)    => self.remove_key_frame(*time_offset)
-        }
-    }
 }

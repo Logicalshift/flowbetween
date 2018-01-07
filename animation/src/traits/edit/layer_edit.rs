@@ -8,9 +8,10 @@ use std::time::Duration;
 /// Layers may have different types, so this can be used to check what
 /// types of action a particular layer might support.
 /// 
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum LayerEditType {
-    Paint
+    Vector
 }
 
 ///

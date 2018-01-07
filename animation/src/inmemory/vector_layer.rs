@@ -25,15 +25,6 @@ impl InMemoryVectorLayer {
             core:       Mutex::new(core)
         }
     }
-
-    ///
-    /// Applies new edits for this layer
-    /// 
-    pub fn apply_edit(&self, edit: &LayerEdit) {
-        let mut core = self.core.lock().unwrap();
-
-        core.apply_edit(edit);
-    }
 }
 
 impl Layer for InMemoryVectorLayer {
@@ -59,12 +50,18 @@ impl Layer for InMemoryVectorLayer {
         self.core.lock().unwrap().add_key_frame(when);
     }
 
+    fn remove_key_frame(&mut self, when: Duration) {
+        self.core.lock().unwrap().remove_key_frame(when);
+    }
+
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
         unimplemented!()
     }
 
     fn supported_edit_types(&self) -> Vec<LayerEditType> {
-        unimplemented!()
+        return vec![
+            LayerEditType::Vector
+        ];
     }
 
     fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {

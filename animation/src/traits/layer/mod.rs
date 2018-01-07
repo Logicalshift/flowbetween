@@ -40,6 +40,11 @@ pub trait Layer :
     fn add_key_frame(&mut self, when: Duration);
 
     ///
+    /// Removes a key frame from the specified time
+    /// 
+    fn remove_key_frame(&mut self, when: Duration);
+
+    ///
     /// Retrieves the definition of this layer as a vector layer
     /// 
     fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>>;
