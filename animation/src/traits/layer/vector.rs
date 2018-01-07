@@ -1,16 +1,13 @@
 use super::super::vector::*;
 
+use std::time::Duration;
+
 ///
 /// Represents a layer that contains vector elements
 /// 
 pub trait VectorLayer : Send {
     ///
-    /// Retrieves the elements from this layer
-    /// 
-    fn elements<'a>(&'a self) -> Box<'a+Iterator<Item=&VectorElement>>;
-
-    ///
     /// Adds a new vector element to this layer
     /// 
-    fn add_element(&mut self, new_element: Box<VectorElement>);
+    fn add_element(&mut self, when: Duration, new_element: Box<VectorElement>);
 }

@@ -4,7 +4,6 @@ use super::super::traits::*;
 use super::vector_keyframe::*;
 
 use std::sync::*;
-use std::collections::*;
 use std::time::Duration;
 
 ///
@@ -16,9 +15,6 @@ pub struct VectorLayerCore {
 
     /// The key frames for this vector, in order
     keyframes: Vec<Arc<VectorKeyFrame>>,
-
-    /// The elements in this tree
-    elements: BTreeMap<Duration, Vec<Box<VectorElement>>>
 }
 
 impl VectorLayerCore {
@@ -29,7 +25,6 @@ impl VectorLayerCore {
         VectorLayerCore {
             id:                     id,
             keyframes:              vec![],
-            elements:               BTreeMap::new()
         }
     }
 

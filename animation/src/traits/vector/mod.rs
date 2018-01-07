@@ -6,8 +6,6 @@ mod element;
 mod brush_element;
 mod brush_properties_element;
 
-use std::time::Duration;
-
 pub use self::properties::*;
 pub use self::path::*;
 pub use self::element::*;
@@ -27,13 +25,6 @@ pub enum Vector {
 }
 
 impl VectorElement for Vector {
-    fn appearance_time(&self) -> Duration {
-        match self {
-            &Vector::Empty              => Duration::from_millis(0),
-            &Vector::Brush(ref elem)    => elem.appearance_time()
-        }
-    }
-
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
         match self {
             &Vector::Empty              => (),

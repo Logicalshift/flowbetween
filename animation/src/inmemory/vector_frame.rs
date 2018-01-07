@@ -38,8 +38,8 @@ impl Frame for VectorFrame {
         let offset = self.offset;
         let mut properties = VectorProperties::default();
 
-        self.keyframe.elements().iter().for_each(move |element| {
-            if element.appearance_time() <= offset {
+        self.keyframe.elements().iter().for_each(move |&(appearance_time, ref element)| {
+            if appearance_time <= offset {
                 element.render(gc, &mut properties);
             }
         })
