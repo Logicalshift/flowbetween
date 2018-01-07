@@ -67,6 +67,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(Bounds::next_horiz(2.0)),
                     Control::label()
                         .with("FlowBetween")
+                        .with(FontWeight::Light)
                         .with(Font::Size(17.0))
                         .with(Bounds::next_horiz(160.0)),
                     

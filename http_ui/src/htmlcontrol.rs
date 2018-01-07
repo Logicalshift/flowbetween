@@ -208,7 +208,8 @@ impl ToHtml for Font {
 
         match self {
             &Size(size)     => DomAttribute::new("style", &format!("font-size: {}px;", size)),
-            &Align(align)   => align.to_html_subcomponent(base_path, controller_path)
+            &Align(align)   => align.to_html_subcomponent(base_path, controller_path),
+            &Weight(weight) => weight.to_html_subcomponent(base_path, controller_path)
         }
     }
 }
@@ -222,6 +223,12 @@ impl ToHtml for TextAlign {
             &Center => DomAttribute::new("style", &format!("text-align: center;")),
             &Right  => DomAttribute::new("style", &format!("text-align: right;"))
         }
+    }
+}
+
+impl ToHtml for FontWeight {
+    fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+        DomAttribute::new("style", &format!("font-weight: {};", *self as u32))
     }
 }
 

@@ -75,6 +75,7 @@ impl InkMenuController {
                 .with(vec![
                     Control::label()
                         .with("Ink:")
+                        .with(FontWeight::Light)
                         .with(TextAlign::Right)
                         .with(Bounds::next_horiz(48.0)),
                     Control::empty()

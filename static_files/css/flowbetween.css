@@ -27,7 +27,7 @@ html, body {
     height:         100%;
     overflow:       hidden;
     font-family:    "lato", "helvetica", sans-serif;
-    font-weight:    100
+    font-weight:    400;
 }
 
 #root {
