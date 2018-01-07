@@ -20,6 +20,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Eraser {
     fn image_name(&self) -> String { "eraser".to_string() }
 
     fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> { 
+        /*
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
         if let Some(mut selected_layer) = selected_layer {
@@ -37,9 +38,11 @@ impl<Anim: 'static+Animation> Tool<Anim> for Eraser {
                 ToolActivationState::NeedsReactivation
             }
         }))
+        */
     }
 
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, _device: &PaintDevice, actions: &Vec<Painting>) {
+        /*
         let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
 
         // Perform the paint actions on the selected layer if we can
@@ -62,5 +65,6 @@ impl<Anim: 'static+Animation> Tool<Anim> for Eraser {
                 });
             }
         }
+        */
     }
 }
