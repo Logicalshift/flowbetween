@@ -1,5 +1,6 @@
 use super::path::*;
 use super::element::*;
+use super::properties::*;
 
 use super::super::brush::*;
 use super::super::brush_properties::*;
@@ -17,14 +18,8 @@ pub struct BrushElement {
     /// When this element is drawn relative to the start of the frame
     appearance_time: Duration,
 
-    // The properties for this element (TODO: group a bunch of brush elements with the same properties)
-    properties: BrushProperties,
-
     /// The path taken by this brush stroke
     points: Vec<BrushPoint>,
-
-    /// The brush that will be used for this brush stroke
-    brush: Arc<Brush>
 }
 
 impl BrushElement {
@@ -33,10 +28,8 @@ impl BrushElement {
     /// 
     pub fn new(brush: &Arc<Brush>, appearance_time: Duration, start_pos: BrushPoint, properties: &BrushProperties) -> BrushElement {
         BrushElement {
-            properties:         *properties,
             appearance_time:    appearance_time,
             points:             vec![start_pos],
-            brush:              Arc::clone(brush)
         }
     }
 
@@ -76,9 +69,9 @@ impl VectorElement for BrushElement {
         }
     }
 
-    fn render(&self, gc: &mut GraphicsPrimitives) {
+    fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
         // TODO: find a way to only prepare to render once per brush
-        self.brush.prepare_to_render(gc, &self.properties);
-        self.brush.render_brush(gc, &self.properties, &self.points)
+        properties.brush.prepare_to_render(gc, &properties.brush_properties);
+        properties.brush.render_brush(gc, &properties.brush_properties, &self.points)
     }
 }

@@ -38,10 +38,10 @@ impl VectorElement for Vector {
         }
     }
 
-    fn render(&self, gc: &mut GraphicsPrimitives) {
+    fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
         match self {
             &Vector::Empty              => (),
-            &Vector::Brush(ref elem)    => elem.render(gc)
+            &Vector::Brush(ref elem)    => elem.render(gc, properties)
         }
     }
 }
