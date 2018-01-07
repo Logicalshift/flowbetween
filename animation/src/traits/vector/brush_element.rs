@@ -2,11 +2,9 @@ use super::element::*;
 use super::properties::*;
 
 use super::super::brush::*;
-use super::super::brush_properties::*;
 
 use canvas::*;
 
-use std::sync::*;
 use std::time::Duration;
 
 ///
@@ -25,7 +23,7 @@ impl BrushElement {
     ///
     /// Begins a new brush stroke at a particular position
     /// 
-    pub fn new(brush: &Arc<Brush>, appearance_time: Duration, start_pos: BrushPoint, properties: &BrushProperties) -> BrushElement {
+    pub fn new(appearance_time: Duration, start_pos: BrushPoint) -> BrushElement {
         BrushElement {
             appearance_time:    appearance_time,
             points:             vec![start_pos],
@@ -60,8 +58,6 @@ impl VectorElement for BrushElement {
     }
 
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
-        // TODO: find a way to only prepare to render once per brush
-        properties.brush.prepare_to_render(gc, &properties.brush_properties);
         properties.brush.render_brush(gc, &properties.brush_properties, &self.points)
     }
 }
