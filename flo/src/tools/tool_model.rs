@@ -13,8 +13,8 @@ pub struct ToolModel<'a, Anim: 'a+Animation> {
     /// The animation view model for this animation
     pub anim_view_model: &'a AnimationViewModel<Anim>,
 
-    /// The currently selected layer
-    pub selected_layer: Reader<'a, Layer>,
+    /// The ID of the currently selected layer in the animation
+    pub selected_layer_id: u64,
 
     /// The layer ID of the currently selected layer in the canvas
     pub canvas_layer_id: u32

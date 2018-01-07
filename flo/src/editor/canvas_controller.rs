@@ -247,19 +247,18 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         let effective_tool = self.anim_view_model.tools().effective_tool.get();
 
         // Get the selected layer
-        let selected_layer = self.get_selected_layer();
+        let selected_layer_id = self.anim_view_model.timeline().selected_layer.get();
 
-        if let (Some(selected_layer), Some(effective_tool)) = (selected_layer, effective_tool) {
+        if let (Some(selected_layer_id), Some(effective_tool)) = (selected_layer_id, effective_tool) {
             // Create the tool model for this action
             let canvas              = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-            let selected_layer_id   = selected_layer.id();
             let canvas_layer_id     = self.core.sync(|core| core.frame_layers.get(&selected_layer_id).map(|layer| layer.layer_id));
             let canvas_layer_id     = canvas_layer_id.unwrap_or(1);
 
             let tool_model = ToolModel {
                 canvas:             &canvas,
                 anim_view_model:    &self.anim_view_model,
-                selected_layer:     selected_layer,
+                selected_layer_id:  selected_layer_id,
                 canvas_layer_id:    canvas_layer_id
             };
 
