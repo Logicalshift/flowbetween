@@ -40,7 +40,8 @@ impl Frame for VectorFrame {
 
         self.keyframe.elements().iter().for_each(move |&(appearance_time, ref element)| {
             if appearance_time <= offset {
-                element.render(gc, &mut properties);
+                element.update_properties(&mut properties);
+                element.render(gc, &properties);
             }
         })
     }
