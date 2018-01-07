@@ -39,3 +39,35 @@ pub trait Animation :
     /// 
     fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>>;
 }
+
+///
+/// Trait implemented by objects that support editing the data associated with an animation
+/// 
+/// Normally edits are made by sending them via the `edit()` method in 
+/// `Animation`. This used to edit the actual data structure associated
+/// with an animation.
+/// 
+pub trait EditableAnimation
+    : Send+Sync {
+    ///
+    /// Sets the canvas size of this animation
+    ///
+    fn set_size(&mut self, size: (f64, f64));
+
+    ///
+    /// Creates a new layer with a particular ID
+    /// 
+    /// Has no effect if the layer ID is already in use
+    /// 
+    fn create_layer(&mut self, new_layer_id: u64);
+
+    ///
+    /// Removes the layer with the specified ID
+    /// 
+    fn remove_layer(&mut self, old_layer_id: u64);
+
+    ///
+    /// Opens a particular layer for editing
+    /// 
+    fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Editor<'a, Layer>;
+}

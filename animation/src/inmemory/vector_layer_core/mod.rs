@@ -1,13 +1,9 @@
-mod paint;
 mod edit_log;
 
 use super::super::brushes::*;
 use super::super::traits::*;
 use super::vector_keyframe::*;
 
-use canvas::*;
-
-use std::mem;
 use std::sync::*;
 use std::time::Duration;
 
@@ -81,7 +77,7 @@ impl VectorLayerCore {
     ///
     /// Adds a new key frame to this core 
     /// 
-    fn add_key_frame(&mut self, time_offset: Duration) {
+    pub fn add_key_frame(&mut self, time_offset: Duration) {
         // TODO: do nothing if the keyframe is already created
 
         // Generate a new keyframe
@@ -95,7 +91,7 @@ impl VectorLayerCore {
     ///
     /// Removes a keyframe from this core
     /// 
-    fn remove_key_frame(&mut self, time_offset: Duration) {
+    pub fn remove_key_frame(&mut self, time_offset: Duration) {
         // Binary search for the key frame
         let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time_offset));
 

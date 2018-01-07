@@ -3,27 +3,25 @@ use super::vector_frame::*;
 use super::vector_layer_core::*;
 use super::super::traits::*;
 
-use canvas::*;
-
 use std::sync::*;
 use std::time::Duration;
 
 ///
 /// Represents a vector layer. Vector layers support brush and vector objects.
 /// 
-pub struct VectorLayer {
+pub struct InMemoryVectorLayer {
     /// The core data for this layer
     core: RwLock<VectorLayerCore>
 }
 
-impl VectorLayer {
+impl InMemoryVectorLayer {
     ///
     /// Cretes a new vector layer
     /// 
-    pub fn new(id: u64) -> VectorLayer {
+    pub fn new(id: u64) -> InMemoryVectorLayer {
         let core = VectorLayerCore::new(id);
 
-        VectorLayer { 
+        InMemoryVectorLayer { 
             core:       RwLock::new(core)
         }
     }
@@ -38,7 +36,7 @@ impl VectorLayer {
     }
 }
 
-impl Layer for VectorLayer {
+impl Layer for InMemoryVectorLayer {
     fn id(&self) -> u64 {
         self.core.read().unwrap().id()
     }
@@ -57,6 +55,10 @@ impl Layer for VectorLayer {
         }
     }
 
+    fn add_key_frame(&mut self, when: Duration) {
+        self.core.write().unwrap().add_key_frame(when);
+    }
+
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
         unimplemented!()
     }
@@ -65,11 +67,11 @@ impl Layer for VectorLayer {
         unimplemented!()
     }
 
-    fn as_paint_layer<'a>(&'a self) -> Option<&'a PaintLayer> {
+    fn as_vector_layer<'a>(&'a self) -> Option<&'a VectorLayer> {
         unimplemented!()
     }
 
-    fn draw_pending_actions(&self, gc: &mut GraphicsPrimitives, pending: &PendingEditLog<LayerEdit>) {
+    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
         unimplemented!()
     }
 }

@@ -1,11 +1,10 @@
-mod paint;
+mod vector;
 
-pub use self::paint::*;
+pub use self::vector::*;
 
 use super::edit::*;
 use super::frame::*;
-
-use canvas::*;
+use super::editable::*;
 
 use std::sync::*;
 use std::time::Duration;
@@ -26,14 +25,9 @@ pub trait Layer :
     fn supported_edit_types(&self) -> Vec<LayerEditType>;
 
     ///
-    /// Retrieves the definition of this layer as a paint layer
+    /// Retrieves the definition of this layer as a vector layer
     /// 
-    fn as_paint_layer<'a>(&'a self) -> Option<&'a PaintLayer>;
-
-    ///
-    /// Renders the result of the specified set of actions to the given graphics primitives
-    /// 
-    fn draw_pending_actions(&self, gc: &mut GraphicsPrimitives, pending: &PendingEditLog<LayerEdit>);    
+    fn as_vector_layer<'a>(&'a self) -> Option<&'a VectorLayer>;
 
     ///
     /// Retrieves a frame from this layer with the specified parameters
@@ -44,4 +38,14 @@ pub trait Layer :
     /// Retrieves the times where key frames exist
     ///
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>>;
+
+    ///
+    /// Adds a new key frame at the specified time
+    /// 
+    fn add_key_frame(&mut self, when: Duration);
+
+    ///
+    /// Retrieves an editor for the vector layer
+    /// 
+    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>>;
 }

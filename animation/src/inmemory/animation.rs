@@ -18,7 +18,7 @@ struct AnimationCore {
     size: (f64, f64),
 
     /// The layers in this animation, as an object and as a vector layer (we need to return references to the layer object and rust can't downgrade for us)
-    layers: HashMap<u64, (Arc<Layer>, Arc<VectorLayer>)>
+    layers: HashMap<u64, (Arc<Layer>, Arc<InMemoryVectorLayer>)>
 }
 
 ///
@@ -137,7 +137,7 @@ impl AnimationCore {
     fn add_new_layer(&mut self, layer_id: u64) {
         self.layers.entry(layer_id)
             .or_insert_with(|| {
-                let layer = Arc::new(VectorLayer::new(layer_id));
+                let layer = Arc::new(InMemoryVectorLayer::new(layer_id));
 
                 (layer.clone(), layer)
             });
