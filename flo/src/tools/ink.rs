@@ -23,12 +23,13 @@ impl Ink {
     ///
     /// Performs a single painting action on the canvas
     /// 
-    pub fn paint_action<'a, Anim: 'static+Animation>(model: &ToolModel<'a, Anim>, layer: &mut BrushPreview, action: &Painting) {
+    pub fn paint_action<'a, Anim: 'static+Animation>(model: &ToolModel<'a, Anim>, preview: &mut BrushPreview, action: &Painting) {
         // Get when this paint stroke is being made
         let current_time = model.current_time;
 
         // Get the canvas layer ID
-        let canvas_layer_id = model.canvas_layer_id;
+        let canvas_layer_id     = model.canvas_layer_id;
+        let selected_layer_id   = model.selected_layer_id;
 
         model.canvas.draw(move |gc| {
             // Perform the action
@@ -39,28 +40,27 @@ impl Ink {
                     gc.store();
 
                     // Begin the brush stroke
-                    layer.set_brush_properties(&model.anim_view_model.brush().brush_properties.get());
-                    layer.start_brush_stroke(brush_point_from_painting(action));
+                    preview.set_brush_properties(&model.anim_view_model.brush().brush_properties.get());
+                    preview.start_brush_stroke(brush_point_from_painting(action));
                 },
 
                 PaintAction::Continue    => {
                     // Append to the brush stroke
-                    layer.continue_brush_stroke(brush_point_from_painting(action));
+                    preview.continue_brush_stroke(brush_point_from_painting(action));
                 },
 
                 PaintAction::Finish      => {
                     // Draw the 'final' brush stroke
                     gc.restore();
-                    layer.draw_current_brush_stroke(gc);
+                    preview.draw_current_brush_stroke(gc);
 
                     // Commit the brush stroke to the animation
-                    // Finish the brush stroke
-                    //layer.finish_brush_stroke();
+                    preview.commit_to_animation(current_time, selected_layer_id, model.anim_view_model.animation());
                 },
 
                 PaintAction::Cancel      => {
                     // Cancel the brush stroke
-                    layer.cancel_brush_stroke();
+                    preview.cancel_brush_stroke();
                     gc.restore();
                 }
             }
@@ -108,6 +108,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
         }
 
         // The start action will set us up for rendering the preview by setting up a stored state
+        // We render here so we don't render repeatedly when there are multiple actions
         model.canvas.draw(|gc| {
             // Re-render the current brush stroke
             gc.restore();
