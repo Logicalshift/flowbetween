@@ -1,5 +1,11 @@
 use super::*;
 
+use animation::brushes::*;
+
+use typemap::*;
+
+impl Key for Eraser { type Value = BrushPreview; }
+
 ///
 /// The Eraser tool (Erasers control points of existing objects)
 /// 
@@ -20,15 +26,13 @@ impl<Anim: 'static+Animation> Tool<Anim> for Eraser {
     fn image_name(&self) -> String { "eraser".to_string() }
 
     fn activate<'a>(&self, model: &ToolModel<'a, Anim>) -> BindRef<ToolActivationState> { 
-        BindRef::from(bind(ToolActivationState::NeedsReactivation))
+        // Create the brush preview
+        let mut brush_preview = BrushPreview::new();
+        brush_preview.select_brush(&BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Erase);
+        brush_preview.set_brush_properties(&model.anim_view_model.brush().brush_properties.get());
 
-        /*
-        let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
-
-        if let Some(mut selected_layer) = selected_layer {
-            // Pick the ink brush in erase mode for the current layer
-            selected_layer.select_brush(&BrushDefinition::Ink(InkDefinition::default_eraser()), BrushDrawingStyle::Erase);
-        }
+        // Store the preview in the state
+        model.tool_state.lock().unwrap().insert::<Eraser>(brush_preview);
 
         // If the selected layer is different, we need re-activation
         let activated_layer_id  = model.anim_view_model.timeline().selected_layer.get();
@@ -40,33 +44,26 @@ impl<Anim: 'static+Animation> Tool<Anim> for Eraser {
                 ToolActivationState::NeedsReactivation
             }
         }))
-        */
     }
 
     fn paint<'a>(&self, model: &ToolModel<'a, Anim>, _device: &PaintDevice, actions: &Vec<Painting>) {
-        /*
-        let selected_layer: Option<Editor<PaintLayer+'static>>  = model.selected_layer.edit();
+        // Should be a brush preview in the state
+        let tool_state      = model.tool_state.clone();
+        let mut tool_state  = tool_state.lock().unwrap();
+        let brush_preview   = tool_state.get_mut::<Eraser>().unwrap();
 
-        // Perform the paint actions on the selected layer if we can
-        if let Some(mut selected_layer) = selected_layer {
-            for action in actions {
-                Ink::paint_action(model, &mut *selected_layer, action);
-            }
-
-            // If there's a brush stroke waiting, render it
-            // Starting a brush stroke selects the layer and creates a save state, which 
-            // we assume is still present for the canvas (this is fragile!)
-            if selected_layer.has_pending_brush_stroke() {
-                let layer: &PaintLayer  = &*selected_layer;
-
-                model.canvas.draw(|gc| {
-                    // Re-render the current brush stroke
-                    gc.restore();
-                    gc.store();
-                    layer.draw_current_brush_stroke(gc);
-                });
-            }
+        // Perform the paint actions
+        for action in actions {
+            Ink::paint_action(model, brush_preview, action);
         }
-        */
+
+        // The start action will set us up for rendering the preview by setting up a stored state
+        // We render here so we don't render repeatedly when there are multiple actions
+        model.canvas.draw(|gc| {
+            // Re-render the current brush stroke
+            gc.restore();
+            gc.store();
+            brush_preview.draw_current_brush_stroke(gc);
+        });
     }
 }
