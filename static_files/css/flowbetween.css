@@ -2,18 +2,21 @@
     font-family: "lato";
     src: url("../fonts/lato/Lato-Regular.woff2");
     font-weight: 400;
+    text-rendering: optimizeLegibility;
 }
 
 @font-face {
     font-family: "lato";
     src: url("../fonts/lato/Lato-Thin.woff2");
     font-weight: 100;
+    text-rendering: optimizeLegibility;
 }
 
 @font-face {
     font-family: "lato";
     src: url("../fonts/lato/Lato-Bold.woff2");
     font-weight: bold;
+    text-rendering: optimizeLegibility;
 }
 
 html, body {
