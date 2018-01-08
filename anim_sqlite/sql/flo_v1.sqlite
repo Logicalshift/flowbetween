@@ -5,6 +5,10 @@
  ***/
 
 /*
+ *  ===== File declarations
+ */
+
+/*
  * The FlowBetween table indicates version information for this file and
  * contains a single record.
  */
@@ -20,13 +24,96 @@ CREATE TABLE FlowBetween (
 );
 
 /*
+ *  ===== The edit log
+ */
+
+/*
+ * The edit log contains a list of edits made by the user
+ */
+CREATE TABLE Flo_EditLog (
+    /* Order of this edit */
+    Id      INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+
+    /* Type of edit (see Flo_EnumerationDescriptions for the values) */
+    Edit    INTEGER NOT NULL
+);
+
+/*
+ * The editlog size table provides the size parameter for edits that require one
+ */
+CREATE TABLE Flo_EL_Size (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+
+    X           REAL,
+    Y           REAL
+) WITHOUT ROWID;
+
+/*
+ * If an edit applies to a layer, this supplies the layer ID
+ */
+CREATE TABLE Flo_EL_Layer (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+
+    Layer       INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * Associates an edit containing brush information with the brush
+ */
+CREATE TABLE Flo_EL_Brush (
+    EditId          INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+
+    DrawingStyle    INTEGER NOT NULL,
+    BrushType       INTEGER NOT NULL,
+    Brush           INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * Provides an ink brush definition (BrushType == Ink)
+ */
+CREATE TABLE Flo_EL_Brush_Ink (
+    Brush           INTEGER NOT NULL PRIMARY KEY ASC,
+
+    MinWidth        REAL NOT NULL,
+    MaxWidth        REAL NOT NULL,
+    ScaleUpDistance REAL NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * Associates an edit with any brush properties it may have
+ */
+CREATE TABLE Flo_EL_BrushProperties (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+
+    Size        REAL NOT NULL,
+    Opacity     REAL NOT NULL,
+    Color       INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * Associates an edit with a series of raw input points
+ */
+CREATE TABLE Flo_EL_RawPoint (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    PointId     INTEGER NOT NULL,
+
+    PosX        REAL NOT NULL,
+    PosY        REAL NOT NULL,
+    Pressure    REAL NOT NULL,
+    TiltX       REAL NOT NULL,
+    TiltY       REAL NOT NULL,
+
+    PRIMARY KEY (EditId, PointId)
+) WITHOUT ROWID;
+
+/*
  *  ===== Enumeration descriptions
  */
 
 /*
  * Provides information about what enumerable values mean
  */
-CREATE TABLE EnumerationDescriptions (
+CREATE TABLE Flo_EnumerationDescriptions (
     /* Name of the field containing an enumeration */
     FieldName   TEXT NOT NULL,
 
@@ -43,10 +130,30 @@ CREATE TABLE EnumerationDescriptions (
 );
 
 /* The stable/unstable enumeration */
-INSERT INTO EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("Stable", 0, "Unstable", "File was created with a development version of FlowBetween and may not conform to the final schema for this version"),
-            ("Stable", 1, "Stable", "File was created using a stable version of the schema");
+INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("Stable", 0,   "Unstable", "File was created with a development version of FlowBetween and may not conform to the final schema for this version"),
+            ("Stable", 1,   "Stable",   "File was created using a stable version of the schema");
 
+/* The possible types of edit */
+INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("Edit", 0, "SetSize",                          "Sets the size of the animation"),
+            ("Edit", 1, "AddNewLayer",                      "Adds a new layer with a particular ID to the animation"),
+            ("Edit", 2, "RemoveLayer",                      "Removes a layer from the animation"),
+            ("Edit", 3, "Layer::AddKeyFrame",               "Adds a new keyframe to a layer"),
+            ("Edit", 4, "Layer::RemoveKeyFrame",            "Removes a keyframe from a layer"),
+            ("Edit", 5, "Layer::Paint::SelectBrush",        "Selects a particular brush definition"),
+            ("Edit", 6, "Layer::Paint::BrushProperties",    "Sets the brush properties"),
+            ("Edit", 7, "Layer::Paint::BrushStroke",        "Represents a brush stroke with the specified raw properties");
+
+/* Brush drawing style */
+INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("DrawingStyle", 0, "Draw",     "Brush should draw onto the canvas"),
+            ("DrawingStyle", 1, "Erase",    "Brush should erase from the current layer");
+
+/* Types of brush definition */
+INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("BrushType", 0,    "Simple",   "Simple brush (mainly used for testing)"),
+            ("BrushType", 1,    "Ink",      "Ink brush");
 /*
  *  ===== DEFAULT DATA
  */
