@@ -58,6 +58,16 @@ CREATE TABLE Flo_EL_Layer (
 ) WITHOUT ROWID;
 
 /*
+ * The time for edits that use one. Times here are measured in microseconds
+ * from the start of the animation.
+ */
+CREATE TABLE Flo_EL_When (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+
+    AtTime      INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
  * Associates an edit containing brush information with the brush
  */
 CREATE TABLE Flo_EL_Brush (
