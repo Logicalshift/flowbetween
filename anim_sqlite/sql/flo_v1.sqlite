@@ -101,6 +101,28 @@ CREATE TABLE Flo_EL_BrushProperties (
 ) WITHOUT ROWID;
 
 /*
+ * A colour defined as an RGB triplet
+ */
+CREATE TABLE Flo_EL_Color_Rgb (
+    Color       INTEGER NOT NULL PRIMARY KEY ASC,
+
+    R           REAL NOT NULL,
+    G           REAL NOT NULL,
+    B           REAL NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * A colour defined as an HSLuv triplet
+ */
+CREATE TABLE Flo_EL_Color_Hsluv (
+    Color       INTEGER NOT NULL PRIMARY KEY ASC,
+
+    H           REAL NOT NULL,
+    S           REAL NOT NULL,
+    L           REAL NOT NULL
+) WITHOUT ROWID;
+
+/*
  * Associates an edit with a series of raw input points
  */
 CREATE TABLE Flo_EL_RawPoint (
