@@ -8,3 +8,4 @@ canvas              = { path = "../canvas" }
 animation           = { path = "../animation" }
 
 rusqlite            = { version = "0.11.0", features = ["bundled"] }
+desync              = { git = "https://github.com/logicalshift/desync", branch = "develop" }
