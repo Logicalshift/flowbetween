@@ -1,17 +1,22 @@
 use desync::*;
 use rusqlite::*;
+
 use std::mem;
+use std::sync::*;
 
 #[cfg(test)] mod tests;
 mod setup;
+mod editlog;
+mod editlog_statements;
 
 pub use self::setup::*;
+pub use self::editlog::*;
 
 ///
 /// Database used to store an animation
 /// 
 pub struct AnimationDb {
-    core: Desync<AnimationDbCore>
+    core: Arc<Desync<AnimationDbCore>>
 }
 
 ///
@@ -53,7 +58,7 @@ impl AnimationDb {
         };
 
         AnimationDb {
-            core: Desync::new(core)
+            core: Arc::new(Desync::new(core))
         }
     }
 

@@ -9,19 +9,23 @@ impl AnimationDb {
     /// Initialises the database
     /// 
     pub fn setup(&self) {
-        self.async(|core| {
-            // Create the definition string
-            let v1_definition   = String::from_utf8_lossy(V1_DEFINITION);
+        self.async(|core| core.setup());
+    }
+}
 
-            // Execute against the database
-            core.sqlite.execute_batch(&v1_definition)?;
+impl AnimationDbCore {
+    pub fn setup(&mut self) -> Result<()> {
+        // Create the definition string
+        let v1_definition   = String::from_utf8_lossy(V1_DEFINITION);
 
-            // Set the database version string
-            let version_string      = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
-            let mut update_version  = core.sqlite.prepare("UPDATE FlowBetween SET FloVersion = ?")?;
-            update_version.execute(&[&version_string])?;
+        // Execute against the database
+        self.sqlite.execute_batch(&v1_definition)?;
 
-            Ok(())
-        });
+        // Set the database version string
+        let version_string      = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
+        let mut update_version  = self.sqlite.prepare("UPDATE FlowBetween SET FloVersion = ?")?;
+        update_version.execute(&[&version_string])?;
+
+        Ok(())
     }
 }
