@@ -24,4 +24,4 @@ impl AnimationDb {
             Ok(())
         });
     }
-}0
+}
