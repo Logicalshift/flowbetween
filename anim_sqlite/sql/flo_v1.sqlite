@@ -74,15 +74,22 @@ CREATE TABLE Flo_EL_Brush (
     EditId          INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
 
     DrawingStyle    INTEGER NOT NULL,
-    BrushType       INTEGER NOT NULL,
-    Brush           INTEGER NOT NULL
+    Brush           INTEGER NOT NULL REFERENCES Flo_EL_Brush_Type(Brush)
 ) WITHOUT ROWID;
+
+/*
+ * Associates a brush with a brush type
+ */
+CREATE TABLE Flo_EL_Brush_Type (
+    Brush       INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+    BrushType   INTEGER NOT NULL
+);
 
 /*
  * Provides an ink brush definition (BrushType == Ink)
  */
 CREATE TABLE Flo_EL_Brush_Ink (
-    Brush           INTEGER NOT NULL PRIMARY KEY ASC,
+    Brush           INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EL_Brush_Type(Brush),
 
     MinWidth        REAL NOT NULL,
     MaxWidth        REAL NOT NULL,
@@ -97,14 +104,22 @@ CREATE TABLE Flo_EL_BrushProperties (
 
     Size        REAL NOT NULL,
     Opacity     REAL NOT NULL,
-    Color       INTEGER NOT NULL
+    Color       INTEGER NOT NULL REFERENCES Flo_EL_Color_Type(Color)
 ) WITHOUT ROWID;
+
+/*
+ * Associates a colour with a colour type
+ */
+CREATE TABLE Flo_EL_Color_Type (
+    Color       INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+    ColorType   INTEGER NOT NULL
+);
 
 /*
  * A colour defined as an RGB triplet
  */
 CREATE TABLE Flo_EL_Color_Rgb (
-    Color       INTEGER NOT NULL PRIMARY KEY ASC,
+    Color       INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EL_Color_Type(Color),
 
     R           REAL NOT NULL,
     G           REAL NOT NULL,
@@ -115,7 +130,7 @@ CREATE TABLE Flo_EL_Color_Rgb (
  * A colour defined as an HSLuv triplet
  */
 CREATE TABLE Flo_EL_Color_Hsluv (
-    Color       INTEGER NOT NULL PRIMARY KEY ASC,
+    Color       INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EL_Color_Type(Color),
 
     H           REAL NOT NULL,
     S           REAL NOT NULL,
@@ -186,6 +201,12 @@ INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
 INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
      VALUES ("BrushType", 0,    "Simple",   "Simple brush (mainly used for testing)"),
             ("BrushType", 1,    "Ink",      "Ink brush");
+
+/* Types of colour definition */
+INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("ColorType", 0,    "RGB",      "RGB colour"),
+            ("ColorType", 1,    "HSLUV",    "HSLuv colour");
+
 /*
  *  ===== DEFAULT DATA
  */
