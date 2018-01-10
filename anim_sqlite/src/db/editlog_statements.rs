@@ -14,13 +14,13 @@ pub struct EditLogStatements<'a> {
     insert_el_size:             Option<CachedStatement<'a>>,
     insert_el_layer:            Option<CachedStatement<'a>>,
     insert_el_when:             Option<CachedStatement<'a>>,
-    insert_el_brush_type:       Option<CachedStatement<'a>>,
+    insert_brush_type:       Option<CachedStatement<'a>>,
     insert_el_brush:            Option<CachedStatement<'a>>,
-    insert_el_brush_ink:        Option<CachedStatement<'a>>,
-    insert_el_brush_properties: Option<CachedStatement<'a>>,
-    insert_el_color_type:       Option<CachedStatement<'a>>,
-    insert_el_color_rgb:        Option<CachedStatement<'a>>,
-    insert_el_color_hsluv:      Option<CachedStatement<'a>>,
+    insert_brush_ink:        Option<CachedStatement<'a>>,
+    insert_brush_properties: Option<CachedStatement<'a>>,
+    insert_color_type:       Option<CachedStatement<'a>>,
+    insert_color_rgb:        Option<CachedStatement<'a>>,
+    insert_color_hsluv:      Option<CachedStatement<'a>>,
     insert_el_rawpoint:         Option<CachedStatement<'a>>,
 }
 
@@ -36,13 +36,13 @@ impl<'a> EditLogStatements<'a> {
             insert_el_size:             None,
             insert_el_layer:            None,
             insert_el_when:             None,
-            insert_el_brush_type:       None,
+            insert_brush_type:       None,
             insert_el_brush:            None,
-            insert_el_brush_ink:        None,
-            insert_el_brush_properties: None,
-            insert_el_color_type:       None,
-            insert_el_color_rgb:        None,
-            insert_el_color_hsluv:      None,
+            insert_brush_ink:        None,
+            insert_brush_properties: None,
+            insert_color_type:       None,
+            insert_color_rgb:        None,
+            insert_color_hsluv:      None,
             insert_el_rawpoint:         None
         }
     }
@@ -75,10 +75,10 @@ impl<'a> EditLogStatements<'a> {
         )
     }
 
-    pub fn insert_el_brush_type<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
+    pub fn insert_brush_type<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
-        self.insert_el_brush_type.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_EL_Brush_Type (BrushType) VALUES (?)").unwrap()
+        self.insert_brush_type.get_or_insert_with(|| 
+            sqlite.prepare_cached("INSERT INTO Flo_Brush_Type (BrushType) VALUES (?)").unwrap()
         )
     }
 
@@ -89,38 +89,38 @@ impl<'a> EditLogStatements<'a> {
         )
     }
 
-    pub fn insert_el_brush_ink<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
+    pub fn insert_brush_ink<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
-        self.insert_el_brush_ink.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_EL_Brush_Ink (Brush, MinWidth, MaxWidth, ScaleUpDistance) VALUES (?, ?, ?, ?)").unwrap()
+        self.insert_brush_ink.get_or_insert_with(|| 
+            sqlite.prepare_cached("INSERT INTO Flo_Brush_Ink (Brush, MinWidth, MaxWidth, ScaleUpDistance) VALUES (?, ?, ?, ?)").unwrap()
         )
     }
 
-    pub fn insert_el_brush_properties<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
+    pub fn insert_brush_properties<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
-        self.insert_el_brush_properties.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_EL_BrushProperties (EditId, Size, Opacity, Color) VALUES (?, ?, ?, ?)").unwrap()
+        self.insert_brush_properties.get_or_insert_with(|| 
+            sqlite.prepare_cached("INSERT INTO Flo_BrushProperties (EditId, Size, Opacity, Color) VALUES (?, ?, ?, ?)").unwrap()
         )
     }
 
-    pub fn insert_el_color_type<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
+    pub fn insert_color_type<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
-        self.insert_el_brush_type.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_EL_Color_Type (ColorType) VALUES (?)").unwrap()
+        self.insert_brush_type.get_or_insert_with(|| 
+            sqlite.prepare_cached("INSERT INTO Flo_Color_Type (ColorType) VALUES (?)").unwrap()
         )
     }
 
-    pub fn insert_el_color_rgb<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
+    pub fn insert_color_rgb<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
-        self.insert_el_color_rgb.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_EL_Color_Rgb (Color, R, G, B) VALUES (?, ?, ?, ?)").unwrap()
+        self.insert_color_rgb.get_or_insert_with(|| 
+            sqlite.prepare_cached("INSERT INTO Flo_Color_Rgb (Color, R, G, B) VALUES (?, ?, ?, ?)").unwrap()
         )
     }
 
-    pub fn insert_el_color_hsluv<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
+    pub fn insert_color_hsluv<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
-        self.insert_el_color_hsluv.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_EL_Color_Hsluv (Color, H, S, L) VALUES (?, ?, ?, ?)").unwrap()
+        self.insert_color_hsluv.get_or_insert_with(|| 
+            sqlite.prepare_cached("INSERT INTO Flo_Color_Hsluv (Color, H, S, L) VALUES (?, ?, ?, ?)").unwrap()
         )
     }
 
@@ -181,11 +181,11 @@ mod test {
     }
 
     #[test]
-    fn insert_el_brush_type() {
+    fn insert_brush_type() {
         let core     = core();
         let mut stmt = EditLogStatements::new(&core.sqlite);
 
-        let brush_id = stmt.insert_el_brush_type().insert(&[&0]).unwrap();
+        let brush_id = stmt.insert_brush_type().insert(&[&0]).unwrap();
         assert!(brush_id == 1);
     }
 
@@ -195,54 +195,54 @@ mod test {
         let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
-        let brush_id = stmt.insert_el_brush_type().insert(&[&0]).unwrap();
+        let brush_id = stmt.insert_brush_type().insert(&[&0]).unwrap();
         stmt.insert_el_brush().insert(&[&edit_id, &0, &brush_id]).unwrap();
     }
 
     #[test]
-    fn insert_el_color_type() {
+    fn insert_color_type() {
         let core     = core();
         let mut stmt = EditLogStatements::new(&core.sqlite);
 
-        let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
+        let color_id = stmt.insert_color_type().insert(&[&0]).unwrap();
         assert!(color_id == 1);
     }
 
     #[test]
-    fn insert_el_brush_ink() {
+    fn insert_brush_ink() {
         let core     = core();
         let mut stmt = EditLogStatements::new(&core.sqlite);
 
-        let brush_id = stmt.insert_el_brush_type().insert(&[&0]).unwrap();
-        stmt.insert_el_brush_ink().insert(&[&brush_id, &10.0, &20.0, &30.0]).unwrap();
+        let brush_id = stmt.insert_brush_type().insert(&[&0]).unwrap();
+        stmt.insert_brush_ink().insert(&[&brush_id, &10.0, &20.0, &30.0]).unwrap();
     }
 
     #[test]
-    fn insert_el_brush_properties() {
+    fn insert_brush_properties() {
         let core     = core();
         let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
-        let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
-        stmt.insert_el_brush_properties().insert(&[&edit_id, &20.0, &1.0, &color_id]).unwrap();
+        let color_id = stmt.insert_color_type().insert(&[&0]).unwrap();
+        stmt.insert_brush_properties().insert(&[&edit_id, &20.0, &1.0, &color_id]).unwrap();
     }
 
     #[test]
-    fn insert_el_color_rgb() {
+    fn insert_color_rgb() {
         let core     = core();
         let mut stmt = EditLogStatements::new(&core.sqlite);
 
-        let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
-        stmt.insert_el_color_rgb().insert(&[&color_id, &1.0, &0.0, &1.0]).unwrap();
+        let color_id = stmt.insert_color_type().insert(&[&0]).unwrap();
+        stmt.insert_color_rgb().insert(&[&color_id, &1.0, &0.0, &1.0]).unwrap();
     }
 
     #[test]
-    fn insert_el_color_hsluv() {
+    fn insert_color_hsluv() {
         let core     = core();
         let mut stmt = EditLogStatements::new(&core.sqlite);
 
-        let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
-        stmt.insert_el_color_hsluv().insert(&[&color_id, &45.0, &100.0, &50.0]).unwrap();
+        let color_id = stmt.insert_color_type().insert(&[&0]).unwrap();
+        stmt.insert_color_hsluv().insert(&[&color_id, &45.0, &100.0, &50.0]).unwrap();
     }
 
     #[test]

@@ -204,7 +204,7 @@ impl AnimationDbCore {
 
             &BrushProperties(ref properties)                => {
                 let color_id        = self.insert_color(statements, &properties.color)?;
-                statements.insert_el_brush_properties().insert(&[
+                statements.insert_brush_properties().insert(&[
                     &edit_id, 
                     
                     &(properties.size as f64),
@@ -255,13 +255,13 @@ impl AnimationDbCore {
             &Ink(_)     => self.edit_log_enum.as_ref().unwrap().brush_ink
         };
 
-        let brush_id = statements.insert_el_brush_type().insert(&[&brush_type])?;
+        let brush_id = statements.insert_brush_type().insert(&[&brush_type])?;
 
         // Type-specific information
         match brush_definition {
             &Simple             => { },
             &Ink(ref ink_defn)  => { 
-                statements.insert_el_brush_ink().insert(&[
+                statements.insert_brush_ink().insert(&[
                     &brush_id,
 
                     &(ink_defn.min_width as f64),
@@ -284,12 +284,12 @@ impl AnimationDbCore {
             &Color::Hsluv(_, _, _, _)   => self.edit_log_enum.as_ref().unwrap().color_hsluv,
         };
 
-        let color_id = statements.insert_el_color_type().insert(&[&color_type])?;
+        let color_id = statements.insert_color_type().insert(&[&color_type])?;
 
         // Components
         match color {
             &Color::Rgba(r, g, b, _) => {
-                statements.insert_el_color_rgb().insert(&[
+                statements.insert_color_rgb().insert(&[
                     &color_id,
                     &(r as f64),
                     &(g as f64),
@@ -297,7 +297,7 @@ impl AnimationDbCore {
                 ])?;
             },
             &Color::Hsluv(h, s, l, _) => {
-                statements.insert_el_color_hsluv().insert(&[
+                statements.insert_color_hsluv().insert(&[
                     &color_id,
                     &(h as f64),
                     &(s as f64),
