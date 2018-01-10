@@ -26,9 +26,12 @@ struct AnimationDbCore {
     /// The database connection
     sqlite: Connection,
 
+    /// The enum values for the edit log (or None if these are not yet available)
+    edit_log_enum: Option<EditLogEnumValues>,
+
     /// If there has been a failure with the database, this is it. No future operations 
-    /// will work if there has been an error
-    failure: Option<Error>
+    /// will work while there's an error that hasn't been cleared
+    failure: Option<Error>,
 }
 
 impl AnimationDb {
@@ -52,10 +55,7 @@ impl AnimationDb {
     /// Creates an animation database that uses an existing database already set up in a SQLite connection
     /// 
     pub fn from_connection(connection: Connection) -> AnimationDb {
-        let core = AnimationDbCore {
-            sqlite:     connection,
-            failure:    None
-        };
+        let core = AnimationDbCore::new(connection);
 
         AnimationDb {
             core: Arc::new(Desync::new(core))
@@ -87,5 +87,20 @@ impl AnimationDb {
                 core.failure    = result.err();
             }
         })
+    }
+}
+
+impl AnimationDbCore {
+    ///
+    /// Creates a new database core
+    /// 
+    fn new(connection: Connection) -> AnimationDbCore {
+        let core = AnimationDbCore {
+            sqlite:         connection,
+            edit_log_enum:  None,
+            failure:        None
+        };
+
+        core
     }
 }

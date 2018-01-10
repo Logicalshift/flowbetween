@@ -173,7 +173,7 @@ CREATE TABLE Flo_EnumerationDescriptions (
     /* Comment */
     Comment     TEXT,
 
-    PRIMARY KEY (FieldName, Value)
+    PRIMARY KEY (FieldName, ApiName)
 );
 
 /* The stable/unstable enumeration */
