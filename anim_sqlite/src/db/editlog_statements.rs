@@ -4,7 +4,7 @@ use rusqlite::*;
 ///
 /// Prepared statement cache for the database
 /// 
-pub struct DbStatements<'a> {
+pub struct EditLogStatements<'a> {
     /// Connection to the database
     sqlite:             &'a Connection,
 
@@ -24,12 +24,12 @@ pub struct DbStatements<'a> {
     insert_el_rawpoint:         Option<CachedStatement<'a>>,
 }
 
-impl<'a> DbStatements<'a> {
+impl<'a> EditLogStatements<'a> {
     ///
     /// Creates a new DB statements cache
     ///
-    pub fn new(connection: &'a Connection) -> DbStatements<'a> {
-        DbStatements {
+    pub fn new(connection: &'a Connection) -> EditLogStatements<'a> {
+        EditLogStatements {
             sqlite:             connection,
 
             insert_editlog:             None,
@@ -85,7 +85,7 @@ impl<'a> DbStatements<'a> {
     pub fn insert_el_brush<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
         self.insert_el_brush.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_EL_Brush (EditId, DrawingStyle, BrushType, Brush) VALUES (?, ?, ?, ?)").unwrap()
+            sqlite.prepare_cached("INSERT INTO Flo_EL_Brush (EditId, DrawingStyle, Brush) VALUES (?, ?, ?)").unwrap()
         )
     }
 
@@ -147,7 +147,7 @@ mod test {
     #[test]
     fn insert_editlog() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let row_id = stmt.insert_editlog().insert(&[&2]).unwrap();
         assert!(row_id == 1);
@@ -156,7 +156,7 @@ mod test {
     #[test]
     fn insert_el_size() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
         stmt.insert_el_size().insert(&[&edit_id, &1980.0, &1080.0]).unwrap();
@@ -165,7 +165,7 @@ mod test {
     #[test]
     fn insert_el_layer() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
         stmt.insert_el_layer().insert(&[&edit_id, &1]).unwrap();
@@ -174,7 +174,7 @@ mod test {
     #[test]
     fn insert_el_when() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
         stmt.insert_el_when().insert(&[&edit_id, &1000000]).unwrap();
@@ -183,16 +183,26 @@ mod test {
     #[test]
     fn insert_el_brush_type() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let brush_id = stmt.insert_el_brush_type().insert(&[&0]).unwrap();
         assert!(brush_id == 1);
     }
 
     #[test]
+    fn insert_el_brush() {
+        let core     = core();
+        let mut stmt = EditLogStatements::new(&core.sqlite);
+
+        let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
+        let brush_id = stmt.insert_el_brush_type().insert(&[&0]).unwrap();
+        stmt.insert_el_brush().insert(&[&edit_id, &0, &brush_id]).unwrap();
+    }
+
+    #[test]
     fn insert_el_color_type() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
         assert!(color_id == 1);
@@ -201,7 +211,7 @@ mod test {
     #[test]
     fn insert_el_brush_ink() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let brush_id = stmt.insert_el_brush_type().insert(&[&0]).unwrap();
         stmt.insert_el_brush_ink().insert(&[&brush_id, &10.0, &20.0, &30.0]).unwrap();
@@ -210,7 +220,7 @@ mod test {
     #[test]
     fn insert_el_brush_properties() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
         let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
@@ -220,7 +230,7 @@ mod test {
     #[test]
     fn insert_el_color_rgb() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
         stmt.insert_el_color_rgb().insert(&[&color_id, &1.0, &0.0, &1.0]).unwrap();
@@ -229,7 +239,7 @@ mod test {
     #[test]
     fn insert_el_color_hsluv() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let color_id = stmt.insert_el_color_type().insert(&[&0]).unwrap();
         stmt.insert_el_color_hsluv().insert(&[&color_id, &45.0, &100.0, &50.0]).unwrap();
@@ -238,7 +248,7 @@ mod test {
     #[test]
     fn insert_el_rawpoint() {
         let core     = core();
-        let mut stmt = DbStatements::new(&core.sqlite);
+        let mut stmt = EditLogStatements::new(&core.sqlite);
 
         let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
         stmt.insert_el_rawpoint().insert(&[&edit_id, &0, &1.0, &2.0, &0.5, &0.0, &0.0]).unwrap();
