@@ -139,7 +139,7 @@ mod test {
     /// Creates a DB core to test the SQL statements on
     fn core() -> AnimationDbCore {
         let mut core = AnimationDbCore::new(Connection::open_in_memory().unwrap());
-        core.setup();
+        core.setup().unwrap();
 
         core
     }
