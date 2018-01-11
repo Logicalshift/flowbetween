@@ -1,5 +1,4 @@
 use super::*;
-use rusqlite::*;
 
 ///
 /// Prepared statement cache for the database
@@ -14,13 +13,13 @@ pub struct EditLogStatements<'a> {
     insert_el_size:             Option<CachedStatement<'a>>,
     insert_el_layer:            Option<CachedStatement<'a>>,
     insert_el_when:             Option<CachedStatement<'a>>,
-    insert_brush_type:       Option<CachedStatement<'a>>,
+    insert_brush_type:          Option<CachedStatement<'a>>,
     insert_el_brush:            Option<CachedStatement<'a>>,
-    insert_brush_ink:        Option<CachedStatement<'a>>,
-    insert_brush_properties: Option<CachedStatement<'a>>,
-    insert_color_type:       Option<CachedStatement<'a>>,
-    insert_color_rgb:        Option<CachedStatement<'a>>,
-    insert_color_hsluv:      Option<CachedStatement<'a>>,
+    insert_brush_ink:           Option<CachedStatement<'a>>,
+    insert_brush_properties:    Option<CachedStatement<'a>>,
+    insert_color_type:          Option<CachedStatement<'a>>,
+    insert_color_rgb:           Option<CachedStatement<'a>>,
+    insert_color_hsluv:         Option<CachedStatement<'a>>,
     insert_el_rawpoint:         Option<CachedStatement<'a>>,
 }
 
@@ -105,7 +104,7 @@ impl<'a> EditLogStatements<'a> {
 
     pub fn insert_color_type<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
-        self.insert_brush_type.get_or_insert_with(|| 
+        self.insert_color_type.get_or_insert_with(|| 
             sqlite.prepare_cached("INSERT INTO Flo_Color_Type (ColorType) VALUES (?)").unwrap()
         )
     }
