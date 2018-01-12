@@ -4,13 +4,11 @@ use animation::*;
 use animation::editor::*;
 use animation::inmemory::pending_log::*;
 
-use std::ops::Range;
-
 impl SqliteAnimation {
     ///
     /// Commits a set of edits to this animation
     /// 
-    fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&self, edits: I) -> Range<usize> {
+    fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&self, edits: I) {
         let edits: Vec<AnimationEdit> = edits.into_iter().collect();
 
         // The animation editor performs the edits (via the MutableAnimation implementation)
@@ -22,9 +20,6 @@ impl SqliteAnimation {
         // Perform the edits
         let mut mutable = self.db.edit();
         editor.perform(&mut *mutable, edits);
-
-        // TODO: return the range properly
-        unimplemented!()
     }
 }
 

@@ -72,22 +72,20 @@ mod test {
         assert!(log.length() == 0);
 
         {
-            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
+            let mut pending = InMemoryPendingLog::new(|items| { log.commit_edits(items); });
 
             pending.set_pending(&[1, 2, 3, 4]);
 
-            let commit_range = pending.commit_pending();
-            assert!(commit_range == (0..4));
+            pending.commit_pending();
         }
         assert!(log.length() == 4);
 
         {
-            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
+            let mut pending = InMemoryPendingLog::new(|items| { log.commit_edits(items); });
 
             pending.set_pending(&[7,8,9,10]);
 
-            let commit_range = pending.commit_pending();
-            assert!(commit_range == (4..8));
+            pending.commit_pending();
         }
         assert!(log.length() == 8);
 
@@ -100,7 +98,7 @@ mod test {
 
 
         {
-            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
+            let mut pending = InMemoryPendingLog::new(|items| { log.commit_edits(items); });
 
             pending.set_pending(&[1, 2, 3, 4]);
             pending.commit_pending();
@@ -108,13 +106,12 @@ mod test {
         assert!(log.length() == 4);
 
         {
-            let mut pending = InMemoryPendingLog::new(|items| log.commit_edits(items));
+            let mut pending = InMemoryPendingLog::new(|items| { log.commit_edits(items); });
 
             pending.set_pending(&[7,8,9,10]);
             pending.cancel_pending();
 
-            let commit_range = pending.commit_pending();
-            assert!(commit_range == (4..4));
+            pending.commit_pending();
         }
 
         assert!(log.length() == 4);

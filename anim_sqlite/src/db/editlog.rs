@@ -2,7 +2,6 @@ use super::*;
 use super::editlog_statements::*;
 
 use canvas::*;
-use animation::*;
 
 use std::time::Duration;
 

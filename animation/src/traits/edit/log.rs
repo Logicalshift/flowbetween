@@ -37,7 +37,7 @@ pub trait PendingEditLog<Edit> {
     /// Commits any pending edits for this log. Returns the
     /// range where the edits were committed.
     /// 
-    fn commit_pending(&mut self) -> Range<usize>;
+    fn commit_pending(&mut self);
 
     ///
     /// Cancels any pending edits for this log
@@ -92,7 +92,7 @@ impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for &'a mut Log {
     }
 
     #[inline]
-    fn commit_pending(&mut self) -> Range<usize> {
+    fn commit_pending(&mut self) {
         (**self).commit_pending()
     }
 
@@ -138,7 +138,7 @@ impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for RwLockWriteGu
     }
 
     #[inline]
-    fn commit_pending(&mut self) -> Range<usize> {
+    fn commit_pending(&mut self) {
         (**self).commit_pending()
     }
 
@@ -175,7 +175,7 @@ impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for RwLock<Log> {
     }
 
     #[inline]
-    fn commit_pending(&mut self) -> Range<usize> {
+    fn commit_pending(&mut self) {
         self.write().unwrap().commit_pending()
     }
 
@@ -212,7 +212,7 @@ impl<'a, Edit, Log: PendingEditLog<Edit>> PendingEditLog<Edit> for Arc<RwLock<Lo
     }
 
     #[inline]
-    fn commit_pending(&mut self) -> Range<usize> {
+    fn commit_pending(&mut self) {
         (**self).write().unwrap().commit_pending()
     }
 

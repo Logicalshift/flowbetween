@@ -1,5 +1,4 @@
 use super::*;
-use super::super::db::*;
 
 use rusqlite::*;
 use std::path::Path;

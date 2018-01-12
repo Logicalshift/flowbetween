@@ -142,7 +142,7 @@ impl AnimationCore {
     ///
     /// Commits a set of edits to this animation
     /// 
-    fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&mut self, edits: I) -> Range<usize> {
+    fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&mut self, edits: I) {
         // The animation editor is what actually applies these edits to this object
         let editor = AnimationEditor::new();
 
@@ -153,7 +153,7 @@ impl AnimationCore {
         editor.perform(self, edits.iter().cloned());
 
         // Commit to the main log
-        self.edit_log.commit_edits(edits)
+        self.edit_log.commit_edits(edits);
     }
 }
 

@@ -1,7 +1,5 @@
 use super::editlog::*;
 
-use animation::*;
-
 use rusqlite::*;
 
 ///

@@ -15,7 +15,7 @@ pub struct InMemoryPendingLog<Edit, CommitFn> {
 }
 
 impl<Edit, CommitFn> InMemoryPendingLog<Edit, CommitFn>
-where CommitFn: FnMut(Vec<Edit>) -> Range<usize> {
+where CommitFn: FnMut(Vec<Edit>) -> () {
     ///
     /// Creates a new in-memory pending log
     /// 
@@ -28,7 +28,7 @@ where CommitFn: FnMut(Vec<Edit>) -> Range<usize> {
 }
 
 impl<Edit: Clone, CommitFn> PendingEditLog<Edit> for InMemoryPendingLog<Edit, CommitFn>
-where CommitFn: FnMut(Vec<Edit>) -> Range<usize> {
+where CommitFn: FnMut(Vec<Edit>) -> () {
     fn pending(&self) -> Vec<Edit> {
         self.pending.clone()
     }
@@ -37,13 +37,13 @@ where CommitFn: FnMut(Vec<Edit>) -> Range<usize> {
         self.pending = edits.iter().map(|edit| edit.clone()).collect();
     }
 
-    fn commit_pending(&mut self) -> Range<usize> {
+    fn commit_pending(&mut self) {
         // Swap out the pending edits for an empty lsit
         let mut pending = vec![];
         mem::swap(&mut pending, &mut self.pending);
 
         // Pass to the on_commit function
-        (self.on_commit)(pending)
+        (self.on_commit)(pending);
     }
 
     fn cancel_pending(&mut self) {
