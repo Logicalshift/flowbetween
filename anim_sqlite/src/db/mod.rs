@@ -1,3 +1,5 @@
+use animation::*;
+
 use desync::*;
 use rusqlite::*;
 
@@ -8,30 +10,19 @@ use std::sync::*;
 mod setup;
 mod editlog;
 mod editlog_statements;
+mod mutable_animation;
+mod core;
 
 pub use self::setup::*;
 pub use self::editlog::*;
+use self::mutable_animation::*;
+use self::core::*;
 
 ///
 /// Database used to store an animation
 /// 
 pub struct AnimationDb {
     core: Arc<Desync<AnimationDbCore>>
-}
-
-///
-/// Core data structure used by the animation database
-/// 
-struct AnimationDbCore {
-    /// The database connection
-    sqlite: Connection,
-
-    /// The enum values for the edit log (or None if these are not yet available)
-    edit_log_enum: Option<EditLogEnumValues>,
-
-    /// If there has been a failure with the database, this is it. No future operations 
-    /// will work while there's an error that hasn't been cleared
-    failure: Option<Error>,
 }
 
 impl AnimationDb {
@@ -87,6 +78,17 @@ impl AnimationDb {
                 core.failure    = result.err();
             }
         })
+    }
+
+    ///
+    /// Creates an animation editor
+    /// 
+    pub fn edit<'a>(&self) -> Editor<'a, MutableAnimation> {
+        // Turning the animation editor into an object provides the DerefMut interface we need
+        let editor                          = AnimationEditor::new(&self.core);
+        let editor: Box<MutableAnimation>   = Box::new(editor);
+
+        Editor::new(editor)
     }
 }
 

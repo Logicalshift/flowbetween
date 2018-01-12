@@ -20,8 +20,8 @@ impl SqliteAnimation {
         self.db.insert_edits(edits.iter().cloned());
 
         // Perform the edits
-        // TODO: mutable editor
-        // editor.perform(self, edits);
+        let mut mutable = self.db.edit();
+        editor.perform(&mut *mutable, edits);
 
         // TODO: return the range properly
         unimplemented!()
