@@ -37,8 +37,12 @@ impl AnimationDb {
     /// Creates a new animation database using the specified SQLite connection
     /// 
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
-        let db = Self::from_connection(connection);
+        let core = AnimationDbCore::new(connection);
+        let db = AnimationDb {
+            core: Arc::new(Desync::new(core))
+        };
         db.setup();
+
         db
     }
 
@@ -48,9 +52,11 @@ impl AnimationDb {
     pub fn from_connection(connection: Connection) -> AnimationDb {
         let core = AnimationDbCore::new(connection);
 
-        AnimationDb {
+        let db = AnimationDb {
             core: Arc::new(Desync::new(core))
-        }
+        };
+
+        db
     }
 
     ///

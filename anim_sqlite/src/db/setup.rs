@@ -14,6 +14,9 @@ impl AnimationDb {
 }
 
 impl AnimationDbCore {
+    ///
+    /// Initialises the database
+    /// 
     pub fn setup(&mut self) -> Result<()> {
         // Create the definition string
         let v1_definition   = String::from_utf8_lossy(V1_DEFINITION);
