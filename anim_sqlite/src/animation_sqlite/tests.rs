@@ -69,6 +69,7 @@ fn add_multiple_layers() {
         AnimationEdit::AddNewLayer(3),
         AnimationEdit::AddNewLayer(4)
     ]);
+    anim.panic_on_error();
 
     assert!(anim.get_layer_ids().len() == 3);
 
