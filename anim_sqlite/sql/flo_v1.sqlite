@@ -201,6 +201,12 @@ CREATE TABLE Flo_AnimationLayers (
 
 CREATE UNIQUE INDEX FloIdx_AssignedLayers ON Flo_AnimationLayers (AnimationId, AssignedLayerId);
 
+/* Deleting an animation layer deletes the corresponding layertype */
+CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_AnimationLayers
+    BEGIN
+        DELETE FROM Flo_LayerType WHERE LayerId = Old.LayerId;
+    END;
+
 /*
  * Represents a vector layer
  */
@@ -211,6 +217,12 @@ CREATE TABLE Flo_LayerType (
     /* The type of this layer */
     LayerType       INTEGER NOT NULL
 );
+
+/* Deleting an animation layer deletes the corresponding keyframes */
+CREATE TRIGGER Flo_Delete_Layer_KeyFrames BEFORE DELETE ON Flo_LayerType
+    BEGIN
+        DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
+    END;
 
 /*
  * Represents a keyframe for a layer
