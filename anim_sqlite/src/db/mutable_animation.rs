@@ -46,6 +46,7 @@ impl Drop for AnimationEditor {
 
 impl MutableAnimation for AnimationEditor {
     fn set_size(&mut self, size: (f64, f64)) {
+        // Update the size for the current animation
         self.edits.push(Box::new(move |sqlite, animation_id| {
             sqlite.execute(
                 "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
@@ -57,7 +58,23 @@ impl MutableAnimation for AnimationEditor {
     }
 
     fn add_layer(&mut self, new_layer_id: u64) {
-        unimplemented!()
+        // Create a layer with this assigned ID
+        self.edits.push(Box::new(move |sqlite, animation_id| {
+            // TODO: hard codes the layer type as 0 (vector layer), but we can't set layer types right now anyway
+            // Create the layer
+            let layer_id: i32 = sqlite.execute(
+                "INSERT INTO Flo_LayerType (LayerType) VALUES (0)",
+                &[]
+            )?;
+
+            // Give it an assigned ID
+            sqlite.execute(
+                "INSERT INTO Flo_AnimationLayers (AnimationId, LayerId, AssignedLayerId) VALUES (?, ?, ?)",
+                &[&animation_id, &layer_id, &(new_layer_id as i64)]
+            )?;
+
+            Ok(())
+        }))
     }
 
     fn remove_layer(&mut self, old_layer_id: u64) {
