@@ -5,8 +5,6 @@ use animation::*;
 use animation::LayerEdit::*;
 use animation::PaintEdit::*;
 
-use std::time::*;
-
 #[test]
 fn can_create_new_database() {
     let db = AnimationDb::new();

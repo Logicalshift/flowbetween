@@ -1,6 +1,7 @@
 use super::*;
 use animation::*;
 use std::time::Duration;
+use std::sync::*;
 
 #[test]
 fn default_size_is_1980_1080() {
@@ -234,6 +235,36 @@ fn remove_layer_with_keyframe() {
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_none());
 
+    anim.panic_on_error();
+}
+
+#[test]
+fn draw_brush_strokes() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(BrushProperties::new()))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+    ]);
     anim.panic_on_error();
 }
 
