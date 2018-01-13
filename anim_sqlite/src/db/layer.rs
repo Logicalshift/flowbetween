@@ -24,8 +24,17 @@ impl AnimationDb {
     /// Retrieves a layer for a particular ID
     ///
     pub fn get_layer_with_id(&self, assigned_id: u64) -> Option<SqliteVectorLayer> {
+        SqliteVectorLayer::from_assigned_id(&self.core, assigned_id)
+    }
+}
+
+impl SqliteVectorLayer {
+    ///
+    /// Retrieves a layer for a particular ID
+    ///
+    pub fn from_assigned_id(core: &Arc<Desync<AnimationDbCore>>, assigned_id: u64) -> Option<SqliteVectorLayer> {
         // Query for the 'real' layer ID
-        let layer: Result<(i64, i64)> = self.core.sync(|core| {
+        let layer: Result<(i64, i64)> = core.sync(|core| {
             // Fetch the layer data (we need the 'real' ID here)
             let mut get_layer = core.sqlite.prepare(
                 "SELECT Layer.LayerId, Layer.LayerType FROM Flo_AnimationLayers AS Anim \
@@ -49,7 +58,7 @@ impl AnimationDb {
                     assigned_id:    assigned_id,
                     layer_id:       layer_id,
                     layer_type:     layer_type,
-                    core:           Arc::clone(&self.core)
+                    core:           Arc::clone(core)
                 }
             })
     }

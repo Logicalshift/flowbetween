@@ -91,6 +91,16 @@ impl MutableAnimation for AnimationEditor {
     }
 
     fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>> {
-        unimplemented!()
+        // Retrieve the layer
+        let layer = SqliteVectorLayer::from_assigned_id(&self.core, layer_id);
+
+        // Box it
+        let layer = layer.map(|layer| {
+            let boxed: Box<Layer> = Box::new(layer);
+            boxed
+        });
+
+        // Edit it
+        layer.map(|layer| Editor::new(layer))
     }
 }
