@@ -9,7 +9,6 @@ impl SqliteAnimation {
     /// 
     pub fn new_in_memory() -> SqliteAnimation {
         let db = AnimationDb::new();
-        db.setup();
 
         SqliteAnimation {
             db: db
@@ -21,7 +20,6 @@ impl SqliteAnimation {
     /// 
     pub fn new_with_file<P: AsRef<Path>>(path: P) -> Result<SqliteAnimation> {
         let db = AnimationDb::new_from_connection(Connection::open_with_flags(path, SQLITE_OPEN_CREATE)?);
-        db.setup();
 
         Ok(SqliteAnimation {
             db: db
