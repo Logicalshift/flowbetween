@@ -94,6 +94,10 @@ CREATE TABLE Flo_EL_RawPoint (
 ) WITHOUT ROWID;
 
 /*
+ *  ===== Colours, brushes and similar resources
+ */
+
+/*
  * Associates a brush with a brush type
  */
 CREATE TABLE Flo_Brush_Type (
@@ -154,6 +158,101 @@ CREATE TABLE Flo_Color_Hsluv (
 ) WITHOUT ROWID;
 
 /*
+ *  ===== Animation
+ */
+
+/*
+ * Definition of an animation
+ */
+CREATE TABLE Flo_Animation (
+    /* The identifier of this animation */
+    AnimationId     INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+
+    /* Size of the main frame for this animation */
+    SizeX           REAL NOT NULL,
+    SizeY           REAL NOT NULL
+);
+
+/*
+ * Associates an animation with the layers it contains
+ */
+CREATE TABLE Flo_AnimationLayers (
+    AnimationId INTEGER NOT NULL REFERENCES Flo_Animation(AnimationId),
+    LayerId     INTEGER NOT NULL REFERENCES Flo_LayerType(LayerId),
+
+    PRIMARY KEY (AnimationId, LayerId)
+) WITHOUT ROWID;
+
+/*
+ * Represents a vector layer
+ */
+CREATE TABLE Flo_LayerType (
+    /* The ID of this layer */
+    LayerId         INTEGER NOT NULL PRIMARY KEY ASC,
+
+    /* The type of this layer */
+    LayerType       INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * Represents a keyframe for a layer
+ */
+CREATE TABLE Flo_LayerKeyFrame (
+    /* ID of this keyframe */
+    KeyFrameId  INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+
+    /* The ID of the layer with keyframes */
+    LayerId     INTEGER NOT NULL REFERENCES Flo_LayerType(LayerId),
+
+    /* Time in microseconds where this keyframe starts */
+    AtTime      INTEGER NOT NULL
+);
+
+/*
+ * Represents an element in a vector layer
+ */
+CREATE TABLE Flo_VectorElement (
+    /* Identifier for this element */
+    ElementId           INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+
+    /* Type of this element */
+    VectorElementType   INTEGER NOT NULL,
+
+    /* When this element is added to the animation */
+    AtTime              INTEGER NOT NULL
+);
+
+/*
+ * Vector brush element
+ */
+CREATE TABLE Flo_BrushElement (
+    ElementId   INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+    Brush       INTEGER NOT NULL REFERENCES Flo_Brush_Type(Brush)
+) WITHOUT ROWID;
+
+/*
+ * Vector brush properties element
+ */
+CREATE TABLE Flo_BrushPropertiesElement (
+    ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+    BrushProperties     INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * Brush point associated with an element
+ */
+CREATE TABLE Flo_BrushPoint (
+    ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+
+    X1                  REAL NOT NULL,
+    Y1                  REAL NOT NULL,
+    X2                  REAL NOT NULL,
+    X3                  REAL NOT NULL,
+    Y3                  REAL NOT NULL,
+    Width               REAL NOT NULL
+) WITHOUT ROWID;
+
+/*
  *  ===== Enumeration descriptions
  */
 
@@ -206,6 +305,16 @@ INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
 INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
      VALUES ("ColorType", 0,    "RGB",      "RGB colour"),
             ("ColorType", 1,    "HSLUV",    "HSLuv colour");
+
+/* Types of layer */
+INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("LayerType", 0,    "Vector",   "Vector layer");
+
+/* Types of vector element */
+INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
+     VALUES ("VectorElementType",   0,  "Brush",            "Selects a brush for future vector elements"),
+            ("VectorElementType",   1,  "BrushProperties",  "Sets brush properties for future vector elements"),
+            ("VectorElementType",   2,  "BrushStroke",      "Brush stroke element");            
 
 /*
  *  ===== DEFAULT DATA
