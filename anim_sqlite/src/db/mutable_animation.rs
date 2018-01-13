@@ -78,7 +78,16 @@ impl MutableAnimation for AnimationEditor {
     }
 
     fn remove_layer(&mut self, old_layer_id: u64) {
-        unimplemented!()
+        // Create a layer with this assigned ID
+        self.edits.push(Box::new(move |sqlite, animation_id| {
+            // Delete the layer with this assigned ID (triggers will clear out everything else)
+            sqlite.execute(
+                "DELETE FROM Flo_AnimationLayers WHERE AssignedLayerId = ?",
+                &[&(old_layer_id as i64)]
+            )?;
+
+            Ok(())
+        }))
     }
 
     fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>> {
