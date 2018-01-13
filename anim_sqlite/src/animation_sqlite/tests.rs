@@ -26,6 +26,29 @@ fn add_layer() {
 }
 
 #[test]
+fn set_size() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::SetSize(100.0, 200.0)
+    ]);
+}
+
+#[test]
+fn size_changes_after_being_set() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    assert!(anim.size() == (1980.0, 1080.0));
+
+    anim.perform_edits(vec![
+        AnimationEdit::SetSize(100.0, 200.0)
+    ]);
+
+    assert!((anim.size().0-100.0).abs() < 0.01);
+    assert!((anim.size().1-200.0).abs() < 0.01);
+}
+
+#[test]
 fn retrieve_layer_ids() {
     let anim = SqliteAnimation::new_in_memory();
 
