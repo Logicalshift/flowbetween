@@ -99,6 +99,22 @@ fn remove_layer() {
 }
 
 #[test]
+fn single_layer_id() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+
+    let mut layer_ids = anim.get_layer_ids();
+    layer_ids.sort();
+    assert!(layer_ids.len() == 1);
+    assert!(layer_ids == vec![2]);
+
+    anim.panic_on_error();
+}
+
+#[test]
 fn retrieve_layer_ids() {
     let anim = SqliteAnimation::new_in_memory();
 

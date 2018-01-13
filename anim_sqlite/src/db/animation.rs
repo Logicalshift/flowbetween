@@ -25,7 +25,7 @@ impl AnimationDb {
     pub fn get_layer_ids(&self) -> Vec<u64> {
         // Ask the core for the valid layer IDs
         let layer_ids: Result<Vec<i64>> = self.core.sync(|core| {
-            let mut get_layers  = core.sqlite.prepare("SELECT LayerId FROM Flo_AnimationLayers WHERE AnimationId = ?")?;
+            let mut get_layers  = core.sqlite.prepare("SELECT AssignedLayerId FROM Flo_AnimationLayers WHERE AnimationId = ?")?;
             let layers          = get_layers.query_map(&[&core.animation_id], |row| row.get(0))?;
 
             let res: Vec<i64>   = layers.map(|layer| layer.unwrap()).collect();
