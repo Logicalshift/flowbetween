@@ -7,12 +7,15 @@ use std::mem;
 use std::sync::*;
 
 #[cfg(test)] mod tests;
+
 mod setup;
 mod editlog;
 mod editlog_statements;
+mod animation;
 mod mutable_animation;
 mod core;
 
+pub use self::animation::*;
 pub use self::setup::*;
 pub use self::editlog::*;
 use self::mutable_animation::*;

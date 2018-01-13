@@ -24,12 +24,14 @@ impl SqliteAnimation {
 }
 
 impl Animation for SqliteAnimation {
+    #[inline]
     fn size(&self) -> (f64, f64) {
-        unimplemented!()
+        self.db.size()
     }
 
+    #[inline]
     fn get_layer_ids(&self) -> Vec<u64> {
-        unimplemented!()
+        self.db.get_layer_ids()
     }
 
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {

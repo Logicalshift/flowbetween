@@ -1,5 +1,7 @@
 use super::db::*;
 
+#[cfg(test)] mod tests;
+
 mod data;
 mod anim;
 
