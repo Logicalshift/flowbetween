@@ -19,18 +19,6 @@ fn no_layers_by_default() {
 }
 
 #[test]
-fn add_layer() {
-    let anim = SqliteAnimation::new_in_memory();
-    anim.panic_on_error();
-
-    anim.perform_edits(vec![
-        AnimationEdit::AddNewLayer(2)
-    ]);
-
-    anim.panic_on_error();
-}
-
-#[test]
 fn set_size() {
     let anim = SqliteAnimation::new_in_memory();
 
@@ -58,6 +46,56 @@ fn size_changes_after_being_set() {
 }
 
 #[test]
+fn add_layer() {
+    let anim = SqliteAnimation::new_in_memory();
+    anim.panic_on_error();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+
+    assert!(anim.get_layer_ids().len() == 1);
+
+    anim.panic_on_error();
+}
+
+#[test]
+fn add_multiple_layers() {
+    let anim = SqliteAnimation::new_in_memory();
+    anim.panic_on_error();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::AddNewLayer(3),
+        AnimationEdit::AddNewLayer(4)
+    ]);
+
+    assert!(anim.get_layer_ids().len() == 3);
+
+    anim.panic_on_error();
+}
+
+#[test]
+fn remove_layer() {
+    let anim = SqliteAnimation::new_in_memory();
+    anim.panic_on_error();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+
+    assert!(anim.get_layer_ids().len() == 1);
+
+    anim.perform_edits(vec![
+        AnimationEdit::RemoveLayer(2)
+    ]);
+
+    assert!(anim.get_layer_ids().len() == 0);
+
+    anim.panic_on_error();
+}
+
+#[test]
 fn retrieve_layer_ids() {
     let anim = SqliteAnimation::new_in_memory();
 
@@ -68,6 +106,7 @@ fn retrieve_layer_ids() {
 
     let mut layer_ids = anim.get_layer_ids();
     layer_ids.sort();
+    assert!(layer_ids.len() == 2);
     assert!(layer_ids == vec![2, 42]);
 
     anim.panic_on_error();
