@@ -1,5 +1,6 @@
 use super::*;
 use animation::*;
+use std::time::Duration;
 
 #[test]
 fn default_size_is_1980_1080() {
@@ -14,3 +15,103 @@ fn no_layers_by_default() {
 
     assert!(anim.get_layer_ids().len() == 0);
 }
+
+#[test]
+fn add_layer() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+}
+
+#[test]
+fn retrieve_layer_ids() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::AddNewLayer(42)
+    ]);
+
+    let mut layer_ids = anim.get_layer_ids();
+    layer_ids.sort();
+    assert!(layer_ids == vec![2, 42]);
+}
+
+#[test]
+fn retrieve_layer() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+
+    let layer = anim.get_layer_with_id(2);
+    assert!(layer.is_some());
+    assert!(layer.unwrap().id() == 2);
+}
+
+#[test]
+fn non_existent_layer() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+
+    let layer = anim.get_layer_with_id(3);
+    assert!(layer.is_none());
+}
+
+#[test]
+fn add_keyframe() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))
+    ]);
+}
+
+#[test]
+fn remove_keyframe() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250))),
+        AnimationEdit::Layer(2, LayerEdit::RemoveKeyFrame(Duration::from_millis(250)))
+    ]);
+}
+
+#[test]
+fn retrieve_keyframe() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))
+    ]);
+}
+
+#[test]
+fn remove_layer_with_keyframe() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250))),
+    ]);
+
+    let layer = anim.get_layer_with_id(2);
+    assert!(layer.is_some());
+    
+    anim.perform_edits(vec![
+        AnimationEdit::RemoveLayer(2)
+    ]);
+
+    let layer = anim.get_layer_with_id(2);
+    assert!(layer.is_none());
+}
+

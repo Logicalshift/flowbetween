@@ -6,6 +6,15 @@ use animation::inmemory::pending_log::*;
 
 impl SqliteAnimation {
     ///
+    /// Convenience method that performs some edits on this animation
+    /// 
+    pub fn perform_edits(&self, edits: Vec<AnimationEdit>) {
+        let mut editor = self.edit();
+        editor.set_pending(&edits);
+        editor.commit_pending();
+    }
+
+    ///
     /// Commits a set of edits to this animation
     /// 
     fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&self, edits: I) {
