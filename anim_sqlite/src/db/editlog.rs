@@ -3,8 +3,6 @@ use super::editlog_statements::*;
 
 use canvas::*;
 
-use std::time::Duration;
-
 ///
 /// The values to use for the enum values in the various editlog tables
 /// 
@@ -160,16 +158,6 @@ impl AnimationDbCore {
         };
 
         Ok(())
-    }
-
-    ///
-    /// Retrieves microseconds from a duration
-    /// 
-    fn get_micros(when: &Duration) -> i64 {
-        let secs:i64    = when.as_secs() as i64;
-        let nanos:i64   = when.subsec_nanos() as i64;
-
-        (secs * 1_000_000) + (nanos / 1_000)
     }
 
     ///

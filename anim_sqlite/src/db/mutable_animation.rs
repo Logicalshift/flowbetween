@@ -1,10 +1,5 @@
 use super::*;
 
-use animation::*;
-
-use rusqlite::*;
-use std::ops::Deref;
-
 ///
 /// Class used for the animation object for a database
 /// 

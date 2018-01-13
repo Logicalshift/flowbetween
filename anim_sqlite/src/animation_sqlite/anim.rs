@@ -35,7 +35,16 @@ impl Animation for SqliteAnimation {
     }
 
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
-        unimplemented!()
+        // Try to retrieve the layer from the editor
+        let layer = self.db.get_layer_with_id(layer_id);
+
+        // Turn into a reader if it exists
+        let layer = layer.map(|layer| {
+            let boxed: Box<Layer> = Box::new(layer);
+            boxed
+        });
+
+        layer.map(|layer| Reader::new(layer))
     }
 
     fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>> {

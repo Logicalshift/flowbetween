@@ -191,22 +191,26 @@ INSERT INTO Flo_Animation (SizeX, SizeY) VALUES (1980.0, 1080.0);
  * Associates an animation with the layers it contains
  */
 CREATE TABLE Flo_AnimationLayers (
-    AnimationId INTEGER NOT NULL REFERENCES Flo_Animation(AnimationId),
-    LayerId     INTEGER NOT NULL REFERENCES Flo_LayerType(LayerId),
+    AnimationId     INTEGER NOT NULL REFERENCES Flo_Animation(AnimationId),
+    LayerId         INTEGER NOT NULL REFERENCES Flo_LayerType(LayerId),
+
+    AssignedLayerId INTEGER NOT NULL,
 
     PRIMARY KEY (AnimationId, LayerId)
 ) WITHOUT ROWID;
+
+CREATE UNIQUE INDEX FloIdx_AssignedLayers ON Flo_AnimationLayers (AnimationId, AssignedLayerId);
 
 /*
  * Represents a vector layer
  */
 CREATE TABLE Flo_LayerType (
     /* The ID of this layer */
-    LayerId         INTEGER NOT NULL PRIMARY KEY ASC,
+    LayerId         INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
 
     /* The type of this layer */
     LayerType       INTEGER NOT NULL
-) WITHOUT ROWID;
+);
 
 /*
  * Represents a keyframe for a layer
@@ -222,6 +226,8 @@ CREATE TABLE Flo_LayerKeyFrame (
     AtTime      INTEGER NOT NULL
 );
 
+CREATE INDEX FloIdx_FrameTime ON Flo_LayerKeyFrame (LayerId, AtTime);
+
 /*
  * Represents an element in a vector layer
  */
@@ -229,12 +235,23 @@ CREATE TABLE Flo_VectorElement (
     /* Identifier for this element */
     ElementId           INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
 
+    /* The ID of the keyframe that this element belongs to */
+    KeyFrameId          INTEGER NOT NULL REFERENCES Flo_LayerKeyFrame(KeyFrameId),
+
     /* Type of this element */
     VectorElementType   INTEGER NOT NULL,
 
-    /* When this element is added to the animation */
+    /* When this element is added to the animation relative to when the keyframe started */
     AtTime              INTEGER NOT NULL
 );
+
+CREATE INDEX FloIdx_ElementTime ON Flo_VectorElement (KeyFrameId, AtTime, ElementId);
+
+/* Deleting a key frame also deletes any vector elements it contains */
+CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
+    BEGIN
+        DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
+    END;
 
 /*
  * Vector brush element
@@ -244,6 +261,12 @@ CREATE TABLE Flo_BrushElement (
     Brush       INTEGER NOT NULL REFERENCES Flo_Brush_Type(Brush)
 ) WITHOUT ROWID;
 
+/* Deleting a vector element deletes the attached brush elements */
+CREATE TRIGGER Flo_Delete_BrushElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushElement WHERE ElementId = Old.ElementId;
+    END;
+
 /*
  * Vector brush properties element
  */
@@ -252,19 +275,34 @@ CREATE TABLE Flo_BrushPropertiesElement (
     BrushProperties     INTEGER NOT NULL REFERENCES Flo_BrushProperties(BrushProperties)
 ) WITHOUT ROWID;
 
+/* Deleting a vector element deletes the attached brush properties elements */
+CREATE TRIGGER Flo_Delete_BrushPropertiesElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPropertiesElement WHERE ElementId = Old.ElementId;
+    END;
+
 /*
  * Brush point associated with an element
  */
 CREATE TABLE Flo_BrushPoint (
-    ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+    ElementId           INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+    PointId             INTEGER NOT NULL,
 
     X1                  REAL NOT NULL,
     Y1                  REAL NOT NULL,
     X2                  REAL NOT NULL,
     X3                  REAL NOT NULL,
     Y3                  REAL NOT NULL,
-    Width               REAL NOT NULL
+    Width               REAL NOT NULL,
+
+    PRIMARY KEY (ElementId, PointId)
 ) WITHOUT ROWID;
+
+/* Deleting a vector element deletes the points elements */
+CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPoint WHERE ElementId = Old.ElementId;
+    END;
 
 /*
  *  ===== Enumeration descriptions

@@ -5,6 +5,7 @@ use rusqlite::*;
 
 use std::mem;
 use std::sync::*;
+use std::time::Duration;
 
 #[cfg(test)] mod tests;
 
@@ -14,10 +15,12 @@ mod editlog_statements;
 mod animation;
 mod mutable_animation;
 mod core;
+mod layer;
 
 pub use self::animation::*;
 pub use self::setup::*;
 pub use self::editlog::*;
+pub use self::layer::*;
 use self::mutable_animation::*;
 use self::core::*;
 
@@ -116,5 +119,22 @@ impl AnimationDbCore {
         };
 
         core
+    }
+
+    ///
+    /// Turns a microsecond count into a duration
+    /// 
+    fn from_micros(when: i64) -> Duration {
+        Duration::new((when / 1_000_000) as u64, ((when % 1_000_000) * 1000) as u32)
+    }
+
+    ///
+    /// Retrieves microseconds from a duration
+    /// 
+    fn get_micros(when: &Duration) -> i64 {
+        let secs:i64    = when.as_secs() as i64;
+        let nanos:i64   = when.subsec_nanos() as i64;
+
+        (secs * 1_000_000) + (nanos / 1_000)
     }
 }
