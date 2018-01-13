@@ -30,7 +30,7 @@ impl AnimationDb {
     /// Creates a new animation database with an in-memory database
     /// 
     pub fn new() -> AnimationDb {
-        Self::from_connection(Connection::open_in_memory().unwrap())
+        Self::new_from_connection(Connection::open_in_memory().unwrap())
     }
 
     ///
@@ -42,6 +42,7 @@ impl AnimationDb {
             core: Arc::new(Desync::new(core))
         };
         db.setup();
+        db.prepare();
 
         db
     }
@@ -55,6 +56,7 @@ impl AnimationDb {
         let db = AnimationDb {
             core: Arc::new(Desync::new(core))
         };
+        db.prepare();
 
         db
     }
@@ -105,6 +107,7 @@ impl AnimationDbCore {
     fn new(connection: Connection) -> AnimationDbCore {
         let core = AnimationDbCore {
             sqlite:         connection,
+            animation_id:   0,
             edit_log_enum:  None,
             failure:        None
         };

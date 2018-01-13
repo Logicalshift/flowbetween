@@ -11,6 +11,13 @@ impl AnimationDb {
     pub fn setup(&self) {
         self.async(|core| core.setup());
     }
+
+    ///
+    /// Initialises the database
+    /// 
+    pub fn prepare(&self) {
+        self.async(|core| core.prepare());
+    }
 }
 
 impl AnimationDbCore {
@@ -28,6 +35,16 @@ impl AnimationDbCore {
         let version_string      = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
         let mut update_version  = self.sqlite.prepare("UPDATE FlowBetween SET FloVersion = ?")?;
         update_version.execute(&[&version_string])?;
+
+        Ok(())
+    }
+
+    ///
+    /// Preprares to use a database that has been setup
+    /// 
+    pub fn prepare(&mut self) -> Result<()> {
+        let animation_id = self.sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", &[], |row| row.get(0))?;
+        self.animation_id = animation_id;
 
         Ok(())
     }

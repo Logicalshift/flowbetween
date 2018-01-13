@@ -183,6 +183,11 @@ CREATE TABLE Flo_Animation (
 );
 
 /*
+ * Database is created with a single animation
+ */
+INSERT INTO Flo_Animation (SizeX, SizeY) VALUES (1980.0, 1080.0);
+
+/*
  * Associates an animation with the layers it contains
  */
 CREATE TABLE Flo_AnimationLayers (
