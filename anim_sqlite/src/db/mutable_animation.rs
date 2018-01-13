@@ -62,10 +62,8 @@ impl MutableAnimation for AnimationEditor {
         self.edits.push(Box::new(move |sqlite, animation_id| {
             // TODO: hard codes the layer type as 0 (vector layer), but we can't set layer types right now anyway
             // Create the layer
-            let layer_id: i32 = sqlite.execute(
-                "INSERT INTO Flo_LayerType (LayerType) VALUES (0)",
-                &[]
-            )?;
+            let mut make_new_layer  = sqlite.prepare("INSERT INTO Flo_LayerType (LayerType) VALUES (0)")?;
+            let layer_id            = make_new_layer.insert(&[])?;
 
             // Give it an assigned ID
             sqlite.execute(
