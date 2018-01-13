@@ -84,12 +84,14 @@ fn remove_layer() {
     anim.perform_edits(vec![
         AnimationEdit::AddNewLayer(2)
     ]);
+    anim.panic_on_error();
 
     assert!(anim.get_layer_ids().len() == 1);
 
     anim.perform_edits(vec![
         AnimationEdit::RemoveLayer(2)
     ]);
+    anim.panic_on_error();
 
     assert!(anim.get_layer_ids().len() == 0);
 
