@@ -189,6 +189,13 @@ fn add_keyframe() {
     ]);
 
     anim.panic_on_error();
+
+    let layer = anim.get_layer_with_id(2);
+    assert!(layer.is_some());
+
+    let keyframes: Vec<Duration> = layer.unwrap().get_key_frames().collect();
+    assert!(keyframes.len() == 1);
+    assert!(keyframes[0] == Duration::from_millis(250));
 }
 
 #[test]
