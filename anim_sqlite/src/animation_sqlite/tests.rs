@@ -99,6 +99,24 @@ fn remove_layer() {
 }
 
 #[test]
+fn cannot_add_same_layer_again() {
+    let anim = SqliteAnimation::new_in_memory();
+    anim.panic_on_error();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+
+    assert!(anim.retrieve_and_clear_error().is_none());
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2)
+    ]);
+
+    assert!(anim.retrieve_and_clear_error().is_some());
+}
+
+#[test]
 fn single_layer_id() {
     let anim = SqliteAnimation::new_in_memory();
 
