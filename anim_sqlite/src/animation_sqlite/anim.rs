@@ -4,7 +4,23 @@ use animation::*;
 use animation::editor::*;
 use animation::inmemory::pending_log::*;
 
+use rusqlite::*;
+
 impl SqliteAnimation {
+    ///
+    /// If there has been an error, retrieves what it is and clears the condition
+    /// 
+    pub fn retrieve_and_clear_error(&self) -> Option<Error> {
+        self.db.retrieve_and_clear_error()
+    }
+
+    ///
+    /// Panics if this animation has reached an error condition
+    ///
+    pub fn panic_on_error(&self) {
+        self.retrieve_and_clear_error().map(|erm| panic!("{:?}", erm));
+    }
+
     ///
     /// Convenience method that performs some edits on this animation
     /// 
