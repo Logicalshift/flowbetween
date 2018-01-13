@@ -214,12 +214,15 @@ impl AnimationDbCore {
 
             &BrushProperties(ref properties)                => {
                 let color_id        = self.insert_color(statements, &properties.color)?;
-                statements.insert_brush_properties().insert(&[
-                    &edit_id, 
-                    
+                let properties_id   = statements.insert_brush_properties().insert(&[
                     &(properties.size as f64),
                     &(properties.opacity as f64),
                     &color_id
+                ])?;
+
+                statements.insert_el_brush_properties().insert(&[
+                    &edit_id,
+                    &properties_id
                 ])?;
             },
 

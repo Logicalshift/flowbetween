@@ -78,6 +78,15 @@ CREATE TABLE Flo_EL_Brush (
 ) WITHOUT ROWID;
 
 /*
+ * Associates an edit containing brush properties with definition
+ */
+CREATE TABLE Flo_EL_BrushProperties (
+    EditId          INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+
+    BrushProperties INTEGER NOT NULL REFERENCES Flo_BrushProperties(BrushProperties)
+) WITHOUT ROWID;
+
+/*
  * Associates an edit with a series of raw input points
  */
 CREATE TABLE Flo_EL_RawPoint (
@@ -120,12 +129,12 @@ CREATE TABLE Flo_Brush_Ink (
  * Associates an edit with any brush properties it may have
  */
 CREATE TABLE Flo_BrushProperties (
-    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+    BrushProperties INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
 
-    Size        REAL NOT NULL,
-    Opacity     REAL NOT NULL,
-    Color       INTEGER NOT NULL REFERENCES Flo_Color_Type(Color)
-) WITHOUT ROWID;
+    Size            REAL NOT NULL,
+    Opacity         REAL NOT NULL,
+    Color           INTEGER NOT NULL REFERENCES Flo_Color_Type(Color)
+);
 
 /*
  * Associates a colour with a colour type
@@ -235,7 +244,7 @@ CREATE TABLE Flo_BrushElement (
  */
 CREATE TABLE Flo_BrushPropertiesElement (
     ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
-    BrushProperties     INTEGER NOT NULL
+    BrushProperties     INTEGER NOT NULL REFERENCES Flo_BrushProperties(BrushProperties)
 ) WITHOUT ROWID;
 
 /*

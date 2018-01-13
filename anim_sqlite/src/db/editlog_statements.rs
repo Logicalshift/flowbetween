@@ -16,6 +16,7 @@ pub struct EditLogStatements<'a> {
     insert_brush_type:          Option<CachedStatement<'a>>,
     insert_el_brush:            Option<CachedStatement<'a>>,
     insert_brush_ink:           Option<CachedStatement<'a>>,
+    insert_el_brush_properties: Option<CachedStatement<'a>>,
     insert_brush_properties:    Option<CachedStatement<'a>>,
     insert_color_type:          Option<CachedStatement<'a>>,
     insert_color_rgb:           Option<CachedStatement<'a>>,
@@ -29,19 +30,20 @@ impl<'a> EditLogStatements<'a> {
     ///
     pub fn new(connection: &'a Connection) -> EditLogStatements<'a> {
         EditLogStatements {
-            sqlite:             connection,
+            sqlite:                     connection,
 
             insert_editlog:             None,
             insert_el_size:             None,
             insert_el_layer:            None,
             insert_el_when:             None,
-            insert_brush_type:       None,
+            insert_brush_type:          None,
             insert_el_brush:            None,
-            insert_brush_ink:        None,
-            insert_brush_properties: None,
-            insert_color_type:       None,
-            insert_color_rgb:        None,
-            insert_color_hsluv:      None,
+            insert_brush_ink:           None,
+            insert_el_brush_properties: None,
+            insert_brush_properties:    None,
+            insert_color_type:          None,
+            insert_color_rgb:           None,
+            insert_color_hsluv:         None,
             insert_el_rawpoint:         None
         }
     }
@@ -95,10 +97,17 @@ impl<'a> EditLogStatements<'a> {
         )
     }
 
+    pub fn insert_el_brush_properties<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
+        let sqlite = &self.sqlite;
+        self.insert_el_brush_properties.get_or_insert_with(|| 
+            sqlite.prepare_cached("INSERT INTO Flo_EL_BrushProperties (EditId, BrushProperties) VALUES (?, ?)").unwrap()
+        )
+    }
+
     pub fn insert_brush_properties<'b>(&'b mut self) -> &'b mut CachedStatement<'a> {
         let sqlite = &self.sqlite;
         self.insert_brush_properties.get_or_insert_with(|| 
-            sqlite.prepare_cached("INSERT INTO Flo_BrushProperties (EditId, Size, Opacity, Color) VALUES (?, ?, ?, ?)").unwrap()
+            sqlite.prepare_cached("INSERT INTO Flo_BrushProperties (Size, Opacity, Color) VALUES (?, ?, ?)").unwrap()
         )
     }
 
@@ -218,12 +227,23 @@ mod test {
 
     #[test]
     fn insert_brush_properties() {
-        let core     = core();
-        let mut stmt = EditLogStatements::new(&core.sqlite);
+        let core            = core();
+        let mut stmt        = EditLogStatements::new(&core.sqlite);
 
-        let edit_id = stmt.insert_editlog().insert(&[&0]).unwrap();
-        let color_id = stmt.insert_color_type().insert(&[&0]).unwrap();
-        stmt.insert_brush_properties().insert(&[&edit_id, &20.0, &1.0, &color_id]).unwrap();
+        let color_id        = stmt.insert_color_type().insert(&[&0]).unwrap();
+        let properties_id   = stmt.insert_brush_properties().insert(&[&20.0, &1.0, &color_id]).unwrap();
+        assert!(properties_id == 1);
+    }
+
+    #[test]
+    fn insert_el_brush_properties() {
+        let core            = core();
+        let mut stmt        = EditLogStatements::new(&core.sqlite);
+
+        let edit_id         = stmt.insert_editlog().insert(&[&0]).unwrap();
+        let color_id        = stmt.insert_color_type().insert(&[&0]).unwrap();
+        let properties_id   = stmt.insert_brush_properties().insert(&[&20.0, &1.0, &color_id]).unwrap();
+        stmt.insert_el_brush_properties().insert(&[&edit_id, &properties_id]).unwrap();
     }
 
     #[test]
