@@ -32,14 +32,14 @@ impl VectorKeyFrame {
     ///
     /// Adds a new element to the front of the vector
     /// 
-    pub fn add_element(&self, when: Duration, new_element: Box<VectorElement>) {
+    pub fn add_element(&self, when: Duration, new_element: Vector) {
         self.core.lock().unwrap().add_element(when, new_element);
     }
 
     ///
     /// Retrieves the elements in this keyframe
     /// 
-    pub fn elements<'a>(&'a self) -> Box<'a+Deref<Target=Vec<(Duration, Box<VectorElement>)>>> {
+    pub fn elements<'a>(&'a self) -> Box<'a+Deref<Target=Vec<(Duration, Vector)>>> {
         let core            = self.core.lock().unwrap();
 
         let elements = DerefMap::map(core, |core| &core.elements);
@@ -64,7 +64,7 @@ struct VectorKeyFrameCore {
     start_time: Duration,
 
     /// The elements in this key frame (ordered from back to front)
-    elements: Vec<(Duration, Box<VectorElement>)>,
+    elements: Vec<(Duration, Vector)>,
 
     /// The properties that will apply to the next element added to this core
     active_properties: VectorProperties
@@ -102,7 +102,7 @@ impl VectorKeyFrameCore {
     /// Adds a new element to the front of the vector
     /// 
     #[inline]
-    pub fn add_element(&mut self, when: Duration, new_element: Box<VectorElement>) {
+    pub fn add_element(&mut self, when: Duration, new_element: Vector) {
         new_element.update_properties(&mut self.active_properties);
         self.elements.push((when, new_element));
     }

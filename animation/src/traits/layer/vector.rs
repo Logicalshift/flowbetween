@@ -11,7 +11,7 @@ pub trait VectorLayer : Send {
     ///
     /// Adds a new vector element to this layer
     /// 
-    fn add_element(&mut self, when: Duration, new_element: Box<VectorElement>);
+    fn add_element(&mut self, when: Duration, new_element: Vector);
 
     ///
     /// The brush that will be active for the next element that's added to this layer

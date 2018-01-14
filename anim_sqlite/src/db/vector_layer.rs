@@ -157,7 +157,7 @@ impl Layer for SqliteVectorLayer {
 }
 
 impl VectorLayer for SqliteVectorLayer {
-    fn add_element(&mut self, when: Duration, new_element: Box<VectorElement>) {
+    fn add_element(&mut self, when: Duration, new_element: Vector) {
         unimplemented!()
     }
 
