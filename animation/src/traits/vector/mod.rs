@@ -14,6 +14,8 @@ pub use self::brush_element::*;
 pub use self::brush_properties_element::*;
 pub use self::brush_definition_element::*;
 
+use std::ops::Deref;
+
 ///
 /// Possible types of vector element
 /// 
@@ -39,24 +41,17 @@ impl Vector {
     }
 }
 
-impl VectorElement for Vector {
-    fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
+impl Deref for Vector {
+    type Target = VectorElement;
+
+    #[inline]
+    fn deref(&self) -> &VectorElement {
         use Vector::*;
 
         match self {
-            &BrushDefinition(ref defn)  => defn.render(gc, properties),
-            &BrushProperties(ref props) => props.render(gc, properties),
-            &BrushStroke(ref elem)      => elem.render(gc, properties)
-        }
-    }
-
-    fn update_properties(&self, properties: &mut VectorProperties) { 
-        use Vector::*;
-
-        match self {
-            &BrushDefinition(ref defn)  => defn.update_properties(properties),
-            &BrushProperties(ref props) => props.update_properties(properties),
-            &BrushStroke(ref elem)      => elem.update_properties(properties)
+            &BrushDefinition(ref defn)  => defn,
+            &BrushProperties(ref props) => props,
+            &BrushStroke(ref elem)      => elem
         }
     }
 }
