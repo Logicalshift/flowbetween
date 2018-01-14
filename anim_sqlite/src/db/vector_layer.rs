@@ -1,5 +1,6 @@
 use super::*;
 
+use animation::brushes::*;
 use std::time::Duration;
 
 ///
@@ -14,6 +15,10 @@ pub struct SqliteVectorLayer {
 
     /// The type of this layer
     _layer_type: i64,
+
+    /// The currently active brush for this layer (or none if we need to fetch this from the database)
+    /// The active brush is the brush most recently added to the keyframe at the specified point in time
+    active_brush: Option<(Duration, Arc<Brush>)>,
 
     /// Database core
     core: Arc<Desync<AnimationDbCore>>
@@ -108,6 +113,7 @@ impl SqliteVectorLayer {
                     assigned_id:    assigned_id,
                     layer_id:       layer_id,
                     _layer_type:    layer_type,
+                    active_brush:   None,
                     core:           Arc::clone(core)
                 }
             })
@@ -333,11 +339,21 @@ impl SqliteVectorLayer {
 
 impl VectorLayer for SqliteVectorLayer {
     fn add_element(&mut self, when: Duration, new_element: Vector) {
+        use animation::Vector::*;
+
         let layer_id = self.layer_id;
 
-        self.core.async(move |core| {
-            use animation::Vector::*;
+        // Update the state of this object based on the element
+        match new_element {
+            BrushDefinition(ref brush_definition)   => {
+                self.active_brush = Some((when, create_brush_from_definition(brush_definition.definition(), brush_definition.drawing_style())));
+            },
 
+            _ => ()
+        }
+
+        // Send the element to the core
+        self.core.async(move |core| {
             // Create a new element
             let element_id = Self::create_new_element(core, layer_id, when, &new_element);
     
@@ -351,6 +367,18 @@ impl VectorLayer for SqliteVectorLayer {
     }
 
     fn active_brush(&self, when: Duration) -> Arc<Brush> {
-        unimplemented!()
+        // If the cached active brush is at the right time and 
+        if let Some((time, ref brush)) = self.active_brush {
+            if time == when {
+                return Arc::clone(&brush);
+            } else {
+                unimplemented!("TODO: got a brush but for the wrong time ({:?} vs {:?})", time, when);
+            }
+        }
+
+        // If the time doesn't match, or nothing is cached then we need to fetch from the database
+        unimplemented!("TODO: store/fetch active brush for keyframes in the database");
+
+        // create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw)
     }
 }
