@@ -15,12 +15,12 @@ mod editlog_statements;
 mod animation;
 mod mutable_animation;
 mod core;
-mod layer;
+mod vector_layer;
 
 pub use self::animation::*;
 pub use self::setup::*;
 pub use self::editlog::*;
-pub use self::layer::*;
+pub use self::vector_layer::*;
 use self::mutable_animation::*;
 use self::core::*;
 
