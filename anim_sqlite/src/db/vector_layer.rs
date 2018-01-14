@@ -302,6 +302,33 @@ impl SqliteVectorLayer {
             Ok(())
         });
     }
+
+    ///
+    /// Writes a brush stroke to the database
+    ///
+    fn create_brush_stroke(element_id: i64, core: &mut AnimationDbCore, brush_stroke: BrushElement) {
+        core.edit(move |sqlite, _animation_id, _core| {
+            let mut insert_point = sqlite.prepare_cached("INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")?;
+
+            let points  = brush_stroke.points();
+            let len     = points.len();
+
+            // Iterate through the points and add them to the database
+            for (point, index) in points.iter().zip((0..len).into_iter()) {
+                insert_point.insert(&[
+                    &element_id,
+                    &(index as i64),
+
+                    &(point.position.0 as f64), &(point.position.1 as f64),
+                    &(point.cp1.0 as f64), &(point.cp1.1 as f64),
+                    &(point.cp2.0 as f64), &(point.cp2.1 as f64),
+                    &(point.width as f64)
+                ])?;
+            }
+
+            Ok(())
+        })
+    }
 }
 
 impl VectorLayer for SqliteVectorLayer {
@@ -318,7 +345,7 @@ impl VectorLayer for SqliteVectorLayer {
             match new_element {
                 BrushDefinition(brush_definition)   => Self::create_brush_definition(element_id, core, brush_definition),
                 BrushProperties(brush_properties)   => Self::create_brush_properties(element_id, core, brush_properties),
-                BrushStroke(brush_stroke)           => unimplemented!(),
+                BrushStroke(brush_stroke)           => Self::create_brush_stroke(element_id, core, brush_stroke),
             }
         });
     }
