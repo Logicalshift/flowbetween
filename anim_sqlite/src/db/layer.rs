@@ -13,7 +13,7 @@ pub struct SqliteVectorLayer {
     layer_id: i64,
 
     /// The type of this layer
-    layer_type: i64,
+    _layer_type: i64,
 
     /// Database core
     core: Arc<Desync<AnimationDbCore>>
@@ -57,7 +57,7 @@ impl SqliteVectorLayer {
                 SqliteVectorLayer {
                     assigned_id:    assigned_id,
                     layer_id:       layer_id,
-                    layer_type:     layer_type,
+                    _layer_type:    layer_type,
                     core:           Arc::clone(core)
                 }
             })

@@ -23,24 +23,33 @@ impl AnimationEditor {
             edits:  vec![]
         }
     }
-}
 
-impl Drop for AnimationEditor {
-    fn drop(&mut self) {
+    ///
+    /// Ensures any pending edits have been sent to the database
+    /// 
+    fn commit_pending_edits(&mut self) {
         // Grab the set of uncommitted edits
         let mut edits = vec![];
         mem::swap(&mut self.edits, &mut edits);
 
         // Send to the core
-        self.core.async(move |core| {
-            let failure = &mut core.failure;
+        if edits.len() > 0 {
+            self.core.async(move |core| {
+                let failure = &mut core.failure;
 
-            for edit in edits {
-                if failure.is_none() {
-                    *failure = (edit)(&core.sqlite, core.animation_id).err()
+                for edit in edits {
+                    if failure.is_none() {
+                        *failure = (edit)(&core.sqlite, core.animation_id).err()
+                    }
                 }
-            }
-        })
+            })
+        }
+    }
+}
+
+impl Drop for AnimationEditor {
+    fn drop(&mut self) {
+        self.commit_pending_edits();
     }
 }
 
@@ -89,6 +98,9 @@ impl MutableAnimation for AnimationEditor {
     }
 
     fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>> {
+        // Make sure that any pending edits have been committed to the core
+        self.commit_pending_edits();
+
         // Retrieve the layer
         let layer = SqliteVectorLayer::from_assigned_id(&self.core, layer_id);
 
