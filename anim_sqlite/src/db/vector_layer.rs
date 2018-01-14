@@ -144,10 +144,24 @@ impl Layer for SqliteVectorLayer {
     }
 
     fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {
-        unimplemented!()
+        let vector_layer = self as &VectorLayer;
+
+        Some(Reader::new(vector_layer))
     }
 
     fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
+        let vector_layer = self as &mut VectorLayer;
+
+        Some(Editor::new(vector_layer))
+    }
+}
+
+impl VectorLayer for SqliteVectorLayer {
+    fn add_element(&mut self, when: Duration, new_element: Box<VectorElement>) {
+        unimplemented!()
+    }
+
+    fn active_brush(&self, when: Duration) -> Arc<Brush> {
         unimplemented!()
     }
 }
