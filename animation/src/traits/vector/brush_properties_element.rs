@@ -19,6 +19,13 @@ impl BrushPropertiesElement {
             new_properties:     new_properties
         }
     }
+
+    ///
+    /// Retrieves the brush properties that this will set for future elements
+    ///
+    pub fn brush_properties<'a>(&'a self) -> &BrushProperties {
+        &self.new_properties
+    }
 }
 
 impl VectorElement for BrushPropertiesElement {
