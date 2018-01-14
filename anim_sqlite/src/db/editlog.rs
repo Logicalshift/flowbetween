@@ -1,8 +1,6 @@
 use super::*;
 use super::editlog_statements::*;
 
-use canvas::*;
-
 ///
 /// The values to use for the enum values in the various editlog tables
 /// 
@@ -201,12 +199,7 @@ impl AnimationDbCore {
             },
 
             &BrushProperties(ref properties)                => {
-                let color_id        = Self::insert_color(&self.sqlite, &properties.color, &self.edit_log_enum.as_ref().unwrap())?;
-                let properties_id   = statements.insert_brush_properties().insert(&[
-                    &(properties.size as f64),
-                    &(properties.opacity as f64),
-                    &color_id
-                ])?;
+                let properties_id = Self::insert_brush_properties(&self.sqlite, &properties, self.edit_log_enum.as_ref().unwrap())?;
 
                 statements.insert_el_brush_properties().insert(&[
                     &edit_id,
