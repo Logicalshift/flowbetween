@@ -291,6 +291,7 @@ fn remove_layer_with_keyframe() {
     anim.panic_on_error();
 }
 
+/*
 #[test]
 fn draw_brush_strokes() {
     let anim = SqliteAnimation::new_in_memory();
@@ -320,4 +321,4 @@ fn draw_brush_strokes() {
     ]);
     anim.panic_on_error();
 }
-
+*/
