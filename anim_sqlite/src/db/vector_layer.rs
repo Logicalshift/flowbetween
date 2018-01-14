@@ -272,6 +272,36 @@ impl SqliteVectorLayer {
             Ok(())
         });
     }
+
+    ///
+    /// Writes a brush definition element to the database
+    ///
+    fn create_brush_definition(element_id: i64, core: &mut AnimationDbCore, definition: BrushDefinitionElement) {
+        // The edit log enum needs to be loaded
+        if core.edit_log_enum.is_none() {
+            core.edit_log_enum = Some(EditLogEnumValues::new(&core.sqlite));
+        }
+
+        // Insert the properties for this element
+        core.edit(move |sqlite, _animation_id, core| {
+            // Statement to add a new brush properties entry
+            let mut insert_element = sqlite.prepare_cached("INSERT INTO Flo_BrushElement (ElementId, Brush, DrawingStyle) VALUES (?, ?, ?)")?;
+
+            // Create the brush
+            let edit_log_enum   = core.edit_log_enum.as_ref().unwrap();
+            let brush_id        = AnimationDbCore::insert_brush(&core.sqlite, definition.definition(), edit_log_enum)?;
+
+            let drawing_style   = match definition.drawing_style() {
+                BrushDrawingStyle::Draw     => edit_log_enum.draw_draw,
+                BrushDrawingStyle::Erase    => edit_log_enum.draw_erase
+            };
+
+            // Perform the insertion
+            insert_element.insert(&[&element_id, &brush_id, &drawing_style])?;
+
+            Ok(())
+        });
+    }
 }
 
 impl VectorLayer for SqliteVectorLayer {
@@ -286,7 +316,7 @@ impl VectorLayer for SqliteVectorLayer {
     
             // Record the details of the element itself
             match new_element {
-                BrushDefinition(brush_definition)   => unimplemented!(),
+                BrushDefinition(brush_definition)   => Self::create_brush_definition(element_id, core, brush_definition),
                 BrushProperties(brush_properties)   => Self::create_brush_properties(element_id, core, brush_properties),
                 BrushStroke(brush_stroke)           => unimplemented!(),
             }

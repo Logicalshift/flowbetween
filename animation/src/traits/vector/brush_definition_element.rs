@@ -25,6 +25,20 @@ impl BrushDefinitionElement {
             drawing_style:  drawing_style
         }
     }
+
+    ///
+    /// Retrieves the brush definition for this element
+    ///
+    pub fn definition<'a>(&'a self) -> &'a BrushDefinition {
+        &self.new_definition
+    }
+
+    ///
+    /// Retrieves the drawing style for this element
+    ///
+    pub fn drawing_style(&self) -> BrushDrawingStyle {
+        self.drawing_style
+    }
 }
 
 impl VectorElement for BrushDefinitionElement {

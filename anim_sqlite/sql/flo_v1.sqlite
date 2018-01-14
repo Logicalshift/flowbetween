@@ -269,8 +269,9 @@ CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
  * Vector brush element
  */
 CREATE TABLE Flo_BrushElement (
-    ElementId   INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
-    Brush       INTEGER NOT NULL REFERENCES Flo_Brush_Type(Brush)
+    ElementId       INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+    Brush           INTEGER NOT NULL REFERENCES Flo_Brush_Type(Brush),
+    DrawingStyle    INTEGER NOT NULL
 ) WITHOUT ROWID;
 
 /* Deleting a vector element deletes the attached brush elements */
