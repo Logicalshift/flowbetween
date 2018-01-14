@@ -221,7 +221,7 @@ fn add_keyframe2() {
 }
 
 #[test]
-fn add_keyframe3() {
+fn add_keyframe_with_layer_editor() {
     let anim = SqliteAnimation::new_in_memory();
 
     anim.perform_edits(vec![
