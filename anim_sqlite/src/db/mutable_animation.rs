@@ -21,7 +21,7 @@ impl AnimationEditor {
     ///
     /// Performs an edit on this item (if the core's error condition is clear)
     /// 
-    fn edit<TEdit: Fn(&Connection, i64) -> Result<()>+Send+'static>(&mut self, edit: TEdit) {
+    fn edit<TEdit: Fn(&Connection, i64, &AnimationDbCore) -> Result<()>+Send+'static>(&mut self, edit: TEdit) {
         self.core.async(move |core| core.edit(edit))
     }
 }
@@ -29,7 +29,7 @@ impl AnimationEditor {
 impl MutableAnimation for AnimationEditor {
     fn set_size(&mut self, size: (f64, f64)) {
         // Update the size for the current animation
-        self.edit(move |sqlite, animation_id| {
+        self.edit(move |sqlite, animation_id, _core| {
             sqlite.execute(
                 "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
                 &[&size.0, &size.1, &animation_id]
@@ -41,7 +41,7 @@ impl MutableAnimation for AnimationEditor {
 
     fn add_layer(&mut self, new_layer_id: u64) {
         // Create a layer with this assigned ID
-        self.edit(move |sqlite, animation_id| {
+        self.edit(move |sqlite, animation_id, _core| {
             // TODO: hard codes the layer type as 0 (vector layer), but we can't set layer types right now anyway
             // Create the layer
             let mut make_new_layer  = sqlite.prepare("INSERT INTO Flo_LayerType (LayerType) VALUES (0)")?;
@@ -59,7 +59,7 @@ impl MutableAnimation for AnimationEditor {
 
     fn remove_layer(&mut self, old_layer_id: u64) {
         // Create a layer with this assigned ID
-        self.edit(move |sqlite, animation_id| {
+        self.edit(move |sqlite, animation_id, _core| {
             // Delete the layer with this assigned ID (triggers will clear out everything else)
             sqlite.execute(
                 "DELETE FROM Flo_AnimationLayers WHERE AssignedLayerId = ?",

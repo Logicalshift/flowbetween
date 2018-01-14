@@ -376,7 +376,7 @@ INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
 
 /* Types of vector element */
 INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("VectorElementType",   0,  "Brush",            "Selects a brush for future vector elements"),
+     VALUES ("VectorElementType",   0,  "BrushDefinition",  "Selects a brush for future vector elements"),
             ("VectorElementType",   1,  "BrushProperties",  "Sets brush properties for future vector elements"),
             ("VectorElementType",   2,  "BrushStroke",      "Brush stroke element");            
 

@@ -115,6 +115,7 @@ impl AnimationDbCore {
             sqlite:         connection,
             animation_id:   0,
             edit_log_enum:  None,
+            vector_enum:    None,
             failure:        None
         };
 

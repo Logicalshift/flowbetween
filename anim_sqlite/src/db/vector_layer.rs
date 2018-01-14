@@ -19,6 +19,56 @@ pub struct SqliteVectorLayer {
     core: Arc<Desync<AnimationDbCore>>
 }
 
+///
+/// Enumeration values for the vector elements
+///
+pub struct VectorElementEnumValues {
+    pub brush_definition:   i32,
+    pub brush_properties:   i32,
+    pub brush_stroke:       i32
+}
+
+impl VectorElementEnumValues {
+    ///
+    /// Reads the enum values
+    ///
+    pub fn new(sqlite: &Connection) -> Result<VectorElementEnumValues> {
+        // Define a function to read values
+        let read_value = |name: &str| {
+            sqlite.query_row(
+                "SELECT Value FROM Flo_EnumerationDescriptions WHERE FieldName = \"VectorElementType\" AND ApiName = ?",
+                &[&name],
+                |row| row.get(0)
+            )
+        };
+
+        // Read the values for the element values
+        let brush_definition    = read_value("BrushDefinition")?;
+        let brush_properties    = read_value("BrushProperties")?;
+        let brush_stroke        = read_value("BrushStroke")?;
+
+        // Turn into an enum values object
+        Ok(VectorElementEnumValues {
+            brush_definition:   brush_definition,
+            brush_properties:   brush_properties,
+            brush_stroke:       brush_stroke
+        })
+    }
+
+    ///
+    /// Retrieves the type ID for a vector element
+    ///
+    fn get_vector_type(&self, vector: &Vector) -> i32 {
+        use animation::Vector::*;
+
+        match vector {
+            &BrushDefinition(_) => self.brush_definition,
+            &BrushProperties(_) => self.brush_properties,
+            &BrushStroke(_)     => self.brush_stroke
+        }
+    }
+}
+
 impl AnimationDb {
     ///
     /// Retrieves a layer for a particular ID
@@ -165,7 +215,15 @@ impl SqliteVectorLayer {
     fn create_new_element(core: &mut AnimationDbCore, layer_id: i64, when: Duration, element: &Vector) -> i64 {
         let mut element_id: i64 = -1;
 
-        core.edit(move |sqlite, animation_id| {
+        // Ensure that the vector enum is populated for the edit
+        if core.vector_enum.is_none() {
+            core.vector_enum = Some(VectorElementEnumValues::new(&core.sqlite).unwrap());
+        }
+
+        core.edit(move |sqlite, animation_id, core| {
+            // Want the list of enumeration values for the vector elements
+            let vector_enum = core.vector_enum.as_ref().unwrap();
+
             // Convert when to microseconds
             let when = AnimationDbCore::get_micros(&when);
 
@@ -178,8 +236,8 @@ impl SqliteVectorLayer {
             // Find the keyframe that we can add this element to
             let (keyframe, keyframe_time): (i64, i64) = get_key_frame.query_row(&[&layer_id, &when], |row| (row.get(0), row.get(1)))?;
 
-            // Fetch the element type (TODO!)
-            let element_type = 0;
+            // Fetch the element type
+            let element_type = vector_enum.get_vector_type(element);
 
             // Create the vector element
             element_id = create_element.insert(&[&keyframe, &element_type, &(when-keyframe_time)])?;
