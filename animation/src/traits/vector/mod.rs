@@ -19,25 +19,44 @@ pub use self::brush_definition_element::*;
 /// 
 #[derive(Clone)]
 pub enum Vector {
-    /// Empty vector
-    Empty,
+    /// Sets the brush properties for future brush strokes
+    BrushDefinition(BrushDefinitionElement),
+
+    /// Brush properties for future brush strokes
+    BrushProperties(BrushPropertiesElement),
 
     /// Brush stroke vector
-    Brush(BrushElement)
+    BrushStroke(BrushElement)
+}
+
+impl Vector {
+    ///
+    /// Creates a new vector from an element
+    /// 
+    #[inline]
+    pub fn new<IntoVec: Into<Vector>>(from: IntoVec) -> Vector {
+        from.into()
+    }
 }
 
 impl VectorElement for Vector {
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
+        use Vector::*;
+
         match self {
-            &Vector::Empty              => (),
-            &Vector::Brush(ref elem)    => elem.render(gc, properties)
+            &BrushDefinition(ref defn)  => defn.render(gc, properties),
+            &BrushProperties(ref props) => props.render(gc, properties),
+            &BrushStroke(ref elem)      => elem.render(gc, properties)
         }
     }
 
     fn update_properties(&self, properties: &mut VectorProperties) { 
+        use Vector::*;
+
         match self {
-            &Vector::Empty              => (),
-            &Vector::Brush(ref elem)    => elem.update_properties(properties)
+            &BrushDefinition(ref defn)  => defn.update_properties(properties),
+            &BrushProperties(ref props) => props.update_properties(properties),
+            &BrushStroke(ref elem)      => elem.update_properties(properties)
         }
     }
 }

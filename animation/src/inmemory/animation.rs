@@ -7,7 +7,7 @@ use super::super::editor::*;
 use std::sync::*;
 use std::collections::*;
 use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut, Range};
+use std::ops::{Deref, DerefMut};
 
 ///
 /// Core values associated with an animation

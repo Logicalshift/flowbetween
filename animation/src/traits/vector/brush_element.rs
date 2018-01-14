@@ -1,9 +1,6 @@
-use super::element::*;
-use super::properties::*;
+use super::*;
 
 use super::super::brush::*;
-
-use canvas::*;
 
 use std::sync::*;
 
@@ -37,5 +34,12 @@ impl BrushElement {
 impl VectorElement for BrushElement {
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
         properties.brush.render_brush(gc, &properties.brush_properties, &self.points)
+    }
+}
+
+impl Into<Vector> for BrushElement {
+    #[inline]
+    fn into(self) -> Vector {
+        Vector::BrushStroke(self)
     }
 }

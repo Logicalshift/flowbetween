@@ -1,10 +1,7 @@
-use super::element::*;
-use super::properties::*;
+use super::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
-
-use canvas::*;
 
 ///
 /// Element representing selecting a new brush definition
@@ -43,5 +40,12 @@ impl VectorElement for BrushDefinitionElement {
     /// 
     fn update_properties(&self, properties: &mut VectorProperties) {
         properties.brush = create_brush_from_definition(&self.new_definition, self.drawing_style);
+    }
+}
+
+impl Into<Vector> for BrushDefinitionElement {
+    #[inline]
+    fn into(self) -> Vector {
+        Vector::BrushDefinition(self)
     }
 }

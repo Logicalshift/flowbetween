@@ -1,8 +1,5 @@
-use super::element::*;
-use super::properties::*;
+use super::*;
 use super::super::brush_properties::*;
-
-use canvas::*;
 
 ///
 /// Element representing selecting some new brush properties
@@ -37,5 +34,12 @@ impl VectorElement for BrushPropertiesElement {
     /// 
     fn update_properties(&self, properties: &mut VectorProperties) {
         properties.brush_properties = self.new_properties.clone();
+    }
+}
+
+impl Into<Vector> for BrushPropertiesElement {
+    #[inline]
+    fn into(self) -> Vector {
+        Vector::BrushProperties(self)
     }
 }

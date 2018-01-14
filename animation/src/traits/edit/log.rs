@@ -1,5 +1,4 @@
 use std::sync::*;
-use std::ops::Range;
 
 ///
 /// Trait implemented by things that can be edited (or described) by sequences

@@ -1,7 +1,6 @@
 use super::super::traits::*;
 
 use std::mem;
-use std::ops::Range;
 
 ///
 /// Represents an in-memory pending edit log
