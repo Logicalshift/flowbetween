@@ -192,7 +192,7 @@ impl AnimationDbCore {
 
         match edit {
             &SelectBrush(ref definition, ref drawing_style) => {
-                let brush_id        = self.insert_brush(statements, definition)?;
+                let brush_id        = Self::insert_brush(&self.sqlite, definition, self.edit_log_enum.as_ref().unwrap())?;
                 let drawing_style   = match drawing_style {
                     &BrushDrawingStyle::Draw    => self.edit_log_enum.as_ref().unwrap().draw_draw,
                     &BrushDrawingStyle::Erase   => self.edit_log_enum.as_ref().unwrap().draw_erase
@@ -242,36 +242,5 @@ impl AnimationDbCore {
         }
 
         Ok(())
-    }
-
-    ///
-    /// Inserts a brush definition
-    /// 
-    pub fn insert_brush<'a>(&self, statements: &mut EditLogStatements<'a>, brush_definition: &BrushDefinition) -> Result<i64> {
-        use animation::BrushDefinition::*;
-
-        // Base brush
-        let brush_type = match brush_definition {
-            &Simple     => self.edit_log_enum.as_ref().unwrap().brush_simple,
-            &Ink(_)     => self.edit_log_enum.as_ref().unwrap().brush_ink
-        };
-
-        let brush_id = statements.insert_brush_type().insert(&[&brush_type])?;
-
-        // Type-specific information
-        match brush_definition {
-            &Simple             => { },
-            &Ink(ref ink_defn)  => { 
-                statements.insert_brush_ink().insert(&[
-                    &brush_id,
-
-                    &(ink_defn.min_width as f64),
-                    &(ink_defn.max_width as f64),
-                    &(ink_defn.scale_up_distance as f64)
-                ])?;
-            }
-        }
-
-        Ok(brush_id)
     }
 }

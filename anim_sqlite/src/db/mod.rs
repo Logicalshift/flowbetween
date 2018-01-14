@@ -16,6 +16,7 @@ mod animation;
 mod mutable_animation;
 mod core;
 mod color;
+mod brush;
 mod vector_layer;
 
 pub use self::animation::*;
@@ -24,7 +25,6 @@ pub use self::editlog::*;
 pub use self::vector_layer::*;
 use self::mutable_animation::*;
 use self::core::*;
-use self::color::*;
 
 ///
 /// Database used to store an animation
