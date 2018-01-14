@@ -201,7 +201,7 @@ impl AnimationDbCore {
             },
 
             &BrushProperties(ref properties)                => {
-                let color_id        = self.insert_color(statements, &properties.color)?;
+                let color_id        = Self::insert_color(&self.sqlite, &properties.color, &self.edit_log_enum.as_ref().unwrap())?;
                 let properties_id   = statements.insert_brush_properties().insert(&[
                     &(properties.size as f64),
                     &(properties.opacity as f64),
@@ -273,40 +273,5 @@ impl AnimationDbCore {
         }
 
         Ok(brush_id)
-    }
-    
-    ///
-    /// Inserts a colour definition
-    /// 
-    pub fn insert_color<'a>(&self, statements: &mut EditLogStatements<'a>, color: &Color) -> Result<i64> {
-        // Base colour
-        let color_type = match color {
-            &Color::Rgba(_, _, _, _)    => self.edit_log_enum.as_ref().unwrap().color_rgb,
-            &Color::Hsluv(_, _, _, _)   => self.edit_log_enum.as_ref().unwrap().color_hsluv,
-        };
-
-        let color_id = statements.insert_color_type().insert(&[&color_type])?;
-
-        // Components
-        match color {
-            &Color::Rgba(r, g, b, _) => {
-                statements.insert_color_rgb().insert(&[
-                    &color_id,
-                    &(r as f64),
-                    &(g as f64),
-                    &(b as f64)
-                ])?;
-            },
-            &Color::Hsluv(h, s, l, _) => {
-                statements.insert_color_hsluv().insert(&[
-                    &color_id,
-                    &(h as f64),
-                    &(s as f64),
-                    &(l as f64)
-                ])?;
-            },
-        }
-
-        Ok(color_id)
     }
 }
