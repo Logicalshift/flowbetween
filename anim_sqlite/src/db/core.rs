@@ -24,7 +24,7 @@ impl AnimationDbCore {
     ///
     /// Performs an edit on this core if the failure condition is clear
     /// 
-    pub fn edit<TEdit: Fn(&Connection, i64) -> Result<()>+Send>(&mut self, edit: TEdit) {
+    pub fn edit<TEdit: FnOnce(&Connection, i64) -> Result<()>>(&mut self, edit: TEdit) {
         // Perform the edit if there is no failure
         if self.failure.is_none() {
             self.failure = edit(&self.sqlite, self.animation_id).err();

@@ -151,14 +151,64 @@ impl Layer for SqliteVectorLayer {
 
     fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
         let vector_layer = self as &mut VectorLayer;
-
+ 
         Some(Editor::new(vector_layer))
+    }
+}
+
+impl SqliteVectorLayer {
+    ///
+    /// Creates a new vector element in an animation DB core
+    ///
+    /// The element is created without its associated data.
+    ///
+    fn create_new_element(core: &mut AnimationDbCore, layer_id: i64, when: Duration, element: &Vector) -> i64 {
+        let mut element_id: i64 = -1;
+
+        core.edit(move |sqlite, animation_id| {
+            // Convert when to microseconds
+            let when = AnimationDbCore::get_micros(&when);
+
+            // SQL statements: find the frame that this time represents and insert a new element
+            // We'd like to preserve these statments between calls but rusqlite imposes lifetime limits that 
+            // force us to use prepare_cached (or muck around with reference objects).
+            let mut get_key_frame   = sqlite.prepare_cached("SELECT TOP 1 KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC")?;
+            let mut create_element  = sqlite.prepare_cached("INSERT INTO Flo_VectorElement (KeyFrameId, VectorElementType, AtTime) VALUES (?, ?, ?)")?;
+
+            // Find the keyframe that we can add this element to
+            let (keyframe, keyframe_time): (i64, i64) = get_key_frame.query_row(&[&layer_id, &when], |row| (row.get(0), row.get(1)))?;
+
+            // Fetch the element type (TODO!)
+            let element_type = 0;
+
+            // Create the vector element
+            element_id = create_element.insert(&[&keyframe, &element_type, &(when-keyframe_time)])?;
+
+            Ok(())
+        });
+
+        // Return the element ID
+        element_id
     }
 }
 
 impl VectorLayer for SqliteVectorLayer {
     fn add_element(&mut self, when: Duration, new_element: Vector) {
-        unimplemented!()
+        let layer_id = self.layer_id;
+
+        self.core.async(move |core| {
+            use animation::Vector::*;
+
+            // Create a new element
+            let element_id = Self::create_new_element(core, layer_id, when, &new_element);
+
+            // Record the details of the element itself
+            match new_element {
+                BrushDefinition(brush_definition)   => unimplemented!(),
+                BrushProperties(brush_properties)   => unimplemented!(),
+                BrushStroke(brush_stroke)           => unimplemented!(),
+            }
+        });
     }
 
     fn active_brush(&self, when: Duration) -> Arc<Brush> {
