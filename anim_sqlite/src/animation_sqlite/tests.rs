@@ -221,6 +221,30 @@ fn add_keyframe2() {
 }
 
 #[test]
+fn add_keyframe3() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+    ]);
+
+    {
+        let mut layer_editor = anim.edit_layer(2);
+        layer_editor.set_pending(&[LayerEdit::AddKeyFrame(Duration::from_millis(250))]);
+        layer_editor.commit_pending();
+    }
+
+    anim.panic_on_error();
+
+    let layer = anim.get_layer_with_id(2);
+    assert!(layer.is_some());
+
+    let keyframes: Vec<Duration> = layer.unwrap().get_key_frames().collect();
+    assert!(keyframes.len() == 1);
+    assert!(keyframes[0] == Duration::from_millis(250));
+}
+
+#[test]
 fn remove_keyframe() {
     let anim = SqliteAnimation::new_in_memory();
 
