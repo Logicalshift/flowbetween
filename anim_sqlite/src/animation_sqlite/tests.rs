@@ -298,13 +298,22 @@ fn draw_brush_strokes() {
     anim.perform_edits(vec![
         AnimationEdit::AddNewLayer(2),
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 BrushDefinition::Ink(InkDefinition::default()), 
                 BrushDrawingStyle::Draw
             )
         )),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
             BrushProperties(BrushProperties::new()))),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
