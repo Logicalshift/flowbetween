@@ -1,11 +1,16 @@
 use super::*;
 
+use std::collections::*;
+
 ///
 /// Class used for the animation object for a database
 /// 
 pub struct AnimationEditor {
     /// The core, where the edits are sent
     core: Arc<Desync<AnimationDbCore>>,
+
+    /// The layers created by this editor (used to track state)
+    layers: HashMap<u64, SqliteVectorLayer>
 }
 
 impl AnimationEditor {
@@ -14,7 +19,8 @@ impl AnimationEditor {
     /// 
     pub fn new(core: &Arc<Desync<AnimationDbCore>>) -> AnimationEditor {
         AnimationEditor {
-            core:   Arc::clone(core)
+            core:   Arc::clone(core),
+            layers: HashMap::new()
         }
     }
 
@@ -58,8 +64,11 @@ impl MutableAnimation for AnimationEditor {
     }
 
     fn remove_layer(&mut self, old_layer_id: u64) {
+        // Remove the cached version of this layer
+        self.layers.remove(&old_layer_id);
+
         // Create a layer with this assigned ID
-        self.edit(move |sqlite, animation_id, _core| {
+        self.edit(move |sqlite, _animation_id, _core| {
             // Delete the layer with this assigned ID (triggers will clear out everything else)
             sqlite.execute(
                 "DELETE FROM Flo_AnimationLayers WHERE AssignedLayerId = ?",
@@ -71,16 +80,21 @@ impl MutableAnimation for AnimationEditor {
     }
 
     fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>> {
-        // Retrieve the layer
-        let layer = SqliteVectorLayer::from_assigned_id(&self.core, layer_id);
+        // Create the layer if one is not already cached
+        let layer = if !self.layers.contains_key(&layer_id) {
+            let new_layer = SqliteVectorLayer::from_assigned_id(&self.core, layer_id);
 
-        // Box it
-        let layer = layer.map(|layer| {
-            let boxed: Box<Layer> = Box::new(layer);
-            boxed
-        });
+            if let Some(new_layer) = new_layer {
+                self.layers.insert(layer_id, new_layer);
+                self.layers.get_mut(&layer_id)
+            } else {
+                None
+            }
+        } else {
+            self.layers.get_mut(&layer_id)
+        };
 
         // Edit it
-        layer.map(|layer| Editor::new(layer))
+        layer.map(|layer| Editor::new(layer as &mut Layer))
     }
 }
