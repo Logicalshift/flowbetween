@@ -226,30 +226,34 @@ impl SqliteVectorLayer {
             core.vector_enum = Some(VectorElementEnumValues::new(&core.sqlite).unwrap());
         }
 
-        core.edit(move |sqlite, animation_id, core| {
-            // Want the list of enumeration values for the vector elements
-            let vector_enum = core.vector_enum.as_ref().unwrap();
+        {
+            let new_element_id = &mut element_id;
 
-            // Convert when to microseconds
-            let when = AnimationDbCore::get_micros(&when);
+            core.edit(move |sqlite, _animation_id, core| {
+                // Want the list of enumeration values for the vector elements
+                let vector_enum = core.vector_enum.as_ref().unwrap();
 
-            // SQL statements: find the frame that this time represents and insert a new element
-            // We'd like to preserve these statments between calls but rusqlite imposes lifetime limits that 
-            // force us to use prepare_cached (or muck around with reference objects).
-            let mut get_key_frame   = sqlite.prepare_cached("SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1")?;
-            let mut create_element  = sqlite.prepare_cached("INSERT INTO Flo_VectorElement (KeyFrameId, VectorElementType, AtTime) VALUES (?, ?, ?)")?;
+                // Convert when to microseconds
+                let when = AnimationDbCore::get_micros(&when);
 
-            // Find the keyframe that we can add this element to
-            let (keyframe, keyframe_time): (i64, i64) = get_key_frame.query_row(&[&layer_id, &when], |row| (row.get(0), row.get(1)))?;
+                // SQL statements: find the frame that this time represents and insert a new element
+                // We'd like to preserve these statments between calls but rusqlite imposes lifetime limits that 
+                // force us to use prepare_cached (or muck around with reference objects).
+                let mut get_key_frame   = sqlite.prepare_cached("SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1")?;
+                let mut create_element  = sqlite.prepare_cached("INSERT INTO Flo_VectorElement (KeyFrameId, VectorElementType, AtTime) VALUES (?, ?, ?)")?;
 
-            // Fetch the element type
-            let element_type = vector_enum.get_vector_type(element);
+                // Find the keyframe that we can add this element to
+                let (keyframe, keyframe_time): (i64, i64) = get_key_frame.query_row(&[&layer_id, &when], |row| (row.get(0), row.get(1)))?;
 
-            // Create the vector element
-            element_id = create_element.insert(&[&keyframe, &element_type, &(when-keyframe_time)])?;
+                // Fetch the element type
+                let element_type = vector_enum.get_vector_type(element);
 
-            Ok(())
-        });
+                // Create the vector element
+                *new_element_id = create_element.insert(&[&keyframe, &element_type, &(when-keyframe_time)])?;
+
+                Ok(())
+            });
+        }
 
         // Return the element ID
         element_id
