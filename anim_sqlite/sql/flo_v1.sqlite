@@ -304,6 +304,7 @@ CREATE TABLE Flo_BrushPoint (
     X1                  REAL NOT NULL,
     Y1                  REAL NOT NULL,
     X2                  REAL NOT NULL,
+    Y2                  REAL NOT NULL,
     X3                  REAL NOT NULL,
     Y3                  REAL NOT NULL,
     Width               REAL NOT NULL,
