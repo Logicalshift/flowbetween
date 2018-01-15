@@ -30,7 +30,11 @@ use self::core::*;
 /// Database used to store an animation
 /// 
 pub struct AnimationDb {
-    core: Arc<Desync<AnimationDbCore>>
+    /// The core contains details of the database
+    core: Arc<Desync<AnimationDbCore>>,
+
+    /// The editor is used to provide the mutable animation interface (we keep it around so it can cache values if necessary)
+    editor: Mutex<AnimationEditor>
 }
 
 impl AnimationDb {
@@ -45,9 +49,12 @@ impl AnimationDb {
     /// Creates a new animation database using the specified SQLite connection
     /// 
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
-        let core = AnimationDbCore::new(connection);
-        let db = AnimationDb {
-            core: Arc::new(Desync::new(core))
+        let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
+        let editor  = AnimationEditor::new(&core);
+
+        let db      = AnimationDb {
+            core:   core,
+            editor: Mutex::new(editor)
         };
         db.setup();
         db.prepare();
@@ -59,10 +66,12 @@ impl AnimationDb {
     /// Creates an animation database that uses an existing database already set up in a SQLite connection
     /// 
     pub fn from_connection(connection: Connection) -> AnimationDb {
-        let core = AnimationDbCore::new(connection);
+        let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
+        let editor  = AnimationEditor::new(&core);
 
         let db = AnimationDb {
-            core: Arc::new(Desync::new(core))
+            core:   core,
+            editor: Mutex::new(editor)
         };
         db.prepare();
 
@@ -99,10 +108,9 @@ impl AnimationDb {
     ///
     /// Creates an animation editor
     /// 
-    pub fn edit<'a>(&self) -> Editor<'a, MutableAnimation> {
-        // Turning the animation editor into an object provides the DerefMut interface we need
-        let editor                          = AnimationEditor::new(&self.core);
-        let editor: Box<MutableAnimation>   = Box::new(editor);
+    pub fn edit<'a>(&'a self) -> Editor<'a, MutableAnimation> {
+        let editor: &Mutex<MutableAnimation> = &self.editor;
+        let editor  = editor.lock().unwrap();
 
         Editor::new(editor)
     }
