@@ -291,7 +291,6 @@ fn remove_layer_with_keyframe() {
     anim.panic_on_error();
 }
 
-/*
 #[test]
 fn draw_brush_strokes() {
     let anim = SqliteAnimation::new_in_memory();
@@ -353,4 +352,3 @@ fn delete_layer_after_drawing_brush_stroke() {
 
     anim.perform_edits(vec![AnimationEdit::RemoveLayer(2)]);
 }
-*/

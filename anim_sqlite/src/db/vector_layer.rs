@@ -236,7 +236,7 @@ impl SqliteVectorLayer {
             // SQL statements: find the frame that this time represents and insert a new element
             // We'd like to preserve these statments between calls but rusqlite imposes lifetime limits that 
             // force us to use prepare_cached (or muck around with reference objects).
-            let mut get_key_frame   = sqlite.prepare_cached("SELECT TOP 1 KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC")?;
+            let mut get_key_frame   = sqlite.prepare_cached("SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1")?;
             let mut create_element  = sqlite.prepare_cached("INSERT INTO Flo_VectorElement (KeyFrameId, VectorElementType, AtTime) VALUES (?, ?, ?)")?;
 
             // Find the keyframe that we can add this element to
