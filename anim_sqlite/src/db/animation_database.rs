@@ -4,6 +4,10 @@ use super::db_update::*;
 use rusqlite::*;
 use std::collections::*;
 
+const V1_DEFINITION: &[u8]      = include_bytes!["../../sql/flo_v1.sqlite"];
+const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
+const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
+
 ///
 /// Provides an interface for updating and accessing the animation SQLite database
 /// 
@@ -74,6 +78,24 @@ impl AnimationDatabase {
     }
 
     ///
+    /// Initialises the database
+    /// 
+    pub fn setup(sqlite: &Connection) -> Result<()> {
+        // Create the definition string
+        let v1_definition   = String::from_utf8_lossy(V1_DEFINITION);
+
+        // Execute against the database
+        sqlite.execute_batch(&v1_definition)?;
+
+        // Set the database version string
+        let version_string      = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
+        let mut update_version  = sqlite.prepare("UPDATE FlowBetween SET FloVersion = ?")?;
+        update_version.execute(&[&version_string])?;
+
+        Ok(())
+    }
+
+    ///
     /// Returns the text of the query for a particular statements
     /// 
     fn query_for_statement(statement: Statement) -> &'static str {
@@ -117,21 +139,51 @@ impl AnimationDatabase {
     /// Prepares a statement from the database
     /// 
     #[inline]
-    fn prepare<'conn>(&'conn self, statement: Statement) -> Result<CachedStatement<'conn>> {
-        self.sqlite.prepare_cached(Self::query_for_statement(statement))
+    fn prepare<'conn>(sqlite: &'conn Connection, statement: Statement) -> Result<CachedStatement<'conn>> {
+        sqlite.prepare_cached(Self::query_for_statement(statement))
     }
 
     ///
     /// Fetches a statement from a cache, or prepares it
     /// 
     fn prepare_with_cache<'a, 'conn>(&'conn self, statement: Statement, cache: &'a mut HashMap<Statement, CachedStatement<'conn>>) -> &'a mut CachedStatement<'conn> {
-        cache.entry(statement).or_insert_with(|| self.prepare(statement).unwrap())
+        cache.entry(statement).or_insert_with(|| Self::prepare(&self.sqlite, statement).unwrap())
+    }
+
+    ///
+    /// Retrieves an enum value
+    /// 
+    fn enum_value(&mut self, val: DbEnum) -> i64 {
+        let sqlite = &self.sqlite;
+
+        *self.enum_values.entry(val).or_insert_with(|| {
+            let DbEnumName(field, name) = DbEnumName::from(val);
+            Self::prepare(sqlite, Statement::SelectEnumValue)
+                .unwrap()
+                .query_row(&[&field, &name], |row| row.get(0))
+                .unwrap()
+        })
     }
 
     ///
     /// Executes a particular database update
     /// 
-    fn execute_update(<'a, 'conn>(&'conn self, update: DatabaseUpdate, cache: &'a mut HashMap<Statement, CachedStatement<'conn>>) {
+    fn execute_update<'a, 'conn>(&'conn self, update: DatabaseUpdate, cache: &'a mut HashMap<Statement, CachedStatement<'conn>>) {
         unimplemented!()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::core::*;
+
+    #[test]
+    fn can_get_enum_value() {
+        let conn = Connection::open_in_memory().unwrap();
+        AnimationDatabase::setup(&conn);
+        let mut db = AnimationDatabase::new(conn);
+
+        assert!(db.enum_value(DbEnum::EditLog(EditLogType::LayerAddKeyFrame)) == 3);
     }
 }
