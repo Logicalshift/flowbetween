@@ -10,6 +10,7 @@ use std::time::Duration;
 #[cfg(test)] mod tests;
 
 mod setup;
+mod animation_database;
 mod db_enum;
 mod db_update;
 mod editlog;

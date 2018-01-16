@@ -4,7 +4,7 @@ pub struct DbEnumName(pub &'static str, pub &'static str);
 ///
 /// Type of edit log item
 /// 
-#[derive(Copy, Clone, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum EditLogType {
     SetSize,
     AddNewLayer,
@@ -21,7 +21,7 @@ pub enum EditLogType {
 ///
 /// Types of drawing style
 /// 
-#[derive(Copy, Clone, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum DrawingStyleType {
     Draw,
     Erase
@@ -30,7 +30,7 @@ pub enum DrawingStyleType {
 ///
 /// Types of brush definition
 /// 
-#[derive(Copy, Clone, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum BrushDefinitionType {
     Simple,
     Ink
@@ -39,7 +39,7 @@ pub enum BrushDefinitionType {
 ///
 /// Types of colour definition
 /// 
-#[derive(Copy, Clone, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ColorType {
     Rgb,
     Hsluv
@@ -48,7 +48,7 @@ pub enum ColorType {
 ///
 /// Types of player
 /// 
-#[derive(Copy, Clone, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum LayerType {
     Vector
 }
@@ -56,7 +56,7 @@ pub enum LayerType {
 ///
 /// Types of vector element
 /// 
-#[derive(Copy, Clone, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum VectorElementType {
     BrushDefinition,
     BrushProperties,
@@ -66,7 +66,7 @@ pub enum VectorElementType {
 ///
 /// All of the DB enums in one place
 /// 
-#[derive(Copy, Clone, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum DbEnum {
     EditLog(EditLogType),
     DrawingStyle(DrawingStyleType),

@@ -60,7 +60,7 @@ pub enum DatabaseUpdate {
     PopAssignLayer(u64),
 
     /// Adds a key frame to the layer with the specified assigned ID
-    AddKeyframe(u64, Duration),
+    AddKeyFrame(u64, Duration),
 
     /// Removes a keyframe from the layer with the specified assigned ID
     RemoveKeyFrame(u64, Duration),
