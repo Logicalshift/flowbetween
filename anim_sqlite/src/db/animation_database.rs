@@ -25,7 +25,7 @@ pub struct AnimationDatabase {
 }
 
 /// List of database statements we use
-#[derive(Clone, Copy, PartialEq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 enum Statement {
     SelectEnumValue,
     SelectLayerId,
@@ -111,5 +111,27 @@ impl AnimationDatabase {
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                     => "DELETE FROM Flo_AnimationLayers WHERE AssignedLayerId = ?"
         }
+    }
+
+    ///
+    /// Prepares a statement from the database
+    /// 
+    #[inline]
+    fn prepare<'conn>(&'conn self, statement: Statement) -> Result<CachedStatement<'conn>> {
+        self.sqlite.prepare_cached(Self::query_for_statement(statement))
+    }
+
+    ///
+    /// Fetches a statement from a cache, or prepares it
+    /// 
+    fn prepare_with_cache<'a, 'conn>(&'conn self, statement: Statement, cache: &'a mut HashMap<Statement, CachedStatement<'conn>>) -> &'a mut CachedStatement<'conn> {
+        cache.entry(statement).or_insert_with(|| self.prepare(statement).unwrap())
+    }
+
+    ///
+    /// Executes a particular database update
+    /// 
+    fn execute_update(<'a, 'conn>(&'conn self, update: DatabaseUpdate, cache: &'a mut HashMap<Statement, CachedStatement<'conn>>) {
+        unimplemented!()
     }
 }
