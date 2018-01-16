@@ -10,6 +10,7 @@ use std::time::Duration;
 /// 'Pop' elements remove an element. (Push elements may also remove to use
 /// to generate the element they leave behind)
 /// 
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum DatabaseUpdate {
     /// Removes the ID from the top of the stack
     Pop,
@@ -64,6 +65,9 @@ pub enum DatabaseUpdate {
 
     /// Removes a keyframe from the layer with the specified assigned ID
     RemoveKeyFrame(u64, Duration),
+
+    /// Looks up a layer with an assigned ID and pushes its real ID
+    PushLayerForAssignedId(u64),
 
     /// Creates a new vector element with the specified type and time (from the start of the animation) and pushes its ID
     PushVectorElementType(VectorElementType, Duration),
