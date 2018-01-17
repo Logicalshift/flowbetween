@@ -17,6 +17,9 @@ pub enum DatabaseUpdate {
     /// Removes the ID from the top of the stack
     Pop,
 
+    /// Updates the canvas size of the animation
+    UpdateCanvasSize(f32, f32),
+
     /// Inserts a new edit log and pushes its ID
     PushEditType(EditLogType),
 
@@ -55,6 +58,9 @@ pub enum DatabaseUpdate {
 
     /// Uses the colour ID on top of the stack and inserts an HSLuv value, leaving the ID behind
     PushHsluv(f32, f32, f32),
+
+    /// Removes the layer with the ID on top of the stack
+    PopDeleteLayer,
 
     /// Creates a new layer of the specified type and pushes its ID
     PushLayerType(LayerType),

@@ -1,3 +1,5 @@
+use animation::*;
+
 /// Provides the enum type and name for a database enum value
 pub struct DbEnumName(pub &'static str, pub &'static str);
 
@@ -74,6 +76,47 @@ pub enum DbEnum {
     Color(ColorType),
     Layer(LayerType),
     VectorElement(VectorElementType)
+}
+
+impl<'a> From<&'a AnimationEdit> for EditLogType {
+    fn from(t: &AnimationEdit) -> EditLogType {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+        use self::PaintEdit::*;
+
+        match t {
+            &SetSize(_, _)                          => EditLogType::SetSize,
+            &AddNewLayer(_)                         => EditLogType::AddNewLayer,
+            &RemoveLayer(_)                         => EditLogType::RemoveLayer,
+            &Layer(_, AddKeyFrame(_))               => EditLogType::LayerAddKeyFrame,
+            &Layer(_, RemoveKeyFrame(_))            => EditLogType::LayerRemoveKeyFrame,
+            &Layer(_, Paint(_, SelectBrush(_, _)))  => EditLogType::LayerPaintSelectBrush,
+            &Layer(_, Paint(_, BrushProperties(_))) => EditLogType::LayerPaintBrushProperties,
+            &Layer(_, Paint(_, BrushStroke(_)))     => EditLogType::LayerPaintBrushStroke
+        }
+    }
+}
+
+impl<'a> From<&'a BrushDrawingStyle> for DrawingStyleType {
+    fn from(t: &BrushDrawingStyle) -> DrawingStyleType {
+        use self::BrushDrawingStyle::*;
+
+        match t {
+            &Draw   => DrawingStyleType::Draw,
+            &Erase  => DrawingStyleType::Erase
+        }
+    }
+}
+
+impl<'a> From<&'a BrushDefinition> for BrushDefinitionType {
+    fn from(t: &BrushDefinition) -> BrushDefinitionType {
+        use self::BrushDefinition::*;
+
+        match t {
+            &Simple     => BrushDefinitionType::Simple,
+            &Ink(_)     => BrushDefinitionType::Ink
+        }
+    }
 }
 
 impl From<EditLogType> for DbEnumName {

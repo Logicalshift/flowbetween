@@ -9,12 +9,10 @@ use std::time::Duration;
 
 #[cfg(test)] mod tests;
 
-mod setup;
 mod animation_database;
 mod db_enum;
 mod db_update;
 mod editlog;
-mod editlog_statements;
 mod animation;
 mod mutable_animation;
 mod core;
@@ -23,11 +21,11 @@ mod brush;
 mod vector_layer;
 
 pub use self::animation::*;
-pub use self::setup::*;
 pub use self::editlog::*;
 pub use self::vector_layer::*;
 use self::mutable_animation::*;
 use self::core::*;
+use self::animation_database::*;
 
 ///
 /// Database used to store an animation
@@ -52,6 +50,8 @@ impl AnimationDb {
     /// Creates a new animation database using the specified SQLite connection
     /// 
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
+        AnimationDatabase::setup(&connection);
+
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
         let editor  = AnimationEditor::new(&core);
 
@@ -59,8 +59,6 @@ impl AnimationDb {
             core:   core,
             editor: Mutex::new(editor)
         };
-        db.setup();
-        db.prepare();
 
         db
     }
@@ -76,7 +74,6 @@ impl AnimationDb {
             core:   core,
             editor: Mutex::new(editor)
         };
-        db.prepare();
 
         db
     }
@@ -125,9 +122,7 @@ impl AnimationDbCore {
     /// 
     fn new(connection: Connection) -> AnimationDbCore {
         let core = AnimationDbCore {
-            sqlite:         connection,
-            animation_id:   0,
-            edit_log_enum:  None,
+            db:             AnimationDatabase::new(connection),
             vector_enum:    None,
             failure:        None
         };
