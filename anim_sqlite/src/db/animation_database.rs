@@ -4,6 +4,7 @@ use super::db_update::*;
 use rusqlite::*;
 use std::collections::*;
 use std::time::Duration;
+use std::mem;
 
 const V1_DEFINITION: &[u8]      = include_bytes!["../../sql/flo_v1.sqlite"];
 const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
@@ -181,7 +182,7 @@ impl AnimationDatabase {
     ///
     /// Executes a particular database update
     /// 
-    fn execute_update<'a, 'conn>(&'conn mut self, update: DatabaseUpdate) -> Result<()> {
+    fn execute_update(&mut self, update: DatabaseUpdate) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         match update {
@@ -392,6 +393,56 @@ impl AnimationDatabase {
                 Ok(())
             }
         }
+    }
+
+    ///
+    /// Performs a set of updates on the database immediately
+    /// 
+    fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
+        for update in updates {
+            self.execute_update(update)?;
+        }
+        Ok(())
+    }
+
+    ///
+    /// Performs a set of updates on the database
+    /// 
+    pub fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
+        if let Some(ref mut pending) = self.pending {
+            // Queue the updates into the pending queue if we're not performing them immediately
+            pending.extend(updates.into_iter());
+        } else {
+            // Execute these updates immediately
+            self.execute_updates_now(updates)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Starts queuing up database updates for later execution as a batch
+    /// 
+    pub fn begin_queuing(&mut self) {
+        if self.pending.is_none() {
+            self.pending = Some(vec![]);
+        }
+    }
+
+    ///
+    /// Executes the update queue
+    /// 
+    pub fn execute_queue(&mut self) -> Result<()> {
+        // Fetch the pending updates
+        let mut pending = None;
+        mem::swap(&mut pending, &mut self.pending);
+
+        // Execute them now
+        if let Some(pending) = pending {
+            self.execute_updates_now(pending)?;
+        }
+
+        Ok(())
     }
 }
 
