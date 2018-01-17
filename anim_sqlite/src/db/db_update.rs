@@ -1,5 +1,7 @@
 use super::db_enum::*;
 
+use animation::*;
+use std::sync::*;
 use std::time::Duration;
 
 ///
@@ -10,7 +12,7 @@ use std::time::Duration;
 /// 'Pop' elements remove an element. (Push elements may also remove to use
 /// to generate the element they leave behind)
 /// 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum DatabaseUpdate {
     /// Removes the ID from the top of the stack
     Pop,
@@ -34,7 +36,7 @@ pub enum DatabaseUpdate {
     PopEditLogBrushProperties,
 
     /// Uses the edit ID on top of the stack and inserts a raw point for it (index, position, pressure, tilt)
-    PushRawPoint(u64, (f32, f32), f32, (f32, f32)),
+    PushRawPoints(Arc<Vec<RawPoint>>),
 
     /// Inserts a new brush type definition, pushing the new brush's ID to the stack
     PushBrushType(BrushDefinitionType),
@@ -57,19 +59,23 @@ pub enum DatabaseUpdate {
     /// Creates a new layer of the specified type and pushes its ID
     PushLayerType(LayerType),
 
-    /// Pops a layer ID and inserts an ID assignment for it
-    PopAssignLayer(u64),
-
-    /// Adds a key frame to the layer with the specified assigned ID
-    AddKeyFrame(u64, Duration),
-
-    /// Removes a keyframe from the layer with the specified assigned ID
-    RemoveKeyFrame(u64, Duration),
+    /// Takes the layer ID on the stack and
+    PushAssignLayer(u64),
 
     /// Looks up a layer with an assigned ID and pushes its real ID
     PushLayerForAssignedId(u64),
 
-    /// Creates a new vector element with the specified type and time (from the start of the animation) and pushes its ID
+    /// Adds a key frame to the layer with the ID on top of the stack
+    PopAddKeyFrame(Duration),
+
+    /// Removes a keyframe from the layer with the ID on top of the stack
+    PopRemoveKeyFrame(Duration),
+
+    /// Pops a layer ID and pushes the time and ID of the key
+    PushNearestKeyFrame(Duration),
+
+    /// Uses the keyframe ID and time on top of the stack and creates a new vector element with the specified type and time (from the start of the animation) and pushes its ID
+    /// (Stack has the element ID, the key frame ID and the time left afterwards)
     PushVectorElementType(VectorElementType, Duration),
 
     /// Pops a brush ID and a vector element ID and creates a vector brush element from them
@@ -78,6 +84,6 @@ pub enum DatabaseUpdate {
     /// Pops a brush properites ID and a vector element ID and creates a vector brush properties element from them
     PopVectorBrushPropertiesElement,
 
-    /// Given a vector element ID on the stack, creates a brush point (and leaves the element on the stack)
-    PushBrushPoint(u64, (f32, f32), (f32, f32), (f32, f32), f32)
+    /// Pops a vector element ID from the stack and creates a set of brush points for it
+    PopBrushPoints(Arc<Vec<BrushPoint>>)
 }

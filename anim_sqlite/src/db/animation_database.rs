@@ -3,6 +3,7 @@ use super::db_update::*;
 
 use rusqlite::*;
 use std::collections::*;
+use std::time::Duration;
 
 const V1_DEFINITION: &[u8]      = include_bytes!["../../sql/flo_v1.sqlite"];
 const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
@@ -33,6 +34,7 @@ pub struct AnimationDatabase {
 enum Statement {
     SelectEnumValue,
     SelectLayerId,
+    SelectNearestKeyFrame,
 
     UpdateAnimationSize,
 
@@ -96,6 +98,23 @@ impl AnimationDatabase {
     }
 
     ///
+    /// Turns a microsecond count into a duration
+    /// 
+    fn from_micros(when: i64) -> Duration {
+        Duration::new((when / 1_000_000) as u64, ((when % 1_000_000) * 1000) as u32)
+    }
+
+    ///
+    /// Retrieves microseconds from a duration
+    /// 
+    fn get_micros(when: &Duration) -> i64 {
+        let secs:i64    = when.as_secs() as i64;
+        let nanos:i64   = when.subsec_nanos() as i64;
+
+        (secs * 1_000_000) + (nanos / 1_000)
+    }
+
+    ///
     /// Returns the text of the query for a particular statements
     /// 
     fn query_for_statement(statement: Statement) -> &'static str {
@@ -106,6 +125,7 @@ impl AnimationDatabase {
             SelectLayerId                   => "SELECT Layer.LayerId, Layer.LayerType FROM Flo_AnimationLayers AS Anim \
                                                        INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
                                                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
+            SelectNearestKeyFrame           => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 
@@ -144,13 +164,6 @@ impl AnimationDatabase {
     }
 
     ///
-    /// Fetches a statement from a cache, or prepares it
-    /// 
-    fn prepare_with_cache<'a, 'conn>(&'conn self, statement: Statement, cache: &'a mut HashMap<Statement, CachedStatement<'conn>>) -> &'a mut CachedStatement<'conn> {
-        cache.entry(statement).or_insert_with(|| Self::prepare(&self.sqlite, statement).unwrap())
-    }
-
-    ///
     /// Retrieves an enum value
     /// 
     fn enum_value(&mut self, val: DbEnum) -> i64 {
@@ -168,8 +181,217 @@ impl AnimationDatabase {
     ///
     /// Executes a particular database update
     /// 
-    fn execute_update<'a, 'conn>(&'conn self, update: DatabaseUpdate, cache: &'a mut HashMap<Statement, CachedStatement<'conn>>) {
-        unimplemented!()
+    fn execute_update<'a, 'conn>(&'conn mut self, update: DatabaseUpdate) -> Result<()> {
+        use self::DatabaseUpdate::*;
+
+        match update {
+            Pop                                                             => { 
+                self.stack.pop(); 
+                Ok(()) 
+            },
+
+            PushEditType(edit_log_type)                                     => {
+                let edit_log_type   = self.enum_value(DbEnum::EditLog(edit_log_type));
+                let edit_log_id     = Self::prepare(&self.sqlite, Statement::InsertEditType)?.insert(&[&edit_log_type])?;
+                self.stack.push(edit_log_id);
+                Ok(())
+            },
+
+            PopEditLogSetSize(width, height)                                => {
+                let edit_log_id     = self.stack.pop().unwrap();
+                let mut set_size    = Self::prepare(&self.sqlite, Statement::InsertELSetSize)?;
+                set_size.insert(&[&edit_log_id, &(width as f64), &(height as f64)])?;
+                Ok(())
+            },
+
+            PushEditLogLayer(layer_id)                                      => {
+                let edit_log_id     = self.stack.pop().unwrap();
+                let mut set_layer   = Self::prepare(&self.sqlite, Statement::InsertELLayer)?;
+                set_layer.insert(&[&edit_log_id, &(layer_id as i64)])?;
+                self.stack.push(edit_log_id);
+                Ok(())
+            },
+
+            PushEditLogWhen(when)                                           => {
+                let edit_log_id     = self.stack.pop().unwrap();
+                let mut set_when    = Self::prepare(&self.sqlite, Statement::InsertELWhen)?;
+                set_when.insert(&[&edit_log_id, &Self::get_micros(&when)])?;
+                self.stack.push(edit_log_id);
+                Ok(())
+            },
+
+            PopEditLogBrush(drawing_style)                                  => {
+                let brush_id        = self.stack.pop().unwrap();
+                let edit_log_id     = self.stack.pop().unwrap();
+                let drawing_style   = self.enum_value(DbEnum::DrawingStyle(drawing_style));
+                let mut set_brush   = Self::prepare(&self.sqlite, Statement::InsertELBrush)?;
+                set_brush.insert(&[&edit_log_id, &drawing_style, &brush_id])?;
+                Ok(())
+            },
+
+            PopEditLogBrushProperties                                       => {
+                let brush_props_id      = self.stack.pop().unwrap();
+                let edit_log_id         = self.stack.pop().unwrap();
+                let mut set_brush_props = Self::prepare(&self.sqlite, Statement::InsertELBrushProperties)?;
+                set_brush_props.insert(&[&edit_log_id, &brush_props_id])?;
+                Ok(())
+            },
+
+            PushRawPoints(points)                                           => {
+                let edit_log_id         = self.stack.last().unwrap();
+                let mut add_raw_point   = Self::prepare(&self.sqlite, Statement::InsertELRawPoint)?;
+                let num_points          = points.len();
+
+                for (point, index) in points.iter().zip((0..num_points).into_iter()) {
+                    add_raw_point.insert(&[
+                        edit_log_id, &(index as i64), 
+                        &(point.position.0 as f64), &(point.position.1 as f64),
+                        &(point.pressure as f64),
+                        &(point.tilt.0 as f64), &(point.tilt.1 as f64)
+                    ])?;
+                }
+
+                Ok(())                
+            },
+
+            PushBrushType(brush_type)                                       => {
+                let brush_type              = self.enum_value(DbEnum::BrushDefinition(brush_type));
+                let mut insert_brush_type   = Self::prepare(&self.sqlite, Statement::InsertBrushType)?;
+                let brush_id                = insert_brush_type.insert(&[&brush_type])?;
+                self.stack.push(brush_id);
+                Ok(())
+            },
+
+            PushInkBrush(min_width, max_width, scale_up_distance)           => {
+                let brush_id                = self.stack.last().unwrap();
+                let mut insert_ink_brush    = Self::prepare(&self.sqlite, Statement::InsertInkBrush)?;
+                insert_ink_brush.insert(&[brush_id, &(min_width as f64), &(max_width as f64), &(scale_up_distance as f64)])?;
+                Ok(())
+            },
+
+            PushBrushProperties(size, opacity)                              => {
+                let color_id                    = self.stack.pop().unwrap();
+                let mut insert_brush_properties = Self::prepare(&self.sqlite, Statement::InsertBrushProperties)?;
+                let brush_props_id              = insert_brush_properties.insert(&[&(size as f64), &(opacity as f64), &color_id])?;
+                self.stack.push(brush_props_id);
+                Ok(())
+            },
+
+            PushColorType(color_type)                                       => {
+                let color_type              = self.enum_value(DbEnum::Color(color_type));
+                let mut insert_color_type   = Self::prepare(&self.sqlite, Statement::InsertColorType)?;
+                let color_id                = insert_color_type.insert(&[&color_type])?;
+                self.stack.push(color_id);
+                Ok(())
+            },
+
+            PushRgb(r, g, b)                                                => {
+                let color_id        = self.stack.last().unwrap();
+                let mut insert_rgb  = Self::prepare(&self.sqlite, Statement::InsertRgb)?;
+                insert_rgb.insert(&[color_id, &(r as f64), &(g as f64), &(b as f64)])?;
+                Ok(())
+            },
+
+            PushHsluv(h, s, l)                                              => {
+                let color_id            = self.stack.last().unwrap();
+                let mut insert_hsluv    = Self::prepare(&self.sqlite, Statement::InsertHsluv)?;
+                insert_hsluv.insert(&[color_id, &(h as f64), &(s as f64), &(l as f64)])?;
+                Ok(())
+            },
+
+            PushLayerType(layer_type)                                       => {
+                let layer_type              = self.enum_value(DbEnum::Layer(layer_type));
+                let mut insert_layer_type   = Self::prepare(&self.sqlite, Statement::InsertLayerType)?;
+                let layer_id                = insert_layer_type.insert(&[&layer_type])?;
+                self.stack.push(layer_id);
+                Ok(())
+            },
+
+            PushAssignLayer(assigned_id)                                    => {
+                let layer_id                = self.stack.last().unwrap();
+                let mut insert_assign_layer = Self::prepare(&self.sqlite, Statement::InsertAssignLayer)?;
+                insert_assign_layer.insert(&[&self.animation_id, layer_id, &(assigned_id as i64)])?;
+                Ok(())
+            },
+
+            PushLayerForAssignedId(assigned_id)                             => {
+                let mut select_layer_id = Self::prepare(&self.sqlite, Statement::SelectLayerId)?;
+                let layer_id            = select_layer_id.query_row(&[&self.animation_id, &(assigned_id as i64)], |row| row.get(0))?;
+                self.stack.push(layer_id);
+                Ok(())
+            },
+
+            PopAddKeyFrame(when)                                            => {
+                let layer_id                = self.stack.pop().unwrap();
+                let mut insert_key_frame    = Self::prepare(&self.sqlite, Statement::InsertKeyFrame)?;
+                insert_key_frame.insert(&[&layer_id, &Self::get_micros(&when)])?;
+                Ok(())
+            },
+
+            PopRemoveKeyFrame(when)                                         => {
+                let layer_id                = self.stack.pop().unwrap();
+                let mut delete_key_frame    = Self::prepare(&self.sqlite, Statement::DeleteKeyFrame)?;
+                delete_key_frame.execute(&[&layer_id, &Self::get_micros(&when)])?;
+                Ok(())
+            },
+
+            PushNearestKeyFrame(when)                                       => {
+                let layer_id                        = self.stack.pop().unwrap();
+                let mut select_nearest_keyframe     = Self::prepare(&self.sqlite, Statement::SelectNearestKeyFrame)?;
+                let (keyframe_id, start_micros)     = select_nearest_keyframe.query_row(&[&layer_id, &(Self::get_micros(&when))], |row| (row.get(0), row.get(1)))?;
+                self.stack.push(start_micros);
+                self.stack.push(keyframe_id);
+                Ok(())
+            },
+
+            PushVectorElementType(element_type, when)                       => {
+                let keyframe_id                     = self.stack.pop().unwrap();
+                let start_micros                    = self.stack.pop().unwrap();
+                let element_type                    = self.enum_value(DbEnum::VectorElement(element_type));
+                let mut insert_vector_element_type  = Self::prepare(&self.sqlite, Statement::InsertVectorElementType)?;
+                let when                            = Self::get_micros(&when) - start_micros;
+                let element_id                      = insert_vector_element_type.insert(&[&keyframe_id, &element_type, &when])?;
+                self.stack.push(start_micros);
+                self.stack.push(keyframe_id);
+                self.stack.push(element_id);
+                Ok(())
+            },
+
+            PopVectorBrushElement(drawing_style)                            => {
+                let brush_id                            = self.stack.pop().unwrap();
+                let element_id                          = self.stack.pop().unwrap();
+                let drawing_style                       = self.enum_value(DbEnum::DrawingStyle(drawing_style));
+                let mut insert_brush_definition_element = Self::prepare(&self.sqlite, Statement::InsertBrushDefinitionElement)?;
+                insert_brush_definition_element.insert(&[&element_id, &brush_id, &drawing_style])?;
+                Ok(())
+            },
+
+            PopVectorBrushPropertiesElement                                 => {
+                let brush_props_id                  = self.stack.pop().unwrap();
+                let element_id                      = self.stack.pop().unwrap();
+                let mut insert_brush_props_element  = Self::prepare(&self.sqlite, Statement::InsertBrushProperties)?;
+                insert_brush_props_element.insert(&[&element_id, &brush_props_id])?;
+                Ok(())
+            },
+
+            PopBrushPoints(points)                                          => {
+                let element_id              = self.stack.pop().unwrap();
+                let mut insert_brush_point  = Self::prepare(&self.sqlite, Statement::InsertBrushPoint)?;
+
+                let num_points = points.len();
+                for (point, index) in points.iter().zip((0..num_points).into_iter()) {
+                    insert_brush_point.insert(&[
+                        &element_id, &(index as i64),
+                        &(point.cp1.0 as f64), &(point.cp1.1 as f64),
+                        &(point.cp2.0 as f64), &(point.cp2.1 as f64),
+                        &(point.position.0 as f64), &(point.position.1 as f64),
+                        &(point.width as f64)
+                    ])?;
+                }
+
+                Ok(())
+            }
+        }
     }
 }
 
