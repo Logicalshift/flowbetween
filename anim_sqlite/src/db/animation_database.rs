@@ -201,7 +201,14 @@ impl AnimationDatabase {
         use self::DatabaseUpdate::*;
 
         match update {
-            Pop                                                             => { 
+            Pop                                                             => {
+                #[cfg(test)]
+                {
+                    if self.stack.len() == 0 {
+                        panic!("Popping on empty stack");
+                    }
+                }
+
                 self.stack.pop(); 
                 Ok(()) 
             },
