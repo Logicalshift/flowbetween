@@ -188,6 +188,24 @@ CREATE TABLE Flo_Animation (
 INSERT INTO Flo_Animation (SizeX, SizeY) VALUES (1980.0, 1080.0);
 
 /*
+ * Represents a vector layer
+ */
+CREATE TABLE Flo_LayerType (
+    /* The ID of this layer */
+    LayerId         INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+
+    /* The type of this layer */
+    LayerType       INTEGER NOT NULL
+);
+
+/* Deleting a layer type deletes the corresponding animation layers and key frames */
+CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
+    BEGIN
+        DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
+        DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
+    END;
+
+/*
  * Associates an animation with the layers it contains
  */
 CREATE TABLE Flo_AnimationLayers (
@@ -200,29 +218,6 @@ CREATE TABLE Flo_AnimationLayers (
 ) WITHOUT ROWID;
 
 CREATE UNIQUE INDEX FloIdx_AssignedLayers ON Flo_AnimationLayers (AnimationId, AssignedLayerId);
-
-/* Deleting an animation layer deletes the corresponding layertype */
-CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_AnimationLayers
-    BEGIN
-        DELETE FROM Flo_LayerType WHERE LayerId = Old.LayerId;
-    END;
-
-/*
- * Represents a vector layer
- */
-CREATE TABLE Flo_LayerType (
-    /* The ID of this layer */
-    LayerId         INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
-
-    /* The type of this layer */
-    LayerType       INTEGER NOT NULL
-);
-
-/* Deleting an animation layer deletes the corresponding keyframes */
-CREATE TRIGGER Flo_Delete_Layer_KeyFrames BEFORE DELETE ON Flo_LayerType
-    BEGIN
-        DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
-    END;
 
 /*
  * Represents a keyframe for a layer

@@ -176,7 +176,7 @@ impl FloSqlite {
             InsertBrushPoint                => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
-            DeleteLayer                     => "DELETE FROM Flo_AnimationLayers WHERE AnimationId = ? AND LayerId = ?"
+            DeleteLayer                     => "DELETE FROM Flo_LayerType WHERE LayerId = ?"
         }
     }
 
@@ -340,7 +340,7 @@ impl FloSqlite {
             PopDeleteLayer                                                  => {
                 let layer_id            = self.stack.pop().unwrap();
                 let mut delete_layer    = Self::prepare(&self.sqlite, Statement::DeleteLayer)?;
-                delete_layer.execute(&[&self.animation_id, &layer_id])?;
+                delete_layer.execute(&[&layer_id])?;
                 Ok(())
             },
 
