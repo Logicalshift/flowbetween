@@ -159,7 +159,7 @@ impl AnimationDatabase {
             InsertBrushPoint                => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
-            DeleteLayer                     => "DELETE FROM Flo_AnimationLayers WHERE AssignedLayerId = ?"
+            DeleteLayer                     => "DELETE FROM Flo_AnimationLayers WHERE AnimationId = ? AND LayerId = ?"
         }
     }
 
@@ -304,6 +304,13 @@ impl AnimationDatabase {
                 let color_id            = self.stack.last().unwrap();
                 let mut insert_hsluv    = Self::prepare(&self.sqlite, Statement::InsertHsluv)?;
                 insert_hsluv.insert(&[color_id, &(h as f64), &(s as f64), &(l as f64)])?;
+                Ok(())
+            },
+
+            PopDeleteLayer                                                  => {
+                let layer_id            = self.stack.pop().unwrap();
+                let mut delete_layer    = Self::prepare(&self.sqlite, Statement::DeleteLayer)?;
+                delete_layer.execute(&[&self.animation_id, &layer_id])?;
                 Ok(())
             },
 
