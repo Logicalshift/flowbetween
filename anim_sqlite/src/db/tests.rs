@@ -14,7 +14,7 @@ fn can_create_new_database() {
     assert!(db.retrieve_and_clear_error().is_none());
 }
 
-fn core() -> AnimationDbCore {
+fn core() -> AnimationDbCore<FloSqlite> {
     let connection = Connection::open_in_memory().unwrap();
     FloSqlite::setup(&connection).unwrap();
 
