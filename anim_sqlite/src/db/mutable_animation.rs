@@ -40,7 +40,7 @@ impl MutableAnimation for AnimationEditor {
         // Update the size for the current animation
         self.edit(move |db| {
             db.update(vec![
-                DatabaseUpdate::UpdateCanvasSize(size.0 as f32, size.1 as f32)
+                DatabaseUpdate::UpdateCanvasSize(size.0, size.1)
             ])?;
 
             Ok(())

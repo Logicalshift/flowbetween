@@ -18,7 +18,7 @@ pub enum DatabaseUpdate {
     Pop,
 
     /// Updates the canvas size of the animation
-    UpdateCanvasSize(f32, f32),
+    UpdateCanvasSize(f64, f64),
 
     /// Inserts a new edit log and pushes its ID
     PushEditType(EditLogType),

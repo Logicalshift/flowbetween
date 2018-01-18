@@ -198,6 +198,12 @@ impl AnimationDatabase {
                 Ok(()) 
             },
 
+            UpdateCanvasSize(width, height)                                 => {
+                let mut update_size = Self::prepare(&self.sqlite, Statement::UpdateAnimationSize)?;
+                update_size.execute(&[&width, &height, &self.animation_id])?;
+                Ok(())
+            },
+
             PushEditType(edit_log_type)                                     => {
                 let edit_log_type   = self.enum_value(DbEnum::EditLog(edit_log_type));
                 let edit_log_id     = Self::prepare(&self.sqlite, Statement::InsertEditType)?.insert(&[&edit_log_type])?;
@@ -488,7 +494,7 @@ impl AnimationDatabase {
     fn query_row<T, F: FnOnce(&Row) -> T>(&mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<T> {
         self.flush_pending()?;
 
-        let statement = Self::prepare(&self.sqlite, statement)?;
+        let mut statement = Self::prepare(&self.sqlite, statement)?;
         statement.query_row(params, f)
     }
 
@@ -498,7 +504,7 @@ impl AnimationDatabase {
     fn query_map<'a, T, F: FnMut(&Row) -> T>(&'a mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<MappedRows<'a, F>> {
         self.flush_pending()?;
 
-        let statement = Self::prepare(&self.sqlite, statement)?;
+        let mut statement = Self::prepare(&self.sqlite, statement)?;
         statement.query_map(params, f)
     }
 
