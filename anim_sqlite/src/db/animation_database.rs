@@ -512,7 +512,8 @@ impl AnimationDatabase {
     /// Finds the real layer ID for the specified assigned ID
     /// 
     pub fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<i64> {
-        self.query_row(Statement::SelectLayerId, &[&self.animation_id, &(assigned_id as i64)], |row| row.get(0))
+        let animation_id = self.animation_id;
+        self.query_row(Statement::SelectLayerId, &[&animation_id, &(assigned_id as i64)], |row| row.get(0))
     }
 
     ///
@@ -529,16 +530,18 @@ impl AnimationDatabase {
     /// Returns the size of the animation
     /// 
     pub fn query_size(&mut self) -> Result<(f64, f64)> {
-        self.query_row(Statement::SelectAnimationSize, &[&self.animation_id], |row| (row.get(0), row.get(1)))
+        let animation_id = self.animation_id;
+        self.query_row(Statement::SelectAnimationSize, &[&animation_id], |row| (row.get(0), row.get(1)))
     }
 
     ///
     /// Returns the assigned layer IDs
     /// 
     pub fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>> {
+        let animation_id = self.animation_id;
         let rows = self.query_map(
             Statement::SelectAssignedLayerIds, 
-            &[&self.animation_id],
+            &[&animation_id],
             |row| {
                 let layer_id: i64 = row.get(0);
                 layer_id as u64
