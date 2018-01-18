@@ -85,6 +85,14 @@ impl AnimationDatabase {
     }
 
     ///
+    /// True if there are no items on the stack for this item
+    /// 
+    #[cfg(test)]
+    pub fn stack_is_empty(&self) -> bool {
+        self.stack.len() == 0
+    }
+
+    ///
     /// Initialises the database
     /// 
     pub fn setup(sqlite: &Connection) -> Result<()> {

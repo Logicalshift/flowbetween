@@ -83,10 +83,7 @@ impl AnimationDb {
     pub fn retrieve_and_clear_error(&self) -> Option<Error> {
         // We have to clear the error as rusqlite::Error does not implement clone or copy
         self.core.sync(|core| {
-            let mut failure = None;
-            mem::swap(&mut core.failure, &mut failure);
-
-            failure
+            core.retrieve_and_clear_error()
         })
     }
 
@@ -126,5 +123,16 @@ impl AnimationDbCore {
         };
 
         core
+    }
+
+    ///
+    /// If there has been an error, retrieves what it is and clears the condition
+    /// 
+    fn retrieve_and_clear_error(&mut self) -> Option<Error> {
+        // We have to clear the error as rusqlite::Error does not implement clone or copy
+        let mut failure = None;
+        mem::swap(&mut self.failure, &mut failure);
+
+        failure
     }
 }
