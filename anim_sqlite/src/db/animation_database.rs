@@ -2,6 +2,7 @@ use super::db_enum::*;
 use super::db_update::*;
 
 use rusqlite::*;
+use rusqlite::types::ToSql;
 use std::collections::*;
 use std::time::Duration;
 use std::mem;
@@ -36,6 +37,9 @@ enum Statement {
     SelectEnumValue,
     SelectLayerId,
     SelectNearestKeyFrame,
+    SelectKeyFrameTimes,
+    SelectAnimationSize,
+    SelectAssignedLayerIds,
 
     UpdateAnimationSize,
 
@@ -78,6 +82,14 @@ impl AnimationDatabase {
             stack:          vec![],
             pending:        None
         }
+    }
+
+    ///
+    /// True if there are no items on the stack for this item
+    /// 
+    #[cfg(test)]
+    pub fn stack_is_empty(&self) -> bool {
+        self.stack.len() == 0
     }
 
     ///
@@ -127,6 +139,9 @@ impl AnimationDatabase {
                                                        INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
                                                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
             SelectNearestKeyFrame           => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
+            SelectKeyFrameTimes             => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ?",
+            SelectAnimationSize             => "SELECT SizeX, SizeY FROM Flo_Animation WHERE AnimationId = ?",
+            SelectAssignedLayerIds          => "SELECT AssignedLayerId FROM Flo_AnimationLayers WHERE AnimationId = ?",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 
@@ -152,7 +167,7 @@ impl AnimationDatabase {
             InsertBrushPoint                => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
 
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
-            DeleteLayer                     => "DELETE FROM Flo_AnimationLayers WHERE AssignedLayerId = ?"
+            DeleteLayer                     => "DELETE FROM Flo_AnimationLayers WHERE AnimationId = ? AND LayerId = ?"
         }
     }
 
@@ -189,6 +204,12 @@ impl AnimationDatabase {
             Pop                                                             => { 
                 self.stack.pop(); 
                 Ok(()) 
+            },
+
+            UpdateCanvasSize(width, height)                                 => {
+                let mut update_size = Self::prepare(&self.sqlite, Statement::UpdateAnimationSize)?;
+                update_size.execute(&[&width, &height, &self.animation_id])?;
+                Ok(())
             },
 
             PushEditType(edit_log_type)                                     => {
@@ -300,6 +321,13 @@ impl AnimationDatabase {
                 Ok(())
             },
 
+            PopDeleteLayer                                                  => {
+                let layer_id            = self.stack.pop().unwrap();
+                let mut delete_layer    = Self::prepare(&self.sqlite, Statement::DeleteLayer)?;
+                delete_layer.execute(&[&self.animation_id, &layer_id])?;
+                Ok(())
+            },
+
             PushLayerType(layer_type)                                       => {
                 let layer_type              = self.enum_value(DbEnum::Layer(layer_type));
                 let mut insert_layer_type   = Self::prepare(&self.sqlite, Statement::InsertLayerType)?;
@@ -312,6 +340,11 @@ impl AnimationDatabase {
                 let layer_id                = self.stack.last().unwrap();
                 let mut insert_assign_layer = Self::prepare(&self.sqlite, Statement::InsertAssignLayer)?;
                 insert_assign_layer.insert(&[&self.animation_id, layer_id, &(assigned_id as i64)])?;
+                Ok(())
+            },
+
+            PushLayerId(layer_id)                                           => {
+                self.stack.push(layer_id);
                 Ok(())
             },
 
@@ -370,7 +403,7 @@ impl AnimationDatabase {
             PopVectorBrushPropertiesElement                                 => {
                 let brush_props_id                  = self.stack.pop().unwrap();
                 let element_id                      = self.stack.pop().unwrap();
-                let mut insert_brush_props_element  = Self::prepare(&self.sqlite, Statement::InsertBrushProperties)?;
+                let mut insert_brush_props_element  = Self::prepare(&self.sqlite, Statement::InsertBrushPropertiesElement)?;
                 insert_brush_props_element.insert(&[&element_id, &brush_props_id])?;
                 Ok(())
             },
@@ -444,17 +477,102 @@ impl AnimationDatabase {
 
         Ok(())
     }
+
+    ///
+    /// Ensures any pending updates are committed to the database
+    /// 
+    pub fn flush_pending(&mut self) -> Result<()> {
+        if self.pending.is_some() {
+            // Fetch the pending updates
+            let mut pending = Some(vec![]);
+            mem::swap(&mut pending, &mut self.pending);
+
+            // Execute them now
+            if let Some(pending) = pending {
+                self.execute_updates_now(pending)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Queries a single row in the database
+    /// 
+    fn query_row<T, F: FnOnce(&Row) -> T>(&mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<T> {
+        self.flush_pending()?;
+
+        let mut statement = Self::prepare(&self.sqlite, statement)?;
+        statement.query_row(params, f)
+    }
+
+    ///
+    /// Queries and maps some rows
+    /// 
+    fn query_map<'a, T: 'a, F: FnMut(&Row) -> T>(&mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<Box<'a+Iterator<Item=Result<T>>>> {
+        self.flush_pending()?;
+
+        // Prepare the statement
+        let mut statement = Self::prepare(&self.sqlite, statement)?;
+
+        // Gather the results into a vector (can't keep the map due to lifetime requirements: Rust can't preserve the statement outside of this function)
+        let results: Vec<Result<T>> = statement.query_map(params, f)?.collect();
+
+        // Convert into an iterator (into_iter preserves the lifetime of the vec so we don't have the same problem)
+        Ok(Box::new(results.into_iter()))
+    }
+
+    ///
+    /// Finds the real layer ID for the specified assigned ID
+    /// 
+    pub fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<i64> {
+        let animation_id = self.animation_id;
+        self.query_row(Statement::SelectLayerId, &[&animation_id, &(assigned_id as i64)], |row| row.get(0))
+    }
+
+    ///
+    /// Returns an iterator over the key frame times for a particular layer ID
+    /// 
+    pub fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64) -> Result<Vec<Duration>> {
+        let rows = self.query_map(Statement::SelectKeyFrameTimes, &[&layer_id], |row| { Self::from_micros(row.get(0)) })?;
+        let rows = rows.map(|row| row.unwrap());
+
+        Ok(rows.collect())
+    }
+
+    ///
+    /// Returns the size of the animation
+    /// 
+    pub fn query_size(&mut self) -> Result<(f64, f64)> {
+        let animation_id = self.animation_id;
+        self.query_row(Statement::SelectAnimationSize, &[&animation_id], |row| (row.get(0), row.get(1)))
+    }
+
+    ///
+    /// Returns the assigned layer IDs
+    /// 
+    pub fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>> {
+        let animation_id = self.animation_id;
+        let rows = self.query_map(
+            Statement::SelectAssignedLayerIds, 
+            &[&animation_id],
+            |row| {
+                let layer_id: i64 = row.get(0);
+                layer_id as u64
+            })?;
+
+        Ok(rows.filter(|row| row.is_ok()).map(|row| row.unwrap()).collect())
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::core::*;
 
     #[test]
     fn can_get_enum_value() {
         let conn = Connection::open_in_memory().unwrap();
-        AnimationDatabase::setup(&conn);
+        AnimationDatabase::setup(&conn).unwrap();
         let mut db = AnimationDatabase::new(conn);
 
         assert!(db.enum_value(DbEnum::EditLog(EditLogType::LayerAddKeyFrame)) == 3);

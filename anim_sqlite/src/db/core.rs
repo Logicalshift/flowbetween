@@ -1,5 +1,4 @@
-use super::editlog::*;
-use super::vector_layer::*;
+use super::animation_database::*;
 
 use rusqlite::*;
 
@@ -8,16 +7,7 @@ use rusqlite::*;
 /// 
 pub struct AnimationDbCore {
     /// The database connection
-    pub sqlite: Connection,
-
-    /// The enum values for the edit log (or None if these are not yet available)
-    pub edit_log_enum: Option<EditLogEnumValues>,
-
-    /// The enum values for the vector elements
-    pub vector_enum: Option<VectorElementEnumValues>,
-
-    /// The ID value of the animation we're editing
-    pub animation_id: i64,
+    pub db: AnimationDatabase,
 
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
@@ -28,10 +18,10 @@ impl AnimationDbCore {
     ///
     /// Performs an edit on this core if the failure condition is clear
     /// 
-    pub fn edit<TEdit: FnOnce(&Connection, i64, &AnimationDbCore) -> Result<()>>(&mut self, edit: TEdit) {
+    pub fn edit<TEdit: FnOnce(&mut AnimationDatabase) -> Result<()>>(&mut self, edit: TEdit) {
         // Perform the edit if there is no failure
         if self.failure.is_none() {
-            self.failure = edit(&self.sqlite, self.animation_id, self).err();
+            self.failure = edit(&mut self.db).err();
         }
     }
 }

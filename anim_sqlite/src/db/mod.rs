@@ -5,16 +5,13 @@ use rusqlite::*;
 
 use std::mem;
 use std::sync::*;
-use std::time::Duration;
 
 #[cfg(test)] mod tests;
 
-mod setup;
 mod animation_database;
 mod db_enum;
 mod db_update;
 mod editlog;
-mod editlog_statements;
 mod animation;
 mod mutable_animation;
 mod core;
@@ -23,11 +20,11 @@ mod brush;
 mod vector_layer;
 
 pub use self::animation::*;
-pub use self::setup::*;
 pub use self::editlog::*;
 pub use self::vector_layer::*;
 use self::mutable_animation::*;
 use self::core::*;
+use self::animation_database::*;
 
 ///
 /// Database used to store an animation
@@ -52,6 +49,8 @@ impl AnimationDb {
     /// Creates a new animation database using the specified SQLite connection
     /// 
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
+        AnimationDatabase::setup(&connection).unwrap();
+
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
         let editor  = AnimationEditor::new(&core);
 
@@ -59,8 +58,6 @@ impl AnimationDb {
             core:   core,
             editor: Mutex::new(editor)
         };
-        db.setup();
-        db.prepare();
 
         db
     }
@@ -76,7 +73,6 @@ impl AnimationDb {
             core:   core,
             editor: Mutex::new(editor)
         };
-        db.prepare();
 
         db
     }
@@ -87,10 +83,7 @@ impl AnimationDb {
     pub fn retrieve_and_clear_error(&self) -> Option<Error> {
         // We have to clear the error as rusqlite::Error does not implement clone or copy
         self.core.sync(|core| {
-            let mut failure = None;
-            mem::swap(&mut core.failure, &mut failure);
-
-            failure
+            core.retrieve_and_clear_error()
         })
     }
 
@@ -125,10 +118,7 @@ impl AnimationDbCore {
     /// 
     fn new(connection: Connection) -> AnimationDbCore {
         let core = AnimationDbCore {
-            sqlite:         connection,
-            animation_id:   0,
-            edit_log_enum:  None,
-            vector_enum:    None,
+            db:             AnimationDatabase::new(connection),
             failure:        None
         };
 
@@ -136,19 +126,13 @@ impl AnimationDbCore {
     }
 
     ///
-    /// Turns a microsecond count into a duration
+    /// If there has been an error, retrieves what it is and clears the condition
     /// 
-    fn from_micros(when: i64) -> Duration {
-        Duration::new((when / 1_000_000) as u64, ((when % 1_000_000) * 1000) as u32)
-    }
+    fn retrieve_and_clear_error(&mut self) -> Option<Error> {
+        // We have to clear the error as rusqlite::Error does not implement clone or copy
+        let mut failure = None;
+        mem::swap(&mut self.failure, &mut failure);
 
-    ///
-    /// Retrieves microseconds from a duration
-    /// 
-    fn get_micros(when: &Duration) -> i64 {
-        let secs:i64    = when.as_secs() as i64;
-        let nanos:i64   = when.subsec_nanos() as i64;
-
-        (secs * 1_000_000) + (nanos / 1_000)
+        failure
     }
 }
