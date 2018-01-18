@@ -8,7 +8,7 @@ impl AnimationDbCore {
     ///
     /// Inserts a colour definition, leaving the ID on the database stack
     /// 
-    pub fn insert_color(db: &mut AnimationDatabase, color: &Color) -> Result<()> {
+    pub fn insert_color(db: &mut FloSqlite, color: &Color) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         match color {

@@ -8,7 +8,7 @@ use std::sync::*;
 
 #[cfg(test)] mod tests;
 
-mod animation_database;
+mod flo_sqlite;
 mod db_enum;
 mod db_update;
 mod editlog;
@@ -24,7 +24,7 @@ pub use self::editlog::*;
 pub use self::vector_layer::*;
 use self::mutable_animation::*;
 use self::core::*;
-use self::animation_database::*;
+use self::flo_sqlite::*;
 
 ///
 /// Database used to store an animation
@@ -49,7 +49,7 @@ impl AnimationDb {
     /// Creates a new animation database using the specified SQLite connection
     /// 
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
-        AnimationDatabase::setup(&connection).unwrap();
+        FloSqlite::setup(&connection).unwrap();
 
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
         let editor  = AnimationEditor::new(&core);
@@ -118,7 +118,7 @@ impl AnimationDbCore {
     /// 
     fn new(connection: Connection) -> AnimationDbCore {
         let core = AnimationDbCore {
-            db:             AnimationDatabase::new(connection),
+            db:             FloSqlite::new(connection),
             failure:        None
         };
 

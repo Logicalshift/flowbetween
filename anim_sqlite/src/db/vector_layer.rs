@@ -140,7 +140,7 @@ impl SqliteVectorLayer {
     ///
     /// The element is created without its associated data.
     ///
-    fn create_new_element(db: &mut AnimationDatabase, layer_id: i64, when: Duration, element: &Vector) -> Result<()> {
+    fn create_new_element(db: &mut FloSqlite, layer_id: i64, when: Duration, element: &Vector) -> Result<()> {
         db.update(vec![
             DatabaseUpdate::PushLayerId(layer_id),
             DatabaseUpdate::PushNearestKeyFrame(when),
@@ -153,7 +153,7 @@ impl SqliteVectorLayer {
     ///
     /// Writes a brush properties element to the database (popping the element ID)
     ///
-    fn create_brush_properties(db: &mut AnimationDatabase, properties: BrushPropertiesElement) -> Result<()> {
+    fn create_brush_properties(db: &mut FloSqlite, properties: BrushPropertiesElement) -> Result<()> {
         AnimationDbCore::insert_brush_properties(db, properties.brush_properties())?;
 
         // Create the element
@@ -167,7 +167,7 @@ impl SqliteVectorLayer {
     ///
     /// Writes a brush definition element to the database (popping the element ID)
     ///
-    fn create_brush_definition(db: &mut AnimationDatabase, definition: BrushDefinitionElement) -> Result<()> {
+    fn create_brush_definition(db: &mut FloSqlite, definition: BrushDefinitionElement) -> Result<()> {
         // Create the brush definition
         AnimationDbCore::insert_brush(db, definition.definition())?;
 
@@ -182,7 +182,7 @@ impl SqliteVectorLayer {
     ///
     /// Writes a brush stroke to the database (popping the element ID)
     ///
-    fn create_brush_stroke(db: &mut AnimationDatabase, brush_stroke: BrushElement) -> Result<()> {
+    fn create_brush_stroke(db: &mut FloSqlite, brush_stroke: BrushElement) -> Result<()> {
         db.update(vec![
             DatabaseUpdate::PopBrushPoints(brush_stroke.points())
         ])?;

@@ -22,7 +22,7 @@ const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
 /// place (making it easier to change) and it eliminates a hard dependency on
 /// SQLite. (It also reduces the amount of boilerplate code needed in a lot of places)
 /// 
-pub struct AnimationDatabase {
+pub struct FloSqlite {
     /// The SQLite connection
     sqlite: Connection,
 
@@ -76,14 +76,14 @@ enum Statement {
     DeleteLayer
 }
 
-impl AnimationDatabase {
+impl FloSqlite {
     ///
     /// Creates a new animation database
     /// 
-    pub fn new(sqlite: Connection) -> AnimationDatabase {
+    pub fn new(sqlite: Connection) -> FloSqlite {
         let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", &[], |row| row.get(0)).unwrap();
 
-        AnimationDatabase {
+        FloSqlite {
             sqlite:         sqlite,
             animation_id:   animation_id,
             enum_values:    HashMap::new(),
@@ -587,8 +587,8 @@ mod test {
     #[test]
     fn can_get_enum_value() {
         let conn = Connection::open_in_memory().unwrap();
-        AnimationDatabase::setup(&conn).unwrap();
-        let mut db = AnimationDatabase::new(conn);
+        FloSqlite::setup(&conn).unwrap();
+        let mut db = FloSqlite::new(conn);
 
         assert!(db.enum_value(DbEnum::EditLog(EditLogType::LayerAddKeyFrame)) == 3);
     }

@@ -1,5 +1,5 @@
 use super::*;
-use super::animation_database::*;
+use super::flo_sqlite::*;
 use super::db_update::*;
 use super::db_enum::*;
 
@@ -30,7 +30,7 @@ impl AnimationEditor {
     ///
     /// Performs an edit on this item (if the core's error condition is clear)
     /// 
-    fn edit<TEdit: Fn(&mut AnimationDatabase) -> Result<()>+Send+'static>(&mut self, edit: TEdit) {
+    fn edit<TEdit: Fn(&mut FloSqlite) -> Result<()>+Send+'static>(&mut self, edit: TEdit) {
         self.core.async(move |core| core.edit(edit))
     }
 }

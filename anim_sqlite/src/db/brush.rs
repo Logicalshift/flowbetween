@@ -6,7 +6,7 @@ impl AnimationDbCore {
     ///
     /// Inserts a brush definition, leaving the ID on the database stack
     /// 
-    pub fn insert_brush(db: &mut AnimationDatabase, brush_definition: &BrushDefinition) -> Result<()> {
+    pub fn insert_brush(db: &mut FloSqlite, brush_definition: &BrushDefinition) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         match brush_definition {
@@ -28,7 +28,7 @@ impl AnimationDbCore {
     ///
     /// Inserts some brush properties into the database, leaving the ID on the database stack
     ///
-    pub fn insert_brush_properties(db: &mut AnimationDatabase, brush_properties: &BrushProperties) -> Result<()> {
+    pub fn insert_brush_properties(db: &mut FloSqlite, brush_properties: &BrushProperties) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         Self::insert_color(db, &brush_properties.color)?;
