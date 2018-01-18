@@ -38,6 +38,8 @@ enum Statement {
     SelectLayerId,
     SelectNearestKeyFrame,
     SelectKeyFrameTimes,
+    SelectAnimationSize,
+    SelectAssignedLayerIds,
 
     UpdateAnimationSize,
 
@@ -130,6 +132,8 @@ impl AnimationDatabase {
                                                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
             SelectNearestKeyFrame           => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
             SelectKeyFrameTimes             => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ?",
+            SelectAnimationSize             => "SELECT SizeX, SizeY FROM Flo_Animation WHERE AnimationId = ?",
+            SelectAssignedLayerIds          => "SELECT AssignedLayerId FROM Flo_AnimationLayers WHERE AnimationId = ?",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 
@@ -506,6 +510,28 @@ impl AnimationDatabase {
         let rows = rows.map(|row| row.unwrap());
 
         Ok(rows.collect())
+    }
+
+    ///
+    /// Returns the size of the animation
+    /// 
+    pub fn query_size(&mut self) -> Result<(f64, f64)> {
+        self.query_row(Statement::SelectAnimationSize, &[&self.animation_id], |row| (row.get(0), row.get(1)))
+    }
+
+    ///
+    /// Returns the assigned layer IDs
+    /// 
+    pub fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>> {
+        let rows = self.query_map(
+            Statement::SelectAssignedLayerIds, 
+            &[&self.animation_id],
+            |row| {
+                let layer_id: i64 = row.get(0);
+                layer_id as u64
+            })?;
+
+        Ok(rows.filter(|row| row.is_ok()).map(|row| row.unwrap()).collect())
     }
 }
 
