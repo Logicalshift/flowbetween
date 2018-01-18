@@ -9,7 +9,7 @@ use std::time::Duration;
 ///
 /// Represents a vector layer in a SQLite database
 /// 
-pub struct SqliteVectorLayer {
+pub struct SqliteVectorLayer<TFile: FloFile+Send> {
     /// The ID that was assigned to this layer
     assigned_id: u64,
 
@@ -21,23 +21,23 @@ pub struct SqliteVectorLayer {
     active_brush: Option<(Duration, Arc<Brush>)>,
 
     /// Database core
-    core: Arc<Desync<AnimationDbCore>>
+    core: Arc<Desync<AnimationDbCore<TFile>>>
 }
 
 impl AnimationDb {
     ///
     /// Retrieves a layer for a particular ID
     ///
-    pub fn get_layer_with_id(&self, assigned_id: u64) -> Option<SqliteVectorLayer> {
+    pub fn get_layer_with_id(&self, assigned_id: u64) -> Option<SqliteVectorLayer<FloSqlite>> {
         SqliteVectorLayer::from_assigned_id(&self.core, assigned_id)
     }
 }
 
-impl SqliteVectorLayer {
+impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
     ///
     /// Retrieves a layer for a particular ID
     ///
-    pub fn from_assigned_id(core: &Arc<Desync<AnimationDbCore>>, assigned_id: u64) -> Option<SqliteVectorLayer> {
+    pub fn from_assigned_id(core: &Arc<Desync<AnimationDbCore<TFile>>>, assigned_id: u64) -> Option<SqliteVectorLayer<TFile>> {
         // Query for the 'real' layer ID
         let layer = core.sync(|core| {
             // Fetch the layer data (we need the 'real' ID here)
@@ -57,11 +57,11 @@ impl SqliteVectorLayer {
     }
 }
 
-impl SqliteVectorLayer {
+impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
     ///
     /// Performs an async operation on the database
     /// 
-    fn async<TFn: 'static+Send+Fn(&mut AnimationDbCore) -> Result<()>>(&self, action: TFn) {
+    fn async<TFn: 'static+Send+Fn(&mut AnimationDbCore<TFile>) -> Result<()>>(&self, action: TFn) {
         self.core.async(move |core| {
             // Only run the function if there has been no failure
             if core.failure.is_none() {
@@ -73,7 +73,7 @@ impl SqliteVectorLayer {
     }
 }
 
-impl Layer for SqliteVectorLayer {
+impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
     fn id(&self) -> u64 {
         self.assigned_id
     }
@@ -135,13 +135,13 @@ impl Layer for SqliteVectorLayer {
     }
 }
 
-impl SqliteVectorLayer {
+impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     ///
     /// Creates a new vector element in an animation DB core, leaving the element ID, key frame ID and time pushed on the DB stack
     ///
     /// The element is created without its associated data.
     ///
-    fn create_new_element(db: &mut FloSqlite, layer_id: i64, when: Duration, element: &Vector) -> Result<()> {
+    fn create_new_element(db: &mut TFile, layer_id: i64, when: Duration, element: &Vector) -> Result<()> {
         db.update(vec![
             DatabaseUpdate::PushLayerId(layer_id),
             DatabaseUpdate::PushNearestKeyFrame(when),
@@ -154,7 +154,7 @@ impl SqliteVectorLayer {
     ///
     /// Writes a brush properties element to the database (popping the element ID)
     ///
-    fn create_brush_properties(db: &mut FloSqlite, properties: BrushPropertiesElement) -> Result<()> {
+    fn create_brush_properties(db: &mut TFile, properties: BrushPropertiesElement) -> Result<()> {
         AnimationDbCore::insert_brush_properties(db, properties.brush_properties())?;
 
         // Create the element
@@ -168,7 +168,7 @@ impl SqliteVectorLayer {
     ///
     /// Writes a brush definition element to the database (popping the element ID)
     ///
-    fn create_brush_definition(db: &mut FloSqlite, definition: BrushDefinitionElement) -> Result<()> {
+    fn create_brush_definition(db: &mut TFile, definition: BrushDefinitionElement) -> Result<()> {
         // Create the brush definition
         AnimationDbCore::insert_brush(db, definition.definition())?;
 
@@ -183,7 +183,7 @@ impl SqliteVectorLayer {
     ///
     /// Writes a brush stroke to the database (popping the element ID)
     ///
-    fn create_brush_stroke(db: &mut FloSqlite, brush_stroke: BrushElement) -> Result<()> {
+    fn create_brush_stroke(db: &mut TFile, brush_stroke: BrushElement) -> Result<()> {
         db.update(vec![
             DatabaseUpdate::PopBrushPoints(brush_stroke.points())
         ])?;
@@ -192,7 +192,7 @@ impl SqliteVectorLayer {
     }
 }
 
-impl VectorLayer for SqliteVectorLayer {
+impl<TFile: FloFile+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {
     fn add_element(&mut self, when: Duration, new_element: Vector) {
         use animation::Vector::*;
 

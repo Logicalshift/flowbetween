@@ -1,24 +1,24 @@
-use super::flo_sqlite::*;
+use super::flo_store::*;
 
 use rusqlite::*;
 
 ///
 /// Core data structure used by the animation database
 /// 
-pub struct AnimationDbCore {
+pub struct AnimationDbCore<TFile: FloFile> {
     /// The database connection
-    pub db: FloSqlite,
+    pub db: TFile,
 
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
     pub failure: Option<Error>,
 }
 
-impl AnimationDbCore {
+impl<TFile: FloFile> AnimationDbCore<TFile> {
     ///
     /// Performs an edit on this core if the failure condition is clear
     /// 
-    pub fn edit<TEdit: FnOnce(&mut FloSqlite) -> Result<()>>(&mut self, edit: TEdit) {
+    pub fn edit<TEdit: FnOnce(&mut TFile) -> Result<()>>(&mut self, edit: TEdit) {
         // Perform the edit if there is no failure
         if self.failure.is_none() {
             self.failure = edit(&mut self.db).err();

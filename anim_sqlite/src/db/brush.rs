@@ -3,11 +3,11 @@ use super::db_enum::*;
 use super::db_update::*;
 use super::flo_store::*;
 
-impl AnimationDbCore {
+impl<TFile: FloFile> AnimationDbCore<TFile> {
     ///
     /// Inserts a brush definition, leaving the ID on the database stack
     /// 
-    pub fn insert_brush(db: &mut FloSqlite, brush_definition: &BrushDefinition) -> Result<()> {
+    pub fn insert_brush(db: &mut TFile, brush_definition: &BrushDefinition) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         match brush_definition {
@@ -29,7 +29,7 @@ impl AnimationDbCore {
     ///
     /// Inserts some brush properties into the database, leaving the ID on the database stack
     ///
-    pub fn insert_brush_properties(db: &mut FloSqlite, brush_properties: &BrushProperties) -> Result<()> {
+    pub fn insert_brush_properties(db: &mut TFile, brush_properties: &BrushProperties) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         Self::insert_color(db, &brush_properties.color)?;

@@ -1,5 +1,4 @@
 use super::*;
-use super::flo_sqlite::*;
 use super::db_update::*;
 use super::db_enum::*;
 use super::flo_store::*;
@@ -9,19 +8,19 @@ use std::collections::*;
 ///
 /// Class used for the animation object for a database
 /// 
-pub struct AnimationEditor {
+pub struct AnimationEditor<TFile: FloFile+Send> {
     /// The core, where the edits are sent
-    core: Arc<Desync<AnimationDbCore>>,
+    core: Arc<Desync<AnimationDbCore<TFile>>>,
 
     /// The layers created by this editor (used to track state)
-    layers: HashMap<u64, SqliteVectorLayer>
+    layers: HashMap<u64, SqliteVectorLayer<TFile>>
 }
 
-impl AnimationEditor {
+impl<TFile: FloFile+Send+'static> AnimationEditor<TFile> {
     ///
     /// Creates a new animation editor
     /// 
-    pub fn new(core: &Arc<Desync<AnimationDbCore>>) -> AnimationEditor {
+    pub fn new(core: &Arc<Desync<AnimationDbCore<TFile>>>) -> AnimationEditor<TFile> {
         AnimationEditor {
             core:   Arc::clone(core),
             layers: HashMap::new()
@@ -31,12 +30,12 @@ impl AnimationEditor {
     ///
     /// Performs an edit on this item (if the core's error condition is clear)
     /// 
-    fn edit<TEdit: Fn(&mut FloSqlite) -> Result<()>+Send+'static>(&mut self, edit: TEdit) {
+    fn edit<TEdit: Fn(&mut TFile) -> Result<()>+Send+'static>(&mut self, edit: TEdit) {
         self.core.async(move |core| core.edit(edit))
     }
 }
 
-impl MutableAnimation for AnimationEditor {
+impl<TFile: FloFile+Send+'static> MutableAnimation for AnimationEditor<TFile> {
     fn set_size(&mut self, size: (f64, f64)) {
         // Update the size for the current animation
         self.edit(move |db| {

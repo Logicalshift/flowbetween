@@ -26,16 +26,17 @@ pub use self::vector_layer::*;
 use self::mutable_animation::*;
 use self::core::*;
 use self::flo_sqlite::*;
+use self::flo_store::*;
 
 ///
 /// Database used to store an animation
 /// 
 pub struct AnimationDb {
     /// The core contains details of the database
-    core: Arc<Desync<AnimationDbCore>>,
+    core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
 
     /// The editor is used to provide the mutable animation interface (we keep it around so it can cache values if necessary)
-    editor: Mutex<AnimationEditor>
+    editor: Mutex<AnimationEditor<FloSqlite>>
 }
 
 impl AnimationDb {
@@ -91,7 +92,7 @@ impl AnimationDb {
     ///
     /// Performs an async operation on the database
     /// 
-    fn async<TFn: 'static+Send+Fn(&mut AnimationDbCore) -> Result<()>>(&self, action: TFn) {
+    fn async<TFn: 'static+Send+Fn(&mut AnimationDbCore<FloSqlite>) -> Result<()>>(&self, action: TFn) {
         self.core.async(move |core| {
             // Only run the function if there has been no failure
             if core.failure.is_none() {
@@ -113,11 +114,11 @@ impl AnimationDb {
     }
 }
 
-impl AnimationDbCore {
+impl AnimationDbCore<FloSqlite> {
     ///
-    /// Creates a new database core
+    /// Creates a new database core with a sqlite connection
     /// 
-    fn new(connection: Connection) -> AnimationDbCore {
+    fn new(connection: Connection) -> AnimationDbCore<FloSqlite> {
         let core = AnimationDbCore {
             db:             FloSqlite::new(connection),
             failure:        None
@@ -125,7 +126,9 @@ impl AnimationDbCore {
 
         core
     }
+}
 
+impl<TFile: FloFile> AnimationDbCore<TFile> {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
     /// 

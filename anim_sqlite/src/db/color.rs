@@ -5,11 +5,11 @@ use super::flo_store::*;
 
 use canvas::*;
 
-impl AnimationDbCore {
+impl<TFile: FloFile> AnimationDbCore<TFile> {
     ///
     /// Inserts a colour definition, leaving the ID on the database stack
     /// 
-    pub fn insert_color(db: &mut FloSqlite, color: &Color) -> Result<()> {
+    pub fn insert_color(db: &mut TFile, color: &Color) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         match color {
