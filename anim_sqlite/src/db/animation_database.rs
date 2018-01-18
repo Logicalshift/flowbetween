@@ -560,12 +560,11 @@ impl AnimationDatabase {
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::core::*;
 
     #[test]
     fn can_get_enum_value() {
         let conn = Connection::open_in_memory().unwrap();
-        AnimationDatabase::setup(&conn);
+        AnimationDatabase::setup(&conn).unwrap();
         let mut db = AnimationDatabase::new(conn);
 
         assert!(db.enum_value(DbEnum::EditLog(EditLogType::LayerAddKeyFrame)) == 3);

@@ -1,9 +1,10 @@
 use super::*;
 
 use animation;
-use animation::*;
 use animation::LayerEdit::*;
 use animation::PaintEdit::*;
+
+use std::time::Duration;
 
 #[test]
 fn can_create_new_database() {
@@ -11,19 +12,11 @@ fn can_create_new_database() {
     assert!(db.retrieve_and_clear_error().is_none());
 }
 
-#[test]
-fn can_read_default_enum() {
-    let mut db = AnimationDbCore::new(Connection::open_in_memory().unwrap());
-    db.setup().unwrap();
-
-    let edit_enum = EditLogEnumValues::new(&db.sqlite);
-
-    assert!(edit_enum.layer_paint_select_brush == 5);
-}
-
 fn core() -> AnimationDbCore {
-    let mut core = AnimationDbCore::new(Connection::open_in_memory().unwrap());
-    core.setup().unwrap();
+    let connection = Connection::open_in_memory().unwrap();
+    AnimationDatabase::setup(&connection).unwrap();
+
+    let core = AnimationDbCore::new(connection);
     core
 }
 
