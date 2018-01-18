@@ -5,7 +5,6 @@ use rusqlite::*;
 
 use std::mem;
 use std::sync::*;
-use std::time::Duration;
 
 #[cfg(test)] mod tests;
 
@@ -50,7 +49,7 @@ impl AnimationDb {
     /// Creates a new animation database using the specified SQLite connection
     /// 
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
-        AnimationDatabase::setup(&connection);
+        AnimationDatabase::setup(&connection).unwrap();
 
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
         let editor  = AnimationEditor::new(&core);
@@ -123,27 +122,9 @@ impl AnimationDbCore {
     fn new(connection: Connection) -> AnimationDbCore {
         let core = AnimationDbCore {
             db:             AnimationDatabase::new(connection),
-            vector_enum:    None,
             failure:        None
         };
 
         core
-    }
-
-    ///
-    /// Turns a microsecond count into a duration
-    /// 
-    fn from_micros(when: i64) -> Duration {
-        Duration::new((when / 1_000_000) as u64, ((when % 1_000_000) * 1000) as u32)
-    }
-
-    ///
-    /// Retrieves microseconds from a duration
-    /// 
-    fn get_micros(when: &Duration) -> i64 {
-        let secs:i64    = when.as_secs() as i64;
-        let nanos:i64   = when.subsec_nanos() as i64;
-
-        (secs * 1_000_000) + (nanos / 1_000)
     }
 }

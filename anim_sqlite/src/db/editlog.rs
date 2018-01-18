@@ -88,11 +88,11 @@ impl AnimationDbCore {
             }
 
             &AddKeyFrame(when)              => {
-                self.db.update(vec![PushEditLogWhen(when), Pop]);
+                self.db.update(vec![PushEditLogWhen(when), Pop])?;
             }
 
             &RemoveKeyFrame(when)           => {
-                self.db.update(vec![PushEditLogWhen(when), Pop]);
+                self.db.update(vec![PushEditLogWhen(when), Pop])?;
             }
         }
 

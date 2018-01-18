@@ -23,56 +23,6 @@ pub struct SqliteVectorLayer {
     core: Arc<Desync<AnimationDbCore>>
 }
 
-///
-/// Enumeration values for the vector elements
-///
-pub struct VectorElementEnumValues {
-    pub brush_definition:   i32,
-    pub brush_properties:   i32,
-    pub brush_stroke:       i32
-}
-
-impl VectorElementEnumValues {
-    ///
-    /// Reads the enum values
-    ///
-    pub fn new(sqlite: &Connection) -> Result<VectorElementEnumValues> {
-        // Define a function to read values
-        let read_value = |name: &str| {
-            sqlite.query_row(
-                "SELECT Value FROM Flo_EnumerationDescriptions WHERE FieldName = \"VectorElementType\" AND ApiName = ?",
-                &[&name],
-                |row| row.get(0)
-            )
-        };
-
-        // Read the values for the element values
-        let brush_definition    = read_value("BrushDefinition")?;
-        let brush_properties    = read_value("BrushProperties")?;
-        let brush_stroke        = read_value("BrushStroke")?;
-
-        // Turn into an enum values object
-        Ok(VectorElementEnumValues {
-            brush_definition:   brush_definition,
-            brush_properties:   brush_properties,
-            brush_stroke:       brush_stroke
-        })
-    }
-
-    ///
-    /// Retrieves the type ID for a vector element
-    ///
-    fn get_vector_type(&self, vector: &Vector) -> i32 {
-        use animation::Vector::*;
-
-        match vector {
-            &BrushDefinition(_) => self.brush_definition,
-            &BrushProperties(_) => self.brush_properties,
-            &BrushStroke(_)     => self.brush_stroke
-        }
-    }
-}
-
 impl AnimationDb {
     ///
     /// Retrieves a layer for a particular ID
@@ -219,7 +169,7 @@ impl SqliteVectorLayer {
     ///
     fn create_brush_definition(db: &mut AnimationDatabase, definition: BrushDefinitionElement) -> Result<()> {
         // Create the brush definition
-        AnimationDbCore::insert_brush(db, definition.definition());
+        AnimationDbCore::insert_brush(db, definition.definition())?;
 
         // Insert the properties for this element
         db.update(vec![
