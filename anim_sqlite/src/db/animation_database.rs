@@ -14,6 +14,14 @@ const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
 ///
 /// Provides an interface for updating and accessing the animation SQLite database
 /// 
+/// This takes a series of updates (see `DatabaseUpdate` for the list) and turns them
+/// into database commands. We do things this way for a few reasons: it creates
+/// an isolation layer between the implementation of the interfaces and the design
+/// of the database, it provides a way to test code without actually having to
+/// instantiate a database, it ensures that all of the database code is in one
+/// place (making it easier to change) and it eliminates a hard dependency on
+/// SQLite. (It also reduces the amount of boilerplate code needed in a lot of places)
+/// 
 pub struct AnimationDatabase {
     /// The SQLite connection
     sqlite: Connection,
