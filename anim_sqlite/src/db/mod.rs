@@ -8,6 +8,7 @@ use std::sync::*;
 
 #[cfg(test)] mod tests;
 
+mod flo_store;
 mod flo_sqlite;
 mod db_enum;
 mod db_update;

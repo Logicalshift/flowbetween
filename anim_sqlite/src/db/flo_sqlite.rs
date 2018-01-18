@@ -1,5 +1,6 @@
 use super::db_enum::*;
 use super::db_update::*;
+use super::flo_store::*;
 
 use rusqlite::*;
 use rusqlite::types::ToSql;
@@ -454,64 +455,6 @@ impl FloSqlite {
     }
 
     ///
-    /// Performs a set of updates on the database
-    /// 
-    pub fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
-        if let Some(ref mut pending) = self.pending {
-            // Queue the updates into the pending queue if we're not performing them immediately
-            pending.extend(updates.into_iter());
-        } else {
-            // Execute these updates immediately
-            self.execute_updates_now(updates)?;
-        }
-
-        Ok(())
-    }
-
-    ///
-    /// Starts queuing up database updates for later execution as a batch
-    /// 
-    pub fn begin_queuing(&mut self) {
-        if self.pending.is_none() {
-            self.pending = Some(vec![]);
-        }
-    }
-
-    ///
-    /// Executes the update queue
-    /// 
-    pub fn execute_queue(&mut self) -> Result<()> {
-        // Fetch the pending updates
-        let mut pending = None;
-        mem::swap(&mut pending, &mut self.pending);
-
-        // Execute them now
-        if let Some(pending) = pending {
-            self.execute_updates_now(pending)?;
-        }
-
-        Ok(())
-    }
-
-    ///
-    /// Ensures any pending updates are committed to the database
-    /// 
-    pub fn flush_pending(&mut self) -> Result<()> {
-        if self.pending.is_some() {
-            // Fetch the pending updates
-            let mut pending = Some(vec![]);
-            mem::swap(&mut pending, &mut self.pending);
-
-            // Execute them now
-            if let Some(pending) = pending {
-                self.execute_updates_now(pending)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    ///
     /// Queries a single row in the database
     /// 
     fn query_row<T, F: FnOnce(&Row) -> T>(&mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<T> {
@@ -536,11 +479,73 @@ impl FloSqlite {
         // Convert into an iterator (into_iter preserves the lifetime of the vec so we don't have the same problem)
         Ok(Box::new(results.into_iter()))
     }
+}
 
+impl FloStore for FloSqlite {
+    ///
+    /// Performs a set of updates on the database
+    /// 
+    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
+        if let Some(ref mut pending) = self.pending {
+            // Queue the updates into the pending queue if we're not performing them immediately
+            pending.extend(updates.into_iter());
+        } else {
+            // Execute these updates immediately
+            self.execute_updates_now(updates)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Starts queuing up database updates for later execution as a batch
+    /// 
+    fn begin_queuing(&mut self) {
+        if self.pending.is_none() {
+            self.pending = Some(vec![]);
+        }
+    }
+
+    ///
+    /// Executes the update queue
+    /// 
+    fn execute_queue(&mut self) -> Result<()> {
+        // Fetch the pending updates
+        let mut pending = None;
+        mem::swap(&mut pending, &mut self.pending);
+
+        // Execute them now
+        if let Some(pending) = pending {
+            self.execute_updates_now(pending)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Ensures any pending updates are committed to the database
+    /// 
+    fn flush_pending(&mut self) -> Result<()> {
+        if self.pending.is_some() {
+            // Fetch the pending updates
+            let mut pending = Some(vec![]);
+            mem::swap(&mut pending, &mut self.pending);
+
+            // Execute them now
+            if let Some(pending) = pending {
+                self.execute_updates_now(pending)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl FloQuery for FloSqlite {
     ///
     /// Finds the real layer ID for the specified assigned ID
     /// 
-    pub fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<i64> {
+    fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<i64> {
         let animation_id = self.animation_id;
         self.query_row(Statement::SelectLayerId, &[&animation_id, &(assigned_id as i64)], |row| row.get(0))
     }
@@ -548,7 +553,7 @@ impl FloSqlite {
     ///
     /// Returns an iterator over the key frame times for a particular layer ID
     /// 
-    pub fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64) -> Result<Vec<Duration>> {
+    fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64) -> Result<Vec<Duration>> {
         let rows = self.query_map(Statement::SelectKeyFrameTimes, &[&layer_id], |row| { Self::from_micros(row.get(0)) })?;
         let rows = rows.map(|row| row.unwrap());
 
@@ -558,7 +563,7 @@ impl FloSqlite {
     ///
     /// Returns the size of the animation
     /// 
-    pub fn query_size(&mut self) -> Result<(f64, f64)> {
+    fn query_size(&mut self) -> Result<(f64, f64)> {
         let animation_id = self.animation_id;
         self.query_row(Statement::SelectAnimationSize, &[&animation_id], |row| (row.get(0), row.get(1)))
     }
@@ -566,7 +571,7 @@ impl FloSqlite {
     ///
     /// Returns the assigned layer IDs
     /// 
-    pub fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>> {
+    fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>> {
         let animation_id = self.animation_id;
         let rows = self.query_map(
             Statement::SelectAssignedLayerIds, 
@@ -578,6 +583,9 @@ impl FloSqlite {
 
         Ok(rows.filter(|row| row.is_ok()).map(|row| row.unwrap()).collect())
     }
+}
+
+impl FloFile for FloSqlite {
 }
 
 #[cfg(test)]
