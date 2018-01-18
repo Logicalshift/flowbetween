@@ -395,7 +395,7 @@ impl AnimationDatabase {
             PopVectorBrushPropertiesElement                                 => {
                 let brush_props_id                  = self.stack.pop().unwrap();
                 let element_id                      = self.stack.pop().unwrap();
-                let mut insert_brush_props_element  = Self::prepare(&self.sqlite, Statement::InsertBrushProperties)?;
+                let mut insert_brush_props_element  = Self::prepare(&self.sqlite, Statement::InsertBrushPropertiesElement)?;
                 insert_brush_props_element.insert(&[&element_id, &brush_props_id])?;
                 Ok(())
             },
