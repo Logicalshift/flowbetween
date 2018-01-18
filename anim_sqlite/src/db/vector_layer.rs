@@ -1,4 +1,6 @@
 use super::*;
+use super::db_enum::*;
+use super::db_update::*;
 
 use animation::brushes::*;
 use std::time::Duration;
@@ -12,9 +14,6 @@ pub struct SqliteVectorLayer {
 
     /// The ID of this layer
     layer_id: i64,
-
-    /// The type of this layer
-    _layer_type: i64,
 
     /// The currently active brush for this layer (or none if we need to fetch this from the database)
     /// The active brush is the brush most recently added to the keyframe at the specified point in time
@@ -89,30 +88,17 @@ impl SqliteVectorLayer {
     ///
     pub fn from_assigned_id(core: &Arc<Desync<AnimationDbCore>>, assigned_id: u64) -> Option<SqliteVectorLayer> {
         // Query for the 'real' layer ID
-        let layer: Result<(i64, i64)> = core.sync(|core| {
+        let layer = core.sync(|core| {
             // Fetch the layer data (we need the 'real' ID here)
-            let mut get_layer = core.sqlite.prepare(
-                "SELECT Layer.LayerId, Layer.LayerType FROM Flo_AnimationLayers AS Anim \
-                        INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
-                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?;")?;
-            
-            let layer = get_layer.query_row(
-                &[&core.animation_id, &(assigned_id as i64)],
-                |layer| {
-                    (layer.get(0), layer.get(1))
-                }
-            )?;
-
-            Ok(layer)
+            core.db.query_layer_id_for_assigned_id(assigned_id)
         });
 
         // If the layer exists, create a SqliteVectorLayer
         layer.ok()
-            .map(|(layer_id, layer_type)| {
+            .map(|layer_id| {
                 SqliteVectorLayer {
                     assigned_id:    assigned_id,
                     layer_id:       layer_id,
-                    _layer_type:    layer_type,
                     active_brush:   None,
                     core:           Arc::clone(core)
                 }
@@ -150,21 +136,7 @@ impl Layer for SqliteVectorLayer {
     }
 
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
-        let keyframes = self.core.sync(|core| {
-            // Query for the microsecond times from the database
-            let mut get_key_frames  = core.sqlite.prepare("SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ?")?;
-            let key_frames          = get_key_frames.query_map(
-                &[&self.layer_id],
-                |time| { let i: i64 = time.get(0); i }
-            )?;
-
-            // Convert to micros to produce the final result
-            let key_frames: Vec<Duration> = key_frames
-                .map(|micros| AnimationDbCore::from_micros(micros.unwrap()))
-                .collect();
-            
-            Ok(key_frames)
-        });
+        let keyframes = self.core.sync(|core| core.db.query_key_frame_times_for_layer_id(self.layer_id));
 
         // Turn into an iterator
         let keyframes = keyframes.unwrap_or_else(|_: Error| vec![]);
@@ -177,10 +149,10 @@ impl Layer for SqliteVectorLayer {
         let layer_id = self.layer_id;
 
         self.async(move |core| {
-            let mut insert_key_frame    = core.sqlite.prepare("INSERT INTO Flo_LayerKeyFrame (LayerId, AtTime) VALUES (?, ?)")?;
-            let at_time                 = AnimationDbCore::get_micros(&when);
-
-            insert_key_frame.execute(&[&layer_id, &at_time])?;
+            core.db.update(vec![
+                DatabaseUpdate::PushLayerId(layer_id),
+                DatabaseUpdate::PopAddKeyFrame(when)
+            ])?;
 
             Ok(())
         });
@@ -190,10 +162,10 @@ impl Layer for SqliteVectorLayer {
         let layer_id = self.layer_id;
 
         self.async(move |core| {
-            let mut insert_key_frame    = core.sqlite.prepare("DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?")?;
-            let at_time                 = AnimationDbCore::get_micros(&when);
-
-            insert_key_frame.execute(&[&layer_id, &at_time])?;
+            core.db.update(vec![
+                DatabaseUpdate::PushLayerId(layer_id),
+                DatabaseUpdate::PopRemoveKeyFrame(when)
+            ])?;
 
             Ok(())
         });
@@ -214,130 +186,58 @@ impl Layer for SqliteVectorLayer {
 
 impl SqliteVectorLayer {
     ///
-    /// Creates a new vector element in an animation DB core
+    /// Creates a new vector element in an animation DB core, leaving the element ID, key frame ID and time pushed on the DB stack
     ///
     /// The element is created without its associated data.
     ///
-    fn create_new_element(core: &mut AnimationDbCore, layer_id: i64, when: Duration, element: &Vector) -> i64 {
-        let mut element_id: i64 = -1;
+    fn create_new_element(db: &mut AnimationDatabase, layer_id: i64, when: Duration, element: &Vector) -> Result<()> {
+        db.update(vec![
+            DatabaseUpdate::PushLayerId(layer_id),
+            DatabaseUpdate::PushNearestKeyFrame(when),
+            DatabaseUpdate::PushVectorElementType(VectorElementType::from(element), when)
+        ])?;
 
-        // Ensure that the vector enum is populated for the edit
-        if core.vector_enum.is_none() {
-            core.vector_enum = Some(VectorElementEnumValues::new(&core.sqlite).unwrap());
-        }
-
-        {
-            let new_element_id = &mut element_id;
-
-            core.edit(move |sqlite, _animation_id, core| {
-                // Want the list of enumeration values for the vector elements
-                let vector_enum = core.vector_enum.as_ref().unwrap();
-
-                // Convert when to microseconds
-                let when = AnimationDbCore::get_micros(&when);
-
-                // SQL statements: find the frame that this time represents and insert a new element
-                // We'd like to preserve these statments between calls but rusqlite imposes lifetime limits that 
-                // force us to use prepare_cached (or muck around with reference objects).
-                let mut get_key_frame   = sqlite.prepare_cached("SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1")?;
-                let mut create_element  = sqlite.prepare_cached("INSERT INTO Flo_VectorElement (KeyFrameId, VectorElementType, AtTime) VALUES (?, ?, ?)")?;
-
-                // Find the keyframe that we can add this element to
-                let (keyframe, keyframe_time): (i64, i64) = get_key_frame.query_row(&[&layer_id, &when], |row| (row.get(0), row.get(1)))?;
-
-                // Fetch the element type
-                let element_type = vector_enum.get_vector_type(element);
-
-                // Create the vector element
-                *new_element_id = create_element.insert(&[&keyframe, &element_type, &(when-keyframe_time)])?;
-
-                Ok(())
-            });
-        }
-
-        // Return the element ID
-        element_id
+        Ok(())
     }
 
     ///
-    /// Writes a brush properties element to the database
+    /// Writes a brush properties element to the database (popping the element ID)
     ///
-    fn create_brush_properties(element_id: i64, core: &mut AnimationDbCore, properties: BrushPropertiesElement) {
-        // The edit log enum needs to be loaded
-        if core.edit_log_enum.is_none() {
-            core.edit_log_enum = Some(EditLogEnumValues::new(&core.sqlite));
-        }
+    fn create_brush_properties(db: &mut AnimationDatabase, properties: BrushPropertiesElement) -> Result<()> {
+        AnimationDbCore::insert_brush_properties(db, properties.brush_properties())?;
+
+        // Create the element
+        db.update(vec![
+            DatabaseUpdate::PopVectorBrushPropertiesElement
+        ])?;
+
+        Ok(())
+    }
+
+    ///
+    /// Writes a brush definition element to the database (popping the element ID)
+    ///
+    fn create_brush_definition(db: &mut AnimationDatabase, definition: BrushDefinitionElement) -> Result<()> {
+        // Create the brush definition
+        AnimationDbCore::insert_brush(db, definition.definition());
 
         // Insert the properties for this element
-        core.edit(move |sqlite, _animation_id, core| {
-            // Statement to add a new brush properties entry
-            let mut insert_element = sqlite.prepare_cached("INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)")?;
+        db.update(vec![
+            DatabaseUpdate::PopVectorBrushElement(DrawingStyleType::from(&definition.drawing_style()))
+        ])?;
 
-            // Create the properties
-            let properties_id = AnimationDbCore::insert_brush_properties(&core.sqlite, properties.brush_properties(), core.edit_log_enum.as_ref().unwrap())?;
-
-            // Perform the insertion
-            insert_element.insert(&[&element_id, &properties_id])?;
-
-            Ok(())
-        });
+        Ok(())
     }
 
     ///
-    /// Writes a brush definition element to the database
+    /// Writes a brush stroke to the database (popping the element ID)
     ///
-    fn create_brush_definition(element_id: i64, core: &mut AnimationDbCore, definition: BrushDefinitionElement) {
-        // The edit log enum needs to be loaded
-        if core.edit_log_enum.is_none() {
-            core.edit_log_enum = Some(EditLogEnumValues::new(&core.sqlite));
-        }
+    fn create_brush_stroke(db: &mut AnimationDatabase, brush_stroke: BrushElement) -> Result<()> {
+        db.update(vec![
+            DatabaseUpdate::PopBrushPoints(brush_stroke.points())
+        ])?;
 
-        // Insert the properties for this element
-        core.edit(move |sqlite, _animation_id, core| {
-            // Statement to add a new brush properties entry
-            let mut insert_element = sqlite.prepare_cached("INSERT INTO Flo_BrushElement (ElementId, Brush, DrawingStyle) VALUES (?, ?, ?)")?;
-
-            // Create the brush
-            let edit_log_enum   = core.edit_log_enum.as_ref().unwrap();
-            let brush_id        = AnimationDbCore::insert_brush(&core.sqlite, definition.definition(), edit_log_enum)?;
-
-            let drawing_style   = match definition.drawing_style() {
-                BrushDrawingStyle::Draw     => edit_log_enum.draw_draw,
-                BrushDrawingStyle::Erase    => edit_log_enum.draw_erase
-            };
-
-            // Perform the insertion
-            insert_element.insert(&[&element_id, &brush_id, &drawing_style])?;
-
-            Ok(())
-        });
-    }
-
-    ///
-    /// Writes a brush stroke to the database
-    ///
-    fn create_brush_stroke(element_id: i64, core: &mut AnimationDbCore, brush_stroke: BrushElement) {
-        core.edit(move |sqlite, _animation_id, _core| {
-            let mut insert_point = sqlite.prepare_cached("INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")?;
-
-            let points  = brush_stroke.points();
-            let len     = points.len();
-
-            // Iterate through the points and add them to the database
-            for (point, index) in points.iter().zip((0..len).into_iter()) {
-                insert_point.insert(&[
-                    &element_id,
-                    &(index as i64),
-
-                    &(point.position.0 as f64), &(point.position.1 as f64),
-                    &(point.cp1.0 as f64), &(point.cp1.1 as f64),
-                    &(point.cp2.0 as f64), &(point.cp2.1 as f64),
-                    &(point.width as f64)
-                ])?;
-            }
-
-            Ok(())
-        })
+        Ok(())
     }
 }
 
@@ -358,15 +258,25 @@ impl VectorLayer for SqliteVectorLayer {
 
         // Send the element to the core
         self.core.async(move |core| {
-            // Create a new element
-            let element_id = Self::create_new_element(core, layer_id, when, &new_element);
-    
-            // Record the details of the element itself
-            match new_element {
-                BrushDefinition(brush_definition)   => Self::create_brush_definition(element_id, core, brush_definition),
-                BrushProperties(brush_properties)   => Self::create_brush_properties(element_id, core, brush_properties),
-                BrushStroke(brush_stroke)           => Self::create_brush_stroke(element_id, core, brush_stroke),
-            }
+            core.edit(move |db| {
+                // Create a new element
+                Self::create_new_element(db, layer_id, when, &new_element)?;
+        
+                // Record the details of the element itself
+                match new_element {
+                    BrushDefinition(brush_definition)   => Self::create_brush_definition(db, brush_definition)?,
+                    BrushProperties(brush_properties)   => Self::create_brush_properties(db, brush_properties)?,
+                    BrushStroke(brush_stroke)           => Self::create_brush_stroke(db, brush_stroke)?,
+                }
+
+                // create_new_element pushes an element ID, a key frame ID and a time. The various element actions pop the element ID so we need to pop the frame ID and time
+                db.update(vec![
+                    DatabaseUpdate::Pop,
+                    DatabaseUpdate::Pop
+                ])?;
+
+                Ok(())
+            })
         });
     }
 

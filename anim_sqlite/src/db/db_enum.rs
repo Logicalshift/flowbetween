@@ -108,6 +108,17 @@ impl<'a> From<&'a BrushDrawingStyle> for DrawingStyleType {
     }
 }
 
+impl<'a> From<&'a Vector> for VectorElementType {
+    fn from(t: &Vector) -> VectorElementType {
+        use self::Vector::*;
+
+        match t {
+            &BrushDefinition(_) => VectorElementType::BrushDefinition,
+            &BrushProperties(_) => VectorElementType::BrushProperties,
+            &BrushStroke(_)     => VectorElementType::BrushStroke
+        }
+    }
+}
 impl<'a> From<&'a BrushDefinition> for BrushDefinitionType {
     fn from(t: &BrushDefinition) -> BrushDefinitionType {
         use self::BrushDefinition::*;
@@ -118,6 +129,7 @@ impl<'a> From<&'a BrushDefinition> for BrushDefinitionType {
         }
     }
 }
+
 
 impl From<EditLogType> for DbEnumName {
     fn from(t: EditLogType) -> DbEnumName {

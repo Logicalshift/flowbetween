@@ -2,6 +2,7 @@ use super::db_enum::*;
 use super::db_update::*;
 
 use rusqlite::*;
+use rusqlite::types::ToSql;
 use std::collections::*;
 use std::time::Duration;
 use std::mem;
@@ -36,6 +37,7 @@ enum Statement {
     SelectEnumValue,
     SelectLayerId,
     SelectNearestKeyFrame,
+    SelectKeyFrameTimes,
 
     UpdateAnimationSize,
 
@@ -127,6 +129,7 @@ impl AnimationDatabase {
                                                        INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
                                                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
             SelectNearestKeyFrame           => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
+            SelectKeyFrameTimes             => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ?",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 
@@ -315,6 +318,11 @@ impl AnimationDatabase {
                 Ok(())
             },
 
+            PushLayerId(layer_id)                                           => {
+                self.stack.push(layer_id);
+                Ok(())
+            },
+
             PushLayerForAssignedId(assigned_id)                             => {
                 let mut select_layer_id = Self::prepare(&self.sqlite, Statement::SelectLayerId)?;
                 let layer_id            = select_layer_id.query_row(&[&self.animation_id, &(assigned_id as i64)], |row| row.get(0))?;
@@ -443,6 +451,61 @@ impl AnimationDatabase {
         }
 
         Ok(())
+    }
+
+    ///
+    /// Ensures any pending updates are committed to the database
+    /// 
+    pub fn flush_pending(&mut self) -> Result<()> {
+        if self.pending.is_some() {
+            // Fetch the pending updates
+            let mut pending = Some(vec![]);
+            mem::swap(&mut pending, &mut self.pending);
+
+            // Execute them now
+            if let Some(pending) = pending {
+                self.execute_updates_now(pending)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Queries a single row in the database
+    /// 
+    fn query_row<T, F: FnOnce(&Row) -> T>(&mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<T> {
+        self.flush_pending()?;
+
+        let statement = Self::prepare(&self.sqlite, statement)?;
+        statement.query_row(params, f)
+    }
+
+    ///
+    /// Queries and maps some rows
+    /// 
+    fn query_map<'a, T, F: FnMut(&Row) -> T>(&'a mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<MappedRows<'a, F>> {
+        self.flush_pending()?;
+
+        let statement = Self::prepare(&self.sqlite, statement)?;
+        statement.query_map(params, f)
+    }
+
+    ///
+    /// Finds the real layer ID for the specified assigned ID
+    /// 
+    pub fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<i64> {
+        self.query_row(Statement::SelectLayerId, &[&self.animation_id, &(assigned_id as i64)], |row| row.get(0))
+    }
+
+    ///
+    /// Returns an iterator over the key frame times for a particular layer ID
+    /// 
+    pub fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64) -> Result<Vec<Duration>> {
+        let rows = self.query_map(Statement::SelectKeyFrameTimes, &[&layer_id], |row| { Self::from_micros(row.get(0)) })?;
+        let rows = rows.map(|row| row.unwrap());
+
+        Ok(rows.collect())
     }
 }
 

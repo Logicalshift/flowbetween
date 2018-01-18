@@ -6,18 +6,18 @@ impl AnimationDbCore {
     ///
     /// Inserts a brush definition, leaving the ID on the database stack
     /// 
-    pub fn insert_brush(&mut self, brush_definition: &BrushDefinition) -> Result<()> {
+    pub fn insert_brush(db: &mut AnimationDatabase, brush_definition: &BrushDefinition) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         match brush_definition {
             &BrushDefinition::Simple => {
-                self.db.update(vec![
+                db.update(vec![
                     PushBrushType(BrushDefinitionType::from(brush_definition)),
                 ])
             },
 
             &BrushDefinition::Ink(ref ink_defn) => {
-                self.db.update(vec![
+                db.update(vec![
                     PushBrushType(BrushDefinitionType::from(brush_definition)),
                     PushInkBrush(ink_defn.min_width, ink_defn.max_width, ink_defn.scale_up_distance)
                 ])
@@ -28,11 +28,15 @@ impl AnimationDbCore {
     ///
     /// Inserts some brush properties into the database, leaving the ID on the database stack
     ///
-    pub fn insert_brush_properties(&mut self, brush_properties: &BrushProperties) -> Result<()> {
+    pub fn insert_brush_properties(db: &mut AnimationDatabase, brush_properties: &BrushProperties) -> Result<()> {
         use self::DatabaseUpdate::*;
 
-        self.db.update(vec![
+        Self::insert_color(db, &brush_properties.color)?;
+
+        db.update(vec![
             PushBrushProperties(brush_properties.size, brush_properties.opacity)
-        ])
+        ])?;
+
+        Ok(())
     }
 }

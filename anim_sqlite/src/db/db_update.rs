@@ -71,6 +71,9 @@ pub enum DatabaseUpdate {
     /// Looks up a layer with an assigned ID and pushes its real ID
     PushLayerForAssignedId(u64),
 
+    /// Pushes a known layer ID
+    PushLayerId(i64),
+
     /// Adds a key frame to the layer with the ID on top of the stack
     PopAddKeyFrame(Duration),
 

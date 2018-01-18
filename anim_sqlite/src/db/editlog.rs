@@ -107,12 +107,12 @@ impl AnimationDbCore {
 
         match edit {
             &SelectBrush(ref definition, ref drawing_style) => {
-                self.insert_brush(definition)?;
+                Self::insert_brush(&mut self.db, definition)?;
                 self.db.update(vec![PopEditLogBrush(DrawingStyleType::from(drawing_style))])?;
             },
 
             &BrushProperties(ref properties)                => {
-                self.insert_brush_properties(properties)?;
+                Self::insert_brush_properties(&mut self.db, properties)?;
                 self.db.update(vec![PopEditLogBrushProperties])?;
             },
 
