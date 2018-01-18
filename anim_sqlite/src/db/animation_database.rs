@@ -501,11 +501,17 @@ impl AnimationDatabase {
     ///
     /// Queries and maps some rows
     /// 
-    fn query_map<'a, T, F: FnMut(&Row) -> T>(&'a mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<MappedRows<'a, F>> {
+    fn query_map<'a, T: 'a, F: FnMut(&Row) -> T>(&mut self, statement: Statement, params: &[&ToSql], f: F) -> Result<Box<'a+Iterator<Item=Result<T>>>> {
         self.flush_pending()?;
 
+        // Prepare the statement
         let mut statement = Self::prepare(&self.sqlite, statement)?;
-        statement.query_map(params, f)
+
+        // Gather the results into a vector (can't keep the map due to lifetime requirements: Rust can't preserve the statement outside of this function)
+        let results: Vec<Result<T>> = statement.query_map(params, f)?.collect();
+
+        // Convert into an iterator (into_iter preserves the lifetime of the vec so we don't have the same problem)
+        Ok(Box::new(results.into_iter()))
     }
 
     ///
