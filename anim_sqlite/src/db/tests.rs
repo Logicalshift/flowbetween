@@ -135,7 +135,9 @@ fn can_query_edit_type() {
         db.update(vec![
             DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
             DatabaseUpdate::PushEditLogLayer(3),
-            DatabaseUpdate::Pop
+            DatabaseUpdate::Pop,
+            DatabaseUpdate::PushEditType(EditLogType::SetSize),
+            DatabaseUpdate::Pop,
         ])?;
 
         let edit_entries = db.query_edit_log_values(0, 1).unwrap();
@@ -145,6 +147,16 @@ fn can_query_edit_type() {
         assert!(edit_entries[0].when.is_none());
         assert!(edit_entries[0].brush.is_none());
         assert!(edit_entries[0].brush_properties_id.is_none());
+
+        let edit_entries2 = db.query_edit_log_values(1, 2).unwrap();
+        assert!(edit_entries2.len() == 1);
+        assert!(edit_entries2[0].edit_type == EditLogType::SetSize);
+
+        let edit_entries3 = db.query_edit_log_values(2, 3).unwrap();
+        assert!(edit_entries3.len() == 0);
+
+        let edit_entries4 = db.query_edit_log_values(0, 2).unwrap();
+        assert!(edit_entries4.len() == 2);
 
         Ok(())
     });
