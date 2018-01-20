@@ -224,31 +224,37 @@ impl FloSqlite {
     ///
     /// Finds the DbEnum value for a particular value
     /// 
-    fn value_for_enum(&mut self, enum_type: DbEnumType, convert_value: i64) -> Option<DbEnum> {
-        let sqlite = &self.sqlite;
+    fn value_for_enum(&mut self, enum_type: DbEnumType, convert_value: Option<i64>) -> Option<DbEnum> {
+        match convert_value {
+            Some(convert_value) => {
+                let sqlite = &self.sqlite;
 
-        // Fetch/create the hash of enum values
-        let enum_values = self.value_for_enum.entry(enum_type)
-            .or_insert_with(|| {
-                // Generate a hash of each value in the enum by looking them up in the database
-                let mut value_hash = HashMap::new();
-                for enum_entry in Vec::<DbEnum>::from(enum_type) {
-                    // Would like to re-use self.enum_value here but can't due to borrowing rules
-                    // Has the additional annoying side-effect that we can look things up twice
-                    let DbEnumName(field, name) = DbEnumName::from(enum_entry);
-                    let db_enum_value = Self::prepare(sqlite, FloStatement::SelectEnumValue)
-                        .unwrap()
-                        .query_row(&[&field, &name], |row| row.get(0))
-                        .unwrap();
+                // Fetch/create the hash of enum values
+                let enum_values = self.value_for_enum.entry(enum_type)
+                    .or_insert_with(|| {
+                        // Generate a hash of each value in the enum by looking them up in the database
+                        let mut value_hash = HashMap::new();
+                        for enum_entry in Vec::<DbEnum>::from(enum_type) {
+                            // Would like to re-use self.enum_value here but can't due to borrowing rules
+                            // Has the additional annoying side-effect that we can look things up twice
+                            let DbEnumName(field, name) = DbEnumName::from(enum_entry);
+                            let db_enum_value = Self::prepare(sqlite, FloStatement::SelectEnumValue)
+                                .unwrap()
+                                .query_row(&[&field, &name], |row| row.get(0))
+                                .unwrap();
 
-                    value_hash.insert(db_enum_value, enum_entry);
-                }
+                            value_hash.insert(db_enum_value, enum_entry);
+                        }
 
-                value_hash
-            });
-        
-        // Attempt to fetch the dbenum for the value of this type
-        enum_values.get(&convert_value).map(|val| *val)
+                        value_hash
+                    });
+                
+                // Attempt to fetch the dbenum for the value of this type
+                enum_values.get(&convert_value).map(|val| *val)
+            },
+
+            None => None
+        }
     }
 }
 

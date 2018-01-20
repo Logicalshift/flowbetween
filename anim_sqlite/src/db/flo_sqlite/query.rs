@@ -84,6 +84,7 @@ impl FloQuery for FloSqlite {
     /// Retrieves a set of values from the edit log
     /// 
     fn query_edit_log_values(&mut self, from_index: i64, to_index: i64) -> Result<Vec<EditLogEntry>> {
+        // Converts an i64 from the DB to an u64 as we use those for IDs
         #[inline]
         fn as_id(id_in: Option<i64>) -> Option<u64> {
             match id_in {
@@ -92,6 +93,7 @@ impl FloQuery for FloSqlite {
             }
         }
 
+        // Converts an i64 to a duration
         #[inline]
         fn as_duration(time_in: Option<i64>) -> Option<Duration> {
             match time_in {
@@ -100,18 +102,25 @@ impl FloQuery for FloSqlite {
             }
         }
 
+        // Fetch the entries from the database
         self.query_map(FloStatement::SelectEditLogValues, &[&(to_index-from_index), &(from_index)],
-            |row| {
-                EditLogEntry {
-                    edit_id:                row.get(0),
-                    edit_type:              EditLogType::AddNewLayer, /* TODO */
-                    layer_id:               as_id(row.get(2)),
-                    when:                   as_duration(row.get(3)),
-                    brush:                  as_id(row.get(5)).and_then(|brush_id| Some((brush_id, DrawingStyleType::Draw))), /* TODO */
-                    brush_properties_id:    as_id(row.get(6))
-                }
-            })
-            .map(|i| i.map(|j| j.unwrap()).collect())
+            |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)))
+            .map(|rows_with_errors| rows_with_errors
+                .map(|row_with_error| row_with_error.unwrap())
+                .map(|(edit_id, edit_type, layer_id, when, drawing_style, brush_id, brush_properties_id)| {
+                    let edit_type       = self.value_for_enum(DbEnumType::EditLog, Some(edit_type)).unwrap().edit_log().unwrap();
+                    let drawing_style   = self.value_for_enum(DbEnumType::DrawingStyle, drawing_style).and_then(|ds| ds.drawing_style());
+
+                    EditLogEntry {
+                        edit_id:                edit_id,
+                        edit_type:              edit_type,
+                        layer_id:               as_id(layer_id),
+                        when:                   as_duration(when),
+                        brush:                  as_id(brush_id).and_then(|brush_id| drawing_style.and_then(|drawing_style| Some((brush_id, drawing_style)))),
+                        brush_properties_id:    as_id(brush_properties_id)
+                    }
+                }).collect()
+            )
     }
 
     ///
