@@ -126,6 +126,31 @@ fn adding_edit_type_increases_log_length() {
 }
 
 #[test]
+fn can_query_edit_type() {
+    let mut core = core();
+
+    core.edit(|db| {
+        assert!(db.query_edit_log_length().unwrap() == 0);
+
+        db.update(vec![
+            DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+            DatabaseUpdate::PushEditLogLayer(3),
+            DatabaseUpdate::Pop
+        ])?;
+
+        let edit_entries = db.query_edit_log_values(0, 1).unwrap();
+        assert!(edit_entries.len() == 1);
+        assert!(edit_entries[0].edit_type == EditLogType::LayerAddKeyFrame);
+        assert!(edit_entries[0].layer_id == Some(3));
+        assert!(edit_entries[0].when.is_none());
+        assert!(edit_entries[0].brush.is_none());
+        assert!(edit_entries[0].brush_properties_id.is_none());
+
+        Ok(())
+    });
+}
+
+#[test]
 fn smoke_pop_edit_log_set_size() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
