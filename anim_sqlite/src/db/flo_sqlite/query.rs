@@ -110,7 +110,8 @@ impl FloQuery for FloSqlite {
                     brush:                  as_id(row.get(5)).and_then(|brush_id| Some((brush_id, DrawingStyleType::Draw))), /* TODO */
                     brush_properties_id:    as_id(row.get(6))
                 }
-            }).map(|i| i.map(|j| j.unwrap()).collect())
+            })
+            .map(|i| i.map(|j| j.unwrap()).collect())
     }
 
     ///

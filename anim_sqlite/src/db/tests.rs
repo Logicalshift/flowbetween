@@ -1,6 +1,7 @@
 use super::*;
 use super::db_enum::*;
 use super::flo_store::*;
+use super::flo_query::*;
 
 use animation;
 use animation::LayerEdit::*;
@@ -105,6 +106,23 @@ fn smoke_push_edit_type() {
         DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
         DatabaseUpdate::Pop
     ]);
+}
+
+#[test]
+fn adding_edit_type_increases_log_length() {
+    let mut core = core();
+
+    core.edit(|db| {
+        assert!(db.query_edit_log_length().unwrap() == 0);
+
+        db.update(vec![
+            DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+            DatabaseUpdate::Pop
+        ])?;
+
+        assert!(db.query_edit_log_length().unwrap() == 1);
+        Ok(())
+    });
 }
 
 #[test]
