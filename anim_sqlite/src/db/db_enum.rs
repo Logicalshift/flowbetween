@@ -78,6 +78,85 @@ pub enum DbEnum {
     VectorElement(VectorElementType)
 }
 
+///
+/// The types of enumeration that are in the database
+/// 
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum DbEnumType {
+    EditLog,
+    DrawingStyle,
+    BrushDefinition,
+    Color,
+    Layer,
+    VectorElement
+}
+
+pub const ALL_DB_ENUM_TYPES: [DbEnumType; 6] = [ DbEnumType::EditLog, DbEnumType::DrawingStyle, DbEnumType::BrushDefinition, DbEnumType::Color, DbEnumType::Layer, DbEnumType::VectorElement ];
+
+impl From<DbEnumType> for Vec<DbEnum> {
+    fn from(t: DbEnumType) -> Vec<DbEnum> {
+        use self::DbEnumType::*;
+
+        match t {
+            EditLog => {
+                use self::EditLogType::*;
+                vec![
+                    DbEnum::EditLog(SetSize),
+                    DbEnum::EditLog(AddNewLayer),
+                    DbEnum::EditLog(RemoveLayer),
+
+                    DbEnum::EditLog(LayerAddKeyFrame),
+                    DbEnum::EditLog(LayerRemoveKeyFrame),
+
+                    DbEnum::EditLog(LayerPaintSelectBrush),
+                    DbEnum::EditLog(LayerPaintBrushProperties),
+                    DbEnum::EditLog(LayerPaintBrushStroke)
+                ]
+            },
+
+            DrawingStyle => {
+                use self::DrawingStyleType::*;
+                vec![
+                    DbEnum::DrawingStyle(Draw),
+                    DbEnum::DrawingStyle(Erase)
+                ]
+            },
+
+            BrushDefinition => {
+                use self::BrushDefinitionType::*;
+                vec![
+                    DbEnum::BrushDefinition(Simple),
+                    DbEnum::BrushDefinition(Ink)
+                ]
+            },
+
+            Color => {
+                use self::ColorType::*;
+                vec![
+                    DbEnum::Color(Rgb),
+                    DbEnum::Color(Hsluv)
+                ]
+            },
+
+            Layer => {
+                use self::LayerType::*;
+                vec![
+                    DbEnum::Layer(Vector)
+                ]
+            },
+
+            VectorElement => {
+                use self::VectorElementType::*;
+                vec![
+                    DbEnum::VectorElement(BrushDefinition),
+                    DbEnum::VectorElement(BrushProperties),
+                    DbEnum::VectorElement(BrushStroke),
+                ]
+            }
+        }
+    }
+}
+
 impl<'a> From<&'a AnimationEdit> for EditLogType {
     fn from(t: &AnimationEdit) -> EditLogType {
         use self::AnimationEdit::*;
