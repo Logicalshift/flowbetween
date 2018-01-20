@@ -74,10 +74,43 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Retrieves the total number of entries in the edit log
+    /// 
+    fn query_edit_log_length(&mut self) -> Result<i64> {
+        self.query_row(FloStatement::SelectEditLogLength, &[], |row| row.get(0))
+    }
+
+    ///
     /// Retrieves a set of values from the edit log
     /// 
     fn query_edit_log_values(&mut self, from_index: i64, to_index: i64) -> Result<Vec<EditLogEntry>> {
-        unimplemented!()
+        #[inline]
+        fn as_id(id_in: Option<i64>) -> Option<u64> {
+            match id_in {
+                Some(id_in) => Some(id_in as u64),
+                None        => None
+            }
+        }
+
+        #[inline]
+        fn as_duration(time_in: Option<i64>) -> Option<Duration> {
+            match time_in {
+                Some(time_in)   => Some(FloSqlite::from_micros(time_in)),
+                None            => None
+            }
+        }
+
+        self.query_map(FloStatement::SelectEditLogValues, &[&(to_index-from_index), &(from_index)],
+            |row| {
+                EditLogEntry {
+                    edit_id:                row.get(0),
+                    edit_type:              EditLogType::AddNewLayer, /* TODO */
+                    layer_id:               as_id(row.get(2)),
+                    when:                   as_duration(row.get(3)),
+                    brush:                  as_id(row.get(5)).and_then(|brush_id| Some((brush_id, DrawingStyleType::Draw))), /* TODO */
+                    brush_properties_id:    as_id(row.get(6))
+                }
+            }).map(|i| i.map(|j| j.unwrap()).collect())
     }
 
     ///

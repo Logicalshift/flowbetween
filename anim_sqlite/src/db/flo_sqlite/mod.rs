@@ -54,6 +54,8 @@ enum FloStatement {
     SelectKeyFrameTimes,
     SelectAnimationSize,
     SelectAssignedLayerIds,
+    SelectEditLogLength,
+    SelectEditLogValues,
 
     UpdateAnimationSize,
 
@@ -156,6 +158,13 @@ impl FloSqlite {
             SelectKeyFrameTimes             => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ?",
             SelectAnimationSize             => "SELECT SizeX, SizeY FROM Flo_Animation WHERE AnimationId = ?",
             SelectAssignedLayerIds          => "SELECT AssignedLayerId FROM Flo_AnimationLayers WHERE AnimationId = ?",
+            SelectEditLogLength             => "SELECT COUNT(Id) FROM Flo_EditLog",
+            SelectEditLogValues             => "SELECT EL.Id, EL.Edit, Layers.Layer, Time.AtTime, Brush.DrawingStyle, Brush.Brush, BrushProps.BrushProperties FROM Flo_EditLog AS EL \
+                                                    LEFT OUTER JOIN Flo_EL_Layer           AS Layers        ON EL.Id = Layers.EditId \
+                                                    LEFT OUTER JOIN Flo_EL_When            AS Time          ON EL.Id = Time.EditId \
+                                                    LEFT OUTER JOIN Flo_EL_Brush           AS Brush         ON EL.Id = Brush.EditId \
+                                                    LEFT OUTER JOIN Flo_EL_BrushProperties AS BrushProps    ON EL.Id = BrushProps.EditId \
+                                                    LIMIT ? OFFSET ?",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 

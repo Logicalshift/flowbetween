@@ -14,7 +14,7 @@ pub struct EditLogEntry {
     pub edit_type:              EditLogType,
     pub layer_id:               Option<u64>,
     pub when:                   Option<Duration>,
-    pub brush_id:               Option<u64>,
+    pub brush:                  Option<(u64, DrawingStyleType)>,
     pub brush_properties_id:    Option<u64>
 }
 
@@ -67,6 +67,11 @@ pub trait FloQuery {
     /// Returns the assigned layer IDs
     /// 
     fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>>;
+
+    ///
+    /// Retrieves the total number of entries in the edit log
+    /// 
+    fn query_edit_log_length(&mut self) -> Result<i64>;
 
     ///
     /// Retrieves a set of values from the edit log
