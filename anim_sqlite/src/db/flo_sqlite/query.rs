@@ -1,5 +1,7 @@
 use super::*;
 
+use animation::*;
+
 impl FloSqlite {
     ///
     /// Queries a single row in the database
@@ -69,5 +71,47 @@ impl FloQuery for FloSqlite {
             })?;
 
         Ok(rows.filter(|row| row.is_ok()).map(|row| row.unwrap()).collect())
+    }
+
+    ///
+    /// Retrieves a set of values from the edit log
+    /// 
+    fn query_edit_log_values(&mut self, from_index: i64, to_index: i64) -> Result<Vec<EditLogEntry>> {
+        unimplemented!()
+    }
+
+    ///
+    /// Queries the size associated with an edit log entry
+    /// 
+    fn query_edit_log_size(&mut self, edit_id: i64) -> Result<(f64, f64)> {
+        unimplemented!()
+    }
+
+    ///
+    /// Retrieves the raw points associated with a particular edit ID
+    /// 
+    fn query_edit_log_raw_points(&mut self, edit_id: i64) -> Result<Vec<RawPoint>> {
+        unimplemented!()
+    }
+
+    ///
+    /// Retrieves a colour with the specified ID
+    /// 
+    fn query_color(&mut self, color_id: i64) -> Result<ColorEntry> {
+        unimplemented!()
+    }
+
+    ///
+    /// Retrieves the brush with the specified ID
+    /// 
+    fn query_brush(&mut self, brush_id: i64) -> Result<BrushEntry> {
+        unimplemented!()
+    }
+
+    ///
+    /// Retrieves the brush properties with the specified ID
+    /// 
+    fn query_brush_properties(&mut self, brush_properties_id: i64) -> Result<BrushPropertiesEntry> {
+        unimplemented!()
     }
 }
