@@ -38,6 +38,9 @@ pub struct FloSqlite {
     /// The enum values that we know about
     enum_values: HashMap<DbEnum, i64>,
 
+    /// Maps DB enum types to maps of their values
+    value_for_enum: HashMap<DbEnumType, HashMap<i64, DbEnum>>,
+
     /// The stack of IDs that we know about
     stack: Vec<i64>,
 
@@ -95,6 +98,7 @@ impl FloSqlite {
             sqlite:         sqlite,
             animation_id:   animation_id,
             enum_values:    HashMap::new(),
+            value_for_enum: HashMap::new(),
             stack:          vec![],
             pending:        None
         }
@@ -215,6 +219,36 @@ impl FloSqlite {
                 .query_row(&[&field, &name], |row| row.get(0))
                 .unwrap()
         })
+    }
+
+    ///
+    /// Finds the DbEnum value for a particular value
+    /// 
+    fn value_for_enum(&mut self, enum_type: DbEnumType, convert_value: i64) -> Option<DbEnum> {
+        let sqlite = &self.sqlite;
+
+        // Fetch/create the hash of enum values
+        let enum_values = self.value_for_enum.entry(enum_type)
+            .or_insert_with(|| {
+                // Generate a hash of each value in the enum by looking them up in the database
+                let mut value_hash = HashMap::new();
+                for enum_entry in Vec::<DbEnum>::from(enum_type) {
+                    // Would like to re-use self.enum_value here but can't due to borrowing rules
+                    // Has the additional annoying side-effect that we can look things up twice
+                    let DbEnumName(field, name) = DbEnumName::from(enum_entry);
+                    let db_enum_value = Self::prepare(sqlite, FloStatement::SelectEnumValue)
+                        .unwrap()
+                        .query_row(&[&field, &name], |row| row.get(0))
+                        .unwrap();
+
+                    value_hash.insert(db_enum_value, enum_entry);
+                }
+
+                value_hash
+            });
+        
+        // Attempt to fetch the dbenum for the value of this type
+        enum_values.get(&convert_value).map(|val| *val)
     }
 }
 

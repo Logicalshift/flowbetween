@@ -78,6 +78,56 @@ pub enum DbEnum {
     VectorElement(VectorElementType)
 }
 
+impl DbEnum {
+    /// Returns the EditLog value for this enum (if there is one)
+    pub fn edit_log(self) -> Option<EditLogType> {
+        match self {
+            DbEnum::EditLog(res)    => Some(res),
+            _                       => None
+        }
+    }
+
+    /// Returns the DrawingStyle value for this enum (if there is one)
+    pub fn drawing_style(self) -> Option<DrawingStyleType> {
+        match self {
+            DbEnum::DrawingStyle(res)   => Some(res),
+            _                           => None
+        }
+    }
+
+    /// Returns the BrushDefinition value for this enum (if there is one)
+    pub fn brush_definition(self) -> Option<BrushDefinitionType> {
+        match self {
+            DbEnum::BrushDefinition(res)    => Some(res),
+            _                               => None
+        }
+    }
+
+    /// Returns the Color value for this enum (if there is one)
+    pub fn color(self) -> Option<ColorType> {
+        match self {
+            DbEnum::Color(res)  => Some(res),
+            _                   => None
+        }
+    }
+
+    /// Returns the Layer value for this enum (if there is one)
+    pub fn layer(self) -> Option<LayerType> {
+        match self {
+            DbEnum::Layer(res)  => Some(res),
+            _                   => None
+        }
+    }
+
+    /// Returns the VectorElement value for this enum (if there is one)
+    pub fn vector_element(self) -> Option<VectorElementType> {
+        match self {
+            DbEnum::VectorElement(res)  => Some(res),
+            _                           => None
+        }
+    }
+}
+
 ///
 /// The types of enumeration that are in the database
 /// 
