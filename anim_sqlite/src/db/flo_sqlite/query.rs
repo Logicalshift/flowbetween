@@ -103,6 +103,9 @@ impl FloQuery for FloSqlite {
         }
 
         // Fetch the entries from the database
+        // Can't call value_for_enum from query_map due to lifetimes, and need to deal
+        // with the fact that individual rows can have errors as well as the whole thing,
+        // so this ends up messy
         self.query_map(FloStatement::SelectEditLogValues, &[&(to_index-from_index), &(from_index)],
             |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)))
             .map(|rows_with_errors| rows_with_errors
