@@ -12,7 +12,6 @@ mod flo_store;
 mod flo_query;
 mod flo_sqlite;
 mod db_enum;
-mod db_update;
 mod editlog;
 mod animation;
 mod mutable_animation;
