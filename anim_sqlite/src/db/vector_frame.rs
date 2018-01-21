@@ -11,12 +11,6 @@ use std::time::Duration;
 /// Represents a frame calculated from a vector layer
 /// 
 pub struct VectorFrame {
-    /// The ID of the layer that this frame is for
-    layer_id: i64,
-
-    /// The ID of the keyframe that this frame is for
-    keyframe_id: i64,
-
     /// The time of the keyframe
     keyframe_time: Duration,
 
@@ -99,8 +93,6 @@ impl VectorFrame {
 
         // Can create the frame now
         Ok(VectorFrame {
-            layer_id:           layer_id,
-            keyframe_id:        keyframe_id,
             keyframe_time:      keyframe_time,
             keyframe_offset:    keyframe_offset,
             elements:           elements
