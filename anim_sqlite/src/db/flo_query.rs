@@ -59,6 +59,11 @@ pub trait FloQuery {
     fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64) -> Result<Vec<Duration>>;
 
     ///
+    /// Finds the nearest keyframe to the specified time in the specified layer
+    /// 
+    fn query_nearest_key_frame<'a>(&'a mut self, layer_id: i64, when: Duration) -> Result<(i64, Duration)>;
+
+    ///
     /// Returns the size of the animation
     /// 
     fn query_size(&mut self) -> Result<(f64, f64)>;

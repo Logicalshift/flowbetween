@@ -132,7 +132,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
 
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
         let core: Result<Arc<Frame>> = self.core.sync(|core| {
-            let frame               = VectorFrame::frame_at_time(&mut core.db, time_index)?;
+            let frame               = VectorFrame::frame_at_time(&mut core.db, self.layer_id, time_index)?;
             let frame: Arc<Frame>   = Arc::new(frame);
 
             Ok(frame)
