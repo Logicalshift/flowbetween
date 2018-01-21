@@ -316,6 +316,8 @@ impl Brush for InkBrush {
             point.set_pressure(pressure * (distance/scale_up_distance));
         }
 
+        /*
+         * -- TODO: needs its own config option
         // Scale down the pressure at the end of the brush stroke
         last_point  = *ink_points.last().unwrap();
         distance    = 0.0;
@@ -331,6 +333,7 @@ impl Brush for InkBrush {
             let pressure = point.pressure();
             point.set_pressure(pressure * (distance/scale_up_distance));
         }
+        */
 
         // Fit these points to a curve
         let curve = InkCurve::fit_from_points(&ink_points, 1.0);
