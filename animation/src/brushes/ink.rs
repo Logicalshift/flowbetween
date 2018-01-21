@@ -305,7 +305,23 @@ impl Brush for InkBrush {
         let mut last_point  = ink_points[0];
         let scale_up_distance = self.scale_up_distance as f64;
         for point in ink_points.iter_mut() {
-            // Compute the current distnace
+            // Add to the distance
+            distance += last_point.distance_to(point);
+            last_point = *point;
+
+            // Scale the pressure by the distance
+            if distance > scale_up_distance { break; }
+
+            let pressure = point.pressure();
+            point.set_pressure(pressure * (distance/scale_up_distance));
+        }
+
+        // Scale down the pressure at the end of the brush stroke
+        last_point  = *ink_points.last().unwrap();
+        distance    = 0.0;
+        for index in (0..ink_points.len()).rev() {
+            let point = &mut ink_points[index];
+
             distance += last_point.distance_to(point);
             last_point = *point;
 
