@@ -246,4 +246,29 @@ impl FloQuery for FloSqlite {
                     })
                     .collect())
     }
+
+
+    ///
+    /// Queries the brush points associated with a vector element
+    /// 
+    fn query_vector_element_brush_points(&mut self, element_id: i64) -> Result<Vec<BrushPoint>> {
+        self.query_map(FloStatement::SelectBrushPoints, &[&element_id],
+            |row| {
+                let x1:     f64 = row.get(0);
+                let y1:     f64 = row.get(1);
+                let x2:     f64 = row.get(2);
+                let y2:     f64 = row.get(3);
+                let x3:     f64 = row.get(4);
+                let y3:     f64 = row.get(5);
+                let width:  f64 = row.get(6);
+
+                BrushPoint {
+                    cp1:        (x1 as f32, y1 as f32),
+                    cp2:        (x2 as f32, y2 as f32),
+                    position:   (x3 as f32, y3 as f32),
+                    width:      width as f32
+                }
+            })
+            .map(|rows_with_errors| rows_with_errors.map(|row_with_error| row_with_error.unwrap()).collect())
+    }
 }

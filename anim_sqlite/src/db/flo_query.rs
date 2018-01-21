@@ -123,4 +123,9 @@ pub trait FloQuery {
     /// Queries the vector elements that appear before a certain time in the specified keyframe
     /// 
     fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>>;
+
+    ///
+    /// Queries the brush points associated with a vector element
+    /// 
+    fn query_vector_element_brush_points(&mut self, element_id: i64) -> Result<Vec<BrushPoint>>;
 }

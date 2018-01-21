@@ -65,6 +65,7 @@ enum FloStatement {
     SelectBrushDefinition,
     SelectBrushProperties,
     SelectVectorElementsBefore,
+    SelectBrushPoints,
 
     UpdateAnimationSize,
 
@@ -190,6 +191,7 @@ impl FloSqlite {
                                                     LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                     WHERE Elem.KeyFrameId = ? AND Elem.AtTime <= ? \
                                                     ORDER BY Elem.ElementId ASC",
+            SelectBrushPoints               => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 
