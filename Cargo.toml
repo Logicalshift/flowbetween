@@ -6,6 +6,7 @@ authors     = ["Andrew Hunter"]
 [dependencies]
 static_files    = { path = "static_files" }
 animation       = { path = "animation" }
+anim_sqlite     = { path = "anim_sqlite" }
 http_ui         = { path = "http_ui" }
 binding         = { path = "binding" }
 ui              = { path = "ui" }

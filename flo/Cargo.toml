@@ -5,7 +5,6 @@ authors     = ["Andrew Hunter"]
 
 [dependencies]
 animation       = { path = "../animation" }
-anim_sqlite     = { path = "../anim_sqlite" }
 curves          = { path = "../curves" }
 binding         = { path = "../binding" }
 ui              = { path = "../ui" }

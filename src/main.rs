@@ -7,6 +7,7 @@ extern crate flo;
 extern crate http_ui;
 extern crate binding;
 extern crate animation;
+extern crate anim_sqlite;
 extern crate static_files;
 
 extern crate serde;

@@ -3,7 +3,7 @@ use ui::Image;
 use binding::*;
 use http_ui::*;
 use animation::*;
-use animation::inmemory::*;
+use anim_sqlite::*;
 
 use flo::*;
 use flo::style::*;
@@ -55,9 +55,9 @@ impl FlowBetweenSession {
         }
     }
 
-    fn create_inmemory_animation() -> InMemoryAnimation {
+    fn create_inmemory_animation() -> SqliteAnimation {
         // Create a new animation
-        let animation = InMemoryAnimation::new();
+        let animation = SqliteAnimation::new_in_memory();
 
         // Add a single layer and an initial keyframe
         animation.perform_edits(vec![

@@ -150,7 +150,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "flo"
 version = "0.1.0"
 dependencies = [
- "anim_sqlite 0.1.0",
  "animation 0.1.0",
  "binding 0.1.0",
  "canvas 0.1.0",
@@ -168,6 +167,7 @@ dependencies = [
 name = "flow_between"
 version = "0.1.0"
 dependencies = [
+ "anim_sqlite 0.1.0",
  "animation 0.1.0",
  "binding 0.1.0",
  "flo 0.1.0",
