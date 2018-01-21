@@ -52,7 +52,13 @@ impl VectorFrame {
     /// Decodes the brush properties for a particular entry
     /// 
     fn properties_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushPropertiesElement> {
-        unimplemented!()
+        // Decode the brush properties
+        let brush_properties = entry.brush_properties_id
+            .map(|brush_properties_id| AnimationDbCore::get_brush_properties(db, brush_properties_id))
+            .unwrap_or_else(|| Ok(BrushProperties::new()));
+
+        // Generate the element
+        Ok(BrushPropertiesElement::new(brush_properties?))
     }
 
     ///
