@@ -3,6 +3,8 @@ use canvas::*;
 use animation::*;
 use std::time::Duration;
 use std::sync::*;
+use std::any::*;
+use super::super::db::vector_frame::*;
 
 #[test]
 fn default_size_is_1980_1080() {
@@ -409,9 +411,38 @@ fn read_frame_after_edits() {
     anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2).unwrap();
-    let frame = layer.get_frame_at_time(Duration::from_millis(442));
 
-    assert!(frame.time_index() == Duration::from_millis(442));
+    {
+        let frame                   = layer.get_frame_at_time(Duration::from_millis(442));
+        let elements: Vec<Vector>   = frame.vector_elements().unwrap().collect();
+
+        assert!(frame.time_index() == Duration::from_millis(442));
+        assert!(elements.len() == 5);
+
+        assert!(match &elements[0] {
+            &Vector::BrushDefinition(ref defn) => Some(defn.definition()),
+            _ => None
+        } == Some(&BrushDefinition::Ink(InkDefinition::default())));
+
+        assert!(match &elements[1] {
+            &Vector::BrushProperties(ref props) => Some(props.brush_properties()),
+            _ => None
+        } == Some(&BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }));
+
+
+        assert!(match &elements[3] {
+            &Vector::BrushStroke(ref brush_stroke) => Some(brush_stroke.points()),
+            _ => None
+        }.is_some());
+    }
+
+    {
+        let frame                   = layer.get_frame_at_time(Duration::from_millis(60));
+        let elements: Vec<Vector>   = frame.vector_elements().unwrap().collect();
+
+        assert!(frame.time_index() == Duration::from_millis(60));
+        assert!(elements.len() == 0);
+    }
 }
 
 #[test]

@@ -47,4 +47,14 @@ impl Frame for VectorFrame {
             }
         })
     }
+
+    fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>> {
+        let offset                  = self.offset;
+        let elements: Vec<Vector>   = self.keyframe.elements().iter()
+            .filter(move |&&(appearance_time, _)| appearance_time <= offset)
+            .map(|&(_, ref element)| element.clone())
+            .collect();
+
+        Some(Box::new(elements.into_iter()))
+    }
 }

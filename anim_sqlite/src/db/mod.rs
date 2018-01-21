@@ -20,7 +20,7 @@ mod core;
 mod color;
 mod brush;
 mod vector_layer;
-mod vector_frame;
+pub mod vector_frame;
 
 pub use self::animation::*;
 pub use self::insert_editlog::*;

@@ -29,4 +29,8 @@ impl Frame for EmptyFrame {
 
     fn render_to(&self, _gc: &mut GraphicsPrimitives) {
     }
+
+    fn vector_elements(&self) -> Option<Box<Iterator<Item=Vector>>> {
+        None
+    }
 }

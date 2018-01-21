@@ -128,4 +128,11 @@ impl Frame for VectorFrame {
             element.render(gc, &properties);
         })
     }
+
+    ///
+    /// Attempts to retrieve the vector elements associated with this frame, if there are any
+    /// 
+    fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>> {
+        Some(Box::new(self.elements.iter().cloned()))
+    }
 }

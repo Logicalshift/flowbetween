@@ -1,12 +1,12 @@
-use canvas::*;
+use super::vector::*;
 
+use canvas::*;
 use std::time::Duration;
-use std::any::Any;
 
 ///
 /// Represents a single frame in a layer of an animation
 ///
-pub trait Frame : Send+Sync+Any {
+pub trait Frame : Send+Sync {
     ///
     /// Time index of this frame relative to its keyframe
     /// 
@@ -16,4 +16,9 @@ pub trait Frame : Send+Sync+Any {
     /// Renders this frame to a particular graphics context
     ///
     fn render_to(&self, gc: &mut GraphicsPrimitives);
+
+    ///
+    /// Attempts to retrieve the vector elements associated with this frame, if there are any
+    /// 
+    fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>>;
 }
