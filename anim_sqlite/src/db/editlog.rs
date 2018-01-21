@@ -54,6 +54,21 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
     }
 
     ///
+    /// Generates a BrushProperties entry
+    /// 
+    fn brush_properties_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
+        // Fetch the brush properties from the database
+        let brush_properties = entry.brush_properties_id
+            .map(|brush_properties_id| AnimationDbCore::get_brush_properties(&mut core.db, brush_properties_id).unwrap_or(BrushProperties::new()))
+            .unwrap_or(BrushProperties::new());
+        
+        // This is a paint edit, so we need the 'when' too
+        let when = entry.when.unwrap_or(Duration::from_millis(0));
+
+        LayerEdit::Paint(when, PaintEdit::BrushProperties(brush_properties))
+    }
+
+    ///
     /// Turns an edit log entry into an animation edit
     /// 
     fn animation_edit_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
@@ -68,7 +83,7 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
             LayerRemoveKeyFrame         => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::RemoveKeyFrame(entry.when.unwrap_or(Duration::from_millis(0)))),
 
             LayerPaintSelectBrush       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::select_brush_for_entry(core, entry)),
-            LayerPaintBrushProperties   => unimplemented!(),
+            LayerPaintBrushProperties   => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_properties_for_entry(core, entry)),
             LayerPaintBrushStroke       => unimplemented!()
         }
     }

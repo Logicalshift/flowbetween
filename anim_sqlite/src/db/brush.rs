@@ -62,4 +62,18 @@ impl<TFile: FloFile> AnimationDbCore<TFile> {
             }
         }
     }
+
+    ///
+    /// Retrieves the brush properties with the specified ID
+    /// 
+    pub fn get_brush_properties(db: &mut TFile, brush_properties_id: i64) -> Result<BrushProperties> {
+        let brush_properties_entry  = db.query_brush_properties(brush_properties_id)?;
+        let color                   = Self::get_color(db, brush_properties_entry.color_id)?;
+
+        Ok(BrushProperties {
+            size:       brush_properties_entry.size as f32,
+            opacity:    brush_properties_entry.opacity as f32,
+            color:      color
+        })
+    }
 }
