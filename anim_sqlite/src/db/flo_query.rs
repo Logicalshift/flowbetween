@@ -45,6 +45,17 @@ pub struct BrushPropertiesEntry {
 }
 
 ///
+/// Entry read from the vector element table
+/// 
+pub struct VectorElementEntry {
+    pub element_id:             i64,
+    pub element_type:           VectorElementType,
+    pub when:                   Duration,
+    pub brush:                  Option<(i64, DrawingStyleType)>,
+    pub brush_properties_id:    Option<i64>
+}
+
+///
 /// Trait implemented by objects that can query an underlying store for FlowBetween
 /// 
 pub trait FloQuery {
@@ -107,4 +118,9 @@ pub trait FloQuery {
     /// Retrieves the brush properties with the specified ID
     /// 
     fn query_brush_properties(&mut self, brush_properties_id: i64) -> Result<BrushPropertiesEntry>;
+
+    ///
+    /// Queries the vector elements that appear before a certain time in the specified keyframe
+    /// 
+    fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>>;
 }
