@@ -73,7 +73,7 @@ impl Animation for SqliteAnimation {
     }
 
     fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>> {
-        unimplemented!()
+        self.db.get_log()
     }
 
     fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
