@@ -39,4 +39,27 @@ impl<TFile: FloFile> AnimationDbCore<TFile> {
 
         Ok(())
     }
+
+    ///
+    /// Retrieves the brush definition with the specified ID
+    /// 
+    pub fn get_brush_definition(db: &mut TFile, brush_id: i64) -> Result<BrushDefinition> {
+        use self::BrushDefinitionType::*;
+
+        let brush_entry = db.query_brush(brush_id)?;
+
+        match brush_entry.brush_type {
+            Simple  => Ok(BrushDefinition::Simple),
+            Ink     => {
+                let (min_width, max_width, scale_up_distance) = brush_entry.ink_defn.unwrap_or((0.0, 0.0, 0.0));
+                let min_width           = min_width as f32;
+                let max_width           = max_width as f32;
+                let scale_up_distance   = scale_up_distance as f32;
+
+                Ok(BrushDefinition::Ink(InkDefinition {
+                    min_width, max_width, scale_up_distance
+                }))
+            }
+        }
+    }
 }

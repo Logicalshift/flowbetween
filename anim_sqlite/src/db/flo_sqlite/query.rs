@@ -114,13 +114,16 @@ impl FloQuery for FloSqlite {
                     let edit_type       = self.value_for_enum(DbEnumType::EditLog, Some(edit_type)).unwrap().edit_log().unwrap();
                     let drawing_style   = self.value_for_enum(DbEnumType::DrawingStyle, drawing_style).and_then(|ds| ds.drawing_style());
 
+                    let brush_id: Option<i64>               = brush_id;
+                    let brush_properties_id: Option<i64>    = brush_properties_id;
+
                     EditLogEntry {
                         edit_id:                edit_id,
                         edit_type:              edit_type,
                         layer_id:               as_id(layer_id),
                         when:                   as_duration(when),
-                        brush:                  as_id(brush_id).and_then(|brush_id| drawing_style.and_then(|drawing_style| Some((brush_id, drawing_style)))),
-                        brush_properties_id:    as_id(brush_properties_id)
+                        brush:                  brush_id.and_then(|brush_id| drawing_style.and_then(|drawing_style| Some((brush_id, drawing_style)))),
+                        brush_properties_id:    brush_properties_id
                     }
                 }).collect()
             )

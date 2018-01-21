@@ -14,8 +14,8 @@ pub struct EditLogEntry {
     pub edit_type:              EditLogType,
     pub layer_id:               Option<u64>,
     pub when:                   Option<Duration>,
-    pub brush:                  Option<(u64, DrawingStyleType)>,
-    pub brush_properties_id:    Option<u64>
+    pub brush:                  Option<(i64, DrawingStyleType)>,
+    pub brush_properties_id:    Option<i64>
 }
 
 ///
