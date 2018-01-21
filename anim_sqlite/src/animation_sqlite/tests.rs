@@ -3,7 +3,6 @@ use canvas::*;
 use animation::*;
 use std::time::Duration;
 use std::sync::*;
-use std::any::*;
 use super::super::db::vector_frame::*;
 
 #[test]
