@@ -24,7 +24,7 @@ pub struct EditLogEntry {
 pub struct ColorEntry {
     pub color_type:             ColorType,
     pub rgb:                    Option<(f64, f64, f64)>,
-    pub hsl:                    Option<(f64, f64, f64)>
+    pub hsluv:                  Option<(f64, f64, f64)>
 }
 
 ///

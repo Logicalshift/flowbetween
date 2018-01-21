@@ -157,20 +157,53 @@ impl FloQuery for FloSqlite {
     /// Retrieves a colour with the specified ID
     /// 
     fn query_color(&mut self, color_id: i64) -> Result<ColorEntry> {
-        unimplemented!()
+        self.query_row(FloStatement::SelectColor, &[&color_id], |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)))
+            .map(|(color_type, r, g, b, h, s, l)| {
+                let r: Option<f64>  = r;
+                let g: Option<f64>  = g;
+                let b: Option<f64>  = b;
+                let h: Option<f64>  = h;
+                let s: Option<f64>  = s;
+                let l: Option<f64>  = l;
+                let color_type      = self.value_for_enum(DbEnumType::Color, Some(color_type)).and_then(|color_type| color_type.color());
+
+                ColorEntry {
+                    color_type: color_type.unwrap(),
+
+                    rgb:        r.and_then(|r| g.map(|g| (r, g))).and_then(|(r, g)| b.map(|b| (r, g, b))),
+                    hsluv:      h.and_then(|h| s.map(|s| (h, s))).and_then(|(h, s)| l.map(|l| (h, s, l)))
+                }
+            })
     }
 
     ///
     /// Retrieves the brush with the specified ID
     /// 
     fn query_brush(&mut self, brush_id: i64) -> Result<BrushEntry> {
-        unimplemented!()
+        self.query_row(FloStatement::SelectBrushDefinition, &[&brush_id], |row| (row.get(0), row.get(1), row.get(2), row.get(3)))
+            .map(|(brush_type, min_width, max_width, scale_up_distance)| {
+                let min_width: Option<f64>          = min_width;
+                let max_width: Option<f64>          = max_width;
+                let scale_up_distance: Option<f64>  = scale_up_distance;
+                let brush_type                      = self.value_for_enum(DbEnumType::BrushDefinition, Some(brush_type)).and_then(|brush_type| brush_type.brush_definition());
+
+                BrushEntry {
+                    brush_type: brush_type.unwrap(),
+                    ink_defn:   min_width.and_then(|min_width| max_width.map(|max_width| (min_width, max_width))).and_then(|(min_width, max_width)| scale_up_distance.map(|scale_up| (min_width, max_width, scale_up)))
+                }
+            })
     }
 
     ///
     /// Retrieves the brush properties with the specified ID
     /// 
     fn query_brush_properties(&mut self, brush_properties_id: i64) -> Result<BrushPropertiesEntry> {
-        unimplemented!()
+        self.query_row(FloStatement::SelectBrushProperties, &[&brush_properties_id], |row| {
+            BrushPropertiesEntry {
+                size:       row.get(0),
+                opacity:    row.get(1),
+                color_id:   row.get(2)
+            }
+        })
     }
 }
