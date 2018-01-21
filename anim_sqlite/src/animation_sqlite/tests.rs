@@ -1,4 +1,5 @@
 use super::*;
+use canvas::*;
 use animation::*;
 use std::time::Duration;
 use std::sync::*;
@@ -328,6 +329,55 @@ fn draw_brush_strokes() {
                 ])))),
     ]);
     anim.panic_on_error();
+}
+
+#[test]
+fn read_brush_strokes_from_layer() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+    ]);
+    anim.panic_on_error();
+
+    let edit_log    = anim.get_log();
+    let edits       = edit_log.read(&mut (0..7));
+
+    println!("{:?}", edits);
+    assert!(edits.len() == 7);
+    assert!(edits[0] == AnimationEdit::AddNewLayer(2));
+    assert!(edits[1] == AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))));
+    assert!(edits[2] == AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )));
+    assert!(edits[3] == AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))));
+    assert!(edits[6] == AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))));
 }
 
 #[test]
