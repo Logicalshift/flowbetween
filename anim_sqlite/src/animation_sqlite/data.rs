@@ -25,4 +25,24 @@ impl SqliteAnimation {
             db: db
         })
     }
+
+    ///
+    /// Takes an existing SQLite connection and creates a new animation in it
+    /// 
+    pub fn set_up_existing_database(sqlite: Connection) -> Result<SqliteAnimation> {
+        let db = AnimationDb::new_from_connection(sqlite);
+        Ok(SqliteAnimation {
+            db: db
+        })
+    }
+
+    ///
+    /// Uses an existing SQLite connection with an animation in it to create an animation object
+    /// 
+    pub fn from_existing_database(sqlite: Connection) -> Result<SqliteAnimation> {
+        let db = AnimationDb::from_connection(sqlite);
+        Ok(SqliteAnimation {
+            db: db
+        })
+    }
 }
