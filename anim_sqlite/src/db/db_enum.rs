@@ -141,8 +141,6 @@ pub enum DbEnumType {
     VectorElement
 }
 
-pub const ALL_DB_ENUM_TYPES: [DbEnumType; 6] = [ DbEnumType::EditLog, DbEnumType::DrawingStyle, DbEnumType::BrushDefinition, DbEnumType::Color, DbEnumType::Layer, DbEnumType::VectorElement ];
-
 impl From<DbEnumType> for Vec<DbEnum> {
     fn from(t: DbEnumType) -> Vec<DbEnum> {
         use self::DbEnumType::*;
