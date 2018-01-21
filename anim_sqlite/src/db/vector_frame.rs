@@ -31,7 +31,7 @@ impl VectorFrame {
     ///
     /// Decodes the brush for a particular entry
     /// 
-    fn brush_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushDefinitionElement> {
+    fn brush_definition_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushDefinitionElement> {
         // Try to load the brush with the ID
         let brush: Result<(BrushDefinition, DrawingStyleType)> = entry.brush
             .map(|(brush_id, drawing_style)| Ok((AnimationDbCore::get_brush_definition(db, brush_id)?, drawing_style)))
@@ -62,13 +62,21 @@ impl VectorFrame {
     }
 
     ///
+    /// Decodes a brush stroke element for a particular element
+    /// 
+    fn brush_stroke_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushElement> {
+        let points = db.query_vector_element_brush_points(entry.element_id)?;
+        Ok(BrushElement::new(Arc::new(points)))
+    }
+
+    ///
     /// Tries to turn a vector element entry into a Vector object
     /// 
     fn vector_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
         match entry.element_type {
-            VectorElementType::BrushDefinition => Ok(Vector::BrushDefinition(Self::brush_for_entry(db, entry)?)),
+            VectorElementType::BrushDefinition => Ok(Vector::BrushDefinition(Self::brush_definition_for_entry(db, entry)?)),
             VectorElementType::BrushProperties => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
-            VectorElementType::BrushStroke     => unimplemented!()
+            VectorElementType::BrushStroke     => Ok(Vector::BrushStroke(Self::brush_stroke_for_entry(db, entry)?))
         }
     }
 
