@@ -130,14 +130,27 @@ impl FloQuery for FloSqlite {
     /// Queries the size associated with an edit log entry
     /// 
     fn query_edit_log_size(&mut self, edit_id: i64) -> Result<(f64, f64)> {
-        unimplemented!()
+        self.query_row(FloStatement::SelectEditLogSize, &[&edit_id], |row| {
+            (row.get(0), row.get(1))
+        })
     }
 
     ///
     /// Retrieves the raw points associated with a particular edit ID
     /// 
     fn query_edit_log_raw_points(&mut self, edit_id: i64) -> Result<Vec<RawPoint>> {
-        unimplemented!()
+        self.query_map(FloStatement::SelectEditLogRawPoints, &[&edit_id], |row| {
+            let position: (f64, f64)    = (row.get(0), row.get(1));
+            let pressure: f64           = row.get(2);
+            let tilt: (f64, f64)        = (row.get(3), row.get(4));
+
+            RawPoint {
+                position:   (position.0 as f32, position.1 as f32),
+                pressure:   pressure as f32,
+                tilt:       (tilt.0 as f32, tilt.1 as f32)
+            }
+        })
+        .map(|rows_with_errors| rows_with_errors.map(|row| row.unwrap()).collect())
     }
 
     ///

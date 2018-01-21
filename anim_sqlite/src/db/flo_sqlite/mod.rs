@@ -59,6 +59,8 @@ enum FloStatement {
     SelectAssignedLayerIds,
     SelectEditLogLength,
     SelectEditLogValues,
+    SelectEditLogSize,
+    SelectEditLogRawPoints,
 
     UpdateAnimationSize,
 
@@ -169,6 +171,8 @@ impl FloSqlite {
                                                     LEFT OUTER JOIN Flo_EL_Brush           AS Brush         ON EL.Id = Brush.EditId \
                                                     LEFT OUTER JOIN Flo_EL_BrushProperties AS BrushProps    ON EL.Id = BrushProps.EditId \
                                                     LIMIT ? OFFSET ?",
+            SelectEditLogSize               => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
+            SelectEditLogRawPoints          => "SELECT PosX, PosY, Pressure, TiltX, TiltY FROM Flo_EL_RawPoint WHERE EditId = ? ORDER BY PointId ASC",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 
