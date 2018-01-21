@@ -332,7 +332,7 @@ fn draw_brush_strokes() {
 }
 
 #[test]
-fn read_brush_strokes_from_layer() {
+fn read_brush_strokes_from_edit_log() {
     let anim = SqliteAnimation::new_in_memory();
 
     anim.perform_edits(vec![
@@ -363,7 +363,6 @@ fn read_brush_strokes_from_layer() {
     let edit_log    = anim.get_log();
     let edits       = edit_log.read(&mut (0..7));
 
-    println!("{:?}", edits);
     assert!(edits.len() == 7);
     assert!(edits[0] == AnimationEdit::AddNewLayer(2));
     assert!(edits[1] == AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))));

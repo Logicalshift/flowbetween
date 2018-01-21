@@ -142,6 +142,8 @@ impl<TFile: FloFile+Send+'static> EditLog<AnimationEdit> for DbEditLog<TFile> {
                 }
             }
 
+            ranges.push(current_range);
+
             // Read the edit entries
             self.core.sync(move |core| {
                 let mut edits = vec![];
