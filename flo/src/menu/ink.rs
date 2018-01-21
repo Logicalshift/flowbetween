@@ -41,6 +41,9 @@ impl InkMenuController {
         view_model.set_computed("Size", move || PropertyValue::Float(vm_size.get() as f64));
         view_model.set_computed("Opacity", move || PropertyValue::Float(vm_opacity.get() as f64));
 
+        view_model.set_property("EditSize", PropertyValue::Bool(false));
+        view_model.set_property("EditOpacity", PropertyValue::Bool(false));
+
         // Create the colour picker popup
         let color_picker_open   = Binding::new(false);
         let color_picker        = ColorPickerController::new(colour);
@@ -54,20 +57,28 @@ impl InkMenuController {
         // Create the canvases
         let canvases = Arc::new(ResourceManager::new());
 
-        let brush_preview   = Self::brush_preview(size, opacity, colour);
-        let brush_preview   = canvases.register(brush_preview);
+        let brush_preview           = Self::brush_preview(size, opacity, colour);
+        let brush_preview           = canvases.register(brush_preview);
         canvases.assign_name(&brush_preview, "BrushPreview");
 
-        let size_preview    = Self::size_preview(size);
-        let size_preview    = canvases.register(size_preview);
+        let size_preview            = Self::size_preview(size, 32.0 - 6.0);
+        let size_preview            = canvases.register(size_preview);
         canvases.assign_name(&size_preview, "SizePreview");
 
-        let opacity_preview = Self::opacity_preview(opacity);
-        let opacity_preview = canvases.register(opacity_preview);
+        let size_preview_large      = Self::size_preview(size, 100.0);
+        let size_preview_large      = canvases.register(size_preview_large);
+        canvases.assign_name(&size_preview_large, "SizePreview2");
+
+        let opacity_preview         = Self::opacity_preview(opacity, 32.0-6.0);
+        let opacity_preview         = canvases.register(opacity_preview);
         canvases.assign_name(&opacity_preview, "OpacityPreview");
 
-        let colour_preview = Self::colour_preview(colour);
-        let colour_preview = canvases.register(colour_preview);
+        let opacity_preview_large   = Self::opacity_preview(opacity, 84.0);
+        let opacity_preview_large   = canvases.register(opacity_preview_large);
+        canvases.assign_name(&opacity_preview_large, "OpacityPreview2");
+
+        let colour_preview          = Self::colour_preview(colour);
+        let colour_preview          = canvases.register(colour_preview);
         canvases.assign_name(&colour_preview, "ColourPreview");
 
         // Generate the UI
@@ -114,12 +125,25 @@ impl InkMenuController {
                         .with(State::Range((0.0.to_property(), 50.0.to_property())))
                         .with(State::Value(Property::Bind("Size".to_string())))
                         .with(Bounds::next_horiz(96.0))
-                        .with((ActionTrigger::EditValue, "ChangeSize".to_string()))
-                        .with((ActionTrigger::SetValue, "ChangeSize".to_string())),
+                        .with((ActionTrigger::EditValue, "ChangeSizeEdit".to_string()))
+                        .with((ActionTrigger::SetValue, "ChangeSizeSet".to_string())),
                     Control::empty().with(Bounds::next_horiz(4.0)),
                     Control::canvas()
                         .with(size_preview)
-                        .with(Bounds::next_horiz(32.0)),
+                        .with(Bounds::next_horiz(32.0))
+                        .with(vec![
+                            Control::popup()
+                                .with(Popup::IsOpen(Property::Bind("EditSize".to_string())))
+                                .with(Popup::Direction(PopupDirection::Below))
+                                .with(Popup::Size(100, 100))
+                                .with(Popup::Offset(14))
+                                .with(ControlAttribute::ZIndex(1000))
+                                .with(vec![
+                                    Control::canvas()
+                                        .with(Bounds::fill_all())
+                                        .with(size_preview_large)
+                                ])
+                        ]),
 
                     Self::divider(),
 
@@ -132,12 +156,26 @@ impl InkMenuController {
                         .with(State::Range((0.0.to_property(), 1.0.to_property())))
                         .with(State::Value(Property::Bind("Opacity".to_string())))
                         .with(Bounds::next_horiz(96.0))
-                        .with((ActionTrigger::EditValue, "ChangeOpacity".to_string()))
-                        .with((ActionTrigger::SetValue, "ChangeOpacity".to_string())),
+                        .with((ActionTrigger::EditValue, "ChangeOpacityEdit".to_string()))
+                        .with((ActionTrigger::SetValue, "ChangeOpacitySet".to_string())),
                     Control::empty().with(Bounds::next_horiz(4.0)),
                     Control::canvas()
                         .with(opacity_preview)
-                        .with(Bounds::next_horiz(32.0)),
+                        .with(Bounds::next_horiz(32.0))
+                        .with(vec![
+                            Control::popup()
+                                .with(Popup::IsOpen(Property::Bind("EditOpacity".to_string())))
+                                .with(Popup::Direction(PopupDirection::Below))
+                                .with(Popup::Size(100, 100))
+                                .with(Popup::Offset(14))
+                                .with(ControlAttribute::ZIndex(1000))
+                                .with(ControlAttribute::Padding((8, 8), (8, 8)))
+                                .with(vec![
+                                    Control::canvas()
+                                        .with(Bounds::fill_all())
+                                        .with(opacity_preview_large)
+                                ])
+                        ]),
 
                     Control::empty()
                         .with(Bounds::next_horiz(16.0)),
@@ -175,9 +213,8 @@ impl InkMenuController {
     ///
     /// Creates the size preview canvas
     /// 
-    pub fn size_preview(size: &Binding<f32>) -> BindingCanvas {
+    pub fn size_preview(size: &Binding<f32>, control_height: f32) -> BindingCanvas {
         let size            = size.clone();
-        let control_height  = 32.0 - 6.0;
 
         BindingCanvas::with_drawing(move |gc| {
             let size = size.get();
@@ -194,9 +231,8 @@ impl InkMenuController {
     ///
     /// Creates the opacity preview canvas
     /// 
-    pub fn opacity_preview(opacity: &Binding<f32>) -> BindingCanvas {
+    pub fn opacity_preview(opacity: &Binding<f32>, control_height: f32) -> BindingCanvas {
         let opacity         = opacity.clone();
-        let control_height  = 32.0 - 6.0;
 
         BindingCanvas::with_drawing(move |gc| {
             let size = control_height - 8.0;
@@ -313,14 +349,28 @@ impl Controller for InkMenuController {
         use ui::ActionParameter::*;
 
         match (action_id, action_parameter) {
-            ("ChangeSize", &Value(PropertyValue::Float(new_size))) => {
+            ("ChangeSizeEdit", &Value(PropertyValue::Float(new_size))) => {
                 // User has dragged the 'size' property
                 self.size.clone().set(new_size as f32);
+                self.view_model.set_property("EditSize", PropertyValue::Bool(true));
             },
 
-            ("ChangeOpacity", &Value(PropertyValue::Float(new_opacity))) => {
+            ("ChangeSizeSet", &Value(PropertyValue::Float(new_size))) => {
+                // User has dragged the 'size' property
+                self.size.clone().set(new_size as f32);
+                self.view_model.set_property("EditSize", PropertyValue::Bool(false));
+            },
+
+            ("ChangeOpacityEdit", &Value(PropertyValue::Float(new_opacity))) => {
                 // User has dragged the 'opacity' property
                 self.opacity.clone().set(new_opacity as f32);
+                self.view_model.set_property("EditOpacity", PropertyValue::Bool(true));
+            },
+
+            ("ChangeOpacitySet", &Value(PropertyValue::Float(new_opacity))) => {
+                // User has dragged the 'opacity' property
+                self.opacity.clone().set(new_opacity as f32);
+                self.view_model.set_property("EditOpacity", PropertyValue::Bool(false));
             },
 
             ("ShowColorPopup", _) => {
