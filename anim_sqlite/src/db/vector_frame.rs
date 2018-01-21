@@ -1,4 +1,5 @@
 use super::*;
+use super::db_enum::*;
 use super::flo_store::*;
 use super::flo_query::*;
 
@@ -28,10 +29,41 @@ pub struct VectorFrame {
 
 impl VectorFrame {
     ///
+    /// Decodes the brush for a particular entry
+    /// 
+    fn brush_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushDefinitionElement> {
+        // Try to load the brush with the ID
+        let brush: Result<(BrushDefinition, DrawingStyleType)> = entry.brush
+            .map(|(brush_id, drawing_style)| Ok((AnimationDbCore::get_brush_definition(db, brush_id)?, drawing_style)))
+            .unwrap_or_else(|| Ok((BrushDefinition::Ink(InkDefinition::default()), DrawingStyleType::Draw)));
+
+        // Generate a brush element from it
+        let (brush, drawing_style) = brush?;
+
+        let drawing_style = match drawing_style {
+            DrawingStyleType::Draw  => BrushDrawingStyle::Draw,
+            DrawingStyleType::Erase => BrushDrawingStyle::Erase
+        };
+
+        Ok(BrushDefinitionElement::new(brush, drawing_style))
+    }
+
+    ///
+    /// Decodes the brush properties for a particular entry
+    /// 
+    fn properties_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushPropertiesElement> {
+        unimplemented!()
+    }
+
+    ///
     /// Tries to turn a vector element entry into a Vector object
     /// 
     fn vector_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
-        unimplemented!()
+        match entry.element_type {
+            VectorElementType::BrushDefinition => Ok(Vector::BrushDefinition(Self::brush_for_entry(db, entry)?)),
+            VectorElementType::BrushProperties => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
+            VectorElementType::BrushStroke     => unimplemented!()
+        }
     }
 
     ///
