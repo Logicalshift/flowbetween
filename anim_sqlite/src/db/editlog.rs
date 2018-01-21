@@ -69,6 +69,29 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
     }
 
     ///
+    /// Retrieves the raw points associated with an entry 
+    /// 
+    fn raw_points_for_entry(core: &mut AnimationDbCore<TFile>, edit_id: i64) -> Arc<Vec<RawPoint>> {
+        let points = core.db.query_edit_log_raw_points(edit_id).unwrap_or_else(|_err| vec![]);
+
+        Arc::new(points)
+    }
+
+    ///
+    /// Decodes a brush stroke entry
+    /// 
+    fn brush_stroke_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
+        // Fetch the points for this entry
+        let points = Self::raw_points_for_entry(core, entry.edit_id);
+        
+        // This is a paint edit, so we need the 'when' too
+        let when = entry.when.unwrap_or(Duration::from_millis(0));
+
+        // Turn into a set of points
+        LayerEdit::Paint(when, PaintEdit::BrushStroke(points))
+    }
+
+    ///
     /// Turns an edit log entry into an animation edit
     /// 
     fn animation_edit_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
@@ -84,7 +107,7 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
 
             LayerPaintSelectBrush       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::select_brush_for_entry(core, entry)),
             LayerPaintBrushProperties   => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_properties_for_entry(core, entry)),
-            LayerPaintBrushStroke       => unimplemented!()
+            LayerPaintBrushStroke       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_stroke_for_entry(core, entry))
         }
     }
 }
