@@ -1,6 +1,7 @@
 use super::*;
 use super::db_enum::*;
 use super::flo_store::*;
+use super::vector_frame::*;
 
 use animation::brushes::*;
 use std::time::Duration;
@@ -81,10 +82,6 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
         vec![LayerEditType::Vector]
     }
 
-    fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
-        unimplemented!()
-    }
-
     fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
         let keyframes = self.core.sync(|core| core.db.query_key_frame_times_for_layer_id(self.layer_id));
 
@@ -131,6 +128,17 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
         let vector_layer = self as &mut VectorLayer;
  
         Some(Editor::new(vector_layer))
+    }
+
+    fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
+        let core: Result<Arc<Frame>> = self.core.sync(|core| {
+            let frame               = VectorFrame::frame_at_time(&mut core.db, time_index)?;
+            let frame: Arc<Frame>   = Arc::new(frame);
+
+            Ok(frame)
+        });
+
+        core.unwrap()
     }
 }
 

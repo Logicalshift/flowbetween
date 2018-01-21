@@ -7,7 +7,7 @@ use std::time::Duration;
 ///
 pub trait Frame : Send+Sync {
     ///
-    /// Time index of this frame
+    /// Time index of this frame relative to its keyframe
     /// 
     fn time_index(&self) -> Duration;
 
