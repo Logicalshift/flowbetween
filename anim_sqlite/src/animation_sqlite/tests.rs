@@ -3,7 +3,6 @@ use canvas::*;
 use animation::*;
 use std::time::Duration;
 use std::sync::*;
-use super::super::db::vector_frame::*;
 
 #[test]
 fn default_size_is_1980_1080() {

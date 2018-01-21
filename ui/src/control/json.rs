@@ -22,6 +22,7 @@ impl ToJsonValue for ControlAttribute {
             &StateAttr(Value(ref property))         => json!({ "Value": property }),
             &StateAttr(Range((ref min, ref max)))   => json!({ "Range": [min, max] }),
             &PopupAttr(ref popup)                   => json!({ "Popup": popup }),
+            &ScrollAttr(ref scroll)                 => json!({ "Scroll": scroll }),
             &Id(ref id)                             => json!({ "Id": id }),
             &Controller(ref name)                   => json!({ "Controller": name }),
             &Action(ref trigger, ref action)        => json!({ "Action": (trigger, action) }),

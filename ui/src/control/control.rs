@@ -37,6 +37,11 @@ impl Control {
         Self::new(CroppingContainer)
     }
 
+    /// Creates a new scrolling container control
+    pub fn scrolling_container() -> Control {
+        Self::new(ScrollingContainer)
+    }
+
     /// Creates a new popup control
     pub fn popup() -> Control {
         Self::new(Popup)

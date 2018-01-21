@@ -12,6 +12,9 @@ pub enum ControlType {
     /// Control that contains other controls (and crops them to the bounds of this control)
     CroppingContainer,
 
+    /// Control that contains other controls and some scroll bars
+    ScrollingContainer,
+
     /// Control that 'pops up' from its parent, usually a temporary
     /// dialog box of some description
     Popup,

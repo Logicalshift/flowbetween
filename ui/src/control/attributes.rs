@@ -4,6 +4,7 @@ use super::actions::*;
 use super::font_attr::*;
 use super::state_attr::*;
 use super::popup_attr::*;
+use super::scroll_attr::*;
 use super::appearance_attr::*;
 
 use super::super::property::*;
@@ -41,6 +42,9 @@ pub enum ControlAttribute {
 
     /// Specifies the appearance of this control
     AppearanceAttr(Appearance),
+
+    /// Specifies how the contents of this control will scroll
+    ScrollAttr(Scroll),
 
     /// The unique ID for this control
     Id(String),
@@ -192,6 +196,16 @@ impl ControlAttribute {
     }
     
     ///
+    /// The appearance assigned by this attribute, if there is one
+    /// 
+    pub fn scroll<'a>(&'a self) -> Option<&'a Scroll> {
+        match self {
+            &ScrollAttr(ref scroll) => Some(scroll),
+            _                       => None
+        }
+    }
+     
+    ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)
     ///
@@ -209,6 +223,7 @@ impl ControlAttribute {
             &PopupAttr(ref popup)               => Some(popup) != compare_to.popup(),
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
             &AppearanceAttr(ref appearance)     => Some(appearance) != compare_to.appearance(),
+            &ScrollAttr(ref scroll)             => Some(scroll) != compare_to.scroll(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)      => Some(components.len()) != compare_to.subcomponents().map(|components| components.len())
