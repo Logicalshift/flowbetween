@@ -534,6 +534,11 @@ function flowbetween(root_node) {
             return get_attrs('Action');
         };
 
+        // scrolls returns all of the scrolling attributes for this control
+        let scrolls = () => {
+            return get_attrs('Scroll');
+        };
+
         // popup returns the list of popup attributes (combined into a single object)
         let popup = () => {
             let popups = get_attrs('Popup');
@@ -549,7 +554,8 @@ function flowbetween(root_node) {
             actions:        actions,
             bounding_box:   bounding_box,
             padding:        padding,
-            popup:          popup
+            popup:          popup,
+            scrolls:        scrolls
         };
     };
 
@@ -705,6 +711,18 @@ function flowbetween(root_node) {
 
         if (subcomponents === null) {
             return;
+        }
+
+        // Scrolling containers might specify their own minimum size
+        if (parent_node.tagName.toLowerCase() === 'flo-scrolling') {
+            let scrolls = attributes.scrolls();
+
+            scrolls.forEach(scroll_attr => {
+                if (scroll_attr['MinimumContentSize']) {
+                    if (scroll_attr['MinimumContentSize'][0] > total_width)     { total_width   = scroll_attr['MinimumContentSize'][0]; }
+                    if (scroll_attr['MinimumContentSize'][1] > total_height)    { total_height  = scroll_attr['MinimumContentSize'][1]; }
+                }
+            });
         }
 
         // Take account of the padding
