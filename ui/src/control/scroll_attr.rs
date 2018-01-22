@@ -8,7 +8,13 @@ use modifier::*;
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Scroll {
     /// The size of the content of this scroll region
-    ContentSize(f32, f32),
+    /// 
+    /// This is a minimum size. If there are items placed outside this region, the scroll 
+    /// region will grow to accomodate them.
+    /// 
+    /// If the control is larger than this size, then the bounds will be set to the
+    /// overall size of the control.
+    MinimumContentSize(f32, f32),
 
     /// Whether or not to allow horizontal or vertical scrolling at all
     /// Both are allowed by default (ie, the default value of this is true, true)

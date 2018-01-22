@@ -15,7 +15,7 @@ impl TimelineController {
     pub fn new() -> TimelineController {
         let ui = bind(Control::scrolling_container()
             .with(Bounds::fill_all())
-            .with(Scroll::ContentSize(6000.0, 256.0))
+            .with(Scroll::MinimumContentSize(6000.0, 256.0))
             .with(Scroll::AllowScroll(true, true))
             .with(Scroll::AutoHide(false, true))
             .with(Appearance::Background(TIMELINE_BACKGROUND))

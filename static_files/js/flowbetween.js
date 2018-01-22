@@ -1035,10 +1035,10 @@ function flowbetween(root_node) {
         } else if (attribute['Scroll']) {
             let scroll = attribute['Scroll'];
 
-            if (scroll['ContentSize']) {
+            if (scroll['MinimumContentSize']) {
                 let canvas_deco             = node.getElementsByTagName('deco-scroll-canvas')[0];
-                canvas_deco.style.width     = scroll['ContentSize'][0] + 'px';
-                canvas_deco.style.height    = scroll['ContentSize'][1] + 'px';
+                canvas_deco.style.width     = scroll['MinimumContentSize'][0] + 'px';
+                canvas_deco.style.height    = scroll['MinimumContentSize'][1] + 'px';
             }
 
         }
