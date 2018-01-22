@@ -161,7 +161,17 @@ impl ToHtml for ControlAttribute {
 
 impl ToHtml for Scroll {
     fn to_html_subcomponent(&self, _base_path: &str, _controller_path: &str) -> DomNode {
+        use ui::Scroll::*;
+
         match self {
+            &HorizontalScrollBar(ScrollBarVisibility::Never)        => DomAttribute::new("style", "overflow-x: hidden;"),
+            &HorizontalScrollBar(ScrollBarVisibility::Always)       => DomAttribute::new("style", "overflow-x: scroll;"),
+            &HorizontalScrollBar(ScrollBarVisibility::OnlyIfNeeded) => DomAttribute::new("style", "overflow-x: auto;"),
+
+            &VerticalScrollBar(ScrollBarVisibility::Never)          => DomAttribute::new("style", "overflow-y: hidden;"),
+            &VerticalScrollBar(ScrollBarVisibility::Always)         => DomAttribute::new("style", "overflow-y: scroll;"),
+            &VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded)   => DomAttribute::new("style", "overflow-y: auto;"),
+
             _ => DomEmpty::new()
         }
     }

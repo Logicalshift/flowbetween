@@ -3,6 +3,16 @@ use super::*;
 use modifier::*;
 
 ///
+/// Possible visibilities for the scrollbars
+/// 
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum ScrollBarVisibility {
+    Never,
+    Always,
+    OnlyIfNeeded    
+}
+
+///
 /// Attributes representing the way a control scrolls its content
 /// 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -16,13 +26,11 @@ pub enum Scroll {
     /// overall size of the control.
     MinimumContentSize(f32, f32),
 
-    /// Whether or not to allow horizontal or vertical scrolling at all
-    /// Both are allowed by default (ie, the default value of this is true, true)
-    AllowScroll(bool, bool),
+    /// Specifies the visibility of the horizontal scroll bar
+    HorizontalScrollBar(ScrollBarVisibility),
 
-    /// Whether or not to auto-hide the horizontal or vertical scroll bars
-    /// Both are displayed by default (ie, the default value of this is false, false)
-    AutoHide(bool, bool)
+    /// Specifies the visibility of the vertical scroll bar
+    VerticalScrollBar(ScrollBarVisibility)
 }
 
 impl Modifier<Control> for Scroll {

@@ -16,8 +16,8 @@ impl TimelineController {
         let ui = bind(Control::scrolling_container()
             .with(Bounds::fill_all())
             .with(Scroll::MinimumContentSize(6000.0, 16.0))
-            .with(Scroll::AllowScroll(true, true))
-            .with(Scroll::AutoHide(false, true))
+            .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
+            .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
             .with(Appearance::Background(TIMELINE_BACKGROUND))
             .with(ControlAttribute::Padding((16, 16), (16, 16)))
             .with(vec![
