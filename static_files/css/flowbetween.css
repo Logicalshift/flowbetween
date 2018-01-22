@@ -28,6 +28,7 @@ html, body {
     overflow:       hidden;
     font-family:    "lato", "helvetica", sans-serif;
     font-weight:    400;
+    overflow:       hidden;
 }
 
 #root {
@@ -173,7 +174,8 @@ flo-cropping {
 }
 
 flo-scrolling {
-    overflow: scroll;
+    overflow:                   scroll;
+    -webkit-overflow-scrolling: touch;
 }
 
 flo-scrolling > deco-scroll-canvas {
