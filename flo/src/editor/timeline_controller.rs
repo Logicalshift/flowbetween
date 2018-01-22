@@ -1,6 +1,7 @@
 use super::super::style::*;
 
 use ui::*;
+use canvas::*;
 use binding::*;
 
 ///
@@ -17,7 +18,12 @@ impl TimelineController {
             .with(Scroll::ContentSize(6000.0, 256.0))
             .with(Scroll::AllowScroll(true, true))
             .with(Scroll::AutoHide(false, true))
-            .with(Appearance::Background(TIMELINE_BACKGROUND)));
+            .with(Appearance::Background(TIMELINE_BACKGROUND))
+            .with(vec![
+                Control::empty()
+                    .with(Appearance::Background(Color::Rgba(0.4, 0.0, 0.0, 1.0)))
+                    .with(Bounds::fill_all())
+            ]));
 
         TimelineController {
             ui:         ui
