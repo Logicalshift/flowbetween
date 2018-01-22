@@ -1032,6 +1032,15 @@ function flowbetween(root_node) {
                 return true;
             });
 
+        } else if (attribute['Scroll']) {
+            let scroll = attribute['Scroll'];
+
+            if (scroll['ContentSize']) {
+                let canvas_deco             = node.getElementsByTagName('deco-scroll-canvas')[0];
+                canvas_deco.style.width     = scroll['ContentSize'][0] + 'px';
+                canvas_deco.style.height    = scroll['ContentSize'][1] + 'px';
+            }
+
         }
 
         // Update the property that allows us to unbind the viewmodel

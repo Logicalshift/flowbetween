@@ -171,3 +171,11 @@ flo-popup > deco-beak.left:after {
 flo-cropping {
     overflow: hidden;
 }
+
+flo-scrolling {
+    overflow: scroll;
+}
+
+flo-scrolling > deco-scroll-canvas {
+    z-index: -1000;
+}
