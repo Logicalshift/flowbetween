@@ -1725,7 +1725,7 @@ function flowbetween(root_node) {
         passive: true
     });
 
-    root_node.addEventListener('touchdown', ev => {
+    root_node.addEventListener('touchstart', ev => {
         dismiss_others(ev.target);
     }, {
         capture: true,
