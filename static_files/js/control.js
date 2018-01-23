@@ -117,10 +117,11 @@ let flo_control = (function () {
     ///
     /// Adds drag event handling to a node
     ///
-    let on_drag = (node, add_action_event, start_drag, continue_drag, finish_drag) => {
+    let on_drag = (node, add_action_event, start_drag, continue_drag, finish_drag, cancel_drag) => {
         start_drag          = start_drag || (() => {});
         continue_drag       = continue_drag || (() => {});
         finish_drag         = finish_drag || (() => {});
+        cancel_drag         = cancel_drag || finish_drag;
 
         // Handles the mouse down event (this starts dragging immediately)
         // Starting dragging immediately prevents other kinds of actions
@@ -156,6 +157,36 @@ let flo_control = (function () {
             start_drag(x, y);
         };
 
+        // Handles the 'touch start' event (which also creates a drag effect)
+        // Mouse down doesn't really work for dragging on touch devices (well, iOS devices anyway)
+        let touch_start = event => {
+            // Only drag with a single finger
+            if (event.touches.length !== 1) {
+                return;
+            }
+
+            // Add event handlers for the drag
+            document.addEventListener('touchmove', touch_move, true);
+            document.addEventListener('touchend', touch_end, true);
+            document.addEventListener('touchcancel', touch_cancel, true);
+
+            // Stop the default event (which will stop things like the annoying iOS bounce)
+            event.preventDefault();
+
+            // Work out the location of the touch in the target node
+            let x = event.touches[0].clientX;
+            let y = event.touches[0].clientY;
+
+            let client_rect = node.parentNode.getBoundingClientRect();
+
+            x -= client_rect.left + node.offsetLeft;
+            y -= client_rect.top + node.offsetTop;
+            x += node.scrollLeft;
+            y += node.scrollTop;
+
+            start_drag(x, y);
+        };
+
         // Moving the mouse continues the drag operation
         let mouse_move = event => {
             event.preventDefault();
@@ -187,8 +218,54 @@ let flo_control = (function () {
             finish_drag();
         };
 
+        // Moving a touchpoint continues the drag operation
+        let touch_move = event => {
+            event.preventDefault();
+
+            // Work out the location of the click in the target node
+            let x = event.touches[0].clientX;
+            let y = event.touches[0].clientY;
+
+            let client_rect = node.parentNode.getBoundingClientRect();
+
+            x -= client_rect.left + node.offsetLeft;
+            y -= client_rect.top + node.offsetTop;
+            x += node.scrollLeft;
+            y += node.scrollTop;
+
+            // Continue the drag operation
+            continue_drag(x, y);
+        };
+
+        // Releasing a touch ends the drag operation
+        let touch_end = event => {
+            event.preventDefault();
+
+            // Release the device
+            document.removeEventListener('touchmove', touch_move, true);
+            document.removeEventListener('touchend', touch_end, true);
+            document.removeEventListener('touchcancel', touch_cancel, true);
+
+            // Dragging has finished
+            finish_drag();
+        };
+
+        // Touch drags can wind up being cancelled (eg, by palm rejection)
+        let touch_cancel = event => {
+            event.preventDefault();
+
+            // Release the device
+            document.removeEventListener('touchmove', touch_move, true);
+            document.removeEventListener('touchend', touch_end, true);
+            document.removeEventListener('touchcancel', touch_cancel, true);
+
+            // Dragging has been cancelled
+            cancel_drag();
+        };
+
         // Register for the mouse down event
         add_action_event(node, 'mousedown', mouse_down, false);
+        add_action_event(node, 'touchstart', touch_start, true);
     };
 
     ///
@@ -300,6 +377,17 @@ let flo_control = (function () {
             input_handler(flo_value);
         };
 
+        ///
+        /// Event fired if a drag operation is cancelled
+        ///
+        let cancel_drag = () => {
+            // Final event resets the value
+            flo_value = initial_value;
+
+            let input_handler = rotor_node.flo_set_value || (() => {});
+            input_handler(flo_value);
+        };
+
         // Set the initial value for the rotor
         set_value(flo_value);
 
@@ -335,7 +423,7 @@ let flo_control = (function () {
         });
 
         // Register event handlers
-        on_drag(rotor_node, add_action_event, start_drag, continue_drag, end_drag);
+        on_drag(rotor_node, add_action_event, start_drag, continue_drag, end_drag, cancel_drag);
     };
 
     ///
