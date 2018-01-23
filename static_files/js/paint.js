@@ -327,7 +327,7 @@ let flo_paint = (function() {
         };
 
         // Register for the pointer down event
-        add_action_event(node, 'touchstart', touch_start, false);
+        add_action_event(node, 'touchstart', touch_start, true);
     };
 
     ///
