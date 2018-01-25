@@ -11,6 +11,8 @@ const MAX_DISTANCE: f32 = 126.0;
 /// be chosen (provided it's re-used when de-squishing). 0.0 will work well.
 /// 
 pub fn squish_float<Target: Write>(target: &mut Target, last: f64, next: f64) -> Result<usize, Error> {
+    let last = if last.is_infinite() || last.is_nan() { 0.0 } else { last };
+
     // What we encode is the difference between two floats
     let diff = (next - last) as f32;
 
