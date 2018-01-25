@@ -75,7 +75,7 @@ enum FloStatement {
     InsertELWhen,
     InsertELBrush,
     InsertELBrushProperties,
-    InsertELRawPoint,
+    InsertELRawPoints,
     InsertBrushType,
     InsertInkBrush,
     InsertBrushProperties,
@@ -177,7 +177,7 @@ impl FloSqlite {
                                                     LEFT OUTER JOIN Flo_EL_BrushProperties AS BrushProps    ON EL.Id = BrushProps.EditId \
                                                     LIMIT ? OFFSET ?",
             SelectEditLogSize               => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
-            SelectEditLogRawPoints          => "SELECT PosX, PosY, Pressure, TiltX, TiltY FROM Flo_EL_RawPoint WHERE EditId = ? ORDER BY PointId ASC",
+            SelectEditLogRawPoints          => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
             SelectColor                     => "SELECT Col.ColorType, Rgb.R, Rgb.G, Rgb.B, Hsluv.H, Hsluv.S, Hsluv.L FROM Flo_Color_Type AS Col \
                                                     LEFT OUTER JOIN Flo_Color_Rgb   AS Rgb      ON Col.Color = Rgb.Color \
                                                     LEFT OUTER JOIN Flo_Color_Hsluv AS Hsluv    ON Col.Color = Hsluv.Color \
@@ -201,7 +201,7 @@ impl FloSqlite {
             InsertELWhen                    => "INSERT INTO Flo_EL_When (EditId, AtTime) VALUES (?, ?)",
             InsertELBrush                   => "INSERT INTO Flo_EL_Brush (EditId, DrawingStyle, Brush) VALUES (?, ?, ?)",
             InsertELBrushProperties         => "INSERT INTO Flo_EL_BrushProperties (EditId, BrushProperties) VALUES (?, ?)",
-            InsertELRawPoint                => "INSERT INTO Flo_EL_RawPoint (EditId, PointId, PosX, PosY, Pressure, TiltX, TiltY) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            InsertELRawPoints               => "INSERT INTO Flo_EL_RawPoints (EditId, Points) VALUES (?, ?)",
             InsertBrushType                 => "INSERT INTO Flo_Brush_Type (BrushType) VALUES (?)",
             InsertInkBrush                  => "INSERT INTO Flo_Brush_Ink (Brush, MinWidth, MaxWidth, ScaleUpDistance) VALUES (?, ?, ?, ?)",
             InsertBrushProperties           => "INSERT INTO Flo_BrushProperties (Size, Opacity, Color) VALUES (?, ?, ?)",

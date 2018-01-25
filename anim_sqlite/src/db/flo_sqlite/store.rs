@@ -1,4 +1,5 @@
 use super::*;
+use animation::*;
 
 impl FloSqlite {
     ///
@@ -75,17 +76,11 @@ impl FloSqlite {
 
             PushRawPoints(points)                                           => {
                 let edit_log_id         = self.stack.last().unwrap();
-                let mut add_raw_point   = Self::prepare(&self.sqlite, FloStatement::InsertELRawPoint)?;
-                let num_points          = points.len();
+                let mut add_raw_point   = Self::prepare(&self.sqlite, FloStatement::InsertELRawPoints)?;
+                let mut point_bytes     = vec![];
 
-                for (point, index) in points.iter().zip((0..num_points).into_iter()) {
-                    add_raw_point.insert(&[
-                        edit_log_id, &(index as i64), 
-                        &(point.position.0 as f64), &(point.position.1 as f64),
-                        &(point.pressure as f64),
-                        &(point.tilt.0 as f64), &(point.tilt.1 as f64)
-                    ])?;
-                }
+                write_raw_points(&mut point_bytes, &*points).unwrap();
+                add_raw_point.insert(&[edit_log_id, &point_bytes])?;
 
                 Ok(())                
             },

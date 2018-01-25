@@ -89,17 +89,11 @@ CREATE TABLE Flo_EL_BrushProperties (
 /*
  * Associates an edit with a series of raw input points
  */
-CREATE TABLE Flo_EL_RawPoint (
+CREATE TABLE Flo_EL_RawPoints (
     EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
-    PointId     INTEGER NOT NULL,
+    Points      BLOB NOT NULL,
 
-    PosX        REAL NOT NULL,
-    PosY        REAL NOT NULL,
-    Pressure    REAL NOT NULL,
-    TiltX       REAL NOT NULL,
-    TiltY       REAL NOT NULL,
-
-    PRIMARY KEY (EditId, PointId)
+    PRIMARY KEY (EditId)
 ) WITHOUT ROWID;
 
 /*
