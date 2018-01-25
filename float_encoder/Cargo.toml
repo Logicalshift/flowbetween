@@ -1,0 +1,6 @@
+[package]
+name = "float_encoder"
+version = "0.1.0"
+authors = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
+
+[dependencies]

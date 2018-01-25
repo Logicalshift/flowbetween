@@ -1,5 +1,6 @@
 #!/bin/sh
 
+cargo test -p float_encoder
 cargo test -p binding
 cargo test -p curves
 cargo test -p canvas
