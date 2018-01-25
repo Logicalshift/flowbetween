@@ -3,6 +3,7 @@
 //!
 extern crate curves;
 extern crate canvas;
+extern crate float_encoder;
 
 #[macro_use]
 extern crate serde_derive;

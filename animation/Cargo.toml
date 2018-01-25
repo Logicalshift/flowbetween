@@ -6,6 +6,7 @@ authors     = ["Andrew Hunter"]
 [dependencies]
 canvas              = { path = "../canvas" }
 curves              = { path = "../curves" }
+float_encoder       = { path = "../float_encoder" }
 
 typemap             = "^0.3.3"
 modifier            = "^0.1.0"

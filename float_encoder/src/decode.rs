@@ -11,13 +11,13 @@ pub fn unsquish_float<Source: Read>(src: &mut Source, last: f64) -> Result<f64, 
 
     // Read the fixed-point diff
     let mut diff_bytes  = [0,0];
-    src.read(&mut diff_bytes)?;
+    src.read_exact(&mut diff_bytes)?;
     let diff: i16       = (diff_bytes[0] as i16) | ((diff_bytes[1] as i16)<<8);
 
     if diff == (nan as i16) {
         // Diff stored as a f32
         let mut diff_bytes          = [0,0,0,0];
-        src.read(&mut diff_bytes)?;
+        src.read_exact(&mut diff_bytes)?;
         let diff_bit_pattern: u32   = 
               ((diff_bytes[0] as u32)<<0)
             | ((diff_bytes[1] as u32)<<8)
