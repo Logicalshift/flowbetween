@@ -24,7 +24,8 @@ impl TimelineController {
                 Control::empty()
                     .with(Appearance::Background(Color::Rgba(0.4, 0.0, 0.0, 1.0)))
                     .with(Bounds::fill_all())
-            ]));
+            ])
+            .with((ActionTrigger::VirtualScroll(128.0, 128.0), "Scroll")));
 
         TimelineController {
             ui:         ui
@@ -35,5 +36,17 @@ impl TimelineController {
 impl Controller for TimelineController {
     fn ui(&self) -> BindRef<Control> {
         BindRef::new(&self.ui)
+    }
+
+    fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
+        use ui::ActionParameter::*;
+
+        match (action_id, action_parameter) {
+            ("Scroll", &VirtualScroll((x, y), (width, height))) => {
+                println!("{:?} {:?}", (x, y), (width, height));
+            },
+
+            _ => ()
+        }
     }
 }
