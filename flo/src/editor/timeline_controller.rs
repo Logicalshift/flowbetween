@@ -26,7 +26,7 @@ pub struct TimelineController {
     virtual_scale:      VirtualCanvas,
 
     /// The UI for the timeline
-    ui:                 Binding<Control>
+    ui:                 BindRef<Control>
 }
 
 impl TimelineController {
@@ -41,7 +41,8 @@ impl TimelineController {
         let virtual_scale = VirtualCanvas::new(Arc::clone(&canvases), Self::draw_scale);
 
         // UI
-        let ui = bind(Control::scrolling_container()
+        let virtual_scale_control = virtual_scale.control();
+        let ui = BindRef::new(&computed(move || Control::scrolling_container()
             .with(Bounds::fill_all())
             .with(Scroll::MinimumContentSize(6000.0, 256.0))
             .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
@@ -57,10 +58,10 @@ impl TimelineController {
                         y2: Position::At(SCALE_HEIGHT)
                     })
                     .with(vec![
-                        virtual_scale.control().get()
+                        virtual_scale_control.get()
                     ])
             ])
-            .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, 256.0), "Scroll")));
+            .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, 256.0), "Scroll"))));
 
         // Piece it together
         TimelineController {
@@ -92,7 +93,7 @@ impl TimelineController {
 
 impl Controller for TimelineController {
     fn ui(&self) -> BindRef<Control> {
-        BindRef::new(&self.ui)
+        BindRef::clone(&self.ui)
     }
 
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
