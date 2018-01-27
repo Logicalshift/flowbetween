@@ -75,13 +75,120 @@ impl<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()> VirtualCanvas<Dr
         if self.top_left.get() != top_left {
             // Top-left coordinate affects what is drawn in the various canvases
             // We need to re-order the canvases to avoid having to redraw all of the tiles
+            self.reorder_canvases(self.top_left.get(), top_left);
+
             self.top_left.clone().set(top_left);
         }
 
         if self.grid_size.get() != grid_size {
             // Grid size affects the number of canvases we're drawing overall
+            self.resize_canvases(grid_size);
+
             self.grid_size.clone().set(grid_size);
         }
+    }
+
+    ///
+    /// Makes a canvas at a particular grid position
+    /// 
+    fn make_canvas(&self, pos: (u32, u32)) -> Resource<BindingCanvas> {
+        unimplemented!()
+    }
+
+    ///
+    /// Updates the canvases grid to match a new grid size
+    /// 
+    fn resize_canvases(&self, new_grid_size: (u32, u32)) {
+        let (left, top)     = self.top_left.get();
+        let (width, height) = new_grid_size;
+        let mut canvases    = self.canvases.get();
+
+        // Remove any extra rows if we're getting smaller
+        canvases.truncate(height as usize);
+
+        // Resize the existing rows
+        let mut ypos = top;
+        for ref mut row in canvases.iter_mut() {
+            // Remove canvases if there are too many
+            row.truncate(width as usize);
+
+            // Add canvses if more are needed
+            while row.len() < width as usize {
+                let xpos = left + row.len() as u32;
+                row.push(self.make_canvas((xpos, ypos)));
+            }
+
+            // Update ypos to the next row
+            ypos += 1;
+        }
+
+        // Add new rows
+        let mut ypos = top;
+        while canvases.len() < height as usize {
+            let new_row = (0..width).into_iter()
+                .map(|x| left + x)
+                .map(|xpos| self.make_canvas((xpos, ypos)))
+                .collect();
+            canvases.push(new_row);
+
+            ypos += 1;
+        }
+
+        // Update the canvases
+        self.canvases.clone().set(canvases);
+    }
+
+    ///
+    /// Takes the canvas array and regenerates it with a new top-left coordinate
+    /// 
+    fn reorder_canvases(&self, old_top_left: (u32, u32), new_top_left: (u32, u32)) {
+        // Fetch the old array and the size of the grid
+        let (old_left, old_top) = old_top_left;
+        let (new_left, new_top) = new_top_left;
+        let (size_x, size_y)    = self.grid_size.get();
+        let old_canvases        = self.canvases.get();
+        let mut new_canvases    = vec![];
+
+        let (old_left, old_top) = (old_left as i32, old_top as i32);
+        let (new_left, new_top) = (new_left as i32, new_top as i32);
+
+        // Generate the new canvas array
+        for y in 0..size_y {
+            // Start generating this row
+            let y               = y as i32;
+            let mut this_row    = vec![];
+
+            // Work out the row in the previous set of canvases
+            let old_y           = y - (old_top - new_top);
+
+            for x in 0..size_x {
+                // Work out the column in the previous set of canvases
+                let x       = x as i32;
+                let old_x   = x - (old_left - new_left);
+
+                if old_y >= 0 && old_y < old_canvases.len() as i32 {
+                    // Row is within the original grid
+                    let old_row = &old_canvases[1];
+
+                    if old_x >= 0 && old_x < old_row.len() as i32 {
+                        // Use the existing canvas for this grid cell
+                        this_row.push(old_row[old_x as usize].clone())
+                    } else {
+                        // Create a new grid cell
+                        this_row.push(self.make_canvas(((x+new_left) as u32, (y+new_top) as u32)));
+                    }
+                } else {
+                    // Create a new grid cell
+                    this_row.push(self.make_canvas(((x+new_left) as u32, (y+new_top) as u32)));
+                }
+            }
+
+            // Add this row to the set
+            new_canvases.push(this_row);
+        }
+
+        // Update the canvases
+        self.canvases.clone().set(new_canvases);
     }
 
     ///
