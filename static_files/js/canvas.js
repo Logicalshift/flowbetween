@@ -23,14 +23,18 @@ let flo_canvas = (function() {
     /// Remove any canvas from the list of active canvases that no longer have a parent
     ///
     function remove_inactive_canvases() {
+        let new_active_canvases = [];
+
         // Remove any canvas element that has a null parent
         for (let index=0; index<active_canvases.length; ++index) {
-            if (!active_canvases[index].is_active()) {
-                active_canvases.splice(index, 1);
-                --index;
+            if (active_canvases[index].is_active()) {
+                new_active_canvases.push(active_canvases[index]);
+            } else {
                 mark_canvases_outdated();
             }
         }
+
+        active_canvases = new_active_canvases;
     }
 
     ///
