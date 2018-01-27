@@ -28,13 +28,13 @@ pub struct VirtualCanvas<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> 
     tile_size: Binding<(f32, f32)>,
 
     /// Draws a section of the virtual canvas
-    draw_region: DrawRegion,
+    draw_region: Arc<DrawRegion>,
 
     /// Binding for the control
     control: Arc<Bound<Control>>
 }
 
-impl<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()> VirtualCanvas<DrawRegion> {
+impl<DrawRegion: 'static+Send+Sync+Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()> VirtualCanvas<DrawRegion> {
     ///
     /// Creates a new virtual canvas
     /// 
@@ -51,7 +51,7 @@ impl<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()> VirtualCanvas<Dr
             top_left:           top_left,
             grid_size:          grid_size,
             tile_size:          tile_size,
-            draw_region:        draw_region,
+            draw_region:        Arc::new(draw_region),
             control:            control
         }
     }
@@ -92,7 +92,22 @@ impl<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()> VirtualCanvas<Dr
     /// Makes a canvas at a particular grid position
     /// 
     fn make_canvas(&self, pos: (u32, u32)) -> Resource<BindingCanvas> {
-        unimplemented!()
+        let draw_region = Arc::clone(&self.draw_region);
+        let tile_size   = self.tile_size.clone();
+
+        // Create a new canvas to draw this particular region
+        let new_canvas  = BindingCanvas::with_drawing(move |gc| {
+            let (width, height) = tile_size.get();
+            let (xpos, ypos)    = pos;
+
+            let xpos            = width * (xpos as f32);
+            let ypos            = height * (ypos as f32);
+
+            (*draw_region)(gc, (xpos, ypos));
+        });
+
+        // Generate a resource. Resource managers keep weak references so we don't need to worry about tidying this up later (unless it's given a name somehow)
+        self.canvas_resources.register(new_canvas)
     }
 
     ///
