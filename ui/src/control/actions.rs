@@ -22,7 +22,10 @@ pub enum ActionTrigger {
     EditValue,
 
     /// The value of an item has been edited and should be updated
-    SetValue
+    SetValue,
+
+    /// Divides a scrollable region into a grid, and generates an event whenever the region in the top-left corner changes
+    VirtualScroll(f32, f32)
 }
 
 ///
@@ -37,5 +40,8 @@ pub enum ActionParameter {
     Paint(PaintDevice, Vec<Painting>),
 
     /// The new value for an item
-    Value(PropertyValue)
+    Value(PropertyValue),
+
+    /// Indicates the top-left corner of a scrollable region (as a grid coordinate) and the size of the region (in grid entries)
+    VirtualScroll((u32, u32), (u32, u32))
 }
