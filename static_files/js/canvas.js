@@ -966,13 +966,6 @@ let flo_canvas = (function() {
         let shadow = null;
         let parent = element;
 
-        // Put the canvas in the shadow DOM if we can
-        // TODO: interferes with subcomponents, so this is disabled for now
-        if (element.attachShadow && false) {
-            shadow = element.attachShadow({mode: 'open'});
-            parent = shadow;
-        }
-
         // Read the canvas attributes
         let flo_controller  = element.getAttribute('flo-controller');
         let flo_name        = element.getAttribute('flo-name');
