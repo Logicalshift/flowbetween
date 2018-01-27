@@ -11,7 +11,7 @@ use std::sync::*;
 /// Provides a way to define a virtual canvas (produces a control that can be embedded
 /// in another control that uses the `VirtualScroll` action)
 ///
-pub struct VirtualCanvas<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()> {
+pub struct VirtualCanvas {
     /// The sub-canvases for this control
     canvas_resources: Arc<ResourceManager<BindingCanvas>>,
 
@@ -28,17 +28,17 @@ pub struct VirtualCanvas<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> 
     tile_size: Binding<(f32, f32)>,
 
     /// Draws a section of the virtual canvas
-    draw_region: Arc<DrawRegion>,
+    draw_region: Arc<Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()+Send+Sync>,
 
     /// Binding for the control
     control: Arc<Bound<Control>>
 }
 
-impl<DrawRegion: 'static+Send+Sync+Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()> VirtualCanvas<DrawRegion> {
+impl VirtualCanvas {
     ///
     /// Creates a new virtual canvas
     /// 
-    pub fn new(canvas_resources: Arc<ResourceManager<BindingCanvas>>, draw_region: DrawRegion) -> VirtualCanvas<DrawRegion> {
+    pub fn new<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()+Send+Sync+'static>(canvas_resources: Arc<ResourceManager<BindingCanvas>>, draw_region: DrawRegion) -> VirtualCanvas {
         let tiles       = bind(vec![]);
         let top_left    = bind((0, 0));
         let grid_size   = bind((0, 0));
