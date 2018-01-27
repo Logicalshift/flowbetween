@@ -87,6 +87,8 @@ let flo_canvas = (function() {
     /// Attaches a new canvas to a HTML element
     ///
     function start(element) {
+        remove_inactive_canvases();
+
         let existing_canvas = element.flo_canvas;
 
         if (!existing_canvas) {
