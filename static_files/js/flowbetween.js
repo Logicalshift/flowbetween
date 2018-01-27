@@ -745,10 +745,14 @@ function flowbetween(root_node) {
         };
 
         for (let node_index=0; node_index<subcomponents.length; ++node_index) {
+            let element         = subnodes[node_index];
             let component       = subcomponents[node_index];
             let attributes      = get_attributes(component);
             let bounding_box    = attributes.bounding_box() || default_bounding_box;
-            let layout_override = subnodes[node_index].flo_layout;
+            let layout_override = element.flo_layout;
+
+            element.flo_prev_width  = element.clientWidth;
+            element.flo_prev_height = element.clientHeight;
 
             if (!layout_override) {
                 // Convert the bounding box into an absolute position
@@ -772,7 +776,7 @@ function flowbetween(root_node) {
                 stretch_y += bounding_box.y2['Stretch'] || 0;
             } else {
                 // Node has custom layout behaviour: call the flo_layout property to get the position
-                positions.push(layout_override(subnodes[node_index], attributes));
+                positions.push(layout_override(element, attributes));
             }
         }
 
@@ -819,6 +823,12 @@ function flowbetween(root_node) {
             element.style.width     = (pos.x2-pos.x1) + 'px';
             element.style.top       = (pos.y1+padding.top) + 'px';
             element.style.height    = (pos.y2-pos.y1) + 'px';
+
+            // If the node has an on resize property, then call that after laying it out
+            let on_resize = element.flo_resize;
+            if (on_resize && (element.flo_prev_width !== element.clientWidth || element.flo_prev_height !== element.clientHeight)) {
+                on_resize(element.clientWidth, element.clientHeight, element);
+            }
         }
     };
 
