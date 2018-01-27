@@ -951,6 +951,9 @@ function flowbetween(root_node) {
         if (action_type === 'Click') {
             wire_click(action_name, node, controller_path);
 
+        } else if (action_type['VirtualScroll']) {
+            wire_virtual_scroll(action_name, node, controller_path, action_type['VirtualScroll'][0], action_type['VirtualScroll'][1]);
+
         } else if (action_type['Paint']) {
             flo_paint.wire_paint(action_type['Paint'], action_name, node, controller_path);
         
@@ -1007,6 +1010,79 @@ function flowbetween(root_node) {
         if (actions) {
             actions.forEach(action => wire_action(action, node, controller_path));
         }
+    };
+
+    ///
+    /// Fires a virtual scroll event for a node (useful when the node is scrolled or when the node is resized)
+    ///
+    let virtual_scroll_node = (controller_path, action_name, node, grid_x, grid_y) => {
+        // Fetch the coordinates from the node
+        let offset_x    = node.scrollX;
+        let offset_y    = node.scrollY;
+        let width       = node.clientWidth;
+        let height      = node.clientHeight;
+
+        // Convert into grid coords
+        let xpos        = Math.floor(offset_x / grid_x);
+        let ypos        = Math.floor(offset_y / grid_y);
+        let grid_width  = Math.ceil(width / grid_x);
+        let grid_height = Math.ceil(height / grid_y);
+
+        let changed     = false;
+        let last_pos    = node.flo_virtual_scroll;
+
+        if (!last_pos) {
+            changed = true;
+        } else {
+            changed  = last_pos.xpos !== xpos 
+                    || last_pos.ypos !== ypos 
+                    || last_pos.grid_width !== grid_width
+                    || last_pos.grid_height !== grid_height;
+        }
+
+        if (changed) {
+            // Store the current position
+            node.flo_virtual_scroll = {
+                xpos, ypos, grid_width, grid_height
+            };
+
+            // Fire the event
+            perform_action(controller_path, action_name, { 'VirtualScroll': [ [xpos, ypos], [grid_width, grid_height] ] });
+        }
+    };
+
+    ///
+    /// Wires a node for the virtual scroll event
+    ///
+    let wire_virtual_scroll = (action_name, node, controller_path, grid_x, grid_y) => {
+        // Function to fire when the node scrolls
+        let will_scroll = false;
+        let scroll_now  = () => virtual_scroll_node(controller_path, action_name, node, grid_x, grid_y);
+
+        let on_scroll   = () => {
+            if (!will_scroll) {
+                will_scroll = true;
+                requestAnimationFrame(() => {
+                    will_scroll = false;
+                    scroll_now();
+                });
+            }
+        };
+
+        // Scroll the node whenever the scroll event is fired
+        add_action_event(node, 'scroll', () => on_scroll());
+
+        // Also scroll whenever the node's size changes
+        let more_resize = node.flo_resize;
+        node.flo_resize = (width, height, element) => {
+            on_scroll();
+            if (more_resize) {
+                more_resize(width, height, element);
+            }
+        };
+
+        // Also scroll right now
+        on_scroll();
     };
 
     ///
