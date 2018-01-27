@@ -106,8 +106,6 @@ impl Controller for TimelineController {
             ("Scroll", &VirtualScroll((x, y), (width, height))) => {
                 // The virtual scale is always drawn at the top, so we hard-code the top and height values
                 self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (x, 0), (width, 1));
-
-                println!("{:?} {:?}", (x, y), (width, height));
             },
 
             _ => ()
