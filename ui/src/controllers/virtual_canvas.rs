@@ -251,3 +251,52 @@ impl<DrawRegion: 'static+Send+Sync+Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()
         }))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn control_is_initially_empty() {
+        let resource_manager    = Arc::new(ResourceManager::new());
+        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { });
+
+        let control             = virtual_canvas.control();
+
+        assert!(control.get().subcomponents().unwrap().len() == 0);
+    }
+
+    #[test]
+    fn initial_grid_generates_correctly() {
+        let resource_manager    = Arc::new(ResourceManager::new());
+        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { });
+
+        let control             = virtual_canvas.control();
+
+        virtual_canvas.virtual_scroll((128.0, 128.0), (0, 0), (6, 2));
+
+        assert!(control.get().subcomponents().unwrap().len() == 12);
+    }
+
+    #[test]
+    fn grid_scrolls_correctly() {
+        let resource_manager    = Arc::new(ResourceManager::new());
+        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { });
+
+        let control             = virtual_canvas.control();
+
+        virtual_canvas.virtual_scroll((128.0, 128.0), (0, 0), (6, 2));
+
+        assert!(control.get().subcomponents().unwrap().len() == 12);
+        assert!(control.get().subcomponents().unwrap()[0].bounding_box().unwrap().x1 == Position::At(0.0));
+        assert!(control.get().subcomponents().unwrap()[0].bounding_box().unwrap().y1 == Position::At(0.0));
+
+        virtual_canvas.virtual_scroll((128.0, 128.0), (2, 4), (6, 2));
+
+        assert!(control.get().subcomponents().unwrap().len() == 12);
+        assert!(control.get().subcomponents().unwrap()[0].bounding_box().unwrap().x1 == Position::At(256.0));
+        assert!(control.get().subcomponents().unwrap()[0].bounding_box().unwrap().x2 == Position::At(384.0));
+        assert!(control.get().subcomponents().unwrap()[0].bounding_box().unwrap().y1 == Position::At(512.0));
+        assert!(control.get().subcomponents().unwrap()[0].bounding_box().unwrap().y2 == Position::At(640.0));
+    }
+}

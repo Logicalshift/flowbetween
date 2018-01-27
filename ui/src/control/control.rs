@@ -1,4 +1,5 @@
 use super::types::*;
+use super::bounds::*;
 use super::modifier::*;
 use super::attributes::*;
 
@@ -131,6 +132,16 @@ impl Control {
     pub fn subcomponents<'a>(&'a self) -> Option<&'a Vec<Control>> {
         self.attributes.iter()
             .map(|attr| attr.subcomponents())
+            .find(|attr| attr.is_some())
+            .map(|attr| attr.unwrap())
+    }
+    
+    ///
+    /// Finds the bounding box for this control if it exists
+    /// 
+    pub fn bounding_box<'a>(&'a self) -> Option<&'a Bounds> {
+        self.attributes.iter()
+            .map(|attr| attr.bounding_box())
             .find(|attr| attr.is_some())
             .map(|attr| attr.unwrap())
     }
