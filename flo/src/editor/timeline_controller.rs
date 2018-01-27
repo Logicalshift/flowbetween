@@ -84,8 +84,8 @@ impl TimelineController {
         // Draw the border line
         gc.stroke_color(TIMESCALE_BORDER);
         gc.new_path();
-        gc.move_to(x, SCALE_HEIGHT-0.5);
-        gc.line_to(x+VIRTUAL_WIDTH, SCALE_HEIGHT-0.5);
+        gc.move_to(x, 0.5);
+        gc.line_to(x+VIRTUAL_WIDTH, 0.5);
         gc.stroke();
     }
 }
