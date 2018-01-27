@@ -66,6 +66,11 @@ impl<DrawRegion: 'static+Send+Sync+Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()
     ///
     /// Handles a virtual scroll event
     /// 
+    /// Callers can use the raw values from the virtual scroll event (the canvases will
+    /// always fill the available area), but if they want to hide the canvases loading
+    /// in from the user they may want to increase the grid size and move the top-left
+    /// corner to allow for a buffer.
+    /// 
     pub fn virtual_scroll(&self, tile_size: (f32, f32), top_left: (u32, u32), grid_size: (u32, u32)) {
         if self.tile_size.get() != tile_size {
             // Tile size mainly affects how the regions are drawn
