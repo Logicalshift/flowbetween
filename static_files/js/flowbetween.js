@@ -1017,8 +1017,8 @@ function flowbetween(root_node) {
     ///
     let virtual_scroll_node = (controller_path, action_name, node, grid_x, grid_y) => {
         // Fetch the coordinates from the node
-        let offset_x    = node.scrollX;
-        let offset_y    = node.scrollY;
+        let offset_x    = node.scrollLeft;
+        let offset_y    = node.scrollTop;
         let width       = node.clientWidth;
         let height      = node.clientHeight;
 
