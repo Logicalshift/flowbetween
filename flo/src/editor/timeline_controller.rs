@@ -48,7 +48,6 @@ impl TimelineController {
             .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
             .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
             .with(Appearance::Background(TIMELINE_BACKGROUND))
-            .with(ControlAttribute::Padding((16, 16), (16, 16)))
             .with(vec![
                 Control::container()
                     .with(Bounds {
