@@ -1025,8 +1025,8 @@ function flowbetween(root_node) {
         // Convert into grid coords
         let xpos        = Math.floor(offset_x / grid_x);
         let ypos        = Math.floor(offset_y / grid_y);
-        let grid_width  = Math.ceil(width / grid_x);
-        let grid_height = Math.ceil(height / grid_y);
+        let grid_width  = Math.ceil((width / grid_x)+0.5);
+        let grid_height = Math.ceil((height / grid_y)+0.5);
 
         let changed     = false;
         let last_pos    = node.flo_virtual_scroll;
