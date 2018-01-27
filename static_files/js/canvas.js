@@ -870,29 +870,19 @@ let flo_canvas = (function() {
         // The canvas map will need to be updated before we can look up canvases by name
         mark_canvases_outdated();
 
-        // Add this canvas to the list of active canvases
-        active_canvases.push({
-            is_active:      is_active,
-            resize_canvas:  resize_canvas,
-            draw:           canvas.flo_draw,
-            flo_name:       canvas.flo_name,
-            flo_controller: canvas.flo_controller,
-            decoder:        canvas.flo_canvas_decoder
-        });
-
         let draw = canvas.flo_draw;
 
         ///
         /// Returns true if this canvas is active
         ///
-        function is_active() {
+        let is_active = () => {
             return canvas.parentNode !== null;
-        }
+        };
 
         ///
         /// Updates the content size of the canvas
         ///
-        function resize_canvas() {
+        let resize_canvas = () => {
             // Resize if the canvas's size has changed
             var ratio           = window.devicePixelRatio || 1;
             let target_width    = canvas.clientWidth * ratio;
@@ -907,7 +897,18 @@ let flo_canvas = (function() {
                 draw.replay_drawing();
                 draw.draw_layers();
             }
-        }
+        };
+
+        // Add this canvas to the list of active canvases
+        active_canvases.push({
+            canvas_element: canvas,
+            is_active:      is_active,
+            resize_canvas:  resize_canvas,
+            draw:           canvas.flo_draw,
+            flo_name:       canvas.flo_name,
+            flo_controller: canvas.flo_controller,
+            decoder:        canvas.flo_canvas_decoder
+        });
 
         // Run through the initial set of events
         requestAnimationFrame(() => resize_canvas());
