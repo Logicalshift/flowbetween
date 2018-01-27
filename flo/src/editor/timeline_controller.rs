@@ -79,6 +79,8 @@ impl TimelineController {
         gc.center_region(x, 0.0, x+VIRTUAL_WIDTH, SCALE_HEIGHT);
         gc.line_width(1.0);
 
+        // TODO: draw the ticks
+
         // Draw the border line
         gc.stroke_color(TIMESCALE_BORDER);
         gc.new_path();

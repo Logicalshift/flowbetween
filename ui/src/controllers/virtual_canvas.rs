@@ -188,7 +188,7 @@ impl VirtualCanvas {
 
                 if old_y >= 0 && old_y < old_tiles.len() as i32 {
                     // Row is within the original grid
-                    let old_row = &old_tiles[1];
+                    let old_row = &old_tiles[old_y as usize];
 
                     if old_x >= 0 && old_x < old_row.len() as i32 {
                         // Use the existing canvas for this grid cell
