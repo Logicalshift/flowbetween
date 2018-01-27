@@ -25,7 +25,7 @@ impl TimelineController {
                     .with(Appearance::Background(Color::Rgba(0.4, 0.0, 0.0, 1.0)))
                     .with(Bounds::fill_all())
             ])
-            .with((ActionTrigger::VirtualScroll(128.0, 128.0), "Scroll")));
+            .with((ActionTrigger::VirtualScroll(400.0, 256.0), "Scroll")));
 
         TimelineController {
             ui:         ui
