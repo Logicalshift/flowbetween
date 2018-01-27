@@ -250,7 +250,7 @@ impl VirtualCanvas {
                 .collect();
 
             // Turn into a container control with all of the canvases in it
-            Control::container()
+            Control::cropping_container()
                 .with(Bounds::fill_all())
                 .with(tile_controls)
         }))
