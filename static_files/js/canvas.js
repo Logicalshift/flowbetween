@@ -13,11 +13,21 @@ let flo_canvas = (function() {
     // List of active canvases
     let active_canvases = [];
 
+    // Canvases in the 'boneyard', which can be resurrected if they're used again quickly
+    let boneyard        = [];
+
     // Maps controller_path + canvas_name to the list of active canvases
     let canvas_map      = {};
 
     // True if the canvas map is outdated
     let canvas_map_outdated = true;
+
+    ///
+    /// Removes dead canvases from the boneyard
+    ///
+    function reap_boneyard() {
+        boneyard = [];
+    }
 
     ///
     /// Remove any canvas from the list of active canvases that no longer have a parent
@@ -30,6 +40,7 @@ let flo_canvas = (function() {
             if (active_canvases[index].is_active()) {
                 new_active_canvases.push(active_canvases[index]);
             } else {
+                boneyard.push(active_canvases[index]);
                 mark_canvases_outdated();
             }
         }
@@ -66,6 +77,7 @@ let flo_canvas = (function() {
             requestAnimationFrame(() => {
                 if (canvas_map_outdated) {
                     update_canvas_map();
+                    reap_boneyard();
                 }
             });
         }
@@ -78,9 +90,20 @@ let flo_canvas = (function() {
         let existing_canvas = element.flo_canvas;
 
         if (!existing_canvas) {
-            // Canvas is not present: create a new one
-            element.flo_canvas = create_canvas(element);
+            // Attempt to raise the canvas from the dead
+            let flo_controller  = element.getAttribute('flo-controller');
+            let flo_name        = element.getAttribute('flo-name');
+            let zombie          = get_zombie_canvas(flo_controller, flo_name);
+
+            if (zombie) {
+                // Can resurrect the canvas using an existing element
+                element.flo_canvas = resurrect_canvas(element, zombie);
+            } else {
+                // Need to create an all-new canvas
+                element.flo_canvas = create_canvas(element);
+            }
         } else {
+            // Canvas is already set up, but isn't started
             restart(element, existing_canvas);
         }
     }
@@ -944,6 +967,28 @@ let flo_canvas = (function() {
     }
 
     ///
+    /// Attempts to ressurect a canvas from the boneyard (saves reloading a canvas that's only mostly dead)
+    ///
+    function get_zombie_canvas(controller_path, canvas_name) {
+        for (let index = 0; index < boneyard.length; ++index) {
+            // Find the ex-canvas
+            let dead_canvas = boneyard[index];
+            if (!dead_canvas) {
+                continue;
+            }
+
+            // Resurrect if it's a Norwegian Blue
+            if (dead_canvas.flo_controller === controller_path && dead_canvas.flo_name === canvas_name) {
+                // Lurch down to the village
+                boneyard[index] = null;
+                return dead_canvas;
+            }
+        }
+
+        return null;
+    }
+
+    ///
     /// Updates the canvas with the specified path using an encoded update
     ///
     function update_canvas(controller_path, canvas_name, encoded_update) {
@@ -965,10 +1010,41 @@ let flo_canvas = (function() {
     }
 
     ///
+    /// Uses a zombie canvas (canvas element which no longer in the DOM) to create a new canvas for an element
+    ///
+    function resurrect_canvas(element, zombie) {
+        let parent = element;
+
+        // Read the canvas attributes
+        let flo_controller  = element.getAttribute('flo-controller');
+        let flo_name        = element.getAttribute('flo-name');
+
+        // Get the original canvas element
+        let canvas = zombie.canvas_element;
+
+        // Add to the DOM
+        parent.appendChild(canvas);
+
+        // Set up the element
+        element.flo_canvas_decoder  = canvas.flo_canvas_decoder;
+        element.flo_draw            = canvas.flo_draw;
+        element.flo_map_coords      = canvas.flo_map_coords;
+        element.flo_controller      = flo_controller;
+        element.flo_name            = flo_name;
+
+        // Restart monitoring events for this canvas
+        monitor_canvas_events(canvas);
+
+        return {
+            canvas: canvas,
+            draw:   canvas.flo_draw
+        };
+    }
+
+    ///
     /// Creates a canvas for an element
     ///
     function create_canvas(element) {
-        let shadow = null;
         let parent = element;
 
         // Read the canvas attributes
@@ -1000,7 +1076,6 @@ let flo_canvas = (function() {
         
         // Return the properties to attach to the parent element
         return {
-            shadow: shadow,
             canvas: canvas,
             draw:   canvas.flo_draw
         };
