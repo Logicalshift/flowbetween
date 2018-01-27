@@ -31,7 +31,7 @@ pub struct VirtualCanvas {
     draw_region: Arc<Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()+Send+Sync>,
 
     /// Binding for the control
-    control: Arc<Bound<Control>>
+    control: BindRef<Control>
 }
 
 impl VirtualCanvas {
@@ -59,8 +59,8 @@ impl VirtualCanvas {
     ///
     /// Retrieves the control that renders this virtual canvas
     /// 
-    pub fn control(&self) -> Arc<Bound<Control>> {
-        Arc::clone(&self.control)
+    pub fn control(&self) -> BindRef<Control> {
+        BindRef::clone(&self.control)
     }
 
     ///
@@ -214,14 +214,14 @@ impl VirtualCanvas {
     ///
     /// Creates the control binding for this virtual canvas
     /// 
-    fn make_control(tiles: &Binding<Vec<Vec<Resource<BindingCanvas>>>>, top_left: &Binding<(u32, u32)>, tile_size: &Binding<(f32, f32)>) -> Arc<Bound<Control>> {
+    fn make_control(tiles: &Binding<Vec<Vec<Resource<BindingCanvas>>>>, top_left: &Binding<(u32, u32)>, tile_size: &Binding<(f32, f32)>) -> BindRef<Control> {
         // Clone the bindings
         let tiles       = Binding::clone(tiles);
         let top_left    = Binding::clone(top_left);
         let tile_size   = Binding::clone(tile_size);
 
         // Bind a new control
-        Arc::new(computed(move || {
+        BindRef::new(&computed(move || {
             let (tile_x, tile_y)    = tile_size.get();
             let (left, top)         = top_left.get();
             let tiles               = tiles.get();
