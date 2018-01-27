@@ -43,7 +43,7 @@ impl<DrawRegion: 'static+Send+Sync+Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()
         let top_left    = bind((0, 0));
         let grid_size   = bind((0, 0));
         let tile_size   = bind((256.0, 256.0));
-        let control     = Self::make_control(&canvases, &top_left, &grid_size, &tile_size);
+        let control     = Self::make_control(&canvases, &top_left, &tile_size);
 
         VirtualCanvas {
             canvas_resources:   canvas_resources,
@@ -93,7 +93,7 @@ impl<DrawRegion: 'static+Send+Sync+Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()
     /// 
     fn make_canvas(&self, pos: (u32, u32)) -> Resource<BindingCanvas> {
         let draw_region = Arc::clone(&self.draw_region);
-        let tile_size   = self.tile_size.clone();
+        let tile_size   = Binding::clone(&self.tile_size);
 
         // Create a new canvas to draw this particular region
         let new_canvas  = BindingCanvas::with_drawing(move |gc| {
@@ -209,16 +209,45 @@ impl<DrawRegion: 'static+Send+Sync+Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()
     ///
     /// Creates the control binding for this virtual canvas
     /// 
-    fn make_control(canvases: &Binding<Vec<Vec<Resource<BindingCanvas>>>>, top_left: &Binding<(u32, u32)>, grid_size: &Binding<(u32, u32)>, tile_size: &Binding<(f32, f32)>) -> Arc<Bound<Control>> {
+    fn make_control(canvases: &Binding<Vec<Vec<Resource<BindingCanvas>>>>, top_left: &Binding<(u32, u32)>, tile_size: &Binding<(f32, f32)>) -> Arc<Bound<Control>> {
         // Clone the bindings
         let canvases    = Binding::clone(canvases);
         let top_left    = Binding::clone(top_left);
-        let grid_size   = Binding::clone(grid_size);
         let tile_size   = Binding::clone(tile_size);
 
         // Bind a new control
         Arc::new(computed(move || {
-            Control::empty()
+            let (tile_x, tile_y)    = tile_size.get();
+            let (left, top)         = top_left.get();
+            let canvases            = canvases.get();
+
+            let (left, top)         = (left as f32, top as f32);
+            let (left, top)         = (left*tile_x, top*tile_y);
+
+            // Generate the canvas grid from the canvas array
+            let canvas_controls: Vec<Control> = canvases.iter()
+                .zip((0..canvases.len()).into_iter())
+                .map(|(row, ypos)| (row, (ypos as f32) * tile_y + top))
+                .map(|(row, ypos)| row.iter()
+                    .zip((0..row.len()).into_iter())
+                    .map(|(cell, xpos)| (cell, (xpos as f32) * tile_x + left))
+                    .map(move |(cell, xpos)| Control::canvas()
+                        .with(Bounds {
+                            x1: Position::At(xpos),
+                            y1: Position::At(ypos),
+                            x2: Position::At(xpos+tile_x),
+                            y2: Position::At(ypos+tile_y)
+                        })
+                        .with(cell.clone())
+                    )
+                )
+                .flat_map(|row| row)
+                .collect();
+
+            // Turn into a container control with all of the canvases in it
+            Control::container()
+                .with(Bounds::fill_all())
+                .with(canvas_controls)
         }))
     }
 }
