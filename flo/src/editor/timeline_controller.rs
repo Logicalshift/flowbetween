@@ -140,7 +140,9 @@ impl Controller for TimelineController {
         match (action_id, action_parameter) {
             ("Scroll", &VirtualScroll((x, _y), (width, _height))) => {
                 // The virtual scale is always drawn at the top, so we hard-code the top and height values
-                self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (x, 0), (width, 1));
+                // Expanding the grid width by 2 allows for a 'buffer' on either side to prevent pop-in
+                let virtual_x = if x > 0 { x-1 } else { x };
+                self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (virtual_x, 0), (width+2, 1));
             },
 
             _ => ()
