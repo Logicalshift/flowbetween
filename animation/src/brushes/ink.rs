@@ -9,6 +9,10 @@ use canvas::*;
 // Minimum distance between points to use to fit to a curve
 const MIN_DISTANCE: f64 = 2.0;
 
+// Scaling used on the pressure for coordinate fitting
+// (As we fit to a distance of 1.0, having a pressure of 0-1 means the curve fitter can use essentially any pressure)
+const INK_PRESSURE_SCALE: f64 = 50.0;
+
 ///
 /// The ink brush draws a solid line with width based on pressure
 /// 
@@ -73,7 +77,7 @@ impl<'a> From<&'a RawPoint> for InkCoord {
         InkCoord {
             x: src.position.0 as f64,
             y: src.position.1 as f64,
-            pressure: src.pressure as f64
+            pressure: (src.pressure as f64)*INK_PRESSURE_SCALE
         }
     }
 }
@@ -83,7 +87,7 @@ impl<'a> From<&'a BrushPoint> for InkCoord {
         InkCoord {
             x: src.position.0 as f64,
             y: src.position.1 as f64,
-            pressure: src.width as f64
+            pressure: (src.width as f64)*INK_PRESSURE_SCALE
         }
     }
 }
@@ -318,6 +322,7 @@ impl Brush for InkBrush {
 
         /*
          * -- TODO: needs its own config option
+         *
         // Scale down the pressure at the end of the brush stroke
         last_point  = *ink_points.last().unwrap();
         distance    = 0.0;
@@ -348,7 +353,7 @@ impl Brush for InkBrush {
                 position:   (start.x as f32, start.y as f32),
                 cp1:        (0.0, 0.0),
                 cp2:        (0.0, 0.0),
-                width:      start.pressure as f32
+                width:      (start.pressure/INK_PRESSURE_SCALE) as f32
             });
 
             // Convert the remaining curve segments
@@ -360,7 +365,7 @@ impl Brush for InkBrush {
                     position:   (end.x as f32, end.y as f32),
                     cp1:        (cp1.x as f32, cp1.y as f32),
                     cp2:        (cp2.x as f32, cp2.y as f32),
-                    width:      end.pressure as f32
+                    width:      (end.pressure/INK_PRESSURE_SCALE) as f32
                 });
             }
         }

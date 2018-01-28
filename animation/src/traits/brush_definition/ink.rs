@@ -23,7 +23,7 @@ impl InkDefinition {
         InkDefinition {
             min_width:          0.25,
             max_width:          5.0,
-            scale_up_distance:  20.0
+            scale_up_distance:  40.0
         }
     }
 
