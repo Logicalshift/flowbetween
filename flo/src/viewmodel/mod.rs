@@ -2,11 +2,13 @@ mod timeline;
 mod brush;
 mod tools;
 mod menu;
+mod layer;
 
 pub use self::timeline::*;
 pub use self::brush::*;
 pub use self::tools::*;
 pub use self::menu::*;
+pub use self::layer::*;
 
 use animation::*;
 
@@ -39,7 +41,7 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     pub fn new(animation: Anim) -> AnimationViewModel<Anim> {
         let animation   = Arc::new(animation);
         let tools       = ToolViewModel::new();
-        let timeline    = TimelineViewModel::new();
+        let timeline    = TimelineViewModel::new(&*animation);
         let brush       = BrushViewModel::new();
         let menu        = MenuViewModel::new(&tools.effective_tool);
 
