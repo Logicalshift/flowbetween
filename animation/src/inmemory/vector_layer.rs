@@ -4,6 +4,7 @@ use super::vector_layer_core::*;
 use super::super::traits::*;
 
 use std::sync::*;
+use std::ops::Range;
 use std::time::Duration;
 
 ///
@@ -54,7 +55,7 @@ impl Layer for InMemoryVectorLayer {
         self.core.lock().unwrap().remove_key_frame(when);
     }
 
-    fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
+    fn get_key_frames_during_time(&self, _when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
         unimplemented!()
     }
 

@@ -6,7 +6,9 @@ use super::edit::*;
 use super::frame::*;
 use super::editable::*;
 
+use std::u32;
 use std::sync::*;
+use std::ops::Range;
 use std::time::Duration;
 
 ///
@@ -32,7 +34,12 @@ pub trait Layer :
     ///
     /// Retrieves the times where key frames exist
     ///
-    fn get_key_frames(&self) -> Box<Iterator<Item=Duration>>;
+    fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> { self.get_key_frames_during_time(Duration::from_millis(0)..Duration::from_secs(u32::MAX as u64)) }
+
+    ///
+    /// Retrieves the times where key frames exist during a specified time range
+    /// 
+    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>>;
 
     ///
     /// Adds a new key frame at the specified time

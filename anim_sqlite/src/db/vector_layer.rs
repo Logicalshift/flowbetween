@@ -4,6 +4,7 @@ use super::flo_store::*;
 use super::vector_frame::*;
 
 use animation::brushes::*;
+use std::ops::Range;
 use std::time::Duration;
 
 ///
@@ -82,12 +83,15 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
         vec![LayerEditType::Vector]
     }
 
-    fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> {
-        let keyframes = self.core.sync(|core| core.db.query_key_frame_times_for_layer_id(self.layer_id));
+    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
+        let from        = when.start;
+        let until       = when.end;
+
+        let keyframes   = self.core.sync(|core| core.db.query_key_frame_times_for_layer_id(self.layer_id, from, until));
 
         // Turn into an iterator
-        let keyframes = keyframes.unwrap_or_else(|_: Error| vec![]);
-        let keyframes = Box::new(keyframes.into_iter());
+        let keyframes   = keyframes.unwrap_or_else(|_: Error| vec![]);
+        let keyframes   = Box::new(keyframes.into_iter());
 
         keyframes
     }

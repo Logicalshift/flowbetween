@@ -42,9 +42,12 @@ impl FloQuery for FloSqlite {
     ///
     /// Returns an iterator over the key frame times for a particular layer ID
     /// 
-    fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64) -> Result<Vec<Duration>> {
-        let rows = self.query_map(FloStatement::SelectKeyFrameTimes, &[&layer_id], |row| { Self::from_micros(row.get(0)) })?;
-        let rows = rows.map(|row| row.unwrap());
+    fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64, from: Duration, until: Duration) -> Result<Vec<Duration>> {
+        let from    = Self::get_micros(&from);
+        let until   = Self::get_micros(&until);
+
+        let rows    = self.query_map(FloStatement::SelectKeyFrameTimes, &[&layer_id, &from, &until], |row| { Self::from_micros(row.get(0)) })?;
+        let rows    = rows.map(|row| row.unwrap());
 
         Ok(rows.collect())
     }
