@@ -52,7 +52,6 @@ impl FloQuery for FloSqlite {
         Ok(rows.collect())
     }
 
-
     ///
     /// Queries the nearest keyframe to the specified time in the specified layer
     /// 
