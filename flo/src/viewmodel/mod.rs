@@ -3,12 +3,14 @@ mod brush;
 mod tools;
 mod menu;
 mod layer;
+mod keyframe;
 
 pub use self::timeline::*;
 pub use self::brush::*;
 pub use self::tools::*;
 pub use self::menu::*;
 pub use self::layer::*;
+pub use self::keyframe::*;
 
 use animation::*;
 
@@ -25,7 +27,7 @@ pub struct AnimationViewModel<Anim: Animation> {
     tools: ToolViewModel<Anim>,
 
     /// The timeline view model
-    timeline: TimelineViewModel,
+    timeline: TimelineViewModel<Anim>,
 
     /// The brush view model
     brush: BrushViewModel,
@@ -41,7 +43,7 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     pub fn new(animation: Anim) -> AnimationViewModel<Anim> {
         let animation   = Arc::new(animation);
         let tools       = ToolViewModel::new();
-        let timeline    = TimelineViewModel::new(&*animation);
+        let timeline    = TimelineViewModel::new(Arc::clone(&animation));
         let brush       = BrushViewModel::new();
         let menu        = MenuViewModel::new(&tools.effective_tool);
 
@@ -78,7 +80,7 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     ///
     /// Retrieves the viewmodel of the timeline for this animation
     /// 
-    pub fn timeline(&self) -> &TimelineViewModel {
+    pub fn timeline(&self) -> &TimelineViewModel<Anim> {
         &self.timeline
     }
 
