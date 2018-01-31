@@ -173,13 +173,27 @@ CREATE TABLE Flo_Animation (
 
     /* Size of the main frame for this animation */
     SizeX           REAL NOT NULL,
-    SizeY           REAL NOT NULL
+    SizeY           REAL NOT NULL,
+
+    /* Length of this animation, in microseconds */
+    Duration        INTEGER NOT NULL,
+
+    /* Length of a frame, in nanoseconds */
+    Frame_Length_ns INTEGER NOT NULL
 );
 
 /*
- * Database is created with a single animation
+ * Database is created with a single 2 minute long 30fps animation
  */
-INSERT INTO Flo_Animation (SizeX, SizeY) VALUES (1980.0, 1080.0);
+INSERT INTO Flo_Animation (
+    SizeX, SizeY,
+    Duration,
+    Frame_Length_ns
+) VALUES (
+    1980.0, 1080.0,
+    1000000 * 60 * 2,
+    1000000000 / 30
+);
 
 /*
  * Represents a vector layer
