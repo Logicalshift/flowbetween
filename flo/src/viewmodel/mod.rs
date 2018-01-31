@@ -59,13 +59,6 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     }
 
     ///
-    /// Retrieves the animation being edited by this viewmodel
-    /// 
-    pub fn animation(&self) -> &Anim {
-        &*self.animation
-    }
-
-    ///
     /// Retrieves a reference to the animation being edited by this viewmodel
     /// 
     pub fn animation_ref(&self) -> Arc<Anim> {

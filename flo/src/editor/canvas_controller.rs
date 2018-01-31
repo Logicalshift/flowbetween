@@ -98,7 +98,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// Clears a canvas and sets it up for rendering
     /// 
     fn clear_canvas(&self, canvas: &Resource<BindingCanvas>) {
-        let (width, height) = self.anim_view_model.animation().size();
+        let (width, height) = self.anim_view_model.size();
 
         canvas.draw(move |gc| {
             gc.clear_canvas();
@@ -124,7 +124,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// 
     fn draw_background(&self, gc: &mut GraphicsPrimitives) {
         // Work out the width, height to draw the animation to draw
-        let (width, height) = self.anim_view_model.animation().size();
+        let (width, height) = self.anim_view_model.size();
         let (width, height) = (width as f32, height as f32);
         
         // Background always goes on layer 0

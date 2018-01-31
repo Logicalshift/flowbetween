@@ -55,7 +55,7 @@ impl Ink {
                     preview.draw_current_brush_stroke(gc);
 
                     // Commit the brush stroke to the animation
-                    preview.commit_to_animation(current_time, selected_layer_id, model.anim_view_model.animation());
+                    preview.commit_to_animation(current_time, selected_layer_id, model.anim_view_model);
                 },
 
                 PaintAction::Cancel      => {
