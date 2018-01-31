@@ -13,6 +13,22 @@ fn default_size_is_1980_1080() {
 }
 
 #[test]
+fn default_duration_is_two_minutes() {
+    let anim = SqliteAnimation::new_in_memory();
+    anim.panic_on_error();
+
+    assert!(anim.duration() == Duration::from_secs(120));
+}
+
+#[test]
+fn default_framerate_is_30_fps() {
+    let anim = SqliteAnimation::new_in_memory();
+    anim.panic_on_error();
+
+    assert!(anim.frame_length() == Duration::new(0, 33_333_333));
+}
+
+#[test]
 fn no_layers_by_default() {
     let anim = SqliteAnimation::new_in_memory();
     anim.panic_on_error();

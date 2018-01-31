@@ -56,6 +56,8 @@ enum FloStatement {
     SelectNearestKeyFrame,
     SelectKeyFrameTimes,
     SelectAnimationSize,
+    SelectAnimationDuration,
+    SelectAnimationFrameLength,
     SelectAssignedLayerIds,
     SelectEditLogLength,
     SelectEditLogValues,
@@ -145,6 +147,13 @@ impl FloSqlite {
     }
 
     ///
+    /// Turns a nanosecond count into a duration
+    /// 
+    fn from_nanos(when: i64) -> Duration {
+        Duration::new((when / 1_000_000_000) as u64, (when % 1_000_000_000) as u32)
+    }
+
+    ///
     /// Retrieves microseconds from a duration
     /// 
     fn get_micros(when: &Duration) -> i64 {
@@ -168,6 +177,8 @@ impl FloSqlite {
             SelectNearestKeyFrame           => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
             SelectKeyFrameTimes             => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime >= ? AND AtTime < ?",
             SelectAnimationSize             => "SELECT SizeX, SizeY FROM Flo_Animation WHERE AnimationId = ?",
+            SelectAnimationDuration         => "SELECT Duration FROM Flo_Animation WHERE AnimationId = ?",
+            SelectAnimationFrameLength      => "SELECT Frame_Length_ns FROM Flo_Animation WHERE AnimationId = ?",
             SelectAssignedLayerIds          => "SELECT AssignedLayerId FROM Flo_AnimationLayers WHERE AnimationId = ?",
             SelectEditLogLength             => "SELECT COUNT(Id) FROM Flo_EditLog",
             SelectEditLogValues             => "SELECT EL.Id, EL.Edit, Layers.Layer, Time.AtTime, Brush.DrawingStyle, Brush.Brush, BrushProps.BrushProperties FROM Flo_EditLog AS EL \

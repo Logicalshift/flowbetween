@@ -24,6 +24,16 @@ fn core() -> AnimationDbCore<FloSqlite> {
 }
 
 #[test]
+fn initial_length_is_two_minutes() {
+    assert!(core().db.query_duration().unwrap() == Duration::from_secs(120));
+}
+
+#[test]
+fn initial_frame_rate_is_30fps() {
+    assert!(core().db.query_frame_length().unwrap() == Duration::new(0, 33_333_333));
+}
+
+#[test]
 fn insert_set_size() {
     core().insert_edits(&[AnimationEdit::SetSize(1980.0, 1080.0)]).unwrap();
 }

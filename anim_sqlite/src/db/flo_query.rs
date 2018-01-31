@@ -80,6 +80,16 @@ pub trait FloQuery {
     fn query_size(&mut self) -> Result<(f64, f64)>;
 
     ///
+    /// Returns the total length of the animation
+    /// 
+    fn query_duration(&mut self) -> Result<Duration>;
+
+    ///
+    /// Returns the length of a frame in the animation
+    /// 
+    fn query_frame_length(&mut self) -> Result<Duration>;
+
+    ///
     /// Returns the assigned layer IDs
     /// 
     fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>>;

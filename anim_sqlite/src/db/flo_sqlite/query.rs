@@ -68,6 +68,22 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Returns the total length of the animation
+    /// 
+    fn query_duration(&mut self) -> Result<Duration> {
+        let animation_id = self.animation_id;
+        self.query_row(FloStatement::SelectAnimationDuration, &[&animation_id], |row| Self::from_micros(row.get(0)))
+    }
+
+    ///
+    /// Returns the length of a frame in the animation
+    /// 
+    fn query_frame_length(&mut self) -> Result<Duration> {
+        let animation_id = self.animation_id;
+        self.query_row(FloStatement::SelectAnimationFrameLength, &[&animation_id], |row| Self::from_nanos(row.get(0)))
+    }
+
+    ///
     /// Returns the assigned layer IDs
     /// 
     fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>> {

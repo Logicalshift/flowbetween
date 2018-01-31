@@ -61,13 +61,11 @@ impl Animation for SqliteAnimation {
     }
 
     fn duration(&self) -> Duration {
-        // TODO
-        Duration::from_millis(120 * 1000)
+        self.db.duration()
     }
 
     fn frame_length(&self) -> Duration {
-        // TODO
-        Duration::from_millis(1000 / 30)
+        self.db.frame_length()
     }
 
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
