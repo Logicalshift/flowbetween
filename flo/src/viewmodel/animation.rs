@@ -35,6 +35,8 @@ impl<Anim: Animation> Animation for AnimationViewModel<Anim> {
     /// Retrieves an edit log that can be used to alter this animation
     /// 
     fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
+        // TODO: want to return an edit log that updates this object as well
+        // TODO: make sure the updates are properly serialised when they come from multiple sources
         self.animation.edit()
     }
 
@@ -42,6 +44,7 @@ impl<Anim: Animation> Animation for AnimationViewModel<Anim> {
     /// Retrieves an edit log that can be used to edit a layer in this animation
     /// 
     fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>> {
+        // TODO: need the edit log here as well
         self.animation.edit_layer(layer_id)
     }
 }
