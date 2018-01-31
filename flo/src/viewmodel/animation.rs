@@ -2,12 +2,21 @@ use super::*;
 
 use animation::*;
 
+use std::time::Duration;
+
 impl<Anim: Animation> Animation for AnimationViewModel<Anim> {
     ///
     /// Retrieves the frame size of this animation
     /// 
     fn size(&self) -> (f64, f64) {
         self.animation.size()
+    }
+
+    ///
+    /// Retrieves the length of this animation
+    /// 
+    fn duration(&self) -> Duration {
+        self.animation.duration()
     }
 
     ///

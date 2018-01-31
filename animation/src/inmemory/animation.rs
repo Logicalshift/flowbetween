@@ -6,6 +6,7 @@ use super::super::editor::*;
 
 use std::sync::*;
 use std::collections::*;
+use std::time::Duration;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
@@ -84,6 +85,10 @@ impl<'a, CoreRef: Deref<Target=AnimationCore>+DerefMut> DerefMut for CoreLayerRe
 impl Animation for InMemoryAnimation {
     fn size(&self) -> (f64, f64) {
         (*self.core).lock().unwrap().size
+    }
+
+    fn duration(&self) -> Duration {
+        Duration::from_millis(1000 * 120)
     }
 
     fn get_layer_ids(&self) -> Vec<u64> {

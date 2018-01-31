@@ -5,6 +5,7 @@ use animation::editor::*;
 use animation::inmemory::pending_log::*;
 
 use rusqlite::*;
+use std::time::Duration;
 
 impl SqliteAnimation {
     ///
@@ -57,6 +58,11 @@ impl Animation for SqliteAnimation {
     #[inline]
     fn get_layer_ids(&self) -> Vec<u64> {
         self.db.get_layer_ids()
+    }
+
+    fn duration(&self) -> Duration {
+        // TODO
+        Duration::from_millis(120 * 1000)
     }
 
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {

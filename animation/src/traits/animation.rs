@@ -2,6 +2,8 @@ use super::edit::*;
 use super::layer::*;
 use super::editable::*;
 
+use std::time::Duration;
+
 ///
 /// Represents an animation
 ///
@@ -11,6 +13,11 @@ pub trait Animation :
     /// Retrieves the frame size of this animation
     /// 
     fn size(&self) -> (f64, f64);
+
+    ///
+    /// Retrieves the length of this animation
+    /// 
+    fn duration(&self) -> Duration;
 
     ///
     /// Retrieves the IDs of the layers in this object
