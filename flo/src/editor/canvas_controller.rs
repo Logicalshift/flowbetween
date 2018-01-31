@@ -154,12 +154,11 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// 
     fn update_layers_to_frame_at_time(&self, time: Duration) {
         // Get the animation for the update
-        let animation = self.anim_view_model.animation_ref();
+        let animation = self.anim_view_model.clone();
 
         // Update the layers in the core
         self.core.async(move |core| {
             // Open the animation layers
-            let animation   = &*animation;
             let layers      = animation.get_layer_ids();
 
             // Generate the frame for each layer and assign an ID
