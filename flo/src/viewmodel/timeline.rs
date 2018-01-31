@@ -41,7 +41,7 @@ impl<Anim: Animation> Clone for TimelineViewModel<Anim> {
     }
 }
 
-impl<Anim: Animation>  TimelineViewModel<Anim> {
+impl<Anim: Animation> TimelineViewModel<Anim> {
     ///
     /// Creates a new timeline viewmodel
     /// 
