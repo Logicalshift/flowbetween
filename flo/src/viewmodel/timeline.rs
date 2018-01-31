@@ -67,14 +67,15 @@ impl<Anim: Animation> TimelineViewModel<Anim> {
         }
 
         // Read the animation properties
-        let duration = animation.duration();
+        let duration        = animation.duration();
+        let frame_duration  = animation.frame_length();
 
         // Create the timeline view model
         TimelineViewModel {
             animation:      animation,
             current_time:   bind(Duration::from_millis(0)),
             duration:       bind(duration),
-            frame_duration: bind(Duration::new(0, 33_333_333)), // 30fps
+            frame_duration: bind(frame_duration),
             layers:         bind(layers),
             selected_layer: bind(Some(0)),
             keyframes:      Arc::new(Mutex::new(HashMap::new()))

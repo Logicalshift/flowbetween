@@ -20,6 +20,11 @@ pub trait Animation :
     fn duration(&self) -> Duration;
 
     ///
+    /// Retrieves the duration of a single frame
+    /// 
+    fn frame_length(&self) -> Duration;
+
+    ///
     /// Retrieves the IDs of the layers in this object
     /// 
     fn get_layer_ids(&self) -> Vec<u64>;

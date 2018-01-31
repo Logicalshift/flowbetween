@@ -91,6 +91,10 @@ impl Animation for InMemoryAnimation {
         Duration::from_millis(1000 * 120)
     }
 
+    fn frame_length(&self) -> Duration {
+        Duration::new(0, 1_000_000_000 / 30)
+    }
+
     fn get_layer_ids(&self) -> Vec<u64> {
         (*self.core).lock().unwrap()
             .layers.keys().cloned().collect()

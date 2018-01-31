@@ -65,6 +65,11 @@ impl Animation for SqliteAnimation {
         Duration::from_millis(120 * 1000)
     }
 
+    fn frame_length(&self) -> Duration {
+        // TODO
+        Duration::from_millis(1000 / 30)
+    }
+
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
         // Try to retrieve the layer from the editor
         let layer = self.db.get_layer_with_id(layer_id);
