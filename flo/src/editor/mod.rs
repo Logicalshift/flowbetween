@@ -43,7 +43,7 @@ impl EditorController {
 
         let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new(&animation));
-        let timeline    = Arc::new(TimelineController::new());
+        let timeline    = Arc::new(TimelineController::new(&animation));
         let toolbox     = Arc::new(ToolboxController::new(&animation));
 
         let ui          = bind(Self::ui());

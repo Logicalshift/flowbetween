@@ -1,8 +1,10 @@
 use super::super::style::*;
+use super::super::viewmodel::*;
 
 use ui::*;
 use canvas::*;
 use binding::*;
+use animation::*;
 
 use std::sync::*;
 
@@ -24,7 +26,10 @@ const TICK_HEIGHT: f32      = 5.0;
 ///
 /// The timeline allows the user to pick a point in time and create layers in the animation
 ///
-pub struct TimelineController {
+pub struct TimelineController<Anim: Animation> {
+    /// The view model for this controller
+    _view_model:        AnimationViewModel<Anim>,
+
     /// The canvases for the timeline
     canvases:           Arc<ResourceManager<BindingCanvas>>,
 
@@ -35,11 +40,13 @@ pub struct TimelineController {
     ui:                 BindRef<Control>
 }
 
-impl TimelineController {
+impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates a new timeline controller
     /// 
-    pub fn new() -> TimelineController {
+    pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> TimelineController<Anim> {
+        let anim_view_model = anim_view_model.clone();
+
         // Create the canvases
         let canvases = Arc::new(ResourceManager::new());
 
@@ -47,29 +54,45 @@ impl TimelineController {
         let virtual_scale = VirtualCanvas::new(Arc::clone(&canvases), Self::draw_scale);
 
         // UI
+        let duration        = BindRef::new(&anim_view_model.timeline().duration);
+        let frame_duration  = BindRef::new(&anim_view_model.timeline().frame_duration);
+
         let virtual_scale_control = virtual_scale.control();
-        let ui = BindRef::new(&computed(move || Control::scrolling_container()
-            .with(Bounds::fill_all())
-            .with(Scroll::MinimumContentSize(6000.0, 256.0))
-            .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
-            .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
-            .with(Appearance::Background(TIMELINE_BACKGROUND))
-            .with(vec![
-                Control::container()
-                    .with(Bounds {
-                        x1: Position::At(0.0),
-                        x2: Position::End,
-                        y1: Position::At(0.0),
-                        y2: Position::At(SCALE_HEIGHT)
-                    })
-                    .with(vec![
-                        virtual_scale_control.get()
-                    ])
-            ])
-            .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, 256.0), "Scroll"))));
+        let ui = BindRef::new(&computed(move || {
+            // Work out the number of frames in this animation
+            let duration            = duration.get();
+            let frame_duration      = frame_duration.get();
+
+            let duration_ns         = duration.as_secs()*1_000_000_000 + (duration.subsec_nanos() as u64);
+            let frame_duration_ns   = frame_duration.as_secs()*1_000_000_000 + (frame_duration.subsec_nanos() as u64);
+
+            let width               = TICK_LENGTH * ((duration_ns / frame_duration_ns) as f32);
+
+            // Build the final control
+            Control::scrolling_container()
+                .with(Bounds::fill_all())
+                .with(Scroll::MinimumContentSize(width, 256.0))
+                .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
+                .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
+                .with(Appearance::Background(TIMELINE_BACKGROUND))
+                .with(vec![
+                    Control::container()
+                        .with(Bounds {
+                            x1: Position::At(0.0),
+                            x2: Position::End,
+                            y1: Position::At(0.0),
+                            y2: Position::At(SCALE_HEIGHT)
+                        })
+                        .with(vec![
+                            virtual_scale_control.get()
+                        ])
+                ])
+                .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, 256.0), "Scroll"))
+        }));
 
         // Piece it together
         TimelineController {
+            _view_model:    anim_view_model,
             ui:             ui,
             virtual_scale:  virtual_scale,
             canvases:       canvases
@@ -125,7 +148,7 @@ impl TimelineController {
     }
 }
 
-impl Controller for TimelineController {
+impl<Anim: Animation> Controller for TimelineController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
