@@ -4,6 +4,7 @@ mod tools;
 mod menu;
 mod layer;
 mod keyframe;
+mod animation;
 
 pub use self::timeline::*;
 pub use self::brush::*;
@@ -11,6 +12,7 @@ pub use self::tools::*;
 pub use self::menu::*;
 pub use self::layer::*;
 pub use self::keyframe::*;
+pub use self::animation::*;
 
 use animation::*;
 
