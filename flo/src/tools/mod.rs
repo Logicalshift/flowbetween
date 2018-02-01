@@ -48,6 +48,11 @@ pub enum ToolActivationState {
 ///
 /// Trait implemented by tool objects
 /// 
+/// TODO: the 'I/O' model we use for canvases and the edit log kind of implies that
+/// perhaps a tool should be a method that maps a series of input actions to
+/// output actions rather than using a stateful model. (Brush strokes in particular
+/// just queue all the raw points up so we kind of get this effect anyway)
+/// 
 pub trait Tool<Anim: Animation> : Send+Sync {
     ///
     /// Retrieves the name of this tool
