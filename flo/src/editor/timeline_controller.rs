@@ -36,6 +36,9 @@ pub struct TimelineController<Anim: Animation> {
     /// A virtual control that draws the timeline scale
     virtual_scale:      VirtualCanvas,
 
+    /// A virtual control that draws the keyframes
+    virtual_keyframes:  VirtualCanvas,
+
     /// The UI for the timeline
     ui:                 BindRef<Control>
 }
@@ -53,11 +56,15 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         // This draws the scale along the top; we use a virtual control as this allows us unlimited width
         let virtual_scale = VirtualCanvas::new(Arc::clone(&canvases), Self::draw_scale);
 
+        // This draws the keyframes
+        let virtual_keyframes = VirtualCanvas::new(Arc::clone(&canvases), Self::draw_scale);
+
         // UI
         let duration        = BindRef::new(&anim_view_model.timeline().duration);
         let frame_duration  = BindRef::new(&anim_view_model.timeline().frame_duration);
 
-        let virtual_scale_control = virtual_scale.control();
+        let virtual_scale_control       = virtual_scale.control();
+        let virtual_keyframes_control   = virtual_keyframes.control();
         let ui = BindRef::new(&computed(move || {
             // Work out the number of frames in this animation
             let duration            = duration.get();
@@ -85,6 +92,16 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         })
                         .with(vec![
                             virtual_scale_control.get()
+                        ]),
+                    Control::container()
+                        .with(Bounds {
+                            x1: Position::At(0.0),
+                            x2: Position::End,
+                            y1: Position::At(SCALE_HEIGHT),
+                            y2: Position::End
+                        })
+                        .with(vec![
+                            virtual_keyframes_control.get()
                         ])
                 ])
                 .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, 256.0), "Scroll"))
@@ -92,10 +109,11 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
         // Piece it together
         TimelineController {
-            _view_model:    anim_view_model,
-            ui:             ui,
-            virtual_scale:  virtual_scale,
-            canvases:       canvases
+            _view_model:        anim_view_model,
+            ui:                 ui,
+            virtual_scale:      virtual_scale,
+            virtual_keyframes:  virtual_keyframes,
+            canvases:           canvases
         }
     }
 
@@ -161,11 +179,13 @@ impl<Anim: Animation> Controller for TimelineController<Anim> {
         use ui::ActionParameter::*;
 
         match (action_id, action_parameter) {
-            ("Scroll", &VirtualScroll((x, _y), (width, _height))) => {
+            ("Scroll", &VirtualScroll((x, y), (width, height))) => {
                 // The virtual scale is always drawn at the top, so we hard-code the top and height values
                 // Expanding the grid width by 2 allows for a 'buffer' on either side to prevent pop-in
                 let virtual_x = if x > 0 { x-1 } else { x };
+                let virtual_y = if y > 0 { y-1 } else { y };
                 self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (virtual_x, 0), (width+2, 1));
+                self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, 256.0), (virtual_x, virtual_y), (width+2, height+2));
             },
 
             _ => ()
