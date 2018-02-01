@@ -183,9 +183,8 @@ impl<Anim: Animation> Controller for TimelineController<Anim> {
                 // The virtual scale is always drawn at the top, so we hard-code the top and height values
                 // Expanding the grid width by 2 allows for a 'buffer' on either side to prevent pop-in
                 let virtual_x = if x > 0 { x-1 } else { x };
-                let virtual_y = if y > 0 { y-1 } else { y };
                 self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (virtual_x, 0), (width+2, 1));
-                self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, 256.0), (virtual_x, virtual_y), (width+2, height+2));
+                self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, 256.0), (virtual_x, y), (width+2, height));
             },
 
             _ => ()
