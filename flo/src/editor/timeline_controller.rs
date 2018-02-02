@@ -144,49 +144,51 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Draws the timeline scale
     /// 
-    fn draw_scale(gc: &mut GraphicsPrimitives, (x, _y): (f32, f32)) {
-        // Set up the canvas
-        gc.canvas_height(SCALE_HEIGHT);
-        gc.center_region(x, 0.0, x+VIRTUAL_WIDTH, SCALE_HEIGHT);
-        gc.line_width(1.0);
+    fn draw_scale(x: f32, y: f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync> {
+        Box::new(move |gc| {
+            // Set up the canvas
+            gc.canvas_height(SCALE_HEIGHT);
+            gc.center_region(x, 0.0, x+VIRTUAL_WIDTH, SCALE_HEIGHT);
+            gc.line_width(1.0);
 
-        // Draw the ticks
-        let start_tick  = (x / TICK_LENGTH).floor() as i32;
-        let end_tick    = ((x+VIRTUAL_WIDTH)/TICK_LENGTH).ceil() as i32;
+            // Draw the ticks
+            let start_tick  = (x / TICK_LENGTH).floor() as i32;
+            let end_tick    = ((x+VIRTUAL_WIDTH)/TICK_LENGTH).ceil() as i32;
 
-        gc.stroke_color(TIMESCALE_TICK);
+            gc.stroke_color(TIMESCALE_TICK);
 
-        for tick in start_tick..(end_tick+1) {
-            let tick_x = (tick as f32) * TICK_LENGTH;
-            let tick_x = tick_x + (TICK_LENGTH/2.0);
+            for tick in start_tick..(end_tick+1) {
+                let tick_x = (tick as f32) * TICK_LENGTH;
+                let tick_x = tick_x + (TICK_LENGTH/2.0);
 
-            gc.new_path();
+                gc.new_path();
 
-            if (tick%5) == 0 {
-                gc.stroke_color(TIMESCALE_MAINTICK);
+                if (tick%5) == 0 {
+                    gc.stroke_color(TIMESCALE_MAINTICK);
 
-                gc.move_to(tick_x, 0.0);
-                if (tick%10) == 0 {
-                    gc.line_to(tick_x, TICK_MAIN_HEIGHT);
+                    gc.move_to(tick_x, 0.0);
+                    if (tick%10) == 0 {
+                        gc.line_to(tick_x, TICK_MAIN_HEIGHT);
+                    } else {
+                        gc.line_to(tick_x, TICK_HEIGHT);
+                    }
+                    gc.stroke();
+
+                    gc.stroke_color(TIMESCALE_TICK);
                 } else {
+                    gc.move_to(tick_x, 0.0);
                     gc.line_to(tick_x, TICK_HEIGHT);
+                    gc.stroke();
                 }
-                gc.stroke();
-
-                gc.stroke_color(TIMESCALE_TICK);
-            } else {
-                gc.move_to(tick_x, 0.0);
-                gc.line_to(tick_x, TICK_HEIGHT);
-                gc.stroke();
             }
-        }
 
-        // Draw the border line
-        gc.stroke_color(TIMESCALE_BORDER);
-        gc.new_path();
-        gc.move_to(x, 0.5);
-        gc.line_to(x+VIRTUAL_WIDTH, 0.5);
-        gc.stroke();
+            // Draw the border line
+            gc.stroke_color(TIMESCALE_BORDER);
+            gc.new_path();
+            gc.move_to(x, 0.5);
+            gc.line_to(x+VIRTUAL_WIDTH, 0.5);
+            gc.stroke();
+        })
     }
 }
 

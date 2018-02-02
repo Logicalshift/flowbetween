@@ -28,7 +28,7 @@ pub struct VirtualCanvas {
     tile_size: Binding<(f32, f32)>,
 
     /// Draws a section of the virtual canvas
-    draw_region: Arc<Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()+Send+Sync>,
+    draw_region: Arc<Fn(f32, f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync>,
 
     /// Binding for the control
     control: BindRef<Control>
@@ -38,7 +38,7 @@ impl VirtualCanvas {
     ///
     /// Creates a new virtual canvas
     /// 
-    pub fn new<DrawRegion: Fn(&mut GraphicsPrimitives, (f32, f32)) -> ()+Send+Sync+'static>(canvas_resources: Arc<ResourceManager<BindingCanvas>>, draw_region: DrawRegion) -> VirtualCanvas {
+    pub fn new<DrawRegion: Fn(f32, f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync+'static>(canvas_resources: Arc<ResourceManager<BindingCanvas>>, draw_region: DrawRegion) -> VirtualCanvas {
         let tiles       = bind(vec![]);
         let top_left    = bind((0, 0));
         let grid_size   = bind((0, 0));
@@ -97,18 +97,24 @@ impl VirtualCanvas {
     /// Makes a canvas at a particular grid position
     /// 
     fn make_tile(&self, pos: (u32, u32)) -> Resource<BindingCanvas> {
+        // TODO: if the draw_region function creates a binding (which we actually want it to, this will fail)
+
         let draw_region = Arc::clone(&self.draw_region);
         let tile_size   = Binding::clone(&self.tile_size);
-
-        // Create a new canvas to draw this particular region
-        let new_canvas  = BindingCanvas::with_drawing(move |gc| {
-            let (width, height) = tile_size.get();
+        let region_fn   = computed(move || {
             let (xpos, ypos)    = pos;
+            let (width, height) = tile_size.get();
 
             let xpos            = width * (xpos as f32);
             let ypos            = height * (ypos as f32);
 
-            (*draw_region)(gc, (xpos, ypos));
+            Arc::new(draw_region(xpos, ypos))
+        });
+
+        // Create a new canvas to draw this particular region
+        let new_canvas  = BindingCanvas::with_drawing(move |gc| {
+            let draw_region = region_fn.get();
+            (*draw_region)(gc);
         });
 
         // Generate a resource. Resource managers keep weak references so we don't need to worry about tidying this up later (unless it's given a name somehow)
@@ -264,7 +270,7 @@ mod test {
     #[test]
     fn control_is_initially_empty() {
         let resource_manager    = Arc::new(ResourceManager::new());
-        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { });
+        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { Box::new(|_| { }) });
 
         let control             = virtual_canvas.control();
 
@@ -274,7 +280,7 @@ mod test {
     #[test]
     fn initial_grid_generates_correctly() {
         let resource_manager    = Arc::new(ResourceManager::new());
-        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { });
+        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { Box::new(|_| { }) });
 
         let control             = virtual_canvas.control();
 
@@ -286,7 +292,7 @@ mod test {
     #[test]
     fn grid_scrolls_correctly() {
         let resource_manager    = Arc::new(ResourceManager::new());
-        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { });
+        let virtual_canvas      = VirtualCanvas::new(resource_manager, |_, _| { Box::new(|_| { }) });
 
         let control             = virtual_canvas.control();
 
