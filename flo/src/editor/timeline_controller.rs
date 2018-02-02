@@ -133,6 +133,15 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     }
 
     ///
+    /// Creates the function for drawing the keyframes
+    /// 
+    fn create_draw_keyframes_fn(timeline: &TimelineViewModel<Anim>) -> Box<Fn(&mut GraphicsPrimitives, (f32, f32))> {
+        let timeline = timeline.clone();
+
+        unimplemented!()
+    }
+
+    ///
     /// Draws the timeline scale
     /// 
     fn draw_scale(gc: &mut GraphicsPrimitives, (x, _y): (f32, f32)) {
