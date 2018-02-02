@@ -163,13 +163,18 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
                 // Center the drawing region
                 gc.canvas_height(-VIRTUAL_HEIGHT);
-                gc.center_region(x, y+VIRTUAL_HEIGHT, x+VIRTUAL_WIDTH, y);
+                gc.center_region(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
 
                 // Fill the background
                 gc.fill_color(TIMESCALE_BACKGROUND);
                 gc.new_path();
                 gc.rect(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
                 gc.fill();
+
+                gc.stroke_color(TIMESCALE_MAINTICK);
+                gc.new_path();
+                gc.rect(x+0.5, y+0.5, x+VIRTUAL_WIDTH-0.5, y+VIRTUAL_HEIGHT-0.5);
+                gc.stroke();
 
                 // Draw the layer dividers
                 gc.line_width(1.0);
