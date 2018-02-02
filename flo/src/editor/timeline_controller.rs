@@ -7,6 +7,7 @@ use binding::*;
 use animation::*;
 
 use std::sync::*;
+use std::time::Duration;
 
 /// Width of an item in a virtualised canvas
 const VIRTUAL_WIDTH: f32    = 400.0;
@@ -22,6 +23,9 @@ const TICK_MAIN_HEIGHT: f32 = 10.0;
 
 /// Height of an 'inbetween' tick
 const TICK_HEIGHT: f32      = 5.0;
+
+/// Height of a layer in pixels
+const LAYER_HEIGHT: f32     = 18.0;
 
 ///
 /// The timeline allows the user to pick a point in time and create layers in the animation
@@ -62,23 +66,43 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         // UI
         let duration        = BindRef::new(&anim_view_model.timeline().duration);
         let frame_duration  = BindRef::new(&anim_view_model.timeline().frame_duration);
+        let layers          = BindRef::new(&anim_view_model.timeline().layers);
 
         let virtual_scale_control       = virtual_scale.control();
         let virtual_keyframes_control   = virtual_keyframes.control();
-        let ui = BindRef::new(&computed(move || {
+
+        let ui = Self::ui(layers, duration, frame_duration, virtual_scale_control, virtual_keyframes_control);
+
+        // Piece it together
+        TimelineController {
+            _view_model:        anim_view_model,
+            ui:                 ui,
+            virtual_scale:      virtual_scale,
+            virtual_keyframes:  virtual_keyframes,
+            canvases:           canvases
+        }
+    }
+
+    ///
+    /// Creates the user interface for the timeline
+    /// 
+    fn ui(layers: BindRef<Vec<LayerViewModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>) -> BindRef<Control> {
+        BindRef::new(&computed(move || {
             // Work out the number of frames in this animation
             let duration            = duration.get();
             let frame_duration      = frame_duration.get();
+            let layers              = layers.get();
 
             let duration_ns         = duration.as_secs()*1_000_000_000 + (duration.subsec_nanos() as u64);
             let frame_duration_ns   = frame_duration.as_secs()*1_000_000_000 + (frame_duration.subsec_nanos() as u64);
 
             let width               = TICK_LENGTH * ((duration_ns / frame_duration_ns) as f32);
+            let height              = (layers.len() as f32) * LAYER_HEIGHT;
 
             // Build the final control
             Control::scrolling_container()
                 .with(Bounds::fill_all())
-                .with(Scroll::MinimumContentSize(width, 256.0))
+                .with(Scroll::MinimumContentSize(width, height + SCALE_HEIGHT))
                 .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
                 .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
                 .with(Appearance::Background(TIMELINE_BACKGROUND))
@@ -105,16 +129,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         ])
                 ])
                 .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, 256.0), "Scroll"))
-        }));
-
-        // Piece it together
-        TimelineController {
-            _view_model:        anim_view_model,
-            ui:                 ui,
-            virtual_scale:      virtual_scale,
-            virtual_keyframes:  virtual_keyframes,
-            canvases:           canvases
-        }
+        }))
     }
 
     ///
