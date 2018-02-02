@@ -12,6 +12,9 @@ use std::time::Duration;
 /// Width of an item in a virtualised canvas
 const VIRTUAL_WIDTH: f32    = 400.0;
 
+/// Height of an item in a virtualised canvas
+const VIRTUAL_HEIGHT: f32   = 256.0;
+
 /// Height of the time scale control
 const SCALE_HEIGHT: f32     = 24.0;
 
@@ -61,7 +64,8 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         let virtual_scale = VirtualCanvas::new(Arc::clone(&canvases), Self::draw_scale);
 
         // This draws the keyframes
-        let virtual_keyframes = VirtualCanvas::new(Arc::clone(&canvases), Self::draw_scale);
+        let create_keyframe_canvas  = Self::create_draw_keyframes_fn(anim_view_model.timeline());
+        let virtual_keyframes       = VirtualCanvas::new(Arc::clone(&canvases), move |x, y| (create_keyframe_canvas)(x, y));
 
         // UI
         let duration        = BindRef::new(&anim_view_model.timeline().duration);
@@ -135,16 +139,73 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates the function for drawing the keyframes
     /// 
-    fn create_draw_keyframes_fn(timeline: &TimelineViewModel<Anim>) -> Box<Fn(&mut GraphicsPrimitives, (f32, f32))> {
-        let timeline = timeline.clone();
+    fn create_draw_keyframes_fn(timeline: &TimelineViewModel<Anim>) -> Box<Fn(f32, f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync> {
+        let timeline    = timeline.clone();
 
-        unimplemented!()
+        Box::new(move |x, y| {
+            // Get the layers that we'll draw
+            let first_layer = (y/VIRTUAL_HEIGHT).floor() as u32;
+            let last_layer  = ((y+VIRTUAL_HEIGHT)/VIRTUAL_HEIGHT).ceil() as u32 + 1;
+
+            // ... and the keyframes in this time region
+            let start_tick  = (x/TICK_LENGTH).floor() as u32;
+            let end_tick    = ((x+VIRTUAL_WIDTH)/TICK_LENGTH).ceil() as u32 + 1;
+            let keyframes   = timeline.get_keyframe_binding(start_tick..end_tick);
+            let layers      = BindRef::new(&timeline.layers);
+
+            // Generate the drawing function for this part of the canvas
+            Box::new(move |gc| {
+                let layers      = layers.get();
+                let keyframes   = keyframes.get();
+
+                let last_layer  = last_layer.min(layers.len() as u32);
+                let end_tick    = end_tick;
+
+                // Center the drawing region
+                gc.canvas_height(-VIRTUAL_HEIGHT);
+                gc.center_region(x, y+VIRTUAL_HEIGHT, x+VIRTUAL_WIDTH, y);
+
+                // Fill the background
+                gc.fill_color(TIMESCALE_BACKGROUND);
+                gc.new_path();
+                gc.rect(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
+                gc.fill();
+
+                // Draw the layer dividers
+                gc.line_width(1.0);
+                gc.stroke_color(TIMESCALE_LAYERS);
+
+                let end_x = (end_tick as f32) * TICK_LENGTH;
+                let end_y = (last_layer as f32) * LAYER_HEIGHT;
+
+                gc.new_path();
+                for layer_index in first_layer..last_layer {
+                    let layer_y = (layer_index as f32) * LAYER_HEIGHT;
+
+                    gc.move_to(x, layer_y + LAYER_HEIGHT);
+                    gc.line_to(end_x, layer_y + LAYER_HEIGHT);
+                }
+                gc.stroke();
+
+                // Draw the cell dividers
+                gc.stroke_color(TIMESCALE_CELL);
+                gc.new_path();
+                for cell_index in start_tick..end_tick {
+                    let cell_x = (cell_index as f32) * TICK_LENGTH;
+                    let cell_x = cell_x + TICK_LENGTH/2.0;
+
+                    gc.move_to(cell_x, y);
+                    gc.line_to(cell_x, end_y);
+                }
+                gc.stroke();
+            })
+        })
     }
 
     ///
     /// Draws the timeline scale
     /// 
-    fn draw_scale(x: f32, y: f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync> {
+    fn draw_scale(x: f32, _y: f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync> {
         Box::new(move |gc| {
             // Set up the canvas
             gc.canvas_height(SCALE_HEIGHT);
@@ -210,7 +271,7 @@ impl<Anim: Animation> Controller for TimelineController<Anim> {
                 // Expanding the grid width by 2 allows for a 'buffer' on either side to prevent pop-in
                 let virtual_x = if x > 0 { x-1 } else { x };
                 self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (virtual_x, 0), (width+2, 1));
-                self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, 256.0), (virtual_x, y), (width+2, height));
+                self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, VIRTUAL_HEIGHT), (virtual_x, y), (width+2, height));
             },
 
             _ => ()
