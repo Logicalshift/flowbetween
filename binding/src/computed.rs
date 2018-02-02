@@ -8,8 +8,8 @@ use std::mem;
 ///
 /// Represents a computed value
 ///
-#[derive(Clone, PartialEq)]
-enum ComputedValue<Value: 'static+Clone+PartialEq> {
+#[derive(Clone)]
+enum ComputedValue<Value: 'static+Clone> {
     Unknown,
     Cached(Value)
 }
@@ -19,7 +19,7 @@ use self::ComputedValue::*;
 ///
 /// Core representation ofa computed binding
 ///
-struct ComputedBindingCore<Value: 'static+Clone+PartialEq, TFn>
+struct ComputedBindingCore<Value: 'static+Clone, TFn>
 where TFn: 'static+Fn() -> Value {
     /// Function to call to recalculate this item
     calculate_value: TFn,
@@ -34,7 +34,7 @@ where TFn: 'static+Fn() -> Value {
     when_changed: Vec<ReleasableNotifiable>
 }
 
-impl<Value: 'static+Clone+PartialEq, TFn> ComputedBindingCore<Value, TFn>
+impl<Value: 'static+Clone, TFn> ComputedBindingCore<Value, TFn>
 where TFn: 'static+Fn() -> Value {
     ///
     /// Creates a new computed binding core item
@@ -52,11 +52,12 @@ where TFn: 'static+Fn() -> Value {
     /// Marks the value as changed, returning true if the value was removed
     ///
     pub fn mark_changed(&mut self) -> bool {
-        if self.latest_value == Unknown {
-            false
-        } else {
-            self.latest_value = Unknown;
-            true
+        match self.latest_value {
+            Unknown => false,
+            _       => {
+                self.latest_value = Unknown;
+                true
+            }
         }
     }
 
@@ -98,7 +99,7 @@ where TFn: 'static+Fn() -> Value {
     }
 }
 
-impl<Value: 'static+Clone+PartialEq, TFn> Drop for ComputedBindingCore<Value, TFn>
+impl<Value: 'static+Clone, TFn> Drop for ComputedBindingCore<Value, TFn>
 where TFn: 'static+Fn() -> Value {
     fn drop(&mut self) {
         // No point receiving any notifications once the core has gone
@@ -112,13 +113,13 @@ where TFn: 'static+Fn() -> Value {
 ///
 /// Represents a binding to a value that is computed by a function
 ///
-pub struct ComputedBinding<Value: 'static+Clone+PartialEq, TFn>
+pub struct ComputedBinding<Value: 'static+Clone, TFn>
 where TFn: 'static+Fn() -> Value {
     /// The core where the binding data is stored
     core: Arc<Mutex<ComputedBindingCore<Value, TFn>>>
 }
 
-impl<Value: 'static+Clone+PartialEq+Send, TFn> ComputedBinding<Value, TFn>
+impl<Value: 'static+Clone+Send, TFn> ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
     ///
     /// Creates a new computable binding
@@ -203,7 +204,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 /// notification is generated for such a reference.
 ///
 impl<Value, TFn> Notifiable for Weak<Mutex<ComputedBindingCore<Value, TFn>>>
-where Value: 'static+Clone+PartialEq+Send, TFn: 'static+Send+Sync+Fn() -> Value {
+where Value: 'static+Clone+Send, TFn: 'static+Send+Sync+Fn() -> Value {
     fn mark_as_changed(&self) {
         // If the reference is still active, reconstitute a computed binding in order to call the mark_changed method
         if let Some(to_notify) = self.upgrade() {
@@ -216,14 +217,14 @@ where Value: 'static+Clone+PartialEq+Send, TFn: 'static+Send+Sync+Fn() -> Value 
     }
 }
 
-impl<Value: 'static+Clone+PartialEq+Send, TFn> Clone for ComputedBinding<Value, TFn>
+impl<Value: 'static+Clone+Send, TFn> Clone for ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
     fn clone(&self) -> Self {
         ComputedBinding { core: Arc::clone(&self.core) }
     }
 }
 
-impl<Value: 'static+Clone+PartialEq, TFn> Changeable for ComputedBinding<Value, TFn>
+impl<Value: 'static+Clone, TFn> Changeable for ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
     fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
         let releasable = ReleasableNotifiable::new(what);
@@ -238,7 +239,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     }
 }
 
-impl<Value: 'static+Clone+PartialEq+Send, TFn> Bound<Value> for ComputedBinding<Value, TFn>
+impl<Value: 'static+Clone+Send, TFn> Bound<Value> for ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
     fn get(&self) -> Value {
         // This is a dependency of the current binding context
