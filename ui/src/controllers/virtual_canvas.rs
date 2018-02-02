@@ -73,7 +73,8 @@ impl VirtualCanvas {
     /// 
     pub fn virtual_scroll(&self, tile_size: (f32, f32), top_left: (u32, u32), grid_size: (u32, u32)) {
         if self.tile_size.get() != tile_size {
-            // Tile size mainly affects how the regions are drawn
+            // Tile size mainly affects how the regions are drawn. We need to remove the existing tiles whenever this changes
+            self.tiles.clone().set(vec![]);
             self.tile_size.clone().set(tile_size);
         }
    
@@ -96,24 +97,19 @@ impl VirtualCanvas {
     ///
     /// Makes a canvas at a particular grid position
     /// 
-    fn make_tile(&self, pos: (u32, u32)) -> Resource<BindingCanvas> {
-        // TODO: if the draw_region function creates a binding (which we actually want it to, this will fail)
+    fn make_tile(&self, pos: (u32, u32), tile_size: (f32, f32)) -> Resource<BindingCanvas> {
+        // Work out the location of this tile
+        let (xpos, ypos)    = pos;
+        let (width, height) = tile_size;
 
-        let draw_region = Arc::clone(&self.draw_region);
-        let tile_size   = Binding::clone(&self.tile_size);
-        let region_fn   = computed(move || {
-            let (xpos, ypos)    = pos;
-            let (width, height) = tile_size.get();
+        let xpos            = width * (xpos as f32);
+        let ypos            = height * (ypos as f32);
 
-            let xpos            = width * (xpos as f32);
-            let ypos            = height * (ypos as f32);
-
-            Arc::new(draw_region(xpos, ypos))
-        });
+        // Get the function to draw this region
+        let draw_region     = (self.draw_region)(xpos, ypos);
 
         // Create a new canvas to draw this particular region
         let new_canvas  = BindingCanvas::with_drawing(move |gc| {
-            let draw_region = region_fn.get();
             (*draw_region)(gc);
         });
 
@@ -128,6 +124,7 @@ impl VirtualCanvas {
         let (left, top)     = self.top_left.get();
         let (width, height) = new_grid_size;
         let mut tiles       = self.tiles.get();
+        let tile_size       = self.tile_size.get();
 
         // Remove any extra rows if we're getting smaller
         tiles.truncate(height as usize);
@@ -141,7 +138,7 @@ impl VirtualCanvas {
             // Add canvses if more are needed
             while row.len() < width as usize {
                 let xpos = left + row.len() as u32;
-                row.push(self.make_tile((xpos, ypos)));
+                row.push(self.make_tile((xpos, ypos), tile_size));
             }
 
             // Update ypos to the next row
@@ -153,7 +150,7 @@ impl VirtualCanvas {
         while tiles.len() < height as usize {
             let new_row = (0..width).into_iter()
                 .map(|x| left + x)
-                .map(|xpos| self.make_tile((xpos, ypos)))
+                .map(|xpos| self.make_tile((xpos, ypos), tile_size))
                 .collect();
             tiles.push(new_row);
 
@@ -173,6 +170,7 @@ impl VirtualCanvas {
         let (new_left, new_top) = new_top_left;
         let (size_x, size_y)    = self.grid_size.get();
         let old_tiles           = self.tiles.get();
+        let tile_size           = self.tile_size.get();
         let mut new_tiles       = vec![];
 
         let (old_left, old_top) = (old_left as i32, old_top as i32);
@@ -201,11 +199,11 @@ impl VirtualCanvas {
                         this_row.push(old_row[old_x as usize].clone())
                     } else {
                         // Create a new grid cell
-                        this_row.push(self.make_tile(((x+new_left) as u32, (y+new_top) as u32)));
+                        this_row.push(self.make_tile(((x+new_left) as u32, (y+new_top) as u32), tile_size));
                     }
                 } else {
                     // Create a new grid cell
-                    this_row.push(self.make_tile(((x+new_left) as u32, (y+new_top) as u32)));
+                    this_row.push(self.make_tile(((x+new_left) as u32, (y+new_top) as u32), tile_size));
                 }
             }
 
