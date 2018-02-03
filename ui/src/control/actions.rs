@@ -18,6 +18,9 @@ pub enum ActionTrigger {
     /// you can begin a new one with a different input method)
     Paint(PaintDevice),
 
+    /// Tracks drag actions for this control
+    Drag,
+
     /// The value of an item is being edited and has a new intermediate value
     EditValue,
 
