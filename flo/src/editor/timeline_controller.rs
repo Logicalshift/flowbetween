@@ -132,7 +132,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             virtual_keyframes_control.get()
                         ])
                 ])
-                .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, 256.0), "Scroll"))
+                .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, VIRTUAL_HEIGHT), "Scroll"))
         }))
     }
 
