@@ -8,8 +8,8 @@ pub enum Position {
     /// Point located at a specific value
     At(f32),
 
-    /// Point located at a value specified by a property
-    AtProperty(Property),
+    /// Point located at a value specified by a property, with an offset
+    AtProperty(Property, f32),
 
     /// Point at an offset from its counterpart (eg, width or height)
     Offset(f32),

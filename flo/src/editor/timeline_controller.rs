@@ -143,8 +143,8 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         ]),
                     Control::empty()
                         .with(Bounds {
-                            x1: Position::AtProperty(Property::Bind("IndicatorXPos".to_string())),
-                            x2: Position::At(32.0),
+                            x1: Position::AtProperty(Property::Bind("IndicatorXPos".to_string()), -16.0),
+                            x2: Position::AtProperty(Property::Bind("IndicatorXPos".to_string()), 16.0),
                             y1: Position::Start,
                             y2: Position::End
                         })
