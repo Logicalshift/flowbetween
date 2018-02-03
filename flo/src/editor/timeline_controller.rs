@@ -171,24 +171,14 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 gc.rect(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
                 gc.fill();
 
-                // Draw the layer dividers
                 gc.line_width(0.5);
-                gc.stroke_color(TIMESCALE_LAYERS);
 
+                // Draw the cell dividers
                 let end_x = (end_tick as f32) * TICK_LENGTH;
                 let end_y = (last_layer as f32) * LAYER_HEIGHT;
 
-                gc.new_path();
-                for layer_index in first_layer..last_layer {
-                    let layer_y = (layer_index as f32) * LAYER_HEIGHT;
-
-                    gc.move_to(x, layer_y + LAYER_HEIGHT);
-                    gc.line_to(end_x, layer_y + LAYER_HEIGHT);
-                }
-                gc.stroke();
-
-                // Draw the cell dividers
                 gc.stroke_color(TIMESCALE_CELL);
+
                 gc.new_path();
                 for cell_index in start_tick..end_tick {
                     let cell_x = (cell_index as f32) * TICK_LENGTH;
@@ -196,6 +186,18 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
                     gc.move_to(cell_x, y);
                     gc.line_to(cell_x, end_y);
+                }
+                gc.stroke();
+
+                // Draw the layer dividers
+                gc.stroke_color(TIMESCALE_LAYERS);
+
+                gc.new_path();
+                for layer_index in first_layer..last_layer {
+                    let layer_y = ((layer_index as f32) * LAYER_HEIGHT) - 0.5;
+
+                    gc.move_to(x, layer_y + LAYER_HEIGHT);
+                    gc.line_to(end_x, layer_y + LAYER_HEIGHT);
                 }
                 gc.stroke();
             })
