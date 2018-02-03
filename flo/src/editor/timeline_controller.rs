@@ -200,6 +200,30 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                     gc.line_to(end_x, layer_y + LAYER_HEIGHT);
                 }
                 gc.stroke();
+
+                // Draw the keyframes that are in this region
+                gc.fill_color(TIMESCALE_KEYFRAME);
+                for keyframe in keyframes.iter() {
+                    // Fetch where this frame occurs
+                    let frame       = keyframe.frame;
+                    let layer_id    = keyframe.layer_id;
+                    //let layer_index = layers.iter().filter(|layer| layer.id.get() == layer_id).nth(0);
+                    let layer_index = Some(layer_id as u32); // TODO: need the index, not the ID but we'll use the ID for now
+
+                    // Draw it if it's in this view
+                    if let Some(layer_index) = layer_index {
+                        if layer_index >= first_layer && layer_index < last_layer {
+                            // Top-left corner of this frame
+                            let xpos = (frame as f32) * TICK_LENGTH;
+                            let ypos = (layer_index as f32) * LAYER_HEIGHT;
+
+                            // Draw the frame marker
+                            gc.new_path();
+                            gc.circle(xpos + TICK_LENGTH/2.0, ypos + LAYER_HEIGHT/2.0, TICK_LENGTH/2.0 - 0.5);
+                            gc.fill();
+                        }
+                    }
+                }
             })
         })
     }

@@ -106,9 +106,9 @@ impl<Anim: Animation> TimelineViewModel<Anim> {
             let layers              = self.animation.get_layer_ids();
 
             let keyframe_viewmodel  = layers.into_iter()
-                .map(|layer_id| self.animation.get_layer_with_id(layer_id))
-                .filter(|reader| reader.is_some())
-                .map(|reader| reader.unwrap())
+                .map(|layer_id|     self.animation.get_layer_with_id(layer_id))
+                .filter(|reader|    reader.is_some())
+                .map(|reader|       reader.unwrap())
                 .map(move |reader| {
                     let keyframes = reader.get_key_frames_during_time(when.clone());
                     (reader, keyframes)

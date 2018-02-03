@@ -10,6 +10,7 @@ pub const TIMESCALE_MAINTICK:   Color = Color::Rgba(0.75, 0.8, 0.8, 1.0);
 pub const TIMESCALE_LAYERS:     Color = Color::Rgba(0.42, 0.45, 0.45, 1.0);
 pub const TIMESCALE_CELL:       Color = Color::Rgba(0.36, 0.4, 0.4, 1.0);
 pub const TIMESCALE_BACKGROUND: Color = Color::Rgba(0.3, 0.3, 0.3, 1.0);
+pub const TIMESCALE_KEYFRAME:   Color = Color::Rgba(0.2, 0.6, 0.7, 1.0);
 pub const MENU_BACKGROUND:      Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 pub const TOOLS_BACKGROUND:     Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 pub const MENU_BACKGROUND_ALT:  Color = Color::Rgba(0.24, 0.26, 0.30, 1.0);
