@@ -28,7 +28,7 @@ const TICK_MAIN_HEIGHT: f32 = 10.0;
 const TICK_HEIGHT: f32      = 5.0;
 
 /// Height of a layer in pixels
-const LAYER_HEIGHT: f32     = 18.0;
+const LAYER_HEIGHT: f32     = 24.0;
 
 ///
 /// The timeline allows the user to pick a point in time and create layers in the animation
@@ -172,7 +172,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 gc.fill();
 
                 // Draw the layer dividers
-                gc.line_width(1.0);
+                gc.line_width(0.5);
                 gc.stroke_color(TIMESCALE_LAYERS);
 
                 let end_x = (end_tick as f32) * TICK_LENGTH;
