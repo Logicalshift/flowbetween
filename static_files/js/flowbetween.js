@@ -684,7 +684,6 @@ function flowbetween(root_node) {
         case 'After':   return last_pos_abs;
 
         case 'AtProperty': {
-            let property    = next_pos_desc[pos_type][0];
             let offset      = next_pos_desc[pos_type][1];
 
             return offset;
