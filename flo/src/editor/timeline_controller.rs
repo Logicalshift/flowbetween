@@ -35,7 +35,10 @@ const LAYER_HEIGHT: f32     = 24.0;
 ///
 pub struct TimelineController<Anim: Animation> {
     /// The view model for this controller
-    _view_model:        AnimationViewModel<Anim>,
+    _anim_view_model:   AnimationViewModel<Anim>,
+
+    /// The UI view model
+    view_model:         Arc<DynamicViewModel>,
 
     /// The canvases for the timeline
     canvases:           Arc<ResourceManager<BindingCanvas>>,
@@ -67,6 +70,11 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         let create_keyframe_canvas  = Self::create_draw_keyframes_fn(anim_view_model.timeline());
         let virtual_keyframes       = VirtualCanvas::new(Arc::clone(&canvases), move |x, y| (create_keyframe_canvas)(x, y));
 
+        // Viewmodel specifies a few dynamic things
+        let view_model = DynamicViewModel::new();
+
+        view_model.set_property("IndicatorXPos", PropertyValue::Float((TICK_LENGTH*4.0) as f64));
+
         // UI
         let duration        = BindRef::new(&anim_view_model.timeline().duration);
         let frame_duration  = BindRef::new(&anim_view_model.timeline().frame_duration);
@@ -79,11 +87,12 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
         // Piece it together
         TimelineController {
-            _view_model:        anim_view_model,
+            _anim_view_model:   anim_view_model,
             ui:                 ui,
             virtual_scale:      virtual_scale,
             virtual_keyframes:  virtual_keyframes,
-            canvases:           canvases
+            canvases:           canvases,
+            view_model:         Arc::new(view_model)
         }
     }
 
@@ -118,6 +127,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             y1: Position::At(0.0),
                             y2: Position::At(SCALE_HEIGHT)
                         })
+                        .with(ControlAttribute::ZIndex(2))
                         .with(vec![
                             virtual_scale_control.get()
                         ]),
@@ -130,7 +140,16 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         })
                         .with(vec![
                             virtual_keyframes_control.get()
-                        ])
+                        ]),
+                    Control::empty()
+                        .with(Bounds {
+                            x1: Position::AtProperty(Property::Bind("IndicatorXPos".to_string())),
+                            x2: Position::Offset(32.0),
+                            y1: Position::Start,
+                            y2: Position::End
+                        })
+                        .with(Appearance::Background(Color::Rgba(0.6, 0.4, 0.4, 0.5)))
+                        .with(ControlAttribute::ZIndex(4))
                 ])
                 .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, VIRTUAL_HEIGHT), "Scroll"))
         }))
@@ -308,5 +327,9 @@ impl<Anim: Animation> Controller for TimelineController<Anim> {
 
             _ => ()
         }
+    }
+
+    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        Some(self.view_model.clone())
     }
 }
