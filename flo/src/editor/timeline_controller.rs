@@ -166,7 +166,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 gc.center_region(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
 
                 // Fill the background
-                gc.fill_color(TIMESCALE_BACKGROUND);
+                gc.fill_color(TIMELINE_BACKGROUND);
                 gc.new_path();
                 gc.rect(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
                 gc.fill();
@@ -213,6 +213,12 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
             gc.canvas_height(SCALE_HEIGHT);
             gc.center_region(x, 0.0, x+VIRTUAL_WIDTH, SCALE_HEIGHT);
             gc.line_width(1.0);
+
+            // Fill the background
+            gc.fill_color(TIMESCALE_BACKGROUND);
+            gc.new_path();
+            gc.rect(x, 0.0, x+VIRTUAL_WIDTH, SCALE_HEIGHT);
+            gc.fill();
 
             // Draw the ticks
             let start_tick  = (x / TICK_LENGTH).floor() as i32;
