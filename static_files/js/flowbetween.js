@@ -683,6 +683,13 @@ function flowbetween(root_node) {
         case 'End':     return max_extent;
         case 'After':   return last_pos_abs;
 
+        case 'AtProperty': {
+            let property    = next_pos_desc[pos_type][0];
+            let offset      = next_pos_desc[pos_type][1];
+
+            return offset;
+        }
+
         case 'Stretch': {
             let stretch = next_pos_desc[pos_type];
             if (total_stretch > 0) {
