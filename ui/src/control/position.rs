@@ -1,10 +1,15 @@
+use super::super::property::*;
+
 ///
 /// Represents a position coordinate
 ///
-#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Position {
     /// Point located at a specific value
     At(f32),
+
+    /// Point located at a value specified by a property
+    AtProperty(Property),
 
     /// Point at an offset from its counterpart (eg, width or height)
     Offset(f32),

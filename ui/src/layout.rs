@@ -1,4 +1,5 @@
 use super::control::*;
+use super::property::*;
 
 ///
 /// Converts Positions to actual coordinates
@@ -11,7 +12,7 @@ pub struct PositionLayout {
     start: f32,
 
     /// The length of the axis that this layout is along
-    length: f32
+    length: f32,
 }
 
 impl PositionLayout {
@@ -34,7 +35,10 @@ impl PositionLayout {
             &Stretch(_ratio)    => self.last_pos,
             &Start              => self.start,
             &End                => self.start + self.length,
-            &After              => self.last_pos
+            &After              => self.last_pos,
+
+            &AtProperty(Property::Float(pos))   => pos as f32,
+            &AtProperty(_)                      => 0.0
         };
 
         self.last_pos = next_pos;
