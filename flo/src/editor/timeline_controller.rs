@@ -171,11 +171,6 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 gc.rect(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
                 gc.fill();
 
-                gc.stroke_color(TIMESCALE_MAINTICK);
-                gc.new_path();
-                gc.rect(x+0.5, y+0.5, x+VIRTUAL_WIDTH-0.5, y+VIRTUAL_HEIGHT-0.5);
-                gc.stroke();
-
                 // Draw the layer dividers
                 gc.line_width(1.0);
                 gc.stroke_color(TIMESCALE_LAYERS);
