@@ -13,6 +13,21 @@ pub enum ScrollBarVisibility {
 }
 
 ///
+/// Specifies a fixed axis
+///
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+pub enum FixedAxis {
+    /// Fixed in position along the horizontal axis
+    Horizontal,
+
+    /// Fixed in position along the vertical axis
+    Vertical,
+
+    /// Fixed in position along both axes
+    Both
+}
+
+///
 /// Attributes representing the way a control scrolls its content
 /// 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -30,7 +45,12 @@ pub enum Scroll {
     HorizontalScrollBar(ScrollBarVisibility),
 
     /// Specifies the visibility of the vertical scroll bar
-    VerticalScrollBar(ScrollBarVisibility)
+    VerticalScrollBar(ScrollBarVisibility),
+
+    /// Fixes the position of this element relative to its containing scroll region
+    ///
+    /// It will be laid out as normal but will not move when the region is scrolled
+    Fix(FixedAxis)
 }
 
 impl Modifier<Control> for Scroll {
