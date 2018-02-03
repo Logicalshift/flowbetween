@@ -276,18 +276,24 @@ let flo_canvas = (function() {
             let pixel_width     = canvas.width;
             let pixel_height    = canvas.height;
 
-            let ratio           = pixel_height/height;
+            let ratio_x         = pixel_height/height;
+            let ratio_y         = -ratio_x;
+
+            if (height < 0) {
+                // Using a negative heights flips coordinates vertically but not horizontally
+                ratio_x = -ratio_x;
+            }
 
             context.setTransform(
-                ratio,              0, 
-                0,                  -ratio, 
+                ratio_x,            0, 
+                0,                  ratio_y, 
                 pixel_width/2.0,    pixel_height/2.0
             );
 
             transform_set([ 
-                ratio,  0,      pixel_width/2.0,
-                0,      -ratio, pixel_height/2.0, 
-                0,      0,      1
+                ratio_x,    0,          pixel_width/2.0,
+                0,          ratio_y,    pixel_height/2.0, 
+                0,          0,          1
             ]);
         }
 
