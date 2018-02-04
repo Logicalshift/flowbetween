@@ -9,6 +9,12 @@ use animation::*;
 use std::sync::*;
 use std::time::Duration;
 
+/// Action when the user drags the timeline 'time' indicator
+const DRAG_TIMELINE_POSITION: &str = "DRAGTIME";
+
+/// Action when the virtual scroll position changes
+const SCROLL_TIMELINE: &str     = "Scroll";
+
 /// Width of an item in a virtualised canvas
 const VIRTUAL_WIDTH: f32        = 400.0;
 
@@ -155,6 +161,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         })
                         .with(Appearance::Background(Color::Rgba(0.6, 0.4, 0.4, 0.5)))
                         .with(Scroll::Fix(FixedAxis::Vertical))
+                        .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
                         .with(ControlAttribute::ZIndex(4)),
                     Control::empty()            // Selected frame indicator (lower part, under the timeline)
                         .with(Bounds {
@@ -166,7 +173,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         .with(Appearance::Background(Color::Rgba(0.4, 0.4, 0.6, 0.5)))
                         .with(ControlAttribute::ZIndex(1))
                 ])
-                .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, VIRTUAL_HEIGHT), "Scroll"))
+                .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, VIRTUAL_HEIGHT), SCROLL_TIMELINE))
         }))
     }
 
@@ -326,12 +333,16 @@ impl<Anim: Animation> Controller for TimelineController<Anim> {
         use ui::ActionParameter::*;
 
         match (action_id, action_parameter) {
-            ("Scroll", &VirtualScroll((x, y), (width, height))) => {
+            (SCROLL_TIMELINE, &VirtualScroll((x, y), (width, height))) => {
                 // The virtual scale is always drawn at the top, so we hard-code the top and height values
                 // Expanding the grid width by 2 allows for a 'buffer' on either side to prevent pop-in
                 let virtual_x = if x > 0 { x-1 } else { x };
                 self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (virtual_x, 0), (width+2, 1));
                 self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, VIRTUAL_HEIGHT), (virtual_x, y), (width+2, height));
+            },
+
+            (DRAG_TIMELINE_POSITION, &Drag(drag_type, pos)) => {
+                println!("Drag: {:?} {:?}", drag_type, pos);
             },
 
             _ => ()
