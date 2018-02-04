@@ -128,6 +128,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             y2: Position::At(SCALE_HEIGHT)
                         })
                         .with(ControlAttribute::ZIndex(3))
+                        .with(Scroll::Fix(FixedAxis::Vertical))
                         .with(vec![
                             virtual_scale_control.get()
                         ]),
@@ -150,6 +151,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             y2: Position::At(SCALE_HEIGHT)
                         })
                         .with(Appearance::Background(Color::Rgba(0.6, 0.4, 0.4, 0.5)))
+                        .with(Scroll::Fix(FixedAxis::Vertical))
                         .with(ControlAttribute::ZIndex(4)),
                     Control::empty()            // Selected frame indicator (lower part, under the timeline)
                         .with(Bounds {
