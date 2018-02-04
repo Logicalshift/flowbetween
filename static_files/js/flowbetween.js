@@ -821,6 +821,10 @@ function flowbetween(root_node) {
         }
 
         // Elements with an 'AtPosition' value are 'floating': we update their position based on the value of the property
+        // The need to do binding here complicates things quite a lot: the usual thing 
+        // that happens here is that we just set the left, top, width or height properties
+        // to the value stored in the attribute. When it's bound we update it whenever
+        // it changes (without triggering a new layout)
         let make_floating = (initial_value, property, set_value) => {
             return on_property_change(controller_path, property, (value) => set_value((value['Float'] || 0) + initial_value));
         };
@@ -847,11 +851,30 @@ function flowbetween(root_node) {
             let element         = subnodes[node_index];
             let pos             = positions[node_index];
 
-            // If any of the positions are floating, bind to them
-            bind_property_position(node_index, pos.x1+padding.left, (bounds) => bounds.x1, (pos) => { element.style.left    = pos + 'px'; });
-            bind_property_position(node_index, pos.x2-pos.x1,       (bounds) => bounds.x2, (pos) => { element.style.width   = pos + 'px'; });
-            bind_property_position(node_index, pos.y1+padding.top,  (bounds) => bounds.y1, (pos) => { element.style.top     = pos + 'px'; });
-            bind_property_position(node_index, pos.y2-pos.y1,       (bounds) => bounds.y2, (pos) => { element.style.height  = pos + 'px'; });
+            // Set the positions, performing viewmodel binding if necessary
+            let x1 = pos.x1+padding.left;
+            let y1 = pos.y1+padding.top;
+            let x2 = pos.x2;
+            let y2 = pos.y2;
+
+            bind_property_position(node_index, x1,  (bounds) => bounds.x1, (pos) => { 
+                x1 = pos; 
+                element.style.left      = pos + 'px';
+                element.style.width     = (x2-x1) + 'px';
+            });
+            bind_property_position(node_index, x2,  (bounds) => bounds.x2, (pos) => { 
+                x2 = pos; 
+                element.style.width     = (pos-x1) + 'px';
+            });
+            bind_property_position(node_index, y1,  (bounds) => bounds.y1, (pos) => {
+                y1 = pos; 
+                element.style.top       = pos + 'px'; 
+                element.style.height    = (y2-y1) + 'px';
+            });
+            bind_property_position(node_index, y2,  (bounds) => bounds.y2, (pos) => { 
+                y2 = pos;
+                element.style.height    = (pos-y1) + 'px'; 
+            });
 
             // If the node has an on resize property, then call that after laying it out
             let on_resize = element.flo_resize;
