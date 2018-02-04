@@ -342,6 +342,7 @@ impl<Anim: Animation> Controller for TimelineController<Anim> {
             },
 
             (DRAG_TIMELINE_POSITION, &Drag(drag_type, pos)) => {
+                self.view_model.set_property("IndicatorXPos", PropertyValue::Float(pos.0 as f64));
                 println!("Drag: {:?} {:?}", drag_type, pos);
             },
 
