@@ -832,7 +832,7 @@ function flowbetween(root_node) {
         // to the value stored in the attribute. When it's bound we update it whenever
         // it changes (without triggering a new layout)
         let make_floating = (initial_value, property, set_value) => {
-            return on_property_change(controller_path, property, (value) => set_value((value['Float'] || 0) + initial_value));
+            return on_property_change(controller_path, property, (value) => { set_value((value['Float'] || 0) + initial_value); return true; });
         };
         let remove_actions = [];
 
