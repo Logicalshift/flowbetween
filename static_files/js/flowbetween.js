@@ -8,7 +8,7 @@
 
 /* exported flowbetween */
 /* exported replace_object_with_content */
-/* global flo_canvas, flo_paint */
+/* global flo_canvas, flo_paint, flo_control */
 
 function flowbetween(root_node) {
     /// The ID of the running session
@@ -990,6 +990,46 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Wires up a drag action to a node
+    ///
+    let wire_drag = (action_name, node, controller_path) => {
+        // Last known drag coordinates
+        let start_x = 0;
+        let start_y = 0;
+        let last_x  = 0;
+        let last_y  = 0;
+
+        // Drag operation is starting
+        let start_drag = (x, y) => {
+            start_x = last_x = x;
+            start_y = last_y = y;
+
+            perform_action(controller_path, action_name, { 'Drag': [ 'Start', [x, y]] });
+        };
+
+        // Drag operation continues
+        let continue_drag = (x, y) => {
+            last_x = x;
+            last_y = y;
+
+            perform_action(controller_path, action_name, { 'Drag': [ 'Drag', [x, y]] });
+        };
+
+        // Drag operation finishes
+        let finish_drag = () => {
+            perform_action(controller_path, action_name, { 'Drag': [ 'Finish', [last_x, last_y]] });
+        };
+
+        // Drag operation got cancelled
+        let cancel_drag = () => {
+            perform_action(controller_path, action_name, { 'Drag': [ 'Cancel', [start_x, start_y]] });
+        };
+
+        // Wire up the event
+        flo_control.on_drag(node, add_action_event, start_drag, continue_drag, finish_drag, cancel_drag);
+    };
+
+    ///
     /// Rewires any intrinsic events that might have been removed by a
     /// call to remove_action_events_from_node
     ///
@@ -1022,7 +1062,10 @@ function flowbetween(root_node) {
 
         } else if (action_type['Paint']) {
             flo_paint.wire_paint(action_type['Paint'], action_name, node, controller_path);
-        
+
+        } else if (action_type === 'Drag') {
+            wire_drag(action_name, node, controller_path);
+
         } else if (action_type === 'EditValue') {
             node.flo_edit_value = new_property_value => perform_action(controller_path, action_name, { 'Value': new_property_value });
 
