@@ -120,18 +120,18 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
                 .with(Appearance::Background(TIMELINE_BACKGROUND))
                 .with(vec![
-                    Control::container()
+                    Control::container()        // Scale
                         .with(Bounds {
                             x1: Position::At(0.0),
                             x2: Position::End,
                             y1: Position::At(0.0),
                             y2: Position::At(SCALE_HEIGHT)
                         })
-                        .with(ControlAttribute::ZIndex(2))
+                        .with(ControlAttribute::ZIndex(3))
                         .with(vec![
                             virtual_scale_control.get()
                         ]),
-                    Control::container()
+                    Control::container()        // Timeline
                         .with(Bounds {
                             x1: Position::At(0.0),
                             x2: Position::End,
@@ -140,16 +140,26 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         })
                         .with(vec![
                             virtual_keyframes_control.get()
-                        ]),
-                    Control::empty()
+                        ])
+                        .with(ControlAttribute::ZIndex(2)),
+                    Control::empty()            // Selected frame indicator (upper part, arrow indicator)
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
                             y1: Position::Start,
-                            y2: Position::End
+                            y2: Position::At(SCALE_HEIGHT)
                         })
                         .with(Appearance::Background(Color::Rgba(0.6, 0.4, 0.4, 0.5)))
-                        .with(ControlAttribute::ZIndex(4))
+                        .with(ControlAttribute::ZIndex(4)),
+                    Control::empty()            // Selected frame indicator (lower part, under the timeline)
+                        .with(Bounds {
+                            x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
+                            x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
+                            y1: Position::At(SCALE_HEIGHT),
+                            y2: Position::End
+                        })
+                        .with(Appearance::Background(Color::Rgba(0.4, 0.4, 0.6, 0.5)))
+                        .with(ControlAttribute::ZIndex(1))
                 ])
                 .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, VIRTUAL_HEIGHT), "Scroll"))
         }))
@@ -183,12 +193,6 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 // Center the drawing region
                 gc.canvas_height(-VIRTUAL_HEIGHT);
                 gc.center_region(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
-
-                // Fill the background
-                gc.fill_color(TIMELINE_BACKGROUND);
-                gc.new_path();
-                gc.rect(x, y, x+VIRTUAL_WIDTH, y+VIRTUAL_HEIGHT);
-                gc.fill();
 
                 gc.line_width(0.5);
 
