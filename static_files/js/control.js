@@ -122,6 +122,11 @@ let flo_control = (function () {
         continue_drag       = continue_drag || (() => {});
         finish_drag         = finish_drag || (() => {});
         cancel_drag         = cancel_drag || finish_drag;
+        
+        let start_client_x  = 0;
+        let start_client_y  = 0;
+        let start_drag_x    = 0;
+        let start_drag_y    = 0;
 
         // Handles the mouse down event (this starts dragging immediately)
         // Starting dragging immediately prevents other kinds of actions
@@ -142,6 +147,9 @@ let flo_control = (function () {
             let x = event.clientX;
             let y = event.clientY;
 
+            start_client_x = x;
+            start_client_y = y;
+
             // This slightly odd way of calculating node position partially deals 
             // with the fact that event.clientX does not take account of the 
             // transform but getBoundingClientRect does and we want the value
@@ -152,6 +160,9 @@ let flo_control = (function () {
             y -= client_rect.top + node.offsetTop;
             x += node.scrollLeft;
             y += node.scrollTop;
+
+            start_drag_x = x;
+            start_drag_y = y;
     
             // Flag that the drag event is starting
             start_drag(x, y);
@@ -177,12 +188,18 @@ let flo_control = (function () {
             let x = event.touches[0].clientX;
             let y = event.touches[0].clientY;
 
+            start_client_x = x;
+            start_client_y = y;
+
             let client_rect = node.parentNode.getBoundingClientRect();
 
             x -= client_rect.left + node.offsetLeft;
             y -= client_rect.top + node.offsetTop;
             x += node.scrollLeft;
             y += node.scrollTop;
+
+            start_drag_x = x;
+            start_drag_y = y;
 
             start_drag(x, y);
         };
@@ -195,12 +212,8 @@ let flo_control = (function () {
             let x = event.clientX;
             let y = event.clientY;
 
-            let client_rect = node.parentNode.getBoundingClientRect();
-
-            x -= client_rect.left + node.offsetLeft;
-            y -= client_rect.top + node.offsetTop;
-            x += node.scrollLeft;
-            y += node.scrollTop;
+            x += (start_drag_x - start_client_x);
+            y += (start_drag_y - start_client_y);
 
             // Continue the drag operation
             continue_drag(x, y);
@@ -226,12 +239,8 @@ let flo_control = (function () {
             let x = event.touches[0].clientX;
             let y = event.touches[0].clientY;
 
-            let client_rect = node.parentNode.getBoundingClientRect();
-
-            x -= client_rect.left + node.offsetLeft;
-            y -= client_rect.top + node.offsetTop;
-            x += node.scrollLeft;
-            y += node.scrollTop;
+            x += (start_drag_x - start_client_x);
+            y += (start_drag_y - start_client_y);
 
             // Continue the drag operation
             continue_drag(x, y);
