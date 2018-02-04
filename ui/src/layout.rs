@@ -37,8 +37,8 @@ impl PositionLayout {
             &End                => self.start + self.length,
             &After              => self.last_pos,
 
-            &AtProperty(Property::Float(pos), offset)   => (pos as f32) + offset,
-            &AtProperty(_, _)                           => 0.0
+            &Floating(Property::Float(pos), offset) => (pos as f32) + offset,
+            &Floating(_, _)                         => 0.0
         };
 
         self.last_pos = next_pos;

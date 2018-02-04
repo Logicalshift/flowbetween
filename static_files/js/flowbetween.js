@@ -683,7 +683,7 @@ function flowbetween(root_node) {
         case 'End':     return max_extent;
         case 'After':   return last_pos_abs;
 
-        case 'AtProperty': {
+        case 'Floating': {
             let offset      = next_pos_desc[pos_type][1];
 
             return offset;
@@ -837,9 +837,9 @@ function flowbetween(root_node) {
             let bounding_box    = get_attributes(component).bounding_box() || default_bounding_box;
             let position        = get_position(bounding_box);
 
-            if (position && position['AtProperty']) {
+            if (position && position['Floating']) {
                 // This is a floating node: bind to its property value
-                remove_actions.push(make_floating(initial_value, position['AtProperty'][0], set_position));
+                remove_actions.push(make_floating(initial_value, position['Floating'][0], set_position));
             } else {
                 // Just a standard node: set to the initial position and leave it
                 set_position(initial_value);

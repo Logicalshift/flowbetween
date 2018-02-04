@@ -9,7 +9,11 @@ pub enum Position {
     At(f32),
 
     /// Point located at a value specified by a property, with an offset
-    AtProperty(Property, f32),
+    /// When this item is moved, only its bounding box is changed: no further
+    /// layout is performed. Other items are laid out as if this had the offset
+    /// value (this is what makes this a 'floating' item: it can float away
+    /// from its initial position without affecting other items)
+    Floating(Property, f32),
 
     /// Point at an offset from its counterpart (eg, width or height)
     Offset(f32),
