@@ -708,7 +708,7 @@ function flowbetween(root_node) {
     ///
     /// Lays out the subcomponents associated with a particular node
     ///
-    let layout_subcomponents = (parent_node, attributes) => {
+    let layout_subcomponents = (parent_node, attributes, controller_path) => {
         let subcomponents   = attributes.subcomponents();
         let subnodes        = get_flo_subnodes(parent_node);
         let positions       = [];
@@ -820,15 +820,38 @@ function flowbetween(root_node) {
             }
         }
 
+        // Elements with an 'AtPosition' value are 'floating': we update their position based on the value of the property
+        let make_floating = (initial_value, property, set_value) => {
+            return on_property_change(controller_path, property, (value) => set_value((value['Float'] || 0) + initial_value));
+        };
+        let remove_actions = [];
+
+        // Either sets the position directly, or generates an action to track the specified property
+        let bind_property_position = (node_index, initial_value, get_position, set_position) => {
+            // Fetch the position for this node
+            let component       = subcomponents[node_index];
+            let bounding_box    = get_attributes(component).bounding_box() || default_bounding_box;
+            let position        = get_position(bounding_box);
+
+            if (position && position['AtProperty']) {
+                // This is a floating node: bind to its property value
+                remove_actions.push(make_floating(initial_value, position['AtProperty'][0], set_position));
+            } else {
+                // Just a standard node: set to the initial position and leave it
+                set_position(initial_value);
+            }
+        };
+
         // Final pass: finish the layout
         for (let node_index=0; node_index<subcomponents.length; ++node_index) {
-            let element = subnodes[node_index];
-            let pos     = positions[node_index];
+            let element         = subnodes[node_index];
+            let pos             = positions[node_index];
 
-            element.style.left      = (pos.x1+padding.left) + 'px';
-            element.style.width     = (pos.x2-pos.x1) + 'px';
-            element.style.top       = (pos.y1+padding.top) + 'px';
-            element.style.height    = (pos.y2-pos.y1) + 'px';
+            // If any of the positions are floating, bind to them
+            bind_property_position(node_index, pos.x1+padding.left, (bounds) => bounds.x1, (pos) => { element.style.left    = pos + 'px'; });
+            bind_property_position(node_index, pos.x2-pos.x1,       (bounds) => bounds.x2, (pos) => { element.style.width   = pos + 'px'; });
+            bind_property_position(node_index, pos.y1+padding.top,  (bounds) => bounds.y1, (pos) => { element.style.top     = pos + 'px'; });
+            bind_property_position(node_index, pos.y2-pos.y1,       (bounds) => bounds.y2, (pos) => { element.style.height  = pos + 'px'; });
 
             // If the node has an on resize property, then call that after laying it out
             let on_resize = element.flo_resize;
@@ -1478,7 +1501,7 @@ function flowbetween(root_node) {
     /// Given a node and its control data, updates the layout
     ///
     let layout_tree = (dom_node, control_data) => {
-        visit_dom(dom_node, control_data, (node, attributes) => layout_subcomponents(node, attributes));
+        visit_dom(dom_node, control_data, (node, attributes, controller_path) => layout_subcomponents(node, attributes, controller_path));
     };
 
     ///
