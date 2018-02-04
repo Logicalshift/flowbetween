@@ -719,6 +719,12 @@ function flowbetween(root_node) {
             return;
         }
 
+        // Stop any layout that's happening for this node already
+        if (parent_node.flo_remove_layout_bindings) {
+            parent_node.flo_remove_layout_bindings();
+            parent_node.flo_remove_layout_bindings = null;
+        }
+
         // Scrolling containers might specify their own minimum size
         if (parent_node.tagName.toLowerCase() === 'flo-scrolling') {
             let scrolls = attributes.scrolls();
@@ -881,6 +887,14 @@ function flowbetween(root_node) {
             if (on_resize && (element.flo_prev_width !== element.clientWidth || element.flo_prev_height !== element.clientHeight)) {
                 on_resize(element.clientWidth, element.clientHeight, element);
             }
+        }
+
+        // Make note of the remove actions if there were any
+        if (remove_actions.length > 0) {
+            parent_node.flo_remove_layout_bindings = () => {
+                remove_actions.forEach(remove_item => remove_item());
+                remove_actions = [];
+            };
         }
     };
 
