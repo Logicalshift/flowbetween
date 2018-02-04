@@ -720,9 +720,9 @@ function flowbetween(root_node) {
         }
 
         // Stop any layout that's happening for this node already
-        if (parent_node.flo_remove_layout_bindings) {
-            parent_node.flo_remove_layout_bindings();
-            parent_node.flo_remove_layout_bindings = null;
+        if (parent_node.flo_unbind_layout) {
+            parent_node.flo_unbind_layout();
+            parent_node.flo_unbind_layout = null;
         }
 
         // Scrolling containers might specify their own minimum size
@@ -891,7 +891,7 @@ function flowbetween(root_node) {
 
         // Make note of the remove actions if there were any
         if (remove_actions.length > 0) {
-            parent_node.flo_remove_layout_bindings = () => {
+            parent_node.flo_unbind_layout = () => {
                 remove_actions.forEach(remove_item => remove_item());
                 remove_actions = [];
             };
@@ -1261,7 +1261,7 @@ function flowbetween(root_node) {
                 remove_action_events_from_node(node);
             }
 
-            let unbind_layout = node.flo_remove_layout_bindings;
+            let unbind_layout = node.flo_unbind_layout;
             if (unbind_layout) {
                 unbind_layout();
             }
