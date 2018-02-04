@@ -32,6 +32,17 @@ pub enum ActionTrigger {
 }
 
 ///
+/// Indicates what type of drag action is occurring
+/// 
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
+pub enum DragAction {
+    Start,
+    Drag,
+    Finish,
+    Cancel
+}
+
+///
 /// Data that can be sent alongside an action
 ///
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
@@ -41,6 +52,9 @@ pub enum ActionParameter {
 
     /// Painting information
     Paint(PaintDevice, Vec<Painting>),
+
+    /// Item drag action. Coordinates are relative to a fixed point during a drag action
+    Drag(DragAction, (f32, f32)),
 
     /// The new value for an item
     Value(PropertyValue),
