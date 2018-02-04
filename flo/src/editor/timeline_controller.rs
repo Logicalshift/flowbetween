@@ -44,13 +44,16 @@ const LAYER_PANEL_WIDTH: f32    = 256.0;
 ///
 pub struct TimelineController<Anim: Animation> {
     /// The view model for this controller
-    _anim_view_model:   AnimationViewModel<Anim>,
+    anim_view_model:   AnimationViewModel<Anim>,
 
     /// The UI view model
     view_model:         Arc<DynamicViewModel>,
 
     /// The canvases for the timeline
     canvases:           Arc<ResourceManager<BindingCanvas>>,
+
+    /// The current_time at the most recent drag start position
+    drag_start_time:    Binding<Duration>,
 
     /// A virtual control that draws the timeline scale
     virtual_scale:      VirtualCanvas,
@@ -82,7 +85,21 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         // Viewmodel specifies a few dynamic things
         let view_model = DynamicViewModel::new();
 
-        view_model.set_property("IndicatorXPos", PropertyValue::Float((TICK_LENGTH*4.0) as f64));
+        // Indicator xpos is computed from the current frame
+        let current_time    = anim_view_model.timeline().current_time.clone();
+        let frame_duration  = anim_view_model.timeline().frame_duration.clone();
+        view_model.set_computed("IndicatorXPos", move || {
+            let current_time        = current_time.get();
+            let frame_duration      = frame_duration.get();
+
+            let current_time_ns     = current_time.as_secs() * 1_000_000_000 + (current_time.subsec_nanos() as u64);
+            let frame_duration_ns   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
+
+            let frame               = current_time_ns / frame_duration_ns;
+
+            let tick_length         = TICK_LENGTH as f64;
+            PropertyValue::Float((frame as f64) * tick_length + (tick_length/2.0))
+        });
 
         // UI
         let duration        = BindRef::new(&anim_view_model.timeline().duration);
@@ -96,10 +113,11 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
         // Piece it together
         TimelineController {
-            _anim_view_model:   anim_view_model,
+            anim_view_model:    anim_view_model,
             ui:                 ui,
             virtual_scale:      virtual_scale,
             virtual_keyframes:  virtual_keyframes,
+            drag_start_time:    bind(Duration::from_millis(0)),
             canvases:           canvases,
             view_model:         Arc::new(view_model)
         }
@@ -320,7 +338,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     }
 }
 
-impl<Anim: Animation> Controller for TimelineController<Anim> {
+impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
@@ -341,9 +359,32 @@ impl<Anim: Animation> Controller for TimelineController<Anim> {
                 self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, VIRTUAL_HEIGHT), (virtual_x, y), (width+2, height));
             },
 
-            (DRAG_TIMELINE_POSITION, &Drag(drag_type, pos)) => {
-                self.view_model.set_property("IndicatorXPos", PropertyValue::Float(pos.0 as f64));
-                println!("Drag: {:?} {:?}", drag_type, pos);
+            (DRAG_TIMELINE_POSITION, &Drag(DragAction::Start, _, _)) => {
+                // Remember the start time when a drag begins
+                self.drag_start_time.clone().set(self.anim_view_model.timeline().current_time.get());
+            },
+
+            (DRAG_TIMELINE_POSITION, &Drag(_drag_type, (start_x, _start_y), (x, _y))) => {
+                // Get the frame duration and start time in nanoseconds
+                let timeline            = self.anim_view_model.timeline();
+                let start_time          = self.drag_start_time.get();
+                let frame_duration      = timeline.frame_duration.get();
+
+                let start_time_ns       = start_time.as_secs() * 1_000_000_000 + (start_time.subsec_nanos() as u64);
+                let frame_duration_ns   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
+
+                // Work out the number of frames from the start we are
+                let diff_x              = x - start_x;
+                let diff_frames         = (diff_x / TICK_LENGTH).round() as i64;
+                let diff_time_ns        = diff_frames * (frame_duration_ns as i64);
+
+                // New time from nanoseconds
+                let new_time            = (start_time_ns as i64) + diff_time_ns;
+                let new_time            = if new_time < 0 { 0 } else { new_time as u64 };
+                let new_time            = Duration::new(new_time / 1_000_000_000, (new_time % 1_000_000_000) as u32);
+
+                // Update the viewmodel time
+                timeline.current_time.clone().set(new_time);
             },
 
             _ => ()

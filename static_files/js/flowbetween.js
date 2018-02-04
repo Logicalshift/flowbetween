@@ -1004,7 +1004,7 @@ function flowbetween(root_node) {
             start_x = last_x = x;
             start_y = last_y = y;
 
-            perform_action(controller_path, action_name, { 'Drag': [ 'Start', [x, y]] });
+            perform_action(controller_path, action_name, { 'Drag': [ 'Start', [start_x, start_y], [x, y]] });
         };
 
         // Drag operation continues
@@ -1012,17 +1012,17 @@ function flowbetween(root_node) {
             last_x = x;
             last_y = y;
 
-            perform_action(controller_path, action_name, { 'Drag': [ 'Drag', [x, y]] });
+            perform_action(controller_path, action_name, { 'Drag': [ 'Drag', [start_x, start_y], [x, y]] });
         };
 
         // Drag operation finishes
         let finish_drag = () => {
-            perform_action(controller_path, action_name, { 'Drag': [ 'Finish', [last_x, last_y]] });
+            perform_action(controller_path, action_name, { 'Drag': [ 'Finish', [start_x, start_y], [last_x, last_y]] });
         };
 
         // Drag operation got cancelled
         let cancel_drag = () => {
-            perform_action(controller_path, action_name, { 'Drag': [ 'Cancel', [start_x, start_y]] });
+            perform_action(controller_path, action_name, { 'Drag': [ 'Cancel', [start_x, start_y], [start_x, start_y]] });
         };
 
         // Wire up the event

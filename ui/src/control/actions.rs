@@ -54,7 +54,7 @@ pub enum ActionParameter {
     Paint(PaintDevice, Vec<Painting>),
 
     /// Item drag action. Coordinates are relative to a fixed point during a drag action
-    Drag(DragAction, (f32, f32)),
+    Drag(DragAction, (f32, f32), (f32, f32)),
 
     /// The new value for an item
     Value(PropertyValue),
