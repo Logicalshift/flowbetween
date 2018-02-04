@@ -13,6 +13,10 @@ pub enum Position {
     /// layout is performed. Other items are laid out as if this had the offset
     /// value (this is what makes this a 'floating' item: it can float away
     /// from its initial position without affecting other items)
+    /// 
+    /// This is useful for items that move but don't otherwise change shape:
+    /// as no layout needs to be performed beyond moving the item these are always
+    /// fast to change.
     Floating(Property, f32),
 
     /// Point at an offset from its counterpart (eg, width or height)
