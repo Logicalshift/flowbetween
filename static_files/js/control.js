@@ -641,6 +641,7 @@ let flo_control = (function () {
         load_slider:    load_slider,
         load_rotor:     load_rotor,
         load_popup:     load_popup,
-        layout_popup:   layout_popup
+        layout_popup:   layout_popup,
+        on_drag:        on_drag
     };
 })();
