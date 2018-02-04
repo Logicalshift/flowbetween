@@ -1261,6 +1261,11 @@ function flowbetween(root_node) {
                 remove_action_events_from_node(node);
             }
 
+            let unbind_layout = node.flo_remove_layout_bindings;
+            if (unbind_layout) {
+                unbind_layout();
+            }
+
             if (node.tagName.toLowerCase() === 'flo-canvas') {
                 flo_canvas.stop(node); 
             }        
