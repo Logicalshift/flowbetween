@@ -109,7 +109,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         let virtual_scale_control       = virtual_scale.control();
         let virtual_keyframes_control   = virtual_keyframes.control();
 
-        let ui = Self::ui(layers, duration, frame_duration, virtual_scale_control, virtual_keyframes_control);
+        let ui = Self::ui(layers, duration, frame_duration, virtual_scale_control, virtual_keyframes_control, Arc::clone(&canvases));
 
         // Piece it together
         TimelineController {
@@ -126,8 +126,17 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates the user interface for the timeline
     /// 
-    fn ui(layers: BindRef<Vec<LayerViewModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>) -> BindRef<Control> {
+    fn ui(layers: BindRef<Vec<LayerViewModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>, canvases: Arc<ResourceManager<BindingCanvas>>) -> BindRef<Control> {
+        let timescale_indicator         = BindingCanvas::with_drawing(Self::draw_frame_indicator);
+        let timescale_indicator         = canvases.register(timescale_indicator);
+
+        let timescale_indicator_line    = BindingCanvas::with_drawing(Self::draw_frame_indicator_line);
+        let timescale_indicator_line    = canvases.register(timescale_indicator_line);
+
         BindRef::new(&computed(move || {
+            let timescale_indicator         = timescale_indicator.clone();
+            let timescale_indicator_line    = timescale_indicator_line.clone();
+            
             // Work out the number of frames in this animation
             let duration            = duration.get();
             let frame_duration      = frame_duration.get();
@@ -170,25 +179,25 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             virtual_keyframes_control.get()
                         ])
                         .with(ControlAttribute::ZIndex(2)),
-                    Control::empty()            // Selected frame indicator (upper part, arrow indicator)
+                    Control::canvas()           // Selected frame indicator (upper part, arrow indicator)
+                        .with(timescale_indicator)
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
                             y1: Position::Start,
                             y2: Position::At(SCALE_HEIGHT)
                         })
-                        .with(Appearance::Background(Color::Rgba(0.6, 0.4, 0.4, 0.5)))
                         .with(Scroll::Fix(FixedAxis::Vertical))
                         .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
                         .with(ControlAttribute::ZIndex(4)),
-                    Control::empty()            // Selected frame indicator (lower part, under the timeline)
+                    Control::canvas()           // Selected frame indicator (lower part, under the timeline)
+                        .with(timescale_indicator_line)
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
                             y1: Position::At(SCALE_HEIGHT),
                             y2: Position::End
                         })
-                        .with(Appearance::Background(Color::Rgba(0.4, 0.4, 0.6, 0.5)))
                         .with(ControlAttribute::ZIndex(1))
                 ])
                 .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, VIRTUAL_HEIGHT), SCROLL_TIMELINE))
@@ -335,6 +344,40 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
             gc.line_to(x+VIRTUAL_WIDTH, 0.5);
             gc.stroke();
         })
+    }
+
+    ///
+    /// Draws the frame indicator
+    /// 
+    fn draw_frame_indicator(gc: &mut GraphicsPrimitives) -> () {
+        gc.canvas_height(2.05);
+
+        gc.fill_color(TIMESCALE_INDICATOR);
+
+        gc.new_path();
+        gc.circle(0.0, 0.2, 0.6);
+        gc.fill();
+
+        gc.new_path();
+        gc.move_to(-0.6, 0.2);
+        gc.line_to(0.0, -1.0);
+        gc.line_to(0.6, 0.2);
+        gc.close_path();
+        gc.fill();
+    }
+
+    ///
+    /// Draws the frame indicator line
+    /// 
+    fn draw_frame_indicator_line(gc: &mut GraphicsPrimitives) -> () {
+        gc.stroke_color(TIMESCALE_INDICATOR2);
+        gc.canvas_height(2.0);
+        gc.line_width_pixels(1.0);
+
+        gc.new_path();
+        gc.move_to(0.0, -1.0);
+        gc.line_to(0.0, 1.0);
+        gc.stroke();
     }
 }
 
