@@ -10,7 +10,10 @@ use std::sync::*;
 use std::time::Duration;
 
 /// Action when the user drags the timeline 'time' indicator
-const DRAG_TIMELINE_POSITION: &str = "DRAGTIME";
+const DRAG_TIMELINE_POSITION: &str = "DragTime";
+
+/// Action when the user clicks/drags on the scale away from the 'time' indicator
+const CLICK_AND_DRAG_TIMELINE_POSITION: &str = "ClickTime";
 
 /// Action when the virtual scroll position changes
 const SCROLL_TIMELINE: &str     = "Scroll";
@@ -163,6 +166,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             y1: Position::At(0.0),
                             y2: Position::At(SCALE_HEIGHT)
                         })
+                        .with((ActionTrigger::Drag, CLICK_AND_DRAG_TIMELINE_POSITION))
                         .with(ControlAttribute::ZIndex(3))
                         .with(Scroll::Fix(FixedAxis::Vertical))
                         .with(vec![
@@ -379,6 +383,46 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         gc.line_to(0.0, 1.0);
         gc.stroke();
     }
+
+    ///
+    /// Converts a duration to ns
+    /// 
+    fn duration_to_ns(time: Duration) -> i64 {
+        (time.as_secs() * 1_000_000_000) as i64 + (time.subsec_nanos() as i64)
+    }
+
+    ///
+    /// Converts a nanosecond time to a duration
+    /// 
+    /// Durations can't represent negative values, so negative times will be represented
+    /// as 0
+    /// 
+    fn ns_to_duration(ns: i64) -> Duration {
+        if ns < 0 {
+            Duration::new(0, 0)
+        } else {
+            Duration::new((ns / 1_000_000_000) as u64, (ns % 1_000_000_000) as u32)
+        }
+    }
+
+    ///
+    /// Converts an x position to a nanosecond value
+    /// 
+    /// (Nanoseconds rather than a duration so this works for negative times)
+    /// 
+    fn xpos_to_ns(&self, xpos: f32) -> i64 {
+        // Get the frame duration and start time in nanoseconds
+        let timeline            = self.anim_view_model.timeline();
+        let frame_duration      = timeline.frame_duration.get();
+
+        let frame_duration_ns   = Self::duration_to_ns(frame_duration);
+
+        // Work out the number of frames from the start we are
+        let frames              = (xpos / TICK_LENGTH).round() as i64;
+        let time_ns             = frames * (frame_duration_ns as i64);
+
+        time_ns
+    }
 }
 
 impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
@@ -402,29 +446,34 @@ impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
                 self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, VIRTUAL_HEIGHT), (virtual_x, y), (width+2, height));
             },
 
+            (CLICK_AND_DRAG_TIMELINE_POSITION, &Drag(DragAction::Start, (start_x, _start_y), _)) => {
+                // Clicking on the scale moves the time to where the user clicked initially
+                let time_ns = self.xpos_to_ns(start_x);
+                let time    = Self::ns_to_duration(time_ns);
+
+                self.anim_view_model.timeline().current_time.clone().set(time);
+                self.drag_start_time.clone().set(time);
+            },
+
             (DRAG_TIMELINE_POSITION, &Drag(DragAction::Start, _, _)) => {
                 // Remember the start time when a drag begins
                 self.drag_start_time.clone().set(self.anim_view_model.timeline().current_time.get());
             },
 
-            (DRAG_TIMELINE_POSITION, &Drag(_drag_type, (start_x, _start_y), (x, _y))) => {
+            (DRAG_TIMELINE_POSITION, &Drag(_drag_type, (start_x, _start_y), (x, _y)))
+            | (CLICK_AND_DRAG_TIMELINE_POSITION, &Drag(_drag_type, (start_x, _start_y), (x, _y))) => {
                 // Get the frame duration and start time in nanoseconds
                 let timeline            = self.anim_view_model.timeline();
                 let start_time          = self.drag_start_time.get();
-                let frame_duration      = timeline.frame_duration.get();
 
-                let start_time_ns       = start_time.as_secs() * 1_000_000_000 + (start_time.subsec_nanos() as u64);
-                let frame_duration_ns   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
+                let start_time_ns       = Self::duration_to_ns(start_time);
 
                 // Work out the number of frames from the start we are
                 let diff_x              = x - start_x;
-                let diff_frames         = (diff_x / TICK_LENGTH).round() as i64;
-                let diff_time_ns        = diff_frames * (frame_duration_ns as i64);
+                let diff_time_ns        = self.xpos_to_ns(diff_x);
 
                 // New time from nanoseconds
-                let new_time            = (start_time_ns as i64) + diff_time_ns;
-                let new_time            = if new_time < 0 { 0 } else { new_time as u64 };
-                let new_time            = Duration::new(new_time / 1_000_000_000, (new_time % 1_000_000_000) as u32);
+                let new_time            = Self::ns_to_duration(start_time_ns + diff_time_ns);
 
                 // Update the viewmodel time
                 timeline.current_time.clone().set(new_time);
