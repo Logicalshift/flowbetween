@@ -48,6 +48,12 @@ pub trait Controller : Send+Sync {
 
     /// Retrieves a resource manager containing the canvases used in the UI for this controller
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { None }
+
+    /// Called just before an update is processed
+    /// 
+    /// This is called for every controller every time after processing any actions
+    /// that might have occurred.
+    fn tick(&self) { }
 }
 
 ///

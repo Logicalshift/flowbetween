@@ -10,6 +10,7 @@ use super::canvas_body::*;
 use super::session_state::*;
 
 use ui::*;
+use binding::Bound;
 
 extern crate serde_json;
 
@@ -109,6 +110,24 @@ impl<TSession: Session+'static> UiHandler<TSession> {
     }
 
     ///
+    /// Sends the tick event to the specified controller
+    /// 
+    pub fn send_tick(controller: Arc<Controller>) {
+        // Send to the subcontrollers
+        let ui              = controller.ui().get();
+        let subcontrollers  = ui.all_controllers();
+
+        for subcontroller in subcontrollers {
+            if let Some(subcontroller) = controller.get_subcontroller(&subcontroller) {
+                Self::send_tick(subcontroller);
+            }
+        }
+
+        // Send to this controlle
+        controller.tick();
+    }
+
+    ///
     /// Dispatches an action to a controller
     ///
     pub fn dispatch_action(&self, session: Arc<TSession>, controller_path: &Vec<String>, action_name: &str, action_parameter: &ActionParameter) {
@@ -170,6 +189,9 @@ impl<TSession: Session+'static> UiHandler<TSession> {
                 Action(ref controller_path, ref action, ref action_parameter) => self.dispatch_action(session.clone(), controller_path, action, action_parameter)
             }
         }
+
+        // Dispatch a tick
+        Self::send_tick(session.clone());
 
         // If the UI has changed, then add a HTML update to the response
         // TODO: if we're handling requests in parallel we actually need to diff against the UI state in whatever the most recent known state sent was rather than the state at the start
