@@ -31,7 +31,10 @@ struct FrameLayer {
 /// 
 struct CanvasCore {
     /// The layers in the current frame
-    frame_layers: HashMap<u64, FrameLayer>
+    frame_layers: HashMap<u64, FrameLayer>,
+
+    /// The time of the current frame
+    current_time: Duration
 }
 
 ///
@@ -59,7 +62,8 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             tool_state:         Arc::new(Mutex::new(SendMap::custom())),
 
             core:               Desync::new(CanvasCore {
-                frame_layers: HashMap::new()
+                frame_layers: HashMap::new(),
+                current_time: Duration::new(0, 0)
             })
         };
 
@@ -158,6 +162,9 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
         // Update the layers in the core
         self.core.async(move |core| {
+            // Update the time set in the core
+            core.current_time = time;
+
             // Open the animation layers
             let layers      = animation.get_layer_ids();
 
@@ -244,6 +251,18 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::new(&self.ui)
+    }
+
+    fn tick(&self) {
+        // Check that the frame time hasn't changed
+        let displayed_time  = self.core.sync(|core| core.current_time);
+        let target_time     = self.anim_view_model.timeline().current_time.get();
+
+        if displayed_time != target_time {
+            // If the selected frame has changed, regenerate the canvas
+            self.update_layers_to_frame_at_time(target_time);
+            self.draw_frame_layers();
+        }
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
