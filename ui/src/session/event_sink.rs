@@ -83,7 +83,7 @@ impl<CoreController: Controller+'static> Sink for EventSink<CoreController> {
             // We're ready
             Ok(Async::Ready(()))
         } else {
-            // Generate a task and defer
+            // Generate a task and defer until the core is available again
             let task = task::current();
             self.core.async(move |_| {
                 // The event we were expecting will be retired at this point, so signal the task

@@ -6,5 +6,8 @@ use super::super::control::*;
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum UiEvent {
     /// Performs the specified action
-    Action(Vec<String>, String, ActionParameter)
+    Action(Vec<String>, String, ActionParameter),
+
+    /// Sends a tick to all the controllers
+    Tick
 }
