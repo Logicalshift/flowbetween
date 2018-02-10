@@ -251,6 +251,8 @@ impl Drop for CanvasState {
 #[cfg(test)]
 mod test {
     use super::*;
+    use super::super::super::binding_canvas::*;
+    use super::super::super::resource_manager::*;
 
     #[test]
     fn can_create_canvas_state()  {
