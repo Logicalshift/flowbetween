@@ -26,7 +26,7 @@ pub struct CanvasDiff {
     pub canvas_name: String,
 
     // The updates being made to the canvas
-    // pub updates: Vec<Draw>
+    pub updates: Vec<Draw>
 }
 
 ///
