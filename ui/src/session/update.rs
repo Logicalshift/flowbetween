@@ -1,4 +1,5 @@
 use super::super::control::*;
+use super::super::viewmodel_update::*;
 
 use canvas::*;
 
@@ -38,5 +39,8 @@ pub enum UiUpdate {
     UpdateUi(Vec<UiDiff>),
 
     /// Represents an update to a canvas in a controller
-    UpdateCanvas(Vec<CanvasDiff>)
+    UpdateCanvas(Vec<CanvasDiff>),
+
+    /// Represents an update to the viewmodel
+    UpdateViewModel(Vec<ViewModelUpdate>)
 }
