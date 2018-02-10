@@ -652,11 +652,49 @@ let flo_control = (function () {
         return target_area;
     };
 
+    ///
+    /// Recurses through a node and ensures that any item it contains that has a fixed scroll position stays where it is
+    /// We use the margin CSS property for this, which makes it unavailable for other uses
+    ///
+    let fix_scroll_positions = (node) => {
+        // Work out the offsets for this node
+        let offset_left = node.scrollLeft;
+        let offset_top  = node.scrollTop;
+
+        // Iterate through the subtree and look for items with the flo-scroll-fix attribute
+        let set_node_position = node => {
+            let scroll_fix = node.getAttribute('flo-scroll-fix') || '';
+
+            if (scroll_fix.indexOf('horiz') !== -1) {
+                node.style.marginLeft = offset_left + 'px';
+            }
+
+            if (scroll_fix.indexOf('vert') !== -1) {
+                node.style.marginTop = offset_top + 'px';
+            }
+        };
+
+        let fix_child_positions = node => {
+            [].slice.apply(node.children).forEach(child_node => {
+                if (!child_node.getAttribute('flo-scroll-fix')) {
+                    // Recurse into nodes that don't have the attribute set
+                    fix_child_positions(child_node);
+                } else {
+                    // Set the positions of those that do
+                    set_node_position(child_node);
+                }
+            });
+        };
+
+        fix_child_positions(node);
+    };
+
     return {
-        load_slider:    load_slider,
-        load_rotor:     load_rotor,
-        load_popup:     load_popup,
-        layout_popup:   layout_popup,
-        on_drag:        on_drag
+        load_slider:            load_slider,
+        load_rotor:             load_rotor,
+        load_popup:             load_popup,
+        layout_popup:           layout_popup,
+        on_drag:                on_drag,
+        fix_scroll_positions:   fix_scroll_positions
     };
 })();

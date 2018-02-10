@@ -32,7 +32,7 @@
 </template>
 
 <template>
-    <flo-scrolling>
+    <flo-scrolling onload="flowbetween.add_action_event(this, 'scroll', ev => flo_control.fix_scroll_positions(this, ev))">
         <deco-scroll-canvas />
     </flo-scrolling>
 </template>
