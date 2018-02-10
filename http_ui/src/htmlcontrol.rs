@@ -172,6 +172,10 @@ impl ToHtml for Scroll {
             &VerticalScrollBar(ScrollBarVisibility::Always)         => DomAttribute::new("style", "overflow-y: scroll;"),
             &VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded)   => DomAttribute::new("style", "overflow-y: auto;"),
 
+            &Fix(FixedAxis::Horizontal)                             => DomAttribute::new("flo-scroll-fix", "horiz"),
+            &Fix(FixedAxis::Vertical)                               => DomAttribute::new("flo-scroll-fix", "vert"),
+            &Fix(FixedAxis::Both)                                   => DomAttribute::new("flo-scroll-fix", "horiz vert"),
+
             _ => DomEmpty::new()
         }
     }
