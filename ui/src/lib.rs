@@ -28,6 +28,7 @@ mod binding_canvas;
 pub mod control;
 pub mod image;
 pub mod controllers;
+pub mod session;
 
 pub use user_interface::*;
 pub use self::json::*;
