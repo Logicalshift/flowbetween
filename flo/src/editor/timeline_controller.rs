@@ -154,7 +154,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
             // Build the final control
             Control::scrolling_container()
                 .with(Bounds::fill_all())
-                .with(Scroll::MinimumContentSize(width, height + SCALE_HEIGHT))
+                .with(Scroll::MinimumContentSize(width, height + SCALE_HEIGHT + 500.0))
                 .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
                 .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
                 .with(Appearance::Background(TIMELINE_BACKGROUND))
