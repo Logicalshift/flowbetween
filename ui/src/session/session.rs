@@ -21,13 +21,13 @@ pub struct UiSession<CoreController: Controller> {
     core: Arc<Desync<UiSessionCore>>
 }
 
-impl<CoreController: Controller> UiSession<CoreController> {
+impl<CoreController: Controller+'static> UiSession<CoreController> {
     ///
     /// Cretes a new UI session with the specified core controller
     /// 
     pub fn new(controller: CoreController) -> UiSession<CoreController> {
         let controller  = Arc::new(controller);
-        let core        = UiSessionCore::new();
+        let core        = UiSessionCore::new(controller.clone());
 
         UiSession {
             controller: controller,

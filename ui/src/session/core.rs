@@ -5,21 +5,30 @@ use super::super::controller::*;
 
 use binding::*;
 
+use std::sync::*;
+
 ///
 /// Core UI session structures
 /// 
 pub struct UiSessionCore {
     /// The sequential ID of the last wake for update event
-    last_update_id: u64
+    last_update_id: u64,
+
+    /// The UI tree for the applicaiton
+    ui_tree: BindRef<Control>
 }
 
 impl UiSessionCore {
     ///
     /// Creates a new UI core
     /// 
-    pub fn new() -> UiSessionCore {
+    pub fn new(controller: Arc<Controller>) -> UiSessionCore {
+        // Assemble the UI for the controller
+        let ui_tree = assemble_ui(controller);
+
         UiSessionCore {
-            last_update_id: 0
+            last_update_id: 0,
+            ui_tree:        ui_tree
         }
     }
 
@@ -27,6 +36,11 @@ impl UiSessionCore {
     /// Retrieves the ID of the last update that was dispatched for this core
     /// 
     pub fn last_update_id(&self) -> u64 { self.last_update_id }
+
+    ///
+    /// Retrieves a reference to the UI tree for the whole application
+    /// 
+    pub fn ui_tree(&self) -> BindRef<Control> { BindRef::clone(&self.ui_tree) }
 
     ///
     /// Dispatches an event to the specified controller
