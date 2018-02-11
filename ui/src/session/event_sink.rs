@@ -12,9 +12,9 @@ use std::sync::*;
 /// The event sink works with a UI session. When events arrive, they can be sent
 /// to one of these
 /// 
-pub struct UiEventSink<CoreController: Controller> {
+pub struct UiEventSink {
     /// The core controller that will be the target for these events
-    controller: Arc<CoreController>,
+    controller: Arc<Controller>,
 
     /// The core that is affected by these events
     core: Arc<Desync<UiSessionCore>>,
@@ -26,11 +26,11 @@ pub struct UiEventSink<CoreController: Controller> {
     last_finished_event: Arc<Mutex<usize>>
 }
 
-impl<CoreController: Controller> UiEventSink<CoreController> {
+impl UiEventSink {
     ///
     /// Creates a new event sink
     /// 
-    pub fn new(controller: Arc<CoreController>, core: Arc<Desync<UiSessionCore>>) -> UiEventSink<CoreController> {
+    pub fn new<CoreController: 'static+Controller>(controller: Arc<CoreController>, core: Arc<Desync<UiSessionCore>>) -> UiEventSink {
         UiEventSink {
             controller:             controller,
             core:                   core,
@@ -40,7 +40,7 @@ impl<CoreController: Controller> UiEventSink<CoreController> {
     }
 }
 
-impl<CoreController: Controller+'static> Sink for UiEventSink<CoreController> {
+impl Sink for UiEventSink {
     type SinkItem   = UiEvent;
     type SinkError  = ();
 

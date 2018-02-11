@@ -74,13 +74,13 @@ impl<CoreController: Controller> Deref for UiSession<CoreController> {
 
 impl<CoreController: 'static+Controller> UserInterface<UiEvent, Vec<UiUpdate>, ()> for UiSession<CoreController> {
     /// The type of the event sink for this UI
-    type EventSink = UiEventSink<CoreController>;
+    type EventSink = UiEventSink;
 
     /// The type of the update stream for this UI
     type UpdateStream = UiUpdateStream;
 
     /// Retrieves an input event sink for this user interface
-    fn get_input_sink(&self) -> UiEventSink<CoreController> {
+    fn get_input_sink(&self) -> UiEventSink {
         UiEventSink::new(Arc::clone(&self.controller), Arc::clone(&self.core))
     }
 
