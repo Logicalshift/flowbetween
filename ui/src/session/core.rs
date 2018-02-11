@@ -5,6 +5,7 @@ use super::super::controller::*;
 
 use binding::*;
 
+use std::mem;
 use std::sync::*;
 
 ///
@@ -15,7 +16,10 @@ pub struct UiSessionCore {
     last_update_id: u64,
 
     /// The UI tree for the applicaiton
-    ui_tree: BindRef<Control>
+    ui_tree: BindRef<Control>,
+
+    /// Functions to be called next time the core is updated
+    update_callbacks: Vec<Box<Fn(&mut UiSessionCore) -> ()+Send>>
 }
 
 impl UiSessionCore {
@@ -27,8 +31,9 @@ impl UiSessionCore {
         let ui_tree = assemble_ui(controller);
 
         UiSessionCore {
-            last_update_id: 0,
-            ui_tree:        ui_tree
+            last_update_id:     0,
+            ui_tree:            ui_tree,
+            update_callbacks:   vec![]
         }
     }
 
@@ -79,11 +84,27 @@ impl UiSessionCore {
     }
 
     ///
+    /// Registers a function to be called next time the core is updated
+    /// 
+    pub fn on_next_update<Callback: 'static+Fn(&mut UiSessionCore) -> ()+Send>(&mut self, callback: Callback) {
+        // Call the function when the next update occurs
+        self.update_callbacks.push(Box::new(callback))
+    }
+
+    ///
     /// Wakes things up that might be waiting for updates
     /// 
     fn wake_for_updates(&mut self) {
         // Update the last update ID
         self.last_update_id += 1;
+
+        // Perform the callbacks
+        let mut callbacks = vec![];
+        mem::swap(&mut callbacks, &mut self.update_callbacks);
+
+        for callback in callbacks {
+            (*callback)(self);
+        }
     }
 
     ///
