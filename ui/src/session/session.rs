@@ -7,6 +7,7 @@ use super::super::controller::*;
 use super::super::user_interface::*;
 
 use desync::*;
+use binding::*;
 
 use std::sync::*;
 use std::ops::Deref;
@@ -19,7 +20,10 @@ pub struct UiSession<CoreController: Controller> {
     controller: Arc<CoreController>,
 
     /// The core of the UI session
-    core: Arc<Desync<UiSessionCore>>
+    core: Arc<Desync<UiSessionCore>>,
+
+    /// A releasable that tracks UI updates
+    ui_update_lifetime: Box<Releasable>
 }
 
 impl<CoreController: Controller+'static> UiSession<CoreController> {
@@ -27,13 +31,36 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
     /// Cretes a new UI session with the specified core controller
     /// 
     pub fn new(controller: CoreController) -> UiSession<CoreController> {
-        let controller  = Arc::new(controller);
-        let core        = UiSessionCore::new(controller.clone());
+        let controller          = Arc::new(controller);
+        let core                = UiSessionCore::new(controller.clone());
+        let core                = Arc::new(Desync::new(core));
+
+        let ui_update_lifetime  = Self::track_ui_updates(Arc::clone(&core));
 
         UiSession {
-            controller: controller,
-            core:       Arc::new(Desync::new(core))
+            controller:         controller,
+            core:               core,
+            ui_update_lifetime: ui_update_lifetime
         }
+    }
+
+    ///
+    /// Causes wake_for_updates to be called on a core when its UI changes
+    /// 
+    fn track_ui_updates(core: Arc<Desync<UiSessionCore>>) -> Box<Releasable> {
+        let update_core = Arc::clone(&core);
+
+        core.sync(move |core| {
+            let ui = core.ui_tree();
+
+            ui.when_changed(notify(move || update_core.async(|core| core.wake_for_updates())))
+        })
+    }
+}
+
+impl<CoreController: Controller> Drop for UiSession<CoreController> {
+    fn drop(&mut self) {
+        self.ui_update_lifetime.done();
     }
 }
 

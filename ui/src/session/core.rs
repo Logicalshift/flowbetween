@@ -105,7 +105,7 @@ impl UiSessionCore {
     ///
     /// Wakes things up that might be waiting for updates
     /// 
-    fn wake_for_updates(&mut self) {
+    pub fn wake_for_updates(&mut self) {
         // Update the last update ID
         self.last_update_id += 1;
 

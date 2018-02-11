@@ -156,9 +156,7 @@ fn ui_update_triggers_update() {
         UiUpdate::UpdateUi(vec![UiDiff {
             address: vec![],
             new_ui: Control::label().with("Updated")
-        }]),
-        
-        UiUpdate::UpdateViewModel(vec![])
+        }])
     ])));
 }
 
@@ -195,11 +193,6 @@ fn viewmodel_update_triggers_update() {
     let updated_ui = next_or_timeout.wait_stream().unwrap();
     assert!(updated_ui != Ok(TestItem::Timeout));
     assert!(updated_ui == Ok(TestItem::Updates(vec![
-        UiUpdate::UpdateUi(vec![UiDiff {
-            address: vec![],
-            new_ui: Control::label().with("Updated")
-        }]),
-        
         UiUpdate::UpdateViewModel(vec![])
     ])));
 }
