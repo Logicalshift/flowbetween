@@ -14,3 +14,8 @@ pub use self::event_sink::*;
 pub use self::update_stream::*;
 
 #[cfg(test)] mod tests;
+
+use super::user_interface::*;
+
+/// The basic user interface implemented by a UI session 
+pub type CoreUserInterface = UserInterface<UiEvent, Vec<UiUpdate>, (), EventSink=UiEventSink, UpdateStream=UiUpdateStream>;
