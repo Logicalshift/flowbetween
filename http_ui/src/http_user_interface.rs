@@ -274,6 +274,7 @@ mod test {
         let next_or_timeout     = http_stream.map(|updates| TestItem::Updates(updates)).select(timeout(2000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
         let mut next_or_timeout = executor::spawn(next_or_timeout);
 
+        // First update should be munged into a NewUserInterfaceHtml update
         let first_update = next_or_timeout.wait_stream().unwrap();
         assert!(first_update != Ok(TestItem::Timeout));
         assert!(first_update == Ok(TestItem::Updates(vec![
