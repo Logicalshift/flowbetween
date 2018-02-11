@@ -38,10 +38,10 @@ impl UiSessionState {
     ///
     /// Updates the UI for this element, returning the corresponding update event
     /// 
-    pub fn update_ui(&mut self, new_ui: Control) -> Option<UiUpdate> {
+    pub fn update_ui(&mut self, new_ui: &Control) -> Option<UiUpdate> {
         let update = if let Some(ref old_ui) = self.ui {
             // Find the differences for the UI
-            let differences = diff_tree(old_ui, &new_ui);
+            let differences = diff_tree(old_ui, new_ui);
 
             if differences.len() == 0 {
                 // UI has not changed
@@ -66,7 +66,9 @@ impl UiSessionState {
         };
 
         // Update the UI
-        self.ui = Some(new_ui);
+        if update.is_some() {
+            self.ui = Some(new_ui.clone());
+        }
 
         // The update is the result
         update
@@ -81,33 +83,33 @@ mod test {
     fn initial_ui_diff_contains_everything() {
         let mut state = UiSessionState::new();
 
-        assert!(state.update_ui(Control::empty()) == Some(UiUpdate::UpdateUi(vec![UiDiff { address: vec![], new_ui: Control::empty() }])));
+        assert!(state.update_ui(&Control::empty()) == Some(UiUpdate::UpdateUi(vec![UiDiff { address: vec![], new_ui: Control::empty() }])));
     }
 
     #[test]
     fn update_ui_with_no_difference_returns_no_updates() {
         let mut state = UiSessionState::new();
 
-        state.update_ui(Control::empty());
-        assert!(state.update_ui(Control::empty()) == None);
+        state.update_ui(&Control::empty());
+        assert!(state.update_ui(&Control::empty()) == None);
     }
 
     #[test]
     fn changing_ui_generates_differences() {
         let mut state = UiSessionState::new();
 
-        state.update_ui(Control::empty()
+        state.update_ui(&Control::empty()
             .with(vec![
                 Control::label().with("Test1")
             ]));
         
-        assert!(state.update_ui(Control::empty()
+        assert!(state.update_ui(&Control::empty()
             .with(vec![
                 Control::label().with("Test2")
             ])) == Some(UiUpdate::UpdateUi(vec![
                 UiDiff {
-                    address: vec![0],
-                    new_ui: Control::label().with("Test2")
+                    address:    vec![0],
+                    new_ui:     Control::label().with("Test2")
                 }
             ])));
     }
