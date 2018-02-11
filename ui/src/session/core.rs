@@ -9,8 +9,8 @@ use binding::*;
 /// Core UI session structures
 /// 
 pub struct UiSessionCore {
-    /// The state of the UI at the last update
-    state: UiSessionState
+    /// The sequential ID of the last wake for update event
+    last_update_id: u64
 }
 
 impl UiSessionCore {
@@ -19,9 +19,14 @@ impl UiSessionCore {
     /// 
     pub fn new() -> UiSessionCore {
         UiSessionCore {
-            state: UiSessionState::new()
+            last_update_id: 0
         }
     }
+
+    ///
+    /// Retrieves the ID of the last update that was dispatched for this core
+    /// 
+    pub fn last_update_id(&self) -> u64 { self.last_update_id }
 
     ///
     /// Dispatches an event to the specified controller
@@ -63,7 +68,8 @@ impl UiSessionCore {
     /// Wakes things up that might be waiting for updates
     /// 
     fn wake_for_updates(&mut self) {
-
+        // Update the last update ID
+        self.last_update_id += 1;
     }
 
     ///
