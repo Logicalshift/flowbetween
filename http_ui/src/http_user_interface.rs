@@ -1,5 +1,6 @@
 use super::event::*;
 use super::update::*;
+use super::htmlcontrol::*;
 
 use ui::*;
 use ui::session::*;
@@ -47,6 +48,92 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
             Action(controller_path, action_name, action_parameter) => UiEvent::Action(controller_path, action_name, action_parameter)
         }
     }
+
+    ///
+    /// Generates a new UI update (transforms a set of updates into the 'new HTML' update)
+    /// 
+    fn new_ui_update(old_updates: Vec<Update>) -> Vec<Update> {
+        let mut new_updates = vec![];
+
+        // Convert the updates in the old update
+        for update in old_updates {
+            match update {
+                Update::UpdateHtml(html_diff) => {
+                    ()
+                },
+
+                // Viewmodel updates should all wind up rolled into the new HTML update if we generate it
+                // (Nothing will get generated normally)
+                Update::UpdateViewModel(_) => (),
+
+                // Everything else is left as-is
+                update => new_updates.push(update)
+            }
+        }
+
+        new_updates
+    }
+
+    ///
+    /// Maps a core UI diff into a HTML diff
+    /// 
+    fn map_core_ui_diff(ui_diff: UiDiff, ui_tree: &Control, base_path: &str) -> HtmlDiff {
+        // Fetch the properties of this difference
+        let address         = ui_diff.address;
+        let new_ui          = ui_diff.new_ui;
+        let controller_path = html_controller_path_for_address(ui_tree, &address);
+        let html            = new_ui.to_html_subcomponent(base_path, &controller_path);
+
+        // Turn into a HTML diff
+        HtmlDiff::new(address, &new_ui, html.to_string())
+    }
+
+    ///
+    /// Maps a single core update to a HTTP update
+    /// 
+    fn map_core_update(core_update: UiUpdate) -> Vec<Update> {
+        use self::UiUpdate::*;
+
+        match core_update {
+            Start => vec![],
+
+            UpdateUi(core_diffs) => {
+                // TODO: use the correct UI tree (need to fetch it from somewhere)
+                let base_path   = "foo/bar".to_string();
+                let ui_tree     = Control::empty();
+
+                // Map the UI differences
+                vec![Update::UpdateHtml(core_diffs.into_iter()
+                    .map(|core_ui_diff| Self::map_core_ui_diff(core_ui_diff, &ui_tree, &base_path))
+                    .collect()
+                )]
+            },
+            
+            UpdateCanvas(canvas_diffs) => unimplemented!() /* vec![Update::UpdateCanvas(canvas_diffs)] */,
+
+            UpdateViewModel(view_model_diffs) => vec![Update::UpdateViewModel(view_model_diffs)]
+        }
+    }
+
+    ///
+    /// Converts updates from the core into HTTP updates
+    /// 
+    fn core_updates_to_http_updates(core_update: Vec<UiUpdate>) -> Vec<Update> {
+        use self::UiUpdate::*;
+
+        let is_start    = core_update.len() > 0 && core_update[0] == Start;
+        let base_update = core_update.into_iter()
+                .flat_map(|core_update| Self::map_core_update(core_update).into_iter())
+                .collect();
+
+        if is_start {
+            // Generate the new UI HTML update
+            Self::new_ui_update(base_update)            
+        } else {
+            // Convert each update individually
+            base_update
+        }
+    }
 }
 
 impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
@@ -54,16 +141,27 @@ impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUs
     type UpdateStream = Box<Stream<Item=Vec<Update>, Error=()>>;
 
     fn get_input_sink(&self) -> Self::EventSink {
+        // Get the core event sink
         let core_sink   = self.core_ui.get_input_sink();
+
+        // Create a sink that turns HTTP events into core events
         let mapped_sink = core_sink.with_flat_map(|http_event| {
             let core_event = Self::http_event_to_core_event(http_event);
             stream::once(Ok(core_event))
         });
 
+        // This new sink is our result
         Box::new(mapped_sink)
     }
 
     fn get_updates(&self) -> Self::UpdateStream {
-        unimplemented!()
+        // Fetch the updates from the core
+        let core_updates = self.core_ui.get_updates();
+
+        // Turn into HTTP updates
+        let mapped_updates = core_updates.map(|core_update| Self::core_updates_to_http_updates(core_update));
+
+        // These are the results
+        Box::new(mapped_updates)
     }
 }
