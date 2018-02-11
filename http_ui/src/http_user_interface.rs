@@ -102,17 +102,13 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     /// Maps a single core update to a HTTP update
     /// 
-    fn map_core_update(core_update: UiUpdate) -> Vec<Update> {
+    fn map_core_update(core_update: UiUpdate, base_path: &str, ui_tree: &Control) -> Vec<Update> {
         use self::UiUpdate::*;
 
         match core_update {
             Start => vec![],
 
             UpdateUi(core_diffs) => {
-                // TODO: use the correct UI tree (need to fetch it from somewhere)
-                let base_path   = "foo/bar".to_string();
-                let ui_tree     = Control::empty();
-
                 // Map the UI differences
                 vec![Update::UpdateHtml(core_diffs.into_iter()
                     .map(|core_ui_diff| Self::map_core_ui_diff(core_ui_diff, &ui_tree, &base_path))
@@ -129,12 +125,12 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     /// Converts updates from the core into HTTP updates
     /// 
-    fn core_updates_to_http_updates(core_update: Vec<UiUpdate>) -> Vec<Update> {
+    fn core_updates_to_http_updates(core_update: Vec<UiUpdate>, base_path: &str, ui_tree: &Control) -> Vec<Update> {
         use self::UiUpdate::*;
 
         let is_start    = core_update.len() > 0 && core_update[0] == Start;
         let base_update = core_update.into_iter()
-                .flat_map(|core_update| Self::map_core_update(core_update).into_iter())
+                .flat_map(|core_update| Self::map_core_update(core_update, base_path, ui_tree).into_iter())
                 .collect();
 
         if is_start {
@@ -169,8 +165,16 @@ impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUs
         // Fetch the updates from the core
         let core_updates = self.core_ui.get_updates();
 
+        // Fetch the extra components we need to map events from this object
+        let ui_tree     = BindRef::clone(&self.ui_tree);
+        let base_path   = self.base_path.clone();
+
         // Turn into HTTP updates
-        let mapped_updates = core_updates.map(|core_update| Self::core_updates_to_http_updates(core_update));
+        let mapped_updates = core_updates.map(move |core_updates| {
+            let ui_tree = ui_tree.get();
+
+            Self::core_updates_to_http_updates(core_updates, &base_path, &ui_tree)
+        });
 
         // These are the results
         Box::new(mapped_updates)
