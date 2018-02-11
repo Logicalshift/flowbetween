@@ -203,3 +203,5 @@ fn viewmodel_update_triggers_update() {
         UiUpdate::UpdateViewModel(vec![])
     ])));
 }
+
+// TODO: also check we trigger an update if a canvas that's in the UI changes
