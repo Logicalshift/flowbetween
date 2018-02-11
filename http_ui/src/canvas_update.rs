@@ -1,7 +1,7 @@
 ///
 /// Data stored for a canvas update event
 ///
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Debug)]
 pub struct CanvasUpdate {
     ///
     /// The path to the controller for this canvas (using the same encoding we use for flo-canvas)

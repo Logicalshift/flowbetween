@@ -224,3 +224,60 @@ impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUs
         Box::new(mapped_updates)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use serde_json::*;
+    use futures::sync::oneshot;
+
+    use std::time::Duration;
+    use std::thread::*;
+
+    struct TestController {
+        ui: Binding<Control>,
+    }
+
+    impl Controller for TestController {
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::new(&self.ui)
+        }
+    }
+
+    #[derive(Clone, PartialEq, Debug)]
+    enum TestItem {
+        Updates(Vec<Update>),
+        Timeout
+    }
+
+    /// Creates a timeout future
+    fn timeout(ms: u64) -> oneshot::Receiver<()> {
+        let (timeout_send, timeout_recv) = oneshot::channel::<()>();
+
+        spawn(move || {
+            sleep(Duration::from_millis(ms));
+            timeout_send.send(()).ok();
+        });
+
+        timeout_recv
+    }
+
+    #[test]
+    fn generates_initial_update() {
+        let controller      = TestController { ui: bind(Control::empty()) };
+        let core_session    = Arc::new(UiSession::new(controller));
+        let http_session    = HttpUserInterface::new(core_session, "test/session".to_string());
+
+        let http_stream     = http_session.get_updates();
+
+        let next_or_timeout     = http_stream.map(|updates| TestItem::Updates(updates)).select(timeout(2000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
+        let mut next_or_timeout = executor::spawn(next_or_timeout);
+
+        let first_update = next_or_timeout.wait_stream().unwrap();
+        assert!(first_update != Ok(TestItem::Timeout));
+        assert!(first_update == Ok(TestItem::Updates(vec![
+            Update::NewUserInterfaceHtml("<flo-empty></flo-empty>".to_string(), json![{ "attributes": Vec::<String>::new(), "control_type": "Empty" }], vec![])
+        ])));
+    }
+}

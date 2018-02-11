@@ -7,7 +7,7 @@ use serde_json;
 ///
 /// Describes a HTML node that should be changed
 ///
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct HtmlDiff {
     /// The address in the document of the node to be replaced
     pub address: Vec<u32>,
@@ -38,7 +38,7 @@ impl HtmlDiff {
 /// Events and other requests to the HTTP interface can return lists
 /// of updates that should be performed in response.
 ///
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Update {
     ///
     /// There is no session ID or the session is unknown
