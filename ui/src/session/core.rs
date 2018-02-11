@@ -1,4 +1,3 @@
-use super::state::*;
 use super::event::*;
 use super::super::control::*;
 use super::super::controller::*;
@@ -19,7 +18,7 @@ pub struct UiSessionCore {
     ui_tree: BindRef<Control>,
 
     /// Functions to be called next time the core is updated
-    update_callbacks: Vec<Box<Fn(&mut UiSessionCore) -> ()+Send>>
+    update_callbacks: Vec<Box<FnMut(&mut UiSessionCore) -> ()+Send>>
 }
 
 impl UiSessionCore {
@@ -86,9 +85,21 @@ impl UiSessionCore {
     ///
     /// Registers a function to be called next time the core is updated
     /// 
-    pub fn on_next_update<Callback: 'static+Fn(&mut UiSessionCore) -> ()+Send>(&mut self, callback: Callback) {
+    pub fn on_next_update<Callback: 'static+FnOnce(&mut UiSessionCore) -> ()+Send>(&mut self, callback: Callback) {
+        // FnBox is in nightly, so here's our 'boxed FnOnce' workaround
+        let mut callback    = Some(callback);
+
         // Call the function when the next update occurs
-        self.update_callbacks.push(Box::new(callback))
+        self.update_callbacks.push(Box::new(move |session_core| {
+            // Swap out the preserved callback
+            let mut call_once = None;
+            mem::swap(&mut call_once, &mut callback);
+
+            // Call it if it hasn't been called before
+            if let Some(call_once) = call_once {
+                call_once(session_core);
+            }
+        }));
     }
 
     ///
@@ -102,8 +113,8 @@ impl UiSessionCore {
         let mut callbacks = vec![];
         mem::swap(&mut callbacks, &mut self.update_callbacks);
 
-        for callback in callbacks {
-            (*callback)(self);
+        for mut callback in callbacks {
+            callback(self);
         }
     }
 
