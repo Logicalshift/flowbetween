@@ -54,7 +54,7 @@ impl UiUpdateStream {
     ///
     /// Creates a new UI update stream
     /// 
-    pub fn new(core: Arc<Desync<UiSessionCore>>, controller: Arc<Controller>) -> UiUpdateStream {
+    pub fn new(controller: Arc<Controller>, core: Arc<Desync<UiSessionCore>>) -> UiUpdateStream {
         // Create the values that will go into the core
         let session_core    = core;
         let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new(controller)));
