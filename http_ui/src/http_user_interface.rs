@@ -4,6 +4,7 @@ use super::htmlcontrol::*;
 
 use ui::*;
 use ui::session::*;
+use binding::*;
 use futures::*;
 use futures::stream;
 
@@ -14,16 +15,26 @@ use std::sync::*;
 /// 
 pub struct HttpUserInterface<CoreUi> {
     /// The core UI is the non-platform specific implementation of the user interface
-    core_ui: Arc<CoreUi>
+    core_ui: Arc<CoreUi>,
+
+    /// A binding ref for the UI tree (we need this for converting controller paths)
+    ui_tree: BindRef<Control>,
+
+    /// The base path of the instance (where URIs are generated relative to)
+    base_path: String
 }
 
 impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     /// Creates a new HTTP UI that will translate requests for the specified core UI
     /// 
-    pub fn new(ui: Arc<CoreUi>) -> HttpUserInterface<CoreUi> {
+    pub fn new(ui: Arc<CoreUi>, base_path: String) -> HttpUserInterface<CoreUi> {
+        let ui_tree = ui.ui_tree();
+
         HttpUserInterface {
-            core_ui: ui
+            core_ui:    ui,
+            ui_tree:    ui_tree,
+            base_path:  base_path
         }
     }
 

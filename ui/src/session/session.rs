@@ -92,4 +92,7 @@ impl<CoreController: 'static+Controller> UserInterface<UiEvent, Vec<UiUpdate>, (
 }
 
 impl<CoreController: 'static+Controller> CoreUserInterface for UiSession<CoreController> {
+    fn ui_tree(&self) -> BindRef<Control> {
+        self.core.sync(|core| core.ui_tree())
+    }
 }
