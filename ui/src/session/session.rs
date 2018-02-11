@@ -1,3 +1,4 @@
+use super::*;
 use super::core::*;
 use super::event::*;
 use super::update::*;
@@ -65,10 +66,10 @@ impl<CoreController: Controller> Drop for UiSession<CoreController> {
 }
 
 impl<CoreController: Controller> Deref for UiSession<CoreController> {
-    type Target = CoreController;
+    type Target = Arc<CoreController>;
 
-    fn deref(&self) -> &CoreController {
-        &*self.controller
+    fn deref(&self) -> &Arc<CoreController> {
+        &self.controller
     }
 }
 
@@ -88,4 +89,7 @@ impl<CoreController: 'static+Controller> UserInterface<UiEvent, Vec<UiUpdate>, (
     fn get_updates(&self) -> UiUpdateStream {
         UiUpdateStream::new(self.controller.clone(), Arc::clone(&self.core))
     }
+}
+
+impl<CoreController: 'static+Controller> CoreUserInterface for UiSession<CoreController> {
 }

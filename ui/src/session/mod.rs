@@ -18,4 +18,5 @@ pub use self::update_stream::*;
 use super::user_interface::*;
 
 /// The basic user interface implemented by a UI session 
-pub type CoreUserInterface = UserInterface<UiEvent, Vec<UiUpdate>, (), EventSink=UiEventSink, UpdateStream=UiUpdateStream>;
+pub trait CoreUserInterface : UserInterface<UiEvent, Vec<UiUpdate>, (), EventSink=UiEventSink, UpdateStream=UiUpdateStream> {
+}
