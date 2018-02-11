@@ -175,12 +175,17 @@ impl Stream for UiUpdateStream {
 
             session_core.async(move |session_core| {
                 stream_core.sync(move |stream_core| {
-                    if pending.lock().unwrap().is_some() {
+                    let mut pending = pending.lock().unwrap();
+
+                    if pending.is_some() {
                         // If there's now a pending update, then signal the task to return via the stream
                         task.notify();
                     } else if session_core.last_update_id() != stream_core.last_update_id {
                         // If the core has a newer update than we do then start generating a new pending update
-                        unimplemented!()
+                        *pending = Some(stream_core.state.get_updates(&session_core.ui_tree()));
+
+                        stream_core.last_update_id = session_core.last_update_id();
+                        task.notify();
                     } else {
                         // Otherwise, ask the core to notify us when an update is available
                         unimplemented!()
