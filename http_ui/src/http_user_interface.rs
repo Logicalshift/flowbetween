@@ -1,12 +1,16 @@
 use super::event::*;
 use super::update::*;
 use super::htmlcontrol::*;
+use super::canvas_update::*;
 
 use ui::*;
 use ui::session::*;
+use canvas::*;
 use binding::*;
 use futures::*;
 use futures::stream;
+use itertools::join;
+use percent_encoding::*;
 
 use std::sync::*;
 
@@ -104,6 +108,28 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     }
 
     ///
+    /// Converts a canvas diff into a canvas update
+    /// 
+    /// Mainly this means encoding the content of the update
+    /// 
+    fn map_canvas_diff(canvas_diff: CanvasDiff) -> CanvasUpdate {
+        // Encode the updates from the diff
+        let mut encoded_updates = String::new();
+        canvas_diff.updates.encode_canvas(&mut encoded_updates);
+
+        // Create the HTTP version of the controller path
+        let controller_path = join(canvas_diff.controller.iter()
+            .map(|component| utf8_percent_encode(&*component, DEFAULT_ENCODE_SET)),
+            "/");
+
+        // Canvas name also needs to be encoded
+        let canvas_name     = utf8_percent_encode(&canvas_diff.canvas_name, DEFAULT_ENCODE_SET).to_string();
+
+        // Can now generate an update
+        CanvasUpdate::new(controller_path, canvas_name, encoded_updates)
+    }
+
+    ///
     /// Maps a core UI diff into a HTML diff
     /// 
     fn map_core_ui_diff(ui_diff: UiDiff, ui_tree: &Control, base_path: &str) -> HtmlDiff {
@@ -134,7 +160,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
                 )]
             },
             
-            UpdateCanvas(canvas_diffs) => unimplemented!() /* vec![Update::UpdateCanvas(canvas_diffs)] */,
+            UpdateCanvas(canvas_diffs) => vec![Update::UpdateCanvas(canvas_diffs.into_iter().map(|diff| Self::map_canvas_diff(diff)).collect())],
 
             UpdateViewModel(view_model_diffs) => vec![Update::UpdateViewModel(view_model_diffs)]
         }
