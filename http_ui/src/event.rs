@@ -18,5 +18,10 @@ pub enum Event {
     ///
     /// Sends an action to the controller found along a certain path
     ///
-    Action(Vec<String>, String, ActionParameter)
+    Action(Vec<String>, String, ActionParameter),
+
+    ///
+    /// Sends a tick event to the controllers
+    /// 
+    Tick
 }
