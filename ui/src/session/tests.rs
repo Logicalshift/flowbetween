@@ -193,7 +193,9 @@ fn viewmodel_update_triggers_update() {
     let updated_ui = next_or_timeout.wait_stream().unwrap();
     assert!(updated_ui != Ok(TestItem::Timeout));
     assert!(updated_ui == Ok(TestItem::Updates(vec![
-        UiUpdate::UpdateViewModel(vec![])
+        UiUpdate::UpdateViewModel(vec![
+            ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(1))])
+        ])
     ])));
 }
 
