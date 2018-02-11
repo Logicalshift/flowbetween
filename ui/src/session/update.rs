@@ -6,7 +6,7 @@ use canvas::*;
 ///
 /// Represents a differnce to the UI
 /// 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct UiDiff {
     /// The address of where the UI tree was changed
     pub address: Vec<u32>,
@@ -18,7 +18,7 @@ pub struct UiDiff {
 ///
 /// Represents a difference to a canvas
 /// 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct CanvasDiff {
     /// The path to the controller that owns the canvas being updated
     pub controller: Vec<String>,
@@ -33,7 +33,7 @@ pub struct CanvasDiff {
 ///
 /// Updates that can arrive from the UI
 /// 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum UiUpdate {
     /// Represents a series of updates to the UI tree
     UpdateUi(Vec<UiDiff>),

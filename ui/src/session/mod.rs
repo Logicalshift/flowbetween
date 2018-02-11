@@ -9,5 +9,8 @@ pub mod session;
 
 pub use self::event::*;
 pub use self::update::*;
+pub use self::session::*;
 pub use self::event_sink::*;
 pub use self::update_stream::*;
+
+#[cfg(test)] mod tests;
