@@ -143,6 +143,24 @@ impl UiSessionState {
             None
         }
     }
+
+    ///
+    /// Retrieves the updates that are pending in this object
+    /// 
+    pub fn get_updates(&mut self, ui_binding: &BindRef<Control>) -> Vec<UiUpdate> {
+        // Fetch the updates for the various categories
+        let ui_updates          = self.update_ui(&ui_binding.get());
+        let viewmodel_updates   = self.get_viewmodel_update();
+        let canvas_updates      = self.get_canvas_update();
+
+        // Combine into a vector
+        let mut combined_updates = vec![];
+        if let Some(ui_updates) = ui_updates                { combined_updates.push(ui_updates); }
+        if let Some(viewmodel_updates) = viewmodel_updates  { combined_updates.push(viewmodel_updates); }
+        if let Some(canvas_updates) = canvas_updates        { combined_updates.push(canvas_updates); }
+
+        combined_updates
+    }
 }
 
 #[cfg(test)]
