@@ -10,13 +10,13 @@ use serde_json;
 #[derive(Clone, Serialize, Deserialize)]
 pub struct HtmlDiff {
     /// The address in the document of the node to be replaced
-    address: Vec<u32>,
+    pub address: Vec<u32>,
 
     /// The UI tree corresponding to the new HTML
-    ui_tree: serde_json::Value,
+    pub ui_tree: serde_json::Value,
 
     /// The HTML that should replace this node
-    new_html: String
+    pub new_html: String
 }
 
 impl HtmlDiff {

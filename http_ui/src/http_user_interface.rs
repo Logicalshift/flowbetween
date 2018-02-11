@@ -63,14 +63,32 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     /// Generates a new UI update (transforms a set of updates into the 'new HTML' update)
     /// 
+    /// The start update should come with an 'UpdateHtml' update that replaces the entire
+    /// tree. We turn this into a NewUserInterfaceHtml update by combining it with the 
+    /// contents of the view model updates.
+    /// 
     fn new_ui_update(old_updates: Vec<Update>) -> Vec<Update> {
         let mut new_updates = vec![];
+
+        // Collect all the viewmodel updates into one place
+        let viewmodel_updates: Vec<ViewModelUpdate> = old_updates.iter()
+            .flat_map(|update| match update {
+                &Update::UpdateViewModel(ref view_model) => view_model.clone(),
+                _ => vec![]
+            }.into_iter())
+            .collect();
 
         // Convert the updates in the old update
         for update in old_updates {
             match update {
                 Update::UpdateHtml(html_diff) => {
-                    ()
+                    if html_diff.len() == 1 && html_diff[0].address.len() == 0 {
+                        // This should be converted into a new HTML event
+                        new_updates.push(Update::NewUserInterfaceHtml(html_diff[0].new_html.clone(), html_diff[0].ui_tree.clone(), viewmodel_updates.clone()));
+                    } else {
+                        // Just treat this as a standard update
+                        new_updates.push(Update::UpdateHtml(html_diff));
+                    }
                 },
 
                 // Viewmodel updates should all wind up rolled into the new HTML update if we generate it
