@@ -149,6 +149,32 @@ impl UpdateStreamCore {
         self.state.watch_viewmodel(Arc::clone(&self.controller));
         self.state.watch_canvases(ui_binding);
     }
+
+    ///
+    /// Updates against a pending update
+    /// 
+    pub fn finish_update(&mut self, ui_binding: &BindRef<Control>, update_id: u64, pending: Arc<Mutex<Option<Vec<UiUpdate>>>>) {
+        if update_id == self.last_update_id {
+            // Already dispatched this update
+            return;
+        }
+
+        let mut pending = pending.lock().unwrap();
+        if pending.is_some() {
+            // Different update is already pending
+            return;
+        }
+
+        if let Some(ref waiting) = self.waiting {
+            // Something is waiting for an update, so we're going to generate it now
+            let update  = self.state.get_updates(ui_binding);
+            *pending    = Some(update);
+
+            // Poke whatever's waiting to let it know that its update has arrived
+            self.last_update_id = update_id;
+            waiting.notify();
+        }
+    }
 }
 
 impl Stream for UiUpdateStream {
@@ -168,10 +194,12 @@ impl Stream for UiUpdateStream {
             Ok(Async::Ready(Some(pending)))
         } else {
             // No update available yet. We need to register with the core to trigger one
-            let task            = task::current();
-            let pending         = Arc::clone(&self.pending);
-            let session_core    = Arc::clone(&self.session_core);
-            let stream_core     = Arc::clone(&self.stream_core);
+            let task                = task::current();
+            let pending             = Arc::clone(&self.pending);
+            let session_core        = Arc::clone(&self.session_core);
+            let stream_core         = Arc::clone(&self.stream_core);
+            let update_pending      = Arc::clone(&self.pending);
+            let update_stream_core  = Arc::clone(&self.stream_core);
 
             session_core.async(move |session_core| {
                 stream_core.sync(move |stream_core| {
@@ -188,7 +216,14 @@ impl Stream for UiUpdateStream {
                         task.notify();
                     } else {
                         // Otherwise, ask the core to notify us when an update is available
-                        unimplemented!()
+                        stream_core.waiting = Some(task);
+                        let ui_binding      = session_core.ui_tree();
+
+                        session_core.on_next_update(move |session_core| {
+                            let this_update_id = session_core.last_update_id();
+
+                            update_stream_core.async(move |stream_core| stream_core.finish_update(&ui_binding, this_update_id, update_pending));
+                        });
                     }
                 });
             });
