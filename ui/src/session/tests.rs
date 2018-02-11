@@ -85,6 +85,7 @@ fn ticks_generate_empty_event() {
     // Send a tick
     event_sink.start_send(UiEvent::Tick).unwrap();
 
+    // Nothing has changed, but the tick should still cause an event
     let tick_update = next_or_timeout.wait_stream().unwrap();
     assert!(tick_update == Ok(TestItem::Updates(vec![])));
 }
@@ -107,6 +108,7 @@ fn timeout_after_first_event() {
     let first_item = next_or_timeout.wait_stream().unwrap();
     assert!(first_item != Ok(TestItem::Timeout));
 
+    // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
     let should_timeout = next_or_timeout.wait_stream().unwrap();
     assert!(should_timeout == Ok(TestItem::Timeout));
 }
