@@ -1,9 +1,11 @@
 use super::core::*;
 use super::state::*;
 use super::update::*;
+use super::super::control::*;
 use super::super::controller::*;
 
 use desync::*;
+use binding::*;
 use futures::*;
 
 use std::mem;
@@ -48,11 +50,35 @@ impl UiUpdateStream {
     /// Creates a new UI update stream
     /// 
     pub fn new(core: Arc<Desync<UiSessionCore>>, controller: Arc<Controller>) -> UiUpdateStream {
+        // Create the values that will go into the core
+        let session_core    = core;
+        let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new(controller)));
+        let pending         = Arc::new(Mutex::new(None));
+
+        // Set up the core to receive updates
+        Self::initialise_core(Arc::clone(&session_core), Arc::clone(&stream_core));
+        
+        // Generate the stream
         UiUpdateStream {
-            session_core:   core,
-            stream_core:    Arc::new(Desync::new(UpdateStreamCore::new(controller))),
-            pending:        Arc::new(Mutex::new(None))
+            session_core:   session_core,
+            stream_core:    stream_core,
+            pending:        pending
         }
+    }
+
+    ///
+    /// Sets up the stream core with its initial state
+    /// 
+    fn initialise_core(session_core: Arc<Desync<UiSessionCore>>, stream_core: Arc<Desync<UpdateStreamCore>>) {
+        session_core.async(move |session_core| {
+            // Need the UI binding from the core
+            let ui_binding = session_core.ui_tree();
+
+            // Set up the core with its initial state
+            stream_core.async(move |stream_core| {
+                stream_core.setup_state(&ui_binding);
+            })
+        })
     }
 }
 
@@ -66,6 +92,14 @@ impl UpdateStreamCore {
             state:          UiSessionState::new(),
             last_update_id: 0
         }
+    }
+
+    ///
+    /// Sets up the state object to track updates
+    /// 
+    pub fn setup_state(&mut self, ui_binding: &BindRef<Control>) {
+        self.state.watch_viewmodel(Arc::clone(&self.controller));
+        self.state.watch_canvases(ui_binding);
     }
 }
 
