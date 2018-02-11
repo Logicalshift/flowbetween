@@ -164,6 +164,9 @@ fn ui_update_triggers_update() {
 
 -- TODO: viewmodel changes should also result in the update stream returning
 -- Viewmodels don't implement Changeable yet which makes this hard to achieve in practice
+-- This is not a huge issue because any events will trigger an update, so viewmodel
+   changes caused by an event will always be picked up (it's just 'out of band'
+   changes that will be missed)
 
 #[test]
 fn viewmodel_update_triggers_update() {
