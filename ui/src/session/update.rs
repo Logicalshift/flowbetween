@@ -35,6 +35,9 @@ pub struct CanvasDiff {
 /// 
 #[derive(Clone, PartialEq, Debug)]
 pub enum UiUpdate {
+    /// Start of a stream of UI updates
+    Start,
+
     /// Represents a series of updates to the UI tree
     UpdateUi(Vec<UiDiff>),
 

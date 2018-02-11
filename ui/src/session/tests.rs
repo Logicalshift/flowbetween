@@ -63,6 +63,8 @@ fn session_creates_initial_event() {
     let first_item          = next_or_timeout.wait_stream().unwrap();
 
     assert!(first_item == Ok(TestItem::Updates(vec![
+        UiUpdate::Start,
+
         UiUpdate::UpdateUi(vec![UiDiff {
             address: vec![],
             new_ui: Control::empty()

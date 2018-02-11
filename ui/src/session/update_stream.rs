@@ -100,6 +100,7 @@ impl UiUpdateStream {
         let pending         = Arc::clone(&self.pending);
 
         session_core.async(move |session_core| {
+            let update_id  = session_core.last_update_id();
             let ui_binding = session_core.ui_tree();
 
             stream_core.async(move |stream_core| {
@@ -111,7 +112,8 @@ impl UiUpdateStream {
                 let initial_viewmodel   = UiUpdate::UpdateViewModel(viewmodel_update_controller_tree(&*stream_core.controller));
 
                 // Turn into a set of updates
-                let mut updates = vec![];
+                // These updates include the start event
+                let mut updates = vec![UiUpdate::Start];
                 if let Some(initial_ui) = initial_ui { updates.push(initial_ui); }
                 updates.push(initial_viewmodel);
 
@@ -119,6 +121,9 @@ impl UiUpdateStream {
                 let mut pending = pending.lock().unwrap();
 
                 *pending = Some(updates);
+
+                // Set the update ID where this was triggered
+                stream_core.last_update_id = update_id;
 
                 // Poke anything that's waiting for an update
                 let mut waiting = None;
