@@ -3,10 +3,12 @@ use super::state::*;
 use super::update::*;
 use super::super::control::*;
 use super::super::controller::*;
+use super::super::diff_viewmodel::*;
 
 use desync::*;
 use binding::*;
 use futures::*;
+use futures::task::Task;
 
 use std::mem;
 use std::sync::*;
@@ -22,7 +24,10 @@ struct UpdateStreamCore {
     state: UiSessionState,
 
     /// The ID of the last update that was generated
-    last_update_id: u64
+    last_update_id: u64,
+
+    /// Task that's waiting for a pending update
+    waiting: Option<Task>
 }
 
 ///
@@ -42,7 +47,7 @@ pub struct UiUpdateStream {
     stream_core: Arc<Desync<UpdateStreamCore>>,
 
     /// Update that was generated for the last poll and is ready to go
-    pending: Arc<Mutex<Option<Vec<UiUpdate>>>>
+    pending: Arc<Mutex<Option<Vec<UiUpdate>>>>,
 }
 
 impl UiUpdateStream {
@@ -59,11 +64,16 @@ impl UiUpdateStream {
         Self::initialise_core(Arc::clone(&session_core), Arc::clone(&stream_core));
         
         // Generate the stream
-        UiUpdateStream {
+        let new_stream = UiUpdateStream {
             session_core:   session_core,
             stream_core:    stream_core,
             pending:        pending
-        }
+        };
+
+        // Send the setup event to it
+        new_stream.generate_initial_event();
+
+        new_stream
     }
 
     ///
@@ -80,6 +90,43 @@ impl UiUpdateStream {
             })
         })
     }
+
+    ///
+    /// Creates the initial set of pending events (initial UI refresh and viewmodel refresh)
+    /// 
+    fn generate_initial_event(&self) {
+        let session_core    = Arc::clone(&self.session_core);
+        let stream_core     = Arc::clone(&self.stream_core);
+        let pending         = Arc::clone(&self.pending);
+
+        session_core.async(move |session_core| {
+            let ui_binding = session_core.ui_tree();
+
+            stream_core.async(move |stream_core| {
+                // Get the initial UI tree
+                let ui_tree = ui_binding.get();
+
+                // We generate an update that sends the entire UI and viewmodel state to the target
+                let initial_ui          = stream_core.state.update_ui(&ui_tree);
+                let initial_viewmodel   = UiUpdate::UpdateViewModel(viewmodel_update_controller_tree(&*stream_core.controller));
+
+                // Turn into a set of updates
+                let mut updates = vec![];
+                if let Some(initial_ui) = initial_ui { updates.push(initial_ui); }
+                updates.push(initial_viewmodel);
+
+                // This is the initial pending update
+                let mut pending = pending.lock().unwrap();
+
+                *pending = Some(updates);
+
+                // Poke anything that's waiting for an update
+                let mut waiting = None;
+                mem::swap(&mut waiting, &mut stream_core.waiting);
+                waiting.map(|waiting| waiting.notify());
+            });
+        })
+    }
 }
 
 impl UpdateStreamCore {
@@ -90,7 +137,8 @@ impl UpdateStreamCore {
         UpdateStreamCore {
             controller:     controller,
             state:          UiSessionState::new(),
-            last_update_id: 0
+            last_update_id: 0,
+            waiting:        None
         }
     }
 
