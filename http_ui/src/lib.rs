@@ -16,6 +16,7 @@ extern crate futures;
 extern crate desync;
 
 mod http_user_interface;
+mod http_session;
 mod session;
 mod session_state;
 mod update;
@@ -29,6 +30,7 @@ pub mod canvas_state;
 mod canvas_update;
 
 pub use self::http_user_interface::*;
+pub use self::http_session::*;
 pub use self::session::*;
 pub use self::session_state::*;
 pub use self::update::*;

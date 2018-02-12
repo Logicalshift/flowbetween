@@ -187,9 +187,12 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     }
 }
 
+pub type HttpEventSink      = Box<Sink<SinkItem=Event, SinkError=()>>;
+pub type HttpUpdateStream   = Box<Stream<Item=Vec<Update>, Error=()>>;
+
 impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
-    type EventSink = Box<Sink<SinkItem=Event, SinkError=()>>;
-    type UpdateStream = Box<Stream<Item=Vec<Update>, Error=()>>;
+    type EventSink      = HttpEventSink;
+    type UpdateStream   = HttpUpdateStream;
 
     fn get_input_sink(&self) -> Self::EventSink {
         // Get the core event sink
