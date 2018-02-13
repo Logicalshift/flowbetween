@@ -7,9 +7,6 @@ use ui::session::*;
 
 use futures::*;
 use futures::future;
-use futures::stream;
-use futures::executor;
-use futures::executor::Spawn;
 
 use std::mem;
 

@@ -28,6 +28,7 @@ pub mod minidom;
 pub mod canvas_body;
 pub mod canvas_state;
 mod canvas_update;
+mod parked_future;
 
 pub use self::http_user_interface::*;
 pub use self::http_session::*;
