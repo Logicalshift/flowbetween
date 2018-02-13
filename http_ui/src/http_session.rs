@@ -122,6 +122,46 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
         });
 
         // finish_update is the result
-        Box::new(finish_update)
+        Box::new(finish_update.fuse())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::null_session::*;
+
+    use futures::executor;
+    use std::sync::*;
+
+    #[test]
+    fn will_return_update_for_event() {
+        let null_session        = NullSession::new();
+        let ui                  = UiSession::new(null_session);
+        let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
+        let mut http_session    = HttpSession::new(http_ui);
+
+        let mut send_an_event   = executor::spawn(http_session.send_events(vec![Event::NewSession, Event::UiRefresh]));
+        let updates             = send_an_event.wait_future();
+
+        // Update should contain the new user interface message
+        assert!(updates.unwrap().len() > 0);
+    }
+
+    #[test]
+    fn will_return_update_for_next_event() {
+        let null_session        = NullSession::new();
+        let ui                  = UiSession::new(null_session);
+        let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
+        let mut http_session    = HttpSession::new(http_ui);
+
+        let mut send_an_event   = executor::spawn(http_session.send_events(vec![Event::NewSession, Event::UiRefresh]));
+        send_an_event.wait_future().unwrap();
+
+        let mut send_another_event  = executor::spawn(http_session.send_events(vec![Event::Tick]));
+        let updates                 = send_another_event.wait_future();
+
+        // Second update will return but as it's a tick and nothing happens there will be no events
+        assert!(updates.unwrap().len() == 0);
     }
 }
