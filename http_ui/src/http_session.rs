@@ -10,13 +10,14 @@ use futures::*;
 use futures::future;
 
 use std::mem;
+use std::sync::*;
 
 ///
 /// Represents a session running on a HTTP connection 
 /// 
 pub struct HttpSession<CoreUi> {
     /// The core UI object
-    http_ui: HttpUserInterface<CoreUi>,
+    http_ui: Arc<HttpUserInterface<CoreUi>>,
 
     /// The event sink for the UI
     input: Box<Future<Item=HttpEventSink, Error=()>>,
@@ -29,7 +30,7 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
     ///
     /// Creates a new session from a HTTP user interface
     /// 
-    pub fn new(http_ui: HttpUserInterface<CoreUi>) -> HttpSession<CoreUi> {
+    pub fn new(http_ui: Arc<HttpUserInterface<CoreUi>>) -> HttpSession<CoreUi> {
         let input   = Box::new(future::ok(http_ui.get_input_sink()));
         let updates = Box::new(future::ok(http_ui.get_updates()));
 
@@ -44,6 +45,7 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
     /// Restarts the update stream (will regenerate the 'new UI' event)
     /// 
     pub fn restart_updates(&mut self) {
+        // Just replace the update stream with a new one (it'll generate the 'new UI' event immedately)
         self.updates = Box::new(future::ok(self.http_ui.get_updates()));
     }
 
@@ -132,14 +134,13 @@ mod test {
     use super::super::null_session::*;
 
     use futures::executor;
-    use std::sync::*;
 
     #[test]
     fn will_return_update_for_event() {
         let null_session        = NullSession::new();
         let ui                  = UiSession::new(null_session);
         let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
-        let mut http_session    = HttpSession::new(http_ui);
+        let mut http_session    = HttpSession::new(Arc::new(http_ui));
 
         let mut send_an_event   = executor::spawn(http_session.send_events(vec![Event::NewSession, Event::UiRefresh]));
         let updates             = send_an_event.wait_future();
@@ -153,7 +154,7 @@ mod test {
         let null_session        = NullSession::new();
         let ui                  = UiSession::new(null_session);
         let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
-        let mut http_session    = HttpSession::new(http_ui);
+        let mut http_session    = HttpSession::new(Arc::new(http_ui));
 
         let mut send_an_event   = executor::spawn(http_session.send_events(vec![Event::NewSession, Event::UiRefresh]));
         send_an_event.wait_future().unwrap();
