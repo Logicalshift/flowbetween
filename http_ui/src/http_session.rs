@@ -1,5 +1,6 @@
 use super::event::*;
 use super::update::*;
+use super::parked_future::*;
 use super::http_user_interface::*;
 
 use ui::*;
@@ -56,11 +57,13 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
         // (If we get out of sync, we should be out of sync only for a single
         // event)
 
-        // Take ownership of the future input and upates. These errors will
-        // replace them while this function executes but will be gone by the
-        // time we finish
-        let mut input: Box<Future<Item=HttpEventSink, Error=()>>        = Box::new(future::err(()));
-        let mut updates: Box<Future<Item=HttpUpdateStream, Error=()>>   = Box::new(future::err(()));
+        // Park our future input and updates
+        let (input, future_input)       = park_future();
+        let (updates, future_updates)   = park_future();
+
+        // Take ownership of the future input and updates by replacing them with our parked values
+        let mut input: Box<Future<Item=HttpEventSink, Error=()>>        = Box::new(input);
+        let mut updates: Box<Future<Item=HttpUpdateStream, Error=()>>   = Box::new(updates);
 
         mem::swap(&mut input, &mut self.input);
         mem::swap(&mut updates, &mut self.updates);
@@ -99,7 +102,7 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
                 let next_update = updates.as_mut().unwrap().poll();
 
                 match next_update {
-                    Ok(Async::Ready(result))    => Ok(Async::Ready((updates.take(), result.unwrap_or(vec![])))),
+                    Ok(Async::Ready(result))    => Ok(Async::Ready((updates.take().unwrap(), result.unwrap_or(vec![])))),
                     Ok(Async::NotReady)         => Ok(Async::NotReady),
                     Err(derp)                   => Err(derp)
                 }
@@ -107,11 +110,12 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
         });
         
         // Once the update is ready, return the input and updates so we can send the next set of events and produce the result
-        let finish_update = wait_for_update.map(|(input, updates, result)| {
-            // TODO: Store/notify the input
-            // (Really want a way to park/unpark a future but the futures library doesn't have a thing like that that I can see)
+        let finish_update = wait_for_update.map(move |(input, updates, result)| {
+            // Return ownership of the input
+            future_input.unpark(input);
 
-            // TODO: Store/notify the updates
+            // Return ownership of the updates
+            future_updates.unpark(updates);
 
             // Only return the result
             result
