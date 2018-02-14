@@ -109,10 +109,20 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
         let input_and_updates = input.join(updates);
 
         // Once they are both ready, load the events into the input sink
-        let load_events = input_and_updates.map(move |(mut input, updates)| {
+        let load_events = input_and_updates.map(move |(mut input, mut updates)| {
             // Load the events
             for evt in events {
-                input.start_send(evt).unwrap();
+                match evt {
+                    Event::UiRefresh => {
+                        // Replace the updates with a new set if we get a refresh event
+                        updates = http_ui.get_updates();
+                    },
+
+                    evt => {
+                        // Send the other events to the input
+                        input.start_send(evt).unwrap();
+                    }
+                };
             }
 
             // Pass the input and updates forwards
