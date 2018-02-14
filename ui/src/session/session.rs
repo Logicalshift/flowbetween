@@ -24,7 +24,7 @@ pub struct UiSession<CoreController: Controller> {
     core: Arc<Desync<UiSessionCore>>,
 
     /// A releasable that tracks UI updates
-    ui_update_lifetime: Box<Releasable>
+    ui_update_lifetime: Mutex<Box<Releasable>>
 }
 
 impl<CoreController: Controller+'static> UiSession<CoreController> {
@@ -41,7 +41,7 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
         UiSession {
             controller:         controller,
             core:               core,
-            ui_update_lifetime: ui_update_lifetime
+            ui_update_lifetime: Mutex::new(ui_update_lifetime)
         }
     }
 
@@ -61,7 +61,7 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
 
 impl<CoreController: Controller> Drop for UiSession<CoreController> {
     fn drop(&mut self) {
-        self.ui_update_lifetime.done();
+        self.ui_update_lifetime.lock().unwrap().done();
     }
 }
 
