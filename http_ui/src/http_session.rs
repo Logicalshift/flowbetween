@@ -53,6 +53,8 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
     /// Sends some updates to this object and returns the resulting update
     /// 
     pub fn send_events(&mut self, events: Vec<Event>) -> Box<Future<Item=Vec<Update>, Error=()>> {
+        // TODO: if the update stream is newly generated, we should wait for the initial 'new UI' event before polling for other events
+
         // We rely on the core UI only generating updates when we're polling
         // for them here.
         //
