@@ -42,11 +42,43 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
     }
 
     ///
-    /// Restarts the update stream (will regenerate the 'new UI' event)
+    /// Restarts the update stream (will regenerate the 'new UI' event, which is
+    /// returned in the future return value).
     /// 
-    pub fn restart_updates(&mut self) {
-        // Just replace the update stream with a new one (it'll generate the 'new UI' event immedately)
+    pub fn restart_updates(&mut self) -> Box<Future<Item=Vec<Update>, Error=()>> {
+        // Replace the update stream with a new one (the 'new session' even will start here)
         self.updates = Box::new(future::ok(self.http_ui.get_updates()));
+
+        // Result is a future event from the updates
+        let (updates, future_updates) = park_future();
+
+        // We'll own the updates while we wait for this event
+        let mut updates: Box<Future<Item=HttpUpdateStream, Error=()>> = Box::new(updates);
+        mem::swap(&mut updates, &mut self.updates);
+
+        let wait_for_update = updates.then(|updates| {
+            // Poll for the next update
+            let updates     = updates.unwrap();
+            let mut updates = Some(updates);
+
+            future::poll_fn(move || {
+                let next_update = updates.as_mut().unwrap().poll();
+
+                match next_update {
+                    Ok(Async::Ready(result))    => Ok(Async::Ready((updates.take().unwrap(), result.unwrap_or(vec![])))),
+                    Ok(Async::NotReady)         => Ok(Async::NotReady),
+                    Err(derp)                   => Err(derp)
+                }
+            })
+        });
+
+        // Once the update is available, return ownership and supply the result to the caller
+        let finish_update = wait_for_update.map(|(updates, result)| {
+            future_updates.unpark(updates);
+            result
+        });
+
+        Box::new(finish_update.fuse())
     }
 
     ///
@@ -60,6 +92,7 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
         //
         // (If we get out of sync, we should be out of sync only for a single
         // event)
+        let http_ui = Arc::clone(&self.http_ui);
 
         // Park our future input and updates
         let (input, future_input)       = park_future();
