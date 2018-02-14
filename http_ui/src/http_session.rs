@@ -115,6 +115,7 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
                 match evt {
                     Event::UiRefresh => {
                         // Replace the updates with a new set if we get a refresh event
+                        // TODO: defer this until after all the events are sent!
                         updates = http_ui.get_updates();
                     },
 
