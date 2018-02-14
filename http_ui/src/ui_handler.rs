@@ -426,10 +426,10 @@ impl<TSession: Session+'static> UiHandler<TSession> {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UiHandlerRequest {
     /// The session ID, if there is one
-    session_id: Option<String>,
+    pub session_id: Option<String>,
 
     /// The events that the UI wishes to report with this request
-    events: Vec<Event>
+    pub events: Vec<Event>
 }
 
 ///
@@ -438,7 +438,7 @@ pub struct UiHandlerRequest {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct UiHandlerResponse {
     /// Updates generated for this request
-    updates: Vec<Update>
+    pub updates: Vec<Update>
 }
 
 impl<TSession: Session+'static> Handler for UiHandler<TSession> {
