@@ -7,7 +7,6 @@ use super::http_user_interface::*;
 // TODO: only used for the response/request structures
 use super::ui_handler::*;
 
-use ui::*;
 use ui::session::*;
 
 use iron::*;
@@ -18,6 +17,8 @@ use iron::modifiers::*;
 use mount::*;
 
 use uuid::*;
+use serde_json;
+use bodyparser::*;
 use futures::executor;
 
 use std::sync::*;
@@ -130,5 +131,88 @@ impl<CoreController: HttpController+'static> UiHandler2<CoreController> {
 
         // Add to the response
         response.updates.extend(update_results);
+    }
+
+    ///
+    /// Handles a UI handler request
+    ///
+    pub fn handle_ui_request(&self, req: UiHandlerRequest, base_url: &str) -> Response {
+        // The response that we'll return for this request
+        let mut response    = UiHandlerResponse { updates: vec![] };
+        let session_id      = req.session_id.clone();
+
+        // Dispatch depending on whether or not this request corresponds to an active session
+        match session_id {
+            None                    => self.handle_no_session(base_url, &mut response, &req),
+            Some(ref session_id)    => {
+                // Try to fetch the session for this ID
+                let session = {
+                    self.sessions.lock().unwrap()
+                        .get(session_id)
+                        .cloned()
+                };
+
+                // If the session ID is not presently registered, then we proceed as if the session is missing 
+                match session {
+                    Some(session) => {
+                        let mut session = session.lock().unwrap();
+                        self.handle_with_session(&mut session, &mut response, req)
+                    },
+                    _ => 
+                        self.handle_no_session(base_url, &mut response, &req)
+                }
+            }
+        };
+
+        // Generate the final response
+        Response::with((
+            status::Ok,
+            Header(ContentType::json()),
+            serde_json::to_string(&response).unwrap()
+        ))
+    }
+}
+
+impl<CoreController: HttpController+'static> Handler for UiHandler2<CoreController> {
+    ///
+    /// Handles a request for a UI session (or creates new sessions)
+    ///
+    fn handle(&self, req: &mut Request) -> IronResult<Response> {
+        match req.method {
+            Method::Post => {
+                let is_json         = match req.headers.get() { Some(&ContentType(Mime(TopLevel::Application, SubLevel::Json, _))) => true, _ => false };
+                let mut base_url    = Self::base_url(req).path().join("/");
+
+                if base_url.chars().nth(0) != Some('/') {
+                    base_url.insert(0, '/');
+                }
+
+                if !is_json {
+                    // Must be a JSON POST request
+                    Ok(Response::with((status::BadRequest)))
+                } else {
+                    // Parse the request
+                    let request = req.get::<Struct<UiHandlerRequest>>();
+
+                    match request {
+                        Ok(Some(request))   => Ok(self.handle_ui_request(request, &base_url)),
+                        Ok(None)            => Ok(Response::with((status::BadRequest))),
+                        Err(_)              => Ok(Response::with((status::BadRequest)))
+                    }
+                }
+            },
+
+            /*
+            Method::Get => {
+                // Resource fetch
+                Ok(self.handle_resource_request(req))
+            },
+            */
+
+            _ => {
+                // Unsupported method
+                Ok(Response::with((status::BadRequest)))
+            }
+        }
     }
 }

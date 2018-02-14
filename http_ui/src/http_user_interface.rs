@@ -187,8 +187,8 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     }
 }
 
-pub type HttpEventSink      = Box<Sink<SinkItem=Event, SinkError=()>>;
-pub type HttpUpdateStream   = Box<Stream<Item=Vec<Update>, Error=()>>;
+pub type HttpEventSink      = Box<Sink<SinkItem=Event, SinkError=()>+Send>;
+pub type HttpUpdateStream   = Box<Stream<Item=Vec<Update>, Error=()>+Send>;
 
 impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
     type EventSink      = HttpEventSink;

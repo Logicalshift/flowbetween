@@ -20,10 +20,10 @@ pub struct HttpSession<CoreUi> {
     http_ui: Arc<HttpUserInterface<CoreUi>>,
 
     /// The event sink for the UI
-    input: Box<Future<Item=HttpEventSink, Error=()>>,
+    input: Box<Future<Item=HttpEventSink, Error=()>+Send>,
 
     /// The stream of events for the session (or None if it has been reset or not started yet)
-    updates: Box<Future<Item=HttpUpdateStream, Error=()>>
+    updates: Box<Future<Item=HttpUpdateStream, Error=()>+Send>
 }
 
 impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
@@ -53,7 +53,7 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
         let (updates, future_updates) = park_future();
 
         // We'll own the updates while we wait for this event
-        let mut updates: Box<Future<Item=HttpUpdateStream, Error=()>> = Box::new(updates);
+        let mut updates: Box<Future<Item=HttpUpdateStream, Error=()>+Send> = Box::new(updates);
         mem::swap(&mut updates, &mut self.updates);
 
         let wait_for_update = updates.then(|updates| {
@@ -99,8 +99,8 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
         let (updates, future_updates)   = park_future();
 
         // Take ownership of the future input and updates by replacing them with our parked values
-        let mut input: Box<Future<Item=HttpEventSink, Error=()>>        = Box::new(input);
-        let mut updates: Box<Future<Item=HttpUpdateStream, Error=()>>   = Box::new(updates);
+        let mut input: Box<Future<Item=HttpEventSink, Error=()>+Send>        = Box::new(input);
+        let mut updates: Box<Future<Item=HttpUpdateStream, Error=()>+Send>   = Box::new(updates);
 
         mem::swap(&mut input, &mut self.input);
         mem::swap(&mut updates, &mut self.updates);
