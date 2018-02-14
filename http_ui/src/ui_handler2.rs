@@ -18,6 +18,7 @@ use iron::modifiers::*;
 use mount::*;
 
 use uuid::*;
+use futures::executor;
 
 use std::sync::*;
 use std::collections::*;
@@ -115,5 +116,19 @@ impl<CoreController: HttpController+'static> UiHandler2<CoreController> {
                 _ => response.updates.push(Update::MissingSession)
             }
         }
+    }
+
+    ///
+    /// Sends a request to a session
+    /// 
+    fn handle_with_session(&self, session: &mut HttpSession<UiSession<CoreController>>, response: &mut UiHandlerResponse, req: UiHandlerRequest) {
+        // Send the events to the session
+        let handle_result = session.send_events(req.events);
+
+        // Wait for the response
+        let update_results = executor::spawn(handle_result).wait_future().unwrap();
+
+        // Add to the response
+        response.updates.extend(update_results);
     }
 }
