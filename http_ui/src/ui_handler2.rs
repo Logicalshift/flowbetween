@@ -7,6 +7,7 @@ use super::http_user_interface::*;
 // TODO: only used for the response/request structures
 use super::ui_handler::*;
 
+use ui::*;
 use ui::session::*;
 
 use iron::*;
@@ -20,6 +21,7 @@ use uuid::*;
 use serde_json;
 use bodyparser::*;
 use futures::executor;
+use percent_encoding::*;
 
 use std::sync::*;
 use std::collections::*;
@@ -170,6 +172,34 @@ impl<CoreController: HttpController+'static> UiHandler2<CoreController> {
             Header(ContentType::json()),
             serde_json::to_string(&response).unwrap()
         ))
+    }
+
+    ///
+    /// Returns the controller and the resource name for a URL containing a controller/resource path
+    ///
+    fn decode_controller_path(&self, session: &HttpSession<UiSession<CoreController>>, relative_url: Url) -> Option<(Arc<Controller>, String)> {
+        // Not found if the path is empty
+        if relative_url.path().len() == 0 {
+            return None;
+        }
+
+        let path = relative_url.path();
+
+        // The first part of the path indicates the controller
+        let mut controller: Option<Arc<Controller>> = Some((**session.ui()).clone());
+
+        for path_component in 0..(path.len()-1) {
+            let next_controller_name = &*percent_decode(path[path_component].as_bytes())
+                .decode_utf8()
+                .map(|cow| cow.into_owned())
+                .unwrap_or(String::from(path[path_component]));
+            controller = controller.map_or(None, move |controller| controller.get_subcontroller(next_controller_name));
+        }
+
+        // Final component is the resource name (or id)
+        let resource_name = String::from(*path.last().unwrap());
+
+        controller.map(move |controller| (controller, resource_name))
     }
 }
 
