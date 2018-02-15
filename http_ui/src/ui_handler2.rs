@@ -1,5 +1,6 @@
 use super::event::*;
 use super::update::*;
+use super::canvas_body::*;
 use super::http_session::*;
 use super::http_controller::*;
 use super::http_user_interface::*;
@@ -23,6 +24,7 @@ use bodyparser::*;
 use futures::executor;
 use percent_encoding::*;
 
+use std::str::*;
 use std::sync::*;
 use std::collections::*;
 
@@ -201,6 +203,136 @@ impl<CoreController: HttpController+'static> UiHandler2<CoreController> {
 
         controller.map(move |controller| (controller, resource_name))
     }
+
+    ///
+    /// Generates a response for a canvas
+    ///
+    fn canvas_response(&self, canvas: &Resource<BindingCanvas>) -> Response {
+        let mut response = Response::with((
+            status::Ok,
+            Header(ContentType("application/flocanvas; charset=utf-8".parse::<Mime>().unwrap()))
+        ));
+        response.body = Some(Box::new(CanvasBody::new(canvas)));
+        response
+    }
+
+    ///
+    /// Attempts to retrieve a canvas from the session
+    ///
+    pub fn handle_canvas_get(&self, session: &HttpSession<UiSession<CoreController>>, relative_url: Url) -> Response {
+        if let Some((controller, canvas_name)) = self.decode_controller_path(session, relative_url) {
+            let canvas_resources    = controller.get_canvas_resources();
+            let canvas              = canvas_resources.map_or(None, |resources| {
+                if let Ok(id) = u32::from_str(&canvas_name) {
+                    resources.get_resource_with_id(id)
+                } else {
+                    resources.get_named_resource(&canvas_name)
+                }
+            });
+
+            if let Some(canvas) = canvas {
+                self.canvas_response(&canvas)
+            } else {
+                Response::with((status::NotFound))
+            }
+        } else {
+            // Not found
+            Response::with((status::NotFound))
+        }
+    }
+
+    ///
+    /// Generates a HTTP response containing image data
+    /// 
+    fn image_response(&self, image: Resource<Image>) -> Response {
+        match *image {
+            Image::Png(ref data) => {
+                let mut response = Response::with((
+                    status::Ok,
+                    Header(ContentType::png())
+                ));
+                response.body = Some(Box::new(data.read()));
+                response
+            },
+
+            Image::Svg(ref data) => {
+                let mut response = Response::with((
+                    status::Ok,
+                    Header(ContentType("image/svg+xml; charset=utf-8".parse::<Mime>().unwrap()))
+                ));
+                response.body = Some(Box::new(data.read()));
+                response
+            }
+        }
+    }
+
+    ///
+    /// Attempts to retrieve an image from the session
+    ///
+    pub fn handle_image_get(&self, session: &HttpSession<UiSession<CoreController>>, relative_url: Url) -> Response {
+        if let Some((controller, image_name)) = self.decode_controller_path(session, relative_url) {
+            // Final component is the image name (or id)
+            let image_resources = controller.get_image_resources();
+            let image           = image_resources.map_or(None, |resources| {
+                if let Ok(id) = u32::from_str(&image_name) {
+                    resources.get_resource_with_id(id)
+                } else {
+                    resources.get_named_resource(&image_name)
+                }
+            });
+
+            // Either return the image data, or not found
+            if let Some(image) = image {
+                // Return the image
+                self.image_response(image)
+            } else {
+                // No image found
+                Response::with((status::NotFound))
+            }
+        } else {
+            return Response::with((status::NotFound));
+        }
+    }
+
+    ///
+    /// Handles a get resources request
+    /// 
+    pub fn handle_resource_request(&self, req: &mut Request) -> Response {
+        if req.url.path().len() < 2 {
+            // Path should be session_id/resource_type
+            return Response::with((status::NotFound));
+        }
+
+
+        // Try to retrieve the session
+        let session_id      = req.url.path()[0];
+        let resource_type   = req.url.path()[1];
+
+        let session         = {
+            let active_sessions = self.sessions.lock().unwrap();
+            active_sessions.get(session_id).cloned()
+        };
+
+        if let Some(session) = session {
+            let session         = session.lock().unwrap();
+            let remaining_path  = req.url.path()[2..].join("/");
+            let mut partial_url = req.url.clone();
+
+            partial_url.as_mut().set_path(&remaining_path);
+
+            // Action depends on the resource type
+            match resource_type {
+                // 'i' is shorthand for 'image'
+                "i"     => self.handle_image_get(&*session, partial_url),
+                "c"     => self.handle_canvas_get(&*session, partial_url),
+
+                _       => Response::with((status::NotFound))
+            }
+        } else {
+            // Session not found
+            Response::with((status::NotFound))
+        }
+    }
 }
 
 impl<CoreController: HttpController+'static> Handler for UiHandler2<CoreController> {
@@ -232,12 +364,10 @@ impl<CoreController: HttpController+'static> Handler for UiHandler2<CoreControll
                 }
             },
 
-            /*
             Method::Get => {
                 // Resource fetch
                 Ok(self.handle_resource_request(req))
             },
-            */
 
             _ => {
                 // Unsupported method
