@@ -5,9 +5,6 @@ use super::http_session::*;
 use super::http_controller::*;
 use super::http_user_interface::*;
 
-// TODO: only used for the response/request structures
-use super::ui_handler::*;
-
 use ui::*;
 use ui::session::*;
 
@@ -375,4 +372,25 @@ impl<CoreController: HttpController+'static> Handler for UiHandler2<CoreControll
             }
         }
     }
+}
+
+///
+/// Structure of a request sent to the UI handler
+///
+#[derive(Clone, Serialize, Deserialize)]
+pub struct UiHandlerRequest {
+    /// The session ID, if there is one
+    pub session_id: Option<String>,
+
+    /// The events that the UI wishes to report with this request
+    pub events: Vec<Event>
+}
+
+///
+/// Structure of a UI handler response
+///
+#[derive(Clone, Serialize, Deserialize)]
+pub struct UiHandlerResponse {
+    /// Updates generated for this request
+    pub updates: Vec<Update>
 }

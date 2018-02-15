@@ -1,7 +1,6 @@
 use std::sync::*;
 
-use super::session::*;
-use super::session_state::*;
+use super::http_controller::*;
 
 use ui::*;
 use binding::*;
@@ -24,9 +23,9 @@ impl NullSession {
     }
 }
 
-impl Session for NullSession {
+impl HttpController for NullSession {
     /// Creates a new session
-    fn start_new(_state: Arc<SessionState>) -> Self {
+    fn start_new() -> Self {
         NullSession::new()
     }
 }

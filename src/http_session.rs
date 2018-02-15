@@ -77,15 +77,6 @@ impl FlowBetweenSession {
     }
 }
 
-impl Session for FlowBetweenSession {
-    /// Creates a new session
-    fn start_new(_state: Arc<SessionState>) -> Self {
-        let session = FlowBetweenSession::new();
-
-        session
-    }
-}
-
 impl HttpController for FlowBetweenSession {
     /// Creates a new session
     fn start_new() -> Self {
