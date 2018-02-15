@@ -42,6 +42,20 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
     }
 
     ///
+    /// Retrieves the HTTP user interface that this session is for
+    /// 
+    pub fn http_ui(&self) -> Arc<HttpUserInterface<CoreUi>> {
+        Arc::clone(&self.http_ui)
+    }
+
+    ///
+    /// Retrieves the core UI that this session is for
+    /// 
+    pub fn ui(&self) -> Arc<CoreUi> {
+        self.http_ui.core()
+    }
+
+    ///
     /// Restarts the update stream (will regenerate the 'new UI' event, which is
     /// returned in the future return value).
     /// 
