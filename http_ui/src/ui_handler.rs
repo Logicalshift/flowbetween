@@ -28,16 +28,16 @@ use std::collections::*;
 ///
 /// Handles creating and maintainng HTTP sessions
 /// 
-pub struct UiHandler2<CoreController: HttpController> {
+pub struct UiHandler<CoreController: HttpController> {
     sessions: Mutex<HashMap<String, Arc<Mutex<HttpSession<UiSession<CoreController>>>>>>
 }
 
-impl<CoreController: HttpController+'static> UiHandler2<CoreController> {
+impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     ///
     /// Creates a new UI handler
     /// 
-    pub fn new() -> UiHandler2<CoreController> {
-        UiHandler2 {
+    pub fn new() -> UiHandler<CoreController> {
+        UiHandler {
             sessions: Mutex::new(HashMap::new())
         }
     }
@@ -332,7 +332,7 @@ impl<CoreController: HttpController+'static> UiHandler2<CoreController> {
     }
 }
 
-impl<CoreController: HttpController+'static> Handler for UiHandler2<CoreController> {
+impl<CoreController: HttpController+'static> Handler for UiHandler<CoreController> {
     ///
     /// Handles a request for a UI session (or creates new sessions)
     ///
