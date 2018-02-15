@@ -34,7 +34,7 @@ const SERVER_ADDR: &str     = "0.0.0.0:3000";
 fn main() {
     let mut mount = Mount::new();
     mount.mount("/", flowbetween_static_files());
-    mount.mount("/flowbetween/session", UiHandler::<FlowBetweenSession>::new());
+    mount.mount("/flowbetween/session", UiHandler2::<FlowBetweenSession>::new());
 
     println!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, SERVER_ADDR);
 

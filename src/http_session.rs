@@ -86,6 +86,15 @@ impl Session for FlowBetweenSession {
     }
 }
 
+impl HttpController for FlowBetweenSession {
+    /// Creates a new session
+    fn start_new() -> Self {
+        let session = FlowBetweenSession::new();
+
+        session
+    }
+}
+
 impl Controller for FlowBetweenSession {
     fn ui(&self) -> BindRef<Control> {
         BindRef::new(&self.ui)
