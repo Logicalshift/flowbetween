@@ -123,7 +123,10 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     ///
     /// Sends a request to a session
     /// 
-    fn handle_with_session(&self, session: &mut HttpSession<UiSession<CoreController>>, response: &mut UiHandlerResponse, req: UiHandlerRequest) {
+    fn handle_with_session(&self, session: &mut HttpSession<UiSession<CoreController>>, response: &mut UiHandlerResponse, mut req: UiHandlerRequest) {
+        // Always finish with a tick event
+        req.events.push(Event::Tick);
+
         // Send the events to the session
         let handle_result = session.send_events(req.events);
 
