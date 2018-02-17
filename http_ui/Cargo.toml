@@ -20,3 +20,4 @@ percent-encoding    = "^1.0.1"
 futures             = "^0.1.17"
 desync              = { git = "https://github.com/logicalshift/desync", branch = "develop" }
 itertools           = "^0.7.4"
+websocket           = "^0.20.2"
