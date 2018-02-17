@@ -27,7 +27,6 @@ mod ws_handler;
 mod null_session;
 pub mod minidom;
 pub mod canvas_body;
-pub mod canvas_state;
 mod canvas_update;
 mod parked_future;
 
