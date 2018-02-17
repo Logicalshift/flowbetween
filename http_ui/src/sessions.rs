@@ -34,9 +34,12 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
         // Generate a session ID using the UUID library
         let session_id          = Uuid::new_v4().simple().to_string();
 
+        // Produce the URI for this session
+        let session_uri         = format!("{}/{}", base_path, session_id);
+
         // Generate the varioud components of the session
         let ui_session      = UiSession::new(controller);
-        let http_ui         = HttpUserInterface::new(Arc::new(ui_session), base_path.to_string());
+        let http_ui         = HttpUserInterface::new(Arc::new(ui_session), session_uri);
         let http_session    = HttpSession::new(Arc::new(http_ui));
 
         // Store the new session and associate it with this ID

@@ -1,9 +1,9 @@
 use super::event::*;
 use super::update::*;
+use super::sessions::*;
 use super::canvas_body::*;
 use super::http_session::*;
 use super::http_controller::*;
-use super::http_user_interface::*;
 
 use ui::*;
 use ui::session::*;
@@ -15,7 +15,6 @@ use iron::headers::*;
 use iron::modifiers::*;
 use mount::*;
 
-use uuid::*;
 use serde_json;
 use bodyparser::*;
 use futures::executor;
@@ -23,13 +22,12 @@ use percent_encoding::*;
 
 use std::str::*;
 use std::sync::*;
-use std::collections::*;
 
 ///
 /// Handles creating and maintainng HTTP sessions
 /// 
 pub struct UiHandler<CoreController: HttpController> {
-    sessions: Mutex<HashMap<String, Arc<Mutex<HttpSession<UiSession<CoreController>>>>>>
+    sessions: Arc<WebSessions<CoreController>>
 }
 
 impl<CoreController: HttpController+'static> UiHandler<CoreController> {
@@ -38,7 +36,7 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     /// 
     pub fn new() -> UiHandler<CoreController> {
         UiHandler {
-            sessions: Mutex::new(HashMap::new())
+            sessions: Arc::new(WebSessions::new())
         }
     }
 
@@ -81,22 +79,11 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     /// Creates a new session and session state, returning the ID
     ///
     pub fn new_session(&self, base_url: &str) -> String {
-        // Generate an ID for this session
-        let session_id          = Uuid::new_v4().simple().to_string();
-
-        // Produce the URI for this session
-        let session_uri         = format!("{}/{}", base_url, session_id);
-
         // Create the session controller
         let session_controller  = CoreController::start_new();
 
-        // Turn into a HttpSession by starting up a UI session
-        let ui                  = UiSession::new(session_controller);
-        let http_ui             = HttpUserInterface::new(Arc::new(ui), session_uri);
-        let session             = HttpSession::new(Arc::new(http_ui));
-
         // Store in the list of active sessions
-        self.sessions.lock().unwrap().insert(session_id.clone(), Arc::new(Mutex::new(session)));
+        let session_id = self.sessions.new_session(session_controller, base_url);
 
         // Result is the session ID
         session_id
@@ -150,11 +137,7 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
             None                    => self.handle_no_session(base_url, &mut response, &req),
             Some(ref session_id)    => {
                 // Try to fetch the session for this ID
-                let session = {
-                    self.sessions.lock().unwrap()
-                        .get(session_id)
-                        .cloned()
-                };
+                let session = self.sessions.get_session(session_id);
 
                 // If the session ID is not presently registered, then we proceed as if the session is missing 
                 match session {
@@ -308,10 +291,7 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
         let session_id      = req.url.path()[0];
         let resource_type   = req.url.path()[1];
 
-        let session         = {
-            let active_sessions = self.sessions.lock().unwrap();
-            active_sessions.get(session_id).cloned()
-        };
+        let session         = self.sessions.get_session(session_id);
 
         if let Some(session) = session {
             let session         = session.lock().unwrap();
