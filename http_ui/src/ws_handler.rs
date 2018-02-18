@@ -55,7 +55,7 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                 let sessions = sessions.clone();
 
                 // Only want connections for the rust-websocket protocol
-                if !upgrade.protocols().iter().any(|protocol| protocol == "flo") {
+                if !upgrade.protocols().iter().any(|protocol| protocol == "flo-web") {
                     // Reject anything that doesn't support it
                     tokio_core_handle.spawn(upgrade.reject().map_err(|_| ()).map(|_| ()));
                     return Ok(());
@@ -88,7 +88,7 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
 
                         // Accept websocket upgrades if the protocol is supported
                         let handle_request = upgrade
-                            .use_protocol("flo")
+                            .use_protocol("flo-web")
                             .accept()
                             .and_then(move |(client, _headers)| {
                                 // We send events to the sink and retrieve updates from the stream (as JSON messages)
