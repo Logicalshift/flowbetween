@@ -1874,7 +1874,7 @@ function flowbetween(root_node) {
                 }
             });
 
-            return update_promise;
+            return current_promise;
         };
     })();
 
@@ -1913,6 +1913,7 @@ function flowbetween(root_node) {
     /// Makes a request to refresh the current state of the UI
     ///
     let refresh_ui = () => {
+        note('Requesting UI refresh');
         let request = make_request([ make_event('UiRefresh') ], running_session_id);
 
         return send_request(request);
