@@ -26,6 +26,9 @@ function flowbetween(root_node) {
     // UTF encoder
     let utf8 = new TextEncoder('utf-8');
 
+    // Maps websockets to session IDs
+    let websocket_for_session = {};
+
     // Find out where we're running
     let doc_url  = document.createElement('a');
     doc_url.href = document.URL;
@@ -1558,6 +1561,42 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Connects to a websocket running on a different port on the same server
+    ///
+    let connect_websocket = (websocket_port, session_id) => {
+        var connect = new Promise((resolve) => {
+            // Construct the WS URL from the document URL
+            let ws_base_url     = 'ws://' + doc_url.hostname + ':' + websocket_port;
+            let ws_session_url  = ws_base_url + '/' + session_id;
+
+            // Connect the websocket, using the flo-web protocol
+            let websocket = new WebSocket(ws_session_url, ['flo-web']);
+
+            // Add event handlers for it
+            websocket.addEventListener('message', (event) => {
+                // Decode the updates from the message
+                let updates = JSON.parse(event.data);
+
+                // Dispatch them
+                dispatch_updates(updates)
+                    .catch((err) => {
+                        error('Request failed.', err);
+                    });
+            });
+
+            websocket.addEventListener('open', () => {
+                // Register this as the socket for this session
+                websocket_for_session[session_id] = websocket;
+
+                // Resolve the promise
+                resolve();
+            });
+        });
+
+        return connect;
+    };
+
+    ///
     /// Creates a request for a particular session
     ///
     let make_request = (events, session_id) => {
@@ -1783,6 +1822,11 @@ function flowbetween(root_node) {
                     current_promise = current_promise
                         .then(() => on_new_session(update['NewSession']));
 
+                } else if (update['WebsocketPort']) {
+
+                    current_promise = current_promise
+                        .then(() => connect_websocket(update['WebsocketPort'], running_session_id));
+
                 } else if (update['NewUserInterfaceHtml']) {
 
                     let new_ui_html     = update['NewUserInterfaceHtml'];
@@ -1828,12 +1872,26 @@ function flowbetween(root_node) {
     /// Sends a request to the session URI and processes the result
     ///
     let send_request = (request) => {
-        return retry(() => http_post(request), () => warn('UI request failed - retrying'))
-            .then((response) => response_to_object(response))
-            .then((ui_request) => dispatch_updates(ui_request.updates))
-            .catch((err) => {
-                error('Request failed.', err);
+        let session_id  = request.session_id;
+        let events      = request.events;
+
+        if (session_id && websocket_for_session[session_id]) {
+            // Send the request
+            var promise = new Promise((resolve) => {
+                websocket_for_session[session_id].send(JSON.stringify(events));
+                resolve();
             });
+
+            // Return the promise (TODO: resolve once we receive the corresponding update)
+            return promise;
+        } else {
+            return retry(() => http_post(request), () => warn('UI request failed - retrying'))
+                .then((response) => response_to_object(response))
+                .then((ui_request) => dispatch_updates(ui_request.updates))
+                .catch((err) => {
+                    error('Request failed.', err);
+                });
+        }
     };
 
     ///
