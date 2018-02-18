@@ -2,6 +2,9 @@ use super::sessions::*;
 
 use ui::*;
 use websocket::*;
+use websocket::async::{Server, TcpListener};
+use websocket::server::{WsServer, NoTlsAcceptor};
+use tokio_core::reactor;
 
 use std::sync::*;
 
@@ -27,5 +30,15 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
     /// 
     pub fn from_sessions(sessions: Arc<WebSessions<CoreController>>) -> WebSocketHandler<CoreController> {
         WebSocketHandler { sessions: sessions }
+    }
+
+    ///
+    /// Creates a websocket. Bind address should be something like '127.0.0.1:3001'
+    /// 
+    pub fn create_server(&self, bind_address: &str, tokio_core_handle: Arc<reactor::Handle>) -> WsServer<NoTlsAcceptor, TcpListener> {
+        // Bind a server
+        let server = Server::bind(bind_address, &tokio_core_handle).unwrap();
+
+        server
     }
 }
