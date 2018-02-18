@@ -1888,7 +1888,12 @@ function flowbetween(root_node) {
         if (session_id && websocket_for_session[session_id]) {
             // Send the request
             var promise = new Promise((resolve) => {
-                websocket_for_session[session_id].send(JSON.stringify(events));
+                let websocket = websocket_for_session[session_id];
+
+                events.forEach(event => {
+                    websocket.send(JSON.stringify(event));
+                });
+                
                 resolve();
             });
 
