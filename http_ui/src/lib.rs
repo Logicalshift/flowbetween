@@ -34,6 +34,7 @@ pub mod minidom;
 pub mod canvas_body;
 mod canvas_update;
 mod parked_future;
+mod lazy_future;
 
 pub use self::http_user_interface::*;
 pub use self::http_controller::*;
