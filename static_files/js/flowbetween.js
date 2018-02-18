@@ -20,6 +20,9 @@ function flowbetween(root_node) {
     // Nodes that are waiting for dismiss events
     let waiting_for_dismissal = [];
 
+    // If an update is already running, this is the promise that will resolve when it's done
+    let current_update_promise = Promise.resolve();
+
     // URL where the flowbetween session resides
     let target_url = '/flowbetween/session';
 
@@ -1580,8 +1583,12 @@ function flowbetween(root_node) {
                 let updates = JSON.parse(event.data);
 
                 // Dispatch them
-                dispatch_updates(updates)
+                current_update_promise = current_update_promise.then(() => dispatch_updates(updates))
+                    .then(() => {
+                        current_update_promise = Promise.resolve();
+                    })
                     .catch((err) => {
+                        current_update_promise = Promise.resolve();
                         error('Request failed.', err);
                     });
             });
