@@ -51,6 +51,11 @@ pub enum Update {
     NewSession(String),
 
     ///
+    /// The server supports Flo websockets on the specified port
+    /// 
+    WebsocketPort(u32),
+
+    ///
     /// Supplies a new user interface as HTML, alongside the corresponding UI control data
     /// and view model.
     ///

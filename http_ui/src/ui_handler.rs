@@ -27,7 +27,11 @@ use std::sync::*;
 /// Handles creating and maintainng HTTP sessions
 /// 
 pub struct UiHandler<CoreController: HttpController> {
-    sessions: Arc<WebSessions<CoreController>>
+    /// The sessions that this handler has active
+    sessions: Arc<WebSessions<CoreController>>,
+
+    /// If we want to indicate new sessions should use WebSockets, this is the port for the connection
+    websocket_port: Option<u32>
 }
 
 impl<CoreController: HttpController+'static> UiHandler<CoreController> {
@@ -36,7 +40,8 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     /// 
     pub fn new() -> UiHandler<CoreController> {
         UiHandler {
-            sessions: Arc::new(WebSessions::new())
+            sessions:       Arc::new(WebSessions::new()),
+            websocket_port: None
         }
     }
 
@@ -45,7 +50,17 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     /// set of sessions
     /// 
     pub fn from_sessions(sessions: Arc<WebSessions<CoreController>>) -> UiHandler<CoreController> {
-        UiHandler { sessions: sessions }
+        UiHandler { 
+            sessions:       sessions,
+            websocket_port: None
+        }
+    }
+
+    ///
+    /// Sets the websocket port that this should report when creating a new session
+    /// 
+    pub fn set_websocket_port(&mut self, port: u32) {
+        self.websocket_port = Some(port);
     }
 
     ///
@@ -105,8 +120,16 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
             match event.clone() {
                 // When there is no session, we can request that one be created
                 Event::NewSession => {
+                    // Start a new session
                     let session_id = self.new_session(base_url);
+
+                    // Indicate the session ID
                     response.updates.push(Update::NewSession(session_id));
+
+                    // If we support websockets, indicate where the websocket can be found
+                    if let Some(websocket_port) = self.websocket_port {
+                        response.updates.push(Update::WebsocketPort(websocket_port));
+                    }
                 },
 
                 // For any other event, a session is required, so we add a 'missing session' notification to the response

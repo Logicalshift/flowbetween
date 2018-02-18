@@ -20,6 +20,9 @@ use std::net::SocketAddr;
 ///
 /// Represents a handler for connections to a session using websockets
 /// 
+/// The websocket handler can't create new sessions and assumes we just
+/// want events for existing sessions.
+/// 
 pub struct WebSocketHandler<CoreController: Controller> {
     /// The sessions that will be served via websocket(s)
     sessions: Arc<WebSessions<CoreController>>
