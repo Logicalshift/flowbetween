@@ -69,11 +69,21 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                     .map(|_| ());
                 tokio_core_handle.spawn(handle_request);
                 Ok(())
+            })
+            .then(|i| {
+                match i {
+                    Ok(())      => Ok(()),
+                    Err(err)   => {
+                        // TODO: errors (like just connecting via the browser) stop the server :-(
+                        println!("WS err: {:?}", err);
+                        Ok(())
+                    }
+                }
             });
 
         // Suppress errors and return the result
         // TODO: probably want to log errors instead but there's no logging framework yet
-        let handle_requests = handle_requests.map_err(|_| ());
+        let handle_requests = handle_requests.map_err(|_err: ()| ());
         Box::new(handle_requests)
     }
 
