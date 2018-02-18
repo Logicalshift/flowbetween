@@ -2,13 +2,16 @@ use super::sessions::*;
 
 use ui::*;
 use websocket::*;
-use websocket::async::{Server};
+use websocket::async::{Server, TcpStream};
 use websocket::server::{InvalidConnection};
+use websocket::server::upgrade::WsUpgrade;
 use tokio_core::reactor;
+use bytes::BytesMut;
 
 use futures::*;
 
 use std::sync::*;
+use std::net::SocketAddr;
 
 ///
 /// Represents a handler for connections to a session using websockets
@@ -35,17 +38,14 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
     }
 
     ///
-    /// Creates a websocket. Bind address should be something like '127.0.0.1:3001'
+    /// Handles incoming requests on a websocket connection
     /// 
-    pub fn create_server(&self, bind_address: &str, tokio_core_handle: Arc<reactor::Handle>) -> Box<Future<Item=(), Error=()>> {
-        // Bind a server
-        let server      = Server::bind(bind_address, &tokio_core_handle).unwrap();
-
+    pub fn handle_incoming_requests(&self, incoming: Box<Stream<Item=(WsUpgrade<TcpStream, BytesMut>, SocketAddr), Error=InvalidConnection<TcpStream, BytesMut>>>, tokio_core_handle: Arc<reactor::Handle>) -> Box<Future<Item=(), Error=()>> {
         // Server will use our sessions object
         let sessions    = Arc::clone(&self.sessions);
 
         // Handle incoming requests
-        let handle_requests = server.incoming()
+        let handle_requests = incoming
             .map_err(|InvalidConnection { error, ..}| error)
             .for_each(move |(upgrade, addr)| {
                 // Only want connections for the rust-websocket protocol
@@ -75,5 +75,16 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
         // TODO: probably want to log errors instead but there's no logging framework yet
         let handle_requests = handle_requests.map_err(|_| ());
         Box::new(handle_requests)
+    }
+
+    ///
+    /// Creates a websocket. Bind address should be something like '127.0.0.1:3001'
+    /// 
+    pub fn create_server(&self, bind_address: &str, tokio_core_handle: Arc<reactor::Handle>) -> Box<Future<Item=(), Error=()>> {
+        // Bind a server
+        let server      = Server::bind(bind_address, &tokio_core_handle).unwrap();
+
+        // Register to handle requests on it
+        self.handle_incoming_requests(server.incoming(), tokio_core_handle)
     }
 }

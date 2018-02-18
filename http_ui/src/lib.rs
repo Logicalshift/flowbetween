@@ -16,6 +16,7 @@ extern crate futures;
 extern crate desync;
 extern crate websocket;
 extern crate tokio_core;
+extern crate bytes;
 
 mod http_user_interface;
 mod http_controller;
