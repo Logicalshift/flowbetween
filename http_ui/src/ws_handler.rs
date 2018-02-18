@@ -65,7 +65,6 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                 }
 
                 let (_method, uri) = upgrade.request.subject.clone();
-                println!("Websocket connection on {} to {}", addr, uri);
 
                 // Attempt to fetch the session from the URI
                 let mut session = match uri {
