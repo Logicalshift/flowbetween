@@ -49,6 +49,8 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
         let handle_requests = incoming
             .map_err(|InvalidConnection { error, ..}| error)
             .for_each(move |(upgrade, addr)| {
+                let sessions = sessions.clone();
+
                 // Only want connections for the rust-websocket protocol
                 if !upgrade.protocols().iter().any(|protocol| protocol == "flo") {
                     // Reject anything that doesn't support it
@@ -56,21 +58,46 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                     return Ok(());
                 }
 
-                let (method, uri) = upgrade.request.subject.clone();
+                let (_method, uri) = upgrade.request.subject.clone();
                 println!("Websocket connection on {} to {}", addr, uri);
 
-                // Accept websocket upgrades if the protocol is supported
-                let handle_request = upgrade
-                    .use_protocol("flo")
-                    .accept()
-                    .and_then(|(sink, _stream)| sink.send(Message::text("Hello, world").into()));
+                // Attempt to fetch the session from the URI
+                let mut session = match uri {
+                    RequestUri::AbsolutePath(path)  => path,
+                    RequestUri::AbsoluteUri(uri)    => uri.query().unwrap_or("").to_string(),
+                    _                               => "".to_string()
+                };
 
-                // Spawn our request handler and be done
-                let handle_request = handle_request
-                    .map_err(|_err| ())
-                    .map(|_| ());
-                tokio_core_handle.spawn(handle_request);
-                Ok(())
+                // Remove the '/' from the start of the path
+                if session.starts_with('/') {
+                    session.remove(0);
+                }
+
+                // Attempt to retrieve the session with this ID
+                let session = sessions.get_session(&session);
+
+                match session {
+                    Some(session) => {
+                        // Accept websocket upgrades if the protocol is supported
+                        let handle_request = upgrade
+                            .use_protocol("flo")
+                            .accept()
+                            .and_then(|(sink, _stream)| sink.send(Message::text("Hello, world").into()));
+
+                        // Spawn our request handler and be done
+                        let handle_request = handle_request
+                            .map_err(|_err| ())
+                            .map(|_| ());
+                        tokio_core_handle.spawn(handle_request);
+                        Ok(())
+                    },
+
+                    None => {
+                        // No session at this address: reject the request
+                        tokio_core_handle.spawn(upgrade.reject().map_err(|_| ()).map(|_| ()));
+                        Ok(())
+                    }
+                }
             })
             .then(|i| {
                 match i {
