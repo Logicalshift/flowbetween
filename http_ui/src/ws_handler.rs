@@ -6,6 +6,7 @@ use websocket::async::{Server, TcpStream};
 use websocket::server::{InvalidConnection};
 use websocket::server::upgrade::WsUpgrade;
 use tokio_core::reactor;
+use hyper::uri::*;
 use bytes::BytesMut;
 
 use futures::*;
@@ -49,17 +50,18 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
             .map_err(|InvalidConnection { error, ..}| error)
             .for_each(move |(upgrade, addr)| {
                 // Only want connections for the rust-websocket protocol
-                if !upgrade.protocols().iter().any(|protocol| protocol == "rust-websocket") {
+                if !upgrade.protocols().iter().any(|protocol| protocol == "flo") {
                     // Reject anything that doesn't support it
                     tokio_core_handle.spawn(upgrade.reject().map_err(|_| ()).map(|_| ()));
                     return Ok(());
                 }
 
-                println!("Websocket connection on {}", addr);
+                let (method, uri) = upgrade.request.subject.clone();
+                println!("Websocket connection on {} to {}", addr, uri);
 
                 // Accept websocket upgrades if the protocol is supported
                 let handle_request = upgrade
-                    .use_protocol("rust-websocket")
+                    .use_protocol("flo")
                     .accept()
                     .and_then(|(sink, _stream)| sink.send(Message::text("Hello, world").into()));
 

@@ -289,6 +289,7 @@ dependencies = [
  "canvas 0.1.0",
  "desync 0.1.2 (git+https://github.com/logicalshift/desync?branch=develop)",
  "futures 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hyper 0.10.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "mount 0.4.0 (git+https://github.com/iron/mount.git?rev=d30eeec)",

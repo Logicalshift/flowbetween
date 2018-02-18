@@ -22,5 +22,5 @@ desync              = { git = "https://github.com/logicalshift/desync", branch =
 itertools           = "^0.7.4"
 websocket           = { version = "^0.20.2", features = [ "async" ] }
 tokio-core          = "^0.1"
+hyper               = "^0.10.6"
 bytes               = "^0.4"
-

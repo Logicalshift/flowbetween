@@ -14,6 +14,8 @@ extern crate percent_encoding;
 extern crate itertools;
 extern crate futures;
 extern crate desync;
+
+extern crate hyper;
 extern crate websocket;
 extern crate tokio_core;
 extern crate bytes;
