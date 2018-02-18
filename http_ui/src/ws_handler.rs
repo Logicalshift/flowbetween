@@ -103,6 +103,7 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                                     .map(|update|       serde_json::to_string(&update).unwrap())
                                     .map(|update_json|  OwnedMessage::Text(update_json))
                                     .forward(sink)
+                                    .map_err(|e|        { println!("Update error {:?}", e); e })
                                     .and_then(|(_, sink)| {
                                         sink.send(OwnedMessage::Close(None))
                                     });
