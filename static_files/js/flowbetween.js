@@ -1900,6 +1900,7 @@ function flowbetween(root_node) {
                 events.forEach(event => {
                     websocket.send(JSON.stringify(event));
                 });
+                websocket.send(JSON.stringify('Tick'));
                 
                 resolve();
             });
