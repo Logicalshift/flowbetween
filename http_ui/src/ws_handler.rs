@@ -78,6 +78,11 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
 
                 match session {
                     Some(session) => {
+                        // Get the event streams and sinks for this session
+                        let http_ui = { session.lock().unwrap().http_ui() };
+                        let events  = http_ui.get_input_sink();
+                        let updates = http_ui.get_updates();
+
                         // Accept websocket upgrades if the protocol is supported
                         let handle_request = upgrade
                             .use_protocol("flo")
