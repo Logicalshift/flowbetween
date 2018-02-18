@@ -36,6 +36,7 @@ mod parked_future;
 pub use self::http_user_interface::*;
 pub use self::http_controller::*;
 pub use self::http_session::*;
+pub use self::sessions::*;
 pub use self::update::*;
 pub use self::event::*;
 pub use self::htmlcontrol::*;
