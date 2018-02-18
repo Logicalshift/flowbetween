@@ -41,6 +41,14 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     }
 
     ///
+    /// Creates a websocket handler that will provide websockets for a pre-set
+    /// set of sessions
+    /// 
+    pub fn from_sessions(sessions: Arc<WebSessions<CoreController>>) -> UiHandler<CoreController> {
+        UiHandler { sessions: sessions }
+    }
+
+    ///
     /// Returns the base URL for a request
     ///
     fn base_url(req: &Request) -> Url {
