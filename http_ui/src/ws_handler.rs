@@ -94,7 +94,7 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                                 // We send events to the sink and retrieve updates from the stream (as JSON messages)
                                 let (sink, stream) = client.split();
 
-                                // Turn updates into a send_events request
+                                // Turn updates from the UI into JSON message sent to the websocket
                                 let send_events = updates
                                     .map_err(|_|        WebSocketError::NoDataAvailable)
                                     .map(|update|       serde_json::to_string(&update).unwrap())
@@ -104,7 +104,7 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                                         sink.send(OwnedMessage::Close(None))
                                     });
 
-                                // Turn events from the stream into updates sent to the UI
+                                // Turn events from the stream into events sent to the UI
                                 let receive_events = stream
                                     .take_while(|message| Ok(!message.is_close()))
                                     .filter_map(|message| {
@@ -114,7 +114,7 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                                         }
                                     })
                                     .map(|json_string|          serde_json::from_str(&json_string))
-                                    .filter_map(|maybe_update|  maybe_update.ok())
+                                    .filter_map(|maybe_event|   maybe_event.ok())
                                     .map_err(|_| ())    // TODO: not sure about this
                                     .forward(events)
                                     .and_then(|(_, _)| {
