@@ -54,7 +54,7 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
         // Handle incoming requests
         let handle_requests = incoming
             .map_err(|InvalidConnection { error, ..}| error)
-            .for_each(move |(upgrade, addr)| {
+            .for_each(move |(upgrade, _addr)| {
                 let sessions = sessions.clone();
 
                 // Only want connections for the rust-websocket protocol
