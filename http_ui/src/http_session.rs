@@ -1,5 +1,6 @@
 use super::event::*;
 use super::update::*;
+use super::lazy_future::*;
 use super::parked_future::*;
 use super::http_user_interface::*;
 
@@ -26,7 +27,7 @@ pub struct HttpSession<CoreUi> {
     updates: Box<Future<Item=HttpUpdateStream, Error=()>+Send>
 }
 
-impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
+impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     ///
     /// Creates a new session from a HTTP user interface
     /// 
@@ -53,6 +54,23 @@ impl<CoreUi: 'static+CoreUserInterface> HttpSession<CoreUi> {
     /// 
     pub fn ui(&self) -> Arc<CoreUi> {
         self.http_ui.core()
+    }
+
+    ///
+    /// Sleeps this session (stops any monitoring for events)
+    /// 
+    pub fn fall_asleep(&mut self) {
+        // Suspend the updates
+        let http_ui = self.http_ui.clone();
+        self.updates = Box::new(LazyFuture::new(move || {
+            future::ok(http_ui.get_updates())
+        }));
+
+        // Suspend the input
+        let http_ui = self.http_ui.clone();
+        self.input = Box::new(LazyFuture::new(move || {
+            future::ok(http_ui.get_input_sink())
+        }));
     }
 
     ///
