@@ -1569,6 +1569,8 @@ function flowbetween(root_node) {
             let ws_base_url     = 'ws://' + doc_url.hostname + ':' + websocket_port;
             let ws_session_url  = ws_base_url + '/' + session_id;
 
+            note('Connecting to websocket at ' + ws_session_url);
+
             // Connect the websocket, using the flo-web protocol
             let websocket = new WebSocket(ws_session_url, ['flo-web']);
 
@@ -1585,11 +1587,19 @@ function flowbetween(root_node) {
             });
 
             websocket.addEventListener('open', () => {
+                note('Websocket for session ' + session_id + ' is connected');
+
                 // Register this as the socket for this session
                 websocket_for_session[session_id] = websocket;
 
                 // Resolve the promise
                 resolve();
+            });
+
+            websocket.addEventListener('error', (event) => {
+                // Revert to the standard UI handler if we get an error
+                error('Session ' + session_id + ' suffered a websocket error: ', event);
+                websocket_for_session[session_id] = null;
             });
         });
 
