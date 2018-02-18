@@ -1,7 +1,9 @@
 use super::sessions::*;
 
 use ui::*;
+use serde_json;
 use websocket::*;
+use websocket::message::{OwnedMessage};
 use websocket::async::{Server, TcpStream};
 use websocket::server::{InvalidConnection};
 use websocket::server::upgrade::WsUpgrade;
@@ -10,6 +12,7 @@ use hyper::uri::*;
 use bytes::BytesMut;
 
 use futures::*;
+use futures::future;
 
 use std::sync::*;
 use std::net::SocketAddr;
@@ -87,7 +90,43 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
                         let handle_request = upgrade
                             .use_protocol("flo")
                             .accept()
-                            .and_then(|(sink, _stream)| sink.send(Message::text("Hello, world").into()));
+                            .and_then(move |(client, _headers)| {
+                                // We send events to the sink and retrieve updates from the stream (as JSON messages)
+                                let (sink, stream) = client.split();
+
+                                // Turn updates into a send_events request
+                                let send_events = updates
+                                    .map_err(|_|        WebSocketError::NoDataAvailable)
+                                    .map(|update|       serde_json::to_string(&update).unwrap())
+                                    .map(|update_json|  OwnedMessage::Text(update_json))
+                                    .forward(sink)
+                                    .and_then(|(_, sink)| {
+                                        sink.send(OwnedMessage::Close(None))
+                                    });
+
+                                // Turn events from the stream into updates sent to the UI
+                                let receive_events = stream
+                                    .take_while(|message| Ok(!message.is_close()))
+                                    .filter_map(|message| {
+                                        match message {
+                                            OwnedMessage::Text(event_json)  => Some(event_json),
+                                            _                               => None
+                                        }
+                                    })
+                                    .map(|json_string|          serde_json::from_str(&json_string))
+                                    .filter_map(|maybe_update|  maybe_update.ok())
+                                    .map_err(|_| ())    // TODO: not sure about this
+                                    .forward(events)
+                                    .and_then(|(_, _)| {
+                                        future::ok(())
+                                    })
+                                    .map_err(|_| WebSocketError::NoDataAvailable); // TODO: want to preserve the original error if any?
+
+                                // Result is a selection of these two futures
+                                send_events.map(|_| ()).select(receive_events)
+                                    .map(|_| ())
+                                    .map_err(|(erm, _next)| erm)
+                            });
 
                         // Spawn our request handler and be done
                         let handle_request = handle_request
