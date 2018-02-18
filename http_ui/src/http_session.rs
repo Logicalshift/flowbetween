@@ -71,6 +71,18 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
         self.input = Box::new(LazyFuture::new(move || {
             future::ok(http_ui.get_input_sink())
         }));
+
+        // TODO: way to signal to the caller that they should call 'restart_updates' here
+        // (or make the first event from updates concatenate itself with the second event)
+        //
+        // At the moment, this should only happen if the websocket connection establishes
+        // but fails later on for some reason without restarting the session.
+        //
+        // This is needed because the update stream always generates an update for
+        // every event, but also has an initial update with the 'new HTML' message
+        // in it. Something sending an event while the 'new HTML' message is
+        // waiting will get slightly out of sync (though the 'on demand' nature
+        // of the update stream means it'll only be out of sync for one event)
     }
 
     ///
