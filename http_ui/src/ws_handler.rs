@@ -83,6 +83,9 @@ impl<CoreController: Controller+'static> WebSocketHandler<CoreController> {
 
                 match session {
                     Some(session) => {
+                        // Put the session to sleep (if we're not going to get POST requests for this session it shouldn't be tracking updates)
+                        session.lock().unwrap().fall_asleep();
+
                         // Get the event streams and sinks for this session
                         let http_ui = { session.lock().unwrap().http_ui() };
                         let events  = http_ui.get_input_sink();
