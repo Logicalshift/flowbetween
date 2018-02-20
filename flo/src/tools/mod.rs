@@ -5,6 +5,10 @@ use animation::*;
 use std::sync::*;
 
 mod tool_model;
+
+mod tool_trait;
+mod tool_input;
+mod tool_action;
 mod tool_sets;
 mod select;
 mod adjust;
@@ -14,6 +18,9 @@ mod ink;
 mod eraser;
 
 pub use self::tool_model::*;
+
+pub use self::tool_trait::*;
+pub use self::tool_input::*;
 pub use self::tool_sets::*;
 pub use self::select::*;
 pub use self::adjust::*;
