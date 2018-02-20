@@ -69,15 +69,15 @@ mod binding;
 mod computed;
 mod bindref;
 mod notify_fn;
-mod streaming;
 mod releasable;
+mod follow;
 
 pub use self::traits::*;
 pub use self::binding::*;
 pub use self::computed::*;
 pub use self::bindref::*;
 pub use self::notify_fn::*;
-pub use self::streaming::*;
+pub use self::follow::*;
 
 ///
 /// Creates a simple bound value with the specified initial value
