@@ -1,6 +1,9 @@
-use super::*;
+use super::super::tools::*;
 use super::super::menu::*;
 
+use ui::*;
+use binding::*;
+use animation::*;
 use animation::brushes::*;
 
 use typemap::*;

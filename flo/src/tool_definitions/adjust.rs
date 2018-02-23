@@ -1,4 +1,7 @@
-use super::*;
+use super::super::tools::*;
+
+use ui::*;
+use animation::*;
 
 ///
 /// The Adjust tool (adjusts control points of existing objects)

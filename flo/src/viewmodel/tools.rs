@@ -1,4 +1,5 @@
 use super::super::tools::*;
+use super::super::tool_definitions::*;
 
 use ui::*;
 use binding::*;

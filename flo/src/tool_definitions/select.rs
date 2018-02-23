@@ -1,4 +1,7 @@
-use super::*;
+use super::super::tools::*;
+
+use ui::*;
+use animation::*;
 
 ///
 /// The Select tool (Selects control points of existing objects)

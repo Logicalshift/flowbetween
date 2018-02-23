@@ -1,4 +1,7 @@
-use super::*;
+use super::super::tools::*;
+
+use ui::*;
+use animation::*;
 
 ///
 /// The Pan tool (Pans control points of existing objects)

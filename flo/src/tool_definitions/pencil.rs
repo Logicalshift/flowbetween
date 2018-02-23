@@ -1,4 +1,7 @@
-use super::*;
+use super::super::tools::*;
+
+use ui::*;
+use animation::*;
 
 ///
 /// The Pencil tool (Pencils control points of existing objects)

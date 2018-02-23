@@ -6,29 +6,16 @@ use std::sync::*;
 
 mod tool_model;
 
-mod tool_trait;
-mod tool_input;
 mod tool_action;
-mod tool_sets;
-mod select;
-mod adjust;
-mod pan;
-mod pencil;
-mod ink;
-mod eraser;
+mod tool_input;
+mod tool_trait;
 
 pub use self::tool_model::*;
 
-pub use self::tool_trait::*;
+pub use self::tool_action::*;
 pub use self::tool_input::*;
-pub use self::tool_sets::*;
-pub use self::select::*;
-pub use self::adjust::*;
-pub use self::pan::*;
-pub use self::pencil::*;
-pub use self::ink::*;
-pub use self::eraser::*;
-
+pub use self::tool_trait::*;
+ 
 ///
 /// Converts a UI Painting struct to a BrushPoint
 /// 

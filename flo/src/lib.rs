@@ -17,6 +17,7 @@ extern crate futures;
 pub mod editor;
 pub mod style;
 pub mod tools;
+pub mod tool_definitions;
 pub mod menu;
 pub mod color;
 

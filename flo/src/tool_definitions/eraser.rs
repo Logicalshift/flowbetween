@@ -1,5 +1,9 @@
-use super::*;
+use super::ink::*;
+use super::super::tools::*;
 
+use ui::*;
+use binding::*;
+use animation::*;
 use animation::brushes::*;
 
 use typemap::*;
