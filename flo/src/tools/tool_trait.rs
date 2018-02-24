@@ -10,7 +10,7 @@ use futures::stream;
 ///
 /// Trait implemented by something representing a tool
 /// 
-pub trait Tool2<'a, ToolData: 'static, Anim: 'a+Animation> {
+pub trait Tool2<ToolData: 'static, Anim: Animation> {
     ///
     /// Retrieves the name of this tool
     /// 
@@ -29,7 +29,7 @@ pub trait Tool2<'a, ToolData: 'static, Anim: 'a+Animation> {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, model: AnimationViewModel<Anim>) -> Box<Stream<Item=ToolAction<ToolData>, Error=()>> {
+    fn actions_for_model(&self, _model: AnimationViewModel<Anim>) -> Box<Stream<Item=ToolAction<ToolData>, Error=()>> {
         Box::new(stream::empty())
     }
 
