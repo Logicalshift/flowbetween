@@ -1,5 +1,6 @@
 use super::ink::*;
 use super::super::tools::*;
+use super::super::viewmodel::*;
 
 use ui::*;
 use binding::*;
@@ -7,20 +8,26 @@ use animation::*;
 use animation::brushes::*;
 
 use typemap::*;
+use futures::*;
+use std::sync::*;
 
 impl Key for Eraser { type Value = BrushPreview; }
 
 ///
 /// The Eraser tool (Erasers control points of existing objects)
 /// 
-pub struct Eraser { }
+pub struct Eraser { 
+    ink: Ink
+}
 
 impl Eraser {
     ///
     /// Creates a new instance of the Eraser tool
     /// 
     pub fn new() -> Eraser {
-        Eraser {}
+        Eraser {
+            ink: Ink::new()
+        }
     }
 }
 
@@ -71,5 +78,48 @@ impl<Anim: 'static+Animation> Tool<Anim> for Eraser {
                 brush_preview.draw_current_brush_stroke(gc);
             });
         }
+    }
+}
+
+impl<Anim: Animation+'static> Tool2<InkData, Anim> for Eraser {
+    fn tool_name(&self) -> String { "Eraser".to_string() }
+
+    fn image_name(&self) -> String { "eraser".to_string() }
+
+    fn actions_for_model(&self, model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>> {
+        // Fetch the brush properties
+        let brush_properties    = model.brush().brush_properties.clone();
+        let selected_layer      = model.timeline().selected_layer.clone();
+
+        // Create a computed binding that generates the data for the brush
+        let ink_data            = computed(move || {
+            InkData {
+                brush:              BrushDefinition::Ink(InkDefinition::default()),
+                brush_properties:   brush_properties.get(),
+                selected_layer:     selected_layer.get().unwrap_or(0)
+            }
+        });
+
+        // Turn the computed values into a stream and update the brush whenever the values change
+        Box::new(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
+    }
+
+    fn actions_for_input<'b>(&self, data: Option<&'b InkData>, input: Box<Iterator<Item=ToolInput<'b, InkData>>>) -> Box<'b+Iterator<Item=ToolAction<InkData>>> {
+        use self::ToolAction::*;
+        use self::BrushPreviewAction::*;
+
+        let ink: &Tool2<InkData, Anim> = &self.ink;
+
+        // As for the ink tool, except that we use the eraser drawing style
+        let actions = ink.actions_for_input(data, input)
+            .map(|action| {
+                match action {
+                    BrushPreview(BrushDefinition(brush, BrushDrawingStyle::Draw)) => BrushPreview(BrushDefinition(brush, BrushDrawingStyle::Erase)),
+                    
+                    other => other
+                }
+            });
+
+        Box::new(actions)
     }
 }
