@@ -12,6 +12,11 @@ use std::sync::*;
 ///
 /// Trait implemented by something representing a tool
 /// 
+/// TODO: way for the tool to specify a controller and a model so that
+/// it can store/update its state.
+/// 
+/// TODO: way for the tool to serialize its state to the animation
+/// 
 pub trait Tool2<ToolData: 'static, Anim: Animation> {
     ///
     /// Retrieves the name of this tool
