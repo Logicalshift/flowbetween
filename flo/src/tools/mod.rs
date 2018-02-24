@@ -104,7 +104,7 @@ pub trait ToolSet<Anim: Animation>: Send+Sync {
     ///
     /// Retrieves the tools in this set
     /// 
-    fn tools(&self) -> Vec<Arc<Tool<Anim>>>;
+    fn tools(&self) -> Vec<Arc<Tool2<GenericToolData, Anim>>>;
 }
 
 ///

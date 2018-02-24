@@ -9,26 +9,26 @@ use std::sync::*;
 /// The selection toolset
 /// 
 pub struct SelectionTools<Anim: 'static+Animation> {
-    select: Arc<Tool<Anim>>,
-    adjust: Arc<Tool<Anim>>,
-    pan:    Arc<Tool<Anim>>
+    select: Arc<Tool2<GenericToolData, Anim>>,
+    adjust: Arc<Tool2<GenericToolData, Anim>>,
+    pan:    Arc<Tool2<GenericToolData, Anim>>
 }
 
 ///
 /// The paint toolset
 /// 
 pub struct PaintTools<Anim: 'static+Animation> {
-    pencil: Arc<Tool<Anim>>,
-    ink:    Arc<Tool<Anim>>,
-    eraser: Arc<Tool<Anim>>
+    pencil: Arc<Tool2<GenericToolData, Anim>>,
+    ink:    Arc<Tool2<GenericToolData, Anim>>,
+    eraser: Arc<Tool2<GenericToolData, Anim>>
 }
 
 impl<Anim: Animation> SelectionTools<Anim> {
     pub fn new() -> SelectionTools<Anim> {
         SelectionTools {
-            select: Arc::new(Select::new()),
-            adjust: Arc::new(Adjust::new()),
-            pan:    Arc::new(Pan::new())
+            select: Select::new().to_generic_tool(),
+            adjust: Adjust::new().to_generic_tool(),
+            pan:    Pan::new().to_generic_tool()
         }
     }
 }
@@ -36,9 +36,9 @@ impl<Anim: Animation> SelectionTools<Anim> {
 impl<Anim: Animation> PaintTools<Anim> {
     pub fn new() -> PaintTools<Anim> {
         PaintTools {
-            pencil: Arc::new(Pencil::new()),
-            ink:    Arc::new(Ink::new()),
-            eraser: Arc::new(Eraser::new())
+            pencil: Pencil::new().to_generic_tool(),
+            ink:    Ink::new().to_generic_tool(),
+            eraser: Eraser::new().to_generic_tool()
         }
     }
 }
@@ -46,7 +46,7 @@ impl<Anim: Animation> PaintTools<Anim> {
 impl<Anim: Animation> ToolSet<Anim> for SelectionTools<Anim> {
     fn set_name(&self) -> String { "Selection".to_string() }
 
-    fn tools(&self) -> Vec<Arc<Tool<Anim>>> {
+    fn tools(&self) -> Vec<Arc<Tool2<GenericToolData, Anim>>> {
         vec![
             Arc::clone(&self.select),
             Arc::clone(&self.adjust),
@@ -58,7 +58,7 @@ impl<Anim: Animation> ToolSet<Anim> for SelectionTools<Anim> {
 impl<Anim: Animation> ToolSet<Anim> for PaintTools<Anim> {
     fn set_name(&self) -> String { "Paint".to_string() }
 
-    fn tools(&self) -> Vec<Arc<Tool<Anim>>> {
+    fn tools(&self) -> Vec<Arc<Tool2<GenericToolData, Anim>>> {
         vec![
             Arc::clone(&self.pencil),
             Arc::clone(&self.ink),

@@ -45,3 +45,12 @@ pub trait Tool2<ToolData: 'static, Anim: Animation> : Send+Sync {
     /// 
     fn actions_for_input<'b>(&self, data: Option<&'b ToolData>, input: Box<'b+Iterator<Item=ToolInput<'b, ToolData>>>) -> Box<'b+Iterator<Item=ToolAction<ToolData>>>;
 }
+
+///
+/// Equality so that tool objects can be referred to in bindings
+/// 
+impl<ToolData: 'static, Anim: Animation> PartialEq for Tool2<ToolData, Anim> {
+    fn eq(&self, other: &Tool2<ToolData, Anim>) -> bool {
+        self.tool_name() == other.tool_name()
+    }
+}

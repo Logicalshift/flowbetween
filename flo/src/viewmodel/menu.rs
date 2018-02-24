@@ -18,7 +18,7 @@ impl MenuViewModel {
     ///
     /// Creates a new menu view model
     /// 
-    pub fn new<Anim: 'static+Animation>(effective_tool: &BindRef<Option<Arc<Tool<Anim>>>>) -> MenuViewModel {
+    pub fn new<Anim: 'static+Animation>(effective_tool: &BindRef<Option<Arc<Tool2<GenericToolData, Anim>>>>) -> MenuViewModel {
         let controller = Self::controller_for_tool(effective_tool.clone());
 
         MenuViewModel {
@@ -29,7 +29,7 @@ impl MenuViewModel {
     ///
     /// Creates a binding that returns the menu controller to use when a particular tool is selected
     /// 
-    fn controller_for_tool<Anim: 'static+Animation>(tool: BindRef<Option<Arc<Tool<Anim>>>>) -> BindRef<String> {
+    fn controller_for_tool<Anim: 'static+Animation>(tool: BindRef<Option<Arc<Tool2<GenericToolData, Anim>>>>) -> BindRef<String> {
         BindRef::from(computed(move || {
             tool.get().map(|tool| tool.menu_controller_name()).unwrap_or("".to_string())
         }))

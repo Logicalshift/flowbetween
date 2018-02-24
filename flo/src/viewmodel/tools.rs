@@ -16,13 +16,13 @@ pub struct ToolViewModel<Anim: Animation> {
     effective_tool_activated: Arc<Mutex<BindRef<ToolActivationState>>>,
 
     /// The currently selected tool
-    pub selected_tool: Binding<Option<Arc<Tool<Anim>>>>,
+    pub selected_tool: Binding<Option<Arc<Tool2<GenericToolData, Anim>>>>,
 
     /// The ID of the pointer that's currently in use (device and pointer ID)
     pub current_pointer: Binding<(PaintDevice, i32)>,
 
     /// The tool that is in effect at the current moment (might change if the user chooses a different pointer)
-    pub effective_tool: BindRef<Option<Arc<Tool<Anim>>>>,
+    pub effective_tool: BindRef<Option<Arc<Tool2<GenericToolData, Anim>>>>,
 
     /// The tool sets available for selection
     pub tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>,
@@ -58,7 +58,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
     ///
     /// Returns a binding for the 'effective tool'
     /// 
-    fn effective_tool(selected_tool: Binding<Option<Arc<Tool<Anim>>>>, current_pointer: Binding<(PaintDevice, i32)>, tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>) -> BindRef<Option<Arc<Tool<Anim>>>> {
+    fn effective_tool(selected_tool: Binding<Option<Arc<Tool2<GenericToolData, Anim>>>>, current_pointer: Binding<(PaintDevice, i32)>, tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>) -> BindRef<Option<Arc<Tool2<GenericToolData, Anim>>>> {
         let effective_tool = computed(move || {
             let (device, _pointer_id) = current_pointer.get();
 
