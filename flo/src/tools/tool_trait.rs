@@ -43,5 +43,5 @@ pub trait Tool2<ToolData: 'static, Anim: Animation> {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'b>(&self, data: Option<&'b ToolData>, input: Box<Iterator<Item=ToolInput<'b, ToolData>>>) -> Box<'b+Iterator<Item=ToolAction<ToolData>>>;
+    fn actions_for_input<'b>(&self, data: Option<&'b ToolData>, input: Box<'b+Iterator<Item=ToolInput<'b, ToolData>>>) -> Box<'b+Iterator<Item=ToolAction<ToolData>>>;
 }

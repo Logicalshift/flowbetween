@@ -10,6 +10,7 @@ mod tool_action;
 mod brush_preview_action;
 mod tool_input;
 mod tool_trait;
+mod generic_tool;
 
 pub use self::tool_model::*;
 
@@ -17,6 +18,7 @@ pub use self::tool_action::*;
 pub use self::brush_preview_action::*;
 pub use self::tool_input::*;
 pub use self::tool_trait::*;
+pub use self::generic_tool::*;
  
 ///
 /// Converts a UI Painting struct to a BrushPoint

@@ -32,7 +32,7 @@ impl<Anim: Animation> Tool2<(), Anim> for Pencil {
 
     fn image_name(&self) -> String { "pencil".to_string() }
 
-    fn actions_for_input<'b>(&self, _data: Option<&'b ()>, _input: Box<Iterator<Item=ToolInput<'b, ()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
+    fn actions_for_input<'b>(&self, _data: Option<&'b ()>, _input: Box<'b+Iterator<Item=ToolInput<'b, ()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
         Box::new(vec![].into_iter())
     }
 }
