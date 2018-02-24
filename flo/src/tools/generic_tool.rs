@@ -25,7 +25,7 @@ pub struct GenericTool<ToolData: Send+'static, Anim: Animation, UnderlyingTool: 
 
     // Phantom data for the tool trait parameters
     phantom_anim: PhantomData<Anim>,
-    phantom_tooldata: PhantomData<ToolData>
+    phantom_tooldata: PhantomData<Mutex<ToolData>>
 }
 
 ///

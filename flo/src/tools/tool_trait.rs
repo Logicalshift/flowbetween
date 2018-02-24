@@ -17,7 +17,7 @@ use std::sync::*;
 /// 
 /// TODO: way for the tool to serialize its state to the animation
 /// 
-pub trait Tool2<ToolData: 'static, Anim: Animation> {
+pub trait Tool2<ToolData: 'static, Anim: Animation> : Send+Sync {
     ///
     /// Retrieves the name of this tool
     /// 
