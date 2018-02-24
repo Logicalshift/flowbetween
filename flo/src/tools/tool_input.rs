@@ -3,9 +3,9 @@ use ui::*;
 ///
 /// Represents an input to a tool
 ///
-pub enum ToolInput<ToolData> {
+pub enum ToolInput<'a, ToolData: 'a> {
     /// Specifies the data set for this tool
-    Data(ToolData),
+    Data(&'a ToolData),
 
     /// Specifies painting on a specific device
     PaintDevice(PaintDevice),

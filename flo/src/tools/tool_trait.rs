@@ -9,7 +9,7 @@ use futures::*;
 ///
 /// Trait implemented by something representing a tool
 /// 
-pub trait Tool2<'a, ToolData, Anim: 'a+Animation> {
+pub trait Tool2<'a, ToolData: 'a, Anim: 'a+Animation> {
     ///
     /// Retrieves the name of this tool
     /// 
@@ -33,5 +33,5 @@ pub trait Tool2<'a, ToolData, Anim: 'a+Animation> {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input(&self, input: Box<Iterator<Item=ToolInput<ToolData>>>) -> Box<Iterator<Item=ToolAction<ToolData>>>;
+    fn actions_for_input<'b>(&self, data: Option<&'b ToolData>, input: Box<Iterator<Item=ToolInput<'b, ToolData>>>) -> Box<Iterator<Item=ToolAction<ToolData>>>;
 }
