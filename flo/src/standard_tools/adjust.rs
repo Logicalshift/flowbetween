@@ -26,3 +26,13 @@ impl<Anim: Animation> Tool<Anim> for Adjust {
 
     }
 }
+
+impl<Anim: Animation> Tool2<(), Anim> for Adjust {
+    fn tool_name(&self) -> String { "Adjust".to_string() }
+
+    fn image_name(&self) -> String { "adjust".to_string() }
+
+    fn actions_for_input<'b>(&self, _data: Option<&'b ()>, _input: Box<Iterator<Item=ToolInput<'b, ()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
+        Box::new(vec![].into_iter())
+    }
+}
