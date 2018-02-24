@@ -7,6 +7,9 @@ pub enum BrushPreviewAction {
     /// Clears any existing brush preview
     Clear,
 
+    /// Specifies the layer whose brush preview is being edited
+    Layer(u64),
+
     /// Sets the brush definition to use for the brush preview
     BrushDefinition(BrushDefinition, BrushDrawingStyle),
 

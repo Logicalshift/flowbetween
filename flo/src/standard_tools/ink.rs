@@ -19,7 +19,8 @@ impl Key for Ink { type Value = BrushPreview; }
 #[derive(Clone, PartialEq, Debug)]
 pub struct InkData {
     pub brush:              BrushDefinition,
-    pub brush_properties:   BrushProperties
+    pub brush_properties:   BrushProperties,
+    pub selected_layer:     u64
 }
 
 ///
@@ -143,12 +144,14 @@ impl<Anim: Animation+'static> Tool2<InkData, Anim> for Ink {
     fn actions_for_model(&self, model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>> {
         // Fetch the brush properties
         let brush_properties    = model.brush().brush_properties.clone();
+        let selected_layer      = model.timeline().selected_layer.clone();
 
         // Create a computed binding that generates the data for the brush
         let ink_data            = computed(move || {
             InkData {
                 brush:              BrushDefinition::Ink(InkDefinition::default()),
-                brush_properties:   brush_properties.get()
+                brush_properties:   brush_properties.get(),
+                selected_layer:     selected_layer.get().unwrap_or(0)
             }
         });
 
@@ -165,6 +168,9 @@ impl<Anim: Animation+'static> Tool2<InkData, Anim> for Ink {
             match input {
                 ToolInput::Data(ref ink_data)   => vec![
                     // Set the brush preview status
+                    BrushPreview(Clear),                // Clear on whatever layer the preview is currently on
+                    BrushPreview(Layer(ink_data.selected_layer)),
+                    BrushPreview(Clear),                // Clear on the new layer
                     BrushPreview(BrushDefinition(ink_data.brush.clone(), BrushDrawingStyle::Draw)),
                     BrushPreview(BrushProperties(ink_data.brush_properties.clone()))
                 ],
