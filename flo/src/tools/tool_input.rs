@@ -11,5 +11,5 @@ pub enum ToolInput<'a, ToolData: 'a> {
     PaintDevice(PaintDevice),
 
     /// Specifies an input paint action
-    Paint(PaintAction)
+    Paint(Painting)
 }

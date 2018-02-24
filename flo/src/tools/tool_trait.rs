@@ -7,6 +7,8 @@ use animation::*;
 use futures::*;
 use futures::stream;
 
+use std::sync::*;
+
 ///
 /// Trait implemented by something representing a tool
 /// 
@@ -29,12 +31,12 @@ pub trait Tool2<ToolData: 'static, Anim: Animation> {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, _model: AnimationViewModel<Anim>) -> Box<Stream<Item=ToolAction<ToolData>, Error=()>> {
+    fn actions_for_model(&self, _model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<ToolData>, Error=()>> {
         Box::new(stream::empty())
     }
 
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'b>(&self, data: Option<&'b ToolData>, input: Box<Iterator<Item=ToolInput<'b, ToolData>>>) -> Box<Iterator<Item=ToolAction<ToolData>>>;
+    fn actions_for_input<'b>(&self, data: Option<&'b ToolData>, input: Box<Iterator<Item=ToolInput<'b, ToolData>>>) -> Box<'b+Iterator<Item=ToolAction<ToolData>>>;
 }

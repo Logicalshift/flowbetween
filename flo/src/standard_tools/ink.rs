@@ -1,5 +1,6 @@
-use super::super::tools::*;
 use super::super::menu::*;
+use super::super::tools::*;
+use super::super::viewmodel::*;
 
 use ui::*;
 use binding::*;
@@ -7,8 +8,19 @@ use animation::*;
 use animation::brushes::*;
 
 use typemap::*;
+use futures::*;
+use std::sync::*;
 
 impl Key for Ink { type Value = BrushPreview; }
+
+///
+/// Data for the ink brush
+/// 
+#[derive(Clone, PartialEq, Debug)]
+pub struct InkData {
+    pub brush:              BrushDefinition,
+    pub brush_properties:   BrushProperties
+}
 
 ///
 /// The Ink tool (Inks control points of existing objects)
@@ -120,5 +132,76 @@ impl<Anim: 'static+Animation> Tool<Anim> for Ink {
                 brush_preview.draw_current_brush_stroke(gc);
             });
         }
+    }
+}
+
+impl<Anim: Animation+'static> Tool2<InkData, Anim> for Ink {
+    fn tool_name(&self) -> String { "Ink".to_string() }
+
+    fn image_name(&self) -> String { "ink".to_string() }
+
+    fn actions_for_model(&self, model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>> {
+        // Fetch the brush properties
+        let brush_properties    = model.brush().brush_properties.clone();
+
+        // Create a computed binding that generates the data for the brush
+        let ink_data            = computed(move || {
+            InkData {
+                brush:              BrushDefinition::Ink(InkDefinition::default()),
+                brush_properties:   brush_properties.get()
+            }
+        });
+
+        // Turn the computed values into a stream and update the brush whenever the values change
+        Box::new(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
+    }
+
+    fn actions_for_input<'b>(&self, _data: Option<&'b InkData>, input: Box<Iterator<Item=ToolInput<'b, InkData>>>) -> Box<'b+Iterator<Item=ToolAction<InkData>>> {
+        use self::ToolInput::*;
+        use self::ToolAction::*;
+        use self::BrushPreviewAction::*;
+
+        let actions = input.flat_map(|input| {
+            match input {
+                ToolInput::Data(ref ink_data)   => vec![
+                    // Set the brush preview status
+                    BrushPreview(BrushDefinition(ink_data.brush.clone(), BrushDrawingStyle::Draw)),
+                    BrushPreview(BrushProperties(ink_data.brush_properties.clone()))
+                ],
+
+                PaintDevice(_device)            => vec![
+                    // Switching devices clears any preview
+                    BrushPreview(Clear)
+                ],
+
+                Paint(painting)                 => {
+                    match painting.action {
+                        PaintAction::Start      => vec![
+                            // Starting a new brush stroke starts a new brush preview
+                            BrushPreview(Clear),
+                            BrushPreview(AddPoint(raw_point_from_painting(&painting)))
+                        ],
+                        
+                        PaintAction::Continue   => vec![
+                            // Adds another point to the current brush stroke
+                            BrushPreview(AddPoint(raw_point_from_painting(&painting)))
+                        ],
+                        
+                        PaintAction::Finish     => vec![
+                            // Brush stroke is finished: we commit it
+                            BrushPreview(Commit),
+                            BrushPreview(Clear)
+                        ],
+
+                        PaintAction::Cancel     => vec![
+                            // Brush stroke canceled
+                            BrushPreview(Clear)
+                        ]
+                    }
+                }
+            }.into_iter()
+        });
+
+        Box::new(actions)
     }
 }

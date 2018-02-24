@@ -8,7 +8,7 @@ pub enum BrushPreviewAction {
     Clear,
 
     /// Sets the brush definition to use for the brush preview
-    BrushDefinition(BrushDefinition),
+    BrushDefinition(BrushDefinition, BrushDrawingStyle),
 
     /// Sets the brush properties to use for the brush preview
     BrushProperties(BrushProperties),
