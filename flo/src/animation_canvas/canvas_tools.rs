@@ -126,9 +126,30 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
         // If there's a brush preview, draw it as the renderer annotation
         if let Some(preview) = self.preview.as_ref() {
             if let Some(preview_layer) = self.preview_layer {
-                renderer.annotate_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc));
+                let need_brush = self.need_brush_definition(preview_layer, renderer);
+                let need_props = self.need_brush_properties(preview_layer, renderer);
+
+                renderer.annotate_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
             }
         }
+    }
+
+    ///
+    /// True if we need to update the brush definition before drawing
+    /// 
+    fn need_brush_definition(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
+        let (brush, _properties) = renderer.get_layer_brush(layer_id);
+
+        brush.as_ref() == Some(&self.brush_definition)
+    }
+
+    ///
+    /// True if we need to update the brush properties before drawing
+    /// 
+    fn need_brush_properties(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
+        let (_brush, properties) = renderer.get_layer_brush(layer_id);
+
+        properties.as_ref() == Some(&self.brush_properties)
     }
 
     ///
@@ -160,11 +181,19 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
         if let Some(mut preview) = self.preview.take() {
             // The preview layer is left behind: the next brush stroke will be on the same layer if a new one is not specified
             if let Some(preview_layer) = self.preview_layer {
+                let need_brush = self.need_brush_definition(preview_layer, renderer);
+                let need_props = self.need_brush_properties(preview_layer, renderer);
+
                 // Commit the brush stroke to the renderer
-                renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc));
+                renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
 
                 // Commit the preview to the animation
-                preview.commit_to_animation(self.current_time.get(), preview_layer, &*self.animation);
+                preview.commit_to_animation(need_brush, need_props, self.current_time.get(), preview_layer, &*self.animation);
+
+                // Update the properties in the renderer if they've changed
+                if need_brush || need_props {
+                    renderer.set_layer_brush(preview_layer, Some(self.brush_definition.clone()), Some(self.brush_properties.clone()));
+                }
             }
         }
     }

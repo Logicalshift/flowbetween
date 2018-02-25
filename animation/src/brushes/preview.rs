@@ -13,10 +13,6 @@ pub struct BrushPreview {
     current_brush:          Arc<Brush>,
     brush_properties:       BrushProperties,
     points:                 Vec<RawPoint>,
-
-    brush_changed:          bool,
-    properties_changed:     bool,
-    finished:               bool
 }
 
 impl BrushPreview {
@@ -24,10 +20,7 @@ impl BrushPreview {
         BrushPreview {
             current_brush:      create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw),
             brush_properties:   BrushProperties::new(),
-            points:             vec![],
-            brush_changed:      false,
-            properties_changed: false,
-            finished:           true
+            points:             vec![]
         }
     }
 
@@ -37,7 +30,6 @@ impl BrushPreview {
     pub fn select_brush(&mut self, brush: &BrushDefinition, drawing_style: BrushDrawingStyle) {
         // TODO: store brush definitions in the animation
         self.current_brush = create_brush_from_definition(brush, drawing_style);
-        self.brush_changed = true;
     }
 
     ///
@@ -47,7 +39,6 @@ impl BrushPreview {
     /// 
     pub fn set_brush_properties(&mut self, properties: &BrushProperties) {
         self.brush_properties = *properties;
-        self.properties_changed = true;
     }
 
     ///
@@ -62,7 +53,6 @@ impl BrushPreview {
     /// Clears the preview
     /// 
     pub fn cancel_brush_stroke(&mut self) {
-        self.finished = true;
         self.points = vec![];
     }
 
@@ -93,7 +83,7 @@ impl BrushPreview {
     ///
     /// Draws this preview brush stroke to the specified graphics object
     /// 
-    pub fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives) {
+    pub fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {
         let mut vector_properties = VectorProperties::default();
 
         if self.points.len() < 2 {
@@ -105,16 +95,14 @@ impl BrushPreview {
         vector_properties.brush = self.current_brush.clone();
 
         // Render them to the canvas if they're marked as changed
-        if self.brush_changed {
+        if update_brush_definition {
             self.brush_definition_element().render(gc, &vector_properties)
         }
 
         // Apply brush to the vector properties
         let new_properties = self.brush_properties_element();
-        new_properties.update_properties(&mut vector_properties);
-
-        // Render them to the canvas if they're marked as changed
-        if self.properties_changed {
+        if update_properties {
+            new_properties.update_properties(&mut vector_properties);
             new_properties.render(gc, &vector_properties);
         }
 
@@ -127,7 +115,7 @@ impl BrushPreview {
     ///
     /// Commits this preview to an animation
     /// 
-    pub fn commit_to_animation(&mut self, when: Duration, layer_id: u64, animation: &Animation) {
+    pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &Animation) {
         use LayerEdit::*;
         use PaintEdit::*;
 
@@ -138,20 +126,16 @@ impl BrushPreview {
 
         let mut actions = vec![];
 
-        self.finished = true;
-
         // Select the brush
-        if self.brush_changed {
+        if update_brush_definition {
             let (defn, drawing_style) = self.current_brush.to_definition();
 
             actions.push(Paint(when, SelectBrush(defn, drawing_style)));
-            self.brush_changed = false
         }
 
         // Select the properties
-        if self.properties_changed {
+        if update_properties {
             actions.push(Paint(when, BrushProperties(self.brush_properties.clone())));
-            self.properties_changed = false;
         }
 
         // Perform the brush stroke (and clear out the points)
@@ -164,12 +148,5 @@ impl BrushPreview {
 
         edit.set_pending(&actions);
         edit.commit_pending();
-    }
-
-    ///
-    /// True if this brush stroke has been cancelled or committed
-    /// 
-    pub fn is_finished(&self) -> bool {
-        self.finished
     }
 }
