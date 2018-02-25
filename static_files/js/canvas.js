@@ -460,6 +460,11 @@ let flo_canvas = (function() {
         }
 
         function pop_state() {
+            if (context_stack.length === 0) {
+                console.warn('Tried to pop state while stack was empty');
+                return;
+            }
+
             // Remove any clipping we have
             remove_clip();
 
