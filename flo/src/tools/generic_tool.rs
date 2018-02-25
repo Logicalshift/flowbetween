@@ -12,6 +12,14 @@ use std::sync::*;
 use std::marker::PhantomData;
 
 ///
+/// Trait implemented by FlowBetween tools
+/// 
+/// FloTools eliminate the need to know what the tool data structure stores.
+/// 
+pub trait FloTool<Anim: Animation> : Tool2<GenericToolData, Anim> {
+}
+
+///
 /// The generic tool is used to convert a tool that uses a specific data type
 /// to one that uses a standard data type. This makes it possible to use tools
 /// without needing to know their underlying implementation.
@@ -40,7 +48,7 @@ pub trait ToGenericTool<Anim: Animation, ToolData: Send+'static> {
     ///
     /// Converts this object to a generic tool reference
     /// 
-    fn to_generic_tool(self) -> Arc<Tool2<GenericToolData, Anim>>;
+    fn to_generic_tool(self) -> Arc<FloTool<Anim>>;
 }
 
 impl GenericToolData {
@@ -121,8 +129,23 @@ impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, An
     }
 }
 
+impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, Anim>> FloTool<Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
+}
+
+///
+/// Converts any tool to its generic 'FloTool' equivalent
+/// 
 impl<Anim: 'static+Animation, ToolData: 'static+Send, T: 'static+Tool2<ToolData, Anim>> ToGenericTool<Anim, ToolData> for T {
-    fn to_generic_tool(self) -> Arc<Tool2<GenericToolData, Anim>> {
+    fn to_generic_tool(self) -> Arc<FloTool<Anim>> {
         Arc::new(GenericTool::from(self))
+    }
+}
+
+///
+/// Equality so that tool objects can be referred to in bindings
+/// 
+impl<Anim: Animation> PartialEq for FloTool<Anim> {
+    fn eq(&self, other: &FloTool<Anim>) -> bool {
+        self.tool_name() == other.tool_name()
     }
 }
