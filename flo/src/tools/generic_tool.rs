@@ -109,7 +109,7 @@ impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool2<ToolDat
         self.tool.menu_controller_name()
     }
 
-    fn actions_for_model(&self, model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>> {
+    fn actions_for_model(&self, model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
         // Map the underlying actions to generic actions
         Box::new(self.tool.actions_for_model(model)
             .map(|action| GenericToolData::convert_action_to_generic(action)))

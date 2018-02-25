@@ -141,7 +141,7 @@ impl<Anim: Animation+'static> Tool2<InkData, Anim> for Ink {
 
     fn image_name(&self) -> String { "ink".to_string() }
 
-    fn actions_for_model(&self, model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>> {
+    fn actions_for_model(&self, model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
         let brush_properties    = model.brush().brush_properties.clone();
         let selected_layer      = model.timeline().selected_layer.clone();

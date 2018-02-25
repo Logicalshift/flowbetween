@@ -36,7 +36,7 @@ pub trait Tool2<ToolData: 'static, Anim: Animation> : Send+Sync {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, _model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<ToolData>, Error=()>> {
+    fn actions_for_model(&self, _model: Arc<AnimationViewModel<Anim>>) -> Box<Stream<Item=ToolAction<ToolData>, Error=()>+Send> {
         Box::new(stream::empty())
     }
 
