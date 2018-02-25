@@ -156,9 +156,10 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     /// Commits the current brush preview to the animation
     /// 
     fn commit_brush_preview(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
-        // We take the preview and preview layer here (so there's no preview after this)
+        // We take the preview here (so there's no preview after this)
         if let Some(mut preview) = self.preview.take() {
-            if let Some(preview_layer) = self.preview_layer.take() {
+            // The preview layer is left behind: the next brush stroke will be on the same layer if a new one is not specified
+            if let Some(preview_layer) = self.preview_layer {
                 // Commit the brush stroke to the renderer
                 renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc));
 
