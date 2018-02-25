@@ -1,6 +1,5 @@
 use super::super::tools::*;
 
-use ui::*;
 use animation::*;
 
 use std::sync::*;
@@ -16,16 +15,6 @@ impl Select {
     /// 
     pub fn new() -> Select {
         Select {}
-    }
-}
-
-impl<Anim: Animation> Tool<Anim> for Select {
-    fn tool_name(&self) -> String { "Select".to_string() }
-
-    fn image_name(&self) -> String { "select".to_string() }
-
-    fn paint<'a>(&self, _model: &ToolModel<'a, Anim>, _device: &PaintDevice, _actions: &Vec<Painting>) {
-        
     }
 }
 
