@@ -24,7 +24,7 @@ pub struct ToolRunner<Anim: Animation> {
     tool_data: Option<Arc<GenericToolData>>,
 
     /// The model actions specified by the current tool
-    model_actions: Option<Spawn<Box<Stream<Item=ToolAction<GenericToolData>, Error=()>>>>
+    model_actions: Option<Spawn<Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send>>>
 }
 
 impl<Anim: Animation> ToolRunner<Anim> {
