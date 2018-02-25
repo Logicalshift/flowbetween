@@ -105,7 +105,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
         if let Some(ref tool) = self.current_tool {
             // Chain the data (after model actions) with the supplied input
-            let input = data_input.into_iter().chain(input);
+            let input = data_input.into_iter().chain(i nput);
             let input = Box::new(input);
 
             // Call the tool to get the actions
@@ -122,6 +122,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
         // Update the tool data stored in this object
         if let Some(new_tool_data) = new_tool_data {
+            // TODO: next set of actions should probably get the 'Data' event as a result of this
             self.tool_data = Some(new_tool_data);
         }
 
