@@ -51,26 +51,6 @@ impl BrushPreview {
     }
 
     ///
-    /// Updates the properties for the current brush
-    /// 
-    /// (Won't mark them as changed if they're the same as the current properties)
-    /// 
-    pub fn update_brush_properties(&mut self, properties: &BrushProperties) {
-        if properties != &self.brush_properties {
-            self.brush_properties = *properties;
-            self.properties_changed = true;
-        }
-    }
-
-    ///
-    /// Starts a new brush stroke
-    /// 
-    pub fn start_brush_stroke(&mut self, initial_pos: RawPoint) {
-        self.finished = false;
-        self.points = vec![initial_pos];
-    }
-
-    ///
     /// Continues the current brush stroke
     /// 
     pub fn continue_brush_stroke(&mut self, point: RawPoint) {

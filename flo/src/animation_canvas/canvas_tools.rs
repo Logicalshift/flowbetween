@@ -146,7 +146,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
 
             BrushPreviewAction::Layer(layer_id)                 => { self.preview_layer = Some(layer_id); },
             BrushPreviewAction::BrushDefinition(defn, style)    => { self.brush_definition = (defn.clone(), style); self.preview.as_mut().map(move |preview| preview.select_brush(&defn, style)); },
-            BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.update_brush_properties(&props)); },
+            BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.set_brush_properties(&props)); },
             BrushPreviewAction::AddPoint(point)                 => { self.preview.as_mut().map(move |preview| preview.continue_brush_stroke(point)); },
             BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer) }
         }
