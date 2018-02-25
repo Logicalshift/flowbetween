@@ -18,7 +18,7 @@ impl Select {
     }
 }
 
-impl<Anim: Animation> Tool2<(), Anim> for Select {
+impl<Anim: Animation> Tool<(), Anim> for Select {
     fn tool_name(&self) -> String { "Select".to_string() }
 
     fn image_name(&self) -> String { "select".to_string() }

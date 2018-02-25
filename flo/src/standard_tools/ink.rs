@@ -33,7 +33,7 @@ impl Ink {
     }
 }
 
-impl<Anim: Animation+'static> Tool2<InkData, Anim> for Ink {
+impl<Anim: Animation+'static> Tool<InkData, Anim> for Ink {
     fn tool_name(&self) -> String { "Ink".to_string() }
 
     fn image_name(&self) -> String { "ink".to_string() }

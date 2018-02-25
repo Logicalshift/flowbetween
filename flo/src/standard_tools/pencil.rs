@@ -18,7 +18,7 @@ impl Pencil {
     }
 }
 
-impl<Anim: Animation> Tool2<(), Anim> for Pencil {
+impl<Anim: Animation> Tool<(), Anim> for Pencil {
     fn tool_name(&self) -> String { "Pencil".to_string() }
 
     fn image_name(&self) -> String { "pencil".to_string() }

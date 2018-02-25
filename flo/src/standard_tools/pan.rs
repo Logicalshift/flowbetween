@@ -18,7 +18,7 @@ impl Pan {
     }
 }
 
-impl<Anim: Animation> Tool2<(), Anim> for Pan {
+impl<Anim: Animation> Tool<(), Anim> for Pan {
     fn tool_name(&self) -> String { "Pan".to_string() }
 
     fn image_name(&self) -> String { "pan".to_string() }
