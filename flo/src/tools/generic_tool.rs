@@ -55,11 +55,11 @@ impl GenericToolData {
     ///
     /// Converts an action to generic tool data
     /// 
-    fn convert_action_to_generic<ToolData: 'static+Send>(action: ToolAction<ToolData>) -> ToolAction<GenericToolData> {
+    fn convert_action_to_generic<ToolData: 'static+Send+Sync>(action: ToolAction<ToolData>) -> ToolAction<GenericToolData> {
         use self::ToolAction::*;
 
         match action {
-            Data(data)              => Data(GenericToolData(Box::new(data))),
+            Data(data)              => Data(GenericToolData(Box::new(Arc::new(data)))),
             Edit(edit)              => Edit(edit),
             BrushPreview(preview)   => BrushPreview(preview)
         }
@@ -68,14 +68,14 @@ impl GenericToolData {
     ///
     /// Converts to a refernece of the specified type if possible
     /// 
-    fn convert_ref<ToolData: 'static+Send>(&self) -> Option<&ToolData> {
-        self.0.downcast_ref()
+    fn convert_ref<ToolData: 'static+Send>(&self) -> Option<Arc<ToolData>> {
+        self.0.downcast_ref().cloned()
     }
 
     ///
     /// Converts an input value from generic tool data  to specific tool data
     /// 
-    fn convert_input_from_generic<'a, ToolData: 'static+Send>(input: ToolInput<'a, GenericToolData>) -> Option<ToolInput<'a, ToolData>> {
+    fn convert_input_from_generic<ToolData: 'static+Send>(input: ToolInput<GenericToolData>) -> Option<ToolInput<ToolData>> {
         use self::ToolInput::*;
 
         match input {
@@ -96,7 +96,7 @@ impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, An
     }
 }
 
-impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, Anim>> Tool2<GenericToolData, Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
+impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, Anim>> Tool2<GenericToolData, Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
     fn tool_name(&self) -> String {
         self.tool.tool_name()
     }
@@ -115,7 +115,7 @@ impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, An
             .map(|action| GenericToolData::convert_action_to_generic(action)))
     }
 
-    fn actions_for_input<'b>(&self, data: Option<&'b GenericToolData>, input: Box<'b+Iterator<Item=ToolInput<'b, GenericToolData>>>) -> Box<'b+Iterator<Item=ToolAction<GenericToolData>>> {
+    fn actions_for_input<'a>(&'a self, data: Option<Arc<GenericToolData>>, input: Box<'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<'a+Iterator<Item=ToolAction<GenericToolData>>> {
         // Generic data items from other tools don't generate data for this tool
         let data    = data.and_then(|data| data.convert_ref());
         let input   = Box::new(input
@@ -129,13 +129,13 @@ impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, An
     }
 }
 
-impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, Anim>> FloTool<Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
+impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, Anim>> FloTool<Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
 }
 
 ///
 /// Converts any tool to its generic 'FloTool' equivalent
 /// 
-impl<Anim: 'static+Animation, ToolData: 'static+Send, T: 'static+Tool2<ToolData, Anim>> ToFloTool<Anim, ToolData> for T {
+impl<Anim: 'static+Animation, ToolData: 'static+Send+Sync, T: 'static+Tool2<ToolData, Anim>> ToFloTool<Anim, ToolData> for T {
     fn to_flo_tool(self) -> Arc<FloTool<Anim>> {
         Arc::new(GenericTool::from(self))
     }

@@ -1,11 +1,13 @@
 use ui::*;
 
+use std::sync::*;
+
 ///
 /// Represents an input to a tool
 ///
-pub enum ToolInput<'a, ToolData: 'a> {
+pub enum ToolInput<ToolData> {
     /// Specifies the data set for this tool
-    Data(&'a ToolData),
+    Data(Arc<ToolData>),
 
     /// Specifies painting on a specific device
     PaintDevice(PaintDevice),

@@ -21,7 +21,7 @@ pub struct ToolRunner<Anim: Animation> {
     current_tool: Option<Arc<FloTool<Anim>>>,
 
     /// Most recent tool data from the current tool
-    tool_data: Option<GenericToolData>,
+    tool_data: Option<Arc<GenericToolData>>,
 
     /// The model actions specified by the current tool
     model_actions: Option<Spawn<Box<Stream<Item=ToolAction<GenericToolData>, Error=()>>>>
@@ -81,7 +81,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
     /// 
     /// If there are any actions resulting from a change in model state, these are also returned here
     /// 
-    pub fn actions_for_input<'a, Iter: Iterator<Item=ToolInput<'a, GenericToolData>>>(&mut self, input: Iter) -> Box<Iterator<Item=ToolAction<GenericToolData>>> {
+    pub fn actions_for_input<Iter: Iterator<Item=ToolInput<GenericToolData>>>(&mut self, input: Iter) -> Box<Iterator<Item=ToolAction<GenericToolData>>> {
         // Create a place to store the updated tool data for this request
         let mut new_tool_data = None;
 
@@ -92,7 +92,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
         let mut after_processing_data = vec![];
         for action in model_actions {
             match action {
-                ToolAction::Data(new_data)  => self.tool_data = Some(new_data),
+                ToolAction::Data(new_data)  => self.tool_data = Some(Arc::new(new_data)),
                 action                      => after_processing_data.push(action)
             }
         }
@@ -112,12 +112,12 @@ impl<Anim: Animation> ToolRunner<Anim> {
             let input = Box::new(input);
 
             // Call the tool to get the actions
-            let tool_actions = tool.actions_for_input(self.tool_data.as_ref(), input);
+            let tool_actions = tool.actions_for_input(self.tool_data.clone(), input);
 
             // Process any data actions and return the remainder
             for action in tool_actions {
                 match action {
-                    ToolAction::Data(new_data)  => new_tool_data = Some(new_data),
+                    ToolAction::Data(new_data)  => new_tool_data = Some(Arc::new(new_data)),
                     action                      => after_processing_data.push(action)
                 }
             }

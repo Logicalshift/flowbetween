@@ -3,6 +3,8 @@ use super::super::tools::*;
 use ui::*;
 use animation::*;
 
+use std::sync::*;
+
 ///
 /// The Pencil tool (Pencils control points of existing objects)
 /// 
@@ -32,7 +34,7 @@ impl<Anim: Animation> Tool2<(), Anim> for Pencil {
 
     fn image_name(&self) -> String { "pencil".to_string() }
 
-    fn actions_for_input<'b>(&self, _data: Option<&'b ()>, _input: Box<'b+Iterator<Item=ToolInput<'b, ()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
+    fn actions_for_input<'a>(&'a self, _data: Option<Arc<()>>, _input: Box<'a+Iterator<Item=ToolInput<()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
         Box::new(vec![].into_iter())
     }
 }

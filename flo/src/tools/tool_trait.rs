@@ -43,7 +43,7 @@ pub trait Tool2<ToolData: 'static, Anim: Animation> : Send+Sync {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'b>(&self, data: Option<&'b ToolData>, input: Box<'b+Iterator<Item=ToolInput<'b, ToolData>>>) -> Box<'b+Iterator<Item=ToolAction<ToolData>>>;
+    fn actions_for_input<'a>(&'a self, data: Option<Arc<ToolData>>, input: Box<'a+Iterator<Item=ToolInput<ToolData>>>) -> Box<'a+Iterator<Item=ToolAction<ToolData>>>;
 }
 
 ///
