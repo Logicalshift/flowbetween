@@ -3,16 +3,12 @@ use animation::*;
 
 use std::sync::*;
 
-mod tool_model;
-
 mod tool_action;
 mod brush_preview_action;
 mod tool_input;
 mod tool_trait;
 mod generic_tool;
 mod tool_runner;
-
-pub use self::tool_model::*;
 
 pub use self::tool_action::*;
 pub use self::brush_preview_action::*;
