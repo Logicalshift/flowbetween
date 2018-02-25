@@ -4,13 +4,9 @@ use super::super::viewmodel::*;
 
 use binding::*;
 use animation::*;
-use animation::brushes::*;
 
-use typemap::*;
 use futures::*;
 use std::sync::*;
-
-impl Key for Eraser { type Value = BrushPreview; }
 
 ///
 /// The Eraser tool (Erasers control points of existing objects)
