@@ -23,6 +23,9 @@ struct CanvasCore<Anim: Animation> {
     /// Executes actions for the canvas tools
     canvas_tools: CanvasTools<Anim>,
 
+    /// The most recent paint device that received input for this canvas
+    last_paint_device: Option<PaintDevice>,
+
     /// The time of the current frame
     current_time: Duration
 }
@@ -53,9 +56,10 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             anim_view_model:    view_model.clone(),
 
             core:               Desync::new(CanvasCore {
-                renderer:       renderer,
-                canvas_tools:   canvas_tools,
-                current_time:   Duration::new(0, 0)
+                renderer:           renderer,
+                canvas_tools:       canvas_tools,
+                last_paint_device:  None,
+                current_time:       Duration::new(0, 0)
             })
         };
 
@@ -143,16 +147,31 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// Performs a series of painting actions on the canvas
     /// 
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
+        let device = *device;
+
         // Fetch the canvas we're going to draw to
         let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
 
         // Convert the actions into tool inputs
-        let tool_inputs = vec![ToolInput::PaintDevice(*device)].into_iter()
-            .chain(actions.iter()
-                .map(|painting| ToolInput::Paint(painting.clone())));
+        let tool_inputs = actions.iter()
+            .map(|painting| ToolInput::Paint(painting.clone()));
         
         // Send to the canvas tools object
-        self.core.sync(move |core| core.canvas_tools.send_input(&canvas, &mut core.renderer, tool_inputs));
+        self.core.sync(move |core| {
+            let mut extra_inputs = vec![];
+
+            // If the paint device has changed, then send a tool input indicating that that has occurred
+            if Some(device) != core.last_paint_device {
+                core.last_paint_device = Some(device);
+                extra_inputs.push(ToolInput::PaintDevice(device));
+            }
+
+            // Amend the inputs
+            let tool_inputs = extra_inputs.into_iter().chain(tool_inputs);
+            
+            // Send the inputs
+            core.canvas_tools.send_input(&canvas, &mut core.renderer, tool_inputs)
+        });
     }
 }
 
