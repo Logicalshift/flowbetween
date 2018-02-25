@@ -105,7 +105,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
         if let Some(ref tool) = self.current_tool {
             // Chain the data (after model actions) with the supplied input
-            let input = data_input.into_iter().chain(i nput);
+            let input = data_input.into_iter().chain(input);
             let input = Box::new(input);
 
             // Call the tool to get the actions
