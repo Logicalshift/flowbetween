@@ -39,7 +39,7 @@ pub struct GenericTool<ToolData: Send+'static, Anim: Animation, UnderlyingTool: 
 ///
 /// The data structure storing the generic tool data
 /// 
-pub struct GenericToolData(Box<Any+Send>);
+pub struct GenericToolData(Box<Any+Send+Sync>);
 
 ///
 /// Converts a tool to a generic tool
