@@ -149,3 +149,81 @@ impl<Anim: Animation> PartialEq for FloTool<Anim> {
         self.tool_name() == other.tool_name()
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::brush_preview_action::*;
+    use animation::inmemory::*;
+
+    struct TestTool;
+
+    impl Tool2<i32, InMemoryAnimation> for TestTool {
+        fn tool_name(&self) -> String { "test".to_string() }
+
+        fn image_name(&self) -> String { "test".to_string() }
+
+        fn actions_for_input<'a>(&'a self, data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
+            let input: Vec<ToolInput<i32>> = input.collect();
+            
+            if input.len() == 1 {
+                match &input[0] {
+                    &ToolInput::Data(ref data) => {
+                        if **data == 42 {
+                            // Signals to the test that the data made the round trip
+                            Box::new(vec![ToolAction::BrushPreview(BrushPreviewAction::Clear)].into_iter())
+                        } else {
+                            // Data is incorrect
+                            Box::new(vec![].into_iter())
+                        }
+                    }
+
+                    // Action is incorrect
+                    _ => Box::new(vec![].into_iter())
+                }
+
+            } else {
+                // No actions
+                Box::new(vec![ToolAction::Data(42)].into_iter())
+            }
+        }
+    }
+
+    #[test]
+    fn generates_generic_data_for_standard_data() {
+        let generic_tool = TestTool.to_flo_tool();
+
+        let actions = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
+        let actions: Vec<ToolAction<GenericToolData>> = actions.collect();
+
+        assert!(actions.len() == 1);
+        assert!(match &actions[0] {
+            &ToolAction::Data(_) => true,
+            _ => false
+        });
+    }
+
+    #[test]
+    fn data_survives_round_trip() {
+        let generic_tool = TestTool.to_flo_tool();
+
+        let actions = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
+        let mut actions: Vec<ToolAction<GenericToolData>> = actions.collect();
+
+        // Should return a data element of '42'
+        let data = match actions.pop() {
+            Some(ToolAction::Data(data)) => Some(Arc::new(data)),
+            _ => None
+        }.unwrap();
+
+        // Feed this back into the tool: should generate a 'clear' brush preview action as a result (see tool definition)
+        let feedback_actions = generic_tool.actions_for_input(None, Box::new(vec![ToolInput::Data(data)].into_iter()));
+        let feedback_actions: Vec<ToolAction<GenericToolData>> = feedback_actions.collect();
+
+        assert!(feedback_actions.len() == 1);
+        assert!(match &feedback_actions[0] {
+            &ToolAction::BrushPreview(BrushPreviewAction::Clear) => true,
+            _ => false
+        });
+    }
+}

@@ -159,7 +159,7 @@ impl<Anim: Animation+'static> Tool2<InkData, Anim> for Ink {
         Box::new(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
     }
 
-    fn actions_for_input<'a>(&'a self, data: Option<Arc<InkData>>, input: Box<'a+Iterator<Item=ToolInput<InkData>>>) -> Box<'a+Iterator<Item=ToolAction<InkData>>> {
+    fn actions_for_input<'a>(&'a self, _data: Option<Arc<InkData>>, input: Box<'a+Iterator<Item=ToolInput<InkData>>>) -> Box<'a+Iterator<Item=ToolAction<InkData>>> {
         use self::ToolInput::*;
         use self::ToolAction::*;
         use self::BrushPreviewAction::*;
