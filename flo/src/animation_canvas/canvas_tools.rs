@@ -32,6 +32,12 @@ pub struct CanvasTools<Anim: Animation> {
     /// The name of the active tool
     active_tool: Option<Arc<FloTool<Anim>>>,
 
+    /// The brush definition that has been set
+    brush_definition: (BrushDefinition, BrushDrawingStyle),
+
+    /// The brush properties that have been set
+    brush_properties: BrushProperties,
+
     /// Runs commands for the active tool
     tool_runner: ToolRunner<Anim>
 }
@@ -53,7 +59,9 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
             preview:            None,
             preview_layer:      None,
             active_tool:        None,
-            tool_runner:        tool_runner
+            tool_runner:        tool_runner,
+            brush_definition:   (BrushDefinition::Simple, BrushDrawingStyle::Draw),
+            brush_properties:   BrushProperties::new()
         }
     }
 
@@ -128,10 +136,17 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     /// 
     fn process_brush_preview(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, preview: BrushPreviewAction) {
         match preview {
-            BrushPreviewAction::Clear                           => { self.preview = Some(BrushPreview::new()); },
+            BrushPreviewAction::Clear                           => {
+                let mut preview = BrushPreview::new();
+                preview.set_brush_properties(&self.brush_properties);
+                preview.select_brush(&self.brush_definition.0, self.brush_definition.1);
+
+                self.preview = Some(preview);
+            },
+
             BrushPreviewAction::Layer(layer_id)                 => { self.preview_layer = Some(layer_id); },
-            BrushPreviewAction::BrushDefinition(defn, style)    => { self.preview.as_mut().map(move |preview| preview.select_brush(&defn, style)); },
-            BrushPreviewAction::BrushProperties(props)          => { self.preview.as_mut().map(move |preview| preview.update_brush_properties(&props)); },
+            BrushPreviewAction::BrushDefinition(defn, style)    => { self.brush_definition = (defn.clone(), style); self.preview.as_mut().map(move |preview| preview.select_brush(&defn, style)); },
+            BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.update_brush_properties(&props)); },
             BrushPreviewAction::AddPoint(point)                 => { self.preview.as_mut().map(move |preview| preview.continue_brush_stroke(point)); },
             BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer) }
         }
