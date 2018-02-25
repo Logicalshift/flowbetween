@@ -140,7 +140,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     fn need_brush_definition(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
         let (brush, _properties) = renderer.get_layer_brush(layer_id);
 
-        brush.as_ref() == Some(&self.brush_definition)
+        brush.as_ref() != Some(&self.brush_definition)
     }
 
     ///
@@ -149,7 +149,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     fn need_brush_properties(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
         let (_brush, properties) = renderer.get_layer_brush(layer_id);
 
-        properties.as_ref() == Some(&self.brush_properties)
+        properties.as_ref() != Some(&self.brush_properties)
     }
 
     ///
@@ -192,6 +192,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
 
                 // Update the properties in the renderer if they've changed
                 if need_brush || need_props {
+                    println!("Brush: {} {}", need_brush, need_props);
                     renderer.set_layer_brush(preview_layer, Some(self.brush_definition.clone()), Some(self.brush_properties.clone()));
                 }
             }
