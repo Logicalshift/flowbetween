@@ -17,7 +17,7 @@ use std::sync::*;
 /// 
 /// TODO: way for the tool to serialize its state to the animation
 /// 
-pub trait Tool2<ToolData: 'static, Anim: Animation> : Send+Sync {
+pub trait Tool2<ToolData: Send+'static, Anim: Animation> : Send+Sync {
     ///
     /// Retrieves the name of this tool
     /// 
@@ -49,7 +49,7 @@ pub trait Tool2<ToolData: 'static, Anim: Animation> : Send+Sync {
 ///
 /// Equality so that tool objects can be referred to in bindings
 /// 
-impl<ToolData: 'static, Anim: Animation> PartialEq for Tool2<ToolData, Anim> {
+impl<ToolData: Send+'static, Anim: Animation> PartialEq for Tool2<ToolData, Anim> {
     fn eq(&self, other: &Tool2<ToolData, Anim>) -> bool {
         self.tool_name() == other.tool_name()
     }
