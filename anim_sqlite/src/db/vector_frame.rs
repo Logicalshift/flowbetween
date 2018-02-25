@@ -127,4 +127,32 @@ impl Frame for VectorFrame {
     fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>> {
         Some(Box::new(self.elements.iter().cloned()))
     }
+
+    ///
+    /// Finds the brush that will be active after this frame has rendered
+    /// 
+    fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> {
+        let mut properties  = VectorProperties::default();
+
+        self.elements.iter()
+            .for_each(|element| {
+                element.update_properties(&mut properties);
+            });
+
+        Some(properties.brush.to_definition())
+    }
+
+    ///
+    /// Finds the brush properties that will be active after this frame has rendered
+    /// 
+    fn active_brush_properties(&self) -> Option<BrushProperties> {
+        let mut properties  = VectorProperties::default();
+
+        self.elements.iter()
+            .for_each(|element| {
+                element.update_properties(&mut properties);
+            });
+
+        Some(properties.brush_properties)
+    }
 }

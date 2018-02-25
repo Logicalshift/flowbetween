@@ -33,4 +33,8 @@ impl Frame for EmptyFrame {
     fn vector_elements(&self) -> Option<Box<Iterator<Item=Vector>>> {
         None
     }
+
+    fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> { None }
+
+    fn active_brush_properties(&self) -> Option<BrushProperties> { None }
 }

@@ -57,4 +57,26 @@ impl Frame for VectorFrame {
 
         Some(Box::new(elements.into_iter()))
     }
+
+    fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> {
+        let mut properties  = VectorProperties::default();
+
+        self.keyframe.elements().iter()
+            .for_each(|&(_appearance_time, ref element)| {
+                element.update_properties(&mut properties);
+            });
+
+        Some(properties.brush.to_definition())
+    }
+
+    fn active_brush_properties(&self) -> Option<BrushProperties> {
+        let mut properties  = VectorProperties::default();
+
+        self.keyframe.elements().iter()
+            .for_each(|&(_appearance_time, ref element)| {
+                element.update_properties(&mut properties);
+            });
+
+        Some(properties.brush_properties)
+    }
 }
