@@ -116,6 +116,11 @@ impl BrushPreview {
     pub fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives) {
         let mut vector_properties = VectorProperties::default();
 
+        if self.points.len() < 2 {
+            // Do nothing if there are no points in this brush preview
+            return;
+        }
+
         // Set the brush to use in the vector properties
         vector_properties.brush = self.current_brush.clone();
 
@@ -145,6 +150,11 @@ impl BrushPreview {
     pub fn commit_to_animation(&mut self, when: Duration, layer_id: u64, animation: &Animation) {
         use LayerEdit::*;
         use PaintEdit::*;
+
+        if self.points.len() < 2 {
+            // Do nothing if there are no points in this brush preview
+            return;
+        }
 
         let mut actions = vec![];
 
