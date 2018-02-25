@@ -16,6 +16,7 @@ extern crate futures;
 
 pub mod editor;
 pub mod style;
+pub mod animation_canvas;
 pub mod tools;
 pub mod standard_tools;
 pub mod menu;
