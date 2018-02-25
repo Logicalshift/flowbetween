@@ -40,4 +40,20 @@ impl<Anim: Animation> ToolRunner<Anim> {
             model_actions:  None
         }
     }
+
+    ///
+    /// Sets the tool that this will use to run its actions on
+    /// 
+    pub fn set_tool(&mut self, new_tool: &Arc<FloTool<Anim>>) {
+        // Free the data for the current tool
+        self.tool_data      = None;
+        self.model_actions  = None;
+
+        // Set the new tool
+        let model_actions   = new_tool.actions_for_model(Arc::clone(&self.view_model));
+        self.current_tool   = Some(Arc::clone(&new_tool));
+
+        // Start the actions running for the new tool
+        self.model_actions  = Some(executor::spawn(model_actions));
+    }
 }
