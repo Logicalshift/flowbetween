@@ -108,7 +108,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
             *model.tool_state.lock().unwrap() = SendMap::custom();
 
             // Mark the effective tool as active
-            let tool_activation = effective_tool.map(|tool| tool.activate(model));
+            let tool_activation = effective_tool.map(|tool| BindRef::from(bind(ToolActivationState::Activated)) /* tool.activate(model) */);
             
             if let Some(tool_activation) = tool_activation {
                 // Tool needs reactivation if a different tool is selected

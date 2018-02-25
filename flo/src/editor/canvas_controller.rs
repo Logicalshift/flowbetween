@@ -243,7 +243,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
             // Pass the action on to the current tool
             self.anim_view_model.tools().activate_tool(&tool_model);
-            effective_tool.paint(&tool_model, device, actions);
+            // effective_tool.paint(&tool_model, device, actions);
         }
     }
 }
