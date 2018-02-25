@@ -181,8 +181,10 @@ impl CanvasRenderer {
                     // Set the layer and store the backing buffer
                     gc.layer(canvas_layer_id);
                     gc.store();
-                    gc.push_state();
                 }
+
+                // Always push the state so it can be cleared when the annotations go away
+                gc.push_state();
 
                 // Draw the annotations
                 draw_annotations(gc);
