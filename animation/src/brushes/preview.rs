@@ -101,8 +101,12 @@ impl BrushPreview {
 
         // Apply brush to the vector properties
         let new_properties = self.brush_properties_element();
+
+        // We always apply the properties so that our vector properties are accurate
+        new_properties.update_properties(&mut vector_properties);
+
+        // We only render the properties if they're marked as updated
         if update_properties {
-            new_properties.update_properties(&mut vector_properties);
             new_properties.render(gc, &vector_properties);
         }
 
