@@ -7,6 +7,7 @@ use animation::*;
 
 use futures::*;
 
+use std::fmt;
 use std::any::*;
 use std::sync::*;
 use std::marker::PhantomData;
@@ -40,6 +41,12 @@ pub struct GenericTool<ToolData: Send+'static, Anim: Animation, UnderlyingTool: 
 /// The data structure storing the generic tool data
 /// 
 pub struct GenericToolData(Mutex<Box<Any+Send>>);
+
+impl fmt::Debug for GenericToolData {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        fmt.write_str("GenericToolData")
+    }
+}
 
 ///
 /// Converts a tool to a generic tool
