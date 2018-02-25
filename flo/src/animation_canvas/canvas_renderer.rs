@@ -165,7 +165,8 @@ impl CanvasRenderer {
             canvas.draw(move |gc| {
                 // If the layer being annotated has changed, then we need to switch layers
                 if Some(layer_id) != previous_layer {
-                    // TODO: can throw away the stored version of the other layer here (if we had a way to do it)
+                    // Throw away the stored buffer here
+                    gc.free_stored_buffer();
 
                     // Set the layer and store the backing buffer
                     gc.layer(canvas_layer_id);
@@ -174,6 +175,38 @@ impl CanvasRenderer {
 
                 // Draw the annotations
                 draw_annotations(gc);
+            });
+        }
+    }
+
+    ///
+    /// Removes any annotation and then commits some drawing actions to a particular layer
+    /// 
+    /// In general this is useful at the end of a brush stroke, where we want to finalize
+    /// the results of a drawing without having to redraw the entire layer.
+    /// 
+    pub fn commit_to_layer<DrawFn: FnOnce(&mut GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, commit_drawing: DrawFn) {
+        // The currently annotated layer will be selected, so we can elide the layer select command if it's the same layer the user wants to commit drawing to
+        let previous_layer = self.annotated_layer;
+
+        // If there's an annotation, clear it and remove any buffer that might be present
+        if self.annotated_layer.is_some() {
+            self.clear_annotation(canvas);
+            canvas.draw(|gc| gc.free_stored_buffer());
+        }
+
+        // Attempt to retrieve the canvas layer ID for the animation layer
+        let canvas_layer_id = self.frame_layers.get(&layer_id).map(|frame_layer| frame_layer.layer_id);
+
+        if let Some(canvas_layer_id) = canvas_layer_id {
+            canvas.draw(move |gc| {
+                // Set the layer if it has changed
+                if previous_layer != Some(layer_id) {
+                    gc.layer(canvas_layer_id);
+                }
+
+                // Commit the requested drawing operations
+                commit_drawing(gc);
             });
         }
     }
