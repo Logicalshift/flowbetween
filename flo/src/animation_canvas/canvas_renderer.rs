@@ -62,7 +62,7 @@ impl CanvasRenderer {
     ///
     /// Clears a canvas and sets it up for rendering
     /// 
-    fn clear_canvas(&self, canvas: &mut BindingCanvas, (width, height): (f64, f64)) {
+    fn clear_canvas(&self, canvas: &BindingCanvas, (width, height): (f64, f64)) {
         canvas.draw(move |gc| {
             gc.clear_canvas();
             gc.canvas_height((height*1.05) as f32);
@@ -102,7 +102,7 @@ impl CanvasRenderer {
     ///
     /// Draws the current set of frame layers to the specified canvas
     /// 
-    pub fn draw_frame_layers(&self, canvas: &mut BindingCanvas, size: (f64, f64)) {
+    pub fn draw_frame_layers(&self, canvas: &BindingCanvas, size: (f64, f64)) {
         // Clear the canvas and redraw the background
         self.clear_canvas(canvas, size);
         canvas.draw(|gc| self.draw_background(gc, size));

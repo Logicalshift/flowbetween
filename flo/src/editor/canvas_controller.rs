@@ -1,8 +1,8 @@
 use super::super::viewmodel::*;
 use super::super::tools::*;
+use super::super::animation_canvas::*;
 
 use ui::*;
-use canvas::*;
 use desync::*;
 use binding::*;
 use animation::*;
@@ -10,28 +10,16 @@ use animation::*;
 use typemap::*;
 use std::sync::*;
 use std::time::Duration;
-use std::collections::HashMap;
 
 const MAIN_CANVAS: &str     = "main";
 const PAINT_ACTION: &str    = "Paint";
 
 ///
-/// Represents a layer in the current frame
-/// 
-struct FrameLayer {
-    /// The ID of the layer to draw on the canvas
-    layer_id:       u32,
-
-    /// The frame data for this layer
-    layer_frame:    Arc<Frame>
-}
-
-///
 /// The core of the canvas
 /// 
 struct CanvasCore {
-    /// The layers in the current frame
-    frame_layers: HashMap<u64, FrameLayer>,
+    /// The canvas renderer
+    renderer: CanvasRenderer,
 
     /// The time of the current frame
     current_time: Duration
@@ -44,7 +32,6 @@ pub struct CanvasController<Anim: Animation> {
     ui:                 Binding<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_view_model:    AnimationViewModel<Anim>,
-    tool_state:         Arc<Mutex<SendMap>>,
 
     core:               Desync<CanvasCore>
 }
@@ -59,11 +46,10 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             ui:                 bind(Control::empty()),
             canvases:           Arc::new(canvases),
             anim_view_model:    view_model.clone(),
-            tool_state:         Arc::new(Mutex::new(SendMap::custom())),
 
             core:               Desync::new(CanvasCore {
-                frame_layers: HashMap::new(),
-                current_time: Duration::new(0, 0)
+                renderer:       CanvasRenderer::new(),
+                current_time:   Duration::new(0, 0)
             })
         };
 
@@ -94,21 +80,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// 
     fn create_canvas(&self) -> Resource<BindingCanvas> {
         let canvas = self.canvases.register(BindingCanvas::new());
-        self.clear_canvas(&canvas);
         canvas
-    }
-
-    ///
-    /// Clears a canvas and sets it up for rendering
-    /// 
-    fn clear_canvas(&self, canvas: &Resource<BindingCanvas>) {
-        let (width, height) = self.anim_view_model.size();
-
-        canvas.draw(move |gc| {
-            gc.clear_canvas();
-            gc.canvas_height((height*1.05) as f32);
-            gc.center_region(0.0,0.0, width as f32, height as f32);
-        });
     }
 
     ///
@@ -118,39 +90,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         let canvas          = self.create_canvas();
         self.canvases.assign_name(&canvas, MAIN_CANVAS);
 
-        canvas.draw(move |gc| self.draw_background(gc));
-
         canvas
-    }
-
-    ///
-    /// Draws the canvas background to a context
-    /// 
-    fn draw_background(&self, gc: &mut GraphicsPrimitives) {
-        // Work out the width, height to draw the animation to draw
-        let (width, height) = self.anim_view_model.size();
-        let (width, height) = (width as f32, height as f32);
-        
-        // Background always goes on layer 0
-        gc.layer(0);
-
-        gc.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 1.0));
-        gc.line_width_pixels(1.0);
-
-        // Draw the shadow
-        let offset = height * 0.015;
-
-        gc.fill_color(Color::Rgba(0.1, 0.1, 0.1, 0.4));
-        gc.new_path();
-        gc.rect(0.0, 0.0-offset, width+offset, height);
-        gc.fill();
-
-        // Draw the canvas background
-        gc.fill_color(Color::Rgba(1.0, 1.0, 1.0, 1.0));
-        gc.new_path();
-        gc.rect(0.0, 0.0, width, height);
-        gc.fill();
-        gc.stroke();
     }
 
     ///
@@ -165,26 +105,16 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             // Update the time set in the core
             core.current_time = time;
 
+            // Clear any existing canvases
+            core.renderer.clear();
+
             // Open the animation layers
             let layers      = animation.get_layer_ids();
 
-            // Generate the frame for each layer and assign an ID
-            core.frame_layers.clear();
-
-            let mut next_layer_id = 1;
-
+            // Load the frames into the renderer
             for layer_id in layers {
                 if let Some(layer) = animation.get_layer_with_id(layer_id) {
-                    // Create the frame for this layer
-                    let layer_frame = layer.get_frame_at_time(time);
-                    
-                    // Assign a layer ID to this frame and store
-                    core.frame_layers.insert(layer.id(), FrameLayer {
-                        layer_id:       next_layer_id,
-                        layer_frame:    layer_frame
-                    });
-
-                    next_layer_id += 1;
+                    core.renderer.load_frame(&*layer, time);
                 }
             }
         });
@@ -194,21 +124,12 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// Draws the current set of frame layers
     /// 
     fn draw_frame_layers(&self) {
-        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-
-        // Clear the canvas and redraw the background
-        self.clear_canvas(&canvas);
-        canvas.draw(|gc| self.draw_background(gc));
+        let canvas  = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+        let size    = self.anim_view_model.size();
 
         // Draw the active set of layers
         self.core.sync(move |core| {
-            canvas.draw(move |gc| {
-                // Draw the layers
-                for layer in core.frame_layers.values() {
-                    gc.layer(layer.layer_id);
-                    layer.layer_frame.render_to(gc);
-                }
-            });
+            core.renderer.draw_frame_layers(&*canvas, size);
         });
     }
 
@@ -227,6 +148,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         let selected_layer_id = self.anim_view_model.timeline().selected_layer.get();
 
         if let (Some(selected_layer_id), Some(effective_tool)) = (selected_layer_id, effective_tool) {
+            /*
             // Create the tool model for this action
             let canvas              = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
             let canvas_layer_id     = self.core.sync(|core| core.frame_layers.get(&selected_layer_id).map(|layer| layer.layer_id));
@@ -244,6 +166,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             // Pass the action on to the current tool
             self.anim_view_model.tools().activate_tool(&tool_model);
             // effective_tool.paint(&tool_model, device, actions);
+            */
         }
     }
 }
