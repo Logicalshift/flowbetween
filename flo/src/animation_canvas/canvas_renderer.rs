@@ -14,7 +14,13 @@ struct FrameLayer {
     layer_id:       u32,
 
     /// The frame data for this layer
-    layer_frame:    Arc<Frame>
+    layer_frame:    Arc<Frame>,
+
+    /// The brush that was last used for this layer
+    active_brush: Option<(BrushDefinition, BrushDrawingStyle)>,
+
+    /// The brush properties that were last used for this layer
+    active_properties: Option<BrushProperties>
 }
 
 ///
@@ -54,12 +60,16 @@ impl CanvasRenderer {
         let layer_id    = (self.frame_layers.len() as u32) + 1;
 
         // Get the frame for this time
-        let layer_frame = layer.get_frame_at_time(time);
+        let layer_frame             = layer.get_frame_at_time(time);
+        let active_brush            = layer_frame.active_brush();
+        let active_brush_properties = layer_frame.active_brush_properties();
 
         // Store this layer in the hashmap with its layer ID
         self.frame_layers.insert(layer.id(), FrameLayer {
-            layer_id:       layer_id,
-            layer_frame:    layer_frame
+            layer_id:           layer_id,
+            layer_frame:        layer_frame,
+            active_brush:       active_brush,
+            active_properties:  active_brush_properties
         });
     }
 
@@ -208,6 +218,27 @@ impl CanvasRenderer {
                 // Commit the requested drawing operations
                 commit_drawing(gc);
             });
+        }
+    }
+
+    ///
+    /// Retrieves the brush settings for the specified layer 
+    /// 
+    pub fn get_layer_brush(&self, layer_id: u64) -> (Option<(BrushDefinition, BrushDrawingStyle)>, Option<BrushProperties>) {
+        if let Some(layer) = self.frame_layers.get(&layer_id) {
+            (layer.active_brush.clone(), layer.active_properties.clone())
+        } else {
+            (None, None)
+        }
+    }
+
+    ///
+    /// Sets the layer brush for the specified layer (eg after committing a brush preview)
+    /// 
+    pub fn set_layer_brush(&mut self, layer_id: u64, brush: Option<(BrushDefinition, BrushDrawingStyle)>, properties: Option<BrushProperties>) {
+        if let Some(layer) = self.frame_layers.get_mut(&layer_id) {
+            layer.active_brush      = brush;
+            layer.active_properties = properties;
         }
     }
 }
