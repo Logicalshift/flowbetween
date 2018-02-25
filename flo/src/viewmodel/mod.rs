@@ -59,6 +59,13 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     }
 
     ///
+    /// Retrieves the underlying animation for this viewmodel
+    /// 
+    pub fn animation(&self) -> Arc<Anim> {
+        Arc::clone(&self.animation)
+    }
+
+    ///
     /// Retrieves the viewmodel for the drawing tools for this animation
     /// 
     pub fn tools(&self) -> &ToolViewModel<Anim> {

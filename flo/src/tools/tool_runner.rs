@@ -59,6 +59,13 @@ impl<Anim: Animation> ToolRunner<Anim> {
     }
 
     ///
+    /// Updates the data that will be used for the tool
+    /// 
+    pub fn set_tool_data(&mut self, new_data: GenericToolData) {
+        self.tool_data = Some(Arc::new(new_data));
+    }
+
+    ///
     /// Returns the pending model actions for this object
     /// 
     pub fn model_actions(&mut self) -> Box<Iterator<Item=ToolAction<GenericToolData>>> {
