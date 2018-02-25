@@ -415,8 +415,12 @@ let flo_canvas = (function() {
                 context.drawImage(stored_pixels, 0, 0);
 
                 context.restore();
+            }
+        }
 
-                last_store_pos      = null;
+        function free_stored_buffer() {
+            // Set that we no longer have a stored image
+            if (have_stored_image) {
                 have_stored_image   = false;
             }
         }
@@ -556,7 +560,20 @@ let flo_canvas = (function() {
 
         function rewind_to_last_store() {
             if (last_store_pos !== null) {
-                while (replay.length >= last_store_pos) {
+                while (replay.length > last_store_pos) {
+                    replay.pop();
+                }
+            }
+        }
+
+        function rewind_free_stored() {
+            // If the top of the replay buffer is 'store, free stored' remove them both
+            if (replay.length >= 2) {
+                let free_stored_index   = replay.length-1;
+                let store_index         = replay.length-2;
+
+                if (replay[free_stored_index][0] === free_stored_buffer && replay[store_index][0] === store) {
+                    replay.pop();
                     replay.pop();
                 }
             }
@@ -624,6 +641,7 @@ let flo_canvas = (function() {
             clip:               ()              => { replay.push([clip, []]);                           clip();                         },
             store:              ()              => { replay.push([store, []]);                          store();                        },
             restore:            ()              => { replay.push([restore, []]); rewind_to_last_store(); restore();                     },
+            free_stored_buffer: ()              => { replay.push([free_stored_buffer, []]); rewind_free_stored(); free_stored_buffer(); },
             push_state:         ()              => { replay.push([push_state, []]);                     push_state();                   },
             pop_state:          ()              => { replay.push([pop_state, []]);                      pop_state();                    },
             layer:              (layer_id)      => { replay.push([layer, [layer_id]]);                  layer(layer_id);                },
@@ -844,10 +862,11 @@ let flo_canvas = (function() {
 
             let decode_clip = () => {
                 switch (read_char()) {
-                case 'c':   draw.clip();    break;
-                case 'n':   draw.unclip();  break;
-                case 's':   draw.store();   break;
-                case 'r':   draw.restore(); break;
+                case 'c':   draw.clip();                break;
+                case 'n':   draw.unclip();              break;
+                case 's':   draw.store();               break;
+                case 'r':   draw.restore();             break;
+                case 'f':   draw.free_stored_buffer();  break;
                 }
             };
             
