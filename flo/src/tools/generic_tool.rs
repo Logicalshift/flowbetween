@@ -39,7 +39,7 @@ pub struct GenericTool<ToolData: Send+'static, Anim: Animation, UnderlyingTool: 
 ///
 /// The data structure storing the generic tool data
 /// 
-pub struct GenericToolData(Box<Any+Send+Sync>);
+pub struct GenericToolData(Mutex<Box<Any+Send>>);
 
 ///
 /// Converts a tool to a generic tool
@@ -59,7 +59,7 @@ impl GenericToolData {
         use self::ToolAction::*;
 
         match action {
-            Data(data)              => Data(GenericToolData(Box::new(Arc::new(data)))),
+            Data(data)              => Data(GenericToolData(Mutex::new(Box::new(Arc::new(data))))),
             Edit(edit)              => Edit(edit),
             BrushPreview(preview)   => BrushPreview(preview)
         }
@@ -69,7 +69,7 @@ impl GenericToolData {
     /// Converts to a refernece of the specified type if possible
     /// 
     fn convert_ref<ToolData: 'static+Send>(&self) -> Option<Arc<ToolData>> {
-        self.0.downcast_ref().cloned()
+        self.0.lock().unwrap().downcast_ref().cloned()
     }
 
     ///
