@@ -143,7 +143,7 @@ impl CanvasRenderer {
 
         // If the annotated layer exists, then restore the canvas
         if annotated_layer.is_some() {
-            canvas.draw(|gc| gc.restore());
+            canvas.draw(|gc| { gc.pop_state(); gc.restore(); });
         }
     }
 
@@ -181,6 +181,7 @@ impl CanvasRenderer {
                     // Set the layer and store the backing buffer
                     gc.layer(canvas_layer_id);
                     gc.store();
+                    gc.push_state();
                 }
 
                 // Draw the annotations
