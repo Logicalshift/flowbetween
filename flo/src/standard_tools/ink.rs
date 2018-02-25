@@ -196,9 +196,8 @@ impl<Anim: Animation+'static> Tool2<InkData, Anim> for Ink {
                         ],
                         
                         PaintAction::Finish     => vec![
-                            // Brush stroke is finished: we commit it
-                            BrushPreview(Commit),
-                            BrushPreview(Clear)
+                            // Brush stroke is finished: we commit it (committing also clears the preview)
+                            BrushPreview(Commit)
                         ],
 
                         PaintAction::Cancel     => vec![
