@@ -22,7 +22,10 @@ struct FrameLayer {
 /// 
 pub struct CanvasRenderer {
     /// The layers in the current frame
-    frame_layers: HashMap<u64, FrameLayer>
+    frame_layers: HashMap<u64, FrameLayer>,
+
+    /// The layer that we're currently 'annotating'
+    annotated_layer: Option<u64>
 }
 
 impl CanvasRenderer {
@@ -31,7 +34,8 @@ impl CanvasRenderer {
     /// 
     pub fn new() -> CanvasRenderer {
         CanvasRenderer {
-            frame_layers: HashMap::new()
+            frame_layers:       HashMap::new(),
+            annotated_layer:    None
         }
     }
 
@@ -62,7 +66,10 @@ impl CanvasRenderer {
     ///
     /// Clears a canvas and sets it up for rendering
     /// 
-    fn clear_canvas(&self, canvas: &BindingCanvas, (width, height): (f64, f64)) {
+    fn clear_canvas(&mut self, canvas: &BindingCanvas, (width, height): (f64, f64)) {
+        // Clearing the canvas also removes any 'annotations' that might have been performed
+        self.annotated_layer = None;
+
         canvas.draw(move |gc| {
             gc.clear_canvas();
             gc.canvas_height((height*1.05) as f32);
@@ -73,7 +80,7 @@ impl CanvasRenderer {
     ///
     /// Draws the canvas background to a context
     /// 
-    fn draw_background(&self, gc: &mut GraphicsPrimitives, (width, height): (f64, f64)) {
+    fn draw_background(&mut self, gc: &mut GraphicsPrimitives, (width, height): (f64, f64)) {
         // Work out the width, height to draw the animation to draw
         let (width, height) = (width as f32, height as f32);
         
@@ -102,7 +109,7 @@ impl CanvasRenderer {
     ///
     /// Draws the current set of frame layers to the specified canvas
     /// 
-    pub fn draw_frame_layers(&self, canvas: &BindingCanvas, size: (f64, f64)) {
+    pub fn draw_frame_layers(&mut self, canvas: &BindingCanvas, size: (f64, f64)) {
         // Clear the canvas and redraw the background
         self.clear_canvas(canvas, size);
         canvas.draw(|gc| self.draw_background(gc, size));
@@ -115,5 +122,59 @@ impl CanvasRenderer {
                 layer.layer_frame.render_to(gc);
             }
         });
+    }
+
+    ///
+    /// Ensures that any annotations that have been performed are cleared
+    /// 
+    pub fn clear_annotation(&mut self, canvas: &BindingCanvas) {
+        // Fetch & clear the currently annotated layer
+        let annotated_layer = self.annotated_layer.take();
+
+        // If the annotated layer exists, then restore the canvas
+        if annotated_layer.is_some() {
+            canvas.draw(|gc| gc.restore());
+        }
+    }
+
+    ///
+    /// Given a layer ID, draws an annotation on top (replacing any existing annotation)
+    /// 
+    /// The annotation is just a drawing that is on top of the 'real' layer drawing
+    /// and can be replaced at any time. This allows for drawing things like preview
+    /// brush strokes without needing to redraw the entire canvas.
+    /// 
+    pub fn annotate_layer<DrawFn: FnOnce(&mut GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, draw_annotations: DrawFn) {
+        let previous_layer = self.annotated_layer;
+
+        // We can't currently have annotations on more than one layer at once (this is because 'restore' does not function
+        // correctly if the active layer is changed)
+
+        // The existing annotation is cleared by this action
+        self.clear_annotation(canvas);
+
+        // Attempt to retrieve the canvas layer ID for the animation layer
+        let canvas_layer_id = self.frame_layers.get(&layer_id).map(|frame_layer| frame_layer.layer_id);
+
+        // Annotation is drawn if we can find the frame layer for the layer we're annotating
+        if let Some(canvas_layer_id) = canvas_layer_id {
+            // This is now the annotated layer
+            self.annotated_layer = Some(layer_id);
+
+            // Render the canvas
+            canvas.draw(move |gc| {
+                // If the layer being annotated has changed, then we need to switch layers
+                if Some(layer_id) != previous_layer {
+                    // TODO: can throw away the stored version of the other layer here (if we had a way to do it)
+
+                    // Set the layer and store the backing buffer
+                    gc.layer(canvas_layer_id);
+                    gc.store();
+                }
+
+                // Draw the annotations
+                draw_annotations(gc);
+            });
+        }
     }
 }
