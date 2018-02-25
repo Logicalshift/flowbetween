@@ -44,11 +44,11 @@ pub struct GenericToolData(Box<Any+Send>);
 ///
 /// Converts a tool to a generic tool
 /// 
-pub trait ToGenericTool<Anim: Animation, ToolData: Send+'static> {
+pub trait ToFloTool<Anim: Animation, ToolData: Send+'static> {
     ///
     /// Converts this object to a generic tool reference
     /// 
-    fn to_generic_tool(self) -> Arc<FloTool<Anim>>;
+    fn to_flo_tool(self) -> Arc<FloTool<Anim>>;
 }
 
 impl GenericToolData {
@@ -135,8 +135,8 @@ impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool2<ToolData, An
 ///
 /// Converts any tool to its generic 'FloTool' equivalent
 /// 
-impl<Anim: 'static+Animation, ToolData: 'static+Send, T: 'static+Tool2<ToolData, Anim>> ToGenericTool<Anim, ToolData> for T {
-    fn to_generic_tool(self) -> Arc<FloTool<Anim>> {
+impl<Anim: 'static+Animation, ToolData: 'static+Send, T: 'static+Tool2<ToolData, Anim>> ToFloTool<Anim, ToolData> for T {
+    fn to_flo_tool(self) -> Arc<FloTool<Anim>> {
         Arc::new(GenericTool::from(self))
     }
 }

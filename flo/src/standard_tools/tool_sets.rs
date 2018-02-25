@@ -26,9 +26,9 @@ pub struct PaintTools<Anim: 'static+Animation> {
 impl<Anim: Animation> SelectionTools<Anim> {
     pub fn new() -> SelectionTools<Anim> {
         SelectionTools {
-            select: Select::new().to_generic_tool(),
-            adjust: Adjust::new().to_generic_tool(),
-            pan:    Pan::new().to_generic_tool()
+            select: Select::new().to_flo_tool(),
+            adjust: Adjust::new().to_flo_tool(),
+            pan:    Pan::new().to_flo_tool()
         }
     }
 }
@@ -36,9 +36,9 @@ impl<Anim: Animation> SelectionTools<Anim> {
 impl<Anim: Animation> PaintTools<Anim> {
     pub fn new() -> PaintTools<Anim> {
         PaintTools {
-            pencil: Pencil::new().to_generic_tool(),
-            ink:    Ink::new().to_generic_tool(),
-            eraser: Eraser::new().to_generic_tool()
+            pencil: Pencil::new().to_flo_tool(),
+            ink:    Ink::new().to_flo_tool(),
+            eraser: Eraser::new().to_flo_tool()
         }
     }
 }
