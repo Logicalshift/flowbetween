@@ -7,7 +7,6 @@ use desync::*;
 use binding::*;
 use animation::*;
 
-use typemap::*;
 use std::sync::*;
 use std::time::Duration;
 
@@ -17,9 +16,12 @@ const PAINT_ACTION: &str    = "Paint";
 ///
 /// The core of the canvas
 /// 
-struct CanvasCore {
+struct CanvasCore<Anim: Animation> {
     /// The canvas renderer
     renderer: CanvasRenderer,
+
+    /// Executes actions for the canvas tools
+    canvas_tools: CanvasTools<Anim>,
 
     /// The time of the current frame
     current_time: Duration
@@ -33,13 +35,16 @@ pub struct CanvasController<Anim: Animation> {
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_view_model:    AnimationViewModel<Anim>,
 
-    core:               Desync<CanvasCore>
+    core:               Desync<CanvasCore<Anim>>
 }
 
 impl<Anim: Animation+'static> CanvasController<Anim> {
     pub fn new(view_model: &AnimationViewModel<Anim>) -> CanvasController<Anim> {
         // Create the resources
-        let canvases = ResourceManager::new();
+        let canvases        = ResourceManager::new();
+
+        let renderer        = CanvasRenderer::new();
+        let canvas_tools    = CanvasTools::from_model(view_model);
 
         // Create the controller
         let mut controller = CanvasController {
@@ -48,7 +53,8 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             anim_view_model:    view_model.clone(),
 
             core:               Desync::new(CanvasCore {
-                renderer:       CanvasRenderer::new(),
+                renderer:       renderer,
+                canvas_tools:   canvas_tools,
                 current_time:   Duration::new(0, 0)
             })
         };
@@ -137,37 +143,16 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// Performs a series of painting actions on the canvas
     /// 
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
-        // Set the current pointer
-        let pointer_id = actions.first().map(|first_action| first_action.pointer_id).unwrap_or(0);
-        self.anim_view_model.tools().current_pointer.clone().set((*device, pointer_id));
+        // Fetch the canvas we're going to draw to
+        let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
 
-        // Get the active tool
-        let effective_tool = self.anim_view_model.tools().effective_tool.get();
-
-        // Get the selected layer
-        let selected_layer_id = self.anim_view_model.timeline().selected_layer.get();
-
-        if let (Some(selected_layer_id), Some(effective_tool)) = (selected_layer_id, effective_tool) {
-            /*
-            // Create the tool model for this action
-            let canvas              = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-            let canvas_layer_id     = self.core.sync(|core| core.frame_layers.get(&selected_layer_id).map(|layer| layer.layer_id));
-            let canvas_layer_id     = canvas_layer_id.unwrap_or(1);
-
-            let tool_model = ToolModel {
-                current_time:       self.anim_view_model.timeline().current_time.get(),
-                canvas:             &canvas,
-                anim_view_model:    &self.anim_view_model,
-                selected_layer_id:  selected_layer_id,
-                canvas_layer_id:    canvas_layer_id,
-                tool_state:         self.tool_state.clone()
-            };
-
-            // Pass the action on to the current tool
-            self.anim_view_model.tools().activate_tool(&tool_model);
-            // effective_tool.paint(&tool_model, device, actions);
-            */
-        }
+        // Convert the actions into tool inputs
+        let tool_inputs = vec![ToolInput::PaintDevice(*device)].into_iter()
+            .chain(actions.iter()
+                .map(|painting| ToolInput::Paint(painting.clone())));
+        
+        // Send to the canvas tools object
+        self.core.sync(move |core| core.canvas_tools.send_input(&canvas, &mut core.renderer, tool_inputs));
     }
 }
 
