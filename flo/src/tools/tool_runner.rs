@@ -81,7 +81,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
     /// 
     /// If there are any actions resulting from a change in model state, these are also returned here
     /// 
-    pub fn actions_for_input<'a, Iter: Iterator<Item=ToolInput<'a, GenericToolData>>>(&'a mut self, input: Iter) -> Box<Iterator<Item=ToolAction<GenericToolData>>> {
+    pub fn actions_for_input<'a, Iter: Iterator<Item=ToolInput<'a, GenericToolData>>>(&mut self, input: Iter) -> Box<Iterator<Item=ToolAction<GenericToolData>>> {
         // Create a place to store the updated tool data for this request
         let mut new_tool_data = None;
 
