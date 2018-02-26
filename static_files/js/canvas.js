@@ -336,6 +336,11 @@ let flo_canvas = (function() {
         /// Removes the clipping path if one is applied
         ///
         function remove_clip() {
+            // TODO: because JS isn't very well designed, this will clobber things like 
+            // the fill style as well which we don't want to happen.
+            // (The design issues here are a combination of context.save saving
+            // absolutely everything and there being no way to remove a clipping
+            // path once applied)
             if (clipped) {
                 clipped = false;
                 context.restore();
@@ -346,7 +351,7 @@ let flo_canvas = (function() {
         /// Restores the clipping path if it's missing
         ///
         function restore_clip() {
-            if (!clipped) {
+            if (!clipped && clip_stack.length > 0) {
                 clipped = true;
                 context.save();
                 clip_stack.forEach(fn => fn());
