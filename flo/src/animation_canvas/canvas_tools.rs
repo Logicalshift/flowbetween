@@ -192,7 +192,6 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
 
                 // Update the properties in the renderer if they've changed
                 if need_brush || need_props {
-                    println!("Brush: {} {}", need_brush, need_props);
                     renderer.set_layer_brush(preview_layer, Some(self.brush_definition.clone()), Some(self.brush_properties.clone()));
                 }
             }
