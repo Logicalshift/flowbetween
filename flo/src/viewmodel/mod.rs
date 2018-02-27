@@ -14,6 +14,7 @@ pub use self::layer::*;
 pub use self::keyframe::*;
 pub use self::animation::*;
 
+use binding::*;
 use animation::*;
 
 use std::sync::*;
@@ -35,7 +36,13 @@ pub struct AnimationViewModel<Anim: Animation> {
     brush: BrushViewModel,
 
     /// The view model for the menu bar
-    menu: MenuViewModel
+    menu: MenuViewModel,
+
+    /// The size of the animation
+    pub size: BindRef<(f64, f64)>,
+
+    /// The underlying size binding
+    size_binding: Binding<(f64, f64)>
 }
 
 impl<Anim: Animation+'static> AnimationViewModel<Anim> {
@@ -43,18 +50,23 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     /// Creates a new view model
     /// 
     pub fn new(animation: Anim) -> AnimationViewModel<Anim> {
-        let animation   = Arc::new(animation);
-        let tools       = ToolViewModel::new();
-        let timeline    = TimelineViewModel::new(Arc::clone(&animation));
-        let brush       = BrushViewModel::new();
-        let menu        = MenuViewModel::new(&tools.effective_tool);
+        let animation       = Arc::new(animation);
+        let tools           = ToolViewModel::new();
+        let timeline        = TimelineViewModel::new(Arc::clone(&animation));
+        let brush           = BrushViewModel::new();
+        let menu            = MenuViewModel::new(&tools.effective_tool);
+
+        let size_binding    = bind(animation.size());
 
         AnimationViewModel {
             animation:      animation,
             tools:          tools,
             timeline:       timeline,
             brush:          brush,
-            menu:           menu
+            menu:           menu,
+
+            size:           BindRef::from(size_binding.clone()),
+            size_binding:   size_binding
         }
     }
 
@@ -102,7 +114,10 @@ impl<Anim: Animation> Clone for AnimationViewModel<Anim> {
             tools:          self.tools.clone(),
             timeline:       self.timeline.clone(),
             brush:          self.brush.clone(),
-            menu:           self.menu.clone()
+            menu:           self.menu.clone(),
+
+            size:           self.size.clone(),
+            size_binding:   self.size_binding.clone()
         }
     }
 }

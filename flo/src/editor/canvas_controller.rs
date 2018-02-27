@@ -34,7 +34,7 @@ struct CanvasCore<Anim: Animation> {
 /// The canvas controller manages the main drawing canvas
 ///
 pub struct CanvasController<Anim: Animation> {
-    ui:                 Binding<Control>,
+    ui:                 BindRef<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_view_model:    AnimationViewModel<Anim>,
 
@@ -42,16 +42,21 @@ pub struct CanvasController<Anim: Animation> {
 }
 
 impl<Anim: Animation+'static> CanvasController<Anim> {
+    ///
+    /// Creates a new canvas controller
+    /// 
     pub fn new(view_model: &AnimationViewModel<Anim>) -> CanvasController<Anim> {
         // Create the resources
         let canvases        = ResourceManager::new();
 
         let renderer        = CanvasRenderer::new();
         let canvas_tools    = CanvasTools::from_model(view_model);
+        let main_canvas     = Self::create_main_canvas(&canvases);
+        let ui              = Self::ui(main_canvas, view_model.size.clone());
 
         // Create the controller
-        let mut controller = CanvasController {
-            ui:                 bind(Control::empty()),
+        let controller = CanvasController {
+            ui:                 ui,
             canvases:           Arc::new(canvases),
             anim_view_model:    view_model.clone(),
 
@@ -63,21 +68,6 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             })
         };
 
-        // The main canvas is where the current frame is rendered
-        let main_canvas = controller.create_main_canvas();
-
-        // UI is just the canvas
-        controller.ui.set(Control::canvas()
-            .with(main_canvas)
-            .with(Bounds::fill_all())
-            .with((
-                (ActionTrigger::Paint(PaintDevice::Pen),                        PAINT_ACTION),
-                (ActionTrigger::Paint(PaintDevice::Touch),                      PAINT_ACTION),
-                (ActionTrigger::Paint(PaintDevice::Other),                      PAINT_ACTION),
-                (ActionTrigger::Paint(PaintDevice::Eraser),                     PAINT_ACTION),
-                (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   PAINT_ACTION)
-            )));
-
         // Load the initial set of frame layers
         controller.update_layers_to_frame_at_time(view_model.timeline().current_time.get());
         controller.draw_frame_layers();
@@ -86,19 +76,41 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     }
 
     ///
-    /// Creates a canvas for this object
+    /// Creates the ui for the canvas controller
     /// 
-    fn create_canvas(&self) -> Resource<BindingCanvas> {
-        let canvas = self.canvases.register(BindingCanvas::new());
-        canvas
+    fn ui(main_canvas: Resource<BindingCanvas>, size: BindRef<(f64, f64)>) -> BindRef<Control> {
+        let ui = computed(move || {
+            let main_canvas     = main_canvas.clone();
+            let size            = size.get();
+            let (width, height) = size;
+            let (width, height) = (width as f32, height as f32);
+
+            Control::scrolling_container()
+                .with(Bounds::fill_all())
+                .with(Scroll::MinimumContentSize(width, height))
+                .with(vec![
+                    Control::canvas()
+                        .with(main_canvas)
+                        .with(Bounds::fill_all())
+                        .with((
+                            (ActionTrigger::Paint(PaintDevice::Pen),                        PAINT_ACTION),
+                            (ActionTrigger::Paint(PaintDevice::Touch),                      PAINT_ACTION),
+                            (ActionTrigger::Paint(PaintDevice::Other),                      PAINT_ACTION),
+                            (ActionTrigger::Paint(PaintDevice::Eraser),                     PAINT_ACTION),
+                            (ActionTrigger::Paint(PaintDevice::Mouse(MouseButton::Left)),   PAINT_ACTION)
+                        ))
+                ])
+        });
+
+        BindRef::from(ui)
     }
 
     ///
     /// Create the canvas for this controller
     ///
-    fn create_main_canvas(&self) -> Resource<BindingCanvas> {
-        let canvas          = self.create_canvas();
-        self.canvases.assign_name(&canvas, MAIN_CANVAS);
+    fn create_main_canvas(resources: &ResourceManager<BindingCanvas>) -> Resource<BindingCanvas> {
+        let canvas          = resources.register(BindingCanvas::new());
+        resources.assign_name(&canvas, MAIN_CANVAS);
 
         canvas
     }
@@ -177,7 +189,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
 impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
     fn ui(&self) -> BindRef<Control> {
-        BindRef::new(&self.ui)
+        BindRef::clone(&self.ui)
     }
 
     fn tick(&self) {
