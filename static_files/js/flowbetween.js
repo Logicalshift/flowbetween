@@ -1578,8 +1578,10 @@ function flowbetween(root_node) {
             });
         };
 
+        // Create the initial 'next_update' promise
         create_new_promise();
 
+        // Function resolves the existing promise and creates a new one
         return () => {
             on_resolve();
             create_new_promise();
