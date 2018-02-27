@@ -23,6 +23,9 @@ function flowbetween(root_node) {
     // If an update is already running, this is the promise that will resolve when it's done
     let current_update_promise = Promise.resolve();
 
+    // Promise that will resolve once the next update has completed
+    let next_update_promise = Promise.resolve();
+
     // URL where the flowbetween session resides
     let target_url = '/flowbetween/session';
 
@@ -1564,6 +1567,26 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Resolves the 'next update' promise
+    ///
+    let resolve_next_update = (function () {
+        // on_resolve will resolve the update promise. 
+        let on_resolve          = null;
+        let create_new_promise  = () => {
+            next_update_promise = new Promise((resolve) => {
+                on_resolve = () => resolve();
+            });
+        };
+
+        create_new_promise();
+
+        return () => {
+            on_resolve();
+            create_new_promise();
+        };
+    })();
+
+    ///
     /// Connects to a websocket running on a different port on the same server
     ///
     let connect_websocket = (websocket_port, session_id) => {
@@ -1881,6 +1904,9 @@ function flowbetween(root_node) {
                 }
             });
 
+            // Notify that the update has completed
+            resolve_next_update();
+
             return current_promise;
         };
     })();
@@ -1905,8 +1931,9 @@ function flowbetween(root_node) {
                 resolve();
             });
 
-            // Return the promise (TODO: resolve once we receive the corresponding update)
-            return promise;
+            // Resolve once the update from this message is generated
+            let next_update = next_update_promise;
+            return promise.then(() => next_update);
         } else {
             return retry(() => http_post(request), () => warn('UI request failed - retrying'))
                 .then((response) => response_to_object(response))
