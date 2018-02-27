@@ -637,6 +637,9 @@ let flo_canvas = (function() {
                 let width   = canvas.width;
                 let height  = canvas.height;
 
+                // Clear the canvas
+                layer_context.clearRect(0, 0, width, height);
+
                 // Draw each of the layers
                 Object.keys(layer_canvases).forEach(layer_id => {
                     layer_context.globalCompositeOperation = blend_for_layer[layer_id] || 'source-over';
