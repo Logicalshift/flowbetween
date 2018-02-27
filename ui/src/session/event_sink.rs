@@ -41,10 +41,10 @@ impl UiEventSink {
 }
 
 impl Sink for UiEventSink {
-    type SinkItem   = UiEvent;
+    type SinkItem   = Vec<UiEvent>;
     type SinkError  = ();
 
-    fn start_send(&mut self, item: UiEvent) -> StartSend<UiEvent, ()> {
+    fn start_send(&mut self, item: Vec<UiEvent>) -> StartSend<Vec<UiEvent>, ()> {
         // Assign an ID to this event
         let event_id: usize = {
             let mut last_event  = self.last_event.lock().unwrap();

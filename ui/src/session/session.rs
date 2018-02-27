@@ -73,7 +73,7 @@ impl<CoreController: Controller> Deref for UiSession<CoreController> {
     }
 }
 
-impl<CoreController: 'static+Controller> UserInterface<UiEvent, Vec<UiUpdate>, ()> for UiSession<CoreController> {
+impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()> for UiSession<CoreController> {
     /// The type of the event sink for this UI
     type EventSink = UiEventSink;
 

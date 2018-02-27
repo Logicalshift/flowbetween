@@ -1925,10 +1925,8 @@ function flowbetween(root_node) {
             var promise = new Promise((resolve) => {
                 let websocket = websocket_for_session[session_id];
 
-                events.forEach(event => {
-                    websocket.send(JSON.stringify(event));
-                });
-                websocket.send(JSON.stringify('Tick'));
+                events.push('Tick');
+                websocket.send(JSON.stringify(events));
                 
                 resolve();
             });

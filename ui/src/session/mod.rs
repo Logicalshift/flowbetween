@@ -20,7 +20,7 @@ use super::user_interface::*;
 use binding::*;
 
 /// The basic user interface implemented by a UI session 
-pub trait CoreUserInterface : UserInterface<UiEvent, Vec<UiUpdate>, (), EventSink=UiEventSink, UpdateStream=UiUpdateStream> {
+pub trait CoreUserInterface : UserInterface<Vec<UiEvent>, Vec<UiUpdate>, (), EventSink=UiEventSink, UpdateStream=UiUpdateStream> {
     /// Retrieves the control tree for this UI
     fn ui_tree(&self) -> BindRef<Control>;
 }

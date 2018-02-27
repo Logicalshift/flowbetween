@@ -94,7 +94,7 @@ fn ticks_generate_empty_event() {
     assert!(first_item != Ok(TestItem::Timeout));
 
     // Send a tick
-    event_sink.start_send(UiEvent::Tick).unwrap();
+    event_sink.start_send(vec![UiEvent::Tick]).unwrap();
 
     // Nothing has changed, but the tick should still cause an event
     let tick_update = next_or_timeout.wait_stream().unwrap();

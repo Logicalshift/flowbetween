@@ -187,10 +187,10 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     }
 }
 
-pub type HttpEventSink      = Box<Sink<SinkItem=Event, SinkError=()>+Send>;
+pub type HttpEventSink      = Box<Sink<SinkItem=Vec<Event>, SinkError=()>+Send>;
 pub type HttpUpdateStream   = Box<Stream<Item=Vec<Update>, Error=()>+Send>;
 
-impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
+impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
     type EventSink      = HttpEventSink;
     type UpdateStream   = HttpUpdateStream;
 
@@ -199,9 +199,11 @@ impl<CoreUi: CoreUserInterface> UserInterface<Event, Vec<Update>, ()> for HttpUs
         let core_sink   = self.core_ui.get_input_sink();
 
         // Create a sink that turns HTTP events into core events
-        let mapped_sink = core_sink.with_flat_map(|http_event| {
-            let core_event = Self::http_event_to_core_event(http_event);
-            stream::once(Ok(core_event))
+        let mapped_sink = core_sink.with_flat_map(|http_events: Vec<Event>| {
+            let core_events = http_events.into_iter()
+                .map(|evt| Self::http_event_to_core_event(evt))
+                .collect();
+            stream::once(Ok(core_events))
         });
 
         // This new sink is our result

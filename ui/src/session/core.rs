@@ -49,32 +49,34 @@ impl UiSessionCore {
     ///
     /// Dispatches an event to the specified controller
     ///  
-    pub fn dispatch_event(&mut self, event: UiEvent, controller: &Controller) {
-        // Send the event to the controllers
-        match event {
-            UiEvent::Action(controller_path, event_name, action_parameter) => {
-                // Find the controller along this path
-                if controller_path.len() == 0 {
-                    // Straight to the root controller
-                    self.dispatch_action(controller, event_name, action_parameter);
-                } else {
-                    // Controller along a path
-                    let mut controller = controller.get_subcontroller(&controller_path[0]);
+    pub fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &Controller) {
+        for event in events {
+            // Send the event to the controllers
+            match event {
+                UiEvent::Action(controller_path, event_name, action_parameter) => {
+                    // Find the controller along this path
+                    if controller_path.len() == 0 {
+                        // Straight to the root controller
+                        self.dispatch_action(controller, event_name, action_parameter);
+                    } else {
+                        // Controller along a path
+                        let mut controller = controller.get_subcontroller(&controller_path[0]);
 
-                    for controller_name in controller_path.into_iter().skip(1) {
-                        controller = controller.map_or(None, move |ctrl| ctrl.get_subcontroller(&controller_name));
-                    }
+                        for controller_name in controller_path.into_iter().skip(1) {
+                            controller = controller.map_or(None, move |ctrl| ctrl.get_subcontroller(&controller_name));
+                        }
 
-                    match controller {
-                        Some(ref controller)    => self.dispatch_action(&**controller, event_name, action_parameter),
-                        None                    => ()       // TODO: event has disappeared into the void :-(
+                        match controller {
+                            Some(ref controller)    => self.dispatch_action(&**controller, event_name, action_parameter),
+                            None                    => ()       // TODO: event has disappeared into the void :-(
+                        }
                     }
+                },
+
+                UiEvent::Tick => {
+                    // Send a tick to this controller
+                    self.dispatch_tick(controller);
                 }
-            },
-
-            UiEvent::Tick => {
-                // Send a tick to this controller
-                self.dispatch_tick(controller);
             }
         }
 

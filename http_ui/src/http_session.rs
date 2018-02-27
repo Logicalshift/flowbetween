@@ -157,6 +157,7 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
             let mut refresh = false;
 
             // Load the events
+            let mut to_send = vec![];
             for evt in events {
                 match evt {
                     Event::UiRefresh | Event::NewSession => {
@@ -166,10 +167,12 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
 
                     evt => {
                         // Send the other events to the input
-                        input.start_send(evt).unwrap();
+                        to_send.push(evt);
                     }
                 };
             }
+
+            input.start_send(to_send).unwrap();
 
             // Restart the update queue if there's a refresh event
             if refresh {
