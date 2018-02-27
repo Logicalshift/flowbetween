@@ -539,6 +539,26 @@ let flo_canvas = (function() {
             );
         }
 
+        function clear_layer() {
+            // Clear the current layer
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Reset the blend mode
+            blend_for_layer[current_layer_id] = 'source-over';
+
+            // Remove everything from the canvas that was on this layer
+            for (let index=1; index<replay.length; ++index) {
+                if (replay[index][2] === current_layer_id) {
+                    replay[index] = null;
+                    replay.splice(index, 1);
+                    --index;
+                }
+            }
+
+            // Add a 'set layer' command to the replay
+            replay.push([layer, [current_layer_id], current_layer_id]);
+        }
+
         function layer_blend(layer_id, blend_mode) {
             blend_for_layer[layer_id] = blend_mode;
         }
@@ -655,7 +675,8 @@ let flo_canvas = (function() {
             push_state:         ()              => { replay.push([push_state, [], current_layer_id]);                       push_state();                   },
             pop_state:          ()              => { replay.push([pop_state, [], current_layer_id]);                        pop_state();                    },
             layer:              (layer_id)      => { replay.push([layer, [layer_id], current_layer_id]);                    layer(layer_id);                },
-            layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], current_layer_id]); layer_blend(layer_id, blend_mode); },
+            layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         layer_blend(layer_id, blend_mode); },
+            clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      clear_layer();                  },
             clear_canvas:       ()              => { replay = [ [clear_canvas, [], current_layer_id] ];                     clear_canvas();                 },
 
             replay_drawing:     replay_drawing,
@@ -785,6 +806,7 @@ let flo_canvas = (function() {
                 case 'A':   draw.clear_canvas();    break;
                 case 'l':   draw.layer(read_u32()); break;
                 case 'b':   draw.layer_blend(read_u32(), decode_blend_mode()); break;
+                case 'C':   draw.clear_layer();     break;
                 }
             };
 
