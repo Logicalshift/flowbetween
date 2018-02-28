@@ -4,7 +4,7 @@ use animation::*;
 
 use std::time::Duration;
 
-impl<Anim: Animation> Animation for AnimationViewModel<Anim> {
+impl<Anim: Animation> Animation for FloModel<Anim> {
     ///
     /// Retrieves the frame size of this animation
     /// 

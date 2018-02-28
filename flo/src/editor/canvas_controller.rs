@@ -36,7 +36,7 @@ struct CanvasCore<Anim: Animation> {
 pub struct CanvasController<Anim: Animation> {
     ui:                 BindRef<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
-    anim_view_model:    AnimationViewModel<Anim>,
+    anim_view_model:    FloModel<Anim>,
 
     core:               Desync<CanvasCore<Anim>>
 }
@@ -45,7 +45,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     ///
     /// Creates a new canvas controller
     /// 
-    pub fn new(view_model: &AnimationViewModel<Anim>) -> CanvasController<Anim> {
+    pub fn new(view_model: &FloModel<Anim>) -> CanvasController<Anim> {
         // Create the resources
         let canvases        = ResourceManager::new();
 

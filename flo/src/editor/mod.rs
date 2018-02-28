@@ -39,7 +39,7 @@ pub struct EditorController {
 
 impl EditorController {
     pub fn new<Anim: 'static+Animation>(animation: Anim) -> EditorController {
-        let animation   = AnimationViewModel::new(animation);
+        let animation   = FloModel::new(animation);
 
         let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new(&animation));

@@ -13,7 +13,7 @@ use std::time::Duration;
 ///
 /// ViewModel used for the timeline view
 /// 
-pub struct TimelineViewModel<Anim: Animation> {
+pub struct TimelineModel<Anim: Animation> {
     /// The animation that this view model is for
     animation: Arc<Anim>,
 
@@ -27,18 +27,18 @@ pub struct TimelineViewModel<Anim: Animation> {
     pub duration: Binding<Duration>,
 
     /// The layers in the timeline
-    pub layers: Binding<Vec<LayerViewModel>>,
+    pub layers: Binding<Vec<LayerModel>>,
 
     /// The ID of the layer currently selected for editing
     pub selected_layer: Binding<Option<u64>>,
 
     /// The keyframes that occur during a certain time period
-    keyframes: Arc<Mutex<HashMap<Range<u32>, Weak<Binding<Vec<KeyFrameViewModel>>>>>>
+    keyframes: Arc<Mutex<HashMap<Range<u32>, Weak<Binding<Vec<KeyFrameModel>>>>>>
 }
 
-impl<Anim: Animation> Clone for TimelineViewModel<Anim> {
-    fn clone(&self) -> TimelineViewModel<Anim> {
-        TimelineViewModel {
+impl<Anim: Animation> Clone for TimelineModel<Anim> {
+    fn clone(&self) -> TimelineModel<Anim> {
+        TimelineModel {
             animation:      Arc::clone(&self.animation),
             current_time:   Binding::clone(&self.current_time),
             frame_duration: Binding::clone(&self.frame_duration),
@@ -50,11 +50,11 @@ impl<Anim: Animation> Clone for TimelineViewModel<Anim> {
     }
 }
 
-impl<Anim: Animation> TimelineViewModel<Anim> {
+impl<Anim: Animation> TimelineModel<Anim> {
     ///
     /// Creates a new timeline viewmodel
     /// 
-    pub fn new(animation: Arc<Anim>) -> TimelineViewModel<Anim> {
+    pub fn new(animation: Arc<Anim>) -> TimelineModel<Anim> {
         // Load the layers from the animation
         let layer_ids   = animation.get_layer_ids();
         let mut layers  = vec![];
@@ -62,7 +62,7 @@ impl<Anim: Animation> TimelineViewModel<Anim> {
         for id in layer_ids {
             let layer = animation.get_layer_with_id(id);
             if let Some(layer) = layer {
-                layers.push(LayerViewModel::new(&layer));
+                layers.push(LayerModel::new(&layer));
             }
         }
 
@@ -71,7 +71,7 @@ impl<Anim: Animation> TimelineViewModel<Anim> {
         let frame_duration  = animation.frame_length();
 
         // Create the timeline view model
-        TimelineViewModel {
+        TimelineModel {
             animation:      animation,
             current_time:   bind(Duration::from_millis(0)),
             duration:       bind(duration),
@@ -85,7 +85,7 @@ impl<Anim: Animation> TimelineViewModel<Anim> {
     ///
     /// Retrieves a binding that tracks the keyframes in a particular range of frames
     /// 
-    pub fn get_keyframe_binding(&self, frames: Range<u32>) -> Arc<Binding<Vec<KeyFrameViewModel>>> {
+    pub fn get_keyframe_binding(&self, frames: Range<u32>) -> Arc<Binding<Vec<KeyFrameModel>>> {
         self.tidy_keyframes();
         let mut keyframes = self.keyframes.lock().unwrap();
 
@@ -119,7 +119,7 @@ impl<Anim: Animation> TimelineViewModel<Anim> {
                         let frame_duration_nanos: u64   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
                         let frame_time_nanos: u64       = keyframe_time.as_secs() * 1_000_000_000 + (keyframe_time.subsec_nanos() as u64);
 
-                        KeyFrameViewModel {
+                        KeyFrameModel {
                             when:       keyframe_time,
                             frame:      (frame_time_nanos/frame_duration_nanos) as u32,
                             layer_id:   layer_id

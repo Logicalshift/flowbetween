@@ -10,7 +10,7 @@ use std::sync::*;
 ///
 /// View model representing the currently selected and available tools
 /// 
-pub struct ToolViewModel<Anim: Animation> {
+pub struct ToolModel<Anim: Animation> {
     /// The currently selected tool
     pub selected_tool: Binding<Option<Arc<FloTool<Anim>>>>,
 
@@ -24,11 +24,11 @@ pub struct ToolViewModel<Anim: Animation> {
     pub tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>,
 }
 
-impl<Anim: Animation+'static> ToolViewModel<Anim> {
+impl<Anim: Animation+'static> ToolModel<Anim> {
     ///
     /// Creates a new view model
     /// 
-    pub fn new() -> ToolViewModel<Anim> {
+    pub fn new() -> ToolModel<Anim> {
         // Create the initial set of tools
         let default_tool_sets: Vec<Arc<ToolSet<Anim>>> = vec![
             Arc::new(SelectionTools::new()),
@@ -41,7 +41,7 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
         let current_pointer             = bind((PaintDevice::Mouse(MouseButton::Left), 0));
 
         // Finish up the object
-        ToolViewModel {
+        ToolModel {
             effective_tool:             Self::effective_tool(selected_tool.clone(), current_pointer.clone(), tool_sets.clone()),
             selected_tool:              selected_tool,
             tool_sets:                  tool_sets,
@@ -107,9 +107,9 @@ impl<Anim: Animation+'static> ToolViewModel<Anim> {
     }
 }
 
-impl<Anim: Animation> Clone for ToolViewModel<Anim> {
-    fn clone(&self) -> ToolViewModel<Anim> {
-        ToolViewModel {
+impl<Anim: Animation> Clone for ToolModel<Anim> {
+    fn clone(&self) -> ToolModel<Anim> {
+        ToolModel {
             selected_tool:              Binding::clone(&self.selected_tool),
             tool_sets:                  Binding::clone(&self.tool_sets),
             current_pointer:            Binding::clone(&self.current_pointer),

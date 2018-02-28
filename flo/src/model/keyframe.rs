@@ -4,7 +4,7 @@ use std::time::Duration;
 /// Viewmodel for a keyframe
 /// 
 #[derive(Clone, PartialEq)]
-pub struct KeyFrameViewModel {
+pub struct KeyFrameModel {
     /// When this keyframe occurs relative to the start of the animation
     pub when: Duration,
 

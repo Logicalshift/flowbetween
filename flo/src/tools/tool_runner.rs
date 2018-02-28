@@ -15,7 +15,7 @@ use std::sync::*;
 /// 
 pub struct ToolRunner<Anim: Animation> {
     /// The view model that is passed to the tools
-    view_model: Arc<AnimationViewModel<Anim>>,
+    view_model: Arc<FloModel<Anim>>,
 
     /// The currently active tool
     current_tool: Option<Arc<FloTool<Anim>>>,
@@ -31,7 +31,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
     ///
     /// Creates a new tool runner
     /// 
-    pub fn new(view_model: &AnimationViewModel<Anim>) -> ToolRunner<Anim> {
+    pub fn new(view_model: &FloModel<Anim>) -> ToolRunner<Anim> {
         let view_model = Arc::new(view_model.clone());
 
         ToolRunner {

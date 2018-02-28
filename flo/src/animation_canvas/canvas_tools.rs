@@ -46,7 +46,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     ///
     /// Creates a new canvas tools structure
     /// 
-    pub fn from_model(view_model: &AnimationViewModel<Anim>) -> CanvasTools<Anim> {
+    pub fn from_model(view_model: &FloModel<Anim>) -> CanvasTools<Anim> {
         let animation       = view_model.animation();
         let effective_tool  = BindRef::from(view_model.tools().effective_tool.clone());
         let current_time    = BindRef::from(view_model.timeline().current_time.clone());

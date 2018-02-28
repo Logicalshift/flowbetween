@@ -22,21 +22,21 @@ use std::sync::*;
 ///
 /// The viewmodel for the animation editor
 /// 
-pub struct AnimationViewModel<Anim: Animation> {
+pub struct FloModel<Anim: Animation> {
     /// The animation that is being edited
     animation: Arc<Anim>,
 
     /// The status of the currently selected tool
-    tools: ToolViewModel<Anim>,
+    tools: ToolModel<Anim>,
 
     /// The timeline view model
-    timeline: TimelineViewModel<Anim>,
+    timeline: TimelineModel<Anim>,
 
     /// The brush view model
-    brush: BrushViewModel,
+    brush: BrushModel,
 
     /// The view model for the menu bar
-    menu: MenuViewModel,
+    menu: MenuModel,
 
     /// The size of the animation
     pub size: BindRef<(f64, f64)>,
@@ -45,20 +45,20 @@ pub struct AnimationViewModel<Anim: Animation> {
     size_binding: Binding<(f64, f64)>
 }
 
-impl<Anim: Animation+'static> AnimationViewModel<Anim> {
+impl<Anim: Animation+'static> FloModel<Anim> {
     ///
     /// Creates a new view model
     /// 
-    pub fn new(animation: Anim) -> AnimationViewModel<Anim> {
+    pub fn new(animation: Anim) -> FloModel<Anim> {
         let animation       = Arc::new(animation);
-        let tools           = ToolViewModel::new();
-        let timeline        = TimelineViewModel::new(Arc::clone(&animation));
-        let brush           = BrushViewModel::new();
-        let menu            = MenuViewModel::new(&tools.effective_tool);
+        let tools           = ToolModel::new();
+        let timeline        = TimelineModel::new(Arc::clone(&animation));
+        let brush           = BrushModel::new();
+        let menu            = MenuModel::new(&tools.effective_tool);
 
         let size_binding    = bind(animation.size());
 
-        AnimationViewModel {
+        FloModel {
             animation:      animation,
             tools:          tools,
             timeline:       timeline,
@@ -80,36 +80,36 @@ impl<Anim: Animation+'static> AnimationViewModel<Anim> {
     ///
     /// Retrieves the viewmodel for the drawing tools for this animation
     /// 
-    pub fn tools(&self) -> &ToolViewModel<Anim> {
+    pub fn tools(&self) -> &ToolModel<Anim> {
         &self.tools
     }
 
     ///
     /// Retrieves the viewmodel of the timeline for this animation
     /// 
-    pub fn timeline(&self) -> &TimelineViewModel<Anim> {
+    pub fn timeline(&self) -> &TimelineModel<Anim> {
         &self.timeline
     }
 
     ///
     /// Retrieves the viewmodel of the brush settings for this animation
     /// 
-    pub fn brush(&self) -> &BrushViewModel {
+    pub fn brush(&self) -> &BrushModel {
         &self.brush
     }
 
     ///
     /// Retrieves the viewmodel for the menu for this animation
     /// 
-    pub fn menu(&self) -> &MenuViewModel {
+    pub fn menu(&self) -> &MenuModel {
         &self.menu
     }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
-impl<Anim: Animation> Clone for AnimationViewModel<Anim> {
-    fn clone(&self) -> AnimationViewModel<Anim> {
-        AnimationViewModel {
+impl<Anim: Animation> Clone for FloModel<Anim> {
+    fn clone(&self) -> FloModel<Anim> {
+        FloModel {
             animation:      self.animation.clone(),
             tools:          self.tools.clone(),
             timeline:       self.timeline.clone(),

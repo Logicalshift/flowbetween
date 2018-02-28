@@ -9,19 +9,19 @@ use std::sync::*;
 /// The viewmodel for the menu bar
 /// 
 #[derive(Clone)]
-pub struct MenuViewModel {
+pub struct MenuModel {
     /// The controller to use for the menu bar
     pub controller: BindRef<String>
 }
 
-impl MenuViewModel {
+impl MenuModel {
     ///
     /// Creates a new menu view model
     /// 
-    pub fn new<Anim: 'static+Animation>(effective_tool: &BindRef<Option<Arc<FloTool<Anim>>>>) -> MenuViewModel {
+    pub fn new<Anim: 'static+Animation>(effective_tool: &BindRef<Option<Arc<FloTool<Anim>>>>) -> MenuModel {
         let controller = Self::controller_for_tool(effective_tool.clone());
 
-        MenuViewModel {
+        MenuModel {
             controller: controller
         }
     }

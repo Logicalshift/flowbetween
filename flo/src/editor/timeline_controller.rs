@@ -47,7 +47,7 @@ const LAYER_PANEL_WIDTH: f32    = 256.0;
 ///
 pub struct TimelineController<Anim: Animation> {
     /// The view model for this controller
-    anim_view_model:   AnimationViewModel<Anim>,
+    anim_view_model:   FloModel<Anim>,
 
     /// The UI view model
     view_model:         Arc<DynamicViewModel>,
@@ -72,7 +72,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates a new timeline controller
     /// 
-    pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> TimelineController<Anim> {
+    pub fn new(anim_view_model: &FloModel<Anim>) -> TimelineController<Anim> {
         let anim_view_model = anim_view_model.clone();
 
         // Create the canvases
@@ -129,7 +129,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates the user interface for the timeline
     /// 
-    fn ui(layers: BindRef<Vec<LayerViewModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>, canvases: Arc<ResourceManager<BindingCanvas>>) -> BindRef<Control> {
+    fn ui(layers: BindRef<Vec<LayerModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>, canvases: Arc<ResourceManager<BindingCanvas>>) -> BindRef<Control> {
         let timescale_indicator         = BindingCanvas::with_drawing(Self::draw_frame_indicator);
         let timescale_indicator         = canvases.register(timescale_indicator);
 
@@ -211,7 +211,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates the function for drawing the keyframes
     /// 
-    fn create_draw_keyframes_fn(timeline: &TimelineViewModel<Anim>) -> Box<Fn(f32, f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync> {
+    fn create_draw_keyframes_fn(timeline: &TimelineModel<Anim>) -> Box<Fn(f32, f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync> {
         let timeline    = timeline.clone();
 
         Box::new(move |x, y| {

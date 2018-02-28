@@ -6,7 +6,7 @@ use animation::*;
 /// View model for the brush properties
 /// 
 #[derive(Clone)]
-pub struct BrushViewModel {
+pub struct BrushModel {
     /// The size of the brush (pixels)
     pub size: Binding<f32>,
 
@@ -20,18 +20,18 @@ pub struct BrushViewModel {
     pub brush_properties: BindRef<BrushProperties>
 }
 
-impl BrushViewModel {
+impl BrushModel {
     ///
     /// Creates a new brush view model
     /// 
-    pub fn new() -> BrushViewModel {
+    pub fn new() -> BrushModel {
         let size                = bind(5.0);
         let opacity             = bind(1.0);
         let color               = bind(Color::Rgba(0.0, 0.0, 0.0, 1.0));
 
         let brush_properties    = Self::brush_properties(size.clone(), opacity.clone(), color.clone());
 
-        BrushViewModel {
+        BrushModel {
             size:               size,
             opacity:            opacity,
             color:              color,

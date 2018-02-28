@@ -16,14 +16,14 @@ pub struct ToolboxController<Anim: Animation> {
     view_model:         Arc<DynamicViewModel>,
     ui:                 BindRef<Control>,
     images:             Arc<ResourceManager<Image>>,
-    anim_view_model:    AnimationViewModel<Anim>
+    anim_view_model:    FloModel<Anim>
 }
 
 impl<Anim: 'static+Animation> ToolboxController<Anim> {
     ///
     /// Creates a new toolbox controller
     /// 
-    pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> ToolboxController<Anim> {
+    pub fn new(anim_view_model: &FloModel<Anim>) -> ToolboxController<Anim> {
         // Create the viewmodel
         let viewmodel = Arc::new(DynamicViewModel::new());
 

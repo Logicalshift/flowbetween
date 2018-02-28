@@ -12,7 +12,7 @@ use std::sync::*;
 /// The menu controller handles the menbu at the top of the UI
 ///
 pub struct MenuController<Anim: Animation> {
-    _anim_view_model:   AnimationViewModel<Anim>,
+    _anim_view_model:   FloModel<Anim>,
     ui:                 BindRef<Control>,
 
     empty_menu:         Arc<EmptyMenuController>,
@@ -23,7 +23,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     ///
     /// Creates a new menu controller
     /// 
-    pub fn new(anim_view_model: &AnimationViewModel<Anim>) -> MenuController<Anim> {
+    pub fn new(anim_view_model: &FloModel<Anim>) -> MenuController<Anim> {
         // Create the UI
         let ui          = Self::create_ui(&anim_view_model.menu().controller);
 
