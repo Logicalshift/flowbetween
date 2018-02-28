@@ -1,6 +1,6 @@
 use super::ink::*;
 use super::super::tools::*;
-use super::super::viewmodel::*;
+use super::super::model::*;
 
 use binding::*;
 use animation::*;

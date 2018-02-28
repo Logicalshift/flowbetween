@@ -21,6 +21,6 @@ pub mod standard_tools;
 pub mod menu;
 pub mod color;
 
-mod viewmodel;
+mod model;
 
 pub use self::editor::*;

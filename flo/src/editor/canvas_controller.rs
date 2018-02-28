@@ -1,4 +1,4 @@
-use super::super::viewmodel::*;
+use super::super::model::*;
 use super::super::tools::*;
 use super::super::animation_canvas::*;
 

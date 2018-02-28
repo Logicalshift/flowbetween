@@ -1,6 +1,6 @@
 use super::tool_action::*;
 use super::tool_input::*;
-use super::super::viewmodel::*;
+use super::super::model::*;
 
 use animation::*;
 

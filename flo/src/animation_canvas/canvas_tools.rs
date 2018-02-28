@@ -1,6 +1,6 @@
 use super::canvas_renderer::*;
 use super::super::tools::*;
-use super::super::viewmodel::*;
+use super::super::model::*;
 
 use ui::*;
 use binding::*;

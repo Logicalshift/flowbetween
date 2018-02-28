@@ -1,5 +1,5 @@
 use super::super::style::*;
-use super::super::viewmodel::*;
+use super::super::model::*;
 
 use ui::*;
 use canvas::*;

@@ -1,6 +1,6 @@
 use super::super::menu::*;
 use super::super::tools::*;
-use super::super::viewmodel::*;
+use super::super::model::*;
 
 use ui::*;
 use binding::*;

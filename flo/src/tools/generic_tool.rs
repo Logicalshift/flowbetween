@@ -1,7 +1,7 @@
 use super::tool_trait::*;
 use super::tool_input::*;
 use super::tool_action::*;
-use super::super::viewmodel::*;
+use super::super::model::*;
 
 use animation::*;
 

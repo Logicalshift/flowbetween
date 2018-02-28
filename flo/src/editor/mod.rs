@@ -11,7 +11,7 @@ pub use self::toolbox_controller::*;
 use ui::*;
 use binding::*;
 use animation::*;
-use super::viewmodel::*;
+use super::model::*;
 
 use std::sync::*;
 use std::collections::HashMap;
