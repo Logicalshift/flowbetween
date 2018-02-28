@@ -1,6 +1,7 @@
 use super::*;
 
 use animation::*;
+use animation::inmemory::pending_log::*;
 
 use std::time::Duration;
 
@@ -51,9 +52,26 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     /// Retrieves an edit log that can be used to alter this animation
     /// 
     fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
-        // TODO: want to return an edit log that updates this object as well
         // TODO: make sure the updates are properly serialised when they come from multiple sources
-        self.animation.edit()
+
+        let mut animation_edit  = self.animation.edit();
+        let model_edit          = InMemoryPendingLog::new(move |edits| {
+            // Post to the underlying animation
+            animation_edit.set_pending(&edits);
+            animation_edit.commit_pending();
+
+            // Update the viewmodel based on the edits
+            for edit in edits {
+                match edit {
+                    AnimationEdit::SetSize(width, height) => self.size_binding.clone().set((width, height)),
+
+                    _ => ()
+                }
+            }
+        });
+
+        let edit_log: Box<'a+PendingEditLog<AnimationEdit>> = Box::new(model_edit);
+        Editor::new(edit_log)
     }
 
     ///
@@ -62,5 +80,31 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>> {
         // TODO: need the edit log here as well
         self.animation.edit_layer(layer_id)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use animation::inmemory::*;
+
+    #[test]
+    fn size_command_updates_size_binding() {
+        let model = FloModel::new(InMemoryAnimation::new());
+
+        // Initial size is 1980x1080
+        assert!(model.size()        == (1980.0, 1080.0));
+        assert!(model.size.get()    == (1980.0, 1080.0));
+
+        // Change to 800x600
+        {
+            let mut edit_log = model.edit();
+            edit_log.set_pending(&vec![AnimationEdit::SetSize(800.0, 600.0)]);
+            edit_log.commit_pending();
+        }
+
+        // Binding should get changed by this edit
+        assert!(model.size()        == (800.0, 600.0));
+        assert!(model.size.get()    == (800.0, 600.0));
     }
 }
