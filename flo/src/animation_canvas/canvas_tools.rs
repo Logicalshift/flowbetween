@@ -15,7 +15,7 @@ use std::time::Duration;
 /// 
 pub struct CanvasTools<Anim: Animation> {
     /// The animation that actions should be committed to
-    animation: Arc<Anim>,
+    animation: Arc<FloModel<Anim>>,
 
     /// The effective tool for the animation
     effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,
@@ -47,7 +47,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     /// Creates a new canvas tools structure
     /// 
     pub fn from_model(view_model: &FloModel<Anim>) -> CanvasTools<Anim> {
-        let animation       = view_model.animation();
+        let animation       = Arc::new(view_model.clone());
         let effective_tool  = BindRef::from(view_model.tools().effective_tool.clone());
         let current_time    = BindRef::from(view_model.timeline().current_time.clone());
         let tool_runner     = ToolRunner::new(view_model);
