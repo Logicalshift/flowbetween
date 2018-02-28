@@ -12,7 +12,7 @@ use std::sync::*;
 /// The menu controller handles the menbu at the top of the UI
 ///
 pub struct MenuController<Anim: Animation> {
-    _anim_view_model:   FloModel<Anim>,
+    _anim_model:        FloModel<Anim>,
     ui:                 BindRef<Control>,
 
     empty_menu:         Arc<EmptyMenuController>,
@@ -23,12 +23,12 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     ///
     /// Creates a new menu controller
     /// 
-    pub fn new(anim_view_model: &FloModel<Anim>) -> MenuController<Anim> {
+    pub fn new(anim_model: &FloModel<Anim>) -> MenuController<Anim> {
         // Create the UI
-        let ui          = Self::create_ui(&anim_view_model.menu().controller);
+        let ui          = Self::create_ui(&anim_model.menu().controller);
 
         // Create the controllers for the different menu modes
-        let brush       = anim_view_model.brush();
+        let brush       = anim_model.brush();
         let size        = &brush.size;
         let opacity     = &brush.opacity;
         let color       = &brush.color;
@@ -38,7 +38,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
 
         // Create the controller
         MenuController {
-            _anim_view_model:   anim_view_model.clone(),
+            _anim_model:        anim_model.clone(),
             ui:                 BindRef::from(ui),
 
             empty_menu:         empty_menu,

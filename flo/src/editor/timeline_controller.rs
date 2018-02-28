@@ -47,7 +47,7 @@ const LAYER_PANEL_WIDTH: f32    = 256.0;
 ///
 pub struct TimelineController<Anim: Animation> {
     /// The view model for this controller
-    anim_view_model:   FloModel<Anim>,
+    anim_model:         FloModel<Anim>,
 
     /// The UI view model
     view_model:         Arc<DynamicViewModel>,
@@ -72,8 +72,8 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates a new timeline controller
     /// 
-    pub fn new(anim_view_model: &FloModel<Anim>) -> TimelineController<Anim> {
-        let anim_view_model = anim_view_model.clone();
+    pub fn new(anim_model: &FloModel<Anim>) -> TimelineController<Anim> {
+        let anim_model = anim_model.clone();
 
         // Create the canvases
         let canvases = Arc::new(ResourceManager::new());
@@ -82,15 +82,15 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         let virtual_scale = VirtualCanvas::new(Arc::clone(&canvases), Self::draw_scale);
 
         // This draws the keyframes
-        let create_keyframe_canvas  = Self::create_draw_keyframes_fn(anim_view_model.timeline());
+        let create_keyframe_canvas  = Self::create_draw_keyframes_fn(anim_model.timeline());
         let virtual_keyframes       = VirtualCanvas::new(Arc::clone(&canvases), move |x, y| (create_keyframe_canvas)(x, y));
 
         // Viewmodel specifies a few dynamic things
         let view_model = DynamicViewModel::new();
 
         // Indicator xpos is computed from the current frame
-        let current_time    = anim_view_model.timeline().current_time.clone();
-        let frame_duration  = anim_view_model.timeline().frame_duration.clone();
+        let current_time    = anim_model.timeline().current_time.clone();
+        let frame_duration  = anim_model.timeline().frame_duration.clone();
         view_model.set_computed("IndicatorXPos", move || {
             let current_time        = current_time.get();
             let frame_duration      = frame_duration.get();
@@ -105,9 +105,9 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         });
 
         // UI
-        let duration        = BindRef::new(&anim_view_model.timeline().duration);
-        let frame_duration  = BindRef::new(&anim_view_model.timeline().frame_duration);
-        let layers          = BindRef::new(&anim_view_model.timeline().layers);
+        let duration        = BindRef::new(&anim_model.timeline().duration);
+        let frame_duration  = BindRef::new(&anim_model.timeline().frame_duration);
+        let layers          = BindRef::new(&anim_model.timeline().layers);
 
         let virtual_scale_control       = virtual_scale.control();
         let virtual_keyframes_control   = virtual_keyframes.control();
@@ -116,7 +116,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
         // Piece it together
         TimelineController {
-            anim_view_model:    anim_view_model,
+            anim_model:         anim_model,
             ui:                 ui,
             virtual_scale:      virtual_scale,
             virtual_keyframes:  virtual_keyframes,
@@ -412,7 +412,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     /// 
     fn xpos_to_ns(&self, xpos: f32) -> i64 {
         // Get the frame duration and start time in nanoseconds
-        let timeline            = self.anim_view_model.timeline();
+        let timeline            = self.anim_model.timeline();
         let frame_duration      = timeline.frame_duration.get();
 
         let frame_duration_ns   = Self::duration_to_ns(frame_duration);
@@ -451,19 +451,19 @@ impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
                 let time_ns = self.xpos_to_ns(start_x);
                 let time    = Self::ns_to_duration(time_ns);
 
-                self.anim_view_model.timeline().current_time.clone().set(time);
+                self.anim_model.timeline().current_time.clone().set(time);
                 self.drag_start_time.clone().set(time);
             },
 
             (DRAG_TIMELINE_POSITION, &Drag(DragAction::Start, _, _)) => {
                 // Remember the start time when a drag begins
-                self.drag_start_time.clone().set(self.anim_view_model.timeline().current_time.get());
+                self.drag_start_time.clone().set(self.anim_model.timeline().current_time.get());
             },
 
             (DRAG_TIMELINE_POSITION, &Drag(_drag_type, (start_x, _start_y), (x, _y)))
             | (CLICK_AND_DRAG_TIMELINE_POSITION, &Drag(_drag_type, (start_x, _start_y), (x, _y))) => {
                 // Get the frame duration and start time in nanoseconds
-                let timeline            = self.anim_view_model.timeline();
+                let timeline            = self.anim_model.timeline();
                 let start_time          = self.drag_start_time.get();
 
                 let start_time_ns       = Self::duration_to_ns(start_time);

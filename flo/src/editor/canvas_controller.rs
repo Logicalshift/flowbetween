@@ -36,7 +36,7 @@ struct CanvasCore<Anim: Animation> {
 pub struct CanvasController<Anim: Animation> {
     ui:                 BindRef<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
-    anim_view_model:    FloModel<Anim>,
+    anim_model:         FloModel<Anim>,
 
     core:               Desync<CanvasCore<Anim>>
 }
@@ -56,9 +56,9 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
 
         // Create the controller
         let controller = CanvasController {
-            ui:                 ui,
-            canvases:           Arc::new(canvases),
-            anim_view_model:    view_model.clone(),
+            ui:         ui,
+            canvases:   Arc::new(canvases),
+            anim_model: view_model.clone(),
 
             core:               Desync::new(CanvasCore {
                 renderer:           renderer,
@@ -120,7 +120,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// 
     fn update_layers_to_frame_at_time(&self, time: Duration) {
         // Get the animation for the update
-        let animation = self.anim_view_model.clone();
+        let animation = self.anim_model.clone();
 
         // Update the layers in the core
         self.core.async(move |core| {
@@ -147,7 +147,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// 
     fn draw_frame_layers(&self) {
         let canvas  = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
-        let size    = self.anim_view_model.size();
+        let size    = self.anim_model.size();
 
         // Draw the active set of layers
         self.core.sync(move |core| {
@@ -195,7 +195,7 @@ impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
     fn tick(&self) {
         // Check that the frame time hasn't changed
         let displayed_time  = self.core.sync(|core| core.current_time);
-        let target_time     = self.anim_view_model.timeline().current_time.get();
+        let target_time     = self.anim_model.timeline().current_time.get();
 
         if displayed_time != target_time {
             // If the selected frame has changed, regenerate the canvas
