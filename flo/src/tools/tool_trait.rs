@@ -2,6 +2,7 @@ use super::tool_action::*;
 use super::tool_input::*;
 use super::super::model::*;
 
+use ui::*;
 use animation::*;
 
 use futures::*;
@@ -40,9 +41,16 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     fn image_name(&self) -> String;
 
     ///
-    /// Creates a new instance of the menu model for this tool
+    /// Creates a new instance of the UI model for this tool
     /// 
     fn create_model(&self) -> Self::Model;
+
+    ///
+    /// Creates the menu controller for this tool (or None if this tool has no menu controller)
+    /// 
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Box<Controller>> {
+        None
+    }
 
     ///
     /// Retrieves the menu controller to use for adjusting this tool

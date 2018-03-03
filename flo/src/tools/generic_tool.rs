@@ -3,6 +3,7 @@ use super::tool_input::*;
 use super::tool_action::*;
 use super::super::model::*;
 
+use ui::*;
 use animation::*;
 
 use futures::*;
@@ -132,6 +133,12 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
 
     fn create_model(&self) -> GenericToolModel {
         GenericToolModel(Mutex::new(Box::new(Arc::new(self.tool.create_model()))))
+    }
+
+    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Option<Box<Controller>> {
+        tool_model
+            .get_ref()
+            .and_then(move |specific_model| self.tool.create_menu_controller(flo_model, &*specific_model))
     }
 
     fn menu_controller_name(&self) -> String {
