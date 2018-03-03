@@ -17,7 +17,13 @@ use std::sync::*;
 /// 
 /// TODO: way for the tool to serialize its state to the animation
 /// 
-pub trait Tool<ToolData: Send+'static, Anim: Animation> : Send+Sync {
+pub trait Tool<Anim: Animation> : Send+Sync {
+    ///
+    /// Represents data for the tool at a point in time (typically a snapshot
+    /// of the model)
+    /// 
+    type ToolData: Send+'static;
+
     ///
     /// Retrieves the name of this tool
     /// 
@@ -36,21 +42,21 @@ pub trait Tool<ToolData: Send+'static, Anim: Animation> : Send+Sync {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, _model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<ToolData>, Error=()>+Send> {
+    fn actions_for_model(&self, _model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<Self::ToolData>, Error=()>+Send> {
         Box::new(stream::empty())
     }
 
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'a>(&'a self, data: Option<Arc<ToolData>>, input: Box<'a+Iterator<Item=ToolInput<ToolData>>>) -> Box<'a+Iterator<Item=ToolAction<ToolData>>>;
+    fn actions_for_input<'a>(&'a self, data: Option<Arc<Self::ToolData>>, input: Box<'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<'a+Iterator<Item=ToolAction<Self::ToolData>>>;
 }
 
 ///
 /// Equality so that tool objects can be referred to in bindings
 /// 
-impl<ToolData: Send+'static, Anim: Animation> PartialEq for Tool<ToolData, Anim> {
-    fn eq(&self, other: &Tool<ToolData, Anim>) -> bool {
+impl<ToolData: Send+'static, Anim: Animation> PartialEq for Tool<Anim, ToolData=ToolData> {
+    fn eq(&self, other: &Tool<Anim, ToolData=ToolData>) -> bool {
         self.tool_name() == other.tool_name()
     }
 }

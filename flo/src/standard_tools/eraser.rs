@@ -26,7 +26,9 @@ impl Eraser {
     }
 }
 
-impl<Anim: Animation+'static> Tool<InkData, Anim> for Eraser {
+impl<Anim: Animation+'static> Tool<Anim> for Eraser {
+    type ToolData = InkData;
+
     fn tool_name(&self) -> String { "Eraser".to_string() }
 
     fn image_name(&self) -> String { "eraser".to_string() }
@@ -53,7 +55,7 @@ impl<Anim: Animation+'static> Tool<InkData, Anim> for Eraser {
         use self::ToolAction::*;
         use self::BrushPreviewAction::*;
 
-        let ink: &Tool<InkData, Anim> = &self.ink;
+        let ink: &Tool<Anim, ToolData=InkData> = &self.ink;
 
         // As for the ink tool, except that we use the eraser drawing style
         let actions = ink.actions_for_input(data, input)

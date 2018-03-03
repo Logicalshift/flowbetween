@@ -18,7 +18,9 @@ impl Adjust {
     }
 }
 
-impl<Anim: Animation> Tool<(), Anim> for Adjust {
+impl<Anim: Animation> Tool<Anim> for Adjust {
+    type ToolData = ();
+
     fn tool_name(&self) -> String { "Adjust".to_string() }
 
     fn image_name(&self) -> String { "adjust".to_string() }

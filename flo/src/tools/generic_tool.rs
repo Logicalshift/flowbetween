@@ -16,9 +16,8 @@ use std::marker::PhantomData;
 /// Trait implemented by FlowBetween tools
 /// 
 /// FloTools eliminate the need to know what the tool data structure stores.
-/// 
-pub trait FloTool<Anim: Animation> : Tool<GenericToolData, Anim> {
-}
+///
+pub type FloTool<Anim> = Tool<Anim, ToolData=GenericToolData>;
 
 ///
 /// The generic tool is used to convert a tool that uses a specific data type
@@ -28,7 +27,7 @@ pub trait FloTool<Anim: Animation> : Tool<GenericToolData, Anim> {
 /// A generic tool is typically used as its underlying Tool trait, for example
 /// in an `Arc` reference.
 /// 
-pub struct GenericTool<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool<ToolData, Anim>> {
+pub struct GenericTool<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData>> {
     /// The tool that this makes generic
     tool: UnderlyingTool,
 
@@ -93,7 +92,7 @@ impl GenericToolData {
     }
 }
 
-impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool<ToolData, Anim>> From<UnderlyingTool> for GenericTool<ToolData, Anim, UnderlyingTool> {
+impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData>> From<UnderlyingTool> for GenericTool<ToolData, Anim, UnderlyingTool> {
     fn from(tool: UnderlyingTool) -> GenericTool<ToolData, Anim, UnderlyingTool> {
         GenericTool {
             tool:               tool,
@@ -103,7 +102,9 @@ impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool<ToolData, Ani
     }
 }
 
-impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<ToolData, Anim>> Tool<GenericToolData, Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
+impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData>> Tool<Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
+    type ToolData = GenericToolData;
+
     fn tool_name(&self) -> String {
         self.tool.tool_name()
     }
@@ -136,24 +137,12 @@ impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<ToolData
     }
 }
 
-impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<ToolData, Anim>> FloTool<Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
-}
-
 ///
 /// Converts any tool to its generic 'FloTool' equivalent
 /// 
-impl<Anim: 'static+Animation, ToolData: 'static+Send+Sync, T: 'static+Tool<ToolData, Anim>> ToFloTool<Anim, ToolData> for T {
+impl<Anim: 'static+Animation, ToolData: 'static+Send+Sync, T: 'static+Tool<Anim, ToolData=ToolData>> ToFloTool<Anim, ToolData> for T {
     fn to_flo_tool(self) -> Arc<FloTool<Anim>> {
         Arc::new(GenericTool::from(self))
-    }
-}
-
-///
-/// Equality so that tool objects can be referred to in bindings
-/// 
-impl<Anim: Animation> PartialEq for FloTool<Anim> {
-    fn eq(&self, other: &FloTool<Anim>) -> bool {
-        self.tool_name() == other.tool_name()
     }
 }
 
@@ -165,12 +154,14 @@ mod test {
 
     struct TestTool;
 
-    impl Tool<i32, InMemoryAnimation> for TestTool {
+    impl Tool<InMemoryAnimation> for TestTool {
+        type ToolData = i32;
+
         fn tool_name(&self) -> String { "test".to_string() }
 
         fn image_name(&self) -> String { "test".to_string() }
 
-        fn actions_for_input<'a>(&'a self, data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
+        fn actions_for_input<'a>(&'a self, _data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<ToolInput<i32>> = input.collect();
             
             if input.len() == 1 {
