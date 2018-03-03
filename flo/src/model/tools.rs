@@ -6,6 +6,7 @@ use binding::*;
 use animation::*;
 
 use std::sync::*;
+use std::collections::HashMap;
 
 ///
 /// View model representing the currently selected and available tools
@@ -22,6 +23,9 @@ pub struct ToolModel<Anim: Animation> {
 
     /// The tool sets available for selection
     pub tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>,
+
+    /// The models for each tool in the toolsets
+    tool_models: Arc<Mutex<HashMap<String, Arc<GenericToolModel>>>>
 }
 
 impl<Anim: Animation+'static> ToolModel<Anim> {
@@ -39,14 +43,27 @@ impl<Anim: Animation+'static> ToolModel<Anim> {
         let selected_tool               = bind(None);
         let tool_sets                   = bind(default_tool_sets);
         let current_pointer             = bind((PaintDevice::Mouse(MouseButton::Left), 0));
+        let tool_models                 = Arc::new(Mutex::new(HashMap::new()));
+        let effective_tool              = Self::effective_tool(selected_tool.clone(), current_pointer.clone(), tool_sets.clone());
 
         // Finish up the object
         ToolModel {
-            effective_tool:             Self::effective_tool(selected_tool.clone(), current_pointer.clone(), tool_sets.clone()),
+            effective_tool:             effective_tool,
             selected_tool:              selected_tool,
             tool_sets:                  tool_sets,
-            current_pointer:            current_pointer
+            current_pointer:            current_pointer,
+            tool_models:                tool_models
         }
+    }
+
+    ///
+    /// Returns the model for the specified tool
+    /// 
+    pub fn model_for_tool(&self, tool: &FloTool<Anim>) -> Arc<GenericToolModel> {
+        self.tool_models.lock().unwrap()
+            .entry(tool.tool_name())
+            .or_insert_with(move || Arc::new(tool.create_model()))
+            .clone()
     }
 
     ///
@@ -113,7 +130,8 @@ impl<Anim: Animation> Clone for ToolModel<Anim> {
             selected_tool:              Binding::clone(&self.selected_tool),
             tool_sets:                  Binding::clone(&self.tool_sets),
             current_pointer:            Binding::clone(&self.current_pointer),
-            effective_tool:             BindRef::clone(&self.effective_tool)
+            effective_tool:             BindRef::clone(&self.effective_tool),
+            tool_models:                Arc::clone(&self.tool_models)
         }
     }
 }
