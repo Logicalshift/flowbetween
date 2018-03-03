@@ -1,7 +1,9 @@
 use super::ink::*;
+use super::super::menu::*;
 use super::super::tools::*;
 use super::super::model::*;
 
+use ui::*;
 use binding::*;
 use animation::*;
 
@@ -40,6 +42,10 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
         model.size.set(20.0);
 
         model
+    }
+
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<Controller>> {
+        Some(Arc::new(EraserMenuController::new(&tool_model.size, &tool_model.opacity)))
     }
 
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
