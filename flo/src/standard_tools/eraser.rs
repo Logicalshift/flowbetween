@@ -36,10 +36,10 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
 
     fn create_model(&self) -> () { }
 
-    fn actions_for_model(&self, model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
-        let brush_properties    = model.brush().brush_properties.clone();
-        let selected_layer      = model.timeline().selected_layer.clone();
+        let brush_properties    = flo_model.brush().brush_properties.clone();
+        let selected_layer      = flo_model.timeline().selected_layer.clone();
 
         // Create a computed binding that generates the data for the brush
         let ink_data            = computed(move || {

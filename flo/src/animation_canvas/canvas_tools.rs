@@ -78,8 +78,11 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
                 // Select a new tool
                 self.active_tool = Some(Arc::clone(&effective_tool));
 
+                // Fetch the model for this tool
+                let tool_model = self.animation.tools().model_for_tool(&*effective_tool);
+
                 // Load into the tool runner
-                self.tool_runner.set_tool(&effective_tool);
+                self.tool_runner.set_tool(&effective_tool, &*tool_model);
             }
         }
     }

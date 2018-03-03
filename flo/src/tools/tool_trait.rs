@@ -60,7 +60,7 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, _model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<Self::ToolData>, Error=()>+Send> {
+    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Box<Stream<Item=ToolAction<Self::ToolData>, Error=()>+Send> {
         Box::new(stream::empty())
     }
 

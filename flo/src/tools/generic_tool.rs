@@ -7,6 +7,7 @@ use ui::*;
 use animation::*;
 
 use futures::*;
+use futures::stream;
 
 use std::fmt;
 use std::any::*;
@@ -145,10 +146,14 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
         self.tool.menu_controller_name()
     }
 
-    fn actions_for_model(&self, model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
-        // Map the underlying actions to generic actions
-        Box::new(self.tool.actions_for_model(model)
-            .map(|action| GenericToolData::convert_action_to_generic(action)))
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
+        // Map the underlying actions to generic actions. There are no actions if we're passed an invalid tool model
+        tool_model.get_ref()
+            .map(move |tool_model| -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
+                Box::new(self.tool.actions_for_model(flo_model, &*tool_model)
+                    .map(|action| GenericToolData::convert_action_to_generic(action)))
+            })
+            .unwrap_or_else(|| Box::new(stream::empty()))
     }
 
     fn actions_for_input<'a>(&'a self, data: Option<Arc<GenericToolData>>, input: Box<'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<'a+Iterator<Item=ToolAction<GenericToolData>>> {
