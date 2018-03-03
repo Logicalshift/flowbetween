@@ -27,11 +27,14 @@ impl Eraser {
 }
 
 impl<Anim: Animation+'static> Tool<Anim> for Eraser {
-    type ToolData = InkData;
+    type ToolData   = InkData;
+    type Model      = ();
 
     fn tool_name(&self) -> String { "Eraser".to_string() }
 
     fn image_name(&self) -> String { "eraser".to_string() }
+
+    fn create_model(&self) -> () { }
 
     fn actions_for_model(&self, model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
@@ -55,7 +58,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
         use self::ToolAction::*;
         use self::BrushPreviewAction::*;
 
-        let ink: &Tool<Anim, ToolData=InkData> = &self.ink;
+        let ink: &Tool<Anim, ToolData=InkData, Model=()> = &self.ink;
 
         // As for the ink tool, except that we use the eraser drawing style
         let actions = ink.actions_for_input(data, input)

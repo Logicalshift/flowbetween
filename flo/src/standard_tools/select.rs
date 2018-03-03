@@ -19,11 +19,14 @@ impl Select {
 }
 
 impl<Anim: Animation> Tool<Anim> for Select {
-    type ToolData = ();
+    type ToolData   = ();
+    type Model      = ();
 
     fn tool_name(&self) -> String { "Select".to_string() }
 
     fn image_name(&self) -> String { "select".to_string() }
+
+    fn create_model(&self) -> () { }
 
     fn actions_for_input<'a>(&self, _data: Option<Arc<()>>, _input: Box<'a+Iterator<Item=ToolInput<()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
         Box::new(vec![].into_iter())

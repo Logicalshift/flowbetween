@@ -19,11 +19,14 @@ impl Pan {
 }
 
 impl<Anim: Animation> Tool<Anim> for Pan {
-    type ToolData = ();
+    type ToolData   = ();
+    type Model      = ();
 
     fn tool_name(&self) -> String { "Pan".to_string() }
 
     fn image_name(&self) -> String { "pan".to_string() }
+
+    fn create_model(&self) -> () { }
 
     fn actions_for_input<'a>(&'a self, _data: Option<Arc<()>>, _input: Box<'a+Iterator<Item=ToolInput<()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
         Box::new(vec![].into_iter())

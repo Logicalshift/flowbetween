@@ -17,7 +17,7 @@ use std::marker::PhantomData;
 /// 
 /// FloTools eliminate the need to know what the tool data structure stores.
 ///
-pub type FloTool<Anim> = Tool<Anim, ToolData=GenericToolData>;
+pub type FloTool<Anim> = Tool<Anim, ToolData=GenericToolData, Model=GenericToolModel>;
 
 ///
 /// The generic tool is used to convert a tool that uses a specific data type
@@ -27,19 +27,25 @@ pub type FloTool<Anim> = Tool<Anim, ToolData=GenericToolData>;
 /// A generic tool is typically used as its underlying Tool trait, for example
 /// in an `Arc` reference.
 /// 
-pub struct GenericTool<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData>> {
+pub struct GenericTool<ToolData: Send+'static, Model: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData, Model=Model>> {
     /// The tool that this makes generic
     tool: UnderlyingTool,
 
     // Phantom data for the tool trait parameters
-    phantom_anim: PhantomData<Anim>,
-    phantom_tooldata: PhantomData<Mutex<ToolData>>
+    phantom_animation:  PhantomData<Anim>,
+    phantom_tooldata:   PhantomData<Mutex<ToolData>>,
+    phantom_model:      PhantomData<Model>
 }
 
 ///
 /// The data structure storing the generic tool data
 /// 
 pub struct GenericToolData(Mutex<Box<Any+Send>>);
+
+///
+/// The data structure storing the generic tool model
+/// 
+pub struct GenericToolModel(Mutex<Box<Any+Send>>);
 
 impl fmt::Debug for GenericToolData {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -92,18 +98,29 @@ impl GenericToolData {
     }
 }
 
-impl<ToolData: Send+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData>> From<UnderlyingTool> for GenericTool<ToolData, Anim, UnderlyingTool> {
-    fn from(tool: UnderlyingTool) -> GenericTool<ToolData, Anim, UnderlyingTool> {
+impl GenericToolModel {
+    ///
+    /// Retrieves a reference to the tool model
+    ///
+    fn get_ref<Model: 'static+Send>(&self) -> Option<Arc<Model>> {
+        self.0.lock().unwrap().downcast_ref().cloned()
+    }
+}
+
+impl<ToolData: Send+'static, Model: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData, Model=Model>> From<UnderlyingTool> for GenericTool<ToolData, Model, Anim, UnderlyingTool> {
+    fn from(tool: UnderlyingTool) -> GenericTool<ToolData, Model, Anim, UnderlyingTool> {
         GenericTool {
             tool:               tool,
-            phantom_anim:       PhantomData,
-            phantom_tooldata:   PhantomData
+            phantom_animation:  PhantomData,
+            phantom_tooldata:   PhantomData,
+            phantom_model:      PhantomData
         }
     }
 }
 
-impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData>> Tool<Anim> for GenericTool<ToolData, Anim, UnderlyingTool> {
-    type ToolData = GenericToolData;
+impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData, Model=Model>> Tool<Anim> for GenericTool<ToolData, Model, Anim, UnderlyingTool> {
+    type ToolData   = GenericToolData;
+    type Model      = GenericToolModel;
 
     fn tool_name(&self) -> String {
         self.tool.tool_name()
@@ -111,6 +128,10 @@ impl<ToolData: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<Anim, To
 
     fn image_name(&self) -> String {
         self.tool.image_name()        
+    }
+
+    fn create_model(&self) -> GenericToolModel {
+        GenericToolModel(Mutex::new(Box::new(Arc::new(self.tool.create_model()))))
     }
 
     fn menu_controller_name(&self) -> String {
@@ -155,11 +176,14 @@ mod test {
     struct TestTool;
 
     impl Tool<InMemoryAnimation> for TestTool {
-        type ToolData = i32;
+        type ToolData   = i32;
+        type Model      = i32;
 
         fn tool_name(&self) -> String { "test".to_string() }
 
         fn image_name(&self) -> String { "test".to_string() }
+
+        fn create_model(&self) -> i32 { 94 }
 
         fn actions_for_input<'a>(&'a self, _data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<ToolInput<i32>> = input.collect();
@@ -223,5 +247,13 @@ mod test {
             &ToolAction::BrushPreview(BrushPreviewAction::Clear) => true,
             _ => false
         });
+    }
+
+    #[test]
+    fn model_survives_round_trip() {
+        let generic_tool    = TestTool.to_flo_tool();
+        let model           = generic_tool.create_model();
+
+        assert!(model.get_ref() == Some(Arc::new(94)));
     }
 }

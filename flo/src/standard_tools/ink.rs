@@ -34,11 +34,14 @@ impl Ink {
 }
 
 impl<Anim: Animation+'static> Tool<Anim> for Ink {
-    type ToolData = InkData;
+    type ToolData   = InkData;
+    type Model      = ();
 
     fn tool_name(&self) -> String { "Ink".to_string() }
 
     fn image_name(&self) -> String { "ink".to_string() }
+
+    fn create_model(&self) -> () { }
 
     fn menu_controller_name(&self) -> String { INKMENUCONTROLLER.to_string() }
 

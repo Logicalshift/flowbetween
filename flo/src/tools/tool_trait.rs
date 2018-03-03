@@ -25,6 +25,11 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     type ToolData: Send+'static;
 
     ///
+    /// The type of the model used by the UI elements of this tool
+    /// 
+    type Model: Send+Sync+'static;
+
+    ///
     /// Retrieves the name of this tool
     /// 
     fn tool_name(&self) -> String;
@@ -33,6 +38,11 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     /// Retrieves the name of the image that is associated with this tool
     /// 
     fn image_name(&self) -> String;
+
+    ///
+    /// Creates a new instance of the menu model for this tool
+    /// 
+    fn create_model(&self) -> Self::Model;
 
     ///
     /// Retrieves the menu controller to use for adjusting this tool
@@ -55,8 +65,8 @@ pub trait Tool<Anim: Animation> : Send+Sync {
 ///
 /// Equality so that tool objects can be referred to in bindings
 /// 
-impl<ToolData: Send+'static, Anim: Animation> PartialEq for Tool<Anim, ToolData=ToolData> {
-    fn eq(&self, other: &Tool<Anim, ToolData=ToolData>) -> bool {
+impl<ToolData: Send+'static, Model: Send+Sync+'static, Anim: Animation> PartialEq for Tool<Anim, ToolData=ToolData, Model=Model> {
+    fn eq(&self, other: &Tool<Anim, ToolData=ToolData, Model=Model>) -> bool {
         self.tool_name() == other.tool_name()
     }
 }
