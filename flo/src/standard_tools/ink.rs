@@ -70,10 +70,19 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     type ToolData   = InkData;
     type Model      = InkModel;
 
+    ///
+    /// Retrieves the name of this tool
+    /// 
     fn tool_name(&self) -> String { "Ink".to_string() }
 
+    ///
+    /// Retrieves the name of the image that is associated with this tool
+    /// 
     fn image_name(&self) -> String { "ink".to_string() }
 
+    ///
+    /// Creates a new instance of the UI model for this tool
+    /// 
     fn create_model(&self) -> InkModel { 
         let size                = bind(5.0);
         let opacity             = bind(1.0);
@@ -91,10 +100,16 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
 
     fn menu_controller_name(&self) -> String { INKMENUCONTROLLER.to_string() }
 
+    ///
+    /// Creates the menu controller for this tool (or None if this tool has no menu controller)
+    /// 
     fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Box<Controller>> {
         Some(Box::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color)))
     }
 
+    ///
+    /// Returns a stream of tool actions that result from changes to the model
+    /// 
     fn actions_for_model(&self, model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
         let brush_properties    = model.brush().brush_properties.clone();
@@ -113,6 +128,9 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
         Box::new(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
     }
 
+    ///
+    /// Converts a set of tool inputs into the corresponding actions that should be performed
+    /// 
     fn actions_for_input<'a>(&'a self, _data: Option<Arc<InkData>>, input: Box<'a+Iterator<Item=ToolInput<InkData>>>) -> Box<'a+Iterator<Item=ToolAction<InkData>>> {
         use self::ToolInput::*;
         use self::ToolAction::*;
