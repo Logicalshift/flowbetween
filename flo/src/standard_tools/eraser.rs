@@ -35,7 +35,11 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
     fn image_name(&self) -> String { "eraser".to_string() }
 
     fn create_model(&self) -> InkModel {
-        InkModel::new()
+        let mut model = InkModel::new();
+
+        model.size.set(20.0);
+
+        model
     }
 
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
