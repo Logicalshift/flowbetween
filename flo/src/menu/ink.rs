@@ -10,8 +10,6 @@ use animation::brushes::*;
 use std::f32;
 use std::sync::*;
 
-pub const INKMENUCONTROLLER: &str = "InkMenu";
-
 ///
 /// Controller used for the ink tool
 /// 

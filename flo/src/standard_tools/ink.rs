@@ -98,21 +98,19 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
         }
     }
 
-    fn menu_controller_name(&self) -> String { INKMENUCONTROLLER.to_string() }
-
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Box<Controller>> {
-        Some(Box::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color)))
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<Controller>> {
+        Some(Arc::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color)))
     }
 
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &InkModel) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
-        let brush_properties    = flo_model.brush().brush_properties.clone();
+        let brush_properties    = tool_model.brush_properties.clone();
         let selected_layer      = flo_model.timeline().selected_layer.clone();
 
         // Create a computed binding that generates the data for the brush

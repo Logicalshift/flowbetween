@@ -136,14 +136,10 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
         GenericToolModel(Mutex::new(Box::new(Arc::new(self.tool.create_model()))))
     }
 
-    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Option<Box<Controller>> {
+    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Option<Arc<Controller>> {
         tool_model
             .get_ref()
             .and_then(move |specific_model| self.tool.create_menu_controller(flo_model, &*specific_model))
-    }
-
-    fn menu_controller_name(&self) -> String {
-        self.tool.menu_controller_name()
     }
 
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {

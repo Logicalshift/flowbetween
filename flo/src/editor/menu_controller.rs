@@ -1,22 +1,24 @@
 use super::super::menu::*;
 use super::super::style::*;
 use super::super::model::*;
+use super::super::tools::*;
 
 use ui::*;
 use binding::*;
 use animation::*;
 
 use std::sync::*;
+use std::collections::HashMap;
 
 ///
 /// The menu controller handles the menbu at the top of the UI
 ///
 pub struct MenuController<Anim: Animation> {
-    _anim_model:        FloModel<Anim>,
+    anim_model:         Arc<FloModel<Anim>>,
     ui:                 BindRef<Control>,
+    tool_controllers:   Mutex<HashMap<String, Arc<Controller>>>,
 
-    empty_menu:         Arc<EmptyMenuController>,
-    ink_menu:           Arc<InkMenuController>
+    empty_menu:         Arc<EmptyMenuController>
 }
 
 impl<Anim: 'static+Animation> MenuController<Anim> {
@@ -25,24 +27,18 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     /// 
     pub fn new(anim_model: &FloModel<Anim>) -> MenuController<Anim> {
         // Create the UI
-        let ui          = Self::create_ui(&anim_model.menu().controller);
-
-        // Create the controllers for the different menu modes
-        let brush       = anim_model.brush();
-        let size        = &brush.size;
-        let opacity     = &brush.opacity;
-        let color       = &brush.color;
-
-        let empty_menu  = Arc::new(EmptyMenuController::new());
-        let ink_menu    = Arc::new(InkMenuController::new(size, opacity, color));
+        let effective_tool  = anim_model.tools().effective_tool.clone();
+        let tool_controller = BindRef::from(computed(move || format!("Tool_{}", effective_tool.get().map(|tool| tool.tool_name()).unwrap_or(String::new()))));
+        let ui              = Self::create_ui(&tool_controller);
+        let empty_menu      = Arc::new(EmptyMenuController::new());
 
         // Create the controller
         MenuController {
-            _anim_model:        anim_model.clone(),
+            anim_model:         Arc::new(anim_model.clone()),
             ui:                 BindRef::from(ui),
+            tool_controllers:   Mutex::new(HashMap::new()),
 
-            empty_menu:         empty_menu,
-            ink_menu:           ink_menu
+            empty_menu:         empty_menu
         }
     }
 
@@ -79,17 +75,61 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                 .with(Appearance::Background(MENU_BACKGROUND))
         }))
     }
+
+    ///
+    /// Given a controller name (something like Tool_Foo), finds the tool that manages it
+    /// 
+    fn tool_for_controller_name(&self, controller_name: &str) -> Option<Arc<FloTool<Anim>>> {
+        // Go through the tool sets and find the first that matches the name
+        let tool_sets = self.anim_model.tools().tool_sets.get();
+        tool_sets.into_iter()
+            .flat_map(|set| set.tools().into_iter())
+            .filter(|tool|  format!("Tool_{}", tool.tool_name()) == controller_name)
+            .nth(0)
+    }
 }
 
-impl<Anim: Animation> Controller for MenuController<Anim>  {
+impl<Anim: Animation+'static> Controller for MenuController<Anim>  {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
 
     fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
-        match id {
-            INKMENUCONTROLLER   => Some(self.ink_menu.clone()),
-            _                   => Some(self.empty_menu.clone())
+        use std::collections::hash_map::Entry::*;
+
+        // Try to fetch the existing controller for this ID
+        let mut tool_controllers    = self.tool_controllers.lock().unwrap();
+        let entry                   = tool_controllers.entry(id.to_string());
+
+        match entry {
+            // Occupied entries just map to the controller
+            Occupied(controller) => Some(Arc::clone(controller.get())),
+
+            // Vacant entries create a new controller if possible (caching it away so it becomes permanent)
+            Vacant(no_controller) => {
+                // Try to find the tool with this controller
+                let tool = self.tool_for_controller_name(id);
+
+                if let Some(tool) = tool {
+                    // Tool exists: create the controller
+                    let tool_model  = self.anim_model.tools().model_for_tool(&*tool);
+                    let controller  = tool.create_menu_controller(Arc::clone(&self.anim_model), &*tool_model);
+
+                    if let Some(controller) = controller {
+                        // Store in the entry
+                        no_controller.insert(Arc::clone(&controller));
+
+                        // Make this the result
+                        Some(controller)
+                    } else {
+                        // No controller for this tool
+                        Some(self.empty_menu.clone())
+                    }
+                } else {
+                    // Unknown tool
+                    None
+                }
+            }
         }
     }
 }

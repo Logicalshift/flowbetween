@@ -48,14 +48,9 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Box<Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Arc<Controller>> {
         None
     }
-
-    ///
-    /// Retrieves the menu controller to use for adjusting this tool
-    /// 
-    fn menu_controller_name(&self) -> String { "".to_string() }
 
     ///
     /// Returns a stream of tool actions that result from changes to the model
