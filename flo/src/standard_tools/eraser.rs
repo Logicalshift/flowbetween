@@ -28,17 +28,19 @@ impl Eraser {
 
 impl<Anim: Animation+'static> Tool<Anim> for Eraser {
     type ToolData   = InkData;
-    type Model      = ();
+    type Model      = InkModel;
 
     fn tool_name(&self) -> String { "Eraser".to_string() }
 
     fn image_name(&self) -> String { "eraser".to_string() }
 
-    fn create_model(&self) -> () { }
+    fn create_model(&self) -> InkModel {
+        InkModel::new()
+    }
 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
-        let brush_properties    = flo_model.brush().brush_properties.clone();
+        let brush_properties    = tool_model.brush_properties.clone();
         let selected_layer      = flo_model.timeline().selected_layer.clone();
 
         // Create a computed binding that generates the data for the brush

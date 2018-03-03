@@ -49,6 +49,26 @@ impl Ink {
     pub fn new() -> Ink {
         Ink {}
     }
+}
+
+impl InkModel {
+    ///
+    /// Creates a new ink model with the default settings
+    /// 
+    pub fn new() -> InkModel {
+        let size                = bind(5.0);
+        let opacity             = bind(1.0);
+        let color               = bind(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+
+        let brush_properties    = Self::brush_properties(size.clone(), opacity.clone(), color.clone());
+
+        InkModel {
+            size:               size,
+            opacity:            opacity,
+            color:              color,
+            brush_properties:   brush_properties
+        }
+    }
 
     ///
     /// Creates brush properties from the model bindings
@@ -84,18 +104,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     /// Creates a new instance of the UI model for this tool
     /// 
     fn create_model(&self) -> InkModel { 
-        let size                = bind(5.0);
-        let opacity             = bind(1.0);
-        let color               = bind(Color::Rgba(0.0, 0.0, 0.0, 1.0));
-
-        let brush_properties    = Self::brush_properties(size.clone(), opacity.clone(), color.clone());
-
-        InkModel {
-            size:               size,
-            opacity:            opacity,
-            color:              color,
-            brush_properties:   brush_properties
-        }
+        InkModel::new()
     }
 
     ///
