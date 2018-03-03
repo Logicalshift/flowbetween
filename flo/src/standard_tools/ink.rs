@@ -3,6 +3,7 @@ use super::super::tools::*;
 use super::super::model::*;
 
 use ui::*;
+use canvas::*;
 use binding::*;
 use animation::*;
 
@@ -20,6 +21,23 @@ pub struct InkData {
 }
 
 ///
+/// The ink UI model
+/// 
+pub struct InkModel {
+    /// The size of the brush (pixels)
+    pub size: Binding<f32>,
+
+    /// The opacity of the brush (0-1)
+    pub opacity: Binding<f32>,
+
+    /// The colour of the brush (in general alpha should be left at 1.0 here)
+    pub color: Binding<Color>,
+
+    /// The brush properties for the current brush view model
+    pub brush_properties: BindRef<BrushProperties>
+}
+
+///
 /// The Ink tool (Inks control points of existing objects)
 /// 
 pub struct Ink { }
@@ -31,19 +49,51 @@ impl Ink {
     pub fn new() -> Ink {
         Ink {}
     }
+
+    ///
+    /// Creates brush properties from the model bindings
+    /// 
+    fn brush_properties(size: Binding<f32>, opacity: Binding<f32>, color: Binding<Color>) -> BindRef<BrushProperties> {
+        let brush_properties = computed(move || {
+            BrushProperties {
+                size:       size.get(),
+                opacity:    opacity.get(),
+                color:      color.get()
+            }
+        });
+
+        BindRef::from(brush_properties)
+    }
 }
 
 impl<Anim: Animation+'static> Tool<Anim> for Ink {
     type ToolData   = InkData;
-    type Model      = ();
+    type Model      = InkModel;
 
     fn tool_name(&self) -> String { "Ink".to_string() }
 
     fn image_name(&self) -> String { "ink".to_string() }
 
-    fn create_model(&self) -> () { }
+    fn create_model(&self) -> InkModel { 
+        let size                = bind(5.0);
+        let opacity             = bind(1.0);
+        let color               = bind(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+
+        let brush_properties    = Self::brush_properties(size.clone(), opacity.clone(), color.clone());
+
+        InkModel {
+            size:               size,
+            opacity:            opacity,
+            color:              color,
+            brush_properties:   brush_properties
+        }
+    }
 
     fn menu_controller_name(&self) -> String { INKMENUCONTROLLER.to_string() }
+
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Box<Controller>> {
+        Some(Box::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color)))
+    }
 
     fn actions_for_model(&self, model: Arc<FloModel<Anim>>) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties

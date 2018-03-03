@@ -58,7 +58,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
         use self::ToolAction::*;
         use self::BrushPreviewAction::*;
 
-        let ink: &Tool<Anim, ToolData=InkData, Model=()> = &self.ink;
+        let ink: &Tool<Anim, ToolData=InkData, Model=InkModel> = &self.ink;
 
         // As for the ink tool, except that we use the eraser drawing style
         let actions = ink.actions_for_input(data, input)
