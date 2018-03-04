@@ -130,12 +130,12 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     }
 
     ///
-    /// Processes a set of actions, rendering them if necessary
+    /// Processes a set of actions with whatever tool is selected, rendering them if necessary
+    /// 
+    /// Call `refresh_tool` before calling this to make sure that the effective tool
+    /// is active.
     /// 
     pub fn process_actions<ActionIter: Iterator<Item=ToolAction<GenericToolData>>>(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, actions: ActionIter) {
-        // Ensure that the tool is ready to run
-        self.refresh_tool(canvas, renderer);
-
         // Process the actions in sequence
         let mut animation_edits = vec![];
 

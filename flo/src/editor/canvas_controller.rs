@@ -37,6 +37,7 @@ pub struct CanvasController<Anim: Animation> {
     ui:                 BindRef<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_model:         FloModel<Anim>,
+    tool_changed:       Arc<Mutex<bool>>,
 
     core:               Desync<CanvasCore<Anim>>
 }
@@ -53,12 +54,18 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         let canvas_tools    = CanvasTools::from_model(view_model);
         let main_canvas     = Self::create_main_canvas(&canvases);
         let ui              = Self::ui(main_canvas, view_model.size.clone());
+        let tool_changed    = Arc::new(Mutex::new(true));
+
+        // Set the tool changed flag whenever the effective tool changes
+        let also_tool_changed = Arc::clone(&tool_changed);
+        view_model.tools().effective_tool.when_changed(notify(move || { *also_tool_changed.lock().unwrap() = true; }));
 
         // Create the controller
         let controller = CanvasController {
-            ui:         ui,
-            canvases:   Arc::new(canvases),
-            anim_model: view_model.clone(),
+            ui:             ui,
+            canvases:       Arc::new(canvases),
+            anim_model:     view_model.clone(),
+            tool_changed:   tool_changed,
 
             core:               Desync::new(CanvasCore {
                 renderer:           renderer,
@@ -193,6 +200,21 @@ impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
     }
 
     fn tick(&self) {
+        // Ensure that the active tool is up to date
+        if *self.tool_changed.lock().unwrap() {
+            // Tool has changed: need to call refresh()
+            self.core.sync(|core| {
+                // Fetch the canvas to deal with the refresh
+                let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+
+                // Tool has no longer changed
+                *self.tool_changed.lock().unwrap() = false;
+                
+                // Refresh the tool (this will update any overlays, for example)
+                core.canvas_tools.refresh_tool(&*canvas, &mut core.renderer);
+            });
+        }
+
         // Check that the frame time hasn't changed
         let displayed_time  = self.core.sync(|core| core.current_time);
         let target_time     = self.anim_model.timeline().current_time.get();
