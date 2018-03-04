@@ -7,6 +7,7 @@ use binding::*;
 use animation::*;
 use animation::brushes::*;
 
+use std::iter;
 use std::sync::*;
 use std::time::Duration;
 
@@ -66,15 +67,39 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     }
 
     ///
+    /// Deselects the active tool
+    /// 
+    fn deselect_active_tool(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
+        // Send and process the deselect actions to whatever tool is active
+        let deselect_actions = self.tool_runner.actions_for_input(iter::once(ToolInput::Deselect));
+        self.process_actions(canvas, renderer, deselect_actions.into_iter());
+
+        // Active tool becomes 'None' once the deselect actions are processed (so there can be no further feedback to it)
+        self.active_tool = None;
+    }
+
+    ///
+    /// Sends the selection action to the current tool
+    /// 
+    fn select_active_tool(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
+        // Send and process the select action to whatever tool is active
+        let select_actions = self.tool_runner.actions_for_input(iter::once(ToolInput::Select));
+        self.process_actions(canvas, renderer, select_actions.into_iter());
+    }
+
+    ///
     /// If the effective tool is different, changes the tool that's being used by the tool runner
     /// 
-    pub fn refresh_tool(&mut self) {
+    pub fn refresh_tool(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         let effective_tool = self.effective_tool.get();
 
         // If the tool is different...
         if self.active_tool != effective_tool {
             // ... check that a tool is actually selected
             if let Some(effective_tool) = effective_tool {
+                // Deselect the current tool
+                self.deselect_active_tool(canvas, renderer);
+
                 // Select a new tool
                 self.active_tool = Some(Arc::clone(&effective_tool));
 
@@ -83,6 +108,9 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
 
                 // Load into the tool runner
                 self.tool_runner.set_tool(&effective_tool, &*tool_model);
+
+                // Process the 'select' action for the new tool
+                self.select_active_tool(canvas, renderer);
             }
         }
     }
@@ -92,7 +120,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     /// 
     pub fn send_input<InputIter: Iterator<Item=ToolInput<GenericToolData>>>(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, input: InputIter) {
         // Ensure that the tool is ready to run
-        self.refresh_tool();
+        self.refresh_tool(canvas, renderer);
 
         // Send the input to the tool to get the actions
         let actions = self.tool_runner.actions_for_input(input);
@@ -106,7 +134,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     /// 
     pub fn process_actions<ActionIter: Iterator<Item=ToolAction<GenericToolData>>>(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, actions: ActionIter) {
         // Ensure that the tool is ready to run
-        self.refresh_tool();
+        self.refresh_tool(canvas, renderer);
 
         // Process the actions in sequence
         let mut animation_edits = vec![];
