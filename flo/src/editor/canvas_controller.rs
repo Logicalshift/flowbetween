@@ -162,6 +162,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         // Draw the active set of layers
         self.core.sync(move |core| {
             core.renderer.draw_frame_layers(&*canvas, size);
+            core.renderer.draw_overlays(&*canvas);
         });
     }
 
