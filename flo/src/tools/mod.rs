@@ -29,15 +29,3 @@ pub fn raw_point_from_painting(painting: &Painting) -> RawPoint {
         pressure:   painting.pressure
     }
 }
-
-///
-/// Trait indicating the current activation state of a tool
-///
-#[derive(Clone, Copy, PartialEq)]
-pub enum ToolActivationState {
-    /// Tool is currently activated and doesn't need reactivation
-    Activated,
-
-    /// Tool needs to be reactivated before it can be re-used
-    NeedsReactivation
-}
