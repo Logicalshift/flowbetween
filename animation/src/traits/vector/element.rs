@@ -13,7 +13,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// Retrieves the paths for this element, if there are any
     /// 
-    fn to_path(&self) -> Option<Vec<Path>>;
+    fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>>;
 
     ///
     /// Renders this vector element
