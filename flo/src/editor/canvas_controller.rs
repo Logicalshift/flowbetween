@@ -57,8 +57,11 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
         let tool_changed    = Arc::new(Mutex::new(true));
 
         // Set the tool changed flag whenever the effective tool changes
+        // Note: the keep_alive() here will leak if the controller lives for less time than the model
         let also_tool_changed = Arc::clone(&tool_changed);
-        view_model.tools().effective_tool.when_changed(notify(move || { *also_tool_changed.lock().unwrap() = true; }));
+        view_model.tools().effective_tool
+            .when_changed(notify(move || { *also_tool_changed.lock().unwrap() = true; }))
+            .keep_alive();
 
         // Create the controller
         let controller = CanvasController {
