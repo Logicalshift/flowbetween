@@ -26,7 +26,7 @@ impl BrushElement {
     ///
     /// Retrieves the points in this brush element
     /// 
-    pub fn points(&self, properties: &VectorProperties) -> Arc<Vec<BrushPoint>> {
+    pub fn points(&self) -> Arc<Vec<BrushPoint>> {
         Arc::clone(&self.points)
     }
 }
