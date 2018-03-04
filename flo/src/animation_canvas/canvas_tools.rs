@@ -3,6 +3,7 @@ use super::super::tools::*;
 use super::super::model::*;
 
 use ui::*;
+use canvas::*;
 use binding::*;
 use animation::*;
 use animation::brushes::*;
@@ -109,6 +110,9 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
                 // Load into the tool runner
                 self.tool_runner.set_tool(&effective_tool, &*tool_model);
 
+                // Clear the tool overlay
+                renderer.overlay(canvas, 0, vec![Draw::ClearCanvas]);
+
                 // Process the 'select' action for the new tool
                 self.select_active_tool(canvas, renderer);
             }
@@ -144,7 +148,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
                 ToolAction::Data(data)              => self.tool_runner.set_tool_data(data),
                 ToolAction::Edit(edit)              => animation_edits.push(edit),
                 ToolAction::BrushPreview(preview)   => self.process_brush_preview(canvas, renderer, preview),
-                ToolAction::Overlay(_)              => unimplemented!()
+                ToolAction::Overlay(overlay)        => self.process_overlay(canvas, renderer, overlay)
             }
         }
 
@@ -202,6 +206,18 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
             BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.set_brush_properties(&props)); },
             BrushPreviewAction::AddPoint(point)                 => { self.preview.as_mut().map(move |preview| preview.continue_brush_stroke(point)); },
             BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer) }
+        }
+    }
+
+    ///
+    /// Process an overlay action
+    /// 
+    fn process_overlay(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, overlay: OverlayAction) {
+        // Overlay 0 is used for tool overlays
+
+        match overlay {
+            OverlayAction::Clear            => renderer.overlay(canvas, 0, vec![ Draw::ClearCanvas ]),
+            OverlayAction::Draw(drawing)    => renderer.overlay(canvas, 0, drawing)
         }
     }
 
