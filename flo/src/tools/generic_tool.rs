@@ -94,6 +94,8 @@ impl GenericToolData {
         use self::ToolInput::*;
 
         match input {
+            Select              => Some(Select),
+            Deselect            => Some(Deselect),
             Data(ref data)      => data.convert_ref().map(|data| Data(data)),
             PaintDevice(device) => Some(PaintDevice(device)),
             Paint(paint)        => Some(Paint(paint))

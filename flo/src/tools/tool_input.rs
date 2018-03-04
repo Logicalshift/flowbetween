@@ -7,6 +7,12 @@ use std::sync::*;
 ///
 #[derive(Debug)]
 pub enum ToolInput<ToolData> {
+    /// Specifies that this tool has been selected
+    Select,
+
+    /// Specifies that this tool has been deselected
+    Deselect,
+
     /// Specifies the data set for this tool
     Data(Arc<ToolData>),
 

@@ -145,6 +145,8 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
 
         let actions = input.flat_map(|input| {
             match input {
+                Select | Deselect => vec![],
+
                 ToolInput::Data(ref ink_data)   => vec![
                     // Set the brush preview status
                     BrushPreview(Clear),                // Clear on whatever layer the preview is currently on
