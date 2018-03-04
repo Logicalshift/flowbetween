@@ -55,6 +55,14 @@ impl VectorElement for BrushDefinitionElement {
     fn update_properties(&self, properties: &mut VectorProperties) {
         properties.brush = create_brush_from_definition(&self.new_definition, self.drawing_style);
     }
+
+    ///
+    /// Retrieves the paths for this element, if there are any
+    /// 
+    fn to_path(&self) -> Option<Vec<Path>> {
+        None
+    }
+
 }
 
 impl Into<Vector> for BrushDefinitionElement {

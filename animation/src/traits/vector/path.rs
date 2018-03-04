@@ -4,10 +4,7 @@
 #[derive(Clone, Copy)]
 pub struct PathPoint {
     /// X, Y coordinates of this point
-    pub position: (f32, f32),
-
-    /// Stylus pressure for this point
-    pub pressure: f32
+    pub position: (f32, f32)
 }
 
 ///

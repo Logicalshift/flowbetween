@@ -30,6 +30,13 @@ impl BrushPropertiesElement {
 
 impl VectorElement for BrushPropertiesElement {
     ///
+    /// Retrieves the paths for this element, if there are any
+    /// 
+    fn to_path(&self) -> Option<Vec<Path>> {
+        None
+    }
+
+    ///
     /// Renders this vector element
     /// 
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {

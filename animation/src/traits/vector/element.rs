@@ -1,5 +1,7 @@
 use super::properties::*;
 
+use super::path::*;
+
 use canvas::*;
 
 use std::any::*;
@@ -8,6 +10,11 @@ use std::any::*;
 /// Represents an element in a vector layer
 ///
 pub trait VectorElement : Send+Any {
+    ///
+    /// Retrieves the paths for this element, if there are any
+    /// 
+    fn to_path(&self) -> Option<Vec<Path>>;
+
     ///
     /// Renders this vector element
     /// 

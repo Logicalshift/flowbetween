@@ -32,8 +32,18 @@ impl BrushElement {
 }
 
 impl VectorElement for BrushElement {
+    ///
+    /// Renders this vector element
+    /// 
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
         properties.brush.render_brush(gc, &properties.brush_properties, &self.points)
+    }
+
+    ///
+    /// Retrieves the paths for this element, if there are any
+    /// 
+    fn to_path(&self) -> Option<Vec<Path>> {
+        None
     }
 }
 
