@@ -51,6 +51,19 @@ pub struct CanvasRenderer {
     annotated_layer: Option<u64>
 }
 
+impl OverlayLayer {
+    ///
+    /// Creates a new, empty, overlay layer
+    /// 
+    pub fn new() -> OverlayLayer {
+        OverlayLayer {
+            layers:         HashMap::new(),
+            active_layer:   0,
+            drawing:        Canvas::new()
+        }
+    }
+}
+
 impl CanvasRenderer {
     ///
     /// Creates a new canvas renderer
@@ -109,13 +122,9 @@ impl CanvasRenderer {
 
         // Get (or create) the layer map for this overlay
         // We'll generate new entries in this map if unknown layers are encountered
-        let mut overlay = self.overlay_layers
+        let overlay = self.overlay_layers
             .entry(overlay)
-            .or_insert_with(|| OverlayLayer { 
-                layers:         HashMap::new(),
-                active_layer:   0,
-                drawing:        Canvas::new() 
-            });
+            .or_insert_with(|| OverlayLayer::new());
 
         // Pick the currently active layer (allocate it if it doesn't exist)
         let mut active_layer = *overlay.layers.entry(overlay.active_layer).or_insert_with(|| next_free_layer());
@@ -244,6 +253,74 @@ impl CanvasRenderer {
                 layer.layer_frame.render_to(gc);
             }
         });
+    }
+
+    ///
+    /// Redraws all of the overlay layers on a canvas
+    /// 
+    /// Overlay operations will clear any annotation that might have been added.
+    /// 
+    pub fn draw_overlays(&mut self, canvas: &BindingCanvas) {
+        // Overlays screw with the annotation: make sure it's cleared
+        self.clear_annotation(canvas);
+
+        // Draw the overlays
+        canvas.draw(|gc| {
+            // Copy the IDs (the drawing relay requires a mutable borrow so we need a copy)
+            let overlay_layer_ids: Vec<u32> = self.overlay_layers.keys().cloned().collect();
+
+            // Draw each overlay in turn via the relay function
+            for layer_id in overlay_layer_ids {
+                let drawing = self.overlay_layers[&layer_id].drawing.get_drawing();
+                self.relay_drawing_for_overlay(layer_id, gc, drawing.into_iter());
+            }
+        })
+    }
+
+    ///
+    /// Sends some drawing commands to an overlay
+    /// 
+    /// Overlay operations will clear any annotation that might have been added.
+    /// 
+    pub fn overlay(&mut self, canvas: &BindingCanvas, overlay: u32, drawing: Vec<Draw>) {
+        // Overlays screw with the annotation: make sure it's cleared
+        self.clear_annotation(canvas);
+
+        // Copy the drawing into the overlay's canvas
+        {
+            let overlay = self.overlay_layers.entry(overlay)
+                .or_insert_with(|| OverlayLayer::new());
+            overlay.drawing.write(drawing.clone());
+        }
+
+        // Relay the drawing to the binding canvas
+        canvas.draw(|gc| {
+            self.relay_drawing_for_overlay(overlay, gc, drawing.into_iter())
+        });
+    }
+
+    ///
+    /// Clears the overlays from a canvas
+    /// 
+    /// Overlay operations will clear any annotation that might have been added.
+    /// 
+    pub fn clear_overlays(&mut self, canvas: &BindingCanvas) {
+        // Overlays screw with the annotation: make sure it's cleared
+        self.clear_annotation(canvas);
+
+        // Clear all of the overlay layers
+        {
+            let overlay_layer_ids = self.overlay_layers.values()
+                .flat_map(|overlay| overlay.layers.values());
+
+            canvas.write(overlay_layer_ids.flat_map(|layer_id| vec![
+                Draw::Layer(*layer_id),
+                Draw::ClearLayer
+            ].into_iter()).collect());
+        }
+
+        // Delete the overlays
+        self.overlay_layers = HashMap::new();
     }
 
     ///
