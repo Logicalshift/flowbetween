@@ -409,7 +409,7 @@ impl Brush for InkBrush {
         gc.move_to(x as f32, y as f32);
         for curve_list in offset_curves.iter() {
             for curve_section in curve_list.0.iter() {
-                gc_draw_bezier(gc, curve_section);
+                gc.draw(Draw::from(curve_section));
             }
         }
 
