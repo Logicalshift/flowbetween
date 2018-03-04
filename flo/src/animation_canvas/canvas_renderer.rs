@@ -127,8 +127,9 @@ impl CanvasRenderer {
             .or_insert_with(|| OverlayLayer::new());
 
         // Pick the currently active layer (allocate it if it doesn't exist)
-        let mut active_layer = *overlay.layers.entry(overlay.active_layer).or_insert_with(|| next_free_layer());
-        gc.layer(active_layer);
+        let mut active_layer = overlay.active_layer;
+        let canvas_layer = *overlay.layers.entry(active_layer).or_insert_with(|| next_free_layer());
+        gc.layer(canvas_layer);
 
         // Map the drawing actions to actions for the target canvas (map layers mainly)
         for draw in drawing {
@@ -144,7 +145,8 @@ impl CanvasRenderer {
 
                     // Active layer resets back to 0
                     active_layer = 0;
-                    gc.layer(*overlay.layers.get(&0).unwrap());
+                    let canvas_layer = *overlay.layers.entry(active_layer).or_insert_with(|| next_free_layer());
+                    gc.layer(canvas_layer);
                 },
 
                 Layer(overlay_layer) => {
