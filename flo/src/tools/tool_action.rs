@@ -1,4 +1,5 @@
 use super::brush_preview_action::*;
+use super::overlay_action::*;
 
 use animation::*;
 
@@ -14,5 +15,8 @@ pub enum ToolAction<ToolData> {
     Edit(AnimationEdit),
 
     /// Specifies a brush preview action to perform
-    BrushPreview(BrushPreviewAction)
+    BrushPreview(BrushPreviewAction),
+
+    /// Sets the tool overlay drawing
+    Overlay(OverlayAction)
 }

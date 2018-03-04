@@ -75,7 +75,8 @@ impl GenericToolData {
         match action {
             Data(data)              => Data(GenericToolData(Mutex::new(Box::new(Arc::new(data))))),
             Edit(edit)              => Edit(edit),
-            BrushPreview(preview)   => BrushPreview(preview)
+            BrushPreview(preview)   => BrushPreview(preview),
+            Overlay(overlay)        => Overlay(overlay)
         }
     }
 

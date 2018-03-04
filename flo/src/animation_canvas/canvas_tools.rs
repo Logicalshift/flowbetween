@@ -115,7 +115,8 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
             match action {
                 ToolAction::Data(data)              => self.tool_runner.set_tool_data(data),
                 ToolAction::Edit(edit)              => animation_edits.push(edit),
-                ToolAction::BrushPreview(preview)   => self.process_brush_preview(canvas, renderer, preview)
+                ToolAction::BrushPreview(preview)   => self.process_brush_preview(canvas, renderer, preview),
+                ToolAction::Overlay(_)              => unimplemented!()
             }
         }
 
