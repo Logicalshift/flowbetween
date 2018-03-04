@@ -11,16 +11,30 @@ use std::collections::*;
 /// 
 struct FrameLayer {
     /// The ID of the layer to draw on the canvas
-    layer_id:       u32,
+    layer_id:           u32,
 
     /// The frame data for this layer
-    layer_frame:    Arc<Frame>,
+    layer_frame:        Arc<Frame>,
 
     /// The brush that was last used for this layer
-    active_brush: Option<(BrushDefinition, BrushDrawingStyle)>,
+    active_brush:       Option<(BrushDefinition, BrushDrawingStyle)>,
 
     /// The brush properties that were last used for this layer
-    active_properties: Option<BrushProperties>
+    active_properties:  Option<BrushProperties>
+}
+
+///
+/// Represents a layer containing an overlay
+/// 
+struct OverlayLayer {
+    /// How layers in the overlay map to layers in the canvas
+    layers:         HashMap<u32, u32>,
+
+    /// The layer that is currently active for this overlay layer
+    active_layer:   u32,
+
+    /// The drawing for this layer
+    drawing:        Canvas
 }
 
 ///
@@ -29,6 +43,9 @@ struct FrameLayer {
 pub struct CanvasRenderer {
     /// The layers in the current frame
     frame_layers: HashMap<u64, FrameLayer>,
+
+    /// The over layers in the current frame
+    overlay_layers: HashMap<u32, OverlayLayer>,
 
     /// The layer that we're currently 'annotating'
     annotated_layer: Option<u64>
@@ -41,6 +58,7 @@ impl CanvasRenderer {
     pub fn new() -> CanvasRenderer {
         CanvasRenderer {
             frame_layers:       HashMap::new(),
+            overlay_layers:     HashMap::new(),
             annotated_layer:    None
         }
     }
@@ -53,9 +71,103 @@ impl CanvasRenderer {
     }
 
     ///
+    /// Returns the ID of the first free layer
+    /// 
+    fn free_layer(&self) -> u32 {
+        // Create an iterator of all the used layer IDs
+        let used_layers = self.frame_layers.values().map(|layer| layer.layer_id)
+            .chain(self.overlay_layers.values().flat_map(|overlay| overlay.layers.values().map(|layer_id| *layer_id)));
+        
+        // Find the highest
+        let max_layer = used_layers.max();
+
+        // Result is one more than the highest used layer
+        max_layer.unwrap_or(0)+1
+    }
+
+    ///
+    /// Invalidates the layers assigned to overlay canvases
+    /// 
+    fn invalidate_overlay_layers(&mut self) {
+        self.overlay_layers.values_mut()
+            .for_each(|value| value.layers = HashMap::new());
+    }
+
+    ///
+    /// Given a set of drawing actions for an overlay, relays them to the specified canvas
+    /// 
+    fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: u32, gc: &mut GraphicsPrimitives, drawing: DrawIter) {
+        // Find the first free layer in this object
+        let mut free_layer = self.free_layer();
+
+        // Function to generate the next free layer if we need one
+        let mut next_free_layer = move || {
+            let layer_id = free_layer;
+            free_layer += 1;
+            layer_id
+        };
+
+        // Get (or create) the layer map for this overlay
+        // We'll generate new entries in this map if unknown layers are encountered
+        let mut overlay = self.overlay_layers
+            .entry(overlay)
+            .or_insert_with(|| OverlayLayer { 
+                layers:         HashMap::new(),
+                active_layer:   0,
+                drawing:        Canvas::new() 
+            });
+
+        // Pick the currently active layer (allocate it if it doesn't exist)
+        let mut active_layer = *overlay.layers.entry(overlay.active_layer).or_insert_with(|| next_free_layer());
+        gc.layer(active_layer);
+
+        // Map the drawing actions to actions for the target canvas (map layers mainly)
+        for draw in drawing {
+            use self::Draw::*;
+
+            match draw {
+                ClearCanvas => {
+                    // Clear all the layers instead
+                    for layer in overlay.layers.values() {
+                        gc.layer(*layer);
+                        gc.clear_layer();
+                    }
+
+                    // Active layer resets back to 0
+                    active_layer = 0;
+                    gc.layer(*overlay.layers.get(&0).unwrap());
+                },
+
+                Layer(overlay_layer) => {
+                    // Pick the layer from the canvas
+                    let canvas_layer = *overlay.layers.entry(overlay_layer).or_insert_with(|| next_free_layer());
+                    gc.layer(canvas_layer);
+
+                    // This becomes the new active layer
+                    active_layer = overlay_layer;
+                },
+
+                LayerBlend(overlay_layer, blend_style) => {
+                    // Pick the layer from the canvas
+                    let canvas_layer = *overlay.layers.entry(overlay_layer).or_insert_with(|| next_free_layer());
+                    gc.layer_blend(canvas_layer, blend_style);
+                },
+
+                unchanged => gc.draw(unchanged)
+            }
+        }
+
+        // Update the active layer in the overlay (so future drawing commands go back to the right layer)
+        overlay.active_layer = active_layer;
+    }
+
+    ///
     /// Loads a particular frame from a layer into this renderer
     /// 
     pub fn load_frame(&mut self, layer: &Layer, time: Duration) {
+        // If there are any overlays, they get invalidated when we add this frame
+        self.invalidate_overlay_layers();
+
         // The layer ID comes from the number of layers we've currently got loaded (this layer will be rendered on top of all others)
         let layer_id    = (self.frame_layers.len() as u32) + 1;
 
