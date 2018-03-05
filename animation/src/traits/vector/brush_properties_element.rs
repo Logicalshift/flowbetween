@@ -40,7 +40,7 @@ impl VectorElement for BrushPropertiesElement {
     /// Renders this vector element
     /// 
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
-        properties.brush.prepare_to_render(gc, &self.new_properties);
+        gc.draw_list(properties.brush.prepare_to_render(&self.new_properties));
     }
 
     ///

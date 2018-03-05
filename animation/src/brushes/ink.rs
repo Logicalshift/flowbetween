@@ -1,5 +1,6 @@
 use super::super::traits::*;
 
+use std::iter;
 use std::ops::*;
 
 use curves::*;
@@ -373,20 +374,19 @@ impl Brush for InkBrush {
         brush_points
     }
 
-    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties) {
-        // Set the blend mode (mainly so we can act as an eraser as well as a primary brush)
-        gc.blend_mode(self.blend_mode);
-
-        // Set the fill colour & opacity
-        gc.fill_color(properties.color.with_alpha(properties.opacity));
+    fn prepare_to_render<'a>(&'a self, properties: &BrushProperties) -> Box<'a+Iterator<Item=Draw>> {
+        Box::new(vec![
+            Draw::BlendMode(self.blend_mode),
+            Draw::FillColor(properties.color.with_alpha(properties.opacity))
+        ].into_iter())
     }
 
-    fn render_brush(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties, points: &Vec<BrushPoint>) {
+    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<'a+Iterator<Item=Draw>> {
         let size_ratio = properties.size / self.max_width;
         
         // Nothing to do if there are too few points
         if points.len() < 2 {
-            return;
+            return Box::new(iter::empty());
         }
 
         // Create an ink curve from the brush points
@@ -399,36 +399,46 @@ impl Brush for InkBrush {
         }
         
         // Draw a variable width line for this curve
-        let offset_curves: Vec<(Vec<bezier::Curve>, Vec<bezier::Curve>)> 
-            = curve.iter().map(|ink_curve| ink_curve.to_offset_curves((self.min_width*size_ratio) as f64, (self.max_width*size_ratio) as f64)).collect();
+        let (upper_curves, lower_curves): (Vec<_>, Vec<_>) = curve.into_iter()
+            .map(|ink_curve| ink_curve.to_offset_curves((self.min_width*size_ratio) as f64, (self.max_width*size_ratio) as f64))
+            .unzip();
 
-        gc.new_path();
-        
         // Upper portion
-        let Coord2(x, y) = offset_curves[0].0[0].start_point();
-        gc.move_to(x as f32, y as f32);
-        for curve_list in offset_curves.iter() {
-            for curve_section in curve_list.0.iter() {
-                gc.draw(Draw::from(curve_section));
-            }
-        }
+        let Coord2(x, y) = upper_curves[0][0].start_point();
+        let preamble = vec![
+            Draw::NewPath,
+            Draw::Move(x as f32, y as f32)
+        ];
+
+        let upper_curves = upper_curves.into_iter()
+            .flat_map(|curve_list|  curve_list.into_iter())
+            .map(|curve_section|    Draw::from(&curve_section));
 
         // Lower portion (reverse everything)
-        let last_section    = &offset_curves[offset_curves.len()-1].1;
-        let last_curve      = &last_section[last_section.len()-1];
-        let Coord2(x, y)    = last_curve.end_point();
-        gc.line_to(x as f32, y as f32);
+        let Coord2(x, y)    = {
+            let last_section    = &lower_curves[lower_curves.len()-1];
+            let last_curve      = &last_section[last_section.len()-1];
+            last_curve.end_point()
+        };
 
-        for curve_list in offset_curves.iter().rev() {
-            for curve_section in curve_list.1.iter().rev() {
-                let start       = curve_section.start_point();
-                let (cp1, cp2)  = curve_section.control_points();
+        let end_cap = Draw::Line(x as f32, y as f32);
 
-                gc.bezier_curve_to(start.x() as f32, start.y() as f32, cp2.x() as f32, cp2.y() as f32, cp1.x() as f32, cp1.y() as f32);
-            }
-        }
+        let lower_curves = lower_curves.into_iter()
+            .rev()
+            .flat_map(|curve_list|  curve_list.into_iter().rev())
+            .map(|curve_section|    Draw::from(&curve_section.reverse()));
 
-        gc.fill();
+        // Finish up
+        let finish = Draw::Fill;
+
+        // Assemble the final set of instructions
+        let draw_brush = preamble.into_iter()
+            .chain(upper_curves)
+            .chain(iter::once(end_cap))
+            .chain(lower_curves)
+            .chain(iter::once(finish));
+        
+        Box::new(draw_brush)
     }
 
     ///

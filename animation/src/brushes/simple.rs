@@ -4,6 +4,8 @@ use curves::*;
 use curves::bezier;
 use canvas::*;
 
+use std::iter;
+
 ///
 /// Simple brush, which renders a brush stroke as a straight series of line segments
 /// 
@@ -18,9 +20,11 @@ impl SimpleBrush {
 }
 
 impl Brush for SimpleBrush {
-    fn prepare_to_render(&self, gc: &mut GraphicsPrimitives, properties: &BrushProperties) {
-        gc.blend_mode(BlendMode::SourceOver);
-        gc.stroke_color(properties.color);
+    fn prepare_to_render<'a>(&'a self, properties: &BrushProperties) -> Box<'a+Iterator<Item=Draw>> {
+        Box::new(vec![
+            Draw::BlendMode(BlendMode::SourceOver),
+            Draw::StrokeColor(properties.color)
+        ].into_iter())
     }
 
     ///
@@ -82,24 +86,28 @@ impl Brush for SimpleBrush {
         brush_points
     }
 
-    fn render_brush(&self, gc: &mut GraphicsPrimitives, _properties: &BrushProperties, points: &Vec<BrushPoint>) {
+    fn render_brush<'a>(&'a self, _properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<'a+Iterator<Item=Draw>> {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 1 {
-            return;
+            return Box::new(iter::empty());
         }
         
         // Draw a simple line for this brush
-        gc.new_path();
-        
-        gc.move_to(points[0].position.0, points[0].position.1);
-        for segment in points.iter().skip(1) {
-            gc.bezier_curve_to(
-                segment.position.0, segment.position.1,
-                segment.cp1.0, segment.cp1.1,
-                segment.cp2.0, segment.cp2.1
-            );
-        }
+        let preamble = vec![
+            Draw::NewPath,
+            Draw::Move(points[0].position.0, points[0].position.1)
+        ];
 
-        gc.stroke();
+        let curves = points.iter()
+            .skip(1)
+            .map(|segment| Draw::BezierCurve(
+                (segment.position.0, segment.position.1),
+                (segment.cp1.0, segment.cp1.1),
+                (segment.cp2.0, segment.cp2.1)
+            ));
+
+        Box::new(preamble.into_iter()
+            .chain(curves)
+            .chain(iter::once(Draw::Stroke)))
     }
 }

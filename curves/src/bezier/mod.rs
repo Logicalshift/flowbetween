@@ -49,6 +49,14 @@ pub trait BezierCurve: Clone+Sized {
     fn control_points(&self) -> (Self::Point, Self::Point);
 
     ///
+    /// Reverses the direction of this curve
+    /// 
+    fn reverse(self) -> Self {
+        let (cp1, cp2) = self.control_points();
+        Self::from_points(self.end_point(), self.start_point(), cp2, cp1)
+    }
+
+    ///
     /// Given a value t from 0 to 1, returns a point on this curve
     /// 
     #[inline]
@@ -154,5 +162,14 @@ impl BezierCurve for Curve {
     #[inline]
     fn control_points(&self) -> (Coord2, Coord2) {
         self.control_points
+    }
+
+    #[inline]
+    fn reverse(self) -> Curve {
+        Curve {
+            start_point:    self.end_point,
+            end_point:      self.start_point,
+            control_points: (self.control_points.1, self.control_points.0)
+        }
     }
 }
