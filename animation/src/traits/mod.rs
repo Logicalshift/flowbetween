@@ -9,6 +9,7 @@ mod brush_properties;
 mod brush_definition;
 mod brush_drawing_style;
 mod vector;
+mod path;
 
 pub use self::editable::*;
 pub use self::edit::*;
@@ -21,3 +22,4 @@ pub use self::brush_properties::*;
 pub use self::brush_definition::*;
 pub use self::brush_drawing_style::*;
 pub use self::vector::*;
+pub use self::path::*;

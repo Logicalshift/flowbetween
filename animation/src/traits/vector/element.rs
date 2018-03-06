@@ -1,6 +1,5 @@
 use super::properties::*;
-
-use super::path::*;
+use super::super::path::*;
 
 use canvas::*;
 

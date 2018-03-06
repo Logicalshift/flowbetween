@@ -1,5 +1,6 @@
 use super::*;
 
+use super::super::path::*;
 use super::super::brush::*;
 
 use std::sync::*;

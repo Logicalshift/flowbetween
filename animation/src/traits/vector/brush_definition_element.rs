@@ -1,4 +1,5 @@
 use super::*;
+use super::super::path::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;

@@ -1,4 +1,5 @@
 use super::*;
+use super::super::path::*;
 use super::super::brush_properties::*;
 
 ///
