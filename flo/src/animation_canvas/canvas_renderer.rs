@@ -1,10 +1,12 @@
+use super::super::model::*;
+
 use ui::*;
 use canvas::*;
+use binding::*;
 use animation::*;
 
-use std::time::Duration;
 use std::sync::*;
-use std::collections::*;
+use std::collections::HashMap;
 
 ///
 /// Represents a layer in the current frame
@@ -175,25 +177,31 @@ impl CanvasRenderer {
     ///
     /// Loads a particular frame from a layer into this renderer
     /// 
-    pub fn load_frame(&mut self, layer: &Layer, time: Duration) {
-        // If there are any overlays, they get invalidated when we add this frame
-        self.invalidate_overlay_layers();
+    pub fn load_frame(&mut self, model: FrameLayerModel) {
+        // Load the frame data (we don't necessarily form a binding here)
+        let frame = model.frame.get();
 
-        // The layer ID comes from the number of layers we've currently got loaded (this layer will be rendered on top of all others)
-        let layer_id    = (self.frame_layers.len() as u32) + 1;
+        if let Some(frame) = frame {
+            // If there are any overlays, they get invalidated when we add this frame
+            self.invalidate_overlay_layers();
 
-        // Get the frame for this time
-        let layer_frame             = layer.get_frame_at_time(time);
-        let active_brush            = layer_frame.active_brush();
-        let active_brush_properties = layer_frame.active_brush_properties();
+            // The layer ID comes from the number of layers we've currently got loaded (this layer will be rendered on top of all others)
+            let animation_layer_id      = model.layer_id;
+            let canvas_layer_id         = (self.frame_layers.len() as u32) + 1;
 
-        // Store this layer in the hashmap with its layer ID
-        self.frame_layers.insert(layer.id(), FrameLayer {
-            layer_id:           layer_id,
-            layer_frame:        layer_frame,
-            active_brush:       active_brush,
-            active_properties:  active_brush_properties
-        });
+            // Get the frame for this time
+            let layer_frame             = frame;
+            let active_brush            = layer_frame.active_brush();
+            let active_brush_properties = layer_frame.active_brush_properties();
+
+            // Store this layer in the hashmap with its layer ID
+            self.frame_layers.insert(animation_layer_id, FrameLayer {
+                layer_id:           canvas_layer_id,
+                layer_frame:        layer_frame,
+                active_brush:       active_brush,
+                active_properties:  active_brush_properties
+            });
+        }
     }
 
     ///

@@ -18,7 +18,7 @@ use animation::*;
 use std::sync::*;
 
 ///
-/// The viewmodel for the animation editor
+/// The model for the animation editor
 /// 
 pub struct FloModel<Anim: Animation> {
     /// The animation that is being edited
@@ -64,17 +64,24 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     }
 
     ///
-    /// Retrieves the viewmodel for the drawing tools for this animation
+    /// Retrieves the model for the drawing tools for this animation
     /// 
     pub fn tools(&self) -> &ToolModel<Anim> {
         &self.tools
     }
 
     ///
-    /// Retrieves the viewmodel of the timeline for this animation
+    /// Retrieves the model of the timeline for this animation
     /// 
     pub fn timeline(&self) -> &TimelineModel<Anim> {
         &self.timeline
+    }
+
+    ///
+    /// Retrieves the frame model for this animation
+    /// 
+    pub fn frame(&self) -> &FrameModel {
+        &self.frame
     }
 }
 

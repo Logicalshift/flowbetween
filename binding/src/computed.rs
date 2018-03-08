@@ -133,7 +133,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // done is to evaluate the content of the computed value directly. 
         // This can happen if we call a function that returns a binding and 
         // it creates one rather than returning an existing one.
-        BindingContext::panic_if_in_binding_context("Cannot create computed bindings in a computed value calculation function (you should evaluate the value directly rather than create bindings)");
+        // BindingContext::panic_if_in_binding_context("Cannot create computed bindings in a computed value calculation function (you should evaluate the value directly rather than create bindings)");
 
         // Create the binding
         ComputedBinding {

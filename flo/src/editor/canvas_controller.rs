@@ -129,8 +129,8 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     /// Computes the frames for all the layers in the animation
     /// 
     fn update_layers_to_frame_at_time(&self, time: Duration) {
-        // Get the animation for the update
-        let animation = self.anim_model.clone();
+        // Retrieve the layers from the animation
+        let layers = self.anim_model.frame().layers.get();
 
         // Update the layers in the core
         self.core.async(move |core| {
@@ -140,14 +140,9 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
             // Clear any existing canvases
             core.renderer.clear();
 
-            // Open the animation layers
-            let layers      = animation.get_layer_ids();
-
             // Load the frames into the renderer
-            for layer_id in layers {
-                if let Some(layer) = animation.get_layer_with_id(layer_id) {
-                    core.renderer.load_frame(&*layer, time);
-                }
+            for layer_frame in layers {
+                core.renderer.load_frame(layer_frame);
             }
         });
     }
