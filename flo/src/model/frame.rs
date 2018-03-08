@@ -80,6 +80,8 @@ impl FrameModel{
 
                 if let Some(layer) = layer {
                     // Generate the frame
+                    // TODO: make this computed! (right now the frame won't update if the time changes)
+                    // This also removes the need to set the frame in the event the entry is already occupied, as it will regenerate itself automatically
                     let frame = layer.get_frame_at_time(time);   
 
                     match frames.entry(*layer_id) {
