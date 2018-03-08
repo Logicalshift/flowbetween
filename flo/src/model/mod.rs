@@ -30,6 +30,9 @@ pub struct FloModel<Anim: Animation> {
     /// The timeline view model
     timeline: TimelineModel<Anim>,
 
+    /// The frame view model
+    frame: FrameModel,
+
     /// The size of the animation
     pub size: BindRef<(f64, f64)>,
 
@@ -45,6 +48,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
         let animation       = Arc::new(animation);
         let tools           = ToolModel::new();
         let timeline        = TimelineModel::new(Arc::clone(&animation));
+        let frame           = FrameModel::new(Arc::clone(&animation), BindRef::new(&timeline.current_time), BindRef::from(bind(0)));
 
         let size_binding    = bind(animation.size());
 
@@ -52,6 +56,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
             animation:      animation,
             tools:          tools,
             timeline:       timeline,
+            frame:          frame,
 
             size:           BindRef::from(size_binding.clone()),
             size_binding:   size_binding
@@ -80,6 +85,7 @@ impl<Anim: Animation> Clone for FloModel<Anim> {
             animation:      self.animation.clone(),
             tools:          self.tools.clone(),
             timeline:       self.timeline.clone(),
+            frame:          self.frame.clone(),
 
             size:           self.size.clone(),
             size_binding:   self.size_binding.clone()

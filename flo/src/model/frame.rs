@@ -21,12 +21,13 @@ pub struct FrameLayerModel {
 ///
 /// The frame model provides bindings for the content of the current frame
 /// 
+#[derive(Clone)]
 pub struct FrameModel {
     /// The layers in the current frame
     pub layers: BindRef<Vec<FrameLayerModel>>
 }
 
-impl FrameModel{
+impl FrameModel {
     ///
     /// Creates a new frame model that tracks the specified animation
     /// 
