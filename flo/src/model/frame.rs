@@ -15,18 +15,7 @@ pub struct FrameLayerModel {
     pub layer_id: u64,
 
     /// The current frmae for this layer
-    pub frame: BindRef<Arc<Frame>>,
-
-    /// The underlying binding
-    frame_binding: Binding<BoundFrame>
-}
-
-/// BoundFrame provides a PartialEq implementation so we can put an Arc<Frame> in a binding
-#[derive(Clone)]
-struct BoundFrame(Arc<Frame>);
-
-impl PartialEq for BoundFrame {
-    fn eq(&self, _other: &BoundFrame) -> bool { false }
+    pub frame: BindRef<Option<Arc<Frame>>>,
 }
 
 ///
@@ -57,9 +46,6 @@ impl FrameModel{
 
             // We bind to the update so this invalidates whenever the update list changes
             animation_update.get();
-            
-            // Get the current time
-            let time = when.get();
 
             // Refresh the frames from the animation
             let layer_ids = animation.get_layer_ids();
@@ -75,33 +61,27 @@ impl FrameModel{
 
             // Update or generate the frame layer model (something bound to a single layer will get updates for that layer)
             for layer_id in layer_ids.iter() {
-                // Generate the frame for this layer
-                let layer = animation.get_layer_with_id(*layer_id);
+                match frames.entry(*layer_id) {
+                    Entry::Occupied(_occupied) => (),
 
-                if let Some(layer) = layer {
-                    // Generate the frame
-                    // TODO: make this computed! (right now the frame won't update if the time changes)
-                    // This also removes the need to set the frame in the event the entry is already occupied, as it will regenerate itself automatically
-                    let frame = layer.get_frame_at_time(time);   
+                    Entry::Vacant(mut vacant) => {
+                        // Create a new bindnig
+                        let layer_id        = *layer_id;
+                        let when            = BindRef::clone(&when);
+                        let frame_animation = Arc::clone(&animation);
+                        let frame_binding   = computed(move || {
+                            let when = when.get();
+                            frame_animation.get_layer_with_id(layer_id)
+                                .map(|layer| layer.get_frame_at_time(when))
+                        });
 
-                    match frames.entry(*layer_id) {
-                        Entry::Occupied(mut occupied) => {
-                            // Update the layer with the new frame
-                            occupied.get_mut().frame_binding.set(BoundFrame(frame));
-                        },
+                        // Add a frame layer model for this frame
+                        let frame           = BindRef::new(&frame_binding);
 
-                        Entry::Vacant(mut vacant) => {
-                            // Generate a new binding
-                            let frame_binding   = bind(BoundFrame(frame));
-                            let frame_binding2  = frame_binding.clone();
-                            let frame           = BindRef::new(&computed(move || frame_binding2.get().0));
-
-                            vacant.insert(FrameLayerModel {
-                                layer_id:       *layer_id,
-                                frame:          frame,
-                                frame_binding:  frame_binding
-                            });
-                        }
+                        vacant.insert(FrameLayerModel {
+                            layer_id:       layer_id,
+                            frame:          frame,
+                        });
                     }
                 }
             }
