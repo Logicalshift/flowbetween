@@ -2,12 +2,14 @@ mod timeline;
 mod tools;
 mod layer;
 mod keyframe;
+mod frame;
 mod animation;
 
 pub use self::timeline::*;
 pub use self::tools::*;
 pub use self::layer::*;
 pub use self::keyframe::*;
+pub use self::frame::*;
 pub use self::animation::*;
 
 use binding::*;
