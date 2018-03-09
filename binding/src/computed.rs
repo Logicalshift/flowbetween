@@ -133,8 +133,25 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // done is to evaluate the content of the computed value directly. 
         // This can happen if we call a function that returns a binding and 
         // it creates one rather than returning an existing one.
-        // BindingContext::panic_if_in_binding_context("Cannot create computed bindings in a computed value calculation function (you should evaluate the value directly rather than create bindings)");
+        BindingContext::panic_if_in_binding_context("Cannot create computed bindings in a computed value calculation function (you should evaluate the value directly rather than create bindings)");
 
+        // Create the binding
+        ComputedBinding {
+            core: Arc::new(Mutex::new(ComputedBindingCore::new(calculate_value)))
+        }
+    }
+
+    ///
+    /// Creates a new computable binding within another binding
+    /// 
+    /// Normally this is considered an error (if the binding is not held anywhere
+    /// outside of the context, it will never generate an update). `new` panics
+    /// if it's called from within a context for this reason.
+    /// 
+    /// If the purpose of a computed binding is to return other bindings, this 
+    /// limitation does not apply, so this call is available
+    /// 
+    pub fn new_in_context(calculate_value: TFn) -> ComputedBinding<Value, TFn> {
         // Create the binding
         ComputedBinding {
             core: Arc::new(Mutex::new(ComputedBindingCore::new(calculate_value)))

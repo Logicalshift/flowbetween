@@ -54,7 +54,7 @@ impl FrameModel {
             // Remove layers that aren't in use any more
             let deleted_layers: Vec<_> = layer_ids
                 .iter()
-                .filter(|layer_id| !frames.contains_key(layer_id))
+                .filter(|layer_id|  !frames.contains_key(layer_id))
                 .map(|layer_id_ref| *layer_id_ref)
                 .collect();
             
@@ -70,7 +70,7 @@ impl FrameModel {
                         let layer_id        = *layer_id;
                         let when            = BindRef::clone(&when);
                         let frame_animation = Arc::clone(&animation);
-                        let frame_binding   = computed(move || {
+                        let frame_binding   = ComputedBinding::new_in_context(move || {
                             let when = when.get();
                             frame_animation.get_layer_with_id(layer_id)
                                 .map(|layer| layer.get_frame_at_time(when))
