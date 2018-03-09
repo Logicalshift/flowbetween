@@ -1,4 +1,5 @@
 use super::ink::*;
+use super::controls;
 
 use ui::*;
 use canvas::*;
@@ -66,7 +67,7 @@ impl EraserMenuController {
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((0, 3), (0, 3)))
                 .with(vec![
-                    InkMenuController::divider(),
+                    controls::divider(),
 
                     Control::label()
                         .with("Eraser:")
@@ -80,7 +81,7 @@ impl EraserMenuController {
                         .with(brush_preview)
                         .with(Bounds::next_horiz(64.0)),
 
-                    InkMenuController::divider(),
+                    controls::divider(),
 
                     Control::label()
                         .with("Size:")
@@ -111,7 +112,7 @@ impl EraserMenuController {
                                 ])
                         ]),
 
-                    InkMenuController::divider(),
+                    controls::divider(),
 
                     Control::label()
                         .with("Opacity:")
@@ -145,7 +146,7 @@ impl EraserMenuController {
 
                     Control::empty()
                         .with(Bounds::next_horiz(16.0)),
-                    InkMenuController::divider()
+                    controls::divider()
                 ])));
 
         // Finalize the control

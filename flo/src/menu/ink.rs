@@ -1,4 +1,4 @@
-use super::super::style::*;
+use super::controls;
 use super::super::color::*;
 
 use ui::*;
@@ -84,7 +84,7 @@ impl InkMenuController {
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((0, 3), (0, 3)))
                 .with(vec![
-                    Self::divider(),
+                    controls::divider(),
 
                     Control::label()
                         .with("Brush:")
@@ -98,7 +98,7 @@ impl InkMenuController {
                         .with(brush_preview)
                         .with(Bounds::next_horiz(64.0)),
 
-                    Self::divider(),
+                    controls::divider(),
 
                     Control::label()
                         .with("Color:")
@@ -112,7 +112,7 @@ impl InkMenuController {
                         .with((ActionTrigger::Click, "ShowColorPopup"))
                         .with_controller("ColorPopup"),
 
-                    Self::divider(),
+                    controls::divider(),
 
                     Control::label()
                         .with("Size:")
@@ -143,7 +143,7 @@ impl InkMenuController {
                                 ])
                         ]),
 
-                    Self::divider(),
+                    controls::divider(),
 
                     Control::label()
                         .with("Opacity:")
@@ -177,7 +177,7 @@ impl InkMenuController {
 
                     Control::empty()
                         .with(Bounds::next_horiz(16.0)),
-                    Self::divider()
+                    controls::divider()
                 ])));
 
         // Finalize the control
@@ -192,20 +192,6 @@ impl InkMenuController {
             color_picker_open:  color_picker_open,
             color_picker:       Arc::new(color_picker)
         }
-    }
-
-    pub fn divider() -> Control {
-        Control::container()
-            .with(vec![
-                Control::empty()
-                    .with(Bounds::next_horiz(5.0)),
-                Control::empty()
-                    .with(Bounds::next_horiz(2.0))
-                    .with(Appearance::Background(MENU_BACKGROUND_ALT)),
-                Control::empty()
-                    .with(Bounds::next_horiz(5.0)),
-            ])
-            .with(Bounds::next_horiz(12.0))
     }
 
     ///
