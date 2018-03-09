@@ -2,7 +2,6 @@ use super::control::*;
 use super::attributes::*;
 use super::super::json::*;
 
-use serde_json;
 use serde_json::*;
 
 impl ToJsonValue for ControlAttribute {
@@ -28,7 +27,7 @@ impl ToJsonValue for ControlAttribute {
             &Action(ref trigger, ref action)        => json!({ "Action": (trigger, action) }),
 
             &SubComponents(ref components)          => {
-                let json_components: Vec<serde_json::Value> = components.iter()
+                let json_components: Vec<_> = components.iter()
                     .map(|component| component.to_json())
                     .collect();
 
@@ -62,7 +61,7 @@ impl ToJsonValue for ControlAttribute {
 
 impl ToJsonValue for Control {
     fn to_json(&self) -> Value {
-        let attributes: Vec<Value> = self.attributes()
+        let attributes: Vec<_> = self.attributes()
             .map(|attribute| attribute.to_json())
             .collect();
 

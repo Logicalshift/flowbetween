@@ -10,7 +10,7 @@ impl AnimationDb {
     /// 
     pub fn insert_edits<I: IntoIterator<Item=AnimationEdit>>(&self, edits: I) {
         // Clone the core and send the edits to it
-        let edits: Vec<AnimationEdit> = edits.into_iter().collect();
+        let edits: Vec<_> = edits.into_iter().collect();
 
         self.async(move |core| {
             core.insert_edits(&edits)?;

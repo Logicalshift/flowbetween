@@ -35,7 +35,7 @@ impl SqliteAnimation {
     /// Commits a set of edits to this animation
     /// 
     fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&self, edits: I) {
-        let edits: Vec<AnimationEdit> = edits.into_iter().collect();
+        let edits: Vec<_> = edits.into_iter().collect();
 
         // The animation editor performs the edits (via the MutableAnimation implementation)
         let editor = AnimationEditor::new();

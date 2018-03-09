@@ -213,7 +213,7 @@ fn add_keyframe() {
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
 
-    let keyframes: Vec<Duration> = layer.unwrap().get_key_frames().collect();
+    let keyframes: Vec<_> = layer.unwrap().get_key_frames().collect();
     assert!(keyframes.len() == 1);
     assert!(keyframes[0] == Duration::from_millis(250));
 }
@@ -232,7 +232,7 @@ fn add_keyframe2() {
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
 
-    let keyframes: Vec<Duration> = layer.unwrap().get_key_frames().collect();
+    let keyframes: Vec<_> = layer.unwrap().get_key_frames().collect();
     assert!(keyframes.len() == 1);
     assert!(keyframes[0] == Duration::from_millis(250));
 }
@@ -256,7 +256,7 @@ fn add_keyframe_with_layer_editor() {
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
 
-    let keyframes: Vec<Duration> = layer.unwrap().get_key_frames().collect();
+    let keyframes: Vec<_> = layer.unwrap().get_key_frames().collect();
     assert!(keyframes.len() == 1);
     assert!(keyframes[0] == Duration::from_millis(250));
 }
@@ -427,8 +427,8 @@ fn read_frame_after_edits() {
     let layer = anim.get_layer_with_id(2).unwrap();
 
     {
-        let frame                   = layer.get_frame_at_time(Duration::from_millis(442));
-        let elements: Vec<Vector>   = frame.vector_elements().unwrap().collect();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(442));
+        let elements: Vec<_>    = frame.vector_elements().unwrap().collect();
 
         assert!(frame.time_index() == Duration::from_millis(442));
         assert!(elements.len() == 5);
@@ -451,8 +451,8 @@ fn read_frame_after_edits() {
     }
 
     {
-        let frame                   = layer.get_frame_at_time(Duration::from_millis(60));
-        let elements: Vec<Vector>   = frame.vector_elements().unwrap().collect();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(60));
+        let elements: Vec<_>    = frame.vector_elements().unwrap().collect();
 
         assert!(frame.time_index() == Duration::from_millis(60));
         assert!(elements.len() == 0);

@@ -1,6 +1,5 @@
 use binding::*;
 
-use super::property::*;
 use super::viewmodel::*;
 use super::controller::*;
 use super::viewmodel_update::*;
@@ -140,23 +139,23 @@ impl WatchViewModel {
     pub fn get_local_updates(&self) -> Option<ViewModelUpdate> {
         if let Some(controller) = self.controller.upgrade() {
             // Get the current state of the viewmodel
-            let viewmodel                   = controller.get_viewmodel().unwrap_or_else(|| NULL_VIEW_MODEL.clone());
-            let properties: HashSet<String> = viewmodel.get_property_names().into_iter().collect();
+            let viewmodel               = controller.get_viewmodel().unwrap_or_else(|| NULL_VIEW_MODEL.clone());
+            let properties: HashSet<_>  = viewmodel.get_property_names().into_iter().collect();
 
             // Find the changed properties; a property that is no longer in the view model cannot be changed
-            let changed_properties          = self.changed_properties.iter()
+            let changed_properties      = self.changed_properties.iter()
                 .filter(|&(ref name, ref _is_changed)| properties.contains(*name))
                 .filter(|&(ref _name, ref is_changed)| *is_changed.lock().unwrap())
                 .map(|(name, _is_changed)| name.clone());
 
             // Find the new properties: properties that aren't in the existing hash set
-            let existing_properties: HashSet<String>    = self.changed_properties.keys().map(|name| name.clone()).collect();
-            let new_properties                          = properties.iter()
+            let existing_properties: HashSet<_> = self.changed_properties.keys().map(|name| name.clone()).collect();
+            let new_properties                  = properties.iter()
                 .filter(|property| !existing_properties.contains(*property))
                 .map(|name| name.clone());
 
             // This is the list of properties and values to store in the result
-            let properties_and_values: Vec<(String, PropertyValue)> = changed_properties.chain(new_properties)
+            let properties_and_values: Vec<_> = changed_properties.chain(new_properties)
                 .map(|property_name| (property_name.clone(), viewmodel.get_property(&property_name).get()))
                 .collect();
 
@@ -182,8 +181,8 @@ impl WatchViewModel {
             let subcontrollers  = ui.all_controllers();
 
             // Find any subcontrollers that were not in the list
-            let existing_controllers: HashSet<&String>  = self.subcontrollers.iter().collect();
-            let new_controllers: Vec<&String>           = subcontrollers.iter().filter(|controller| !existing_controllers.contains(controller)).collect();
+            let existing_controllers: HashSet<_>    = self.subcontrollers.iter().collect();
+            let new_controllers: Vec<_>             = subcontrollers.iter().filter(|controller| !existing_controllers.contains(controller)).collect();
 
             // For any new controller, the entire viewmodel is different
             let mut result = vec![];

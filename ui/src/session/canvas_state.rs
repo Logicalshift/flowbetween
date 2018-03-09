@@ -77,7 +77,7 @@ impl CanvasStateCore {
         self.update_control(&control, &vec![], &mut found_canvases);
 
         // Find the canvases that are missing from this control
-        let missing_canvases: Vec<CanvasPath> = self.canvases.keys()
+        let missing_canvases: Vec<_> = self.canvases.keys()
             .filter(|canvas_path| !found_canvases.contains(canvas_path))
             .map(|missing_path| missing_path.clone())
             .collect();

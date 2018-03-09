@@ -63,7 +63,7 @@ pub fn rgba_data_for_color_wheel(rgba_color_strip: &[(u8, u8, u8, u8)], size: u3
 /// around the colour wheel) and returns a pixel, generates a colour wheel.
 /// 
 pub fn rgba_data_for_wheel_fn<PixelFn: Fn(f64) -> (u8, u8, u8, u8)>(pixel: PixelFn, size: u32, inner_radius: u32, rotate_degrees: f64) -> Vec<u8> {
-    let colour_strip: Vec<(u8, u8, u8, u8)> = (0..1024)
+    let colour_strip: Vec<_> = (0..1024)
         .into_iter()
         .map(move |index| pixel((index as f64)/1024.0))
         .collect();

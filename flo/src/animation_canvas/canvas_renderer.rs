@@ -277,7 +277,7 @@ impl CanvasRenderer {
         // Draw the overlays
         canvas.draw(|gc| {
             // Copy the IDs (the drawing relay requires a mutable borrow so we need a copy)
-            let overlay_layer_ids: Vec<u32> = self.overlay_layers.keys().cloned().collect();
+            let overlay_layer_ids: Vec<_> = self.overlay_layers.keys().cloned().collect();
 
             // Draw each overlay in turn via the relay function
             for layer_id in overlay_layer_ids {

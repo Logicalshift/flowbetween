@@ -23,7 +23,7 @@ impl FloSqlite {
         let mut statement = Self::prepare(&self.sqlite, statement)?;
 
         // Gather the results into a vector (can't keep the map due to lifetime requirements: Rust can't preserve the statement outside of this function)
-        let results: Vec<Result<T>> = statement.query_map(params, f)?.collect();
+        let results: Vec<_> = statement.query_map(params, f)?.collect();
 
         // Convert into an iterator (into_iter preserves the lifetime of the vec so we don't have the same problem)
         Ok(Box::new(results.into_iter()))
@@ -169,7 +169,7 @@ impl FloQuery for FloSqlite {
     /// 
     fn query_edit_log_raw_points(&mut self, edit_id: i64) -> Result<Vec<RawPoint>> {
         self.query_row(FloStatement::SelectEditLogRawPoints, &[&edit_id], |row| {
-            let point_bytes: Vec<u8>    = row.get(0);
+            let point_bytes: Vec<_>     = row.get(0);
             let mut point_bytes: &[u8]  = &point_bytes;
 
             read_raw_points(&mut point_bytes).unwrap()

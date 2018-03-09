@@ -156,7 +156,7 @@ impl AnimationCore {
         let editor = AnimationEditor::new();
 
         // Collect the edits into a vec so we can inspect them multiple times
-        let edits: Vec<AnimationEdit> = edits.into_iter().collect();
+        let edits: Vec<_> = edits.into_iter().collect();
 
         // Process the edits in the core
         editor.perform(self, edits.iter().cloned());

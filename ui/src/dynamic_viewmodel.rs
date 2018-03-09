@@ -99,7 +99,7 @@ impl ViewModel for DynamicViewModel {
 
     fn get_property_names(&self) -> Vec<String> {
         // The keys for items with 'set' bindings
-        let mut binding_keys: Vec<String> = {
+        let mut binding_keys: Vec<_> = {
             let bindings = self.bindings.lock().unwrap();
             bindings
                 .keys()
@@ -108,7 +108,7 @@ impl ViewModel for DynamicViewModel {
         };
 
         // Keys for items with computed bindings
-        let mut computed_keys: Vec<String> = {
+        let mut computed_keys: Vec<_> = {
             let computed = self.computed.lock().unwrap();
             computed
                 .keys()

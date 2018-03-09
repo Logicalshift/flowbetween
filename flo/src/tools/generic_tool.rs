@@ -197,7 +197,7 @@ mod test {
         fn create_model(&self) -> i32 { 94 }
 
         fn actions_for_input<'a>(&'a self, _data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
-            let input: Vec<ToolInput<i32>> = input.collect();
+            let input: Vec<_> = input.collect();
             
             if input.len() == 1 {
                 match &input[0] {
@@ -226,8 +226,8 @@ mod test {
     fn generates_generic_data_for_standard_data() {
         let generic_tool = TestTool.to_flo_tool();
 
-        let actions = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
-        let actions: Vec<ToolAction<GenericToolData>> = actions.collect();
+        let actions         = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
+        let actions: Vec<_> = actions.collect();
 
         assert!(actions.len() == 1);
         assert!(match &actions[0] {
@@ -240,8 +240,8 @@ mod test {
     fn data_survives_round_trip() {
         let generic_tool = TestTool.to_flo_tool();
 
-        let actions = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
-        let mut actions: Vec<ToolAction<GenericToolData>> = actions.collect();
+        let actions             = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
+        let mut actions: Vec<_> = actions.collect();
 
         // Should return a data element of '42'
         let data = match actions.pop() {
@@ -250,8 +250,8 @@ mod test {
         }.unwrap();
 
         // Feed this back into the tool: should generate a 'clear' brush preview action as a result (see tool definition)
-        let feedback_actions = generic_tool.actions_for_input(None, Box::new(vec![ToolInput::Data(data)].into_iter()));
-        let feedback_actions: Vec<ToolAction<GenericToolData>> = feedback_actions.collect();
+        let feedback_actions            = generic_tool.actions_for_input(None, Box::new(vec![ToolInput::Data(data)].into_iter()));
+        let feedback_actions: Vec<_>    = feedback_actions.collect();
 
         assert!(feedback_actions.len() == 1);
         assert!(match &feedback_actions[0] {

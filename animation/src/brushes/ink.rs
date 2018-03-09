@@ -269,7 +269,7 @@ impl Brush for InkBrush {
         }
 
         // Convert points to ink points
-        let ink_points: Vec<InkCoord> = points.iter().map(|point| InkCoord::from(point)).collect();
+        let ink_points: Vec<_> = points.iter().map(|point| InkCoord::from(point)).collect();
 
         // Average points that are very close together so we don't overdo 
         // the curve fitting

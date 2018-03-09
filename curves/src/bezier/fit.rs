@@ -154,7 +154,7 @@ fn chords_for_points<Point: Coordinate>(points: &[Point]) -> Vec<f64> {
 /// 
 fn generate_bezier<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], chords: &[f64], start_tangent: &Point, end_tangent: &Point) -> Curve {
     // Precompute the RHS as 'a'
-    let a: Vec<(Point, Point)> = chords.iter().map(|chord| {
+    let a: Vec<_> = chords.iter().map(|chord| {
         let inverse_chord   = 1.0 - chord;
 
         let b1              = 3.0 * chord * (inverse_chord*inverse_chord);

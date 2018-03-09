@@ -234,7 +234,7 @@ impl VirtualCanvas {
             let (left, top)         = (left*tile_x, top*tile_y);
 
             // Generate the tile controls from the tiles array
-            let tile_controls: Vec<Control> = tiles.iter()
+            let tile_controls: Vec<_> = tiles.iter()
                 .zip((0..tiles.len()).into_iter())
                 .map(|(row, ypos)| (row, (ypos as f32) * tile_y + top))
                 .map(|(row, ypos)| row.iter()

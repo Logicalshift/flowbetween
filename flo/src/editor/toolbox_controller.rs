@@ -61,9 +61,9 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     fn create_ui(tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
         BindRef::from(computed(move || {
             // Convert the tool sets into tools (with separators between each individual set)
-            let tools_for_sets: Vec<Control> = tool_sets.get().iter()
+            let tools_for_sets: Vec<_> = tool_sets.get().iter()
                 .map(|toolset| {
-                    let tools: Vec<Control> = toolset.tools().iter()
+                    let tools: Vec<_> = toolset.tools().iter()
                         .map(|tool| Self::make_tool(&tool.tool_name(), &viewmodel, images.get_named_resource(&tool.image_name())))
                         .collect();
                     

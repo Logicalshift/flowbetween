@@ -105,7 +105,7 @@ impl<Edit, T: Editable<PendingEditLog<Edit>>> PerformEdits<Edit> for T {
     fn perform_edits<Iter: IntoIterator<Item=Edit>>(&self, edits: Iter) {
         let mut editor = open_edit::<PendingEditLog<Edit>>(self).unwrap();
 
-        let edits: Vec<Edit> = edits.into_iter().collect();
+        let edits: Vec<_> = edits.into_iter().collect();
 
         editor.set_pending(&edits);
         editor.commit_pending();

@@ -75,7 +75,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
         let mut new_updates = vec![];
 
         // Collect all the viewmodel updates into one place
-        let viewmodel_updates: Vec<ViewModelUpdate> = old_updates.iter()
+        let viewmodel_updates: Vec<_> = old_updates.iter()
             .flat_map(|update| match update {
                 &Update::UpdateViewModel(ref view_model) => view_model.clone(),
                 _ => vec![]
@@ -199,7 +199,7 @@ impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for H
         let core_sink   = self.core_ui.get_input_sink();
 
         // Create a sink that turns HTTP events into core events
-        let mapped_sink = core_sink.with_flat_map(|http_events: Vec<Event>| {
+        let mapped_sink = core_sink.with_flat_map(|http_events: Vec<_>| {
             let core_events = http_events.into_iter()
                 .map(|evt| Self::http_event_to_core_event(evt))
                 .collect();
