@@ -56,17 +56,39 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
 
         let mut animation_edit  = self.animation.edit();
         let model_edit          = InMemoryPendingLog::new(move |edits| {
+            use self::AnimationEdit::*;
+            use self::LayerEdit::*;
+
             // Post to the underlying animation
             animation_edit.set_pending(&edits);
             animation_edit.commit_pending();
 
             // Update the viewmodel based on the edits
+            let mut advance_edit_counter = false;
+
             for edit in edits {
                 match edit {
-                    AnimationEdit::SetSize(width, height) => self.size_binding.clone().set((width, height)),
+                    SetSize(width, height) => {
+                        self.size_binding.clone().set((width, height));
+                        advance_edit_counter = true;
+                    },
 
-                    _ => ()
+                    AddNewLayer(_)          |
+                    RemoveLayer(_)          |
+                    Layer(_, Paint(_, _))   => {
+                        advance_edit_counter = true;
+                    }
+
+                    Layer(_, AddKeyFrame(_))    |
+                    Layer(_, RemoveKeyFrame(_)) => {
+                        ()
+                    }
                 }
+            }
+
+            // Advancing the frame edit counter causes any animation frames to be regenerated
+            if advance_edit_counter {
+                self.frame_edit_counter.clone().set(self.frame_edit_counter.get()+1)
             }
         });
 

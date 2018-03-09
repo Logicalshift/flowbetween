@@ -37,7 +37,10 @@ pub struct FloModel<Anim: Animation> {
     pub size: BindRef<(f64, f64)>,
 
     /// The underlying size binding
-    size_binding: Binding<(f64, f64)>
+    size_binding: Binding<(f64, f64)>,
+
+    /// Counter used to signal edits affecting the animation frames
+    frame_edit_counter: Binding<u64>
 }
 
 impl<Anim: Animation+'static> FloModel<Anim> {
@@ -45,21 +48,23 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     /// Creates a new view model
     /// 
     pub fn new(animation: Anim) -> FloModel<Anim> {
-        let animation       = Arc::new(animation);
-        let tools           = ToolModel::new();
-        let timeline        = TimelineModel::new(Arc::clone(&animation));
-        let frame           = FrameModel::new(Arc::clone(&animation), BindRef::new(&timeline.current_time), BindRef::from(bind(0)));
+        let animation           = Arc::new(animation);
+        let tools               = ToolModel::new();
+        let timeline            = TimelineModel::new(Arc::clone(&animation));
+        let frame_edit_counter  = bind(0);
+        let frame               = FrameModel::new(Arc::clone(&animation), BindRef::new(&timeline.current_time), BindRef::new(&frame_edit_counter));
 
-        let size_binding    = bind(animation.size());
+        let size_binding        = bind(animation.size());
 
         FloModel {
-            animation:      animation,
-            tools:          tools,
-            timeline:       timeline,
-            frame:          frame,
+            animation:          animation,
+            tools:              tools,
+            timeline:           timeline,
+            frame_edit_counter: frame_edit_counter,
+            frame:              frame,
 
-            size:           BindRef::from(size_binding.clone()),
-            size_binding:   size_binding
+            size:               BindRef::from(size_binding.clone()),
+            size_binding:       size_binding
         }
     }
 
@@ -89,13 +94,14 @@ impl<Anim: Animation+'static> FloModel<Anim> {
 impl<Anim: Animation> Clone for FloModel<Anim> {
     fn clone(&self) -> FloModel<Anim> {
         FloModel {
-            animation:      self.animation.clone(),
-            tools:          self.tools.clone(),
-            timeline:       self.timeline.clone(),
-            frame:          self.frame.clone(),
+            animation:          self.animation.clone(),
+            tools:              self.tools.clone(),
+            timeline:           self.timeline.clone(),
+            frame_edit_counter: self.frame_edit_counter.clone(),
+            frame:              self.frame.clone(),
 
-            size:           self.size.clone(),
-            size_binding:   self.size_binding.clone()
+            size:               self.size.clone(),
+            size_binding:       self.size_binding.clone()
         }
     }
 }
