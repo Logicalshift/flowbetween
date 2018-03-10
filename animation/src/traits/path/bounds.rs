@@ -1,10 +1,10 @@
 use super::path::*;
 use super::rect::*;
 use super::point::*;
+use super::curve::*;
 use super::element::*;
 
 use curves::*;
-use curves::bezier::*;
 
 ///
 /// Trait implemented by graphical elements with a bounding box
@@ -29,8 +29,10 @@ impl From<(PathPoint, PathElement)> for Rect {
             Close           => Rect::new(start_point, start_point).normalize(),
 
             Bezier(point, cp1, cp2) => {
-                // TODO: need a BezierCurve implementation
-                unimplemented!()
+                let curve                   = PathCurve(start_point, Bezier(point, cp1, cp2));
+                let (topleft, bottomright)  = curve.bounding_box();
+
+                Rect::new(topleft, bottomright).normalize()
             }
         }
     }
