@@ -48,13 +48,13 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
             let frame           = frame_layers.into_iter().filter(|frame| Some(frame.layer_id) == layer_id).nth(0);
 
-            frame.map(|frame| frame.frame.get())
+            frame.map(|frame| frame.frame.get()).unwrap_or(None)
         });
 
         // Follow it, and draw an overlay showing all the bounding boxes
         Box::new(follow(current_frame)
             .map(|current_frame| {
-                if let Some(Some(cf)) = current_frame {
+                if let Some(cf) = current_frame {
                     // Get the elements in the current frame
                     let elements    = cf.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
                     
