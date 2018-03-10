@@ -108,7 +108,17 @@ mod test {
     use super::*;
 
     #[test]
-    fn can_get_bounding_box_for_line() {
+    fn can_get_bounding_box_for_line_element() {
+        let bounds = Rect::from((PathPoint::new(30.0, 30.0), PathElement::Line(PathPoint::new(60.0, 20.0))));
+
+        assert!(bounds.x1 == 30.0);
+        assert!(bounds.y1 == 20.0);
+        assert!(bounds.x2 == 60.0);
+        assert!(bounds.y2 == 30.0);        
+    }
+
+    #[test]
+    fn can_get_bounding_box_for_line_path() {
         use self::PathElement::*;
 
         let line_path = Path::from_elements(vec![
