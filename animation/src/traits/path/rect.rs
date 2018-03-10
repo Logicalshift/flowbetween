@@ -1,5 +1,7 @@
 use super::*;
 
+use canvas::*;
+
 use std::f32;
 
 ///
@@ -85,6 +87,24 @@ impl Rect {
                 y2: f32::max(self.y1, f32::max(self.y2, f32::max(rhs.y1, rhs.y2))),
             }
         }
+    }
+}
+
+impl<'a> Into<Vec<Draw>> for &'a Rect {
+    fn into(self) -> Vec<Draw> {
+        vec![
+            Draw::Move(self.x1, self.y1),
+            Draw::Line(self.x2, self.y1),
+            Draw::Line(self.x2, self.y2),
+            Draw::Line(self.x1, self.y2),
+            Draw::ClosePath
+        ]
+    }
+}
+
+impl Into<Vec<Draw>> for Rect {
+    fn into(self) -> Vec<Draw> {
+        (&self).into()
     }
 }
 
