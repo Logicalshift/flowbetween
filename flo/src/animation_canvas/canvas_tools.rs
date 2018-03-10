@@ -120,6 +120,26 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
     }
 
     ///
+    /// Polls for any pending actions (for example, because the model was updated)
+    /// 
+    pub fn poll_for_pending_actions(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
+        // Get any pending tool actions
+        let actions = self.tool_runner.model_actions();
+
+        // Process any tool data actions
+        let mut remaining_actions = vec![];
+        for action in actions {
+            match action {
+                ToolAction::Data(new_data)  => self.tool_runner.set_tool_data(new_data),
+                not_tool_data               => remaining_actions.push(not_tool_data)
+            }
+        }
+
+        // Pass the remaining actions to process_actions
+        self.process_actions(canvas, renderer, remaining_actions.into_iter());
+    }
+
+    ///
     /// Sends input to the current tool
     /// 
     pub fn send_input<InputIter: Iterator<Item=ToolInput<GenericToolData>>>(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, input: InputIter) {
