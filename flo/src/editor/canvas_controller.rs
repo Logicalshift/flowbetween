@@ -212,6 +212,12 @@ impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
                 // Refresh the tool (this will update any overlays, for example)
                 core.canvas_tools.refresh_tool(&*canvas, &mut core.renderer);
             });
+        } else {
+            // Process any pending actions for the current tool
+            self.core.sync(|core| {
+                let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
+                core.canvas_tools.poll_for_pending_actions(&*canvas, &mut core.renderer)
+            });
         }
 
         // Check that the frame time hasn't changed
