@@ -92,7 +92,7 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
             }
         });
 
-        let edit_log: Box<'a+PendingEditLog<AnimationEdit>> = Box::new(model_edit);
+        let edit_log: Box<'a+PendingEditLog<_>> = Box::new(model_edit);
         Editor::new(edit_log)
     }
 
@@ -100,8 +100,38 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     /// Retrieves an edit log that can be used to edit a layer in this animation
     /// 
     fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>> {
-        // TODO: need the edit log here as well
-        self.animation.edit_layer(layer_id)
+        let mut layer_edit  = self.animation.edit_layer(layer_id);
+        let model_edit      = InMemoryPendingLog::new(move |edits| {
+            use self::LayerEdit::*;
+
+            // Post to the underlying animation
+            layer_edit.set_pending(&edits);
+            layer_edit.commit_pending();
+
+            // Update the viewmodel based on the edits
+            let mut advance_edit_counter = false;
+
+            for edit in edits {
+                match edit {
+                    Paint(_, _)         => {
+                        advance_edit_counter = true;
+                    }
+
+                    AddKeyFrame(_)      |
+                    RemoveKeyFrame(_)   => {
+                        ()
+                    }
+                }
+            }
+
+            // Advancing the frame edit counter causes any animation frames to be regenerated
+            if advance_edit_counter {
+                self.frame_edit_counter.clone().set(self.frame_edit_counter.get()+1)
+            }
+        });
+
+        let edit_log: Box<'a+PendingEditLog<_>> = Box::new(model_edit);
+        Editor::new(edit_log)
     }
 }
 

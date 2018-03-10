@@ -80,7 +80,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     // Create the overlay drawing
                     let overlay = vec![
                             Draw::ClearCanvas,
-                            Draw::LineWidthPixels(2.0),
+                            Draw::LineWidthPixels(1.0),
                             Draw::StrokeColor(Color::Rgba(0.2, 0.8, 1.0, 1.0)),
                             Draw::NewPath
                         ].into_iter()
