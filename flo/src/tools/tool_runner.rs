@@ -23,6 +23,9 @@ pub struct ToolRunner<Anim: Animation> {
     /// Most recent tool data from the current tool
     tool_data: Option<Arc<GenericToolData>>,
 
+    /// True if the tool data has been updated since the last ToolInput::Data event was generated
+    tool_data_updated: bool,
+
     /// The model actions specified by the current tool
     model_actions: Option<Spawn<Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send>>>
 }
@@ -35,10 +38,11 @@ impl<Anim: Animation> ToolRunner<Anim> {
         let view_model = Arc::new(view_model.clone());
 
         ToolRunner {
-            view_model:     view_model,
-            current_tool:   None,
-            tool_data:      None,
-            model_actions:  None
+            view_model:         view_model,
+            current_tool:       None,
+            tool_data:          None,
+            tool_data_updated: false,
+            model_actions:      None
         }
     }
 
@@ -47,8 +51,9 @@ impl<Anim: Animation> ToolRunner<Anim> {
     /// 
     pub fn set_tool(&mut self, new_tool: &Arc<FloTool<Anim>>, tool_model: &GenericToolModel) {
         // Free the data for the current tool
-        self.tool_data      = None;
-        self.model_actions  = None;
+        self.tool_data          = None;
+        self.model_actions      = None;
+        self.tool_data_updated  = false;
 
         // Set the new tool
         let model_actions   = new_tool.actions_for_model(Arc::clone(&self.view_model), tool_model);
@@ -62,7 +67,8 @@ impl<Anim: Animation> ToolRunner<Anim> {
     /// Updates the data that will be used for the tool
     /// 
     pub fn set_tool_data(&mut self, new_data: GenericToolData) {
-        self.tool_data = Some(Arc::new(new_data));
+        self.tool_data          = Some(Arc::new(new_data));
+        self.tool_data_updated  = true;
     }
 
     ///
@@ -104,13 +110,20 @@ impl<Anim: Animation> ToolRunner<Anim> {
                     // Data changes caused by model changes cause the 'Data' event to be generated
                     let new_data = Arc::new(new_data);
                     data_input.push(ToolInput::Data(Arc::clone(&new_data)));
-                    self.tool_data = Some(new_data);
+                    self.tool_data          = Some(new_data);
+                    self.tool_data_updated  = false;
                 },
                 action                      => after_processing_data.push(action)
             }
         }
 
         if let Some(ref tool) = self.current_tool {
+            // If the tool data has been updated since the last data input event, then send a new one
+            if let Some((true, new_tool_data)) = self.tool_data.as_ref().map(|tool_data| (self.tool_data_updated, tool_data)) {
+                data_input.push(ToolInput::Data(Arc::clone(new_tool_data)));
+                self.tool_data_updated = false;
+            }
+
             // Chain the data (after model actions) with the supplied input
             let input = data_input.into_iter().chain(input);
             let input = Box::new(input);
@@ -121,16 +134,15 @@ impl<Anim: Animation> ToolRunner<Anim> {
             // Process any data actions and return the remainder
             for action in tool_actions {
                 match action {
-                    ToolAction::Data(new_data)  => new_tool_data = Some(Arc::new(new_data)),
+                    ToolAction::Data(new_data)  => new_tool_data = Some(new_data),
                     action                      => after_processing_data.push(action)
                 }
             }
         }
 
-        // Update the tool data stored in this object
+        // Update the tool data stored in this object if there was anything new
         if let Some(new_tool_data) = new_tool_data {
-            // TODO: next set of actions should probably get the 'Data' event as a result of this
-            self.tool_data = Some(new_tool_data);
+            self.set_tool_data(new_tool_data);
         }
 
         // The 'after processing' vec forms the result
