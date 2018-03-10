@@ -54,9 +54,9 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
         // Follow it, and draw an overlay showing all the bounding boxes
         Box::new(follow(current_frame)
             .map(|current_frame| {
-                if let Some(cf) = current_frame {
+                if let Some(current_frame) = current_frame {
                     // Get the elements in the current frame
-                    let elements    = cf.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
+                    let elements    = current_frame.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
                     
                     // Build up a vector of bounds
                     let mut bounds      = vec![];
@@ -68,9 +68,14 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
                         // Fetch the paths and add to the bounds
                         if let Some(paths) = element.to_path(&properties) {
+                            println!("Got some paths for an element");
                             bounds.extend(paths.into_iter().map(|path| path.bounding_box()))
+                        } else {
+                            println!("No paths for element");
                         }
                     }
+
+                    println!("{:?}", bounds);
 
                     // Each bound should be drawn as a rectangle
                     let bounds = bounds.into_iter()
