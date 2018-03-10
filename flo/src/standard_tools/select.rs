@@ -68,14 +68,9 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
                         // Fetch the paths and add to the bounds
                         if let Some(paths) = element.to_path(&properties) {
-                            println!("Got some paths for an element");
                             bounds.extend(paths.into_iter().map(|path| path.bounding_box()))
-                        } else {
-                            println!("No paths for element");
                         }
                     }
-
-                    println!("{:?}", bounds);
 
                     // Each bound should be drawn as a rectangle
                     let bounds = bounds.into_iter()
