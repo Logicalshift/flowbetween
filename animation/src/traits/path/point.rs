@@ -6,7 +6,7 @@ use std::ops::{Mul, Add, Sub};
 ///
 /// A point in a path
 /// 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct PathPoint {
     /// X, Y coordinates of this point
     pub position: (f32, f32)

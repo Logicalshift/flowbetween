@@ -12,29 +12,26 @@ pub struct Path {
 }
 
 impl Path {
+    ///
+    /// Creates a new, empty path
+    /// 
     pub fn new() -> Path {
         Path { elements: vec![] }
     }
-}
 
-impl From<(f32, f32)> for PathPoint {
-    fn from((x, y): (f32, f32)) -> PathPoint {
-        PathPoint::new(x, y)
+    ///
+    /// Creates a path from an elements iterator
+    /// 
+    pub fn from_elements<Elements: IntoIterator<Item=PathElement>>(elements: Elements) -> Path {
+        Path {
+            elements: elements.into_iter().collect()
+        }
     }
-}
 
-impl From<(f64, f64)> for PathPoint {
-    fn from((x, y): (f64, f64)) -> PathPoint {
-        PathPoint::new(x as f32, y as f32)
-    }
-}
-
-///
-/// Converts a drawing into a path (ignoring all the parts of a drawing
-/// that cannot be simply converted)
-/// 
-impl<Drawing: IntoIterator<Item=Draw>> From<Drawing> for Path {
-    fn from(drawing: Drawing) -> Path {
+    ///
+    /// Creates a path from a drawing iterator
+    /// 
+    pub fn from_drawing<Drawing: IntoIterator<Item=Draw>>(drawing: Drawing) -> Path {
         let elements = drawing.into_iter()
             .map(|draw| {
                 use self::Draw::*;
@@ -54,6 +51,36 @@ impl<Drawing: IntoIterator<Item=Draw>> From<Drawing> for Path {
         Path {
             elements: elements.collect()
         }
+    }
+}
+
+impl From<(f32, f32)> for PathPoint {
+    fn from((x, y): (f32, f32)) -> PathPoint {
+        PathPoint::new(x, y)
+    }
+}
+
+impl From<(f64, f64)> for PathPoint {
+    fn from((x, y): (f64, f64)) -> PathPoint {
+        PathPoint::new(x as f32, y as f32)
+    }
+}
+
+impl From<Vec<PathElement>> for Path {
+    fn from(points: Vec<PathElement>) -> Path {
+        Path {
+            elements: points
+        }
+    }
+}
+
+///
+/// Converts a drawing into a path (ignoring all the parts of a drawing
+/// that cannot be simply converted)
+/// 
+impl From<Vec<Draw>> for Path {
+    fn from(drawing: Vec<Draw>) -> Path {
+        Path::from_drawing(drawing)
     }
 }
 

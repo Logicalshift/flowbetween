@@ -102,3 +102,27 @@ impl HasBoundingBox for Path {
         Rect::from(self)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_get_bounding_box_for_line() {
+        use self::PathElement::*;
+
+        let line_path = Path::from_elements(vec![
+            Move(PathPoint::new(30.0, 30.0)),
+            Line(PathPoint::new(60.0, 20.0))
+        ]);
+
+        let bounds = line_path.bounding_box();
+
+        println!("{:?}", bounds);
+
+        assert!(bounds.x1 == 30.0);
+        assert!(bounds.y1 == 20.0);
+        assert!(bounds.x2 == 60.0);
+        assert!(bounds.y2 == 30.0);        
+    }
+}

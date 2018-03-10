@@ -3,7 +3,7 @@ use super::point::*;
 ///
 /// Represents an element of a bezier path
 /// 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum PathElement {
     Move(PathPoint),
     Line(PathPoint),

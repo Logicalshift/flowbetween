@@ -44,7 +44,7 @@ impl VectorElement for BrushElement {
     /// Retrieves the paths for this element, if there are any
     /// 
     fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
-        Some(vec![Path::from(properties.brush.render_brush(&properties.brush_properties, &self.points))])
+        Some(vec![Path::from_drawing(properties.brush.render_brush(&properties.brush_properties, &self.points))])
     }
 }
 
