@@ -143,4 +143,56 @@ mod test {
         assert!(bounds.x2 == 60.0);
         assert!(bounds.y2 == 30.0);        
     }
+
+    #[test]
+    fn can_get_bounding_box_for_triangle_path() {
+        use self::PathElement::*;
+
+        let line_path = Path::from_elements(vec![
+            Move(PathPoint::new(30.0, 30.0)),
+            Line(PathPoint::new(60.0, 20.0)),
+            Line(PathPoint::new(120.0, 50.0))
+        ]);
+
+        let bounds = line_path.bounding_box();
+
+        assert!(bounds.x1 == 30.0);
+        assert!(bounds.y1 == 20.0);
+        assert!(bounds.x2 == 120.0);
+        assert!(bounds.y2 == 50.0);        
+    }
+
+    #[test]
+    fn can_get_bounding_box_for_simple_line_bezier_path() {
+        use self::PathElement::*;
+
+        let line_path = Path::from_elements(vec![
+            Move(PathPoint::new(30.0, 30.0)),
+            Bezier(PathPoint::new(60.0, 60.0), PathPoint::new(40.0, 40.0), PathPoint::new(50.0, 50.0))
+        ]);
+
+        let bounds = line_path.bounding_box();
+
+        assert!(bounds.x1 == 30.0);
+        assert!(bounds.y1 == 30.0);
+        assert!(bounds.x2 == 60.0);
+        assert!(bounds.y2 == 60.0);        
+    }
+
+    #[test]
+    fn can_get_bounding_box_for_curved_bezier_path() {
+        use self::PathElement::*;
+
+        let line_path = Path::from_elements(vec![
+            Move(PathPoint::new(0.0, 1.0)),
+            Bezier(PathPoint::new(2.0, 3.0), PathPoint::new(-1.1875291, 1.5), PathPoint::new(1.5, 2.5))
+        ]);
+
+        let bounds = line_path.bounding_box();
+
+        assert!((bounds.x1- -0.3).abs() < 0.0001);
+        assert!((bounds.y1- 1.0).abs() < 0.0001);
+        assert!((bounds.x2- 2.0).abs() < 0.0001);
+        assert!((bounds.y2- 3.0).abs() < 0.0001);
+    }
 }
