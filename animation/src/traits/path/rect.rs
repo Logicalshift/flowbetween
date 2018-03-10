@@ -27,6 +27,15 @@ impl Rect {
     }
 
     ///
+    /// Creates a new rectangle with specific points
+    /// 
+    pub fn with_points(x1: f32, y1: f32, x2: f32, y2: f32) -> Rect {
+        Rect {
+            x1, y1, x2, y2
+        }
+    }
+
+    ///
     /// Creates an empty rectangle
     /// 
     pub fn empty() -> Rect {
@@ -65,9 +74,9 @@ impl Rect {
     #[inline]
     pub fn union(self, rhs: Rect) -> Rect {
         if self.is_zero_size() {
-            self
-        } else if rhs.is_zero_size() {
             rhs
+        } else if rhs.is_zero_size() {
+            self
         } else {
             Rect {
                 x1: f32::min(self.x1, f32::min(self.x2, f32::min(rhs.x1, rhs.x2))),
@@ -76,5 +85,25 @@ impl Rect {
                 y2: f32::max(self.y1, f32::max(self.y2, f32::max(rhs.y1, rhs.y2))),
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_union_rects() {
+        assert!(Rect::with_points(30.0, 30.0, 60.0, 40.0).union(Rect::with_points(40.0, 20.0, 100.0, 30.0)) == Rect::with_points(30.0, 20.0, 100.0, 40.0));
+    }
+
+    #[test]
+    fn can_union_empty_rects_lhs() {
+        assert!(Rect::empty().union(Rect::with_points(40.0, 20.0, 100.0, 30.0)) == Rect::with_points(40.0, 20.0, 100.0, 30.0));
+    }
+
+    #[test]
+    fn can_union_empty_rects_rhs() {
+        assert!(Rect::with_points(30.0, 30.0, 60.0, 40.0).union(Rect::empty()) == Rect::with_points(30.0, 30.0, 60.0, 40.0));
     }
 }
