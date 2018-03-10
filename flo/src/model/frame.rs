@@ -67,11 +67,19 @@ impl FrameModel {
 
                     Entry::Vacant(mut vacant) => {
                         // Create a new bindnig
-                        let layer_id        = *layer_id;
-                        let when            = BindRef::clone(&when);
-                        let frame_animation = Arc::clone(&animation);
-                        let frame_binding   = ComputedBinding::new_in_context(move || {
+                        let layer_id            = *layer_id;
+                        let when                = BindRef::clone(&when);
+                        let frame_animation     = Arc::clone(&animation);
+                        let animation_update    = animation_update.clone();
+
+                        let frame_binding       = ComputedBinding::new_in_context(move || {
+                            // Binds to the animation update...
+                            animation_update.get();
+
+                            // ... as well as the time
                             let when = when.get();
+
+                            // Content is the frame from the layer at this time
                             frame_animation.get_layer_with_id(layer_id)
                                 .map(|layer| layer.get_frame_at_time(when))
                         });
