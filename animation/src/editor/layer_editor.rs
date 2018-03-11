@@ -24,17 +24,17 @@ impl LayerEditor {
         use PaintEdit::*;
 
         match paint {
-            SelectBrush(definition, draw_style) => {
+            SelectBrush(id, definition, draw_style) => {
                 target.edit_vectors().unwrap()
                     .add_element(when, Vector::new(BrushDefinitionElement::new(definition, draw_style)));
             },
 
-            BrushProperties(new_properties)     => {
+            BrushProperties(id, new_properties)     => {
                 target.edit_vectors().unwrap()
                     .add_element(when, Vector::new(BrushPropertiesElement::new(new_properties)));
             },
             
-            BrushStroke(points)                 => {
+            BrushStroke(id, points)                 => {
                 let mut vectors     = target.edit_vectors().unwrap();
                 let brush           = vectors.active_brush(when);
 

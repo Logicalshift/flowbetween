@@ -212,14 +212,14 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
         use self::PaintEdit::*;
 
         match t {
-            &SetSize(_, _)                          => EditLogType::SetSize,
-            &AddNewLayer(_)                         => EditLogType::AddNewLayer,
-            &RemoveLayer(_)                         => EditLogType::RemoveLayer,
-            &Layer(_, AddKeyFrame(_))               => EditLogType::LayerAddKeyFrame,
-            &Layer(_, RemoveKeyFrame(_))            => EditLogType::LayerRemoveKeyFrame,
-            &Layer(_, Paint(_, SelectBrush(_, _)))  => EditLogType::LayerPaintSelectBrush,
-            &Layer(_, Paint(_, BrushProperties(_))) => EditLogType::LayerPaintBrushProperties,
-            &Layer(_, Paint(_, BrushStroke(_)))     => EditLogType::LayerPaintBrushStroke
+            &SetSize(_, _)                              => EditLogType::SetSize,
+            &AddNewLayer(_)                             => EditLogType::AddNewLayer,
+            &RemoveLayer(_)                             => EditLogType::RemoveLayer,
+            &Layer(_, AddKeyFrame(_))                   => EditLogType::LayerAddKeyFrame,
+            &Layer(_, RemoveKeyFrame(_))                => EditLogType::LayerRemoveKeyFrame,
+            &Layer(_, Paint(_, SelectBrush(_, _, _)))   => EditLogType::LayerPaintSelectBrush,
+            &Layer(_, Paint(_, BrushProperties(_, _)))  => EditLogType::LayerPaintBrushProperties,
+            &Layer(_, Paint(_, BrushStroke(_,_)))       => EditLogType::LayerPaintBrushStroke
         }
     }
 }

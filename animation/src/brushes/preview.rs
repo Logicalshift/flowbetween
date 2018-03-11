@@ -134,18 +134,18 @@ impl BrushPreview {
         if update_brush_definition {
             let (defn, drawing_style) = self.current_brush.to_definition();
 
-            actions.push(Paint(when, SelectBrush(defn, drawing_style)));
+            actions.push(Paint(when, SelectBrush(ElementId::Unassigned, defn, drawing_style)));
         }
 
         // Select the properties
         if update_properties {
-            actions.push(Paint(when, BrushProperties(self.brush_properties.clone())));
+            actions.push(Paint(when, BrushProperties(ElementId::Unassigned, self.brush_properties.clone())));
         }
 
         // Perform the brush stroke (and clear out the points)
         let mut points = vec![];
         mem::swap(&mut self.points, &mut points);
-        actions.push(Paint(when, BrushStroke(Arc::new(points))));
+        actions.push(Paint(when, BrushStroke(ElementId::Unassigned, Arc::new(points))));
 
         // Perform the edit
         let mut edit = animation.edit_layer(layer_id);

@@ -106,17 +106,17 @@ impl<TFile: FloFile> AnimationDbCore<TFile> {
         use animation::PaintEdit::*;
 
         match edit {
-            &SelectBrush(ref definition, ref drawing_style) => {
+            &SelectBrush(ref id, ref definition, ref drawing_style) => {
                 Self::insert_brush(&mut self.db, definition)?;
                 self.db.update(vec![PopEditLogBrush(DrawingStyleType::from(drawing_style))])?;
             },
 
-            &BrushProperties(ref properties)                => {
+            &BrushProperties(ref id, ref properties)                => {
                 Self::insert_brush_properties(&mut self.db, properties)?;
                 self.db.update(vec![PopEditLogBrushProperties])?;
             },
 
-            &BrushStroke(ref points)                        => {
+            &BrushStroke(ref id, ref points)                        => {
                 self.db.update(vec![PushRawPoints(Arc::clone(points)), Pop])?;
             }
         }

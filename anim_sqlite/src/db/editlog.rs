@@ -50,7 +50,7 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
             DrawingStyleType::Erase => BrushDrawingStyle::Erase
         };
 
-        LayerEdit::Paint(when, PaintEdit::SelectBrush(brush, drawing_style))
+        LayerEdit::Paint(when, PaintEdit::SelectBrush(ElementId::Unassigned, brush, drawing_style))
     }
 
     ///
@@ -65,7 +65,7 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
         // This is a paint edit, so we need the 'when' too
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
-        LayerEdit::Paint(when, PaintEdit::BrushProperties(brush_properties))
+        LayerEdit::Paint(when, PaintEdit::BrushProperties(ElementId::Unassigned, brush_properties))
     }
 
     ///
@@ -88,7 +88,7 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
         // Turn into a set of points
-        LayerEdit::Paint(when, PaintEdit::BrushStroke(points))
+        LayerEdit::Paint(when, PaintEdit::BrushStroke(ElementId::Unassigned, points))
     }
 
     ///
