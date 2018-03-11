@@ -287,7 +287,7 @@ mod test {
             let mut layer_edit = animation.edit_layer(0);
 
             layer_edit.set_pending(&vec![
-                LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(Arc::new(vec![
+                LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))
