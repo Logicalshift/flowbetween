@@ -61,14 +61,14 @@ impl BrushPreview {
     /// 
     pub fn brush_definition_element(&self) -> BrushDefinitionElement {
         let (defn, drawing_style) = self.current_brush.to_definition();
-        BrushDefinitionElement::new(defn, drawing_style)
+        BrushDefinitionElement::new(ElementId::Unassigned, defn, drawing_style)
     }
 
     ///
     /// Creates the properties element for the current brush stroke
     /// 
     pub fn brush_properties_element(&self) -> BrushPropertiesElement {
-        BrushPropertiesElement::new(self.brush_properties)
+        BrushPropertiesElement::new(ElementId::Unassigned, self.brush_properties)
     }
 
     ///
@@ -77,7 +77,7 @@ impl BrushPreview {
     pub fn brush_element(&self) -> BrushElement {
         let brush_points = self.current_brush.brush_points_for_raw_points(&self.points);
 
-        BrushElement::new(Arc::new(brush_points))
+        BrushElement::new(ElementId::Unassigned, Arc::new(brush_points))
     }
 
     ///

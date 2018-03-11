@@ -1,3 +1,5 @@
+use super::edit::ElementId;
+
 use canvas::*;
 
 mod properties;
@@ -36,6 +38,11 @@ impl Vector {
     #[inline]
     pub fn new<IntoVec: Into<Vector>>(from: IntoVec) -> Vector {
         from.into()
+    }
+
+    #[inline]
+    pub fn id(&self) -> ElementId {
+        self.deref().id()
     }
 }
 

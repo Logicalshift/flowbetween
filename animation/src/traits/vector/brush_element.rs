@@ -11,6 +11,9 @@ use std::sync::*;
 ///
 #[derive(Clone)]
 pub struct BrushElement {
+    /// The ID of this element
+    id: ElementId,
+
     /// The path taken by this brush stroke
     points: Arc<Vec<BrushPoint>>,
 }
@@ -19,9 +22,10 @@ impl BrushElement {
     ///
     /// Begins a new brush stroke at a particular position
     /// 
-    pub fn new(points: Arc<Vec<BrushPoint>>) -> BrushElement {
+    pub fn new(id: ElementId, points: Arc<Vec<BrushPoint>>) -> BrushElement {
         BrushElement {
-            points:             points,
+            id:                 id,
+            points:             points
         }
     }
 

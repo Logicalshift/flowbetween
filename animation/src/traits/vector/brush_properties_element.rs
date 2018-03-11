@@ -8,6 +8,9 @@ use super::super::brush_properties::*;
 ///
 #[derive(Clone)]
 pub struct BrushPropertiesElement {
+    /// The ID of this element
+    id: ElementId,
+
     /// The brush properties to set
     new_properties: BrushProperties
 }
@@ -16,8 +19,9 @@ impl BrushPropertiesElement {
     ///
     /// Creates a new brush properties vector element
     /// 
-    pub fn new(new_properties: BrushProperties) -> BrushPropertiesElement {
+    pub fn new(id: ElementId, new_properties: BrushProperties) -> BrushPropertiesElement {
         BrushPropertiesElement {
+            id:                 id,
             new_properties:     new_properties
         }
     }
@@ -35,7 +39,7 @@ impl VectorElement for BrushPropertiesElement {
     /// The ID of this vector element
     /// 
     fn id(&self) -> ElementId {
-        unimplemented!()
+        self.id
     }
 
     ///

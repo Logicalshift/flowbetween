@@ -26,12 +26,12 @@ impl LayerEditor {
         match paint {
             SelectBrush(id, definition, draw_style) => {
                 target.edit_vectors().unwrap()
-                    .add_element(when, Vector::new(BrushDefinitionElement::new(definition, draw_style)));
+                    .add_element(when, Vector::new(BrushDefinitionElement::new(id, definition, draw_style)));
             },
 
             BrushProperties(id, new_properties)     => {
                 target.edit_vectors().unwrap()
-                    .add_element(when, Vector::new(BrushPropertiesElement::new(new_properties)));
+                    .add_element(when, Vector::new(BrushPropertiesElement::new(id, new_properties)));
             },
             
             BrushStroke(id, points)                 => {
@@ -40,7 +40,7 @@ impl LayerEditor {
 
                 let brush_points    = brush.brush_points_for_raw_points(&points);
 
-                vectors.add_element(when, Vector::new(BrushElement::new(Arc::new(brush_points))));
+                vectors.add_element(when, Vector::new(BrushElement::new(id, Arc::new(brush_points))));
             }
         }
     }

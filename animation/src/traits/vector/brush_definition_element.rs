@@ -10,6 +10,9 @@ use super::super::super::brushes::*;
 ///
 #[derive(Clone)]
 pub struct BrushDefinitionElement {
+    /// The ID of this element
+    id: ElementId,
+
     /// The brush properties to set
     new_definition: BrushDefinition,
 
@@ -21,8 +24,9 @@ impl BrushDefinitionElement {
     ///
     /// Creates a new brush properties vector element
     /// 
-    pub fn new(new_definition: BrushDefinition, drawing_style: BrushDrawingStyle) -> BrushDefinitionElement {
+    pub fn new(id: ElementId, new_definition: BrushDefinition, drawing_style: BrushDrawingStyle) -> BrushDefinitionElement {
         BrushDefinitionElement {
+            id:             id,
             new_definition: new_definition,
             drawing_style:  drawing_style
         }

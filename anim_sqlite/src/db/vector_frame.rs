@@ -39,7 +39,7 @@ impl VectorFrame {
             DrawingStyleType::Erase => BrushDrawingStyle::Erase
         };
 
-        Ok(BrushDefinitionElement::new(brush, drawing_style))
+        Ok(BrushDefinitionElement::new(ElementId::Unassigned, brush, drawing_style))
     }
 
     ///
@@ -52,7 +52,7 @@ impl VectorFrame {
             .unwrap_or_else(|| Ok(BrushProperties::new()));
 
         // Generate the element
-        Ok(BrushPropertiesElement::new(brush_properties?))
+        Ok(BrushPropertiesElement::new(ElementId::Unassigned, brush_properties?))
     }
 
     ///
@@ -60,7 +60,7 @@ impl VectorFrame {
     /// 
     fn brush_stroke_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushElement> {
         let points = db.query_vector_element_brush_points(entry.element_id)?;
-        Ok(BrushElement::new(Arc::new(points)))
+        Ok(BrushElement::new(ElementId::Unassigned, Arc::new(points)))
     }
 
     ///
