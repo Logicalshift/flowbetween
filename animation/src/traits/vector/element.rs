@@ -6,11 +6,11 @@ use canvas::*;
 use std::any::*;
 
 ///
-/// Represents an element in a vector layer
+/// Represents a vector element in a frame
 ///
 pub trait VectorElement : Send+Any {
     ///
-    /// The ID of this vector element
+    /// The ID of this element
     /// 
     fn id(&self) -> u64;
 
