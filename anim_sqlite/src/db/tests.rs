@@ -63,6 +63,7 @@ fn select_brush() {
     core().insert_edits(&[AnimationEdit::Layer(24, 
         Paint(Duration::from_millis(300), 
             SelectBrush(
+                ElementId::Unassigned,
                 BrushDefinition::Ink(InkDefinition::default()), 
                 BrushDrawingStyle::Draw
             )
@@ -74,7 +75,7 @@ fn select_brush() {
 fn brush_properties() {
     core().insert_edits(&[AnimationEdit::Layer(24,
         Paint(Duration::from_millis(300),
-            BrushProperties(animation::BrushProperties::new())
+            BrushProperties(ElementId::Unassigned, animation::BrushProperties::new())
         )
     )]).unwrap();
 }
@@ -83,7 +84,7 @@ fn brush_properties() {
 fn brush_stroke() {
     core().insert_edits(&[AnimationEdit::Layer(24,
         Paint(Duration::from_millis(300),
-            BrushStroke(Arc::new(vec![
+            BrushStroke(ElementId::Unassigned, Arc::new(vec![
                 RawPoint::from((0.0, 0.0)),
                 RawPoint::from((10.0, 0.0)),
                 RawPoint::from((10.0, 10.0)),
