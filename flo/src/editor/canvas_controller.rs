@@ -167,6 +167,11 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
         let device = *device;
 
+        // Update the paint device in the tool model if we're starting a new paint action
+        if actions.len() > 0 && actions[0].action == PaintAction::Start {
+            self.anim_model.tools().current_pointer.clone().set((device, actions[0].pointer_id));
+        }
+
         // Fetch the canvas we're going to draw to
         let canvas = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
 
