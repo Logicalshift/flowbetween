@@ -1,5 +1,6 @@
 use super::properties::*;
 use super::super::path::*;
+use super::super::edit::*;
 
 use canvas::*;
 
@@ -12,7 +13,7 @@ pub trait VectorElement : Send+Any {
     ///
     /// The ID of this element
     /// 
-    fn id(&self) -> u64;
+    fn id(&self) -> ElementId;
 
     ///
     /// Retrieves the paths for this element, if there are any

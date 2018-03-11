@@ -1,5 +1,6 @@
 use super::*;
 use super::super::path::*;
+use super::super::edit::*;
 use super::super::brush_properties::*;
 
 ///
@@ -33,7 +34,7 @@ impl VectorElement for BrushPropertiesElement {
     ///
     /// The ID of this vector element
     /// 
-    fn id(&self) -> u64 {
+    fn id(&self) -> ElementId {
         unimplemented!()
     }
 

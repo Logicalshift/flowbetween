@@ -1,5 +1,6 @@
 use super::*;
 use super::super::path::*;
+use super::super::edit::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
@@ -46,7 +47,7 @@ impl VectorElement for BrushDefinitionElement {
     ///
     /// The ID of this vector element
     /// 
-    fn id(&self) -> u64 {
+    fn id(&self) -> ElementId {
         unimplemented!();
     }
 
@@ -70,7 +71,6 @@ impl VectorElement for BrushDefinitionElement {
     fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> {
         None
     }
-
 }
 
 impl Into<Vector> for BrushDefinitionElement {

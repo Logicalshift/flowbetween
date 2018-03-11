@@ -1,6 +1,7 @@
 use super::*;
 
 use super::super::path::*;
+use super::super::edit::*;
 use super::super::brush::*;
 
 use std::sync::*;
@@ -36,7 +37,7 @@ impl VectorElement for BrushElement {
     ///
     /// The ID of this vector element
     /// 
-    fn id(&self) -> u64 {
+    fn id(&self) -> ElementId {
         unimplemented!();
     }
 
