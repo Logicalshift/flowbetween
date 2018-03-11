@@ -44,6 +44,13 @@ impl BrushDefinitionElement {
 
 impl VectorElement for BrushDefinitionElement {
     ///
+    /// The ID of this vector element
+    /// 
+    fn id(&self) -> u64 {
+        unimplemented!();
+    }
+
+    ///
     /// Renders this vector element
     /// 
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {

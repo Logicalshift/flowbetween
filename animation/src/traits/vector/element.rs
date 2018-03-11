@@ -10,6 +10,11 @@ use std::any::*;
 ///
 pub trait VectorElement : Send+Any {
     ///
+    /// The ID of this vector element
+    /// 
+    fn id(&self) -> u64;
+
+    ///
     /// Retrieves the paths for this element, if there are any
     /// 
     fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>>;

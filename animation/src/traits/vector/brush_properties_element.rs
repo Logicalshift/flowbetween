@@ -31,6 +31,13 @@ impl BrushPropertiesElement {
 
 impl VectorElement for BrushPropertiesElement {
     ///
+    /// The ID of this vector element
+    /// 
+    fn id(&self) -> u64 {
+        unimplemented!()
+    }
+
+    ///
     /// Retrieves the paths for this element, if there are any
     /// 
     fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> {
