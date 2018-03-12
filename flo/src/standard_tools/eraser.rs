@@ -11,6 +11,16 @@ use futures::*;
 use std::sync::*;
 
 ///
+/// TODO: really, we should make the eraser subtract from existing paths rather
+/// than drawing over the top (this means when moving things around, any erasings
+/// stick around: also when something is entire erased it should be removed from
+/// the drawing).
+/// 
+/// We need to add path arithmetic at least before this is possible to do,
+/// however.
+/// 
+
+///
 /// The Eraser tool (Erasers control points of existing objects)
 /// 
 pub struct Eraser { 
@@ -39,7 +49,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
     fn create_model(&self) -> InkModel {
         let mut model = InkModel::new();
 
-        model.size.set(20.0);
+        model.size.set(10.0);
 
         model
     }
