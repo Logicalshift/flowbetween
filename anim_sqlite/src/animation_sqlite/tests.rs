@@ -399,6 +399,40 @@ fn read_brush_strokes_from_edit_log() {
 }
 
 #[test]
+fn will_assign_element_ids() {
+    let animation = SqliteAnimation::new_in_memory();;
+
+    // Perform some edits on the animation with an unassigned element ID
+    animation.perform_edits(vec![
+        AnimationEdit::AddNewLayer(0),
+        AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        AnimationEdit::Layer(0, LayerEdit::Paint(Duration::from_millis(0), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )),
+        AnimationEdit::Layer(0, LayerEdit::Paint(Duration::from_millis(0), PaintEdit::BrushProperties(ElementId::Unassigned, BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))),
+        AnimationEdit::Layer(0, LayerEdit::Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+                RawPoint::from((10.0, 10.0)),
+                RawPoint::from((20.0, 5.0))
+            ]))))
+    ]);
+
+    // Element ID should be assigned if we read the log back
+    let edit_log = animation.get_log();
+
+    let paint_edit = edit_log.read(&mut (4..5));
+
+    // Should be able to find the paint edit here
+    assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, _)) => true, _ => false });
+
+    // Element ID should be assigned
+    assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, PaintEdit::BrushStroke(ElementId::Assigned(_), _))) => true, _ => false });
+}
+
+
+#[test]
 fn read_frame_after_edits() {
     let anim = SqliteAnimation::new_in_memory();
 

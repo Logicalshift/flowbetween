@@ -268,6 +268,32 @@ mod test {
     }
 
     #[test]
+    fn will_assign_element_ids() {
+        let animation = InMemoryAnimation::new();
+
+        // Perform some edits on the animation with an unassigned element ID
+        animation.perform_edits(vec![
+            AnimationEdit::AddNewLayer(0),
+            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+            AnimationEdit::Layer(0, LayerEdit::Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ]))))
+        ]);
+
+        // Element ID should be assigned if we read the log back
+        let edit_log = animation.get_log();
+
+        let paint_edit = edit_log.read(&mut (2..3));
+
+        // Should be able to find the paint edit here
+        assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, _)) => true, _ => false });
+
+        // Element ID should be assigned
+        assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, PaintEdit::BrushStroke(ElementId::Assigned(_), _))) => true, _ => false });
+    }
+
+    #[test]
     fn can_draw_brush_stroke() {
         let animation = InMemoryAnimation::new();
 
