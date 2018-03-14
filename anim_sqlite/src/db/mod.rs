@@ -29,6 +29,7 @@ use self::mutable_animation::*;
 use self::core::*;
 use self::flo_sqlite::*;
 use self::flo_store::*;
+use self::flo_query::*;
 
 ///
 /// Database used to store an animation
@@ -36,6 +37,9 @@ use self::flo_store::*;
 pub struct AnimationDb {
     /// The core contains details of the database
     core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
+
+    /// The next available element ID
+    next_element_id: Arc<Mutex<i64>>,
 
     /// The editor is used to provide the mutable animation interface (we keep it around so it can cache values if necessary)
     editor: Mutex<AnimationDbEditor<FloSqlite>>
@@ -58,9 +62,13 @@ impl AnimationDb {
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
         let editor  = AnimationDbEditor::new(&core);
 
+        // We begin assigning element IDs at the current length of the edit log
+        let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
+
         let db      = AnimationDb {
-            core:   core,
-            editor: Mutex::new(editor)
+            core:               core,
+            editor:             Mutex::new(editor),
+            next_element_id:    Arc::new(Mutex::new(initial_element_id))
         };
 
         db
@@ -73,9 +81,13 @@ impl AnimationDb {
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
         let editor  = AnimationDbEditor::new(&core);
 
+        // We begin assigning element IDs at the current length of the edit log
+        let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
+
         let db = AnimationDb {
-            core:   core,
-            editor: Mutex::new(editor)
+            core:               core,
+            editor:             Mutex::new(editor),
+            next_element_id:    Arc::new(Mutex::new(initial_element_id))
         };
 
         db
@@ -113,6 +125,17 @@ impl AnimationDb {
         let editor  = editor.lock().unwrap();
 
         Editor::new(editor)
+    }
+
+    ///
+    /// Assigns a new, unique, element ID for the database
+    /// 
+    pub fn assign_element_id(&self) -> i64 {
+        let mut next_element_id = self.next_element_id.lock().unwrap();
+        let id                  = *next_element_id;
+
+        *next_element_id += 1;
+        id
     }
 }
 

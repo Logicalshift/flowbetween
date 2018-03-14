@@ -35,16 +35,11 @@ impl SqliteAnimation {
     /// Commits a set of edits to this animation
     /// 
     fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&self, edits: I) {
-        // Assign element IDs (this presupposes that we have exclusive access to the database, which is currently true)
-        let mut next_element_id = 0 as i64; // TODO! Should use the edit log length or something here
+        // Assign element IDs
         let mut assigned_edits  = vec![];
 
         for edit in edits {
-            assigned_edits.push(edit.assign_element_id(|| {
-                let id = next_element_id;
-                next_element_id += 1;
-                id
-            }));
+            assigned_edits.push(edit.assign_element_id(|| self.db.assign_element_id()));
         }
 
         // The animation editor performs the edits (via the MutableAnimation implementation)
