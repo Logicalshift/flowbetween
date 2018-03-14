@@ -44,8 +44,17 @@ CREATE TABLE Flo_EditLog (
 CREATE TABLE Flo_EL_Size (
     EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
 
-    X           REAL,
-    Y           REAL
+    X           REAL NOT NULL,
+    Y           REAL NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * If an element specifies an element ID, the EL_ElementId table supplies what that ID is
+ */
+CREATE TABLE Flo_EL_ElementId (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+
+    ElementId   INTEGER NOT NULL
 ) WITHOUT ROWID;
 
 /*
