@@ -35,6 +35,20 @@ impl<TFile: FloFile> AnimationDbCore<TFile> {
     }
 
     ///
+    /// Inserts an element ID into the edit log
+    /// 
+    fn insert_element_id(db: &mut TFile, element_id: &ElementId) -> Result<()> {
+        use self::ElementId::*;
+
+        match element_id {
+            &Unassigned     => { },
+            &Assigned(id)   => { db.update(vec![PushEditLogElementId(id)])?; },
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Inserts a single AnimationEdit into the edit log
     /// 
     fn insert_edit_log<'a>(&mut self, edit: &AnimationEdit) -> Result<()> {
@@ -107,16 +121,19 @@ impl<TFile: FloFile> AnimationDbCore<TFile> {
 
         match edit {
             &SelectBrush(ref id, ref definition, ref drawing_style) => {
+                Self::insert_element_id(&mut self.db, id)?;
                 Self::insert_brush(&mut self.db, definition)?;
                 self.db.update(vec![PopEditLogBrush(DrawingStyleType::from(drawing_style))])?;
             },
 
             &BrushProperties(ref id, ref properties)                => {
+                Self::insert_element_id(&mut self.db, id)?;
                 Self::insert_brush_properties(&mut self.db, properties)?;
                 self.db.update(vec![PopEditLogBrushProperties])?;
             },
 
             &BrushStroke(ref id, ref points)                        => {
+                Self::insert_element_id(&mut self.db, id)?;
                 self.db.update(vec![PushRawPoints(Arc::clone(points)), Pop])?;
             }
         }
