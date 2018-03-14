@@ -7,7 +7,7 @@ use std::collections::*;
 ///
 /// Class used for the animation object for a database
 /// 
-pub struct AnimationEditor<TFile: FloFile+Send> {
+pub struct AnimationDbEditor<TFile: FloFile+Send> {
     /// The core, where the edits are sent
     core: Arc<Desync<AnimationDbCore<TFile>>>,
 
@@ -15,12 +15,12 @@ pub struct AnimationEditor<TFile: FloFile+Send> {
     layers: HashMap<u64, SqliteVectorLayer<TFile>>
 }
 
-impl<TFile: FloFile+Send+'static> AnimationEditor<TFile> {
+impl<TFile: FloFile+Send+'static> AnimationDbEditor<TFile> {
     ///
     /// Creates a new animation editor
     /// 
-    pub fn new(core: &Arc<Desync<AnimationDbCore<TFile>>>) -> AnimationEditor<TFile> {
-        AnimationEditor {
+    pub fn new(core: &Arc<Desync<AnimationDbCore<TFile>>>) -> AnimationDbEditor<TFile> {
+        AnimationDbEditor {
             core:   Arc::clone(core),
             layers: HashMap::new()
         }
@@ -34,7 +34,7 @@ impl<TFile: FloFile+Send+'static> AnimationEditor<TFile> {
     }
 }
 
-impl<TFile: FloFile+Send+'static> MutableAnimation for AnimationEditor<TFile> {
+impl<TFile: FloFile+Send+'static> MutableAnimation for AnimationDbEditor<TFile> {
     fn set_size(&mut self, size: (f64, f64)) {
         // Update the size for the current animation
         self.edit(move |db| {

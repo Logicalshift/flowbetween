@@ -38,7 +38,7 @@ pub struct AnimationDb {
     core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
 
     /// The editor is used to provide the mutable animation interface (we keep it around so it can cache values if necessary)
-    editor: Mutex<AnimationEditor<FloSqlite>>
+    editor: Mutex<AnimationDbEditor<FloSqlite>>
 }
 
 impl AnimationDb {
@@ -56,7 +56,7 @@ impl AnimationDb {
         FloSqlite::setup(&connection).unwrap();
 
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationEditor::new(&core);
+        let editor  = AnimationDbEditor::new(&core);
 
         let db      = AnimationDb {
             core:   core,
@@ -71,7 +71,7 @@ impl AnimationDb {
     /// 
     pub fn from_connection(connection: Connection) -> AnimationDb {
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationEditor::new(&core);
+        let editor  = AnimationDbEditor::new(&core);
 
         let db = AnimationDb {
             core:   core,
