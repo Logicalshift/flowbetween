@@ -273,6 +273,14 @@ fn smoke_editlog_brush_properties() {
 }
 
 #[test]
+fn smoke_editlog_element_id() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::LayerPaintSelectBrush),
+        DatabaseUpdate::PushEditLogElementId(3)
+    ])
+}
+
+#[test]
 fn smoke_editlog_brush() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::LayerPaintSelectBrush),

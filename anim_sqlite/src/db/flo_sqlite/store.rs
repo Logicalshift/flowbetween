@@ -74,6 +74,14 @@ impl FloSqlite {
                 Ok(())
             },
 
+            PushEditLogElementId(element_id)                                => {
+                let edit_log_id         = self.stack.last().unwrap();
+                let mut add_element_id  = Self::prepare(&self.sqlite, FloStatement::InsertELElementId)?;
+                
+                add_element_id.insert(&[edit_log_id, &element_id])?;
+                Ok(())
+            },
+
             PushRawPoints(points)                                           => {
                 let edit_log_id         = self.stack.last().unwrap();
                 let mut add_raw_point   = Self::prepare(&self.sqlite, FloStatement::InsertELRawPoints)?;
