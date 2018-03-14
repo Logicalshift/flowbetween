@@ -384,18 +384,29 @@ fn read_brush_strokes_from_edit_log() {
     assert!(edits.len() == 7);
     assert!(edits[0] == AnimationEdit::AddNewLayer(2));
     assert!(edits[1] == AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))));
-    assert!(edits[2] == AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
-                ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+    assert!(match edits[2] {
+        AnimationEdit::Layer(2, LayerEdit::Paint(_when, PaintEdit::SelectBrush(
+                ElementId::Assigned(_element_id),
+                BrushDefinition::Ink(ref ink_defn), 
                 BrushDrawingStyle::Draw
             )
-        )));
-    assert!(edits[3] == AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
-            BrushProperties(ElementId::Unassigned, BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))));
-    assert!(edits[6] == AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
-                    RawPoint::from((10.0, 10.0)),
-                    RawPoint::from((20.0, 5.0))
-                ])))));
+        ))  => ink_defn == &InkDefinition::default(),
+        _   => false
+    });
+    assert!(match edits[3] {
+        AnimationEdit::Layer(2, LayerEdit::Paint(_when, PaintEdit::
+            BrushProperties(ElementId::Assigned(_element_id), ref brush_properties)))
+                => brush_properties == &BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 },
+            _ => false
+    });
+    assert!(match edits[6] {
+        AnimationEdit::Layer(2, LayerEdit::Paint(ref when, PaintEdit::BrushStroke(ElementId::Assigned(_), ref points)))
+                        => points == &Arc::new(vec![
+                            RawPoint::from((10.0, 10.0)),
+                            RawPoint::from((20.0, 5.0))
+                        ]) && when == &Duration::from_millis(442),
+                _       => false 
+    });
 }
 
 #[test]
