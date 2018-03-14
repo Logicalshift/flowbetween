@@ -276,7 +276,10 @@ fn smoke_editlog_brush_properties() {
 fn smoke_editlog_element_id() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::LayerPaintSelectBrush),
-        DatabaseUpdate::PushEditLogElementId(3)
+        DatabaseUpdate::PushEditLogElementId(3),
+        DatabaseUpdate::PushBrushType(BrushDefinitionType::Ink),
+        DatabaseUpdate::PushInkBrush(1.0, 2.0, 3.0),
+        DatabaseUpdate::PopEditLogBrush(DrawingStyleType::Erase)
     ])
 }
 
