@@ -133,10 +133,10 @@ impl FloQuery for FloSqlite {
         // with the fact that individual rows can have errors as well as the whole thing,
         // so this ends up messy
         self.query_map(FloStatement::SelectEditLogValues, &[&(to_index-from_index), &(from_index)],
-            |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)))
+            |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6), row.get(7)))
             .map(|rows_with_errors| rows_with_errors
                 .map(|row_with_error| row_with_error.unwrap())
-                .map(|(edit_id, edit_type, layer_id, when, drawing_style, brush_id, brush_properties_id)| {
+                .map(|(edit_id, edit_type, layer_id, when, drawing_style, brush_id, brush_properties_id, element_id)| {
                     let edit_type       = self.value_for_enum(DbEnumType::EditLog, Some(edit_type)).unwrap().edit_log().unwrap();
                     let drawing_style   = self.value_for_enum(DbEnumType::DrawingStyle, drawing_style).and_then(|ds| ds.drawing_style());
 
@@ -149,7 +149,8 @@ impl FloQuery for FloSqlite {
                         layer_id:               as_id(layer_id),
                         when:                   as_duration(when),
                         brush:                  brush_id.and_then(|brush_id| drawing_style.and_then(|drawing_style| Some((brush_id, drawing_style)))),
-                        brush_properties_id:    brush_properties_id
+                        brush_properties_id:    brush_properties_id,
+                        element_id:             element_id
                     }
                 }).collect()
             )
