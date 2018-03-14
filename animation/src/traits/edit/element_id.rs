@@ -66,3 +66,12 @@ impl From<ElementId> for Option<i64> {
         id.id()
     }
 }
+
+impl From<Option<i64>> for ElementId {
+    fn from(id: Option<i64>) -> ElementId {
+        match id {
+            Some(id)    => ElementId::Assigned(id),
+            None        => ElementId::Unassigned
+        }
+    }
+}

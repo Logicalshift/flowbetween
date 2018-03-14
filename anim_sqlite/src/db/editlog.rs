@@ -50,7 +50,11 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
             DrawingStyleType::Erase => BrushDrawingStyle::Erase
         };
 
-        LayerEdit::Paint(when, PaintEdit::SelectBrush(ElementId::Unassigned, brush, drawing_style))
+        // Paint edits create elements, so there may be an element ID
+        // (These are optional, but should have been assigned during the commit process)
+        let element_id = ElementId::from(entry.element_id);
+
+        LayerEdit::Paint(when, PaintEdit::SelectBrush(element_id, brush, drawing_style))
     }
 
     ///
@@ -65,7 +69,11 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
         // This is a paint edit, so we need the 'when' too
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
-        LayerEdit::Paint(when, PaintEdit::BrushProperties(ElementId::Unassigned, brush_properties))
+        // Paint edits create elements, so there may be an element ID
+        // (These are optional, but should have been assigned during the commit process)
+        let element_id = ElementId::from(entry.element_id);
+
+        LayerEdit::Paint(when, PaintEdit::BrushProperties(element_id, brush_properties))
     }
 
     ///
@@ -87,8 +95,12 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
         // This is a paint edit, so we need the 'when' too
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
+        // Paint edits create elements, so there may be an element ID
+        // (These are optional, but should have been assigned during the commit process)
+        let element_id = ElementId::from(entry.element_id);
+
         // Turn into a set of points
-        LayerEdit::Paint(when, PaintEdit::BrushStroke(ElementId::Unassigned, points))
+        LayerEdit::Paint(when, PaintEdit::BrushStroke(element_id, points))
     }
 
     ///
