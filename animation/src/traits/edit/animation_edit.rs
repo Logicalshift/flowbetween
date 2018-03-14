@@ -18,3 +18,18 @@ pub enum AnimationEdit {
     /// Removes the layer with the specified ID
     RemoveLayer(u64)
 }
+
+impl AnimationEdit {
+    ///
+    /// If this edit contains an unassigned element ID, calls the specified function to supply a new
+    /// element ID. If the edit already has an ID, leaves it unchanged.
+    /// 
+    pub fn assign_element_id<AssignFn: FnOnce() -> i64>(self, assign_element_id: AssignFn) -> AnimationEdit {
+        use self::AnimationEdit::*;
+
+        match self {
+            Layer(layer_id, layer_edit) => Layer(layer_id, layer_edit.assign_element_id(assign_element_id)),
+            other                       => other
+        }
+    }
+}

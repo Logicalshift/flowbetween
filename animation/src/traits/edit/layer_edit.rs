@@ -31,3 +31,18 @@ pub enum LayerEdit {
     /// Removes a keyframe previously added at a particular duration
     RemoveKeyFrame(Duration)
 }
+
+impl LayerEdit {
+    ///
+    /// If this edit contains an unassigned element ID, calls the specified function to supply a new
+    /// element ID. If the edit already has an ID, leaves it unchanged.
+    /// 
+    pub fn assign_element_id<AssignFn: FnOnce() -> i64>(self, assign_element_id: AssignFn) -> LayerEdit {
+        use self::LayerEdit::*;
+
+        match self {
+            Paint(when, paint_edit) => Paint(when, paint_edit.assign_element_id(assign_element_id)),
+            other                   => other
+        }
+    }
+}

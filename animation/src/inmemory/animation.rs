@@ -17,6 +17,9 @@ struct AnimationCore {
     /// The edit log for this animation
     edit_log: InMemoryEditLog<AnimationEdit>,
 
+    /// The next element ID to assign
+    next_element_id: i64,
+
     /// The size of the animation canvas
     size: (f64, f64),
 
@@ -41,6 +44,7 @@ impl InMemoryAnimation {
         let core = AnimationCore {
             edit_log:           InMemoryEditLog::new(),
             size:               (1980.0, 1080.0),
+            next_element_id:    0,
             layers:             HashMap::new()
         };
 
@@ -155,14 +159,21 @@ impl AnimationCore {
         // The animation editor is what actually applies these edits to this object
         let editor = AnimationEditor::new();
 
-        // Collect the edits into a vec so we can inspect them multiple times
-        let edits: Vec<_> = edits.into_iter().collect();
+        // Collect the edits and assign element IDs as we go
+        let mut assigned_edits = vec![];
+        for edit in edits {
+            assigned_edits.push(edit.assign_element_id(|| {
+                let id = self.next_element_id;
+                self.next_element_id += 1;
+                id
+            }));         
+        }
 
         // Process the edits in the core
-        editor.perform(self, edits.iter().cloned());
+        editor.perform(self, assigned_edits.iter().cloned());
 
         // Commit to the main log
-        self.edit_log.commit_edits(edits);
+        self.edit_log.commit_edits(assigned_edits);
     }
 }
 
