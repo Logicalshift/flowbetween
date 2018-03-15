@@ -29,7 +29,7 @@ impl<Anim: Animation> Tool<Anim> for Adjust {
 
     fn image_name(&self) -> String { "adjust".to_string() }
 
-    fn create_model(&self) -> () { }
+    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
 
     fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Option<Arc<Controller>> {
         Some(Arc::new(AdjustMenuController::new()))

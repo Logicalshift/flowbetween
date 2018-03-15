@@ -1,4 +1,5 @@
 use super::super::tools::*;
+use super::super::model::*;
 use super::super::standard_tools::*;
 
 use ui::*;
@@ -59,10 +60,10 @@ impl<Anim: Animation+'static> ToolModel<Anim> {
     ///
     /// Returns the model for the specified tool
     /// 
-    pub fn model_for_tool(&self, tool: &FloTool<Anim>) -> Arc<GenericToolModel> {
+    pub fn model_for_tool(&self, tool: &FloTool<Anim>, model: Arc<FloModel<Anim>>) -> Arc<GenericToolModel> {
         self.tool_models.lock().unwrap()
             .entry(tool.tool_name())
-            .or_insert_with(move || Arc::new(tool.create_model()))
+            .or_insert_with(move || Arc::new(tool.create_model(model)))
             .clone()
     }
 

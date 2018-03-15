@@ -137,8 +137,8 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
         self.tool.image_name()        
     }
 
-    fn create_model(&self) -> GenericToolModel {
-        GenericToolModel(Mutex::new(Box::new(Arc::new(self.tool.create_model()))))
+    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> GenericToolModel {
+        GenericToolModel(Mutex::new(Box::new(Arc::new(self.tool.create_model(flo_model)))))
     }
 
     fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Option<Arc<Controller>> {

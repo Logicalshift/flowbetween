@@ -80,7 +80,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
     fn image_name(&self) -> String { "select".to_string() }
 
-    fn create_model(&self) -> () { }
+    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
 
     fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Option<Arc<Controller>> {
         Some(Arc::new(SelectMenuController::new()))

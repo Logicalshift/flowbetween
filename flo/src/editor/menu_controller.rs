@@ -112,7 +112,7 @@ impl<Anim: Animation+'static> Controller for MenuController<Anim>  {
 
                 if let Some(tool) = tool {
                     // Tool exists: create the controller
-                    let tool_model  = self.anim_model.tools().model_for_tool(&*tool);
+                    let tool_model  = self.anim_model.tools().model_for_tool(&*tool, Arc::clone(&self.anim_model));
                     let controller  = tool.create_menu_controller(Arc::clone(&self.anim_model), &*tool_model);
 
                     if let Some(controller) = controller {

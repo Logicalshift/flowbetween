@@ -43,7 +43,7 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     ///
     /// Creates a new instance of the UI model for this tool
     /// 
-    fn create_model(&self) -> Self::Model;
+    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> Self::Model;
 
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)

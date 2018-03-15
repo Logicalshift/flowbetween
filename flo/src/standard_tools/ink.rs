@@ -103,7 +103,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     ///
     /// Creates a new instance of the UI model for this tool
     /// 
-    fn create_model(&self) -> InkModel { 
+    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> InkModel { 
         InkModel::new()
     }
 
