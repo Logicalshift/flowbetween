@@ -77,10 +77,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<Stream<Item=ToolAction<()>, Error=()>+Send> {
         // The set of currently selected elements
-        let selected = flo_model.selection().selected_element.clone();
-        let selected = computed(move || -> HashSet<_> { selected.get().into_iter().collect() });
+        let selected_elements = flo_model.selection().selected_element.clone();
+        let selected_elements = computed(move || -> HashSet<_> { selected_elements.get().into_iter().collect() });
 
-        // Create a binding that works out the current frame
+        // Create a binding that works out the frame for the currently selected layer
         let current_frame = computed(move || {
             // Get the layer ID and the frame layers
             let layer_id        = flo_model.timeline().selected_layer.get();
@@ -92,11 +92,11 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
         });
 
         // Follow it, and draw an overlay showing all the bounding boxes
-        Box::new(follow(current_frame)
-            .map(|current_frame| {
+        Box::new(follow(computed(move || (current_frame.get(), selected_elements.get())))
+            .map(|(current_frame, selected_elements)| {
                 if let Some(current_frame) = current_frame {
                     // Get the elements in the current frame
-                    let elements    = current_frame.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
+                    let elements        = current_frame.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
                     
                     // Build up a vector of bounds
                     let mut selection   = vec![];
@@ -106,8 +106,12 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                         // Update the properties according to this element
                         element.update_properties(&mut properties);
 
-                        // Draw the settings for this element
-                        selection.extend(Self::highlight_for_selection(&element, &properties));
+                        // If the element is selected, draw a highlight around it
+                        let element_id = element.id();
+                        if element_id.is_assigned() && selected_elements.contains(&element_id) {
+                            // Draw the settings for this element
+                            selection.extend(Self::highlight_for_selection(&element, &properties));
+                        }
                     }
                     
                     // Create the overlay drawing
