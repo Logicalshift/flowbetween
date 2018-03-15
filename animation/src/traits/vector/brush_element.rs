@@ -42,7 +42,7 @@ impl VectorElement for BrushElement {
     /// The ID of this vector element
     /// 
     fn id(&self) -> ElementId {
-        unimplemented!();
+        self.id
     }
 
     ///
