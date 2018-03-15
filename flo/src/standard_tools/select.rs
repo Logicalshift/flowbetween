@@ -12,6 +12,17 @@ use std::sync::*;
 use std::collections::HashSet;
 
 ///
+/// The model for the Select tool
+/// 
+pub struct SelectModel {
+    /// Contains a pointer to the current frame
+    pub frame: BindRef<Frame>,
+
+    /// Contains the bounding boxes of the elements in the current frame
+    pub bounding_boxes: BindRef<Vec(ElementId, Rect)>
+}
+
+///
 /// The Select tool (Selects control points of existing objects)
 /// 
 pub struct Select { }
