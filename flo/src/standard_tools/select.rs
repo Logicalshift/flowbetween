@@ -168,7 +168,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
                         // If the element is selected, draw a highlight around it
                         let element_id = element.id();
-                        if element_id.is_assigned() /* && selected_elements.contains(&element_id) */ {
+                        if element_id.is_assigned() && selected_elements.contains(&element_id) {
                             // Draw the settings for this element
                             selection.extend(Self::highlight_for_selection(&element, &properties));
                         }
