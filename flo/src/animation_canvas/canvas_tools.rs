@@ -168,7 +168,9 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
                 ToolAction::Data(data)              => self.tool_runner.set_tool_data(data),
                 ToolAction::Edit(edit)              => animation_edits.push(edit),
                 ToolAction::BrushPreview(preview)   => self.process_brush_preview(canvas, renderer, preview),
-                ToolAction::Overlay(overlay)        => self.process_overlay(canvas, renderer, overlay)
+                ToolAction::Overlay(overlay)        => self.process_overlay(canvas, renderer, overlay),
+                ToolAction::Select(element)         => self.animation.selection().select(element),
+                ToolAction::ClearSelection          => self.animation.selection().clear_selection()
             }
         }
 

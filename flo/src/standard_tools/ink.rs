@@ -139,13 +139,13 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
     fn actions_for_input<'a>(&'a self, _data: Option<Arc<InkData>>, input: Box<'a+Iterator<Item=ToolInput<InkData>>>) -> Box<'a+Iterator<Item=ToolAction<InkData>>> {
-        use self::ToolInput::*;
-        use self::ToolAction::*;
         use self::BrushPreviewAction::*;
+        use self::ToolAction::*;
+        use self::ToolInput::*;
 
         let actions = input.flat_map(|input| {
             match input {
-                Select | Deselect => vec![],
+                ToolInput::Select | ToolInput::Deselect => vec![],
 
                 ToolInput::Data(ref ink_data)   => vec![
                     // Set the brush preview status

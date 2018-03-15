@@ -18,5 +18,11 @@ pub enum ToolAction<ToolData> {
     BrushPreview(BrushPreviewAction),
 
     /// Sets the tool overlay drawing
-    Overlay(OverlayAction)
+    Overlay(OverlayAction),
+
+    /// Clears the current selection
+    ClearSelection,
+
+    /// Adds a particular element to the selection
+    Select(ElementId)
 }
