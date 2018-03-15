@@ -3,6 +3,7 @@ mod tools;
 mod layer;
 mod keyframe;
 mod frame;
+mod selection;
 mod animation;
 
 pub use self::timeline::*;
@@ -10,6 +11,7 @@ pub use self::tools::*;
 pub use self::layer::*;
 pub use self::keyframe::*;
 pub use self::frame::*;
+pub use self::selection::*;
 pub use self::animation::*;
 
 use binding::*;
@@ -27,11 +29,14 @@ pub struct FloModel<Anim: Animation> {
     /// The status of the currently selected tool
     tools: ToolModel<Anim>,
 
-    /// The timeline view model
+    /// The timeline model
     timeline: TimelineModel<Anim>,
 
-    /// The frame view model
+    /// The frame model
     frame: FrameModel,
+
+    /// The selection model
+    selection: SelectionModel,
 
     /// The size of the animation
     pub size: BindRef<(f64, f64)>,
@@ -45,7 +50,7 @@ pub struct FloModel<Anim: Animation> {
 
 impl<Anim: Animation+'static> FloModel<Anim> {
     ///
-    /// Creates a new view model
+    /// Creates a new model
     /// 
     pub fn new(animation: Anim) -> FloModel<Anim> {
         let animation           = Arc::new(animation);
@@ -53,6 +58,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
         let timeline            = TimelineModel::new(Arc::clone(&animation));
         let frame_edit_counter  = bind(0);
         let frame               = FrameModel::new(Arc::clone(&animation), BindRef::new(&timeline.current_time), BindRef::new(&frame_edit_counter));
+        let selection           = SelectionModel::new();
 
         let size_binding        = bind(animation.size());
 
@@ -62,6 +68,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
             timeline:           timeline,
             frame_edit_counter: frame_edit_counter,
             frame:              frame,
+            selection:          selection,
 
             size:               BindRef::from(size_binding.clone()),
             size_binding:       size_binding
@@ -88,6 +95,13 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     pub fn frame(&self) -> &FrameModel {
         &self.frame
     }
+
+    ///
+    /// Retrieves the selection model for this animation
+    /// 
+    pub fn selection(&self) -> &SelectionModel {
+        &self.selection
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
@@ -99,6 +113,7 @@ impl<Anim: Animation> Clone for FloModel<Anim> {
             timeline:           self.timeline.clone(),
             frame_edit_counter: self.frame_edit_counter.clone(),
             frame:              self.frame.clone(),
+            selection:          self.selection.clone(),
 
             size:               self.size.clone(),
             size_binding:       self.size_binding.clone()
