@@ -16,10 +16,10 @@ use std::collections::HashSet;
 /// 
 pub struct SelectModel {
     /// Contains a pointer to the current frame
-    pub frame: BindRef<Frame>,
+    pub frame: BindRef<Arc<Frame>>,
 
     /// Contains the bounding boxes of the elements in the current frame
-    pub bounding_boxes: BindRef<Vec(ElementId, Rect)>
+    pub bounding_boxes: BindRef<Vec<(ElementId, Rect)>>
 }
 
 ///
