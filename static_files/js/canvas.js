@@ -677,7 +677,7 @@ let flo_canvas = (function() {
             free_stored_buffer: ()              => { replay.push([free_stored_buffer, [], current_layer_id]); rewind_free_stored(); free_stored_buffer();   },
             push_state:         ()              => { replay.push([push_state, [], current_layer_id]);                       push_state();                   },
             pop_state:          ()              => { replay.push([pop_state, [], current_layer_id]);                        pop_state();                    },
-            layer:              (layer_id)      => { replay.push([layer, [layer_id], current_layer_id]);                    layer(layer_id);                },
+            layer:              (layer_id)      => { replay.push([layer, [layer_id], layer]);                               layer(layer_id);                },
             layer_blend:        (layer_id, blend_mode) => { replay.push([layer_blend, [layer_id, blend_mode], -1]);         layer_blend(layer_id, blend_mode); },
             clear_layer:        ()              => { replay.push([clear_layer, [], current_layer_id]);                      clear_layer();                  },
             clear_canvas:       ()              => { replay = [ [clear_canvas, [], current_layer_id] ];                     clear_canvas();                 },
