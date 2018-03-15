@@ -8,8 +8,8 @@ use binding::*;
 use animation::*;
 
 use futures::*;
-use std::iter;
 use std::sync::*;
+use std::collections::HashSet;
 
 ///
 /// The Select tool (Selects control points of existing objects)
@@ -22,6 +22,42 @@ impl Select {
     /// 
     pub fn new() -> Select {
         Select {}
+    }
+
+    ///
+    /// Returns the list of commands to set up for drawing some selections
+    /// 
+    fn selection_drawing_settings() -> Vec<Draw> {
+        vec![
+            Draw::ClearCanvas,
+            Draw::LineWidthPixels(1.0),
+            Draw::StrokeColor(Color::Rgba(0.2, 0.8, 1.0, 1.0)),
+            Draw::NewPath
+        ]
+    }
+
+    ///
+    /// Returns the drawing actions to highlight the specified element
+    /// 
+    fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> Vec<Draw> {
+        // Get the paths for this element
+        let paths = element.to_path(properties);
+        if let Some(paths) = paths {
+            // Retrieve the bounding box for each of the paths
+            let bounds = paths.into_iter().map(|path| path.bounding_box());
+
+            // Merge into a single bounding box
+            let bounds = bounds.fold(Rect::empty(), |current, next| current.union(next));
+
+            // Draw a rectangle around these bounds
+            let mut bounds: Vec<Draw> = bounds.into();
+            bounds.push(Draw::Stroke);
+
+            bounds
+        } else {
+            // There are no paths for this element
+            vec![]
+        }
     }
 }
 
@@ -40,6 +76,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     }
 
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<Stream<Item=ToolAction<()>, Error=()>+Send> {
+        // The set of currently selected elements
+        let selected = flo_model.selection().selected_element.clone();
+        let selected = computed(move || -> HashSet<_> { selected.get().into_iter().collect() });
+
         // Create a binding that works out the current frame
         let current_frame = computed(move || {
             // Get the layer ID and the frame layers
@@ -59,33 +99,20 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     let elements    = current_frame.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
                     
                     // Build up a vector of bounds
-                    let mut bounds      = vec![];
+                    let mut selection   = vec![];
                     let mut properties  = VectorProperties::default();
 
                     for element in elements {
                         // Update the properties according to this element
                         element.update_properties(&mut properties);
 
-                        // Fetch the paths and add to the bounds
-                        if let Some(paths) = element.to_path(&properties) {
-                            bounds.extend(paths.into_iter().map(|path| path.bounding_box()))
-                        }
+                        // Draw the settings for this element
+                        selection.extend(Self::highlight_for_selection(&element, &properties));
                     }
-
-                    // Each bound should be drawn as a rectangle
-                    let bounds = bounds.into_iter()
-                        .map(|bounds| -> Vec<Draw> { bounds.into() })
-                        .flat_map(|drawing| drawing.into_iter());
                     
                     // Create the overlay drawing
-                    let overlay = vec![
-                            Draw::ClearCanvas,
-                            Draw::LineWidthPixels(1.0),
-                            Draw::StrokeColor(Color::Rgba(0.2, 0.8, 1.0, 1.0)),
-                            Draw::NewPath
-                        ].into_iter()
-                        .chain(bounds)
-                        .chain(iter::once(Draw::Stroke));
+                    let overlay = Self::selection_drawing_settings().into_iter()
+                        .chain(selection);
 
                     ToolAction::Overlay(OverlayAction::Draw(overlay.collect()))
                 } else {
