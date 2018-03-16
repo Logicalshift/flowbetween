@@ -196,7 +196,7 @@ mod test {
 
         fn image_name(&self) -> String { "test".to_string() }
 
-        fn create_model(&self) -> i32 { 94 }
+        fn create_model(&self, _flo_model: Arc<FloModel<InMemoryAnimation>>) -> i32 { 94 }
 
         fn actions_for_input<'a>(&'a self, _data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<_> = input.collect();
@@ -264,8 +264,9 @@ mod test {
 
     #[test]
     fn model_survives_round_trip() {
+        let flo_model       = Arc::new(FloModel::new(InMemoryAnimation::new()));
         let generic_tool    = TestTool.to_flo_tool();
-        let model           = generic_tool.create_model();
+        let model           = generic_tool.create_model(Arc::clone(&flo_model));;
 
         assert!(model.get_ref() == Some(Arc::new(94)));
     }
