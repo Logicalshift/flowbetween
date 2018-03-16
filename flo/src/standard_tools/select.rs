@@ -8,6 +8,7 @@ use binding::*;
 use animation::*;
 
 use futures::*;
+use futures::stream;
 use std::sync::*;
 use std::collections::HashSet;
 
@@ -16,10 +17,40 @@ use std::collections::HashSet;
 /// 
 pub struct SelectModel {
     /// Contains a pointer to the current frame
-    pub frame: BindRef<Option<Arc<Frame>>>,
+    frame: BindRef<Option<Arc<Frame>>>,
 
     /// Contains the bounding boxes of the elements in the current frame
-    pub bounding_boxes: BindRef<Vec<(ElementId, Rect)>>
+    bounding_boxes: BindRef<Vec<(ElementId, Rect)>>
+}
+
+///
+/// The actions that the tool can take
+/// 
+#[derive(Copy, Clone)]
+enum SelectAction {
+    /// No action (or the current action has been cancelled)
+    NoAction,
+
+    /// An item has been newly selected
+    Select,
+
+    /// The user is picking some items using a selection box
+    RubberBand,
+
+    /// The user has dragged their selection (either by selecting and moving away from the current location or by clicking on an item that's already selected)
+    Drag
+}
+
+///
+/// The select data provides feedback for the action being taken by the select tool
+/// 
+#[derive(Copy, Clone)]
+pub struct SelectData {
+    /// The current select action
+    action: SelectAction,
+
+    /// The position where the current action started
+    initial_position: RawPoint
 }
 
 ///
@@ -40,7 +71,9 @@ impl Select {
     /// 
     fn selection_drawing_settings() -> Vec<Draw> {
         vec![
-            Draw::ClearCanvas,
+            Draw::Layer(0),
+            Draw::ClearLayer,
+
             Draw::LineWidthPixels(1.0),
             Draw::StrokeColor(Color::Rgba(0.2, 0.8, 1.0, 1.0)),
             Draw::NewPath
@@ -73,13 +106,16 @@ impl Select {
 }
 
 impl<Anim: 'static+Animation> Tool<Anim> for Select {
-    type ToolData   = ();
+    type ToolData   = SelectData;
     type Model      = SelectModel;
 
     fn tool_name(&self) -> String { "Select".to_string() }
 
     fn image_name(&self) -> String { "select".to_string() }
 
+    ///
+    /// Creates the model for the Select tool
+    /// 
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> SelectModel {
         // Create a binding that works out the frame for the currently selected layer
         let selected_layer  = flo_model.timeline().selected_layer.clone();
@@ -139,11 +175,17 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
         }
     }
 
+    ///
+    /// Creates the menu bar controller for the select tool
+    /// 
     fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectModel) -> Option<Arc<Controller>> {
         Some(Arc::new(SelectMenuController::new()))
     }
 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &SelectModel) -> Box<Stream<Item=ToolAction<()>, Error=()>+Send> {
+    ///
+    /// Returns a stream containing the actions for the view and tool model for the select tool
+    /// 
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &SelectModel) -> Box<Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
         // The set of currently selected elements
         let selected_elements = flo_model.selection().selected_element.clone();
         let selected_elements = computed(move || -> HashSet<_> { selected_elements.get().into_iter().collect() });
@@ -151,8 +193,8 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
         // Create a binding that works out the frame for the currently selected layer
         let current_frame = tool_model.frame.clone();
 
-        // Follow it, and draw an overlay showing all the bounding boxes
-        Box::new(follow(computed(move || (current_frame.get(), selected_elements.get())))
+        // Follow it, and draw an overlay showing the bounding boxes of everything that's selected
+        let draw_selection_overlay = follow(computed(move || (current_frame.get(), selected_elements.get())))
             .map(|(current_frame, selected_elements)| {
                 if let Some(current_frame) = current_frame {
                     // Get the elements in the current frame
@@ -183,10 +225,59 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     // Just clear the overlay
                     ToolAction::Overlay(OverlayAction::Clear)
                 }
-            }))
+            });
+        
+        // On setup, we create an initial SelectData with no action (this will later get updated during actions_for_input)
+        let setup_data = stream::once(Ok(ToolAction::Data(SelectData {
+            action:             SelectAction::NoAction,
+            initial_position:   RawPoint::from((0.0, 0.0))
+        })));
+
+        // Generate the final stream
+        let select_stream = setup_data.chain(draw_selection_overlay);
+        Box::new(select_stream)
     }
 
-    fn actions_for_input<'a>(&self, _data: Option<Arc<()>>, _input: Box<'a+Iterator<Item=ToolInput<()>>>) -> Box<Iterator<Item=ToolAction<()>>> {
-        Box::new(vec![].into_iter())
+    ///
+    /// Returns the actions that result from a particular inpiut
+    /// 
+    fn actions_for_input<'a>(&self, data: Option<Arc<SelectData>>, input: Box<'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<Iterator<Item=ToolAction<SelectData>>> {
+        if let Some(mut data) = data {
+            // We build up a vector of actions to perform as we go
+            let mut actions = vec![];
+
+            // Process the inputs
+            for input in input {
+                match input {
+                    ToolInput::Data(new_data) => {
+                        // Whenever we get feedback about what the data is set to, update our data
+                        data = new_data;
+                    },
+
+                    ToolInput::Select | ToolInput::Deselect => {
+                        // Reset the action to 'no action' when the tool is selected or deselected
+                        let new_data = SelectData {
+                            action:             SelectAction::NoAction,
+                            initial_position:   RawPoint::from((0.0, 0.0))
+                        };
+
+                        // This replaces the data object
+                        data = Arc::new(new_data);
+
+                        // And we get an action to update the data for the next set of inputs
+                        actions.push(ToolAction::Data(new_data));
+                    },
+
+                    ToolInput::Paint(_)         => (),
+                    ToolInput::PaintDevice(_)   => ()
+                }
+            }
+
+            // Return the actions that we built up
+            Box::new(actions.into_iter())
+        } else {
+            // Received input before the tool is initialised
+            Box::new(vec![].into_iter())
+        }
     }
 }
