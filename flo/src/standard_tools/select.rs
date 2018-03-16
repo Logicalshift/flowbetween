@@ -8,19 +8,19 @@ use binding::*;
 use animation::*;
 
 use futures::*;
-use futures::stream;
 use std::sync::*;
 use std::collections::HashSet;
 
 ///
 /// The model for the Select tool
 /// 
+#[derive(Clone)]
 pub struct SelectModel {
     /// Contains a pointer to the current frame
     frame: BindRef<Option<Arc<Frame>>>,
 
     /// Contains the bounding boxes of the elements in the current frame
-    bounding_boxes: BindRef<Vec<(ElementId, Rect)>>
+    bounding_boxes: BindRef<Arc<Vec<(ElementId, Rect)>>>
 }
 
 ///
@@ -44,8 +44,14 @@ enum SelectAction {
 ///
 /// The select data provides feedback for the action being taken by the select tool
 /// 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct SelectData {
+    /// The current frame
+    frame: Option<Arc<Frame>>,
+
+    // The bounding boxes of the elements in the current frame
+    bounding_boxes: Arc<Vec<(ElementId, Rect)>>,
+
     /// The current select action
     action: SelectAction,
 
@@ -57,6 +63,32 @@ pub struct SelectData {
 /// The Select tool (Selects control points of existing objects)
 /// 
 pub struct Select { }
+
+impl SelectData {
+    ///
+    /// Creates a copy of this object with a different actions 
+    ///
+    fn with_action(&self, new_action: SelectAction) -> SelectData {
+        SelectData {
+            frame:              self.frame.clone(),
+            bounding_boxes:     self.bounding_boxes.clone(),
+            action:             new_action,
+            initial_position:   self.initial_position.clone()
+        }
+    }
+    
+    ///
+    /// Creates a copy of this object with a new initial position
+    ///
+    fn with_initial_position(&self, new_initial_position: RawPoint) -> SelectData {
+        SelectData {
+            frame:              self.frame.clone(),
+            bounding_boxes:     self.bounding_boxes.clone(),
+            action:             self.action,
+            initial_position:   new_initial_position
+        }
+    }
+}
 
 impl Select {
     ///
@@ -169,10 +201,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     bounding_boxes.push((element.id(), bounds));
                 }
 
-                bounding_boxes
+                Arc::new(bounding_boxes)
             } else {
                 // No bounding boxes if there's no frame
-                vec![]
+                Arc::new(vec![])
             }
         });
 
@@ -233,15 +265,23 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     ToolAction::Overlay(OverlayAction::Clear)
                 }
             });
-        
-        // On setup, we create an initial SelectData with no action (this will later get updated during actions_for_input)
-        let setup_data = stream::once(Ok(ToolAction::Data(SelectData {
-            action:             SelectAction::NoAction,
-            initial_position:   RawPoint::from((0.0, 0.0))
-        })));
 
+        // Whenever the frame or the set of bounding boxes changes, we create a new SelectData object
+        // (this also resets any in-progress action)
+        let current_frame   = tool_model.frame.clone();
+        let bounding_boxes  = tool_model.bounding_boxes.clone();
+        let data_for_model  = follow(computed(move || (current_frame.get(), bounding_boxes.get())))
+            .map(|(current_frame, bounding_boxes)| {
+                ToolAction::Data(SelectData {
+                    frame:              current_frame,
+                    bounding_boxes:     bounding_boxes,
+                    action:             SelectAction::NoAction,
+                    initial_position:   RawPoint::from((0.0, 0.0))
+                })
+            });
+        
         // Generate the final stream
-        let select_stream = setup_data.chain(draw_selection_overlay);
+        let select_stream = data_for_model.select(draw_selection_overlay);
         Box::new(select_stream)
     }
 
@@ -263,13 +303,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
                     ToolInput::Select | ToolInput::Deselect => {
                         // Reset the action to 'no action' when the tool is selected or deselected
-                        let new_data = SelectData {
-                            action:             SelectAction::NoAction,
-                            initial_position:   RawPoint::from((0.0, 0.0))
-                        };
+                        let new_data = data.with_action(SelectAction::NoAction);
 
                         // This replaces the data object
-                        data = Arc::new(new_data);
+                        data = Arc::new(new_data.clone());
 
                         // And we get an action to update the data for the next set of inputs
                         actions.push(ToolAction::Data(new_data));
