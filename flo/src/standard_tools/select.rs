@@ -103,6 +103,13 @@ impl Select {
             vec![]
         }
     }
+
+    ///
+    /// Processes a paint action (at the top level)
+    /// 
+    fn paint(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
+        (actions, data)
+    }
 }
 
 impl<Anim: 'static+Animation> Tool<Anim> for Select {
@@ -268,7 +275,12 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                         actions.push(ToolAction::Data(new_data));
                     },
 
-                    ToolInput::Paint(_)         => (),
+                    ToolInput::Paint(painting)  => {
+                        let (new_actions, new_data) = self.paint(painting, actions, data);
+                        actions = new_actions;
+                        data    = new_data;
+                    },
+
                     ToolInput::PaintDevice(_)   => ()
                 }
             }
