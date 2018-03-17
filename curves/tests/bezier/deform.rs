@@ -1,5 +1,5 @@
-use curves::*;
-use curves::bezier;
+use flo_curves::*;
+use flo_curves::bezier;
 
 #[test]
 fn deform_line_upwards() {

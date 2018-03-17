@@ -21,7 +21,7 @@
 //! different is the idea that they can be computed as well. Here's an example:
 //! 
 //! ```
-//! # use binding::*;
+//! # use flo_binding::*;
 //! let mut number      = bind(1);
 //! let number_clone    = number.clone();
 //! let plusone         = computed(move || number_clone.get() + 1);

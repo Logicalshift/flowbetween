@@ -1,6 +1,6 @@
 use super::*;
 
-use curves::bezier;
+use flo_curves::bezier;
 
 #[test]
 fn can_subdivide_1() {

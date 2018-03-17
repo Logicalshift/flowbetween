@@ -1,6 +1,6 @@
-use curves::*;
-use curves::bezier;
-use curves::bezier::NormalCurve;
+use flo_curves::*;
+use flo_curves::bezier;
+use flo_curves::bezier::NormalCurve;
 
 #[test]
 fn normal_for_line_is_straight_up() {

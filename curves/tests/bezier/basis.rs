@@ -1,5 +1,5 @@
 use super::*;
-use curves::bezier;
+use flo_curves::bezier;
 
 #[test]
 fn basis_at_t0_is_w1() {

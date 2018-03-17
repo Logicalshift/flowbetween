@@ -1,4 +1,4 @@
-use curves::bezier;
+use flo_curves::bezier;
 
 #[test]
 fn can_take_first_derivative() {

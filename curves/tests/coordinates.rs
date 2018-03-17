@@ -1,6 +1,6 @@
-extern crate curves;
+extern crate flo_curves;
 
-use curves::*;
+use flo_curves::*;
 
 #[test]
 fn can_get_distance_between_points() {
