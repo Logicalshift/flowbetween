@@ -6,6 +6,8 @@ license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "User interface description for FlowBetween"
 
+include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
+
 [dependencies]
 flo_animation   = { path = "../animation", version = "^0.1.0" }
 flo_curves      = { path = "../curves", version = "^0.1.0" }
