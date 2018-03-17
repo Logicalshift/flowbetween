@@ -27,7 +27,7 @@ impl<TAction> FnOnceMessage<TAction> {
 }
 
 impl<TAction> FloGtkMessage for FnOnceMessage<TAction>
-where TAction: Send+FnOnce(&mut FloGtk) -> () {
+where TAction: 'static+Send+FnOnce(&mut FloGtk) -> () {
     fn process(&mut self, flo_gtk: &mut FloGtk) {
         if let Some(process) = self.process.take() {
             process(flo_gtk);
