@@ -63,6 +63,16 @@ impl Rect {
     }
 
     ///
+    /// Returns true if the specified point is inside this rectangle
+    /// 
+    pub fn contains(&self, x: f32, y: f32) -> bool {
+        (f32::min(self.x1, self.x2) <= x)   && 
+        (x <= f32::max(self.x1, self.x2))   &&
+        (f32::min(self.y1, self.y2) <= y)   &&
+        (y <= f32::max(self.y1, self.y2))
+    }
+
+    ///
     /// True if this rectangle has no size
     /// 
     #[inline]

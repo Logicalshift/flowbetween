@@ -137,9 +137,60 @@ impl Select {
     }
 
     ///
+    /// Returns the ID of the element at the position represented by the specified painting action
+    /// 
+    fn element_at_point(&self, data: &SelectData, point: &Painting) -> Option<ElementId> {
+        // Find the front-most item that matches this point
+        for &(ref id, ref bounding_box) in data.bounding_boxes.iter().rev() {
+            if bounding_box.contains(point.location.0, point.location.1) {
+                return Some(*id);
+            }
+        }
+
+        // No ID matches
+        None
+    }
+
+    ///
     /// Processes a paint action (at the top level)
     /// 
     fn paint(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
+        let mut actions     = actions;
+        let mut data        = data;
+        let current_action  = data.action;
+
+        match (current_action, paint.action) {
+            (_, PaintAction::Start) => {
+                // Find the element at this point
+                if let Some(element) = self.element_at_point(&*data, &paint) {
+                    // Select this element
+                    // TODO: add to the selection if shift is held down
+                    actions.push(ToolAction::ClearSelection);
+                    actions.push(ToolAction::Select(element));
+                } else {
+                    // Select no elements
+                    actions.push(ToolAction::ClearSelection);
+                }
+            },
+
+            (_, PaintAction::Cancel) => {
+                // Reset the data state to 'no action'
+                let new_data = data.with_action(SelectAction::NoAction);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+            },
+
+            (_, PaintAction::Finish) => {
+                // Reset the data state to 'no action'
+                let new_data = data.with_action(SelectAction::NoAction);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+            },
+
+            // Other combinations have no effect
+            _ => ()
+        }
+
         (actions, data)
     }
 }
