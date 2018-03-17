@@ -1,0 +1,13 @@
+[package]
+name        = "gtk-ui"
+version     = "0.1.0"
+authors     = ["Andrew Hunter"]
+license     = "Apache-2.0"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "Gtk+ implementation pipe for flo_ui"
+
+[dependencies]
+flo_ui      = { path = "../ui", version = "^0.1.0" }
+flo_canvas  = { path = "../canvas", version = "^0.1.0" }
+
+gtk         = "0.3.0"
