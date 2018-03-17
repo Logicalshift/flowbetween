@@ -2,6 +2,7 @@
 name        = "binding"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
+license     = "Apache-2.0"
 
 [dependencies]
 futures         = "^0.1.17"

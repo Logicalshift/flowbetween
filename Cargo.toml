@@ -2,6 +2,7 @@
 name        = "flow_between"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
+license     = "Apache-2.0"
 
 [dependencies]
 static_files    = { path = "static_files" }
