@@ -22,7 +22,7 @@ impl GtkThread {
     /// 
     pub fn new() -> GtkThread {
         // Create a new thread
-        let thread = GtkThread {
+        let mut thread = GtkThread {
             message_target: GtkMessageTarget::new(),
             running_thread: None
         };
@@ -63,6 +63,6 @@ impl Drop for GtkThread {
         self.message_target.async(|_gtk| gtk::main_quit());
 
         // Wait for the thread to finish before the object is truely dropped
-        self.running_thread.map(|running_thread| running_thread.join());
+        self.running_thread.take().map(|running_thread| running_thread.join());
     }
 }
