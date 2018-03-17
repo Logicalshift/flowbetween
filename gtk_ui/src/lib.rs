@@ -5,10 +5,18 @@
 //! front-end toolkit.
 //! 
 
-mod gtk_action;
+extern crate flo_ui;
+extern crate flo_canvas;
+
+extern crate gtk;
+extern crate glib;
+
+mod gtk_thread;
 mod gtk_event;
+mod gtk_action;
 mod gtk_user_interface;
 
+pub use self::gtk_thread::*;
 pub use self::gtk_event::*;
 pub use self::gtk_action::*;
 pub use self::gtk_user_interface::*;
