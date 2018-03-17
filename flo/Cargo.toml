@@ -5,11 +5,11 @@ authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 
 [dependencies]
-animation       = { path = "../animation" }
-curves          = { path = "../curves" }
-binding         = { path = "../binding" }
-ui              = { path = "../ui" }
-canvas          = { path = "../canvas" }
+flo_animation   = { path = "../animation" }
+flo_curves      = { path = "../curves" }
+flo_binding     = { path = "../binding" }
+flo_ui          = { path = "../ui" }
+flo_canvas      = { path = "../canvas" }
 desync          = { git = "https://github.com/logicalshift/desync", branch = "develop" }
 
 serde           = "^1.0.0"

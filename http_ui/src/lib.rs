@@ -1,6 +1,6 @@
-extern crate ui;
-extern crate canvas;
-extern crate binding;
+extern crate flo_ui as ui;
+extern crate flo_canvas as canvas;
+extern crate flo_binding as binding;
 
 extern crate serde;
 extern crate serde_json;

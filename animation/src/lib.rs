@@ -1,9 +1,9 @@
 //!
 //! Library for describing and editing FlowBetween animations
 //!
-extern crate curves;
-extern crate canvas;
-extern crate float_encoder;
+extern crate flo_curves as curves;
+extern crate flo_canvas as canvas;
+extern crate flo_float_encoder as float_encoder;
 
 #[macro_use]
 extern crate serde_derive;

@@ -5,12 +5,12 @@ authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 
 [dependencies]
-static_files    = { path = "static_files" }
-animation       = { path = "animation" }
-anim_sqlite     = { path = "anim_sqlite" }
-http_ui         = { path = "http_ui" }
-binding         = { path = "binding" }
-ui              = { path = "ui" }
+flo_static_files= { path = "static_files" }
+flo_animation   = { path = "animation" }
+flo_anim_sqlite = { path = "anim_sqlite" }
+flo_http_ui     = { path = "http_ui" }
+flo_binding     = { path = "binding" }
+flo_ui          = { path = "ui" }
 flo             = { path = "flo" }
 
 serde           = "^1.0.0"

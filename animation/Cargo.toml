@@ -1,13 +1,13 @@
 [package]
-name        = "animation"
+name        = "flo_animation"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 
 [dependencies]
-canvas              = { path = "../canvas" }
-curves              = { path = "../curves" }
-float_encoder       = { path = "../float_encoder" }
+flo_canvas          = { path = "../canvas" }
+flo_curves          = { path = "../curves" }
+flo_float_encoder   = { path = "../float_encoder" }
 
 typemap             = "^0.3.3"
 modifier            = "^0.1.0"

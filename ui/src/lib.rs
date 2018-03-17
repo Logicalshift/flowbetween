@@ -1,5 +1,5 @@
-extern crate canvas;
-extern crate binding;
+extern crate flo_canvas as canvas;
+extern crate flo_binding as binding;
 
 #[macro_use]
 extern crate serde_derive;

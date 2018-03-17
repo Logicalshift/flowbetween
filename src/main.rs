@@ -2,13 +2,13 @@
 //! # FlowBetween HTTP server
 //!
 
-extern crate ui;
+extern crate flo_ui as ui;
 extern crate flo;
-extern crate http_ui;
-extern crate binding;
-extern crate animation;
-extern crate anim_sqlite;
-extern crate static_files;
+extern crate flo_http_ui as http_ui;
+extern crate flo_binding as binding;
+extern crate flo_animation as animation;
+extern crate flo_anim_sqlite as anim_sqlite;
+extern crate flo_static_files as static_files;
 
 extern crate serde;
 extern crate serde_json;

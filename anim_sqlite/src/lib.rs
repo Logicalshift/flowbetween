@@ -1,5 +1,5 @@
-extern crate animation;
-extern crate canvas;
+extern crate flo_animation as animation;
+extern crate flo_canvas as canvas;
 
 extern crate rusqlite;
 extern crate desync;
