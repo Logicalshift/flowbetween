@@ -10,7 +10,10 @@ use std::thread::JoinHandle;
 /// 
 pub struct GtkThread {
     /// Used to send messages and actions to the Gtk thread
-    message_target: GtkMessageTarget
+    message_target: GtkMessageTarget,
+
+    /// None, or the running thread
+    running_thread: Option<JoinHandle<()>>
 }
 
 impl GtkThread {
@@ -18,15 +21,23 @@ impl GtkThread {
     /// Creates a new Gtk thread
     /// 
     pub fn new() -> GtkThread {
-        GtkThread {
-            message_target: GtkMessageTarget::new()
-        }
+        // Create a new thread
+        let thread = GtkThread {
+            message_target: GtkMessageTarget::new(),
+            running_thread: None
+        };
+
+        // Start it running
+        thread.running_thread = Some(thread.run_thread());
+
+        // This thread is the result
+        thread
     }
 
     ///
     /// Starts running Gtk in a thread
     /// 
-    pub fn run_thread(&self) -> JoinHandle<()> {
+    fn run_thread(&self) -> JoinHandle<()> {
         // Clone the message target so we can use it as the source for the new thread
         let thread_target = self.message_target.clone();
 
@@ -43,5 +54,15 @@ impl GtkThread {
         });
 
         thread
+    }
+}
+
+impl Drop for GtkThread {
+    fn drop(&mut self) {
+        // When a GtkThread is dropped, tell GTK to shut down
+        self.message_target.async(|_gtk| gtk::main_quit());
+
+        // Wait for the thread to finish before the object is truely dropped
+        self.running_thread.map(|running_thread| running_thread.join());
     }
 }
