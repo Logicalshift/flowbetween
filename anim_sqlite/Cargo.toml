@@ -5,8 +5,8 @@ authors     = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
 license     = "Apache-2.0"
 
 [dependencies]
-flo_canvas          = { path = "../canvas" }
-flo_animation       = { path = "../animation" }
+flo_canvas          = { path = "../canvas", version = "^0.1.0" }
+flo_animation       = { path = "../animation", version = "^0.1.0" }
 
 rusqlite            = { version = "0.11.0", features = ["bundled"] }
-desync              = { git = "https://github.com/logicalshift/desync", branch = "develop" }
+desync              = "^0.1.2"

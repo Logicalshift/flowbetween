@@ -23,7 +23,7 @@ mount               = { git = "https://github.com/iron/mount.git", rev="d30eeec"
 bodyparser          = { git = "https://github.com/iron/body-parser.git", rev="49ae53c" }
 percent-encoding    = "^1.0.1"
 futures             = "^0.1.17"
-desync              = { git = "https://github.com/logicalshift/desync", branch = "develop" }
+desync              = "^0.1.2"
 itertools           = "^0.7.4"
 websocket           = { version = "^0.20.2", features = [ "async" ] }
 tokio-core          = "^0.1"
