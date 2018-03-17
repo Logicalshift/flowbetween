@@ -19,8 +19,8 @@ serde_derive        = "^1.0.0"
 svg                 = "^0.5.6"
 uuid                = { version = "^0.4", features = [ "v4" ] }
 iron                = "0.6"
-mount               = { git = "https://github.com/iron/mount.git", rev="d30eeec" }
-bodyparser          = { git = "https://github.com/iron/body-parser.git", rev="49ae53c" }
+mount               = "0.4.0"
+bodyparser          = "0.8.0"
 percent-encoding    = "^1.0.1"
 futures             = "^0.1.17"
 desync              = "^0.1.2"
