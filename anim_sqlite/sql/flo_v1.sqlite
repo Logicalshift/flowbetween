@@ -253,6 +253,17 @@ CREATE TABLE Flo_LayerKeyFrame (
 CREATE INDEX FloIdx_FrameTime ON Flo_LayerKeyFrame (LayerId, AtTime);
 
 /*
+ * Specifies the assigned element ID for an element in a layer
+ */
+CREATE TABLE Flo_AssignedElementId (
+    /* The ID of the element that has been given an assigned ID */
+    ElementId   INTEGER NOT NULL PRIMARY KEY,
+
+    /* The ID assigned to this element */
+    AssignedId  INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
  * Represents an element in a vector layer
  */
 CREATE TABLE Flo_VectorElement (

@@ -53,7 +53,8 @@ pub struct VectorElementEntry {
     pub element_type:           VectorElementType,
     pub when:                   Duration,
     pub brush:                  Option<(i64, DrawingStyleType)>,
-    pub brush_properties_id:    Option<i64>
+    pub brush_properties_id:    Option<i64>,
+    pub assigned_id:            ElementId
 }
 
 ///
