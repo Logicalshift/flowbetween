@@ -3,6 +3,10 @@ name        = "flo_anim_sqlite"
 version     = "0.1.0"
 authors     = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
 license     = "Apache-2.0"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "SQLite storage for FlowBetween animations"
+
+include     = [ "Cargo.toml", "src/**/*", "sql/**/*" ]
 
 [dependencies]
 flo_canvas          = { path = "../canvas", version = "^0.1.0" }

@@ -3,11 +3,13 @@ name        = "flo_animation"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "Describes a FlowBetween animation"
 
 [dependencies]
-flo_canvas          = { path = "../canvas" }
-flo_curves          = { path = "../curves" }
-flo_float_encoder   = { path = "../float_encoder" }
+flo_canvas          = { path = "../canvas", version = "^0.1.0" }
+flo_curves          = { path = "../curves", version = "^0.1.0" }
+flo_float_encoder   = { path = "../float_encoder", version = "^0.1.0" }
 
 typemap             = "^0.3.3"
 modifier            = "^0.1.0"

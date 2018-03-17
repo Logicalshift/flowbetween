@@ -3,6 +3,8 @@ name        = "flo"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "User interface description for FlowBetween"
 
 [dependencies]
 flo_animation   = { path = "../animation", version = "^0.1.0" }
