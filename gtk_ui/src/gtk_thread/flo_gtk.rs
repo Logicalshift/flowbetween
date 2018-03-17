@@ -52,8 +52,7 @@ impl GtkMessageTarget {
     ///
     /// Performs an action asynchronously on this message target
     /// 
-    pub fn async<MsgFn: 'static+Send+FnOnce(&FloGtk) -> ()>(&mut self, action: MsgFn) 
-    where for<'r> MsgFn: FnOnce(&'r mut FloGtk) -> () {
+    pub fn async<MsgFn: 'static+Send+FnOnce(&mut FloGtk) -> ()>(&mut self, action: MsgFn) {
         // Lock the queue in order to start sending the message
         let mut queue = self.queue.0.lock().unwrap();
 
