@@ -462,11 +462,11 @@ fn read_frame_after_edits() {
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
-        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(127), Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
-        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(128), Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
@@ -492,11 +492,15 @@ fn read_frame_after_edits() {
             _ => None
         } == Some(&BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }));
 
-
         assert!(match &elements[3] {
             &Vector::BrushStroke(ref brush_stroke) => Some(brush_stroke.points()),
             _ => None
         }.is_some());
+
+        assert!(match &elements[3] {
+            &Vector::BrushStroke(ref brush_stroke) => Some(brush_stroke.id()),
+            _ => None
+        } == Some(ElementId::Assigned(128)));
     }
 
     {
