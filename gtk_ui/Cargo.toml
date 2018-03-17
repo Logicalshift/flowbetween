@@ -1,5 +1,5 @@
 [package]
-name        = "gtk-ui"
+name        = "flo_gtk_ui"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
