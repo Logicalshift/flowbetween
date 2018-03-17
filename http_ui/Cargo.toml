@@ -3,11 +3,15 @@ name        = "flo_http_ui"
 version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "HTTP+HTML implementation pipe for flo_ui"
+
+include     = [ "Cargo.toml", "src/**/*", "js/**/*" ]
 
 [dependencies]
-flo_ui              = { path = "../ui" }
-flo_binding         = { path = "../binding" }
-flo_canvas          = { path = "../canvas" }
+flo_ui              = { path = "../ui", version = "0.1.0" }
+flo_binding         = { path = "../binding", version = "0.1.0" }
+flo_canvas          = { path = "../canvas", version = "0.1.0" }
 
 serde               = "^1.0.0"
 serde_json          = "^1.0.0"
