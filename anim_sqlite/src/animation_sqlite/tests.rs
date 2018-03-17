@@ -458,7 +458,7 @@ fn read_frame_after_edits() {
         )),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
             BrushProperties(ElementId::Unassigned, BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))),
-        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(126), Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
@@ -500,7 +500,7 @@ fn read_frame_after_edits() {
         assert!(match &elements[3] {
             &Vector::BrushStroke(ref brush_stroke) => Some(brush_stroke.id()),
             _ => None
-        } == Some(ElementId::Assigned(128)));
+        } == Some(ElementId::Assigned(127)));
     }
 
     {
