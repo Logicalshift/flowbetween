@@ -21,8 +21,8 @@ impl ElementId {
         use self::ElementId::*;
 
         match self {
-            &Unassigned => true,
-            &Assigned(_) => false
+            &Unassigned     => false,
+            &Assigned(_)    => true
         }
     }
 
@@ -73,5 +73,37 @@ impl From<Option<i64>> for ElementId {
             Some(id)    => ElementId::Assigned(id),
             None        => ElementId::Unassigned
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn create_from_option() {
+        assert!(ElementId::from(Some(2)) == ElementId::Assigned(2));
+        assert!(ElementId::from(None) == ElementId::Unassigned);
+    }
+
+    #[test]
+    fn create_option_from_id() {
+        assert!(Option::<i64>::from(ElementId::Assigned(42)) == Some(42));
+        assert!(Option::<i64>::from(ElementId::Unassigned) == None);
+
+        assert!(ElementId::Assigned(42).id() == Some(42));
+        assert!(ElementId::Unassigned.id() == None);
+    }
+
+    #[test]
+    fn is_assigned() {
+        assert!(ElementId::Assigned(42).is_assigned());
+        assert!(!ElementId::Unassigned.is_assigned());
+    }
+
+    #[test]
+    fn is_unassigned() {
+        assert!(!ElementId::Assigned(42).is_unassigned());
+        assert!(ElementId::Unassigned.is_unassigned());
     }
 }
