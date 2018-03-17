@@ -208,6 +208,13 @@ impl FloSqlite {
                 Ok(())
             },
 
+            PushElementAssignId(assigned_id)                                => {
+                let element_id                      = self.stack.last().unwrap();
+                let mut insert_element_assigned_id  = Self::prepare(&self.sqlite, FloStatement::InsertElementAssignedId)?;
+                insert_element_assigned_id.insert(&[element_id, &assigned_id])?;
+                Ok(())
+            },
+
             PopVectorBrushElement(drawing_style)                            => {
                 let brush_id                            = self.stack.pop().unwrap();
                 let element_id                          = self.stack.pop().unwrap();

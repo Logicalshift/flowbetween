@@ -153,11 +153,20 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     /// The element is created without its associated data.
     ///
     fn create_new_element(db: &mut TFile, layer_id: i64, when: Duration, element: &Vector) -> Result<()> {
-        db.update(vec![
-            DatabaseUpdate::PushLayerId(layer_id),
-            DatabaseUpdate::PushNearestKeyFrame(when),
-            DatabaseUpdate::PushVectorElementType(VectorElementType::from(element), when)
-        ])?;
+        if let Some(ElementId::Assigned(assigned_id)) = Some(element.id()) {
+            db.update(vec![
+                DatabaseUpdate::PushLayerId(layer_id),
+                DatabaseUpdate::PushNearestKeyFrame(when),
+                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element), when),
+                DatabaseUpdate::PushElementAssignId(assigned_id)
+            ])?;
+        } else {
+            db.update(vec![
+                DatabaseUpdate::PushLayerId(layer_id),
+                DatabaseUpdate::PushNearestKeyFrame(when),
+                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element), when)
+            ])?;
+        }
 
         Ok(())
     }

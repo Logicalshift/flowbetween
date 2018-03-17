@@ -89,6 +89,7 @@ enum FloStatement {
     InsertAssignLayer,
     InsertKeyFrame,
     InsertVectorElementType,
+    InsertElementAssignedId,
     InsertBrushDefinitionElement,
     InsertBrushPropertiesElement,
     InsertBrushPoint,
@@ -230,6 +231,7 @@ impl FloSqlite {
             InsertBrushDefinitionElement    => "INSERT INTO Flo_BrushElement (ElementId, Brush, DrawingStyle) VALUES (?, ?, ?)",
             InsertBrushPropertiesElement    => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
             InsertBrushPoint                => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            InsertElementAssignedId         => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
 
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                     => "DELETE FROM Flo_LayerType WHERE LayerId = ?"

@@ -94,6 +94,9 @@ pub enum DatabaseUpdate {
     /// (Stack has the element ID, the key frame ID and the time left afterwards)
     PushVectorElementType(VectorElementType, Duration),
 
+    /// Uses the element ID on top of the stack and sets its assigned ID, leaving it on top of the stack
+    PushElementAssignId(i64),
+
     /// Pops a brush ID and a vector element ID and creates a vector brush element from them
     PopVectorBrushElement(DrawingStyleType),
 
