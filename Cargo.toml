@@ -5,6 +5,7 @@ authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Vector animation editor"
+include     = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 
 [dependencies]
 flo_static_files= { path = "static_files",  version="^0.1.0" }

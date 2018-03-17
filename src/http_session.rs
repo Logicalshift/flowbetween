@@ -40,7 +40,7 @@ impl FlowBetweenSession {
         let animation = Self::create_inmemory_animation();
 
         // Some images for the root controller
-        let flo = images.register(png_static(include_bytes!("../static_files/png/Flo-Orb-small.png")));
+        let flo = images.register(png_static(include_bytes!("../png/Flo-Orb-small.png")));
         images.assign_name(&flo, "flo");
 
         // Create the session
