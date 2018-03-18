@@ -1,9 +1,11 @@
 use super::message::*;
+use super::super::gtk_action::*;
+use super::super::widgets::*;
 
 use gtk;
 use glib;
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::cell::RefCell;
 use std::sync::*;
 use std::thread;
@@ -31,7 +33,10 @@ pub struct GtkMessageTarget {
 /// 
 pub struct FloGtk {
     /// Messages pending for the GTK thread
-    pending_messages: MessageQueue
+    pending_messages: MessageQueue,
+
+    /// Hashmap for the windows that are being managed by this object
+    windows: HashMap<WindowId, Arc<GtkUiWindow>>
 }
 
 impl MessageQueue {
@@ -126,7 +131,8 @@ impl FloGtk {
     /// 
     pub fn new() -> FloGtk {
         FloGtk { 
-            pending_messages: MessageQueue::new()
+            pending_messages:   MessageQueue::new(),
+            windows:            HashMap::new()
         }
     }
 
@@ -144,6 +150,20 @@ impl FloGtk {
         // Ensure that we're ready to go by flushing all pending messages for this thread immediately
         // If there were any messages pending before we added to the list of instances, this thread will never be triggered
         process_pending_messages();
+    }
+
+    ///
+    /// Associates a window with an ID
+    /// 
+    pub fn register_window<TWindow: 'static+GtkUiWindow>(&mut self, window_id: WindowId, window: TWindow) {
+        self.windows.insert(window_id, Arc::new(window));
+    }
+
+    ///
+    /// Attempts to retrieve the window with the specified ID
+    /// 
+    pub fn get_window(&self, window_id: WindowId) -> Option<Arc<GtkUiWindow>> {
+        self.windows.get(&window_id).cloned()
     }
 
     ///
