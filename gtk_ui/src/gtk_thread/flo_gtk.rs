@@ -6,8 +6,9 @@ use gtk;
 use glib;
 
 use std::collections::{HashMap, VecDeque};
-use std::cell::RefCell;
+use std::cell::{RefCell, RefMut};
 use std::sync::*;
+use std::rc::Rc;
 use std::thread;
 
 /// Contains the FloGtk instance running on the current thread
@@ -36,7 +37,7 @@ pub struct FloGtk {
     pending_messages: MessageQueue,
 
     /// Hashmap for the windows that are being managed by this object
-    windows: HashMap<WindowId, Arc<GtkUiWindow>>
+    windows: HashMap<WindowId, Rc<RefCell<GtkUiWindow>>>
 }
 
 impl MessageQueue {
@@ -156,14 +157,14 @@ impl FloGtk {
     /// Associates a window with an ID
     /// 
     pub fn register_window<TWindow: 'static+GtkUiWindow>(&mut self, window_id: WindowId, window: TWindow) {
-        self.windows.insert(window_id, Arc::new(window));
+        self.windows.insert(window_id, Rc::new(RefCell::new(window)));
     }
 
     ///
     /// Attempts to retrieve the window with the specified ID
     /// 
-    pub fn get_window(&self, window_id: WindowId) -> Option<Arc<GtkUiWindow>> {
-        self.windows.get(&window_id).cloned()
+    pub fn get_window<'a>(&'a self, window_id: WindowId) -> Option<RefMut<'a, GtkUiWindow+'static>> {
+        self.windows.get(&window_id).map(|window| window.borrow_mut())
     }
 
     ///

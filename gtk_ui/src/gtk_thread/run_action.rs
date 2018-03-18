@@ -18,12 +18,17 @@ pub fn run_action(flo_gtk: &mut FloGtk, action: &GtkAction) {
 /// 
 fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, action: &GtkWindowAction) {
     match action {
-        &GtkWindowAction::New(ref window_type)          => unimplemented!(),
-        &GtkWindowAction::SetTitle(ref title)           => unimplemented!(),
-        &GtkWindowAction::SetDefaultSize(width, height) => unimplemented!(),
-        &GtkWindowAction::SetPosition(pos)              => unimplemented!(),
-        &GtkWindowAction::ShowAll                       => unimplemented!(),
-        &GtkWindowAction::Hide                          => unimplemented!(),
-        &GtkWindowAction::Close                         => unimplemented!()
+        &GtkWindowAction::New(ref window_type) => {
+            // For new window actions, we need to create the window before we proceed
+            let new_window = gtk::Window::new(window_type.clone());
+            flo_gtk.register_window(window_id, new_window);
+
+            flo_gtk.get_window(window_id).map(|mut window| window.process(flo_gtk, &GtkWindowAction::New(window_type.clone())));
+        },
+
+        other => {
+            // For all other actions, we just pass on to the window with this ID
+            flo_gtk.get_window(window_id).map(|mut window| window.process(flo_gtk, other));
+        }
     }
 }
