@@ -48,7 +48,7 @@ impl GtkThread {
             // Initialise gtk and panic if we get a failure
             let init_result = gtk::init();
             if init_result.is_err() {
-                panic!("Failed to start Gtk: {:?}", init_result);
+                panic!("Failed to start GTK: {:?}", init_result);
             }
 
             // Create the Gtk data structure
