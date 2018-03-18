@@ -6,7 +6,7 @@ use gtk;
 use glib;
 
 use std::collections::{HashMap, VecDeque};
-use std::cell::{RefCell, RefMut};
+use std::cell::RefCell;
 use std::sync::*;
 use std::rc::Rc;
 use std::thread;
@@ -163,8 +163,8 @@ impl FloGtk {
     ///
     /// Attempts to retrieve the window with the specified ID
     /// 
-    pub fn get_window<'a>(&'a self, window_id: WindowId) -> Option<RefMut<'a, GtkUiWindow+'static>> {
-        self.windows.get(&window_id).map(|window| window.borrow_mut())
+    pub fn get_window(&self, window_id: WindowId) -> Option<Rc<RefCell<GtkUiWindow>>> {
+        self.windows.get(&window_id).cloned()
     }
 
     ///

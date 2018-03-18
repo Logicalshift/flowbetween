@@ -36,5 +36,5 @@ pub enum GtkAction {
     Stop,
 
     /// Performs an action on a window
-    Window(WindowId, GtkWindowAction)
+    Window(WindowId, Vec<GtkWindowAction>)
 }
