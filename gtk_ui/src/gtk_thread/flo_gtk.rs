@@ -168,6 +168,13 @@ impl FloGtk {
     }
 
     ///
+    /// Removes the window that has the specified ID
+    /// 
+    pub fn remove_window(&mut self, window_id: WindowId) {
+        self.windows.remove(&window_id);
+    }
+
+    ///
     /// Processes any messages pending for this instance
     /// 
     fn process_messages(&mut self) {

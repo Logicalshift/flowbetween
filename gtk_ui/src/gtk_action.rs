@@ -20,7 +20,7 @@ pub enum WidgetId {
 pub enum GtkWindowAction {
     New(WindowType),
     SetPosition(WindowPosition),
-    SetDefaultSize(i32, u32),
+    SetDefaultSize(i32, i32),
     SetTitle(String),
     ShowAll,
     Hide,

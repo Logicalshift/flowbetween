@@ -26,6 +26,12 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, action: &GtkWind
             flo_gtk.get_window(window_id).map(|mut window| window.process(flo_gtk, &GtkWindowAction::New(window_type.clone())));
         },
 
+        &GtkWindowAction::Close => {
+            // Closing the window removes it entirely from the windows we know about
+            flo_gtk.get_window(window_id).map(|mut window| window.process(flo_gtk, &GtkWindowAction::Close));
+            flo_gtk.remove_window(window_id);
+        },
+
         other => {
             // For all other actions, we just pass on to the window with this ID
             flo_gtk.get_window(window_id).map(|mut window| window.process(flo_gtk, other));
