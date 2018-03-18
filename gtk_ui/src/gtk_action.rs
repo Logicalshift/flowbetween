@@ -16,6 +16,7 @@ pub enum WidgetId {
 ///
 /// Actions that cacn be performed on a window
 /// 
+#[derive(Clone)]
 pub enum GtkWindowAction {
     New(WindowType),
     SetPosition(WindowPosition),
@@ -29,6 +30,7 @@ pub enum GtkWindowAction {
 ///
 /// GTK actions that can be requested
 /// 
+#[derive(Clone)]
 pub enum GtkAction {
     /// Shuts down Gtk
     Stop,

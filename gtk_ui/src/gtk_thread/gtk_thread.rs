@@ -1,4 +1,6 @@
 use super::flo_gtk::*;
+use super::run_action::*;
+use super::super::gtk_action::*;
 
 use gtk;
 
@@ -54,6 +56,17 @@ impl GtkThread {
         });
 
         thread
+    }
+
+    ///
+    /// Performs a set of actions on the Gtk thread
+    /// 
+    pub fn perform_actions(&mut self, actions: Vec<GtkAction>) {
+        self.message_target.async(|flo_gtk| {
+            for action in actions {
+                run_action(flo_gtk, &action)
+            }
+        });
     }
 }
 
