@@ -15,6 +15,7 @@ mod gtk_thread;
 mod gtk_event;
 mod gtk_action;
 mod gtk_user_interface;
+mod widgets;
 
 pub use self::gtk_thread::*;
 pub use self::gtk_event::*;
