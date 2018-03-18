@@ -6,6 +6,7 @@ use glib;
 use std::collections::VecDeque;
 use std::cell::RefCell;
 use std::sync::*;
+use std::thread;
 
 /// Contains the FloGtk instance running on the current thread
 thread_local!(static GTK_INSTANCES: RefCell<Vec<FloGtk>> = RefCell::new(vec![]));
@@ -66,6 +67,42 @@ impl GtkMessageTarget {
         if !messages_pending {
             glib::idle_add(process_pending_messages);
         }
+    }
+
+    ///
+    /// Performs an action synchronously on this message target
+    /// 
+    pub fn sync<TReturn: 'static+Send, MsgFn: 'static+Send+FnOnce(&mut FloGtk) -> TReturn>(&mut self, action: MsgFn) -> TReturn {
+        // Thread to be woken once the event is available
+        let wake_thread = thread::current();
+
+        // The result will be placed here
+        let our_result = Arc::new(Mutex::new(None));
+
+        // We pass a copy of this result to the target thread
+        let gtk_result = our_result.clone(); 
+
+        // Dispatch the task to the gtk thread
+        self.async(move |gtk| { 
+            // Fetch the result from the function
+            let result = action(gtk);
+
+            // Store as the thread result
+            *gtk_result.lock().unwrap() = Some(result);
+
+            // Unpark the wake thread when done
+            wake_thread.unpark(); 
+        });
+
+        // Park the thread until the result is available
+        // (If unpark is called before park, the park call should return immediately)
+        while { our_result.lock().unwrap().is_none() } {
+            thread::park();
+        }
+
+        // Return the result that was generated on the gtk thread
+        let result = our_result.lock().unwrap().take();
+        result.unwrap()
     }
 }
 
