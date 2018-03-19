@@ -8,13 +8,14 @@ pub enum WindowId {
 }
 
 /// ID used to identify a Gtk widget
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum WidgetId {
     Unassigned,
     Assigned(i64)
 }
 
 ///
-/// Actions that cacn be performed on a window
+/// Actions that can be performed on a window
 /// 
 #[derive(Clone)]
 pub enum GtkWindowAction {
@@ -28,6 +29,13 @@ pub enum GtkWindowAction {
 }
 
 ///
+/// Actions that can be performed on a widget
+/// 
+#[derive(Clone)]
+pub enum GtkWidgetAction {
+}
+
+///
 /// GTK actions that can be requested
 /// 
 #[derive(Clone)]
@@ -35,6 +43,9 @@ pub enum GtkAction {
     /// Shuts down Gtk
     Stop,
 
-    /// Performs an action on a window
-    Window(WindowId, Vec<GtkWindowAction>)
+    /// Performs some actions on a window
+    Window(WindowId, Vec<GtkWindowAction>),
+
+    /// Performs some actions on a widget
+    Widget(WidgetId, Vec<GtkWidgetAction>)
 }
