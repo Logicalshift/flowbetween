@@ -9,7 +9,8 @@ use gtk;
 pub fn run_action(flo_gtk: &mut FloGtk, action: &GtkAction) {
     match action {
         &GtkAction::Stop                                    => gtk::main_quit(),
-        &GtkAction::Window(window_id, ref window_action)    => run_window_action(flo_gtk, window_id, window_action)
+        &GtkAction::Window(window_id, ref window_action)    => run_window_action(flo_gtk, window_id, window_action),
+        &GtkAction::Widget(widget_id, ref widget_action)    => run_widget_action(flo_gtk, widget_id, widget_action)
     }
 }
 
@@ -47,4 +48,11 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
             }
         }
     }
+}
+
+///
+/// Executes a Gtk widget action
+/// 
+fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<GtkWidgetAction>) {
+    unimplemented!()
 }
