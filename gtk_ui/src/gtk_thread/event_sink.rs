@@ -205,3 +205,76 @@ impl Drop for GtkEventStream {
         sink_core.poll_complete.take().map(|task| task.notify());
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use std::thread;
+    use futures::executor;
+
+    #[test]
+    fn can_send_and_receive_an_event() {
+        let mut sink    = GtkEventSink::new();
+        let mut stream  = sink.get_stream();
+
+        // Spawn a thread to send a message to the sink
+        thread::spawn(move || {
+            let mut sink_executor = executor::spawn(sink);
+            sink_executor.wait_send(GtkEvent::None);
+        });
+
+        // Receive the event from the thread
+        let mut stream_executor = executor::spawn(stream);
+
+        let next_event = stream_executor.wait_stream();
+        assert!(next_event == Some(Ok(GtkEvent::None)));
+    }
+
+    #[test]
+    fn can_send_and_receive_an_event_to_multiple_streams() {
+        let mut sink    = GtkEventSink::new();
+        let mut stream1 = sink.get_stream();
+        let mut stream2 = sink.get_stream();
+        let mut stream3 = sink.get_stream();
+
+        // Spawn a thread to send a message to the sink
+        thread::spawn(move || {
+            let mut sink_executor = executor::spawn(sink);
+            sink_executor.wait_send(GtkEvent::None);
+        });
+
+        // Receive the event from the thread
+        let mut stream_executor1 = executor::spawn(stream1);
+        let mut stream_executor3 = executor::spawn(stream2);
+        let mut stream_executor2 = executor::spawn(stream3);
+
+        assert!(stream_executor1.wait_stream() == Some(Ok(GtkEvent::None)));
+        assert!(stream_executor2.wait_stream() == Some(Ok(GtkEvent::None)));
+        assert!(stream_executor3.wait_stream() == Some(Ok(GtkEvent::None)));
+
+        assert!(stream_executor1.wait_stream() == None);
+        assert!(stream_executor2.wait_stream() == None);
+        assert!(stream_executor3.wait_stream() == None);
+    }
+
+    #[test]
+    fn closing_sink_ends_stream() {
+        let mut sink    = GtkEventSink::new();
+        let mut stream  = sink.get_stream();
+
+        // Spawn a thread to send a message to the sink
+        thread::spawn(move || {
+            let mut sink_executor = executor::spawn(sink);
+            sink_executor.wait_send(GtkEvent::None);
+        });
+
+        // Receive the event from the thread
+        let mut stream_executor = executor::spawn(stream);
+
+        let _next_event = stream_executor.wait_stream();
+        let last_event = stream_executor.wait_stream();
+
+        assert!(last_event == None);
+    }
+}
