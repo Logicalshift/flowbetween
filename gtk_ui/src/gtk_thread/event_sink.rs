@@ -6,25 +6,35 @@ use futures::sink::Sink;
 use futures::task;
 use futures::task::Task;
 
-use std::mem;
 use std::sync::*;
 use std::collections::VecDeque;
 
 ///
 /// Core data for a Gtk event sink or stream
 /// 
-struct GtkEventCore {
-    /// Events waiting to be sent to listening streams
+struct GtkEventSinkCore {
+    /// True if the sink has been dropped
+    dropped: bool,
+
+    /// Streams that are attached to this event sink
+    streams: Vec<Arc<Mutex<GtkEventStreamCore>>>,
+
+    /// If something is waiting for all of the events to drain, this is the task to notify
+    poll_complete: Option<Task>
+}
+
+///
+/// Core data for a Gtk event stream
+/// 
+struct GtkEventStreamCore {
+    /// Set to true if this stream has been dropped and is not in use any more
+    dropped: bool,
+
+    /// The events that have been sent to this stream and are not yet consumed
     pending: VecDeque<GtkEvent>,
 
-    /// Tasks waiting for an event to arrive in the pending list
-    listening: Vec<Task>,
-
-    /// Tasks waiting for the pending queue to drain
-    poll_complete: Vec<Task>,
-
-    /// Count of the number of streams that are listening for events
-    active_streams: usize
+    /// If the stream is waiting for an event, this is the task to notify
+    poll_event: Option<Task>,
 }
 
 ///
@@ -34,14 +44,19 @@ struct GtkEventCore {
 /// 
 #[derive(Clone)]
 pub struct GtkEventSink {
-    core: Arc<Mutex<GtkEventCore>>
+    /// Core of this sink
+    core: Arc<Mutex<GtkEventSinkCore>>
 }
 
 ///
 /// Stream that receives future events from an event sink
 /// 
 pub struct GtkEventStream {
-    core: Arc<Mutex<GtkEventCore>>
+    /// Core of this stream
+    core: Arc<Mutex<GtkEventStreamCore>>,
+
+    /// Core of the sink this stream is attached to
+    sink_core: Arc<Mutex<GtkEventSinkCore>>
 }
 
 impl GtkEventSink {
@@ -49,11 +64,10 @@ impl GtkEventSink {
     /// Creates a new event sink
     /// 
     pub fn new() -> GtkEventSink {
-        let core = GtkEventCore {
-            pending:        VecDeque::new(),
-            listening:      vec![],
-            poll_complete:  vec![],
-            active_streams: 0
+        let core = GtkEventSinkCore {
+            dropped:        false,
+            streams:        vec![],
+            poll_complete:  None
         };
 
         GtkEventSink {
@@ -64,9 +78,24 @@ impl GtkEventSink {
     ///
     /// Retrieves a stream for reading from this sink
     /// 
-    pub fn get_stream(&self) -> GtkEventStream {
+    pub fn get_stream(&mut self) -> GtkEventStream {
+        let mut core = self.core.lock().unwrap();
+
+        // Create the stream core
+        let stream_core = GtkEventStreamCore {
+            dropped:    false,
+            pending:    VecDeque::new(),
+            poll_event: None
+        };
+        let stream_core = Arc::new(Mutex::new(stream_core));
+
+        // Add to the list of streams attached to this event sink
+        core.streams.push(Arc::clone(&stream_core));
+
+        // Generate the new event stream
         GtkEventStream {
-            core: Arc::clone(&self.core)
+            core:       stream_core,
+            sink_core:  Arc::clone(&self.core)
         }
     }
 }
@@ -79,17 +108,19 @@ impl Sink for GtkEventSink {
         // Get the core
         let mut core = self.core.lock().unwrap();
 
+        // Clean out any stream that is no longer active
+        core.streams.retain(|stream_core| !stream_core.lock().unwrap().dropped);
+
         // If there are active streams, then post the event and wake any up that are waiting
-        if core.active_streams > 0 {
-            // Post the event
-            core.pending.push_front(item);
+        if core.streams.len() > 0 {
+            for stream in core.streams.iter() {
+                let mut stream_core = stream.lock().unwrap();
 
-            // Wake the streams
-            let mut listening = vec![];
-            mem::swap(&mut listening, &mut core.listening);
+                // Post the event
+                stream_core.pending.push_front(item.clone());
 
-            for task in listening {
-                task.notify();
+                // Wake the stream if it's asleep
+                stream_core.poll_event.take().map(|task| task.notify());
             }
         }
 
@@ -100,14 +131,77 @@ impl Sink for GtkEventSink {
     fn poll_complete(&mut self) -> Poll<(), ()> {
         let mut core = self.core.lock().unwrap();
 
-        if core.pending.len() > 0 {
+        // Clean out any stream that is no longer active
+        core.streams.retain(|stream_core| !stream_core.lock().unwrap().dropped);
+
+        // Check for pending actions
+        let any_pending = core.streams.iter()
+            .any(|stream_core| stream_core.lock().unwrap().pending.len() > 0);
+
+        if any_pending {
             // There are tasks waiting to be consumed
-            core.poll_complete.push(task::current());
+            core.poll_complete = Some(task::current());
 
             Ok(Async::NotReady)
         } else {
             // There are no tasks waiting to be consumed
             Ok(Async::Ready(()))
         }
+    }
+}
+
+impl Stream for GtkEventStream {
+    type Item   = GtkEvent;
+    type Error  = ();
+
+    fn poll(&mut self) -> Poll<Option<GtkEvent>, ()> {
+        // If we need to signal the sink core, we'll need it locked, and it must always be locked ahead of the stream core
+        let mut sink_core   = self.sink_core.lock().unwrap();
+        let mut stream_core = self.core.lock().unwrap();
+
+        // If there is a pending event, return it immediately
+        if let Some(next_event) = stream_core.pending.pop_front() {
+            if stream_core.pending.len() == 0 {
+                // All events are clear: the sink can poll for completion again
+                sink_core.poll_complete.take().map(|task| task.notify());
+            }
+
+            // Next event is ready
+            Ok(Async::Ready(Some(next_event)))
+        } else if sink_core.dropped {
+            // The sink is no longer available to produce more events
+            Ok(Async::Ready(None))
+        } else {
+            // No events are ready: wait for the next event to arrive
+            stream_core.poll_event = Some(task::current());
+
+            Ok(Async::NotReady)
+        }
+    }
+}
+
+impl Drop for GtkEventSink {
+    fn drop(&mut self) {
+        // Mark the core as dropped
+        let mut core = self.core.lock().unwrap();
+        core.dropped = true;
+
+        // Wake all of the streams so they have a chance to signal that they are finished
+        for stream_core in core.streams.iter() {
+            stream_core.lock().unwrap().poll_event.take().map(|task| task.notify());
+        }
+    }
+}
+
+impl Drop for GtkEventStream {
+    fn drop(&mut self) {
+        let mut sink_core   = self.sink_core.lock().unwrap();
+        let mut stream_core = self.core.lock().unwrap();
+
+        // Mark the core as dropped
+        stream_core.dropped = true;
+
+        // Wake the sink to give it a chance to indicate that it has completed sending events
+        sink_core.poll_complete.take().map(|task| task.notify());
     }
 }
