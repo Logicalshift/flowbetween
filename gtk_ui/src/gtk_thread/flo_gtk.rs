@@ -1,9 +1,12 @@
 use super::message::*;
 use super::super::gtk_action::*;
+use super::super::gtk_event::*;
 use super::super::widgets::*;
 
 use gtk;
 use glib;
+use futures::stream::Stream;
+use futures::sink::Sink;
 
 use std::collections::{HashMap, VecDeque};
 use std::cell::RefCell;
@@ -172,6 +175,20 @@ impl FloGtk {
     /// 
     pub fn remove_window(&mut self, window_id: WindowId) {
         self.windows.remove(&window_id);
+    }
+
+    ///
+    /// Retrieves a stream that will return all future events generated for this object
+    /// 
+    pub fn get_event_stream(&mut self) -> Box<Stream<Item=GtkEvent, Error=()>> {
+        unimplemented!()
+    }
+
+    ///
+    /// Retrieves a sink that can be used to send events to any attached streams
+    /// 
+    pub fn get_event_sink(&mut self) -> Box<Sink<SinkItem=GtkEvent, SinkError=()>> {
+        unimplemented!()
     }
 
     ///
