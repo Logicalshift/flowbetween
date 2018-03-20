@@ -1,4 +1,5 @@
 mod message;
+pub mod event_sink;
 mod flo_gtk;
 mod gtk_thread;
 mod run_action;
