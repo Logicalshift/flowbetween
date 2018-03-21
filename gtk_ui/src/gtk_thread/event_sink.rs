@@ -13,8 +13,8 @@ use std::collections::VecDeque;
 /// Core data for a Gtk event sink or stream
 /// 
 struct GtkEventSinkCore {
-    /// True if the sink has been dropped
-    dropped: bool,
+    /// Number of event sinks referencing this core
+    sink_count: usize,
 
     /// Streams that are attached to this event sink
     streams: Vec<Arc<Mutex<GtkEventStreamCore>>>,
@@ -42,7 +42,6 @@ struct GtkEventStreamCore {
 /// 
 /// Gtk events are dispatched with a multiple sender/multiple receiver system
 /// 
-#[derive(Clone)]
 pub struct GtkEventSink {
     /// Core of this sink
     core: Arc<Mutex<GtkEventSinkCore>>
@@ -65,7 +64,7 @@ impl GtkEventSink {
     /// 
     pub fn new() -> GtkEventSink {
         let core = GtkEventSinkCore {
-            dropped:        false,
+            sink_count:     1,
             streams:        vec![],
             poll_complete:  None
         };
@@ -168,7 +167,7 @@ impl Stream for GtkEventStream {
 
             // Next event is ready
             Ok(Async::Ready(Some(next_event)))
-        } else if sink_core.dropped {
+        } else if sink_core.sink_count <= 0 {
             // The sink is no longer available to produce more events
             Ok(Async::Ready(None))
         } else {
@@ -180,11 +179,26 @@ impl Stream for GtkEventStream {
     }
 }
 
+impl Clone for GtkEventSink {
+    fn clone(&self) -> GtkEventSink {
+        // Increase the reference count for the event sinks
+        {
+            let mut core = self.core.lock().unwrap();
+            core.sink_count += 1;
+        }
+
+        // Generate a new event sink with the same core as this one
+        GtkEventSink {
+            core: Arc::clone(&self.core)
+        }        
+    }
+}
+
 impl Drop for GtkEventSink {
     fn drop(&mut self) {
         // Mark the core as dropped
         let mut core = self.core.lock().unwrap();
-        core.dropped = true;
+        core.sink_count -= 1;
 
         // Wake all of the streams so they have a chance to signal that they are finished
         for stream_core in core.streams.iter() {
@@ -216,12 +230,12 @@ mod test {
     #[test]
     fn can_send_and_receive_an_event() {
         let mut sink    = GtkEventSink::new();
-        let mut stream  = sink.get_stream();
+        let stream      = sink.get_stream();
 
         // Spawn a thread to send a message to the sink
         thread::spawn(move || {
             let mut sink_executor = executor::spawn(sink);
-            sink_executor.wait_send(GtkEvent::None);
+            sink_executor.wait_send(GtkEvent::None).unwrap();
         });
 
         // Receive the event from the thread
@@ -234,14 +248,14 @@ mod test {
     #[test]
     fn can_send_and_receive_an_event_to_multiple_streams() {
         let mut sink    = GtkEventSink::new();
-        let mut stream1 = sink.get_stream();
-        let mut stream2 = sink.get_stream();
-        let mut stream3 = sink.get_stream();
+        let stream1     = sink.get_stream();
+        let stream2     = sink.get_stream();
+        let stream3     = sink.get_stream();
 
         // Spawn a thread to send a message to the sink
         thread::spawn(move || {
             let mut sink_executor = executor::spawn(sink);
-            sink_executor.wait_send(GtkEvent::None);
+            sink_executor.wait_send(GtkEvent::None).unwrap();
         });
 
         // Receive the event from the thread
@@ -259,14 +273,44 @@ mod test {
     }
 
     #[test]
+    fn can_send_event_from_multiple_sinks() {
+        let mut sink    = Some(GtkEventSink::new());
+        let stream      = sink.as_mut().unwrap().get_stream();
+
+        for sink_num in 0..3 {
+            let sink = sink.clone().unwrap();
+            // Spawn a thread to send a message to the sink
+            thread::spawn(move || {
+                let mut sink_executor = executor::spawn(sink);
+                sink_executor.wait_send(GtkEvent::None).unwrap();
+            });
+        }
+
+        // Make sure the sink is dropped when all of the threads finish
+        sink = None;
+
+        // Receive the event from the thread
+        let mut stream_executor = executor::spawn(stream);
+
+        let next_event = stream_executor.wait_stream();
+        assert!(next_event == Some(Ok(GtkEvent::None)));
+        let next_event = stream_executor.wait_stream();
+        assert!(next_event == Some(Ok(GtkEvent::None)));
+        let next_event = stream_executor.wait_stream();
+        assert!(next_event == Some(Ok(GtkEvent::None)));
+        let next_event = stream_executor.wait_stream();
+        assert!(next_event == None);
+    }
+
+    #[test]
     fn closing_sink_ends_stream() {
         let mut sink    = GtkEventSink::new();
-        let mut stream  = sink.get_stream();
+        let stream      = sink.get_stream();
 
         // Spawn a thread to send a message to the sink
         thread::spawn(move || {
             let mut sink_executor = executor::spawn(sink);
-            sink_executor.wait_send(GtkEvent::None);
+            sink_executor.wait_send(GtkEvent::None).unwrap();
         });
 
         // Receive the event from the thread
