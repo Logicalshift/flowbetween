@@ -1,4 +1,5 @@
 use super::message::*;
+use super::event_sink::*;
 use super::super::gtk_action::*;
 use super::super::gtk_event::*;
 use super::super::widgets::*;
@@ -40,7 +41,10 @@ pub struct FloGtk {
     pending_messages: MessageQueue,
 
     /// Hashmap for the windows that are being managed by this object
-    windows: HashMap<WindowId, Rc<RefCell<GtkUiWindow>>>
+    windows: HashMap<WindowId, Rc<RefCell<GtkUiWindow>>>,
+
+    /// The event sink for this object
+    event_sink: GtkEventSink
 }
 
 impl MessageQueue {
@@ -136,7 +140,8 @@ impl FloGtk {
     pub fn new() -> FloGtk {
         FloGtk { 
             pending_messages:   MessageQueue::new(),
-            windows:            HashMap::new()
+            windows:            HashMap::new(),
+            event_sink:         GtkEventSink::new()
         }
     }
 
@@ -181,14 +186,16 @@ impl FloGtk {
     /// Retrieves a stream that will return all future events generated for this object
     /// 
     pub fn get_event_stream(&mut self) -> Box<Stream<Item=GtkEvent, Error=()>> {
-        unimplemented!()
+        // Generate a stream from our event sink
+        Box::new(self.event_sink.get_stream())
     }
 
     ///
     /// Retrieves a sink that can be used to send events to any attached streams
     /// 
     pub fn get_event_sink(&mut self) -> Box<Sink<SinkItem=GtkEvent, SinkError=()>> {
-        unimplemented!()
+        // Result is a clone of our 'core' event sink
+        Box::new(self.event_sink.clone())
     }
 
     ///
