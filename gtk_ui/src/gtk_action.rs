@@ -1,3 +1,6 @@
+use flo_ui::*;
+use flo_canvas::*;
+
 use gtk::*;
 
 /// ID used to identify a Gtk window
@@ -33,6 +36,7 @@ pub enum GtkWindowAction {
 /// 
 #[derive(Clone)]
 pub enum GtkWidgetType {
+    Generic,
     Layout,
     Button,
     Label,
@@ -49,8 +53,56 @@ pub enum GtkWidgetAction {
     /// Creates a new widget of the specifed type
     New(GtkWidgetType),
 
+    /// Removes all the widgets from the specified window and makes this one the new root
+    SetRoot(WindowId),
+
+    /// Updates the layout of this widget
+    Layout(WidgetLayout),
+
+    /// Updates the content of this widget
+    Content(WidgetContent),
+
+    /// Updates the appearance of this widget
+    Appearance(Appearance),
+
+    /// Updates the state of this widget
+    State(State),
+
+    /// Updates the font properties for this widget
+    Font(Font),
+
     /// Deletes this widget (and any child widgets it may contain)
     Delete
+}
+
+///
+/// Specifies a change to the content of a widget
+/// 
+#[derive(Clone)]
+pub enum WidgetContent {
+    /// Adds this widget as a child of the specified widget
+    SetParent(WidgetId),
+
+    /// Sets the text of this widget to the specified string
+    SetText(String),
+
+    /// Specifies that this widget should draw itself from the specified canvas
+    Draw(Resource<Canvas>)
+}
+
+///
+/// Specifies a change to how a widget is laid out
+/// 
+#[derive(Clone)]
+pub enum WidgetLayout {
+    /// Specifies how this widget should be laid out
+    BoundingBox(Bounds),
+
+    /// Specifies the Z-index of this widget
+    ZIndex(u32),
+
+    /// Specifies the padding for this widget
+    Padding(u32, u32, u32, u32)
 }
 
 ///
