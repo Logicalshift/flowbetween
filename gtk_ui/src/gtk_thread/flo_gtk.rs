@@ -42,6 +42,9 @@ pub struct FloGtk {
 
     /// Hashmap for the windows that are being managed by this object
     windows: HashMap<WindowId, Rc<RefCell<GtkUiWindow>>>,
+    
+    /// Hashmap for the widgets that are being managed by this object
+    widgets: HashMap<WidgetId, Rc<RefCell<GtkUiWidget>>>,
 
     /// The event sink for this object
     event_sink: GtkEventSink
@@ -141,6 +144,7 @@ impl FloGtk {
         FloGtk { 
             pending_messages:   MessageQueue::new(),
             windows:            HashMap::new(),
+            widgets:            HashMap::new(),
             event_sink:         GtkEventSink::new()
         }
     }
@@ -180,6 +184,27 @@ impl FloGtk {
     /// 
     pub fn remove_window(&mut self, window_id: WindowId) {
         self.windows.remove(&window_id);
+    }
+
+    ///
+    /// Associates a widget with an ID
+    /// 
+    pub fn register_widget<TWidget: 'static+GtkUiWidget>(&mut self, widget_id: WidgetId, widget: TWidget) {
+        self.widgets.insert(widget_id, Rc::new(RefCell::new(widget)));
+    }
+
+    ///
+    /// Attempts to retrieve the widget with the specified ID
+    /// 
+    pub fn get_widget(&self, widget_id: WidgetId) -> Option<Rc<RefCell<GtkUiWidget>>> {
+        self.widgets.get(&widget_id).cloned()
+    }
+
+    ///
+    /// Removes the widget that has the specified ID
+    /// 
+    pub fn remove_widget(&mut self, widget_id: WidgetId) {
+        self.widgets.remove(&widget_id);
     }
 
     ///
