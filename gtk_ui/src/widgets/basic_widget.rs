@@ -4,6 +4,7 @@ use super::super::gtk_thread::*;
 use flo_ui::*;
 
 use gtk;
+use gtk::prelude::*;
 
 ///
 /// Performs the basic processing associated with a widget action (using a generic Gtk widget as the target)
@@ -20,7 +21,7 @@ pub fn process_basic_widget_action(widget: &mut gtk::Widget, flo_gtk: &mut FloGt
 
         &New(_widget_type)          => (),
         &SetRoot(window_id)         => { flo_gtk.get_window(window_id).map(|window| window.borrow_mut().set_root(flo_gtk, widget)); },
-        &Delete                     => unimplemented!()
+        &Delete                     => { widget.unparent(); }
     }
 }
 
