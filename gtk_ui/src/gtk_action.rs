@@ -34,7 +34,7 @@ pub enum GtkWindowAction {
 ///
 /// Types of widget that can be created
 /// 
-#[derive(Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum GtkWidgetType {
     Generic,
     Layout,
