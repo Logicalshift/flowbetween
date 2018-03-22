@@ -29,10 +29,28 @@ pub enum GtkWindowAction {
 }
 
 ///
+/// Types of widget that can be created
+/// 
+#[derive(Clone)]
+pub enum GtkWidgetType {
+    Layout,
+    Button,
+    Label,
+    DrawingArea,
+    Scale,
+    Scrollable
+}
+
+///
 /// Actions that can be performed on a widget
 /// 
 #[derive(Clone)]
 pub enum GtkWidgetAction {
+    /// Creates a new widget of the specifed type
+    New(GtkWidgetType),
+
+    /// Deletes this widget (and any child widgets it may contain)
+    Delete
 }
 
 ///
