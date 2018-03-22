@@ -11,7 +11,7 @@ pub fn process_basic_widget_action(widget: &mut Widget, flo_gtk: &mut FloGtk, ac
 
     match action {
         &New(_widget_type)          => (),
-        &SetRoot(window_id)         => unimplemented!(),
+        &SetRoot(window_id)         => { flo_gtk.get_window(window_id).map(|window| window.borrow_mut().set_root(flo_gtk, widget)); },
         &Layout(ref layout)         => unimplemented!(),
         &Content(ref content)       => unimplemented!(),
         &Appearance(ref appearance) => unimplemented!(),

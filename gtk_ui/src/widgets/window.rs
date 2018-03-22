@@ -11,11 +11,16 @@ pub trait GtkUiWindow {
     ///
     /// Processes an action for this window
     /// 
-    fn process(&mut self, flo_gtk: &FloGtk, action: &GtkWindowAction);
+    fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWindowAction);
+
+    ///
+    /// Sets a widhget as the root of this window
+    /// 
+    fn set_root(&mut self, flo_gtk: &mut FloGtk, widget: &gtk::Widget);
 }
 
 impl GtkUiWindow for gtk::Window {
-    fn process(&mut self, _flo_gtk: &FloGtk, action: &GtkWindowAction) {
+    fn process(&mut self, _flo_gtk: &mut FloGtk, action: &GtkWindowAction) {
         match action {
             &GtkWindowAction::New(ref _window_type)         => { },
             &GtkWindowAction::SetTitle(ref title)           => { self.set_title(&*title); },
@@ -25,5 +30,11 @@ impl GtkUiWindow for gtk::Window {
             &GtkWindowAction::Hide                          => { self.hide(); },
             &GtkWindowAction::Close                         => { self.hide(); }
         }
+    }
+
+    fn set_root(&mut self, _flo_gtk: &mut FloGtk, widget: &gtk::Widget) {
+        // Replace any existing child of this window with the specified widget
+        self.get_children().iter().for_each(|existing| self.remove(existing));
+        self.add(widget);
     }
 }
