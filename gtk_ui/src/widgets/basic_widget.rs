@@ -72,8 +72,8 @@ pub fn process_basic_widget_font(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk,
     use self::Font::*;
 
     match font {
-        &Size(f32)              => (),
-        &Align(TextAlign)       => (),
-        &Weight(FontWeight)     => ()
+        &Size(size_pixels)      => (),
+        &Align(ref align)       => (),
+        &Weight(ref weight)     => ()
     }
 }
