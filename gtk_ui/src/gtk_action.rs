@@ -102,7 +102,7 @@ pub enum WidgetLayout {
     ZIndex(u32),
 
     /// Specifies the padding for this widget
-    Padding(u32, u32, u32, u32)
+    Padding((u32, u32), (u32, u32))
 }
 
 ///

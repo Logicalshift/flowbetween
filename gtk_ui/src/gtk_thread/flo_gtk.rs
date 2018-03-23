@@ -231,6 +231,14 @@ impl FloGtk {
     }
 
     ///
+    /// Retrieves the data of a specific type associated with a widget
+    /// 
+    pub fn get_widget_data_or_insert<'a, TData: 'static, FnInsert: FnOnce() -> TData>(&'a mut self, widget_id: WidgetId, or_insert: FnInsert) -> Option<&'a mut TData> {
+        self.widget_data.get_mut(&widget_id)
+            .map(move |anymap| anymap.entry::<TData>().or_insert_with(or_insert))
+    }
+
+    ///
     /// Retrieves a stream that will return all future events generated for this object
     /// 
     pub fn get_event_stream(&mut self) -> Box<Stream<Item=GtkEvent, Error=()>> {
