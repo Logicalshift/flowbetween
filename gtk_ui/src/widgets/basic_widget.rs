@@ -48,13 +48,32 @@ pub fn process_basic_widget_content(widget: &mut gtk::Widget, flo_gtk: &mut FloG
 }
 
 pub fn process_basic_widget_appearance(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, appearance: &Appearance) {
-    unimplemented!()
+    use self::Appearance::*;
+
+    match appearance {
+        &Foreground(ref color)      => (),
+        &Background(ref color)      => (),
+        &Image(ref color)           => ()
+    }
 }
 
 pub fn process_basic_widget_state(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, state: &State) {
-    unimplemented!()
+    use self::State::*;
+
+    match state {
+        &Selected(ref selected_prop)    => (),
+        &Badged(ref badged_prop)        => (),
+        &Value(ref value_prop)          => (),
+        &Range((ref from, ref to))      => ()
+    }
 }
 
 pub fn process_basic_widget_font(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, font: &Font) {
-    unimplemented!()
+    use self::Font::*;
+
+    match font {
+        &Size(f32)              => (),
+        &Align(TextAlign)       => (),
+        &Weight(FontWeight)     => ()
+    }
 }
