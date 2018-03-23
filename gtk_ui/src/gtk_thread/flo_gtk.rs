@@ -51,7 +51,10 @@ pub struct FloGtk {
     widget_data: HashMap<WidgetId, AnyMap>,
 
     /// The event sink for this object
-    event_sink: GtkEventSink
+    event_sink: GtkEventSink,
+
+    /// The style provider for the widgets and windows created for this Gtk instance
+    style_provider: gtk::CssProvider
 }
 
 impl MessageQueue {
@@ -150,7 +153,8 @@ impl FloGtk {
             windows:            HashMap::new(),
             widgets:            HashMap::new(),
             widget_data:        HashMap::new(),
-            event_sink:         GtkEventSink::new()
+            event_sink:         GtkEventSink::new(),
+            style_provider:     gtk::CssProvider::new()
         }
     }
 
@@ -168,6 +172,13 @@ impl FloGtk {
         // Ensure that we're ready to go by flushing all pending messages for this thread immediately
         // If there were any messages pending before we added to the list of instances, this thread will never be triggered
         process_pending_messages();
+    }
+
+    ///
+    /// Retrieves the style provider for this object
+    /// 
+    pub fn style_provider<'a>(&'a mut self) -> &'a mut gtk::CssProvider {
+        &mut self.style_provider
     }
 
     ///

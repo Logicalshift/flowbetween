@@ -2,6 +2,7 @@ use super::flo_gtk::*;
 use super::super::gtk_action::*;
 
 use gtk;
+use gtk::prelude::*;
 
 ///
 /// Executes a Gtk action
@@ -25,8 +26,15 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
     for action in actions.iter() {
         match action {
             &GtkWindowAction::New(ref window_type) => {
-                // For new window actions, we need to create the window before we proceed
+                // For new window actions, we need to create the window before we can send actions to it
                 let new_window = gtk::Window::new(window_type.clone());
+
+                // Add our style context
+                new_window.get_style_context()
+                    .unwrap()
+                    .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+                
+                // Register the window
                 flo_gtk.register_window(window_id, new_window);
 
                 // Fetch the reference to the new window and make it the reference for the rest of the commands
