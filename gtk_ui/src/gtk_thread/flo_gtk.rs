@@ -8,6 +8,7 @@ use gtk;
 use glib;
 use futures::stream::Stream;
 use futures::sink::Sink;
+use anymap::*;
 
 use std::collections::{HashMap, VecDeque};
 use std::cell::RefCell;
@@ -45,6 +46,9 @@ pub struct FloGtk {
     
     /// Hashmap for the widgets that are being managed by this object
     widgets: HashMap<WidgetId, Rc<RefCell<GtkUiWidget>>>,
+
+    /// Data attached to a particular widget ID
+    widget_data: HashMap<WidgetId, AnyMap>,
 
     /// The event sink for this object
     event_sink: GtkEventSink
@@ -145,6 +149,7 @@ impl FloGtk {
             pending_messages:   MessageQueue::new(),
             windows:            HashMap::new(),
             widgets:            HashMap::new(),
+            widget_data:        HashMap::new(),
             event_sink:         GtkEventSink::new()
         }
     }
@@ -191,6 +196,7 @@ impl FloGtk {
     /// 
     pub fn register_widget<TWidget: 'static+GtkUiWidget>(&mut self, widget_id: WidgetId, widget: TWidget) {
         self.widgets.insert(widget_id, Rc::new(RefCell::new(widget)));
+        self.widget_data.insert(widget_id, AnyMap::new());
     }
 
     ///
@@ -205,6 +211,23 @@ impl FloGtk {
     /// 
     pub fn remove_widget(&mut self, widget_id: WidgetId) {
         self.widgets.remove(&widget_id);
+        self.widget_data.remove(&widget_id);
+    }
+
+    ///
+    /// Sets the data associated with a particular type and widget
+    /// 
+    pub fn set_widget_data<TData: 'static>(&mut self, widget_id: WidgetId, new_data: TData) {
+        self.widget_data.get_mut(&widget_id)
+            .map(move |anymap| anymap.insert(new_data));
+    }
+
+    ///
+    /// Retrieves the data of a specific type associated with a widget
+    /// 
+    pub fn get_widget_data<'a, TData: 'static>(&'a mut self, widget_id: WidgetId) -> Option<&'a mut TData> {
+        self.widget_data.get_mut(&widget_id)
+            .and_then(move |anymap| anymap.get_mut::<TData>())
     }
 
     ///

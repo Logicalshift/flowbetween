@@ -10,6 +10,7 @@ extern crate flo_canvas;
 
 extern crate gtk;
 extern crate glib;
+extern crate anymap;
 extern crate futures;
 
 mod gtk_thread;
