@@ -30,7 +30,13 @@ pub fn process_basic_widget_layout(widget: &mut gtk::Widget, flo_gtk: &mut FloGt
 }
 
 pub fn process_basic_widget_content(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, content: &WidgetContent) {
-    unimplemented!()
+    use self::WidgetContent::*;
+
+    match content {
+        &SetParent(parent_id)   => { widget.unparent(); flo_gtk.get_widget(parent_id).map(|parent_widget| parent_widget.borrow_mut().add_child(widget)); },
+        &SetText(ref _text)     => () /* Standard gtk widgets can't have text in them */,
+        &Draw(ref canvas)       => unimplemented!()
+    }
 }
 
 pub fn process_basic_widget_appearance(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, appearance: &Appearance) {
