@@ -1,8 +1,8 @@
 use super::flo_gtk::*;
 use super::super::gtk_action::*;
+use super::super::widgets::*;
 
 use gtk;
-use glib;
 use gtk::prelude::*;
 
 ///
@@ -28,7 +28,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
         match action {
             &GtkWindowAction::New(ref window_type) => {
                 // For new window actions, we need to create the window before we can send actions to it
-                let new_window = gtk::Window::new(window_type.clone());
+                let mut new_window = gtk::Window::new(window_type.clone());
 
                 // Add our style context
                 new_window.get_style_context()
@@ -36,7 +36,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
                     .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
                 // Store the window ID
-                new_window.set_property("flo_window_id", &glib::AnyValue::new(window_id)).unwrap();
+                new_window.flo_set_window_id(window_id);
                 
                 // Register the window
                 flo_gtk.register_window(window_id, new_window);
