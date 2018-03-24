@@ -2,6 +2,7 @@ use super::flo_gtk::*;
 use super::super::gtk_action::*;
 
 use gtk;
+use glib;
 use gtk::prelude::*;
 
 ///
@@ -33,6 +34,9 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
                 new_window.get_style_context()
                     .unwrap()
                     .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+                // Store the window ID
+                new_window.set_property("flo_window_id", &glib::AnyValue::new(window_id)).unwrap();
                 
                 // Register the window
                 flo_gtk.register_window(window_id, new_window);
