@@ -80,8 +80,8 @@ pub enum GtkWidgetAction {
 /// 
 #[derive(Clone)]
 pub enum WidgetContent {
-    /// Adds this widget as a child of the specified widget
-    SetParent(WidgetId),
+    /// Sets the children of this widget to be a particular set of widgets
+    SetChildren(Vec<WidgetId>),
 
     /// Sets the text of this widget to the specified string
     SetText(String),

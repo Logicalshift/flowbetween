@@ -21,14 +21,9 @@ pub trait GtkUiWidget {
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction);
 
     ///
-    /// Adds a child widget to this widget
+    /// Sets the children of this widget
     /// 
-    fn add_child(&mut self, new_child: Rc<RefCell<GtkUiWidget>>);
-
-    ///
-    /// Sets the parent of this widget 
-    ///
-    fn set_parent(&mut self, new_parent: Rc<RefCell<GtkUiWidget>>);
+    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>);
 
     ///
     /// Retrieves the underlying widget for this UI widget
@@ -39,7 +34,6 @@ pub trait GtkUiWidget {
 impl GtkUiWidget for Box<GtkUiWidget> {
     fn id(&self) -> WidgetId                                                { (**self).id() }
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction)   { (**self).process(flo_gtk, action) }
-    fn add_child(&mut self, new_child: Rc<RefCell<GtkUiWidget>>)            { (**self).add_child(new_child) }
-    fn set_parent(&mut self, new_parent: Rc<RefCell<GtkUiWidget>>)          { (**self).set_parent(new_parent) }
+    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>)     { (**self).set_children(children) }
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget                      { (**self).get_underlying() }
 }

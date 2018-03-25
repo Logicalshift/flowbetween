@@ -82,17 +82,16 @@ impl GtkUiWidget for FloWidget {
     }
 
     ///
-    /// Adds a child widget to this widget
+    /// Sets the children of this widget
     /// 
-    fn add_child(&mut self, new_child: Rc<RefCell<GtkUiWidget>>) {
-        self.container.add(new_child.borrow().get_underlying())
-    }
+    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+        // Remove any existing children
+        self.container.get_children().into_iter().for_each(|existing| self.container.remove(&existing));
 
-    ///
-    /// Sets the parent of this widget 
-    ///
-    fn set_parent(&mut self, _new_parent: Rc<RefCell<GtkUiWidget>>) {
-        // Does nothing at the moment
+        // Add children to this widget
+        for child in children {
+            self.container.add(child.borrow().get_underlying());
+        }
     }
 
     ///

@@ -37,24 +37,26 @@ impl GtkUiWidget for BasicWidget {
         process_basic_widget_action(id, widget, flo_gtk, action);
     }
 
-    fn add_child(&mut self, new_child: Rc<RefCell<GtkUiWidget>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
         let BasicWidget(_id, ref widget) = *self;
-
-        // Remove the child widget from its existing parent
-        let new_child = new_child.borrow();
-        let new_child = new_child.get_underlying();
-
-        new_child.unparent();
 
         // If this widget is a container, add this as a child widget
         let container = widget.clone().dynamic_cast::<gtk::Container>();
         if let Ok(container) = container {
-            container.add(new_child);
-        }
-    }
+            // Remove any existing child widgets
+            container.get_children().iter().for_each(|child| container.remove(child));
 
-    fn set_parent(&mut self, _new_parent: Rc<RefCell<GtkUiWidget>>) {
-        // Basic widgets don't need to know what their parent is
+            for new_child in children {
+                // Remove the child widget from its existing parent
+                let new_child = new_child.borrow();
+                let new_child = new_child.get_underlying();
+
+                new_child.unparent();
+
+                // Add to the container
+                container.add(new_child);
+            }
+        }
     }
 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
@@ -103,18 +105,18 @@ pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_g
 ///
 /// Performs the actions required to set a widget's parent
 /// 
-pub fn set_widget_parent(widget_id: WidgetId, new_parent_id: WidgetId, flo_gtk: &mut FloGtk) {
+pub fn set_widget_parent(widget_id: WidgetId, children: &Vec<WidgetId>, flo_gtk: &mut FloGtk) {
     // Fetch the widget information
     let widget_data     = flo_gtk.widget_data();
-    let child_widget    = widget_data.get_widget(widget_id);
-    let parent_widget   = widget_data.get_widget(new_parent_id);
-
-    if let (Some(child_widget), Some(parent_widget)) = (child_widget, parent_widget) {
-        // Set the parent of the child widget
-        child_widget.borrow_mut().set_parent(Rc::clone(&parent_widget));
-
-        // Add to the children of the new parent widget
-        parent_widget.borrow_mut().add_child(Rc::clone(&child_widget));
+    let widget          = widget_data.get_widget(widget_id);
+    let children        = children.iter()
+        .map(|child_id| widget_data.get_widget(*child_id))
+        .filter(|child| !child.is_none())
+        .map(|child| child.unwrap())
+        .collect();
+    
+    if let Some(widget) = widget {
+        widget.borrow_mut().set_children(children);
     }
 }
 
@@ -125,9 +127,9 @@ pub fn process_basic_widget_content<W: WidgetExt>(id: WidgetId, widget: &W, flo_
     use self::WidgetContent::*;
 
     match content {
-        &SetParent(parent_id)   => set_widget_parent(id, parent_id, flo_gtk),
-        &SetText(ref _text)     => () /* Standard gtk widgets can't have text in them */,
-        &Draw(ref canvas)       => unimplemented!()
+        &SetChildren(ref children)  => set_widget_parent(id, children, flo_gtk),
+        &SetText(ref _text)         => () /* Standard gtk widgets can't have text in them */,
+        &Draw(ref canvas)           => unimplemented!()
     }
 }
 
