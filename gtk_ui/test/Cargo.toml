@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
 
 [dependencies]
+flo_ui      = { path = "../../ui" }
 flo_gtk_ui  = { path = ".." }
 
 gtk         = "0.4.0"

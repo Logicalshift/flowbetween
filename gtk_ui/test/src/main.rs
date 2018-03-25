@@ -1,6 +1,8 @@
 extern crate gtk;
+extern crate flo_ui;
 extern crate flo_gtk_ui;
 
+use flo_ui::*;
 use flo_gtk_ui::*;
 
 use std::thread;
@@ -18,9 +20,21 @@ fn main() {
             GtkWindowAction::ShowAll
         ]),
 
+        GtkAction::Widget(WidgetId::Assigned(1), vec![
+            GtkWidgetAction::New(GtkWidgetType::Generic),
+            GtkWidgetAction::Content(WidgetContent::SetText(String::from("Something else"))),
+            GtkWidgetAction::Layout(WidgetLayout::BoundingBox(Bounds {
+                x1: Position::At(100.0),
+                y1: Position::At(100.0),
+                x2: Position::At(400.0),
+                y2: Position::At(120.0)
+            }))
+        ]),
+
         GtkAction::Widget(WidgetId::Assigned(0), vec![
             GtkWidgetAction::New(GtkWidgetType::Generic),
             GtkWidgetAction::Content(WidgetContent::SetText(String::from("Hello, world"))),
+            GtkWidgetAction::Content(WidgetContent::SetChildren(vec![WidgetId::Assigned(1)])),
             GtkWidgetAction::SetRoot(window0)
         ])
     ]);
