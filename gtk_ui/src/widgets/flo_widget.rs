@@ -75,8 +75,6 @@ impl FloWidget {
     /// 
     fn attach_layout_signal(container: &gtk::Container, layout: Rc<RefCell<FloWidgetLayout>>) {
         container.connect_size_allocate(move |container, _allocation| {
-            println!("Layout! {:?}", _allocation);
-
             layout.borrow().layout_fixed(container);
         });
     }
