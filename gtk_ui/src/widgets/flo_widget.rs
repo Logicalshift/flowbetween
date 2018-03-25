@@ -120,6 +120,7 @@ impl GtkUiWidget for FloWidget {
         }
 
         // Queue a resize so the layout is done
+        self.layout.borrow().layout_fixed(&self.container);
         self.container.queue_resize();
     }
 
