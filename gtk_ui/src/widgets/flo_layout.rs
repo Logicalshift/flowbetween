@@ -202,7 +202,8 @@ impl FloWidgetLayout {
                     gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, underlying.to_glib_none().0, "x".to_glib_none().0,  gtk::Value::from(&x).to_glib_none().0);
                     gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, underlying.to_glib_none().0, "y".to_glib_none().0,  gtk::Value::from(&y).to_glib_none().0);
                 }
-
+                // Can also cast to Fixed or Layout but the above code will work on either
+                
                 //target.child_set_property(underlying, "x", &(x.floor() as i32)).unwrap();
                 //target.child_set_property(underlying, "y", &(y.floor() as i32)).unwrap();
                 underlying.set_size_request(width.floor() as i32, height.floor() as i32);
