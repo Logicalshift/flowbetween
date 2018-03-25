@@ -30,15 +30,13 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
                 // For new window actions, we need to create the window before we can send actions to it
                 let mut new_window = gtk::Window::new(window_type.clone());
 
-                new_window.add(&gtk::Box::new(gtk::Orientation::Vertical, 0));
-                new_window.get_child()
-                    .and_then(|child| child.dynamic_cast::<gtk::Container>().ok())
-                    .map(|child| child.add(&gtk::Label::new("This space left blank")));
-
                 // Add our style context
                 new_window.get_style_context()
                     .unwrap()
                     .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+                // New windows with no content get a generic message initially
+                new_window.add(&gtk::Label::new("Flo: This space left blank"));
                 
                 // Register the window
                 flo_gtk.register_window(window_id, new_window);

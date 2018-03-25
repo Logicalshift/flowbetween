@@ -34,14 +34,7 @@ impl GtkUiWindow for gtk::Window {
 
     fn set_root(&mut self, _flo_gtk: &mut FloGtk, widget: &gtk::Widget) {
         // Replace any existing child of this window with the specified widget
-        self.get_child()
-            .and_then(|child| child.dynamic_cast::<gtk::Container>().ok())
-            .map(|child| child.add(&gtk::Label::new(Some("Hum"))));
-        
-        /*
         self.get_child().map(|child| self.remove(&child));
-        self.add(&gtk::Label::new(Some("Hum")));
-        //self.add(widget);
-        */
+        self.add(widget);
     }
 }
