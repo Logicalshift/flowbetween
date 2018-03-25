@@ -20,8 +20,8 @@ impl BasicWidget {
     ///
     /// Creates a basic widget
     /// 
-    pub fn new(id: WidgetId, widget: gtk::Widget) -> BasicWidget {
-        BasicWidget(id, widget)
+    pub fn new<Src: Cast+IsA<gtk::Widget>>(id: WidgetId, widget: Src) -> BasicWidget {
+        BasicWidget(id, widget.upcast::<gtk::Widget>())
     }
 }
 

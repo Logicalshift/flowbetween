@@ -5,6 +5,7 @@ pub mod basic_widget;
 mod layout;
 mod properties;
 mod run_action;
+mod factory;
 
 pub use self::window::*;
 pub use self::widget::*;

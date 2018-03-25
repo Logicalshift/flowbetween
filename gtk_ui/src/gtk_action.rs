@@ -38,11 +38,11 @@ pub enum GtkWindowAction {
 pub enum GtkWidgetType {
     Generic,
     Layout,
+    Fixed,
     Button,
     Label,
     DrawingArea,
-    Scale,
-    Scrollable
+    Scale
 }
 
 ///
