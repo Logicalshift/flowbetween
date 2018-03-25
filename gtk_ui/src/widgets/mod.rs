@@ -2,6 +2,7 @@ mod window;
 mod widget;
 mod widget_data;
 pub mod basic_widget;
+pub mod flo_widget;
 mod layout;
 mod run_action;
 mod factory;
