@@ -92,7 +92,7 @@ impl GtkUiWidget for FloWidget {
     /// Sets the parent of this widget 
     ///
     fn set_parent(&mut self, _new_parent: Rc<RefCell<GtkUiWidget>>) {
-
+        // Does nothing at the moment
     }
 
     ///

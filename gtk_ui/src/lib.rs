@@ -16,7 +16,7 @@ extern crate futures;
 mod gtk_thread;
 mod gtk_event;
 mod gtk_action;
-mod widgets;
+pub mod widgets;
 mod session;
 
 pub use self::gtk_thread::*;

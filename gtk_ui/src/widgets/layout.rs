@@ -5,15 +5,16 @@ use flo_ui::*;
 ///
 /// Data associated with a widget used for describing how it will be laid out
 /// 
+#[derive(Clone)]
 pub struct Layout {
     /// The bounding box of this widget
-    bounds: Option<Bounds>,
+    pub bounds: Option<Bounds>,
 
     /// The padding for this widget
-    padding: Option<(u32, u32, u32, u32)>,
+    pub padding: Option<(u32, u32, u32, u32)>,
 
     /// The Z-index for this widget
-    z_index: Option<u32>
+    pub z_index: Option<u32>
 }
 
 impl Layout {
