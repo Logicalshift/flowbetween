@@ -35,3 +35,11 @@ pub trait GtkUiWidget {
     /// 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget;
 }
+
+impl GtkUiWidget for Box<GtkUiWidget> {
+    fn id(&self) -> WidgetId                                                { (**self).id() }
+    fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction)   { (**self).process(flo_gtk, action) }
+    fn add_child(&mut self, new_child: Rc<RefCell<GtkUiWidget>>)            { (**self).add_child(new_child) }
+    fn set_parent(&mut self, new_parent: Rc<RefCell<GtkUiWidget>>)          { (**self).set_parent(new_parent) }
+    fn get_underlying<'a>(&'a self) -> &'a gtk::Widget                      { (**self).get_underlying() }
+}

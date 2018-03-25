@@ -1,4 +1,5 @@
 use super::window::*;
+use super::factory::*;
 use super::properties::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
@@ -57,7 +58,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
 
             other => {
                 // For all other actions, we just pass on to the window with this ID
-                window.as_mut().map(|window| window.borrow_mut().process(flo_gtk, other));
+                window.as_ref().map(|window| window.borrow_mut().process(flo_gtk, other));
             }
         }
     }
@@ -67,5 +68,40 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
 /// Executes a Gtk widget action
 /// 
 fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<GtkWidgetAction>) {
-    unimplemented!()
+    // Fetch the widget for which we will be dispatching actions
+    let widget_data = flo_gtk.widget_data();
+    let mut widget  = widget_data.get_widget(widget_id);
+
+    // Send the actions to the widget
+    for action in actions.iter() {
+        match action {
+            &GtkWidgetAction::New(widget_type)  => {
+                // Call the factory method to create a new widget
+                let new_widget = create_widget(widget_id, widget_type);
+
+                // Register with the widget data
+                widget_data.register_widget(widget_id, new_widget);
+                
+                // Update the widget that actions are sent to
+                widget = widget_data.get_widget(widget_id);
+
+                // Dispatch the 'new' action to the newly created widget
+                widget.as_ref().map(|widget| widget.borrow_mut().process(flo_gtk, &GtkWidgetAction::New(widget_type)));
+            },
+
+            &GtkWidgetAction::Delete => {
+                // Send the delete request to this widget so it can do whatever it needs to do
+                widget.as_ref().map(|widget| widget.borrow_mut().process(flo_gtk, &GtkWidgetAction::Delete));
+
+                // Remove the data for this widget
+                widget_data.remove_widget(widget_id);
+                widget = None;
+            },
+
+            other => {
+                // Other actions can just be sent straight to the widget involved
+                widget.as_ref().map(|widget| widget.borrow_mut().process(flo_gtk, other));
+            }
+        }
+    }
 }
