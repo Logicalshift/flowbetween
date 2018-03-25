@@ -100,7 +100,7 @@ impl GtkUiWidget for FloWidget {
             },
 
             // Any other action is processed as normal
-            other => { process_basic_widget_action(self.id, &self.as_widget, flo_gtk, other); }
+            other => { process_basic_widget_action(self, flo_gtk, other); }
         }
     }
 
