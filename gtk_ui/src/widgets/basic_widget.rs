@@ -97,7 +97,7 @@ pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_g
     widget_layout.map(move |widget_layout| widget_layout.borrow_mut().update(layout));
 
     // Tell the parent of this widget it needs relayout
-    widget.queue_resize();
+    widget.get_parent().map(|parent| parent.queue_resize());
 }
 
 ///
