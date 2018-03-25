@@ -5,6 +5,8 @@ use super::super::gtk_action::*;
 use gtk;
 use gtk::prelude::*;
 
+use std::rc::*;
+
 ///
 /// Executes a Gtk action
 /// 
@@ -75,7 +77,7 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
         match action {
             &GtkWidgetAction::New(widget_type)  => {
                 // Call the factory method to create a new widget
-                let new_widget = create_widget(widget_id, widget_type);
+                let new_widget = create_widget(widget_id, widget_type, Rc::clone(&widget_data));
 
                 // Register with the widget data
                 widget_data.register_widget(widget_id, new_widget);

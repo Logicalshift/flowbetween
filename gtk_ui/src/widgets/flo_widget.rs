@@ -1,5 +1,7 @@
 use super::widget::*;
 use super::basic_widget::*;
+use super::flo_layout::*;
+use super::widget_data::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 
@@ -24,20 +26,24 @@ pub struct FloWidget {
 
     /// The widget used to display the text for this itme
     text: Option<gtk::Label>,
+
+    /// Used to lay out the content of the container
+    layout: Rc<RefCell<FloWidgetLayout>>
 }
 
 impl FloWidget {
     ///
     /// Creates a new FloWidget that can contain generic controls
     /// 
-    pub fn new(id: WidgetId) -> FloWidget {
+    pub fn new(id: WidgetId, widget_data: Rc<WidgetData>) -> FloWidget {
         let fixed = gtk::Fixed::new();
             
         FloWidget {
             id:         id,
             container:  fixed.clone().upcast::<gtk::Container>(),
             as_widget:  fixed.clone().upcast::<gtk::Widget>(),
-            text:       None
+            text:       None,
+            layout:     Rc::new(RefCell::new(FloWidgetLayout::new(widget_data)))
         }
     }
 
