@@ -6,13 +6,22 @@ use anymap::*;
 use std::rc::*;
 use std::cell::*;
 use std::collections::HashMap;
+use std::ops::Deref;
 
 ///
-/// Represents a mutable borrow of the data associated with a widget
+/// Represents a data entry for a widget
 /// 
-pub struct WidgetDataRef<'a, TData: 'a> {
-    widget_ref: RefMut<'a, HashMap<WidgetId, AnyMap>>,
-    data:       &'a mut TData
+pub struct WidgetDataEntry<TData> {
+    /// Reference to the data in this entry
+    data: Rc<RefCell<TData>>,
+}
+
+impl<TData> Deref for WidgetDataEntry<TData> {
+    type Target = RefCell<TData>;
+
+    fn deref(&self) -> &RefCell<TData> {
+        &*self.data
+    }
 }
 
 ///
@@ -23,6 +32,10 @@ pub struct WidgetDataRef<'a, TData: 'a> {
 /// Here, we track their data manually)
 /// 
 pub struct WidgetData {
+    // We store our values in RefCells so that we can retrieve and add values via a 'self' reference
+    // rather than a 'mut self' reference (making this convenient to use from a reference that's
+    // passed around GTK signal handlers, but otherwise a bit ugly)
+
     /// Hashmap for the widgets that are being managed by this object
     widgets: RefCell<HashMap<WidgetId, Rc<RefCell<GtkUiWidget>>>>,
 
@@ -70,24 +83,77 @@ impl WidgetData {
     pub fn set_widget_data<TData: 'static>(&self, widget_id: WidgetId, new_data: TData) {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
-            .map(move |anymap| anymap.insert(new_data));
+            .map(move |anymap| anymap.insert(Rc::new(RefCell::new(new_data))));
     }
 
     ///
     /// Retrieves the data of a specific type associated with a widget
     /// 
-    pub fn get_widget_data<'a, TData: 'static>(&'a self, widget_id: WidgetId) -> Option<&'a mut TData> {
+    pub fn get_widget_data<'a, TData: 'static>(&'a self, widget_id: WidgetId) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
-            .and_then(move |anymap| anymap.get_mut::<TData>())
+            .and_then(move |anymap| anymap.get_mut::<Rc<RefCell<TData>>>())
+            .map(|data| WidgetDataEntry { data: Rc::clone(&data) })
     }
 
     ///
     /// Retrieves the data of a specific type associated with a widget
     /// 
-    pub fn get_widget_data_or_insert<'a, TData: 'static, FnInsert: FnOnce() -> TData>(&'a self, widget_id: WidgetId, or_insert: FnInsert) -> Option<&'a mut TData> {
+    pub fn get_widget_data_or_insert<'a, TData: 'static, FnInsert: FnOnce() -> TData>(&'a self, widget_id: WidgetId, or_insert: FnInsert) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
-            .map(move |anymap| anymap.entry::<TData>().or_insert_with(or_insert))
+            .map(move |anymap| anymap.entry::<Rc<RefCell<TData>>>().or_insert_with(move || Rc::new(RefCell::new(or_insert()))))
+            .map(|data| WidgetDataEntry { data: Rc::clone(&data) })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::super::gtk_thread::*;
+    use gtk;
+
+    struct TestWidget { }
+
+    impl GtkUiWidget for TestWidget { 
+        fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) { }
+        fn add_child(&mut self, new_child: &gtk::Widget) { }
+    }
+
+    #[test]
+    fn non_existent_widget() {
+        let data = WidgetData::new();
+        assert!(data.get_widget(WidgetId::Assigned(42)).is_none());
+    }
+
+    #[test]
+    fn create_widget() {
+        let data = WidgetData::new();
+        data.register_widget(WidgetId::Assigned(42), TestWidget {});
+        assert!(data.get_widget(WidgetId::Assigned(42)).is_some());
+    }
+
+    #[test]
+    fn store_data_for_widget() {
+        let data = WidgetData::new();
+        data.register_widget(WidgetId::Assigned(42), TestWidget {});
+        data.set_widget_data(WidgetId::Assigned(42), 42);
+
+        let value = data.get_widget_data::<i32>(WidgetId::Assigned(42)).unwrap();
+        assert!(*value.borrow() == 42);
+    }
+
+    #[test]
+    fn different_data_types() {
+        let data = WidgetData::new();
+        data.register_widget(WidgetId::Assigned(42), TestWidget {});
+        data.set_widget_data(WidgetId::Assigned(42), 42);
+        data.set_widget_data(WidgetId::Assigned(42), String::from("Hello, world"));
+
+        let value = data.get_widget_data::<i32>(WidgetId::Assigned(42)).unwrap();
+        assert!(*value.borrow() == 42);
+
+        let value = data.get_widget_data::<String>(WidgetId::Assigned(42)).unwrap();
+        assert!(&*value.borrow() == &String::from("Hello, world"));
     }
 }

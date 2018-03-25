@@ -32,7 +32,7 @@ pub fn process_basic_widget_layout(id: WidgetId, widget: &mut gtk::Widget, flo_g
     let widget_layout   = widget_data.get_widget_data_or_insert(id, || Layout::new());
 
     // Update it with the content of the command
-    widget_layout.map(move |widget_layout| widget_layout.update(layout));
+    widget_layout.map(move |widget_layout| widget_layout.borrow_mut().update(layout));
 
     // Tell the parent of this widget it needs relayout
     widget.queue_resize();
