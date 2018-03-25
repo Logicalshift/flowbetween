@@ -36,14 +36,20 @@ impl FloWidget {
     /// Creates a new FloWidget that can contain generic controls
     /// 
     pub fn new(id: WidgetId, widget_data: Rc<WidgetData>) -> FloWidget {
-        let fixed = gtk::Fixed::new();
+        // Create the widget
+        let fixed   = gtk::Fixed::new();
+        let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(widget_data)));
+
+        // Attach events to it
+        Self::attach_layout_signal(&fixed.clone().upcast::<gtk::Container>(), Rc::clone(&layout));
             
+        // Build the final structure
         FloWidget {
             id:         id,
             container:  fixed.clone().upcast::<gtk::Container>(),
             as_widget:  fixed.clone().upcast::<gtk::Widget>(),
             text:       None,
-            layout:     Rc::new(RefCell::new(FloWidgetLayout::new(widget_data)))
+            layout:     layout
         }
     }
 
@@ -62,6 +68,17 @@ impl FloWidget {
 
         // Update the text within the label
         text_label.set_text(new_text);
+    }
+
+    ///
+    /// Attaches a signal handler to perform layout in the specified container when resized
+    /// 
+    fn attach_layout_signal(container: &gtk::Container, layout: Rc<RefCell<FloWidgetLayout>>) {
+        container.connect_size_allocate(move |container, _allocation| {
+            println!("Layout! {:?}", _allocation);
+
+            layout.borrow().layout_fixed(container);
+        });
     }
 }
 
@@ -94,10 +111,16 @@ impl GtkUiWidget for FloWidget {
         // Remove any existing children
         self.container.get_children().into_iter().for_each(|existing| self.container.remove(&existing));
 
+        // Send to the layout
+        self.layout.borrow_mut().set_children(children.iter().map(|widget| widget.borrow().id()));
+
         // Add children to this widget
         for child in children {
             self.container.add(child.borrow().get_underlying());
         }
+
+        // Queue a resize so the layout is done
+        self.container.queue_resize();
     }
 
     ///
