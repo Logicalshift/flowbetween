@@ -1,4 +1,5 @@
 use super::layout::*;
+use super::widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
@@ -8,6 +9,59 @@ use gtk;
 use gtk::prelude::*;
 
 use std::rc::*;
+use std::cell::*;
+
+///
+/// Represents a basic widget
+/// 
+pub struct BasicWidget(pub WidgetId, pub gtk::Widget);
+
+impl BasicWidget {
+    ///
+    /// Creates a basic widget
+    /// 
+    pub fn new(id: WidgetId, widget: gtk::Widget) -> BasicWidget {
+        BasicWidget(id, widget)
+    }
+}
+
+impl GtkUiWidget for BasicWidget {
+    fn id(&self) -> WidgetId {
+        let BasicWidget(id, ref _widget) = *self;
+        id
+    }
+
+    fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
+        let BasicWidget(id, ref mut widget) = *self;
+
+        process_basic_widget_action(id, widget, flo_gtk, action);
+    }
+
+    fn add_child(&mut self, new_child: Rc<RefCell<GtkUiWidget>>) {
+        let BasicWidget(_id, ref widget) = *self;
+
+        // Remove the child widget from its existing parent
+        let new_child = new_child.borrow();
+        let new_child = new_child.get_underlying();
+
+        new_child.unparent();
+
+        // If this widget is a container, add this as a child widget
+        let container = widget.clone().dynamic_cast::<gtk::Container>();
+        if let Ok(container) = container {
+            container.add(new_child);
+        }
+    }
+
+    fn set_parent(&mut self, _new_parent: Rc<RefCell<GtkUiWidget>>) {
+        // Basic widgets don't need to know what their parent is
+    }
+
+    fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
+        let BasicWidget(_id, ref widget) = *self;
+        widget
+    }
+}
 
 ///
 /// Performs the basic processing associated with a widget action (using a generic Gtk widget as the target)
