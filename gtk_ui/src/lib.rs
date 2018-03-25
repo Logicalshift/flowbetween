@@ -9,6 +9,7 @@ extern crate flo_ui;
 extern crate flo_canvas;
 
 extern crate gtk;
+extern crate gtk_sys;
 extern crate glib;
 extern crate anymap;
 extern crate futures;

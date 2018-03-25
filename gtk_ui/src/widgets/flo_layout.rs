@@ -5,7 +5,9 @@ use super::super::gtk_action::*;
 use flo_ui::*;
 
 use gtk;
+use gtk_sys;
 use gtk::prelude::*;
+use glib::translate::ToGlibPtr;
 
 use std::rc::*;
 
@@ -192,8 +194,17 @@ impl FloWidgetLayout {
                 let widget      = widget.borrow();
                 let underlying  = widget.get_underlying();
 
-                underlying.set_property("x", &(x.floor() as i32)).unwrap();
-                underlying.set_property("y", &(y.floor() as i32)).unwrap();
+                // Unsafe code used here because the rust GTK bindings don't have gtk_container_child_set_property
+                unsafe {
+                    let x = x.floor() as i32;
+                    let y = y.floor() as i32;
+
+                    gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, underlying.to_glib_none().0, "x".to_glib_none().0,  gtk::Value::from(&x).to_glib_none().0);
+                    gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, underlying.to_glib_none().0, "y".to_glib_none().0,  gtk::Value::from(&y).to_glib_none().0);
+                }
+
+                //target.child_set_property(underlying, "x", &(x.floor() as i32)).unwrap();
+                //target.child_set_property(underlying, "y", &(y.floor() as i32)).unwrap();
                 underlying.set_size_request(width.floor() as i32, height.floor() as i32);
             }
         }
