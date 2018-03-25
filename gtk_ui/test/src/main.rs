@@ -16,6 +16,12 @@ fn main() {
             GtkWindowAction::SetTitle("Hello".to_string()),
             GtkWindowAction::SetDefaultSize(1024, 768),
             GtkWindowAction::ShowAll
+        ]),
+
+        GtkAction::Widget(WidgetId::Assigned(0), vec![
+            GtkWidgetAction::New(GtkWidgetType::Label),
+            GtkWidgetAction::Content(WidgetContent::SetText(String::from("Hello, world"))),
+            GtkWidgetAction::SetRoot(window0)
         ])
     ]);
 
