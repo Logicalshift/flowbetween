@@ -36,5 +36,6 @@ impl GtkUiWindow for gtk::Window {
         // Replace any existing child of this window with the specified widget
         self.get_child().map(|child| self.remove(&child));
         self.add(widget);
+        widget.show_all();
     }
 }

@@ -50,6 +50,7 @@ impl FloWidget {
         let text_label  = self.text.get_or_insert_with(|| {
             let label = gtk::Label::new(new_text);
             container.add(&label);
+            label.show_all();
             label
         });
 
