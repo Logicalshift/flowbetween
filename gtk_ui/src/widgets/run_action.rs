@@ -1,6 +1,4 @@
-use super::window::*;
 use super::factory::*;
-use super::properties::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 
@@ -36,9 +34,6 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
                 new_window.get_style_context()
                     .unwrap()
                     .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-                // Store the window ID
-                new_window.flo_set_window_id(window_id);
                 
                 // Register the window
                 flo_gtk.register_window(window_id, new_window);
