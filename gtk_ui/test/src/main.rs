@@ -19,7 +19,7 @@ fn main() {
         ]),
 
         GtkAction::Widget(WidgetId::Assigned(0), vec![
-            GtkWidgetAction::New(GtkWidgetType::Label),
+            GtkWidgetAction::New(GtkWidgetType::Generic),
             GtkWidgetAction::Content(WidgetContent::SetText(String::from("Hello, world"))),
             GtkWidgetAction::SetRoot(window0)
         ])
