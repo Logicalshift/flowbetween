@@ -36,7 +36,7 @@ impl GtkUiWindow for gtk::Window {
         // Replace any existing child of this window with the specified widget
         self.get_child()
             .and_then(|child| child.dynamic_cast::<gtk::Container>().ok())
-            .map(|child| child.add(widget));
+            .map(|child| child.add(&gtk::Label::new(Some("Hum"))));
         
         /*
         self.get_child().map(|child| self.remove(&child));
