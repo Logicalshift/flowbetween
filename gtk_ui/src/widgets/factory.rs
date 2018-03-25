@@ -1,4 +1,5 @@
 use super::widget::*;
+use super::flo_widget::*;
 use super::basic_widget::*;
 use super::super::gtk_action::*;
 
@@ -11,7 +12,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType) -> Box<GtkUiWidge
     use self::GtkWidgetType::*;
 
     match widget_type {
-        Generic         => Box::new(BasicWidget::new(id, gtk::Layout::new(None, None))),
+        Generic         => Box::new(FloWidget::new(id)),
         Layout          => Box::new(BasicWidget::new(id, gtk::Layout::new(None, None))),
         Fixed           => Box::new(BasicWidget::new(id, gtk::Fixed::new())),
         Button          => Box::new(BasicWidget::new(id, gtk::Button::new())),
