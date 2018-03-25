@@ -28,7 +28,8 @@ pub fn process_basic_widget_action(id: WidgetId, widget: &mut gtk::Widget, flo_g
 
 pub fn process_basic_widget_layout(id: WidgetId, widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, layout: &WidgetLayout) { 
     // Fetch or create the layout for this widget
-    let widget_layout = flo_gtk.get_widget_data_or_insert(id, || Layout::new());
+    let widget_data     = flo_gtk.widget_data();
+    let widget_layout   = widget_data.get_widget_data_or_insert(id, || Layout::new());
 
     // Update it with the content of the command
     widget_layout.map(move |widget_layout| widget_layout.update(layout));
@@ -41,7 +42,7 @@ pub fn process_basic_widget_content(widget: &mut gtk::Widget, flo_gtk: &mut FloG
     use self::WidgetContent::*;
 
     match content {
-        &SetParent(parent_id)   => { widget.unparent(); flo_gtk.get_widget(parent_id).map(|parent_widget| parent_widget.borrow_mut().add_child(widget)); },
+        &SetParent(parent_id)   => { widget.unparent(); flo_gtk.widget_data().get_widget(parent_id).map(|parent_widget| parent_widget.borrow_mut().add_child(widget)); },
         &SetText(ref _text)     => () /* Standard gtk widgets can't have text in them */,
         &Draw(ref canvas)       => unimplemented!()
     }

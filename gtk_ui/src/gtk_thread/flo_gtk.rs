@@ -8,7 +8,6 @@ use gtk;
 use glib;
 use futures::stream::Stream;
 use futures::sink::Sink;
-use anymap::*;
 
 use std::collections::{HashMap, VecDeque};
 use std::cell::RefCell;
@@ -44,11 +43,8 @@ pub struct FloGtk {
     /// Hashmap for the windows that are being managed by this object
     windows: HashMap<WindowId, Rc<RefCell<GtkUiWindow>>>,
     
-    /// Hashmap for the widgets that are being managed by this object
-    widgets: HashMap<WidgetId, Rc<RefCell<GtkUiWidget>>>,
-
-    /// Data attached to a particular widget ID
-    widget_data: HashMap<WidgetId, AnyMap>,
+    /// Data associated with Flo widgets
+    widget_data: Rc<WidgetData>,
 
     /// The event sink for this object
     event_sink: GtkEventSink,
@@ -151,8 +147,7 @@ impl FloGtk {
         FloGtk { 
             pending_messages:   MessageQueue::new(),
             windows:            HashMap::new(),
-            widgets:            HashMap::new(),
-            widget_data:        HashMap::new(),
+            widget_data:        Rc::new(WidgetData::new()),
             event_sink:         GtkEventSink::new(),
             style_provider:     gtk::CssProvider::new()
         }
@@ -203,50 +198,10 @@ impl FloGtk {
     }
 
     ///
-    /// Associates a widget with an ID
+    /// Retrieves the widget data structure for this object
     /// 
-    pub fn register_widget<TWidget: 'static+GtkUiWidget>(&mut self, widget_id: WidgetId, widget: TWidget) {
-        self.widgets.insert(widget_id, Rc::new(RefCell::new(widget)));
-        self.widget_data.insert(widget_id, AnyMap::new());
-    }
-
-    ///
-    /// Attempts to retrieve the widget with the specified ID
-    /// 
-    pub fn get_widget(&self, widget_id: WidgetId) -> Option<Rc<RefCell<GtkUiWidget>>> {
-        self.widgets.get(&widget_id).cloned()
-    }
-
-    ///
-    /// Removes the widget that has the specified ID
-    /// 
-    pub fn remove_widget(&mut self, widget_id: WidgetId) {
-        self.widgets.remove(&widget_id);
-        self.widget_data.remove(&widget_id);
-    }
-
-    ///
-    /// Sets the data associated with a particular type and widget
-    /// 
-    pub fn set_widget_data<TData: 'static>(&mut self, widget_id: WidgetId, new_data: TData) {
-        self.widget_data.get_mut(&widget_id)
-            .map(move |anymap| anymap.insert(new_data));
-    }
-
-    ///
-    /// Retrieves the data of a specific type associated with a widget
-    /// 
-    pub fn get_widget_data<'a, TData: 'static>(&'a mut self, widget_id: WidgetId) -> Option<&'a mut TData> {
-        self.widget_data.get_mut(&widget_id)
-            .and_then(move |anymap| anymap.get_mut::<TData>())
-    }
-
-    ///
-    /// Retrieves the data of a specific type associated with a widget
-    /// 
-    pub fn get_widget_data_or_insert<'a, TData: 'static, FnInsert: FnOnce() -> TData>(&'a mut self, widget_id: WidgetId, or_insert: FnInsert) -> Option<&'a mut TData> {
-        self.widget_data.get_mut(&widget_id)
-            .map(move |anymap| anymap.entry::<TData>().or_insert_with(or_insert))
+    pub fn widget_data(&self) -> Rc<WidgetData> {
+        Rc::clone(&self.widget_data)
     }
 
     ///
