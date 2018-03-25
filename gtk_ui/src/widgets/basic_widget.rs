@@ -7,6 +7,8 @@ use flo_ui::*;
 use gtk;
 use gtk::prelude::*;
 
+use std::rc::*;
+
 ///
 /// Performs the basic processing associated with a widget action (using a generic Gtk widget as the target)
 /// 
@@ -15,7 +17,7 @@ pub fn process_basic_widget_action(id: WidgetId, widget: &mut gtk::Widget, flo_g
 
     match action {
         &Layout(ref layout)         => process_basic_widget_layout(id, widget, flo_gtk, layout),
-        &Content(ref content)       => process_basic_widget_content(widget, flo_gtk, content),
+        &Content(ref content)       => process_basic_widget_content(id, widget, flo_gtk, content),
         &Appearance(ref appearance) => process_basic_widget_appearance(widget, flo_gtk, appearance),
         &State(ref state)           => process_basic_widget_state(widget, flo_gtk, state),
         &Font(ref font)             => process_basic_widget_font(widget, flo_gtk, font),
@@ -26,6 +28,9 @@ pub fn process_basic_widget_action(id: WidgetId, widget: &mut gtk::Widget, flo_g
     }
 }
 
+///
+/// Processes a layout command for a widget being managed by FlowBetween
+/// 
 pub fn process_basic_widget_layout(id: WidgetId, widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, layout: &WidgetLayout) { 
     // Fetch or create the layout for this widget
     let widget_data     = flo_gtk.widget_data();
@@ -38,16 +43,40 @@ pub fn process_basic_widget_layout(id: WidgetId, widget: &mut gtk::Widget, flo_g
     widget.queue_resize();
 }
 
-pub fn process_basic_widget_content(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, content: &WidgetContent) {
+///
+/// Performs the actions required to set a widget's parent
+/// 
+pub fn set_widget_parent(widget_id: WidgetId, new_parent_id: WidgetId, flo_gtk: &mut FloGtk) {
+    // Fetch the widget information
+    let widget_data     = flo_gtk.widget_data();
+    let child_widget    = widget_data.get_widget(widget_id);
+    let parent_widget   = widget_data.get_widget(new_parent_id);
+
+    if let (Some(child_widget), Some(parent_widget)) = (child_widget, parent_widget) {
+        // Set the parent of the child widget
+        child_widget.borrow_mut().set_parent(Rc::clone(&parent_widget));
+
+        // Add to the children of the new parent widget
+        parent_widget.borrow_mut().add_child(Rc::clone(&child_widget));
+    }
+}
+
+///
+/// Processes a content command for a widget being managed by FlowBetween
+/// 
+pub fn process_basic_widget_content(id: WidgetId, widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, content: &WidgetContent) {
     use self::WidgetContent::*;
 
     match content {
-        &SetParent(parent_id)   => { widget.unparent(); flo_gtk.widget_data().get_widget(parent_id).map(|parent_widget| parent_widget.borrow_mut().add_child(widget)); },
+        &SetParent(parent_id)   => set_widget_parent(id, parent_id, flo_gtk),
         &SetText(ref _text)     => () /* Standard gtk widgets can't have text in them */,
         &Draw(ref canvas)       => unimplemented!()
     }
 }
 
+///
+/// Generic appearance command for a widget being managed by FlowBetween
+/// 
 pub fn process_basic_widget_appearance(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, appearance: &Appearance) {
     use self::Appearance::*;
 
@@ -58,6 +87,9 @@ pub fn process_basic_widget_appearance(widget: &mut gtk::Widget, flo_gtk: &mut F
     }
 }
 
+///
+/// Processes a basic state command for a widget being managed by FlowBetween
+/// 
 pub fn process_basic_widget_state(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, state: &State) {
     use self::State::*;
 
@@ -69,6 +101,9 @@ pub fn process_basic_widget_state(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk
     }
 }
 
+///
+/// Processes a font command for a widget being managed by FlowBetween
+/// 
 pub fn process_basic_widget_font(widget: &mut gtk::Widget, flo_gtk: &mut FloGtk, font: &Font) {
     use self::Font::*;
 
