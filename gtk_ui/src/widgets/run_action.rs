@@ -1,6 +1,7 @@
-use super::flo_gtk::*;
+use super::window::*;
+use super::properties::*;
+use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
-use super::super::widgets::*;
 
 use gtk;
 use gtk::prelude::*;

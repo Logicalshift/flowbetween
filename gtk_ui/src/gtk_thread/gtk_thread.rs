@@ -1,6 +1,6 @@
 use super::flo_gtk::*;
-use super::run_action::*;
 use super::super::gtk_action::*;
+use super::super::widgets::*;
 
 use gtk;
 
