@@ -18,6 +18,12 @@ pub struct FloWidget {
     /// The ID assigned to this widget
     id: WidgetId,
 
+    /// Widget data
+    widget_data: Rc<WidgetData>,
+
+    /// The IDs of the child widgets of this widget
+    child_ids: Vec<WidgetId>,
+
     /// The widget that will contain the content for this widget
     container: gtk::Container,
 
@@ -38,18 +44,20 @@ impl FloWidget {
     pub fn new(id: WidgetId, widget_data: Rc<WidgetData>) -> FloWidget {
         // Create the widget
         let fixed   = gtk::Fixed::new();
-        let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(widget_data)));
+        let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(Rc::clone(&widget_data))));
 
         // Attach events to it
         Self::attach_layout_signal(&fixed.clone().upcast::<gtk::Container>(), Rc::clone(&layout));
             
         // Build the final structure
         FloWidget {
-            id:         id,
-            container:  fixed.clone().upcast::<gtk::Container>(),
-            as_widget:  fixed.clone().upcast::<gtk::Widget>(),
-            text:       None,
-            layout:     layout
+            id:             id,
+            widget_data:    widget_data,
+            child_ids:      vec![],
+            container:      fixed.clone().upcast::<gtk::Container>(),
+            as_widget:      fixed.clone().upcast::<gtk::Widget>(),
+            text:           None,
+            layout:         layout
         }
     }
 
@@ -106,13 +114,19 @@ impl GtkUiWidget for FloWidget {
     /// Sets the children of this widget
     /// 
     fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
-        // Remove any existing children
-        self.container.get_children().into_iter().for_each(|existing| self.container.remove(&existing));
+        let widget_data = &self.widget_data;
+        let container   = &self.container;
+
+        // Remove any child widgets added by the previous call to this function
+        self.child_ids.drain(..)
+            .map(|child_id| widget_data.get_widget(child_id))
+            .map(|widget| widget.map(|widget| container.remove(widget.borrow().get_underlying())));
 
         // Send to the layout
         self.layout.borrow_mut().set_children(children.iter().map(|widget| widget.borrow().id()));
 
         // Add children to this widget
+        self.child_ids.extend(children.iter().map(|child_widget| child_widget.borrow().id()));
         for child in children {
             self.container.add(child.borrow().get_underlying());
         }
