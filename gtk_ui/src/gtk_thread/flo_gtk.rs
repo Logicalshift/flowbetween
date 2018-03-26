@@ -72,7 +72,7 @@ impl GtkMessageTarget {
     ///
     /// Performs an action asynchronously on this message target
     /// 
-    pub fn async<MsgFn: 'static+Send+FnOnce(&mut FloGtk) -> ()>(&mut self, action: MsgFn) {
+    pub fn async<MsgFn: 'static+Send+FnOnce(&mut FloGtk) -> ()>(&self, action: MsgFn) {
         // Lock the queue in order to start sending the message
         let mut queue = self.queue.0.lock().unwrap();
 
@@ -91,7 +91,7 @@ impl GtkMessageTarget {
     ///
     /// Performs an action synchronously on this message target
     /// 
-    pub fn sync<TReturn: 'static+Send, MsgFn: 'static+Send+FnOnce(&mut FloGtk) -> TReturn>(&mut self, action: MsgFn) -> TReturn {
+    pub fn sync<TReturn: 'static+Send, MsgFn: 'static+Send+FnOnce(&mut FloGtk) -> TReturn>(&self, action: MsgFn) -> TReturn {
         // Thread to be woken once the event is available
         let wake_thread = thread::current();
 

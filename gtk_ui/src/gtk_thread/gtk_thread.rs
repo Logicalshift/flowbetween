@@ -76,7 +76,7 @@ impl GtkThread {
     ///
     /// Performs a set of actions on the Gtk thread
     /// 
-    pub fn perform_actions(&mut self, actions: Vec<GtkAction>) {
+    pub fn perform_actions(&self, actions: Vec<GtkAction>) {
         self.message_target.async(|flo_gtk| {
             for action in actions {
                 run_action(flo_gtk, &action)
