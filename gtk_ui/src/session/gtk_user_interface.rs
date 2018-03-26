@@ -1,3 +1,4 @@
+use super::action_sink::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 use super::super::gtk_event::*;
@@ -33,7 +34,9 @@ impl UserInterface<Vec<GtkAction>, GtkEvent, ()> for GtkUserInterface {
     type UpdateStream   = Box<Stream<Item=GtkEvent, Error=()>>;
 
     fn get_input_sink(&self) -> Self::EventSink {
-        unimplemented!()
+        let sink = ActionSink::new(Arc::clone(&self.thread));
+
+        Box::new(sink)
     }
 
     fn get_updates(&self) -> Self::UpdateStream {

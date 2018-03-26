@@ -1,3 +1,4 @@
+mod action_sink;
 mod gtk_session;
 mod gtk_user_interface;
 
