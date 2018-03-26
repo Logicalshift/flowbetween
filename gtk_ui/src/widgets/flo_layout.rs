@@ -12,6 +12,10 @@ use glib::translate::ToGlibPtr;
 use std::rc::*;
 use std::collections::HashSet;
 
+///
+/// Provides the computed layout position for a widget
+/// 
+#[derive(Clone, Copy)]
 pub struct WidgetPosition {
     id: WidgetId,
 
@@ -180,6 +184,9 @@ impl FloWidgetLayout {
         for widget_layout in layout {
             // Fetch the widget we're going to lay out
             let widget = self.widget_data.get_widget(widget_layout.id);
+
+            // Store this layout data with the widget
+            self.widget_data.set_widget_data(widget_layout.id, widget_layout);
 
             // If the widget exists, then position it according to its coordinates (and padding)
             if let Some(widget) = widget {
