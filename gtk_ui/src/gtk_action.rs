@@ -66,7 +66,7 @@ pub enum GtkWidgetAction {
     Appearance(Appearance),
 
     /// Updates the state of this widget
-    State(State),
+    State(WidgetState),
 
     /// Updates the font properties for this widget
     Font(Font),
@@ -103,6 +103,24 @@ pub enum WidgetLayout {
 
     /// Specifies the padding for this widget
     Padding((u32, u32), (u32, u32))
+}
+
+///
+/// Specifies a change to the state of a widget
+/// 
+#[derive(Clone)]
+pub enum WidgetState {
+    /// Sets whether or not this widget is highlighted as being selected
+    SetSelected(bool),
+
+    /// Sets whether or not this widget shows a badge next to it
+    SetBadged(bool),
+
+    /// Sets the value of this widget
+    SetValueFloat(f32),
+
+    /// Sets the range of valid values for this widget
+    SetRangeFloat(f32, f32)
 }
 
 ///

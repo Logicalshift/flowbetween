@@ -144,14 +144,14 @@ pub fn process_basic_widget_appearance<W: WidgetExt>(widget: &W, flo_gtk: &mut F
 ///
 /// Processes a basic state command for a widget being managed by FlowBetween
 /// 
-pub fn process_basic_widget_state<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, state: &State) {
-    use self::State::*;
+pub fn process_basic_widget_state<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, state: &WidgetState) {
+    use self::WidgetState::*;
 
     match state {
-        &Selected(ref selected_prop)    => (),
-        &Badged(ref badged_prop)        => (),
-        &Value(ref value_prop)          => (),
-        &Range((ref from, ref to))      => ()
+        &SetSelected(selected)      => (),
+        &SetBadged(badged)          => (),
+        &SetValueFloat(value)       => (),
+        &SetRangeFloat(from, to)    => ()
     }
 }
 
