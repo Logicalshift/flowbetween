@@ -10,6 +10,7 @@ use gtk::prelude::*;
 use glib::translate::ToGlibPtr;
 
 use std::rc::*;
+use std::collections::HashSet;
 
 pub struct WidgetPosition {
     id: WidgetId,
@@ -174,6 +175,8 @@ impl FloWidgetLayout {
         let layout      = self.get_layout(width as f32, height as f32);
 
         // Position each of the widgets
+        let mut remaining: HashSet<_> = target.get_children().into_iter().collect();
+
         for widget_layout in layout {
             // Fetch the widget we're going to lay out
             let widget = self.widget_data.get_widget(widget_layout.id);
@@ -194,6 +197,8 @@ impl FloWidgetLayout {
                 let widget      = widget.borrow();
                 let underlying  = widget.get_underlying();
 
+                remaining.remove(underlying);
+
                 // Unsafe code used here because the rust GTK bindings don't have gtk_container_child_set_property
                 unsafe {
                     let x = x.floor() as i32;
@@ -203,11 +208,21 @@ impl FloWidgetLayout {
                     gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, underlying.to_glib_none().0, "y".to_glib_none().0,  gtk::Value::from(&y).to_glib_none().0);
                 }
                 // Can also cast to Fixed or Layout but the above code will work on either
-                
+
                 //target.child_set_property(underlying, "x", &(x.floor() as i32)).unwrap();
                 //target.child_set_property(underlying, "y", &(y.floor() as i32)).unwrap();
                 underlying.set_size_request(width.floor() as i32, height.floor() as i32);
             }
+        }
+
+        // Make any remaining widget fill the entire container
+        for extra_widget in remaining {
+            unsafe {
+                gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, extra_widget.to_glib_none().0, "x".to_glib_none().0,  gtk::Value::from(&0).to_glib_none().0);
+                gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, extra_widget.to_glib_none().0, "y".to_glib_none().0,  gtk::Value::from(&0).to_glib_none().0);
+            }
+
+            extra_widget.set_size_request(width, height);
         }
     }
 }
