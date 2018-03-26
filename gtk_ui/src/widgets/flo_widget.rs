@@ -120,7 +120,7 @@ impl GtkUiWidget for FloWidget {
         // Remove any child widgets added by the previous call to this function
         self.child_ids.drain(..)
             .map(|child_id| widget_data.get_widget(child_id))
-            .map(|widget| widget.map(|widget| container.remove(widget.borrow().get_underlying())));
+            .for_each(|widget| { widget.map(|widget| container.remove(widget.borrow().get_underlying())); });
 
         // Send to the layout
         self.layout.borrow_mut().set_children(children.iter().map(|widget| widget.borrow().id()));
