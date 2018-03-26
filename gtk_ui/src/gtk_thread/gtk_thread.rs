@@ -1,4 +1,5 @@
 use super::flo_gtk::*;
+use super::event_sink::*;
 use super::super::gtk_action::*;
 use super::super::widgets::*;
 
@@ -11,6 +12,9 @@ use std::thread::JoinHandle;
 /// Represents a running Gtk thread, providing an interface for other threads to use
 /// 
 pub struct GtkThread {
+    /// A clone of the event sink that the Gtk thread will send its events to
+    event_sink: GtkEventSink,
+
     /// Used to send messages and actions to the Gtk thread
     message_target: GtkMessageTarget,
 
@@ -23,8 +27,12 @@ impl GtkThread {
     /// Creates a new Gtk thread
     /// 
     pub fn new() -> GtkThread {
+        // Create the event sink
+        let event_sink = GtkEventSink::new();
+
         // Create a new thread
         let mut thread = GtkThread {
+            event_sink:     event_sink,
             message_target: GtkMessageTarget::new(),
             running_thread: None
         };
@@ -41,7 +49,8 @@ impl GtkThread {
     /// 
     fn run_thread(&self) -> JoinHandle<()> {
         // Clone the message target so we can use it as the source for the new thread
-        let thread_target = self.message_target.clone();
+        let thread_target   = self.message_target.clone();
+        let event_sink      = self.event_sink.clone();
 
         // Start the Gtk thread
         let thread = thread::spawn(move || {
@@ -52,7 +61,7 @@ impl GtkThread {
             }
 
             // Create the Gtk data structure
-            let flo_gtk = FloGtk::new();
+            let flo_gtk = FloGtk::new(event_sink);
 
             // Send messages to it
             flo_gtk.receive_messages(&thread_target);
@@ -73,6 +82,13 @@ impl GtkThread {
                 run_action(flo_gtk, &action)
             }
         });
+    }
+
+    ///
+    /// Retrieves a stream of the events originating from the GTK thread
+    /// 
+    pub fn get_event_stream(&self) -> GtkEventStream {
+        self.event_sink.get_stream()
     }
 }
 

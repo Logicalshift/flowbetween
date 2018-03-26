@@ -77,7 +77,7 @@ impl GtkEventSink {
     ///
     /// Retrieves a stream for reading from this sink
     /// 
-    pub fn get_stream(&mut self) -> GtkEventStream {
+    pub fn get_stream(&self) -> GtkEventStream {
         let mut core = self.core.lock().unwrap();
 
         // Create the stream core

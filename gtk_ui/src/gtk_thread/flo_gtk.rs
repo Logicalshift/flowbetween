@@ -143,12 +143,12 @@ impl FloGtk {
     ///
     /// Creates a new FloGtk instance
     /// 
-    pub fn new() -> FloGtk {
+    pub fn new(event_sink: GtkEventSink) -> FloGtk {
         FloGtk { 
             pending_messages:   MessageQueue::new(),
             windows:            HashMap::new(),
             widget_data:        Rc::new(WidgetData::new()),
-            event_sink:         GtkEventSink::new(),
+            event_sink:         event_sink,
             style_provider:     gtk::CssProvider::new()
         }
     }
