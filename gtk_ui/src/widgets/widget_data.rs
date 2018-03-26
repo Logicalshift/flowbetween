@@ -116,8 +116,10 @@ mod test {
     struct TestWidget { }
 
     impl GtkUiWidget for TestWidget { 
+        fn id(&self) -> WidgetId { WidgetId::Assigned(0) }
         fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) { }
-        fn add_child(&mut self, new_child: &gtk::Widget) { }
+        fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) { }
+        fn get_underlying<'a>(&'a self) -> &'a gtk::Widget { unimplemented!() }
     }
 
     #[test]
