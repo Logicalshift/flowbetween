@@ -76,6 +76,13 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
     for action in actions.iter() {
         match action {
             &GtkWidgetAction::New(widget_type)  => {
+                // If there's an existing widget with this ID, delete it
+                if (widget.is_some()) {
+                    // Cause the current widget to be deleted
+                    widget.as_ref().map(|widget| widget.borrow_mut().process(flo_gtk, &GtkWidgetAction::Delete));
+                    widget_data.remove_widget(widget_id);
+                }
+
                 // Call the factory method to create a new widget
                 let new_widget = create_widget(widget_id, widget_type, Rc::clone(&widget_data));
 
