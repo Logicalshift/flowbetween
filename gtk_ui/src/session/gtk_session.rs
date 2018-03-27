@@ -1,3 +1,4 @@
+use super::gtk_control::*;
 use super::gtk_user_interface::*;
 use super::super::gtk_action::*;
 
@@ -13,6 +14,12 @@ use std::sync::*;
 /// Core data structures associated with a Gtk session
 /// 
 struct GtkSessionCore {
+    /// The ID to assign to the next widget generated for this session
+    next_widget_id: i64,
+
+    /// The root Gtk control
+    root_control: Option<Control>,
+
     /// The GTK user interface
     gtk_ui: GtkUserInterface
 }
@@ -38,7 +45,9 @@ impl GtkSession {
 
         // Create the core
         let core = GtkSessionCore {
-            gtk_ui: gtk_ui
+            next_widget_id: 0,
+            root_control:   None,
+            gtk_ui:         gtk_ui
         };
         let core = Arc::new(Mutex::new(core));
 
@@ -73,5 +82,22 @@ impl GtkSession {
                 ShowAll
             ])
         ]).unwrap();
+    }
+}
+
+impl GtkSessionCore {
+    ///
+    /// Processes an update from the core UI and returns the resulting GtkActions after updating
+    /// the state in the core
+    /// 
+    pub fn process_update(&mut self, update: UiUpdate) -> Vec<GtkAction> {
+        use self::UiUpdate::*;
+
+        match update {
+            Start                                   => vec![],
+            UpdateUi(ui_differences)                => vec![],
+            UpdateCanvas(canvas_differences)        => vec![],
+            UpdateViewModel(viewmodel_differences)  => vec![]
+        }
     }
 }
