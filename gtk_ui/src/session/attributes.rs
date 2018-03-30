@@ -24,17 +24,23 @@ impl ToGtkActions for ControlAttribute {
             &ZIndex(zindex)                         => vec![ GtkWidgetAction::Layout(WidgetLayout::ZIndex(zindex)) ].into_actions(),
             &Padding((left, top), (right, bottom))  => vec![ GtkWidgetAction::Layout(WidgetLayout::Padding((left, top), (right, bottom))) ].into_actions(),
             
-            &Text(ref text)                         => unimplemented!(),
+            &Text(ref text)                         => vec![ PropertyAction::from_property(text.clone(), |text| GtkWidgetAction::Content(WidgetContent::SetText(text.to_string()))) ],
+
             &FontAttr(ref font)                     => unimplemented!(),
             &StateAttr(ref state)                   => unimplemented!(),
             &PopupAttr(ref popup)                   => unimplemented!(),
             &AppearanceAttr(ref appearance)         => unimplemented!(),
             &ScrollAttr(ref scroll)                 => unimplemented!(),
+
             &Id(ref id)                             => unimplemented!(),
-            &SubComponents(ref _components)         => unimplemented!(),
-            &Controller(ref controller_name)        => unimplemented!(),
             &Action(ref trigger, ref action_name)   => unimplemented!(),
-            &Canvas(ref canvas)                     => unimplemented!()
+            &Canvas(ref canvas)                     => unimplemented!(),
+
+            // The GTK layout doesn't need to know the controller
+            &Controller(ref _controller_name)       => vec![],
+
+            // Subcomponents are added elsewhere: we don't assign them here
+            &SubComponents(ref _components)         => vec![]
         }
     }
 }

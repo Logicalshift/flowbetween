@@ -130,3 +130,16 @@ impl<'a> ToProperty for &'a PropertyValue {
         }
     }
 }
+
+impl From<Property> for Option<PropertyValue> {
+    fn from(prop: Property) -> Option<PropertyValue> {
+        match prop {
+            Property::Nothing       => Some(PropertyValue::Nothing),
+            Property::Bool(b)       => Some(PropertyValue::Bool(b)),
+            Property::Int(i)        => Some(PropertyValue::Int(i)),
+            Property::Float(f)      => Some(PropertyValue::Float(f)),
+            Property::String(ref s) => Some(PropertyValue::String(s.clone())),
+            Property::Bind(_)       => None
+        }
+    }
+}
