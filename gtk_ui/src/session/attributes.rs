@@ -45,18 +45,6 @@ impl ToGtkActions for ControlAttribute {
     }
 }
 
-impl ToGtkActions for Font {
-    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        use self::Font::*;
-
-        match self {
-            &Size(pixels)       => unimplemented!(),
-            &Align(align)       => unimplemented!(),
-            &Weight(weight)     => unimplemented!()
-        }
-    }
-}
-
 impl ToGtkActions for State {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
         use self::State::*;
@@ -67,8 +55,6 @@ impl ToGtkActions for State {
             &Value(ref value)           => unimplemented!(),
             &Range((ref min, ref max))  => unimplemented!()
         }
-
-        unimplemented!()
     }
 }
 
@@ -85,15 +71,15 @@ impl ToGtkActions for Popup {
     }
 }
 
+impl ToGtkActions for Font {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        vec![ GtkWidgetAction::Font(self.clone()) ].into_actions()
+    }
+}
+
 impl ToGtkActions for Appearance {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        use self::Appearance::*;
-
-        match self {
-            &Foreground(ref foreground) => unimplemented!(),
-            &Background(ref background) => unimplemented!(),
-            &Image(ref image)           => unimplemented!()
-        }
+        vec![ GtkWidgetAction::Appearance(self.clone()) ].into_actions()
     }
 }
 
