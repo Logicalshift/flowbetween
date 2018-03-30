@@ -247,11 +247,11 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
             if let Some(canvas) = canvas {
                 self.canvas_response(&canvas)
             } else {
-                Response::with((status::NotFound))
+                Response::with(status::NotFound)
             }
         } else {
             // Not found
-            Response::with((status::NotFound))
+            Response::with(status::NotFound)
         }
     }
 
@@ -301,10 +301,10 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
                 self.image_response(image)
             } else {
                 // No image found
-                Response::with((status::NotFound))
+                Response::with(status::NotFound)
             }
         } else {
-            return Response::with((status::NotFound));
+            return Response::with(status::NotFound);
         }
     }
 
@@ -314,7 +314,7 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
     pub fn handle_resource_request(&self, req: &mut Request) -> Response {
         if req.url.path().len() < 2 {
             // Path should be session_id/resource_type
-            return Response::with((status::NotFound));
+            return Response::with(status::NotFound);
         }
 
 
@@ -337,11 +337,11 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
                 "i"     => self.handle_image_get(&*session, partial_url),
                 "c"     => self.handle_canvas_get(&*session, partial_url),
 
-                _       => Response::with((status::NotFound))
+                _       => Response::with(status::NotFound)
             }
         } else {
             // Session not found
-            Response::with((status::NotFound))
+            Response::with(status::NotFound)
         }
     }
 }
@@ -362,15 +362,15 @@ impl<CoreController: HttpController+'static> Handler for UiHandler<CoreControlle
 
                 if !is_json {
                     // Must be a JSON POST request
-                    Ok(Response::with((status::BadRequest)))
+                    Ok(Response::with(status::BadRequest))
                 } else {
                     // Parse the request
                     let request = req.get::<Struct<UiHandlerRequest>>();
 
                     match request {
                         Ok(Some(request))   => Ok(self.handle_ui_request(request, &base_url)),
-                        Ok(None)            => Ok(Response::with((status::BadRequest))),
-                        Err(_)              => Ok(Response::with((status::BadRequest)))
+                        Ok(None)            => Ok(Response::with(status::BadRequest)),
+                        Err(_)              => Ok(Response::with(status::BadRequest))
                     }
                 }
             },
@@ -382,7 +382,7 @@ impl<CoreController: HttpController+'static> Handler for UiHandler<CoreControlle
 
             _ => {
                 // Unsupported method
-                Ok(Response::with((status::BadRequest)))
+                Ok(Response::with(status::BadRequest))
             }
         }
     }
