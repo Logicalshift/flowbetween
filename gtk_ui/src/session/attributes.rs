@@ -12,14 +12,14 @@ pub trait ToGtkActions {
     fn to_gtk_actions(&self) -> Vec<GtkWidgetAction>;
 }
 
-impl<'a> From<&'a ControlAttribute> for GtkWidgetAction {
-    fn from(attr: &'a ControlAttribute) -> GtkWidgetAction {
+impl ToGtkActions for ControlAttribute {
+    fn to_gtk_actions(&self) -> Vec<GtkWidgetAction> {
         use self::ControlAttribute::*;
 
-        match attr {
-            &BoundingBox(ref bounds)                => unimplemented!(),
-            &ZIndex(zindex)                         => unimplemented!(),
-            &Padding((left, top), (right, bottom))  => unimplemented!(),
+        match self {
+            &BoundingBox(ref bounds)                => vec![ GtkWidgetAction::Layout(WidgetLayout::BoundingBox(bounds.clone())) ],
+            &ZIndex(zindex)                         => vec![ GtkWidgetAction::Layout(WidgetLayout::ZIndex(zindex)) ],
+            &Padding((left, top), (right, bottom))  => vec![ GtkWidgetAction::Layout(WidgetLayout::Padding((left, top), (right, bottom))) ],
             &Text(ref text)                         => unimplemented!(),
             &FontAttr(ref font)                     => unimplemented!(),
             &StateAttr(ref state)                   => unimplemented!(),
