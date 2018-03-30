@@ -96,6 +96,12 @@ pub enum WidgetContent {
     Draw(Resource<Canvas>)
 }
 
+impl From<WidgetContent> for GtkWidgetAction {
+    fn from(item: WidgetContent) -> GtkWidgetAction {
+        GtkWidgetAction::Content(item)
+    }
+}
+
 ///
 /// Specifies a change to how a widget is laid out
 /// 
@@ -109,6 +115,12 @@ pub enum WidgetLayout {
 
     /// Specifies the padding for this widget
     Padding((u32, u32), (u32, u32))
+}
+
+impl From<WidgetLayout> for GtkWidgetAction {
+    fn from(item: WidgetLayout) -> GtkWidgetAction {
+        GtkWidgetAction::Layout(item)
+    }
 }
 
 ///
@@ -127,6 +139,25 @@ pub enum WidgetState {
 
     /// Sets the range of valid values for this widget
     SetRangeFloat(f32, f32)
+}
+
+impl From<WidgetState> for GtkWidgetAction {
+    fn from(item: WidgetState) -> GtkWidgetAction {
+        GtkWidgetAction::State(item)
+    }
+}
+
+
+impl From<Font> for GtkWidgetAction {
+    fn from(item: Font) -> GtkWidgetAction {
+        GtkWidgetAction::Font(item)
+    }
+}
+
+impl From<Appearance> for GtkWidgetAction {
+    fn from(item: Appearance) -> GtkWidgetAction {
+        GtkWidgetAction::Appearance(item)
+    }
 }
 
 ///
