@@ -86,6 +86,12 @@ pub enum WidgetContent {
     /// Sets the text of this widget to the specified string
     SetText(String),
 
+    /// Adds a class to this widget
+    AddClass(String),
+
+    /// Removes a class from this widget
+    RemoveClass(String),
+
     /// Specifies that this widget should draw itself from the specified canvas
     Draw(Resource<Canvas>)
 }

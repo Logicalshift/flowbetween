@@ -32,7 +32,7 @@ impl ToGtkActions for ControlAttribute {
             &AppearanceAttr(ref appearance)         => appearance.to_gtk_actions(),
             &ScrollAttr(ref scroll)                 => scroll.to_gtk_actions(),
 
-            &Id(ref id)                             => unimplemented!(),
+            &Id(ref id)                             => vec![ GtkWidgetAction::Content(WidgetContent::AddClass(id.clone())) ].into_actions(),
             &Action(ref trigger, ref action_name)   => unimplemented!(),
             &Canvas(ref canvas)                     => unimplemented!(),
 
