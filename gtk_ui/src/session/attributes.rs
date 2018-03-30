@@ -26,11 +26,11 @@ impl ToGtkActions for ControlAttribute {
             
             &Text(ref text)                         => vec![ PropertyAction::from_property(text.clone(), |text| GtkWidgetAction::Content(WidgetContent::SetText(text.to_string()))) ],
 
-            &FontAttr(ref font)                     => unimplemented!(),
-            &StateAttr(ref state)                   => unimplemented!(),
-            &PopupAttr(ref popup)                   => unimplemented!(),
-            &AppearanceAttr(ref appearance)         => unimplemented!(),
-            &ScrollAttr(ref scroll)                 => unimplemented!(),
+            &FontAttr(ref font)                     => font.to_gtk_actions(),
+            &StateAttr(ref state)                   => state.to_gtk_actions(),
+            &PopupAttr(ref popup)                   => popup.to_gtk_actions(),
+            &AppearanceAttr(ref appearance)         => appearance.to_gtk_actions(),
+            &ScrollAttr(ref scroll)                 => scroll.to_gtk_actions(),
 
             &Id(ref id)                             => unimplemented!(),
             &Action(ref trigger, ref action_name)   => unimplemented!(),
@@ -42,5 +42,35 @@ impl ToGtkActions for ControlAttribute {
             // Subcomponents are added elsewhere: we don't assign them here
             &SubComponents(ref _components)         => vec![]
         }
+    }
+}
+
+impl ToGtkActions for Font {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        unimplemented!()
+    }
+}
+
+impl ToGtkActions for State {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        unimplemented!()
+    }
+}
+
+impl ToGtkActions for Popup {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        unimplemented!();
+    }
+}
+
+impl ToGtkActions for Appearance {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        unimplemented!();
+    }
+}
+
+impl ToGtkActions for Scroll {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        unimplemented!();
     }
 }
