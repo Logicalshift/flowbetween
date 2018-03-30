@@ -47,30 +47,65 @@ impl ToGtkActions for ControlAttribute {
 
 impl ToGtkActions for Font {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        unimplemented!()
+        use self::Font::*;
+
+        match self {
+            &Size(pixels)       => unimplemented!(),
+            &Align(align)       => unimplemented!(),
+            &Weight(weight)     => unimplemented!()
+        }
     }
 }
 
 impl ToGtkActions for State {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        use self::State::*;
+
+        match self {
+            &Selected(ref selected)     => unimplemented!(),
+            &Badged(ref badged)         => unimplemented!(),
+            &Value(ref value)           => unimplemented!(),
+            &Range((ref min, ref max))  => unimplemented!()
+        }
+
         unimplemented!()
     }
 }
 
 impl ToGtkActions for Popup {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        unimplemented!();
+        use self::Popup::*;
+
+        match self {
+            &IsOpen(ref is_open)        => unimplemented!(),
+            &Direction(ref direction)   => unimplemented!(),
+            &Size(width, height)        => unimplemented!(),
+            &Offset(u32)                => unimplemented!()
+        }
     }
 }
 
 impl ToGtkActions for Appearance {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        unimplemented!();
+        use self::Appearance::*;
+
+        match self {
+            &Foreground(ref foreground) => unimplemented!(),
+            &Background(ref background) => unimplemented!(),
+            &Image(ref image)           => unimplemented!()
+        }
     }
 }
 
 impl ToGtkActions for Scroll {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        unimplemented!();
+        use self::Scroll::*;
+
+        match self {
+            &MinimumContentSize(width, height)      => unimplemented!(),
+            &HorizontalScrollBar(ref visibility)    => unimplemented!(),
+            &VerticalScrollBar(ref visibility)      => unimplemented!(),
+            &Fix(ref axis)                          => unimplemented!()
+        }
     }
 }
