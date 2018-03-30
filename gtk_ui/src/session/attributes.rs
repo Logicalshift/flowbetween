@@ -20,11 +20,11 @@ impl ToGtkActions for ControlAttribute {
         use self::ControlAttribute::*;
 
         match self {
-            &BoundingBox(ref bounds)                => vec![ GtkWidgetAction::Layout(WidgetLayout::BoundingBox(bounds.clone())) ].into_actions(),
-            &ZIndex(zindex)                         => vec![ GtkWidgetAction::Layout(WidgetLayout::ZIndex(zindex)) ].into_actions(),
-            &Padding((left, top), (right, bottom))  => vec![ GtkWidgetAction::Layout(WidgetLayout::Padding((left, top), (right, bottom))) ].into_actions(),
+            &BoundingBox(ref bounds)                => vec![ WidgetLayout::BoundingBox(bounds.clone()).into() ].into_actions(),
+            &ZIndex(zindex)                         => vec![ WidgetLayout::ZIndex(zindex).into() ].into_actions(),
+            &Padding((left, top), (right, bottom))  => vec![ WidgetLayout::Padding((left, top), (right, bottom)).into() ].into_actions(),
             
-            &Text(ref text)                         => vec![ PropertyAction::from_property(text.clone(), |text| GtkWidgetAction::Content(WidgetContent::SetText(text.to_string()))) ],
+            &Text(ref text)                         => vec![ PropertyAction::from_property(text.clone(), |text| WidgetContent::SetText(text.to_string()).into()) ],
 
             &FontAttr(ref font)                     => font.to_gtk_actions(),
             &StateAttr(ref state)                   => state.to_gtk_actions(),
@@ -73,13 +73,13 @@ impl ToGtkActions for Popup {
 
 impl ToGtkActions for Font {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        vec![ GtkWidgetAction::Font(self.clone()) ].into_actions()
+        vec![ self.clone().into() ].into_actions()
     }
 }
 
 impl ToGtkActions for Appearance {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        vec![ GtkWidgetAction::Appearance(self.clone()) ].into_actions()
+        vec![ self.clone().into() ].into_actions()
     }
 }
 
