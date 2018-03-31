@@ -33,8 +33,8 @@ impl ToGtkActions for ControlAttribute {
             &ScrollAttr(ref scroll)                 => scroll.to_gtk_actions(),
 
             &Id(ref id)                             => vec![ GtkWidgetAction::Content(WidgetContent::AddClass(id.clone())) ].into_actions(),
-            &Action(ref trigger, ref action_name)   => unimplemented!(),
-            &Canvas(ref canvas)                     => unimplemented!(),
+            &Action(ref trigger, ref action_name)   => vec![],
+            &Canvas(ref canvas)                     => vec![],
 
             // The GTK layout doesn't need to know the controller
             &Controller(ref _controller_name)       => vec![],
@@ -66,10 +66,10 @@ impl ToGtkActions for Popup {
         use self::Popup::*;
 
         match self {
-            &IsOpen(ref is_open)        => unimplemented!(),
-            &Direction(ref direction)   => unimplemented!(),
-            &Size(width, height)        => unimplemented!(),
-            &Offset(u32)                => unimplemented!()
+            &IsOpen(ref is_open)        => vec![],
+            &Direction(ref direction)   => vec![],
+            &Size(width, height)        => vec![],
+            &Offset(u32)                => vec![]
         }
     }
 }
