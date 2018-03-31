@@ -75,6 +75,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
         &Appearance(ref appearance) => process_basic_widget_appearance(widget.get_underlying(), flo_gtk, appearance),
         &State(ref state)           => process_basic_widget_state(widget.get_underlying(), flo_gtk, state),
         &Font(ref font)             => process_basic_widget_font(widget.get_underlying(), flo_gtk, font),
+        &Scroll(ref scroll)         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
         &New(_widget_type)          => (),
         &SetRoot(window_id)         => { 
@@ -168,5 +169,16 @@ pub fn process_basic_widget_font<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk,
         &Size(size_pixels)      => (),
         &Align(ref align)       => (),
         &Weight(ref weight)     => ()
+    }
+}
+
+pub fn process_basic_widget_scroll<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, scroll: &Scroll) {
+    use self::Scroll::*;
+
+    match scroll {
+        &MinimumContentSize(width, height)      => (),
+        &HorizontalScrollBar(ref visibility)    => (),
+        &VerticalScrollBar(ref visibility)      => (),
+        &Fix(ref axis)                          => ()
     }
 }

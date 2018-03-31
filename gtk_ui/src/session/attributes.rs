@@ -88,13 +88,6 @@ impl ToGtkActions for Appearance {
 
 impl ToGtkActions for Scroll {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        use self::Scroll::*;
-
-        match self {
-            &MinimumContentSize(width, height)      => unimplemented!(),
-            &HorizontalScrollBar(ref visibility)    => unimplemented!(),
-            &VerticalScrollBar(ref visibility)      => unimplemented!(),
-            &Fix(ref axis)                          => unimplemented!()
-        }
+        vec![ self.clone().into() ].into_actions()
     }
 }

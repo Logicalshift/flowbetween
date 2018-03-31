@@ -71,6 +71,9 @@ pub enum GtkWidgetAction {
     /// Updates the font properties for this widget
     Font(Font),
 
+    /// Updates how the content of this widget scrolls
+    Scroll(Scroll),
+
     /// Deletes this widget (and any child widgets it may contain)
     Delete
 }
@@ -150,7 +153,6 @@ impl From<WidgetState> for GtkWidgetAction {
     }
 }
 
-
 impl From<Font> for GtkWidgetAction {
     fn from(item: Font) -> GtkWidgetAction {
         GtkWidgetAction::Font(item)
@@ -160,6 +162,12 @@ impl From<Font> for GtkWidgetAction {
 impl From<Appearance> for GtkWidgetAction {
     fn from(item: Appearance) -> GtkWidgetAction {
         GtkWidgetAction::Appearance(item)
+    }
+}
+
+impl From<Scroll> for GtkWidgetAction {
+    fn from(item: Scroll) -> GtkWidgetAction {
+        GtkWidgetAction::Scroll(item)
     }
 }
 
