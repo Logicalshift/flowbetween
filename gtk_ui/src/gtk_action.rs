@@ -137,8 +137,11 @@ pub enum WidgetState {
     /// Sets the value of this widget
     SetValueFloat(f32),
 
-    /// Sets the range of valid values for this widget
-    SetRangeFloat(f32, f32)
+    /// Sets the minimum value for this widget
+    SetRangeMin(f32),
+
+    /// Sets the maximum value for this widget
+    SetRangeMax(f32)
 }
 
 impl From<WidgetState> for GtkWidgetAction {

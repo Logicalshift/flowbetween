@@ -153,7 +153,8 @@ pub fn process_basic_widget_state<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk
         &SetSelected(selected)      => (),
         &SetBadged(badged)          => (),
         &SetValueFloat(value)       => (),
-        &SetRangeFloat(from, to)    => ()
+        &SetRangeMin(from)          => (),
+        &SetRangeMax(to)            => ()
     }
 }
 

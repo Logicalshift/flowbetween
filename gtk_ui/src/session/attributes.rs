@@ -50,10 +50,13 @@ impl ToGtkActions for State {
         use self::State::*;
 
         match self {
-            &Selected(ref selected)     => unimplemented!(),
-            &Badged(ref badged)         => unimplemented!(),
-            &Value(ref value)           => unimplemented!(),
-            &Range((ref min, ref max))  => unimplemented!()
+            &Selected(ref selected)     => vec![ PropertyAction::from_property(selected.clone(), |value| WidgetState::SetSelected(value.to_bool().unwrap_or(false)).into()) ],
+            &Badged(ref badged)         => vec![ PropertyAction::from_property(badged.clone(), |value| WidgetState::SetBadged(value.to_bool().unwrap_or(false)).into()) ],
+            &Value(ref value)           => vec![ PropertyAction::from_property(value.clone(), |value| WidgetState::SetValueFloat(value.to_f32().unwrap_or(0.0)).into()) ],
+            &Range((ref min, ref max))  => vec![ 
+                PropertyAction::from_property(min.clone(), |min| WidgetState::SetRangeMin(min.to_f32().unwrap_or(0.0)).into()),
+                PropertyAction::from_property(max.clone(), |max| WidgetState::SetRangeMax(max.to_f32().unwrap_or(0.0)).into()) 
+            ]
         }
     }
 }

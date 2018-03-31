@@ -48,6 +48,28 @@ impl PropertyValue {
             None
         }
     }
+
+    ///
+    /// Returns the boolean value of this property, if it is one
+    /// 
+    pub fn to_bool(&self) -> Option<bool> {
+        if let &PropertyValue::Bool(result) = self {
+            Some(result)
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// Returns the floating point value of this property, if it is one
+    /// 
+    pub fn to_f32(&self) -> Option<f32> {
+        if let &PropertyValue::Float(result) = self {
+            Some(result as f32)
+        } else {
+            None
+        }
+    }
 }
 
 impl ToString for Property {
