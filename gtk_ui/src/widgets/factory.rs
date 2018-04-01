@@ -15,9 +15,9 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
     use self::GtkWidgetType::*;
 
     match widget_type {
-        Generic         => Box::new(FloWidget::new(id, widget_data)),
-        Layout          => Box::new(BasicWidget::new(id, gtk::Layout::new(None, None))),
-        Fixed           => Box::new(BasicWidget::new(id, gtk::Fixed::new())),
+        Generic         => Box::new(FloWidget::new(id, gtk::Fixed::new(), widget_data)),
+        Layout          => Box::new(FloWidget::new(id, gtk::Layout::new(None, None), widget_data)),
+        Fixed           => Box::new(FloWidget::new(id, gtk::Fixed::new(), widget_data)),
         Button          => Box::new(BasicWidget::new(id, gtk::Button::new())),
         Label           => Box::new(BasicWidget::new(id, gtk::Label::new(None))),
         DrawingArea     => Box::new(BasicWidget::new(id, gtk::DrawingArea::new())),

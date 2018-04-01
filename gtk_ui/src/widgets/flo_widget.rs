@@ -39,23 +39,25 @@ pub struct FloWidget {
 
 impl FloWidget {
     ///
-    /// Creates a new FloWidget that can contain generic controls
+    /// Creates a new FloWidget that can contain generic controls using the fixed layout style
     /// 
-    pub fn new(id: WidgetId, widget_data: Rc<WidgetData>) -> FloWidget {
+    pub fn new<Container: Cast+IsA<gtk::Container>>(id: WidgetId, container: Container, widget_data: Rc<WidgetData>) -> FloWidget {
+        // Cast the container to a gtk container
+        let container = container.upcast::<gtk::Container>();
+
         // Create the widget
-        let fixed   = gtk::Fixed::new();
         let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(Rc::clone(&widget_data))));
 
         // Attach events to it
-        Self::attach_layout_signal(&fixed.clone().upcast::<gtk::Container>(), Rc::clone(&layout));
+        Self::attach_layout_signal(&container.clone(), Rc::clone(&layout));
             
         // Build the final structure
         FloWidget {
             id:             id,
             widget_data:    widget_data,
             child_ids:      vec![],
-            container:      fixed.clone().upcast::<gtk::Container>(),
-            as_widget:      fixed.clone().upcast::<gtk::Widget>(),
+            container:      container.clone(),
+            as_widget:      container.upcast::<gtk::Widget>(),
             text:           None,
             layout:         layout
         }
