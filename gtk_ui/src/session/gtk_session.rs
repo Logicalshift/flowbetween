@@ -1,4 +1,6 @@
+use super::attributes::*;
 use super::gtk_control::*;
+use super::property_action::*;
 use super::gtk_user_interface::*;
 use super::super::gtk_action::*;
 
@@ -8,6 +10,7 @@ use flo_ui::session::*;
 use gtk;
 use gtk::prelude::*;
 use futures::*;
+use std::mem;
 use std::sync::*;
 
 ///
@@ -111,9 +114,190 @@ impl GtkSessionCore {
     }
 
     ///
+    /// Given a set of actions with viewmodel dependencies, translates them into standard Gtk action while
+    /// binding them into the viewmodel for this control
+    /// 
+    pub fn bind_viewmodel(&mut self, control_id: WidgetId, actions: Vec<PropertyWidgetAction>) -> Vec<GtkAction> {
+        use self::PropertyAction::*;
+        
+        vec![
+            GtkAction::Widget(control_id, 
+                actions.into_iter()
+                    .flat_map(|action| {
+                        match action {
+                            Unbound(action)     => vec![action],
+                            Bound(prop, map_fn) => vec![]
+                        }
+                    })
+                    .collect()
+            )
+        ]
+    }
+
+    ///
+    /// Generates the actions to create a particular control, and binds it to the viewmodel to keep it up to
+    /// date
+    /// 
+    pub fn create_control(&mut self, control: &Control) -> (GtkControl, Vec<GtkAction>) {
+        // Assign an ID for this control
+        let control_id  = self.create_widget_id();
+        let mut gtk_control = GtkControl::new(control_id);
+
+        // Get the actions to create this control
+        let create_this_control = control.to_gtk_actions();
+
+        // Bind any properties to the view model
+        let mut create_this_control = self.bind_viewmodel(control_id, create_this_control);
+
+        // Add the actions to create any subcomponent
+        let mut subcomponent_ids = vec![];
+        for subcomponent in control.subcomponents().unwrap_or(&vec![]) {
+            let (subcomponent, create_subcomponent) = self.create_control(subcomponent);
+
+            subcomponent_ids.push(subcomponent.widget_id);
+            gtk_control.child_controls.push(subcomponent);
+            create_this_control.extend(create_subcomponent);
+        }
+
+        // Add in the subcomponents for this control
+        if subcomponent_ids.len() > 0 {
+            create_this_control.push(GtkAction::Widget(control_id, vec![ GtkWidgetAction::Content(WidgetContent::SetChildren(subcomponent_ids)) ]));
+        }
+
+        // Result is the control ID and the actions required to create this control and its subcomponents
+        (gtk_control, create_this_control)
+    }
+
+    ///
+    /// Generates the actions required to delete a particular control
+    /// 
+    pub fn delete_control(&mut self, control: &GtkControl) -> Vec<GtkAction> {
+        // TODO: unbind any widgets found here from the viewmodel
+
+        // Delete the control from the Gtk tree
+        control.delete_actions()
+    }
+
+    ///
+    /// Finds the control at the specified address (if there is one)
+    /// 
+    pub fn control_at_address<'a>(&'a self, address: &Vec<u32>) -> Option<&'a GtkControl> {
+        // The control at vec![] is the root control
+        let mut current_control = self.root_control.as_ref();
+
+        // For each part of the index, the next control is just the child control at this index
+        for index in address.iter() {
+            current_control.and_then(|control| control.child_at_index(*index));
+        }
+
+        // Result is the current control if we found one at this address
+        current_control
+    }
+
+    ///
+    /// Finds the control at the specified address (if there is one)
+    /// 
+    pub fn control_at_address_mut<'a>(&'a mut self, address: &Vec<u32>) -> Option<&'a mut GtkControl> {
+        // The control at vec![] is the root control
+        let mut current_control = self.root_control.as_mut();
+
+        // For each part of the index, the next control is just the child control at this index
+        for index in address.iter() {
+            current_control = current_control.and_then(|control| control.child_at_index_mut(*index));
+        }
+
+        // Result is the current control if we found one at this address
+        current_control
+    }
+
+    ///
+    /// Updates the control tree to add the specified control at the given address and returns
+    /// the Gtk actions required to update the control children
+    /// 
+    pub fn replace_control(&mut self, address: &Vec<u32>, new_control: GtkControl) -> Vec<GtkAction> {
+        if address.len() == 0 {
+            // We're updating the root control
+            
+            // Actions to remove the existing root control
+            let delete_actions = self.root_control
+                .take()
+                .map(|control| self.delete_control(&control))
+                .unwrap_or(vec![]);
+
+            // Actions to set our new control as root
+            let set_as_root = vec![
+                GtkAction::Widget(new_control.widget_id, vec![ GtkWidgetAction::SetRoot(WindowId::Assigned(0)) ])
+            ];
+
+            // New control is now root
+            self.root_control = Some(new_control);
+
+            // Set the new root then delete the old control tree
+            set_as_root.into_iter()
+                .chain(delete_actions)
+                .collect()
+        } else {
+            // We're updating a child of an existing control
+
+            // Get the parent address
+            let mut parent_address  = address.clone();
+            let replace_index       = parent_address.pop().unwrap();
+
+            // Attempt to fetch the parent
+            let mut control_to_delete   = new_control;
+            let mut update_control_tree;
+            if let Some(mut parent) = self.control_at_address_mut(&parent_address) /* && parent.child_controls.len() < replace_index */ {
+                // Parent exists and the child control is available for deletion
+
+                // Swap out the control in the parent item
+                mem::swap(&mut control_to_delete, &mut parent.child_controls[replace_index as usize]);
+
+                // Action is to replace the children of the parent control
+                let new_child_ids = parent.child_controls.iter()
+                    .map(|child_control| child_control.widget_id)
+                    .collect();
+
+                update_control_tree = vec![
+                    GtkAction::Widget(parent.widget_id, vec![ GtkWidgetAction::Content(WidgetContent::SetChildren(new_child_ids)) ])
+                ];
+            } else {
+                // Oops, cannot replace the control here
+                // We just generate the actions to delete the new control
+                update_control_tree = vec![];
+            }
+
+            // Delete the old control
+            let delete_old = self.delete_control(&control_to_delete);
+
+            // Update the control tree then delete the old control
+            update_control_tree.into_iter()
+                .chain(delete_old)
+                .collect()
+        }
+    }
+
+    ///
+    /// Generates the actions to update the UI with a particular diff
+    /// 
+    pub fn update_ui_with_diff(&mut self, diff: UiDiff) -> Vec<GtkAction> {
+        // Create the actions to generate the control in this diff
+        let (new_control, new_control_actions) = self.create_control(&diff.new_ui);
+
+        // Replace the control at the specified address with our new control
+        let replace_actions = self.replace_control(&diff.address, new_control);
+
+        // Generate the new control then replace the old control
+        new_control_actions.into_iter()
+            .chain(replace_actions)
+            .collect()
+    }
+
+    ///
     /// Updates the user interface with the specified set of differences
     /// 
     pub fn update_ui(&mut self, ui_differences: Vec<UiDiff>) -> Vec<GtkAction> {
-        vec![]
+        ui_differences.into_iter()
+            .flat_map(|diff| self.update_ui_with_diff(diff))
+            .collect()
     }
 }
