@@ -5,9 +5,7 @@ use super::super::gtk_action::*;
 use flo_ui::*;
 
 use gtk;
-use gtk_sys;
 use gtk::prelude::*;
-use glib::translate::ToGlibPtr;
 
 use std::rc::*;
 use std::collections::HashSet;
@@ -172,8 +170,9 @@ impl FloWidgetLayout {
     /// 
     pub fn layout_fixed(&self, target: &gtk::Container) {
         // Fetch the width and height of the target
-        let width       = target.get_allocated_width();
-        let height      = target.get_allocated_height();
+        let allocation  = target.get_allocation();
+        let width       = allocation.width;
+        let height      = allocation.height;
 
         // Get the layout for this widget
         let layout      = self.get_layout(width as f32, height as f32);
@@ -194,6 +193,9 @@ impl FloWidgetLayout {
                 let (x1, y1, x2, y2)            = (widget_layout.x1 as f64, widget_layout.y1 as f64, widget_layout.x2 as f64, widget_layout.y2 as f64);
                 let (left, top, right, bottom)  = (widget_layout.padding.0 as f64, widget_layout.padding.1 as f64, widget_layout.padding.2 as f64, widget_layout.padding.3 as f64);
 
+                // Y coordinates are inverted vs GTK
+                // let (y1, y2)                    = ((height as f64)-y2, (height as f64)-y1);
+
                 // Convert to x, y and width and height
                 let x       = x1+left;
                 let y       = y1+top;
@@ -206,40 +208,25 @@ impl FloWidgetLayout {
 
                 remaining.remove(underlying);
 
-                // Unsafe code used here because the rust GTK bindings don't have gtk_container_child_set_property
-                unsafe {
-                    let x = x.floor() as i32;
-                    let y = y.floor() as i32;
-
-                    gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, underlying.to_glib_none().0, "x".to_glib_none().0,  gtk::Value::from(&x).to_glib_none().0);
-                    gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, underlying.to_glib_none().0, "y".to_glib_none().0,  gtk::Value::from(&y).to_glib_none().0);
-                }
-                // Can also cast to Fixed or Layout but the above code will work on either
-
-                //target.child_set_property(underlying, "x", &(x.floor() as i32)).unwrap();
-                //target.child_set_property(underlying, "y", &(y.floor() as i32)).unwrap()
-
                 // Send a size request to the widget if its width or height has changed
+                let (new_x, new_y)          = (x.floor() as i32, y.floor() as i32);
                 let (new_width, new_height) = (width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
-                let (old_width, old_height) = (underlying.get_allocated_width(), underlying.get_allocated_height());
 
-                if new_width != old_width || new_height != old_height {
-                    underlying.queue_resize();
-                }
+                // Suppress a GTK warning
+                let _preferred_size = (underlying.get_preferred_width(), underlying.get_preferred_height());    // Side-effect: suppress warning about fixed layout
                 
                 // Resize the widget
-                underlying.set_size_request(new_width, new_height);
+                underlying.size_allocate(&mut gtk::Rectangle { x: new_x, y: new_y, width: new_width, height: new_height });
             }
         }
 
         // Make any remaining widget fill the entire container
         for extra_widget in remaining {
-            unsafe {
-                gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, extra_widget.to_glib_none().0, "x".to_glib_none().0,  gtk::Value::from(&0).to_glib_none().0);
-                gtk_sys::gtk_container_child_set_property(target.to_glib_none().0, extra_widget.to_glib_none().0, "y".to_glib_none().0,  gtk::Value::from(&0).to_glib_none().0);
-            }
+            // Stop GTK moaning that we're doing fixed layout
+            let _preferred_size = (extra_widget.get_preferred_width(), extra_widget.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
-            extra_widget.set_size_request(width, height);
+            // Allocate the size for this widget
+            extra_widget.size_allocate(&mut gtk::Rectangle { x: 0, y: 0, width: width, height: height })
         }
     }
 }
