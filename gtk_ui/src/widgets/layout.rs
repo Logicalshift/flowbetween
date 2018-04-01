@@ -5,7 +5,7 @@ use flo_ui::*;
 ///
 /// Data associated with a widget used for describing how it will be laid out
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Layout {
     /// The bounding box of this widget
     pub bounds: Option<Bounds>,
