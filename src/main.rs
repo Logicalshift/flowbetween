@@ -4,6 +4,7 @@
 
 extern crate flo_ui;
 extern crate flo;
+extern crate flo_gtk_ui;
 extern crate flo_http_ui;
 extern crate flo_binding;
 extern crate flo_animation;
@@ -28,6 +29,7 @@ use std::thread;
 
 use flo_static_files::*;
 use flo_http_ui::*;
+use flo_gtk_ui::*;
 
 use self::http_session::*;
 
@@ -38,6 +40,13 @@ const WS_SERVER_PORT: u32   = 3001;
 const BIND_ADDRESS: &str    = "0.0.0.0";
 
 fn main() {
+    // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
+    // Create a GTK session
+    let gtk_ui      = GtkUserInterface::new();
+    let gtk_session = GtkSession::from(FlowBetweenSession::new(), gtk_ui);
+
+    gtk_session.run();
+
     // Create the web session structure
     let sessions = Arc::new(WebSessions::new());
     
