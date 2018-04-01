@@ -9,8 +9,8 @@ use flo_ui::session::*;
 
 use gtk;
 use futures::*;
+use futures::executor;
 use futures::stream::*;
-use futures::sink::SendAll;
 use std::mem;
 use std::sync::*;
 
@@ -67,6 +67,20 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     }
 
     ///
+    /// Runs this session until it finishes
+    /// 
+    pub fn run(self) {
+        // Create the processors
+        let action_process = self.create_action_process();
+
+        // Spawn the executor
+        let mut runner = executor::spawn(action_process);
+
+        // Wait for everything to run
+        runner.wait_future().unwrap();
+    }
+
+    ///
     /// Creates a future that will stop when the UI stops producing events, which connects events from the
     /// core UI to the GTK UI.
     /// 
@@ -93,7 +107,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
             .flatten();
         
         // Connect the updates to the sink to generate our future
-        let action_process: SendAll<_, _> = gtk_action_sink.send_all(gtk_core_updates);
+        let action_process = gtk_action_sink.send_all(gtk_core_updates);
 
         Box::new(action_process.map(|_stream_sink| ()))
     }
