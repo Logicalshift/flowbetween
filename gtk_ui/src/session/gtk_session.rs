@@ -18,7 +18,7 @@ struct GtkSessionCore {
     next_widget_id: i64,
 
     /// The root Gtk control
-    root_control: Option<Control>,
+    root_control: Option<GtkControl>,
 
     /// The GTK user interface
     gtk_ui: GtkUserInterface
@@ -95,9 +95,16 @@ impl GtkSessionCore {
 
         match update {
             Start                                   => vec![],
-            UpdateUi(ui_differences)                => vec![],
+            UpdateUi(ui_differences)                => self.update_ui(ui_differences),
             UpdateCanvas(canvas_differences)        => vec![],
             UpdateViewModel(viewmodel_differences)  => vec![]
         }
+    }
+
+    ///
+    /// Updates the user interface with the specified set of differences
+    /// 
+    pub fn update_ui(&mut self, ui_differences: Vec<UiDiff>) -> Vec<GtkAction> {
+        vec![]
     }
 }
