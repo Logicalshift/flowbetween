@@ -30,15 +30,19 @@ struct GtkSessionCore {
 ///
 /// The Gtk session object represents a session running with Gtk
 /// 
-pub struct GtkSession {
-    core: Arc<Mutex<GtkSessionCore>>
+pub struct GtkSession<Ui> {
+    /// Core data structures for the GTK session
+    core:       Arc<Mutex<GtkSessionCore>>,
+
+    /// The core UI that this session is running
+    core_ui:    Ui
 }
 
-impl GtkSession {
+impl<Ui: CoreUserInterface> GtkSession<Ui> {
     ///
     /// Creates a new session connecting a core UI to a Gtk UI
     /// 
-    pub fn new<Ui: CoreUserInterface>(core_ui: Ui, gtk_ui: GtkUserInterface) -> GtkSession {
+    pub fn new(core_ui: Ui, gtk_ui: GtkUserInterface) -> GtkSession<Ui> {
         // Get the GTK event streams
         let mut gtk_action_sink     = gtk_ui.get_input_sink();
         let mut gtk_event_stream    = gtk_ui.get_updates();
@@ -54,18 +58,13 @@ impl GtkSession {
         };
         let core = Arc::new(Mutex::new(core));
 
+        // Connect the events from the core UI to the 
+
         // Finish up by creating the new session
         GtkSession {
-            core: core
+            core:       core,
+            core_ui:    core_ui
         }
-    }
-
-    ///
-    /// Creates a GTK session from a core controller
-    /// 
-    pub fn from<CoreController: Controller+'static>(controller: CoreController, gtk_ui: GtkUserInterface) -> GtkSession {
-        let session = UiSession::new(controller);
-        Self::new(session, gtk_ui)
     }
 
     ///
@@ -85,6 +84,16 @@ impl GtkSession {
                 ShowAll
             ])
         ]).unwrap();
+    }
+}
+
+impl<CoreController: Controller+'static> GtkSession<UiSession<CoreController>> {
+    ///
+    /// Creates a GTK session from a core controller
+    /// 
+    pub fn from(controller: CoreController, gtk_ui: GtkUserInterface) -> GtkSession<UiSession<CoreController>> {
+        let session = UiSession::new(controller);
+        Self::new(session, gtk_ui)
     }
 }
 
