@@ -217,8 +217,18 @@ impl FloWidgetLayout {
                 // Can also cast to Fixed or Layout but the above code will work on either
 
                 //target.child_set_property(underlying, "x", &(x.floor() as i32)).unwrap();
-                //target.child_set_property(underlying, "y", &(y.floor() as i32)).unwrap();
-                underlying.set_size_request(width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
+                //target.child_set_property(underlying, "y", &(y.floor() as i32)).unwrap()
+
+                // Send a size request to the widget if its width or height has changed
+                let (new_width, new_height) = (width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
+                let (old_width, old_height) = (underlying.get_allocated_width(), underlying.get_allocated_height());
+
+                if new_width != old_width || new_height != old_height {
+                    underlying.queue_resize();
+                }
+                
+                // Resize the widget
+                underlying.set_size_request(new_width, new_height);
             }
         }
 
