@@ -15,6 +15,41 @@ pub trait ToGtkActions {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction>;
 }
 
+///
+/// Creates the actions required to instantiate a control - without its subcomponents
+/// 
+impl ToGtkActions for Control {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        use self::ControlType::*;
+        use self::GtkWidgetAction::*;
+
+        // Convert the control type into the command to create the appropriate Gtk widget
+        let create_new = match self.control_type() {
+            Empty               => New(GtkWidgetType::Generic),
+            Container           => New(GtkWidgetType::Fixed),
+            CroppingContainer   => New(GtkWidgetType::Layout),
+            ScrollingContainer  => New(GtkWidgetType::Layout),
+            Popup               => New(GtkWidgetType::Generic),
+            Button              => New(GtkWidgetType::Button),
+            Label               => New(GtkWidgetType::Label),
+            Canvas              => New(GtkWidgetType::DrawingArea),
+            Slider              => New(GtkWidgetType::Scale),
+            Rotor               => New(GtkWidgetType::Generic)
+        };
+
+        // Build into the 'create control' action
+        let mut create_control = vec![ create_new.into() ];
+
+        // Generate the actions for all of the attributes
+        for attribute in self.attributes() {
+            let create_attribute = attribute.to_gtk_actions();
+            create_control.extend(create_attribute.into_iter());
+        }
+
+        create_control
+    }
+}
+
 impl ToGtkActions for ControlAttribute {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
         use self::ControlAttribute::*;
