@@ -218,7 +218,7 @@ impl FloWidgetLayout {
 
                 //target.child_set_property(underlying, "x", &(x.floor() as i32)).unwrap();
                 //target.child_set_property(underlying, "y", &(y.floor() as i32)).unwrap();
-                underlying.set_size_request(width.floor() as i32, height.floor() as i32);
+                underlying.set_size_request(width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
             }
         }
 
