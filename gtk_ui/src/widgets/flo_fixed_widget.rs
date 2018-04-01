@@ -14,7 +14,7 @@ use std::cell::*;
 ///
 /// Represents the behaviour of a widget that can contain Flo content (such as labels, etc)
 /// 
-pub struct FloWidget {
+pub struct FloFixedWidget {
     /// The ID assigned to this widget
     id: WidgetId,
 
@@ -37,11 +37,11 @@ pub struct FloWidget {
     layout: Rc<RefCell<FloWidgetLayout>>
 }
 
-impl FloWidget {
+impl FloFixedWidget {
     ///
     /// Creates a new FloWidget that can contain generic controls using the fixed layout style
     /// 
-    pub fn new<Container: Cast+IsA<gtk::Container>>(id: WidgetId, container: Container, widget_data: Rc<WidgetData>) -> FloWidget {
+    pub fn new<Container: Cast+IsA<gtk::Container>>(id: WidgetId, container: Container, widget_data: Rc<WidgetData>) -> FloFixedWidget {
         // Cast the container to a gtk container
         let container = container.upcast::<gtk::Container>();
 
@@ -52,7 +52,7 @@ impl FloWidget {
         Self::attach_layout_signal(&container.clone(), Rc::clone(&layout));
             
         // Build the final structure
-        FloWidget {
+        FloFixedWidget {
             id:             id,
             widget_data:    widget_data,
             child_ids:      vec![],
@@ -90,7 +90,7 @@ impl FloWidget {
     }
 }
 
-impl GtkUiWidget for FloWidget {
+impl GtkUiWidget for FloFixedWidget {
     ///
     /// Retrieves the ID assigned to this widget
     /// 
