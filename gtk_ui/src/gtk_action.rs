@@ -20,7 +20,7 @@ pub enum WidgetId {
 ///
 /// Actions that can be performed on a window
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum GtkWindowAction {
     New(WindowType),
     SetPosition(WindowPosition),
@@ -48,7 +48,7 @@ pub enum GtkWidgetType {
 ///
 /// Actions that can be performed on a widget
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum GtkWidgetAction {
     /// Creates a new widget of the specifed type
     New(GtkWidgetType),
@@ -81,7 +81,7 @@ pub enum GtkWidgetAction {
 ///
 /// Specifies a change to the content of a widget
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum WidgetContent {
     /// Sets the children of this widget to be a particular set of widgets
     SetChildren(Vec<WidgetId>),
@@ -108,7 +108,7 @@ impl From<WidgetContent> for GtkWidgetAction {
 ///
 /// Specifies a change to how a widget is laid out
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum WidgetLayout {
     /// Specifies how this widget should be laid out
     BoundingBox(Bounds),
@@ -129,7 +129,7 @@ impl From<WidgetLayout> for GtkWidgetAction {
 ///
 /// Specifies a change to the state of a widget
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum WidgetState {
     /// Sets whether or not this widget is highlighted as being selected
     SetSelected(bool),
@@ -174,7 +174,7 @@ impl From<Scroll> for GtkWidgetAction {
 ///
 /// GTK actions that can be requested
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum GtkAction {
     /// Shuts down Gtk
     Stop,
