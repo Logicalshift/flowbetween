@@ -42,7 +42,8 @@ pub enum GtkWidgetType {
     Button,
     Label,
     DrawingArea,
-    Scale
+    Scale,
+    Popup
 }
 
 ///
