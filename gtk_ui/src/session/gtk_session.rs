@@ -102,6 +102,15 @@ impl GtkSessionCore {
     }
 
     ///
+    /// Creates an ID for a widget in this core
+    /// 
+    pub fn create_widget_id(&mut self) -> WidgetId {
+        let widget_id = self.next_widget_id;
+        self.next_widget_id += 1;
+        WidgetId::Assigned(widget_id)
+    }
+
+    ///
     /// Updates the user interface with the specified set of differences
     /// 
     pub fn update_ui(&mut self, ui_differences: Vec<UiDiff>) -> Vec<GtkAction> {
