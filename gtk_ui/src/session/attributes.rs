@@ -104,7 +104,7 @@ impl ToGtkActions for Popup {
             &IsOpen(ref is_open)        => vec![],
             &Direction(ref direction)   => vec![],
             &Size(width, height)        => vec![],
-            &Offset(u32)                => vec![]
+            &Offset(distance)           => vec![]
         }
     }
 }

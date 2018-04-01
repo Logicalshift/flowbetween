@@ -8,8 +8,9 @@ use flo_ui::*;
 use flo_ui::session::*;
 
 use gtk;
-use gtk::prelude::*;
 use futures::*;
+use futures::stream::*;
+use futures::sink::SendAll;
 use std::mem;
 use std::sync::*;
 
@@ -58,13 +59,43 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
         };
         let core = Arc::new(Mutex::new(core));
 
-        // Connect the events from the core UI to the 
-
         // Finish up by creating the new session
         GtkSession {
             core:       core,
             core_ui:    core_ui
         }
+    }
+
+    ///
+    /// Creates a future that will stop when the UI stops producing events, which connects events from the
+    /// core UI to the GTK UI.
+    /// 
+    pub fn create_action_process(&self) -> Box<Future<Item=(), Error=()>> {
+        // These are the streams we want to connect
+        let gtk_action_sink = self.core.lock().unwrap().gtk_ui.get_input_sink();
+        let core_updates    = self.core_ui.get_updates();
+
+        // Map the core updates to GTK updates
+        let core = self.core.clone();
+        let gtk_core_updates    = core_updates
+            .map(move |updates| {
+                // Lock the core while we process these updates
+                let mut core = core.lock().unwrap();
+
+                // Generate all of the actions for the current set of updates
+                let actions: Vec<_> = updates.into_iter()
+                    .flat_map(|update| core.process_update(update))
+                    .collect();
+                
+                // Send as a single block to the GTK thread
+                iter_ok(vec![actions])
+            })
+            .flatten();
+        
+        // Connect the updates to the sink to generate our future
+        let action_process: SendAll<_, _> = gtk_action_sink.send_all(gtk_core_updates);
+
+        Box::new(action_process.map(|_stream_sink| ()))
     }
 
     ///
@@ -196,7 +227,7 @@ impl GtkSessionCore {
 
         // For each part of the index, the next control is just the child control at this index
         for index in address.iter() {
-            current_control.and_then(|control| control.child_at_index(*index));
+            current_control = current_control.and_then(|control| control.child_at_index(*index));
         }
 
         // Result is the current control if we found one at this address
@@ -254,8 +285,8 @@ impl GtkSessionCore {
 
             // Attempt to fetch the parent
             let mut control_to_delete   = new_control;
-            let mut update_control_tree;
-            if let Some(mut parent) = self.control_at_address_mut(&parent_address) /* && parent.child_controls.len() < replace_index */ {
+            let update_control_tree;
+            if let Some(parent) = self.control_at_address_mut(&parent_address) /* && parent.child_controls.len() < replace_index */ {
                 // Parent exists and the child control is available for deletion
 
                 // Swap out the control in the parent item
