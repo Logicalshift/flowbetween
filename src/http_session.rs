@@ -1,9 +1,9 @@
-use ui::*;
-use ui::Image;
-use binding::*;
-use http_ui::*;
-use animation::*;
-use anim_sqlite::*;
+use flo_ui::*;
+use flo_ui::Image;
+use flo_binding::*;
+use flo_http_ui::*;
+use flo_animation::*;
+use flo_anim_sqlite::*;
 
 use flo::*;
 use flo::style::*;

@@ -2,13 +2,13 @@
 //! # FlowBetween HTTP server
 //!
 
-extern crate flo_ui as ui;
+extern crate flo_ui;
 extern crate flo;
-extern crate flo_http_ui as http_ui;
-extern crate flo_binding as binding;
-extern crate flo_animation as animation;
-extern crate flo_anim_sqlite as anim_sqlite;
-extern crate flo_static_files as static_files;
+extern crate flo_http_ui;
+extern crate flo_binding;
+extern crate flo_animation;
+extern crate flo_anim_sqlite;
+extern crate flo_static_files;
 
 extern crate serde;
 extern crate serde_json;
@@ -26,8 +26,8 @@ use tokio_core::reactor::Core;
 use std::sync::*;
 use std::thread;
 
-use static_files::*;
-use http_ui::*;
+use flo_static_files::*;
+use flo_http_ui::*;
 
 use self::http_session::*;
 
