@@ -145,21 +145,29 @@ impl GtkUiWidget for FloFixedWidget {
     /// Sets the children of this widget
     /// 
     fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
-        let widget_data = &self.widget_data;
-        let container   = &self.container;
+        {
+            let widget_data = &self.widget_data;
+            let container   = &self.container;
 
-        // Remove any child widgets added by the previous call to this function
-        self.child_ids.drain(..)
-            .map(|child_id| widget_data.get_widget(child_id))
-            .for_each(|widget| { widget.map(|widget| container.remove(widget.borrow().get_underlying())); });
+            // Remove any child widgets added by the previous call to this function
+            self.child_ids.drain(..)
+                .map(|child_id| widget_data.get_widget(child_id))
+                .for_each(|widget| { widget.map(|widget| container.remove(widget.borrow().get_underlying())); });
 
-        // Send to the layout
-        self.layout.borrow_mut().set_children(children.iter().map(|widget| widget.borrow().id()));
+            // Send to the layout
+            self.layout.borrow_mut().set_children(children.iter().map(|widget| widget.borrow().id()));
 
-        // Add children to this widget
-        self.child_ids.extend(children.iter().map(|child_widget| child_widget.borrow().id()));
-        for child in children {
-            self.container.add(child.borrow().get_underlying());
+            // Add children to this widget
+            self.child_ids.extend(children.iter().map(|child_widget| child_widget.borrow().id()));
+            for child in children.iter() {
+                self.container.add(child.borrow().get_underlying());
+            }
+        }
+
+        // Give them windows
+        for child in children.iter() {
+            let id = child.borrow().id();
+            self.ensure_window(id);
         }
 
         // Queue a resize so the layout is done
