@@ -107,7 +107,7 @@ impl FloFixedWidget {
             // No window. Wrap in an event box, which always has its own window
             let event_box = gtk::EventBox::new();
 
-            widget.unparent();
+            self.container.remove(&widget);
             event_box.add(&widget);
 
             self.container.add(&event_box);
