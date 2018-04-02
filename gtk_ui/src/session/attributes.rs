@@ -72,7 +72,7 @@ impl ToGtkActions for ControlAttribute {
             &Canvas(ref canvas)                     => vec![],
 
             // The GTK layout doesn't need to know the controller
-            &Controller(ref _controller_name)       => vec![],
+            &Controller(ref controller_name)       => vec![ GtkWidgetAction::Content(WidgetContent::AddClass(format!("c-{}", controller_name))) ].into_actions(),
 
             // Subcomponents are added elsewhere: we don't assign them here
             &SubComponents(ref _components)         => vec![]
