@@ -112,6 +112,8 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
                 if let Some(widget_ref) = widget.as_ref() {
                     // Create a clone of the widget object
                     let gtk_widget  = widget_ref.borrow().get_underlying().clone();
+
+                    // If it's in a container, fetch that so we can shuffle things around
                     let container   = gtk_widget.get_parent().and_then(|parent| parent.dynamic_cast::<gtk::Container>().ok());
 
                     // No window. Wrap in an event box, which always has its own window
