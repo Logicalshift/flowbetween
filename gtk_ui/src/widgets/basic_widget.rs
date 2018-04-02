@@ -1,5 +1,6 @@
 use super::layout::*;
 use super::widget::*;
+use super::custom_style::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
@@ -72,7 +73,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
     match action {
         &Layout(ref layout)         => process_basic_widget_layout(widget.id(), widget.get_underlying(), flo_gtk, layout),
         &Content(ref content)       => process_basic_widget_content(widget, flo_gtk, content),
-        &Appearance(ref appearance) => process_basic_widget_appearance(widget.get_underlying(), flo_gtk, appearance),
+        &Appearance(ref appearance) => process_basic_widget_appearance(widget, flo_gtk, appearance),
         &State(ref state)           => process_basic_widget_state(widget.get_underlying(), flo_gtk, state),
         &Font(ref font)             => process_basic_widget_font(widget.get_underlying(), flo_gtk, font),
         &Scroll(ref scroll)         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
@@ -144,13 +145,23 @@ pub fn process_basic_widget_content<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mu
 ///
 /// Generic appearance command for a widget being managed by FlowBetween
 /// 
-pub fn process_basic_widget_appearance<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, appearance: &Appearance) {
+pub fn process_basic_widget_appearance<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, appearance: &Appearance) {
     use self::Appearance::*;
 
     match appearance {
-        &Foreground(ref color)      => (),
-        &Background(ref color)      => (),
-        &Image(ref color)           => ()
+        &Foreground(ref color)      => {
+            let custom_style = flo_gtk.widget_data().get_custom_style(widget);
+
+            custom_style.borrow_mut().set_foreground(color);
+        },
+
+        &Background(ref color)      => {
+            let custom_style = flo_gtk.widget_data().get_custom_style(widget);
+
+            custom_style.borrow_mut().set_background(color);
+        },
+
+        &Image(ref image)           => ()
     }
 }
 

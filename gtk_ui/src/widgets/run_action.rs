@@ -1,6 +1,7 @@
 use super::factory::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
+use super::super::widgets::custom_style::*;
 
 use gtk;
 use gtk::prelude::*;
@@ -111,4 +112,7 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
             }
         }
     }
+
+    // Perform post-processing steps
+    widget.as_ref().map(|widget| widget_data.update_custom_style(&*widget.borrow()));
 }

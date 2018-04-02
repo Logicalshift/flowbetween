@@ -1,3 +1,4 @@
+use super::widget::*;
 use super::widget_data::*;
 use super::super::gtk_action::*;
 
@@ -129,16 +130,18 @@ pub trait CustomStyleForWidget {
     ///
     /// Retrieves the custom style for a widget
     /// 
-    fn get_custom_style(&self, widget_id: WidgetId) -> WidgetDataEntry<CustomStyle>;
+    fn get_custom_style(&self, widget: &GtkUiWidget) -> WidgetDataEntry<CustomStyle>;
 
     ///
     /// Causes the custom style for a particular widget to be updated
     /// 
-    fn update_custom_style(&self, widget_id: WidgetId);
+    fn update_custom_style(&self, widget: &GtkUiWidget);
 }
 
 impl CustomStyleForWidget for WidgetData {
-    fn get_custom_style(&self, widget_id: WidgetId) -> WidgetDataEntry<CustomStyle> {
+    fn get_custom_style(&self, widget: &GtkUiWidget) -> WidgetDataEntry<CustomStyle> {
+        let widget_id = widget.id();
+
         if let Some(existing_style) = self.get_widget_data(widget_id) {
             // Just use whatever already exists if there's something
             existing_style
@@ -147,8 +150,7 @@ impl CustomStyleForWidget for WidgetData {
 
             // Create a new style and attach it to the widget
             let new_style = CustomStyle::new(widget_id);
-            self.get_widget(widget_id)
-                .map(|widget| new_style.apply(widget.borrow().get_underlying()));
+            new_style.apply(widget.get_underlying());
 
             // Store as the style for this widget
             self.set_widget_data(widget_id, new_style);
@@ -158,8 +160,8 @@ impl CustomStyleForWidget for WidgetData {
         }
     }
 
-    fn update_custom_style(&self, widget_id: WidgetId) {
-        if let Some(existing_style) = self.get_widget_data::<CustomStyle>(widget_id) {
+    fn update_custom_style(&self, widget: &GtkUiWidget) {
+        if let Some(existing_style) = self.get_widget_data::<CustomStyle>(widget.id()) {
             existing_style.borrow_mut().reload_if_needed();
         }
     }
