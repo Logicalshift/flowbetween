@@ -57,8 +57,8 @@ impl CustomStyle {
     /// Returns the style sheet as a string
     ///
     fn style_sheet(&self) -> String {
-        vec![ format!("{} {{\n", self.class_name()) ].into_iter()
-            .chain(self.styles.iter().map(|(name, defn)| format!(" {}: {};", name, defn)))
+        vec![ format!(".{} {{\n", self.class_name()) ].into_iter()
+            .chain(self.styles.iter().map(|(name, defn)| format!(" {}: {};\n", name, defn)))
             .chain(vec![ "}\n".to_string() ].into_iter())
             .join("")
     }
