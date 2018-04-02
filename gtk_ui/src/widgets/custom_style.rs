@@ -121,6 +121,20 @@ impl CustomStyle {
     pub fn set_background(&mut self, background_color: &Color) {
         self.set_style("background-color", &Self::value_for_color(background_color));
     }
+
+    ///
+    /// Sets the font size of this widget
+    /// 
+    pub fn set_font_size(&mut self, pixels: f32) {
+        self.set_style("font-size", &format!("{}px", pixels));
+    }
+
+    ///
+    /// Sets the font weight of the widget
+    /// 
+    pub fn set_font_weight(&mut self, weight: u32) {
+        self.set_style("font-weight", &format!("{}", weight));
+    }
 }
 
 ///

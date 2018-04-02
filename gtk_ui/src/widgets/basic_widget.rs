@@ -75,7 +75,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
         &Content(ref content)       => process_basic_widget_content(widget, flo_gtk, content),
         &Appearance(ref appearance) => process_basic_widget_appearance(widget, flo_gtk, appearance),
         &State(ref state)           => process_basic_widget_state(widget.get_underlying(), flo_gtk, state),
-        &Font(ref font)             => process_basic_widget_font(widget.get_underlying(), flo_gtk, font),
+        &Font(ref font)             => process_basic_widget_font(widget, flo_gtk, font),
         &Scroll(ref scroll)         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
         &New(_widget_type)          => (),
@@ -154,13 +154,11 @@ pub fn process_basic_widget_appearance<W: GtkUiWidget>(widget: &W, flo_gtk: &mut
     match appearance {
         &Foreground(ref color)      => {
             let custom_style = flo_gtk.widget_data().get_custom_style(widget);
-
             custom_style.borrow_mut().set_foreground(color);
         },
 
         &Background(ref color)      => {
             let custom_style = flo_gtk.widget_data().get_custom_style(widget);
-
             custom_style.borrow_mut().set_background(color);
         },
 
@@ -186,13 +184,19 @@ pub fn process_basic_widget_state<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk
 ///
 /// Processes a font command for a widget being managed by FlowBetween
 /// 
-pub fn process_basic_widget_font<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, font: &Font) {
+pub fn process_basic_widget_font<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, font: &Font) {
     use self::Font::*;
 
     match font {
-        &Size(size_pixels)      => (),
-        &Align(ref align)       => (),
-        &Weight(ref weight)     => ()
+        &Align(_align)          => (),
+        &Size(size_pixels)      => {
+            let custom_style = flo_gtk.widget_data().get_custom_style(widget);
+            custom_style.borrow_mut().set_font_size(size_pixels);
+        },
+        &Weight(weight)         =>  {
+            let custom_style = flo_gtk.widget_data().get_custom_style(widget);
+            custom_style.borrow_mut().set_font_weight(weight as u32);
+        }
     }
 }
 

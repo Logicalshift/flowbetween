@@ -3,6 +3,8 @@ use super::basic_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
+use flo_ui::*;
+
 use gtk;
 use gtk::prelude::*;
 
@@ -28,10 +30,18 @@ impl FloLabelWidget {
     /// Creates a basic widget
     /// 
     pub fn new<Src: Cast+Clone+IsA<gtk::Widget>+IsA<gtk::Label>>(id: WidgetId, widget: Src) -> FloLabelWidget {
+        // Fetch the object references
+        let label   = widget.clone().upcast::<gtk::Label>();
+        let widget  = widget.upcast::<gtk::Widget>();
+
+        // FlowBetween labels are left-aligned by default
+        label.set_property_xalign(0.0);
+
+        // Generate the final widget
         FloLabelWidget {
             id:     id,
-            label:  widget.clone().upcast::<gtk::Label>(),
-            widget: widget.upcast::<gtk::Widget>()
+            label:  label,
+            widget: widget
         }
     }
 }
@@ -44,8 +54,13 @@ impl GtkUiWidget for FloLabelWidget {
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         use self::GtkWidgetAction::*;
         use self::WidgetContent::*;
+        use self::Font::*;
 
         match action {
+            &Font(Align(TextAlign::Left))   => { self.label.set_property_xalign(0.0); },
+            &Font(Align(TextAlign::Center)) => { self.label.set_property_xalign(0.5); },
+            &Font(Align(TextAlign::Right))  => { self.label.set_property_xalign(1.0); },
+
             &Content(SetText(ref new_text)) => { self.label.set_text(&*new_text); },
             other_action                    => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
