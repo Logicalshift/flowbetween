@@ -7,6 +7,7 @@ pub mod flo_fixed_widget;
 pub mod flo_popup_widget;
 pub mod proxy_widget;
 pub mod flo_layout;
+mod custom_style;
 mod layout;
 mod run_action;
 mod factory;
