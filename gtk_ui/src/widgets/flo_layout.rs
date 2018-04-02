@@ -131,6 +131,9 @@ impl FloWidgetLayout {
         let stretch_x = width - xpos;
         let stretch_y = height - ypos;
 
+        xpos = 0.0;
+        ypos = 0.0;
+
         for widget_id in self.child_widget_ids.iter() {
             // Get the layout for this widget
             let layout = self.widget_data.get_widget_data::<Layout>(*widget_id);
@@ -193,9 +196,6 @@ impl FloWidgetLayout {
                 let (x1, y1, x2, y2)            = (widget_layout.x1 as f64, widget_layout.y1 as f64, widget_layout.x2 as f64, widget_layout.y2 as f64);
                 let (left, top, right, bottom)  = (widget_layout.padding.0 as f64, widget_layout.padding.1 as f64, widget_layout.padding.2 as f64, widget_layout.padding.3 as f64);
 
-                // Y coordinates are inverted vs GTK
-                // let (y1, y2)                    = ((height as f64)-y2, (height as f64)-y1);
-
                 // Convert to x, y and width and height
                 let x       = x1+left;
                 let y       = y1+top;
@@ -228,5 +228,75 @@ impl FloWidgetLayout {
             // Allocate the size for this widget
             extra_widget.size_allocate(&mut gtk::Rectangle { x: 0, y: 0, width: width, height: height })
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::*;
+    use super::super::super::gtk_thread::*;
+
+    use std::cell::*;
+
+    impl GtkUiWidget for WidgetId {
+        fn id(&self) -> WidgetId                                                { *self }
+        fn process(&mut self, _flo_gtk: &mut FloGtk, _action: &GtkWidgetAction) { }
+        fn set_children(&mut self, _children: Vec<Rc<RefCell<GtkUiWidget>>>)    { }
+        fn get_underlying<'a>(&'a self) -> &'a gtk::Widget                      { unimplemented!() }
+    }
+
+    #[test]
+    fn basic_layout() {
+        use self::Position::*;
+
+        // Simple top, middle, bottom layout (this is FlowBetween's basic layout)
+        let top         = WidgetId::Assigned(0);
+        let middle      = WidgetId::Assigned(1);
+        let bottom      = WidgetId::Assigned(2);
+        let widget_data = Rc::new(WidgetData::new());
+
+        widget_data.register_widget(top, top);
+        widget_data.register_widget(middle, middle);
+        widget_data.register_widget(bottom, bottom);
+
+        let top_bounds = Bounds {
+            x1: Start,  y1: After,
+            x2: End,    y2: Offset(32.0)
+        };
+        let middle_bounds = Bounds {
+           x1: Start,   y1: After, 
+           x2: End,     y2: Stretch(1.0)
+        };
+        let bottom_bounds = Bounds {
+            x1: Start,  y1: After,
+            x2: End,    y2: Offset(256.0)
+        };
+
+        widget_data.set_widget_data(top, Layout { bounds: Some(top_bounds), padding: None, z_index: None });
+        widget_data.set_widget_data(middle, Layout { bounds: Some(middle_bounds), padding: None, z_index: None });
+        widget_data.set_widget_data(bottom, Layout { bounds: Some(bottom_bounds), padding: None, z_index: None });
+
+        // Create a layout for these bounds
+        let mut layout = FloWidgetLayout::new(Rc::clone(&widget_data));
+        layout.set_children(vec![ top, middle, bottom ]);
+
+        // Perform the layout
+        let new_layout = layout.get_layout(1920.0, 1080.0);
+
+        // Check that when laid out in a specific area this produces the results we were expecting
+        assert!(new_layout.len() == 3);
+
+        assert!(new_layout[0].id == top);
+        assert!(new_layout[0].x1 == 0.0);   assert!(new_layout[0].x2 == 1920.0);
+        assert!(new_layout[0].y1 == 0.0);   assert!(new_layout[0].y2 == 32.0);
+
+        assert!(new_layout[1].id == middle);
+        assert!(new_layout[1].x1 == 0.0);   assert!(new_layout[1].x2 == 1920.0);
+        assert!(new_layout[1].y1 == 32.0);  assert!(new_layout[1].y2 == 824.0);
+
+        assert!(new_layout[2].id == bottom);
+        assert!(new_layout[2].x1 == 0.0);   assert!(new_layout[2].x2 == 1920.0);
+        assert!(new_layout[2].y1 == 824.0); assert!(new_layout[2].y2 == 1080.0);
     }
 }
