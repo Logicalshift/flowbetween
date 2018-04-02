@@ -63,6 +63,15 @@ impl WidgetData {
     }
 
     ///
+    /// Substitutes a different widget for the specified widget
+    /// 
+    pub fn replace_widget<TWidget: 'static+GtkUiWidget>(&self, widget_id: WidgetId, widget: TWidget) {
+        self.widgets.borrow_mut()
+            .get_mut(&widget_id)
+            .map(move |widget_ref| *widget_ref = Rc::new(RefCell::new(widget)));
+    }
+
+    ///
     /// Attempts to retrieve the widget with the specified ID
     /// 
     pub fn get_widget(&self, widget_id: WidgetId) -> Option<Rc<RefCell<GtkUiWidget>>> {
