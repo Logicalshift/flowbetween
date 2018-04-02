@@ -2,6 +2,7 @@ use super::widget::*;
 use super::basic_widget::*;
 use super::flo_layout::*;
 use super::widget_data::*;
+use super::proxy_widget::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 
@@ -87,6 +88,34 @@ impl FloFixedWidget {
         container.connect_size_allocate(move |container, _allocation| {
             layout.borrow().layout_fixed(container);
         });
+    }
+
+    ///
+    /// Ensures that a child widget has an associated window, so it can be Z-ordered
+    /// 
+    fn ensure_window(&mut self, child_widget_id: WidgetId) {
+        // Fetch the current widget with this ID
+        if let Some(existing_widget) = self.widget_data.get_widget(child_widget_id) {
+            // Nothing to do if it already has a window
+            if existing_widget.borrow().get_underlying().get_window().is_some() {
+                return;
+            }
+
+            // Create a clone of the widget object
+            let widget = existing_widget.borrow().get_underlying().clone();
+
+            // No window. Wrap in an event box, which always has its own window
+            let event_box = gtk::EventBox::new();
+
+            widget.unparent();
+            event_box.add(&widget);
+
+            self.container.add(&event_box);
+
+            // Substitute a proxy widget
+            let proxy_event_box = ProxyWidget::new(Rc::clone(&existing_widget), event_box);
+            self.widget_data.replace_widget(child_widget_id, proxy_event_box);
+        }
     }
 }
 
