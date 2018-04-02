@@ -164,7 +164,7 @@ impl GtkUiWidget for FloFixedWidget {
             }
         }
 
-        // Give them windows
+        // Give them windows (TODO: we really need to only do this when we're about to perform a layout and some widgets have z-indexes)
         for child in children.iter() {
             let id = child.borrow().id();
             self.ensure_window(id);

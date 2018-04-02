@@ -6,6 +6,7 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
+use gdk::prelude::*;
 
 use std::rc::*;
 use std::collections::HashSet;
@@ -169,6 +170,29 @@ impl FloWidgetLayout {
     }
 
     ///
+    /// Given a set of pairs of widget IDs and indexes, orders the corresponding widgets by Z-Index
+    /// 
+    /// Widgets that do not have a window will not be ordered.
+    /// 
+    pub fn order_zindex<ZIndexes: IntoIterator<Item=(WidgetId, u32)>>(&self, indexes: ZIndexes) {
+        // Order the widgets by z-index
+        let mut ordered_zindexes:Vec<_> = indexes.into_iter().collect();
+        ordered_zindexes.sort_by_key(|&(_widget, z_index)| z_index);
+
+        // Raise the windows in order
+        // TODO: consider avoiding raising if the windows are already ordered?
+        for (widget_id, _) in ordered_zindexes {
+            self.widget_data.get_widget(widget_id)
+                .map(|widget| {
+                    widget.borrow()
+                        .get_underlying()
+                        .get_window()
+                        .map(|window| window.raise());
+                });
+        }
+    }
+
+    ///
     /// Lays out the widgets in a particular container (with 'Fixed' semantics - ie, GtkFixed or GtkLayout)
     /// 
     pub fn layout_fixed(&self, target: &gtk::Container) {
@@ -181,7 +205,8 @@ impl FloWidgetLayout {
         let layout      = self.get_layout(width as f32, height as f32);
 
         // Position each of the widgets
-        let mut remaining: HashSet<_> = target.get_children().into_iter().collect();
+        let mut remaining: HashSet<_>   = target.get_children().into_iter().collect();
+        let mut z_indices               = vec![];
 
         for widget_layout in layout {
             // Fetch the widget we're going to lay out
@@ -218,8 +243,14 @@ impl FloWidgetLayout {
                 
                 // Resize the widget
                 underlying.size_allocate(&mut gtk::Rectangle { x: new_x, y: new_y, width: new_width, height: new_height });
+
+                // Store the z-index for later ordering
+                z_indices.push((widget_layout.id, widget_layout.z_index));
             }
         }
+
+        // Order z-indices of the widgets we've just been through (assuming they have windows that can be ordered)
+        self.order_zindex(z_indices);
 
         // Make any remaining widget fill the entire container
         for extra_widget in remaining {
