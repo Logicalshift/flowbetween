@@ -5,6 +5,7 @@ pub mod basic_widget;
 pub mod flo_label_widget;
 pub mod flo_fixed_widget;
 pub mod flo_popup_widget;
+pub mod proxy_widget;
 pub mod flo_layout;
 mod layout;
 mod run_action;
