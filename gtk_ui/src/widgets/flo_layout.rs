@@ -210,6 +210,7 @@ impl FloWidgetLayout {
 
                 // Send a size request to the widget if its width or height has changed
                 let (new_x, new_y)          = (x.floor() as i32, y.floor() as i32);
+                let (new_x, new_y)          = (new_x + allocation.x, new_y + allocation.y);
                 let (new_width, new_height) = (width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
 
                 // Suppress a GTK warning
@@ -226,7 +227,7 @@ impl FloWidgetLayout {
             let _preferred_size = (extra_widget.get_preferred_width(), extra_widget.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
             // Allocate the size for this widget
-            extra_widget.size_allocate(&mut gtk::Rectangle { x: 0, y: 0, width: width, height: height })
+            extra_widget.size_allocate(&mut gtk::Rectangle { x: allocation.x, y: allocation.y, width: width, height: height })
         }
     }
 }
