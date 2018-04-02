@@ -38,7 +38,7 @@ impl ToGtkActions for Control {
         };
 
         // Build into the 'create control' action
-        let mut create_control = vec![ create_new.into() ];
+        let mut create_control = vec![ create_new.into(), GtkWidgetAction::Box.into() ];
 
         // Generate the actions for all of the attributes
         for attribute in self.attributes() {

@@ -79,11 +79,14 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
         &Scroll(ref scroll)         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
         &New(_widget_type)          => (),
+        &Delete                     => { widget.get_underlying().unparent(); },
+
         &SetRoot(window_id)         => { 
             let widget = widget.get_underlying().clone();
             flo_gtk.get_window(window_id).map(|window| window.borrow_mut().set_root(flo_gtk, &widget));
         },
-        &Delete                     => { widget.get_underlying().unparent(); }
+
+        &Box                        => { }
     }
 }
 

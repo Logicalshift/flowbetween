@@ -2,6 +2,7 @@ use super::factory::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 use super::super::widgets::custom_style::*;
+use super::super::widgets::proxy_widget::*;
 
 use gtk;
 use gtk::prelude::*;
@@ -104,6 +105,30 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
                 // Remove the data for this widget
                 widget_data.remove_widget(widget_id);
                 widget = None;
+            },
+
+            &GtkWidgetAction::Box => {
+                // Boxing a widget creates a new event box with the old widget inside
+                if let Some(widget_ref) = widget.as_ref() {
+                    // Create a clone of the widget object
+                    let gtk_widget  = widget_ref.borrow().get_underlying().clone();
+                    let container   = gtk_widget.get_parent().and_then(|parent| parent.dynamic_cast::<gtk::Container>().ok());
+
+                    // No window. Wrap in an event box, which always has its own window
+                    let event_box = gtk::EventBox::new();
+
+                    container.as_ref().map(|container| container.remove(&gtk_widget));
+                    event_box.add(&gtk_widget);
+
+                    container.as_ref().map(|container| container.add(&event_box));
+
+                    // Substitute a proxy widget
+                    let proxy_event_box = ProxyWidget::new(Rc::clone(widget_ref), event_box);
+                    widget_data.replace_widget(widget_id, proxy_event_box);
+                }
+
+                // Use the substitute widget for future updates
+                widget = widget_data.get_widget(widget_id);
             },
 
             other => {
