@@ -1,4 +1,7 @@
+use super::widget_data::*;
 use super::super::gtk_action::*;
+
+use flo_canvas::*;
 
 use gtk;
 use gtk::prelude::*;
@@ -83,5 +86,81 @@ impl CustomStyle {
         // We use a custom style provider and class name when we map our widget
         style_context.as_ref().map(|style_context| style_context.add_provider(&self.style_provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION));
         style_context.map(|style_context| style_context.add_class(&class_name));
+    }
+
+    ///
+    /// Sets the value of a style property
+    /// 
+    pub fn set_style(&mut self, key_name: &str, style: &str) {
+        // Update the style and mark this as needing an update
+        self.styles.insert(key_name.to_string(), style.to_string());
+        self.need_refresh = true;
+    }
+
+    ///
+    /// Returns the CSS for a color
+    /// 
+    fn value_for_color(color: &Color) -> String {
+        let (r, g, b, a)    = color.to_rgba_components();
+        let (r, g, b)       = ((r*255.0).floor() as i32, (g*255.0).floor() as i32, (b*255.0).floor() as i32);
+
+        format!("rgba({}, {}, {}, {})", r, g, b, a)
+    }
+
+    ///
+    /// Updates the foreground colour of the style
+    /// 
+    pub fn set_foreground(&mut self, foreground_color: &Color) {
+        self.set_style("color", &Self::value_for_color(foreground_color));
+    }
+
+    ///
+    /// Updates the background colour of the style
+    /// 
+    pub fn set_background(&mut self, background_color: &Color) {
+        self.set_style("background-color", &Self::value_for_color(background_color));
+    }
+}
+
+///
+/// Trait used to provide a custom style for a particular widget
+/// 
+pub trait CustomStyleForWidget {
+    ///
+    /// Retrieves the custom style for a widget
+    /// 
+    fn get_custom_style(&self, widget_id: WidgetId) -> WidgetDataEntry<CustomStyle>;
+
+    ///
+    /// Causes the custom style for a particular widget to be updated
+    /// 
+    fn update_custom_style(&self, widget_id: WidgetId);
+}
+
+impl CustomStyleForWidget for WidgetData {
+    fn get_custom_style(&self, widget_id: WidgetId) -> WidgetDataEntry<CustomStyle> {
+        if let Some(existing_style) = self.get_widget_data(widget_id) {
+            // Just use whatever already exists if there's something
+            existing_style
+        } else {
+            // This widget doesn't have a custom style yet
+
+            // Create a new style and attach it to the widget
+            let new_style = CustomStyle::new(widget_id);
+            self.get_widget(widget_id)
+                .map(|widget| new_style.apply(widget.borrow().get_underlying()));
+
+            // Store as the style for this widget
+            self.set_widget_data(widget_id, new_style);
+
+            // Retrieve it straight back for the result of this function
+            self.get_widget_data(widget_id).unwrap()
+        }
+    }
+
+    fn update_custom_style(&self, widget_id: WidgetId) {
+        if let Some(existing_style) = self.get_widget_data::<CustomStyle>(widget_id) {
+            existing_style.borrow_mut().reload_if_needed();
+        }
     }
 }
