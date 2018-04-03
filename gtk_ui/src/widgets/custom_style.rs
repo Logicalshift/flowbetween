@@ -14,7 +14,8 @@ use std::collections::HashMap;
 /// The custom style manages custom widget style information
 /// 
 /// This is used so that we can things like font formatting and colour information for Flo Widgets to be things
-/// other than their defaults (which Flo allows directly but GTK does extremely tediously via a style sheet)
+/// other than their defaults (which Flo allows directly but GTK does via a style sheet... well, partly via a 
+/// style sheet)
 /// 
 pub struct CustomStyle {
     /// The widget ID that this custom style is for
