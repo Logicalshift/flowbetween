@@ -11,6 +11,8 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
+use gdk_pixbuf;
+use gdk_pixbuf::prelude::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -98,8 +100,19 @@ impl FloFixedWidget {
         if let Some(new_image) = new_image {
             // Create a new image widget
             let pixbuf          = pixbuf_from_image(new_image);
-            let image_widget    = gtk::Image::new_from_pixbuf(&pixbuf);
+            let image_widget    = gtk::Image::new();
+            
+            // GTK can't auto-scale images, so we'll do that ourselves
+            image_widget.connect_size_allocate(move |image, allocation| {
+                let image = image.clone();
+                if let Some(image) = image.dynamic_cast::<gtk::Image>().ok() {
+                    // Scale the image to fit
+                    let scaled = pixbuf.scale_simple(allocation.width, allocation.height, gdk_pixbuf::InterpType::Bilinear);
+                    scaled.map(|scaled| image.set_from_pixbuf(&scaled));
+                }
+            });
 
+            // This is the image widget we'll put into this container
             new_image_widget    = Some(image_widget);
         }
 
