@@ -74,7 +74,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
         &Layout(ref layout)         => process_basic_widget_layout(widget.id(), widget.get_underlying(), flo_gtk, layout),
         &Content(ref content)       => process_basic_widget_content(widget, flo_gtk, content),
         &Appearance(ref appearance) => process_basic_widget_appearance(widget, flo_gtk, appearance),
-        &State(ref state)           => process_basic_widget_state(widget.get_underlying(), flo_gtk, state),
+        &State(ref state)           => process_basic_widget_state(widget, flo_gtk, state),
         &Font(ref font)             => process_basic_widget_font(widget, flo_gtk, font),
         &Scroll(ref scroll)         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
@@ -169,11 +169,11 @@ pub fn process_basic_widget_appearance<W: GtkUiWidget>(widget: &W, flo_gtk: &mut
 ///
 /// Processes a basic state command for a widget being managed by FlowBetween
 /// 
-pub fn process_basic_widget_state<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, state: &WidgetState) {
+pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, state: &WidgetState) {
     use self::WidgetState::*;
 
     match state {
-        &SetSelected(selected)      => (),
+        &SetSelected(selected)      => { widget.get_underlying().clone().dynamic_cast::<gtk::ToggleButton>().ok().map(|toggle| { println!("{}", selected); toggle.set_active(selected); }); },
         &SetBadged(badged)          => (),
         &SetValueFloat(value)       => (),
         &SetRangeMin(from)          => (),
