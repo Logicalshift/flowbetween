@@ -56,7 +56,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
         Self::create_main_window(&mut gtk_action_sink);
 
         // Create the viewmodel (which gets its own input sink)
-        let viewmodel = GtkSessionViewModel::new(gtk_ui.get_input_sink());
+        let viewmodel = GtkSessionViewModel::new();
 
         // Create the core
         let core = GtkSessionCore {
@@ -367,11 +367,7 @@ impl GtkSessionCore {
     /// Updates the user interface with the specified set of viewmodel changes
     /// 
     pub fn update_viewmodel(&mut self, viewmodel_differences: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
-        // Process the updates in the viewmodel
-        self.viewmodel.update(viewmodel_differences);
-
-        // The viewmodel currently sends updates to its own sink
-        // TODO: this doesn't actually work though as if the UI updates are not processed at this point it all goes wrong
-        vec![]
+        // Process the updates in the viewmodel, and return the resulting updates
+        self.viewmodel.update(viewmodel_differences)
     }
 }
