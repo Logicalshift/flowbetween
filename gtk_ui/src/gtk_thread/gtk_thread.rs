@@ -78,15 +78,17 @@ impl GtkThread {
     /// Performs a set of actions on the Gtk thread
     /// 
     pub fn perform_actions(&self, actions: Vec<GtkAction>) {
-        self.message_target.async(|flo_gtk| {
-            // Run all of the actions
-            for action in actions {
-                run_action(flo_gtk, &action)
-            }
+        if actions.len() > 0 {
+            self.message_target.async(|flo_gtk| {
+                // Run all of the actions
+                for action in actions {
+                    run_action(flo_gtk, &action)
+                }
 
-            // Generate a tick event when they're complete
-            flo_gtk.get_event_sink().start_send(GtkEvent::Tick).unwrap();
-        });
+                // Generate a tick event when they're complete
+                flo_gtk.get_event_sink().start_send(GtkEvent::Tick).unwrap();
+            });
+        }
     }
 
     ///
