@@ -1,3 +1,4 @@
+use super::viewmodel::*;
 use super::attributes::*;
 use super::gtk_control::*;
 use super::property_action::*;
@@ -25,7 +26,10 @@ struct GtkSessionCore {
     root_control: Option<GtkControl>,
 
     /// The GTK user interface
-    gtk_ui: GtkUserInterface
+    gtk_ui: GtkUserInterface,
+
+    /// The viewmodel for this session
+    viewmodel: GtkSessionViewModel
 }
 
 ///
@@ -51,11 +55,15 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
         // Create the main window (always ID 0)
         Self::create_main_window(&mut gtk_action_sink);
 
+        // Create the viewmodel (which gets its own input sink)
+        let viewmodel = GtkSessionViewModel::new(gtk_ui.get_input_sink());
+
         // Create the core
         let core = GtkSessionCore {
             next_widget_id: 0,
             root_control:   None,
-            gtk_ui:         gtk_ui
+            gtk_ui:         gtk_ui,
+            viewmodel:      viewmodel
         };
         let core = Arc::new(Mutex::new(core));
 
