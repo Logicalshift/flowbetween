@@ -10,7 +10,10 @@ use std::collections::hash_map::Entry;
 /// 
 pub struct GtkSessionViewModel {
     /// Values set in the viewmodel (controller path to properties)
-    values: HashMap<Vec<String>, HashMap<String, PropertyValue>>
+    values: HashMap<Vec<String>, HashMap<String, PropertyValue>>,
+
+    /// The bindings in this viewmodel
+    bindings: HashMap<Vec<String>, HashMap<String, Vec<(WidgetId, Box<Fn(PropertyValue) -> Vec<GtkWidgetAction>>)>>>
 }
 
 impl GtkSessionViewModel {
@@ -19,7 +22,8 @@ impl GtkSessionViewModel {
     /// 
     pub fn new() -> GtkSessionViewModel {
         GtkSessionViewModel {
-            values:         HashMap::new()
+            values:         HashMap::new(),
+            bindings:       HashMap::new()
         }
     }
 
@@ -37,9 +41,24 @@ impl GtkSessionViewModel {
         match property {
             // Bindings need to be stored for future updates
             &Property::Bind(ref binding) => {
-                println!("Bind {:?} -> {:?}", controller_path, property);
+                // If the property exists, then generate some actions to return
+                let actions = {
+                    let controller_values   = self.values.get(controller_path);
+                    let property_value      = controller_values.and_then(|controller_values| controller_values.get(binding));
 
-                vec![ GtkWidgetAction::Content(WidgetContent::SetText("Not implemented".to_string())) ]
+                    property_value
+                        .map(|property_value| action_fn(property_value.clone()))
+                        .unwrap_or(vec![])
+                };
+
+                // Store the bindings
+                let mut controller_bindings = self.bindings.entry(controller_path.clone()).or_insert_with(|| HashMap::new());
+                let mut property_bindings   = controller_bindings.entry(binding.clone()).or_insert_with(|| vec![]);
+
+                property_bindings.push((widget_id, action_fn));
+
+                // Return any actions that might have been generated for a pre-existing property value
+                actions
             },
 
             // Other properties are fixed values: just run the function immediately
