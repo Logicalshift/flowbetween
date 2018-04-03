@@ -219,7 +219,7 @@ impl GtkSessionCore {
             // Create the subcomponent
             let (subcomponent, create_subcomponent) = {
                 // Update the controller path if the subcomponent has a controller
-                let subcomponent_controller = subcomponent.controller().map(|controller| controller.to_string());
+                let subcomponent_controller = control.controller().map(|controller| controller.to_string());
 
                 if let Some(subcomponent_controller) = subcomponent_controller {
                     // Components of this control have a different controller path
