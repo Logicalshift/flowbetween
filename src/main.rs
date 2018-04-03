@@ -47,6 +47,7 @@ fn main() {
 
     gtk_session.run();
 
+    /*
     // Create the web session structure
     let sessions = Arc::new(WebSessions::new());
     
@@ -73,4 +74,5 @@ fn main() {
     println!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT));
 
     Iron::new(mount).http(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT)).unwrap();
+    */
 }

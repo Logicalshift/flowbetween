@@ -3,6 +3,7 @@ use super::attributes::*;
 use super::gtk_control::*;
 use super::property_action::*;
 use super::gtk_user_interface::*;
+use super::super::gtk_event::*;
 use super::super::gtk_action::*;
 
 use flo_ui::*;
@@ -79,13 +80,35 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     /// 
     pub fn run(self) {
         // Create the processors
-        let action_process = self.create_action_process();
+        let action_process      = self.create_action_process();
+        
+        // Run until the window is closed (or the action stream is closed)
+        let close_window        = self.window_closed();
+        let run_until_closed    = action_process.select(close_window)
+            .map_err(|_| ());
 
         // Spawn the executor
-        let mut runner = executor::spawn(action_process);
+        let mut runner = executor::spawn(run_until_closed);
 
         // Wait for everything to run
         runner.wait_future().unwrap();
+    }
+
+    ///
+    /// Creates a future that will resolve when all of the windows associated with this session are closed
+    /// 
+    pub fn window_closed(&self) -> Box<Future<Item=(), Error=()>> {
+        // There's only window 0 at the moment
+        let event_stream = self.core.lock().unwrap().gtk_ui.get_updates();
+
+        // Filter for window close events
+        let window_close_events = event_stream.filter(|evt| evt == &GtkEvent::CloseWindow(WindowId::Assigned(0)));
+
+        // We want the first window close event
+        let next_window_close = window_close_events.into_future();
+
+        // Result is the window close event with the item remove
+        Box::new(next_window_close.map(|_| ()).map_err(|_| ()))
     }
 
     ///
