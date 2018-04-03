@@ -19,11 +19,13 @@ extern crate itertools;
 
 mod gtk_thread;
 mod gtk_event;
+mod gtk_event_parameter;
 mod gtk_action;
 pub mod widgets;
 mod session;
 
 pub use self::gtk_thread::*;
 pub use self::gtk_event::*;
+pub use self::gtk_event_parameter::*;
 pub use self::gtk_action::*;
 pub use self::session::*;
