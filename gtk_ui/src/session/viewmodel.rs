@@ -31,7 +31,13 @@ impl GtkSessionViewModel {
     /// Deletes the binding data for a particular widget ID
     /// 
     pub fn delete_widget(&mut self, widget_id: WidgetId) {
-        // TODO
+        // This is a naive algorithm that iterates through the entire set of bindings looking for our widget
+        // If there are a large number of bindings, this may be very inefficient
+        for (_, property_bindings) in self.bindings.iter_mut() {
+            for (_, property_list) in property_bindings.iter_mut() {
+                property_list.retain(|&(ref id, _)| *id != widget_id)
+            }
+        }
     }
 
     ///
