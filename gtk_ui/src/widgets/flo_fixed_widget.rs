@@ -114,7 +114,7 @@ impl FloFixedWidget {
 
                     // Create a scaled image with that ratio
                     let (new_width, new_height)         = (image_width * ratio, image_height * ratio);
-                    let (new_width, new_height)         = (new_width as i32, new_height as i32);
+                    let (new_width, new_height)         = (new_width.floor() as i32, new_height.floor() as i32);
 
                     // Scale the image to fit
                     let scaled = pixbuf.scale_simple(new_width, new_height, gdk_pixbuf::InterpType::Bilinear);
