@@ -60,7 +60,7 @@ impl ToGtkActions for ControlAttribute {
             &ZIndex(zindex)                         => vec![ WidgetLayout::ZIndex(zindex).into() ].into_actions(),
             &Padding((left, top), (right, bottom))  => vec![ WidgetLayout::Padding((left, top), (right, bottom)).into() ].into_actions(),
             
-            &Text(ref text)                         => vec![ PropertyAction::from_property(text.clone(), |text| WidgetContent::SetText(text.to_string()).into()) ],
+            &Text(ref text)                         => vec![ PropertyAction::from_property(text.clone(), |text| vec![ WidgetContent::SetText(text.to_string()).into() ]) ],
 
             &FontAttr(ref font)                     => font.to_gtk_actions(),
             &StateAttr(ref state)                   => state.to_gtk_actions(),
@@ -86,12 +86,12 @@ impl ToGtkActions for State {
         use self::State::*;
 
         match self {
-            &Selected(ref selected)     => vec![ PropertyAction::from_property(selected.clone(), |value| WidgetState::SetSelected(value.to_bool().unwrap_or(false)).into()) ],
-            &Badged(ref badged)         => vec![ PropertyAction::from_property(badged.clone(), |value| WidgetState::SetBadged(value.to_bool().unwrap_or(false)).into()) ],
-            &Value(ref value)           => vec![ PropertyAction::from_property(value.clone(), |value| WidgetState::SetValueFloat(value.to_f32().unwrap_or(0.0)).into()) ],
+            &Selected(ref selected)     => vec![ PropertyAction::from_property(selected.clone(), |value| vec![ WidgetState::SetSelected(value.to_bool().unwrap_or(false)).into() ]) ],
+            &Badged(ref badged)         => vec![ PropertyAction::from_property(badged.clone(), |value| vec![ WidgetState::SetBadged(value.to_bool().unwrap_or(false)).into() ]) ],
+            &Value(ref value)           => vec![ PropertyAction::from_property(value.clone(), |value| vec![ WidgetState::SetValueFloat(value.to_f32().unwrap_or(0.0)).into() ]) ],
             &Range((ref min, ref max))  => vec![ 
-                PropertyAction::from_property(min.clone(), |min| WidgetState::SetRangeMin(min.to_f32().unwrap_or(0.0)).into()),
-                PropertyAction::from_property(max.clone(), |max| WidgetState::SetRangeMax(max.to_f32().unwrap_or(0.0)).into()) 
+                PropertyAction::from_property(min.clone(), |min| vec![ WidgetState::SetRangeMin(min.to_f32().unwrap_or(0.0)).into() ]),
+                PropertyAction::from_property(max.clone(), |max| vec![ WidgetState::SetRangeMax(max.to_f32().unwrap_or(0.0)).into() ]) 
             ]
         }
     }

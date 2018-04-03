@@ -5,7 +5,7 @@ use flo_ui::*;
 /// 
 pub enum PropertyAction<Action> {
     Unbound(Action),
-    Bound(Property, Box<Fn(PropertyValue) -> Action>)
+    Bound(Property, Box<Fn(PropertyValue) -> Vec<Action>>)
 }
 
 impl<Action> PropertyAction<Action> {
@@ -13,15 +13,8 @@ impl<Action> PropertyAction<Action> {
     /// Converts a property into a PropertyAction via a function that takes a concrete binding and returns the action
     /// that should be produced for that value
     /// 
-    pub fn from_property<TFn: 'static+Fn(PropertyValue) -> Action>(property: Property, convert_value: TFn) -> PropertyAction<Action> {
-        if let Property::Bind(binding) = property {
-            PropertyAction::Bound(Property::Bind(binding), Box::new(convert_value))
-        } else {
-            let maybe_value: Option<PropertyValue>  = property.into();
-            let definitely_value                    = maybe_value.unwrap_or_else(|| PropertyValue::String("<< bad binding >>".to_string()));
-
-            PropertyAction::Unbound(convert_value(definitely_value))
-        }
+    pub fn from_property<TFn: 'static+Fn(PropertyValue) -> Vec<Action>>(property: Property, convert_value: TFn) -> PropertyAction<Action> {
+        PropertyAction::Bound(property, Box::new(convert_value))
     }
 }
 
