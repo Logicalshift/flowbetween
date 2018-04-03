@@ -51,7 +51,6 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     pub fn new(core_ui: Ui, gtk_ui: GtkUserInterface) -> GtkSession<Ui> {
         // Get the GTK event streams
         let mut gtk_action_sink     = gtk_ui.get_input_sink();
-        let mut gtk_event_stream    = gtk_ui.get_updates();
 
         // Create the main window (always ID 0)
         Self::create_main_window(&mut gtk_action_sink);
@@ -81,10 +80,13 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     pub fn run(self) {
         // Create the processors
         let action_process      = self.create_action_process();
+        let event_process       = self.create_event_process();
         
-        // Run until the window is closed (or the action stream is closed)
-        let close_window        = self.window_closed();
-        let run_until_closed    = action_process.select(close_window)
+        // Run until the window is closed (or the any of the processing streams are closed)
+        let close_window        = self.when_window_closed();
+        let run_until_closed    = close_window
+            .select2(action_process)
+            .select2(event_process)
             .map_err(|_| ());
 
         // Spawn the executor
@@ -97,7 +99,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     ///
     /// Creates a future that will resolve when all of the windows associated with this session are closed
     /// 
-    pub fn window_closed(&self) -> Box<Future<Item=(), Error=()>> {
+    pub fn when_window_closed(&self) -> Box<Future<Item=(), Error=()>> {
         // There's only window 0 at the moment
         let event_stream = self.core.lock().unwrap().gtk_ui.get_updates();
 
@@ -117,11 +119,11 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     /// 
     pub fn create_action_process(&self) -> Box<Future<Item=(), Error=()>> {
         // These are the streams we want to connect
-        let gtk_action_sink = self.core.lock().unwrap().gtk_ui.get_input_sink();
-        let core_updates    = self.core_ui.get_updates();
+        let gtk_action_sink     = self.core.lock().unwrap().gtk_ui.get_input_sink();
+        let core_updates        = self.core_ui.get_updates();
 
         // Map the core updates to GTK updates
-        let core = self.core.clone();
+        let core                = self.core.clone();
         let gtk_core_updates    = core_updates
             .map(move |updates| {
                 // Lock the core while we process these updates
@@ -141,6 +143,31 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
         let action_process = gtk_action_sink.send_all(gtk_core_updates);
 
         Box::new(action_process.map(|_stream_sink| ()))
+    }
+
+    ///
+    /// Creates a future that will stop when the GTK side stops producing events, which connects events from GTK
+    /// to the core UI
+    ///
+    pub fn create_event_process(&self) -> Box<Future<Item=(), Error=()>> {
+        // GTK events become input events on the core side
+        let gtk_events  = self.core.lock().unwrap().gtk_ui.get_updates();
+        let core_input  = self.core_ui.get_input_sink();
+
+        // Connect the streams
+        let core            = self.core.clone();
+        let core_ui_events  = gtk_events
+            .map(move |event| {
+                let mut core = core.lock().unwrap();
+
+                // Generate the core UI events for this event
+                core.process_event(event)
+            });
+        
+        // Send the processed events to the core input
+        let event_process = core_input.send_all(core_ui_events);
+
+        Box::new(event_process.map(|_stream_sink| ()))
     }
 
     ///
@@ -174,6 +201,13 @@ impl<CoreController: Controller+'static> GtkSession<UiSession<CoreController>> {
 }
 
 impl GtkSessionCore {
+    ///
+    /// Processes a GTK event into a UI event
+    /// 
+    pub fn process_event(&mut self, event: GtkEvent) -> Vec<UiEvent> {
+        vec![]
+    }
+
     ///
     /// Processes an update from the core UI and returns the resulting GtkActions after updating
     /// the state in the core
