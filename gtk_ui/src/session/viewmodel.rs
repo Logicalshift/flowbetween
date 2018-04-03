@@ -27,9 +27,22 @@ impl GtkSessionViewModel {
     /// Binds a property to an action to be performed every time it's changed
     /// 
     pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property: &Property, action_fn: Box<Fn(PropertyValue) -> Vec<GtkWidgetAction>>) -> Vec<GtkWidgetAction> {
-        println!("Bind {:?} -> {:?}", controller_path, property);
+        match property {
+            // Bindings need to be stored for future updates
+            &Property::Bind(ref binding) => {
+                println!("Bind {:?} -> {:?}", controller_path, property);
 
-        vec![ GtkWidgetAction::Content(WidgetContent::SetText("Not implemented".to_string())) ]
+                vec![ GtkWidgetAction::Content(WidgetContent::SetText("Not implemented".to_string())) ]
+            },
+
+            // Other properties are fixed values: just run the function immediately
+            fixed_value => {
+                let maybe_value: Option<PropertyValue>  = fixed_value.clone().into();
+                let definitely_value                    = maybe_value.unwrap_or_else(|| PropertyValue::String("<< bad binding >>".to_string()));
+
+                action_fn(definitely_value)
+            }
+        }
     }
 
     ///
