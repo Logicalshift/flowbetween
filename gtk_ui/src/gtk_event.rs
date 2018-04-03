@@ -15,6 +15,6 @@ pub enum GtkEvent {
     /// A window was closed by the user
     CloseWindow(WindowId),
 
-    /// Registered action has occurred on a widget
-    Action(WidgetId, String, GtkEventParameter)
+    /// Registered event has occurred on a widget
+    Event(WidgetId, String, GtkEventParameter)
 }
