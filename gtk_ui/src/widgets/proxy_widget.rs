@@ -59,17 +59,19 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         use self::GtkWidgetAction::*;
+        use flo_ui::Appearance::*;
 
         // Some actions should always be processed against the proxy widget
         match action {
             // The proxy widget should become the root, not its content
-            &SetRoot(_)         => { process_basic_widget_action(self, flo_gtk, action); },
+            &SetRoot(_)             => { process_basic_widget_action(self, flo_gtk, action); },
 
             // Some appearance settings (like background colour) can only be set on things like EventBoxes, so the proxy processes them
-            &Appearance(_)      => { process_basic_widget_action(self, flo_gtk, action); },
+            &Appearance(Image(_))   => { self.underlying_widget.borrow_mut().process(flo_gtk, action); },
+            &Appearance(_)          => { process_basic_widget_action(self, flo_gtk, action); },
 
             // Everything else is processed like the proxy doesn't exist
-            _                   => { self.underlying_widget.borrow_mut().process(flo_gtk, action); }
+            _                       => { self.underlying_widget.borrow_mut().process(flo_gtk, action); }
         }
     }
 
