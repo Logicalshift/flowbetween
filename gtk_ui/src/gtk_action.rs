@@ -189,3 +189,16 @@ pub enum GtkAction {
     /// Performs some actions on a widget
     Widget(WidgetId, Vec<GtkWidgetAction>)
 }
+
+impl GtkAction {
+    ///
+    /// True if this action is a no-op (can be removed from the actions list)
+    /// 
+    pub fn is_no_op(&self) -> bool {
+        match self {
+            &GtkAction::Window(_, ref window_actions)   => window_actions.len() == 0,
+            &GtkAction::Widget(_, ref widget_actions)   => widget_actions.len() == 0,
+            _                                           => false
+        }
+    }
+}
