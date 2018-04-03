@@ -211,7 +211,7 @@ impl GtkSessionCore {
         match event {
             None                                        => vec![],
             CloseWindow(WindowId)                       => vec![],
-            Tick                                        => { println!("Tick"); vec![ UiEvent::Tick ] },
+            Tick                                        => vec![ UiEvent::Tick ],
             Event(WidgetId, String, GtkEventParameter)  => vec![]
         }
     }
