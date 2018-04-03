@@ -1,4 +1,5 @@
 use super::factory::*;
+use super::super::gtk_event::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 use super::super::widgets::custom_style::*;
@@ -8,6 +9,7 @@ use gtk;
 use gtk::prelude::*;
 
 use std::rc::*;
+use std::cell::*;
 
 ///
 /// Executes a Gtk action
@@ -18,6 +20,20 @@ pub fn run_action(flo_gtk: &mut FloGtk, action: &GtkAction) {
         &GtkAction::Window(window_id, ref window_action)    => run_window_action(flo_gtk, window_id, window_action),
         &GtkAction::Widget(widget_id, ref widget_action)    => run_widget_action(flo_gtk, widget_id, widget_action)
     }
+}
+
+///
+/// Wires up the events for a window
+/// 
+fn wire_up_window(new_window: &gtk::Window, window_id: WindowId, flo_gtk: &mut FloGtk) {
+    // Retrieve a sink where we can send our events to
+    let event_sink = flo_gtk.get_event_sink();
+
+    // GTK events are Fn() and not FnMut() :-/ Use a cell so we can actually send events.
+    let event_sink = RefCell::new(event_sink);
+
+    // Send the close event when the window is closed
+    new_window.connect_hide(move |_window| { event_sink.borrow_mut().start_send(GtkEvent::CloseWindow(window_id)).unwrap(); });
 }
 
 ///
@@ -41,6 +57,9 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
 
                 // New windows with no content get a generic message initially
                 new_window.add(&gtk::Label::new("Flo: This space left blank"));
+
+                // Wire up events
+                wire_up_window(&new_window, window_id, flo_gtk);
                 
                 // Register the window
                 flo_gtk.register_window(window_id, new_window);
