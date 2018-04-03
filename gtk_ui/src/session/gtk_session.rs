@@ -179,8 +179,10 @@ impl GtkSessionCore {
     /// Given a set of actions with viewmodel dependencies, translates them into standard Gtk action while
     /// binding them into the viewmodel for this control
     /// 
-    pub fn bind_viewmodel(&mut self, control_id: WidgetId, actions: Vec<PropertyWidgetAction>) -> Vec<GtkAction> {
+    pub fn bind_viewmodel(&mut self, control_id: WidgetId, controller_path: &Vec<String>, actions: Vec<PropertyWidgetAction>) -> Vec<GtkAction> {
         use self::PropertyAction::*;
+
+        let viewmodel = &mut self.viewmodel;
         
         vec![
             GtkAction::Widget(control_id, 
@@ -188,7 +190,7 @@ impl GtkSessionCore {
                     .flat_map(|action| {
                         match action {
                             Unbound(action)     => vec![action],
-                            Bound(prop, map_fn) => vec![]
+                            Bound(prop, map_fn) => viewmodel.bind(control_id, controller_path, &prop, map_fn)
                         }
                     })
                     .collect()
@@ -200,7 +202,7 @@ impl GtkSessionCore {
     /// Generates the actions to create a particular control, and binds it to the viewmodel to keep it up to
     /// date
     /// 
-    pub fn create_control(&mut self, control: &Control) -> (GtkControl, Vec<GtkAction>) {
+    pub fn create_control(&mut self, control: &Control, controller_path: &Vec<String>) -> (GtkControl, Vec<GtkAction>) {
         // Assign an ID for this control
         let control_id      = self.create_widget_id();
         let mut gtk_control = GtkControl::new(control_id, control.controller().map(|controller| controller.to_string()));
@@ -209,13 +211,29 @@ impl GtkSessionCore {
         let create_this_control = control.to_gtk_actions();
 
         // Bind any properties to the view model
-        let mut create_this_control = self.bind_viewmodel(control_id, create_this_control);
+        let mut create_this_control = self.bind_viewmodel(control_id, controller_path, create_this_control);
 
         // Add the actions to create any subcomponent
         let mut subcomponent_ids = vec![];
         for subcomponent in control.subcomponents().unwrap_or(&vec![]) {
-            let (subcomponent, create_subcomponent) = self.create_control(subcomponent);
+            // Create the subcomponent
+            let (subcomponent, create_subcomponent) = {
+                // Update the controller path if the subcomponent has a controller
+                let subcomponent_controller = subcomponent.controller().map(|controller| controller.to_string());
 
+                if let Some(subcomponent_controller) = subcomponent_controller {
+                    // Components of this control have a different controller path
+                    let mut subcomponent_path = controller_path.clone();
+                    subcomponent_path.push(subcomponent_controller);
+
+                    self.create_control(subcomponent, &subcomponent_path)
+                } else {
+                    // Re-use the existing controller path
+                    self.create_control(subcomponent, controller_path)
+                }
+            };
+
+            // Store as a child control
             subcomponent_ids.push(subcomponent.widget_id);
             gtk_control.child_controls.push(subcomponent);
             create_this_control.extend(create_subcomponent);
@@ -254,6 +272,29 @@ impl GtkSessionCore {
 
         // Result is the current control if we found one at this address
         current_control
+    }
+
+    ///
+    /// Reads the controller path for a particular address
+    /// 
+    pub fn controller_path_for_address(&self, address: &Vec<u32>) -> Vec<String> {
+        let mut path            = vec![];
+        let mut current_control = self.root_control.as_ref();
+
+        for index in address {
+            let index = *index;
+
+            // Push the next entry in the controller path
+            if let Some(controller) = current_control.and_then(|control| control.controller.as_ref()) {
+                path.push(controller.clone());
+            }
+
+            // Get the next control
+            current_control = current_control.and_then(|control| control.child_at_index(index));
+        }
+
+        // Controllers apply to the controls underneath the one that specifies a controller attribute so we don't push the last component
+        path
     }
 
     ///
@@ -342,8 +383,10 @@ impl GtkSessionCore {
     /// Generates the actions to update the UI with a particular diff
     /// 
     pub fn update_ui_with_diff(&mut self, diff: UiDiff) -> Vec<GtkAction> {
+        let controller_path = self.controller_path_for_address(&diff.address);
+
         // Create the actions to generate the control in this diff
-        let (new_control, new_control_actions) = self.create_control(&diff.new_ui);
+        let (new_control, new_control_actions) = self.create_control(&diff.new_ui, &controller_path);
 
         // Replace the control at the specified address with our new control
         let replace_actions = self.replace_control(&diff.address, new_control);

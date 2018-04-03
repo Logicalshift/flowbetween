@@ -28,7 +28,7 @@ impl GtkSessionViewModel {
     ///
     /// Binds a property to an action to be performed every time it's changed
     /// 
-    pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property_name: &str, action_fn: Box<Fn(PropertyValue) -> Vec<GtkAction>>) -> Vec<GtkAction> {
+    pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property: &Property, action_fn: Box<Fn(PropertyValue) -> GtkWidgetAction>) -> Vec<GtkWidgetAction> {
         unimplemented!()
     }
 
