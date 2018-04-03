@@ -252,7 +252,8 @@ impl GtkSessionCore {
     /// Generates the actions required to delete a particular control
     /// 
     pub fn delete_control(&mut self, control: &GtkControl) -> Vec<GtkAction> {
-        // TODO: unbind any widgets found here from the viewmodel
+        // Unbind this control from the viewmodel
+        control.delete_from_viewmodel(&mut self.viewmodel);
 
         // Delete the control from the Gtk tree
         control.delete_actions()

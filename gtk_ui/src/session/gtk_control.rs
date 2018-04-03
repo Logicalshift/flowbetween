@@ -1,3 +1,4 @@
+use super::viewmodel::*;
 use super::super::gtk_action::*;
 
 ///
@@ -38,6 +39,17 @@ impl GtkControl {
     /// 
     pub fn child_at_index_mut<'a>(&'a mut self, index: u32) -> Option<&'a mut GtkControl> {
         self.child_controls.get_mut(index as usize)
+    }
+
+    ///
+    /// Removes this control and any child controls from the viewmodel
+    /// 
+    pub fn delete_from_viewmodel(&self, viewmodel: &mut GtkSessionViewModel) {
+        for child_control in self.child_controls.iter() {
+            child_control.delete_from_viewmodel(viewmodel);
+        }
+
+        viewmodel.delete_widget(self.widget_id);
     }
 
     ///

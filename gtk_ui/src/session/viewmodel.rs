@@ -24,6 +24,13 @@ impl GtkSessionViewModel {
     }
 
     ///
+    /// Deletes the binding data for a particular widget ID
+    /// 
+    pub fn delete_widget(&mut self, widget_id: WidgetId) {
+        // TODO
+    }
+
+    ///
     /// Binds a property to an action to be performed every time it's changed
     /// 
     pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property: &Property, action_fn: Box<Fn(PropertyValue) -> Vec<GtkWidgetAction>>) -> Vec<GtkWidgetAction> {
