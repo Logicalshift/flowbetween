@@ -202,8 +202,8 @@ impl GtkSessionCore {
     /// 
     pub fn create_control(&mut self, control: &Control) -> (GtkControl, Vec<GtkAction>) {
         // Assign an ID for this control
-        let control_id  = self.create_widget_id();
-        let mut gtk_control = GtkControl::new(control_id);
+        let control_id      = self.create_widget_id();
+        let mut gtk_control = GtkControl::new(control_id, control.controller().map(|controller| controller.to_string()));
 
         // Get the actions to create this control
         let create_this_control = control.to_gtk_actions();

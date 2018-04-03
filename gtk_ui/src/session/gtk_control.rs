@@ -18,10 +18,10 @@ impl GtkControl {
     ///
     /// Creates a new GTK control with a particular widget ID
     /// 
-    pub fn new(widget_id: WidgetId) -> GtkControl {
+    pub fn new(widget_id: WidgetId, controller: Option<String>) -> GtkControl {
         GtkControl {
             widget_id:      widget_id,
-            controller:     None,
+            controller:     controller,
             child_controls: vec![]
         }
     }
