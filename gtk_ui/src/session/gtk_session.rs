@@ -132,6 +132,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
                 // Generate all of the actions for the current set of updates
                 let actions: Vec<_> = updates.into_iter()
                     .flat_map(|update| core.process_update(update))
+                    .filter(|action| !action.is_no_op())
                     .collect();
                 
                 // Send as a single block to the GTK thread
@@ -140,7 +141,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
             .flatten();
         
         // Connect the updates to the sink to generate our future
-        let action_process = gtk_action_sink.send_all(gtk_core_updates);
+        let action_process = gtk_action_sink.send_all(gtk_core_updates.filter(|action_list| action_list.len() > 0));
 
         Box::new(action_process.map(|_stream_sink| ()))
     }
