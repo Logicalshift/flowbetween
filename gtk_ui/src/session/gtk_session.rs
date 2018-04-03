@@ -162,7 +162,7 @@ impl GtkSessionCore {
             Start                                   => vec![],
             UpdateUi(ui_differences)                => self.update_ui(ui_differences),
             UpdateCanvas(canvas_differences)        => vec![],
-            UpdateViewModel(viewmodel_differences)  => vec![]
+            UpdateViewModel(viewmodel_differences)  => self.update_viewmodel(viewmodel_differences)
         }
     }
 
@@ -361,5 +361,17 @@ impl GtkSessionCore {
         ui_differences.into_iter()
             .flat_map(|diff| self.update_ui_with_diff(diff))
             .collect()
+    }
+
+    ///
+    /// Updates the user interface with the specified set of viewmodel changes
+    /// 
+    pub fn update_viewmodel(&mut self, viewmodel_differences: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
+        // Process the updates in the viewmodel
+        self.viewmodel.update(viewmodel_differences);
+
+        // The viewmodel currently sends updates to its own sink
+        // TODO: this doesn't actually work though as if the UI updates are not processed at this point it all goes wrong
+        vec![]
     }
 }
