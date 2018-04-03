@@ -205,7 +205,14 @@ impl GtkSessionCore {
     /// Processes a GTK event into a UI event
     /// 
     pub fn process_event(&mut self, event: GtkEvent) -> Vec<UiEvent> {
-        vec![]
+        use self::GtkEvent::*;
+
+        match event {
+            None                                        => vec![],
+            CloseWindow(WindowId)                       => vec![],
+            Tick                                        => { println!("Tick"); vec![ UiEvent::Tick ] },
+            Event(WidgetId, String, GtkEventParameter)  => vec![]
+        }
     }
 
     ///

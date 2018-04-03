@@ -1,6 +1,7 @@
 use super::flo_gtk::*;
 use super::event_sink::*;
 use super::super::gtk_action::*;
+use super::super::gtk_event::*;
 use super::super::widgets::*;
 
 use gtk;
@@ -78,9 +79,13 @@ impl GtkThread {
     /// 
     pub fn perform_actions(&self, actions: Vec<GtkAction>) {
         self.message_target.async(|flo_gtk| {
+            // Run all of the actions
             for action in actions {
                 run_action(flo_gtk, &action)
             }
+
+            // Generate a tick event when they're complete
+            flo_gtk.get_event_sink().start_send(GtkEvent::Tick).unwrap();
         });
     }
 
