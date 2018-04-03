@@ -47,14 +47,13 @@ impl GtkSessionViewModel {
         match property {
             // Bindings need to be stored for future updates
             &Property::Bind(ref binding) => {
-                // If the property exists, then generate some actions to return (if the property has no value yet, no actions are generated)
+                // Call the action function with the current value of the property to set up the control
                 let actions = {
                     let controller_values   = self.values.get(controller_path);
                     let property_value      = controller_values.and_then(|controller_values| controller_values.get(binding));
+                    let property_value      = property_value.cloned().unwrap_or(PropertyValue::Nothing);
 
-                    property_value
-                        .map(|property_value| action_fn(property_value.clone()))
-                        .unwrap_or(vec![])
+                    action_fn(property_value)
                 };
 
                 // Store the bindings
