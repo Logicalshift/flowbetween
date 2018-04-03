@@ -213,25 +213,24 @@ impl GtkSessionCore {
         // Bind any properties to the view model
         let mut create_this_control = self.bind_viewmodel(control_id, controller_path, create_this_control);
 
+        // Work out the controller path for the subcomponents
+        // If a control has a controller attribute, it's not part of that controller, but its subcomponents are
+        let mut new_controller_path;
+
+        let subcomponents_controller_path = if let Some(controller) = control.controller() {
+            new_controller_path = controller_path.clone();
+            new_controller_path.push(controller.to_string());
+
+            &new_controller_path
+        } else {
+            controller_path
+        };
+
         // Add the actions to create any subcomponent
         let mut subcomponent_ids = vec![];
         for subcomponent in control.subcomponents().unwrap_or(&vec![]) {
             // Create the subcomponent
-            let (subcomponent, create_subcomponent) = {
-                // Update the controller path if the subcomponent has a controller
-                let subcomponent_controller = control.controller().map(|controller| controller.to_string());
-
-                if let Some(subcomponent_controller) = subcomponent_controller {
-                    // Components of this control have a different controller path
-                    let mut subcomponent_path = controller_path.clone();
-                    subcomponent_path.push(subcomponent_controller);
-
-                    self.create_control(subcomponent, &subcomponent_path)
-                } else {
-                    // Re-use the existing controller path
-                    self.create_control(subcomponent, controller_path)
-                }
-            };
+            let (subcomponent, create_subcomponent) = self.create_control(subcomponent, subcomponents_controller_path);
 
             // Store as a child control
             subcomponent_ids.push(subcomponent.widget_id);
