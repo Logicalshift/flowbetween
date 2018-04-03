@@ -10,6 +10,8 @@ extern crate flo_canvas;
 
 extern crate gtk;
 extern crate gdk;
+extern crate gio;
+extern crate gdk_pixbuf;
 extern crate glib;
 extern crate anymap;
 extern crate futures;

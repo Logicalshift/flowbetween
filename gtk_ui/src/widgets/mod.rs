@@ -11,7 +11,9 @@ mod custom_style;
 mod layout;
 mod run_action;
 mod factory;
+mod image;
 
+pub use self::image::*;
 pub use self::window::*;
 pub use self::widget::*;
 pub use self::widget_data::*;

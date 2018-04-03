@@ -1,3 +1,4 @@
+use super::image::*;
 use super::widget::*;
 use super::basic_widget::*;
 use super::flo_layout::*;
@@ -5,6 +6,8 @@ use super::widget_data::*;
 use super::proxy_widget::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
+
+use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
@@ -31,8 +34,11 @@ pub struct FloFixedWidget {
     /// The widget interface for our container
     as_widget: gtk::Widget,
 
-    /// The widget used to display the text for this itme
+    /// The widget used to display the text for this item
     text: Option<gtk::Label>,
+    
+    /// The widget used to display the image for this item
+    image: Option<gtk::Image>,
 
     /// Used to lay out the content of the container
     layout: Rc<RefCell<FloWidgetLayout>>
@@ -60,6 +66,7 @@ impl FloFixedWidget {
             container:      container.clone(),
             as_widget:      container.upcast::<gtk::Widget>(),
             text:           None,
+            image:          None,
             layout:         layout
         }
     }
@@ -79,6 +86,30 @@ impl FloFixedWidget {
 
         // Update the text within the label
         text_label.set_text(new_text);
+    }
+
+    ///
+    /// Sets or removes the image for this widget
+    /// 
+    pub fn set_image(&mut self, new_image: Option<Resource<Image>>) {
+        // We entirely replace the image widget every time
+        let mut new_image_widget = None;
+
+        if let Some(new_image) = new_image {
+            // Create a new image widget
+            let pixbuf          = pixbuf_from_image(new_image);
+            let image_widget    = gtk::Image::new_from_pixbuf(&pixbuf);
+
+            new_image_widget    = Some(image_widget);
+        }
+
+        // Remove the previous image widget if there is one
+        let container = &mut self.container;
+        self.image.take().map(|old_image| container.remove(&old_image));
+        
+        // Add the new image widget if we created one
+        self.image = new_image_widget;
+        self.image.as_ref().map(|new_image| container.add(new_image));
     }
 
     ///
@@ -134,6 +165,10 @@ impl GtkUiWidget for FloFixedWidget {
         match action {
             &GtkWidgetAction::Content(WidgetContent::SetText(ref new_text)) => {
                 self.set_text(new_text);
+            },
+
+            &GtkWidgetAction::Appearance(Appearance::Image(ref image_data)) => {
+                self.set_image(Some(image_data.clone()));
             },
 
             // Any other action is processed as normal
