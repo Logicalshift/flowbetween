@@ -2,8 +2,6 @@ use super::super::gtk_action::*;
 
 use flo_ui::*;
 
-use futures::*;
-
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
@@ -29,7 +27,9 @@ impl GtkSessionViewModel {
     /// Binds a property to an action to be performed every time it's changed
     /// 
     pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property: &Property, action_fn: Box<Fn(PropertyValue) -> GtkWidgetAction>) -> Vec<GtkWidgetAction> {
-        unimplemented!()
+        println!("Bind {:?} -> {:?}", controller_path, property);
+
+        vec![ GtkWidgetAction::Content(WidgetContent::SetText("Not implemented".to_string())) ]
     }
 
     ///
