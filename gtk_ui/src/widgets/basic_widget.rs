@@ -265,6 +265,8 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
                         Inhibit(false) 
                     } 
                 }); 
-            }
+            },
+        
+        EditValue | SetValue => { }
     }
 }

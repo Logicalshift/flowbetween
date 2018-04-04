@@ -8,6 +8,7 @@ use super::basic_widget::*;
 use super::super::gtk_action::*;
 
 use gtk;
+use gtk::prelude::*;
 
 use std::rc::*;
 
@@ -24,7 +25,12 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Button          => Box::new(BasicWidget::new(id, gtk::ToggleButton::new())),
         Label           => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         DrawingArea     => Box::new(BasicWidget::new(id, gtk::DrawingArea::new())),
-        Scale           => Box::new(FloScaleWidget::new(id, gtk::Scale::new(gtk::Orientation::Horizontal, None))),
-        Popup           => Box::new(FloPopupWidget::new(id, gtk::Fixed::new()))
+        Popup           => Box::new(FloPopupWidget::new(id, gtk::Fixed::new())),
+
+        Scale           => {
+            let scale = gtk::Scale::new(gtk::Orientation::Horizontal, None);
+            scale.set_draw_value(false);
+            Box::new(FloScaleWidget::new(id, scale))
+        },
     }
 }

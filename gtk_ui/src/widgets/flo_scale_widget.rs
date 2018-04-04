@@ -1,7 +1,10 @@
 use super::widget::*;
 use super::basic_widget::*;
+use super::super::gtk_event::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
+use super::super::gtk_event_parameter::*;
+use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
@@ -52,19 +55,34 @@ impl GtkUiWidget for FloScaleWidget {
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         use self::GtkWidgetAction::*;
         use self::WidgetState::*;
+        use self::GtkWidgetEventType::{EditValue, SetValue};
 
         match action {
-            &State(SetValueFloat(value))    => self.scale.set_value(value as f64),
-            &State(SetRangeMin(min_value))  => {
+            &State(SetValueFloat(value))                => self.scale.set_value(value as f64),
+            &State(SetRangeMin(min_value))              => {
                 self.min = min_value as f64;
                 self.scale.set_range(self.min.min(self.max), self.max.max(self.min));
             },
-            &State(SetRangeMax(max_value))  => {
+            &State(SetRangeMax(max_value))              => {
                 self.max = max_value as f64;
                 self.scale.set_range(self.min.min(self.max), self.max.max(self.min));
             },
 
-            other_action                    => { process_basic_widget_action(self, flo_gtk, other_action); }
+            &RequestEvent(SetValue, ref event_name)     |
+            &RequestEvent(EditValue, ref event_name)    => {
+                // Right now, there doesn't seem to be an easy way to distinguish between values set during a drag and at the end
+                // so we consider 'set' and 'edit' to be the same actions for now.
+                let id          = self.id;
+                let sink        = RefCell::new(flo_gtk.get_event_sink());
+                let event_name  = event_name.clone();
+                self.scale.connect_value_changed(move |widget| { 
+                    let new_value = widget.get_value();
+
+                    sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value))).unwrap();
+                });
+            },
+
+            other_action                                => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
     }
 

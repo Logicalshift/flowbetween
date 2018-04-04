@@ -535,8 +535,8 @@ impl GtkSessionCore {
                     Dismiss                         => vec![],
                     Paint(device)                   => vec![],
                     Drag                            => vec![],
-                    EditValue                       => vec![],
-                    SetValue                        => vec![],
+                    EditValue                       => vec![ RequestEvent(GtkWidgetEventType::EditValue, action_name) ],
+                    SetValue                        => vec![ RequestEvent(GtkWidgetEventType::SetValue, action_name) ],
                     VirtualScroll(width, height)    => vec![]
                 }
             })
