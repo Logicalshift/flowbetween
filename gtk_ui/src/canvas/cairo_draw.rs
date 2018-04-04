@@ -166,6 +166,15 @@ impl CairoDraw {
     }
 
     ///
+    /// Converts a Flo Transform2D to a Cairo matrix
+    /// 
+    fn get_transform(transform: Transform2D) -> Matrix {
+        let Transform2D(a, b, _c) = transform;
+
+        Matrix::new(a.0 as f64, b.0 as f64, a.1 as f64, b.1 as f64, a.2 as f64, b.2 as f64)
+    }
+
+    ///
     /// Perform a canvas drawing operation in the Cairo context associated with this object
     /// 
     pub fn draw(&mut self, drawing: Draw) {
@@ -189,10 +198,10 @@ impl CairoDraw {
             FillColor(color)                            => { self.set_color = ColorTarget::None; self.fill_color = color; },
             StrokeColor(color)                          => { self.set_color = ColorTarget::None; self.stroke_color = color; },
             BlendMode(blend)                            => { self.ctxt.set_operator(Self::get_operator(blend)); },
-            IdentityTransform                           => {},
+            IdentityTransform                           => { self.ctxt.set_matrix(self.initial_matrix); },
             CanvasHeight(height)                        => {},
             CenterRegion((minx, miny), (maxx, maxy))    => {},
-            MultiplyTransform(transform)                => {},
+            MultiplyTransform(transform)                => { self.ctxt.transform(Self::get_transform(transform)); },
             Unclip                                      => { self.ctxt.reset_clip(); },
             Clip                                        => { self.ctxt.clip(); },
             Store                                       => { /* Requires external support */ },
