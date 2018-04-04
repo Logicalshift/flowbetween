@@ -175,6 +175,22 @@ impl CairoDraw {
     }
 
     ///
+    /// Sets the line width in pixels
+    /// 
+    fn set_line_width_pixels(&self, pixels: f32) {
+        let pixels      = pixels as f64;
+        let transform   = self.ctxt.get_matrix();
+
+        // Length of the first column of the transformation matrix is the scale factor (for the width)
+        let mut scale = (transform.xx + transform.yx).sqrt();
+        if scale == 0.0 { scale = 1.0; }
+
+        // Scale the width down according to this factor (we'll always use the horizontal scale factor)
+        let line_width = pixels / scale;
+        self.ctxt.set_line_width(line_width);
+    }
+
+    ///
     /// Perform a canvas drawing operation in the Cairo context associated with this object
     /// 
     pub fn draw(&mut self, drawing: Draw) {
@@ -189,7 +205,7 @@ impl CairoDraw {
             Fill                                        => { self.set_color(ColorTarget::Fill); self.ctxt.fill(); },
             Stroke                                      => { self.set_color(ColorTarget::Stroke); self.ctxt.stroke(); },
             LineWidth(width)                            => { self.ctxt.set_line_width(width as f64); },
-            LineWidthPixels(pixels)                     => {},
+            LineWidthPixels(pixels)                     => { self.set_line_width_pixels(pixels); },
             LineJoin(join)                              => { self.ctxt.set_line_join(Self::get_join(join)); },
             LineCap(cap)                                => { self.ctxt.set_line_cap(Self::get_cap(cap)); },
             NewDashPattern                              => { self.dash_pattern = vec![]; self.ctxt.set_dash(&[], 0.0); },
