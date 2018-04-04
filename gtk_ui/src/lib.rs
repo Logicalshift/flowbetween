@@ -12,6 +12,7 @@ extern crate gtk;
 extern crate gdk;
 extern crate gio;
 extern crate gdk_pixbuf;
+extern crate cairo;
 extern crate glib;
 extern crate anymap;
 extern crate futures;
@@ -23,6 +24,7 @@ mod gtk_event_parameter;
 mod gtk_widget_event_type;
 mod gtk_action;
 pub mod widgets;
+pub mod canvas;
 mod session;
 
 pub use self::gtk_thread::*;

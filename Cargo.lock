@@ -309,6 +309,7 @@ name = "flo_gtk_ui"
 version = "0.1.0"
 dependencies = [
  "anymap 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cairo-rs 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_canvas 0.1.0",
  "flo_ui 0.1.0",
  "futures 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)",
