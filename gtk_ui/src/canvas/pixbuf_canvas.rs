@@ -11,7 +11,7 @@ use cairo;
 use std::collections::HashMap;
 
 struct Layer {
-    pix_buf: Pixbuf,
+    surface: cairo::ImageSurface,
     context: CairoDraw
 }
 
@@ -75,7 +75,7 @@ impl PixBufCanvas {
         // Draw them to the target
         for (_, layer) in layers {
             drawable.set_operator(cairo::Operator::Over);
-            drawable.set_source_pixbuf(&layer.pix_buf, 0.0, 0.0);
+            drawable.set_source_surface(&layer.surface, 0.0, 0.0);
             drawable.paint();
         }
     }
@@ -88,18 +88,15 @@ impl PixBufCanvas {
         let height  = self.viewport.viewport_height;
 
         // Perform the incantations to create a pixbuf we can draw on
-        let buf     = Pixbuf::new(gdk_pixbuf::Colorspace::Rgb, true, 8, width, height);
         let surface = cairo::ImageSurface::create(cairo::Format::ARgb32, width, height).unwrap();
         let context = cairo::Context::new(&surface);
-
-        context.set_source_pixbuf(&buf, 0.0, 0.0);
 
         // Pass on to a new CairoDraw instance
         let draw    = CairoDraw::new(context, self.viewport);
 
         // Store as a new layer
         let new_layer = Layer {
-            pix_buf: buf,
+            surface: surface,
             context: draw
         };
 
