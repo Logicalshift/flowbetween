@@ -184,11 +184,23 @@ pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloG
     use self::WidgetState::*;
 
     match state {
-        &SetSelected(selected)      => { widget.get_underlying().clone().dynamic_cast::<gtk::ToggleButton>().ok().map(|toggle| { toggle.set_active(selected); }); },
-        &SetBadged(badged)          => (),
-        &SetValueFloat(value)       => (),
-        &SetRangeMin(from)          => (),
-        &SetRangeMax(to)            => ()
+        &SetSelected(selected)      => {
+            widget.get_underlying()
+                .get_style_context()
+                .map(|context| if selected { context.add_class("selected") } else { context.remove_class("selected") });
+
+            // TODO: toggle buttons probably should get their own class thing
+            widget.get_underlying().clone().dynamic_cast::<gtk::ToggleButton>().ok().map(|toggle| { toggle.set_active(selected); });
+        },
+        &SetBadged(badged)          => {
+            widget.get_underlying()
+                .get_style_context()
+                .map(|context| if badged { context.add_class("badged") } else { context.remove_class("badged") });
+        },
+
+        &SetValueFloat(_value)      => (),
+        &SetRangeMin(_from)         => (),
+        &SetRangeMax(_to)           => ()
     }
 }
 
