@@ -53,7 +53,8 @@ impl GtkUiWidget for BasicWidget {
                 let new_child = new_child.borrow();
                 let new_child = new_child.get_underlying();
 
-                new_child.unparent();
+                let previous_parent = new_child.get_parent().and_then(|parent| parent.dynamic_cast::<gtk::Container>().ok());
+                previous_parent.map(|previous_parent| previous_parent.remove(new_child));
 
                 // Add to the container
                 container.add(new_child);
@@ -83,7 +84,12 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
         &Scroll(ref scroll)                         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
         &New(_widget_type)                          => (),
-        &Delete                                     => { widget.get_underlying().unparent(); },
+        &Delete                                     => {
+            // Remove this widget from its parent
+            let widget          = widget.get_underlying();
+            let previous_parent = widget.get_parent().and_then(|parent| parent.dynamic_cast::<gtk::Container>().ok());
+            previous_parent.map(|previous_parent| previous_parent.remove(widget));
+        },
 
         &SetRoot(window_id)                         => { 
             let widget = widget.get_underlying().clone();
