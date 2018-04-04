@@ -5,6 +5,7 @@ use super::property_action::*;
 use super::gtk_user_interface::*;
 use super::super::gtk_event::*;
 use super::super::gtk_action::*;
+use super::super::gtk_widget_event_type::*;
 
 use flo_ui::*;
 use flo_ui::session::*;
@@ -308,6 +309,12 @@ impl GtkSessionCore {
             create_this_control.push(GtkAction::Widget(control_id, vec![ GtkWidgetAction::Content(WidgetContent::SetChildren(subcomponent_ids)) ]));
         }
 
+        // Add in any events this control might have registered
+        let wire_actions = self.wire_events_for_control(control);
+        if wire_actions.len() > 0 {
+            create_this_control.push(GtkAction::Widget(control_id, wire_actions));
+        }
+
         // Result is the control ID and the actions required to create this control and its subcomponents
         (gtk_control, create_this_control)
     }
@@ -477,5 +484,37 @@ impl GtkSessionCore {
     fn update_viewmodel(&mut self, viewmodel_differences: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
         // Process the updates in the viewmodel, and return the resulting updates
         self.viewmodel.update(viewmodel_differences)
+    }
+
+    ///
+    /// Generates the actions required to wire up the events for a control
+    /// 
+    fn wire_events_for_control(&mut self, control: &Control) -> Vec<GtkWidgetAction> {
+        use self::ControlAttribute::Action;
+        use self::ActionTrigger::*;
+        use self::GtkWidgetAction::RequestEvent;
+        
+        // Get the action attributes from the control
+        let actions = control.attributes()
+            .filter(|attribute| match attribute { &&Action(_, _) => true, _ => false })
+            .map(|action| match action {
+                &Action(ref trigger, ref name)  => (trigger.clone(), name.clone()),
+                _                               => panic!("Action filter failed")
+            });
+
+        // Generate 'wire' events from them
+        actions
+            .flat_map(|(action, action_name)| {
+                match action {
+                    Click                           => vec![ RequestEvent(GtkWidgetEventType::Click, action_name) ],
+                    Dismiss                         => vec![],
+                    Paint(device)                   => vec![],
+                    Drag                            => vec![],
+                    EditValue                       => vec![],
+                    SetValue                        => vec![],
+                    VirtualScroll(width, height)    => vec![]
+                }
+            })
+            .collect()
     }
 }
