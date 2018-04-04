@@ -36,10 +36,29 @@ impl ToGtkActions for Control {
             Slider              => New(GtkWidgetType::Scale),
             Rotor               => New(GtkWidgetType::Generic)
         };
+        
+        // The widget class allows the style sheet to specifically target Flo widgets
+        let widget_class = match self.control_type() {
+            Empty               => "flo-empty",
+            Container           => "flo-container",
+            CroppingContainer   => "flo-cropping-container",
+            ScrollingContainer  => "flo-scrolling-container",
+            Popup               => "flo-popup",
+            Button              => "flo-button",
+            Label               => "flo-label",
+            Canvas              => "flo-canvas",
+            Slider              => "flo-slider",
+            Rotor               => "flo-rotor"
+        };
 
         // Build into the 'create control' action
         // TODO: only box the containers and things that don't have backgrounds?
-        let mut create_control = vec![ create_new.into(), GtkWidgetAction::Box.into(), GtkWidgetAction::Show.into() ];
+        let mut create_control = vec![ 
+            create_new.into(), 
+            GtkWidgetAction::Box.into(), 
+            GtkWidgetAction::Content(WidgetContent::AddClass(widget_class.to_string())).into(),
+            GtkWidgetAction::Show.into()
+        ];
 
         // Generate the actions for all of the attributes
         for attribute in self.attributes() {
