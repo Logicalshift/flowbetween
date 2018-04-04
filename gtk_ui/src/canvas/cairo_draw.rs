@@ -328,7 +328,7 @@ impl<'a> From<&'a CanvasViewport> for Matrix {
 
         let mut matrix = Matrix::identity();
         matrix.translate(-viewport.viewport_x as f64, -viewport.viewport_y as f64);
-        matrix.translate((viewport.width/2.0) as f64, (viewport.height/2.0) as f64);
+        matrix.translate((viewport.width as f64)/2.0, (viewport.height as f64)/2.0);
         matrix.scale(scale, scale);
 
         matrix
@@ -349,12 +349,12 @@ mod test {
     #[test]
     fn viewport_matrix_center_at_0_0() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         0.0,
-            viewport_y:         0.0,
-            viewport_width:     800.0,
-            viewport_height:    600.0
+            width:              800,
+            height:             600,
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     800,
+            viewport_height:    600
         };
         let matrix = Matrix::from(viewport);
 
@@ -365,12 +365,12 @@ mod test {
     #[test]
     fn viewport_matrix_center_with_offset() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         100.0,
-            viewport_y:         100.0,
-            viewport_width:     800.0,
-            viewport_height:    600.0
+            width:              800,
+            height:             600,
+            viewport_x:         100,
+            viewport_y:         100,
+            viewport_width:     800,
+            viewport_height:    600
         };
         let matrix = Matrix::from(viewport);
 
@@ -381,12 +381,12 @@ mod test {
     #[test]
     fn viewport_matrix_center_with_small_window() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         100.0,
-            viewport_y:         100.0,
-            viewport_width:     400.0,
-            viewport_height:    300.0
+            width:              800,
+            height:             600,
+            viewport_x:         100,
+            viewport_y:         100,
+            viewport_width:     400,
+            viewport_height:    300
         };
         let matrix = Matrix::from(viewport);
 
@@ -397,12 +397,12 @@ mod test {
     #[test]
     fn viewport_matrix_top_at_0_1() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         0.0,
-            viewport_y:         0.0,
-            viewport_width:     800.0,
-            viewport_height:    600.0
+            width:              800,
+            height:             600,
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     800,
+            viewport_height:    600
         };
         let matrix = Matrix::from(viewport);
 
@@ -413,12 +413,12 @@ mod test {
     #[test]
     fn viewport_matrix_bottom_at_0_minus_1() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         0.0,
-            viewport_y:         0.0,
-            viewport_width:     800.0,
-            viewport_height:    600.0
+            width:              800,
+            height:             600,
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     800,
+            viewport_height:    600
         };
         let matrix = Matrix::from(viewport);
 
@@ -429,12 +429,12 @@ mod test {
     #[test]
     fn viewport_matrix_top_with_offset() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         100.0,
-            viewport_y:         100.0,
-            viewport_width:     800.0,
-            viewport_height:    600.0
+            width:              800,
+            height:             600,
+            viewport_x:         100,
+            viewport_y:         100,
+            viewport_width:     800,
+            viewport_height:    600
         };
         let matrix = Matrix::from(viewport);
 
@@ -445,12 +445,12 @@ mod test {
     #[test]
     fn viewport_matrix_top_bottom_with_custom_height() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         0.0,
-            viewport_y:         0.0,
-            viewport_width:     800.0,
-            viewport_height:    600.0
+            width:              800,
+            height:             600,
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     800,
+            viewport_height:    600
         };
         let matrix = Matrix::from(viewport);
         let height = CairoDraw::height_matrix(6.0);
@@ -465,12 +465,12 @@ mod test {
     #[test]
     fn viewport_matrix_top_bottom_translated_with_custom_height() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         100.0,
-            viewport_y:         100.0,
-            viewport_width:     400.0,
-            viewport_height:    300.0
+            width:              800,
+            height:             600,
+            viewport_x:         100,
+            viewport_y:         100,
+            viewport_width:     400,
+            viewport_height:    300
         };
         let matrix = Matrix::from(viewport);
         let height = CairoDraw::height_matrix(6.0);
@@ -485,12 +485,12 @@ mod test {
     #[test]
     fn viewport_matrix_recenter_on_rect() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         0.0,
-            viewport_y:         0.0,
-            viewport_width:     800.0,
-            viewport_height:    600.0
+            width:              800,
+            height:             600,
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     800,
+            viewport_height:    600
         };
         let matrix      = Matrix::from(&viewport);
         let recenter    = CairoDraw::center_matrix(&matrix, &viewport, 2.0, 3.0, 3.0, 4.0);
@@ -503,12 +503,12 @@ mod test {
     #[test]
     fn viewport_matrix_recenter_on_rect_translated() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         100.0,
-            viewport_y:         100.0,
-            viewport_width:     400.0,
-            viewport_height:    300.0
+            width:              800,
+            height:             600,
+            viewport_x:         100,
+            viewport_y:         100,
+            viewport_width:     400,
+            viewport_height:    300
         };
         let matrix      = Matrix::from(&viewport);
         let recenter    = CairoDraw::center_matrix(&matrix, &viewport, 2.0, 3.0, 3.0, 4.0);
@@ -521,12 +521,12 @@ mod test {
     #[test]
     fn viewport_matrix_recenter_on_rect_translated_scaled() {
         let viewport = CanvasViewport {
-            width:              800.0,
-            height:             600.0,
-            viewport_x:         100.0,
-            viewport_y:         100.0,
-            viewport_width:     400.0,
-            viewport_height:    300.0
+            width:              800,
+            height:             600,
+            viewport_x:         100,
+            viewport_y:         100,
+            viewport_width:     400,
+            viewport_height:    300
         };
         let mut matrix  = Matrix::from(&viewport);
         matrix.scale(0.5, 0.5);
