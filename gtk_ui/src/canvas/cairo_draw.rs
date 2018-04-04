@@ -210,6 +210,45 @@ impl CairoDraw {
     }
 
     ///
+    /// Computes a matrix to make a particular region centered in the viewport
+    /// 
+    fn center_matrix(current_matrix: &Matrix, viewport: &CanvasViewport, minx: f32, miny: f32, maxx: f32, maxy: f32) -> Matrix {
+        let minx            = minx as f64;
+        let miny            = miny as f64;
+        let maxx            = maxx as f64;
+        let maxy            = maxy as f64;
+
+        let pixel_width     = viewport.width as f64;
+        let pixel_height    = viewport.height as f64;
+
+        // Get the current scaling of this canvas
+        let mut xscale = (current_matrix.xx*current_matrix.xx + current_matrix.yx*current_matrix.yx).sqrt();
+        let mut yscale = (current_matrix.xy*current_matrix.xy + current_matrix.yy*current_matrix.yy).sqrt();
+        if xscale == 0.0 { xscale = 1.0; }
+        if yscale == 0.0 { yscale = 1.0; }
+
+        // Current X, Y coordinates (centered)
+        let cur_x = (current_matrix.x0-(pixel_width/2.0))/xscale;
+        let cur_y = (current_matrix.y0-(pixel_height/2.0))/yscale;
+        
+        // New center coordinates
+        let center_x = (minx+maxx)/2.0;
+        let center_y = (miny+maxy)/2.0;
+
+        // Compute the offsets and transform the canvas
+        let x_offset = cur_x - center_x;
+        let y_offset = cur_y - center_y;
+
+        let x_offset = x_offset + (viewport.viewport_x as f64)/xscale;
+        let y_offset = y_offset + (viewport.viewport_y as f64)/xscale;
+
+        // Generate the result matrix
+        let mut result = Matrix::identity();
+        result.translate(x_offset, y_offset);
+        result
+    }
+
+    ///
     /// Perform a canvas drawing operation in the Cairo context associated with this object
     /// 
     pub fn draw(&mut self, drawing: Draw) {
@@ -250,7 +289,11 @@ impl CairoDraw {
                 let height      = Self::height_matrix(height);
                 self.ctxt.set_matrix(Matrix::multiply(&height, &transform));
             },
-            CenterRegion((minx, miny), (maxx, maxy))    => {},
+            CenterRegion((minx, miny), (maxx, maxy))    => {
+                let transform   = self.ctxt.get_matrix();
+                let center      = Self::center_matrix(&transform, &self.viewport, minx, miny, maxx, maxy);
+                self.ctxt.set_matrix(Matrix::multiply(&center, &transform));
+            },
 
             ClearCanvas                                 |
             ClearLayer                                  => {
@@ -437,5 +480,60 @@ mod test {
         assert!((matrix.transform_point(0.0, 3.0).1 - 500.0).abs() < 0.01);
         assert!((matrix.transform_point(0.0, -3.0).0 - 300.0).abs() < 0.01);
         assert!((matrix.transform_point(0.0, -3.0).1 - -100.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_recenter_on_rect() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         0.0,
+            viewport_y:         0.0,
+            viewport_width:     800.0,
+            viewport_height:    600.0
+        };
+        let matrix      = Matrix::from(&viewport);
+        let recenter    = CairoDraw::center_matrix(&matrix, &viewport, 2.0, 3.0, 3.0, 4.0);
+        let matrix      = Matrix::multiply(&recenter, &matrix);
+
+        assert!((matrix.transform_point(2.5, 3.5).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(2.5, 3.5).1 - 300.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_recenter_on_rect_translated() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         100.0,
+            viewport_y:         100.0,
+            viewport_width:     400.0,
+            viewport_height:    300.0
+        };
+        let matrix      = Matrix::from(&viewport);
+        let recenter    = CairoDraw::center_matrix(&matrix, &viewport, 2.0, 3.0, 3.0, 4.0);
+        let matrix      = Matrix::multiply(&recenter, &matrix);
+
+        assert!((matrix.transform_point(2.5, 3.5).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(2.5, 3.5).1 - 200.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_recenter_on_rect_translated_scaled() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         100.0,
+            viewport_y:         100.0,
+            viewport_width:     400.0,
+            viewport_height:    300.0
+        };
+        let mut matrix  = Matrix::from(&viewport);
+        matrix.scale(0.5, 0.5);
+        let recenter    = CairoDraw::center_matrix(&matrix, &viewport, 2.0, 3.0, 3.0, 4.0);
+        let matrix      = Matrix::multiply(&recenter, &matrix);
+
+        assert!((matrix.transform_point(2.5, 3.5).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(2.5, 3.5).1 - 200.0).abs() < 0.01);
     }
 }
