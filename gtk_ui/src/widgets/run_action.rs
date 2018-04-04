@@ -143,6 +143,9 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
 
                     container.as_ref().map(|container| container.add(&event_box));
 
+                    // Ensure it has the same visibility as the parent widget
+                    event_box.set_visible(gtk_widget.get_visible());
+
                     // Substitute a proxy widget
                     let proxy_event_box = ProxyWidget::new(Rc::clone(widget_ref), event_box);
                     widget_data.replace_widget(widget_id, proxy_event_box);

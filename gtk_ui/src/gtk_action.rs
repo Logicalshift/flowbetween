@@ -62,6 +62,9 @@ pub enum GtkWidgetAction {
     /// Removes all the widgets from the specified window and makes this one the new root
     SetRoot(WindowId),
 
+    /// Marks this widget as displayed
+    Show,
+
     /// Put this widget inside an event box
     Box,
 

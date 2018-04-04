@@ -166,6 +166,9 @@ impl FloFixedWidget {
 
             self.container.add(&event_box);
 
+            // Ensure it has the same visibility as the parent widget
+            event_box.set_visible(widget.get_visible());
+
             // Substitute a proxy widget
             let proxy_event_box = ProxyWidget::new(Rc::clone(&existing_widget), event_box);
             self.widget_data.replace_widget(child_widget_id, proxy_event_box);

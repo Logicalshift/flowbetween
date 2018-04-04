@@ -75,14 +75,15 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
     use self::GtkWidgetAction::*;
 
     match action {
-        &Layout(ref layout)                         => process_basic_widget_layout(widget.id(), widget.get_underlying(), flo_gtk, layout),
         &RequestEvent(event_type, ref action_name)  => process_basic_event_request(widget, flo_gtk, event_type, action_name),
+        &Layout(ref layout)                         => process_basic_widget_layout(widget.id(), widget.get_underlying(), flo_gtk, layout),
         &Content(ref content)                       => process_basic_widget_content(widget, flo_gtk, content),
         &Appearance(ref appearance)                 => process_basic_widget_appearance(widget, flo_gtk, appearance),
         &State(ref state)                           => process_basic_widget_state(widget, flo_gtk, state),
         &Font(ref font)                             => process_basic_widget_font(widget, flo_gtk, font),
         &Scroll(ref scroll)                         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
+        &Show                                       => { widget.get_underlying().show() },
         &New(_widget_type)                          => (),
         &Delete                                     => {
             // Remove this widget from its parent

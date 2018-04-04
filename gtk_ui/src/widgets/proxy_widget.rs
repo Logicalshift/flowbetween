@@ -70,6 +70,12 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
             &Appearance(Image(_))   => { self.underlying_widget.borrow_mut().process(flo_gtk, action); },
             &Appearance(_)          => { process_basic_widget_action(self, flo_gtk, action); },
 
+            // Showing the widget shows both this and the proxy widget
+            &Show                   => {
+                process_basic_widget_action(self, flo_gtk, action);
+                self.underlying_widget.borrow_mut().process(flo_gtk, action);
+            },
+
             // Deletions remove the proxy widget and not the underlying one
             &Delete                 => { process_basic_widget_action(self, flo_gtk, action); },
 

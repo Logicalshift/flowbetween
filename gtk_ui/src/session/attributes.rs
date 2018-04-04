@@ -39,7 +39,7 @@ impl ToGtkActions for Control {
 
         // Build into the 'create control' action
         // TODO: only box the containers and things that don't have backgrounds?
-        let mut create_control = vec![ create_new.into(), GtkWidgetAction::Box.into() ];
+        let mut create_control = vec![ create_new.into(), GtkWidgetAction::Box.into(), GtkWidgetAction::Show.into() ];
 
         // Generate the actions for all of the attributes
         for attribute in self.attributes() {
