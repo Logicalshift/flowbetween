@@ -1,9 +1,10 @@
+use super::viewport::*;
+
 use flo_canvas as flo;
 use flo_canvas::*;
 
 use cairo;
 use cairo::*;
-use cairo::prelude::*;
 
 ///
 /// The current source colour that's set
@@ -67,22 +68,35 @@ pub struct CairoDraw {
     fill_color: Color,
 
     /// The colour that's currently set
-    set_color: ColorTarget
+    set_color: ColorTarget,
+
+    /// The initial translation matrix
+    initial_matrix: Matrix
 }
 
 impl CairoDraw {
     ///
     /// Creates a new Cairo drawing target
     /// 
-    pub fn new(ctxt: Context) -> CairoDraw {
+    pub fn new(ctxt: Context, viewport: CanvasViewport) -> CairoDraw {
+        ctxt.set_matrix(Matrix::from(&viewport));
+
         CairoDraw {
             ctxt:           ctxt,
             saved_states:   vec![],
             dash_pattern:   vec![],
             stroke_color:   Color::Rgba(0.0, 0.0, 0.0, 1.0),
             fill_color:     Color::Rgba(0.0, 0.0, 0.0, 1.0),
-            set_color:      ColorTarget::None
+            set_color:      ColorTarget::None,
+            initial_matrix: viewport.into()
         }
+    }
+
+    ///
+    /// Updates the viewport for this drawing target
+    /// 
+    pub fn set_viewport(&mut self, new_viewport: CanvasViewport) {
+        self.initial_matrix = new_viewport.into();
     }
 
     ///
@@ -210,7 +224,129 @@ impl CairoDraw {
                 self.ctxt.set_dash(&[], 0.0);
                 self.ctxt.set_line_width(1.0);
                 self.ctxt.set_operator(Operator::Over);
+                self.ctxt.set_matrix(self.initial_matrix);
             }
         }
+    }
+}
+
+impl<'a> From<&'a CanvasViewport> for Matrix {
+    fn from(viewport: &'a CanvasViewport) -> Matrix {
+        let scale           = (viewport.height as f64)/2.0;
+
+        let mut matrix = Matrix::identity();
+        matrix.translate(-viewport.viewport_x as f64, -viewport.viewport_y as f64);
+        matrix.translate((viewport.width/2.0) as f64, (viewport.height/2.0) as f64);
+        matrix.scale(scale, scale);
+
+        matrix
+    }
+}
+
+impl From<CanvasViewport> for Matrix {
+    #[inline]
+    fn from(viewport: CanvasViewport) -> Matrix {
+        Matrix::from(&viewport)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn viewport_matrix_center_at_0_0() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         0.0,
+            viewport_y:         0.0,
+            viewport_width:     800.0,
+            viewport_height:    600.0
+        };
+        let matrix = Matrix::from(viewport);
+
+        assert!((matrix.transform_point(0.0, 0.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 0.0).1 - 300.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_center_with_offset() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         100.0,
+            viewport_y:         100.0,
+            viewport_width:     800.0,
+            viewport_height:    600.0
+        };
+        let matrix = Matrix::from(viewport);
+
+        assert!((matrix.transform_point(0.0, 0.0).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 0.0).1 - 200.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_center_with_small_window() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         100.0,
+            viewport_y:         100.0,
+            viewport_width:     400.0,
+            viewport_height:    300.0
+        };
+        let matrix = Matrix::from(viewport);
+
+        assert!((matrix.transform_point(0.0, 0.0).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 0.0).1 - 200.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_top_at_0_1() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         0.0,
+            viewport_y:         0.0,
+            viewport_width:     800.0,
+            viewport_height:    600.0
+        };
+        let matrix = Matrix::from(viewport);
+
+        assert!((matrix.transform_point(0.0, 1.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 1.0).1 - 600.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_bottom_at_0_minus_1() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         0.0,
+            viewport_y:         0.0,
+            viewport_width:     800.0,
+            viewport_height:    600.0
+        };
+        let matrix = Matrix::from(viewport);
+
+        assert!((matrix.transform_point(0.0, -1.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -1.0).1 - 0.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_top_with_offset() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         100.0,
+            viewport_y:         100.0,
+            viewport_width:     800.0,
+            viewport_height:    600.0
+        };
+        let matrix = Matrix::from(viewport);
+
+        assert!((matrix.transform_point(0.0, 1.0).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 1.0).1 - 500.0).abs() < 0.01);
     }
 }
