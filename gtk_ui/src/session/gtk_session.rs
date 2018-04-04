@@ -234,7 +234,7 @@ impl GtkSessionCore {
     ///
     /// Creates an ID for a widget in this core
     /// 
-    pub fn create_widget_id(&mut self) -> WidgetId {
+    fn create_widget_id(&mut self) -> WidgetId {
         let widget_id = self.next_widget_id;
         self.next_widget_id += 1;
         WidgetId::Assigned(widget_id)
@@ -244,7 +244,7 @@ impl GtkSessionCore {
     /// Given a set of actions with viewmodel dependencies, translates them into standard Gtk action while
     /// binding them into the viewmodel for this control
     /// 
-    pub fn bind_viewmodel(&mut self, control_id: WidgetId, controller_path: &Vec<String>, actions: Vec<PropertyWidgetAction>) -> Vec<GtkAction> {
+    fn bind_viewmodel(&mut self, control_id: WidgetId, controller_path: &Vec<String>, actions: Vec<PropertyWidgetAction>) -> Vec<GtkAction> {
         use self::PropertyAction::*;
 
         let viewmodel = &mut self.viewmodel;
@@ -267,7 +267,7 @@ impl GtkSessionCore {
     /// Generates the actions to create a particular control, and binds it to the viewmodel to keep it up to
     /// date
     /// 
-    pub fn create_control(&mut self, control: &Control, controller_path: &Vec<String>) -> (GtkControl, Vec<GtkAction>) {
+    fn create_control(&mut self, control: &Control, controller_path: &Vec<String>) -> (GtkControl, Vec<GtkAction>) {
         // Assign an ID for this control
         let control_id      = self.create_widget_id();
         let mut gtk_control = GtkControl::new(control_id, control.controller().map(|controller| controller.to_string()));
@@ -315,7 +315,7 @@ impl GtkSessionCore {
     ///
     /// Generates the actions required to delete a particular control
     /// 
-    pub fn delete_control(&mut self, control: &GtkControl) -> Vec<GtkAction> {
+    fn delete_control(&mut self, control: &GtkControl) -> Vec<GtkAction> {
         // Unbind this control from the viewmodel
         control.delete_from_viewmodel(&mut self.viewmodel);
 
@@ -326,7 +326,7 @@ impl GtkSessionCore {
     ///
     /// Finds the control at the specified address (if there is one)
     /// 
-    pub fn control_at_address<'a>(&'a self, address: &Vec<u32>) -> Option<&'a GtkControl> {
+    fn control_at_address<'a>(&'a self, address: &Vec<u32>) -> Option<&'a GtkControl> {
         // The control at vec![] is the root control
         let mut current_control = self.root_control.as_ref();
 
@@ -342,7 +342,7 @@ impl GtkSessionCore {
     ///
     /// Reads the controller path for a particular address
     /// 
-    pub fn controller_path_for_address(&self, address: &Vec<u32>) -> Vec<String> {
+    fn controller_path_for_address(&self, address: &Vec<u32>) -> Vec<String> {
         let mut path            = vec![];
         let mut current_control = self.root_control.as_ref();
 
@@ -365,7 +365,7 @@ impl GtkSessionCore {
     ///
     /// Finds the control at the specified address (if there is one)
     /// 
-    pub fn control_at_address_mut<'a>(&'a mut self, address: &Vec<u32>) -> Option<&'a mut GtkControl> {
+    fn control_at_address_mut<'a>(&'a mut self, address: &Vec<u32>) -> Option<&'a mut GtkControl> {
         // The control at vec![] is the root control
         let mut current_control = self.root_control.as_mut();
 
@@ -382,7 +382,7 @@ impl GtkSessionCore {
     /// Updates the control tree to add the specified control at the given address and returns
     /// the Gtk actions required to update the control children
     /// 
-    pub fn replace_control(&mut self, address: &Vec<u32>, new_control: GtkControl) -> Vec<GtkAction> {
+    fn replace_control(&mut self, address: &Vec<u32>, new_control: GtkControl) -> Vec<GtkAction> {
         if address.len() == 0 {
             // We're updating the root control
             
@@ -447,7 +447,7 @@ impl GtkSessionCore {
     ///
     /// Generates the actions to update the UI with a particular diff
     /// 
-    pub fn update_ui_with_diff(&mut self, diff: UiDiff) -> Vec<GtkAction> {
+    fn update_ui_with_diff(&mut self, diff: UiDiff) -> Vec<GtkAction> {
         let controller_path = self.controller_path_for_address(&diff.address);
 
         // Create the actions to generate the control in this diff
@@ -465,7 +465,7 @@ impl GtkSessionCore {
     ///
     /// Updates the user interface with the specified set of differences
     /// 
-    pub fn update_ui(&mut self, ui_differences: Vec<UiDiff>) -> Vec<GtkAction> {
+    fn update_ui(&mut self, ui_differences: Vec<UiDiff>) -> Vec<GtkAction> {
         ui_differences.into_iter()
             .flat_map(|diff| self.update_ui_with_diff(diff))
             .collect()
@@ -474,7 +474,7 @@ impl GtkSessionCore {
     ///
     /// Updates the user interface with the specified set of viewmodel changes
     /// 
-    pub fn update_viewmodel(&mut self, viewmodel_differences: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
+    fn update_viewmodel(&mut self, viewmodel_differences: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
         // Process the updates in the viewmodel, and return the resulting updates
         self.viewmodel.update(viewmodel_differences)
     }
