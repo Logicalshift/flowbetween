@@ -235,10 +235,15 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
             // For basic widgets with no explicit click action, we just detect the button press event
             widget.get_underlying()
                 .connect_button_press_event(move |_, button| { 
-                    if button.get_state() == gdk::ModifierType::BUTTON1_MASK {
+                    if button.get_state().is_empty() && button.get_button() == 1 {
+                        // Left mouse button down with no modifiers = click
                         event_sink.borrow_mut().start_send(Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
-                        Inhibit(true) 
+                        Inhibit(true)
+                    } else if button.get_button() == 1 {
+                        // Not a click but we stil want to inhibit actions here
+                        Inhibit(true)
                     } else { 
+                        // Other button down = continue with other event handlers
                         Inhibit(false) 
                     } 
                 }); 
