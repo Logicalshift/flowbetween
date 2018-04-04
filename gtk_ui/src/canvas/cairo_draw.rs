@@ -70,6 +70,9 @@ pub struct CairoDraw {
     /// The colour that's currently set
     set_color: ColorTarget,
 
+    /// The viewport for this canvas
+    viewport: CanvasViewport,
+
     /// The initial translation matrix
     initial_matrix: Matrix
 }
@@ -88,7 +91,8 @@ impl CairoDraw {
             stroke_color:   Color::Rgba(0.0, 0.0, 0.0, 1.0),
             fill_color:     Color::Rgba(0.0, 0.0, 0.0, 1.0),
             set_color:      ColorTarget::None,
-            initial_matrix: viewport.into()
+            initial_matrix: Matrix::from(&viewport),
+            viewport:       viewport
         }
     }
 
@@ -96,7 +100,8 @@ impl CairoDraw {
     /// Updates the viewport for this drawing target
     /// 
     pub fn set_viewport(&mut self, new_viewport: CanvasViewport) {
-        self.initial_matrix = new_viewport.into();
+        self.initial_matrix = Matrix::from(&new_viewport);
+        self.viewport       = new_viewport;
     }
 
     ///
