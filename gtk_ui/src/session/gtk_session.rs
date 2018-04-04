@@ -17,6 +17,7 @@ use futures::stream::*;
 use std::mem;
 use std::rc::*;
 use std::sync::*;
+use std::collections::HashMap;
 
 ///
 /// Core data structures associated with a Gtk session
@@ -32,7 +33,10 @@ struct GtkSessionCore {
     gtk_ui: GtkUserInterface,
 
     /// The viewmodel for this session
-    viewmodel: GtkSessionViewModel
+    viewmodel: GtkSessionViewModel,
+
+    /// Specifies the controller path for particular widget IDs
+    controller_for_widget: HashMap<WidgetId, Rc<Vec<String>>>
 }
 
 ///
@@ -62,10 +66,11 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
 
         // Create the core
         let core = GtkSessionCore {
-            next_widget_id: 0,
-            root_control:   None,
-            gtk_ui:         gtk_ui,
-            viewmodel:      viewmodel
+            next_widget_id:         0,
+            root_control:           None,
+            gtk_ui:                 gtk_ui,
+            viewmodel:              viewmodel,
+            controller_for_widget:  HashMap::new()
         };
         let core = Arc::new(Mutex::new(core));
 
@@ -165,7 +170,8 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
 
                 // Generate the core UI events for this event
                 core.process_event(event)
-            });
+            })
+            .filter(|events| events.len() > 0);
         
         // Send the processed events to the core input
         let event_process = core_input.send_all(core_ui_events);
@@ -212,9 +218,11 @@ impl GtkSessionCore {
 
         match event {
             None                                        => vec![],
-            CloseWindow(WindowId)                       => vec![],
+            CloseWindow(_window_id)                     => vec![],
             Tick                                        => vec![ UiEvent::Tick ],
-            Event(WidgetId, String, GtkEventParameter)  => vec![]
+            Event(widget, event_name, parameter)        => self.controller_for_widget.get(&widget)
+                .map(|controller| vec![ UiEvent::Action((**controller).clone(), event_name, parameter.into()) ])
+                .unwrap_or(vec![])
         }
     }
 
@@ -274,6 +282,9 @@ impl GtkSessionCore {
         let control_id      = self.create_widget_id();
         let mut gtk_control = GtkControl::new(control_id, control.controller().map(|controller| controller.to_string()));
 
+        // Associate the controller path with the new id
+        self.controller_for_widget.insert(control_id, Rc::clone(&controller_path));
+
         // Get the actions to create this control
         let create_this_control = control.to_gtk_actions();
 
@@ -319,9 +330,24 @@ impl GtkSessionCore {
     }
 
     ///
-    /// Generates the actions required to delete a particular control
+    /// Removes the controller path for a particular control and any child controls it might have
+    /// 
+    fn remove_controller_path(&mut self, control: &GtkControl) {
+        // Remove the child controls too
+        control.child_controls.iter().for_each(|control| self.remove_controller_path(control));
+
+        // Remove this control
+        self.controller_for_widget.remove(&control.widget_id);
+    }
+
+    ///
+    /// Removes a control and it's child controls from the session data structures, and generates
+    /// the actions needed to remove it from the GTK control hierarchy.
     /// 
     fn delete_control(&mut self, control: &GtkControl) -> Vec<GtkAction> {
+        // Remove the controller path for this control
+        self.remove_controller_path(control);
+
         // Unbind this control from the viewmodel
         control.delete_from_viewmodel(&mut self.viewmodel);
 
