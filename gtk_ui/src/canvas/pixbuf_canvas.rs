@@ -5,7 +5,6 @@ use flo_canvas::*;
 
 use gdk_pixbuf;
 use gdk_pixbuf::Pixbuf;
-use gdk_pixbuf::prelude::*;
 use gdk::prelude::*;
 use cairo;
 
@@ -24,7 +23,10 @@ pub struct PixBufCanvas {
     layers: HashMap<u32, Layer>,
 
     /// The viewport for this canvas
-    viewport: CanvasViewport
+    viewport: CanvasViewport,
+
+    /// The currently selected layer
+    current_layer: u32
 }
 
 impl PixBufCanvas {
@@ -33,8 +35,48 @@ impl PixBufCanvas {
     /// 
     pub fn new(viewport: CanvasViewport) -> PixBufCanvas {
         PixBufCanvas {
-            layers:     HashMap::new(),
-            viewport:   viewport
+            layers:         HashMap::new(),
+            viewport:       viewport,
+            current_layer:  0
+        }
+    }
+
+    ///
+    /// Performs a drawing action on this canvas
+    /// 
+    pub fn draw(&mut self, action: Draw) {
+        let current_layer = self.current_layer;
+
+        // The current layer must exist
+        if !self.layers.contains_key(&current_layer) {
+            self.create_layer(current_layer);
+        }
+
+        // Fetch the layer we're going to draw to
+        let layer = self.layers.get_mut(&self.current_layer);
+
+        // Perform drawing
+        match action {
+            Draw::Layer(new_layer)  => self.current_layer = new_layer,
+            
+            // Other actions go to the current layer
+            other_action            => { layer.map(|layer| layer.context.draw(other_action)); }
+        }
+    }
+
+    ///
+    /// Renders the canvas to a particular drawable
+    /// 
+    pub fn render_to_context(&self, drawable: &cairo::Context) {
+        // Put the layers in order
+        let mut layers: Vec<_> = self.layers.iter().collect();
+        layers.sort_by(|&a, &b| a.0.cmp(b.0));
+
+        // Draw them to the target
+        for (_, layer) in layers {
+            drawable.set_operator(cairo::Operator::Over);
+            drawable.set_source_pixbuf(&layer.pix_buf, 0.0, 0.0);
+            drawable.paint();
         }
     }
 
