@@ -1,3 +1,5 @@
+use super::gtk_widget_event_type::*;
+
 use flo_ui::*;
 use flo_canvas::*;
 
@@ -20,7 +22,7 @@ pub enum WidgetId {
 ///
 /// Actions that can be performed on a window
 /// 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum GtkWindowAction {
     New(WindowType),
     SetPosition(WindowPosition),
@@ -49,10 +51,13 @@ pub enum GtkWidgetType {
 ///
 /// Actions that can be performed on a widget
 /// 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum GtkWidgetAction {
     /// Creates a new widget of the specifed type
     New(GtkWidgetType),
+
+    /// Requests a particular event type for this widget, generating the specified action name
+    RequestEvent(GtkWidgetEventType, String),
 
     /// Removes all the widgets from the specified window and makes this one the new root
     SetRoot(WindowId),
@@ -85,7 +90,7 @@ pub enum GtkWidgetAction {
 ///
 /// Specifies a change to the content of a widget
 /// 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum WidgetContent {
     /// Sets the children of this widget to be a particular set of widgets
     SetChildren(Vec<WidgetId>),
@@ -112,7 +117,7 @@ impl From<WidgetContent> for GtkWidgetAction {
 ///
 /// Specifies a change to how a widget is laid out
 /// 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum WidgetLayout {
     /// Specifies how this widget should be laid out
     BoundingBox(Bounds),
@@ -133,7 +138,7 @@ impl From<WidgetLayout> for GtkWidgetAction {
 ///
 /// Specifies a change to the state of a widget
 /// 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum WidgetState {
     /// Sets whether or not this widget is highlighted as being selected
     SetSelected(bool),
@@ -178,7 +183,7 @@ impl From<Scroll> for GtkWidgetAction {
 ///
 /// GTK actions that can be requested
 /// 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum GtkAction {
     /// Shuts down Gtk
     Stop,

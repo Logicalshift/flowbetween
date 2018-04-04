@@ -1,11 +1,15 @@
 use super::layout::*;
 use super::widget::*;
 use super::custom_style::*;
+use super::super::gtk_event::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
+use super::super::gtk_event_parameter::*;
+use super::super::gtk_widget_event_type::*;
 
 use flo_ui::*;
 
+use gdk;
 use gtk;
 use gtk::prelude::*;
 
@@ -71,22 +75,23 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
     use self::GtkWidgetAction::*;
 
     match action {
-        &Layout(ref layout)         => process_basic_widget_layout(widget.id(), widget.get_underlying(), flo_gtk, layout),
-        &Content(ref content)       => process_basic_widget_content(widget, flo_gtk, content),
-        &Appearance(ref appearance) => process_basic_widget_appearance(widget, flo_gtk, appearance),
-        &State(ref state)           => process_basic_widget_state(widget, flo_gtk, state),
-        &Font(ref font)             => process_basic_widget_font(widget, flo_gtk, font),
-        &Scroll(ref scroll)         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
+        &Layout(ref layout)                         => process_basic_widget_layout(widget.id(), widget.get_underlying(), flo_gtk, layout),
+        &RequestEvent(event_type, ref action_name)  => process_basic_event_request(widget, flo_gtk, event_type, action_name),
+        &Content(ref content)                       => process_basic_widget_content(widget, flo_gtk, content),
+        &Appearance(ref appearance)                 => process_basic_widget_appearance(widget, flo_gtk, appearance),
+        &State(ref state)                           => process_basic_widget_state(widget, flo_gtk, state),
+        &Font(ref font)                             => process_basic_widget_font(widget, flo_gtk, font),
+        &Scroll(ref scroll)                         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
-        &New(_widget_type)          => (),
-        &Delete                     => { widget.get_underlying().unparent(); },
+        &New(_widget_type)                          => (),
+        &Delete                                     => { widget.get_underlying().unparent(); },
 
-        &SetRoot(window_id)         => { 
+        &SetRoot(window_id)                         => { 
             let widget = widget.get_underlying().clone();
             flo_gtk.get_window(window_id).map(|window| window.borrow_mut().set_root(flo_gtk, &widget));
         },
 
-        &Box                        => { }
+        &Box                                        => { }
     }
 }
 
@@ -200,6 +205,9 @@ pub fn process_basic_widget_font<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGt
     }
 }
 
+///
+/// Processes a scroll command for a widget
+/// 
 pub fn process_basic_widget_scroll<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, scroll: &Scroll) {
     use self::Scroll::*;
 
@@ -208,5 +216,32 @@ pub fn process_basic_widget_scroll<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGt
         &HorizontalScrollBar(ref visibility)    => (),
         &VerticalScrollBar(ref visibility)      => (),
         &Fix(ref axis)                          => ()
+    }
+}
+
+///
+/// Performs the actions associated with basic event registration for a widget
+/// 
+pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, event_type: GtkWidgetEventType, action_name: &String) {
+    use self::GtkWidgetEventType::*;
+    use self::GtkEvent::Event;
+        
+    let widget_id   = widget.id();
+    let action_name = action_name.clone();
+    let event_sink  = RefCell::new(flo_gtk.get_event_sink());
+
+    match event_type {
+        Click => {
+            // For basic widgets with no explicit click action, we just detect the button press event
+            widget.get_underlying()
+                .connect_button_press_event(move |_, button| { 
+                    if button.get_state() == gdk::ModifierType::BUTTON1_MASK {
+                        event_sink.borrow_mut().start_send(Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
+                        Inhibit(true) 
+                    } else { 
+                        Inhibit(false) 
+                    } 
+                }); 
+            }
     }
 }
