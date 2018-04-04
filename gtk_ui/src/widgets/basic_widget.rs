@@ -9,7 +9,6 @@ use super::super::gtk_widget_event_type::*;
 
 use flo_ui::*;
 
-use gdk;
 use gtk;
 use gtk::prelude::*;
 
