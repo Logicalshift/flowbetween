@@ -196,6 +196,20 @@ impl CairoDraw {
     }
 
     ///
+    /// Computes the transformation to apply for a particular canvas height
+    /// 
+    fn height_matrix(height: f32) -> Matrix {
+        let height      = height as f64;
+        let ratio_x     = 2.0/height;
+        let ratio_y     = ratio_x;
+
+        let mut result  = Matrix::identity();
+        result.scale(ratio_x, ratio_y);
+
+        result
+    }
+
+    ///
     /// Perform a canvas drawing operation in the Cairo context associated with this object
     /// 
     pub fn draw(&mut self, drawing: Draw) {
@@ -220,8 +234,6 @@ impl CairoDraw {
             StrokeColor(color)                          => { self.set_color = ColorTarget::None; self.stroke_color = color; },
             BlendMode(blend)                            => { self.ctxt.set_operator(Self::get_operator(blend)); },
             IdentityTransform                           => { self.ctxt.set_matrix(self.initial_matrix); },
-            CanvasHeight(height)                        => {},
-            CenterRegion((minx, miny), (maxx, maxy))    => {},
             MultiplyTransform(transform)                => { self.ctxt.transform(Self::get_transform(transform)); },
             Unclip                                      => { self.ctxt.reset_clip(); },
             Clip                                        => { self.ctxt.clip(); },
@@ -232,6 +244,13 @@ impl CairoDraw {
             PopState                                    => { self.ctxt.restore(); self.saved_states.pop().map(|state| state.restore(self)); },
             Layer(_layer_id)                            => { /* Layers require external support */ },
             LayerBlend(_layer_id, _mode)                => { /* Layers require external support */ },
+
+            CanvasHeight(height)                        => {
+                let transform   = self.initial_matrix.clone();
+                let height      = Self::height_matrix(height);
+                self.ctxt.set_matrix(Matrix::multiply(&height, &transform));
+            },
+            CenterRegion((minx, miny), (maxx, maxy))    => {},
 
             ClearCanvas                                 |
             ClearLayer                                  => {
@@ -378,5 +397,45 @@ mod test {
 
         assert!((matrix.transform_point(0.0, 1.0).0 - 300.0).abs() < 0.01);
         assert!((matrix.transform_point(0.0, 1.0).1 - 500.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_top_bottom_with_custom_height() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         0.0,
+            viewport_y:         0.0,
+            viewport_width:     800.0,
+            viewport_height:    600.0
+        };
+        let matrix = Matrix::from(viewport);
+        let height = CairoDraw::height_matrix(6.0);
+        let matrix = Matrix::multiply(&height, &matrix);
+
+        assert!((matrix.transform_point(0.0, 3.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 3.0).1 - 600.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -3.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -3.0).1 - 0.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn viewport_matrix_top_bottom_translated_with_custom_height() {
+        let viewport = CanvasViewport {
+            width:              800.0,
+            height:             600.0,
+            viewport_x:         100.0,
+            viewport_y:         100.0,
+            viewport_width:     400.0,
+            viewport_height:    300.0
+        };
+        let matrix = Matrix::from(viewport);
+        let height = CairoDraw::height_matrix(6.0);
+        let matrix = Matrix::multiply(&height, &matrix);
+
+        assert!((matrix.transform_point(0.0, 3.0).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 3.0).1 - 500.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -3.0).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -3.0).1 - -100.0).abs() < 0.01);
     }
 }
