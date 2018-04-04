@@ -1,4 +1,5 @@
 use binding::*;
+use binding::binding_context::*;
 
 use super::image::*;
 use super::control::*;
@@ -64,8 +65,8 @@ fn get_full_ui_tree(base_controller: &Arc<Controller>) -> Control {
 
     base_ui.get().map(&|control| {
         if let Some(controller_id) = control.controller() {
-            // Has a subcontroller
-            let subcontroller = base_controller.get_subcontroller(controller_id);
+            // Has a subcontroller. These are retrieved without a binding context to allow them to initialise themselves and any dependent bindings if needed
+            let subcontroller = BindingContext::out_of_context(|| { base_controller.get_subcontroller(controller_id) });
 
             if let Some(subcontroller) = subcontroller {
                 // If we can look up the subcontroller then this control should have its UI as its subcomponents
