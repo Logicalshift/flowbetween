@@ -168,14 +168,8 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
             .map(move |event| {
                 let mut core = core.lock().unwrap();
 
-                println!("{:?}", event);
-
                 // Generate the core UI events for this event
                 core.process_event(event)
-            })
-            .map(|evt| {
-                println!("Evt {:?}", evt);
-                evt
             })
             .filter(|events| events.len() > 0);
         
