@@ -89,7 +89,7 @@ impl ToGtkActions for ControlAttribute {
 
             &Id(ref id)                             => vec![ WidgetContent::AddClass(id.clone()).into() ].into_actions(),
             &Action(ref _trigger, ref _action_name) => vec![],
-            &Canvas(ref canvas)                     => vec![],
+            &Canvas(ref canvas)                     => vec![ WidgetContent::Draw(canvas.get_drawing()).into() ].into_actions(),
 
             // The GTK layout doesn't need to know the controller
             &Controller(ref controller_name)       => vec![ GtkWidgetAction::Content(WidgetContent::AddClass(format!("c-{}", controller_name))) ].into_actions(),
