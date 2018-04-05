@@ -78,6 +78,14 @@ impl PixBufCanvas {
     }
 
     ///
+    /// Changes the viewport of this pixbuf (which also erases any existing drawing)
+    /// 
+    pub fn set_viewport(&mut self, new_viewport: CanvasViewport) {
+        self.layers.clear();
+        self.viewport = new_viewport;
+    }
+
+    ///
     /// Creates a new layer
     /// 
     fn create_layer(&mut self, layer_id: u32) {

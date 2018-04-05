@@ -47,6 +47,7 @@ impl FloDrawingWidget {
     /// Creates a new drawing widget
     /// 
     pub fn new(widget_id: WidgetId, drawing_area: gtk::DrawingArea) -> FloDrawingWidget {
+        // Create the data structures
         let canvas      = Canvas::new();
         let as_widget   = drawing_area.clone().upcast::<gtk::Widget>();
         let pixbufs     = PixBufCanvas::new(CanvasViewport::minimal());
@@ -58,6 +59,10 @@ impl FloDrawingWidget {
         };
         let core        = Rc::new(RefCell::new(core));
 
+        // Wire events
+        Self::connect_size_allocate(&drawing_area, Rc::clone(&core));
+
+        // Generate the widget
         FloDrawingWidget {
             widget_id:      widget_id,
             drawing_area:   drawing_area,
@@ -67,11 +72,25 @@ impl FloDrawingWidget {
     }
 
     ///
+    /// Deals with resizing the drawing area
+    /// 
+    fn connect_size_allocate(drawing_area: &gtk::DrawingArea, core: Rc<RefCell<DrawingCore>>) {
+        drawing_area.connect_size_allocate(move |widget, new_allocation| {
+            // Unlock the core
+            let mut core = core.borrow_mut();
+
+            // Pixbufs will now be invalid
+            core.need_redraw = true;
+
+            // Update the viewport for the pixbufs
+            core.pixbufs.set_viewport(Self::get_viewport(widget, new_allocation));
+        });
+    }
+
+    ///
     /// Retrieves the viewport for a canvas
     /// 
-    fn get_viewport(drawing_area: gtk::DrawingArea) -> CanvasViewport {
-        let allocation = drawing_area.get_allocation();
-
+    fn get_viewport(_drawing_area: &gtk::DrawingArea, allocation: &gtk::Allocation) -> CanvasViewport {
         // TODO: search for a containing scrolling area and limit to the displayed size
 
         CanvasViewport {
