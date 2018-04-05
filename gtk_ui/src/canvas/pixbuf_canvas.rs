@@ -43,6 +43,10 @@ impl PixBufCanvas {
     /// 
     pub fn draw(&mut self, action: Draw) {
         let current_layer = self.current_layer;
+        
+        // TODO: clearing the canvas should remove all of the layers
+        // TODO: switching layers should bring over the state settings from the previous layer
+        // TODO: storing/restoring parts of a layer
 
         // The current layer must exist
         if !self.layers.contains_key(&current_layer) {

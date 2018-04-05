@@ -166,12 +166,12 @@ impl FloDrawingWidget {
         // TODO: search for a containing scrolling area and limit to the displayed size
 
         CanvasViewport {
-            width:              allocation.width.min(1),
-            height:             allocation.height.min(1),
+            width:              allocation.width.max(1),
+            height:             allocation.height.max(1),
             viewport_x:         0,
             viewport_y:         0,
-            viewport_width:     allocation.width.min(1),
-            viewport_height:    allocation.height.min(1)
+            viewport_width:     allocation.width.max(1),
+            viewport_height:    allocation.height.max(1)
         }
     }
 }
