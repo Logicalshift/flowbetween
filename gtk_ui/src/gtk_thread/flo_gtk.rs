@@ -84,6 +84,7 @@ impl GtkMessageTarget {
 
         // Wake the thread and tell it to process messages if needed
         if !messages_pending {
+            // TODO: this runs at too low a priority for things like dragging scales (updates only occur when the user releases the drag). Need a higher-priority way to send events to the main thread.
             glib::idle_add(process_pending_messages);
         }
     }
