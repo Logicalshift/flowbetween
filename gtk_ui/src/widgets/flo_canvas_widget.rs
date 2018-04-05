@@ -55,9 +55,24 @@ impl FloDrawingWidget {
         let core        = DrawingCore {
             canvas:         canvas,
             pixbufs:        pixbufs,
-            need_redraw:    false
+            need_redraw:    true
         };
         let core        = Rc::new(RefCell::new(core));
+
+        // Test canvas
+        core.borrow_mut().canvas.draw(|gc| {
+            gc.stroke_color(Color::Rgba(1.0, 0.0, 0.0, 1.0));
+
+            gc.new_path();
+            gc.move_to(-1.0, -1.0);
+            gc.line_to(1.0, 1.0);
+            gc.stroke();
+
+            gc.new_path();
+            gc.move_to(1.0, -1.0);
+            gc.line_to(-1.0, 1.0);
+            gc.stroke();
+        });
 
         // Wire events
         Self::connect_size_allocate(&drawing_area, Rc::clone(&core));
