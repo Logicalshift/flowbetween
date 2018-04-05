@@ -97,14 +97,6 @@ impl CairoDraw {
     }
 
     ///
-    /// Updates the viewport for this drawing target
-    /// 
-    pub fn set_viewport(&mut self, new_viewport: CanvasViewport) {
-        self.initial_matrix = Matrix::from(&new_viewport);
-        self.viewport       = new_viewport;
-    }
-
-    ///
     /// Converts a flo line join into a Cairo LineJoin
     ///
     fn get_join(our_join: flo::LineJoin) -> cairo::LineJoin {
@@ -329,7 +321,7 @@ impl<'a> From<&'a CanvasViewport> for Matrix {
         let mut matrix = Matrix::identity();
         matrix.translate(-viewport.viewport_x as f64, -viewport.viewport_y as f64);
         matrix.translate((viewport.width as f64)/2.0, (viewport.height as f64)/2.0);
-        matrix.scale(scale, scale);
+        matrix.scale(scale, -scale);
 
         matrix
     }
@@ -406,8 +398,8 @@ mod test {
         };
         let matrix = Matrix::from(viewport);
 
-        assert!((matrix.transform_point(0.0, 1.0).0 - 400.0).abs() < 0.01);
-        assert!((matrix.transform_point(0.0, 1.0).1 - 600.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -1.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -1.0).1 - 600.0).abs() < 0.01);
     }
 
     #[test]
@@ -422,8 +414,8 @@ mod test {
         };
         let matrix = Matrix::from(viewport);
 
-        assert!((matrix.transform_point(0.0, -1.0).0 - 400.0).abs() < 0.01);
-        assert!((matrix.transform_point(0.0, -1.0).1 - 0.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 1.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 1.0).1 - 0.0).abs() < 0.01);
     }
 
     #[test]
@@ -438,8 +430,8 @@ mod test {
         };
         let matrix = Matrix::from(viewport);
 
-        assert!((matrix.transform_point(0.0, 1.0).0 - 300.0).abs() < 0.01);
-        assert!((matrix.transform_point(0.0, 1.0).1 - 500.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -1.0).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -1.0).1 - 500.0).abs() < 0.01);
     }
 
     #[test]
@@ -456,10 +448,10 @@ mod test {
         let height = CairoDraw::height_matrix(6.0);
         let matrix = Matrix::multiply(&height, &matrix);
 
-        assert!((matrix.transform_point(0.0, 3.0).0 - 400.0).abs() < 0.01);
-        assert!((matrix.transform_point(0.0, 3.0).1 - 600.0).abs() < 0.01);
         assert!((matrix.transform_point(0.0, -3.0).0 - 400.0).abs() < 0.01);
-        assert!((matrix.transform_point(0.0, -3.0).1 - 0.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -3.0).1 - 600.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 3.0).0 - 400.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 3.0).1 - 0.0).abs() < 0.01);
     }
 
     #[test]
@@ -476,10 +468,10 @@ mod test {
         let height = CairoDraw::height_matrix(6.0);
         let matrix = Matrix::multiply(&height, &matrix);
 
-        assert!((matrix.transform_point(0.0, 3.0).0 - 300.0).abs() < 0.01);
-        assert!((matrix.transform_point(0.0, 3.0).1 - 500.0).abs() < 0.01);
         assert!((matrix.transform_point(0.0, -3.0).0 - 300.0).abs() < 0.01);
-        assert!((matrix.transform_point(0.0, -3.0).1 - -100.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, -3.0).1 - 500.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 3.0).0 - 300.0).abs() < 0.01);
+        assert!((matrix.transform_point(0.0, 3.0).1 - -100.0).abs() < 0.01);
     }
 
     #[test]
