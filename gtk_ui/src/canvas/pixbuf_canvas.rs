@@ -95,6 +95,13 @@ impl PixBufCanvas {
     }
 
     ///
+    /// Retrieves the viewport for this pixbuf
+    /// 
+    pub fn get_viewport(&self) -> CanvasViewport {
+        self.viewport
+    }
+
+    ///
     /// Creates a new layer
     /// 
     fn create_layer(&mut self, layer_id: u32) {

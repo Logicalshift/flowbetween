@@ -20,8 +20,10 @@ struct DrawingCore {
     pixbufs:        PixBufCanvas,
 
     /// Set to true if the canvas needs to be redrawn to the pixbufs
-    need_redraw:    bool
+    need_redraw:    bool,
 
+    /// Set to true if the size has changed and we need to consider a redraw
+    check_size:     bool
 }
 
 ///
@@ -55,7 +57,8 @@ impl FloDrawingWidget {
         let core        = DrawingCore {
             canvas:         canvas,
             pixbufs:        pixbufs,
-            need_redraw:    true
+            need_redraw:    true,
+            check_size:     true
         };
         let core        = Rc::new(RefCell::new(core));
 
@@ -95,14 +98,17 @@ impl FloDrawingWidget {
             // Unlock the core
             let mut core = core.borrow_mut();
 
-            // Pixbufs will now be invalid
-            core.need_redraw = true;
+            let new_viewport        = Self::get_viewport(widget, new_allocation);
+            let existing_viewport   = core.pixbufs.get_viewport();
 
-            // Update the viewport for the pixbufs
-            core.pixbufs.set_viewport(Self::get_viewport(widget, new_allocation));
+            // Cause a redraw if the viewport has changed
+            if new_viewport != existing_viewport {
+                // Next time we do a draw, we need to check the size
+                core.check_size = true;
 
-            // Make sure the widget is redrawn
-            widget.queue_draw();
+                // Make sure the widget is redrawn
+                widget.queue_draw();
+            }
         });
     }
 
@@ -119,9 +125,28 @@ impl FloDrawingWidget {
     /// Deals with drawing the main drawing area
     /// 
     fn connect_draw(drawing_area: &gtk::DrawingArea, core: Rc<RefCell<DrawingCore>>) {
-        drawing_area.connect_draw(move |_widget, context| {
+        drawing_area.connect_draw(move |widget, context| {
             // Fetch the core
             let mut core = core.borrow_mut();
+
+            // If we need to check the size, do so and maybe set the redraw bit
+            if core.check_size {
+                // Get the current viewport
+                let existing_viewport   = core.pixbufs.get_viewport();
+
+                // Get the allocated viewport
+                let allocation          = widget.get_allocation();
+                let current_viewport    = Self::get_viewport(widget, &allocation);
+
+                // A redraw is required if the size is different from the last time we drew the pixbufs
+                if existing_viewport != current_viewport {
+                    core.pixbufs.set_viewport(current_viewport);
+                    core.need_redraw = true;
+                }
+
+                // Size is checked
+                core.check_size = false;
+            }
 
             // Make sure everything has been drawn up to date
             if core.need_redraw {
