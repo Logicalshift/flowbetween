@@ -28,7 +28,10 @@ struct MessageQueue(Arc<Mutex<VecDeque<Box<FloGtkMessage>>>>);
 #[derive(Clone)]
 pub struct GtkMessageTarget {
     /// The queue where messages for this target will be sent
-    queue: MessageQueue
+    queue: MessageQueue,
+
+    // Context where messages will be sent
+    target_context: Option<glib::MainContext>
 }
 
 ///
@@ -65,7 +68,8 @@ impl GtkMessageTarget {
     /// 
     pub fn new() -> GtkMessageTarget {
         GtkMessageTarget {
-            queue: MessageQueue::new()
+            queue:          MessageQueue::new(),
+            target_context: glib::MainContext::default()
         }
     }
 
@@ -84,8 +88,10 @@ impl GtkMessageTarget {
 
         // Wake the thread and tell it to process messages if needed
         if !messages_pending {
-            // TODO: this runs at too low a priority for things like dragging scales (updates only occur when the user releases the drag). Need a higher-priority way to send events to the main thread.
-            glib::idle_add(process_pending_messages);
+            // The idle_add_full function would be more elegant here but it's not currently available in glib
+            // (idle_add uses too low a priority for us)
+            let source = glib::idle_source_new("flo", glib::PRIORITY_HIGH, process_pending_messages);
+            source.attach(self.target_context.as_ref());
         }
     }
 
