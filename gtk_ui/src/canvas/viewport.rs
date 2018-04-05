@@ -21,3 +21,16 @@ pub struct CanvasViewport {
     /// The viewport height
     pub viewport_height: i32
 }
+
+impl CanvasViewport {
+    pub fn minimal() -> CanvasViewport {
+        CanvasViewport {
+            width:              1,
+            height:             1,
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     1,
+            viewport_height:    1
+        }
+    }
+}
