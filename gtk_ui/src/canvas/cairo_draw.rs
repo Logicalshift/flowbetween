@@ -49,6 +49,19 @@ impl SavedState {
 }
 
 ///
+/// Represents the current state of a CarioDraw object (used for moving state between layers usually)
+/// 
+pub struct CairoState {
+    transform:      Matrix,
+    line_width:     f64,
+    line_join:      cairo::LineJoin,
+    line_cap:       cairo::LineCap,
+    fill_color:     Color,
+    stroke_color:   Color,
+    dash_pattern:   Vec<f64>
+}
+
+///
 /// Performs Flo drawing actions in a Cairo context
 /// 
 pub struct CairoDraw {
@@ -243,22 +256,37 @@ impl CairoDraw {
     ///
     /// Copies the drawing state from another CairoDraw object
     /// 
-    pub fn copy_state(&mut self, from: &CairoDraw) {
-        let transform       = from.ctxt.get_matrix();
-        let line_width      = from.ctxt.get_line_width();
-        let line_join       = from.ctxt.get_line_join();
-        let line_cap        = from.ctxt.get_line_cap();
-        let fill_color      = from.fill_color;
-        let stroke_color    = from.stroke_color;
-        let dash_pattern    = from.dash_pattern.clone();
+    pub fn get_state(&self) -> CairoState {
+        let transform       = self.ctxt.get_matrix();
+        let line_width      = self.ctxt.get_line_width();
+        let line_join       = self.ctxt.get_line_join();
+        let line_cap        = self.ctxt.get_line_cap();
+        let fill_color      = self.fill_color;
+        let stroke_color    = self.stroke_color;
+        let dash_pattern    = self.dash_pattern.clone();
 
-        self.ctxt.set_matrix(transform);
-        self.ctxt.set_line_width(line_width);
-        self.ctxt.set_line_join(line_join);
-        self.ctxt.set_line_cap(line_cap);
-        self.fill_color     = fill_color;
-        self.stroke_color   = stroke_color;
-        self.dash_pattern   = dash_pattern;
+        CairoState {
+            transform,
+            line_width,
+            line_join,
+            line_cap,
+            fill_color,
+            stroke_color,
+            dash_pattern
+        }
+    }
+
+    ///
+    /// Sets the state of this from a state retrieved via get_state()
+    ///
+    pub fn set_state(&mut self, state: &CairoState) {
+        self.ctxt.set_matrix(state.transform);
+        self.ctxt.set_line_width(state.line_width);
+        self.ctxt.set_line_join(state.line_join);
+        self.ctxt.set_line_cap(state.line_cap);
+        self.fill_color     = state.fill_color;
+        self.stroke_color   = state.stroke_color;
+        self.dash_pattern   = state.dash_pattern.clone();
         self.set_color      = ColorTarget::None;
     }
 

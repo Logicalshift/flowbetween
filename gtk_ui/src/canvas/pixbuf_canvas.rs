@@ -23,7 +23,10 @@ pub struct PixBufCanvas {
     viewport: CanvasViewport,
 
     /// The currently selected layer
-    current_layer: u32
+    current_layer: u32,
+
+    /// The state to restore during the next drawing operation
+    saved_state: Option<CairoState>
 }
 
 impl PixBufCanvas {
@@ -34,7 +37,8 @@ impl PixBufCanvas {
         PixBufCanvas {
             layers:         HashMap::new(),
             viewport:       viewport,
-            current_layer:  0
+            current_layer:  0,
+            saved_state:    None
         }
     }
 
@@ -46,10 +50,18 @@ impl PixBufCanvas {
             Draw::ClearCanvas => {
                 // Clearing the canvas clears all the layers and resets us to layer 0
                 self.layers.clear();
-                self.current_layer = 0;
+                self.saved_state    = None;
+                self.current_layer  = 0;
             },
 
             Draw::Layer(new_layer_id) => {
+                // Save the state from the current layer if necessary
+                if self.saved_state.is_none() {
+                    // If there is already a saved state, we don't save from the new layer (presumably no operations have been performed so the older state is the one that should be kept)
+                    let previous_layer_id   = self.current_layer;
+                    self.saved_state        = self.layers.get(&previous_layer_id).map(|layer| layer.context.get_state());
+                }
+
                 // Changing the current layer sets which layer is selected
                 self.current_layer = new_layer_id;
             },
@@ -59,6 +71,11 @@ impl PixBufCanvas {
                 let current_layer   = self.current_layer;
                 let viewport        = &self.viewport;
                 let layer           = self.layers.entry(current_layer).or_insert_with(|| Self::create_layer(viewport));
+
+                // Restore the saved state if there is one
+                if let Some(state) = self.saved_state.take() {
+                    layer.context.set_state(&state);
+                }
 
                 // Draw on this layer's context
                 layer.context.draw(other_action);
