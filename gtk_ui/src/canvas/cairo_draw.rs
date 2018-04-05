@@ -241,6 +241,28 @@ impl CairoDraw {
     }
 
     ///
+    /// Copies the drawing state from another CairoDraw object
+    /// 
+    pub fn copy_state(&mut self, from: &CairoDraw) {
+        let transform       = from.ctxt.get_matrix();
+        let line_width      = from.ctxt.get_line_width();
+        let line_join       = from.ctxt.get_line_join();
+        let line_cap        = from.ctxt.get_line_cap();
+        let fill_color      = from.fill_color;
+        let stroke_color    = from.stroke_color;
+        let dash_pattern    = from.dash_pattern.clone();
+
+        self.ctxt.set_matrix(transform);
+        self.ctxt.set_line_width(line_width);
+        self.ctxt.set_line_join(line_join);
+        self.ctxt.set_line_cap(line_cap);
+        self.fill_color     = fill_color;
+        self.stroke_color   = stroke_color;
+        self.dash_pattern   = dash_pattern;
+        self.set_color      = ColorTarget::None;
+    }
+
+    ///
     /// Perform a canvas drawing operation in the Cairo context associated with this object
     /// 
     pub fn draw(&mut self, drawing: Draw) {
