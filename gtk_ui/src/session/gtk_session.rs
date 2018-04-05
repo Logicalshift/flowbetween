@@ -356,22 +356,6 @@ impl GtkSessionCore {
     }
 
     ///
-    /// Finds the control at the specified address (if there is one)
-    /// 
-    fn control_at_address<'a>(&'a self, address: &Vec<u32>) -> Option<&'a GtkControl> {
-        // The control at vec![] is the root control
-        let mut current_control = self.root_control.as_ref();
-
-        // For each part of the index, the next control is just the child control at this index
-        for index in address.iter() {
-            current_control = current_control.and_then(|control| control.child_at_index(*index));
-        }
-
-        // Result is the current control if we found one at this address
-        current_control
-    }
-
-    ///
     /// Reads the controller path for a particular address
     /// 
     fn controller_path_for_address(&self, address: &Vec<u32>) -> Vec<String> {
