@@ -61,6 +61,7 @@ impl FloDrawingWidget {
 
         // Wire events
         Self::connect_size_allocate(&drawing_area, Rc::clone(&core));
+        Self::connect_draw(&drawing_area, Rc::clone(&core));
 
         // Generate the widget
         FloDrawingWidget {
@@ -84,7 +85,63 @@ impl FloDrawingWidget {
 
             // Update the viewport for the pixbufs
             core.pixbufs.set_viewport(Self::get_viewport(widget, new_allocation));
+
+            // Make sure the widget is redrawn
+            widget.queue_draw();
         });
+    }
+
+    ///
+    /// Redraws the core from the canvas
+    /// 
+    fn redraw(core: &mut DrawingCore) {
+        for draw in core.canvas.get_drawing() {
+            core.pixbufs.draw(draw);
+        }
+    }
+
+    ///
+    /// Deals with drawing the main drawing area
+    /// 
+    fn connect_draw(drawing_area: &gtk::DrawingArea, core: Rc<RefCell<DrawingCore>>) {
+        drawing_area.connect_draw(move |_widget, context| {
+            // Fetch the core
+            let mut core = core.borrow_mut();
+
+            // Make sure everything has been drawn up to date
+            if core.need_redraw {
+                Self::redraw(&mut core);
+                core.need_redraw = false;
+            }
+
+            // Render the pixbufs
+            core.pixbufs.render_to_context(context);
+
+            Inhibit(true)
+        });
+    }
+
+    ///
+    /// Performs some drawing actions on this canvas
+    /// 
+    fn draw<DrawIter: Send+IntoIterator<Item=Draw>>(&mut self, actions: DrawIter) {
+        // Get the core to do drawing on
+        let mut core = self.core.borrow_mut();
+
+        if core.need_redraw {
+            // Only need to store these actions in the canvas
+            core.canvas.write(actions.into_iter().collect());
+        } else {
+            // Write to the canvas and the core
+            let actions: Vec<_> = actions.into_iter().collect();
+            for action in actions.iter() {
+                core.pixbufs.draw(*action);
+            }
+            core.canvas.write(actions);
+        }
+
+        // Note that a redraw is needed
+        self.drawing_area.queue_draw();
     }
 
     ///
