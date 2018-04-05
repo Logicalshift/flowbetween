@@ -42,8 +42,9 @@ pub enum GtkWidgetType {
     Layout,
     Fixed,
     Button,
+    ToggleButton,
     Label,
-    DrawingArea,
+    CanvasDrawingArea,
     Scale,
     Popup
 }
