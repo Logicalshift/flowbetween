@@ -17,7 +17,7 @@ use futures::stream::*;
 use std::mem;
 use std::rc::*;
 use std::sync::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 ///
 /// Core data structures associated with a Gtk session
@@ -36,7 +36,10 @@ struct GtkSessionCore {
     viewmodel: GtkSessionViewModel,
 
     /// Specifies the controller path for particular widget IDs
-    controller_for_widget: HashMap<WidgetId, Rc<Vec<String>>>
+    controller_for_widget: HashMap<WidgetId, Rc<Vec<String>>>,
+
+    /// Maps canvas names (controller and canvas name) to the widgets that they're being drawn upon
+    widgets_for_canvas: HashMap<(Rc<Vec<String>>, String), HashSet<WidgetId>>
 }
 
 ///
@@ -70,7 +73,8 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
             root_control:           None,
             gtk_ui:                 gtk_ui,
             viewmodel:              viewmodel,
-            controller_for_widget:  HashMap::new()
+            controller_for_widget:  HashMap::new(),
+            widgets_for_canvas:     HashMap::new()
         };
         let core = Arc::new(Mutex::new(core));
 
@@ -236,7 +240,7 @@ impl GtkSessionCore {
         match update {
             Start                                   => vec![],
             UpdateUi(ui_differences)                => self.update_ui(ui_differences),
-            UpdateCanvas(canvas_differences)        => vec![],
+            UpdateCanvas(canvas_differences)        => self.update_canvases(canvas_differences),
             UpdateViewModel(viewmodel_differences)  => self.update_viewmodel(viewmodel_differences)
         }
     }
@@ -299,7 +303,7 @@ impl GtkSessionCore {
 
             Rc::new(new_controller_path)
         } else {
-            controller_path
+            Rc::clone(&controller_path)
         };
 
         // Add the actions to create any subcomponent
@@ -319,7 +323,17 @@ impl GtkSessionCore {
             create_this_control.push(GtkAction::Widget(control_id, vec![ GtkWidgetAction::Content(WidgetContent::SetChildren(subcomponent_ids)) ]));
         }
 
-        // Add in any events this control might have registered
+        // If this control has a canvas, then store it in the 'widgets for canvas' structure so we'll send updates there
+        if let Some(canvas) = control.canvas_resource() {
+            let canvas_name             = canvas.name().unwrap_or_else(|| canvas.id().to_string());
+            let canvas_id               = (Rc::clone(&controller_path), canvas_name);
+            let mut widgets_for_canvas  = self.widgets_for_canvas.entry(canvas_id)
+                .or_insert_with(|| HashSet::new());
+            
+            widgets_for_canvas.insert(control_id);
+        }
+
+        // Wire up any events this control might have registered
         let wire_actions = self.wire_events_for_control(control);
         if wire_actions.len() > 0 {
             create_this_control.push(GtkAction::Widget(control_id, wire_actions));
@@ -347,6 +361,8 @@ impl GtkSessionCore {
     fn delete_control(&mut self, control: &GtkControl) -> Vec<GtkAction> {
         // Remove the controller path for this control
         self.remove_controller_path(control);
+
+        // TODO: remove from the widget_for_canvas hashmap
 
         // Unbind this control from the viewmodel
         control.delete_from_viewmodel(&mut self.viewmodel);
@@ -493,6 +509,43 @@ impl GtkSessionCore {
     fn update_viewmodel(&mut self, viewmodel_differences: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
         // Process the updates in the viewmodel, and return the resulting updates
         self.viewmodel.update(viewmodel_differences)
+    }
+
+    ///
+    /// Updates a single canvas
+    /// 
+    fn update_canvas(&mut self, canvas_difference: CanvasDiff) -> Vec<GtkAction> {
+        let controller_path = Rc::new(canvas_difference.controller);
+        let canvas_name     = canvas_difference.canvas_name;
+        let updates         = canvas_difference.updates;
+        let canvas_id       = (controller_path, canvas_name);
+
+        let widgets         = self.widgets_for_canvas.get(&canvas_id);
+
+        if let Some(widgets) = widgets {
+            // Generate updates for all of the widgets with these canvases
+            if widgets.len() == 1 {
+                // One widget gets the actions (we can move them instead of copying)
+                let widget_id = widgets.iter().nth(0).unwrap();
+                vec![ GtkAction::Widget(*widget_id, vec![ WidgetContent::Draw(updates).into() ])]
+            } else {
+                // Clone the actions to many widgets
+                widgets.iter().map(|widget_id| GtkAction::Widget(*widget_id, vec![ WidgetContent::Draw(updates.clone()).into() ]))
+                    .collect()
+            }
+        } else {
+            // No canvases are attached at these addresses
+            vec![]
+        }
+    }
+
+    ///
+    /// Updates some canvases
+    /// 
+    fn update_canvases(&mut self, canvas_differences: Vec<CanvasDiff>) -> Vec<GtkAction> {
+        canvas_differences.into_iter()
+            .flat_map(|diff| self.update_canvas(diff))
+            .collect()
     }
 
     ///
