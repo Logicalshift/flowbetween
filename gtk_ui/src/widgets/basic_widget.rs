@@ -140,7 +140,7 @@ pub fn process_basic_widget_content<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mu
     match content {
         &SetChildren(ref children)      => set_widget_parent(widget, children, flo_gtk),
         &SetText(ref _text)             => () /* Standard gtk widgets can't have text in them */,
-        &Draw(ref canvas)               => unimplemented!(),
+        &Draw(ref _drawing)             => () /* Drawing requires support from the widget */,
 
         &AddClass(ref class_name)       => {
             let widget          = widget.get_underlying();
