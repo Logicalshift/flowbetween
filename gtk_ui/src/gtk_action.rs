@@ -108,8 +108,8 @@ pub enum WidgetContent {
     /// Removes a class from this widget
     RemoveClass(String),
 
-    /// Specifies that this widget should draw itself from the specified canvas
-    Draw(Resource<Canvas>)
+    /// Specifies a drawing to perform on this widget
+    Draw(Vec<Draw>)
 }
 
 impl From<WidgetContent> for GtkWidgetAction {
