@@ -3,9 +3,6 @@ use super::cairo_draw::*;
 
 use flo_canvas::*;
 
-use gdk_pixbuf;
-use gdk_pixbuf::Pixbuf;
-use gdk::prelude::*;
 use cairo;
 
 use std::collections::HashMap;
