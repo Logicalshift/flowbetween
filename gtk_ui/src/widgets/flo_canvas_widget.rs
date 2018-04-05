@@ -147,10 +147,10 @@ impl FloDrawingWidget {
                     // Update the viewport
                     core.pixbufs.set_viewport(current_viewport);
                     core.need_redraw = true;
-
-                    // Store the scaling factor for the widget
-                    core.scale_factor = widget.get_scale_factor();
                 }
+
+                // Store the scaling factor for the widget
+                core.scale_factor = widget.get_scale_factor();
 
                 // Size is checked
                 core.check_size = false;
