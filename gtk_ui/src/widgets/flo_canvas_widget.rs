@@ -183,7 +183,8 @@ impl GtkUiWidget for FloDrawingWidget {
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         match action {
-            other_action    => { process_basic_widget_action(self, flo_gtk, other_action); }
+            &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => self.draw(drawing.iter().map(|draw| *draw)),
+            other_action                                                => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
     }
 
