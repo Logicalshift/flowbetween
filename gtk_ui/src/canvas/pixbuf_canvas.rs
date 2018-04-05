@@ -42,9 +42,14 @@ impl PixBufCanvas {
     /// Performs a drawing action on this canvas
     /// 
     pub fn draw(&mut self, action: Draw) {
+        // Clearing the canvas clears all the layers and resets us to layer 0
+        if action == Draw::ClearCanvas {
+            self.layers.clear();
+            self.current_layer = 0;
+        }
+
         let current_layer = self.current_layer;
         
-        // TODO: clearing the canvas should remove all of the layers
         // TODO: switching layers should bring over the state settings from the previous layer
         // TODO: storing/restoring parts of a layer
 
