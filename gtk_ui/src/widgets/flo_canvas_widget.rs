@@ -19,6 +19,9 @@ struct DrawingCore {
     /// Raster version of the canvas
     pixbufs:        PixBufCanvas,
 
+    /// The scale factor the pixbufs were created at
+    scale_factor:   i32,
+
     /// Set to true if the canvas needs to be redrawn to the pixbufs
     need_redraw:    bool,
 
@@ -57,6 +60,7 @@ impl FloDrawingWidget {
         let core        = DrawingCore {
             canvas:         canvas,
             pixbufs:        pixbufs,
+            scale_factor:   1,
             need_redraw:    true,
             check_size:     true
         };
@@ -140,8 +144,12 @@ impl FloDrawingWidget {
 
                 // A redraw is required if the size is different from the last time we drew the pixbufs
                 if existing_viewport != current_viewport {
+                    // Update the viewport
                     core.pixbufs.set_viewport(current_viewport);
                     core.need_redraw = true;
+
+                    // Store the scaling factor for the widget
+                    core.scale_factor = widget.get_scale_factor();
                 }
 
                 // Size is checked
@@ -155,6 +163,9 @@ impl FloDrawingWidget {
             }
 
             // Render the pixbufs
+            let scale_factor = core.scale_factor;
+            let scale_factor = 1.0/(scale_factor as f64);
+            context.scale(scale_factor, scale_factor);
             core.pixbufs.render_to_context(context);
 
             Inhibit(true)
@@ -187,16 +198,18 @@ impl FloDrawingWidget {
     ///
     /// Retrieves the viewport for a canvas
     /// 
-    fn get_viewport(_drawing_area: &gtk::DrawingArea, allocation: &gtk::Allocation) -> CanvasViewport {
+    fn get_viewport(drawing_area: &gtk::DrawingArea, allocation: &gtk::Allocation) -> CanvasViewport {
         // TODO: search for a containing scrolling area and limit to the displayed size
 
+        let scale_factor = drawing_area.get_scale_factor();
+
         CanvasViewport {
-            width:              allocation.width.max(1),
-            height:             allocation.height.max(1),
+            width:              allocation.width.max(1) * scale_factor,
+            height:             allocation.height.max(1) * scale_factor,
             viewport_x:         0,
             viewport_y:         0,
-            viewport_width:     allocation.width.max(1),
-            viewport_height:    allocation.height.max(1)
+            viewport_width:     allocation.width.max(1) * scale_factor,
+            viewport_height:    allocation.height.max(1) * scale_factor
         }
     }
 }
