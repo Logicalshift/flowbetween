@@ -72,13 +72,18 @@ impl GtkUiWidget for FloScaleWidget {
             &RequestEvent(EditValue, ref event_name)    => {
                 // Right now, there doesn't seem to be an easy way to distinguish between values set during a drag and at the end
                 // so we consider 'set' and 'edit' to be the same actions for now.
+                let last_value  = RefCell::new(self.scale.get_value());
                 let id          = self.id;
                 let sink        = RefCell::new(flo_gtk.get_event_sink());
                 let event_name  = event_name.clone();
                 self.scale.connect_value_changed(move |widget| { 
-                    let new_value = widget.get_value();
+                    let new_value       = widget.get_value();
+                    let mut last_value  = last_value.borrow_mut();
 
+                    if new_value != *last_value {
+                        *last_value = new_value;
                     sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value))).unwrap();
+                    }
                 });
             },
 
