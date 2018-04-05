@@ -12,35 +12,37 @@ use gtk::prelude::*;
 use std::rc::*;
 use std::cell::*;
 
+struct DrawingCore {
+    /// Canvas (used to cache the drawing commands used for a redraw)
+    canvas:         Canvas,
+
+    /// Raster version of the canvas
+    pixbufs:        PixBufCanvas,
+
+    /// Set to true if the canvas needs to be redrawn to the pixbufs
+    need_redraw:    bool
+
+}
+
 ///
 /// A Flo widget used to draw canvas actions
 /// 
 pub struct FloDrawingWidget {
     /// The ID of this widget
     widget_id: WidgetId,
-    
-    /// Drawing actions for this widget (used as a cache for when we need to redraw the pixbufs)
-    canvas: Rc<RefCell<Canvas>>,
-
-    /// The pixel buffers containing the rasterized version of the canvas
-    pixbufs: Rc<RefCell<PixBufCanvas>>,
 
     /// The drawing area used by this widget
     drawing_area: gtk::DrawingArea,
 
     /// This widget represented as a widget
-    as_widget: gtk::Widget
+    as_widget: gtk::Widget,
+
+    /// Core data cell
+    core: Rc<RefCell<DrawingCore>>
 }
 
 
 impl FloDrawingWidget {
-    ///
-    /// Retrieves the viewport for a canvas
-    /// 
-    fn get_viewport(drawing_area: gtk::DrawingArea) -> CanvasViewport {
-        unimplemented!()
-    }
-
     ///
     /// Creates a new drawing widget
     /// 
@@ -49,15 +51,36 @@ impl FloDrawingWidget {
         let as_widget   = drawing_area.clone().upcast::<gtk::Widget>();
         let pixbufs     = PixBufCanvas::new(CanvasViewport::minimal());
 
-        let canvas      = Rc::new(RefCell::new(canvas));
-        let pixbufs     = Rc::new(RefCell::new(pixbufs));
+        let core        = DrawingCore {
+            canvas:         canvas,
+            pixbufs:        pixbufs,
+            need_redraw:    false
+        };
+        let core        = Rc::new(RefCell::new(core));
 
         FloDrawingWidget {
             widget_id:      widget_id,
-            canvas:         canvas,
-            pixbufs:        pixbufs,
             drawing_area:   drawing_area,
-            as_widget:      as_widget
+            as_widget:      as_widget,
+            core:           core
+        }
+    }
+
+    ///
+    /// Retrieves the viewport for a canvas
+    /// 
+    fn get_viewport(drawing_area: gtk::DrawingArea) -> CanvasViewport {
+        let allocation = drawing_area.get_allocation();
+
+        // TODO: search for a containing scrolling area and limit to the displayed size
+
+        CanvasViewport {
+            width:              allocation.width.min(1),
+            height:             allocation.height.min(1),
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     allocation.width.min(1),
+            viewport_height:    allocation.height.min(1)
         }
     }
 }
