@@ -42,31 +42,27 @@ impl PixBufCanvas {
     /// Performs a drawing action on this canvas
     /// 
     pub fn draw(&mut self, action: Draw) {
-        // Clearing the canvas clears all the layers and resets us to layer 0
-        if action == Draw::ClearCanvas {
-            self.layers.clear();
-            self.current_layer = 0;
-        }
-
-        let current_layer = self.current_layer;
-        
-        // TODO: switching layers should bring over the state settings from the previous layer
-        // TODO: storing/restoring parts of a layer
-
-        // The current layer must exist
-        if !self.layers.contains_key(&current_layer) {
-            self.create_layer(current_layer);
-        }
-
-        // Fetch the layer we're going to draw to
-        let layer = self.layers.get_mut(&self.current_layer);
-
-        // Perform drawing
         match action {
-            Draw::Layer(new_layer)  => self.current_layer = new_layer,
-            
-            // Other actions go to the current layer
-            other_action            => { layer.map(|layer| layer.context.draw(other_action)); }
+            Draw::ClearCanvas => {
+                // Clearing the canvas clears all the layers and resets us to layer 0
+                self.layers.clear();
+                self.current_layer = 0;
+            },
+
+            Draw::Layer(new_layer_id) => {
+                // Changing the current layer sets which layer is selected
+                self.current_layer = new_layer_id;
+            },
+
+            other_action => {
+                // Fetch the current layer
+                let current_layer   = self.current_layer;
+                let viewport        = &self.viewport;
+                let layer           = self.layers.entry(current_layer).or_insert_with(|| Self::create_layer(viewport));
+
+                // Draw on this layer's context
+                layer.context.draw(other_action);
+            }
         }
     }
 
@@ -104,16 +100,16 @@ impl PixBufCanvas {
     ///
     /// Creates a new layer
     /// 
-    fn create_layer(&mut self, layer_id: u32) {
-        let width   = self.viewport.viewport_width;
-        let height  = self.viewport.viewport_height;
+    fn create_layer(viewport: &CanvasViewport) -> Layer {
+        let width   = viewport.viewport_width;
+        let height  = viewport.viewport_height;
 
         // Perform the incantations to create a pixbuf we can draw on
         let surface = cairo::ImageSurface::create(cairo::Format::ARgb32, width, height).unwrap();
         let context = cairo::Context::new(&surface);
 
         // Pass on to a new CairoDraw instance
-        let draw    = CairoDraw::new(context, self.viewport);
+        let draw    = CairoDraw::new(context, *viewport);
 
         // Store as a new layer
         let new_layer = Layer {
@@ -121,6 +117,6 @@ impl PixBufCanvas {
             context: draw
         };
 
-        self.layers.insert(layer_id, new_layer);
+        new_layer
     }
 }
