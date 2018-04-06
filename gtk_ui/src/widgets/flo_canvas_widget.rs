@@ -1,4 +1,5 @@
 use super::widget::*;
+use super::widget_data::*;
 use super::basic_widget::*;
 use super::super::canvas::*;
 use super::super::gtk_action::*;
@@ -8,6 +9,7 @@ use flo_canvas::*;
 
 use gtk;
 use gtk::prelude::*;
+use cairo::prelude::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -29,7 +31,10 @@ struct DrawingCore {
     check_size:     bool,
 
     /// True if a redraw request is pending
-    draw_pending: bool
+    draw_pending:   bool,
+
+    /// Widget data object
+    widget_data:    Rc<WidgetData>
 }
 
 ///
@@ -53,7 +58,7 @@ impl FloDrawingWidget {
     ///
     /// Creates a new drawing widget
     /// 
-    pub fn new(widget_id: WidgetId, drawing_area: gtk::DrawingArea) -> FloDrawingWidget {
+    pub fn new(widget_id: WidgetId, drawing_area: gtk::DrawingArea, data: Rc<WidgetData>) -> FloDrawingWidget {
         // Create the data structures
         let canvas      = Canvas::new();
         let as_widget   = drawing_area.clone().upcast::<gtk::Widget>();
@@ -65,7 +70,8 @@ impl FloDrawingWidget {
             scale_factor:   1,
             need_redraw:    true,
             check_size:     true,
-            draw_pending:   false
+            draw_pending:   false,
+            widget_data:    data
         };
         let core        = Rc::new(RefCell::new(core));
 
@@ -193,6 +199,14 @@ impl FloDrawingWidget {
             core.pixbufs.draw(*action);
         }
         core.canvas.write(actions);
+
+        // Get the transformation matrix
+        let canvas_to_widget = core.pixbufs.get_matrix();
+        let mut widget_to_canvas = canvas_to_widget;
+        widget_to_canvas.invert();
+
+        // Store the transformation matrix for use with generating coordinates for paint events
+        core.widget_data.set_widget_data(self.widget_id, widget_to_canvas);
 
         // Note that a redraw is needed
         Self::queue_draw(&mut *core, &self.drawing_area);

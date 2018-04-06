@@ -26,7 +26,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Button              => Box::new(BasicWidget::new(id, gtk::Button::new())),
         ToggleButton        => Box::new(BasicWidget::new(id, gtk::ToggleButton::new())),
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
-        CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new())),
+        CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new(), widget_data)),
         Popup               => Box::new(FloPopupWidget::new(id, gtk::Fixed::new())),
 
         Scale           => {
