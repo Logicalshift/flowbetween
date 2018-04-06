@@ -17,10 +17,10 @@ pub struct WidgetDataEntry<TData> {
 }
 
 impl<TData> Deref for WidgetDataEntry<TData> {
-    type Target = RefCell<TData>;
+    type Target = Rc<RefCell<TData>>;
 
-    fn deref(&self) -> &RefCell<TData> {
-        &*self.data
+    fn deref(&self) -> &Rc<RefCell<TData>> {
+        &self.data
     }
 }
 

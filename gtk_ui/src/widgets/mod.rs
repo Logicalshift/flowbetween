@@ -14,6 +14,7 @@ mod layout;
 mod run_action;
 mod factory;
 mod image;
+mod paint;
 
 pub use self::image::*;
 pub use self::window::*;
