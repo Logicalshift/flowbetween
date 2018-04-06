@@ -49,7 +49,6 @@ pub struct FloDrawingWidget {
     core: Rc<RefCell<DrawingCore>>
 }
 
-
 impl FloDrawingWidget {
     ///
     /// Creates a new drawing widget
@@ -182,17 +181,18 @@ impl FloDrawingWidget {
         // Get the core to do drawing on
         let mut core = self.core.borrow_mut();
 
+        // Make sure the core drawing is up to date
         if core.need_redraw {
-            // Only need to store these actions in the canvas
-            core.canvas.write(actions.into_iter().collect());
-        } else {
-            // Write to the canvas and the core
-            let actions: Vec<_> = actions.into_iter().collect();
-            for action in actions.iter() {
-                core.pixbufs.draw(*action);
-            }
-            core.canvas.write(actions);
+            Self::redraw(&mut core);
+            core.need_redraw = false;
         }
+
+        // Write to the canvas and the core
+        let actions: Vec<_> = actions.into_iter().collect();
+        for action in actions.iter() {
+            core.pixbufs.draw(*action);
+        }
+        core.canvas.write(actions);
 
         // Note that a redraw is needed
         Self::queue_draw(&mut *core, &self.drawing_area);
