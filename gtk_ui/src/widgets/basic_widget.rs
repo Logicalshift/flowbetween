@@ -270,7 +270,7 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
             },
         
         Paint(device) => {
-            PaintActions::wire_widget(&*flo_gtk.widget_data(), event_sink, widget, action_name.clone(), device);
+            PaintActions::wire_widget(flo_gtk.widget_data(), event_sink, widget, action_name.clone(), device);
         },
         
         EditValue | SetValue => { }

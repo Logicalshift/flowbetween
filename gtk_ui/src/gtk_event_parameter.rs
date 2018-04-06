@@ -5,6 +5,8 @@ use glib::translate::*;
 use gdk;
 use gdk::prelude::*;
 use gdk_sys;
+use cairo;
+use cairo::prelude::*;
 
 use std::slice;
 
@@ -82,6 +84,13 @@ impl GtkPainting {
                 _ => {}
             }
         }
+    }
+
+    ///
+    /// Transforms this painting event using a matrix
+    /// 
+    pub fn transform(&mut self, matrix: &cairo::Matrix) {
+        self.position = matrix.transform_point(self.position.0, self.position.1);
     }
 
     ///

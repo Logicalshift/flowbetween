@@ -47,7 +47,7 @@ impl PaintActions {
     ///
     /// Wires an existing widget for paint events
     /// 
-    pub fn wire_widget<W: GtkUiWidget>(widget_data: &WidgetData, event_sink: RefCell<GtkEventSink>, widget: &W, event_name: String, device: GtkPaintDevice) {
+    pub fn wire_widget<W: GtkUiWidget>(widget_data: Rc<WidgetData>, event_sink: RefCell<GtkEventSink>, widget: &W, event_name: String, device: GtkPaintDevice) {
         let widget_id       = widget.id();
         let existing_wiring = widget_data.get_widget_data::<PaintActions>(widget_id);
 
@@ -65,7 +65,7 @@ impl PaintActions {
                 let new_wiring = widget_data.get_widget_data::<PaintActions>(widget_id).unwrap();
 
                 // Connect the paint events to this widget
-                Self::connect_events(widget.get_underlying(), Rc::clone(&*new_wiring));
+                Self::connect_events(widget_data, widget.get_underlying(), widget.id(), Rc::clone(&*new_wiring));
 
                 // TODO: add this device to the set supported by this widget
             }
@@ -75,27 +75,31 @@ impl PaintActions {
     ///
     /// Connects paint events to a GTK widget
     /// 
-    fn connect_events(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
+    fn connect_events(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
         // Make sure we're generating the appropriate events on this widget
         widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
 
         // Connect to the signals
-        Self::connect_button_pressed(widget, Rc::clone(&paint));
-        Self::connect_button_released(widget, Rc::clone(&paint));
-        Self::connect_motion(widget, paint);
+        Self::connect_button_pressed(Rc::clone(&widget_data), widget, widget_id, Rc::clone(&paint));
+        Self::connect_button_released(Rc::clone(&widget_data), widget, widget_id, Rc::clone(&paint));
+        Self::connect_motion(widget_data, widget, widget_id, paint);
     }
 
     ///
     /// Sets up the button pressed event for a painting action
     /// 
-    fn connect_button_pressed(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
+    fn connect_button_pressed(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
         widget.connect_button_press_event(move |widget, event| {
             let mut paint = paint.borrow_mut();
 
             // Create the painting data
-            let widget_id   = paint.widget_id;
-            let event_name  = paint.event_name.clone();
-            let painting    = GtkPainting::from_button(event);
+            let widget_id       = paint.widget_id;
+            let event_name      = paint.event_name.clone();
+            let mut painting    = GtkPainting::from_button(event);
+
+            if let Some(transform) = widget_data.get_widget_data(widget_id) {
+                painting.transform(&*transform.borrow());
+            }
 
             // TODO: check if this is a device we want to follow
 
@@ -113,7 +117,7 @@ impl PaintActions {
     ///
     /// Sets up the button released event for a painting action
     /// 
-    fn connect_button_released(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
+    fn connect_button_released(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
         widget.connect_button_release_event(move |widget, event| {
             let mut paint = paint.borrow_mut();
 
@@ -125,9 +129,13 @@ impl PaintActions {
                 paint.painting = false;
 
                 // Create the painting data
-                let widget_id   = paint.widget_id;
-                let event_name  = paint.event_name.clone();
-                let painting    = GtkPainting::from_button(event);
+                let widget_id       = paint.widget_id;
+                let event_name      = paint.event_name.clone();
+                let mut painting    = GtkPainting::from_button(event);
+
+                if let Some(transform) = widget_data.get_widget_data(widget_id) {
+                    painting.transform(&*transform.borrow());
+                }
 
                 // Generate the start event on the sink
                 paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintFinish(painting))).unwrap();
@@ -144,15 +152,19 @@ impl PaintActions {
     ///
     /// Sets up the motion event for a painting action
     /// 
-    fn connect_motion(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
+    fn connect_motion(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
         widget.connect_motion_notify_event(move |widget, event| {
             let mut paint = paint.borrow_mut();
 
             if paint.painting {
                 // Create the painting data
-                let widget_id   = paint.widget_id;
-                let event_name  = paint.event_name.clone();
-                let painting    = GtkPainting::from_motion(event);
+                let widget_id       = paint.widget_id;
+                let event_name      = paint.event_name.clone();
+                let mut painting    = GtkPainting::from_motion(event);
+
+                if let Some(transform) = widget_data.get_widget_data(widget_id) {
+                    painting.transform(&*transform.borrow());
+                }
 
                 // Generate the start event on the sink
                 paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting))).unwrap();
