@@ -9,7 +9,13 @@ use cairo::prelude::*;
 use std::collections::HashMap;
 
 struct Layer {
+    /// The surface this layer is drawn upon
     surface: cairo::ImageSurface,
+
+    /// Stored variation of this surface
+    stored: Option<cairo::ImageSurface>,
+
+    /// Context that this surface will be drawn upon
     context: CairoDraw
 }
 
@@ -40,6 +46,62 @@ impl PixBufCanvas {
             viewport:       viewport,
             current_layer:  0,
             saved_state:    None
+        }
+    }
+
+    ///
+    /// Generates a stored version of the specified layer
+    /// 
+    fn save_layer(&mut self, layer_id: u32) {
+        let width           = self.viewport.viewport_width;
+        let height          = self.viewport.viewport_height;
+        let viewport        = &self.viewport;
+
+        // Get or create the layer we're saving (we'll save an empty layer if it's new)
+        let layer           = self.layers.entry(layer_id).or_insert_with(|| Self::create_layer(viewport));
+
+        // Remove any stored value from the layer
+        layer.stored = None;
+
+        // Create a new stored context to draw on
+        let stored_surface  = cairo::ImageSurface::create(cairo::Format::ARgb32, width, height).unwrap();
+        let stored_context  = cairo::Context::new(&stored_surface);
+
+        // Copy from the layer surface to our stored surface
+        stored_context.set_source_surface(&layer.surface, 0.0, 0.0);
+        stored_context.set_operator(cairo::Operator::Source);
+        stored_context.paint();
+
+        // Store in the layer
+        layer.stored = Some(stored_surface);
+    }
+
+    ///
+    /// Restores the specified layer from its stored version
+    ///  
+    fn restore_layer(&mut self, layer_id: u32) {
+        if let Some(layer) = self.layers.get_mut(&layer_id) {
+            // Get the layer surface
+            let layer_surface = &layer.surface;
+
+            // Fetch the saved layer
+            if let Some(saved_layer) = layer.stored.as_ref() {
+                // Draw from the saved layer onto the main layer
+                let layer_context = cairo::Context::new(&layer_surface);
+
+                layer_context.set_source_surface(saved_layer, 0.0, 0.0);
+                layer_context.set_operator(cairo::Operator::Source);
+                layer_context.paint();
+            }
+        }
+    }
+
+    ///
+    /// Clears the storage associated with a layer
+    /// 
+    fn clear_storage(&mut self, layer_id: u32) {
+        if let Some(layer) = self.layers.get_mut(&layer_id) {
+            layer.stored = None;
         }
     }
 
@@ -81,6 +143,10 @@ impl PixBufCanvas {
                 // Changing the current layer sets which layer is selected
                 self.current_layer = new_layer_id;
             },
+
+            Draw::Store             => { let current_layer = self.current_layer; self.save_layer(current_layer); },
+            Draw::Restore           => { let current_layer = self.current_layer; self.restore_layer(current_layer); },
+            Draw::FreeStoredBuffer  => { let current_layer = self.current_layer; self.clear_storage(current_layer); },
 
             other_action => {
                 // Fetch the current layer
@@ -159,8 +225,9 @@ impl PixBufCanvas {
 
         // Store as a new layer
         let new_layer = Layer {
-            surface: surface,
-            context: draw
+            surface:    surface,
+            context:    draw,
+            stored:     None
         };
 
         new_layer
