@@ -570,7 +570,7 @@ impl GtkSessionCore {
                 match action {
                     Click                           => vec![ RequestEvent(GtkWidgetEventType::Click, action_name) ],
                     Dismiss                         => vec![],
-                    Paint(device)                   => vec![],
+                    Paint(device)                   => vec![ RequestEvent(GtkWidgetEventType::Paint(device.into()), action_name) ],
                     Drag                            => vec![],
                     EditValue                       => vec![ RequestEvent(GtkWidgetEventType::EditValue, action_name) ],
                     SetValue                        => vec![ RequestEvent(GtkWidgetEventType::SetValue, action_name) ],
