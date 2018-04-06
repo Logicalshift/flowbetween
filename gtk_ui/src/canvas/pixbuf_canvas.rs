@@ -55,6 +55,21 @@ impl PixBufCanvas {
                 self.current_layer  = 0;
             },
 
+            Draw::ClearLayer => {
+                let current_layer   = self.current_layer;
+                let viewport        = &self.viewport;
+
+                // Save the state so that it's preserved when the layer restarts
+                if self.saved_state.is_none() {
+                    // If there is already a saved state, we don't save from the new layer (presumably no operations have been performed so the older state is the one that should be kept)
+                    self.saved_state        = self.layers.get(&current_layer).map(|layer| layer.context.get_state());
+                }
+
+                // Send the clear request to the current layer
+                let layer = self.layers.entry(current_layer).or_insert_with(|| Self::create_layer(viewport));
+                layer.context.draw(Draw::ClearLayer);
+            },
+
             Draw::Layer(new_layer_id) => {
                 // Save the state from the current layer if necessary
                 if self.saved_state.is_none() {
