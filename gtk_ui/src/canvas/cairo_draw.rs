@@ -90,6 +90,15 @@ pub struct CairoDraw {
     initial_matrix: Matrix
 }
 
+impl CairoState {
+    ///
+    /// Retrieves the transformation matrix attached to this state
+    ///
+    pub fn get_matrix(&self) -> cairo::Matrix {
+        self.transform.clone()
+    }
+}
+
 impl CairoDraw {
     ///
     /// Creates a new Cairo drawing target
@@ -251,6 +260,13 @@ impl CairoDraw {
         let mut result = Matrix::identity();
         result.translate(x_offset, y_offset);
         result
+    }
+
+    ///
+    /// Retrieves the transformation matrix for this context
+    /// 
+    pub fn get_matrix(&self) -> cairo::Matrix {
+        self.ctxt.get_matrix()
     }
 
     ///

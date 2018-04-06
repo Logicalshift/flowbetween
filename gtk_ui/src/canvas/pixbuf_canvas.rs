@@ -4,6 +4,7 @@ use super::cairo_draw::*;
 use flo_canvas::*;
 
 use cairo;
+use cairo::prelude::*;
 
 use std::collections::HashMap;
 
@@ -81,6 +82,19 @@ impl PixBufCanvas {
                 layer.context.draw(other_action);
             }
         }
+    }
+
+    ///
+    /// Retrieves the transformation matrix for this canvas
+    /// 
+    pub fn get_matrix(&self) -> cairo::Matrix {
+        let current_layer = self.current_layer;
+        
+        self.saved_state
+            .as_ref()
+            .map(|state| Some(state.get_matrix()))
+            .unwrap_or_else(|| self.layers.get(&current_layer).map(|layer| layer.context.get_matrix()))
+            .unwrap_or_else(|| cairo::Matrix::identity())
     }
 
     ///
