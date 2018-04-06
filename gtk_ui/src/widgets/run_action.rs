@@ -7,6 +7,7 @@ use super::super::widgets::proxy_widget::*;
 
 use gtk;
 use gtk::prelude::*;
+use futures::*;
 
 use std::rc::*;
 use std::cell::*;

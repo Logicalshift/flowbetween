@@ -1,5 +1,6 @@
 use super::widget::*;
 use super::widget_data::*;
+use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 use super::super::gtk_widget_event_type::*;
 
@@ -13,24 +14,28 @@ use std::cell::*;
 /// Contents of the cell that tracks painting state
 /// 
 struct PaintCore {
-
+    /// Where the paint events should be sent to
+    event_sink: GtkEventSink
 }
 
 ///
 /// Provides support for the painting events for a widget
 /// 
-pub struct Paint {
+pub struct PaintActions {
+    /// Mutable core of the paint actions
     core: RefCell<PaintCore>
 }
 
-impl Paint {
+impl PaintActions {
     /// 
     /// Creates new paint data
     /// 
-    fn new() -> Paint {
-        let core = PaintCore { };
+    fn new(event_sink: GtkEventSink) -> PaintActions {
+        let core = PaintCore { 
+            event_sink: event_sink
+        };
 
-        Paint {
+        PaintActions {
             core: RefCell::new(core)
         }
     }
@@ -38,9 +43,9 @@ impl Paint {
     ///
     /// Wires an existing widget for paint events
     /// 
-    pub fn wire_widget<W: GtkUiWidget>(widget_data: &mut WidgetData, widget: &W, device: GtkPaintDevice) {
+    pub fn wire_widget<W: GtkUiWidget>(widget_data: &WidgetData, event_sink: RefCell<GtkEventSink>, widget: &W, device: GtkPaintDevice) {
         let widget_id       = widget.id();
-        let existing_wiring = widget_data.get_widget_data::<Paint>(widget_id);
+        let existing_wiring = widget_data.get_widget_data::<PaintActions>(widget_id);
 
         match existing_wiring {
             Some(paint) => {
@@ -49,10 +54,10 @@ impl Paint {
 
             None => {
                 // Create some new wiring
-                widget_data.set_widget_data(widget_id, Paint::new());
+                widget_data.set_widget_data(widget_id, PaintActions::new(event_sink.into_inner()));
 
                 // Fetch the wiring
-                let new_wiring = widget_data.get_widget_data::<Paint>(widget_id).unwrap();
+                let new_wiring = widget_data.get_widget_data::<PaintActions>(widget_id).unwrap();
 
                 // Connect the paint events to this widget
                 Self::connect_events(widget.get_underlying(), Rc::clone(&*new_wiring));
@@ -65,7 +70,7 @@ impl Paint {
     ///
     /// Connects paint events to a GTK widget
     /// 
-    fn connect_events(widget: &gtk::Widget, paint: Rc<RefCell<Paint>>) {
+    fn connect_events(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
 
     }
 }

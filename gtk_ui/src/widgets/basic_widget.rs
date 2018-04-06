@@ -1,3 +1,4 @@
+use super::paint::*;
 use super::layout::*;
 use super::widget::*;
 use super::custom_style::*;
@@ -11,6 +12,7 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
+use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -267,7 +269,9 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
                 }); 
             },
         
-        Paint(device) => { },
+        Paint(device) => {
+            PaintActions::wire_widget(&*flo_gtk.widget_data(), event_sink, widget, device);
+        },
         
         EditValue | SetValue => { }
     }

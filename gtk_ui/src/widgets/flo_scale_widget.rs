@@ -8,6 +8,7 @@ use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
+use futures::*;
 
 use std::cell::*;
 use std::rc::*;

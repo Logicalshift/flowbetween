@@ -5,6 +5,7 @@ use super::super::gtk_event::*;
 use super::super::widgets::*;
 
 use gtk;
+use futures::*;
 
 use std::thread;
 use std::thread::JoinHandle;

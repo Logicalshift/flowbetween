@@ -222,9 +222,9 @@ impl FloGtk {
     ///
     /// Retrieves a sink that can be used to send events to any attached streams
     /// 
-    pub fn get_event_sink(&mut self) -> Box<Sink<SinkItem=GtkEvent, SinkError=()>> {
+    pub fn get_event_sink(&mut self) -> GtkEventSink {
         // Result is a clone of our 'core' event sink
-        Box::new(self.event_sink.clone())
+        self.event_sink.clone()
     }
 
     ///
