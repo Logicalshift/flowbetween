@@ -41,38 +41,43 @@ const BIND_ADDRESS: &str    = "0.0.0.0";
 
 fn main() {
     // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
-    // Create a GTK session
-    let gtk_ui      = GtkUserInterface::new();
-    let gtk_session = GtkSession::from(FlowBetweenSession::new(), gtk_ui);
 
-    gtk_session.run();
+    let gtk_thread = thread::spawn(|| {
+        // Create a GTK session
+        let gtk_ui      = GtkUserInterface::new();
+        let gtk_session = GtkSession::from(FlowBetweenSession::new(), gtk_ui);
 
-    /*
-    // Create the web session structure
-    let sessions = Arc::new(WebSessions::new());
-    
-    // Set up an iron server
-    let mut mount   = Mount::new();
-    let mut web_ui  = UiHandler::<FlowBetweenSession>::from_sessions(sessions.clone());
-    web_ui.set_websocket_port(WS_SERVER_PORT);
-    mount.mount("/", flowbetween_static_files());
-    mount.mount("/flowbetween/session", web_ui);
-    
-    // Run the WS server
-    thread::spawn(move || {
-        // Set up a websockets server
-        let mut tokio_core  = Core::new().unwrap();
-        let ws_handle       = Arc::new(tokio_core.handle());
-        let ws_handler      = WebSocketHandler::from_sessions(sessions.clone());
-        let ws_stream       = ws_handler.create_server(&format!("{}:{}", BIND_ADDRESS, WS_SERVER_PORT), ws_handle);
-
-        println!("{} v{} preparing to serve websocket requests at {}", PACKAGE_NAME, PACKAGE_VERSION, format!("{}:{}", BIND_ADDRESS, WS_SERVER_PORT));
-        tokio_core.run(ws_stream).unwrap();
+        gtk_session.run();
     });
 
-    // Run the iron server
-    println!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT));
+    let http_thread = thread::spawn(|| {
+        // Create the web session structure
+        let sessions = Arc::new(WebSessions::new());
+        
+        // Set up an iron server
+        let mut mount   = Mount::new();
+        let mut web_ui  = UiHandler::<FlowBetweenSession>::from_sessions(sessions.clone());
+        web_ui.set_websocket_port(WS_SERVER_PORT);
+        mount.mount("/", flowbetween_static_files());
+        mount.mount("/flowbetween/session", web_ui);
+        
+        // Run the WS server
+        thread::spawn(move || {
+            // Set up a websockets server
+            let mut tokio_core  = Core::new().unwrap();
+            let ws_handle       = Arc::new(tokio_core.handle());
+            let ws_handler      = WebSocketHandler::from_sessions(sessions.clone());
+            let ws_stream       = ws_handler.create_server(&format!("{}:{}", BIND_ADDRESS, WS_SERVER_PORT), ws_handle);
 
-    Iron::new(mount).http(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT)).unwrap();
-    */
+            println!("{} v{} preparing to serve websocket requests at {}", PACKAGE_NAME, PACKAGE_VERSION, format!("{}:{}", BIND_ADDRESS, WS_SERVER_PORT));
+            tokio_core.run(ws_stream).unwrap();
+        });
+
+        // Run the iron server
+        println!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT));
+
+        Iron::new(mount).http(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT)).unwrap();
+    });
+
+    gtk_thread.join().unwrap();
 }
