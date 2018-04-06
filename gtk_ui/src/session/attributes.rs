@@ -16,6 +16,22 @@ pub trait ToGtkActions {
 }
 
 ///
+/// Determines the GTK control to use for a button control
+/// 
+/// We need to use a toggle button for buttons with a selected attribute, or a normal button for everything else
+/// 
+fn button_type_for_control(control: &Control) -> GtkWidgetType {
+    // This works because we don't update attributes except via the viewmodel right now (so if the control hasn't got a selected
+    // attribute it will never have one in the future). If at some point, the selected attribute can be added to a control, we may
+    // end up with a situation where Button is chosen incorrectly.
+    if control.attributes().any(|attribute| match attribute { &ControlAttribute::StateAttr(State::Selected(_)) => true, _ => false }) {
+        GtkWidgetType::ToggleButton
+    } else {
+        GtkWidgetType::Button
+    }
+}
+
+///
 /// Creates the actions required to instantiate a control - without its subcomponents
 /// 
 impl ToGtkActions for Control {
@@ -30,7 +46,7 @@ impl ToGtkActions for Control {
             CroppingContainer   => New(GtkWidgetType::Layout),
             ScrollingContainer  => New(GtkWidgetType::Layout),
             Popup               => New(GtkWidgetType::Popup),
-            Button              => New(GtkWidgetType::ToggleButton),
+            Button              => New(button_type_for_control(self)),
             Label               => New(GtkWidgetType::Label),
             Canvas              => New(GtkWidgetType::CanvasDrawingArea),
             Slider              => New(GtkWidgetType::Scale),
