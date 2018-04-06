@@ -105,8 +105,6 @@ impl PaintActions {
             // Generate the start event on the sink
             paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
 
-            println!("Button down");
-
             // Prevent standard handling
             Inhibit(true)
         });
@@ -126,10 +124,13 @@ impl PaintActions {
                 // Note that we're no longer painting
                 paint.painting = false;
 
-                println!("Button released");
+                // Create the painting data
+                let widget_id   = paint.widget_id;
+                let event_name  = paint.event_name.clone();
+                let painting    = GtkPainting::from_button(event);
 
-                // TODO: stop tracking motion
-                // TODO: generate the finished event on the sink
+                // Generate the start event on the sink
+                paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintFinish(painting))).unwrap();
 
                 // Painting: inhibit the usual behaviour
                 Inhibit(true)
@@ -148,14 +149,18 @@ impl PaintActions {
             let mut paint = paint.borrow_mut();
 
             if paint.painting {
+                // Create the painting data
+                let widget_id   = paint.widget_id;
+                let event_name  = paint.event_name.clone();
+                let painting    = GtkPainting::from_motion(event);
+
+                // Generate the start event on the sink
+                paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting))).unwrap();
+
                 // TODO: also check that we're following the right device
-                // TODO: send a motion event to the target
-                println!("Motion");
 
                 Inhibit(true)
             } else {
-                println!("Also motion");
-
                 Inhibit(false)
             }
         });
