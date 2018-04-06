@@ -143,37 +143,6 @@ impl FloFixedWidget {
             layout.borrow().layout_fixed(container);
         });
     }
-
-    ///
-    /// Ensures that a child widget has an associated window, so it can be Z-ordered
-    /// 
-    fn ensure_window(&mut self, child_widget_id: WidgetId) {
-        // Fetch the current widget with this ID
-        if let Some(existing_widget) = self.widget_data.get_widget(child_widget_id) {
-            // Nothing to do if it already has a window
-            if existing_widget.borrow().get_underlying().get_window().is_some() {
-                return;
-            }
-
-            // Create a clone of the widget object
-            let widget = existing_widget.borrow().get_underlying().clone();
-
-            // No window. Wrap in an event box, which always has its own window
-            let event_box = gtk::EventBox::new();
-
-            self.container.remove(&widget);
-            event_box.add(&widget);
-
-            self.container.add(&event_box);
-
-            // Ensure it has the same visibility as the parent widget
-            event_box.set_visible(widget.get_visible());
-
-            // Substitute a proxy widget
-            let proxy_event_box = ProxyWidget::new(Rc::clone(&existing_widget), event_box);
-            self.widget_data.replace_widget(child_widget_id, proxy_event_box);
-        }
-    }
 }
 
 impl GtkUiWidget for FloFixedWidget {
@@ -223,12 +192,6 @@ impl GtkUiWidget for FloFixedWidget {
             for child in children.iter() {
                 self.container.add(child.borrow().get_underlying());
             }
-        }
-
-        // Give them windows (TODO: we really need to only do this when we're about to perform a layout and some widgets have z-indexes)
-        for child in children.iter() {
-            let id = child.borrow().id();
-            self.ensure_window(id);
         }
 
         // Queue a resize so the layout is done
