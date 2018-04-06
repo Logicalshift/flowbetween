@@ -53,6 +53,18 @@ impl GtkControl {
     }
 
     ///
+    /// Returns all of the widget IDs in the tree rooted at this control
+    /// 
+    pub fn tree_ids(&self) -> Vec<WidgetId> {
+        vec![ self.widget_id ]
+            .into_iter()
+            .chain(self.child_controls.iter()
+                .flat_map(|control| control.tree_ids())
+            )
+            .collect()
+    }
+
+    ///
     /// Creates the actions for deleting this control and any child controls
     /// 
     pub fn delete_actions(&self) -> Vec<GtkAction> {

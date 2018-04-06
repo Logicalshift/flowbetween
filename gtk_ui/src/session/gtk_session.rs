@@ -362,7 +362,13 @@ impl GtkSessionCore {
         // Remove the controller path for this control
         self.remove_controller_path(control);
 
-        // TODO: remove from the widget_for_canvas hashmap
+        // Remove from the widget_for_canvas hashmap
+        let remove_widget_ids = control.tree_ids();
+        let remove_widget_ids: HashSet<_> = remove_widget_ids.into_iter().collect();
+
+        self.widgets_for_canvas.iter_mut()
+            .for_each(|(_canvas, widgets)| widgets.retain(|id| !remove_widget_ids.contains(id)));
+        self.widgets_for_canvas.retain(|_canvas, widgets| widgets.len() > 0);
 
         // Unbind this control from the viewmodel
         control.delete_from_viewmodel(&mut self.viewmodel);
