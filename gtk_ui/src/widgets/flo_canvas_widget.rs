@@ -9,6 +9,7 @@ use flo_canvas::*;
 
 use gtk;
 use gtk::prelude::*;
+use cairo;
 use cairo::prelude::*;
 
 use std::rc::*;
@@ -204,6 +205,14 @@ impl FloDrawingWidget {
         let canvas_to_widget = core.pixbufs.get_matrix();
         let mut widget_to_canvas = canvas_to_widget;
         widget_to_canvas.invert();
+
+        if core.scale_factor != 1 {
+            let scale_factor = core.scale_factor as f64;
+            let mut scale_matrix = cairo::Matrix::identity();
+            scale_matrix.scale(scale_factor, scale_factor);
+
+            widget_to_canvas = cairo::Matrix::multiply(&scale_matrix, &widget_to_canvas);
+        }
 
         // Store the transformation matrix for use with generating coordinates for paint events
         core.widget_data.set_widget_data(self.widget_id, widget_to_canvas);
