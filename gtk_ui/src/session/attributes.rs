@@ -21,14 +21,36 @@ pub trait ToGtkActions {
 /// We need to use a toggle button for buttons with a selected attribute, or a normal button for everything else
 /// 
 fn button_type_for_control(control: &Control) -> GtkWidgetType {
+    use self::ControlAttribute::*;
+
     // This works because we don't update attributes except via the viewmodel right now (so if the control hasn't got a selected
     // attribute it will never have one in the future). If at some point, the selected attribute can be added to a control, we may
     // end up with a situation where Button is chosen incorrectly.
-    if control.attributes().any(|attribute| match attribute { &ControlAttribute::StateAttr(State::Selected(_)) => true, _ => false }) {
+    if control.attributes().any(|attribute| match attribute { &StateAttr(State::Selected(_)) => true, _ => false }) {
         GtkWidgetType::ToggleButton
     } else {
         GtkWidgetType::Button
     }
+}
+
+///
+/// Determines if a control needs an event box or not
+/// 
+fn needs_event_box(control: &Control) -> bool {
+    use self::ControlAttribute::*;
+
+    control.attributes().any(|attribute| {
+        match attribute {
+            // Controls with a background colour need an event box
+            &AppearanceAttr(Appearance::Background(_)) => true,
+
+            // Controls with a z-index need an event box
+            &ZIndex(_) => true,
+
+            // Other controls do not need an event box
+            _ => false
+        }
+    })
 }
 
 ///
@@ -68,13 +90,20 @@ impl ToGtkActions for Control {
         };
 
         // Build into the 'create control' action
-        // TODO: only box the containers and things that don't have backgrounds?
         let mut create_control = vec![ 
             create_new.into(), 
-            GtkWidgetAction::Box.into(), 
+        ];
+
+        // Some controls need an event box (eg, to show a custom background or to allow for z-ordering)
+        if needs_event_box(self) {
+            create_control.push(GtkWidgetAction::Box.into());
+        }
+
+        // Controls have their own class for styling and are displayed by default
+        create_control.extend(vec![
             GtkWidgetAction::Content(WidgetContent::AddClass(widget_class.to_string())).into(),
             GtkWidgetAction::Show.into()
-        ];
+        ]);
 
         // Generate the actions for all of the attributes
         for attribute in self.attributes() {
