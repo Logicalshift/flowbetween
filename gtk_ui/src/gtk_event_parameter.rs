@@ -75,9 +75,11 @@ impl GtkPainting {
 
             // For the axes corresponding to a value in our structure, set that value
             match device.get_axis_use(axis_id as u32) {
-                AxisUse::X          => { self.position.0    = axis_value; }
-                AxisUse::Y          => { self.position.1    = axis_value; }
-                AxisUse::Pressure   => { self.pressure      = axis_value; }
+                /*
+                AxisUse::X          => { self.position.0    = axis_value; },
+                AxisUse::Y          => { self.position.1    = axis_value; },
+                */
+                AxisUse::Pressure   => { self.pressure      = axis_value; },
                 AxisUse::Xtilt      => { self.xtilt         = axis_value; },
                 AxisUse::Ytilt      => { self.ytilt         = axis_value; },
 
