@@ -136,7 +136,9 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
         }
 
         // Pass the remaining actions to process_actions
-        self.process_actions(canvas, renderer, remaining_actions.into_iter());
+        if remaining_actions.len() > 0 {
+            self.process_actions(canvas, renderer, remaining_actions.into_iter());
+        }
     }
 
     ///
