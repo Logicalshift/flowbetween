@@ -1,12 +1,15 @@
 use super::widget::*;
 use super::widget_data::*;
+use super::super::gtk_event::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
+use super::super::gtk_event_parameter::*;
 use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
 use gdk;
+use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -15,6 +18,12 @@ use std::cell::*;
 /// Provides support for the painting events for a widget
 /// 
 pub struct PaintActions {
+    /// The ID of the widget these actions are for
+    widget_id: WidgetId,
+
+    /// The name of the event to generate
+    event_name: String,
+
     /// Where the paint events should be sent to
     event_sink: GtkEventSink,
 
@@ -26,8 +35,10 @@ impl PaintActions {
     /// 
     /// Creates new paint data
     /// 
-    fn new(event_sink: GtkEventSink) -> PaintActions {
+    fn new(widget_id: WidgetId, event_name: String, event_sink: GtkEventSink) -> PaintActions {
         PaintActions {
+            widget_id:  widget_id,
+            event_name: event_name,
             event_sink: event_sink,
             painting:   false
         }
@@ -36,18 +47,19 @@ impl PaintActions {
     ///
     /// Wires an existing widget for paint events
     /// 
-    pub fn wire_widget<W: GtkUiWidget>(widget_data: &WidgetData, event_sink: RefCell<GtkEventSink>, widget: &W, device: GtkPaintDevice) {
+    pub fn wire_widget<W: GtkUiWidget>(widget_data: &WidgetData, event_sink: RefCell<GtkEventSink>, widget: &W, event_name: String, device: GtkPaintDevice) {
         let widget_id       = widget.id();
         let existing_wiring = widget_data.get_widget_data::<PaintActions>(widget_id);
 
         match existing_wiring {
             Some(paint) => {
                 // TODO: Add the device to the set already in use
+                // TODO: if the name is different from the original event name, we'll just use that
             },
 
             None => {
                 // Create some new wiring
-                widget_data.set_widget_data(widget_id, PaintActions::new(event_sink.into_inner()));
+                widget_data.set_widget_data(widget_id, PaintActions::new(widget_id, event_name, event_sink.into_inner()));
 
                 // Fetch the wiring
                 let new_wiring = widget_data.get_widget_data::<PaintActions>(widget_id).unwrap();
@@ -80,12 +92,18 @@ impl PaintActions {
         widget.connect_button_press_event(move |widget, event| {
             let mut paint = paint.borrow_mut();
 
+            // Create the painting data
+            let widget_id   = paint.widget_id;
+            let event_name  = paint.event_name.clone();
+            let painting    = GtkPainting::from_button(event);
+
             // TODO: check if this is a device we want to follow
 
             // Note that we're painting
             paint.painting = true;
 
-            // TODO: generate the start event on the sink
+            // Generate the start event on the sink
+            paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
 
             println!("Button down");
 

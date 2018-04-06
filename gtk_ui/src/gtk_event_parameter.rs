@@ -87,7 +87,7 @@ impl GtkPainting {
     ///
     /// Creates a painting action from a motion event
     /// 
-    pub fn from_button(button: gdk::EventButton) -> GtkPainting {
+    pub fn from_button(button: &gdk::EventButton) -> GtkPainting {
         // Create a neutral painting
         let mut painting = GtkPainting {
             position: (0.0, 0.0),
@@ -109,7 +109,7 @@ impl GtkPainting {
     ///
     /// Creates a painting action from a motion event
     /// 
-    pub fn from_motion(motion: gdk::EventMotion) -> GtkPainting {
+    pub fn from_motion(motion: &gdk::EventMotion) -> GtkPainting {
         // Create a neutral painting
         let mut painting = GtkPainting {
             position: (0.0, 0.0),
