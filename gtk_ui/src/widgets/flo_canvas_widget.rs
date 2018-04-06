@@ -26,7 +26,10 @@ struct DrawingCore {
     need_redraw:    bool,
 
     /// Set to true if the size has changed and we need to consider a redraw
-    check_size:     bool
+    check_size:     bool,
+
+    /// True if a redraw request is pending
+    draw_pending: bool
 }
 
 ///
@@ -62,7 +65,8 @@ impl FloDrawingWidget {
             pixbufs:        pixbufs,
             scale_factor:   1,
             need_redraw:    true,
-            check_size:     true
+            check_size:     true,
+            draw_pending:   false
         };
         let core        = Rc::new(RefCell::new(core));
 
@@ -96,7 +100,7 @@ impl FloDrawingWidget {
                 core.check_size = true;
 
                 // Make sure the widget is redrawn
-                widget.queue_draw();
+                Self::queue_draw(&mut *core, widget);
             }
         });
     }
@@ -117,6 +121,9 @@ impl FloDrawingWidget {
         drawing_area.connect_draw(move |widget, context| {
             // Fetch the core
             let mut core = core.borrow_mut();
+
+            // Drawing request is no longer pending
+            core.draw_pending = false;
 
             // If we need to check the size, do so and maybe set the redraw bit
             if core.check_size {
@@ -158,6 +165,17 @@ impl FloDrawingWidget {
     }
 
     ///
+    /// Indicates a drawing request is required
+    /// 
+    fn queue_draw(core: &mut DrawingCore, drawing_area: &gtk::DrawingArea) {
+        if !core.draw_pending {
+            core.draw_pending = true;
+
+            drawing_area.add_tick_callback(|widget: &gtk::DrawingArea, _clock| { widget.queue_draw(); Continue(false) });
+        }
+    }
+
+    ///
     /// Performs some drawing actions on this canvas
     /// 
     fn draw<DrawIter: Send+IntoIterator<Item=Draw>>(&mut self, actions: DrawIter) {
@@ -177,7 +195,7 @@ impl FloDrawingWidget {
         }
 
         // Note that a redraw is needed
-        self.drawing_area.queue_draw();
+        Self::queue_draw(&mut *core, &self.drawing_area);
     }
 
     ///
