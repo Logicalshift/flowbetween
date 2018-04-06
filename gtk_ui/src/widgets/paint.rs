@@ -6,6 +6,7 @@ use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
+use gdk;
 
 use std::rc::*;
 use std::cell::*;
@@ -39,16 +40,12 @@ impl PaintActions {
         let widget_id       = widget.id();
         let existing_wiring = widget_data.get_widget_data::<PaintActions>(widget_id);
 
-        println!("Wiring");
-
         match existing_wiring {
             Some(paint) => {
                 // TODO: Add the device to the set already in use
             },
 
             None => {
-                println!("New");
-
                 // Create some new wiring
                 widget_data.set_widget_data(widget_id, PaintActions::new(event_sink.into_inner()));
 
@@ -67,6 +64,10 @@ impl PaintActions {
     /// Connects paint events to a GTK widget
     /// 
     fn connect_events(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
+        // Make sure we're generating the appropriate events on this widget
+        widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
+
+        // Connect to the signals
         Self::connect_button_pressed(widget, Rc::clone(&paint));
         Self::connect_button_released(widget, Rc::clone(&paint));
         Self::connect_motion(widget, paint);
@@ -84,7 +85,6 @@ impl PaintActions {
             // Note that we're painting
             paint.painting = true;
 
-            // TODO: track motion
             // TODO: generate the start event on the sink
 
             println!("Button down");
