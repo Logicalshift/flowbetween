@@ -7,6 +7,7 @@ pub mod flo_label_widget;
 pub mod flo_fixed_widget;
 pub mod flo_popup_widget;
 pub mod flo_scale_widget;
+pub mod flo_scroll_widget;
 pub mod flo_canvas_widget;
 pub mod proxy_widget;
 pub mod flo_layout;
