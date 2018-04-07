@@ -205,9 +205,9 @@ impl FloWidgetLayout {
     /// Lays out the widgets in a gtk::Layout continue
     /// 
     pub fn layout_in_layout(&self, target: &gtk::Layout) {
-        let allocation  = target.get_allocation();
+        let (width, height) = target.get_size();
 
-        self.layout_in_container(target, allocation.x, allocation.y, allocation.width, allocation.height);
+        self.layout_in_container(target, 0, 0, width as i32, height as i32)
     }
 
     ///
