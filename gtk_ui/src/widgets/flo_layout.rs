@@ -196,11 +196,24 @@ impl FloWidgetLayout {
     /// Lays out the widgets in a particular container (with 'Fixed' semantics - ie, GtkFixed or GtkLayout)
     /// 
     pub fn layout_fixed(&self, target: &gtk::Container) {
-        // Fetch the width and height of the target
         let allocation  = target.get_allocation();
-        let width       = allocation.width;
-        let height      = allocation.height;
 
+        self.layout_in_container(target, allocation.x, allocation.y, allocation.width, allocation.height);
+    }
+
+    ///
+    /// Lays out the widgets in a gtk::Layout continue
+    /// 
+    pub fn layout_in_layout(&self, target: &gtk::Layout) {
+        let allocation  = target.get_allocation();
+
+        self.layout_in_container(target, allocation.x, allocation.y, allocation.width, allocation.height);
+    }
+
+    ///
+    /// Performs container layout with a particular width and height
+    /// 
+    fn layout_in_container<T: Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>>(&self, target: &T, min_x: i32, min_y: i32, width: i32, height: i32) {
         // Get the layout for this widget
         let layout      = self.get_layout(width as f32, height as f32);
 
@@ -235,7 +248,7 @@ impl FloWidgetLayout {
 
                 // Send a size request to the widget if its width or height has changed
                 let (new_x, new_y)          = (x.floor() as i32, y.floor() as i32);
-                let (new_x, new_y)          = (new_x + allocation.x, new_y + allocation.y);
+                let (new_x, new_y)          = (new_x + min_x, new_y + min_y);
                 let (new_width, new_height) = (width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
 
                 // Suppress a GTK warning
@@ -258,7 +271,7 @@ impl FloWidgetLayout {
             let _preferred_size = (extra_widget.get_preferred_width(), extra_widget.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
             // Allocate the size for this widget
-            extra_widget.size_allocate(&mut gtk::Rectangle { x: allocation.x, y: allocation.y, width: width, height: height })
+            extra_widget.size_allocate(&mut gtk::Rectangle { x: min_x, y: min_y, width: width, height: height })
         }
     }
 }

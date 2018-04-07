@@ -131,10 +131,8 @@ impl FixedWidgetLayout for gtk::Fixed {
 
 impl FixedWidgetLayout for gtk::Layout {
     fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
-        let container = layout_widget.upcast::<gtk::Container>();
-
-        container.connect_size_allocate(move |container, _allocation| {
-            layout.borrow().layout_fixed(container);
+        layout_widget.connect_size_allocate(move |layout_widget, _allocation| {
+            layout.borrow().layout_in_layout(layout_widget);
         });
     }
 }
