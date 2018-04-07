@@ -5,7 +5,7 @@ use modifier::*;
 ///
 /// Possible visibilities for the scrollbars
 /// 
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ScrollBarVisibility {
     Never,
     Always,
@@ -15,7 +15,7 @@ pub enum ScrollBarVisibility {
 ///
 /// Specifies a fixed axis
 ///
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum FixedAxis {
     /// Fixed in position along the horizontal axis
     Horizontal,

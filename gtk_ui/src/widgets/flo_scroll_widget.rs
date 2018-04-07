@@ -4,6 +4,8 @@ use super::flo_fixed_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
+use flo_ui::*;
+
 use gtk;
 use gtk::prelude::*;
 
@@ -50,7 +52,14 @@ impl GtkUiWidget for FloScrollWidget {
     }
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
+        use self::GtkWidgetAction::*;
+        use self::Scroll::*;
+
         match action {
+            &Scroll(MinimumContentSize(width, height))  => { self.layout.set_size(width as u32, height as u32); },
+            &Scroll(HorizontalScrollBar(visibility))    => { /* TODO */ },
+            &Scroll(VerticalScrollBar(visibility))      => { /* TODO */ },
+
             // All other actions act as if the fixed widget performed them
             other_action => { self.fixed_widget.process(flo_gtk, other_action); }
         }
