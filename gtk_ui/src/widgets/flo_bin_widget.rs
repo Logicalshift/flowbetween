@@ -47,11 +47,11 @@ impl FloBinWidget {
     ///
     /// Creates a new bin widget
     /// 
-    pub fn new<W: Clone+Cast+IsA<gtk::Bin>+IsA<gtk::Widget>>(id: WidgetId, bin_widget: &W, widget_data: Rc<WidgetData>) -> FloBinWidget {
+    pub fn new<W: Clone+Cast+IsA<gtk::Bin>+IsA<gtk::Widget>>(id: WidgetId, bin_widget: W, widget_data: Rc<WidgetData>) -> FloBinWidget {
         FloBinWidget {
             id:             id,
             bin:            bin_widget.clone().upcast::<gtk::Bin>(),
-            as_widget:      bin_widget.clone().upcast::<gtk::Widget>(),
+            as_widget:      bin_widget.upcast::<gtk::Widget>(),
             widget_data:    widget_data,
             label:          None,
             image:          None,
@@ -148,6 +148,13 @@ impl GtkUiWidget for FloBinWidget {
                 self.make_fixed(flo_gtk);
                 process_basic_widget_action(self, flo_gtk, action);
             },
+
+            // Events should come to this widget and not to the underlying fixed widget
+            &RequestEvent(_, _)     => { process_basic_widget_action(self, flo_gtk, action); },
+
+            // General appearance should apply to this widget
+            &Appearance(_)          => { process_basic_widget_action(self, flo_gtk, action); },
+            &State(_)               => { process_basic_widget_action(self, flo_gtk, action); },
 
             // The bin widget should become the root, not its content
             &SetRoot(_)             => { process_basic_widget_action(self, flo_gtk, action); },
