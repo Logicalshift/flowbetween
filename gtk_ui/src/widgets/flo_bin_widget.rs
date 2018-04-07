@@ -6,6 +6,7 @@ use super::flo_fixed_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
+use flo_ui;
 use flo_ui::*;
 
 use gtk;
@@ -144,10 +145,14 @@ impl GtkUiWidget for FloBinWidget {
         // Some actions should always be processed against the proxy widget
         match action {
             // Adding child widgets always generates the fixed widget before proceeding
-            &Content(WidgetContent::SetChildren(_)) => {
+            &Content(WidgetContent::SetChildren(_))                 => {
                 self.make_fixed(flo_gtk);
                 process_basic_widget_action(self, flo_gtk, action);
             },
+
+            // Images and text can act as the entire content of a bin
+            &Content(WidgetContent::SetText(ref new_text))          => { self.set_label(new_text.clone(), flo_gtk); }
+            &Appearance(flo_ui::Appearance::Image(ref new_image))   => { self.set_image(new_image.clone(), flo_gtk); }
 
             // Events should come to this widget and not to the underlying fixed widget
             &RequestEvent(_, _)     => { process_basic_widget_action(self, flo_gtk, action); },
