@@ -52,7 +52,7 @@ impl GtkUiWidget for FloScrollWidget {
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         match action {
             // All other actions act as if the fixed widget performed them
-            other_action => { self.fixed_widget.process(flo_gtk, action); }
+            other_action => { self.fixed_widget.process(flo_gtk, other_action); }
         }
     }
 

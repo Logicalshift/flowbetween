@@ -43,19 +43,26 @@ pub struct FloFixedWidget {
     layout: Rc<RefCell<FloWidgetLayout>>
 }
 
+///
+/// Trait used to describe how to perform layout in a fixed widget
+/// 
+pub trait FixedWidgetLayout {
+    fn attach_layout_signal(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>);
+}
+
 impl FloFixedWidget {
     ///
     /// Creates a new FloWidget that can contain generic controls using the fixed layout style
     /// 
-    pub fn new<Container: Cast+IsA<gtk::Container>>(id: WidgetId, container: Container, widget_data: Rc<WidgetData>) -> FloFixedWidget {
+    pub fn new<Container: Cast+Clone+IsA<gtk::Container>+FixedWidgetLayout>(id: WidgetId, container_widget: Container, widget_data: Rc<WidgetData>) -> FloFixedWidget {
         // Cast the container to a gtk container
-        let container = container.upcast::<gtk::Container>();
+        let container = container_widget.clone().upcast::<gtk::Container>();
 
         // Create the widget
         let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(Rc::clone(&widget_data))));
 
         // Attach events to it
-        Self::attach_layout_signal(&container.clone(), Rc::clone(&layout));
+        Container::attach_layout_signal(container_widget, Rc::clone(&layout));
             
         // Build the final structure
         FloFixedWidget {
@@ -110,11 +117,22 @@ impl FloFixedWidget {
         self.image = new_image_widget;
         self.image.as_ref().map(|new_image| container.add(new_image));
     }
+}
 
-    ///
-    /// Attaches a signal handler to perform layout in the specified container when resized
-    /// 
-    fn attach_layout_signal(container: &gtk::Container, layout: Rc<RefCell<FloWidgetLayout>>) {
+impl FixedWidgetLayout for gtk::Fixed {
+    fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
+        let container = fixed.upcast::<gtk::Container>();
+
+        container.connect_size_allocate(move |container, _allocation| {
+            layout.borrow().layout_fixed(container);
+        });
+    }
+}
+
+impl FixedWidgetLayout for gtk::Layout {
+    fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
+        let container = layout_widget.upcast::<gtk::Container>();
+
         container.connect_size_allocate(move |container, _allocation| {
             layout.borrow().layout_fixed(container);
         });
