@@ -6,7 +6,6 @@ use super::flo_label_widget::*;
 use super::flo_scale_widget::*;
 use super::flo_canvas_widget::*;
 use super::widget_data::*;
-use super::basic_widget::*;
 use super::super::gtk_action::*;
 
 use gtk;
