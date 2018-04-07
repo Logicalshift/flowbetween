@@ -3,7 +3,6 @@ use super::widget::*;
 use super::basic_widget::*;
 use super::flo_layout::*;
 use super::widget_data::*;
-use super::proxy_widget::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 
@@ -11,8 +10,6 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
-use gdk_pixbuf;
-use gdk_pixbuf::prelude::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -99,28 +96,7 @@ impl FloFixedWidget {
 
         if let Some(new_image) = new_image {
             // Create a new image widget
-            let pixbuf          = pixbuf_from_image(new_image);
-            let image_widget    = gtk::Image::new();
-            
-            // GTK can't auto-scale images, so we'll do that ourselves
-            image_widget.connect_size_allocate(move |image, allocation| {
-                let image = image.clone();
-                if let Some(image) = image.dynamic_cast::<gtk::Image>().ok() {
-                    // Work out the scale ratio for the image (so we fit it into the control but keep the aspect ratio)
-                    let (image_width, image_height)     = (pixbuf.get_width() as f64, pixbuf.get_height() as f64);
-                    let (target_width, target_height)   = (allocation.width as f64, allocation.height as f64);
-                    let (ratio_w, ratio_h)              = (target_width/image_width, target_height/image_height);
-                    let ratio                           = ratio_w.min(ratio_h);
-
-                    // Create a scaled image with that ratio
-                    let (new_width, new_height)         = (image_width * ratio, image_height * ratio);
-                    let (new_width, new_height)         = (new_width.floor() as i32, new_height.floor() as i32);
-
-                    // Scale the image to fit
-                    let scaled = pixbuf.scale_simple(new_width, new_height, gdk_pixbuf::InterpType::Bilinear);
-                    scaled.map(|scaled| image.set_from_pixbuf(&scaled));
-                }
-            });
+            let image_widget = image_from_image(new_image);
 
             // This is the image widget we'll put into this container
             new_image_widget    = Some(image_widget);

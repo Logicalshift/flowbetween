@@ -2,6 +2,7 @@ mod window;
 mod widget;
 mod widget_data;
 pub mod basic_widget;
+pub mod flo_bin_widget;
 pub mod flo_label_widget;
 pub mod flo_fixed_widget;
 pub mod flo_popup_widget;
