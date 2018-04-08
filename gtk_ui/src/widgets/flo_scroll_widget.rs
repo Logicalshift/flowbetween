@@ -147,13 +147,31 @@ impl FloScrollWidget {
     ///
     /// Generates a virtual scroll event when an adjustment changes
     /// 
+    fn connect_virtual_scroll_on_resize(&self, state: Rc<RefCell<VirtualScrollState>>, sink: GtkEventSink, action_name: String, width: f32, height: f32) {
+        let weak_layout = self.layout.clone().downgrade();
+        let sink        = RefCell::new(sink);
+        let widget_id   = self.id;
+
+        // Generate a new virtual scroll event whenever the scroll window's size changes
+        self.scroll_window.connect_size_allocate(move |_, _allocation| {
+            println!("New scroll window allocation: {:?}", _allocation);
+
+            if let Some(layout) = weak_layout.upgrade() {
+                Self::generate_virtual_scroll_event(widget_id, Rc::clone(&state), &mut *sink.borrow_mut(), &action_name, &layout, width, height);
+            }
+        });
+    }
+
+    ///
+    /// Generates a virtual scroll event when an adjustment changes
+    /// 
     fn connect_virtual_scroll_on_adjust(&self, adjustment: gtk::Adjustment, state: Rc<RefCell<VirtualScrollState>>, sink: GtkEventSink, action_name: String, width: f32, height: f32) {
         let weak_layout = self.layout.clone().downgrade();
         let sink        = RefCell::new(sink);
         let widget_id   = self.id;
 
-        // Generate a new virtual scroll event whenever the size changes
-        adjustment.connect_changed(move |_| {
+        // Generate a new virtual scroll event whenever the adjustment's value changes
+        adjustment.connect_value_changed(move |_| {
             if let Some(layout) = weak_layout.upgrade() {
                 Self::generate_virtual_scroll_event(widget_id, Rc::clone(&state), &mut *sink.borrow_mut(), &action_name, &layout, width, height);
             }
@@ -174,6 +192,7 @@ impl FloScrollWidget {
         Self::generate_virtual_scroll_event(self.id, Rc::clone(&scroll_state), &mut sink, &action_name, &self.layout, width, height);
 
         // Generate virtual scroll events when the size of the scroll area changes
+        self.connect_virtual_scroll_on_resize(Rc::clone(&scroll_state), sink.clone(), action_name.clone(), width, height);
         self.connect_virtual_scroll_on_adjust(self.layout.get_hadjustment().unwrap(), Rc::clone(&scroll_state), sink.clone(), action_name.clone(), width, height);
         self.connect_virtual_scroll_on_adjust(self.layout.get_vadjustment().unwrap(), Rc::clone(&scroll_state), sink, action_name, width, height);
     }
