@@ -60,6 +60,18 @@ impl FloScrollWidget {
         // Create the widgets
         let layout          = gtk::Layout::new(None, None);
 
+        // Ugly hack...
+        // Scroll windows try to shrink when you take controls out of them (for some reason, even with a layout with a set size).
+        // Telling the scroll window that it's allocated size is the same as its minimum size prevents this
+        scroll_window.connect_size_allocate(|scroll_window, allocate| {
+            scroll_window.set_min_content_width(allocate.width);
+            scroll_window.set_min_content_height(allocate.height);
+        });
+
+        // If the scroll window is created at 0 size, it generates a warning, so set a default min size to suppress it
+        scroll_window.set_min_content_width(16);
+        scroll_window.set_min_content_height(16);
+
         // Stick them together
         scroll_window.set_policy(gtk::PolicyType::Always, gtk::PolicyType::Always);
         scroll_window.add(&layout);
@@ -141,6 +153,8 @@ impl FloScrollWidget {
             // Send the event
             let scroll_parameter = GtkEventParameter::VirtualScroll((grid_x, grid_y), (grid_w, grid_h));
             sink.start_send(GtkEvent::Event(widget_id, action_name.to_string(), scroll_parameter)).unwrap();
+        } else {
+            println!("Not scrolling: {:?}", new_state);
         }
     }
 
@@ -154,11 +168,8 @@ impl FloScrollWidget {
 
         // Generate a new virtual scroll event whenever the scroll window's size changes
         self.scroll_window.connect_size_allocate(move |_, _allocation| {
-            println!("New scroll window allocation: {:?}", _allocation);
-
             if let Some(layout) = weak_layout.upgrade() {
-                // TODO: gtk is generating a 0 size event for some reason that's currently utterly mysterious
-                // Self::generate_virtual_scroll_event(widget_id, Rc::clone(&state), &mut *sink.borrow_mut(), &action_name, &layout, width, height);
+                Self::generate_virtual_scroll_event(widget_id, Rc::clone(&state), &mut *sink.borrow_mut(), &action_name, &layout, width, height);
             }
         });
     }
