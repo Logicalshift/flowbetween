@@ -17,28 +17,60 @@ use std::cell::*;
 /// 
 pub struct FloScrollWidget {
     /// The ID of this widget
-    id:         WidgetId,
+    id:             WidgetId,
 
-    /// The layout widget that we'll use to manage the scrolling region
-    layout:     gtk::Layout,
+    /// The grid containing the scroll bars
+    grid:           gtk::Grid,
 
     /// The same widget, cast as a widget
-    as_widget:  gtk::Widget,
+    as_widget:      gtk::Widget,
+
+    /// The horizontal scrollbar for this widget
+    horiz_scroll:   gtk::Scrollbar,
+
+    /// The vertical scrollbar for this widget
+    vert_scroll:    gtk::Scrollbar,
+
+    /// The layout, where the actual child controls go
+    layout:         gtk::Layout,
 
     /// We delegate the actual layout tasks (along with things like setting the image and text) to FloFixedWidget
-    fixed_widget: FloFixedWidget
+    fixed_widget:   FloFixedWidget
 }
 
 impl FloScrollWidget {
     ///
     /// Creates a new scroll widget
     ///
-    pub fn new(id: WidgetId, layout: gtk::Layout, widget_data: Rc<WidgetData>) -> FloScrollWidget {
-        let as_widget       = layout.clone().upcast::<gtk::Widget>();
+    pub fn new(id: WidgetId, grid: gtk::Grid, widget_data: Rc<WidgetData>) -> FloScrollWidget {
+        // Create the widgets
+        let layout          = gtk::Layout::new(None, None);
+        let horiz_scroll    = gtk::Scrollbar::new(gtk::Orientation::Horizontal, None);
+        let vert_scroll     = gtk::Scrollbar::new(gtk::Orientation::Vertical, None);
+        let packer          = gtk::Fixed::new();
+
+        // Set up the various widgets
+        packer.set_size_request(0,0);
+        layout.set_hexpand(true);
+        layout.set_vexpand(true);
+
+        horiz_scroll.set_adjustment(&layout.get_hadjustment().unwrap());
+        vert_scroll.set_adjustment(&layout.get_vadjustment().unwrap());
+
+        // Fill up the grid
+        grid.attach(&layout, 0, 0, 1, 1);
+        grid.attach(&horiz_scroll, 0, 1, 1, 1);
+        grid.attach(&vert_scroll, 1, 0, 1, 1);
+        grid.attach(&packer, 1, 1, 1, 1);
+
+        let as_widget       = grid.clone().upcast::<gtk::Widget>();
         let fixed_widget    = FloFixedWidget::new(id, layout.clone(), widget_data);
 
         FloScrollWidget {
             id:             id,
+            grid:           grid,
+            horiz_scroll:   horiz_scroll,
+            vert_scroll:    vert_scroll,
             layout:         layout,
             as_widget:      as_widget,
             fixed_widget:   fixed_widget

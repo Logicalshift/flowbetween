@@ -30,7 +30,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new(), widget_data)),
         Popup               => Box::new(FloPopupWidget::new(id, gtk::Fixed::new())),
 
-        ScrollArea          => Box::new(FloScrollWidget::new(id, gtk::Layout::new(None, None), widget_data)),
+        ScrollArea          => Box::new(FloScrollWidget::new(id, gtk::Grid::new(), widget_data)),
 
         Scale           => {
             let scale = gtk::Scale::new(gtk::Orientation::Horizontal, None);
