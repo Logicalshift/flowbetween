@@ -214,8 +214,12 @@ impl CairoDraw {
     /// 
     fn height_matrix(height: f32) -> Matrix {
         let height      = height as f64;
-        let ratio_x     = 2.0/height;
+        let mut ratio_x = 2.0/height;
         let ratio_y     = ratio_x;
+
+        if height < 0.0 {
+            ratio_x = -ratio_x;
+        }
 
         let mut result  = Matrix::identity();
         result.scale(ratio_x, ratio_y);
