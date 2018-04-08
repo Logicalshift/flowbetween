@@ -30,7 +30,13 @@ pub struct FloScrollWidget {
     layout:         gtk::Layout,
 
     /// We delegate the actual layout tasks (along with things like setting the image and text) to FloFixedWidget
-    fixed_widget:   FloFixedWidget
+    fixed_widget:   FloFixedWidget,
+
+    /// The horizontal scrollbar policy
+    h_policy:       gtk::PolicyType,
+
+    /// The vertical scrollbar policy
+    v_policy:       gtk::PolicyType
 }
 
 impl FloScrollWidget {
@@ -42,6 +48,7 @@ impl FloScrollWidget {
         let layout          = gtk::Layout::new(None, None);
 
         // Stick them together
+        scroll_window.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Never);
         scroll_window.add(&layout);
 
         // Generate the widget
@@ -53,8 +60,30 @@ impl FloScrollWidget {
             scroll_window:  scroll_window,
             layout:         layout,
             as_widget:      as_widget,
-            fixed_widget:   fixed_widget
+            fixed_widget:   fixed_widget,
+            h_policy:       gtk::PolicyType::Never,
+            v_policy:       gtk::PolicyType::Never
         }
+    }
+
+    ///
+    /// Generates the scrollbar visibility for a particular policy
+    /// 
+    fn policy_for_visibility(visibility: ScrollBarVisibility) -> gtk::PolicyType {
+        use self::ScrollBarVisibility::*;
+
+        match visibility {
+            Never           => gtk::PolicyType::Never,
+            Always          => gtk::PolicyType::Always,
+            OnlyIfNeeded    => gtk::PolicyType::Automatic
+        }
+    }
+
+    ///
+    /// Updates the policy for this scroll widget (which is what GTK calls the rules for showing the scroll bars)
+    /// 
+    fn update_policy(&self) {
+        self.scroll_window.set_policy(self.h_policy, self.v_policy);
     }
 }
 
@@ -72,8 +101,8 @@ impl GtkUiWidget for FloScrollWidget {
         match action {
             // Scroll actions are handled by this control
             &Scroll(MinimumContentSize(width, height))  => { self.layout.set_size(width as u32, height as u32); },
-            &Scroll(HorizontalScrollBar(visibility))    => { /* TODO */ },
-            &Scroll(VerticalScrollBar(visibility))      => { /* TODO */ },
+            &Scroll(HorizontalScrollBar(visibility))    => { self.h_policy = Self::policy_for_visibility(visibility); self.update_policy(); },
+            &Scroll(VerticalScrollBar(visibility))      => { self.v_policy = Self::policy_for_visibility(visibility); self.update_policy(); },
 
             // Content actions are handled by the fixed widget
             &Content(SetText(_))                        => { self.fixed_widget.process(flo_gtk, action); },
