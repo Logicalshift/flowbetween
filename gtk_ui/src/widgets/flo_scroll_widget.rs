@@ -1,5 +1,6 @@
 use super::widget::*;
 use super::widget_data::*;
+use super::basic_widget::*;
 use super::flo_fixed_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
@@ -86,14 +87,21 @@ impl GtkUiWidget for FloScrollWidget {
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         use self::GtkWidgetAction::*;
         use self::Scroll::*;
+        use self::WidgetContent::SetText;
+        use self::Appearance::Image;
 
         match action {
+            // Scroll actions are handled by this control
             &Scroll(MinimumContentSize(width, height))  => { self.layout.set_size(width as u32, height as u32); },
             &Scroll(HorizontalScrollBar(visibility))    => { /* TODO */ },
             &Scroll(VerticalScrollBar(visibility))      => { /* TODO */ },
 
-            // All other actions act as if the fixed widget performed them
-            other_action => { self.fixed_widget.process(flo_gtk, other_action); }
+            // Content actions are handled by the fixed widget
+            &Content(SetText(ref new_text))             => { self.fixed_widget.process(flo_gtk, action); },
+            &Appearance(Image(ref image_data))          => { self.fixed_widget.process(flo_gtk, action); },
+
+            // All other actions are basic actions
+            other_action                                => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
     }
 
