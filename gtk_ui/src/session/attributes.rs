@@ -134,6 +134,10 @@ impl ToGtkActions for ControlAttribute {
 
             &Id(ref id)                             => vec![ WidgetContent::AddClass(id.clone()).into() ].into_actions(),
             &Action(ref _trigger, ref _action_name) => vec![],
+
+            // TODO: canvas drawing instructions are needed for canvases that have been 'seen' before, but for entirely new canvases
+            // there will be an initial update that will duplicate these actions (fortunately starting with a clear so it's not user
+            // visible)
             &Canvas(ref canvas)                     => vec![ WidgetContent::Draw(canvas.get_drawing()).into() ].into_actions(),
 
             // The GTK layout doesn't need to know the controller
