@@ -28,7 +28,10 @@ pub enum GtkEventParameter {
     PaintContinue(GtkPainting),
 
     /// Painting finished
-    PaintFinish(GtkPainting)
+    PaintFinish(GtkPainting),
+
+    /// Virtual scroll region has moved (tuples are the x and y coordinates and the width and height of the grid)
+    VirtualScroll((u32, u32), (u32, u32))
 }
 
 ///
@@ -45,11 +48,12 @@ pub struct GtkPainting {
 impl From<GtkEventParameter> for ActionParameter {
     fn from(event: GtkEventParameter) -> ActionParameter {
         match event {
-            GtkEventParameter::None                 => ActionParameter::None,
-            GtkEventParameter::ScaleValue(value)    => ActionParameter::Value(PropertyValue::Float(value)),
-            GtkEventParameter::PaintStart(paint)    => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Start) ]),
-            GtkEventParameter::PaintContinue(paint) => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Continue) ]),
-            GtkEventParameter::PaintFinish(paint)   => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Finish) ]),
+            GtkEventParameter::None                             => ActionParameter::None,
+            GtkEventParameter::ScaleValue(value)                => ActionParameter::Value(PropertyValue::Float(value)),
+            GtkEventParameter::PaintStart(paint)                => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Start) ]),
+            GtkEventParameter::PaintContinue(paint)             => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Continue) ]),
+            GtkEventParameter::PaintFinish(paint)               => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Finish) ]),
+            GtkEventParameter::VirtualScroll(top_left, size)    => ActionParameter::VirtualScroll(top_left, size)
         }
     }
 }

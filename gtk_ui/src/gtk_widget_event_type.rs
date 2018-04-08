@@ -27,7 +27,10 @@ pub enum GtkWidgetEventType {
     EditValue,
 
     /// User has picked a final value
-    SetValue
+    SetValue,
+
+    /// Performs virtual scrolling using a grid with the specified width and height
+    VirtualScroll(f32, f32)
 }
 
 impl From<PaintDevice> for GtkPaintDevice {
