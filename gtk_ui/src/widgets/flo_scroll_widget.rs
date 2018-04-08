@@ -97,8 +97,8 @@ impl GtkUiWidget for FloScrollWidget {
             &Scroll(VerticalScrollBar(visibility))      => { /* TODO */ },
 
             // Content actions are handled by the fixed widget
-            &Content(SetText(ref new_text))             => { self.fixed_widget.process(flo_gtk, action); },
-            &Appearance(Image(ref image_data))          => { self.fixed_widget.process(flo_gtk, action); },
+            &Content(SetText(_))                        => { self.fixed_widget.process(flo_gtk, action); },
+            &Appearance(Image(_))                       => { self.fixed_widget.process(flo_gtk, action); },
 
             // All other actions are basic actions
             other_action                                => { process_basic_widget_action(self, flo_gtk, other_action); }
