@@ -157,7 +157,8 @@ impl FloScrollWidget {
             println!("New scroll window allocation: {:?}", _allocation);
 
             if let Some(layout) = weak_layout.upgrade() {
-                Self::generate_virtual_scroll_event(widget_id, Rc::clone(&state), &mut *sink.borrow_mut(), &action_name, &layout, width, height);
+                // TODO: gtk is generating a 0 size event for some reason that's currently utterly mysterious
+                // Self::generate_virtual_scroll_event(widget_id, Rc::clone(&state), &mut *sink.borrow_mut(), &action_name, &layout, width, height);
             }
         });
     }
