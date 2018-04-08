@@ -48,7 +48,7 @@ impl FloScrollWidget {
         let layout          = gtk::Layout::new(None, None);
 
         // Stick them together
-        scroll_window.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Never);
+        scroll_window.set_policy(gtk::PolicyType::Always, gtk::PolicyType::Always);
         scroll_window.add(&layout);
 
         // Generate the widget
@@ -61,8 +61,8 @@ impl FloScrollWidget {
             layout:         layout,
             as_widget:      as_widget,
             fixed_widget:   fixed_widget,
-            h_policy:       gtk::PolicyType::Never,
-            v_policy:       gtk::PolicyType::Never
+            h_policy:       gtk::PolicyType::Always,
+            v_policy:       gtk::PolicyType::Always
         }
     }
 
