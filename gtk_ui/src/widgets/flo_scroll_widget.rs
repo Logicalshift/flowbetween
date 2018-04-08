@@ -100,7 +100,7 @@ impl GtkUiWidget for FloScrollWidget {
 
         match action {
             // Scroll actions are handled by this control
-            &Scroll(MinimumContentSize(width, height))  => { self.layout.set_size(width as u32, height as u32); },
+            &Scroll(MinimumContentSize(width, height))  => { self.layout.set_size((width.max(1.0)) as u32, (height.max(1.0)) as u32); },
             &Scroll(HorizontalScrollBar(visibility))    => { self.h_policy = Self::policy_for_visibility(visibility); self.update_policy(); },
             &Scroll(VerticalScrollBar(visibility))      => { self.v_policy = Self::policy_for_visibility(visibility); self.update_policy(); },
 
