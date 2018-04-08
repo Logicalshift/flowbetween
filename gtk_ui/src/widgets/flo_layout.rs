@@ -255,7 +255,12 @@ impl FloWidgetLayout {
                 let _preferred_size = (underlying.get_preferred_width(), underlying.get_preferred_height());    // Side-effect: suppress warning about fixed layout
                 
                 // Resize the widget
-                underlying.size_allocate(&mut gtk::Rectangle { x: new_x, y: new_y, width: new_width, height: new_height });
+                let existing_allocation = underlying.get_allocation();
+                let new_allocation      = gtk::Rectangle { x: new_x, y: new_y, width: new_width, height: new_height };
+
+                if existing_allocation != new_allocation {
+                    underlying.size_allocate(&mut gtk::Rectangle { x: new_x, y: new_y, width: new_width, height: new_height });
+                }
 
                 // Store the z-index for later ordering
                 z_indices.push((widget_layout.id, widget_layout.z_index));
