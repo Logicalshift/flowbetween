@@ -148,13 +148,9 @@ impl FloScrollWidget {
             // Store the state
             *old_state = new_state;
 
-            println!("Virtual scroll: {:?} {:?} {:?}", page_x, page_w, new_state);
-
             // Send the event
             let scroll_parameter = GtkEventParameter::VirtualScroll((grid_x, grid_y), (grid_w, grid_h));
             sink.start_send(GtkEvent::Event(widget_id, action_name.to_string(), scroll_parameter)).unwrap();
-        } else {
-            println!("Not scrolling: {:?}", new_state);
         }
     }
 
