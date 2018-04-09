@@ -12,6 +12,14 @@ use std::rc::*;
 use std::collections::HashSet;
 
 ///
+/// Indicates the floating position of a widget (used when laying it out again) 
+/// 
+pub struct FloatingPosition {
+    pub x: f32,
+    pub y: f32
+}
+
+///
 /// Provides the computed layout position for a widget
 /// 
 #[derive(Clone, Copy)]
@@ -63,13 +71,13 @@ impl FloWidgetLayout {
         use self::Position::*;
 
         match next_pos {
-            &At(pos)                    => pos,
-            &Floating(ref _prop, offset) => offset, /* TODO: need to layout via viewmodel */
-            &Offset(offset)             => last_pos + offset,
-            &Stretch(portion)           => last_pos + stretch_area * (portion/total_stretch),
-            &Start                      => 0.0,
-            &End                        => max_pos,
-            &After                      => last_pos
+            &At(pos)                        => pos,
+            &Floating(ref _prop, offset)    => offset,
+            &Offset(offset)                 => last_pos + offset,
+            &Stretch(portion)               => last_pos + stretch_area * (portion/total_stretch),
+            &Start                          => 0.0,
+            &End                            => max_pos,
+            &After                          => last_pos
         }
     }
 
@@ -235,10 +243,17 @@ impl FloWidgetLayout {
                 let (left, top, right, bottom)  = (widget_layout.padding.0 as f64, widget_layout.padding.1 as f64, widget_layout.padding.2 as f64, widget_layout.padding.3 as f64);
 
                 // Convert to x, y and width and height
-                let x       = x1+left;
-                let y       = y1+top;
+                let mut x   = x1+left;
+                let mut y   = y1+top;
                 let width   = (x2-x1)-(left+right);
                 let height  = (y2-y1)-(top+bottom);
+
+                // Adjust by the floating position if there is one (this will be value as it was last updated via the viewmodel)
+                if let Some(floating) = self.widget_data.get_widget_data::<FloatingPosition>(widget_layout.id) {
+                    let floating = floating.borrow();
+                    x += floating.x as f64;
+                    y += floating.y as f64;
+                }
 
                 // Borrow the widget and set its properties
                 let widget      = widget.borrow();
