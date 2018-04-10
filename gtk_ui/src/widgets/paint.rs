@@ -13,6 +13,8 @@ use gtk::prelude::*;
 use gdk;
 use gdk::prelude::*;
 use gdk_sys;
+use cairo;
+use cairo::prelude::*;
 use futures::*;
 
 use std::rc::*;
@@ -33,7 +35,10 @@ pub struct PaintActions {
     event_sink: GtkEventSink,
 
     /// True if we're following some paint events
-    painting: bool
+    painting: bool,
+
+    /// The transformation matrix in use at the time the event started
+    transform: cairo::Matrix
 }
 
 impl PaintActions {
@@ -45,7 +50,8 @@ impl PaintActions {
             widget_id:  widget_id,
             event_name: event_name,
             event_sink: event_sink,
-            painting:   false
+            painting:   false,
+            transform:  cairo::Matrix::identity()
         }
     }
 
@@ -113,9 +119,13 @@ impl PaintActions {
             let event_name      = paint.event_name.clone();
             let mut painting    = GtkPainting::from_button(event);
 
+            paint.transform     = cairo::Matrix::identity();
+
             if let Some(transform) = widget_data.get_widget_data(widget_id) {
-                painting.transform(&*transform.borrow());
+                paint.transform = *transform.borrow();
             }
+
+            painting.transform(&paint.transform);
 
             // TODO: check if this is a device we want to follow
 
@@ -149,9 +159,7 @@ impl PaintActions {
                 let event_name      = paint.event_name.clone();
                 let mut painting    = GtkPainting::from_button(event);
 
-                if let Some(transform) = widget_data.get_widget_data(widget_id) {
-                    painting.transform(&*transform.borrow());
-                }
+                painting.transform(&paint.transform);
 
                 // Generate the start event on the sink
                 paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintFinish(painting))).unwrap();
@@ -195,9 +203,7 @@ impl PaintActions {
                 let event_name      = paint.event_name.clone();
                 let mut painting    = GtkPainting::from_motion(event);
 
-                if let Some(transform) = widget_data.get_widget_data(widget_id) {
-                    painting.transform(&*transform.borrow());
-                }
+                painting.transform(&paint.transform);
 
                 // Generate the start event on the sink
                 paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting))).unwrap();
