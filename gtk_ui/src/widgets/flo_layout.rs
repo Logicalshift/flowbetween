@@ -72,7 +72,7 @@ impl FloWidgetLayout {
 
         match next_pos {
             &At(pos)                        => pos,
-            &Floating(ref _prop, offset)    => last_pos + offset,
+            &Floating(ref _prop, offset)    => offset,
             &Offset(offset)                 => last_pos + offset,
             &Stretch(portion)               => last_pos + stretch_area * (portion/total_stretch),
             &Start                          => 0.0,
