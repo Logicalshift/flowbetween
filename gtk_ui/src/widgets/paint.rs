@@ -10,6 +10,7 @@ use gtk;
 use gtk::prelude::*;
 use gdk;
 use gdk::prelude::*;
+use gdk_sys;
 use futures::*;
 
 use std::rc::*;
@@ -188,6 +189,9 @@ impl PaintActions {
                 paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting))).unwrap();
 
                 // TODO: also check that we're following the right device
+
+                // Request more motions
+                unsafe { gdk_sys::gdk_event_request_motions(event.as_ref()); }
 
                 Inhibit(true)
             } else {
