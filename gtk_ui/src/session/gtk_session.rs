@@ -3,6 +3,7 @@ use super::attributes::*;
 use super::gtk_control::*;
 use super::property_action::*;
 use super::gtk_user_interface::*;
+use super::consolidate_actions::*;
 use super::super::gtk_event::*;
 use super::super::gtk_action::*;
 use super::super::gtk_widget_event_type::*;
@@ -176,6 +177,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
                 core.process_event(event)
             })
             .filter(|events| events.len() > 0);
+        let core_ui_events  = ConsolidateActionsStream::new(core_ui_events);
         
         // Send the processed events to the core input
         let event_process = core_input.send_all(core_ui_events);

@@ -5,6 +5,7 @@ mod gtk_control;
 mod attributes;
 mod property_action;
 mod viewmodel;
+mod consolidate_actions;
 
 pub use self::gtk_session::*;
 pub use self::gtk_user_interface::*;
