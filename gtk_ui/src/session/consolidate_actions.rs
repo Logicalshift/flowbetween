@@ -1,3 +1,4 @@
+use flo_ui::*;
 use flo_ui::session::*;
 
 use futures::*;
@@ -40,6 +41,39 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream
             (next_event, future_event)
         }
     }
+
+    ///
+    /// Attempts to combine consecutive events that can be considered a single event (paint events, basically)
+    /// 
+    fn reduce(&mut self, events: &mut Vec<UiEvent>) {
+        let mut index = 0;
+
+        loop {
+            // Stop when there's no 'next' item
+            if index+1 >= events.len() {
+                break;
+            }
+
+            match (events[index].clone(), events[index+1].clone()) {
+                (UiEvent::Action(controller1, event_name1, ActionParameter::Paint(device1, paint_actions1)), UiEvent::Action(controller2, event_name2, ActionParameter::Paint(device2, paint_actions2))) => {
+                    if device1 == device2 && event_name1 == event_name2 && controller1 == controller2 {
+                        // Combine paint events
+                        let mut paint_actions = paint_actions1;
+                        paint_actions.extend(paint_actions2);
+
+                        events[index] = UiEvent::Action(controller1, event_name1, ActionParameter::Paint(device1, paint_actions));
+                        events.remove(index+1);
+                    } else {
+                        // Move on to the next event
+                        index += 1;
+                    }
+                },
+
+                // Move on to the next event
+                _ => { index += 1; }
+            }
+        }
+    }
 }
 
 impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> Stream for ConsolidateActionsStream<ActionStream> {
@@ -67,6 +101,9 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> Stream for ConsolidateAc
                         _                       => { break; }
                     }
                 }
+
+                // Reduce the consolidated events
+                self.reduce(&mut next_event);
 
                 Ok(Ready(Some(next_event)))
             } else {
