@@ -127,6 +127,9 @@ pub enum WidgetLayout {
     /// Specifies how this widget should be laid out
     BoundingBox(Bounds),
 
+    /// Specifies the floating offset for this widget
+    Floating(f32, f32),
+
     /// Specifies the Z-index of this widget
     ZIndex(u32),
 

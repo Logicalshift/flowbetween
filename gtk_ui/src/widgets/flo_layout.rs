@@ -22,17 +22,17 @@ pub struct FloatingPosition {
 ///
 /// Provides the computed layout position for a widget
 /// 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct WidgetPosition {
-    id: WidgetId,
+    pub id: WidgetId,
 
-    x1: f32,
-    y1: f32,
-    x2: f32,
-    y2: f32,
+    pub x1: f32,
+    pub y1: f32,
+    pub x2: f32,
+    pub y2: f32,
 
-    padding: (u32, u32, u32, u32),
-    z_index: u32
+    pub padding: (u32, u32, u32, u32),
+    pub z_index: u32
 }
 
 ///
@@ -72,7 +72,7 @@ impl FloWidgetLayout {
 
         match next_pos {
             &At(pos)                        => pos,
-            &Floating(ref _prop, offset)    => offset,
+            &Floating(ref _prop, offset)    => last_pos + offset,
             &Offset(offset)                 => last_pos + offset,
             &Stretch(portion)               => last_pos + stretch_area * (portion/total_stretch),
             &Start                          => 0.0,

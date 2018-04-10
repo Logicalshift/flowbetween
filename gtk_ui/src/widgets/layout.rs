@@ -38,7 +38,8 @@ impl Layout {
         match layout {
             &BoundingBox(ref bounds)                => self.bounds = Some(bounds.clone()),
             &ZIndex(z_index)                        => self.z_index = Some(z_index),
-            &Padding((left, top), (right, bottom))  => self.padding = Some((left, top, right, bottom))
+            &Padding((left, top), (right, bottom))  => self.padding = Some((left, top, right, bottom)),
+            &Floating(_, _)                         => ()
         }
     }
 }

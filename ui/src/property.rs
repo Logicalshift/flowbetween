@@ -62,10 +62,21 @@ impl PropertyValue {
 
     ///
     /// Returns the floating point value of this property, if it is one
-    /// 
+    ///
     pub fn to_f32(&self) -> Option<f32> {
         if let &PropertyValue::Float(result) = self {
             Some(result as f32)
+        } else {
+            None
+        }
+    }
+
+    ///
+    /// Returns the floating point value of this property, if it is one
+    ///
+    pub fn to_f64(&self) -> Option<f64> {
+        if let &PropertyValue::Float(result) = self {
+            Some(result)
         } else {
             None
         }

@@ -1,6 +1,7 @@
 use super::paint::*;
 use super::layout::*;
 use super::widget::*;
+use super::flo_layout::*;
 use super::custom_style::*;
 use super::super::gtk_event::*;
 use super::super::gtk_action::*;
@@ -113,6 +114,31 @@ pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_g
 
     // Update it with the content of the command
     widget_layout.map(move |widget_layout| widget_layout.borrow_mut().update(layout));
+
+    // For floating widgets, we may need to reallocate them immediately
+    if let &WidgetLayout::Floating(float_x, float_y) = layout {
+        // Update the floating position data (so the next layout will use it)
+        widget_data.set_widget_data(id, FloatingPosition { x: float_x, y: float_y });
+
+        // Update the widget position from its position
+        if let Some(current_position) = widget_data.get_widget_data::<WidgetPosition>(id) {
+            let current_position    = current_position.borrow();
+
+            let new_x               = current_position.x1 + float_x;
+            let new_y               = current_position.y1 + float_y;
+            let width               = current_position.x2 - current_position.x1;
+            let height              = current_position.y2 - current_position.y2;
+
+            let new_x               = new_x.floor() as i32;
+            let new_y               = new_y.floor() as i32;
+            let width               = width.floor() as i32;
+            let height              = height.floor() as i32;
+
+            println!("{:?} {:?} {:?}", current_position, float_x, float_y);
+
+            widget.size_allocate(&mut gtk::Rectangle { x: new_x, y: new_y, width: width, height: height });
+        }
+    }
 
     // Tell the parent of this widget it needs relayout
     widget.get_parent().map(|parent| parent.queue_resize());

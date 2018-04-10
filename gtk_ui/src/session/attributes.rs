@@ -3,6 +3,8 @@ use super::super::gtk_action::*;
 
 use flo_ui::*;
 
+use std::sync::*;
+
 pub type PropertyWidgetAction = PropertyAction<GtkWidgetAction>;
 
 ///
@@ -120,7 +122,7 @@ impl ToGtkActions for ControlAttribute {
         use self::ControlAttribute::*;
 
         match self {
-            &BoundingBox(ref bounds)                => vec![ WidgetLayout::BoundingBox(bounds.clone()).into() ].into_actions(),
+            &BoundingBox(ref bounds)                => bounds.to_gtk_actions(),
             &ZIndex(zindex)                         => vec![ WidgetLayout::ZIndex(zindex).into() ].into_actions(),
             &Padding((left, top), (right, bottom))  => vec![ WidgetLayout::Padding((left, top), (right, bottom)).into() ].into_actions(),
             
@@ -146,6 +148,50 @@ impl ToGtkActions for ControlAttribute {
             // Subcomponents are added elsewhere: we don't assign them here
             &SubComponents(ref _components)         => vec![]
         }
+    }
+}
+
+impl ToGtkActions for Bounds {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        // We always start by setting the bounding box to the active value
+        let mut result = vec![ PropertyAction::Unbound(WidgetLayout::BoundingBox(self.clone()).into()) ];
+
+        // The bounding box may have floating properties in x1 and y1 (we don't support x2 and y2 yet). These get property bindings that trigger relayouts
+        let floating_point = Arc::new(Mutex::new((0.0, 0.0)));
+
+        // If the x1 position is floating, then generate a property binding to update it
+        if let &Position::Floating(ref property, ref _offset) = &self.x1 {
+            let floating_point  = Arc::clone(&floating_point);
+
+            result.push(PropertyAction::from_property(property.clone(), move |x1_floating| {
+                // Update the floating point
+                let mut floating_point = floating_point.lock().unwrap();
+
+                if let Some(x1_floating) = x1_floating.to_f32() {
+                    floating_point.0 = x1_floating;
+                }
+
+                vec![ WidgetLayout::Floating(floating_point.0, floating_point.1).into() ]
+            }).into());
+        }
+
+        // If the y1 position is floating, then generate a property binding to update it
+        if let &Position::Floating(ref property, ref _offset) = &self.y1 {
+            let floating_point  = Arc::clone(&floating_point);
+
+            result.push(PropertyAction::from_property(property.clone(), move |y1_floating| {
+                // Update the floating point
+                let mut floating_point = floating_point.lock().unwrap();
+
+                if let Some(y1_floating) = y1_floating.to_f32() {
+                    floating_point.0 = y1_floating;
+                }
+
+                vec![ WidgetLayout::Floating(floating_point.0, floating_point.1).into() ]
+            }).into());
+        }
+
+        result
     }
 }
 
