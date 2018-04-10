@@ -116,7 +116,7 @@ impl Sink for GtkEventSink {
                 let mut stream_core = stream.lock().unwrap();
 
                 // Post the event
-                stream_core.pending.push_front(item.clone());
+                stream_core.pending.push_back(item.clone());
 
                 // Wake the stream if it's asleep
                 stream_core.poll_event.take().map(|task| task.notify());
