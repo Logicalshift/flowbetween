@@ -134,8 +134,6 @@ pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_g
             let width               = width.floor() as i32;
             let height              = height.floor() as i32;
 
-            println!("{:?} {:?} {:?}", current_position, float_x, float_y);
-
             widget.size_allocate(&mut gtk::Rectangle { x: new_x, y: new_y, width: width, height: height });
         }
     }
