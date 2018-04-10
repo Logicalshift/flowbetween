@@ -49,6 +49,9 @@ fn needs_event_box(control: &Control) -> bool {
             // Controls with a z-index need an event box
             &ZIndex(_) => true,
 
+            // Controls with painting need to turn off event compression
+            &Action(ActionTrigger::Paint(_), _) => true,
+
             // Other controls do not need an event box
             _ => false
         }
