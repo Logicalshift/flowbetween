@@ -9,6 +9,7 @@ use super::super::gtk_widget_event_type::*;
 use gtk;
 use gtk::prelude::*;
 use gdk;
+use gdk::prelude::*;
 use futures::*;
 
 use std::rc::*;
@@ -153,6 +154,23 @@ impl PaintActions {
     /// Sets up the motion event for a painting action
     /// 
     fn connect_motion(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
+        // Searches the widget hierarchy to find the widget with a window and disables event compression on it
+        fn disable_compression(widget: &gtk::Widget) {
+            if let Some(window) = widget.get_window() {
+                window.set_event_compression(false);
+            } else if let Some(parent) = widget.get_parent() {
+                disable_compression(&parent);
+            }
+        }
+
+        // If the widget is already realized then disable compression
+        disable_compression(widget);
+
+        // Disable compression if the widget is realized
+        widget.connect_realize(move |widget| {
+            disable_compression(widget);
+        });
+
         widget.connect_motion_notify_event(move |widget, event| {
             let mut paint = paint.borrow_mut();
 
