@@ -67,8 +67,12 @@ impl PixBufCanvas {
         let stored_surface  = cairo::ImageSurface::create(cairo::Format::ARgb32, width, height).unwrap();
         let stored_context  = cairo::Context::new(&stored_surface);
 
+        let surface_pattern = cairo::SurfacePattern::create(&layer.surface);
+        surface_pattern.set_filter(cairo::Filter::Nearest);
+
         // Copy from the layer surface to our stored surface
-        stored_context.set_source_surface(&layer.surface, 0.0, 0.0);
+        stored_context.set_source(&surface_pattern);
+        stored_context.set_antialias(cairo::Antialias::None);
         stored_context.set_operator(cairo::Operator::Source);
         stored_context.paint();
 
@@ -89,7 +93,11 @@ impl PixBufCanvas {
                 // Draw from the saved layer onto the main layer
                 let layer_context = cairo::Context::new(&layer_surface);
 
-                layer_context.set_source_surface(saved_layer, 0.0, 0.0);
+                let surface_pattern = cairo::SurfacePattern::create(&saved_layer);
+                surface_pattern.set_filter(cairo::Filter::Nearest);
+
+                layer_context.set_source(&surface_pattern);
+                layer_context.set_antialias(cairo::Antialias::None);
                 layer_context.set_operator(cairo::Operator::Source);
                 layer_context.paint();
             }
@@ -182,16 +190,25 @@ impl PixBufCanvas {
     /// Renders the canvas to a particular drawable
     /// 
     pub fn render_to_context(&self, drawable: &cairo::Context) {
+        drawable.save();
+
         // Put the layers in order
         let mut layers: Vec<_> = self.layers.iter().collect();
         layers.sort_by(|&a, &b| a.0.cmp(b.0));
 
+        drawable.set_antialias(cairo::Antialias::None);
+
         // Draw them to the target
         for (_, layer) in layers {
+            let layer_pattern = cairo::SurfacePattern::create(&layer.surface);
+            layer_pattern.set_filter(cairo::Filter::Nearest);
+
             drawable.set_operator(cairo::Operator::Over);
-            drawable.set_source_surface(&layer.surface, 0.0, 0.0);
+            drawable.set_source(&layer_pattern);
             drawable.paint();
         }
+
+        drawable.restore();
     }
 
     ///
