@@ -82,7 +82,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
         &Layout(ref layout)                         => process_basic_widget_layout(widget.id(), widget.get_underlying(), flo_gtk, layout),
         &Content(ref content)                       => process_basic_widget_content(widget, flo_gtk, content),
         &Appearance(ref appearance)                 => process_basic_widget_appearance(widget, flo_gtk, appearance),
-        &State(ref state)                           => process_basic_widget_state(widget, flo_gtk, state),
+        &State(ref state)                           => process_basic_widget_state(widget, state),
         &Font(ref font)                             => process_basic_widget_font(widget, flo_gtk, font),
         &Scroll(ref scroll)                         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
 
@@ -199,14 +199,14 @@ pub fn process_basic_widget_appearance<W: GtkUiWidget>(widget: &W, flo_gtk: &mut
             custom_style.borrow_mut().set_background(color);
         },
 
-        &Image(ref image)           => ()
+        &Image(ref _image)          => ()
     }
 }
 
 ///
 /// Processes a basic state command for a widget being managed by FlowBetween
 /// 
-pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, state: &WidgetState) {
+pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, state: &WidgetState) {
     use self::WidgetState::*;
 
     match state {
@@ -252,14 +252,14 @@ pub fn process_basic_widget_font<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGt
 ///
 /// Processes a scroll command for a widget
 /// 
-pub fn process_basic_widget_scroll<W: WidgetExt>(widget: &W, flo_gtk: &mut FloGtk, scroll: &Scroll) {
+pub fn process_basic_widget_scroll<W: WidgetExt>(_widget: &W, _flo_gtk: &mut FloGtk, scroll: &Scroll) {
     use self::Scroll::*;
 
     match scroll {
-        &MinimumContentSize(width, height)      => (),
-        &HorizontalScrollBar(ref visibility)    => (),
-        &VerticalScrollBar(ref visibility)      => (),
-        &Fix(ref axis)                          => ()
+        &MinimumContentSize(_width, _height)    => (),
+        &HorizontalScrollBar(ref _visibility)   => (),
+        &VerticalScrollBar(ref _visibility)     => (),
+        &Fix(ref _axis)                         => ()
     }
 }
 
