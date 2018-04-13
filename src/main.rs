@@ -50,7 +50,7 @@ fn main() {
         gtk_session.run();
     });
 
-    let http_thread = thread::spawn(|| {
+    let _http_thread = thread::spawn(|| {
         // Create the web session structure
         let sessions = Arc::new(WebSessions::new());
         
