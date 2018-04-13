@@ -237,6 +237,8 @@ impl PixBufCanvas {
         let surface = cairo::ImageSurface::create(cairo::Format::ARgb32, width, height).unwrap();
         let context = cairo::Context::new(&surface);
 
+        context.set_antialias(cairo::Antialias::Fast);
+
         // Pass on to a new CairoDraw instance
         let draw    = CairoDraw::new(context, *viewport);
 
