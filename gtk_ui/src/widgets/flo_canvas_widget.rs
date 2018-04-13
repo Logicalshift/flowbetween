@@ -211,12 +211,19 @@ impl FloDrawingWidget {
         }
         core.canvas.write(actions);
 
-        // Get the transformation matrix
+        // Get the transformation matrix: we store this as the translation matrix to use for paint events
         let canvas_to_widget = core.pixbufs.get_matrix();
         let mut widget_to_canvas = canvas_to_widget;
         widget_to_canvas.invert();
 
+        // Need to remove the viewport translation
+        let viewport            = core.pixbufs.get_viewport();
+        let mut move_viewport   = cairo::Matrix::identity();
+        move_viewport.translate(-(viewport.viewport_x) as f64, -(viewport.viewport_y) as f64);
+        widget_to_canvas        = cairo::Matrix::multiply(&move_viewport, &widget_to_canvas);
+
         if core.scale_factor != 1 {
+            // Need to adjust by the scale factor
             let scale_factor = core.scale_factor as f64;
             let mut scale_matrix = cairo::Matrix::identity();
             scale_matrix.scale(scale_factor, scale_factor);
