@@ -18,6 +18,7 @@ extern crate glib;
 extern crate anymap;
 extern crate futures;
 extern crate itertools;
+extern crate time;
 
 mod gtk_thread;
 mod gtk_event;
