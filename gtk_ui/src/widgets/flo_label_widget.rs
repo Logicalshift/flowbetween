@@ -35,7 +35,7 @@ impl FloLabelWidget {
         let widget  = widget.upcast::<gtk::Widget>();
 
         // FlowBetween labels are left-aligned by default
-        label.set_property_xalign(0.0);
+        label.set_xalign(0.0);
 
         // Generate the final widget
         FloLabelWidget {
@@ -57,9 +57,9 @@ impl GtkUiWidget for FloLabelWidget {
         use self::Font::*;
 
         match action {
-            &Font(Align(TextAlign::Left))   => { self.label.set_property_xalign(0.0); },
-            &Font(Align(TextAlign::Center)) => { self.label.set_property_xalign(0.5); },
-            &Font(Align(TextAlign::Right))  => { self.label.set_property_xalign(1.0); },
+            &Font(Align(TextAlign::Left))   => { self.label.set_xalign(0.0); },
+            &Font(Align(TextAlign::Center)) => { self.label.set_xalign(0.5); },
+            &Font(Align(TextAlign::Right))  => { self.label.set_xalign(1.0); },
 
             &Content(SetText(ref new_text)) => { self.label.set_text(&*new_text); },
             other_action                    => { process_basic_widget_action(self, flo_gtk, other_action); }
