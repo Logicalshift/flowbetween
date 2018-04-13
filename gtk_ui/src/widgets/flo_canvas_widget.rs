@@ -192,28 +192,16 @@ impl FloDrawingWidget {
     }
 
     ///
-    /// Performs some drawing actions on this canvas
+    /// Updates the matrix used to convert from screen coordinates to canvas coordinates
     /// 
-    fn draw<DrawIter: Send+IntoIterator<Item=Draw>>(&mut self, actions: DrawIter) {
-        // Get the core to do drawing on
-        let mut core = self.core.borrow_mut();
-
-        // Make sure the core drawing is up to date
-        if core.need_redraw {
-            Self::redraw(&mut core);
-            core.need_redraw = false;
-        }
-
-        // Write to the canvas and the core
-        let actions: Vec<_> = actions.into_iter().collect();
-        for action in actions.iter() {
-            core.pixbufs.draw(*action);
-        }
-        core.canvas.write(actions);
-
+    /// (Paint actions in particular should specify canvas coordinates)
+    /// 
+    fn update_translation_matrix(&self, core: &DrawingCore) {
         // Get the transformation matrix: we store this as the translation matrix to use for paint events
         let canvas_to_widget = core.pixbufs.get_matrix();
         let mut widget_to_canvas = canvas_to_widget;
+
+        // Invert from canvas-to-screen to screen-to-canvas
         widget_to_canvas.invert();
 
         // Need to remove the viewport translation
@@ -233,6 +221,30 @@ impl FloDrawingWidget {
 
         // Store the transformation matrix for use with generating coordinates for paint events
         core.widget_data.set_widget_data(self.widget_id, widget_to_canvas);
+    }
+
+    ///
+    /// Performs some drawing actions on this canvas
+    /// 
+    fn draw<DrawIter: Send+IntoIterator<Item=Draw>>(&mut self, actions: DrawIter) {
+        // Get the core to do drawing on
+        let mut core = self.core.borrow_mut();
+
+        // Make sure the core drawing is up to date
+        if core.need_redraw {
+            Self::redraw(&mut core);
+            core.need_redraw = false;
+        }
+
+        // Write to the canvas and the core
+        let actions: Vec<_> = actions.into_iter().collect();
+        for action in actions.iter() {
+            core.pixbufs.draw(*action);
+        }
+        core.canvas.write(actions);
+
+        // Make sure that the translation matrix is up to date
+        self.update_translation_matrix(&*core);
 
         // Note that a redraw is needed
         Self::queue_draw(&mut *core, &self.drawing_area);
