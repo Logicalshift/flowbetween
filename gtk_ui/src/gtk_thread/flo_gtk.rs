@@ -7,7 +7,6 @@ use super::super::widgets::*;
 use gtk;
 use glib;
 use futures::stream::Stream;
-use futures::sink::Sink;
 
 use std::collections::{HashMap, VecDeque};
 use std::cell::RefCell;
