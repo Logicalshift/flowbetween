@@ -160,6 +160,8 @@ impl FloDrawingWidget {
                 core.need_redraw = false;
             }
 
+            context.save();
+
             // Resize the context to match the scaling factor
             let scale_factor = core.scale_factor;
             let scale_factor = 1.0/(scale_factor as f64);
@@ -171,6 +173,8 @@ impl FloDrawingWidget {
 
             // Render the pixbufs
             core.pixbufs.render_to_context(context);
+
+            context.restore();
 
             Inhibit(true)
         });
