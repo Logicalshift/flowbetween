@@ -69,6 +69,17 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream
                     }
                 },
 
+                (UiEvent::Action(controller1, event_name1, ActionParameter::Drag(DragAction::Drag, _from1, _to1)), UiEvent::Action(controller2, event_name2, ActionParameter::Drag(DragAction::Drag, from2, to2))) => {
+                    if event_name1 == event_name2 && controller1 == controller2 {
+                        // Only the most recent drag continue event makes it through
+                        events[index] = UiEvent::Action(controller1, event_name1, ActionParameter::Drag(DragAction::Drag, from2, to2));
+                        events.remove(index+1);
+                    } else {
+                        // Two drag continue events but for different controls
+                        index += 1;
+                    }
+                }
+
                 // Move on to the next event
                 _ => { index += 1; }
             }

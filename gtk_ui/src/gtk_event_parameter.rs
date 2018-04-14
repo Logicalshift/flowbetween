@@ -30,6 +30,15 @@ pub enum GtkEventParameter {
     /// Painting finished
     PaintFinish(GtkPainting),
 
+    /// User has started dragging over a widget
+    DragStart(f64, f64),
+
+    /// User is continuing to drag a widget
+    DragContinue((f64, f64), (f64, f64)),
+
+    /// User has finished dragging a widget
+    DragFinish((f64, f64), (f64, f64)),
+
     /// Virtual scroll region has moved (tuples are the x and y coordinates and the width and height of the grid)
     VirtualScroll((u32, u32), (u32, u32))
 }
@@ -48,12 +57,15 @@ pub struct GtkPainting {
 impl From<GtkEventParameter> for ActionParameter {
     fn from(event: GtkEventParameter) -> ActionParameter {
         match event {
-            GtkEventParameter::None                             => ActionParameter::None,
-            GtkEventParameter::ScaleValue(value)                => ActionParameter::Value(PropertyValue::Float(value)),
-            GtkEventParameter::PaintStart(paint)                => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Start) ]),
-            GtkEventParameter::PaintContinue(paint)             => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Continue) ]),
-            GtkEventParameter::PaintFinish(paint)               => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Finish) ]),
-            GtkEventParameter::VirtualScroll(top_left, size)    => ActionParameter::VirtualScroll(top_left, size)
+            GtkEventParameter::None                                         => ActionParameter::None,
+            GtkEventParameter::ScaleValue(value)                            => ActionParameter::Value(PropertyValue::Float(value)),
+            GtkEventParameter::PaintStart(paint)                            => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Start) ]),
+            GtkEventParameter::PaintContinue(paint)                         => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Continue) ]),
+            GtkEventParameter::PaintFinish(paint)                           => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Finish) ]),
+            GtkEventParameter::DragStart(x, y)                              => ActionParameter::Drag(DragAction::Start, (x as f32, y as f32), (x as f32, y as f32)),
+            GtkEventParameter::DragContinue((from_x, from_y), (to_x, to_y)) => ActionParameter::Drag(DragAction::Drag, (from_x as f32, from_y as f32), (to_x as f32, to_y as f32)),
+            GtkEventParameter::DragFinish((from_x, from_y), (to_x, to_y))   => ActionParameter::Drag(DragAction::Finish, (from_x as f32, from_y as f32), (to_x as f32, to_y as f32)),
+            GtkEventParameter::VirtualScroll(top_left, size)                => ActionParameter::VirtualScroll(top_left, size)
         }
     }
 }
