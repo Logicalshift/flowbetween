@@ -47,7 +47,7 @@ pub enum GtkWidgetType {
     CanvasDrawingArea,
     Scale,
     ScrollArea,
-    Popup
+    Popover
 }
 
 ///

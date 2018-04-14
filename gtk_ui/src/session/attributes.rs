@@ -72,7 +72,7 @@ impl ToGtkActions for Control {
             Container           => New(GtkWidgetType::Fixed),
             CroppingContainer   => New(GtkWidgetType::Layout),
             ScrollingContainer  => New(GtkWidgetType::ScrollArea),
-            Popup               => New(GtkWidgetType::Popup),
+            Popup               => New(GtkWidgetType::Popover),
             Button              => New(button_type_for_control(self)),
             Label               => New(GtkWidgetType::Label),
             Canvas              => New(GtkWidgetType::CanvasDrawingArea),

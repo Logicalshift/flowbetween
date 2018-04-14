@@ -1,7 +1,7 @@
 use super::widget::*;
 use super::flo_bin_widget::*;
 use super::flo_fixed_widget::*;
-use super::flo_popup_widget::*;
+use super::flo_popover_widget::*;
 use super::flo_label_widget::*;
 use super::flo_scale_widget::*;
 use super::flo_scroll_widget::*;
@@ -28,7 +28,10 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         ToggleButton        => Box::new(FloBinWidget::new(id, gtk::ToggleButton::new(), widget_data)),
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new(), widget_data)),
-        Popup               => Box::new(FloPopupWidget::new(id, gtk::Fixed::new())),
+        Popover             => {
+            let no_widget: Option<&gtk::Widget> = None;
+            Box::new(FloPopoverWidget::new(id, gtk::Popover::new(no_widget), widget_data))
+        },
 
         ScrollArea          => Box::new(FloScrollWidget::new(id, gtk::ScrolledWindow::new(None, None), widget_data)),
 
