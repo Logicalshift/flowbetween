@@ -23,6 +23,9 @@ pub enum GtkWidgetEventType {
     /// User performed painting actions over a widget
     Paint(GtkPaintDevice),
 
+    /// User dragged the control
+    Drag,
+
     /// User is in the process of editing a value
     EditValue,
 

@@ -1,3 +1,4 @@
+use super::drag::*;
 use super::paint::*;
 use super::layout::*;
 use super::widget::*;
@@ -295,6 +296,10 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
         
         Paint(device) => {
             PaintActions::wire_widget(flo_gtk.widget_data(), event_sink, widget, action_name.clone(), device);
+        },
+
+        Drag => {
+            DragActions::wire_widget(flo_gtk.widget_data(), event_sink.into_inner(), widget, action_name.clone());
         },
         
         VirtualScroll(_, _) | EditValue | SetValue => { }
