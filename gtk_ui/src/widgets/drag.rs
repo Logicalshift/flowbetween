@@ -71,9 +71,21 @@ impl DragActions {
     }
 
     ///
+    /// Returns the drag position (in the main window) for the specified mouse position
+    /// 
+    fn drag_position_for_position(widget: &gtk::Widget, position: (f64, f64)) -> (f64, f64) {
+        let parent      = widget.get_toplevel().unwrap();
+
+        let position    = (position.0 as i32, position.1 as i32);
+        let position    = widget.translate_coordinates(&parent, position.0, position.1).unwrap();
+
+        (position.0 as f64, position.1 as f64)
+    }
+
+    ///
     /// Connects the events for a drag actions object
     /// 
-    pub fn connect_events(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
+    fn connect_events(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         // Request the events
         widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
 
@@ -89,15 +101,10 @@ impl DragActions {
     fn connect_press(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         widget.connect_button_press_event(move |widget, button| {
             let mut drag_actions    = drag_actions.borrow_mut();
-            let parent              = widget.get_parent();
 
             if !drag_actions.dragging {
                 // Start dragging
-                let (x, y)      = button.get_position();
-                let position    = (x as i32, y as i32);
-                let position    = parent.map(|parent| widget.translate_coordinates(&parent, position.0, position.1).unwrap_or(position))
-                    .unwrap_or(position);
-                let position    = (position.0 as f64, position.1 as f64);
+                let position = Self::drag_position_for_position(widget, button.get_position());
 
                 drag_actions.dragging       = true;
                 drag_actions.start_point    = position;
@@ -123,15 +130,10 @@ impl DragActions {
     fn connect_motion(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         widget.connect_motion_notify_event(move |widget, button| {
             let mut drag_actions    = drag_actions.borrow_mut();
-            let parent              = widget.get_parent();
 
             if drag_actions.dragging {
                 // Continue dragging
-                let (x, y)      = button.get_position();
-                let position    = (x as i32, y as i32);
-                let position    = parent.map(|parent| widget.translate_coordinates(&parent, position.0, position.1).unwrap_or(position))
-                    .unwrap_or(position);
-                let position    = (position.0 as f64, position.1 as f64);
+                let position = Self::drag_position_for_position(widget, button.get_position());
 
                 // Send the start event
                 let start_point = drag_actions.start_point;
@@ -155,17 +157,12 @@ impl DragActions {
     fn connect_release(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         widget.connect_button_release_event(move |widget, button| {
             let mut drag_actions    = drag_actions.borrow_mut();
-            let parent              = widget.get_parent();
 
             if drag_actions.dragging {
                 // Finish dragging
                 drag_actions.dragging = false;
 
-                let (x, y)      = button.get_position();
-                let position    = (x as i32, y as i32);
-                let position    = parent.map(|parent| widget.translate_coordinates(&parent, position.0, position.1).unwrap_or(position))
-                    .unwrap_or(position);
-                let position    = (position.0 as f64, position.1 as f64);
+                let position = Self::drag_position_for_position(widget, button.get_position());
 
                 // Send the start event
                 let start_point = drag_actions.start_point;
