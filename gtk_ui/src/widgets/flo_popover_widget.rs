@@ -83,7 +83,7 @@ impl FloPopoverWidget {
         // Close and re-open the popup if the parent widget moves
         let popover2    = popover.clone();
         let data2       = Rc::clone(&data);
-        widget.connect_hierarchy_changed(move |_, _| {
+        widget.connect_hierarchy_changed(move |widget, _| {
             let is_open = data2.borrow().is_open;
             if is_open {
                 // Mark the widget as re-opening so the hide event doesn't count as dismissing it
@@ -91,6 +91,7 @@ impl FloPopoverWidget {
 
                 // Hide and re-show the popover (GTK gets confused if the pop-over's parent is moved while it's open)
                 popover2.hide();
+                data2.borrow_mut().position(&popover2, &widget.get_allocation());
                 popover2.show_all();
 
                 // Reset the reopening flag (next hide will count as a dismissal)
