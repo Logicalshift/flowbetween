@@ -45,9 +45,6 @@ pub struct FloDrawingWidget {
     /// The ID of this widget
     widget_id: WidgetId,
 
-    /// The drawing area used by this widget
-    drawing_area: gtk::DrawingArea,
-
     /// This widget represented as a widget
     as_widget: gtk::Widget,
 
@@ -59,7 +56,7 @@ impl FloDrawingWidget {
     ///
     /// Creates a new drawing widget
     /// 
-    pub fn new(widget_id: WidgetId, drawing_area: gtk::DrawingArea, data: Rc<WidgetData>) -> FloDrawingWidget {
+    pub fn new<W: Clone+Cast+IsA<gtk::Widget>>(widget_id: WidgetId, drawing_area: W, data: Rc<WidgetData>) -> FloDrawingWidget {
         // Create the data structures
         let canvas      = Canvas::new();
         let as_widget   = drawing_area.clone().upcast::<gtk::Widget>();
@@ -77,13 +74,12 @@ impl FloDrawingWidget {
         let core        = Rc::new(RefCell::new(core));
 
         // Wire events
-        Self::connect_size_allocate(&drawing_area, Rc::clone(&core));
-        Self::connect_draw(&drawing_area, Rc::clone(&core));
+        Self::connect_size_allocate(&as_widget, Rc::clone(&core));
+        Self::connect_draw(&as_widget, Rc::clone(&core));
 
         // Generate the widget
         FloDrawingWidget {
             widget_id:      widget_id,
-            drawing_area:   drawing_area,
             as_widget:      as_widget,
             core:           core
         }
@@ -92,7 +88,7 @@ impl FloDrawingWidget {
     ///
     /// Deals with resizing the drawing area
     /// 
-    fn connect_size_allocate(drawing_area: &gtk::DrawingArea, core: Rc<RefCell<DrawingCore>>) {
+    fn connect_size_allocate(drawing_area: &gtk::Widget, core: Rc<RefCell<DrawingCore>>) {
         drawing_area.connect_size_allocate(move |widget, new_allocation| {
             // Unlock the core
             let mut core = core.borrow_mut();
@@ -123,7 +119,7 @@ impl FloDrawingWidget {
     ///
     /// Deals with drawing the main drawing area
     /// 
-    fn connect_draw(drawing_area: &gtk::DrawingArea, core: Rc<RefCell<DrawingCore>>) {
+    fn connect_draw(drawing_area: &gtk::Widget, core: Rc<RefCell<DrawingCore>>) {
         drawing_area.connect_draw(move |widget, context| {
             // Fetch the core
             let mut core = core.borrow_mut();
@@ -183,11 +179,11 @@ impl FloDrawingWidget {
     ///
     /// Indicates a drawing request is required
     /// 
-    fn queue_draw(core: &mut DrawingCore, drawing_area: &gtk::DrawingArea) {
+    fn queue_draw(core: &mut DrawingCore, drawing_area: &gtk::Widget) {
         if !core.draw_pending {
             core.draw_pending = true;
 
-            drawing_area.add_tick_callback(|widget: &gtk::DrawingArea, _clock| { widget.queue_draw(); Continue(false) });
+            drawing_area.add_tick_callback(|widget: &gtk::Widget, _clock| { widget.queue_draw(); Continue(false) });
         }
     }
 
@@ -247,13 +243,13 @@ impl FloDrawingWidget {
         self.update_translation_matrix(&*core);
 
         // Note that a redraw is needed
-        Self::queue_draw(&mut *core, &self.drawing_area);
+        Self::queue_draw(&mut *core, &self.as_widget);
     }
 
     ///
     /// Clips a viewport to only the portiomn visible in a scrollable area
     ///
-    fn clip_viewport_to_scrollable(full_viewport: CanvasViewport, scrollable: &gtk::Scrollable, drawing_area: &gtk::DrawingArea) -> CanvasViewport {
+    fn clip_viewport_to_scrollable(full_viewport: CanvasViewport, scrollable: &gtk::Scrollable, drawing_area: &gtk::Widget) -> CanvasViewport {
         // Scrollable must also be a widget
         let scrollable_widget = scrollable.clone().dynamic_cast::<gtk::Widget>().unwrap();
 
@@ -295,7 +291,7 @@ impl FloDrawingWidget {
     ///
     /// Retrieves the viewport for a canvas
     /// 
-    fn get_viewport(drawing_area: &gtk::DrawingArea, allocation: &gtk::Allocation) -> CanvasViewport {
+    fn get_viewport(drawing_area: &gtk::Widget, allocation: &gtk::Allocation) -> CanvasViewport {
         // The scale factor is used to ensure we get a 1:1 pixel ratio for our drawing area
         let scale_factor = drawing_area.get_scale_factor();
 
