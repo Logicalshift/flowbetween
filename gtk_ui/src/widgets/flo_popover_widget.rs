@@ -5,6 +5,8 @@ use super::flo_bin_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
+use flo_ui::*;
+
 use gtk;
 use gtk::prelude::*;
 
@@ -27,7 +29,10 @@ pub struct FloPopoverWidget {
     popover: gtk::Popover,
 
     /// The popup widget itself
-    widget: gtk::Widget
+    widget: gtk::Widget,
+
+    /// Offset used for positioning
+    offset: u32
 }
 
 impl FloPopoverWidget {
@@ -45,7 +50,27 @@ impl FloPopoverWidget {
             id:         id,
             bin:        bin,
             popover:    popover,
-            widget:     widget
+            widget:     widget,
+            offset:     0
+        }
+    }
+
+    ///
+    /// Converts a popup position to a GTK position
+    /// 
+    fn position_for_direction(direction: PopupDirection) -> gtk::PositionType {
+        use self::PopupDirection::*;
+        use gtk::PositionType;
+        
+        match direction {
+            OnTop           => PositionType::Bottom,
+            WindowCentered  => PositionType::Bottom,
+            WindowTop       => PositionType::Bottom,
+
+            Left            => PositionType::Left,
+            Right           => PositionType::Right,
+            Above           => PositionType::Top,
+            Below           => PositionType::Bottom
         }
     }
 }
@@ -56,7 +81,24 @@ impl GtkUiWidget for FloPopoverWidget {
     }
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
+        use GtkWidgetAction::Popup;
+        use WidgetPopup::*;
+
         match action {
+            &Popup(SetDirection(direction)) => { self.popover.set_position(Self::position_for_direction(direction)); },
+            &Popup(SetSize(width, height))  => { self.popover.size_allocate(&mut gtk::Rectangle { x: 0, y: 0, width: width as i32, height: height as i32 }) },
+            &Popup(SetOffset(offset))       => { self.offset = offset },
+
+            &Popup(SetOpen(is_open))        => { 
+                self.popover.set_relative_to(&self.popover.get_parent().unwrap());
+
+                if is_open {
+                    self.popover.show();
+                } else {
+                    self.popover.hide();
+                }
+            },
+
             // Everything else is processed by the bin widget
             other_action    => { self.bin.process(flo_gtk, other_action); }
         }
