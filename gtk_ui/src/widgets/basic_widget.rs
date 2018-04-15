@@ -14,6 +14,7 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
+use gdk;
 use futures::*;
 
 use std::rc::*;
@@ -279,6 +280,8 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
     match event_type {
         Click => {
             // For basic widgets with no explicit click action, we just detect the button press event
+            widget.get_underlying().add_events((gdk::EventMask::BUTTON_PRESS_MASK).bits() as i32);
+
             widget.get_underlying()
                 .connect_button_press_event(move |_, button| { 
                     if button.get_state().is_empty() && button.get_button() == 1 {
