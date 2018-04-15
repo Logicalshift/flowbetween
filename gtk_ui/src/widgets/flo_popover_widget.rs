@@ -79,25 +79,7 @@ impl FloPopoverWidget {
         popover.set_transitions_enabled(true);
         
         Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&data));
-
-        // Close and re-open the popup if the parent widget moves
-        let popover2    = popover.clone();
-        let data2       = Rc::clone(&data);
-        widget.connect_hierarchy_changed(move |widget, _| {
-            let is_open = data2.borrow().is_open;
-            if is_open {
-                // Mark the widget as re-opening so the hide event doesn't count as dismissing it
-                data2.borrow_mut().reopening = true;
-
-                // Hide and re-show the popover (GTK gets confused if the pop-over's parent is moved while it's open)
-                popover2.hide();
-                data2.borrow_mut().position(&popover2, &widget.get_allocation());
-                popover2.show_all();
-
-                // Reset the reopening flag (next hide will count as a dismissal)
-                data2.borrow_mut().reopening = false;
-            }
-        });
+        Self::connect_reopen(&widget, popover.clone(), Rc::clone(&data));
 
         // TODO: somehow get the styles to cascade from the parent widget
         popover.override_background_color(gtk::StateFlags::NORMAL, &gdk::RGBA { red: 0.20, green: 0.22, blue: 0.25, alpha: 0.94 });
@@ -115,6 +97,30 @@ impl FloPopoverWidget {
             widget:     widget,
             data:       data
         }
+    }
+
+    ///
+    /// Re-opens the popover in the event that the base widget changes where it is in the hierarchy
+    /// 
+    /// GTK gets confused about dismissing modal popups when the hierarchy changes while a popup is open.
+    ///
+    fn connect_reopen(base_widget: &gtk::Widget, popover: gtk::Popover, popover_data: Rc<RefCell<FloPopoverData>>) {
+        // Close and re-open the popup if the parent widget moves
+        base_widget.connect_hierarchy_changed(move |widget, _| {
+            let is_open = popover_data.borrow().is_open;
+            if is_open {
+                // Mark the widget as re-opening so the hide event doesn't count as dismissing it
+                popover_data.borrow_mut().reopening = true;
+
+                // Hide and re-show the popover (GTK gets confused if the pop-over's parent is moved while it's open)
+                popover.hide();
+                popover_data.borrow_mut().position(&popover, &widget.get_allocation());
+                popover.show_all();
+
+                // Reset the reopening flag (next hide will count as a dismissal)
+                popover_data.borrow_mut().reopening = false;
+            }
+        });
     }
 
     ///
