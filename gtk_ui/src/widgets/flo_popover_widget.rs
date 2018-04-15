@@ -9,9 +9,21 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
+use gdk;
 
 use std::rc::*;
 use std::cell::*;
+
+///
+/// Data used with a popover widget
+/// 
+struct FloPopoverData {
+    /// Direction the popup will open in
+    direction: PopupDirection,
+
+    /// The offset for this popup
+    offset: u32,
+}
 
 ///
 /// The popup widget is used to manage GTK popup widgets
@@ -29,8 +41,8 @@ pub struct FloPopoverWidget {
     /// The popup widget itself
     widget: gtk::Widget,
 
-    /// Offset used for positioning
-    offset: u32
+    /// Data shared with the layout routine
+    data: Rc<RefCell<FloPopoverData>>
 }
 
 impl FloPopoverWidget {
@@ -38,16 +50,25 @@ impl FloPopoverWidget {
     /// Creates a basic widget
     /// 
     pub fn new<Src: Clone+Cast+IsA<gtk::Widget>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
+        // Create the various components
         let widget  = widget.upcast::<gtk::Widget>();
         let popover = gtk::Popover::new(&widget);
         let content = gtk::Fixed::new();
 
-        // Content widget used to contain the content for this popover
+        // Create the layout data
+        let data    = Rc::new(RefCell::new(FloPopoverData { direction: PopupDirection::Below, offset: 0 }));
+
+        // Set them up
+        popover.set_modal(false);
         popover.add(&content);
 
-        content.set_size_request(100, 100);
-        content.size_allocate(&mut gtk::Rectangle { x: 0, y: 0, width: 100, height: 100 });
+        // TODO: somehow get the styles to cascade from the parent widget
+        popover.override_background_color(gtk::StateFlags::NORMAL, &gdk::RGBA { red: 0.20, green: 0.22, blue: 0.25, alpha: 0.94 });
 
+        // Default size
+        content.set_size_request(100, 100);
+
+        // Content widget used to contain the content for this popover
         let content = FloFixedWidget::new(id, content, Rc::clone(&widget_data));
 
         FloPopoverWidget {
@@ -55,7 +76,7 @@ impl FloPopoverWidget {
             content:    content,
             popover:    popover,
             widget:     widget,
-            offset:     0
+            data:       data
         }
     }
 
@@ -89,9 +110,9 @@ impl GtkUiWidget for FloPopoverWidget {
         use WidgetPopup::*;
 
         match action {
-            &Popup(SetDirection(direction)) => { self.popover.set_position(Self::position_for_direction(direction)); },
+            &Popup(SetDirection(direction)) => { self.data.borrow_mut().direction = direction; self.popover.set_position(Self::position_for_direction(direction)); },
             &Popup(SetSize(width, height))  => { self.content.get_underlying().set_size_request(width as i32, height as i32); },
-            &Popup(SetOffset(offset))       => { self.offset = offset },
+            &Popup(SetOffset(offset))       => { self.data.borrow_mut().offset = offset },
 
             &Popup(SetOpen(is_open))        => { 
                 if is_open {
