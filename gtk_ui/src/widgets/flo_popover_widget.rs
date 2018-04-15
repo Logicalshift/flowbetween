@@ -38,7 +38,7 @@ pub struct FloPopoverWidget {
     /// The popover widget itself
     popover: gtk::Popover,
 
-    /// The popup widget itself
+    /// The base widget, used as the target for the popup
     widget: gtk::Widget,
 
     /// Data shared with the layout routine
@@ -61,6 +61,9 @@ impl FloPopoverWidget {
         // Set them up
         popover.set_modal(false);
         popover.add(&content);
+        popover.set_transitions_enabled(true);
+        
+        Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&data));
 
         // TODO: somehow get the styles to cascade from the parent widget
         popover.override_background_color(gtk::StateFlags::NORMAL, &gdk::RGBA { red: 0.20, green: 0.22, blue: 0.25, alpha: 0.94 });
@@ -78,6 +81,15 @@ impl FloPopoverWidget {
             widget:     widget,
             data:       data
         }
+    }
+
+    ///
+    /// Repositions the popover whenever the base widget's size changes
+    /// 
+    fn connect_position_on_size_allocate(base_widget: &gtk::Widget, popover: gtk::Popover, popover_data: Rc<RefCell<FloPopoverData>>) {
+        base_widget.connect_size_allocate(move |_base_widget, allocation| {
+            popover_data.borrow().position(&popover, allocation);
+        });
     }
 
     ///
@@ -100,6 +112,35 @@ impl FloPopoverWidget {
     }
 }
 
+impl FloPopoverData {
+    ///
+    /// Updates the target position of this popover
+    ///
+    fn position(&self, popover: &gtk::Popover, target_allocation: &gtk::Rectangle) {
+        use self::PopupDirection::*;
+
+        let center_x    = target_allocation.width/8;
+        let center_y    = target_allocation.height/8;
+        let offset      = self.offset as i32;
+
+        let (pos_x, pos_y) = match self.direction {
+            OnTop           => (center_x, center_y),
+            WindowCentered  => (center_x, center_y),
+            WindowTop       => (center_x, center_y),
+
+            Left            => (center_x - offset, center_y),
+            Right           => (center_x + offset, center_y),
+            Above           => (center_x, center_y - offset),
+            Below           => (center_x, center_y + offset)
+        };
+
+        // TODO: point at pos_x, pos_y here (for some reason all my attempts just result in the popup not displaying)
+        // Popups seem to have an issue with scaling?
+        let pointing_to = gtk::Rectangle { x: 0, y: 0, width: target_allocation.width/2, height: target_allocation.height/2 };
+        popover.set_pointing_to(&pointing_to);
+    }
+}
+
 impl GtkUiWidget for FloPopoverWidget {
     fn id(&self) -> WidgetId {
         self.id
@@ -110,9 +151,9 @@ impl GtkUiWidget for FloPopoverWidget {
         use WidgetPopup::*;
 
         match action {
-            &Popup(SetDirection(direction)) => { self.data.borrow_mut().direction = direction; self.popover.set_position(Self::position_for_direction(direction)); },
+            &Popup(SetDirection(direction)) => { self.data.borrow_mut().direction = direction; self.popover.set_position(Self::position_for_direction(direction)); self.data.borrow().position(&self.popover, &self.widget.get_allocation()); },
             &Popup(SetSize(width, height))  => { self.content.get_underlying().set_size_request(width as i32, height as i32); },
-            &Popup(SetOffset(offset))       => { self.data.borrow_mut().offset = offset },
+            &Popup(SetOffset(offset))       => { self.data.borrow_mut().offset = offset; self.data.borrow().position(&self.popover, &self.widget.get_allocation()); },
 
             &Popup(SetOpen(is_open))        => { 
                 if is_open {
