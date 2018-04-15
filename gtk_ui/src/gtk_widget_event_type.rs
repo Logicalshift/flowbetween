@@ -33,7 +33,10 @@ pub enum GtkWidgetEventType {
     SetValue,
 
     /// Performs virtual scrolling using a grid with the specified width and height
-    VirtualScroll(f32, f32)
+    VirtualScroll(f32, f32),
+
+    /// User has interacted outside of this widget
+    Dismiss
 }
 
 impl From<PaintDevice> for GtkPaintDevice {

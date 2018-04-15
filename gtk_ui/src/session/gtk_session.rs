@@ -577,7 +577,7 @@ impl GtkSessionCore {
             .flat_map(|(action, action_name)| {
                 match action {
                     Click                           => vec![ RequestEvent(GtkWidgetEventType::Click, action_name) ],
-                    Dismiss                         => vec![],
+                    Dismiss                         => vec![ RequestEvent(GtkWidgetEventType::Dismiss, action_name) ],
                     Paint(device)                   => vec![ RequestEvent(GtkWidgetEventType::Paint(device.into()), action_name) ],
                     Drag                            => vec![ RequestEvent(GtkWidgetEventType::Drag, action_name) ],
                     EditValue                       => vec![ RequestEvent(GtkWidgetEventType::EditValue, action_name) ],

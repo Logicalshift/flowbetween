@@ -4,6 +4,7 @@ use super::basic_widget::*;
 use super::flo_fixed_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
+use super::super::gtk_widget_event_type::*;
 
 use flo_ui::*;
 
@@ -51,17 +52,24 @@ impl FloPopoverWidget {
     /// 
     pub fn new<Src: Clone+Cast+IsA<gtk::Widget>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
         // Create the various components
-        let widget  = widget.upcast::<gtk::Widget>();
-        let popover = gtk::Popover::new(&widget);
-        let content = gtk::Fixed::new();
+        let widget          = widget.upcast::<gtk::Widget>();
+        let popover         = gtk::Popover::new(&widget);
+        let content_events  = gtk::EventBox::new();
+        let content         = gtk::Fixed::new();
 
         // Create the layout data
         let data    = Rc::new(RefCell::new(FloPopoverData { direction: PopupDirection::Below, offset: 0 }));
 
         // Set them up
+        content_events.add(&content);
+
         popover.set_modal(false);
-        popover.add(&content);
+        popover.add(&content_events);
         popover.set_transitions_enabled(true);
+
+        content_events.add_events((gdk::EventMask::BUTTON_PRESS_MASK).bits() as i32);
+        content_events.set_sensitive(true);
+        content_events.connect_button_press_event(|_, _| Inhibit(true));
         
         Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&data));
 
@@ -119,8 +127,8 @@ impl FloPopoverData {
     fn position(&self, popover: &gtk::Popover, target_allocation: &gtk::Rectangle) {
         use self::PopupDirection::*;
 
-        let center_x    = target_allocation.width/8;
-        let center_y    = target_allocation.height/8;
+        let center_x    = target_allocation.width/4;
+        let center_y    = target_allocation.height/4;
         let offset      = self.offset as i32;
 
         let (pos_x, pos_y) = match self.direction {
@@ -136,7 +144,7 @@ impl FloPopoverData {
 
         // TODO: point at pos_x, pos_y here (for some reason all my attempts just result in the popup not displaying)
         // Popups seem to have an issue with scaling?
-        let pointing_to = gtk::Rectangle { x: 0, y: 0, width: target_allocation.width/2, height: target_allocation.height/2 };
+        let pointing_to = gtk::Rectangle { x: center_x-4, y: center_y-4, width: 8, height: 8 };
         popover.set_pointing_to(&pointing_to);
     }
 }
@@ -147,7 +155,7 @@ impl GtkUiWidget for FloPopoverWidget {
     }
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
-        use GtkWidgetAction::Popup;
+        use GtkWidgetAction::{Popup, RequestEvent};
         use WidgetPopup::*;
 
         match action {
@@ -161,6 +169,22 @@ impl GtkUiWidget for FloPopoverWidget {
                 } else {
                     self.popover.hide();
                 }
+            },
+
+            &RequestEvent(GtkWidgetEventType::Dismiss, ref action_name) => {
+                let action_name = action_name.clone();
+                let sink        = flo_gtk.get_event_sink();
+                let content     = self.content.get_underlying();
+
+                // Popover becomes modal again (it needs to be hidden/shown for this to take effect)
+                self.popover.hide();
+                self.popover.set_modal(true);
+                self.popover.show_all();
+
+                // The hide event causes the popup to dismiss
+                self.popover.connect_hide(move |widget| {
+                    println!("Dismiss");
+                });
             },
 
             // Everything else is processed as if we were a basic widget
