@@ -20,9 +20,6 @@ pub struct FloPopoverWidget {
     /// The ID of the widget
     id: WidgetId,
 
-    /// The base of the pop-over (where the pop-up is aimed at)
-    base: gtk::Fixed,
-
     /// The content of the pop-over
     content: FloFixedWidget,
 
@@ -40,10 +37,9 @@ impl FloPopoverWidget {
     ///
     /// Creates a basic widget
     /// 
-    pub fn new<Src: Clone+Cast+IsA<gtk::Fixed>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
-        let base    = widget.upcast::<gtk::Fixed>();
-        let widget  = base.clone().upcast::<gtk::Widget>();
-        let popover = gtk::Popover::new(&base);
+    pub fn new<Src: Clone+Cast+IsA<gtk::Widget>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
+        let widget  = widget.upcast::<gtk::Widget>();
+        let popover = gtk::Popover::new(&widget);
         let content = gtk::Fixed::new();
 
         // Content widget used to contain the content for this popover
@@ -56,7 +52,6 @@ impl FloPopoverWidget {
 
         FloPopoverWidget {
             id:         id,
-            base:       base,
             content:    content,
             popover:    popover,
             widget:     widget,
