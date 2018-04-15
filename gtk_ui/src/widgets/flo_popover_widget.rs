@@ -57,22 +57,15 @@ impl FloPopoverWidget {
         // Create the various components
         let widget          = widget.upcast::<gtk::Widget>();
         let popover         = gtk::Popover::new(&widget);
-        let content_events  = gtk::EventBox::new();
         let content         = gtk::Fixed::new();
 
         // Create the layout data
         let data    = Rc::new(RefCell::new(FloPopoverData { direction: PopupDirection::Below, offset: 0 }));
 
         // Set them up
-        content_events.add(&content);
-
         popover.set_modal(false);
-        popover.add(&content_events);
+        popover.add(&content);
         popover.set_transitions_enabled(true);
-
-        content_events.add_events((gdk::EventMask::BUTTON_PRESS_MASK).bits() as i32);
-        content_events.set_sensitive(true);
-        content_events.connect_button_press_event(|_, _| Inhibit(true));
         
         Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&data));
 
@@ -186,7 +179,7 @@ impl GtkUiWidget for FloPopoverWidget {
 
                 // The hide event causes the popup to dismiss
                 let sink = RefCell::new(sink);
-                self.popover.connect_hide(move |widget| {
+                self.popover.connect_hide(move |_widget| {
                     sink.borrow_mut().start_send(GtkEvent::Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
                 });
             },
