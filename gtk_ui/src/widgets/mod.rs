@@ -9,6 +9,7 @@ pub mod flo_popover_widget;
 pub mod flo_scale_widget;
 pub mod flo_scroll_widget;
 pub mod flo_canvas_widget;
+pub mod flo_canvas_layout_widget;
 pub mod proxy_widget;
 pub mod flo_layout;
 mod custom_style;
