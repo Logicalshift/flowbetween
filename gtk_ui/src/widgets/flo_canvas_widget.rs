@@ -60,7 +60,7 @@ impl FloDrawingWidget {
         // Create the data structures
         let canvas      = Canvas::new();
         let as_widget   = drawing_area.clone().upcast::<gtk::Widget>();
-        let pixbufs     = PixBufCanvas::new(CanvasViewport::minimal());
+        let pixbufs     = PixBufCanvas::new(CanvasViewport::minimal(), as_widget.get_scale_factor() as f64);
 
         let core        = DrawingCore {
             canvas:         canvas,
@@ -144,7 +144,9 @@ impl FloDrawingWidget {
                 }
 
                 // Store the scaling factor for the widget
-                core.scale_factor = widget.get_scale_factor();
+                let scale_factor    = widget.get_scale_factor();
+                core.scale_factor   = scale_factor;
+                core.pixbufs.set_pixel_scale(scale_factor as f64);
 
                 // Size is checked
                 core.check_size = false;

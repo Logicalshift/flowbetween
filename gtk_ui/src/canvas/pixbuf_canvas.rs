@@ -26,6 +26,9 @@ pub struct PixBufCanvas {
     /// The layers in this canvas
     layers: HashMap<u32, Layer>,
 
+    /// The pixel scale for this canvas
+    pixel_scale: f64,
+
     /// The viewport for this canvas
     viewport: CanvasViewport,
 
@@ -40,13 +43,21 @@ impl PixBufCanvas {
     ///
     /// Creates a new pixbuf canvas
     /// 
-    pub fn new(viewport: CanvasViewport) -> PixBufCanvas {
+    pub fn new(viewport: CanvasViewport, pixel_scale: f64) -> PixBufCanvas {
         PixBufCanvas {
             layers:         HashMap::new(),
+            pixel_scale:    pixel_scale,
             viewport:       viewport,
             current_layer:  0,
             saved_state:    None
         }
+    }
+
+    ///
+    /// Sets the pixel scaling factor to be used for future layers
+    /// 
+    pub fn set_pixel_scale(&mut self, new_scale: f64) {
+        self.pixel_scale = new_scale;
     }
 
     ///
@@ -58,7 +69,8 @@ impl PixBufCanvas {
         let viewport        = &self.viewport;
 
         // Get or create the layer we're saving (we'll save an empty layer if it's new)
-        let layer           = self.layers.entry(layer_id).or_insert_with(|| Self::create_layer(viewport));
+        let pixel_scale     = self.pixel_scale;
+        let layer           = self.layers.entry(layer_id).or_insert_with(|| Self::create_layer(viewport, pixel_scale));
 
         // Remove any stored value from the layer
         layer.stored = None;
@@ -136,7 +148,8 @@ impl PixBufCanvas {
                 }
 
                 // Send the clear request to the current layer
-                let layer = self.layers.entry(current_layer).or_insert_with(|| Self::create_layer(viewport));
+                let pixel_scale = self.pixel_scale;
+                let layer       = self.layers.entry(current_layer).or_insert_with(|| Self::create_layer(viewport, pixel_scale));
                 layer.context.draw(Draw::ClearLayer);
             },
 
@@ -160,7 +173,8 @@ impl PixBufCanvas {
                 // Fetch the current layer
                 let current_layer   = self.current_layer;
                 let viewport        = &self.viewport;
-                let layer           = self.layers.entry(current_layer).or_insert_with(|| Self::create_layer(viewport));
+                let pixel_scale     = self.pixel_scale;
+                let layer           = self.layers.entry(current_layer).or_insert_with(|| Self::create_layer(viewport, pixel_scale));
 
                 // Restore the saved state if there is one
                 if let Some(state) = self.saved_state.take() {
@@ -229,7 +243,7 @@ impl PixBufCanvas {
     ///
     /// Creates a new layer
     /// 
-    fn create_layer(viewport: &CanvasViewport) -> Layer {
+    fn create_layer(viewport: &CanvasViewport, pixel_scale: f64) -> Layer {
         let width   = viewport.viewport_width;
         let height  = viewport.viewport_height;
 
@@ -240,7 +254,7 @@ impl PixBufCanvas {
         context.set_antialias(cairo::Antialias::Fast);
 
         // Pass on to a new CairoDraw instance
-        let draw    = CairoDraw::new(context, *viewport);
+        let draw    = CairoDraw::new(context, *viewport, pixel_scale);
 
         // Store as a new layer
         let new_layer = Layer {

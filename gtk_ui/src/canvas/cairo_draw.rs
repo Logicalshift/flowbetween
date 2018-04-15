@@ -68,6 +68,9 @@ pub struct CairoDraw {
     /// The context to draw in
     ctxt: Context,
 
+    /// If we consider a 'pixel' as being at a different scale, this is how much bigger a 'real' pixel actually is
+    pixel_scale: f64,
+
     /// The saved states
     saved_states: Vec<SavedState>,
 
@@ -103,11 +106,12 @@ impl CairoDraw {
     ///
     /// Creates a new Cairo drawing target
     /// 
-    pub fn new(ctxt: Context, viewport: CanvasViewport) -> CairoDraw {
+    pub fn new(ctxt: Context, viewport: CanvasViewport, pixel_scale: f64) -> CairoDraw {
         ctxt.set_matrix(Matrix::from(&viewport));
 
         CairoDraw {
             ctxt:           ctxt,
+            pixel_scale:    pixel_scale,
             saved_states:   vec![],
             dash_pattern:   vec![],
             stroke_color:   Color::Rgba(0.0, 0.0, 0.0, 1.0),
@@ -198,10 +202,11 @@ impl CairoDraw {
     /// 
     fn set_line_width_pixels(&self, pixels: f32) {
         let pixels      = pixels as f64;
+        let pixels      = pixels * self.pixel_scale;
         let transform   = self.ctxt.get_matrix();
 
         // Length of the first column of the transformation matrix is the scale factor (for the width)
-        let mut scale = (transform.xx + transform.yx).sqrt();
+        let mut scale = (transform.xx*transform.xx + transform.yx*transform.yx).sqrt();
         if scale == 0.0 { scale = 1.0; }
 
         // Scale the width down according to this factor (we'll always use the horizontal scale factor)
