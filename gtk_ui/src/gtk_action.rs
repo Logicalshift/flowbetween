@@ -44,10 +44,12 @@ pub enum GtkWidgetType {
     Button,
     ToggleButton,
     Label,
-    CanvasDrawingArea,
     Scale,
     ScrollArea,
-    Popover
+    Popover,
+
+    CanvasDrawingArea,
+    CanvasLayout
 }
 
 ///

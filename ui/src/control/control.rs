@@ -127,7 +127,7 @@ impl Control {
     }
 
     ///
-    /// If this control has a controller attribute, finds it
+    /// If this control has subcomponents, finds them
     ///
     pub fn subcomponents<'a>(&'a self) -> Option<&'a Vec<Control>> {
         self.attributes.iter()

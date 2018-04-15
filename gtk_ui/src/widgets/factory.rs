@@ -27,10 +27,11 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Button              => Box::new(FloBinWidget::new(id, gtk::Button::new(), widget_data)),
         ToggleButton        => Box::new(FloBinWidget::new(id, gtk::ToggleButton::new(), widget_data)),
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
-        CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new(), widget_data)),
         Popover             => Box::new(FloPopoverWidget::new(id, gtk::Fixed::new(), widget_data)),
 
         ScrollArea          => Box::new(FloScrollWidget::new(id, gtk::ScrolledWindow::new(None, None), widget_data)),
+        CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new(), widget_data)),
+        CanvasLayout        => Box::new(FloDrawingWidget::new(id, gtk::Layout::new(None, None), widget_data)),
 
         Scale           => {
             let scale = gtk::Scale::new(gtk::Orientation::Horizontal, None);

@@ -12,7 +12,7 @@ pub type PropertyWidgetAction = PropertyAction<GtkWidgetAction>;
 /// 
 pub trait ToGtkActions {
     ///
-    /// Converts this itme to a set of GtkWIdgetActions required to render it to a GTK widget
+    /// Converts this itme to a set of GtkWidgetActions required to render it to a GTK widget
     /// 
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction>;
 }
@@ -32,6 +32,24 @@ fn button_type_for_control(control: &Control) -> GtkWidgetType {
         GtkWidgetType::ToggleButton
     } else {
         GtkWidgetType::Button
+    }
+}
+
+///
+/// Determines the GTK control to use for a canvas control
+/// 
+/// Normally we want to use drawing areas, but sometimes canvases can have subcontrols, and in that case we need to use a layout
+/// so we can draw a canvas and have other controls on top of it
+/// 
+fn canvas_type_for_control(control: &Control) -> GtkWidgetType {
+    if let Some(subcomponents) = control.subcomponents() {
+        if subcomponents.len() > 0 {
+            GtkWidgetType::CanvasLayout
+        } else {
+            GtkWidgetType::CanvasDrawingArea
+        }
+    } else {
+        GtkWidgetType::CanvasDrawingArea
     }
 }
 
@@ -75,7 +93,7 @@ impl ToGtkActions for Control {
             Popup               => New(GtkWidgetType::Popover),
             Button              => New(button_type_for_control(self)),
             Label               => New(GtkWidgetType::Label),
-            Canvas              => New(GtkWidgetType::CanvasDrawingArea),
+            Canvas              => New(canvas_type_for_control(self)),
             Slider              => New(GtkWidgetType::Scale),
             Rotor               => New(GtkWidgetType::Generic)
         };
