@@ -86,6 +86,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
         &State(ref state)                           => process_basic_widget_state(widget, state),
         &Font(ref font)                             => process_basic_widget_font(widget, flo_gtk, font),
         &Scroll(ref scroll)                         => process_basic_widget_scroll(widget.get_underlying(), flo_gtk, scroll),
+        &Popup(ref _popup)                          => (),
 
         &Show                                       => { widget.get_underlying().show() },
         &New(_widget_type)                          => (),

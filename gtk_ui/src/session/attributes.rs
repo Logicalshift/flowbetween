@@ -219,10 +219,10 @@ impl ToGtkActions for Popup {
         use self::Popup::*;
 
         match self {
-            &IsOpen(ref _is_open)       => vec![],
-            &Direction(ref _direction)  => vec![],
-            &Size(_width, _height)      => vec![],
-            &Offset(_distance)          => vec![]
+            &IsOpen(ref is_open)        => vec![ PropertyAction::from_property(is_open.clone(), |is_open| vec![ WidgetPopup::SetOpen(is_open.to_bool().unwrap_or(false)).into() ])],
+            &Direction(direction)       => vec![ WidgetPopup::SetDirection(direction).into() ].into_actions(),
+            &Size(width, height)        => vec![ WidgetPopup::SetSize(width, height).into() ].into_actions(),
+            &Offset(distance)           => vec![ WidgetPopup::SetOffset(distance).into() ].into_actions()
         }
     }
 }

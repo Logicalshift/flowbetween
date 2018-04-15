@@ -88,6 +88,9 @@ pub enum GtkWidgetAction {
     /// Updates how the content of this widget scrolls
     Scroll(Scroll),
 
+    /// Controls the popup attributes of this widget
+    Popup(WidgetPopup),
+
     /// Deletes this widget (and any child widgets it may contain)
     Delete
 }
@@ -167,6 +170,30 @@ pub enum WidgetState {
 impl From<WidgetState> for GtkWidgetAction {
     fn from(item: WidgetState) -> GtkWidgetAction {
         GtkWidgetAction::State(item)
+    }
+}
+
+///
+/// Actions for widgets supporting pop-up behaviour
+/// 
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum WidgetPopup {
+    /// Sets the direction this popup will open
+    SetDirection(PopupDirection),
+
+    /// Sets the size of this popup
+    SetSize(u32, u32),
+    
+    /// Sets the offset of this popup from the center of its parent widget
+    SetOffset(u32),
+
+    /// Sets whether or not this popup is open
+    SetOpen(bool)
+}
+
+impl From<WidgetPopup> for GtkWidgetAction {
+    fn from (item: WidgetPopup) -> GtkWidgetAction {
+        GtkWidgetAction::Popup(item)
     }
 }
 
