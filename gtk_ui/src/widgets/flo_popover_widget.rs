@@ -2,8 +2,10 @@ use super::widget::*;
 use super::widget_data::*;
 use super::basic_widget::*;
 use super::flo_fixed_widget::*;
+use super::super::gtk_event::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
+use super::super::gtk_event_parameter::*;
 use super::super::gtk_widget_event_type::*;
 
 use flo_ui::*;
@@ -11,6 +13,7 @@ use flo_ui::*;
 use gtk;
 use gtk::prelude::*;
 use gdk;
+use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -175,6 +178,7 @@ impl GtkUiWidget for FloPopoverWidget {
                 let action_name = action_name.clone();
                 let sink        = flo_gtk.get_event_sink();
                 let content     = self.content.get_underlying();
+                let widget_id   = self.id;
 
                 // Popover becomes modal again (it needs to be hidden/shown for this to take effect)
                 self.popover.hide();
@@ -182,8 +186,9 @@ impl GtkUiWidget for FloPopoverWidget {
                 self.popover.show_all();
 
                 // The hide event causes the popup to dismiss
+                let sink = RefCell::new(sink);
                 self.popover.connect_hide(move |widget| {
-                    println!("Dismiss");
+                    sink.borrow_mut().start_send(GtkEvent::Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
                 });
             },
 
