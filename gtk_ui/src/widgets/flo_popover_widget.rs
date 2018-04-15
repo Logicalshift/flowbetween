@@ -177,7 +177,6 @@ impl GtkUiWidget for FloPopoverWidget {
             &RequestEvent(GtkWidgetEventType::Dismiss, ref action_name) => {
                 let action_name = action_name.clone();
                 let sink        = flo_gtk.get_event_sink();
-                let content     = self.content.get_underlying();
                 let widget_id   = self.id;
 
                 // Popover becomes modal again (it needs to be hidden/shown for this to take effect)
