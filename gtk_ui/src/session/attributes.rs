@@ -64,7 +64,7 @@ fn needs_event_box(control: &Control) -> bool {
 impl ToGtkActions for Control {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
         use self::ControlType::*;
-        use self::GtkWidgetAction::*;
+        use self::GtkWidgetAction::New;
 
         // Convert the control type into the command to create the appropriate Gtk widget
         let create_new = match self.control_type() {
