@@ -13,7 +13,7 @@ use std::cell::*;
 
 ///
 /// Represents a canvas widget that is also usable as a drawing area
-///  
+///
 pub struct FloCanvasLayoutWidget {
     /// This widget as a canvas
     as_drawing: FloDrawingWidget,
