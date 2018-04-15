@@ -27,6 +27,12 @@ struct FloPopoverData {
 
     /// The offset for this popup
     offset: u32,
+
+    /// Set to true if this popover should be considered open
+    is_open: bool,
+
+    /// Set to true while re-opening (prevents the popover from immediately closing during a hierarchy change)
+    reopening: bool
 }
 
 ///
@@ -60,7 +66,12 @@ impl FloPopoverWidget {
         let content         = gtk::Fixed::new();
 
         // Create the layout data
-        let data    = Rc::new(RefCell::new(FloPopoverData { direction: PopupDirection::Below, offset: 0 }));
+        let data    = Rc::new(RefCell::new(FloPopoverData { 
+            direction:  PopupDirection::Below, 
+            offset:     0,
+            is_open:    false,
+            reopening:  false
+        }));
 
         // Set them up
         popover.set_modal(false);
@@ -68,6 +79,24 @@ impl FloPopoverWidget {
         popover.set_transitions_enabled(true);
         
         Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&data));
+
+        // Close and re-open the popup if the parent widget moves
+        let popover2    = popover.clone();
+        let data2       = Rc::clone(&data);
+        widget.connect_hierarchy_changed(move |_, _| {
+            let is_open = data2.borrow().is_open;
+            if is_open {
+                // Mark the widget as re-opening so the hide event doesn't count as dismissing it
+                data2.borrow_mut().reopening = true;
+
+                // Hide and re-show the popover (GTK gets confused if the pop-over's parent is moved while it's open)
+                popover2.hide();
+                popover2.show_all();
+
+                // Reset the reopening flag (next hide will count as a dismissal)
+                data2.borrow_mut().reopening = false;
+            }
+        });
 
         // TODO: somehow get the styles to cascade from the parent widget
         popover.override_background_color(gtk::StateFlags::NORMAL, &gdk::RGBA { red: 0.20, green: 0.22, blue: 0.25, alpha: 0.94 });
@@ -159,11 +188,17 @@ impl GtkUiWidget for FloPopoverWidget {
             &Popup(SetSize(width, height))  => { self.content.get_underlying().set_size_request(width as i32, height as i32); },
             &Popup(SetOffset(offset))       => { self.data.borrow_mut().offset = offset; self.data.borrow().position(&self.popover, &self.widget.get_allocation()); },
 
-            &Popup(SetOpen(is_open))        => { 
-                if is_open {
-                    self.popover.show_all();
-                } else {
-                    self.popover.hide();
+            &Popup(SetOpen(is_open))        => {
+                // Store whether or not the popover is supposed to be open
+                self.data.borrow_mut().is_open = is_open;
+
+                // Open the popup, if the backing widget has a parent
+                if self.widget.get_parent().is_some() {
+                    if is_open {
+                        self.popover.show_all();
+                    } else {
+                        self.popover.hide();
+                    }
                 }
             },
 
@@ -171,6 +206,7 @@ impl GtkUiWidget for FloPopoverWidget {
                 let action_name = action_name.clone();
                 let sink        = flo_gtk.get_event_sink();
                 let widget_id   = self.id;
+                let data        = Rc::clone(&self.data);
 
                 // Popover becomes modal again (it needs to be hidden/shown for this to take effect)
                 self.popover.hide();
@@ -180,7 +216,11 @@ impl GtkUiWidget for FloPopoverWidget {
                 // The hide event causes the popup to dismiss
                 let sink = RefCell::new(sink);
                 self.popover.connect_hide(move |_widget| {
-                    sink.borrow_mut().start_send(GtkEvent::Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
+                    let reopening = data.borrow().reopening;
+
+                    if !reopening {
+                        sink.borrow_mut().start_send(GtkEvent::Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
+                    }
                 });
             },
 
