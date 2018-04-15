@@ -1,7 +1,7 @@
 use super::widget::*;
 use super::widget_data::*;
 use super::basic_widget::*;
-use super::flo_bin_widget::*;
+use super::flo_fixed_widget::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
@@ -13,8 +13,6 @@ use gtk::prelude::*;
 use std::rc::*;
 use std::cell::*;
 
-// TODO: actually manage popups
-
 ///
 /// The popup widget is used to manage GTK popup widgets
 /// 
@@ -22,10 +20,13 @@ pub struct FloPopoverWidget {
     /// The ID of the widget
     id: WidgetId,
 
-    /// The popup is a bin widget, so we delegate most of the actions there
-    bin: FloBinWidget,
+    /// The base of the pop-over (where the pop-up is aimed at)
+    base: gtk::Fixed,
 
-    /// THe popover widget
+    /// The content of the pop-over
+    content: FloFixedWidget,
+
+    /// The popover widget itself
     popover: gtk::Popover,
 
     /// The popup widget itself
@@ -39,16 +40,24 @@ impl FloPopoverWidget {
     ///
     /// Creates a basic widget
     /// 
-    pub fn new<Src: Clone+Cast+IsA<gtk::Popover>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
-        let popover = widget.clone().upcast::<gtk::Popover>();
-        let bin     = popover.clone().upcast::<gtk::Bin>();
-        let widget  = popover.clone().upcast::<gtk::Widget>();
+    pub fn new<Src: Clone+Cast+IsA<gtk::Fixed>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
+        let base    = widget.upcast::<gtk::Fixed>();
+        let widget  = base.clone().upcast::<gtk::Widget>();
+        let popover = gtk::Popover::new(&base);
+        let content = gtk::Fixed::new();
 
-        let bin     = FloBinWidget::new(id, bin, widget_data);
+        // Content widget used to contain the content for this popover
+        popover.add(&content);
+
+        content.set_size_request(100, 100);
+        content.size_allocate(&mut gtk::Rectangle { x: 0, y: 0, width: 100, height: 100 });
+
+        let content = FloFixedWidget::new(id, content, Rc::clone(&widget_data));
 
         FloPopoverWidget {
             id:         id,
-            bin:        bin,
+            base:       base,
+            content:    content,
             popover:    popover,
             widget:     widget,
             offset:     0
@@ -86,27 +95,25 @@ impl GtkUiWidget for FloPopoverWidget {
 
         match action {
             &Popup(SetDirection(direction)) => { self.popover.set_position(Self::position_for_direction(direction)); },
-            &Popup(SetSize(width, height))  => { self.popover.size_allocate(&mut gtk::Rectangle { x: 0, y: 0, width: width as i32, height: height as i32 }) },
+            &Popup(SetSize(width, height))  => { self.content.get_underlying().set_size_request(width as i32, height as i32); },
             &Popup(SetOffset(offset))       => { self.offset = offset },
 
             &Popup(SetOpen(is_open))        => { 
-                self.popover.set_relative_to(&self.popover.get_parent().unwrap());
-
                 if is_open {
-                    self.popover.show();
+                    self.popover.show_all();
                 } else {
                     self.popover.hide();
                 }
             },
 
-            // Everything else is processed by the bin widget
-            other_action    => { self.bin.process(flo_gtk, other_action); }
+            // Everything else is processed as if we were a basic widget
+            other_action    => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
     }
 
     fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
-        // Pass on to the bin widget
-        self.bin.set_children(children);
+        // Pass on to the content widget
+        self.content.set_children(children);
     }
 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
