@@ -161,6 +161,7 @@ impl HsluvPickerController {
                     Control::canvas()
                         .with(Bounds::fill_all())
                         .with(checkmarks.clone())
+                        .with(ControlAttribute::ZIndex(1))
                 ])
                 .with(hsluv_wheel.clone())
                 .with(State::Range((0.0.to_property(), 360.0.to_property())))
