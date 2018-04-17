@@ -138,7 +138,7 @@ impl FloRotorWidget {
 
             // Send drawing signals to any child widgets (they'll draw at the rotated angle)
             data.child_widgets.iter().for_each(|widget| {
-                widget.borrow().get_underlying().draw(context);
+                // ???
             });
 
             // Reset the context to its original settings
@@ -185,7 +185,9 @@ impl GtkUiWidget for FloRotorWidget {
         allocation.y = 0;
 
         // They get the same allocation as this widget
-        children.iter().for_each(|child| child.borrow().get_underlying().size_allocate(&mut allocation.clone()));
+        if allocation.width > 0 && allocation.height > 0 {
+            children.iter().for_each(|child| child.borrow().get_underlying().size_allocate(&mut allocation.clone()));
+        }
 
         // ... and are stored in the data structure
         self.data.borrow_mut().child_widgets = children;
