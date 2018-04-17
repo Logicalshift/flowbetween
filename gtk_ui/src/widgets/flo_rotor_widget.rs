@@ -113,7 +113,11 @@ impl FloRotorWidget {
 
             // Rotate to the angle specified by the value
             context.translate((allocation.width as f64)/2.0, (allocation.height as f64)/2.0);
-            context.rotate(45.0);   // TODO: actual rotation
+
+            let range = (data.range.end - data.range.start).max(0.01);
+            let angle = 360.0 * ((data.value-data.range.start)/(range));
+
+            context.rotate(angle as f64);
             context.translate(-(allocation.width as f64)/2.0, -(allocation.height as f64)/2.0);
 
             // Draw the image, if there is one
