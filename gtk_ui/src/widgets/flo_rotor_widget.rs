@@ -18,7 +18,7 @@ use gdk_pixbuf::prelude::*;
 use std::ops::Range;
 use std::rc::*;
 use std::cell::*;
-use std::f64;
+use std::{f32, f64};
 
 struct RotorData {
     /// The image displayed in the rotor (or none for no image)
@@ -212,7 +212,7 @@ impl FloRotorWidget {
             context.translate((allocation.width as f64)/2.0, (allocation.height as f64)/2.0);
 
             let range = (data.range.end - data.range.start).max(0.01);
-            let angle = 360.0 * ((data.value-data.range.start)/(range));
+            let angle = 2.0 * f32::consts::PI * ((data.value-data.range.start)/(range));
 
             context.rotate(angle as f64);
             context.translate(-(allocation.width as f64)/2.0, -(allocation.height as f64)/2.0);
