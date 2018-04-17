@@ -10,6 +10,7 @@ use flo_ui::*;
 use glib::prelude::*;
 use gtk;
 use gtk::prelude::*;
+use gdk;
 use gdk::prelude::*;
 use gdk_pixbuf;
 use gdk_pixbuf::prelude::*;
@@ -17,6 +18,7 @@ use gdk_pixbuf::prelude::*;
 use std::ops::Range;
 use std::rc::*;
 use std::cell::*;
+use std::f64;
 
 struct RotorData {
     /// The image displayed in the rotor (or none for no image)
@@ -29,7 +31,16 @@ struct RotorData {
     value: f32,
 
     /// Range of values accepted by this rotor
-    range: Range<f32>
+    range: Range<f32>,
+
+    /// Whether or not the rotor is currently being dragged
+    dragging: bool,
+
+    /// Angle where dragging started
+    initial_angle: f64,
+
+    /// Value when dragging started
+    initial_value: f32
 }
 
 ///
@@ -58,7 +69,10 @@ impl FloRotorWidget {
             image:          None,
             child_widgets:  vec![],
             value:          0.0,
-            range:          0.0..1.0
+            range:          0.0..1.0,
+            dragging:       false,
+            initial_angle:  0.0,
+            initial_value:  0.0
         };
         let data = Rc::new(RefCell::new(data));
 
@@ -79,7 +93,90 @@ impl FloRotorWidget {
     fn connect_signals(widget: gtk::Widget, data: Rc<RefCell<RotorData>>) {
         Self::connect_drawing(&widget, Rc::clone(&data));
         Self::connect_size_allocate(&widget, Rc::clone(&data));
-    }   
+        Self::connect_drag(&widget, Rc::clone(&data));
+    }
+
+    ///
+    /// Connects the button press, release and motion events
+    /// 
+    fn connect_drag(widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
+        // Want the events for the various buttons and drags etc 
+        widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
+
+        // Start dragging when the user presses the left mouse button
+        {
+            let data = data.clone();
+            widget.connect_button_press_event(move |widget, button| {
+                if button.get_button() == 1 {
+                    // Start dragging the rotor
+                    let mut data        = data.borrow_mut();
+                    let (x, y)          = button.get_position();
+
+                    data.dragging       = true;
+                    data.initial_angle  = Self::angle_for_point(widget, x, y);
+                    data.initial_value  = data.value;
+
+                    // Prevent default handling
+                    Inhibit(true)
+                } else {
+                    // Other buttons are passed through
+                    Inhibit(false)
+                }
+            });
+        }
+
+        // Stop dragging when the user releases the mouse button
+        {
+            let data = data.clone();
+            widget.connect_button_release_event(move |_widget, _button| {
+                let mut data = data.borrow_mut();
+
+                if data.dragging {
+                    // No longer dragging
+                    data.dragging = false;
+
+                    // TODO: send set events
+                    Inhibit(true)
+                } else {
+                    Inhibit(false)
+                }
+            });
+        }
+
+        // Change the value as the user drags the rotor
+        {
+            let data = data.clone();
+            widget.connect_motion_notify_event(move |widget, motion| {
+                let mut data = data.borrow_mut();
+
+                if data.dragging {
+                    // Fetch the current angle
+                    let (x, y)              = motion.get_position();
+                    let current_angle       = Self::angle_for_point(widget, x, y);
+
+                    // New value depends on the angle difference
+                    let range               = (data.range.end - data.range.start).max(0.01);
+                    let angle_difference    = current_angle - data.initial_angle;
+                    let value_difference    = range * ((angle_difference/360.0) as f32);
+
+                    data.value              = data.initial_value + value_difference;
+                    data.value              = ((data.value - data.range.start) % range) + data.range.start;
+                    if data.value < data.range.start {
+                        data.value += range;
+                    }
+
+                    // TODO: send edit events
+
+                    // Redraw the widget with the new value
+                    widget.queue_draw();
+
+                    Inhibit(true)
+                } else {
+                    Inhibit(false)
+                }
+            });
+        }
+    }
 
     ///
     /// Handles resizing the widget
@@ -151,6 +248,42 @@ impl FloRotorWidget {
             Inhibit(true)
         });
     }
+
+    ///
+    /// Returns the angle of a point in a rotor widget, in degrees
+    /// 
+    fn angle_for_point(widget: &gtk::Widget, x: f64, y: f64) -> f64 {
+        let allocation  = widget.get_allocation();
+        let width       = allocation.width as f64;
+        let height      = allocation.height as f64;
+
+        // Assume that the node is a circle around its center
+        let radius = width/2.0;
+
+        let x = x - width/2.0;
+        let y = y - height/2.0;
+
+        if (x*x + y*y) < (radius*radius) {
+            // If the point is within the main radius, then the angle is just the angle relative to the center
+            f64::atan2(y, x) / (2.0*f64::consts::PI) * 360.0
+        } else {
+            // Really want to project a line onto the circle, then make the 
+            // extra angle be the distance from the rotor. This has a 
+            // similar effect but isn't quite as accurate.
+            let angle               = f64::atan2(y, x) / (2.0*f64::consts::PI) * 360.0;
+            let circumference       = f64::consts::PI*2.0*radius;
+            let mut extra_distance  = -x;
+            if x < -radius {
+                extra_distance -= radius;
+            } else if x > radius {
+                extra_distance += radius;
+            } else {
+                extra_distance = 0.0;
+            }
+
+            angle + ((extra_distance/circumference)*360.0)
+        }
+    }
 }
 
 
@@ -165,8 +298,10 @@ impl GtkUiWidget for FloRotorWidget {
         use self::Appearance::Image;
         use self::GtkWidgetEventType::{EditValue, SetValue};
 
+        let being_dragged = self.data.borrow().dragging;
+
         match action {
-            &State(SetValueFloat(value))                => { self.data.borrow_mut().value = value; self.widget.queue_draw(); },
+            &State(SetValueFloat(value))                => { if !being_dragged { self.data.borrow_mut().value = value; self.widget.queue_draw(); } },
             &State(SetRangeMin(min_value))              => { self.data.borrow_mut().range.start = min_value; self.widget.queue_draw(); },
             &State(SetRangeMax(max_value))              => { self.data.borrow_mut().range.end = max_value; self.widget.queue_draw(); },
 
