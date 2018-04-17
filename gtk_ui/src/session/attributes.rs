@@ -95,7 +95,7 @@ impl ToGtkActions for Control {
             Label               => New(GtkWidgetType::Label),
             Canvas              => New(canvas_type_for_control(self)),
             Slider              => New(GtkWidgetType::Scale),
-            Rotor               => New(GtkWidgetType::Generic)
+            Rotor               => New(GtkWidgetType::Rotor)
         };
         
         // The widget class allows the style sheet to specifically target Flo widgets
