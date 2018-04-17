@@ -5,6 +5,7 @@ use super::super::gtk_action::*;
 
 use gtk;
 use gtk::prelude::*;
+use cairo;
 
 use std::rc::*;
 use std::cell::*;
@@ -90,5 +91,9 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
         &self.as_widget
+    }
+
+    fn draw_manual(&self, context: &cairo::Context) { 
+        self.underlying_widget.borrow().draw_manual(context);
     }
 }

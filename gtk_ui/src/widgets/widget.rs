@@ -2,6 +2,7 @@ use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
 use gtk;
+use cairo;
 
 use std::rc::*;
 use std::cell::*;
@@ -29,6 +30,13 @@ pub trait GtkUiWidget {
     /// Retrieves the underlying widget for this UI widget
     /// 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget;
+
+    ///
+    /// Draws the content of this widget to a context
+    /// 
+    /// (would really like to call .draw() on the underlying widget instead but this doesn't seem to actually work)
+    /// 
+    fn draw_manual(&self, context: &cairo::Context) { }
 }
 
 impl GtkUiWidget for Box<GtkUiWidget> {
@@ -36,4 +44,5 @@ impl GtkUiWidget for Box<GtkUiWidget> {
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction)   { (**self).process(flo_gtk, action) }
     fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>)     { (**self).set_children(children) }
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget                      { (**self).get_underlying() }
+    fn draw_manual(&self, context: &cairo::Context)                         { (**self).draw_manual(context); }
 }

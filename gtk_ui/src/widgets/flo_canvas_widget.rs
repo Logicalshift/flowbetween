@@ -117,62 +117,69 @@ impl FloDrawingWidget {
     }
 
     ///
+    /// Renders the content of this canvas to a cairo context
+    /// 
+    fn perform_draw(widget: &gtk::Widget, context: &cairo::Context, core: &Rc<RefCell<DrawingCore>>) {
+        // Fetch the core
+        let mut core = core.borrow_mut();
+
+        // Drawing request is no longer pending
+        core.draw_pending = false;
+
+        // If we need to check the size, do so and maybe set the redraw bit
+        if core.check_size {
+            // Get the current viewport
+            let existing_viewport   = core.pixbufs.get_viewport();
+
+            // Get the allocated viewport
+            let allocation          = widget.get_allocation();
+            let current_viewport    = Self::get_viewport(widget, &allocation);
+
+            // A redraw is required if the size is different from the last time we drew the pixbufs
+            if existing_viewport != current_viewport {
+                // Update the viewport
+                core.pixbufs.set_viewport(current_viewport);
+                core.need_redraw = true;
+            }
+
+            // Store the scaling factor for the widget
+            let scale_factor    = widget.get_scale_factor();
+            core.scale_factor   = scale_factor;
+            core.pixbufs.set_pixel_scale(scale_factor as f64);
+
+            // Size is checked
+            core.check_size = false;
+        }
+
+        // Make sure everything has been drawn up to date
+        if core.need_redraw {
+            Self::redraw(&mut core);
+            core.need_redraw = false;
+        }
+
+        context.save();
+
+        // Resize the context to match the scaling factor
+        let scale_factor = core.scale_factor;
+        let scale_factor = 1.0/(scale_factor as f64);
+        context.scale(scale_factor, scale_factor);
+
+        // Translate according to the viewport
+        let viewport = core.pixbufs.get_viewport();
+        context.translate(viewport.viewport_x as f64, viewport.viewport_y as f64);
+
+        // Render the pixbufs
+        core.pixbufs.render_to_context(context);
+
+        context.restore();
+    }
+
+    ///
     /// Deals with drawing the main drawing area
     /// 
     fn connect_draw(drawing_area: &gtk::Widget, core: Rc<RefCell<DrawingCore>>) {
         drawing_area.connect_draw(move |widget, context| {
-            // Fetch the core
-            let mut core = core.borrow_mut();
-
-            // Drawing request is no longer pending
-            core.draw_pending = false;
-
-            // If we need to check the size, do so and maybe set the redraw bit
-            if core.check_size {
-                // Get the current viewport
-                let existing_viewport   = core.pixbufs.get_viewport();
-
-                // Get the allocated viewport
-                let allocation          = widget.get_allocation();
-                let current_viewport    = Self::get_viewport(widget, &allocation);
-
-                // A redraw is required if the size is different from the last time we drew the pixbufs
-                if existing_viewport != current_viewport {
-                    // Update the viewport
-                    core.pixbufs.set_viewport(current_viewport);
-                    core.need_redraw = true;
-                }
-
-                // Store the scaling factor for the widget
-                let scale_factor    = widget.get_scale_factor();
-                core.scale_factor   = scale_factor;
-                core.pixbufs.set_pixel_scale(scale_factor as f64);
-
-                // Size is checked
-                core.check_size = false;
-            }
-
-            // Make sure everything has been drawn up to date
-            if core.need_redraw {
-                Self::redraw(&mut core);
-                core.need_redraw = false;
-            }
-
-            context.save();
-
-            // Resize the context to match the scaling factor
-            let scale_factor = core.scale_factor;
-            let scale_factor = 1.0/(scale_factor as f64);
-            context.scale(scale_factor, scale_factor);
-
-            // Translate according to the viewport
-            let viewport = core.pixbufs.get_viewport();
-            context.translate(viewport.viewport_x as f64, viewport.viewport_y as f64);
-
-            // Render the pixbufs
-            core.pixbufs.render_to_context(context);
-
-            context.restore();
+            Self::perform_draw(widget, context, &core);
 
             Inhibit(true)
         });
@@ -341,5 +348,9 @@ impl GtkUiWidget for FloDrawingWidget {
 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
         &self.as_widget
+    }
+
+    fn draw_manual(&self, context: &cairo::Context) { 
+        Self::perform_draw(&self.as_widget, context, &self.core);
     }
 }

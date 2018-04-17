@@ -7,6 +7,7 @@ use super::super::gtk_thread::*;
 
 use gtk;
 use gtk::prelude::*;
+use cairo;
 
 use std::rc::*;
 use std::cell::*;
@@ -59,5 +60,9 @@ impl GtkUiWidget for FloCanvasLayoutWidget {
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
         // Both widget behaviours are the same here
         self.as_fixed.get_underlying()
+    }
+
+    fn draw_manual(&self, context: &cairo::Context) { 
+        self.as_drawing.draw_manual(context);
     }
 }

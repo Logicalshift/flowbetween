@@ -138,7 +138,7 @@ impl FloRotorWidget {
 
             // Send drawing signals to any child widgets (they'll draw at the rotated angle)
             data.child_widgets.iter().for_each(|widget| {
-                // ???
+                widget.borrow().draw_manual(context);
             });
 
             // Reset the context to its original settings
