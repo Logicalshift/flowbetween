@@ -1,9 +1,11 @@
 use super::image::*;
 use super::widget::*;
 use super::basic_widget::*;
+use super::super::gtk_event::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 use super::super::gtk_widget_event_type::*;
+use super::super::gtk_event_parameter::*;
 
 use flo_ui::*;
 
@@ -14,6 +16,7 @@ use gdk;
 use gdk::prelude::*;
 use gdk_pixbuf;
 use gdk_pixbuf::prelude::*;
+use futures::*;
 
 use std::ops::Range;
 use std::rc::*;
@@ -40,7 +43,13 @@ struct RotorData {
     initial_angle: f64,
 
     /// Value when dragging started
-    initial_value: f32
+    initial_value: f32,
+
+    /// Event names and sinks for set events
+    set_events: Vec<(String, GtkEventSink)>,
+
+    /// Event names and sinks for edit events
+    edit_events: Vec<(String, GtkEventSink)>
 }
 
 ///
@@ -72,12 +81,14 @@ impl FloRotorWidget {
             range:          0.0..1.0,
             dragging:       false,
             initial_angle:  0.0,
-            initial_value:  0.0
+            initial_value:  0.0,
+            set_events:     vec![],
+            edit_events:    vec![]
         };
         let data = Rc::new(RefCell::new(data));
 
         // Register events
-        Self::connect_signals(widget.clone().upcast::<gtk::Widget>(), Rc::clone(&data));
+        Self::connect_signals(id, widget.clone().upcast::<gtk::Widget>(), Rc::clone(&data));
 
         // Generate the final widget
         FloRotorWidget {
@@ -90,16 +101,16 @@ impl FloRotorWidget {
     ///
     /// Wires up the signals for this rotor widget
     /// 
-    fn connect_signals(widget: gtk::Widget, data: Rc<RefCell<RotorData>>) {
+    fn connect_signals(widget_id: WidgetId, widget: gtk::Widget, data: Rc<RefCell<RotorData>>) {
         Self::connect_drawing(&widget, Rc::clone(&data));
         Self::connect_size_allocate(&widget, Rc::clone(&data));
-        Self::connect_drag(&widget, Rc::clone(&data));
+        Self::connect_drag(widget_id, &widget, Rc::clone(&data));
     }
 
     ///
     /// Connects the button press, release and motion events
     /// 
-    fn connect_drag(widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
+    fn connect_drag(widget_id: WidgetId, widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
         // Want the events for the various buttons and drags etc 
         widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
 
@@ -135,7 +146,12 @@ impl FloRotorWidget {
                     // No longer dragging
                     data.dragging = false;
 
-                    // TODO: send set events
+                    // Send set events
+                    let value = data.value as f64;
+                    data.set_events.iter_mut().for_each(|&mut (ref event_name, ref mut sink)| {
+                        sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value))).unwrap();
+                    });
+
                     Inhibit(true)
                 } else {
                     Inhibit(false)
@@ -145,7 +161,8 @@ impl FloRotorWidget {
 
         // Change the value as the user drags the rotor
         {
-            let data = data.clone();
+            let data        = data.clone();
+            let widget_id   = widget_id;
             widget.connect_motion_notify_event(move |widget, motion| {
                 let mut data = data.borrow_mut();
 
@@ -165,7 +182,11 @@ impl FloRotorWidget {
                         data.value += range;
                     }
 
-                    // TODO: send edit events
+                    // Send edit events
+                    let value = data.value as f64;
+                    data.edit_events.iter_mut().for_each(|&mut (ref event_name, ref mut sink)| {
+                        sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value))).unwrap();
+                    });
 
                     // Redraw the widget with the new value
                     widget.queue_draw();
@@ -312,6 +333,9 @@ impl GtkUiWidget for FloRotorWidget {
                 // Redraw the widget
                 self.widget.queue_draw()
             },
+
+            &RequestEvent(SetValue, ref event_name)     => { self.data.borrow_mut().set_events.push((event_name.clone(), flo_gtk.get_event_sink())); },
+            &RequestEvent(EditValue, ref event_name)    => { self.data.borrow_mut().edit_events.push((event_name.clone(), flo_gtk.get_event_sink())); },
 
             other_action                                => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
