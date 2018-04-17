@@ -13,8 +13,6 @@ use gtk::prelude::*;
 use gdk::prelude::*;
 use gdk_pixbuf;
 use gdk_pixbuf::prelude::*;
-use cairo;
-use cairo::prelude::*;
 
 use std::ops::Range;
 use std::rc::*;
@@ -80,6 +78,27 @@ impl FloRotorWidget {
     /// 
     fn connect_signals(widget: gtk::Widget, data: Rc<RefCell<RotorData>>) {
         Self::connect_drawing(&widget, Rc::clone(&data));
+        Self::connect_size_allocate(&widget, Rc::clone(&data));
+    }   
+
+    ///
+    /// Handles resizing the widget
+    /// 
+    fn connect_size_allocate(widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
+        widget.connect_size_allocate(move |widget, allocation| {
+            let mut allocation = *allocation;
+            allocation.x = 0;
+            allocation.y = 0;
+
+            // Reallocate the size of all the child widgets
+            data.borrow().child_widgets.iter()
+                .for_each(|child_widget| {
+                    child_widget.borrow().get_underlying().size_allocate(&mut allocation.clone());
+                });
+
+            // Redraw this widget
+            widget.queue_draw();
+        });
     }
 
     ///
@@ -117,9 +136,9 @@ impl FloRotorWidget {
                 context.restore();
             }
 
-            // Send drawing signals to any child widgets
+            // Send drawing signals to any child widgets (they'll draw at the rotated angle)
             data.child_widgets.iter().for_each(|widget| {
-                // widget.borrow_mut().get_underlying().emit("draw", &[&Value::from(context.clone())]);
+                widget.borrow().get_underlying().draw(context);
             });
 
             // Reset the context to its original settings
@@ -159,8 +178,20 @@ impl GtkUiWidget for FloRotorWidget {
         }
     }
 
-    fn set_children(&mut self, _children: Vec<Rc<RefCell<GtkUiWidget>>>) {
-        // Scales cannot have child widgets
+    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+        // Child widgets are drawn manually
+        let mut allocation = self.widget.get_allocation();
+        allocation.x = 0;
+        allocation.y = 0;
+
+        // They get the same allocation as this widget
+        children.iter().for_each(|child| child.borrow().get_underlying().size_allocate(&mut allocation.clone()));
+
+        // ... and are stored in the data structure
+        self.data.borrow_mut().child_widgets = children;
+
+        // Redraw the widget once done
+        self.widget.queue_draw();
     }
 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
