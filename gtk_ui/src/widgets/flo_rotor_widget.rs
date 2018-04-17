@@ -21,7 +21,7 @@ use futures::*;
 use std::ops::Range;
 use std::rc::*;
 use std::cell::*;
-use std::{f32, f64};
+use std::f64;
 
 struct RotorData {
     /// The image displayed in the rotor (or none for no image)
@@ -31,10 +31,10 @@ struct RotorData {
     child_widgets: Vec<Rc<RefCell<GtkUiWidget>>>,
     
     /// Value the rotor is set to
-    value: f32,
+    value: f64,
 
     /// Range of values accepted by this rotor
-    range: Range<f32>,
+    range: Range<f64>,
 
     /// Whether or not the rotor is currently being dragged
     dragging: bool,
@@ -43,7 +43,7 @@ struct RotorData {
     initial_angle: f64,
 
     /// Value when dragging started
-    initial_value: f32,
+    initial_value: f64,
 
     /// Event names and sinks for set events
     set_events: Vec<(String, GtkEventSink)>,
@@ -174,7 +174,7 @@ impl FloRotorWidget {
                     // New value depends on the angle difference
                     let range               = (data.range.end - data.range.start).max(0.01);
                     let angle_difference    = current_angle - data.initial_angle;
-                    let value_difference    = range * ((angle_difference/360.0) as f32);
+                    let value_difference    = range * (angle_difference/360.0);
 
                     data.value              = data.initial_value + value_difference;
                     data.value              = ((data.value - data.range.start) % range) + data.range.start;
@@ -233,7 +233,7 @@ impl FloRotorWidget {
             context.translate((allocation.width as f64)/2.0, (allocation.height as f64)/2.0);
 
             let range = (data.range.end - data.range.start).max(0.01);
-            let angle = 2.0 * f32::consts::PI * ((data.value-data.range.start)/(range));
+            let angle = 2.0 * f64::consts::PI * ((data.value-data.range.start)/(range));
 
             context.rotate(angle as f64);
             context.translate(-(allocation.width as f64)/2.0, -(allocation.height as f64)/2.0);

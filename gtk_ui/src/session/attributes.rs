@@ -188,7 +188,7 @@ impl ToGtkActions for Bounds {
                 // Update the floating point
                 let mut floating_point = floating_point.lock().unwrap();
 
-                if let Some(x1_floating) = x1_floating.to_f32() {
+                if let Some(x1_floating) = x1_floating.to_f64() {
                     floating_point.0 = x1_floating;
                 }
 
@@ -204,7 +204,7 @@ impl ToGtkActions for Bounds {
                 // Update the floating point
                 let mut floating_point = floating_point.lock().unwrap();
 
-                if let Some(y1_floating) = y1_floating.to_f32() {
+                if let Some(y1_floating) = y1_floating.to_f64() {
                     floating_point.0 = y1_floating;
                 }
 
@@ -223,10 +223,10 @@ impl ToGtkActions for State {
         match self {
             &Selected(ref selected)     => vec![ PropertyAction::from_property(selected.clone(), |value| vec![ WidgetState::SetSelected(value.to_bool().unwrap_or(false)).into() ]) ],
             &Badged(ref badged)         => vec![ PropertyAction::from_property(badged.clone(), |value| vec![ WidgetState::SetBadged(value.to_bool().unwrap_or(false)).into() ]) ],
-            &Value(ref value)           => vec![ PropertyAction::from_property(value.clone(), |value| vec![ WidgetState::SetValueFloat(value.to_f32().unwrap_or(0.0)).into() ]) ],
+            &Value(ref value)           => vec![ PropertyAction::from_property(value.clone(), |value| vec![ WidgetState::SetValueFloat(value.to_f64().unwrap_or(0.0)).into() ]) ],
             &Range((ref min, ref max))  => vec![ 
-                PropertyAction::from_property(min.clone(), |min| vec![ WidgetState::SetRangeMin(min.to_f32().unwrap_or(0.0)).into() ]),
-                PropertyAction::from_property(max.clone(), |max| vec![ WidgetState::SetRangeMax(max.to_f32().unwrap_or(0.0)).into() ]) 
+                PropertyAction::from_property(min.clone(), |min| vec![ WidgetState::SetRangeMin(min.to_f64().unwrap_or(0.0)).into() ]),
+                PropertyAction::from_property(max.clone(), |max| vec![ WidgetState::SetRangeMax(max.to_f64().unwrap_or(0.0)).into() ]) 
             ]
         }
     }

@@ -15,8 +15,8 @@ use std::collections::HashSet;
 /// Indicates the floating position of a widget (used when laying it out again) 
 /// 
 pub struct FloatingPosition {
-    pub x: f32,
-    pub y: f32
+    pub x: f64,
+    pub y: f64
 }
 
 ///
@@ -26,10 +26,10 @@ pub struct FloatingPosition {
 pub struct WidgetPosition {
     pub id: WidgetId,
 
-    pub x1: f32,
-    pub y1: f32,
-    pub x2: f32,
-    pub y2: f32,
+    pub x1: f64,
+    pub y1: f64,
+    pub x2: f64,
+    pub y2: f64,
 
     pub padding: (u32, u32, u32, u32),
     pub z_index: u32
@@ -67,14 +67,14 @@ impl FloWidgetLayout {
     ///
     /// Turns a Position into an absolute position
     /// 
-    pub fn layout_position(&self, last_pos: f32, next_pos: &Position, max_pos: f32, stretch_area: f32, total_stretch: f32) -> f32 {
+    pub fn layout_position(&self, last_pos: f64, next_pos: &Position, max_pos: f64, stretch_area: f64, total_stretch: f64) -> f64 {
         use self::Position::*;
 
         match next_pos {
-            &At(pos)                        => pos,
-            &Floating(ref _prop, offset)    => offset,
-            &Offset(offset)                 => last_pos + offset,
-            &Stretch(portion)               => last_pos + stretch_area * (portion/total_stretch),
+            &At(pos)                        => pos as f64,
+            &Floating(ref _prop, offset)    => offset as f64,
+            &Offset(offset)                 => last_pos + (offset as f64),
+            &Stretch(portion)               => last_pos + stretch_area * ((portion as f64)/total_stretch),
             &Start                          => 0.0,
             &End                            => max_pos,
             &After                          => last_pos
@@ -84,9 +84,9 @@ impl FloWidgetLayout {
     ///
     /// Returns the amount of stretch in a position
     /// 
-    fn get_stretch(&self, pos: &Position) -> f32 {
+    fn get_stretch(&self, pos: &Position) -> f64 {
         if let &Position::Stretch(portion) = pos {
-            portion
+            portion as f64
         } else {
             0.0
         }
@@ -95,7 +95,7 @@ impl FloWidgetLayout {
     ///
     /// Performs layout of the widgets in this item
     /// 
-    pub fn get_layout(&self, width: f32, height: f32) -> Vec<WidgetPosition> {
+    pub fn get_layout(&self, width: f64, height: f64) -> Vec<WidgetPosition> {
         // Where we are in the current layout
         let mut xpos    = 0.0;
         let mut ypos    = 0.0;
@@ -223,7 +223,7 @@ impl FloWidgetLayout {
     /// 
     fn layout_in_container<T: Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>>(&self, target: &T, min_x: i32, min_y: i32, width: i32, height: i32) {
         // Get the layout for this widget
-        let layout      = self.get_layout(width as f32, height as f32);
+        let layout      = self.get_layout(width as f64, height as f64);
 
         // Position each of the widgets
         let mut remaining: HashSet<_>   = target.get_children().into_iter().collect();

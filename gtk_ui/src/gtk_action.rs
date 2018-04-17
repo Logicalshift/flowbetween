@@ -134,7 +134,7 @@ pub enum WidgetLayout {
     BoundingBox(Bounds),
 
     /// Specifies the floating offset for this widget
-    Floating(f32, f32),
+    Floating(f64, f64),
 
     /// Specifies the Z-index of this widget
     ZIndex(u32),
@@ -161,13 +161,13 @@ pub enum WidgetState {
     SetBadged(bool),
 
     /// Sets the value of this widget
-    SetValueFloat(f32),
+    SetValueFloat(f64),
 
     /// Sets the minimum value for this widget
-    SetRangeMin(f32),
+    SetRangeMin(f64),
 
     /// Sets the maximum value for this widget
-    SetRangeMax(f32)
+    SetRangeMax(f64)
 }
 
 impl From<WidgetState> for GtkWidgetAction {
