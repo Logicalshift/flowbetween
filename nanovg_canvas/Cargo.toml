@@ -1,0 +1,8 @@
+[package]
+name        = "nanovg_canvas"
+version     = "0.1.0"
+authors     = ["Andrew Hunter"]
+
+[dependencies]
+flo_canvas  = { version = "^0.1.0", path="../canvas" }
+nanovg      = { version = "^0.4.0" }
