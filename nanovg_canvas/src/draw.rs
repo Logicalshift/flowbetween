@@ -113,6 +113,32 @@ impl NanoVgDrawingState {
     }
 
     ///
+    /// Computes the transformation to apply for a particular canvas height
+    /// 
+    fn height_transform(height: f32) -> Transform {
+        let mut ratio_x = 2.0/height;
+        let ratio_y     = ratio_x;
+
+        if height < 0.0 {
+            ratio_x = -ratio_x;
+        }
+
+        let mut result  = Transform::new();
+        result.scale(ratio_x, ratio_y);
+
+        result
+    }
+
+    ///
+    /// Performs the canvas height operation
+    /// 
+    fn canvas_height(&mut self, height: f32) {
+        let height = Self::height_transform(height);
+        self.path_options.transform = self.path_options.transform.clone()
+            .map(|transform| height * transform);
+    }
+
+    ///
     /// Performs a drawing action on the specified frame
     /// 
     pub fn draw<'a>(&mut self, drawing: Draw, frame: &Frame<'a>) {
@@ -137,7 +163,7 @@ impl NanoVgDrawingState {
             StrokeColor(col)                            => { self.stroke = col.into(); },
             BlendMode(blend)                            => { self.path_options.composite_operation = Self::blend_mode(blend); },
             IdentityTransform                           => { self.path_options.transform = Some(self.viewport.to_transform()) },
-            CanvasHeight(height)                        => { },
+            CanvasHeight(height)                        => { self.canvas_height(height); },
             CenterRegion((minx, miny), (maxx, maxy))    => { },
             MultiplyTransform(transform)                => { },
             Unclip                                      => { },
