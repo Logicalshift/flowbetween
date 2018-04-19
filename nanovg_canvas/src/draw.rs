@@ -59,17 +59,34 @@ impl NanoVgDrawingState {
     }
 
     ///
+    /// Renders the current path to a NanoVG path
+    /// 
+    fn render_path(&self, path: &Path) {
+        self.path.iter().for_each(|item| item.add_to_path(path));
+    }
+
+    ///
     /// Fills a path on the current frame
     /// 
-    fn fill_path<'a>(&mut self, frame: &Frame<'a>) {
-
+    fn fill_path<'a>(&self, frame: &Frame<'a>) {
+        frame.path(|path| {
+            self.render_path(&path);
+            path.fill(&self.fill, FillOptions { antialias: true });
+        },
+        self.path_options.clone());
     }
 
     ///
     /// Draws an outline for a path on the current frame
     /// 
-    fn stroke_path<'a>(&mut self, frame: &Frame<'a>) {
+    fn stroke_path<'a>(&self, frame: &Frame<'a>) {
+        frame.path(|path| {
+            let opt = &self.stroke_options;
 
+            self.render_path(&path);
+            path.stroke(&self.fill, StrokeOptions { width: opt.width, line_cap: opt.line_cap, line_join: opt.line_join, miter_limit: opt.miter_limit, antialias: opt.antialias });
+        },
+        self.path_options.clone());
     }
 
     ///
