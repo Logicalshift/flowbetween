@@ -1,5 +1,6 @@
 use super::path::*;
 use super::paint::*;
+use super::viewport::*;
 
 use flo_canvas;
 use flo_canvas::Draw;
@@ -11,7 +12,7 @@ use nanovg;
 /// 
 pub struct NanoVgDrawingState {
     /// The size of the framebuffer in pixels
-    framebuffer_size: (u32, u32),
+    viewport: NanoVgViewport,
 
     /// Pending path instructions
     path: Vec<NanoVgPath>,
@@ -36,15 +37,15 @@ impl NanoVgDrawingState {
     ///
     /// Creates a new NanoVgDrawing state
     /// 
-    pub fn new(framebuffer_width: u32, framebuffer_height: u32) -> NanoVgDrawingState {
+    pub fn new(viewport: NanoVgViewport) -> NanoVgDrawingState {
         NanoVgDrawingState {
-            framebuffer_size:   (framebuffer_width, framebuffer_height),
+            viewport:           viewport,
             path:               vec![],
             stroke:             NanoVgPaint::Color(nanovg::Color::new(0.0, 0.0, 0.0, 1.0)),
             fill:               NanoVgPaint::Color(nanovg::Color::new(0.0, 0.0, 0.0, 1.0)),
             fill_options:       FillOptions { antialias: true },
             stroke_options:     StrokeOptions { width: 1.0, line_cap: LineCap::Butt, line_join: LineJoin::Miter, miter_limit: 16.0, antialias: true },
-            path_options:       PathOptions { clip: Clip::None, composite_operation: CompositeOperation::Basic(BasicCompositeOperation::SourceOver), alpha: 1.0, transform: Some(Transform::new()) }
+            path_options:       PathOptions { clip: Clip::None, composite_operation: CompositeOperation::Basic(BasicCompositeOperation::SourceOver), alpha: 1.0, transform: Some(viewport.to_transform()) }
         }
     }
 
@@ -118,7 +119,7 @@ impl NanoVgDrawingState {
             FillColor(col)                              => { self.fill = col.into(); },
             StrokeColor(col)                            => { self.stroke = col.into(); },
             BlendMode(blend)                            => { self.path_options.composite_operation = Self::blend_mode(blend); },
-            IdentityTransform                           => { self.path_options.transform = Some(Transform::new()) },
+            IdentityTransform                           => { self.path_options.transform = Some(self.viewport.to_transform()) },
             CanvasHeight(height)                        => { },
             CenterRegion((minx, miny), (maxx, maxy))    => { },
             MultiplyTransform(transform)                => { },
