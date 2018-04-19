@@ -130,12 +130,61 @@ impl NanoVgDrawingState {
     }
 
     ///
+    /// Computes a transform to make a particular region centered in the viewport
+    /// 
+    fn center_transform(current_matrix: &Transform, viewport: &NanoVgViewport, minx: f32, miny: f32, maxx: f32, maxy: f32) -> Transform {
+        let pixel_width     = viewport.width as f32;
+        let pixel_height    = viewport.height as f32;
+
+        let xx = current_matrix.matrix[0];
+        let yx = current_matrix.matrix[1];
+        let xy = current_matrix.matrix[2];
+        let yy = current_matrix.matrix[3];
+        let x0 = current_matrix.matrix[4];
+        let y0 = current_matrix.matrix[5];
+
+        // Get the current scaling of this canvas
+        let mut xscale = (xx*xx + yx*yx).sqrt();
+        let mut yscale = (xy*xy + yy*yy).sqrt();
+        if xscale == 0.0 { xscale = 1.0; }
+        if yscale == 0.0 { yscale = 1.0; }
+
+        // Current X, Y coordinates (centered)
+        let cur_x = (x0-(pixel_width/2.0))/xscale;
+        let cur_y = (y0-(pixel_height/2.0))/yscale;
+        
+        // New center coordinates
+        let center_x = (minx+maxx)/2.0;
+        let center_y = (miny+maxy)/2.0;
+
+        // Compute the offsets and transform the canvas
+        let x_offset = cur_x - center_x;
+        let y_offset = cur_y - center_y;
+
+        let x_offset = x_offset + (viewport.viewport_x as f32)/xscale;
+        let y_offset = y_offset + (viewport.viewport_y as f32)/xscale;
+
+        // Generate the result matrix
+        let mut result = Transform::new();
+        result.translate(x_offset, y_offset)
+    }
+
+    ///
     /// Performs the canvas height operation
     /// 
     fn canvas_height(&mut self, height: f32) {
         let height = Self::height_transform(height);
         self.path_options.transform = self.path_options.transform.clone()
             .map(|transform| height * transform);
+    }
+
+    ///
+    /// Performs the center region operation
+    /// 
+    fn center_region(&mut self, minx: f32, miny: f32, maxx: f32, maxy: f32) {
+        let center = Self::center_transform(&self.path_options.transform, minx, miny, maxx, maxy);;
+        self.path_options.transform = self.path_options.transform.clone()
+            .map(|transform| center * transform);
     }
 
     ///
@@ -164,7 +213,7 @@ impl NanoVgDrawingState {
             BlendMode(blend)                            => { self.path_options.composite_operation = Self::blend_mode(blend); },
             IdentityTransform                           => { self.path_options.transform = Some(self.viewport.to_transform()) },
             CanvasHeight(height)                        => { self.canvas_height(height); },
-            CenterRegion((minx, miny), (maxx, maxy))    => { },
+            CenterRegion((minx, miny), (maxx, maxy))    => { self.center_region(minx, miny, maxx, maxy); },
             MultiplyTransform(transform)                => { },
             Unclip                                      => { },
             Clip                                        => { /* TODO: store the current path as the clipping path, write to a clip buffer, then use that with an image source to draw the final result */ },
