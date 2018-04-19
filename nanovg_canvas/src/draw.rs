@@ -1,6 +1,7 @@
 use super::path::*;
 use super::paint::*;
 
+use flo_canvas;
 use flo_canvas::Draw;
 use nanovg::*;
 use nanovg;
@@ -71,6 +72,29 @@ impl NanoVgDrawingState {
     }
 
     ///
+    /// Converts a canvas blending mode into a nanovg blending mdoe
+    /// 
+    fn blend_mode(canvas_mode: flo_canvas::BlendMode) -> CompositeOperation {
+        use flo_canvas::BlendMode::*;
+
+        match canvas_mode {
+            SourceOver          => CompositeOperation::Basic(BasicCompositeOperation::SourceOver),
+            SourceIn            => CompositeOperation::Basic(BasicCompositeOperation::SourceIn),
+            SourceOut           => CompositeOperation::Basic(BasicCompositeOperation::SourceOut),
+            DestinationOver     => CompositeOperation::Basic(BasicCompositeOperation::DestinationOver),
+            DestinationIn       => CompositeOperation::Basic(BasicCompositeOperation::DestinationIn),
+            DestinationOut      => CompositeOperation::Basic(BasicCompositeOperation::DestinationOut),
+            SourceAtop          => CompositeOperation::Basic(BasicCompositeOperation::Atop),
+            DestinationAtop     => CompositeOperation::Basic(BasicCompositeOperation::DestinationAtop),
+
+            Multiply            |   // TODO: I think these are all probably possible with other composite operations but are less eimple than the ones above
+            Screen              |
+            Darken              |
+            Lighten             => CompositeOperation::Basic(BasicCompositeOperation::SourceOver)
+        }
+    }
+
+    ///
     /// Performs a drawing action on the specified frame
     /// 
     pub fn draw<'a>(&mut self, drawing: Draw, frame: &Frame<'a>) {
@@ -93,7 +117,7 @@ impl NanoVgDrawingState {
             DashOffset(offset)                          => { /* Dashed paths are not supported by nanovg */ },
             FillColor(col)                              => { self.fill = col.into(); },
             StrokeColor(col)                            => { self.stroke = col.into(); },
-            BlendMode(blend)                            => { },
+            BlendMode(blend)                            => { self.path_options.composite_operation = Self::blend_mode(blend); },
             IdentityTransform                           => { self.path_options.transform = Some(Transform::new()) },
             CanvasHeight(height)                        => { },
             CenterRegion((minx, miny), (maxx, maxy))    => { },
