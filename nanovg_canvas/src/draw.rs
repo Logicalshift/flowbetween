@@ -182,7 +182,9 @@ impl NanoVgDrawingState {
     /// Performs the center region operation
     /// 
     fn center_region(&mut self, minx: f32, miny: f32, maxx: f32, maxy: f32) {
-        let center = Self::center_transform(&self.path_options.transform, minx, miny, maxx, maxy);;
+        let transform = self.path_options.transform.take().unwrap_or(self.viewport.to_transform());
+
+        let center = Self::center_transform(&transform, &self.viewport, minx, miny, maxx, maxy);;
         self.path_options.transform = self.path_options.transform.clone()
             .map(|transform| center * transform);
     }

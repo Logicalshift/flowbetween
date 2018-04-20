@@ -1,4 +1,6 @@
 extern crate nanovg;
+extern crate gl;
+
 extern crate flo_canvas;
 
 mod draw;
