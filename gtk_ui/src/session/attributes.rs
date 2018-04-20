@@ -42,7 +42,11 @@ fn button_type_for_control(control: &Control) -> GtkWidgetType {
 /// so we can draw a canvas and have other controls on top of it
 /// 
 fn canvas_type_for_control(control: &Control) -> GtkWidgetType {
-    if let Some(subcomponents) = control.subcomponents() {
+    let fast_drawing = control.attributes().any(|attr| attr == &ControlAttribute::HintAttr(Hint::FastDrawing));
+    
+    if fast_drawing {
+        GtkWidgetType::CanvasNanovg
+    } else if let Some(subcomponents) = control.subcomponents() {
         if subcomponents.len() > 0 {
             GtkWidgetType::CanvasLayout
         } else {
