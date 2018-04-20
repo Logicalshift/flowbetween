@@ -2,6 +2,7 @@ use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 
 use gtk;
+use gtk::prelude::*;
 use cairo;
 
 use std::rc::*;
@@ -36,7 +37,7 @@ pub trait GtkUiWidget {
     /// 
     /// (would really like to call .draw() on the underlying widget instead but this doesn't seem to actually work)
     /// 
-    fn draw_manual(&self, context: &cairo::Context) { }
+    fn draw_manual(&self, context: &cairo::Context) { self.get_underlying().draw(context); }
 }
 
 impl GtkUiWidget for Box<GtkUiWidget> {
