@@ -5,6 +5,7 @@ use super::super::gtk_action::*;
 
 use gtk;
 use gtk::prelude::*;
+use gl;
 
 use std::rc::*;
 use std::cell::*;
@@ -26,7 +27,27 @@ impl FloNanoVgWidget {
     /// 
     pub fn new<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloNanoVgWidget {
         let gl_widget = widget.upcast::<gtk::GLArea>();
-        let as_widget = gl_widget.clone().upcast::<gtk::Widget>();
+
+        // The GL area always goes in an event box
+        let event_box = gtk::EventBox::new();
+        let as_widget = event_box.clone().upcast::<gtk::Widget>();
+
+        event_box.add(&gl_widget);
+
+        // Simple realize event
+        gl_widget.connect_realize(|gl_widget| {
+            gl_widget.make_current();
+        });
+
+        // Simple rendering to test out our widget
+        gl_widget.connect_render(|gl_widget, ctxt| { 
+            unsafe {
+                gl::ClearColor(0.5, 0.5, 0.8, 1.0);
+                gl::Clear(gl::COLOR_BUFFER_BIT);
+            }
+
+            Inhibit(true)
+        });
 
         FloNanoVgWidget {
             id: widget_id,
