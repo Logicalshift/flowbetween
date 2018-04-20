@@ -102,6 +102,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
                     Control::canvas()
                         .with(main_canvas)
                         .with(Bounds::fill_all())
+                        .with(Hint::FastDrawing)
                         .with((
                             (ActionTrigger::Paint(PaintDevice::Pen),                        PAINT_ACTION),
                             (ActionTrigger::Paint(PaintDevice::Touch),                      PAINT_ACTION),
