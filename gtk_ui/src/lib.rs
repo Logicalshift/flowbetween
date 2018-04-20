@@ -7,6 +7,7 @@
 
 extern crate flo_ui;
 extern crate flo_canvas;
+extern crate flo_nanovg_canvas;
 
 extern crate gtk;
 extern crate gdk;

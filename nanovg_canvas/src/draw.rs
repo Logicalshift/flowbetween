@@ -165,7 +165,7 @@ impl NanoVgDrawingState {
         let y_offset = y_offset + (viewport.viewport_y as f32)/xscale;
 
         // Generate the result matrix
-        let mut result = Transform::new();
+        let result = Transform::new();
         result.translate(x_offset, y_offset)
     }
 

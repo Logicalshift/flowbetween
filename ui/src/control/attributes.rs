@@ -2,6 +2,7 @@ use super::bounds::*;
 use super::control::*;
 use super::actions::*;
 use super::font_attr::*;
+use super::hint_attr::*;
 use super::state_attr::*;
 use super::popup_attr::*;
 use super::scroll_attr::*;
@@ -45,6 +46,9 @@ pub enum ControlAttribute {
 
     /// Specifies how the contents of this control will scroll
     ScrollAttr(Scroll),
+
+    /// Specifies a hint on how this control should be treated
+    HintAttr(Hint),
 
     /// The unique ID for this control
     Id(String),
@@ -204,6 +208,16 @@ impl ControlAttribute {
             _                       => None
         }
     }
+
+    ///
+    /// If this is a hint attribute, returns the hint, otherwise returns nothing
+    /// 
+    pub fn hint<'a>(&'a self) -> Option<&'a Hint> {
+        match self {
+            &HintAttr(ref hint) => Some(hint),
+            _                   => None
+        }
+    }
      
     ///
     /// Returns true if this attribute is different from another one
@@ -224,6 +238,7 @@ impl ControlAttribute {
             &Canvas(ref canvas_resource)        => Some(canvas_resource) != compare_to.canvas(),
             &AppearanceAttr(ref appearance)     => Some(appearance) != compare_to.appearance(),
             &ScrollAttr(ref scroll)             => Some(scroll) != compare_to.scroll(),
+            &HintAttr(ref hint)                 => Some(hint) != compare_to.hint(),
 
             // For the subcomponents we only care about the number as we don't want to recurse
             &SubComponents(ref components)      => Some(components.len()) != compare_to.subcomponents().map(|components| components.len())

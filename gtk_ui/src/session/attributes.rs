@@ -154,6 +154,7 @@ impl ToGtkActions for ControlAttribute {
             &PopupAttr(ref popup)                   => popup.to_gtk_actions(),
             &AppearanceAttr(ref appearance)         => appearance.to_gtk_actions(),
             &ScrollAttr(ref scroll)                 => scroll.to_gtk_actions(),
+            &HintAttr(ref hint)                     => hint.to_gtk_actions(),
 
             &Id(ref id)                             => vec![ WidgetContent::AddClass(id.clone()).into() ].into_actions(),
             &Action(ref _trigger, ref _action_name) => vec![],
@@ -169,6 +170,12 @@ impl ToGtkActions for ControlAttribute {
             // Subcomponents are added elsewhere: we don't assign them here
             &SubComponents(ref _components)         => vec![]
         }
+    }
+}
+
+impl ToGtkActions for Hint {
+    fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
+        vec![]
     }
 }
 

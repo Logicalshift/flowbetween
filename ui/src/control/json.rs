@@ -25,6 +25,7 @@ impl ToJsonValue for ControlAttribute {
             &Id(ref id)                             => json!({ "Id": id }),
             &Controller(ref name)                   => json!({ "Controller": name }),
             &Action(ref trigger, ref action)        => json!({ "Action": (trigger, action) }),
+            &HintAttr(ref hint)                     => json!({ "Hint": hint }),
 
             &SubComponents(ref components)          => {
                 let json_components: Vec<_> = components.iter()
