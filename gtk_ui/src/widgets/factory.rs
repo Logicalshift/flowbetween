@@ -7,6 +7,7 @@ use super::flo_scale_widget::*;
 use super::flo_rotor_widget::*;
 use super::flo_scroll_widget::*;
 use super::flo_canvas_widget::*;
+use super::flo_nanovg_widget::*;
 use super::flo_canvas_layout_widget::*;
 use super::widget_data::*;
 use super::super::gtk_action::*;
@@ -35,8 +36,9 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Rotor               => Box::new(FloRotorWidget::new(id, gtk::DrawingArea::new())),
         CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new(), widget_data)),
         CanvasLayout        => Box::new(FloCanvasLayoutWidget::new(id, gtk::Layout::new(None, None), widget_data)),
+        CanvasNanovg        => Box::new(FloNanoVgWidget::new(id, gtk::GLArea::new())),
 
-        Scale           => {
+        Scale               => {
             let scale = gtk::Scale::new(gtk::Orientation::Horizontal, None);
             scale.set_draw_value(false);
             Box::new(FloScaleWidget::new(id, scale))
