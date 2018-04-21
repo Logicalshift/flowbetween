@@ -17,10 +17,10 @@ pub struct FloNanoVgWidget {
     /// The ID of this widget
     id: WidgetId,
 
-    /// The GTK GLArea widget
-    gl_widget: gtk::GLArea,
+    /// The GTK GLArea widget (needs to be explicitly retained to avoid random self-destruction)
+    _gl_widget: gtk::GLArea,
 
-    /// THis widget represented as a widget
+    /// The widget that the rest of the code will deal with
     as_widget: gtk::Widget
 }
 
@@ -29,11 +29,9 @@ impl FloNanoVgWidget {
     /// Creates a new NanoVG widget with a particular GL area as the target
     /// 
     pub fn new<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloNanoVgWidget {
+        // Fetch the GL widget and its widget representation
         let gl_widget = widget.upcast::<gtk::GLArea>();
-
-        // The GL area always goes in an event box
-        let event_box = gtk::EventBox::new();
-        let as_widget = event_box.clone().upcast::<gtk::Widget>();
+        let as_widget = gl_widget.clone().upcast::<gtk::Widget>();
 
         // Simple realize event
         gl_widget.connect_realize(|gl_widget| {
@@ -50,13 +48,11 @@ impl FloNanoVgWidget {
             Inhibit(true)
         });
 
-        // Add our GL widget to the event box
-        event_box.add(&gl_widget);
-
+        // Generate the result
         FloNanoVgWidget {
-            id: widget_id,
-            gl_widget: gl_widget,
-            as_widget: as_widget
+            id:         widget_id,
+            _gl_widget: gl_widget,
+            as_widget:  as_widget
         }
     }
 }
