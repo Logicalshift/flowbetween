@@ -20,6 +20,7 @@ extern crate anymap;
 extern crate futures;
 extern crate itertools;
 extern crate gl;
+extern crate epoxy;
 extern crate time;
 
 mod gtk_thread;
