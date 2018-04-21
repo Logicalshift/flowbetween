@@ -44,7 +44,7 @@ fn main() {
         GtkAction::Widget(WidgetId::Assigned(0), vec![
             GtkWidgetAction::New(GtkWidgetType::Generic),
             GtkWidgetAction::Content(WidgetContent::SetText(String::from("Hello, world"))),
-            GtkWidgetAction::Content(WidgetContent::SetChildren(vec![WidgetId::Assigned(1)])),
+            GtkWidgetAction::Content(WidgetContent::SetChildren(vec![WidgetId::Assigned(1), WidgetId::Assigned(2)])),
             GtkWidgetAction::SetRoot(window0)
         ])
     ]);
