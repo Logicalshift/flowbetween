@@ -88,7 +88,18 @@ impl NanoVgLayers {
         self.layers         = HashMap::new();
         self.current_layer  = 0;
         self.state          = NanoVgDrawingState::new(new_viewport.clone());
+        self.viewport       = new_viewport;
         self.scale_factor   = scale_factor;
+    }
+
+    ///
+    /// Clears all layers associated with this object
+    /// 
+    pub fn clear(&mut self) {
+        self.state_stack    = vec![];
+        self.layers         = HashMap::new();
+        self.current_layer  = 0;
+        self.state          = NanoVgDrawingState::new(self.viewport.clone());
     }
 
     ///
