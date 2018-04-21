@@ -81,6 +81,17 @@ impl NanoVgLayers {
     }
 
     ///
+    /// Clears all layers and updates the viewport and scaling
+    /// 
+    pub fn set_viewport(&mut self, new_viewport: NanoVgViewport, scale_factor: f32) {
+        self.state_stack    = vec![];
+        self.layers         = HashMap::new();
+        self.current_layer  = 0;
+        self.state          = NanoVgDrawingState::new(new_viewport.clone());
+        self.scale_factor   = scale_factor;
+    }
+
+    ///
     /// Flush the pending actions (eg, before changing layers)
     /// 
     /// We queue up actions to avoid the need to ask nanovg 
