@@ -31,6 +31,16 @@ fn main() {
             }))
         ]),
 
+        GtkAction::Widget(WidgetId::Assigned(2), vec![
+            GtkWidgetAction::New(GtkWidgetType::CanvasNanovg),
+            GtkWidgetAction::Layout(WidgetLayout::BoundingBox(Bounds {
+                x1: Position::Start,
+                y1: Position::Start,
+                x2: Position::End,
+                y2: Position::End
+            }))
+        ]),
+
         GtkAction::Widget(WidgetId::Assigned(0), vec![
             GtkWidgetAction::New(GtkWidgetType::Generic),
             GtkWidgetAction::Content(WidgetContent::SetText(String::from("Hello, world"))),
