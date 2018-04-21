@@ -6,9 +6,18 @@ use super::super::gtk_action::*;
 use gtk;
 use gtk::prelude::*;
 use gl;
+use nanovg;
 
 use std::rc::*;
 use std::cell::*;
+
+///
+/// NanoVG core data, shared with event handlers
+/// 
+struct NanoVgCore {
+    /// The context, if it exists
+    context: Option<nanovg::Context>
+}
 
 ///
 /// Uses NanoVG to draw using OpenGL on a widget
@@ -33,23 +42,66 @@ impl FloNanoVgWidget {
         let gl_widget = widget.upcast::<gtk::GLArea>();
         let as_widget = gl_widget.clone().upcast::<gtk::Widget>();
 
+        // Create the core data
+        let core = NanoVgCore {
+            context: None
+        };
+        let core = Rc::new(RefCell::new(core));
+
         // Configure the GL area
         gl_widget.set_has_alpha(true);
+        gl_widget.set_has_stencil_buffer(true);
 
         // Simple realize event
-        gl_widget.connect_realize(|gl_widget| {
-            gl_widget.make_current();
-        });
+        {
+            let core = Rc::clone(&core);
+            gl_widget.connect_realize(move |gl_widget| {
+                let mut core = core.borrow_mut();
+
+                // Set the context
+                gl_widget.make_current();
+
+                // Create the nanovg context
+                let context     = nanovg::ContextBuilder::new()
+                    .stencil_strokes()
+                    .antialias()
+                    .build()
+                    .expect("Failed to create NanoVG context");
+                core.context    = Some(context);
+            });
+        }
 
         // Simple rendering to test out our widget
-        gl_widget.connect_render(|gl_widget, ctxt| { 
-            unsafe {
-                gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-                gl::Clear(gl::COLOR_BUFFER_BIT);
-            }
+        {
+            let core = Rc::clone(&core);
+            gl_widget.connect_render(move |gl_widget, ctxt| { 
+                let core        = core.borrow();
+                let allocation  = gl_widget.get_allocation();
+                let context     = core.context.as_ref().unwrap();
+                let scale       = gl_widget.get_scale_factor();
 
-            Inhibit(true)
-        });
+                // Prepare to render
+                unsafe {
+                    gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+                    gl::Clear(gl::COLOR_BUFFER_BIT);
+                    gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
+                }
+
+                context.frame((allocation.width, allocation.height), scale as f32, |frame| {
+                    frame.path(|path| {
+                        path.rect((100.0, 100.0), (1980.0-200.0, 1080.0-200.0));
+                        path.fill(nanovg::Color::new(0.5, 0.5, 0.8, 0.5), Default::default());
+                    }, nanovg::PathOptions { ..Default::default() });
+
+                    frame.path(|path| {
+                        path.circle((1980.0/2.0, 1080.0/2.0), 100.0);
+                        path.fill(nanovg::Color::new(0.8, 0.5, 0.2, 1.0), Default::default());
+                    }, nanovg::PathOptions { ..Default::default() });
+                });
+
+                Inhibit(true)
+            });
+        }
 
         // Generate the result
         FloNanoVgWidget {
