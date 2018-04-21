@@ -62,6 +62,22 @@ impl NanoVgLayers {
     }
 
     ///
+    /// Renders the current set of layers
+    /// 
+    pub fn render(&mut self, x: i32, y: i32) {
+        // Finish any drawing that was pending
+        self.flush();
+
+        // Draw the layers to the current context
+        let mut layer_ids: Vec<_> = self.layers.keys().collect();
+        layer_ids.sort();
+
+        for layer_id in layer_ids {
+            self.layers[layer_id].frame_buffer.blit(x, y);
+        }
+    }
+
+    ///
     /// Performs a drawing action on this layers object
     /// 
     pub fn draw(&mut self, action: Draw) {
