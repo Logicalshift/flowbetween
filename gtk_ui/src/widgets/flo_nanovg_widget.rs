@@ -17,6 +17,9 @@ pub struct FloNanoVgWidget {
     /// The ID of this widget
     id: WidgetId,
 
+    /// The GTK GLArea widget
+    gl_widget: gtk::GLArea,
+
     /// THis widget represented as a widget
     as_widget: gtk::Widget
 }
@@ -27,7 +30,6 @@ impl FloNanoVgWidget {
     /// 
     pub fn new<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloNanoVgWidget {
         let gl_widget = widget.upcast::<gtk::GLArea>();
-        println!("{:?}", gl_widget);
 
         // The GL area always goes in an event box
         let event_box = gtk::EventBox::new();
@@ -44,8 +46,8 @@ impl FloNanoVgWidget {
             println!("Render...");
 
             unsafe {
-                gl::ClearColor(0.5, 0.5, 0.8, 1.0);
-                gl::Clear(gl::COLOR_BUFFER_BIT);
+                //gl::ClearColor(0.5, 0.5, 0.8, 1.0);
+                //gl::Clear(gl::COLOR_BUFFER_BIT);
             }
 
             Inhibit(true)
@@ -56,6 +58,7 @@ impl FloNanoVgWidget {
 
         FloNanoVgWidget {
             id: widget_id,
+            gl_widget: gl_widget,
             as_widget: as_widget
         }
     }
