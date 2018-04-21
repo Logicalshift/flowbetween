@@ -27,20 +27,22 @@ impl FloNanoVgWidget {
     /// 
     pub fn new<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloNanoVgWidget {
         let gl_widget = widget.upcast::<gtk::GLArea>();
+        println!("{:?}", gl_widget);
 
         // The GL area always goes in an event box
         let event_box = gtk::EventBox::new();
         let as_widget = event_box.clone().upcast::<gtk::Widget>();
 
-        event_box.add(&gl_widget);
-
         // Simple realize event
         gl_widget.connect_realize(|gl_widget| {
+            println!("Realize...");
             gl_widget.make_current();
         });
 
         // Simple rendering to test out our widget
         gl_widget.connect_render(|gl_widget, ctxt| { 
+            println!("Render...");
+
             unsafe {
                 gl::ClearColor(0.5, 0.5, 0.8, 1.0);
                 gl::Clear(gl::COLOR_BUFFER_BIT);
@@ -48,6 +50,9 @@ impl FloNanoVgWidget {
 
             Inhibit(true)
         });
+
+        // Add our GL widget to the event box
+        event_box.add(&gl_widget);
 
         FloNanoVgWidget {
             id: widget_id,
