@@ -4,6 +4,7 @@ use super::framebuffer::*;
 
 use flo_canvas::*;
 
+use gl;
 use nanovg;
 
 use std::mem;
@@ -113,6 +114,9 @@ impl NanoVgLayers {
             return;
         }
 
+        // Bind to the GL framebuffer
+        let previous_framebuffer = FrameBuffer::get_current();
+
         // Fetch the current layer
         let layer_id        = self.current_layer;
         let viewport        = &self.viewport;
@@ -129,7 +133,12 @@ impl NanoVgLayers {
             for action in actions {
                 Self::flush_to_layer(state, action, &frame);
             }
+
+            state.commit(&frame);
         });
+
+        // Reset to the framebuffer that was in use before we performed these actions
+        unsafe { gl::BindFramebuffer(gl::FRAMEBUFFER, previous_framebuffer); }
     }
 
     ///
