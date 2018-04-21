@@ -3,6 +3,7 @@ use super::basic_widget::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 
+use flo_canvas::*;
 use flo_nanovg_canvas::*;
 
 use gtk;
@@ -32,10 +33,13 @@ pub struct FloNanoVgWidget {
     id: WidgetId,
 
     /// The GTK GLArea widget (needs to be explicitly retained to avoid random self-destruction)
-    _gl_widget: gtk::GLArea,
+    gl_widget: gtk::GLArea,
 
     /// The widget that the rest of the code will deal with
-    as_widget: gtk::Widget
+    as_widget: gtk::Widget,
+
+    /// The core data for this widget
+    core: Rc<RefCell<NanoVgCore>>
 }
 
 impl FloNanoVgWidget {
@@ -89,29 +93,34 @@ impl FloNanoVgWidget {
         {
             let core = Rc::clone(&core);
             gl_widget.connect_render(move |gl_widget, _ctxt| { 
-                let core        = core.borrow();
-                let allocation  = gl_widget.get_allocation();
-                let context     = core.context.as_ref().unwrap();
-                let scale       = gl_widget.get_scale_factor();
+                let mut core        = core.borrow_mut();
+                {
+                    let allocation  = gl_widget.get_allocation();
+                    let context     = core.context.as_ref().unwrap();
+                    let scale       = gl_widget.get_scale_factor();
 
-                // Prepare to render
-                unsafe {
-                    gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-                    gl::Clear(gl::COLOR_BUFFER_BIT);
-                    gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
+                    // Prepare to render
+                    unsafe {
+                        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+                        gl::Clear(gl::COLOR_BUFFER_BIT);
+                        gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
+                    }
+
+                    context.frame((allocation.width, allocation.height), scale as f32, |frame| {
+                        frame.path(|path| {
+                            path.rect((100.0, 100.0), (1980.0-200.0, 1080.0-200.0));
+                            path.fill(nanovg::Color::new(0.5, 0.5, 0.8, 0.5), Default::default());
+                        }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
+
+                        frame.path(|path| {
+                            path.circle((1980.0/2.0, 1080.0/2.0), 100.0);
+                            path.fill(nanovg::Color::new(0.8, 0.5, 0.2, 1.0), Default::default());
+                        }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
+                    });
                 }
 
-                context.frame((allocation.width, allocation.height), scale as f32, |frame| {
-                    frame.path(|path| {
-                        path.rect((100.0, 100.0), (1980.0-200.0, 1080.0-200.0));
-                        path.fill(nanovg::Color::new(0.5, 0.5, 0.8, 0.5), Default::default());
-                    }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
-
-                    frame.path(|path| {
-                        path.circle((1980.0/2.0, 1080.0/2.0), 100.0);
-                        path.fill(nanovg::Color::new(0.8, 0.5, 0.2, 1.0), Default::default());
-                    }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
-                });
+                // Render the layers
+                core.layers.as_mut().map(|layers| layers.render(0, 0));
 
                 Inhibit(true)
             });
@@ -120,8 +129,9 @@ impl FloNanoVgWidget {
         // Generate the result
         FloNanoVgWidget {
             id:         widget_id,
-            _gl_widget: gl_widget,
-            as_widget:  as_widget
+            gl_widget:  gl_widget,
+            as_widget:  as_widget,
+            core:       core
         }
     }
 
@@ -198,6 +208,28 @@ impl FloNanoVgWidget {
             }
         }
     }
+
+    ///
+    /// Performs some drawing actions on this canvas
+    /// 
+    fn draw<DrawIter: Send+IntoIterator<Item=Draw>>(&mut self, actions: DrawIter) {
+        // Get the core to do drawing on
+        let mut core = self.core.borrow_mut();
+
+        // If the GL widget has been realized, make it current
+        if core.layers.is_some() {
+            self.gl_widget.make_current();
+        }
+
+        // Draw the actions
+        let actions: Vec<_> = actions.into_iter().collect();
+        for action in actions.iter() {
+            core.layers.as_mut().map(|layers| layers.draw(*action));
+        }
+
+        // Note that a redraw is needed
+        self.gl_widget.queue_render();
+    }
 }
 
 impl GtkUiWidget for FloNanoVgWidget {
@@ -206,7 +238,10 @@ impl GtkUiWidget for FloNanoVgWidget {
     }
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
-        process_basic_widget_action(self, flo_gtk, action);
+        match action {
+            &GtkWidgetAction::Content(WidgetContent::Draw(ref drawing)) => self.draw(drawing.iter().map(|draw| *draw)),
+            other_action                                                => process_basic_widget_action(self, flo_gtk, other_action)
+        }
     }
 
     fn set_children(&mut self, _children: Vec<Rc<RefCell<GtkUiWidget>>>) {
