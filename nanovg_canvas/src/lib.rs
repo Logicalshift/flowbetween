@@ -7,6 +7,8 @@ mod draw;
 mod path;
 mod paint;
 mod viewport;
+mod framebuffer;
 
 pub use self::draw::*;
 pub use self::viewport::*;
+pub use self::framebuffer::*;
