@@ -18,7 +18,10 @@ use std::cell::*;
 /// 
 struct NanoVgCore {
     /// The context, if it exists
-    context: Option<nanovg::Context>
+    context: Option<nanovg::Context>,
+
+    // The layers in this core
+    layers: Option<NanoVgLayers>
 }
 
 ///
@@ -46,7 +49,8 @@ impl FloNanoVgWidget {
 
         // Create the core data
         let core = NanoVgCore {
-            context: None
+            layers:     None,
+            context:    None
         };
         let core = Rc::new(RefCell::new(core));
 
@@ -72,6 +76,12 @@ impl FloNanoVgWidget {
                     .build()
                     .expect("Failed to create NanoVG context");
                 core.context    = Some(context);
+
+                // ... and layers
+                let allocation  = gl_widget.get_allocation();
+                let scale       = gl_widget.get_scale_factor() as f32;
+                let layers      = Some(NanoVgLayers::new(Self::get_viewport(&gl_widget.clone().upcast::<gtk::Widget>(), &allocation), scale));
+                core.layers     = layers;
             });
         }
 
@@ -112,6 +122,80 @@ impl FloNanoVgWidget {
             id:         widget_id,
             _gl_widget: gl_widget,
             as_widget:  as_widget
+        }
+    }
+
+    ///
+    /// Retrieves the viewport for a canvas
+    /// 
+    fn get_viewport(drawing_area: &gtk::Widget, allocation: &gtk::Allocation) -> NanoVgViewport {
+        // The scale factor is used to ensure we get a 1:1 pixel ratio for our drawing area
+        let scale_factor = drawing_area.get_scale_factor();
+
+        // Search for a scrollable parent to base the viewport upon
+        let mut scrollable  = None;
+        let mut parent      = Some(drawing_area.clone().upcast::<gtk::Widget>());
+        while parent.is_some() && scrollable.is_none() {
+            scrollable  = parent.clone().and_then(|parent| parent.dynamic_cast::<gtk::Scrollable>().ok());
+            parent      = parent.and_then(|parent| parent.get_parent());
+        }
+
+        // Generate a viewport
+        let viewport = NanoVgViewport {
+            width:              allocation.width.max(1) * scale_factor,
+            height:             allocation.height.max(1) * scale_factor,
+            viewport_x:         0,
+            viewport_y:         0,
+            viewport_width:     allocation.width.max(1) * scale_factor,
+            viewport_height:    allocation.height.max(1) * scale_factor
+        };
+
+        // Clip to the scrollable region if there is one
+        match scrollable {
+            Some(scrollable)    => Self::clip_viewport_to_scrollable(viewport, &scrollable, drawing_area),
+            None                => viewport
+        }
+    }
+
+    ///
+    /// Clips a viewport to only the portion visible in a scrollable area
+    ///
+    fn clip_viewport_to_scrollable(full_viewport: NanoVgViewport, scrollable: &gtk::Scrollable, drawing_area: &gtk::Widget) -> NanoVgViewport {
+        // Scrollable must also be a widget
+        let scrollable_widget = scrollable.clone().dynamic_cast::<gtk::Widget>().unwrap();
+
+        // Will need to scale the coorindates
+        let scale       = drawing_area.get_scale_factor();
+
+        // Get the positions for the scrollable
+        let hadjust     = scrollable.get_hadjustment().unwrap();
+        let vadjust     = scrollable.get_vadjustment().unwrap();
+
+        let hvalue      = hadjust.get_value() as i32;       // = left coordinate
+        let hpagesize   = hadjust.get_page_size() as i32;   // = width
+
+        let vvalue      = vadjust.get_value() as i32;       // = top coordinate
+        let vpagesize   = vadjust.get_page_size() as i32;   // = height
+
+        // TODO: this should really be '&&', maybe allowing for up to a certain size (we get a giant viewport in the timeline right now, so this isn't done)
+        if full_viewport.viewport_width <= hpagesize*scale || full_viewport.viewport_height <= vpagesize*scale {
+            // If the scroll region is larger than the viewport then just use the full viewport
+            full_viewport
+        } else {
+            // Turn the values into coorindates on the scrolling area (note that translate_coordinates returns scaled coordinates for some reason)
+            let (left, top) = scrollable_widget.translate_coordinates(drawing_area, hvalue, vvalue).unwrap();
+
+            // TODO: if the page size is greater than the canvas size, we should probably trim to only the area covered by the actual canvas
+
+            // Otherwise, adjust the viewport to the scroll values
+            NanoVgViewport {
+                width:              full_viewport.width,
+                height:             full_viewport.height,
+                viewport_x:         left,                   // Scaled by translate_coordinates
+                viewport_y:         top,                    // Scaled by translate_coordinates
+                viewport_width:     hpagesize * scale,
+                viewport_height:    vpagesize * scale
+            }
         }
     }
 }
