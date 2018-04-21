@@ -37,17 +37,14 @@ impl FloNanoVgWidget {
 
         // Simple realize event
         gl_widget.connect_realize(|gl_widget| {
-            println!("Realize...");
             gl_widget.make_current();
         });
 
         // Simple rendering to test out our widget
         gl_widget.connect_render(|gl_widget, ctxt| { 
-            println!("Render...");
-
             unsafe {
-                //gl::ClearColor(0.5, 0.5, 0.8, 1.0);
-                //gl::Clear(gl::COLOR_BUFFER_BIT);
+                gl::ClearColor(0.5, 0.5, 0.8, 1.0);
+                gl::Clear(gl::COLOR_BUFFER_BIT);
             }
 
             Inhibit(true)
