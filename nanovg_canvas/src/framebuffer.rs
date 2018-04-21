@@ -8,7 +8,13 @@ pub struct FrameBuffer {
     renderbuffer_id: u32,
 
     /// The ID of the framebuffer
-    framebuffer_id: u32
+    framebuffer_id: u32,
+
+    /// The width of the framebuffer
+    width: i32,
+
+    /// The height of the framebuffer
+    height: i32
 }
 
 impl FrameBuffer {
@@ -58,8 +64,29 @@ impl FrameBuffer {
             // Return the resulting framebuffer
             FrameBuffer {
                 renderbuffer_id:    new_renderbuffer_id,
-                framebuffer_id:     new_framebuffer_id
+                framebuffer_id:     new_framebuffer_id,
+                width:              width,
+                height:             height
             }
+        }
+    }
+
+    ///
+    /// Bind to this framebuffer for drawing
+    /// 
+    pub fn bind(&self) {
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer_id);
+        }
+    }
+
+    ///
+    /// Blits the framebuffer to a new position
+    /// 
+    pub fn blit(&self, x: i32, y: i32) {
+        unsafe {
+            gl::BindFramebuffer(gl::READ_FRAMEBUFFER, self.framebuffer_id);
+            gl::BlitFramebuffer(0, 0, self.width, self.height, x, y, x+self.width, y+self.height, gl::COLOR_BUFFER_BIT, gl::NEAREST);
         }
     }
 }
