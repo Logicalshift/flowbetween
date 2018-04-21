@@ -256,7 +256,7 @@ impl FloDrawingWidget {
     }
 
     ///
-    /// Clips a viewport to only the portiomn visible in a scrollable area
+    /// Clips a viewport to only the portion visible in a scrollable area
     ///
     fn clip_viewport_to_scrollable(full_viewport: CanvasViewport, scrollable: &gtk::Scrollable, drawing_area: &gtk::Widget) -> CanvasViewport {
         // Scrollable must also be a widget
