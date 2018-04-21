@@ -74,7 +74,7 @@ impl FloNanoVgWidget {
         // Simple rendering to test out our widget
         {
             let core = Rc::clone(&core);
-            gl_widget.connect_render(move |gl_widget, ctxt| { 
+            gl_widget.connect_render(move |gl_widget, _ctxt| { 
                 let core        = core.borrow();
                 let allocation  = gl_widget.get_allocation();
                 let context     = core.context.as_ref().unwrap();
@@ -82,7 +82,7 @@ impl FloNanoVgWidget {
 
                 // Prepare to render
                 unsafe {
-                    gl::ClearColor(0.0, 0.0, 0.0, 1.0);
+                    gl::ClearColor(0.0, 0.0, 0.0, 0.0);
                     gl::Clear(gl::COLOR_BUFFER_BIT);
                     gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
                 }
@@ -91,12 +91,12 @@ impl FloNanoVgWidget {
                     frame.path(|path| {
                         path.rect((100.0, 100.0), (1980.0-200.0, 1080.0-200.0));
                         path.fill(nanovg::Color::new(0.5, 0.5, 0.8, 0.5), Default::default());
-                    }, nanovg::PathOptions { ..Default::default() });
+                    }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
 
                     frame.path(|path| {
                         path.circle((1980.0/2.0, 1080.0/2.0), 100.0);
                         path.fill(nanovg::Color::new(0.8, 0.5, 0.2, 1.0), Default::default());
-                    }, nanovg::PathOptions { ..Default::default() });
+                    }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
                 });
 
                 Inhibit(true)
