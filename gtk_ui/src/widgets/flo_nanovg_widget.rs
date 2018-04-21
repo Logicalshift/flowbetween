@@ -3,6 +3,8 @@ use super::basic_widget::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 
+use flo_nanovg_canvas::*;
+
 use gtk;
 use gtk::prelude::*;
 use gl;
@@ -60,6 +62,8 @@ impl FloNanoVgWidget {
 
                 // Set the context
                 gl_widget.make_current();
+
+                let random_framebuffer = FrameBuffer::new(200, 300);
 
                 // Create the nanovg context
                 let context     = nanovg::ContextBuilder::new()
