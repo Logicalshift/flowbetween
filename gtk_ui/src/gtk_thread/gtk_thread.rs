@@ -4,11 +4,15 @@ use super::super::gtk_action::*;
 use super::super::gtk_event::*;
 use super::super::widgets::*;
 
+use gl;
 use gtk;
+use epoxy;
 use futures::*;
+use shared_library::dynamic_library::DynamicLibrary;
 
 use std::thread;
 use std::thread::JoinHandle;
+use std::ptr;
 
 ///
 /// Represents a running Gtk thread, providing an interface for other threads to use
@@ -47,6 +51,26 @@ impl GtkThread {
     }
 
     ///
+    /// Sets up OpenGL on a GTK thread
+    /// 
+    /// See https://github.com/gtk-rs/examples/pull/44/files
+    /// 
+    fn initialize_opengl() {
+        // Tell epoxy how to load symbols from this process
+        epoxy::load_with(|symbol_name| {
+            unsafe {
+                match DynamicLibrary::open(None).unwrap().symbol(symbol_name) {
+                    Ok(v)   => v,
+                    Err(_)  => ptr::null(),
+                }
+            }
+        });
+
+        // Load OpenGL via epoxy
+        gl::load_with(epoxy::get_proc_addr);
+    }
+
+    ///
     /// Starts running Gtk in a thread
     /// 
     fn run_thread(&self) -> JoinHandle<()> {
@@ -61,6 +85,9 @@ impl GtkThread {
             if init_result.is_err() {
                 panic!("Failed to start GTK: {:?}", init_result);
             }
+
+            // Prepare OpenGL as well
+            Self::initialize_opengl();
 
             // Create the Gtk data structure
             let flo_gtk = FloGtk::new(event_sink);
