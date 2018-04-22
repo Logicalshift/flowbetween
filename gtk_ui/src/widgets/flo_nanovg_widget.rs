@@ -76,15 +76,23 @@ impl FloNanoVgWidget {
 
         // Mark for redraw and queue a render on size allocation
         {
-            let core = Rc::clone(&core);
-            gl_widget.connect_size_allocate(move |gl_widget, _allocation| {
-                // Set the redraw and resize flags
-                let mut core = core.borrow_mut();
-                core.needs_resize = true;
-                core.needs_redraw = true;
+            let core            = Rc::clone(&core);
+            let last_allocation = RefCell::new(gl_widget.get_allocation());
+            gl_widget.connect_size_allocate(move |gl_widget, allocation| {
+                let mut last_allocation = last_allocation.borrow_mut();
 
-                // Queue a render
-                gl_widget.queue_render();
+                // TODO: check if the viewport has changed as well
+                if allocation != &*last_allocation {
+                    *last_allocation = allocation.clone();
+
+                    // Set the redraw and resize flags
+                    let mut core = core.borrow_mut();
+                    core.needs_resize = true;
+                    core.needs_redraw = true;
+
+                    // Queue a render
+                    gl_widget.queue_render();
+                }
             });
         }
 
