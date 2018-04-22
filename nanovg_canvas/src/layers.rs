@@ -141,11 +141,21 @@ impl NanoVgLayers {
         let state           = &mut self.state;
         let layer           = self.layers.entry(layer_id).or_insert_with(|| Layer::new(viewport));
 
+        layer.frame_buffer.bind();
+
         // Take the pending actions for the current layer
         mem::swap(&mut actions, &mut self.pending_for_layer);
 
+        // Set the GL viewport for drawing
+        unsafe { gl::Viewport(0, 0, viewport.viewport_width, viewport.viewport_height) };
+
         // Replay them to a frame
-        layer.context.frame((viewport.viewport_width, viewport.viewport_height), scale_factor, move |frame| {
+        let frame_width     = (viewport.viewport_width as f32)/scale_factor;
+        let frame_height    = (viewport.viewport_height as f32)/scale_factor;
+        let frame_width     = frame_width.floor() as i32;
+        let frame_height    = frame_height.floor() as i32;
+
+        layer.context.frame((frame_width, frame_height), scale_factor, move |frame| {
             for action in actions {
                 Self::flush_to_layer(state, action, &frame);
             }
