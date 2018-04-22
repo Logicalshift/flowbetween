@@ -118,6 +118,16 @@ impl FloNanoVgWidget {
             let core = Rc::clone(&core);
             gl_widget.connect_render(move |gl_widget, _ctxt| { 
                 let mut core        = core.borrow_mut();
+
+                // Redraw and resize the layers if needed
+                if core.needs_resize {
+                    Self::resize(&mut *core, gl_widget);
+                }
+
+                if core.needs_redraw {
+                    Self::redraw(&mut *core);
+                }
+
                 {
                     let allocation  = gl_widget.get_allocation();
                     let context     = core.context.as_ref().unwrap();
@@ -130,6 +140,7 @@ impl FloNanoVgWidget {
                         gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
                     }
 
+                    // Test pattern
                     context.frame((allocation.width, allocation.height), scale as f32, |frame| {
                         frame.path(|path| {
                             path.rect((100.0, 100.0), (1980.0-200.0, 1080.0-200.0));
@@ -141,15 +152,6 @@ impl FloNanoVgWidget {
                             path.fill(nanovg::Color::new(0.8, 0.5, 0.2, 1.0), Default::default());
                         }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
                     });
-                }
-
-                // Redraw and resize the layers if needed
-                if core.needs_resize {
-                    Self::resize(&mut *core, gl_widget);
-                }
-
-                if core.needs_redraw {
-                    Self::redraw(&mut *core);
                 }
 
                 // Render the layers
