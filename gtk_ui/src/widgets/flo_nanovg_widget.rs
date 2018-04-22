@@ -18,6 +18,15 @@ use std::cell::*;
 /// NanoVG core data, shared with event handlers
 /// 
 struct NanoVgCore {
+    /// Canvas, used for queuing up redraw instructions
+    canvas: Canvas,
+
+    /// Set to true if the core needs a redraw due to invalidation since the last time it was drawn
+    needs_redraw: bool,
+
+    /// Set to true if the viewport has been invalidated since the last time it was drawn
+    needs_resize: bool,
+
     /// The context, if it exists
     context: Option<nanovg::Context>,
 
@@ -53,14 +62,31 @@ impl FloNanoVgWidget {
 
         // Create the core data
         let core = NanoVgCore {
-            layers:     None,
-            context:    None
+            canvas:         Canvas::new(),
+            needs_redraw:   true,
+            needs_resize:   true,
+            layers:         None,
+            context:        None
         };
         let core = Rc::new(RefCell::new(core));
 
         // Configure the GL area
         gl_widget.set_has_alpha(true);
         gl_widget.set_has_stencil_buffer(true);
+
+        // Mark for redraw and queue a render on size allocation
+        {
+            let core = Rc::clone(&core);
+            gl_widget.connect_size_allocate(move |gl_widget, allocation| {
+                // Set the redraw and resize flags
+                let mut core = core.borrow_mut();
+                core.needs_resize = true;
+                core.needs_redraw = true;
+
+                // Queue a render
+                gl_widget.queue_render();
+            });
+        }
 
         // Simple realize event
         {
@@ -70,8 +96,6 @@ impl FloNanoVgWidget {
 
                 // Set the context
                 gl_widget.make_current();
-
-                let random_framebuffer = FrameBuffer::new(200, 300);
 
                 // Create the nanovg context
                 let context     = nanovg::ContextBuilder::new()
@@ -119,6 +143,15 @@ impl FloNanoVgWidget {
                     });
                 }
 
+                // Redraw and resize the layers if needed
+                if core.needs_resize {
+                    Self::resize(&mut *core, gl_widget);
+                }
+
+                if core.needs_redraw {
+                    Self::redraw(&mut *core);
+                }
+
                 // Render the layers
                 core.layers.as_mut().map(|layers| layers.render(0, 0));
 
@@ -136,9 +169,41 @@ impl FloNanoVgWidget {
     }
 
     ///
+    /// Resets the viewport of a core
+    /// 
+    fn resize<W: gtk::WidgetExt+Clone+Cast+IsA<gtk::Widget>>(core: &mut NanoVgCore, widget: &W) {
+        // Fetch the viewport for the widget
+        let allocation      = widget.get_allocation();
+        let viewport        = Self::get_viewport(widget, &allocation);
+        let scale_factor    = widget.get_scale_factor() as f32;
+
+        // Resize and reallocate the layers
+        core.layers.as_mut().map(|layers| layers.set_viewport(viewport, scale_factor));
+        core.needs_resize = false;
+    }
+
+    ///
+    /// Redraws the layers in a core
+    /// 
+    fn redraw(core: &mut NanoVgCore) {
+        // Get the drawing actions from the canvas
+        let drawing = core.canvas.get_drawing();
+
+        // Perform them on the layers
+        core.layers.as_mut().map(move |layers| {
+            for action in drawing {
+                layers.draw(action);
+            }
+        });
+
+        // No longer need redrawing
+        core.needs_redraw = false;
+    }
+
+    ///
     /// Retrieves the viewport for a canvas
     /// 
-    fn get_viewport(drawing_area: &gtk::Widget, allocation: &gtk::Allocation) -> NanoVgViewport {
+    fn get_viewport<W: gtk::WidgetExt+Clone+Cast+IsA<gtk::Widget>>(drawing_area: &W, allocation: &gtk::Allocation) -> NanoVgViewport {
         // The scale factor is used to ensure we get a 1:1 pixel ratio for our drawing area
         let scale_factor = drawing_area.get_scale_factor();
 
@@ -170,7 +235,7 @@ impl FloNanoVgWidget {
     ///
     /// Clips a viewport to only the portion visible in a scrollable area
     ///
-    fn clip_viewport_to_scrollable(full_viewport: NanoVgViewport, scrollable: &gtk::Scrollable, drawing_area: &gtk::Widget) -> NanoVgViewport {
+    fn clip_viewport_to_scrollable<W: gtk::WidgetExt+IsA<gtk::Widget>>(full_viewport: NanoVgViewport, scrollable: &gtk::Scrollable, drawing_area: &W) -> NanoVgViewport {
         // Scrollable must also be a widget
         let scrollable_widget = scrollable.clone().dynamic_cast::<gtk::Widget>().unwrap();
 
@@ -223,9 +288,12 @@ impl FloNanoVgWidget {
 
         // Draw the actions
         let actions: Vec<_> = actions.into_iter().collect();
-        for action in actions.iter() {
-            core.layers.as_mut().map(|layers| layers.draw(*action));
+        if !core.needs_redraw {
+            for action in actions.iter() {
+                core.layers.as_mut().map(|layers| layers.draw(*action));
+            }
         }
+        core.canvas.write(actions);
 
         // Note that a redraw is needed
         self.gl_widget.queue_render();
