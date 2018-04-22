@@ -77,7 +77,7 @@ impl FloNanoVgWidget {
         // Mark for redraw and queue a render on size allocation
         {
             let core = Rc::clone(&core);
-            gl_widget.connect_size_allocate(move |gl_widget, allocation| {
+            gl_widget.connect_size_allocate(move |gl_widget, _allocation| {
                 // Set the redraw and resize flags
                 let mut core = core.borrow_mut();
                 core.needs_resize = true;
@@ -118,6 +118,8 @@ impl FloNanoVgWidget {
             let core = Rc::clone(&core);
             gl_widget.connect_render(move |gl_widget, _ctxt| { 
                 let mut core        = core.borrow_mut();
+                let allocation      = gl_widget.get_allocation();
+                let scale           = gl_widget.get_scale_factor();
 
                 // Redraw and resize the layers if needed
                 if core.needs_resize {
@@ -128,30 +130,11 @@ impl FloNanoVgWidget {
                     Self::redraw(&mut *core);
                 }
 
-                {
-                    let allocation  = gl_widget.get_allocation();
-                    let context     = core.context.as_ref().unwrap();
-                    let scale       = gl_widget.get_scale_factor();
-
-                    // Prepare to render
-                    unsafe {
-                        gl::ClearColor(0.0, 0.0, 0.0, 0.0);
-                        gl::Clear(gl::COLOR_BUFFER_BIT);
-                        gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
-                    }
-
-                    // Test pattern
-                    context.frame((allocation.width, allocation.height), scale as f32, |frame| {
-                        frame.path(|path| {
-                            path.rect((100.0, 100.0), (1980.0-200.0, 1080.0-200.0));
-                            path.fill(nanovg::Color::new(0.5, 0.5, 0.8, 0.5), Default::default());
-                        }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
-
-                        frame.path(|path| {
-                            path.circle((1980.0/2.0, 1080.0/2.0), 100.0);
-                            path.fill(nanovg::Color::new(0.8, 0.5, 0.2, 1.0), Default::default());
-                        }, nanovg::PathOptions { clip: nanovg::Clip::None, composite_operation: nanovg::CompositeOperation::Basic(nanovg::BasicCompositeOperation::SourceOver), alpha: 1.0, transform: None });
-                    });
+                // Prepare to render
+                unsafe {
+                    gl::ClearColor(0.0, 0.0, 0.0, 0.0);
+                    gl::Clear(gl::COLOR_BUFFER_BIT);
+                    gl::Viewport(0, 0, allocation.width*scale, allocation.height*scale);
                 }
 
                 // Render the layers
