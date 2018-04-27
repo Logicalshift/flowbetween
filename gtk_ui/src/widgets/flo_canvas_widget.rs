@@ -28,9 +28,6 @@ struct DrawingCore {
     /// Set to true if the canvas needs to be redrawn to the pixbufs
     need_redraw:    bool,
 
-    /// Set to true if the size has changed and we need to consider a redraw
-    check_size:     bool,
-
     /// True if a redraw request is pending
     draw_pending:   bool,
 
@@ -67,7 +64,6 @@ impl FloDrawingWidget {
             pixbufs:        pixbufs,
             scale_factor:   1,
             need_redraw:    true,
-            check_size:     true,
             draw_pending:   false,
             widget_data:    data
         };
@@ -98,9 +94,6 @@ impl FloDrawingWidget {
 
             // Cause a redraw if the viewport has changed
             if new_viewport != existing_viewport {
-                // Next time we do a draw, we need to check the size
-                core.check_size = true;
-
                 // Make sure the widget is redrawn
                 Self::queue_draw(&mut *core, widget);
             }
@@ -126,29 +119,23 @@ impl FloDrawingWidget {
         // Drawing request is no longer pending
         core.draw_pending = false;
 
-        // If we need to check the size, do so and maybe set the redraw bit
-        if core.check_size {
-            // Get the current viewport
-            let existing_viewport   = core.pixbufs.get_viewport();
+        // Get the current viewport
+        let existing_viewport   = core.pixbufs.get_viewport();
 
-            // Get the allocated viewport
-            let allocation          = widget.get_allocation();
-            let current_viewport    = Self::get_viewport(widget, &allocation);
+        // Get the allocated viewport
+        let allocation          = widget.get_allocation();
+        let current_viewport    = Self::get_viewport(widget, &allocation);
 
-            // A redraw is required if the size is different from the last time we drew the pixbufs
-            if existing_viewport != current_viewport {
-                // Update the viewport
-                core.pixbufs.set_viewport(current_viewport);
-                core.need_redraw = true;
-            }
+        // A redraw is required if the size is different from the last time we drew the pixbufs
+        if existing_viewport != current_viewport {
+            // Update the viewport
+            core.pixbufs.set_viewport(current_viewport);
+            core.need_redraw = true;
 
             // Store the scaling factor for the widget
             let scale_factor    = widget.get_scale_factor();
             core.scale_factor   = scale_factor;
             core.pixbufs.set_pixel_scale(scale_factor as f64);
-
-            // Size is checked
-            core.check_size = false;
         }
 
         // Make sure everything has been drawn up to date
