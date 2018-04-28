@@ -122,9 +122,13 @@ impl PaintActions {
         widget.connect_button_press_event(move |_widget, event| {
             let mut paint   = paint.borrow_mut();
             let device      = device_for_event(event);
+            let source      = device.get_source();
 
             // Start tracking if the device for the button press is registered
-            if paint.input_sources.contains(&device.get_source()) {
+            if paint.active_device.is_some() && source == gdk::InputSource::Touchscreen {
+                // If the user is using any device other than touch already, never switch to the touch device
+                Inhibit(false)
+            } else if paint.input_sources.contains(&source) {
                 // Create the painting data
                 let widget_id       = paint.widget_id;
                 let event_name      = paint.event_name.clone();
@@ -146,7 +150,7 @@ impl PaintActions {
 
                 // Note that we're painting
                 paint.painting      = true;
-                paint.active_device = Some(device.get_source());
+                paint.active_device = Some(source);
 
                 // Generate the start event on the sink
                 paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
