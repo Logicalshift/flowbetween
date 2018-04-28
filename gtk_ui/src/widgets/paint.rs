@@ -1,3 +1,4 @@
+use super::events::*;
 use super::widget::*;
 use super::widget_data::*;
 use super::super::gtk_event::*;
@@ -42,7 +43,10 @@ pub struct PaintActions {
     input_sources: HashSet<gdk::InputSource>,
 
     /// For mouse events, the buttons that we should respond to
-    buttons: HashSet<i32>
+    buttons: HashSet<i32>,
+
+    /// The device that is currently being tracked
+    active_device: Option<gdk::InputSource>
 }
 
 impl PaintActions {
@@ -57,7 +61,8 @@ impl PaintActions {
             painting:       false,
             transform:      cairo::Matrix::identity(),
             input_sources:  HashSet::new(),
-            buttons:        HashSet::new()
+            buttons:        HashSet::new(),
+            active_device:  None
         }
     }
 
@@ -87,7 +92,7 @@ impl PaintActions {
                 let new_wiring = widget_data.get_widget_data::<PaintActions>(widget_id).unwrap();
 
                 // Connect the paint events to this widget
-                Self::connect_events(widget_data, widget.get_underlying(), widget.id(), Rc::clone(&*new_wiring));
+                Self::connect_events(widget_data, widget.get_underlying(), Rc::clone(&*new_wiring));
 
                 // Add this device to the set supported by this widget
                 let mut new_wiring = new_wiring.borrow_mut();
@@ -100,60 +105,69 @@ impl PaintActions {
     ///
     /// Connects paint events to a GTK widget
     /// 
-    fn connect_events(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
+    fn connect_events(widget_data: Rc<WidgetData>, widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
         // Make sure we're generating the appropriate events on this widget
         widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
 
         // Connect to the signals
-        Self::connect_button_pressed(Rc::clone(&widget_data), widget, widget_id, Rc::clone(&paint));
-        Self::connect_button_released(Rc::clone(&widget_data), widget, widget_id, Rc::clone(&paint));
-        Self::connect_motion(widget_data, widget, widget_id, paint);
+        Self::connect_button_pressed(Rc::clone(&widget_data), widget, Rc::clone(&paint));
+        Self::connect_button_released(widget, Rc::clone(&paint));
+        Self::connect_motion(widget, paint);
     }
 
     ///
     /// Sets up the button pressed event for a painting action
     /// 
-    fn connect_button_pressed(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
-        widget.connect_button_press_event(move |widget, event| {
-            let mut paint = paint.borrow_mut();
+    fn connect_button_pressed(widget_data: Rc<WidgetData>, widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
+        widget.connect_button_press_event(move |_widget, event| {
+            let mut paint   = paint.borrow_mut();
+            let device      = device_for_event(event);
 
-            // Create the painting data
-            let widget_id       = paint.widget_id;
-            let event_name      = paint.event_name.clone();
-            let mut painting    = GtkPainting::from_button(event);
+            // Start tracking if the device for the button press is registered
+            if paint.input_sources.contains(&device.get_source()) {
+                // Create the painting data
+                let widget_id       = paint.widget_id;
+                let event_name      = paint.event_name.clone();
+                let mut painting    = GtkPainting::from_button(event);
 
-            paint.transform     = cairo::Matrix::identity();
+                paint.transform     = cairo::Matrix::identity();
 
-            if let Some(transform) = widget_data.get_widget_data(widget_id) {
-                paint.transform = *transform.borrow();
+                if let Some(transform) = widget_data.get_widget_data(widget_id) {
+                    paint.transform = *transform.borrow();
+                }
+
+                painting.transform(&paint.transform);
+
+                // Cancel any on-going paint operation (so we replace it with the current device)
+                if let Some(current_device) = paint.active_device {
+                    let current_device = paint_device_for_source(current_device);
+                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::PaintCancel(current_device))).unwrap();
+                }
+
+                // Note that we're painting
+                paint.painting      = true;
+                paint.active_device = Some(device.get_source());
+
+                // Generate the start event on the sink
+                paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
+
+                // Prevent standard handling
+                Inhibit(true)
+            } else {
+                Inhibit(false)
             }
-
-            painting.transform(&paint.transform);
-
-            // TODO: check if this is a device we want to follow
-
-            // Note that we're painting
-            paint.painting = true;
-
-            // Generate the start event on the sink
-            paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
-
-            // Prevent standard handling
-            Inhibit(true)
         });
     }
 
     ///
     /// Sets up the button released event for a painting action
     /// 
-    fn connect_button_released(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
-        widget.connect_button_release_event(move |widget, event| {
-            let mut paint = paint.borrow_mut();
+    fn connect_button_released(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
+        widget.connect_button_release_event(move |_widget, event| {
+            let mut paint   = paint.borrow_mut();
+            let device      = device_for_event(event);
 
-            // TODO: check that the button being released is one on the device we're following
-            // TODO: cancel touch events if the stylus is used instead
-
-            if paint.painting {
+            if paint.active_device == Some(device.get_source()) {
                 // Note that we're no longer painting
                 paint.painting = false;
 
@@ -179,7 +193,7 @@ impl PaintActions {
     ///
     /// Sets up the motion event for a painting action
     /// 
-    fn connect_motion(widget_data: Rc<WidgetData>, widget: &gtk::Widget, widget_id: WidgetId, paint: Rc<RefCell<PaintActions>>) {
+    fn connect_motion(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
         // Searches the widget hierarchy to find the widget with a window and disables event compression on it
         fn disable_compression(widget: &gtk::Widget) {
             if let Some(window) = widget.get_window() {
@@ -197,10 +211,11 @@ impl PaintActions {
             disable_compression(widget);
         });
 
-        widget.connect_motion_notify_event(move |widget, event| {
-            let mut paint = paint.borrow_mut();
+        widget.connect_motion_notify_event(move |_widget, event| {
+            let mut paint   = paint.borrow_mut();
+            let device      = device_for_event(event);
 
-            if paint.painting {
+            if paint.active_device == Some(device.get_source()) {
                 // Create the painting data
                 let widget_id       = paint.widget_id;
                 let event_name      = paint.event_name.clone();

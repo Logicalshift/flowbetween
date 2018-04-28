@@ -29,6 +29,9 @@ pub enum GtkEventParameter {
 
     /// Painting finished
     PaintFinish(GtkPainting),
+    
+    /// Painting cancelled
+    PaintCancel(PaintDevice),
 
     /// User has started dragging over a widget
     DragStart(f64, f64),
@@ -62,6 +65,7 @@ impl From<GtkEventParameter> for ActionParameter {
             GtkEventParameter::PaintStart(paint)                            => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Start) ]),
             GtkEventParameter::PaintContinue(paint)                         => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Continue) ]),
             GtkEventParameter::PaintFinish(paint)                           => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Finish) ]),
+            GtkEventParameter::PaintCancel(device)                          => ActionParameter::Paint(device, vec![]),
             GtkEventParameter::DragStart(x, y)                              => ActionParameter::Drag(DragAction::Start, (x as f32, y as f32), (x as f32, y as f32)),
             GtkEventParameter::DragContinue((from_x, from_y), (to_x, to_y)) => ActionParameter::Drag(DragAction::Drag, (from_x as f32, from_y as f32), (to_x as f32, to_y as f32)),
             GtkEventParameter::DragFinish((from_x, from_y), (to_x, to_y))   => ActionParameter::Drag(DragAction::Finish, (from_x as f32, from_y as f32), (to_x as f32, to_y as f32)),

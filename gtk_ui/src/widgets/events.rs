@@ -1,9 +1,31 @@
+use flo_ui::*;
+
 use glib::object::Downcast;
 use glib::translate::*;
 use gdk;
 use gdk_sys;
 
 use std::mem;
+
+///
+/// Returns a paint device corresponding to a GDK input source
+/// 
+pub fn paint_device_for_source(source: gdk::InputSource) -> PaintDevice {
+    use gdk::InputSource::*;
+
+    match source {
+        Mouse           => PaintDevice::Mouse(MouseButton::Left),
+        Cursor          => PaintDevice::Mouse(MouseButton::Left),
+        Keyboard        => PaintDevice::Mouse(MouseButton::Left),
+        Touchpad        => PaintDevice::Mouse(MouseButton::Left),
+        Trackpoint      => PaintDevice::Mouse(MouseButton::Left),
+        __Unknown(_)    => PaintDevice::Mouse(MouseButton::Left),
+        Pen             => PaintDevice::Pen,
+        Eraser          => PaintDevice::Eraser,
+        Touchscreen     => PaintDevice::Touch,
+        TabletPad       => PaintDevice::Pen
+    }
+}
 
 ///
 /// Returns the GDK device that generated a particular event
