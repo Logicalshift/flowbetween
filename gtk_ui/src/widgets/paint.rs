@@ -43,7 +43,7 @@ pub struct PaintActions {
     input_sources: HashSet<gdk::InputSource>,
 
     /// For mouse events, the buttons that we should respond to
-    buttons: HashSet<i32>,
+    buttons: HashSet<u32>,
 
     /// The device that is currently being tracked
     active_device: Option<gdk::InputSource>
@@ -125,7 +125,9 @@ impl PaintActions {
             let source      = device.get_source();
 
             // Start tracking if the device for the button press is registered
-            if paint.active_device.is_some() && source == gdk::InputSource::Touchscreen {
+            if (source == gdk::InputSource::Mouse || source == gdk::InputSource::Touchpad) && !paint.buttons.contains(&event.get_button()) {
+                Inhibit(false)
+            } else if paint.active_device.is_some() && source == gdk::InputSource::Touchscreen {
                 // If the user is using any device other than touch already, never switch to the touch device
                 Inhibit(false)
             } else if paint.input_sources.contains(&source) {

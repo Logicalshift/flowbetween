@@ -32,12 +32,12 @@ impl GtkPaintDevice {
     ///
     /// Returns a list of mouse buttons that a particular GTK device should respond to (the empty list indicates all buttons for this input source) 
     ///
-    pub fn buttons(&self) -> Vec<i32> {
+    pub fn buttons(&self) -> Vec<u32> {
         use self::GtkPaintDevice::*;
 
         match self {
             &None | &Touch | &Stylus | &Eraser  => vec![],
-            &Mouse(ref button)                  => vec![*button]
+            &Mouse(ref button)                  => vec![*button as u32]
         }
     }
 }
@@ -73,9 +73,9 @@ impl From<PaintDevice> for GtkPaintDevice {
     fn from(device: PaintDevice) -> GtkPaintDevice {
         match device {
             PaintDevice::Other                          => GtkPaintDevice::None,
-            PaintDevice::Mouse(MouseButton::Left)       => GtkPaintDevice::Mouse(0),
+            PaintDevice::Mouse(MouseButton::Left)       => GtkPaintDevice::Mouse(1),
             PaintDevice::Mouse(MouseButton::Middle)     => GtkPaintDevice::Mouse(2),
-            PaintDevice::Mouse(MouseButton::Right)      => GtkPaintDevice::Mouse(1),
+            PaintDevice::Mouse(MouseButton::Right)      => GtkPaintDevice::Mouse(3),
             PaintDevice::Mouse(MouseButton::Other(_))   => GtkPaintDevice::None,
             PaintDevice::Pen                            => GtkPaintDevice::Stylus,
             PaintDevice::Eraser                         => GtkPaintDevice::Eraser,
