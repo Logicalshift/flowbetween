@@ -1,5 +1,7 @@
 use flo_ui::*;
 
+use gdk;
+
 ///
 /// Device used for painting
 /// 
@@ -10,6 +12,34 @@ pub enum GtkPaintDevice {
     Touch,
     Stylus,
     Eraser
+}
+
+impl From<GtkPaintDevice> for Vec<gdk::InputSource> {
+    fn from(device: GtkPaintDevice) -> Vec<gdk::InputSource> {
+        use self::GtkPaintDevice::*;
+
+        match device {
+            None        => vec![],
+            Mouse(_)    => vec![gdk::InputSource::Mouse, gdk::InputSource::Trackpoint, gdk::InputSource::Cursor, gdk::InputSource::Touchpad],
+            Touch       => vec![gdk::InputSource::Touchscreen],
+            Stylus      => vec![gdk::InputSource::Pen, gdk::InputSource::TabletPad],
+            Eraser      => vec![gdk::InputSource::Eraser]
+        }        
+    }
+}
+
+impl GtkPaintDevice {
+    ///
+    /// Returns a list of mouse buttons that a particular GTK device should respond to (the empty list indicates all buttons for this input source) 
+    ///
+    pub fn buttons(&self) -> Vec<i32> {
+        use self::GtkPaintDevice::*;
+
+        match self {
+            &None | &Touch | &Stylus | &Eraser  => vec![],
+            &Mouse(ref button)                  => vec![*button]
+        }
+    }
 }
 
 ///

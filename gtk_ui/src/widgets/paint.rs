@@ -17,6 +17,7 @@ use futures::*;
 
 use std::rc::*;
 use std::cell::*;
+use std::collections::HashSet;
 
 ///
 /// Provides support for the painting events for a widget
@@ -35,7 +36,13 @@ pub struct PaintActions {
     painting: bool,
 
     /// The transformation matrix in use at the time the event started
-    transform: cairo::Matrix
+    transform: cairo::Matrix,
+
+    /// The input sources that should generate these actions
+    input_sources: HashSet<gdk::InputSource>,
+
+    /// For mouse events, the buttons that we should respond to
+    buttons: HashSet<i32>
 }
 
 impl PaintActions {
@@ -44,11 +51,13 @@ impl PaintActions {
     /// 
     fn new(widget_id: WidgetId, event_name: String, event_sink: GtkEventSink) -> PaintActions {
         PaintActions {
-            widget_id:  widget_id,
-            event_name: event_name,
-            event_sink: event_sink,
-            painting:   false,
-            transform:  cairo::Matrix::identity()
+            widget_id:      widget_id,
+            event_name:     event_name,
+            event_sink:     event_sink,
+            painting:       false,
+            transform:      cairo::Matrix::identity(),
+            input_sources:  HashSet::new(),
+            buttons:        HashSet::new()
         }
     }
 
@@ -61,7 +70,12 @@ impl PaintActions {
 
         match existing_wiring {
             Some(paint) => {
-                // TODO: Add the device to the set already in use
+                let mut paint = paint.borrow_mut();
+
+                // Add the device to the set already in use
+                paint.input_sources.extend(Vec::<gdk::InputSource>::from(device).into_iter());
+                paint.buttons.extend(device.buttons().into_iter());
+
                 // TODO: if the name is different from the original event name, we'll just use that
             },
 
@@ -75,7 +89,10 @@ impl PaintActions {
                 // Connect the paint events to this widget
                 Self::connect_events(widget_data, widget.get_underlying(), widget.id(), Rc::clone(&*new_wiring));
 
-                // TODO: add this device to the set supported by this widget
+                // Add this device to the set supported by this widget
+                let mut new_wiring = new_wiring.borrow_mut();
+                new_wiring.input_sources.extend(Vec::<gdk::InputSource>::from(device).into_iter());
+                new_wiring.buttons.extend(device.buttons().into_iter());
             }
         }
     }
