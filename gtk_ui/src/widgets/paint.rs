@@ -6,8 +6,6 @@ use super::super::gtk_action::*;
 use super::super::gtk_event_parameter::*;
 use super::super::gtk_widget_event_type::*;
 
-use glib::object::Downcast;
-use glib::translate::*;
 use gtk;
 use gtk::prelude::*;
 use gdk;
@@ -19,7 +17,6 @@ use futures::*;
 
 use std::rc::*;
 use std::cell::*;
-use std::mem;
 
 ///
 /// Provides support for the painting events for a widget
@@ -81,17 +78,6 @@ impl PaintActions {
                 // TODO: add this device to the set supported by this widget
             }
         }
-    }
-
-    fn device_for_event(event: &gdk::Event) {
-        let device: gdk::Device = unsafe {
-            let sys_device: *const gdk_sys::GdkEvent = mem::transmute(event.as_ref());
-            let sys_device = gdk_sys::gdk_event_get_source_device(sys_device);
-            gdk::Device::from_glib_borrow(sys_device).downcast_unchecked()
-        };
-
-        println!("{:?}", device);
-        println!("{:?} {:?} {:?} {:?}", device.get_device_type(), device.get_mode(), device.get_name(), device.get_source());
     }
 
     ///

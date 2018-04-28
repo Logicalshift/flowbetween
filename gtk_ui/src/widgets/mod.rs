@@ -21,6 +21,7 @@ mod factory;
 mod image;
 mod drag;
 mod paint;
+mod events;
 
 pub use self::image::*;
 pub use self::window::*;
