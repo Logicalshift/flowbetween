@@ -33,9 +33,6 @@ pub struct PaintActions {
     /// Where the paint events should be sent to
     event_sink: GtkEventSink,
 
-    /// True if we're following some paint events
-    painting: bool,
-
     /// The transformation matrix in use at the time the event started
     transform: cairo::Matrix,
 
@@ -58,7 +55,6 @@ impl PaintActions {
             widget_id:      widget_id,
             event_name:     event_name,
             event_sink:     event_sink,
-            painting:       false,
             transform:      cairo::Matrix::identity(),
             input_sources:  HashSet::new(),
             buttons:        HashSet::new(),
@@ -151,7 +147,6 @@ impl PaintActions {
                 }
 
                 // Note that we're painting
-                paint.painting      = true;
                 paint.active_device = Some(source);
 
                 // Generate the start event on the sink
@@ -175,7 +170,7 @@ impl PaintActions {
 
             if paint.active_device == Some(device.get_source()) {
                 // Note that we're no longer painting
-                paint.painting = false;
+                paint.active_device = None;
 
                 // Create the painting data
                 let widget_id       = paint.widget_id;
