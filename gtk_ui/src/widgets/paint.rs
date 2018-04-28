@@ -36,6 +36,9 @@ pub struct PaintActions {
     /// The transformation matrix in use at the time the event started
     transform: cairo::Matrix,
 
+    /// True if the first motion should generate a start event
+    need_start: bool,
+
     /// The input sources that should generate these actions
     input_sources: HashSet<gdk::InputSource>,
 
@@ -56,6 +59,7 @@ impl PaintActions {
             event_name:     event_name,
             event_sink:     event_sink,
             transform:      cairo::Matrix::identity(),
+            need_start:     false,
             input_sources:  HashSet::new(),
             buttons:        HashSet::new(),
             active_device:  None
@@ -150,7 +154,13 @@ impl PaintActions {
                 paint.active_device = Some(source);
 
                 // Generate the start event on the sink
-                paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
+                if source != gdk::InputSource::Pen && source != gdk::InputSource::Eraser {
+                    paint.need_start = false;
+                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
+                } else {
+                    // For some reason, the button press event for styluses on Linux is often in the wrong place, so we skip the initial event (making it the motion event instead)
+                    paint.need_start = true;
+                }
 
                 // Prevent standard handling
                 Inhibit(true)
@@ -225,9 +235,12 @@ impl PaintActions {
                 painting.transform(&paint.transform);
 
                 // Generate the start event on the sink
-                paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting))).unwrap();
-
-                // TODO: also check that we're following the right device
+                if paint.need_start {
+                    paint.need_start = false;
+                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
+                } else {
+                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting))).unwrap();
+                }
 
                 // Request more motions
                 unsafe { gdk_sys::gdk_event_request_motions(event.as_ref()); }
