@@ -290,12 +290,16 @@ impl FloWidgetLayout {
         self.order_zindex(z_indices);
 
         // Make any remaining widget fill the entire container
+        let full_size = gtk::Rectangle { x: min_x, y: min_y, width: width, height: height };
         for extra_widget in remaining {
+            // Set the size request for this widget
+            extra_widget.set_size_request(full_size.width, full_size.height);
+
             // Stop GTK moaning that we're doing fixed layout
             let _preferred_size = (extra_widget.get_preferred_width(), extra_widget.get_preferred_height());    // Side-effect: suppress warning about fixed layout
 
             // Allocate the size for this widget
-            extra_widget.size_allocate(&mut gtk::Rectangle { x: min_x, y: min_y, width: width, height: height })
+            extra_widget.size_allocate(&mut full_size.clone());
         }
     }
 }
