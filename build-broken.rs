@@ -5,6 +5,13 @@ use pkg_config::*;
 use std::io::prelude::*;
 use std::io;
 
+// So, I'd quite like to persuade cargo to auto-detect which UI framework to use based on a build.rs script, but it doesn't seem to be
+// possible to use features defined here to change the set of dependencies (eg, disabling gtk-ui), so you have to specify a feature set
+// to use via cargo --features. You can only really specify 'optional' dependencies using the OS specific settings (so we'd be fine if
+// GTK+ was available on all possible UNIX variants, but that isn't true so we can't make compilation easy)
+//
+// Leaving this in because this would actually be a nice thing to do.
+
 fn detect_cairo() -> Result<(), Error> {
     let mut config = pkg_config::Config::new();
 
