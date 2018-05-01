@@ -8,7 +8,9 @@
             "label": "Build FlowBetween",
             "command": "cargo",
             "args": [
-                "build"
+                "build",
+                "--features",
+                "http"
             ],
             "problemMatcher": [
                 "$rustc"
