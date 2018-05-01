@@ -5,6 +5,8 @@
 #[cfg(feature="gtk")]   extern crate flo_gtk_ui;
 #[cfg(feature="http")]  extern crate flo_http_ui;
 #[cfg(feature="http")]  extern crate flo_static_files;
+#[cfg(feature="http")]  extern crate iron;
+#[cfg(feature="http")]  extern crate mount;
 
 extern crate flo_ui;
 extern crate flo;
@@ -16,30 +18,30 @@ extern crate serde;
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
-extern crate iron;
-extern crate mount;
 extern crate tokio_core;
 
-#[cfg(feature="http")] mod http_session;
+mod flo_session;
+#[cfg(feature="http")]  mod http_session;
 
-#[cfg(feature="http")] use iron::*;
-#[cfg(feature="http")] use mount::*;
+#[cfg(feature="http")]  use iron::*;
+#[cfg(feature="http")]  use mount::*;
+
 use tokio_core::reactor::Core;
 use std::sync::*;
 use std::thread;
 use std::thread::JoinHandle;
 
-#[cfg(feature="http")] use flo_static_files::*;
-#[cfg(feature="http")] use flo_http_ui::*;
-use flo_gtk_ui::*;
+#[cfg(feature="http")]  use flo_static_files::*;
+#[cfg(feature="http")]  use flo_http_ui::*;
+#[cfg(feature="gtk")]   use flo_gtk_ui::*;
 
-use self::http_session::*;
+use self::flo_session::*;
 
-const PACKAGE_NAME: &str    = env!("CARGO_PKG_NAME");
-const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
-const SERVER_PORT: u32      = 3000;
-const WS_SERVER_PORT: u32   = 3001;
-const BIND_ADDRESS: &str    = "0.0.0.0";
+#[cfg(feature="http")]  const PACKAGE_NAME: &str    = env!("CARGO_PKG_NAME");
+#[cfg(feature="http")]  const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
+#[cfg(feature="http")]  const SERVER_PORT: u32      = 3000;
+#[cfg(feature="http")]  const WS_SERVER_PORT: u32   = 3001;
+#[cfg(feature="http")]  const BIND_ADDRESS: &str    = "0.0.0.0";
 
 #[cfg(feature="http")]
 fn main_http() -> Option<JoinHandle<()>> {
