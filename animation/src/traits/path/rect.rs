@@ -88,6 +88,16 @@ impl Rect {
     }
 
     ///
+    /// Returns true if the specified rectangle overlaps this one
+    /// 
+    pub fn overlaps(&self, other: &Rect) -> bool {
+        f32::min(self.x1, self.x2) < f32::max(other.x1, other.x2)
+        && f32::max(self.x1, self.x2) > f32::min(other.x1, other.x2)
+        && f32::min(self.y1, self.y2) < f32::max(other.y1, other.y2)
+        && f32::max(self.y1, self.y2) > f32::min(other.y1, other.y2)
+    }
+
+    ///
     /// True if this rectangle has no size
     /// 
     #[inline]
@@ -150,5 +160,45 @@ mod test {
     #[test]
     fn can_union_empty_rects_rhs() {
         assert!(Rect::with_points(30.0, 30.0, 60.0, 40.0).union(Rect::empty()) == Rect::with_points(30.0, 30.0, 60.0, 40.0));
+    }
+
+    #[test]
+    fn overlapping_rects() {
+        let r1 = Rect::with_points(30.0, 30.0, 60.0, 40.0);
+        let r2 = Rect::with_points(20.0, 25.0, 35.0, 35.0);
+
+        assert!(r1.overlaps(&r2));
+    }
+
+    #[test]
+    fn non_overlapping_rects() {
+        let r1 = Rect::with_points(30.0, 30.0, 60.0, 40.0);
+        let r2 = Rect::with_points(20.0, 25.0, 9.0, 10.0);
+
+        assert!(!r1.overlaps(&r2));
+    }
+
+    #[test]
+    fn touching_rects() {
+        let r1 = Rect::with_points(30.0, 30.0, 60.0, 40.0);
+        let r2 = Rect::with_points(20.0, 25.0, 30.0, 30.0);
+
+        assert!(!r1.overlaps(&r2));
+    }
+
+    #[test]
+    fn overlap_interior_rect() {
+        let r1 = Rect::with_points(30.0, 30.0, 60.0, 40.0);
+        let r2 = r1.inset(10.0, 10.0);
+
+        assert!(r1.overlaps(&r2));
+    }
+
+    #[test]
+    fn overlap_exterior_rect() {
+        let r1 = Rect::with_points(30.0, 30.0, 60.0, 40.0);
+        let r2 = r1.inset(-10.0, -10.0);
+
+        assert!(r1.overlaps(&r2));
     }
 }
