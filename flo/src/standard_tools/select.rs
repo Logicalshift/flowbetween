@@ -20,7 +20,7 @@ pub struct SelectModel {
     frame: BindRef<Option<Arc<Frame>>>,
 
     /// Contains the bounding boxes of the elements in the current frame
-    bounding_boxes: BindRef<Arc<Vec<(ElementId, Rect)>>>
+    bounding_boxes: BindRef<Arc<Vec<(ElementId, Arc<VectorProperties>, Rect)>>>
 }
 
 ///
@@ -53,7 +53,7 @@ pub struct SelectData {
     frame: Option<Arc<Frame>>,
 
     // The bounding boxes of the elements in the current frame
-    bounding_boxes: Arc<Vec<(ElementId, Rect)>>,
+    bounding_boxes: Arc<Vec<(ElementId, Arc<VectorProperties>, Rect)>>,
 
     // The current set of selected elements
     selected_elements: Arc<HashSet<ElementId>>,
@@ -219,7 +219,7 @@ impl Select {
     /// 
     fn element_at_point(&self, data: &SelectData, point: (f32, f32)) -> Option<ElementId> {
         // Find the front-most item that matches this point
-        for &(ref id, ref bounding_box) in data.bounding_boxes.iter().rev() {
+        for &(ref id, ref _props, ref bounding_box) in data.bounding_boxes.iter().rev() {
             if bounding_box.contains(point.0, point.1) {
                 return Some(*id);
             }
@@ -238,8 +238,8 @@ impl Select {
 
         // Result is the IDs attached to the bounding boxes that overlap this rectangle
         data.bounding_boxes.iter()
-            .filter(|&&(ref _id, ref bounding_box)| bounding_box.overlaps(&target))
-            .map(|&(ref id, ref _bounding_box)| *id)
+            .filter(|&&(ref _id, ref _props, ref bounding_box)| bounding_box.overlaps(&target))
+            .map(|&(ref id, ref _props, ref _bounding_box)| *id)
             .collect()
     }
 
@@ -421,7 +421,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                         .fold(Rect::empty(), |current, next| current.union(next));
 
                     // Add to the result
-                    bounding_boxes.push((element.id(), bounds));
+                    bounding_boxes.push((element.id(), Arc::clone(&properties), bounds));
                 }
 
                 Arc::new(bounding_boxes)
