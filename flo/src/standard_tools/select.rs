@@ -98,7 +98,21 @@ impl SelectData {
             selected_elements:  self.selected_elements.clone(),
             action:             self.action,
             initial_position:   new_initial_position,
-            drag_position:      self.drag_position.clone()
+            drag_position:      None
+        }
+    }
+
+    ///
+    /// Creates a copy of this object with a new drag position
+    /// 
+    fn with_drag_position(&self, new_drag_position: RawPoint) -> SelectData {
+        SelectData {
+            frame:              self.frame.clone(),
+            bounding_boxes:     self.bounding_boxes.clone(),
+            selected_elements:  self.selected_elements.clone(),
+            action:             self.action,
+            initial_position:   self.initial_position.clone(),
+            drag_position:      Some(new_drag_position)
         }
     }
 }
@@ -287,8 +301,7 @@ impl Select {
 
             (SelectAction::RubberBand, PaintAction::Continue) => {
                 // Draw a rubber band around the selection
-                let mut new_data        = (*data).clone();
-                new_data.drag_position  = Some(RawPoint::from(paint.location));
+                let new_data = data.with_drag_position(RawPoint::from(paint.location));
 
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
