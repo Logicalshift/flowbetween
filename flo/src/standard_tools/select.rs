@@ -184,6 +184,58 @@ impl Select {
     }
 
     ///
+    /// Draws a set of dragged elements
+    /// 
+    fn draw_drag(selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
+        let mut drawing = vec![];
+
+        // Draw the dragged elements on overlay layer 0 (removing the usual bounding boxes that are found there)
+        drawing.layer(0);
+        drawing.clear_layer();
+
+        // Draw everything translated by the drag distance
+        drawing.push_state();
+        drawing.transform(Transform2D::translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
+
+        // Draw the 'shadows' of the elements
+        let mut bounding_boxes = vec![];
+        for (_element, properties, bounds) in selected_elements {
+            // Update the brush properties to be a 'shadow' of the original
+            let mut properties = (*properties).clone();
+            properties.brush_properties.opacity *= 0.25;
+            properties.brush_properties.color   = Color::Rgba(0.6, 0.8, 0.9, 1.0);
+
+            // TODO: fetch the element to render it
+
+            // We'll draw the bounding rectangles later on
+            bounding_boxes.push(bounds);
+        }
+
+        // Draw the bounding boxes
+        drawing.new_path();
+        drawing.extend(vec![
+            Draw::NewPath
+        ]);
+
+        for bounds in bounding_boxes {
+            bounds.draw(&mut drawing);
+        }
+
+        // Finish drawing the bounding boxes
+        drawing.line_width_pixels(2.0);
+        drawing.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 0.1));
+        drawing.stroke();
+
+        drawing.line_width_pixels(0.5);
+        drawing.stroke_color(Color::Rgba(0.2, 0.8, 1.0, 1.0));
+        drawing.stroke();
+
+        // Finish up (popping state to restore the transformation)
+        drawing.pop_state();
+        drawing
+    }
+
+    ///
     /// Returns the drawing actions to highlight the specified element
     /// 
     fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> Vec<Draw> {
@@ -335,6 +387,32 @@ impl Select {
                     Draw::Layer(1),
                     Draw::ClearLayer
                 ])));
+            },
+
+            // -- Dragging behaviour
+
+            (SelectAction::Reselect, PaintAction::Continue) => {
+                // This begins a dragging operation
+                let new_data = data.with_action(SelectAction::Drag);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+            },
+
+            (SelectAction::Drag, PaintAction::Continue) => {
+                // Update the drag position
+                let new_data = data.with_drag_position(RawPoint::from(paint.location));
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+
+                // Draw the current drag state
+                let selected_elements   = Arc::clone(&data.selected_elements);
+                let selected            = data.bounding_boxes.iter()
+                    .filter(|&&(ref id, _, _)| selected_elements.contains(id))
+                    .map(|item| item.clone())
+                    .collect();
+
+                let draw_drag = Self::draw_drag(selected, data.initial_position.position, paint.location);
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_drag)));
             },
 
             // -- Generic behaviour

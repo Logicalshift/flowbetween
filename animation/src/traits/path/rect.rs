@@ -123,6 +123,17 @@ impl Rect {
             }
         }
     }
+
+    ///
+    /// Draws this rectangle on a graphics context
+    /// 
+    pub fn draw(&self, gc: &mut GraphicsContext) {
+        gc.move_to(self.x1, self.y1);
+        gc.line_to(self.x2, self.y1);
+        gc.line_to(self.x2, self.y2);
+        gc.line_to(self.x1, self.y2);
+        gc.close_path();
+    }
 }
 
 impl<'a> Into<Vec<Draw>> for &'a Rect {
