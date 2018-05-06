@@ -217,10 +217,10 @@ impl Select {
     ///
     /// Returns the ID of the element at the position represented by the specified painting action
     /// 
-    fn element_at_point(&self, data: &SelectData, point: &Painting) -> Option<ElementId> {
+    fn element_at_point(&self, data: &SelectData, point: (f32, f32)) -> Option<ElementId> {
         // Find the front-most item that matches this point
         for &(ref id, ref bounding_box) in data.bounding_boxes.iter().rev() {
-            if bounding_box.contains(point.location.0, point.location.1) {
+            if bounding_box.contains(point.0, point.1) {
                 return Some(*id);
             }
         }
@@ -254,7 +254,7 @@ impl Select {
         match (current_action, paint.action) {
             (_, PaintAction::Start) => {
                 // Find the element at this point
-                let element = self.element_at_point(&*data, &paint);
+                let element = self.element_at_point(&*data, paint.location);
 
                 if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
                     // Element is already selected: don't change the selection (so we can start dragging an existing selection)
@@ -265,13 +265,7 @@ impl Select {
                     data = Arc::new(new_data);
 
                 } else if let Some(element) = element {
-                    // Select this element
-                    // TODO: do not change selection if the element is already selected
-                    // TODO: add to the selection if shift is held down
-                    actions.push(ToolAction::ClearSelection);
-                    actions.push(ToolAction::Select(element));
-
-                    // Item is newly selected
+                    // This will select a new element (when the mouse is released)
                     let new_data = data.with_action(SelectAction::Select)
                         .with_initial_position(RawPoint::from(paint.location));
 
@@ -288,13 +282,26 @@ impl Select {
                 }
             },
 
-            // -- Rubber-banding behaviour
+            // -- Rubber-banding selection behaviour
 
             (SelectAction::Select, PaintAction::Continue) => {
                 // TODO: only start rubber-banding once the mouse has moved a certain distance
 
                 // Dragging after making a new selection moves us to rubber-band mode
                 let mut new_data = data.with_action(SelectAction::RubberBand);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+            },
+
+            (SelectAction::Select, PaintAction::Finish) => {
+                // Select whatever was at the initial position
+                actions.push(ToolAction::ClearSelection);
+                if let Some(selected) = self.element_at_point(&*data, data.initial_position.position) {
+                    actions.push(ToolAction::Select(selected));
+                }
+
+                // Reset the action
+                let mut new_data = data.with_action(SelectAction::NoAction);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
             },
