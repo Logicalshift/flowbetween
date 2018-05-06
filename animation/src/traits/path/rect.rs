@@ -50,6 +50,21 @@ impl Rect {
     }
 
     ///
+    /// Creates a new rectangle that's inset from this one by a certain amount
+    /// 
+    pub fn inset(&self, x_distance: f32, y_distance: f32) -> Rect {
+        let half_x = x_distance/2.0;
+        let half_y = y_distance/2.0;
+
+        Rect {
+            x1: f32::min(self.x1, self.x2) + half_x,
+            y1: f32::min(self.y1, self.y2) + half_y,
+            x2: f32::max(self.x1, self.x2) - half_x,
+            y2: f32::max(self.y1, self.y2) - half_y,
+        }
+    }
+
+    ///
     /// Converts a rectangle into one where x2 and y2 are greater than x1 and y1
     /// 
     #[inline]
