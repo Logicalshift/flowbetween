@@ -26,13 +26,16 @@ pub struct SelectModel {
 ///
 /// The actions that the tool can take
 /// 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 enum SelectAction {
     /// No action (or the current action has been cancelled)
     NoAction,
 
     /// An item has been newly selected
     Select,
+
+    /// An item has been reselected
+    Reselect,
 
     /// The user is picking some items using a selection box
     RubberBand,
@@ -51,6 +54,9 @@ pub struct SelectData {
 
     // The bounding boxes of the elements in the current frame
     bounding_boxes: Arc<Vec<(ElementId, Rect)>>,
+
+    // The current set of selected elements
+    selected_elements: Arc<HashSet<ElementId>>,
 
     /// The current select action
     action: SelectAction,
@@ -75,9 +81,10 @@ impl SelectData {
         SelectData {
             frame:              self.frame.clone(),
             bounding_boxes:     self.bounding_boxes.clone(),
+            selected_elements:  self.selected_elements.clone(),
             action:             new_action,
             initial_position:   self.initial_position.clone(),
-            drag_position:      None
+            drag_position:      self.drag_position.clone()
         }
     }
     
@@ -88,9 +95,10 @@ impl SelectData {
         SelectData {
             frame:              self.frame.clone(),
             bounding_boxes:     self.bounding_boxes.clone(),
+            selected_elements:  self.selected_elements.clone(),
             action:             self.action,
             initial_position:   new_initial_position,
-            drag_position:      None
+            drag_position:      self.drag_position.clone()
         }
     }
 }
@@ -186,6 +194,13 @@ impl Select {
     }
 
     ///
+    /// Returns true if the specified element ID is currently selected
+    /// 
+    fn is_selected(&self, data: &SelectData, item: ElementId) -> bool {
+        data.selected_elements.contains(&item)
+    }
+
+    ///
     /// Returns the ID of the element at the position represented by the specified painting action
     /// 
     fn element_at_point(&self, data: &SelectData, point: &Painting) -> Option<ElementId> {
@@ -201,6 +216,20 @@ impl Select {
     }
 
     ///
+    /// Returns all of the elements that are contained within a particular area
+    /// 
+    fn elements_in_area(&self, data: &SelectData, point1: (f32, f32), point2: (f32, f32)) -> Vec<ElementId> {
+        // Get the target rect
+        let target = Rect::with_points(point1.0, point1.1, point2.0, point2.1).normalize();
+
+        // Result is the IDs attached to the bounding boxes that overlap this rectangle
+        data.bounding_boxes.iter()
+            .filter(|&&(ref _id, ref bounding_box)| bounding_box.overlaps(&target))
+            .map(|&(ref id, ref _bounding_box)| *id)
+            .collect()
+    }
+
+    ///
     /// Processes a paint action (at the top level)
     /// 
     fn paint(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
@@ -211,57 +240,47 @@ impl Select {
         match (current_action, paint.action) {
             (_, PaintAction::Start) => {
                 // Find the element at this point
-                if let Some(element) = self.element_at_point(&*data, &paint) {
+                let element = self.element_at_point(&*data, &paint);
+
+                if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
+                    // Element is already selected: don't change the selection (so we can start dragging an existing selection)
+                    let new_data = data.with_action(SelectAction::Reselect)
+                        .with_initial_position(RawPoint::from(paint.location));
+
+                    actions.push(ToolAction::Data(new_data.clone()));
+                    data = Arc::new(new_data);
+
+                } else if let Some(element) = element {
                     // Select this element
+                    // TODO: do not change selection if the element is already selected
                     // TODO: add to the selection if shift is held down
                     actions.push(ToolAction::ClearSelection);
                     actions.push(ToolAction::Select(element));
 
                     // Item is newly selected
-                    let mut new_data            = (*data).clone();
-                    new_data.action             = SelectAction::Select;
-                    new_data.initial_position   = RawPoint::from(paint.location);
+                    let new_data = data.with_action(SelectAction::Select)
+                        .with_initial_position(RawPoint::from(paint.location));
 
                     actions.push(ToolAction::Data(new_data.clone()));
                     data = Arc::new(new_data);
-                } else {
-                    // Select no elements
-                    actions.push(ToolAction::ClearSelection);
 
-                    // Rubber-band if the user drags
-                    let mut new_data            = (*data).clone();
-                    new_data.action             = SelectAction::RubberBand;
-                    new_data.initial_position   = RawPoint::from(paint.location);
+                } else {
+                    // Clicking outside the current selection starts rubber-banding
+                    let new_data = data.with_action(SelectAction::RubberBand)
+                        .with_initial_position(RawPoint::from(paint.location));
 
                     actions.push(ToolAction::Data(new_data.clone()));
                     data = Arc::new(new_data);
                 }
             },
 
-            (_, PaintAction::Cancel) => {
-                // Reset the data state to 'no action'
-                let new_data = data.with_action(SelectAction::NoAction);
-                actions.push(ToolAction::Data(new_data.clone()));
-                data = Arc::new(new_data);
-            },
-
-            (_, PaintAction::Finish) => {
-                // Reset the data state to 'no action'
-                let new_data = data.with_action(SelectAction::NoAction);
-                actions.push(ToolAction::Data(new_data.clone()));
-                data = Arc::new(new_data);
-
-                // Clear layers other than 0 in the overlay
-                actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
-                    Draw::Layer(1),
-                    Draw::ClearLayer
-                ])));
-            },
+            // -- Rubber-banding behaviour
 
             (SelectAction::Select, PaintAction::Continue) => {
-                // Start dragging the selection
-                let mut new_data    = (*data).clone();
-                new_data.action     = SelectAction::Drag;
+                // TODO: only start rubber-banding once the mouse has moved a certain distance
+
+                // Dragging after making a new selection moves us to rubber-band mode
+                let mut new_data = data.with_action(SelectAction::RubberBand);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
             },
@@ -276,6 +295,47 @@ impl Select {
 
                 let draw_rubber_band = Self::draw_rubber_band(data.initial_position.position, paint.location);
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_rubber_band)));
+            },
+
+            (SelectAction::RubberBand, PaintAction::Finish) => {
+                // Reset the data state to 'no action'
+                let new_data = data.with_action(SelectAction::NoAction);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+
+                // Select any items in this area
+                actions.push(ToolAction::ClearSelection);
+                data.drag_position.as_ref().map(|drag_position| {
+                    actions.extend(self.elements_in_area(&data, data.initial_position.position, drag_position.position).into_iter().map(|item| ToolAction::Select(item)));
+                });
+
+                // Clear layer 1 (it's used to draw the rubber band)
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
+                    Draw::Layer(1),
+                    Draw::ClearLayer
+                ])));
+            },
+
+            // -- Generic behaviour
+
+            (_, PaintAction::Finish) => {
+                // Reset the data state to 'no action'
+                let new_data = data.with_action(SelectAction::NoAction);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+
+                // Clear layers other than 0 in the overlay
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
+                    Draw::Layer(1),
+                    Draw::ClearLayer
+                ])));
+            },
+
+            (_, PaintAction::Cancel) => {
+                // Reset the data state to 'no action'
+                let new_data = data.with_action(SelectAction::NoAction);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
             },
 
             // Other combinations have no effect
@@ -410,13 +470,15 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
         // Whenever the frame or the set of bounding boxes changes, we create a new SelectData object
         // (this also resets any in-progress action)
-        let current_frame   = tool_model.frame.clone();
-        let bounding_boxes  = tool_model.bounding_boxes.clone();
-        let data_for_model  = follow(computed(move || (current_frame.get(), bounding_boxes.get())))
-            .map(|(current_frame, bounding_boxes)| {
+        let current_frame       = tool_model.frame.clone();
+        let bounding_boxes      = tool_model.bounding_boxes.clone();
+        let selected_elements   = flo_model.selection().selected_element.clone();
+        let data_for_model  = follow(computed(move || (current_frame.get(), selected_elements.get(), bounding_boxes.get())))
+            .map(|(current_frame, selected_elements, bounding_boxes)| {
                 ToolAction::Data(SelectData {
                     frame:              current_frame,
                     bounding_boxes:     bounding_boxes,
+                    selected_elements:  Arc::new(selected_elements.into_iter().collect()),
                     action:             SelectAction::NoAction,
                     initial_position:   RawPoint::from((0.0, 0.0)),
                     drag_position:      None
