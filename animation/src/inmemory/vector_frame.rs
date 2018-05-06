@@ -36,11 +36,11 @@ impl Frame for VectorFrame {
 
     fn render_to(&self, gc: &mut GraphicsPrimitives) {
         let offset          = self.offset;
-        let mut properties  = VectorProperties::default();
+        let mut properties  = Arc::new(VectorProperties::default());
 
         self.keyframe.elements().iter().for_each(move |&(appearance_time, ref element)| {
             // Properties always update regardless of the time they're at (so the display is consistent)
-            element.update_properties(&mut properties);
+            properties = element.update_properties(Arc::clone(&properties));
 
             if appearance_time <= offset {
                 element.render(gc, &properties);
@@ -59,22 +59,22 @@ impl Frame for VectorFrame {
     }
 
     fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> {
-        let mut properties  = VectorProperties::default();
+        let mut properties  = Arc::new(VectorProperties::default());
 
         self.keyframe.elements().iter()
             .for_each(|&(_appearance_time, ref element)| {
-                element.update_properties(&mut properties);
+                properties = element.update_properties(Arc::clone(&properties));
             });
 
         Some(properties.brush.to_definition())
     }
 
     fn active_brush_properties(&self) -> Option<BrushProperties> {
-        let mut properties  = VectorProperties::default();
+        let mut properties  = Arc::new(VectorProperties::default());
 
         self.keyframe.elements().iter()
             .for_each(|&(_appearance_time, ref element)| {
-                element.update_properties(&mut properties);
+                properties = element.update_properties(Arc::clone(&properties));
             });
 
         Some(properties.brush_properties)

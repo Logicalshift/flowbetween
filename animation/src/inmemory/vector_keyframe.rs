@@ -67,7 +67,7 @@ struct VectorKeyFrameCore {
     elements: Vec<(Duration, Vector)>,
 
     /// The properties that will apply to the next element added to this core
-    active_properties: VectorProperties
+    active_properties: Arc<VectorProperties>
 }
 
 impl VectorKeyFrameCore {
@@ -78,7 +78,7 @@ impl VectorKeyFrameCore {
         VectorKeyFrameCore {
             start_time:         start_time,
             elements:           vec![],
-            active_properties:  VectorProperties::default()
+            active_properties:  Arc::new(VectorProperties::default())
         }
     }
 
@@ -103,7 +103,7 @@ impl VectorKeyFrameCore {
     /// 
     #[inline]
     pub fn add_element(&mut self, when: Duration, new_element: Vector) {
-        new_element.update_properties(&mut self.active_properties);
+        self.active_properties = new_element.update_properties(Arc::clone(&self.active_properties));
         self.elements.push((when, new_element));
     }
 }

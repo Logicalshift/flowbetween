@@ -5,6 +5,8 @@ use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
 
+use std::sync::*;
+
 ///
 /// Element representing selecting a new brush definition
 ///
@@ -65,8 +67,11 @@ impl VectorElement for BrushDefinitionElement {
     ///
     /// Updates the vector properties for future elements
     /// 
-    fn update_properties(&self, properties: &mut VectorProperties) {
+    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+        let mut properties = (*properties).clone();
         properties.brush = create_brush_from_definition(&self.new_definition, self.drawing_style);
+
+        Arc::new(properties)
     }
 
     ///

@@ -254,6 +254,7 @@ impl Select {
         match (current_action, paint.action) {
             (_, PaintAction::Start) => {
                 // Find the element at this point
+                // TODO: preferentially check if the point is within the bounds of an already selected element
                 let element = self.element_at_point(&*data, paint.location);
 
                 if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
@@ -264,7 +265,7 @@ impl Select {
                     actions.push(ToolAction::Data(new_data.clone()));
                     data = Arc::new(new_data);
 
-                } else if let Some(element) = element {
+                } else if element.is_some() {
                     // This will select a new element (when the mouse is released)
                     let new_data = data.with_action(SelectAction::Select)
                         .with_initial_position(RawPoint::from(paint.location));
@@ -404,12 +405,12 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                 let elements            = frame.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
 
                 // We need to track the vector properties through all of the elements in the frame
-                let mut properties      = VectorProperties::default();
+                let mut properties      = Arc::new(VectorProperties::default());
                 let mut bounding_boxes  = vec![];
 
                 for element in elements {
                     // Update the properties
-                    element.update_properties(&mut properties);
+                    properties = element.update_properties(properties);
 
                     // Get the paths for this element
                     let paths = element.to_path(&properties).unwrap_or(vec![]);
@@ -463,11 +464,11 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     
                     // Build up a vector of bounds
                     let mut selection   = vec![];
-                    let mut properties  = VectorProperties::default();
+                    let mut properties  = Arc::new(VectorProperties::default());
 
                     for element in elements {
                         // Update the properties according to this element
-                        element.update_properties(&mut properties);
+                        properties = element.update_properties(properties);
 
                         // If the element is selected, draw a highlight around it
                         let element_id = element.id();

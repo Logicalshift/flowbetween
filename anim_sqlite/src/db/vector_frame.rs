@@ -112,11 +112,11 @@ impl Frame for VectorFrame {
     /// Renders this frame to a particular graphics context
     ///
     fn render_to(&self, gc: &mut GraphicsPrimitives) {
-        let mut properties = VectorProperties::default();
+        let mut properties = Arc::new(VectorProperties::default());
 
         self.elements.iter().for_each(move |element| {
             // Properties always update regardless of the time they're at (so the display is consistent)
-            element.update_properties(&mut properties);
+            properties = element.update_properties(Arc::clone(&properties));
             element.render(gc, &properties);
         })
     }
@@ -132,7 +132,7 @@ impl Frame for VectorFrame {
     /// Finds the brush that will be active after this frame has rendered
     /// 
     fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> {
-        let mut properties          = VectorProperties::default();
+        let mut properties          = Arc::new(VectorProperties::default());
         let mut changes_definition  = false;
 
         self.elements.iter()
@@ -144,7 +144,7 @@ impl Frame for VectorFrame {
                 };
 
                 // Update our properties element from this element
-                element.update_properties(&mut properties);
+                properties = element.update_properties(Arc::clone(&properties));
             });
 
         if changes_definition {
@@ -158,7 +158,7 @@ impl Frame for VectorFrame {
     /// Finds the brush properties that will be active after this frame has rendered
     /// 
     fn active_brush_properties(&self) -> Option<BrushProperties> {
-        let mut properties          = VectorProperties::default();
+        let mut properties          = Arc::new(VectorProperties::default());
         let mut changes_properties  = false;
 
         self.elements.iter()
@@ -170,7 +170,7 @@ impl Frame for VectorFrame {
                 };
 
                 // Update our properties element from this element
-                element.update_properties(&mut properties);
+                properties = element.update_properties(Arc::clone(&properties));
             });
 
         // Return the properties that we found if there were any updates

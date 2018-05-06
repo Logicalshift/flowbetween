@@ -4,6 +4,7 @@ use super::super::edit::*;
 
 use canvas::*;
 
+use std::sync::*;
 use std::any::*;
 
 ///
@@ -26,7 +27,7 @@ pub trait VectorElement : Send+Any {
     fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties);
 
     ///
-    /// Updates the vector properties for future elements
+    /// Returns the properties to use for future elements
     /// 
-    fn update_properties(&self, _properties: &mut VectorProperties) { }
+    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { properties }
 }

@@ -84,15 +84,14 @@ impl BrushPreview {
     /// Draws this preview brush stroke to the specified graphics object
     /// 
     pub fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {
-        let mut vector_properties = VectorProperties::default();
-
         if self.points.len() < 2 {
             // Do nothing if there are no points in this brush preview
             return;
         }
 
         // Set the brush to use in the vector properties
-        vector_properties.brush = self.current_brush.clone();
+        let mut vector_properties   = VectorProperties::default();
+        vector_properties.brush     = self.current_brush.clone();
 
         // Render them to the canvas if they're marked as changed
         if update_brush_definition {
@@ -103,7 +102,8 @@ impl BrushPreview {
         let new_properties = self.brush_properties_element();
 
         // We always apply the properties so that our vector properties are accurate
-        new_properties.update_properties(&mut vector_properties);
+        let mut vector_properties   = Arc::new(vector_properties);
+        vector_properties           = new_properties.update_properties(vector_properties);
 
         // We only render the properties if they're marked as updated
         if update_properties {
@@ -112,7 +112,7 @@ impl BrushPreview {
 
         // Draw the current brush stroke
         let brush_element = self.brush_element();
-        brush_element.update_properties(&mut vector_properties);
+        vector_properties = brush_element.update_properties(vector_properties);
         brush_element.render(gc, &vector_properties);
     }
 

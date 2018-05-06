@@ -3,6 +3,8 @@ use super::super::path::*;
 use super::super::edit::*;
 use super::super::brush_properties::*;
 
+use std::sync::*;
+
 ///
 /// Element representing selecting some new brush properties
 ///
@@ -59,8 +61,11 @@ impl VectorElement for BrushPropertiesElement {
     ///
     /// Updates the vector properties for future elements
     /// 
-    fn update_properties(&self, properties: &mut VectorProperties) {
+    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+        let mut properties = (*properties).clone();
         properties.brush_properties = self.new_properties.clone();
+
+        Arc::new(properties)
     }
 }
 
