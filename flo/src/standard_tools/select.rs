@@ -56,7 +56,10 @@ pub struct SelectData {
     action: SelectAction,
 
     /// The position where the current action started
-    initial_position: RawPoint
+    initial_position: RawPoint,
+
+    /// The position the user has dragged to
+    drag_position: Option<RawPoint>
 }
 
 ///
@@ -73,7 +76,8 @@ impl SelectData {
             frame:              self.frame.clone(),
             bounding_boxes:     self.bounding_boxes.clone(),
             action:             new_action,
-            initial_position:   self.initial_position.clone()
+            initial_position:   self.initial_position.clone(),
+            drag_position:      None
         }
     }
     
@@ -85,7 +89,8 @@ impl SelectData {
             frame:              self.frame.clone(),
             bounding_boxes:     self.bounding_boxes.clone(),
             action:             self.action,
-            initial_position:   new_initial_position
+            initial_position:   new_initial_position,
+            drag_position:      None
         }
     }
 }
@@ -110,6 +115,50 @@ impl Select {
             Draw::StrokeColor(Color::Rgba(0.2, 0.8, 1.0, 1.0)),
             Draw::NewPath
         ]
+    }
+
+    ///
+    /// Returns the drawing instructions for drawing a rubber band around the specified points
+    /// 
+    fn draw_rubber_band(initial_point: (f32, f32), final_point: (f32, f32)) -> Vec<Draw> {
+        // Create a bounding rectangle
+        let bounds                  = Rect::with_points(initial_point.0, initial_point.1, final_point.0, final_point.1);
+        let draw_bounds: Vec<Draw>  = bounds.normalize().into();
+
+        // Setup actions
+        let draw_setup = vec![
+            Draw::Layer(1),
+            Draw::ClearLayer,
+
+            Draw::NewPath
+        ];
+
+        // Draw actions
+        // Drawing an outer/inner section like this creates an effect that makes the highlight visible over nearly all backgrounds
+        let draw_outer = vec![
+            Draw::LineWidthPixels(2.0),
+            Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, 0.1)),
+            Draw::Stroke
+        ];
+
+        let draw_inner = vec![
+            Draw::LineWidthPixels(0.5),
+            Draw::StrokeColor(Color::Rgba(0.1, 0.7, 0.9, 1.0)),
+            Draw::Stroke
+        ];
+
+        let draw_fill = vec![
+            Draw::FillColor(Color::Rgba(0.6, 0.8, 0.9, 0.25)),
+            Draw::Fill
+        ];
+
+        // Combine for the final result
+        draw_setup.into_iter()
+            .chain(draw_bounds)
+            .chain(draw_fill)
+            .chain(draw_outer)
+            .chain(draw_inner)
+            .collect()
     }
 
     ///
@@ -167,9 +216,25 @@ impl Select {
                     // TODO: add to the selection if shift is held down
                     actions.push(ToolAction::ClearSelection);
                     actions.push(ToolAction::Select(element));
+
+                    // Item is newly selected
+                    let mut new_data            = (*data).clone();
+                    new_data.action             = SelectAction::Select;
+                    new_data.initial_position   = RawPoint::from(paint.location);
+
+                    actions.push(ToolAction::Data(new_data.clone()));
+                    data = Arc::new(new_data);
                 } else {
                     // Select no elements
                     actions.push(ToolAction::ClearSelection);
+
+                    // Rubber-band if the user drags
+                    let mut new_data            = (*data).clone();
+                    new_data.action             = SelectAction::RubberBand;
+                    new_data.initial_position   = RawPoint::from(paint.location);
+
+                    actions.push(ToolAction::Data(new_data.clone()));
+                    data = Arc::new(new_data);
                 }
             },
 
@@ -185,6 +250,32 @@ impl Select {
                 let new_data = data.with_action(SelectAction::NoAction);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
+
+                // Clear layers other than 0 in the overlay
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
+                    Draw::Layer(1),
+                    Draw::ClearLayer
+                ])));
+            },
+
+            (SelectAction::Select, PaintAction::Continue) => {
+                // Start dragging the selection
+                let mut new_data    = (*data).clone();
+                new_data.action     = SelectAction::Drag;
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+            },
+
+            (SelectAction::RubberBand, PaintAction::Continue) => {
+                // Draw a rubber band around the selection
+                let mut new_data        = (*data).clone();
+                new_data.drag_position  = Some(RawPoint::from(paint.location));
+
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+
+                let draw_rubber_band = Self::draw_rubber_band(data.initial_position.position, paint.location);
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_rubber_band)));
             },
 
             // Other combinations have no effect
@@ -327,7 +418,8 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     frame:              current_frame,
                     bounding_boxes:     bounding_boxes,
                     action:             SelectAction::NoAction,
-                    initial_position:   RawPoint::from((0.0, 0.0))
+                    initial_position:   RawPoint::from((0.0, 0.0)),
+                    drag_position:      None
                 })
             });
         
