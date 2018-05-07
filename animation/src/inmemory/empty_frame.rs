@@ -34,6 +34,10 @@ impl Frame for EmptyFrame {
         None
     }
 
+    fn element_with_id<'a>(&'a self, _id: ElementId) -> Option<Vector> {
+        None
+    }
+
     fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> { None }
 
     fn active_brush_properties(&self) -> Option<BrushProperties> { None }

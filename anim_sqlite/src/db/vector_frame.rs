@@ -129,6 +129,16 @@ impl Frame for VectorFrame {
     }
 
     ///
+    /// Searches for an element with the specified ID and returns it if found
+    /// 
+    fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector> {
+        let mut elements_with_id = self.elements.iter()
+            .filter(|element| element.id() == id);
+        
+        elements_with_id.nth(0).cloned()
+    }
+
+    ///
     /// Finds the brush that will be active after this frame has rendered
     /// 
     fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> {

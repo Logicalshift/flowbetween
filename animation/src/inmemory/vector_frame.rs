@@ -58,6 +58,22 @@ impl Frame for VectorFrame {
         Some(Box::new(elements.into_iter()))
     }
 
+    fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector> {
+        let keyframe_element = self.keyframe.element_with_id(id);
+        
+        if let Some((appearance_time, element)) = keyframe_element {
+            // Element only exists if it appears after this frame has started
+            if appearance_time <= self.offset {
+                Some(element)
+            } else {
+                None
+            }
+        } else {
+            // No element was found
+            None
+        }
+    }
+
     fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> {
         let mut properties  = Arc::new(VectorProperties::default());
 

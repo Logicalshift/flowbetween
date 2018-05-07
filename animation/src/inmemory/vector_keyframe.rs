@@ -48,6 +48,18 @@ impl VectorKeyFrame {
     }
 
     ///
+    /// Searches for an element with the specified ID and returns it if found
+    /// 
+    pub fn element_with_id<'a>(&'a self, id: ElementId) -> Option<(Duration, Vector)> {
+        let core = self.core.lock().unwrap();
+
+        let mut elements_with_id = core.elements.iter()
+            .filter(|&&(_, ref element)| element.id() == id);
+        
+        elements_with_id.nth(0).cloned()
+    }
+
+    ///
     /// Retrieves the properties that will be applied to the next element added to this keyframe
     /// 
     #[inline]

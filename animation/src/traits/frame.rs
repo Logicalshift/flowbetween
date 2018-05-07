@@ -1,9 +1,11 @@
+use super::edit::*;
 use super::vector::*;
 use super::brush_definition::*;
 use super::brush_properties::*;
 use super::brush_drawing_style::*;
 
 use canvas::*;
+
 use std::time::Duration;
 
 ///
@@ -24,6 +26,11 @@ pub trait Frame : Send+Sync {
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     /// 
     fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>>;
+
+    ///
+    /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
+    /// 
+    fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector>;
 
     ///
     /// The brush that is active after all the elements are drawn in this frame
