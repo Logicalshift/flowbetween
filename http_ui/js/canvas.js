@@ -543,7 +543,13 @@ let flo_canvas = (function() {
 
         function clear_layer() {
             // Clear the current layer
+            context.resetTransform();
             context.clearRect(0, 0, canvas.width, canvas.height);
+            context.setTransform(
+                transform[0],transform[3], 
+                transform[1],transform[4], 
+                transform[2],transform[5]
+            );
 
             // Reset the blend mode
             blend_for_layer[current_layer_id] = 'source-over';
