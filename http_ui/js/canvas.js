@@ -439,6 +439,7 @@ let flo_canvas = (function() {
             let restore_have_image      = have_stored_image;
             let restore_layer_id        = current_layer_id;
             let restore_last_store_pos  = last_store_pos;
+            let restore_transform       = transform.slice();
             context_stack.push(() => {
                 clip_stack                  = restore_clip_stack;
                 dash_pattern                = restore_dash_pattern;
@@ -447,6 +448,7 @@ let flo_canvas = (function() {
                 have_stored_image           = restore_have_image;
                 current_layer_id            = restore_layer_id;
                 last_store_pos              = restore_last_store_pos;
+                transform                   = restore_transform;
                 set_dash_pattern            = true;
             });
 
