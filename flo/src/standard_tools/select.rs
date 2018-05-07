@@ -255,9 +255,18 @@ impl Select {
                 .flat_map(|path| { let path: Vec<Draw> = (&path).into(); path })
                 .collect();
             
-            path_draw.insert(0, Draw::FillColor(Color::Rgba(0.6, 0.8, 0.9, 0.75)));
-            path_draw.insert(1, Draw::NewPath);
+            path_draw.insert(0, Draw::NewPath);
+
+            path_draw.push(Draw::FillColor(Color::Rgba(0.6, 0.8, 0.9, 0.3)));
             path_draw.push(Draw::Fill);
+
+            path_draw.push(Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, 0.4)));
+            path_draw.push(Draw::LineWidthPixels(2.0));
+            path_draw.push(Draw::Stroke);
+
+            path_draw.push(Draw::StrokeColor(Color::Rgba(0.6, 1.0, 1.0, 1.0)));
+            path_draw.push(Draw::LineWidthPixels(0.5));
+            path_draw.push(Draw::Stroke);
 
             (path_draw, bounds)
         } else {
