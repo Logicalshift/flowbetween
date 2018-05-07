@@ -4,6 +4,8 @@ use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
 
+use canvas::*;
+
 use std::sync::*;
 
 ///
@@ -31,5 +33,12 @@ impl VectorProperties {
             brush:              Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
             brush_properties:   BrushProperties::new()
         }
+    }
+
+    ///
+    /// Prepares the context to render with these properties
+    /// 
+    pub fn prepare_to_render(&self, gc: &mut GraphicsPrimitives) {
+        gc.draw_list(self.brush.prepare_to_render(&self.brush_properties));
     }
 }

@@ -186,7 +186,7 @@ impl Select {
     ///
     /// Draws a set of dragged elements
     /// 
-    fn draw_drag(selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
+    fn draw_drag(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
         let mut drawing = vec![];
 
         drawing.layer(1);
@@ -198,13 +198,20 @@ impl Select {
 
         // Draw the 'shadows' of the elements
         let mut bounding_boxes = vec![];
-        for (_element, properties, bounds) in selected_elements {
+        for (element, properties, bounds) in selected_elements {
             // Update the brush properties to be a 'shadow' of the original
             let mut properties = (*properties).clone();
             properties.brush_properties.opacity *= 0.25;
             properties.brush_properties.color   = Color::Rgba(0.6, 0.8, 0.9, 1.0);
 
-            // TODO: fetch the element to render it
+            // Fetch the element to render it
+            let element = data.frame.as_ref().and_then(|frame| frame.element_with_id(element));
+
+            // Render the element using the selection style
+            element.map(|element| {
+                properties.prepare_to_render(&mut drawing);
+                element.render(&mut drawing, &properties);
+            });
 
             // We'll draw the bounding rectangles later on
             bounding_boxes.push(bounds);
@@ -410,7 +417,7 @@ impl Select {
                     .map(|item| item.clone())
                     .collect();
 
-                let draw_drag = Self::draw_drag(selected, data.initial_position.position, paint.location);
+                let draw_drag = Self::draw_drag(&*data, selected, data.initial_position.position, paint.location);
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_drag)));
             },
 
