@@ -223,9 +223,8 @@ impl Select {
             Draw::NewPath
         ]);
 
-        for bounds in bounding_boxes {
-            bounds.draw(&mut drawing);
-        }
+        let bounds = bounding_boxes.into_iter().fold(Rect::empty(), |r1, r2| r1.union(r2));
+        bounds.draw(&mut drawing);
 
         // Finish drawing the bounding boxes
         drawing.line_width_pixels(2.0);
