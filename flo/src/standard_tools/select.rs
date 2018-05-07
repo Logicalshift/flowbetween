@@ -243,24 +243,26 @@ impl Select {
     ///
     /// Returns the drawing actions to highlight the specified element
     /// 
-    fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> Vec<Draw> {
+    fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> (Vec<Draw>, Rect) {
         // Get the paths for this element
         let paths = element.to_path(properties);
         if let Some(paths) = paths {
-            // Retrieve the bounding box for each of the paths
-            let bounds = paths.into_iter().map(|path| path.bounding_box());
+            let bounds = paths.iter()
+                .map(|path| path.bounding_box())
+                .fold(Rect::empty(), |r1, r2| r1.union(r2));
 
-            // Merge into a single bounding box
-            let bounds = bounds.fold(Rect::empty(), |current, next| current.union(next));
+            let mut path_draw: Vec<_> = paths.into_iter()
+                .flat_map(|path| { let path: Vec<Draw> = (&path).into(); path })
+                .collect();
+            
+            path_draw.insert(0, Draw::FillColor(Color::Rgba(0.6, 0.8, 0.9, 0.75)));
+            path_draw.insert(1, Draw::NewPath);
+            path_draw.push(Draw::Fill);
 
-            // Draw a rectangle around these bounds
-            let mut bounds: Vec<Draw> = bounds.into();
-            bounds.push(Draw::Stroke);
-
-            bounds
+            (path_draw, bounds)
         } else {
             // There are no paths for this element
-            vec![]
+            (vec![], Rect::empty())
         }
     }
 
@@ -561,6 +563,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     // Build up a vector of bounds
                     let mut selection   = vec![];
                     let mut properties  = Arc::new(VectorProperties::default());
+                    let mut bounds      = Rect::empty();
 
                     for element in elements {
                         // Update the properties according to this element
@@ -570,8 +573,25 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                         let element_id = element.id();
                         if element_id.is_assigned() && selected_elements.contains(&element_id) {
                             // Draw the settings for this element
-                            selection.extend(Self::highlight_for_selection(&element, &properties));
+                            let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);
+                            selection.extend(drawing);
+                            bounds = bounds.union(bounding_box);
                         }
+                    }
+
+                    // Draw a bounding box around the whole thing
+                    if !bounds.is_zero_size() {
+                        let bounds = bounds.inset(-2.0, -2.0);
+
+                        bounds.draw(&mut selection);
+
+                        selection.line_width_pixels(2.0);
+                        selection.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 0.1));
+                        selection.stroke();
+
+                        selection.line_width_pixels(0.5);
+                        selection.stroke_color(Color::Rgba(0.2, 0.8, 1.0, 1.0));
+                        selection.stroke();
                     }
                     
                     // Create the overlay drawing
