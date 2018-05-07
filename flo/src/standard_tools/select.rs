@@ -189,8 +189,7 @@ impl Select {
     fn draw_drag(selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
         let mut drawing = vec![];
 
-        // Draw the dragged elements on overlay layer 0 (removing the usual bounding boxes that are found there)
-        drawing.layer(0);
+        drawing.layer(1);
         drawing.clear_layer();
 
         // Draw everything translated by the drag distance
@@ -413,6 +412,19 @@ impl Select {
 
                 let draw_drag = Self::draw_drag(selected, data.initial_position.position, paint.location);
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(draw_drag)));
+            },
+
+            (SelectAction::Drag, PaintAction::Finish) => {
+                // Reset the data state to 'no action'
+                let new_data = data.with_action(SelectAction::NoAction);
+                actions.push(ToolAction::Data(new_data.clone()));
+                data = Arc::new(new_data);
+
+                // Redraw the selection highlights
+                actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
+                    Draw::Layer(1),
+                    Draw::ClearLayer
+                ])));
             },
 
             // -- Generic behaviour
