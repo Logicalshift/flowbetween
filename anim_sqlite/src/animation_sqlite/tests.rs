@@ -594,3 +594,29 @@ fn delete_layer_after_drawing_brush_stroke() {
 
     anim.perform_edits(vec![AnimationEdit::RemoveLayer(2)]);
 }
+
+#[test]
+fn move_existing_element() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(1), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        
+        AnimationEdit::Element(ElementId::Assigned(0), Duration::from_millis(442), ElementEdit::Move((0.0, 0.0), (200.0, 200.0)))
+    ]);
+    anim.panic_on_error();
+
+}

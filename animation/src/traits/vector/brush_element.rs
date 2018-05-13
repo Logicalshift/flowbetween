@@ -35,6 +35,44 @@ impl BrushElement {
     pub fn points(&self) -> Arc<Vec<BrushPoint>> {
         Arc::clone(&self.points)
     }
+
+    ///
+    /// Moves this brush stroke so that it fits within a particular bounding box
+    /// (when rendered with a particular set of properties)
+    /// 
+    pub fn move_to(&mut self, new_bounds: Rect, properties: &VectorProperties) {
+        // Scale using the existing bounds
+        let existing_bounds = self.to_path(properties)
+            .map(|paths| paths.into_iter()
+                .map(|path| Rect::from(&path))
+                .fold(Rect::empty(), |a, b| a.union(b)))
+            .unwrap_or(Rect::empty());
+
+        let (current_w, current_h)  = (existing_bounds.x2-existing_bounds.x1, existing_bounds.y2-existing_bounds.y1);
+        let (new_w, new_h)          = (new_bounds.x2-new_bounds.x1, new_bounds.y2-new_bounds.y1);
+        let (scale_x, scale_y)      = (new_w/current_w, new_h/current_h);
+
+        // Functions to transform the points in this brush stroke
+        let transform       = |(x, y)| {
+            ((x - existing_bounds.x1)*scale_x + new_bounds.x1,
+             (y - existing_bounds.y1)*scale_y + new_bounds.y1)
+        };
+
+        let transform_point = |point: &BrushPoint| {
+            BrushPoint {
+                position:   transform(point.position),
+                cp1:        transform(point.cp1),
+                cp2:        transform(point.cp2),
+                width:      point.width
+            }
+        };
+
+        // Perform the transformation itself
+        let new_points      = self.points.iter()
+            .map(|old_point| transform_point(old_point))
+            .collect();
+        self.points = Arc::new(new_points);
+    }
 }
 
 impl VectorElement for BrushElement {

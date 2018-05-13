@@ -26,6 +26,13 @@ impl InMemoryVectorLayer {
             core:       Mutex::new(core)
         }
     }
+
+    ///
+    /// Performs an edit on an element contained within this animation
+    /// 
+    pub fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: &ElementEdit) {
+        // TODO
+    }
 }
 
 impl Layer for InMemoryVectorLayer {

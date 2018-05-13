@@ -3,6 +3,7 @@ use super::db_enum::*;
 use super::flo_store::*;
 
 use std::collections::*;
+use std::time::Duration;
 
 ///
 /// Class used for the animation object for a database
@@ -87,5 +88,9 @@ impl<TFile: FloFile+Send+'static> MutableAnimation for AnimationDbEditor<TFile> 
 
         // Edit it
         layer.map(|layer| Editor::new(layer as &mut Layer))
+    }
+
+    fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: ElementEdit) {
+        unimplemented!()
     }
 }

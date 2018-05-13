@@ -77,6 +77,11 @@ pub trait MutableAnimation :
     fn remove_layer(&mut self, old_layer_id: u64);
 
     ///
+    /// Performs an edit on an element in this layer
+    /// 
+    fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: ElementEdit);
+
+    ///
     /// Opens a particular layer for editing
     /// 
     fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>>;

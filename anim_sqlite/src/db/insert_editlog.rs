@@ -68,21 +68,27 @@ impl<TFile: FloFile> AnimationDbCore<TFile> {
         use animation::AnimationEdit::*;
 
         match edit {
-            &Layer(layer_id, ref layer_edit)    => { 
+            &Layer(layer_id, ref layer_edit)            => { 
                 self.db.update(vec![PushEditLogLayer(layer_id)])?;
                 self.insert_layer_edit(layer_edit)?;
             },
 
-            &SetSize(width, height)             => { 
+            &SetSize(width, height)                         => { 
                 self.db.update(vec![PopEditLogSetSize(width as f32, height as f32)])?;
             },
 
-            &AddNewLayer(layer_id)              => {
+            &AddNewLayer(layer_id)                          => {
                 self.db.update(vec![PushEditLogLayer(layer_id), Pop])?;
             },
 
-            &RemoveLayer(layer_id)              => {
+            &RemoveLayer(layer_id)                          => {
                 self.db.update(vec![PushEditLogLayer(layer_id), Pop])?;
+            }
+
+            &Element(element_id, when, ref element_edit)    => {
+                Self::insert_element_id(&mut self.db, &element_id)?;
+                self.db.update(vec![PushEditLogWhen(when)])?;
+                self.insert_element_edit(element_edit)?;
             }
         };
 
@@ -90,9 +96,27 @@ impl<TFile: FloFile> AnimationDbCore<TFile> {
     }
 
     ///
+    /// Inserts the parameters for an element edit into the edit log
+    /// 
+    fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
+        use animation::ElementEdit::*;
+
+        match edit {
+            &Move(top_left, bottom_right) => {
+                self.db.update(vec![PushRawPoints(Arc::new(vec![
+                    RawPoint::from(top_left), 
+                    RawPoint::from(bottom_right)
+                ]))])?;
+            }
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Inserts the values for a LayerEdit into the edit log (db must have an edit ID pushed. This will be popped when this returns)
     /// 
-    fn insert_layer_edit<'a>(&mut self, edit: &LayerEdit) -> Result<()> {
+    fn insert_layer_edit(&mut self, edit: &LayerEdit) -> Result<()> {
         use animation::LayerEdit::*;
 
         match edit {

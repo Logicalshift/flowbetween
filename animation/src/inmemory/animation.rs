@@ -23,8 +23,8 @@ struct AnimationCore {
     /// The size of the animation canvas
     size: (f64, f64),
 
-    /// The layers in this animation, as an object and as a vector layer (we need to return references to the layer object and rust can't downgrade for us)
-    layers: HashMap<u64, Box<Layer>>,
+    /// The vector layers in this animation
+    vector_layers: HashMap<u64, InMemoryVectorLayer>,
 }
 
 ///
@@ -45,7 +45,7 @@ impl InMemoryAnimation {
             edit_log:           InMemoryEditLog::new(),
             size:               (1980.0, 1080.0),
             next_element_id:    0,
-            layers:             HashMap::new()
+            vector_layers:      HashMap::new()
         };
 
         // Create the final animation
@@ -67,6 +67,9 @@ impl InMemoryAnimation {
 ///
 /// Creates a reference to a layer within the animation core
 /// 
+/// Used to ensure that we retain the lock on the core while a layer editor is
+/// open.
+/// 
 /// Rust won't infer that the target lifetime is 'a without the phantomdata
 /// (or let us specify it in the impl)
 /// 
@@ -76,13 +79,13 @@ impl<'a, CoreRef: Deref<Target=AnimationCore>> Deref for CoreLayerRef<'a, CoreRe
     type Target = Layer+'a;
 
     fn deref(&self) -> &Self::Target {
-        &**self.0.layers.get(&self.1).unwrap()
+        &*self.0.vector_layers.get(&self.1).unwrap()
     }
 }
 
 impl<'a, CoreRef: Deref<Target=AnimationCore>+DerefMut> DerefMut for CoreLayerRef<'a, CoreRef> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut **self.0.layers.get_mut(&self.1).unwrap()
+        &mut *self.0.vector_layers.get_mut(&self.1).unwrap()
     }
 }
 
@@ -101,13 +104,13 @@ impl Animation for InMemoryAnimation {
 
     fn get_layer_ids(&self) -> Vec<u64> {
         (*self.core).lock().unwrap()
-            .layers.keys().cloned().collect()
+            .vector_layers.keys().cloned().collect()
     }
 
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
         let core = (*self.core).lock().unwrap();
 
-        if core.layers.contains_key(&layer_id) {
+        if core.vector_layers.contains_key(&layer_id) {
             let layer_ref   = CoreLayerRef(core, layer_id, PhantomData);
             let reader      = Reader::new(layer_ref);
 
@@ -191,32 +194,38 @@ impl MutableAnimation for AnimationCore {
     /// Has no effect if the layer ID is already in use
     /// 
     fn add_layer(&mut self, new_layer_id: u64) {
-        self.layers.entry(new_layer_id)
-            .or_insert_with(|| {
-                let layer = InMemoryVectorLayer::new(new_layer_id);
-
-                Box::new(layer)
-            });
+        self.vector_layers.entry(new_layer_id)
+            .or_insert_with(|| InMemoryVectorLayer::new(new_layer_id));
     }
 
     ///
     /// Removes the layer with the specified ID
     /// 
     fn remove_layer(&mut self, old_layer_id: u64) {
-        self.layers.remove(&old_layer_id);
+        self.vector_layers.remove(&old_layer_id);
     }
 
     ///
     /// Opens a particular layer for editing
     /// 
     fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>> {
-        if self.layers.contains_key(&layer_id) {
+        if self.vector_layers.contains_key(&layer_id) {
             let layer_ref   = CoreLayerRef(self, layer_id, PhantomData);
             let reader      = Editor::new(layer_ref);
 
             Some(reader)
         } else {
             None
+        }
+    }
+
+    ///
+    /// Performs an edit on an element contained within this animation
+    /// 
+    fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: ElementEdit) {
+        // Forward this edit to all of the layers (the one that owns the element will carry it out)
+        for (_id, layer) in self.vector_layers.iter_mut() {
+            layer.edit_element(element_id, when, &edit);
         }
     }
 }

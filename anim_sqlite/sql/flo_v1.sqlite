@@ -378,7 +378,8 @@ INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
             ("Edit", 4, "Layer::RemoveKeyFrame",            "Removes a keyframe from a layer"),
             ("Edit", 5, "Layer::Paint::SelectBrush",        "Selects a particular brush definition"),
             ("Edit", 6, "Layer::Paint::BrushProperties",    "Sets the brush properties"),
-            ("Edit", 7, "Layer::Paint::BrushStroke",        "Represents a brush stroke with the specified raw properties");
+            ("Edit", 7, "Layer::Paint::BrushStroke",        "Represents a brush stroke with the specified raw properties"),
+            ("Edit", 8, "Element::Move",                    "Represents moving an element");
 
 /* Brush drawing style */
 INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)

@@ -1,4 +1,8 @@
+use super::element_id::*;
 use super::layer_edit::*;
+use super::element_edit::*;
+
+use std::time::Duration;
 
 ///
 /// Represents an edit to an animation object
@@ -7,6 +11,9 @@ use super::layer_edit::*;
 pub enum AnimationEdit {
     /// Edit to an existing layer
     Layer(u64, LayerEdit),
+
+    /// Edit to an existing element (at a particular offset from when its keyframe started)
+    Element(ElementId, Duration, ElementEdit),
 
     /// Sets the canvas size for this animation
     SetSize(f64, f64),

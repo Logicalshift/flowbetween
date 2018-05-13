@@ -34,6 +34,10 @@ impl AnimationEditor {
                     if let Some(mut edit_layer) = target.edit_layer(layer_id) {
                         self.layer_editor.perform(&mut *edit_layer, vec![layer_edit]);
                     }
+                },
+
+                Element(element_id, when, element_edit) => {
+                    target.edit_element(element_id, when, element_edit);
                 }
             }
         }

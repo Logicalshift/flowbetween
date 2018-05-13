@@ -58,6 +58,7 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
         let model_edit          = InMemoryPendingLog::new(move |edits| {
             use self::AnimationEdit::*;
             use self::LayerEdit::*;
+            use self::ElementEdit::*;
 
             // Post to the underlying animation
             animation_edit.set_pending(&edits);
@@ -73,16 +74,17 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
                         advance_edit_counter = true;
                     },
 
-                    AddNewLayer(_)          |
-                    RemoveLayer(_)          |
-                    Layer(_, Paint(_, _))   => {
+                    AddNewLayer(_)              |
+                    RemoveLayer(_)              |
+                    Element(_, _, Move(_, _))   |
+                    Layer(_, Paint(_, _))       => {
                         advance_edit_counter = true;
                     }
 
                     Layer(_, AddKeyFrame(_))    |
                     Layer(_, RemoveKeyFrame(_)) => {
                         ()
-                    }
+                    },
                 }
             }
 
