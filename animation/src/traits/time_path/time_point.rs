@@ -3,6 +3,7 @@ use std::time::Duration;
 ///
 /// Represents a point in time
 /// 
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TimePoint(pub f32, pub f32, pub f32);
 
 impl TimePoint {
