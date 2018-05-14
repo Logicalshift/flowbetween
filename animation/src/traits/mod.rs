@@ -10,6 +10,7 @@ mod brush_definition;
 mod brush_drawing_style;
 mod vector;
 mod path;
+mod time_path;
 
 pub use self::editable::*;
 pub use self::edit::*;
@@ -23,3 +24,4 @@ pub use self::brush_definition::*;
 pub use self::brush_drawing_style::*;
 pub use self::vector::*;
 pub use self::path::*;
+pub use self::time_path::*;
