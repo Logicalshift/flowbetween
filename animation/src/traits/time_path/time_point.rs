@@ -34,7 +34,7 @@ impl TimePoint {
         let TimePoint(_, _, millis) = self;
 
         let secs    = (millis / 1000.0).floor();
-        let nanos   = ((millis / 1000.0)-secs).abs() * 1_000_000.0;
+        let nanos   = (((millis / 1000.0)-secs).abs() * 1_000_000.0).round() * 1_000.0;
 
         if secs < 0.0 {
             // Negative durations are not supported
@@ -42,5 +42,15 @@ impl TimePoint {
         } else {
             Duration::new(secs as u64, nanos as u32)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    pub fn can_round_trip_duration_mills() {
+        assert!(TimePoint::new(0.0, 0.0, Duration::from_millis(1234)).time() == Duration::from_millis(1234));
     }
 }
