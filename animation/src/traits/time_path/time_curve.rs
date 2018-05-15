@@ -5,6 +5,9 @@ use curves::*;
 
 use std::ops::{Mul,Add,Sub};
 
+/// Number of milliseconds precision to use for times
+const DELTA: f32 = 0.1;
+
 ///
 /// Represents a curve through time 
 /// 
@@ -54,6 +57,60 @@ impl TimeCurve {
         }
 
         result
+    }
+
+    ///
+    /// Finds the point within this curve at the specified time
+    /// 
+    pub fn point_at_time(&self, milliseconds: f32) -> Option<TimePoint> {
+        self.as_sections()
+            .into_iter()
+            .filter(|section| {
+                // Filter to sections possibly containing this time
+                let (min, max) = section.bounding_box();
+
+                min.milliseconds() <= milliseconds && max.milliseconds() >= milliseconds
+            })
+            .map(|section| section.point_at_time(milliseconds))
+            .filter(|time| time.is_some())
+            .nth(0)
+            .unwrap_or(None)
+    }
+}
+
+impl TimeCurveSection {
+    ///
+    /// Solves for the point on this curve at the specified time (if it exists)
+    /// 
+    pub fn point_at_time(&self, milliseconds: f32) -> Option<TimePoint> {
+        let midpoint = self.point_at_pos(0.5);
+
+        if (midpoint.milliseconds() - milliseconds).abs() < DELTA {
+            // Found a point that's close enough
+            Some(midpoint)
+        } else {
+            // Subdivide this curve
+            let (left, right)           = self.subdivide(0.5);
+            let (left_min, left_max)    = left.bounding_box();
+            let (right_min, right_max)  = right.bounding_box();
+
+            let mut left_time           = None;
+            let mut right_time          = None;
+
+            if left_min.milliseconds() <= milliseconds && left_max.milliseconds() >= milliseconds {
+                // Search the left-hand side for the point
+                left_time = left.point_at_time(milliseconds);
+            }
+
+            if right_min.milliseconds() <= milliseconds && right_max.milliseconds() >= milliseconds {
+                // Search the right-hand side for the point
+                right_time = right.point_at_time(milliseconds);
+            }
+
+            // If there are multiple matches, then use the left most
+            // Idea is not to allow the user to create loops (but we could create 'ghosts' if we wanted)
+            left_time.or(right_time)
+        }
     }
 }
 
@@ -173,5 +230,41 @@ impl BezierCurve for TimeCurveSection {
     #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
         (self.control_point1, self.control_point2)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::time::Duration;
+
+    #[test]
+    pub fn can_find_initial_point() {
+        let time_curve          = TimeCurve::new(TimePoint::new(20.0, 30.0, Duration::from_millis(0)), TimePoint::new(130.0, 110.0, Duration::from_millis(1000)));
+
+        let point_at_start      = time_curve.point_at_time(0.0).unwrap();
+        let distance_from_start = point_at_start.distance_to(&TimePoint::new(20.0, 30.0, Duration::from_millis(0)));
+
+        assert!(distance_from_start <= DELTA as f64);
+    }
+
+    #[test]
+    pub fn can_find_final_point() {
+        let time_curve          = TimeCurve::new(TimePoint::new(20.0, 30.0, Duration::from_millis(0)), TimePoint::new(130.0, 110.0, Duration::from_millis(1000)));
+
+        let point_at_end        = time_curve.point_at_time(1000.0).unwrap();
+        let distance_from_end   = point_at_end.distance_to(&TimePoint::new(130.0, 110.0, Duration::from_millis(1000)));
+
+        assert!(distance_from_end <= DELTA as f64);
+    }
+
+    #[test]
+    pub fn can_find_mid_point() {
+        let time_curve          = TimeCurve::new(TimePoint::new(20.0, 30.0, Duration::from_millis(0)), TimePoint::new(130.0, 110.0, Duration::from_millis(1000)));
+
+        let point_at_mid        = time_curve.point_at_time(500.0).unwrap();
+        let distance_from_mid   = point_at_mid.distance_to(&TimePoint::new(75.0, 70.0, Duration::from_millis(500)));
+
+        assert!(distance_from_mid <= DELTA as f64);
     }
 }

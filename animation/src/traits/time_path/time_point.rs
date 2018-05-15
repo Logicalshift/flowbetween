@@ -29,6 +29,14 @@ impl TimePoint {
     }
 
     ///
+    /// The time in milliseconds represented by this point
+    /// 
+    #[inline]
+    pub fn milliseconds(&self) -> f32 {
+        self.2
+    }
+
+    ///
     /// Retrieves the time for this point as a duration
     /// 
     pub fn time(&self) -> Duration {
