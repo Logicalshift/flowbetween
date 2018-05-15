@@ -267,4 +267,25 @@ mod test {
 
         assert!(distance_from_mid <= DELTA as f64);
     }
+
+    #[test]
+    pub fn can_find_many_points() {
+        let start_point         = TimePoint::new(20.0, 30.0, Duration::from_millis(0));
+        let end_point           = TimePoint::new(130.0, 110.0, Duration::from_millis(1000));
+        let time_curve          = TimeCurve::new(start_point, end_point);
+
+        for point in 0..=10 {
+            let point   = point as f32;
+            let ratio   = point / 10.0;
+            let time    = 1000.0 * ratio;
+
+            let expected_point  = ((end_point-start_point) * (ratio as f64)) + start_point;
+            let actual_point    = time_curve.point_at_time(time).unwrap();
+
+            let distance        = expected_point.distance_to(&actual_point);
+            assert!(distance < 1.0);
+        }
+
+        assert!(false)
+    }
 }
