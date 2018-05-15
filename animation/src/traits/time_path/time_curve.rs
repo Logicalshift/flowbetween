@@ -269,7 +269,7 @@ mod test {
     }
 
     #[test]
-    pub fn can_find_many_points() {
+    pub fn default_time_line_is_linear() {
         let start_point         = TimePoint::new(20.0, 30.0, Duration::from_millis(0));
         let end_point           = TimePoint::new(130.0, 110.0, Duration::from_millis(1000));
         let time_curve          = TimeCurve::new(start_point, end_point);
@@ -285,7 +285,13 @@ mod test {
             let distance        = expected_point.distance_to(&actual_point);
             assert!(distance < 1.0);
         }
+    }
 
-        assert!(false)
+    #[test]
+    pub fn points_outside_curve_are_not_found() {
+        let time_curve          = TimeCurve::new(TimePoint::new(20.0, 30.0, Duration::from_millis(0)), TimePoint::new(130.0, 110.0, Duration::from_millis(1000)));
+
+        assert!(time_curve.point_at_time(-100.0) == None);
+        assert!(time_curve.point_at_time(1001.0) == None);
     }
 }
