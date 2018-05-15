@@ -8,9 +8,53 @@ use std::ops::{Mul,Add,Sub};
 ///
 /// Represents a curve through time 
 /// 
+#[derive(Clone, PartialEq, Debug)]
 pub struct TimeCurve {
     /// The points on this curves
     pub points: Vec<TimeControlPoint>
+}
+
+///
+/// A section of a time curve
+/// 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub struct TimeCurveSection {
+    pub start: TimePoint,
+    pub end: TimePoint,
+    pub control_point1: TimePoint,
+    pub control_point2: TimePoint
+}
+
+impl TimeCurve {
+    ///
+    /// Creates a new time curve from a line
+    /// 
+    pub fn new(start: TimePoint, end: TimePoint) -> TimeCurve {
+        let start_point = TimeControlPoint::new(start, start, start + (end-start)*0.33333);
+        let end_point   = TimeControlPoint::new(end - (end-start)*0.33333, end, end);
+
+        TimeCurve { 
+            points: vec![start_point, end_point]
+        }
+    }
+
+    ///
+    /// Returns the sections of this curve
+    /// 
+    pub fn as_sections(&self) -> Vec<TimeCurveSection> {
+        let mut result = vec![];
+
+        for index in 0..(self.points.len()-1) {
+            result.push(TimeCurveSection {
+                start:              self.points[index].point,
+                end:                self.points[index+1].point,
+                control_point1:     self.points[index].future,
+                control_point2:     self.points[index+1].past
+            })
+        }
+
+        result
+    }
 }
 
 impl Mul<f64> for TimePoint {
@@ -91,5 +135,43 @@ impl Coordinate for TimePoint {
     #[inline]
     fn from_smallest_components(p1: TimePoint, p2: TimePoint) -> TimePoint {
         TimePoint(p1.0.min(p2.0), p1.1.min(p2.1), p1.2.min(p2.2))
+    }
+}
+
+impl BezierCurve for TimeCurveSection {
+    type Point = TimePoint;
+
+    ///
+    /// Creates a new bezier curve of the same type from some points
+    /// 
+    #[inline]
+    fn from_points(start: Self::Point, end: Self::Point, control_point1: Self::Point, control_point2: Self::Point) -> Self {
+        TimeCurveSection {
+            start, end, control_point1, control_point2
+        }
+    }
+
+    ///
+    /// The start point of this curve
+    /// 
+    #[inline]
+    fn start_point(&self) -> Self::Point {
+        self.start
+    }
+
+    ///
+    /// The end point of this curve
+    /// 
+    #[inline]
+    fn end_point(&self) -> Self::Point {
+        self.end
+    }
+
+    ///
+    /// The control points in this curve
+    /// 
+    #[inline]
+    fn control_points(&self) -> (Self::Point, Self::Point) {
+        (self.control_point1, self.control_point2)
     }
 }
