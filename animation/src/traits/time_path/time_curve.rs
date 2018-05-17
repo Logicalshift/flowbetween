@@ -288,6 +288,24 @@ mod test {
     }
 
     #[test]
+    pub fn default_time_line_is_linear_2() {
+        let start_point         = TimePoint::new(20.0, 30.0, Duration::from_millis(0));
+        let end_point           = TimePoint::new(130.0, 110.0, Duration::from_millis(1000));
+        let time_curve          = TimeCurve::new(start_point, end_point).as_sections()[0];
+
+        for point in 0..=10 {
+            let point   = point as f32;
+            let ratio   = point / 10.0;
+
+            let expected_point  = ((end_point-start_point) * (ratio as f64)) + start_point;
+            let actual_point    = time_curve.point_at_pos(ratio as f64);
+
+            let distance        = expected_point.distance_to(&actual_point);
+            assert!(distance < 1.0);
+        }
+    }
+
+    #[test]
     pub fn points_outside_curve_are_not_found() {
         let time_curve          = TimeCurve::new(TimePoint::new(20.0, 30.0, Duration::from_millis(0)), TimePoint::new(130.0, 110.0, Duration::from_millis(1000)));
 
