@@ -120,6 +120,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 mod test {
     use super::*;
     use animation::inmemory::*;
+    use futures::executor;
 
     #[test]
     fn size_command_updates_size_binding() {
@@ -131,8 +132,8 @@ mod test {
 
         // Change to 800x600
         {
-            let mut edit_log = model.edit();
-            edit_log.start_send(vec![AnimationEdit::SetSize(800.0, 600.0)]).unwrap();
+           let mut edit_log = executor::spawn(model.edit());
+            edit_log.wait_send(vec![AnimationEdit::SetSize(800.0, 600.0)]).unwrap();
         }
 
         // Binding should get changed by this edit
