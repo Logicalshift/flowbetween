@@ -11,6 +11,7 @@ flo_canvas          = { path = "../canvas", version = "^0.1.0" }
 flo_curves          = { path = "../curves", version = "^0.1.0" }
 flo_float_encoder   = { path = "../float_encoder", version = "^0.1.0" }
 
+futures             = "^0.1.17"
 typemap             = "^0.3.3"
 modifier            = "^0.1.0"
 serde               = "^1.0.0"
