@@ -62,8 +62,15 @@ impl Layer for InMemoryVectorLayer {
         }
     }
 
-    fn get_key_frames_during_time(&self, _when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
-        unimplemented!()
+    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
+        let core = self.core.lock().unwrap();
+
+        let result: Vec<_> = core.keyframes()
+            .map(|frame| frame.start_time())
+            .filter(|time| &when.start <= time && &when.end >= time)
+            .collect();
+
+        Box::new(result.into_iter())
     }
 
     fn supported_edit_types(&self) -> Vec<LayerEditType> {

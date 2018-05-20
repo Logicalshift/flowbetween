@@ -39,6 +39,13 @@ impl VectorLayerCore {
     }
 
     ///
+    /// Retrieves the keyframes in this layer
+    /// 
+    pub fn keyframes<'a>(&'a self) -> impl Iterator<Item=Arc<VectorKeyFrame>>+'a {
+        self.keyframes.iter().cloned()
+    }
+
+    ///
     /// Sorts the keyframes in order
     /// 
     fn sort_key_frames(&mut self) {
