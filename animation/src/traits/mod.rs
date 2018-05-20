@@ -1,4 +1,3 @@
-mod editable;
 mod edit;
 mod animation;
 mod frame;
@@ -13,7 +12,6 @@ mod path;
 mod time_path;
 mod motion;
 
-pub use self::editable::*;
 pub use self::edit::*;
 pub use self::animation::*;
 pub use self::frame::*;

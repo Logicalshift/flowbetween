@@ -4,8 +4,8 @@ use super::vector_layer_core::*;
 use super::super::traits::*;
 
 use std::sync::*;
-use std::ops::Range;
 use std::time::Duration;
+use std::ops::{Range, Deref};
 
 ///
 /// Represents a vector layer. Vector layers support brush and vector objects.
@@ -72,9 +72,9 @@ impl Layer for InMemoryVectorLayer {
         ];
     }
 
-    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>> {
         let core: &Mutex<VectorLayer> = &self.core;
 
-        Some(Reader::new(core.lock().unwrap()))
+        Some(Box::new(core.lock().unwrap()))
     }
 }

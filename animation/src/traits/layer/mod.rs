@@ -4,12 +4,11 @@ pub use self::vector::*;
 
 use super::edit::*;
 use super::frame::*;
-use super::editable::*;
 
 use std::u32;
 use std::sync::*;
-use std::ops::Range;
 use std::time::Duration;
+use std::ops::{Range, Deref};
 
 ///
 /// A layer represents a renderable plane in an animation
@@ -44,5 +43,5 @@ pub trait Layer :
     ///
     /// Retrieves the definition of this layer as a vector layer
     /// 
-    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>>;
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>>;
 }
