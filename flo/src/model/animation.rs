@@ -67,7 +67,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     /// 
     fn edit<'a>(&'a self) -> Box<'a+Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
         // Edit the underlying animation
-        let mut animation_edit  = self.animation.edit();
+        let animation_edit  = self.animation.edit();
 
         // Borrow the bits of the viewmodel we can change
         let frame_edit_counter  = &self.frame_edit_counter;

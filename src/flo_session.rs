@@ -1,7 +1,6 @@
 use flo_ui::*;
 use flo_ui::Image;
 use flo_binding::*;
-use flo_animation::*;
 use flo_animation::inmemory::*;
 // use flo_anim_sqlite::*;
 
@@ -9,7 +8,6 @@ use flo::*;
 use flo::style::*;
 
 use std::sync::*;
-use std::time::Duration;
 use serde_json;
 
 ///
