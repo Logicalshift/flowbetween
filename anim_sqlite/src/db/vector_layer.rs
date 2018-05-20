@@ -80,7 +80,7 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
 
         // Record the details of the element itself
         match new_element {
-            SelectBrush(_id, brush_definition, drawing_style)   => Self::create_brush_definition(db, brush_definition)?,
+            SelectBrush(_id, brush_definition, drawing_style)   => Self::create_brush_definition(db, brush_definition, drawing_style)?,
             BrushProperties(_id, brush_properties)              => Self::create_brush_properties(db, brush_properties)?,
             BrushStroke(_id, brush_stroke)                      => Self::create_brush_stroke(db, brush_stroke)?,
         }
@@ -206,8 +206,8 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     ///
     /// Writes a brush properties element to the database (popping the element ID)
     ///
-    fn create_brush_properties(db: &mut TFile, properties: BrushPropertiesElement) -> Result<()> {
-        AnimationDbCore::insert_brush_properties(db, properties.brush_properties())?;
+    fn create_brush_properties(db: &mut TFile, properties: BrushProperties) -> Result<()> {
+        AnimationDbCore::insert_brush_properties(db, properties)?;
 
         // Create the element
         db.update(vec![
@@ -220,13 +220,13 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     ///
     /// Writes a brush definition element to the database (popping the element ID)
     ///
-    fn create_brush_definition(db: &mut TFile, definition: BrushDefinitionElement) -> Result<()> {
+    fn create_brush_definition(db: &mut TFile, definition: BrushDefinition, drawing_style: BrushDrawingStyle) -> Result<()> {
         // Create the brush definition
-        AnimationDbCore::insert_brush(db, definition.definition())?;
+        AnimationDbCore::insert_brush(db, definition)?;
 
         // Insert the properties for this element
         db.update(vec![
-            DatabaseUpdate::PopVectorBrushElement(DrawingStyleType::from(&definition.drawing_style()))
+            DatabaseUpdate::PopVectorBrushElement(DrawingStyleType::from(&drawing_style))
         ])?;
 
         Ok(())
@@ -235,9 +235,11 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     ///
     /// Writes a brush stroke to the database (popping the element ID)
     ///
-    fn create_brush_stroke(db: &mut TFile, brush_stroke: BrushElement) -> Result<()> {
+    fn create_brush_stroke(db: &mut TFile, brush_stroke: Arc<Vec<RawPoint>>) -> Result<()> {
+        // TODO: we need to convert the raw points to brush points here
+
         db.update(vec![
-            DatabaseUpdate::PopBrushPoints(brush_stroke.points())
+            DatabaseUpdate::PopBrushPoints(brush_stroke)
         ])?;
 
         Ok(())
