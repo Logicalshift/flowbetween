@@ -1,4 +1,5 @@
 mod animation;
+mod animation_core;
 mod empty_frame;
 mod vector_layer;
 mod vector_frame;

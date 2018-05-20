@@ -1,5 +1,4 @@
-use super::edit_log::*;
-use super::vector_layer::*;
+use super::animation_core::*;
 use super::super::traits::*;
 
 use futures::*;
@@ -11,23 +10,6 @@ use std::collections::*;
 use std::time::Duration;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
-
-///
-/// Core values associated with an animation
-/// 
-struct AnimationCore {
-    /// The edit log for this animation
-    edit_log: Vec<AnimationEdit>,
-
-    /// The next element ID to assign
-    next_element_id: i64,
-
-    /// The size of the animation canvas
-    size: (f64, f64),
-
-    /// The vector layers in this animation
-    vector_layers: HashMap<u64, InMemoryVectorLayer>,
-}
 
 ///
 /// Represents an animation that's stored entirely in memory 
