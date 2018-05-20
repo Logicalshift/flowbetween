@@ -118,6 +118,9 @@ impl EditableAnimation for InMemoryAnimation {
 mod test {
     use super::*;
     use std::time::Duration;
+    use futures::*;
+    use futures::future;
+    use futures::executor;
 
     #[test]
     fn can_add_layer() {
@@ -176,9 +179,8 @@ mod test {
         ]);
 
         // Element ID should be assigned if we read the log back
-        let edit_log = animation.get_log();
-
-        let paint_edit = edit_log.read(&mut (2..3));
+        let edit_log    = animation.read_edit_log(2..3);
+        let paint_edit  = executor::spawn(edit_log.collect()).wait_future().unwrap();
 
         // Should be able to find the paint edit here
         assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, _)) => true, _ => false });
@@ -203,16 +205,17 @@ mod test {
         ]);
 
         // Draw a brush stroke
+        /*
         {
             let mut layer_edit = animation.edit_layer(0);
 
-            layer_edit.set_pending(&vec![
+            layer_edit.start_send(vec![
                 LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))
-            ]);
-            layer_edit.commit_pending();
+            ]).unwrap();
         }
+        */
     }
 }
