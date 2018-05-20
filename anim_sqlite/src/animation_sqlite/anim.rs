@@ -1,8 +1,6 @@
 use super::*;
 
 use animation::*;
-use animation::editor::*;
-use animation::inmemory::pending_log::*;
 
 use rusqlite::*;
 use std::time::Duration;

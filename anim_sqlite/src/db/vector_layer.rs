@@ -10,6 +10,7 @@ use std::time::Duration;
 ///
 /// Represents a vector layer in a SQLite database
 /// 
+#[derive(Clone)]
 pub struct SqliteVectorLayer<TFile: FloFile+Send> {
     /// The ID that was assigned to this layer
     assigned_id: u64,
@@ -55,6 +56,13 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
                     core:           Arc::clone(core)
                 }
             })
+    }
+
+    ///
+    /// Performs a layer edit to this layer
+    /// 
+    pub fn edit(&mut self, db: &mut TFile, edit: LayerEdit) {
+        unimplemented!()
     }
 }
 
