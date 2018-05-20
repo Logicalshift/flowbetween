@@ -121,6 +121,19 @@ mod test {
     use futures::executor;
 
     #[test]
+    fn can_set_size() {
+        let animation = InMemoryAnimation::new();
+
+        assert!(animation.size() == (1980.0, 1080.0));
+
+        animation.perform_edits(vec![
+            AnimationEdit::SetSize(800.0, 600.0)
+        ]);
+
+        assert!(animation.size() == (800.0, 600.0));
+    }
+
+    #[test]
     fn can_add_layer() {
         let animation = InMemoryAnimation::new();
 
