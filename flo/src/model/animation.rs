@@ -74,7 +74,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
         let size_binding        = &self.size_binding;
 
         // Pipe the edits so they modify the model as a side-effect
-        let model_edit          = animation_edit.with(|edits: Vec<AnimationEdit>| {
+        let model_edit          = animation_edit.with(move |edits: Vec<AnimationEdit>| {
             use self::AnimationEdit::*;
             use self::ElementEdit::*;
             use self::LayerEdit::*;
