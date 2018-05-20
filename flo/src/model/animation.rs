@@ -132,8 +132,7 @@ mod test {
         // Change to 800x600
         {
             let mut edit_log = model.edit();
-            edit_log.set_pending(&vec![AnimationEdit::SetSize(800.0, 600.0)]);
-            edit_log.commit_pending();
+            edit_log.start_send(vec![AnimationEdit::SetSize(800.0, 600.0)]).unwrap();
         }
 
         // Binding should get changed by this edit
