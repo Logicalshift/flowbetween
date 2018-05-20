@@ -125,33 +125,6 @@ impl Animation for InMemoryAnimation {
 
         Reader::new(core.lock().unwrap())
     }
-
-    fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
-        let core = self.core.clone();
-
-        // Create an edit log that will commit to this object's log
-        let edit_log = InMemoryPendingLog::new(move |edits| core.lock().unwrap().commit_edits(edits));
-
-        // Turn it into an editor
-        let edit_log: Box<'a+PendingEditLog<AnimationEdit>> = Box::new(edit_log);
-        Editor::new(edit_log)
-    }
-
-    fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>> {
-        let core = self.core.clone();
-
-        // Create an edit log that will commit to this object's log
-        let edit_log = InMemoryPendingLog::new(move |edits| {
-            let edits = edits.into_iter()
-                .map(|edit| AnimationEdit::Layer(layer_id, edit));
-
-            core.lock().unwrap().commit_edits(edits)
-        });
-
-        // Turn it into an editor
-        let edit_log: Box<'a+PendingEditLog<LayerEdit>> = Box::new(edit_log);
-        Editor::new(edit_log)
-    }
 }
 
 impl AnimationCore {
