@@ -2,7 +2,6 @@ use super::*;
 
 use animation::*;
 use futures::*;
-use futures::future;
 
 use std::ops::{Deref, Range};
 use std::time::Duration;
@@ -58,6 +57,44 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     }
 }
 
+///
+/// Sink used to send data to the animation
+/// 
+struct FloModelSink<TargetSink, ProcessingFn> {
+    /// Function called on every start send
+    processing_fn: ProcessingFn,
+
+    /// Sink where requests should be forwarded to 
+    target_sink: TargetSink
+}
+
+impl<TargetSink, ProcessingFn> FloModelSink<TargetSink, ProcessingFn> {
+    ///
+    /// Creates a new model sink
+    /// 
+    pub fn new(target_sink: TargetSink, processing_fn: ProcessingFn) -> FloModelSink<TargetSink, ProcessingFn> {
+        FloModelSink {
+            processing_fn:  processing_fn,
+            target_sink:    target_sink
+        }
+    }
+}
+
+impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: FnMut(&Vec<AnimationEdit>) -> ()> Sink for FloModelSink<TargetSink, ProcessingFn> {
+    type SinkItem   = Vec<AnimationEdit>;
+    type SinkError  = ();
+
+    fn start_send(&mut self, item: Vec<AnimationEdit>) -> StartSend<Vec<AnimationEdit>, ()> {
+        (self.processing_fn)(&item);
+
+        self.target_sink.start_send(item)
+    }
+
+    fn poll_complete(&mut self) -> Poll<(), ()> {
+        self.target_sink.poll_complete()
+    }
+}
+
 impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     ///
     /// Retrieves a sink that can be used to send edits for this animation
@@ -74,7 +111,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
         let size_binding        = &self.size_binding;
 
         // Pipe the edits so they modify the model as a side-effect
-        let model_edit          = animation_edit.with(move |edits: Vec<AnimationEdit>| {
+        let model_edit          = FloModelSink::new(animation_edit, move |edits: &Vec<AnimationEdit>| {
             use self::AnimationEdit::*;
             use self::ElementEdit::*;
             use self::LayerEdit::*;
@@ -105,11 +142,8 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 
             // Advancing the frame edit counter causes any animation frames to be regenerated
             if advance_edit_counter {
-                frame_edit_counter.clone().set(self.frame_edit_counter.get()+1)
+                frame_edit_counter.clone().set(self.frame_edit_counter.get()+1);
             }
-
-            // Pass the edits on intact
-            future::ok(edits)
         });
 
         Box::new(model_edit)
@@ -132,7 +166,7 @@ mod test {
 
         // Change to 800x600
         {
-           let mut edit_log = executor::spawn(model.edit());
+            let mut edit_log = executor::spawn(model.edit());
             edit_log.wait_send(vec![AnimationEdit::SetSize(800.0, 600.0)]).unwrap();
         }
 
