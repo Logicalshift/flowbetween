@@ -19,3 +19,13 @@ pub struct AnimationCore {
     /// The vector layers in this animation
     pub vector_layers: HashMap<u64, InMemoryVectorLayer>,
 }
+
+impl AnimationCore {
+    ///
+    /// Performs a single edit on this core
+    /// 
+    pub fn edit(&mut self, edit: AnimationEdit) {
+        // TODO!
+        unimplemented!()
+    }
+}

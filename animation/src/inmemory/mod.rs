@@ -1,5 +1,6 @@
 mod animation;
 mod animation_core;
+mod animation_sink;
 mod empty_frame;
 mod vector_layer;
 mod vector_frame;
