@@ -42,7 +42,7 @@ pub struct AnimationDb {
     next_element_id: Arc<Mutex<i64>>,
 
     /// The editor is used to provide the mutable animation interface (we keep it around so it can cache values if necessary)
-    editor: Mutex<AnimationDbEditor<FloSqlite>>
+    editor: Mutex<AnimationEditor<FloSqlite>>
 }
 
 impl AnimationDb {
@@ -60,7 +60,7 @@ impl AnimationDb {
         FloSqlite::setup(&connection).unwrap();
 
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationDbEditor::new(&core);
+        let editor  = AnimationEditor::new(&core);
 
         // We begin assigning element IDs at the current length of the edit log
         let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
@@ -79,7 +79,7 @@ impl AnimationDb {
     /// 
     pub fn from_connection(connection: Connection) -> AnimationDb {
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationDbEditor::new(&core);
+        let editor  = AnimationEditor::new(&core);
 
         // We begin assigning element IDs at the current length of the edit log
         let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
