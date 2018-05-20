@@ -15,7 +15,7 @@ use std::time::Duration;
 ///
 /// Converts tool actions into actions for a canvas
 /// 
-pub struct CanvasTools<Anim: Animation> {
+pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     /// The animation that actions should be committed to
     animation: Arc<FloModel<Anim>>,
 
@@ -44,7 +44,7 @@ pub struct CanvasTools<Anim: Animation> {
     tool_runner: ToolRunner<Anim>
 }
 
-impl<Anim: 'static+Animation> CanvasTools<Anim> {
+impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     ///
     /// Creates a new canvas tools structure
     /// 
@@ -179,8 +179,7 @@ impl<Anim: 'static+Animation> CanvasTools<Anim> {
         // Commit any animation edits that the tool produced
         if animation_edits.len() > 0 {
             let mut editor = self.animation.edit();
-            editor.set_pending(&animation_edits);
-            editor.commit_pending();
+            editor.start_send(animation_edits).unwrap();
         }
 
         // If there's a brush preview, draw it as the renderer annotation
