@@ -5,11 +5,10 @@ use futures::*;
 use futures::stream;
 
 use std::sync::*;
-use std::ops::Range;
 use std::collections::*;
 use std::time::Duration;
+use std::ops::{Range, Deref};
 use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut};
 
 ///
 /// Represents an animation that's stored entirely in memory 
@@ -69,12 +68,6 @@ impl<'a, CoreRef: Deref<Target=AnimationCore>> Deref for CoreLayerRef<'a, CoreRe
     }
 }
 
-impl<'a, CoreRef: Deref<Target=AnimationCore>+DerefMut> DerefMut for CoreLayerRef<'a, CoreRef> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut *self.0.vector_layers.get_mut(&self.1).unwrap()
-    }
-}
-
 impl Animation for InMemoryAnimation {
     fn size(&self) -> (f64, f64) {
         (*self.core).lock().unwrap().size
@@ -93,8 +86,14 @@ impl Animation for InMemoryAnimation {
             .vector_layers.keys().cloned().collect()
     }
 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<&'a Layer> {
-        unimplemented!()
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> {
+        let core = self.core.lock().unwrap();
+
+        if core.vector_layers.contains_key(&layer_id) {
+            Some(Box::new(CoreLayerRef(core, layer_id, PhantomData)))
+        } else {
+            None
+        }
     }
 
     fn get_num_edits(&self) -> usize {

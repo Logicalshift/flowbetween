@@ -3,8 +3,8 @@ use super::layer::*;
 
 use futures::*;
 
-use std::ops::Range;
 use std::time::Duration;
+use std::ops::{Range, Deref};
 
 ///
 /// Represents an animation
@@ -34,7 +34,7 @@ pub trait Animation :
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<&'a Layer>;
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>>;
 
     ///
     /// Retrieves the total number of items that have been performed on this animation
