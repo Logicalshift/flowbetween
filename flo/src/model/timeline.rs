@@ -62,7 +62,7 @@ impl<Anim: Animation> TimelineModel<Anim> {
         for id in layer_ids {
             let layer = animation.get_layer_with_id(id);
             if let Some(layer) = layer {
-                layers.push(LayerModel::new(&layer));
+                layers.push(LayerModel::new(&*layer));
             }
         }
 
