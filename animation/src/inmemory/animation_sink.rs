@@ -49,7 +49,7 @@ impl AnimationSink {
         use self::LayerEdit::*;
         use self::PaintEdit::*;
 
-        let mut core = self.core.lock().unwrap();
+        let core = self.core.lock().unwrap();
 
         // Assign IDs to any element edits
         let mut next_element_id = core.edit_log.len() as i64;
