@@ -61,14 +61,14 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
     ///
     /// Adds a new vector element to this layer
     /// 
-    fn add_element(&mut self, db: &mut TFile, when: Duration, new_element: Vector) {
-        use animation::Vector::*;
+    fn paint(&mut self, db: &mut TFile, when: Duration, new_element: PaintEdit) {
+        use animation::PaintEdit::*;
 
         let layer_id = self.layer_id;
 
         // Update the state of this object based on the element
         match new_element {
-            BrushDefinition(ref brush_definition)   => {
+            SelectBrush(_id, ref brush_definition, _drawing_style)   => {
                 self.active_brush = Some((when, create_brush_from_definition(brush_definition.definition(), brush_definition.drawing_style())));
             },
 
@@ -80,9 +80,9 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
 
         // Record the details of the element itself
         match new_element {
-            BrushDefinition(brush_definition)   => Self::create_brush_definition(db, brush_definition)?,
-            BrushProperties(brush_properties)   => Self::create_brush_properties(db, brush_properties)?,
-            BrushStroke(brush_stroke)           => Self::create_brush_stroke(db, brush_stroke)?,
+            SelectBrush(_id, brush_definition, drawing_style)   => Self::create_brush_definition(db, brush_definition)?,
+            BrushProperties(_id, brush_properties)              => Self::create_brush_properties(db, brush_properties)?,
+            BrushStroke(_id, brush_stroke)                      => Self::create_brush_stroke(db, brush_stroke)?,
         }
 
         // create_new_element pushes an element ID, a key frame ID and a time. The various element actions pop the element ID so we need to pop the frame ID and time
@@ -116,7 +116,7 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
             },
 
             Paint(when, edit) => {
-                unimplemented!()
+                self.paint(db, when, edit);
             }
         }
     }
@@ -184,8 +184,8 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     ///
     /// The element is created without its associated data.
     ///
-    fn create_new_element(db: &mut TFile, layer_id: i64, when: Duration, element: &Vector) -> Result<()> {
-        if let Some(ElementId::Assigned(assigned_id)) = Some(element.id()) {
+    fn create_new_element(db: &mut TFile, layer_id: i64, when: Duration, element: &PaintEdit) -> Result<()> {
+        if let ElementId::Assigned(assigned_id) = element.id() {
             db.update(vec![
                 DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PushNearestKeyFrame(when),
