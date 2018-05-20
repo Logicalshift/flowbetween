@@ -118,8 +118,6 @@ impl EditableAnimation for InMemoryAnimation {
 mod test {
     use super::*;
     use std::time::Duration;
-    use futures::*;
-    use futures::future;
     use futures::executor;
 
     #[test]
@@ -205,17 +203,17 @@ mod test {
         ]);
 
         // Draw a brush stroke
-        /*
         {
-            let mut layer_edit = animation.edit_layer(0);
+            let mut layer_edit = animation.edit();
 
             layer_edit.start_send(vec![
-                LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
-                    RawPoint::from((10.0, 10.0)),
-                    RawPoint::from((20.0, 5.0))
-                ])))
+                AnimationEdit::Layer(0,
+                    LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+                        RawPoint::from((10.0, 10.0)),
+                        RawPoint::from((20.0, 5.0))
+                    ])))
+                )
             ]).unwrap();
         }
-        */
     }
 }
