@@ -10,7 +10,9 @@
             "args": [
                 "build",
                 "--features",
-                "http"
+                "http",
+                "-p",
+                "flo_animation"
             ],
             "problemMatcher": [
                 "$rustc"
