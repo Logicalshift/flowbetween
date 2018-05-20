@@ -119,7 +119,7 @@ impl BrushPreview {
     ///
     /// Commits this preview to an animation
     /// 
-    pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &Animation) {
+    pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &EditableAnimation) {
         use LayerEdit::*;
         use PaintEdit::*;
 
@@ -148,9 +148,7 @@ impl BrushPreview {
         actions.push(Paint(when, BrushStroke(ElementId::Unassigned, Arc::new(points))));
 
         // Perform the edit
-        let mut edit = animation.edit_layer(layer_id);
-
-        edit.set_pending(&actions);
-        edit.commit_pending();
+        let actions = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
+        animation.edit().start_send(actions.collect()).ok();
     }
 }
