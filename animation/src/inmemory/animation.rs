@@ -70,7 +70,7 @@ impl<'a, CoreRef: Deref<Target=AnimationCore>> Deref for CoreLayerRef<'a, CoreRe
 
 impl Animation for InMemoryAnimation {
     fn size(&self) -> (f64, f64) {
-        (*self.core).lock().unwrap().size
+        self.core.lock().unwrap().size
     }
 
     fn duration(&self) -> Duration {
@@ -82,7 +82,7 @@ impl Animation for InMemoryAnimation {
     }
 
     fn get_layer_ids(&self) -> Vec<u64> {
-        (*self.core).lock().unwrap()
+        self.core.lock().unwrap()
             .vector_layers.keys().cloned().collect()
     }
 
@@ -97,7 +97,7 @@ impl Animation for InMemoryAnimation {
     }
 
     fn get_num_edits(&self) -> usize {
-        (*self.core).lock().unwrap().edit_log.len()
+        self.core.lock().unwrap().edit_log.len()
     }
 
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
