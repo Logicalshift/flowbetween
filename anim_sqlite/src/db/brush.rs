@@ -2,7 +2,7 @@ use super::*;
 use super::db_enum::*;
 use super::flo_store::*;
 
-impl<TFile: FloFile> AnimationDbCore<TFile> {
+impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts a brush definition, leaving the ID on the database stack
     /// 
