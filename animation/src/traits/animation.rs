@@ -1,6 +1,7 @@
 use super::edit::*;
 use super::layer::*;
-use super::editable::*;
+
+use futures::*;
 
 use std::time::Duration;
 
@@ -32,57 +33,23 @@ pub trait Animation :
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>>;
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<&'a Layer>;
 
     ///
     /// Retrieves the log for this animation
     /// 
-    fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>>;
-
-    ///
-    /// Retrieves an edit log that can be used to alter this animation
-    /// 
-    fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>>;
-
-    ///
-    /// Retrieves an edit log that can be used to edit a layer in this animation
-    /// 
-    fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>>;
+    fn get_log<'a>(&'a self) -> Box<'a+Stream<Item=AnimationEdit, Error=()>>;
 }
 
 ///
-/// Trait implemented by objects that support editing the data associated with an animation
+/// Represents something that can edit an animation
 /// 
-/// Normally edits are made by sending them via the `edit()` method in 
-/// `Animation`. This used to edit the actual data structure associated
-/// with an animation.
-/// 
-pub trait MutableAnimation :
-    Send {
+pub trait EditableAnimation {
     ///
-    /// Sets the canvas size of this animation
-    ///
-    fn set_size(&mut self, size: (f64, f64));
-
-    ///
-    /// Creates a new layer with a particular ID
+    /// Retrieves a sink that can be used to send edits for this animation
     /// 
-    /// Has no effect if the layer ID is already in use
+    /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
+    /// a set of related edits are performed atomically
     /// 
-    fn add_layer(&mut self, new_layer_id: u64);
-
-    ///
-    /// Removes the layer with the specified ID
-    /// 
-    fn remove_layer(&mut self, old_layer_id: u64);
-
-    ///
-    /// Performs an edit on an element in this layer
-    /// 
-    fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: ElementEdit);
-
-    ///
-    /// Opens a particular layer for editing
-    /// 
-    fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>>;
+    fn edit<'a>(&'a self) -> Box<'a+Sink<Item=Vec<AnimationEdit>, Error=()>>;
 }
