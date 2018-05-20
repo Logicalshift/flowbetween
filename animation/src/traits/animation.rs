@@ -3,6 +3,7 @@ use super::layer::*;
 
 use futures::*;
 
+use std::ops::Range;
 use std::time::Duration;
 
 ///
@@ -36,9 +37,14 @@ pub trait Animation :
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<&'a Layer>;
 
     ///
-    /// Retrieves the log for this animation
+    /// Retrieves the total number of items that have been performed on this animation
     /// 
-    fn get_log<'a>(&'a self) -> Box<'a+Stream<Item=AnimationEdit, Error=()>>;
+    fn get_num_edits(&self) -> usize;
+
+    ///
+    /// Reads from the edit log for this animation
+    /// 
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>>;
 }
 
 ///
