@@ -1,4 +1,5 @@
 use super::animation_core::*;
+use super::animation_sink::*;
 use super::super::traits::*;
 
 use futures::*;
@@ -37,16 +38,14 @@ impl InMemoryAnimation {
         }
     }
 
-    /*
     ///
     /// Convenience method that performs some edits on this animation
     /// 
     pub fn perform_edits(&self, edits: Vec<AnimationEdit>) {
         let mut editor = self.edit();
-        editor.set_pending(&edits);
-        editor.commit_pending();
+
+        editor.start_send(edits).unwrap();
     }
-    */
 }
 
 ///
@@ -106,6 +105,12 @@ impl Animation for InMemoryAnimation {
         let log_items   = stream::iter_ok(log_items);
 
         Box::new(log_items)
+    }
+}
+
+impl EditableAnimation for InMemoryAnimation {
+    fn edit<'a>(&'a self) -> Box<'a+Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
+        Box::new(AnimationSink::new(Arc::clone(&self.core)))
     }
 }
 
