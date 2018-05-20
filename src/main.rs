@@ -12,7 +12,7 @@ extern crate flo_ui;
 extern crate flo;
 extern crate flo_binding;
 extern crate flo_animation;
-extern crate flo_anim_sqlite;
+// extern crate flo_anim_sqlite;
 
 extern crate serde;
 extern crate serde_json;
