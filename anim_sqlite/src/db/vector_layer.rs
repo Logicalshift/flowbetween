@@ -4,7 +4,7 @@ use super::flo_store::*;
 use super::vector_frame::*;
 
 use animation::brushes::*;
-use std::ops::Range;
+use std::ops::{Range, Deref};
 use std::time::Duration;
 
 ///
@@ -59,10 +59,66 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
     }
 
     ///
+    /// Adds a new vector element to this layer
+    /// 
+    fn add_element(&mut self, db: &mut TFile, when: Duration, new_element: Vector) {
+        use animation::Vector::*;
+
+        let layer_id = self.layer_id;
+
+        // Update the state of this object based on the element
+        match new_element {
+            BrushDefinition(ref brush_definition)   => {
+                self.active_brush = Some((when, create_brush_from_definition(brush_definition.definition(), brush_definition.drawing_style())));
+            },
+
+            _ => ()
+        }
+
+        // Create a new element
+        Self::create_new_element(db, layer_id, when, &new_element)?;
+
+        // Record the details of the element itself
+        match new_element {
+            BrushDefinition(brush_definition)   => Self::create_brush_definition(db, brush_definition)?,
+            BrushProperties(brush_properties)   => Self::create_brush_properties(db, brush_properties)?,
+            BrushStroke(brush_stroke)           => Self::create_brush_stroke(db, brush_stroke)?,
+        }
+
+        // create_new_element pushes an element ID, a key frame ID and a time. The various element actions pop the element ID so we need to pop the frame ID and time
+        db.update(vec![
+            DatabaseUpdate::Pop,
+            DatabaseUpdate::Pop
+        ])?;
+    }
+
+    ///
     /// Performs a layer edit to this layer
     /// 
     pub fn edit(&mut self, db: &mut TFile, edit: LayerEdit) {
-        unimplemented!()
+        use self::LayerEdit::*;
+
+        // Note that we can't access the core at this point (the database implies that the core is already in use)
+
+        match edit {
+            AddKeyFrame(when) => {
+                db.update(vec![
+                    DatabaseUpdate::PushLayerId(self.layer_id),
+                    DatabaseUpdate::PopAddKeyFrame(when)
+                ])?;
+            },
+
+            RemoveKeyFrame(when) => {
+                db.update(vec![
+                    DatabaseUpdate::PushLayerId(self.layer_id),
+                    DatabaseUpdate::PopRemoveKeyFrame(when)
+                ])?;
+            },
+
+            Paint(when, edit) => {
+                unimplemented!()
+            }
+        }
     }
 }
 
@@ -104,42 +160,10 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
         keyframes
     }
 
-    fn add_key_frame(&mut self, when: Duration) {
-        let layer_id = self.layer_id;
-
-        self.async(move |core| {
-            core.db.update(vec![
-                DatabaseUpdate::PushLayerId(layer_id),
-                DatabaseUpdate::PopAddKeyFrame(when)
-            ])?;
-
-            Ok(())
-        });
-    }
-
-    fn remove_key_frame(&mut self, when: Duration) {
-        let layer_id = self.layer_id;
-
-        self.async(move |core| {
-            core.db.update(vec![
-                DatabaseUpdate::PushLayerId(layer_id),
-                DatabaseUpdate::PopRemoveKeyFrame(when)
-            ])?;
-
-            Ok(())
-        });
-    }
-
-    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>> {
         let vector_layer = self as &VectorLayer;
 
-        Some(Reader::new(vector_layer))
-    }
-
-    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
-        let vector_layer = self as &mut VectorLayer;
- 
-        Some(Editor::new(vector_layer))
+        Box::new(vector_layer)
     }
 
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
@@ -221,44 +245,6 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
 }
 
 impl<TFile: FloFile+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {
-    fn add_element(&mut self, when: Duration, new_element: Vector) {
-        use animation::Vector::*;
-
-        let layer_id = self.layer_id;
-
-        // Update the state of this object based on the element
-        match new_element {
-            BrushDefinition(ref brush_definition)   => {
-                self.active_brush = Some((when, create_brush_from_definition(brush_definition.definition(), brush_definition.drawing_style())));
-            },
-
-            _ => ()
-        }
-
-        // Send the element to the core
-        self.core.async(move |core| {
-            core.edit(move |db| {
-                // Create a new element
-                Self::create_new_element(db, layer_id, when, &new_element)?;
-        
-                // Record the details of the element itself
-                match new_element {
-                    BrushDefinition(brush_definition)   => Self::create_brush_definition(db, brush_definition)?,
-                    BrushProperties(brush_properties)   => Self::create_brush_properties(db, brush_properties)?,
-                    BrushStroke(brush_stroke)           => Self::create_brush_stroke(db, brush_stroke)?,
-                }
-
-                // create_new_element pushes an element ID, a key frame ID and a time. The various element actions pop the element ID so we need to pop the frame ID and time
-                db.update(vec![
-                    DatabaseUpdate::Pop,
-                    DatabaseUpdate::Pop
-                ])?;
-
-                Ok(())
-            })
-        });
-    }
-
     fn active_brush(&self, when: Duration) -> Arc<Brush> {
         // If the cached active brush is at the right time and 
         if let Some((time, ref brush)) = self.active_brush {

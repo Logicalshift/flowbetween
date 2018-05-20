@@ -19,7 +19,7 @@ impl AnimationDb {
     }
 }
 
-impl<TFile: FloFile> AnimationDbCore<TFile> {
+impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts a set of edits into the database
     /// 
