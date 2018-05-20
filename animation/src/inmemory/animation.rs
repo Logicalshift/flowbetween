@@ -114,68 +114,6 @@ impl EditableAnimation for InMemoryAnimation {
     }
 }
 
-/*
-impl MutableAnimation for AnimationCore {
-    ///
-    /// Sets the canvas size of this animation
-    ///
-    fn set_size(&mut self, size: (f64, f64)) {
-        self.size = size;
-    }
-
-    ///
-    /// Creates a new layer with a particular ID
-    /// 
-    /// Has no effect if the layer ID is already in use
-    /// 
-    fn add_layer(&mut self, new_layer_id: u64) {
-        self.vector_layers.entry(new_layer_id)
-            .or_insert_with(|| InMemoryVectorLayer::new(new_layer_id));
-    }
-
-    ///
-    /// Removes the layer with the specified ID
-    /// 
-    fn remove_layer(&mut self, old_layer_id: u64) {
-        self.vector_layers.remove(&old_layer_id);
-    }
-
-    ///
-    /// Opens a particular layer for editing
-    /// 
-    fn edit_layer<'a>(&'a mut self, layer_id: u64) -> Option<Editor<'a, Layer>> {
-        if self.vector_layers.contains_key(&layer_id) {
-            let layer_ref   = CoreLayerRef(self, layer_id, PhantomData);
-            let reader      = Editor::new(layer_ref);
-
-            Some(reader)
-        } else {
-            None
-        }
-    }
-
-    ///
-    /// Performs an edit on an element contained within this animation
-    /// 
-    fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: ElementEdit) {
-        // Forward this edit to all of the layers (the one that owns the element will carry it out)
-        for (_id, layer) in self.vector_layers.iter_mut() {
-            layer.edit_element(element_id, when, &edit);
-        }
-    }
-}
-
-impl EditLog<AnimationEdit> for AnimationCore {
-    fn length(&self) -> usize {
-        self.edit_log.length()
-    }
-
-    fn read(&self, indices: &mut Iterator<Item=usize>) -> Vec<AnimationEdit> {
-        self.edit_log.read(indices)
-    }
-}
-*/
-
 #[cfg(test)]
 mod test {
     use super::*;
