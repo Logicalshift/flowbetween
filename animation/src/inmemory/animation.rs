@@ -1,10 +1,12 @@
 use super::edit_log::*;
-use super::pending_log::*;
 use super::vector_layer::*;
 use super::super::traits::*;
-use super::super::editor::*;
+
+use futures::*;
+use futures::stream;
 
 use std::sync::*;
+use std::ops::Range;
 use std::collections::*;
 use std::time::Duration;
 use std::marker::PhantomData;
@@ -15,7 +17,7 @@ use std::ops::{Deref, DerefMut};
 /// 
 struct AnimationCore {
     /// The edit log for this animation
-    edit_log: InMemoryEditLog<AnimationEdit>,
+    edit_log: Vec<AnimationEdit>,
 
     /// The next element ID to assign
     next_element_id: i64,
@@ -42,7 +44,7 @@ impl InMemoryAnimation {
     pub fn new() -> InMemoryAnimation {
         // Create the core (30fps by default)
         let core = AnimationCore {
-            edit_log:           InMemoryEditLog::new(),
+            edit_log:           vec![],
             size:               (1980.0, 1080.0),
             next_element_id:    0,
             vector_layers:      HashMap::new()
@@ -54,6 +56,7 @@ impl InMemoryAnimation {
         }
     }
 
+    /*
     ///
     /// Convenience method that performs some edits on this animation
     /// 
@@ -62,6 +65,7 @@ impl InMemoryAnimation {
         editor.set_pending(&edits);
         editor.commit_pending();
     }
+    */
 }
 
 ///
@@ -107,52 +111,24 @@ impl Animation for InMemoryAnimation {
             .vector_layers.keys().cloned().collect()
     }
 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
-        let core = (*self.core).lock().unwrap();
-
-        if core.vector_layers.contains_key(&layer_id) {
-            let layer_ref   = CoreLayerRef(core, layer_id, PhantomData);
-            let reader      = Reader::new(layer_ref);
-
-            Some(reader)
-        } else {
-            None
-        }
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<&'a Layer> {
+        unimplemented!()
     }
 
-    fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>> {
-        let core: &Mutex<EditLog<AnimationEdit>> = &*self.core;
+    fn get_num_edits(&self) -> usize {
+        (*self.core).lock().unwrap().edit_log.len()
+    }
 
-        Reader::new(core.lock().unwrap())
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
+        let core        = self.core.lock().unwrap();
+        let log_items   = range.into_iter().map(move |index| core.edit_log[index]);
+        let log_items   = stream::iter_ok(log_items);
+
+        Box::new(log_items)
     }
 }
 
-impl AnimationCore {
-    ///
-    /// Commits a set of edits to this animation
-    /// 
-    fn commit_edits<I: IntoIterator<Item=AnimationEdit>>(&mut self, edits: I) {
-        // The animation editor is what actually applies these edits to this object
-        let editor = AnimationEditor::new();
-
-        // Collect the edits and assign element IDs as we go
-        let mut assigned_edits = vec![];
-        for edit in edits {
-            assigned_edits.push(edit.assign_element_id(|| {
-                let id = self.next_element_id;
-                self.next_element_id += 1;
-                id
-            }));         
-        }
-
-        // Process the edits in the core
-        editor.perform(self, assigned_edits.iter().cloned());
-
-        // Commit to the main log
-        self.edit_log.commit_edits(assigned_edits);
-    }
-}
-
+/*
 impl MutableAnimation for AnimationCore {
     ///
     /// Sets the canvas size of this animation
@@ -212,6 +188,7 @@ impl EditLog<AnimationEdit> for AnimationCore {
         self.edit_log.read(indices)
     }
 }
+*/
 
 #[cfg(test)]
 mod test {
