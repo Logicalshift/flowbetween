@@ -13,7 +13,7 @@ http        = [ "flo_http_ui", "flo_static_files", "iron", "mount" ]
 
 [dependencies]
 flo_animation   = { path = "animation",     version="^0.1.0" }
-# flo_anim_sqlite = { path = "anim_sqlite",   version="^0.1.0" }
+flo_anim_sqlite = { path = "anim_sqlite",   version="^0.1.0" }
 flo_binding     = { path = "binding",       version="^0.1.0" }
 flo_ui          = { path = "ui",            version="^0.1.0" }
 flo             = { path = "flo",           version="^0.1.0" }
