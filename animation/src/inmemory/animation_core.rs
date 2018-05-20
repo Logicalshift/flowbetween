@@ -41,9 +41,16 @@ impl AnimationCore {
                 self.vector_layers.remove(&old_layer_id);
             }
 
-            Layer(layer_id, edit) => { unimplemented!(); }
+            Layer(layer_id, edit) => { 
+                self.vector_layers.get(&layer_id)
+                    .map(|layer| layer.edit(edit));
+            }
 
-            Element(ElementId, Duration, ElementEdit) => { unimplemented!(); }
+            Element(element_id, when, element_edit) => {
+                // We don't know which layer owns the element, so we just tell all of them to perform the edit (layers without the element will ignore the instruction)
+                self.vector_layers.values()
+                    .for_each(move |layer| layer.edit_element(element_id, when, &element_edit));
+            }
         }
     }
 }

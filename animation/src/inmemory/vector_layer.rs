@@ -28,9 +28,17 @@ impl InMemoryVectorLayer {
     }
 
     ///
+    /// Edits this layer
+    /// 
+    #[inline]
+    pub fn edit(&self, edit: LayerEdit) {
+        self.core.lock().unwrap().edit(edit);
+    }
+
+    ///
     /// Performs an edit on an element contained within this animation
     /// 
-    pub fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: &ElementEdit) {
+    pub fn edit_element(&self, element_id: ElementId, when: Duration, edit: &ElementEdit) {
         // TODO
     }
 }
@@ -54,14 +62,6 @@ impl Layer for InMemoryVectorLayer {
         }
     }
 
-    fn add_key_frame(&mut self, when: Duration) {
-        self.core.lock().unwrap().add_key_frame(when);
-    }
-
-    fn remove_key_frame(&mut self, when: Duration) {
-        self.core.lock().unwrap().remove_key_frame(when);
-    }
-
     fn get_key_frames_during_time(&self, _when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
         unimplemented!()
     }
@@ -76,11 +76,5 @@ impl Layer for InMemoryVectorLayer {
         let core: &Mutex<VectorLayer> = &self.core;
 
         Some(Reader::new(core.lock().unwrap()))
-    }
-
-    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
-        let core: &Mutex<VectorLayer> = &self.core;
-
-        Some(Editor::new(core.lock().unwrap()))
     }
 }

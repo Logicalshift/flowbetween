@@ -1,4 +1,3 @@
-use super::super::vector::*;
 use super::super::brush::*;
 
 use std::time::Duration;

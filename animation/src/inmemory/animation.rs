@@ -101,7 +101,7 @@ impl Animation for InMemoryAnimation {
 
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
         let core        = self.core.lock().unwrap();
-        let log_items   = range.into_iter().map(move |index| core.edit_log[index]);
+        let log_items   = range.into_iter().map(move |index| core.edit_log[index].clone());
         let log_items   = stream::iter_ok(log_items);
 
         Box::new(log_items)

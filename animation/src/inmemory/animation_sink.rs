@@ -46,7 +46,7 @@ impl AnimationSink {
     /// 
     pub fn edit(&self, edit: Vec<AnimationEdit>) {
         // Send the edits to the core
-        let core = self.core.lock().unwrap();
+        let mut core = self.core.lock().unwrap();
 
         edit.into_iter()
             .for_each(|edit| core.edit(edit));
