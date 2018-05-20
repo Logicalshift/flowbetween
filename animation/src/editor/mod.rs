@@ -5,8 +5,6 @@
 //! Animation or layer implementations use this to commit edits.
 //! 
 
-mod animation_editor;
 mod layer_editor;
 
-pub use self::animation_editor::*;
 pub use self::layer_editor::*;
