@@ -48,7 +48,9 @@ impl AnimationSink {
         // Send the edits to the core
         let mut core = self.core.lock().unwrap();
 
-        edit.into_iter()
+        edit.iter()
             .for_each(|edit| core.edit(edit));
+
+        core.edit_log.extend(edit.into_iter());
     }
 }

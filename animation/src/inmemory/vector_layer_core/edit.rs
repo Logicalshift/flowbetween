@@ -45,18 +45,18 @@ impl VectorLayerCore {
     ///
     /// Performs a paint edit on this layer
     /// 
-    pub fn paint(&mut self, when: Duration, paint: PaintEdit) {
+    pub fn paint(&mut self, when: Duration, paint: &PaintEdit) {
         use self::PaintEdit::*;
 
         match paint {
             SelectBrush(id, definition, draw_style) => {
-                let select_brush = Vector::new(BrushDefinitionElement::new(id, definition, draw_style));
+                let select_brush = Vector::new(BrushDefinitionElement::new(*id, definition.clone(), *draw_style));
 
                 self.add_element(when, select_brush);
             },
 
             BrushProperties(id, new_properties)     => {
-                let brush_properties = Vector::new(BrushPropertiesElement::new(id, new_properties));
+                let brush_properties = Vector::new(BrushPropertiesElement::new(*id, *new_properties));
 
                 self.add_element(when, brush_properties);
             },
@@ -65,7 +65,7 @@ impl VectorLayerCore {
                 let brush           = self.active_brush(when);
                 let brush_points    = brush.brush_points_for_raw_points(&points);
 
-                let brush_stroke    = Vector::new(BrushElement::new(id, Arc::new(brush_points)));
+                let brush_stroke    = Vector::new(BrushElement::new(*id, Arc::new(brush_points)));
 
                 self.add_element(when, brush_stroke);
             }
@@ -75,14 +75,14 @@ impl VectorLayerCore {
     ///
     /// Performs a layer edit on this layer
     /// 
-    pub fn edit(&mut self, edit: LayerEdit) {
+    pub fn edit(&mut self, edit: &LayerEdit) {
         use self::LayerEdit::*;
 
         match edit {
-            Paint(when, edit)           => self.paint(when, edit),
+            Paint(when, edit)           => self.paint(*when, edit),
 
-            AddKeyFrame(when)           => self.add_key_frame(when),
-            RemoveKeyFrame(when)        => self.remove_key_frame(when)
+            AddKeyFrame(when)           => self.add_key_frame(*when),
+            RemoveKeyFrame(when)        => self.remove_key_frame(*when)
         }
     }
 }

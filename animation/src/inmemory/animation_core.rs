@@ -24,21 +24,21 @@ impl AnimationCore {
     ///
     /// Performs a single edit on this core
     /// 
-    pub fn edit(&mut self, edit: AnimationEdit) {
+    pub fn edit(&mut self, edit: &AnimationEdit) {
         use self::AnimationEdit::*;
 
         match edit {
             SetSize(x, y) => { 
-                self.size = (x, y); 
+                self.size = (*x, *y); 
             },
 
             AddNewLayer(new_layer_id) => { 
-                self.vector_layers.entry(new_layer_id)
-                    .or_insert_with(|| InMemoryVectorLayer::new(new_layer_id));
+                self.vector_layers.entry(*new_layer_id)
+                    .or_insert_with(|| InMemoryVectorLayer::new(*new_layer_id));
             }
 
             RemoveLayer(old_layer_id) => {
-                self.vector_layers.remove(&old_layer_id);
+                self.vector_layers.remove(old_layer_id);
             }
 
             Layer(layer_id, edit) => { 
@@ -49,7 +49,7 @@ impl AnimationCore {
             Element(element_id, when, element_edit) => {
                 // We don't know which layer owns the element, so we just tell all of them to perform the edit (layers without the element will ignore the instruction)
                 self.vector_layers.values()
-                    .for_each(move |layer| layer.edit_element(element_id, when, &element_edit));
+                    .for_each(move |layer| layer.edit_element(*element_id, *when, element_edit));
             }
         }
     }

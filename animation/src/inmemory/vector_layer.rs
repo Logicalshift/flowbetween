@@ -31,7 +31,7 @@ impl InMemoryVectorLayer {
     /// Edits this layer
     /// 
     #[inline]
-    pub fn edit(&self, edit: LayerEdit) {
+    pub fn edit(&self, edit: &LayerEdit) {
         self.core.lock().unwrap().edit(edit);
     }
 
