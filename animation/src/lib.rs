@@ -12,7 +12,6 @@ extern crate modifier;
 extern crate futures;
 
 mod traits;
-pub mod editor;
 pub mod inmemory;
 pub mod brushes;
 
