@@ -15,7 +15,6 @@ mod db_enum;
 mod editlog;
 mod insert_editlog;
 mod animation;
-mod animation_editor;
 mod animation_core;
 mod color;
 mod brush;
@@ -25,7 +24,6 @@ pub mod vector_frame;
 pub use self::animation::*;
 pub use self::insert_editlog::*;
 pub use self::vector_layer::*;
-use self::animation_editor::*;
 use self::animation_core::*;
 use self::flo_sqlite::*;
 use self::flo_store::*;
@@ -40,9 +38,6 @@ pub struct AnimationDb {
 
     /// The next available element ID
     next_element_id: Arc<Mutex<i64>>,
-
-    /// The editor is used to provide the mutable animation interface (we keep it around so it can cache values if necessary)
-    editor: Mutex<AnimationEditor<FloSqlite>>
 }
 
 impl AnimationDb {
@@ -60,14 +55,12 @@ impl AnimationDb {
         FloSqlite::setup(&connection).unwrap();
 
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationEditor::new(&core);
 
         // We begin assigning element IDs at the current length of the edit log
         let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
 
         let db      = AnimationDb {
             core:               core,
-            editor:             Mutex::new(editor),
             next_element_id:    Arc::new(Mutex::new(initial_element_id))
         };
 
@@ -79,14 +72,12 @@ impl AnimationDb {
     /// 
     pub fn from_connection(connection: Connection) -> AnimationDb {
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationEditor::new(&core);
 
         // We begin assigning element IDs at the current length of the edit log
         let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
 
         let db = AnimationDb {
             core:               core,
-            editor:             Mutex::new(editor),
             next_element_id:    Arc::new(Mutex::new(initial_element_id))
         };
 
