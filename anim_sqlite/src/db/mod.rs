@@ -153,7 +153,7 @@ impl AnimationDbCore<FloSqlite> {
     }
 }
 
-impl<TFile: FloFile> AnimationDbCore<TFile> {
+impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
     /// 
