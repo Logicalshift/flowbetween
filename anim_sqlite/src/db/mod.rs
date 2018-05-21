@@ -109,16 +109,6 @@ impl AnimationDb {
     }
 
     ///
-    /// Creates an animation editor
-    /// 
-    pub fn edit<'a>(&'a self) -> Editor<'a, MutableAnimation> {
-        let editor: &Mutex<MutableAnimation> = &self.editor;
-        let editor  = editor.lock().unwrap();
-
-        Editor::new(editor)
-    }
-
-    ///
     /// Assigns a new, unique, element ID for the database
     /// 
     pub fn assign_element_id(&self) -> i64 {

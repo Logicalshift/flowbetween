@@ -14,3 +14,4 @@ flo_animation       = { path = "../animation", version = "^0.1.0" }
 
 rusqlite            = { version = "0.11.0", features = ["bundled"] }
 desync              = "^0.1.2"
+futures             = "^0.1.17"
