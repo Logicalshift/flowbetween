@@ -12,7 +12,7 @@ mod flo_store;
 mod flo_query;
 mod flo_sqlite;
 mod db_enum;
-mod editlog;
+mod edit_stream;
 mod insert_editlog;
 mod animation;
 mod animation_core;
