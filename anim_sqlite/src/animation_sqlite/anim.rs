@@ -52,7 +52,10 @@ impl Animation for SqliteAnimation {
             boxed
         });
 
-        layer
+        layer.map(|layer| {
+            let boxed: Box<'a+Deref<Target='a+Layer>> = Box::new(layer);
+            boxed
+        })
     }
 
     fn get_num_edits(&self) -> usize {
