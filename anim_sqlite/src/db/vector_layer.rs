@@ -61,22 +61,6 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
     }
 }
 
-impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
-    ///
-    /// Performs an async operation on the database
-    /// 
-    fn async<TFn: 'static+Send+Fn(&mut AnimationDbCore<TFile>) -> Result<()>>(&self, action: TFn) {
-        self.core.async(move |core| {
-            // Only run the function if there has been no failure
-            if core.failure.is_none() {
-                // Run the function and update the error status
-                let result      = action(core);
-                core.failure    = result.err();
-            }
-        })
-    }
-}
-
 impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
     fn id(&self) -> u64 {
         self.assigned_id
