@@ -119,18 +119,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
 
 impl<TFile: FloFile+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {
     fn active_brush(&self, when: Duration) -> Arc<Brush> {
-        // If the cached active brush is at the right time and 
-        if let Some((time, ref brush)) = self.active_brush {
-            if time == when {
-                return Arc::clone(&brush);
-            } else {
-                unimplemented!("TODO: got a brush but for the wrong time ({:?} vs {:?})", time, when);
-            }
-        }
-
-        // If the time doesn't match, or nothing is cached then we need to fetch from the database
-        unimplemented!("TODO: store/fetch active brush for keyframes in the database");
-
-        // create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw)
+        let layer_id = self.layer_id;
+        self.core.sync(|core| core.get_active_brush_for_layer(layer_id, when))
     }
 }

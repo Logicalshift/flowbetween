@@ -3,6 +3,7 @@ use super::flo_store::*;
 use super::vector_layer::*;
 
 use animation::*;
+use animation::brushes::*;
 
 use rusqlite::*;
 use std::sync::*;
@@ -19,6 +20,9 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
     pub failure: Option<Error>,
+
+    /// Maps layers to the brush that's active
+    active_brush_for_layer: HashMap<i64, (Duration, Arc<Brush>)>
 }
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
@@ -30,6 +34,25 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         if self.failure.is_none() {
             self.failure = edit(&mut self.db).err();
         }
+    }
+
+    ///
+    /// Retrieves the brush that is active on the specified layer at the specified time
+    ///
+    pub fn get_active_brush_for_layer(&mut self, layer_id: i64, when: Duration) -> Arc<Brush> {
+        // If the cached active brush is at the right time, then just use that
+        if let Some((time, ref brush)) = self.active_brush_for_layer.get(&layer_id) {
+            if time == &when {
+                return Arc::clone(&brush);
+            } else {
+                unimplemented!("TODO: got a brush but for the wrong time ({:?} vs {:?})", time, when);
+            }
+        }
+
+        // If the time doesn't match, or nothing is cached then we need to fetch from the database
+        unimplemented!("TODO: store/fetch active brush for keyframes in the database");
+
+        // create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw)
     }
 
     ///
@@ -107,8 +130,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         // Update the state of this object based on the element
         match new_element {
             SelectBrush(_id, ref brush_definition, drawing_style)   => {
-                // TODO!
-                // self.active_brush = Some((when, create_brush_from_definition(brush_definition, drawing_style)));
+                // Cache the brush so that follow up drawing instructions don't need to
+                self.active_brush_for_layer.insert(layer_id, (when, create_brush_from_definition(brush_definition, drawing_style)));
             },
 
             _ => ()
