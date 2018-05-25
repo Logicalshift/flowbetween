@@ -19,9 +19,6 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
     pub failure: Option<Error>,
-
-    /// The layers created by this editor (used to track state)
-    layers: HashMap<u64, SqliteVectorLayer<TFile>>
 }
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
@@ -181,6 +178,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             },
 
             AddNewLayer(new_layer_id) => {
+                // Create a layer with the new ID
                 self.db.update(vec![
                     DatabaseUpdate::PushLayerType(LayerType::Vector),
                     DatabaseUpdate::PushAssignLayer(new_layer_id),
@@ -189,10 +187,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             },
 
             RemoveLayer(old_layer_id) => {
-                // Remove the cached version of this layer
-                self.layers.remove(&old_layer_id);
-
-                // Create a layer with this assigned ID
+                // Delete this layer
                 self.db.update(vec![
                     DatabaseUpdate::PushLayerForAssignedId(old_layer_id),
                     DatabaseUpdate::PopDeleteLayer
