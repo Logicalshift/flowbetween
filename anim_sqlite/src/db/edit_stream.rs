@@ -215,13 +215,15 @@ impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<Option<AnimationEdit>, ()> {
-        let range       = self.range;
+        let range       = &self.range;
         let buffer_ref  = Arc::clone(&self.buffer);
         let mut buffer  = self.buffer.lock().unwrap();
 
         if let Some(next_item) = buffer.loaded.pop_front() {
             // Trigger filling the buffer (if a filling operation is not already queued)
             if !buffer.filling {
+                let range = range.clone();
+                
                 buffer.filling = true;
                 self.core.async(move |core| {
                     EditStreamBuffer::fill(&*buffer_ref, core, range, None);
@@ -235,6 +237,8 @@ impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
             Ok(Async::Ready(None))
         } else {
             // Trigger filling the buffer
+            let range = range.clone();
+
             buffer.filling = true;
             self.core.async(move |core| {
                 EditStreamBuffer::fill(&*buffer_ref, core, range, Some(task::current()));
