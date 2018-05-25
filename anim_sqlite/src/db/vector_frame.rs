@@ -25,7 +25,7 @@ impl VectorFrame {
     ///
     /// Decodes the brush for a particular entry
     /// 
-    fn brush_definition_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushDefinitionElement> {
+    fn brush_definition_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushDefinitionElement> {
         // Try to load the brush with the ID
         let brush: Result<(BrushDefinition, DrawingStyleType)> = entry.brush
             .map(|(brush_id, drawing_style)| Ok((AnimationDbCore::get_brush_definition(db, brush_id)?, drawing_style)))
@@ -45,7 +45,7 @@ impl VectorFrame {
     ///
     /// Decodes the brush properties for a particular entry
     /// 
-    fn properties_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushPropertiesElement> {
+    fn properties_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushPropertiesElement> {
         // Decode the brush properties
         let brush_properties = entry.brush_properties_id
             .map(|brush_properties_id| AnimationDbCore::get_brush_properties(db, brush_properties_id))
@@ -58,7 +58,7 @@ impl VectorFrame {
     ///
     /// Decodes a brush stroke element for a particular element
     /// 
-    fn brush_stroke_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushElement> {
+    fn brush_stroke_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushElement> {
         let points = db.query_vector_element_brush_points(entry.element_id)?;
         Ok(BrushElement::new(entry.assigned_id, Arc::new(points)))
     }
@@ -66,7 +66,7 @@ impl VectorFrame {
     ///
     /// Tries to turn a vector element entry into a Vector object
     /// 
-    fn vector_for_entry<TFile: FloFile>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
+    fn vector_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
         match entry.element_type {
             VectorElementType::BrushDefinition => Ok(Vector::BrushDefinition(Self::brush_definition_for_entry(db, entry)?)),
             VectorElementType::BrushProperties => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
@@ -77,7 +77,7 @@ impl VectorFrame {
     ///
     /// Creates a vector frame by querying the file for the frame at the specified time
     /// 
-    pub fn frame_at_time<TFile: FloFile>(db: &mut TFile, layer_id: i64, when: Duration) -> Result<VectorFrame> {
+    pub fn frame_at_time<TFile: FloFile+Send>(db: &mut TFile, layer_id: i64, when: Duration) -> Result<VectorFrame> {
         // Fetch the keyframe times
         let (keyframe_id, keyframe_time)    = db.query_nearest_key_frame(layer_id, when)?;
         let keyframe_offset                 = when - keyframe_time;

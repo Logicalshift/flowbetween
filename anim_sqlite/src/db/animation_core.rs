@@ -36,7 +36,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Performs an edit on this core
     /// 
-    pub fn perform_edit(&mut self, edit: AnimationEdit) {
+    pub fn perform_edit(&mut self, edit: AnimationEdit) -> Result<()> {
         use self::AnimationEdit::*;
 
         match edit {
@@ -62,13 +62,13 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.db.update(vec![
                     DatabaseUpdate::PushLayerForAssignedId(old_layer_id),
                     DatabaseUpdate::PopDeleteLayer
-                ])?
+                ])?;
             },
 
             Layer(layer_id, layer_edit) => {
                 // Create the layer if one is not already cached
                 let layer = if !self.layers.contains_key(&layer_id) {
-                    let new_layer = SqliteVectorLayer::from_assigned_id(&self.core, layer_id);
+                    let new_layer = SqliteVectorLayer::from_assigned_id(self, layer_id);
 
                     if let Some(new_layer) = new_layer {
                         self.layers.insert(layer_id, new_layer);
@@ -80,13 +80,15 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     self.layers.get_mut(&layer_id)
                 };
 
-                // Edit the layer
-                layer.edit(&mut self.db, layer_edit);
+                // Pass the edit on to the layer
+                layer.map(|layer| layer.edit(&mut self.db, layer_edit));
             },
 
             Element(id, when, edit) => {
                 unimplemented!()
             }
         }
+
+        Ok(())
     }
 }

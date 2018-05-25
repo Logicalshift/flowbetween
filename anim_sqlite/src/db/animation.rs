@@ -1,6 +1,7 @@
 use super::*;
-use super::editlog::*;
 use super::flo_query::*;
+use super::edit_sink::*;
+use super::edit_stream::*;
 
 use std::time::Duration;
 

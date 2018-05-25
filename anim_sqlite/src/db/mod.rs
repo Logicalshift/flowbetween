@@ -5,6 +5,7 @@ use rusqlite::*;
 
 use std::mem;
 use std::sync::*;
+use std::collections::HashMap;
 
 #[cfg(test)] mod tests;
 
@@ -12,6 +13,7 @@ mod flo_store;
 mod flo_query;
 mod flo_sqlite;
 mod db_enum;
+mod edit_sink;
 mod edit_stream;
 mod insert_editlog;
 mod animation;
@@ -126,8 +128,9 @@ impl AnimationDbCore<FloSqlite> {
     /// 
     fn new(connection: Connection) -> AnimationDbCore<FloSqlite> {
         let core = AnimationDbCore {
-            db:             FloSqlite::new(connection),
-            failure:        None
+            db:         FloSqlite::new(connection),
+            failure:    None,
+            layers:     HashMap::new()
         };
 
         core

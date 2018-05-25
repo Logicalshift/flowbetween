@@ -4,6 +4,8 @@ use super::flo_store::*;
 use super::vector_frame::*;
 
 use animation::brushes::*;
+
+use rusqlite::*;
 use std::ops::{Range, Deref};
 use std::time::Duration;
 
@@ -61,15 +63,15 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
     ///
     /// Adds a new vector element to this layer
     /// 
-    fn paint(&mut self, db: &mut TFile, when: Duration, new_element: PaintEdit) {
+    fn paint(&mut self, db: &mut TFile, when: Duration, new_element: PaintEdit) -> Result<()> {
         use animation::PaintEdit::*;
 
         let layer_id = self.layer_id;
 
         // Update the state of this object based on the element
         match new_element {
-            SelectBrush(_id, ref brush_definition, _drawing_style)   => {
-                self.active_brush = Some((when, create_brush_from_definition(brush_definition.definition(), brush_definition.drawing_style())));
+            SelectBrush(_id, ref brush_definition, drawing_style)   => {
+                self.active_brush = Some((when, create_brush_from_definition(brush_definition, drawing_style)));
             },
 
             _ => ()
@@ -90,12 +92,14 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
             DatabaseUpdate::Pop,
             DatabaseUpdate::Pop
         ])?;
+
+        Ok(())
     }
 
     ///
     /// Performs a layer edit to this layer
     /// 
-    pub fn edit(&mut self, db: &mut TFile, edit: LayerEdit) {
+    pub fn edit(&mut self, db: &mut TFile, edit: LayerEdit) -> Result<()> {
         use self::LayerEdit::*;
 
         // Note that we can't access the core at this point (the database implies that the core is already in use)
@@ -116,9 +120,11 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
             },
 
             Paint(when, edit) => {
-                self.paint(db, when, edit);
+                self.paint(db, when, edit)?;
             }
         }
+
+        Ok(())
     }
 }
 
@@ -163,7 +169,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
     fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>> {
         let vector_layer = self as &VectorLayer;
 
-        Box::new(vector_layer)
+        Some(Box::new(vector_layer))
     }
 
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
@@ -207,7 +213,7 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     /// Writes a brush properties element to the database (popping the element ID)
     ///
     fn create_brush_properties(db: &mut TFile, properties: BrushProperties) -> Result<()> {
-        AnimationDbCore::insert_brush_properties(db, properties)?;
+        AnimationDbCore::insert_brush_properties(db, &properties)?;
 
         // Create the element
         db.update(vec![
@@ -222,7 +228,7 @@ impl<TFile: FloFile+Send> SqliteVectorLayer<TFile> {
     ///
     fn create_brush_definition(db: &mut TFile, definition: BrushDefinition, drawing_style: BrushDrawingStyle) -> Result<()> {
         // Create the brush definition
-        AnimationDbCore::insert_brush(db, definition)?;
+        AnimationDbCore::insert_brush(db, &definition)?;
 
         // Insert the properties for this element
         db.update(vec![
