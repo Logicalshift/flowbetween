@@ -111,11 +111,14 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Writes a brush stroke to the database (popping the element ID)
     ///
-    fn create_brush_stroke(db: &mut TFile, brush_stroke: Arc<Vec<RawPoint>>) -> Result<()> {
-        // TODO: we need to convert the raw points to brush points here
+    fn create_brush_stroke(&mut self, layer_id: i64, when: Duration, brush_stroke: Arc<Vec<RawPoint>>) -> Result<()> {
+        // Convert the brush stroke to the brush points
+        let active_brush = self.get_active_brush_for_layer(layer_id, when);
+        let brush_stroke = active_brush.brush_points_for_raw_points(&*brush_stroke);
 
-        db.update(vec![
-            DatabaseUpdate::PopBrushPoints(brush_stroke)
+        // Store in the database
+        self.db.update(vec![
+            DatabaseUpdate::PopBrushPoints(Arc::new(brush_stroke))
         ])?;
 
         Ok(())
@@ -144,7 +147,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         match new_element {
             SelectBrush(_id, brush_definition, drawing_style)   => Self::create_brush_definition(&mut self.db, brush_definition, drawing_style)?,
             BrushProperties(_id, brush_properties)              => Self::create_brush_properties(&mut self.db, brush_properties)?,
-            BrushStroke(_id, brush_stroke)                      => Self::create_brush_stroke(&mut self.db, brush_stroke)?,
+            BrushStroke(_id, brush_stroke)                      => self.create_brush_stroke(layer_id, when, brush_stroke)?,
         }
 
         // create_new_element pushes an element ID, a key frame ID and a time. The various element actions pop the element ID so we need to pop the frame ID and time
