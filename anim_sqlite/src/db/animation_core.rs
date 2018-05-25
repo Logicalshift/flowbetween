@@ -22,7 +22,7 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     pub failure: Option<Error>,
 
     /// Maps layers to the brush that's active
-    active_brush_for_layer: HashMap<i64, (Duration, Arc<Brush>)>
+    pub active_brush_for_layer: HashMap<i64, (Duration, Arc<Brush>)>
 }
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
