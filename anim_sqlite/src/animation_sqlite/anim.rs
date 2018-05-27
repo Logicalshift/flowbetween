@@ -59,7 +59,7 @@ impl Animation for SqliteAnimation {
     }
 
     fn get_num_edits(&self) -> usize {
-        unimplemented!()
+        self.db.get_num_edits().unwrap_or(0)
     }
 
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {

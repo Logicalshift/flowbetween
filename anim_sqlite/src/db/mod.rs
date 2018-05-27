@@ -125,6 +125,13 @@ impl AnimationDb {
     }
 
     ///
+    /// Retrieves the number of edits in the animation
+    ///
+    pub fn get_num_edits(&self) -> Result<usize> {
+        self.core.sync(|core| core.db.query_edit_log_length()).map(|length| length as usize)
+    }
+
+    ///
     /// Creates a stream for reading the specified range of elements from this animation
     ///
     pub fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
