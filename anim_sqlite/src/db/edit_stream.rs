@@ -237,11 +237,12 @@ impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
             Ok(Async::Ready(None))
         } else {
             // Trigger filling the buffer
-            let range = range.clone();
+            let range   = range.clone();
+            let task    = task::current();
 
             buffer.filling = true;
             self.core.async(move |core| {
-                EditStreamBuffer::fill(&*buffer_ref, core, range, Some(task::current()));
+                EditStreamBuffer::fill(&*buffer_ref, core, range, Some(task));
             });
 
             // Buffer is not ready yet
