@@ -90,20 +90,6 @@ impl AnimationDb {
     }
 
     ///
-    /// Performs an async operation on the database
-    /// 
-    fn async<TFn: 'static+Send+Fn(&mut AnimationDbCore<FloSqlite>) -> Result<()>>(&self, action: TFn) {
-        self.core.async(move |core| {
-            // Only run the function if there has been no failure
-            if core.failure.is_none() {
-                // Run the function and update the error status
-                let result      = action(core);
-                core.failure    = result.err();
-            }
-        })
-    }
-
-    ///
     /// Retrieves the number of edits in the animation
     ///
     pub fn get_num_edits(&self) -> Result<usize> {

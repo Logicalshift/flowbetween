@@ -1,6 +1,5 @@
 use super::db_enum::*;
 use super::flo_store::*;
-use super::vector_layer::*;
 
 use animation::*;
 use animation::brushes::*;
@@ -70,16 +69,6 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         edits.into_iter()
             .map(|edit| self.assign_element_id(edit))
             .collect()
-    }
-
-    ///
-    /// Performs an edit on this core if the failure condition is clear
-    /// 
-    pub fn edit<TEdit: FnOnce(&mut TFile) -> Result<()>>(&mut self, edit: TEdit) {
-        // Perform the edit if there is no failure
-        if self.failure.is_none() {
-            self.failure = edit(&mut self.db).err();
-        }
     }
 
     ///
@@ -278,7 +267,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 };
 
                 // Edit this layer
-                self.edit_vector_layer(layer_id, layer_edit);
+                self.edit_vector_layer(layer_id, layer_edit)?;
             },
 
             Element(id, when, edit) => {

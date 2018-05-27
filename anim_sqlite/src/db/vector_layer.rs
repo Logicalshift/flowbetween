@@ -1,11 +1,7 @@
 use super::*;
-use super::db_enum::*;
 use super::flo_store::*;
 use super::vector_frame::*;
 
-use animation::brushes::*;
-
-use rusqlite::*;
 use std::ops::{Range, Deref};
 use std::time::Duration;
 

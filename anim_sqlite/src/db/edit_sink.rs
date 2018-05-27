@@ -1,11 +1,8 @@
 use super::*;
 use super::animation_core::*;
 
-use animation::*;
-use futures::*;
 use futures::task;
 
-use std::sync::*;
 use std::collections::VecDeque;
 
 ///

@@ -2,7 +2,6 @@ use super::*;
 use super::db_enum::*;
 use super::flo_query::*;
 
-use futures::*;
 use futures::task;
 
 use std::ops::Range;

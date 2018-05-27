@@ -1,7 +1,5 @@
 use super::*;
 use super::flo_query::*;
-use super::edit_sink::*;
-use super::edit_stream::*;
 
 use std::time::Duration;
 
