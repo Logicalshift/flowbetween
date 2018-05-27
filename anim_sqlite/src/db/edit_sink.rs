@@ -14,7 +14,7 @@ use std::collections::VecDeque;
 ///
 struct EditSinkCore {
     /// Edits pending being sent to the database
-    pending: VecDeque<AnimationEdit>,
+    pending: VecDeque<Vec<AnimationEdit>>,
 
     /// Task that will be signalled when the pending queue is empty
     queue_empty_notification: Option<task::Task>
@@ -31,21 +31,77 @@ pub struct EditSink<TFile: FloFile+Send> {
     core: Arc<Mutex<EditSinkCore>>
 }
 
-impl<TFile: FloFile+Send> EditSink<TFile> {
+impl<TFile: FloFile+Send+'static> EditSink<TFile> {
+    ///
+    /// Creates a new 
+    ///
+    pub fn new(db: Arc<Desync<AnimationDbCore<TFile>>>) -> EditSink<TFile> {
+        let core = EditSinkCore {
+            pending:                    VecDeque::new(),
+            queue_empty_notification:   None
+        };
 
+        EditSink {
+            db:     db,
+            core:   Arc::new(Mutex::new(core))
+        }
+    }
+
+    ///
+    /// Queues a single dequeue/commit from the pending list on the database
+    ///
+    fn queue_edit_dequeue(&self) {
+        // Create a reference to the core that we'll use later on
+        let core = Arc::clone(&self.core);
+
+        // Queue a dequeue operation on the database
+        self.db.async(move |db| {
+            let mut core = core.lock().unwrap();
+
+            // Pop the next set of edits
+            if let Some(edits) = core.pending.pop_front() {
+                // Add to the edit log
+                db.insert_edits(&edits);
+
+                // TODO: perform the edits to the underlying data as well
+            }
+
+            // Signal the task if the core is free of any further pending edits
+            if core.pending.len() == 0 {
+                if let Some(notify) = core.queue_empty_notification.take() {
+                    notify.notify();
+                }
+            }
+        });
+    }
 }
 
-impl<TFile: FloFile+Send> Sink for EditSink<TFile> {
+impl<TFile: FloFile+Send+'static> Sink for EditSink<TFile> {
     type SinkItem = Vec<AnimationEdit>;
     type SinkError = ();
 
     fn start_send(&mut self, item: Vec<AnimationEdit>) -> StartSend<Vec<AnimationEdit>, ()> {
+        // Queue this edit
+        let mut sink_core = self.core.lock().unwrap();
+        sink_core.pending.push_back(item);
+
+        // Queue the performance of the edit
+        self.queue_edit_dequeue();
+
         // Edit performed
         Ok(AsyncSink::Ready)
     }
 
     fn poll_complete(&mut self) -> Poll<(), ()> {
-        // The in-memory sink performs all edits immediately, so is ever-ready
-        Ok(Async::Ready(()))
+        let mut sink_core = self.core.lock().unwrap();
+
+        if sink_core.pending.len() == 0 {
+            // If there are no pending ends, then the edits are completed
+            Ok(Async::Ready(()))
+        } else {
+            // If there are pending edits, then note the task and indicate that we're still processing
+            sink_core.queue_empty_notification = Some(task::current());
+            Ok(Async::NotReady)
+        }
     }
 }
