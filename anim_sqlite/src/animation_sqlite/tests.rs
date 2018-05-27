@@ -1,6 +1,10 @@
 use super::*;
+
 use canvas::*;
 use animation::*;
+
+use futures::*;
+use futures::executor;
 use std::time::Duration;
 use std::sync::*;
 
@@ -246,9 +250,10 @@ fn add_keyframe_with_layer_editor() {
     ]);
 
     {
-        let mut layer_editor = anim.edit_layer(2);
-        layer_editor.set_pending(&[LayerEdit::AddKeyFrame(Duration::from_millis(250))]);
-        layer_editor.commit_pending();
+        let mut sink = executor::spawn(anim.edit());
+
+        sink.wait_send(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))]);
+        sink.wait_flush();
     }
 
     anim.panic_on_error();
@@ -378,8 +383,10 @@ fn read_brush_strokes_from_edit_log() {
     ]);
     anim.panic_on_error();
 
-    let edit_log    = anim.get_log();
-    let edits       = edit_log.read(&mut (0..7));
+    let edit_log    = anim.read_edit_log(0..7);
+    let edit_log    = edit_log.collect();
+    let edit_log    = executor::spawn(edit_log);
+    let edits       = edit_log.wait_future().unwrap();
 
     assert!(edits.len() == 7);
     assert!(edits[0] == AnimationEdit::AddNewLayer(2));
@@ -431,9 +438,11 @@ fn will_assign_element_ids() {
     ]);
 
     // Element ID should be assigned if we read the log back
-    let edit_log = animation.get_log();
+    let edit_log = animation.read_edit_log(4..5);
+    let edit_log = edit_log.collect();
+    let edit_log = executor::spawn(edit_log);
 
-    let paint_edit = edit_log.read(&mut (4..5));
+    let paint_edit = edit_log.wait_future().unwrap();
 
     // Should be able to find the paint edit here
     assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, _)) => true, _ => false });
