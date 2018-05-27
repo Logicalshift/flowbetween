@@ -2,8 +2,8 @@ use flo_ui::*;
 use flo_ui::Image;
 use flo_binding::*;
 use flo_animation::*;
-use flo_animation::inmemory::*;
-// use flo_anim_sqlite::*;
+//use flo_animation::inmemory::*;
+use flo_anim_sqlite::*;
 
 use flo::*;
 use flo::style::*;
@@ -55,6 +55,7 @@ impl FlowBetweenSession {
         }
     }
 
+    /*
     fn create_inmemory_animation() -> InMemoryAnimation {
         // Create a new animation
         let animation = InMemoryAnimation::new();
@@ -75,8 +76,8 @@ impl FlowBetweenSession {
         
         animation
     }
+    */
 
-    /*
     fn create_inmemory_animation() -> SqliteAnimation {
         // Create a new animation
         let animation = SqliteAnimation::new_in_memory();
@@ -97,7 +98,6 @@ impl FlowBetweenSession {
         
         animation
     }
-    */
 }
 
 impl Controller for FlowBetweenSession {
