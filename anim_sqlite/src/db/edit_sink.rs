@@ -60,6 +60,9 @@ impl<TFile: FloFile+Send+'static> EditSink<TFile> {
         self.db.async(move |db| {
             // Pop the next set of edits
             if let Some(edits) = core.lock().unwrap().pending.pop_front() {
+                // Apply element IDs to the edits
+                let edits = db.assign_element_ids(edits);
+
                 // Add to the edit log
                 db.failure = db.failure.take().or_else(|| db.insert_edits(&edits).err());
 

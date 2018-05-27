@@ -33,6 +33,46 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
+    /// Assigns the next element ID and returns it
+    ///
+    fn next_element_id(&mut self) -> i64 {
+        let result      = self.next_element_id;
+        self.next_element_id += 1;
+        result
+    }
+
+    ///
+    /// Assigns an element ID to an animation edit
+    ///
+    fn assign_element_id(&mut self, edit: AnimationEdit) -> AnimationEdit {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
+        use self::PaintEdit::*;
+
+        match edit {
+            Layer(layer_id, Paint(when, BrushProperties(ElementId::Unassigned, props))) =>
+                Layer(layer_id, Paint(when, BrushProperties(ElementId::Assigned(self.next_element_id()), props))),
+
+            Layer(layer_id, Paint(when, SelectBrush(ElementId::Unassigned, defn, drawing_style))) =>
+                Layer(layer_id, Paint(when, SelectBrush(ElementId::Assigned(self.next_element_id()), defn, drawing_style))),
+
+            Layer(layer_id, Paint(when, BrushStroke(ElementId::Unassigned, points))) =>
+                Layer(layer_id, Paint(when, BrushStroke(ElementId::Assigned(self.next_element_id()), points))),
+
+            other => other
+        }
+    }
+
+    ///
+    /// Assigns element IDs to a set of animation IDs
+    ///
+    pub fn assign_element_ids(&mut self, edits: Vec<AnimationEdit>) -> Vec<AnimationEdit> {
+        edits.into_iter()
+            .map(|edit| self.assign_element_id(edit))
+            .collect()
+    }
+
+    ///
     /// Performs an edit on this core if the failure condition is clear
     /// 
     pub fn edit<TEdit: FnOnce(&mut TFile) -> Result<()>>(&mut self, edit: TEdit) {
