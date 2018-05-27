@@ -61,14 +61,22 @@ impl<TFile: FloFile+Send+'static> EditSink<TFile> {
             // Pop the next set of edits
             if let Some(edits) = core.lock().unwrap().pending.pop_front() {
                 // Add to the edit log
-                db.insert_edits(&edits).unwrap();
+                db.failure = db.failure.take().or_else(|| db.insert_edits(&edits).err());
 
-                // Perform the edits to the underlying data as well
-                db.db.begin_queuing();
-                for edit in edits {
-                    db.perform_edit(edit).unwrap();
+                // Perform the edits to the underlying data as well (provided the database error is clear)
+                if db.failure.is_none() {
+                    // Queue the edits for a single transaction
+                    db.db.begin_queuing();
+
+                    // Perform the edits
+                    for edit in edits {
+                        db.failure = db.failure.take().or_else(|| db.perform_edit(edit).err());
+                    }
+
+                    // Update the database and set the final error, if there was one
+                    let execute_result  = db.db.execute_queue();
+                    db.failure          = db.failure.take().or_else(move || execute_result.err());
                 }
-                db.db.execute_queue().unwrap();
             }
 
             // Signal the task if the core is free of any further pending edits
