@@ -1,10 +1,12 @@
 use animation::*;
 
 use desync::*;
+use futures::*;
 use rusqlite::*;
 
 use std::mem;
 use std::sync::*;
+use std::ops::Range;
 use std::collections::HashMap;
 
 #[cfg(test)] mod tests;
@@ -30,6 +32,7 @@ use self::animation_core::*;
 use self::flo_sqlite::*;
 use self::flo_store::*;
 use self::flo_query::*;
+use self::edit_stream::*;
 
 ///
 /// Database used to store an animation
@@ -119,6 +122,15 @@ impl AnimationDb {
 
         *next_element_id += 1;
         id
+    }
+
+    ///
+    /// Creates a stream for reading the specified range of elements from this animation
+    ///
+    pub fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
+        let edit_stream = EditStream::new(&self.core, range);
+
+        Box::new(edit_stream)
     }
 }
 
