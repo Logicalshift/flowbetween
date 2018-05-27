@@ -3,6 +3,7 @@ use super::super::traits::*;
 
 use canvas::*;
 
+use futures::executor;
 use std::mem;
 use std::time::Duration;
 
@@ -148,7 +149,9 @@ impl BrushPreview {
         actions.push(Paint(when, BrushStroke(ElementId::Unassigned, Arc::new(points))));
 
         // Perform the edit
-        let actions = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
-        animation.edit().start_send(actions.collect()).ok();
+        let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
+        let mut edit_sink   = executor::spawn(animation.edit());
+
+        edit_sink.wait_send(actions.collect()).ok();
     }
 }
