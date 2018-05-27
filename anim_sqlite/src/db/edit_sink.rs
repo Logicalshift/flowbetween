@@ -56,20 +56,25 @@ impl<TFile: FloFile+Send+'static> EditSink<TFile> {
 
         // Queue a dequeue operation on the database
         self.db.async(move |db| {
-            let mut core = core.lock().unwrap();
-
             // Pop the next set of edits
-            if let Some(edits) = core.pending.pop_front() {
+            if let Some(edits) = core.lock().unwrap().pending.pop_front() {
                 // Add to the edit log
                 db.insert_edits(&edits);
 
-                // TODO: perform the edits to the underlying data as well
+                // Perform the edits to the underlying data as well
+                for edit in edits {
+                    db.perform_edit(edit);
+                }
             }
 
             // Signal the task if the core is free of any further pending edits
-            if core.pending.len() == 0 {
-                if let Some(notify) = core.queue_empty_notification.take() {
-                    notify.notify();
+            {
+                let mut core = core.lock().unwrap();
+
+                if core.pending.len() == 0 {
+                    if let Some(notify) = core.queue_empty_notification.take() {
+                        notify.notify();
+                    }
                 }
             }
         });
