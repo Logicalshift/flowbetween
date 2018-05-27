@@ -4,9 +4,11 @@ use super::db::*;
 
 mod data;
 mod anim;
+mod edit;
 
 pub use self::data::*;
 pub use self::anim::*;
+pub use self::edit::*;
 
 ///
 /// Animation that uses a SQLite database as a backing store

@@ -33,6 +33,7 @@ use self::flo_sqlite::*;
 use self::flo_store::*;
 use self::flo_query::*;
 use self::edit_stream::*;
+use self::edit_sink::*;
 
 ///
 /// Database used to store an animation
@@ -134,10 +135,17 @@ impl AnimationDb {
     ///
     /// Creates a stream for reading the specified range of elements from this animation
     ///
-    pub fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
+    pub fn read_edit_log(&self, range: Range<usize>) -> Box<Stream<Item=AnimationEdit, Error=()>> {
         let edit_stream = EditStream::new(&self.core, range);
 
         Box::new(edit_stream)
+    }
+
+    ///
+    /// Creates a sink for writing to the animation
+    ///
+    pub fn create_edit_sink(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
+        Box::new(EditSink::new(&self.core))
     }
 }
 

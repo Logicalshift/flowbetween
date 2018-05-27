@@ -35,7 +35,9 @@ impl<TFile: FloFile+Send+'static> EditSink<TFile> {
     ///
     /// Creates a new 
     ///
-    pub fn new(db: Arc<Desync<AnimationDbCore<TFile>>>) -> EditSink<TFile> {
+    pub fn new(db: &Arc<Desync<AnimationDbCore<TFile>>>) -> EditSink<TFile> {
+        let db = Arc::clone(db);
+
         let core = EditSinkCore {
             pending:                    VecDeque::new(),
             queue_empty_notification:   None
