@@ -8,6 +8,8 @@ use binding::*;
 use animation::*;
 use animation::brushes::*;
 
+use futures::*;
+use futures::executor::Spawn;
 use std::iter;
 use std::sync::*;
 use std::time::Duration;
@@ -18,6 +20,9 @@ use std::time::Duration;
 pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     /// The animation that actions should be committed to
     animation: Arc<FloModel<Anim>>,
+
+    /// The edit sink for the animation
+    edit_sink: Spawn<Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>,
 
     /// The effective tool for the animation
     effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,
@@ -53,9 +58,11 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         let effective_tool  = BindRef::from(view_model.tools().effective_tool.clone());
         let current_time    = BindRef::from(view_model.timeline().current_time.clone());
         let tool_runner     = ToolRunner::new(view_model);
+        let edit_sink       = executor::spawn(animation.edit());
 
         CanvasTools {
             animation:          animation,
+            edit_sink:          edit_sink,
             effective_tool:     effective_tool,
             current_time:       current_time,
             preview:            None,
@@ -178,8 +185,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
         // Commit any animation edits that the tool produced
         if animation_edits.len() > 0 {
-            let mut editor = self.animation.edit();
-            editor.start_send(animation_edits).unwrap();
+            self.edit_sink.wait_send(animation_edits).unwrap();
         }
 
         // If there's a brush preview, draw it as the renderer annotation

@@ -102,7 +102,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     /// 
-    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
+    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         // Edit the underlying animation
         let animation_edit  = self.animation.edit();
 

@@ -17,7 +17,7 @@ impl SqliteAnimation {
 }
 
 impl EditableAnimation for SqliteAnimation {
-    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
+    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         self.db.create_edit_sink()
     }
 }

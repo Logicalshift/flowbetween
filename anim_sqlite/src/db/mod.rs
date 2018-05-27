@@ -108,7 +108,7 @@ impl AnimationDb {
     ///
     /// Creates a sink for writing to the animation
     ///
-    pub fn create_edit_sink(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
+    pub fn create_edit_sink(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         Box::new(EditSink::new(&self.core))
     }
 }

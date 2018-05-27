@@ -57,5 +57,5 @@ pub trait EditableAnimation {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     /// 
-    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>>;
+    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>;
 }
