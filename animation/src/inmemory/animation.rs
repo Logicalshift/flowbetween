@@ -109,7 +109,7 @@ impl Animation for InMemoryAnimation {
 }
 
 impl EditableAnimation for InMemoryAnimation {
-    fn edit<'a>(&'a self) -> Box<'a+Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
+    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
         Box::new(AnimationSink::new(Arc::clone(&self.core)))
     }
 }

@@ -102,13 +102,13 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     /// 
-    fn edit<'a>(&'a self) -> Box<'a+Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
+    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>> {
         // Edit the underlying animation
         let animation_edit  = self.animation.edit();
 
         // Borrow the bits of the viewmodel we can change
-        let frame_edit_counter  = &self.frame_edit_counter;
-        let size_binding        = &self.size_binding;
+        let frame_edit_counter  = self.frame_edit_counter.clone();
+        let mut size_binding    = self.size_binding.clone();
 
         // Pipe the edits so they modify the model as a side-effect
         let model_edit          = FloModelSink::new(animation_edit, move |edits: &Vec<AnimationEdit>| {
@@ -122,7 +122,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
             for edit in edits.iter() {
                 match edit {
                     SetSize(width, height) => {
-                        size_binding.clone().set((*width, *height));
+                        size_binding.set((*width, *height));
                         advance_edit_counter = true;
                     },
 
@@ -142,7 +142,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 
             // Advancing the frame edit counter causes any animation frames to be regenerated
             if advance_edit_counter {
-                frame_edit_counter.clone().set(self.frame_edit_counter.get()+1);
+                frame_edit_counter.clone().set(frame_edit_counter.get()+1);
             }
         });
 
