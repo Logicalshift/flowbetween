@@ -8,7 +8,7 @@ impl SqliteAnimation {
     ///
     /// Performs a particular set of edits immediately to this animation
     ///
-    pub fn perform_edits(&mut self, edits: Vec<AnimationEdit>) {
+    pub fn perform_edits(&self, edits: Vec<AnimationEdit>) {
         let mut sink = executor::spawn(self.db.create_edit_sink());
 
         sink.wait_send(edits).unwrap();
