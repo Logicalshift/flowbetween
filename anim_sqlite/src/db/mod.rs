@@ -41,9 +41,6 @@ use self::edit_sink::*;
 pub struct AnimationDb {
     /// The core contains details of the database
     core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
-
-    /// The next available element ID
-    next_element_id: Arc<Mutex<i64>>,
 }
 
 impl AnimationDb {
@@ -62,12 +59,8 @@ impl AnimationDb {
 
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
 
-        // We begin assigning element IDs at the current length of the edit log
-        let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
-
         let db      = AnimationDb {
-            core:               core,
-            next_element_id:    Arc::new(Mutex::new(initial_element_id))
+            core:   core
         };
 
         db
@@ -79,12 +72,8 @@ impl AnimationDb {
     pub fn from_connection(connection: Connection) -> AnimationDb {
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
 
-        // We begin assigning element IDs at the current length of the edit log
-        let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
-
         let db = AnimationDb {
-            core:               core,
-            next_element_id:    Arc::new(Mutex::new(initial_element_id))
+            core:   core,
         };
 
         db
@@ -112,17 +101,6 @@ impl AnimationDb {
                 core.failure    = result.err();
             }
         })
-    }
-
-    ///
-    /// Assigns a new, unique, element ID for the database
-    /// 
-    pub fn assign_element_id(&self) -> i64 {
-        let mut next_element_id = self.next_element_id.lock().unwrap();
-        let id                  = *next_element_id;
-
-        *next_element_id += 1;
-        id
     }
 
     ///
@@ -154,11 +132,19 @@ impl AnimationDbCore<FloSqlite> {
     /// Creates a new database core with a sqlite connection
     /// 
     fn new(connection: Connection) -> AnimationDbCore<FloSqlite> {
+        // Query the database to warm up our cached values
+        let mut db = FloSqlite::new(connection);
+
+        // We begin assigning element IDs at the current length of the edit log
+        let initial_element_id = db.query_edit_log_length().unwrap() as i64;
+
+        // Generate the core
         let core = AnimationDbCore {
-            db:                         FloSqlite::new(connection),
+            db:                         db,
             failure:                    None,
             active_brush_for_layer:     HashMap::new(),
-            layer_id_for_assigned_id:   HashMap::new()
+            layer_id_for_assigned_id:   HashMap::new(),
+            next_element_id:            initial_element_id
         };
 
         core

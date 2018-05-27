@@ -25,7 +25,10 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     pub active_brush_for_layer: HashMap<i64, (Duration, Arc<Brush>)>,
 
     /// Maps the assigned layer IDs to their equivalent real IDs
-    pub layer_id_for_assigned_id: HashMap<u64, i64>
+    pub layer_id_for_assigned_id: HashMap<u64, i64>,
+
+    /// The next element ID that will be assigned
+    pub next_element_id: i64
 }
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
