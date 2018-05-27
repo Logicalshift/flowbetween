@@ -155,9 +155,10 @@ impl AnimationDbCore<FloSqlite> {
     /// 
     fn new(connection: Connection) -> AnimationDbCore<FloSqlite> {
         let core = AnimationDbCore {
-            db:                     FloSqlite::new(connection),
-            failure:                None,
-            active_brush_for_layer: HashMap::new()
+            db:                         FloSqlite::new(connection),
+            failure:                    None,
+            active_brush_for_layer:     HashMap::new(),
+            layer_id_for_assigned_id:   HashMap::new()
         };
 
         core

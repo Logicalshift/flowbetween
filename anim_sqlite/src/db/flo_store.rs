@@ -72,7 +72,7 @@ pub enum DatabaseUpdate {
     /// Creates a new layer of the specified type and pushes its ID
     PushLayerType(LayerType),
 
-    /// Takes the layer ID on the stack and
+    /// Takes the layer ID on the stack and sets an assigned ID, leaving the real ID on the stack
     PushAssignLayer(u64),
 
     /// Looks up a layer with an assigned ID and pushes its real ID

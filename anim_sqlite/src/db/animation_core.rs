@@ -22,7 +22,10 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     pub failure: Option<Error>,
 
     /// Maps layers to the brush that's active
-    pub active_brush_for_layer: HashMap<i64, (Duration, Arc<Brush>)>
+    pub active_brush_for_layer: HashMap<i64, (Duration, Arc<Brush>)>,
+
+    /// Maps the assigned layer IDs to their equivalent real IDs
+    pub layer_id_for_assigned_id: HashMap<u64, i64>
 }
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
@@ -220,8 +223,19 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 ])?;
             },
 
-            Layer(layer_id, layer_edit) => {
-                self.edit_vector_layer(layer_id as i64, layer_edit);
+            Layer(assigned_layer_id, layer_edit) => {
+                // Look up the real layer ID (which is often different to the assigned ID)
+                let layer_id = {
+                    let db                          = &mut self.db;
+                    let layer_id_for_assigned_id    = &mut self.layer_id_for_assigned_id;
+                    let layer_id                    = *layer_id_for_assigned_id.entry(assigned_layer_id)
+                        .or_insert_with(|| db.query_layer_id_for_assigned_id(assigned_layer_id).unwrap_or(-1));
+
+                    layer_id
+                };
+
+                // Edit this layer
+                self.edit_vector_layer(layer_id, layer_edit);
             },
 
             Element(id, when, edit) => {
