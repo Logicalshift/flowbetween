@@ -383,10 +383,10 @@ fn read_brush_strokes_from_edit_log() {
     ]);
     anim.panic_on_error();
 
-    let edit_log    = anim.read_edit_log(0..7);
-    let edit_log    = edit_log.collect();
-    let edit_log    = executor::spawn(edit_log);
-    let edits       = edit_log.wait_future().unwrap();
+    let edit_log        = anim.read_edit_log(0..7);
+    let edit_log        = edit_log.collect();
+    let mut edit_log    = executor::spawn(edit_log);
+    let edits           = edit_log.wait_future().unwrap();
 
     assert!(edits.len() == 7);
     assert!(edits[0] == AnimationEdit::AddNewLayer(2));
@@ -438,9 +438,9 @@ fn will_assign_element_ids() {
     ]);
 
     // Element ID should be assigned if we read the log back
-    let edit_log = animation.read_edit_log(4..5);
-    let edit_log = edit_log.collect();
-    let edit_log = executor::spawn(edit_log);
+    let edit_log        = animation.read_edit_log(4..5);
+    let edit_log        = edit_log.collect();
+    let mut edit_log    = executor::spawn(edit_log);
 
     let paint_edit = edit_log.wait_future().unwrap();
 
