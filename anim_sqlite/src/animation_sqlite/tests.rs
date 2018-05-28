@@ -252,8 +252,8 @@ fn add_keyframe_with_layer_editor() {
     {
         let mut sink = executor::spawn(anim.edit());
 
-        sink.wait_send(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))]);
-        sink.wait_flush();
+        sink.wait_send(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))]).unwrap();
+        sink.wait_flush().unwrap();
     }
 
     anim.panic_on_error();

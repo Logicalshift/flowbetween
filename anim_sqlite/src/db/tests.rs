@@ -96,14 +96,12 @@ fn brush_stroke() {
 }
 
 fn test_updates(updates: Vec<DatabaseUpdate>) {
-    let mut core = core();
-    core.edit(move |db| {
-        db.update(updates)?;
+    let core    = core();
+    let mut db  = core.db;
 
-        assert!(db.stack_is_empty());
-        Ok(())
-    });
-    core.retrieve_and_clear_error().map(|erm| panic!("{:?}", erm));
+    db.update(updates).unwrap();
+
+    assert!(db.stack_is_empty());
 }
 
 #[test]
@@ -121,56 +119,51 @@ fn smoke_push_edit_type() {
 
 #[test]
 fn adding_edit_type_increases_log_length() {
-    let mut core = core();
+    let core    = core();
+    let mut db  = core.db;
 
-    core.edit(|db| {
-        assert!(db.query_edit_log_length().unwrap() == 0);
+    assert!(db.query_edit_log_length().unwrap() == 0);
 
-        db.update(vec![
-            DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
-            DatabaseUpdate::Pop
-        ])?;
+    db.update(vec![
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::Pop
+    ]).unwrap();
 
-        assert!(db.query_edit_log_length().unwrap() == 1);
-        Ok(())
-    });
+    assert!(db.query_edit_log_length().unwrap() == 1);
 }
 
 #[test]
 fn can_query_edit_type() {
-    let mut core = core();
+    let core    = core();
+    let mut db  = core.db;
 
-    core.edit(|db| {
-        assert!(db.query_edit_log_length().unwrap() == 0);
+    assert!(db.query_edit_log_length().unwrap() == 0);
 
-        db.update(vec![
-            DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
-            DatabaseUpdate::PushEditLogLayer(3),
-            DatabaseUpdate::Pop,
-            DatabaseUpdate::PushEditType(EditLogType::SetSize),
-            DatabaseUpdate::Pop,
-        ])?;
+    db.update(vec![
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditLogLayer(3),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::PushEditType(EditLogType::SetSize),
+        DatabaseUpdate::Pop,
+    ]).unwrap();
 
-        let edit_entries = db.query_edit_log_values(0, 1).unwrap();
-        assert!(edit_entries.len() == 1);
-        assert!(edit_entries[0].edit_type == EditLogType::LayerAddKeyFrame);
-        assert!(edit_entries[0].layer_id == Some(3));
-        assert!(edit_entries[0].when.is_none());
-        assert!(edit_entries[0].brush.is_none());
-        assert!(edit_entries[0].brush_properties_id.is_none());
+    let edit_entries = db.query_edit_log_values(0, 1).unwrap();
+    assert!(edit_entries.len() == 1);
+    assert!(edit_entries[0].edit_type == EditLogType::LayerAddKeyFrame);
+    assert!(edit_entries[0].layer_id == Some(3));
+    assert!(edit_entries[0].when.is_none());
+    assert!(edit_entries[0].brush.is_none());
+    assert!(edit_entries[0].brush_properties_id.is_none());
 
-        let edit_entries2 = db.query_edit_log_values(1, 2).unwrap();
-        assert!(edit_entries2.len() == 1);
-        assert!(edit_entries2[0].edit_type == EditLogType::SetSize);
+    let edit_entries2 = db.query_edit_log_values(1, 2).unwrap();
+    assert!(edit_entries2.len() == 1);
+    assert!(edit_entries2[0].edit_type == EditLogType::SetSize);
 
-        let edit_entries3 = db.query_edit_log_values(2, 3).unwrap();
-        assert!(edit_entries3.len() == 0);
+    let edit_entries3 = db.query_edit_log_values(2, 3).unwrap();
+    assert!(edit_entries3.len() == 0);
 
-        let edit_entries4 = db.query_edit_log_values(0, 2).unwrap();
-        assert!(edit_entries4.len() == 2);
-
-        Ok(())
-    });
+    let edit_entries4 = db.query_edit_log_values(0, 2).unwrap();
+    assert!(edit_entries4.len() == 2);
 }
 
 #[test]
