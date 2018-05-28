@@ -2,24 +2,57 @@ use super::*;
 use super::db_enum::*;
 use super::flo_query::*;
 
-use std::time::Duration;
+use futures::task;
 
+use std::ops::Range;
+use std::time::Duration;
+use std::collections::VecDeque;
+
+const BUFFER_SIZE: usize = 100;
 const INVALID_LAYER: u64 = 0xffffffffffffffff;
 
 ///
 /// Provides the editlog trait for the animation DB
 /// 
-pub struct DbEditLog<TFile: FloFile+Send> {
-    core: Arc<Desync<AnimationDbCore<TFile>>>
+pub struct EditStream<TFile: FloFile+Send> {
+    /// The database core
+    core: Arc<Desync<AnimationDbCore<TFile>>>,
+
+    /// Buffer of items that have been read from the databasse
+    buffer: Arc<Mutex<EditStreamBuffer>>,
+
+    /// The range of items that have been read
+    range: Range<usize>
 }
 
-impl<TFile: FloFile+Send> DbEditLog<TFile> {
+struct EditStreamBuffer {
+    /// Items waiting to be supplied to the stream
+    loaded: VecDeque<AnimationEdit>,
+
+    /// The next item to read
+    next: usize,
+
+    /// Set to true if the buffer has a 'fill' operation queued
+    filling: bool
+}
+
+impl<TFile: FloFile+Send> EditStream<TFile> {
     ///
     /// Creates a new edit log for an animation database
     /// 
-    pub fn new(core: &Arc<Desync<AnimationDbCore<TFile>>>) -> DbEditLog<TFile> {
-        DbEditLog {
-            core: Arc::clone(core)
+    pub fn new(core: &Arc<Desync<AnimationDbCore<TFile>>>, range: Range<usize>) -> EditStream<TFile> {
+        // Create an empty buffer at the start of the range
+        let buffer = EditStreamBuffer {
+            loaded:     VecDeque::new(),
+            next:       range.start,
+            filling:    false
+        };
+
+        // Stream over the specified range of IDs
+        EditStream {
+            core:   Arc::clone(core),
+            buffer: Arc::new(Mutex::new(buffer)),
+            range:  range
         }
     }
 
@@ -124,22 +157,11 @@ impl<TFile: FloFile+Send> DbEditLog<TFile> {
             ElementMove                 => unimplemented!()
         }
     }
-}
-
-impl<TFile: FloFile+Send+'static> EditLog<AnimationEdit> for DbEditLog<TFile> {
-    ///
-    /// Retrieves the number of edits in this log
-    ///
-    fn length(&self) -> usize {
-        self.core.sync(|core| {
-            core.db.query_edit_log_length().unwrap() as usize
-        })
-    }
 
     ///
-    /// Reads a range of edits from this log
+    /// Reads a range of edits from the SQLite edit log
     /// 
-    fn read(&self, indices: &mut Iterator<Item=usize>) -> Vec<AnimationEdit> {
+    fn read(core: &mut AnimationDbCore<TFile>, indices: &mut Iterator<Item=usize>) -> Result<Vec<AnimationEdit>> {
         // Turn the indices into ranges (so we can fetch from the database)
         let current_range   = indices.next().map(|pos| pos..(pos+1));
 
@@ -159,32 +181,118 @@ impl<TFile: FloFile+Send+'static> EditLog<AnimationEdit> for DbEditLog<TFile> {
             ranges.push(current_range);
 
             // Read the edit entries
-            self.core.sync(move |core| {
-                let mut edits = vec![];
+            let mut edits = vec![];
 
-                for edit_range in ranges {
-                    // Fetch the entries in this range
-                    let entries = core.db.query_edit_log_values(edit_range.start as i64, edit_range.end as i64);
+            for edit_range in ranges {
+                // Fetch the entries in this range
+                let entries = core.db.query_edit_log_values(edit_range.start as i64, edit_range.end as i64);
 
-                    match entries {
-                        Ok(entries) => {
-                            // Extend the set of existing entries
-                            edits.extend(entries.into_iter().map(|entry| Self::animation_edit_for_entry(core, entry)));
-                        },
+                match entries {
+                    Ok(entries) => {
+                        // Extend the set of existing entries
+                        edits.extend(entries.into_iter().map(|entry| Self::animation_edit_for_entry(core, entry)));
+                    },
 
-                        Err(erm) => {
-                            // Whoops, got an error: pass out of this function
-                            return Err(erm);
-                        }
+                    Err(erm) => {
+                        // Whoops, got an error: pass out of this function
+                        return Err(erm);
                     }
                 }
+            }
 
-                // Result is the edits we found
-                Ok(edits)
-            }).unwrap()
+            // Result is the edits we found
+            Ok(edits)
         } else {
             // Base case: no indices. We don't run anything sync here so this is always fast even if the database is busy
-            vec![]
+            Ok(vec![])
         }
+    }
+}
+
+impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
+    type Item = AnimationEdit;
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<Option<AnimationEdit>, ()> {
+        let range       = &self.range;
+        let buffer_ref  = Arc::clone(&self.buffer);
+        let mut buffer  = self.buffer.lock().unwrap();
+
+        if let Some(next_item) = buffer.loaded.pop_front() {
+            // Trigger filling the buffer (if a filling operation is not already queued)
+            if !buffer.filling {
+                let range = range.clone();
+                
+                buffer.filling = true;
+                self.core.async(move |core| {
+                    EditStreamBuffer::fill(&*buffer_ref, core, range, None);
+                });
+            }
+
+            // If there is already an entry in the buffer, return it
+            Ok(Async::Ready(Some(next_item)))
+        } else if buffer.next >= self.range.end {
+            // Stop if we've reached then end of the stream
+            Ok(Async::Ready(None))
+        } else {
+            // Trigger filling the buffer
+            let range   = range.clone();
+            let task    = task::current();
+
+            buffer.filling = true;
+            self.core.async(move |core| {
+                EditStreamBuffer::fill(&*buffer_ref, core, range, Some(task));
+            });
+
+            // Buffer is not ready yet
+            Ok(Async::NotReady)
+        }
+    }
+}
+
+impl EditStreamBuffer {
+    ///
+    /// Fills a buffer stored in a mutex
+    ///
+    fn fill<TFile: FloFile+Send>(buffer: &Mutex<EditStreamBuffer>, core: &mut AnimationDbCore<TFile>, range: Range<usize>, notify: Option<task::Task>) {
+        // Note that the locking behaviour here assumes we're only running one fill in parallel (possibly with a stream reader)
+        // This allows us to do the DB read while the buffer is unlocked
+
+        // Function to retrieve the number of loaded elements
+        let num_loaded  = || { buffer.lock().unwrap().loaded.len() };
+
+        // Function to retrieve the index of the next item to retrieve
+        let get_next    = || { buffer.lock().unwrap().next };
+
+        // Iterate until we reach the end of the range or fill the buffer
+        while get_next() < range.end && num_loaded() < BUFFER_SIZE {
+            // Want to read exactly enough entries to fill the buffer
+            let num_missing = BUFFER_SIZE - num_loaded();
+            let next        = get_next();
+            let end         = (next + num_missing).min(range.end);
+
+            // Turn into the range of IDs to load
+            let load_range  = next..end;
+
+            // Load the edits from the database
+            let loaded      = EditStream::read(core, &mut load_range.into_iter()).unwrap();
+
+            {
+                let mut buffer = buffer.lock().unwrap();
+
+                // Store in the buffer
+                loaded.into_iter()
+                    .for_each(|entry| buffer.loaded.push_back(entry));
+
+                // Read from the end of the current range
+                buffer.next       = end;
+            }
+        }
+
+        // Note that the buffer has been filled
+        buffer.lock().unwrap().filling = false;
+
+        // Notify the task, if there is one
+        notify.map(|task| task.notify());
     }
 }

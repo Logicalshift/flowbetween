@@ -1,10 +1,13 @@
 use animation::*;
 
 use desync::*;
+use futures::*;
 use rusqlite::*;
 
 use std::mem;
 use std::sync::*;
+use std::ops::Range;
+use std::collections::HashMap;
 
 #[cfg(test)] mod tests;
 
@@ -12,11 +15,11 @@ mod flo_store;
 mod flo_query;
 mod flo_sqlite;
 mod db_enum;
-mod editlog;
+mod edit_sink;
+mod edit_stream;
 mod insert_editlog;
 mod animation;
-mod mutable_animation;
-mod core;
+mod animation_core;
 mod color;
 mod brush;
 mod vector_layer;
@@ -25,11 +28,12 @@ pub mod vector_frame;
 pub use self::animation::*;
 pub use self::insert_editlog::*;
 pub use self::vector_layer::*;
-use self::mutable_animation::*;
-use self::core::*;
+use self::animation_core::*;
 use self::flo_sqlite::*;
 use self::flo_store::*;
 use self::flo_query::*;
+use self::edit_stream::*;
+use self::edit_sink::*;
 
 ///
 /// Database used to store an animation
@@ -37,12 +41,6 @@ use self::flo_query::*;
 pub struct AnimationDb {
     /// The core contains details of the database
     core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
-
-    /// The next available element ID
-    next_element_id: Arc<Mutex<i64>>,
-
-    /// The editor is used to provide the mutable animation interface (we keep it around so it can cache values if necessary)
-    editor: Mutex<AnimationDbEditor<FloSqlite>>
 }
 
 impl AnimationDb {
@@ -60,15 +58,9 @@ impl AnimationDb {
         FloSqlite::setup(&connection).unwrap();
 
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationDbEditor::new(&core);
-
-        // We begin assigning element IDs at the current length of the edit log
-        let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
 
         let db      = AnimationDb {
-            core:               core,
-            editor:             Mutex::new(editor),
-            next_element_id:    Arc::new(Mutex::new(initial_element_id))
+            core:   core
         };
 
         db
@@ -79,15 +71,9 @@ impl AnimationDb {
     /// 
     pub fn from_connection(connection: Connection) -> AnimationDb {
         let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
-        let editor  = AnimationDbEditor::new(&core);
-
-        // We begin assigning element IDs at the current length of the edit log
-        let initial_element_id = core.sync(|core| core.db.query_edit_log_length()).unwrap() as i64;
 
         let db = AnimationDb {
-            core:               core,
-            editor:             Mutex::new(editor),
-            next_element_id:    Arc::new(Mutex::new(initial_element_id))
+            core:   core,
         };
 
         db
@@ -104,38 +90,26 @@ impl AnimationDb {
     }
 
     ///
-    /// Performs an async operation on the database
-    /// 
-    fn async<TFn: 'static+Send+Fn(&mut AnimationDbCore<FloSqlite>) -> Result<()>>(&self, action: TFn) {
-        self.core.async(move |core| {
-            // Only run the function if there has been no failure
-            if core.failure.is_none() {
-                // Run the function and update the error status
-                let result      = action(core);
-                core.failure    = result.err();
-            }
-        })
+    /// Retrieves the number of edits in the animation
+    ///
+    pub fn get_num_edits(&self) -> Result<usize> {
+        self.core.sync(|core| core.db.query_edit_log_length()).map(|length| length as usize)
     }
 
     ///
-    /// Creates an animation editor
-    /// 
-    pub fn edit<'a>(&'a self) -> Editor<'a, MutableAnimation> {
-        let editor: &Mutex<MutableAnimation> = &self.editor;
-        let editor  = editor.lock().unwrap();
+    /// Creates a stream for reading the specified range of elements from this animation
+    ///
+    pub fn read_edit_log(&self, range: Range<usize>) -> Box<Stream<Item=AnimationEdit, Error=()>> {
+        let edit_stream = EditStream::new(&self.core, range);
 
-        Editor::new(editor)
+        Box::new(edit_stream)
     }
 
     ///
-    /// Assigns a new, unique, element ID for the database
-    /// 
-    pub fn assign_element_id(&self) -> i64 {
-        let mut next_element_id = self.next_element_id.lock().unwrap();
-        let id                  = *next_element_id;
-
-        *next_element_id += 1;
-        id
+    /// Creates a sink for writing to the animation
+    ///
+    pub fn create_edit_sink(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
+        Box::new(EditSink::new(&self.core))
     }
 }
 
@@ -144,16 +118,26 @@ impl AnimationDbCore<FloSqlite> {
     /// Creates a new database core with a sqlite connection
     /// 
     fn new(connection: Connection) -> AnimationDbCore<FloSqlite> {
+        // Query the database to warm up our cached values
+        let mut db = FloSqlite::new(connection);
+
+        // We begin assigning element IDs at the current length of the edit log
+        let initial_element_id = db.query_edit_log_length().unwrap() as i64;
+
+        // Generate the core
         let core = AnimationDbCore {
-            db:             FloSqlite::new(connection),
-            failure:        None
+            db:                         db,
+            failure:                    None,
+            active_brush_for_layer:     HashMap::new(),
+            layer_id_for_assigned_id:   HashMap::new(),
+            next_element_id:            initial_element_id
         };
 
         core
     }
 }
 
-impl<TFile: FloFile> AnimationDbCore<TFile> {
+impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
     /// 

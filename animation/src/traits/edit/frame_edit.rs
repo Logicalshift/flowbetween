@@ -24,6 +24,19 @@ pub enum PaintEdit {
 
 impl PaintEdit {
     ///
+    /// The element ID for this edit
+    /// 
+    pub fn id(&self) -> ElementId {
+        use self::PaintEdit::*;
+
+        match self {
+            SelectBrush(id, _, _)   => *id,
+            BrushProperties(id, _)  => *id,
+            BrushStroke(id, _)      => *id
+        }
+    }
+
+    ///
     /// If this edit contains an unassigned element ID, calls the specified function to supply a new
     /// element ID. If the edit already has an ID, leaves it unchanged.
     /// 

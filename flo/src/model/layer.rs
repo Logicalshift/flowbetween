@@ -20,7 +20,7 @@ impl PartialEq for LayerModel {
 }
 
 impl LayerModel {
-    pub fn new<'a>(layer: &Reader<'a, Layer>) -> LayerModel {
+    pub fn new<'a>(layer: &'a Layer) -> LayerModel {
         LayerModel {
             id:     bind(layer.id()),
             name:   bind(format!("Layer {}", layer.id()))

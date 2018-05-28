@@ -4,8 +4,8 @@ use super::vector_layer_core::*;
 use super::super::traits::*;
 
 use std::sync::*;
-use std::ops::Range;
 use std::time::Duration;
+use std::ops::{Range, Deref};
 
 ///
 /// Represents a vector layer. Vector layers support brush and vector objects.
@@ -28,9 +28,17 @@ impl InMemoryVectorLayer {
     }
 
     ///
+    /// Edits this layer
+    /// 
+    #[inline]
+    pub fn edit(&self, edit: &LayerEdit) {
+        self.core.lock().unwrap().edit(edit);
+    }
+
+    ///
     /// Performs an edit on an element contained within this animation
     /// 
-    pub fn edit_element(&mut self, element_id: ElementId, when: Duration, edit: &ElementEdit) {
+    pub fn edit_element(&self, element_id: ElementId, when: Duration, edit: &ElementEdit) {
         // TODO
     }
 }
@@ -54,16 +62,15 @@ impl Layer for InMemoryVectorLayer {
         }
     }
 
-    fn add_key_frame(&mut self, when: Duration) {
-        self.core.lock().unwrap().add_key_frame(when);
-    }
+    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
+        let core = self.core.lock().unwrap();
 
-    fn remove_key_frame(&mut self, when: Duration) {
-        self.core.lock().unwrap().remove_key_frame(when);
-    }
+        let result: Vec<_> = core.keyframes()
+            .map(|frame| frame.start_time())
+            .filter(|time| &when.start <= time && &when.end >= time)
+            .collect();
 
-    fn get_key_frames_during_time(&self, _when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
-        unimplemented!()
+        Box::new(result.into_iter())
     }
 
     fn supported_edit_types(&self) -> Vec<LayerEditType> {
@@ -72,15 +79,9 @@ impl Layer for InMemoryVectorLayer {
         ];
     }
 
-    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>> {
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>> {
         let core: &Mutex<VectorLayer> = &self.core;
 
-        Some(Reader::new(core.lock().unwrap()))
-    }
-
-    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>> {
-        let core: &Mutex<VectorLayer> = &self.core;
-
-        Some(Editor::new(core.lock().unwrap()))
+        Some(Box::new(core.lock().unwrap()))
     }
 }

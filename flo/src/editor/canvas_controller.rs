@@ -16,7 +16,7 @@ const PAINT_ACTION: &str    = "Paint";
 ///
 /// The core of the canvas
 /// 
-struct CanvasCore<Anim: Animation> {
+struct CanvasCore<Anim: Animation+EditableAnimation> {
     /// The canvas renderer
     renderer: CanvasRenderer,
 
@@ -33,7 +33,7 @@ struct CanvasCore<Anim: Animation> {
 ///
 /// The canvas controller manages the main drawing canvas
 ///
-pub struct CanvasController<Anim: Animation> {
+pub struct CanvasController<Anim: Animation+EditableAnimation> {
     ui:                 BindRef<Control>,
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_model:         FloModel<Anim>,
@@ -42,7 +42,7 @@ pub struct CanvasController<Anim: Animation> {
     core:               Desync<CanvasCore<Anim>>
 }
 
-impl<Anim: Animation+'static> CanvasController<Anim> {
+impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     ///
     /// Creates a new canvas controller
     /// 
@@ -199,7 +199,7 @@ impl<Anim: Animation+'static> CanvasController<Anim> {
     }
 }
 
-impl<Anim: Animation+'static> Controller for CanvasController<Anim> {
+impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }

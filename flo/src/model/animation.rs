@@ -1,8 +1,9 @@
 use super::*;
 
 use animation::*;
-use animation::inmemory::pending_log::*;
+use futures::*;
 
+use std::ops::{Deref, Range};
 use std::time::Duration;
 
 impl<Anim: Animation> Animation for FloModel<Anim> {
@@ -37,40 +38,91 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Reader<'a, Layer>> {
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> {
         self.animation.get_layer_with_id(layer_id)
     }
 
     ///
-    /// Retrieves the log for this animation
+    /// Retrieves the total number of items that have been performed on this animation
     /// 
-    fn get_log<'a>(&'a self) -> Reader<'a, EditLog<AnimationEdit>> {
-        self.animation.get_log()
+    fn get_num_edits(&self) -> usize {
+        self.animation.get_num_edits()
     }
 
     ///
-    /// Retrieves an edit log that can be used to alter this animation
+    /// Reads from the edit log for this animation
     /// 
-    fn edit<'a>(&'a self) -> Editor<'a, PendingEditLog<AnimationEdit>> {
-        // TODO: make sure the updates are properly serialised when they come from multiple sources
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
+        self.animation.read_edit_log(range)
+    }
+}
 
-        let mut animation_edit  = self.animation.edit();
-        let model_edit          = InMemoryPendingLog::new(move |edits| {
+///
+/// Sink used to send data to the animation
+/// 
+struct FloModelSink<TargetSink, ProcessingFn> {
+    /// Function called on every start send
+    processing_fn: ProcessingFn,
+
+    /// Sink where requests should be forwarded to 
+    target_sink: TargetSink
+}
+
+impl<TargetSink, ProcessingFn> FloModelSink<TargetSink, ProcessingFn> {
+    ///
+    /// Creates a new model sink
+    /// 
+    pub fn new(target_sink: TargetSink, processing_fn: ProcessingFn) -> FloModelSink<TargetSink, ProcessingFn> {
+        FloModelSink {
+            processing_fn:  processing_fn,
+            target_sink:    target_sink
+        }
+    }
+}
+
+impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: FnMut(&Vec<AnimationEdit>) -> ()> Sink for FloModelSink<TargetSink, ProcessingFn> {
+    type SinkItem   = Vec<AnimationEdit>;
+    type SinkError  = ();
+
+    fn start_send(&mut self, item: Vec<AnimationEdit>) -> StartSend<Vec<AnimationEdit>, ()> {
+        (self.processing_fn)(&item);
+
+        self.target_sink.start_send(item)
+    }
+
+    fn poll_complete(&mut self) -> Poll<(), ()> {
+        self.target_sink.poll_complete()
+    }
+}
+
+impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
+    ///
+    /// Retrieves a sink that can be used to send edits for this animation
+    /// 
+    /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
+    /// a set of related edits are performed atomically
+    /// 
+    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
+        // Edit the underlying animation
+        let animation_edit  = self.animation.edit();
+
+        // Borrow the bits of the viewmodel we can change
+        let frame_edit_counter  = self.frame_edit_counter.clone();
+        let mut size_binding    = self.size_binding.clone();
+
+        // Pipe the edits so they modify the model as a side-effect
+        let model_edit          = FloModelSink::new(animation_edit, move |edits: &Vec<AnimationEdit>| {
             use self::AnimationEdit::*;
-            use self::LayerEdit::*;
             use self::ElementEdit::*;
+            use self::LayerEdit::*;
 
-            // Post to the underlying animation
-            animation_edit.set_pending(&edits);
-            animation_edit.commit_pending();
-
-            // Update the viewmodel based on the edits
+            // Update the viewmodel based on the edits that are about to go through
             let mut advance_edit_counter = false;
 
-            for edit in edits {
+            for edit in edits.iter() {
                 match edit {
                     SetSize(width, height) => {
-                        self.size_binding.clone().set((width, height));
+                        size_binding.set((*width, *height));
                         advance_edit_counter = true;
                     },
 
@@ -90,50 +142,11 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
 
             // Advancing the frame edit counter causes any animation frames to be regenerated
             if advance_edit_counter {
-                self.frame_edit_counter.clone().set(self.frame_edit_counter.get()+1)
+                frame_edit_counter.clone().set(frame_edit_counter.get()+1);
             }
         });
 
-        let edit_log: Box<'a+PendingEditLog<_>> = Box::new(model_edit);
-        Editor::new(edit_log)
-    }
-
-    ///
-    /// Retrieves an edit log that can be used to edit a layer in this animation
-    /// 
-    fn edit_layer<'a>(&'a self, layer_id: u64) -> Editor<'a, PendingEditLog<LayerEdit>> {
-        let mut layer_edit  = self.animation.edit_layer(layer_id);
-        let model_edit      = InMemoryPendingLog::new(move |edits| {
-            use self::LayerEdit::*;
-
-            // Post to the underlying animation
-            layer_edit.set_pending(&edits);
-            layer_edit.commit_pending();
-
-            // Update the viewmodel based on the edits
-            let mut advance_edit_counter = false;
-
-            for edit in edits {
-                match edit {
-                    Paint(_, _)         => {
-                        advance_edit_counter = true;
-                    }
-
-                    AddKeyFrame(_)      |
-                    RemoveKeyFrame(_)   => {
-                        ()
-                    }
-                }
-            }
-
-            // Advancing the frame edit counter causes any animation frames to be regenerated
-            if advance_edit_counter {
-                self.frame_edit_counter.clone().set(self.frame_edit_counter.get()+1)
-            }
-        });
-
-        let edit_log: Box<'a+PendingEditLog<_>> = Box::new(model_edit);
-        Editor::new(edit_log)
+        Box::new(model_edit)
     }
 }
 
@@ -141,6 +154,7 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
 mod test {
     use super::*;
     use animation::inmemory::*;
+    use futures::executor;
 
     #[test]
     fn size_command_updates_size_binding() {
@@ -152,9 +166,8 @@ mod test {
 
         // Change to 800x600
         {
-            let mut edit_log = model.edit();
-            edit_log.set_pending(&vec![AnimationEdit::SetSize(800.0, 600.0)]);
-            edit_log.commit_pending();
+            let mut edit_log = executor::spawn(model.edit());
+            edit_log.wait_send(vec![AnimationEdit::SetSize(800.0, 600.0)]).unwrap();
         }
 
         // Binding should get changed by this edit

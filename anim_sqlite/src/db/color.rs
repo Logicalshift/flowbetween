@@ -4,7 +4,7 @@ use super::flo_store::*;
 
 use canvas::*;
 
-impl<TFile: FloFile> AnimationDbCore<TFile> {
+impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts a colour definition, leaving the ID on the database stack
     /// 

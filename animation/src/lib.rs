@@ -9,9 +9,9 @@ extern crate flo_float_encoder as float_encoder;
 extern crate serde_derive;
 extern crate serde;
 extern crate modifier;
+extern crate futures;
 
 mod traits;
-pub mod editor;
 pub mod inmemory;
 pub mod brushes;
 

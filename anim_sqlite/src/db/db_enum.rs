@@ -239,17 +239,18 @@ impl<'a> From<&'a BrushDrawingStyle> for DrawingStyleType {
     }
 }
 
-impl<'a> From<&'a Vector> for VectorElementType {
-    fn from(t: &Vector) -> VectorElementType {
-        use self::Vector::*;
+impl<'a> From<&'a PaintEdit> for VectorElementType {
+    fn from(t: &PaintEdit) -> VectorElementType {
+        use self::PaintEdit::*;
 
         match t {
-            &BrushDefinition(_) => VectorElementType::BrushDefinition,
-            &BrushProperties(_) => VectorElementType::BrushProperties,
-            &BrushStroke(_)     => VectorElementType::BrushStroke
+            SelectBrush(_, _, _)    => VectorElementType::BrushDefinition,
+            BrushProperties(_, _)   => VectorElementType::BrushProperties,
+            BrushStroke(_, _)       => VectorElementType::BrushStroke
         }
     }
 }
+
 impl<'a> From<&'a BrushDefinition> for BrushDefinitionType {
     fn from(t: &BrushDefinition) -> BrushDefinitionType {
         use self::BrushDefinition::*;

@@ -4,12 +4,11 @@ pub use self::vector::*;
 
 use super::edit::*;
 use super::frame::*;
-use super::editable::*;
 
 use std::u32;
 use std::sync::*;
-use std::ops::Range;
 use std::time::Duration;
+use std::ops::{Range, Deref};
 
 ///
 /// A layer represents a renderable plane in an animation
@@ -42,22 +41,7 @@ pub trait Layer :
     fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>>;
 
     ///
-    /// Adds a new key frame at the specified time
-    /// 
-    fn add_key_frame(&mut self, when: Duration);
-
-    ///
-    /// Removes a key frame from the specified time
-    /// 
-    fn remove_key_frame(&mut self, when: Duration);
-
-    ///
     /// Retrieves the definition of this layer as a vector layer
     /// 
-    fn as_vector_layer<'a>(&'a self) -> Option<Reader<'a, VectorLayer>>;
-
-    ///
-    /// Retrieves an editor for the vector layer
-    /// 
-    fn edit_vectors<'a>(&'a mut self) -> Option<Editor<'a, VectorLayer>>;
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>>;
 }

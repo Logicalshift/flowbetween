@@ -1,4 +1,7 @@
 mod vectors;
+mod edit;
+
+pub use self::edit::*;
 
 use super::super::traits::*;
 use super::vector_keyframe::*;
@@ -36,6 +39,13 @@ impl VectorLayerCore {
     }
 
     ///
+    /// Retrieves the keyframes in this layer
+    /// 
+    pub fn keyframes<'a>(&'a self) -> impl Iterator<Item=Arc<VectorKeyFrame>>+'a {
+        self.keyframes.iter().cloned()
+    }
+
+    ///
     /// Sorts the keyframes in order
     /// 
     fn sort_key_frames(&mut self) {
@@ -56,33 +66,6 @@ impl VectorLayerCore {
             } else {
                 Some(&self.keyframes[following_frame-1])
             }
-        }
-    }
-
-    ///
-    /// Adds a new key frame to this core 
-    /// 
-    pub fn add_key_frame(&mut self, time_offset: Duration) {
-        // TODO: do nothing if the keyframe is already created
-
-        // Generate a new keyframe
-        let new_keyframe = VectorKeyFrame::new(time_offset);
-
-        // Add in order to the existing keyframes
-        self.keyframes.push(Arc::new(new_keyframe));
-        self.sort_key_frames();
-    }
-
-    ///
-    /// Removes a keyframe from this core
-    /// 
-    pub fn remove_key_frame(&mut self, time_offset: Duration) {
-        // Binary search for the key frame
-        let search_result = self.keyframes.binary_search_by(|a| a.start_time().cmp(&time_offset));
-
-        // Remove only if we found an exact match
-        if let Ok(frame_number) = search_result {
-            self.keyframes.remove(frame_number);
         }
     }
 }
