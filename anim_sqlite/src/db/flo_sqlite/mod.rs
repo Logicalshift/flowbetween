@@ -71,6 +71,7 @@ enum FloStatement {
 
     UpdateAnimationSize,
 
+    InsertEnumValue,
     InsertEditType,
     InsertELSetSize,
     InsertELLayer,
@@ -215,6 +216,7 @@ impl FloSqlite {
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
 
+            InsertEnumValue                 => "INSERT INTO Flo_EnumerationDescriptions (FieldName, Value, ApiName, Comment) SELECT ?, (SELECT IFNULL(Max(Value)+1, 0) FROM Flo_EnumerationDescriptions WHERE FieldName = ?), ?, ?",
             InsertEditType                  => "INSERT INTO Flo_EditLog (Edit) VALUES (?)",
             InsertELSetSize                 => "INSERT INTO Flo_EL_Size (EditId, X, Y) VALUES (?, ?, ?)",
             InsertELLayer                   => "INSERT INTO Flo_EL_Layer (EditId, Layer) VALUES (?, ?)",
@@ -264,10 +266,28 @@ impl FloSqlite {
 
         *self.enum_values.entry(val).or_insert_with(|| {
             let DbEnumName(field, name) = DbEnumName::from(val);
-            Self::prepare(sqlite, FloStatement::SelectEnumValue)
+
+            // Try to retrieve this value from the database
+            let existing_value = Self::prepare(sqlite, FloStatement::SelectEnumValue)
                 .unwrap()
-                .query_row(&[&field, &name], |row| row.get(0))
-                .unwrap()
+                .query_row(&[&field, &name], |row| row.get(0));
+
+            if let Err(Error::QueryReturnedNoRows) = existing_value {
+                // If the value doesn't exist, try to insert it as a new value
+                Self::prepare(sqlite, FloStatement::InsertEnumValue)
+                    .unwrap()
+                    .insert(&[&field, &field, &name, &String::from("")])
+                    .unwrap();
+                
+                // Try again to fetch the row
+                Self::prepare(sqlite, FloStatement::SelectEnumValue)
+                    .unwrap()
+                    .query_row(&[&field, &name], |row| row.get(0))
+                    .unwrap()
+            } else {
+                // Result is the existing value
+                existing_value.unwrap()
+            }
         })
     }
 
@@ -277,27 +297,24 @@ impl FloSqlite {
     fn value_for_enum(&mut self, enum_type: DbEnumType, convert_value: Option<i64>) -> Option<DbEnum> {
         match convert_value {
             Some(convert_value) => {
-                let sqlite = &self.sqlite;
-
                 // Fetch/create the hash of enum values
-                let enum_values = self.value_for_enum.entry(enum_type)
-                    .or_insert_with(|| {
-                        // Generate a hash of each value in the enum by looking them up in the database
-                        let mut value_hash = HashMap::new();
-                        for enum_entry in Vec::<DbEnum>::from(enum_type) {
-                            // Would like to re-use self.enum_value here but can't due to borrowing rules
-                            // Has the additional annoying side-effect that we can look things up twice
-                            let DbEnumName(field, name) = DbEnumName::from(enum_entry);
-                            let db_enum_value = Self::prepare(sqlite, FloStatement::SelectEnumValue)
-                                .unwrap()
-                                .query_row(&[&field, &name], |row| row.get(0))
-                                .unwrap();
+                let enum_values = if self.value_for_enum.contains_key(&enum_type) {
+                    // Use cached version
+                    self.value_for_enum.get(&enum_type).unwrap()
+                } else {
+                    // Generate a hash of each value in the enum by looking them up in the database
+                    let mut value_hash = HashMap::new();
+                    for enum_entry in Vec::<DbEnum>::from(enum_type) {
+                        let db_enum_value = self.enum_value(enum_entry);
 
-                            value_hash.insert(db_enum_value, enum_entry);
-                        }
+                        value_hash.insert(db_enum_value, enum_entry);
+                    }
 
-                        value_hash
-                    });
+                    self.value_for_enum.insert(enum_type, value_hash);
+
+                    // Final result is the value we just cached
+                    self.value_for_enum.get(&enum_type).unwrap()
+                };
                 
                 // Attempt to fetch the dbenum for the value of this type
                 enum_values.get(&convert_value).map(|val| *val)
