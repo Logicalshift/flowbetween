@@ -153,6 +153,14 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             LayerPaintSelectBrush       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::select_brush_for_entry(core, entry)),
             LayerPaintBrushProperties   => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_properties_for_entry(core, entry)),
             LayerPaintBrushStroke       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_stroke_for_entry(core, entry)),
+
+            MotionCreate                => unimplemented!(),
+            MotionDelete                => unimplemented!(),
+            MotionSetType               => unimplemented!(),
+            MotionSetOrigin             => unimplemented!(),
+            MotionSetPath               => unimplemented!(),
+            MotionAttach                => unimplemented!(),
+            MotionDetach                => unimplemented!()
         }
     }
 

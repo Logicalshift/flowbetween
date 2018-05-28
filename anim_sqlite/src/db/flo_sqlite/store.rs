@@ -93,6 +93,66 @@ impl FloSqlite {
                 Ok(())                
             },
 
+            PushEditLogMotionOrigin(x, y) => {
+                let (x, y)          = (x as f64, y as f64);
+                let edit_log_id     = self.stack.last().unwrap();
+                let mut add_origin  = Self::prepare(&self.sqlite, FloStatement::InsertELMotionOrigin)?;
+                
+                add_origin.insert(&[edit_log_id, &x, &y])?;
+
+                Ok(())
+            },
+
+            PushEditLogMotionType(motion_type) => {
+                let motion_type     = self.enum_value(DbEnum::MotionType(motion_type));
+                let edit_log_id     = self.stack.last().unwrap();
+                let mut add_type    = Self::prepare(&self.sqlite, FloStatement::InsertELMotionType)?;
+
+                add_type.insert(&[edit_log_id, &motion_type])?;
+
+                Ok(())
+            },
+
+            PushEditLogMotionElement(attach_element) => {
+                let edit_log_id     = self.stack.last().unwrap();
+                let mut add_type    = Self::prepare(&self.sqlite, FloStatement::InsertELMotionElement)?;
+
+                add_type.insert(&[edit_log_id, &attach_element])?;
+
+                Ok(())
+            },
+
+            PushEditLogMotionPath(num_points) => {
+                // Collect the IDs of the points
+                let mut point_ids = vec![];
+                for _index in 0..num_points {
+                    point_ids.push(self.stack.pop().unwrap_or(-1));
+                }
+
+                // The edit log ID is found underneath the stack of points
+                let edit_log_id = self.stack.last().unwrap();
+
+                // Prepare the insertion statement
+                let mut add_point = Self::prepare(&self.sqlite, FloStatement::InsertELMotionTimePoint)?;
+
+                // Insert each of the points in turn
+                for index in 0..num_points {
+                    let point_index = ((num_points-1)-index) as i64;
+                    add_point.insert(&[edit_log_id, &point_index, &point_ids[index]])?;
+                }
+
+                Ok(())
+            },
+
+            PushTimePoint(x, y, millis) => {
+                let (x, y, millis)  = (x as f64, y as f64, millis as f64);
+                let mut add_point   = Self::prepare(&self.sqlite, FloStatement::InsertTimePoint)?;
+                let point_id        = add_point.insert(&[&x, &y, &millis])?;
+                self.stack.push(point_id);
+
+                Ok(())
+            },
+
             PushBrushType(brush_type)                                       => {
                 let brush_type              = self.enum_value(DbEnum::BrushDefinition(brush_type));
                 let mut insert_brush_type   = Self::prepare(&self.sqlite, FloStatement::InsertBrushType)?;

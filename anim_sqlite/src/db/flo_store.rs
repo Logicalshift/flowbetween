@@ -48,6 +48,21 @@ pub enum DatabaseUpdate {
     /// Uses the edit ID on top of the stack and inserts a raw point for it (index, position, pressure, tilt)
     PushRawPoints(Arc<Vec<RawPoint>>),
 
+    /// Uses the edit ID on top of the stack and associates a motion origin with it
+    PushEditLogMotionOrigin(f32, f32),
+
+    /// Uses the edit ID on top of the stack and associates a motion type with it
+    PushEditLogMotionType(MotionType),
+
+    /// Uses the edit ID on top of the stack sets the attached element ID
+    PushEditLogMotionElement(i64),
+
+    /// Pops the specified number of time point IDs from the stack and creates a motion path from them using the edit ID pushed before them (ie, stack shopuld look like `[edit id, point id, point id, ...]`)
+    PushEditLogMotionPath(usize),
+
+    /// Creates a new time point at the specified x, y, time coordinates and pushes its ID to the stack
+    PushTimePoint(f32, f32, f32),
+
     /// Inserts a new brush type definition, pushing the new brush's ID to the stack
     PushBrushType(BrushDefinitionType),
 

@@ -106,8 +106,60 @@ CREATE TABLE Flo_EL_RawPoints (
 ) WITHOUT ROWID;
 
 /*
+ * For a motion edit setting an origin, the location of the motion origin
+ */
+CREATE TABLE Flo_EL_MotionOrigin (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    X           REAL NOT NULL,
+    Y           REAL NOT NULL
+
+    PRIMARY KEY (EditId)
+) WITHOUT ROWID;
+
+/*
+ * For a motion edit setting a type, the type of the motion 
+ */
+CREATE TABLE Flo_EL_MotionType (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    MotionType  INTEGER NOT NULL,
+    
+    PRIMARY KEY (EditId)
+) WITHOUT ROWID;
+
+/*
+ * For a motion edit creating an attachment to another element, the item that's attached to
+ */
+CREATE TABLE Flo_EL_MotionAttach (
+    EditId          INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    AttachedElement INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId)
+) WITHOUT ROWID;
+
+/*
+ * For a motion edit setting a path, represents the points in the path
+ */
+CREATE TABLE Flo_EL_MotionPath (
+    EditId          INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    PointIndex      INTEGER NOT NULL ASC,
+    TimePointId     INTEGER NOT NULL REFERENCES Flo_TimePoint(PointId),
+
+    PRIMARY KEY (EditId, PointIndex)
+) WITHOUT ROWID;
+
+/*
  *  ===== Colours, brushes and similar resources
  */
+
+/*
+ * Represents a point in time
+ */
+CREATE TABLE Flo_TimePoint {
+    PointId         INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+    X               REAL NOT NULL,
+    Y               REAL NOT NULL,
+    Milliseconds    REAL NOT NULL
+};
 
 /*
  * Associates a brush with a brush type
@@ -374,11 +426,21 @@ INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
      VALUES ("Edit", 0, "SetSize",                          "Sets the size of the animation"),
             ("Edit", 1, "AddNewLayer",                      "Adds a new layer with a particular ID to the animation"),
             ("Edit", 2, "RemoveLayer",                      "Removes a layer from the animation"),
+
             ("Edit", 3, "Layer::AddKeyFrame",               "Adds a new keyframe to a layer"),
             ("Edit", 4, "Layer::RemoveKeyFrame",            "Removes a keyframe from a layer"),
             ("Edit", 5, "Layer::Paint::SelectBrush",        "Selects a particular brush definition"),
             ("Edit", 6, "Layer::Paint::BrushProperties",    "Sets the brush properties"),
-            ("Edit", 7, "Layer::Paint::BrushStroke",        "Represents a brush stroke with the specified raw properties");
+            ("Edit", 7, "Layer::Paint::BrushStroke",        "Represents a brush stroke with the specified raw properties"),
+            
+            ("Edit", 8, "Motion::Create",                   "Creates a new motion"),
+            ("Edit", 9, "Motion::Delete",                   "Deletes an existing motion"),
+            ("Edit", 10, "Motion::SetType",                 "Sets the type of a motion"),
+            ("Edit", 11, "Motion::SetOrigin",               "Sets the origin of a motion"),
+            ("Edit", 12, "Motion::SetPath",                 "Sets the path for a motion"),
+            ("Edit", 13, "Motion::Attach",                  "Attaches a motion to an element"),
+            ("Edit", 14, "Motion::Detach",                  "Detaches a motion from an element")
+            ;
 
 /* Brush drawing style */
 INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)

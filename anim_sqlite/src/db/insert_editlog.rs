@@ -68,12 +68,17 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
             &RemoveLayer(layer_id)                          => {
                 self.db.update(vec![PushEditLogLayer(layer_id), Pop])?;
-            }
+            },
 
             &Element(element_id, when, ref element_edit)    => {
                 Self::insert_element_id(&mut self.db, &element_id)?;
                 self.db.update(vec![PushEditLogWhen(when)])?;
                 self.insert_element_edit(element_edit)?;
+            },
+
+            &Motion(motion_id, ref motion_edit)                 => {
+                Self::insert_element_id(&mut self.db, &motion_id);
+                self.insert_motion_edit(motion_edit)?;
             }
         };
 
@@ -84,6 +89,60 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the parameters for an element edit into the edit log
     /// 
     fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
+        Ok(())
+    }
+
+    ///
+    /// Inserts the parameters for a motion edit into the edit log
+    /// 
+    fn insert_motion_edit(&mut self, edit: &MotionEdit) -> Result<()> {
+        use animation::MotionEdit::*;
+
+        match edit {
+            Create                  => { 
+                self.db.update(vec![Pop])?;
+            },
+
+            Delete                  => { 
+                self.db.update(vec![Pop])?;
+            },
+
+            SetType(motion_type)    => {
+                self.db.update(vec![PushEditLogMotionType(*motion_type), Pop])?;
+            },
+            
+            SetOrigin(x, y)         => {
+                self.db.update(vec![PushEditLogMotionOrigin(*x, *y), Pop])?;
+            },
+
+            SetPath(curve)          => {
+                // Create the points in the curve
+                self.db.update(curve.points
+                    .iter()
+                    .flat_map(|control_point| vec![&control_point.point, &control_point.past, &control_point.future])
+                    .map(|&TimePoint(ref x, ref y, ref millis)| PushTimePoint(*x, *y, *millis)))?;
+
+                // Turn into an edit log path
+                self.db.update(vec![PushEditLogMotionPath(curve.points.len()), Pop])?;
+            },
+
+            Attach(element_id)      => {
+                if let ElementId::Assigned(element_id) = element_id {
+                    self.db.update(vec![PushEditLogMotionElement(*element_id), Pop])?;
+                } else {
+                    self.db.update(vec![Pop])?;
+                }
+            },
+
+            Detach(element_id)      => {
+                if let ElementId::Assigned(element_id) = element_id {
+                    self.db.update(vec![PushEditLogMotionElement(*element_id), Pop])?;
+                } else {
+                    self.db.update(vec![Pop])?;
+                }
+            }
+        }
+
         Ok(())
     }
 

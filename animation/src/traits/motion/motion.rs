@@ -10,11 +10,3 @@ pub enum Motion {
     /// Describes how an element is translated over time
     Translate(TranslateMotion)
 }
-
-///
-/// The possible types of motion
-/// 
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum MotionType {
-    Translate
-}

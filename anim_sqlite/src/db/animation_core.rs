@@ -273,6 +273,11 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             Element(id, when, edit) => {
                 // TODO!
                 // unimplemented!()
+            },
+
+            Motion(motion_id, edit) => {
+                // TODO!
+                // unimplemented!()
             }
         }
 

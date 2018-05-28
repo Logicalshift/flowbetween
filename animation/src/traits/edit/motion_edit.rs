@@ -12,6 +12,9 @@ pub enum MotionEdit {
     /// A new motion is created with a type of `None`, an origin at 0,0 and an empty time curve
     Create,
 
+    /// Deletes the motion with this ID
+    Delete,
+
     /// Sets the type of this motion
     SetType(MotionType),
 
@@ -22,5 +25,8 @@ pub enum MotionEdit {
     SetPath(TimeCurve),
 
     /// Attaches this motion to the specified element ID
-    Attach(ElementId)
+    Attach(ElementId),
+
+    /// Detaches this motion from the specified element ID
+    Detach(ElementId)
 }

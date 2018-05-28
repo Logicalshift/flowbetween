@@ -39,12 +39,16 @@ impl AnimationCore {
 
             RemoveLayer(old_layer_id) => {
                 self.vector_layers.remove(old_layer_id);
-            }
+            },
 
             Layer(layer_id, edit) => { 
                 self.vector_layers.get(&layer_id)
                     .map(|layer| layer.edit(edit));
-            }
+            },
+
+            Motion(motion_id, edit) => {
+                // TODO!
+            },
 
             Element(element_id, when, element_edit) => {
                 // We don't know which layer owns the element, so we just tell all of them to perform the edit (layers without the element will ignore the instruction)

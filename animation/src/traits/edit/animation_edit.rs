@@ -1,5 +1,6 @@
 use super::element_id::*;
 use super::layer_edit::*;
+use super::motion_edit::*;
 use super::element_edit::*;
 
 use std::time::Duration;
@@ -14,6 +15,10 @@ pub enum AnimationEdit {
 
     /// Edit to an existing element (at a particular offset from when its keyframe started)
     Element(ElementId, Duration, ElementEdit),
+
+    /// Edit to a motion (which is a description of how an element moves over time)
+    /// Motions have element IDs so can be treated as elements but are not attached to a layer
+    Motion(ElementId, MotionEdit),
 
     /// Sets the canvas size for this animation
     SetSize(f64, f64),

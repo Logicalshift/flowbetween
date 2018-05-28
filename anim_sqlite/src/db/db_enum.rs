@@ -18,6 +18,14 @@ pub enum EditLogType {
     LayerPaintSelectBrush,
     LayerPaintBrushProperties,
     LayerPaintBrushStroke,
+
+    MotionCreate,
+    MotionDelete,
+    MotionSetType,
+    MotionSetOrigin,
+    MotionSetPath,
+    MotionAttach,
+    MotionDetach
 }
 
 ///
@@ -75,6 +83,7 @@ pub enum DbEnum {
     BrushDefinition(BrushDefinitionType),
     Color(ColorType),
     Layer(LayerType),
+    MotionType(MotionType),
     VectorElement(VectorElementType)
 }
 
@@ -208,20 +217,30 @@ impl From<DbEnumType> for Vec<DbEnum> {
 impl<'a> From<&'a AnimationEdit> for EditLogType {
     fn from(t: &AnimationEdit) -> EditLogType {
         use self::AnimationEdit::*;
+        use self::MotionEdit::*;
         use self::LayerEdit::*;
         use self::PaintEdit::*;
 
         match t {
-            &SetSize(_, _)                              => EditLogType::SetSize,
-            &AddNewLayer(_)                             => EditLogType::AddNewLayer,
-            &RemoveLayer(_)                             => EditLogType::RemoveLayer,
-            &Layer(_, AddKeyFrame(_))                   => EditLogType::LayerAddKeyFrame,
-            &Layer(_, RemoveKeyFrame(_))                => EditLogType::LayerRemoveKeyFrame,
-            &Layer(_, Paint(_, SelectBrush(_, _, _)))   => EditLogType::LayerPaintSelectBrush,
-            &Layer(_, Paint(_, BrushProperties(_, _)))  => EditLogType::LayerPaintBrushProperties,
-            &Layer(_, Paint(_, BrushStroke(_,_)))       => EditLogType::LayerPaintBrushStroke,
+            SetSize(_, _)                               => EditLogType::SetSize,
+            AddNewLayer(_)                              => EditLogType::AddNewLayer,
+            RemoveLayer(_)                              => EditLogType::RemoveLayer,
+            
+            Layer(_, AddKeyFrame(_))                    => EditLogType::LayerAddKeyFrame,
+            Layer(_, RemoveKeyFrame(_))                 => EditLogType::LayerRemoveKeyFrame,
+            Layer(_, Paint(_, SelectBrush(_, _, _)))    => EditLogType::LayerPaintSelectBrush,
+            Layer(_, Paint(_, BrushProperties(_, _)))   => EditLogType::LayerPaintBrushProperties,
+            Layer(_, Paint(_, BrushStroke(_,_)))        => EditLogType::LayerPaintBrushStroke,
 
-            &Element(_, _, _)                           => unimplemented!() // No element edits exist yet
+            Motion(_, Create)                           => EditLogType::MotionCreate,
+            Motion(_, Delete)                           => EditLogType::MotionDelete,
+            Motion(_, SetType(_))                       => EditLogType::MotionSetType,
+            Motion(_, SetOrigin(_, _))                  => EditLogType::MotionSetOrigin,
+            Motion(_, SetPath(_))                       => EditLogType::MotionSetPath,
+            Motion(_, Attach(_))                        => EditLogType::MotionAttach,
+            Motion(_, Detach(_))                        => EditLogType::MotionDetach,
+
+            Element(_, _, _)                            => unimplemented!() // No element edits exist yet
         }
     }
 }
@@ -276,6 +295,14 @@ impl From<EditLogType> for DbEnumName {
             LayerPaintSelectBrush       => DbEnumName("Edit", "Layer::Paint::SelectBrush"),
             LayerPaintBrushProperties   => DbEnumName("Edit", "Layer::Paint::BrushProperties"),
             LayerPaintBrushStroke       => DbEnumName("Edit", "Layer::Paint::BrushStroke"),
+
+            MotionCreate                => DbEnumName("Edit", "Motion::Create"),
+            MotionDelete                => DbEnumName("Edit", "Motion::Delete"),
+            MotionSetType               => DbEnumName("Edit", "Motion::SetType"),
+            MotionSetOrigin             => DbEnumName("Edit", "Motion::SetOrigin"),
+            MotionSetPath               => DbEnumName("Edit", "Motion::SetPath"),
+            MotionAttach                => DbEnumName("Edit", "Motion::Attach"),
+            MotionDetach                => DbEnumName("Edit", "Motion::Detach")
         }
     }
 }
@@ -335,6 +362,17 @@ impl From<VectorElementType> for DbEnumName {
     }
 }
 
+impl From<MotionType> for DbEnumName {
+    fn from(t: MotionType) -> DbEnumName {
+        use self::MotionType::*;
+
+        match t {
+            None        => DbEnumName("MotionType", "None"),
+            Translate   => DbEnumName("MotionType", "Translate")
+        }
+    }
+}
+
 impl From<DbEnum> for DbEnumName {
     fn from(t: DbEnum) -> DbEnumName {
         use self::DbEnum::*;
@@ -345,7 +383,8 @@ impl From<DbEnum> for DbEnumName {
             BrushDefinition(bdt)    => DbEnumName::from(bdt),
             Color(ct)               => DbEnumName::from(ct),
             Layer(lt)               => DbEnumName::from(lt),
-            VectorElement(vet)      => DbEnumName::from(vet)
+            VectorElement(vet)      => DbEnumName::from(vet),
+            MotionType(mot)         => DbEnumName::from(mot)
         }
     }
 }

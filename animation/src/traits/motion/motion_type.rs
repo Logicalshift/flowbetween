@@ -1,7 +1,7 @@
 ///
 /// The possible types of motion
 /// 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum MotionType {
     None,
     Translate
