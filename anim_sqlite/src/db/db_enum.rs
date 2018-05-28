@@ -18,8 +18,6 @@ pub enum EditLogType {
     LayerPaintSelectBrush,
     LayerPaintBrushProperties,
     LayerPaintBrushStroke,
-
-    ElementMove
 }
 
 ///
@@ -212,7 +210,6 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
         use self::AnimationEdit::*;
         use self::LayerEdit::*;
         use self::PaintEdit::*;
-        use self::ElementEdit::*;
 
         match t {
             &SetSize(_, _)                              => EditLogType::SetSize,
@@ -223,7 +220,8 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             &Layer(_, Paint(_, SelectBrush(_, _, _)))   => EditLogType::LayerPaintSelectBrush,
             &Layer(_, Paint(_, BrushProperties(_, _)))  => EditLogType::LayerPaintBrushProperties,
             &Layer(_, Paint(_, BrushStroke(_,_)))       => EditLogType::LayerPaintBrushStroke,
-            &Element(_, _, Move(_, _))                  => EditLogType::ElementMove
+
+            &Element(_, _, _)                           => unimplemented!() // No element edits exist yet
         }
     }
 }
@@ -278,8 +276,6 @@ impl From<EditLogType> for DbEnumName {
             LayerPaintSelectBrush       => DbEnumName("Edit", "Layer::Paint::SelectBrush"),
             LayerPaintBrushProperties   => DbEnumName("Edit", "Layer::Paint::BrushProperties"),
             LayerPaintBrushStroke       => DbEnumName("Edit", "Layer::Paint::BrushStroke"),
-
-            ElementMove                 => DbEnumName("Edit", "Element::Move")
         }
     }
 }

@@ -113,7 +113,6 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
         // Pipe the edits so they modify the model as a side-effect
         let model_edit          = FloModelSink::new(animation_edit, move |edits: &Vec<AnimationEdit>| {
             use self::AnimationEdit::*;
-            use self::ElementEdit::*;
             use self::LayerEdit::*;
 
             // Update the viewmodel based on the edits that are about to go through
@@ -128,7 +127,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 
                     AddNewLayer(_)              |
                     RemoveLayer(_)              |
-                    Element(_, _, Move(_, _))   |
+                    Element(_, _, _)            |
                     Layer(_, Paint(_, _))       => {
                         advance_edit_counter = true;
                     }

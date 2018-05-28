@@ -84,17 +84,6 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the parameters for an element edit into the edit log
     /// 
     fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
-        use animation::ElementEdit::*;
-
-        match edit {
-            &Move(top_left, bottom_right) => {
-                self.db.update(vec![PushRawPoints(Arc::new(vec![
-                    RawPoint::from(top_left), 
-                    RawPoint::from(bottom_right)
-                ]))])?;
-            }
-        }
-
         Ok(())
     }
 
