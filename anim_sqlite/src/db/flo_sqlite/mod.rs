@@ -338,6 +338,11 @@ mod test {
         FloSqlite::setup(&conn).unwrap();
         let mut db = FloSqlite::new(conn);
 
-        assert!(db.enum_value(DbEnum::EditLog(EditLogType::LayerAddKeyFrame)) == 3);
+        // Enum values are created starting at 0
+        assert!(db.enum_value(DbEnum::EditLog(EditLogType::LayerAddKeyFrame)) == 0);
+        assert!(db.enum_value(DbEnum::EditLog(EditLogType::LayerRemoveKeyFrame)) == 1);
+
+        // They're independent for different enum types
+        assert!(db.enum_value(DbEnum::DrawingStyle(DrawingStyleType::Draw)) == 0);
     }
 }

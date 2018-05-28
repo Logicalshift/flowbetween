@@ -416,57 +416,6 @@ CREATE TABLE Flo_EnumerationDescriptions (
     PRIMARY KEY (FieldName, ApiName)
 );
 
-/* The stable/unstable enumeration */
-INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("Stable", 0,   "Unstable", "File was created with a development version of FlowBetween and may not conform to the final schema for this version"),
-            ("Stable", 1,   "Stable",   "File was created using a stable version of the schema");
-
-/* The possible types of edit */
-INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("Edit", 0, "SetSize",                          "Sets the size of the animation"),
-            ("Edit", 1, "AddNewLayer",                      "Adds a new layer with a particular ID to the animation"),
-            ("Edit", 2, "RemoveLayer",                      "Removes a layer from the animation"),
-
-            ("Edit", 3, "Layer::AddKeyFrame",               "Adds a new keyframe to a layer"),
-            ("Edit", 4, "Layer::RemoveKeyFrame",            "Removes a keyframe from a layer"),
-            ("Edit", 5, "Layer::Paint::SelectBrush",        "Selects a particular brush definition"),
-            ("Edit", 6, "Layer::Paint::BrushProperties",    "Sets the brush properties"),
-            ("Edit", 7, "Layer::Paint::BrushStroke",        "Represents a brush stroke with the specified raw properties"),
-            
-            ("Edit", 8, "Motion::Create",                   "Creates a new motion"),
-            ("Edit", 9, "Motion::Delete",                   "Deletes an existing motion"),
-            ("Edit", 10, "Motion::SetType",                 "Sets the type of a motion"),
-            ("Edit", 11, "Motion::SetOrigin",               "Sets the origin of a motion"),
-            ("Edit", 12, "Motion::SetPath",                 "Sets the path for a motion"),
-            ("Edit", 13, "Motion::Attach",                  "Attaches a motion to an element"),
-            ("Edit", 14, "Motion::Detach",                  "Detaches a motion from an element")
-            ;
-
-/* Brush drawing style */
-INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("DrawingStyle", 0, "Draw",     "Brush should draw onto the canvas"),
-            ("DrawingStyle", 1, "Erase",    "Brush should erase from the current layer");
-
-/* Types of brush definition */
-INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("BrushType", 0,    "Simple",   "Simple brush (mainly used for testing)"),
-            ("BrushType", 1,    "Ink",      "Ink brush");
-
-/* Types of colour definition */
-INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("ColorType", 0,    "RGB",      "RGB colour"),
-            ("ColorType", 1,    "HSLUV",    "HSLuv colour");
-
-/* Types of layer */
-INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("LayerType", 0,    "Vector",   "Vector layer");
-
-/* Types of vector element */
-INSERT INTO Flo_EnumerationDescriptions(FieldName, Value, ApiName, Comment)
-     VALUES ("VectorElementType",   0,  "BrushDefinition",  "Selects a brush for future vector elements"),
-            ("VectorElementType",   1,  "BrushProperties",  "Sets brush properties for future vector elements"),
-            ("VectorElementType",   2,  "BrushStroke",      "Brush stroke element");            
-
 /*
  *  ===== DEFAULT DATA
  */
