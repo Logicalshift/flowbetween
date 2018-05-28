@@ -111,7 +111,7 @@ CREATE TABLE Flo_EL_RawPoints (
 CREATE TABLE Flo_EL_MotionOrigin (
     EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
     X           REAL NOT NULL,
-    Y           REAL NOT NULL
+    Y           REAL NOT NULL,
 
     PRIMARY KEY (EditId)
 ) WITHOUT ROWID;
@@ -141,7 +141,7 @@ CREATE TABLE Flo_EL_MotionAttach (
  */
 CREATE TABLE Flo_EL_MotionPath (
     EditId          INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
-    PointIndex      INTEGER NOT NULL ASC,
+    PointIndex      INTEGER NOT NULL,
     TimePointId     INTEGER NOT NULL REFERENCES Flo_TimePoint(PointId),
 
     PRIMARY KEY (EditId, PointIndex)
@@ -154,12 +154,12 @@ CREATE TABLE Flo_EL_MotionPath (
 /*
  * Represents a point in time
  */
-CREATE TABLE Flo_TimePoint {
+CREATE TABLE Flo_TimePoint (
     PointId         INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
     X               REAL NOT NULL,
     Y               REAL NOT NULL,
     Milliseconds    REAL NOT NULL
-};
+);
 
 /*
  * Associates a brush with a brush type
