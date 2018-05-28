@@ -223,7 +223,7 @@ impl FloSqlite {
             InsertELBrushProperties         => "INSERT INTO Flo_EL_BrushProperties (EditId, BrushProperties) VALUES (?, ?)",
             InsertELElementId               => "INSERT INTO Flo_EL_ElementId (EditId, ElementId) VALUES (?, ?)",
             InsertELRawPoints               => "INSERT INTO Flo_EL_RawPoints (EditId, Points) VALUES (?, ?)",
-            InsertELMotionOrigin            => "INSERT INTO Flo_EL_MotionOrigin (EditId, X, Y) VALUES (?, ?)",
+            InsertELMotionOrigin            => "INSERT INTO Flo_EL_MotionOrigin (EditId, X, Y) VALUES (?, ?, ?)",
             InsertELMotionType              => "INSERT INTO Flo_EL_MotionType (EditId, MotionType) VALUES (?, ?)",
             InsertELMotionElement           => "INSERT INTO Flo_EL_MotionAttach (EditId, AttachedElement) VALUES (?, ?)",
             InsertELMotionTimePoint         => "INSERT INTO Flo_EL_MotionPath (EditId, PointIndex, TimePointId) VALUES (?, ?, ?)",
