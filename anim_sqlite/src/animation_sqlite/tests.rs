@@ -604,7 +604,6 @@ fn delete_layer_after_drawing_brush_stroke() {
     anim.perform_edits(vec![AnimationEdit::RemoveLayer(2)]);
 }
 
-/*
 #[test]
 fn move_existing_element() {
     let anim = SqliteAnimation::new_in_memory();
@@ -620,14 +619,16 @@ fn move_existing_element() {
         )),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
             BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
-        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(1), Arc::new(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(50), Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
         
-        AnimationEdit::Element(ElementId::Assigned(0), Duration::from_millis(442), ElementEdit::Move((0.0, 0.0), (200.0, 200.0)))
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Create),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetType(MotionType::Translate)),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(0.0, 0.0)),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Attach(ElementId::Assigned(50)))
     ]);
     anim.panic_on_error();
-
 }
-*/
