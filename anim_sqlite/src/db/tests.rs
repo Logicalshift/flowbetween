@@ -118,6 +118,50 @@ fn smoke_push_edit_type() {
 }
 
 #[test]
+fn smoke_push_motion_origin() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
+        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogMotionOrigin(42.0, 24.0),
+        DatabaseUpdate::Pop
+    ]);
+}
+
+#[test]
+fn smoke_push_motion_type_translate() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
+        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogMotionType(MotionType::Translate),
+        DatabaseUpdate::Pop
+    ]);
+}
+
+#[test]
+fn smoke_push_motion_element() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
+        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogMotionElement(2),
+        DatabaseUpdate::Pop
+    ]);
+}
+
+#[test]
+fn smoke_push_motion_path() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
+        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushEditLogMotionPath(4),
+        DatabaseUpdate::Pop
+    ]);
+}
+
+#[test]
 fn adding_edit_type_increases_log_length() {
     let core    = core();
     let mut db  = core.db;
