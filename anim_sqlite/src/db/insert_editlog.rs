@@ -77,7 +77,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             },
 
             &Motion(motion_id, ref motion_edit)                 => {
-                Self::insert_element_id(&mut self.db, &motion_id);
+                Self::insert_element_id(&mut self.db, &motion_id)?;
                 self.insert_motion_edit(motion_edit)?;
             }
         };

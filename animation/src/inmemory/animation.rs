@@ -29,7 +29,8 @@ impl InMemoryAnimation {
             edit_log:           vec![],
             size:               (1980.0, 1080.0),
             next_element_id:    0,
-            vector_layers:      HashMap::new()
+            vector_layers:      HashMap::new(),
+            motions:            vec![]
         };
 
         // Create the final animation
@@ -105,6 +106,35 @@ impl Animation for InMemoryAnimation {
         let log_items   = stream::iter_ok(log_items);
 
         Box::new(log_items)
+    }
+
+    fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {
+        let core                = self.core.lock().unwrap();
+        let when_millis         = (to_millis(when.start) as f32)..(to_millis(when.end) as f32);
+
+        // Collect all the motions in this range into a vec (would be more efficient to store in a btree or something maybe)
+        let motion_ids: Vec<_>  = core.motions.iter()
+            .filter(|(_element_id, motion)| {
+                let motion_time = motion.range_millis();
+
+                !(motion_time.start > when_millis.end) && !(motion_time.end < when_millis.start)
+            })
+            .map(|(element_id, _motion)| *element_id)
+            .collect();
+        
+        // Return this vec as a stream
+        Box::new(stream::iter_ok(motion_ids.into_iter()))
+    }
+
+    fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
+        // Flat search for a motion with this ID
+        let core    = self.core.lock().unwrap();
+        let motion  = core.motions.iter()
+            .filter(|(element_id, _motion)| element_id == &motion_id)
+            .nth(0)
+            .map(|(_element_id, motion)| motion.clone());
+        
+        motion
     }
 }
 

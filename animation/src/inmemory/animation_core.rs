@@ -18,6 +18,9 @@ pub struct AnimationCore {
 
     /// The vector layers in this animation
     pub vector_layers: HashMap<u64, InMemoryVectorLayer>,
+
+    /// The motions in this animation
+    pub motions: Vec<(ElementId, Motion)>
 }
 
 impl AnimationCore {

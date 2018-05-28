@@ -2,6 +2,7 @@ use super::transform::*;
 use super::super::time_path::*;
 use super::super::raw_point::*;
 
+use std::ops::Range;
 use std::time::Duration;
 
 ///
@@ -17,6 +18,17 @@ pub struct TranslateMotion {
 }
 
 impl MotionTransform for TranslateMotion {
+    fn range_millis(&self) -> Range<f32> {
+        if self.translate.points.len() == 0 {
+            0.0..0.0
+        } else {
+            let start   = self.translate.points[0].point.milliseconds();
+            let end     = self.translate.points.last().unwrap().point.milliseconds();
+
+            start..end
+        }
+    }
+
     fn transform_points<'a, Points: 'a+Iterator<Item=RawPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=RawPoint>> {
         let time_millis = ((time.as_secs() as f32) * 1_000.0) + ((time.subsec_nanos() as f32) / 1_000_000.0);
         let origin      = self.origin;
