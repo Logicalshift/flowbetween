@@ -604,6 +604,7 @@ fn delete_layer_after_drawing_brush_stroke() {
     anim.perform_edits(vec![AnimationEdit::RemoveLayer(2)]);
 }
 
+/*
 #[test]
 fn move_existing_element() {
     let anim = SqliteAnimation::new_in_memory();
@@ -629,3 +630,4 @@ fn move_existing_element() {
     anim.panic_on_error();
 
 }
+*/
