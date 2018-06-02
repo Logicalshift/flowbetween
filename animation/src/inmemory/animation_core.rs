@@ -20,7 +20,10 @@ pub struct AnimationCore {
     pub vector_layers: HashMap<u64, InMemoryVectorLayer>,
 
     /// The motions in this animation
-    pub motions: HashMap<ElementId, Motion>
+    pub motions: HashMap<ElementId, Motion>,
+
+    /// Maps element IDs to the attached motions
+    pub motions_for_element: HashMap<ElementId, Vec<ElementId>>
 }
 
 impl AnimationCore {
@@ -73,8 +76,8 @@ impl AnimationCore {
             SetType(motion_type)    => { self.motions.get_mut(&motion_id).map(|motion| motion.set_type(*motion_type)); },
             SetOrigin(x, y)         => { self.motions.get_mut(&motion_id).map(|motion| motion.set_origin((*x, *y))); },
             SetPath(path)           => { self.motions.get_mut(&motion_id).map(|motion| motion.set_path(path.clone())); },
-            Attach(element_id)      => { unimplemented!(); },
-            Detach(element_id)      => { unimplemented!(); }
+            Attach(element_id)      => { self.motions_for_element.entry(*element_id).or_insert_with(|| vec![]).push(*motion_id); },
+            Detach(element_id)      => { self.motions_for_element.get_mut(element_id).map(|motions| motions.retain(|element| element != motion_id)); }
         }
     }
 }
