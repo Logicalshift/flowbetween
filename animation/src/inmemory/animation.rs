@@ -265,4 +265,30 @@ mod test {
             ]).unwrap();
         }
     }
+
+    #[test]
+    fn can_create_translate_motion() {
+        let animation   = InMemoryAnimation::new();
+        let start_point = TimePoint::new(10.0, 20.0, Duration::from_millis(0));
+        let end_point   = TimePoint::new(500.0, 400.0, Duration::from_millis(2000));
+
+        animation.perform_edits(vec![
+            AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::Create),
+            AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::SetType(MotionType::Translate)),
+            AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::SetOrigin(30.0, 40.0)),
+            AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::SetPath(TimeCurve::new(start_point, end_point))),
+
+        ]);
+
+        let motion = animation.motion().get_motion(ElementId::Assigned(1));
+        
+        assert!(motion.is_some());
+
+        if let Some(Motion::Translate(translate)) = motion {
+            assert!(translate.origin == (30.0, 40.0));
+            assert!(translate.translate == TimeCurve::new(start_point, end_point));
+        } else {
+            assert!(false)
+        }
+    }
 }
