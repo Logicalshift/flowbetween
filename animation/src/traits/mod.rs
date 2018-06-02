@@ -1,5 +1,6 @@
 mod edit;
 mod animation;
+mod animation_motion;
 mod frame;
 mod layer;
 mod raw_point;
@@ -14,6 +15,7 @@ mod motion;
 
 pub use self::edit::*;
 pub use self::animation::*;
+pub use self::animation_motion::*;
 pub use self::frame::*;
 pub use self::layer::*;
 pub use self::raw_point::*;

@@ -108,6 +108,12 @@ impl Animation for InMemoryAnimation {
         Box::new(log_items)
     }
 
+    fn motion<'a>(&'a self) -> &'a AnimationMotion {
+        self
+    }
+}
+
+impl AnimationMotion for InMemoryAnimation {
     fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {
         let core                = self.core.lock().unwrap();
         let when_millis         = (to_millis(when.start) as f32)..(to_millis(when.end) as f32);

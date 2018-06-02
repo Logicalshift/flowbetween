@@ -66,6 +66,12 @@ impl Animation for SqliteAnimation {
         self.db.read_edit_log(range)
     }
 
+    fn motion<'a>(&'a self) -> &'a AnimationMotion {
+        self
+    }
+}
+
+impl AnimationMotion for SqliteAnimation {
     fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {
         unimplemented!()
     }
