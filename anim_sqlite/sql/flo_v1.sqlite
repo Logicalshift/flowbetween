@@ -368,6 +368,11 @@ CREATE TABLE Flo_AssignedElementId (
     AssignedId  INTEGER NOT NULL
 ) WITHOUT ROWID;
 
+CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
+    BEGIN
+        DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
+    END;
+
 /*
  * Represents an element in a vector layer
  */
