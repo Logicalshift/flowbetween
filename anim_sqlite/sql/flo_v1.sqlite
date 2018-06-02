@@ -368,6 +368,8 @@ CREATE TABLE Flo_AssignedElementId (
     AssignedId  INTEGER NOT NULL
 ) WITHOUT ROWID;
 
+CREATE UNIQUE INDEX FloIdx_ElementIds ON Flo_AssignedElementId (AssignedId);
+
 /* Deleting from the assigned element ID table also removes anything that references that table */
 CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
     BEGIN
