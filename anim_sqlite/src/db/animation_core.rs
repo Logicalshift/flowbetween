@@ -213,7 +213,9 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 },
 
                 Delete => {
-                    unimplemented!();
+                    self.db.update(vec![
+                        DatabaseUpdate::DeleteMotion(motion_id)
+                    ])?;
                 },
 
                 SetType(motion_type) => {
@@ -248,7 +250,11 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 },
 
                 Detach(element_id) => {
-                    unimplemented!();
+                    if let ElementId::Assigned(element_id) = element_id {
+                        self.db.update(vec![
+                            DatabaseUpdate::DeleteMotionAttachedElement(motion_id, element_id)
+                        ])?;
+                    }
                 }
             }
         }

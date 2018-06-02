@@ -109,6 +109,20 @@ fn translate_motion() {
     ]).unwrap();
 }
 
+#[test]
+fn delete_translate_motion() {
+    let start_point = TimePoint::new(10.0, 20.0, Duration::from_millis(0));
+    let end_point   = TimePoint::new(500.0, 400.0, Duration::from_millis(2000));
+
+    core().insert_edits(&[
+        AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::Create),
+        AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::SetType(MotionType::Translate)),
+        AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::SetOrigin(30.0, 40.0)),
+        AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::SetPath(TimeCurve::new(start_point, end_point))),
+        AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::Delete)
+    ]).unwrap();
+}
+
 fn test_updates(updates: Vec<DatabaseUpdate>) {
     let core    = core();
     let mut db  = core.db;
