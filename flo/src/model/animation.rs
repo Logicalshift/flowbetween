@@ -73,6 +73,13 @@ impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     }
 
     ///
+    /// Retrieves the IDs of the motions attached to a particular element
+    /// 
+    fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
+        self.animation.motion().get_motions_for_element(element_id)
+    }
+
+    ///
     /// Retrieves the motion with the specified ID
     /// 
     fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
