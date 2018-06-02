@@ -152,16 +152,6 @@ CREATE TABLE Flo_EL_MotionPath (
  */
 
 /*
- * Represents a point in time
- */
-CREATE TABLE Flo_TimePoint (
-    PointId         INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
-    X               REAL NOT NULL,
-    Y               REAL NOT NULL,
-    Milliseconds    REAL NOT NULL
-);
-
-/*
  * Associates a brush with a brush type
  */
 CREATE TABLE Flo_Brush_Type (
@@ -220,6 +210,61 @@ CREATE TABLE Flo_Color_Hsluv (
     S           REAL NOT NULL,
     L           REAL NOT NULL
 ) WITHOUT ROWID;
+
+/*
+ *  ===== Motions
+ */
+
+/*
+ * Represents a point in time
+ */
+CREATE TABLE Flo_TimePoint (
+    PointId         INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+    X               REAL NOT NULL,
+    Y               REAL NOT NULL,
+    Milliseconds    REAL NOT NULL
+);
+
+/*
+ * Represents a motion
+ */
+CREATE TABLE Flo_Motion (
+    MotionId    INTEGER NOT NULL PRIMARY KEY ASC,
+    MotionType  INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * The origin of a motion
+ */
+CREATE TABLE Flo_MotionOrigin (
+    MotionId    INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_Motion(MotionId),
+    X           REAL NOT NULL,
+    Y           REAL NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * The path(s) associated with a motion
+ */
+CREATE TABLE Flo_MotionPath (
+    MotionId    INTEGER NOT NULL REFERENCES Flo_Motion(MotionId),
+    PathType    INTEGER NOT NULL,
+    PointIndex  INTEGER NOT NULL,
+    PointId     INTEGER NOT NULL REFERENCES Flo_TimePoint(PointId),
+
+    PRIMARY KEY (MotionId, PathType, PointIndex)
+) WITHOUT ROWID;
+
+/*
+ * The elements attached to a motion
+ */
+CREATE TABLE Flo_MotionAttached (
+    MotionId    INTEGER NOT NULL REFERENCES Flo_Motion(MotionId),
+    ElementId   INTEGER NOT NULL REFERENCES Flo_AssignedElementId(AssignedId),
+
+    PRIMARY KEY (MotionId, ElementId)
+);
+
+CREATE INDEX FloIdx_AttachedMotion ON Flo_MotionAttached (ElementId, MotionId);
 
 /*
  *  ===== Animation

@@ -22,6 +22,7 @@ mod animation;
 mod animation_core;
 mod color;
 mod brush;
+mod motion;
 mod vector_layer;
 pub mod vector_frame;
 
