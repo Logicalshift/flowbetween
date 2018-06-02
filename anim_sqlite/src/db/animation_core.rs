@@ -1,5 +1,6 @@
 use super::db_enum::*;
 use super::flo_store::*;
+use super::motion_path_type::*;
 
 use animation::*;
 use animation::brushes::*;
@@ -195,6 +196,67 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     }
 
     ///
+    /// Performs an editing action on a motion
+    /// 
+    fn edit_motion(&mut self, motion_id: ElementId, edit: MotionEdit) -> Result<()> {
+        use self::MotionEdit::*;
+
+        if let ElementId::Assigned(motion_id) = motion_id {
+            // Motion IDs must have an assigned ID
+            let motion_id = motion_id as i64;
+
+            match edit {
+                Create => {
+                    self.db.update(vec![
+                        DatabaseUpdate::CreateMotion(motion_id)
+                    ])?;
+                },
+
+                Delete => {
+                    unimplemented!();
+                },
+
+                SetType(motion_type) => {
+                    self.db.update(vec![
+                        DatabaseUpdate::SetMotionType(motion_id, motion_type)
+                    ])?;
+                },
+
+                SetOrigin(x, y) => {
+                    self.db.update(vec![
+                        DatabaseUpdate::SetMotionOrigin(motion_id, x, y)
+                    ])?;
+                },
+
+                SetPath(time_path) => {
+                    // Create the points in the curve
+                    self.db.update(time_path.points
+                        .iter()
+                        .flat_map(|control_point| vec![&control_point.point, &control_point.past, &control_point.future])
+                        .map(|&TimePoint(ref x, ref y, ref millis)| DatabaseUpdate::PushTimePoint(*x, *y, *millis)))?;
+
+                    // Turn into a motion path
+                    self.db.update(vec![DatabaseUpdate::SetMotionPath(motion_id, MotionPathType::Position, time_path.points.len())])?;
+                },
+
+                Attach(element_id) => {
+                    if let ElementId::Assigned(element_id) = element_id {
+                        self.db.update(vec![
+                            DatabaseUpdate::AddMotionAttachedElement(motion_id, element_id)
+                        ])?;
+                    }
+                },
+
+                Detach(element_id) => {
+                    unimplemented!();
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Performs a layer edit to a vector layer
     /// 
     pub fn edit_vector_layer(&mut self, layer_id: i64, edit: LayerEdit) -> Result<()> {
@@ -275,9 +337,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 // unimplemented!()
             },
 
-            Motion(motion_id, edit) => {
-                // TODO!
-                // unimplemented!()
+            Motion(motion_id, motion_edit) => {
+                self.edit_motion(motion_id, motion_edit)?;
             }
         }
 
