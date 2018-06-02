@@ -20,7 +20,7 @@ pub struct AnimationCore {
     pub vector_layers: HashMap<u64, InMemoryVectorLayer>,
 
     /// The motions in this animation
-    pub motions: Vec<(ElementId, Motion)>
+    pub motions: HashMap<ElementId, Motion>
 }
 
 impl AnimationCore {
@@ -50,7 +50,7 @@ impl AnimationCore {
             },
 
             Motion(motion_id, edit) => {
-                // TODO!
+                self.edit_motion(motion_id, edit);
             },
 
             Element(element_id, when, element_edit) => {
@@ -58,6 +58,23 @@ impl AnimationCore {
                 self.vector_layers.values()
                     .for_each(move |layer| layer.edit_element(*element_id, *when, element_edit));
             }
+        }
+    }
+
+    ///
+    /// Performs a motion edit action
+    /// 
+    fn edit_motion(&mut self, motion_id: &ElementId, edit: &MotionEdit) {
+        use self::MotionEdit::*;
+
+        match edit {
+            Create                  => { self.motions.insert(*motion_id, Motion::None); },
+            Delete                  => { self.motions.remove(&motion_id); },
+            SetType(motion_type)    => { self.motions.get_mut(&motion_id).map(|motion| motion.set_type(*motion_type)); },
+            SetOrigin(x, y)         => { self.motions.get_mut(&motion_id).map(|motion| motion.set_origin((*x, *y))); },
+            SetPath(path)           => { self.motions.get_mut(&motion_id).map(|motion| motion.set_path(path.clone())); },
+            Attach(element_id)      => { unimplemented!(); },
+            Detach(element_id)      => { unimplemented!(); }
         }
     }
 }

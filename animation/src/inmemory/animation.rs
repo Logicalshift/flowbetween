@@ -30,7 +30,7 @@ impl InMemoryAnimation {
             size:               (1980.0, 1080.0),
             next_element_id:    0,
             vector_layers:      HashMap::new(),
-            motions:            vec![]
+            motions:            HashMap::new()
         };
 
         // Create the final animation
@@ -136,7 +136,7 @@ impl AnimationMotion for InMemoryAnimation {
         // Flat search for a motion with this ID
         let core    = self.core.lock().unwrap();
         let motion  = core.motions.iter()
-            .filter(|(element_id, _motion)| element_id == &motion_id)
+            .filter(|(element_id, _motion)| element_id == &&motion_id)
             .nth(0)
             .map(|(_element_id, motion)| motion.clone());
         

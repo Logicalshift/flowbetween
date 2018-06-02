@@ -17,6 +17,36 @@ pub struct TranslateMotion {
     pub translate: TimeCurve
 }
 
+impl TranslateMotion {
+    ///
+    /// Sets the origin of this motion
+    ///
+    #[inline]
+    pub fn set_origin(&mut self, new_origin: (f32, f32)) {
+        self.origin = new_origin;
+    }
+
+    ///
+    /// Sets the path of this motion
+    /// 
+    #[inline]
+    pub fn set_path(&mut self, new_path: TimeCurve) {
+        self.translate = new_path;
+    }
+}
+
+impl Default for TranslateMotion {
+    ///
+    /// Creates a defualt translate motion
+    /// 
+    fn default() -> TranslateMotion {
+        TranslateMotion {
+            origin:     (0.0, 0.0),
+            translate:  TimeCurve::new(TimePoint::new(0.0, 0.0, Duration::from_millis(0)), TimePoint::new(0.0, 0.0, Duration::from_millis(0)))
+        }
+    }
+}
+
 impl MotionTransform for TranslateMotion {
     fn range_millis(&self) -> Range<f32> {
         if self.translate.points.len() == 0 {

@@ -1,6 +1,8 @@
 use super::translate::*;
 use super::transform::*;
+use super::motion_type::*;
 use super::super::raw_point::*;
+use super::super::time_path::*;
 
 use std::ops::Range;
 use std::time::Duration;
@@ -12,8 +14,49 @@ use std::time::Duration;
 /// 
 #[derive(Clone, PartialEq, Debug)]
 pub enum Motion {
+    /// Motion with no effect
+    None,
+
     /// Describes how an element is translated over time
     Translate(TranslateMotion)
+}
+
+impl Motion {
+    ///
+    /// Sets this motion to be a particular type
+    /// 
+    pub fn set_type(&mut self, motion_type: MotionType) {
+        use self::MotionType::*;
+
+        match motion_type {
+            None        => { *self = Motion::None; },
+            Translate   => { *self = Motion::Translate(TranslateMotion::default()); }
+        }
+    }
+
+    ///
+    /// Sets the origin of this motion
+    /// 
+    pub fn set_origin(&mut self, new_origin: (f32, f32)) {
+        use self::Motion::*;
+
+        match self {
+            None                    => { }
+            Translate(translate)    => { translate.set_origin(new_origin); }
+        }
+    }
+
+    ///
+    /// Sets the path of this motion
+    /// 
+    pub fn set_path(&mut self, new_path: TimeCurve) {
+        use self::Motion::*;
+
+        match self {
+            None                    => { }
+            Translate(translate)    => { translate.set_path(new_path); }
+        }
+    }
 }
 
 impl MotionTransform for Motion {
@@ -21,6 +64,7 @@ impl MotionTransform for Motion {
         use self::Motion::*;
 
         match self {
+            None                    => 0.0..0.0,
             Translate(translate)    => translate.range_millis()
         }
     }
@@ -29,6 +73,7 @@ impl MotionTransform for Motion {
         use self::Motion::*;
 
         match self {
+            None                    => Box::new(points),
             Translate(translate)    => translate.transform_points(time, points)
         }
     }

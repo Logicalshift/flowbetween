@@ -1,11 +1,10 @@
 use super::edit::*;
-use super::layer::*;
 use super::motion::*;
 
 use futures::*;
 
 use std::time::Duration;
-use std::ops::{Range, Deref};
+use std::ops::Range;
 
 ///
 /// Supplies the motion elements for an animation
