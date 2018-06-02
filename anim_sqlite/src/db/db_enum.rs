@@ -1,3 +1,5 @@
+use super::motion_path_type::*;
+
 use animation::*;
 
 /// Provides the enum type and name for a database enum value
@@ -84,6 +86,7 @@ pub enum DbEnum {
     Color(ColorType),
     Layer(LayerType),
     MotionType(MotionType),
+    MotionPathType(MotionPathType),
     VectorElement(VectorElementType)
 }
 
@@ -373,6 +376,16 @@ impl From<MotionType> for DbEnumName {
     }
 }
 
+impl From<MotionPathType> for DbEnumName {
+    fn from(t: MotionPathType) -> DbEnumName {
+        use self::MotionPathType::*;
+
+        match t {
+            Position    => DbEnumName("MotionPathType", "Position"),
+        }
+    }
+}
+
 impl From<DbEnum> for DbEnumName {
     fn from(t: DbEnum) -> DbEnumName {
         use self::DbEnum::*;
@@ -384,7 +397,8 @@ impl From<DbEnum> for DbEnumName {
             Color(ct)               => DbEnumName::from(ct),
             Layer(lt)               => DbEnumName::from(lt),
             VectorElement(vet)      => DbEnumName::from(vet),
-            MotionType(mot)         => DbEnumName::from(mot)
+            MotionType(mot)         => DbEnumName::from(mot),
+            MotionPathType(mpt)     => DbEnumName::from(mpt)
         }
     }
 }

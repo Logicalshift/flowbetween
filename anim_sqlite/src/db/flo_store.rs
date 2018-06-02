@@ -1,5 +1,6 @@
 use super::db_enum::*;
 use super::flo_query::*;
+use super::motion_path_type::*;
 
 // TODO: make error type more generic
 use rusqlite::*;
@@ -119,7 +120,22 @@ pub enum DatabaseUpdate {
     PopVectorBrushPropertiesElement,
 
     /// Pops a vector element ID from the stack and creates a set of brush points for it
-    PopBrushPoints(Arc<Vec<BrushPoint>>)
+    PopBrushPoints(Arc<Vec<BrushPoint>>),
+
+    /// Creates a new motion with the specified ID
+    CreateMotion(i64),
+
+    /// Sets the type of a motion
+    SetMotionType(i64, MotionType),
+
+    /// Sets the origin of a motion
+    SetMotionOrigin(i64, f32, f32),
+
+    /// Pops the specified number of time point IDs from the stack and sets the path of the specified motion to match
+    SetMotionPath(i64, MotionPathType, usize),
+
+    /// Attaches an element ID to a motion
+    AddMotionAttachedElement(i64, i64)
 }
 
 ///

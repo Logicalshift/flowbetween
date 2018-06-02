@@ -24,6 +24,7 @@ mod color;
 mod brush;
 mod motion;
 mod vector_layer;
+mod motion_path_type;
 pub mod vector_frame;
 
 pub use self::animation::*;

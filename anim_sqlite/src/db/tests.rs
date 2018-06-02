@@ -2,6 +2,7 @@ use super::*;
 use super::db_enum::*;
 use super::flo_store::*;
 use super::flo_query::*;
+use super::motion_path_type::*;
 
 use animation;
 use animation::LayerEdit::*;
@@ -477,5 +478,78 @@ fn smoke_pop_brush_points() {
         DatabaseUpdate::PopBrushPoints(Arc::new(vec![BrushPoint { position: (10.0, 5.0), cp1: (20.0, 20.0), cp2: (30.0, 30.0), width: 10.0 }])),
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop
+    ])
+}
+
+#[test]
+fn smoke_create_motion() {
+    test_updates(vec![
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::CreateMotion(2)
+    ])
+}
+
+#[test]
+fn smoke_set_motion_type() {
+    test_updates(vec![
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::SetMotionType(1, animation::MotionType::Translate)
+    ])
+}
+
+#[test]
+fn smoke_set_motion_origin() {
+    test_updates(vec![
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::SetMotionOrigin(1, 20.0, 30.0)
+    ])
+}
+
+#[test]
+fn smoke_set_motion_path() {
+    test_updates(vec![
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::SetMotionPath(1, MotionPathType::Position, 4)
+    ])
+}
+
+#[test]
+fn smoke_change_motion_path() {
+    test_updates(vec![
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::SetMotionPath(1, MotionPathType::Position, 4),
+
+        DatabaseUpdate::PushTimePoint(5.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(6.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(7.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(8.0, 2.0, 3.0),
+        DatabaseUpdate::SetMotionPath(1, MotionPathType::Position, 4)
+    ])
+}
+
+#[test]
+fn smoke_attach_elements_to_motion() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke, Duration::from_millis(2500)),
+        DatabaseUpdate::PushElementAssignId(42),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::AddMotionAttachedElement(1, 42)
     ])
 }

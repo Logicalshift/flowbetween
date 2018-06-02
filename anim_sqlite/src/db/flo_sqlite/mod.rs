@@ -70,6 +70,7 @@ enum FloStatement {
     SelectBrushPoints,
 
     UpdateAnimationSize,
+    UpdateMotionType,
 
     InsertEnumValue,
     InsertEditType,
@@ -99,9 +100,14 @@ enum FloStatement {
     InsertBrushDefinitionElement,
     InsertBrushPropertiesElement,
     InsertBrushPoint,
+    InsertMotion,
+    InsertOrReplaceMotionOrigin,
+    InsertMotionAttachedElement,
+    InsertMotionPathPoint,
 
     DeleteKeyFrame,
-    DeleteLayer
+    DeleteLayer,
+    DeleteMotionPoints
 }
 
 impl FloSqlite {
@@ -215,6 +221,7 @@ impl FloSqlite {
             SelectBrushPoints               => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
+            UpdateMotionType                => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
 
             InsertEnumValue                 => "INSERT INTO Flo_EnumerationDescriptions (FieldName, Value, ApiName, Comment) SELECT ?, (SELECT IFNULL(Max(Value)+1, 0) FROM Flo_EnumerationDescriptions WHERE FieldName = ?), ?, ?",
             InsertEditType                  => "INSERT INTO Flo_EditLog (Edit) VALUES (?)",
@@ -244,9 +251,14 @@ impl FloSqlite {
             InsertBrushPropertiesElement    => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
             InsertBrushPoint                => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             InsertElementAssignedId         => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
+            InsertMotion                    => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
+            InsertOrReplaceMotionOrigin     => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
+            InsertMotionAttachedElement     => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
+            InsertMotionPathPoint           => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
 
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
-            DeleteLayer                     => "DELETE FROM Flo_LayerType WHERE LayerId = ?"
+            DeleteLayer                     => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
+            DeleteMotionPoints              => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?"
         }
     }
 

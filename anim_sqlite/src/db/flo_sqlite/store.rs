@@ -1,4 +1,5 @@
 use super::*;
+
 use animation::*;
 
 impl FloSqlite {
@@ -307,6 +308,62 @@ impl FloSqlite {
                     ])?;
                 }
 
+                Ok(())
+            },
+
+            CreateMotion(motion_id)                                         => {
+                let motion_type         = self.enum_value(DbEnum::MotionType(MotionType::None));
+                let mut insert_motion   = Self::prepare(&self.sqlite, FloStatement::InsertMotion)?;
+
+                insert_motion.insert(&[&motion_id, &motion_type])?;
+
+                Ok(())
+            },
+
+            SetMotionType(motion_id, motion_type)                           => {
+                let motion_type         = self.enum_value(DbEnum::MotionType(motion_type));
+                let mut update_motion   = Self::prepare(&self.sqlite, FloStatement::UpdateMotionType)?;
+
+                update_motion.insert(&[&motion_type, &motion_id])?;
+
+                Ok(())
+            },
+
+            SetMotionOrigin(motion_id, x, y)                                => {
+                let mut set_origin  = Self::prepare(&self.sqlite, FloStatement::InsertOrReplaceMotionOrigin)?;
+                let (x, y)          = (x as f64, y as f64);
+
+                set_origin.insert(&[&motion_id, &x, &y])?;
+
+                Ok(())
+            },
+
+            SetMotionPath(motion_id, path_type, num_points)                 => {
+                let path_type           = self.enum_value(DbEnum::MotionPathType(path_type));
+                let mut delete_path     = Self::prepare(&self.sqlite, FloStatement::DeleteMotionPoints)?;
+                let mut insert_point    = Self::prepare(&self.sqlite, FloStatement::InsertMotionPathPoint)?;
+
+                // Remove the existing path of this type from the motion
+                delete_path.execute(&[&motion_id, &path_type])?;
+
+                // Collect the IDs of the points
+                let mut point_ids = vec![];
+                for _index in 0..num_points {
+                    point_ids.push(self.stack.pop().unwrap_or(-1));
+                }
+
+                // Insert these points
+                for index in 0..num_points {
+                    let point_index = ((num_points-1)-index) as i64;
+                    insert_point.insert(&[&motion_id, &path_type, &point_index, &point_ids[index]])?;
+                }
+
+                Ok(())
+            },
+
+            AddMotionAttachedElement(motion_id, element_id)                 => {
+                let mut insert_attached_element = Self::prepare(&self.sqlite, FloStatement::InsertMotionAttachedElement)?;
+                insert_attached_element.insert(&[&motion_id, &element_id])?;
                 Ok(())
             }
         }
