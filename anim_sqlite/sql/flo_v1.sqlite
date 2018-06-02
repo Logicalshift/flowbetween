@@ -262,7 +262,7 @@ CREATE TABLE Flo_MotionAttached (
     ElementId   INTEGER NOT NULL REFERENCES Flo_AssignedElementId(AssignedId),
 
     PRIMARY KEY (MotionId, ElementId)
-);
+) WITHOUT ROWID;
 
 CREATE INDEX FloIdx_AttachedMotion ON Flo_MotionAttached (ElementId, MotionId);
 
@@ -368,6 +368,7 @@ CREATE TABLE Flo_AssignedElementId (
     AssignedId  INTEGER NOT NULL
 ) WITHOUT ROWID;
 
+/* Deleting from the assigned element ID table also removes anything that references that table */
 CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
     BEGIN
         DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
