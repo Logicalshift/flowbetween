@@ -266,6 +266,14 @@ CREATE TABLE Flo_MotionAttached (
 
 CREATE INDEX FloIdx_AttachedMotion ON Flo_MotionAttached (ElementId, MotionId);
 
+/* Deleting a motion also deletes its attached properties */
+CREATE TRIGGER Flo_Delete_Motion_Elements BEFORE DELETE ON Flo_Motion
+    BEGIN
+        DELETE FROM Flo_MotionOrigin WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_MotionPath WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_MotionAttached WHERE MotionId = Old.MotionId;
+    END;
+
 /*
  *  ===== Animation
  */
