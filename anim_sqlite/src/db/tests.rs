@@ -566,3 +566,45 @@ fn smoke_attach_elements_to_motion() {
         DatabaseUpdate::AddMotionAttachedElement(1, 42)
     ])
 }
+
+#[test]
+fn smoke_delete_motion() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke, Duration::from_millis(2500)),
+        DatabaseUpdate::PushElementAssignId(42),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::AddMotionAttachedElement(1, 42),
+
+        DatabaseUpdate::DeleteMotion(1)
+    ])
+}
+
+#[test]
+fn smoke_delete_motion_attachment() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke, Duration::from_millis(2500)),
+        DatabaseUpdate::PushElementAssignId(42),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::AddMotionAttachedElement(1, 42),
+
+        DatabaseUpdate::DeleteMotionAttachedElement(1, 42)
+    ])
+}

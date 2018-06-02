@@ -365,6 +365,18 @@ impl FloSqlite {
                 let mut insert_attached_element = Self::prepare(&self.sqlite, FloStatement::InsertMotionAttachedElement)?;
                 insert_attached_element.insert(&[&motion_id, &element_id])?;
                 Ok(())
+            },
+
+            DeleteMotion(motion_id)                                         => {
+                let mut delete_motion = Self::prepare(&self.sqlite, FloStatement::DeleteMotion)?;
+                delete_motion.execute(&[&motion_id])?;
+                Ok(())
+            },
+
+            DeleteMotionAttachedElement(motion_id, element_id)              => {
+                let mut delete_attachment = Self::prepare(&self.sqlite, FloStatement::DeleteMotionAttachedElement)?;
+                delete_attachment.execute(&[&motion_id, &element_id])?;
+                Ok(())
             }
         }
     }

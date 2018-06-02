@@ -135,7 +135,13 @@ pub enum DatabaseUpdate {
     SetMotionPath(i64, MotionPathType, usize),
 
     /// Attaches an element ID to a motion
-    AddMotionAttachedElement(i64, i64)
+    AddMotionAttachedElement(i64, i64),
+
+    /// Removes the motion with the specified ID
+    DeleteMotion(i64),
+
+    /// Removes a particular attached element
+    DeleteMotionAttachedElement(i64, i64)
 }
 
 ///
