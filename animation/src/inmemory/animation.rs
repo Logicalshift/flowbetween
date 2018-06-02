@@ -354,4 +354,37 @@ mod test {
 
         assert!(animation.motion().get_motions_for_element(ElementId::Assigned(10)) == vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(2), ElementId::Assigned(3), ElementId::Assigned(4)])
     }
+
+    #[test]
+    fn can_detach_motions_from_element() {
+        let animation   = InMemoryAnimation::new();
+        let start_point = TimePoint::new(10.0, 20.0, Duration::from_millis(0));
+        let end_point   = TimePoint::new(500.0, 400.0, Duration::from_millis(2000));
+
+        animation.perform_edits(vec![
+            AnimationEdit::AddNewLayer(0),
+            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+            AnimationEdit::Layer(0, LayerEdit::Paint(Duration::from_millis(0), PaintEdit::BrushStroke(ElementId::Assigned(10), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ]))))
+        ]);
+
+        for motion_id in 0..5 {
+            animation.perform_edits(vec![
+                AnimationEdit::Motion(ElementId::Assigned(motion_id), MotionEdit::Create),
+                AnimationEdit::Motion(ElementId::Assigned(motion_id), MotionEdit::SetType(MotionType::Translate)),
+                AnimationEdit::Motion(ElementId::Assigned(motion_id), MotionEdit::SetOrigin(30.0, 40.0)),
+                AnimationEdit::Motion(ElementId::Assigned(motion_id), MotionEdit::SetPath(TimeCurve::new(start_point, end_point))),
+
+                AnimationEdit::Motion(ElementId::Assigned(motion_id), MotionEdit::Attach(ElementId::Assigned(10)))
+            ]);
+        }
+
+        animation.perform_edits(vec![
+            AnimationEdit::Motion(ElementId::Assigned(2), MotionEdit::Detach(ElementId::Assigned(10)))
+        ]);
+
+        assert!(animation.motion().get_motions_for_element(ElementId::Assigned(10)) == vec![ElementId::Assigned(0), ElementId::Assigned(1), ElementId::Assigned(3), ElementId::Assigned(4)])
+    }
 }
