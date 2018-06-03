@@ -12,6 +12,7 @@ include     = [ "Cargo.toml", "src/**/*", "sql/**/*" ]
 flo_canvas          = { path = "../canvas", version = "^0.1.0" }
 flo_animation       = { path = "../animation", version = "^0.1.0" }
 
+itertools           = "^0.7.4"
 rusqlite            = { version = "0.11.0", features = ["bundled"] }
-desync              = "^0.1.2"
 futures             = "^0.1.17"
+desync              = "^0.1.2"
