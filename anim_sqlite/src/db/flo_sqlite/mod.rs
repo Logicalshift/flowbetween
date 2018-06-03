@@ -68,6 +68,9 @@ enum FloStatement {
     SelectBrushProperties,
     SelectVectorElementsBefore,
     SelectBrushPoints,
+    SelectMotionsForElement,
+    SelectMotion,
+    SelectMotionTimePoints,
 
     UpdateAnimationSize,
     UpdateMotionType,
@@ -221,6 +224,14 @@ impl FloSqlite {
                                                     WHERE Elem.KeyFrameId = ? AND Elem.AtTime <= ? \
                                                     ORDER BY Elem.ElementId ASC",
             SelectBrushPoints               => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
+            SelectMotionsForElement         => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
+            SelectMotion                    => "SELECT Mot.MotionType, Origin.X, Origin.Y FROM Flo_Motion AS Mot
+                                                    LEFT OUTER JOIN Flo_MotionOrigin AS Origin ON Mot.MotionId = Origin.MotionId
+                                                    WHERE Mot.MotionId = ?", 
+            SelectMotionTimePoints          => "SELECT Point.X, Point.Y, Point.Milliseconds FROM Flo_MotionPath AS Path
+                                                    INNER JOIN Flo_TimePoint AS Point ON Path.PointId = Point.PointId
+                                                    WHERE Path.MotionId = ? AND Path.PathType = ?
+                                                    ORDER BY Path.PointIndex ASC",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
             UpdateMotionType                => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
