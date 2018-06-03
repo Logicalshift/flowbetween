@@ -115,6 +115,15 @@ impl Animation for InMemoryAnimation {
 }
 
 impl AnimationMotion for InMemoryAnimation {
+    fn assign_motion_id(&self) -> ElementId {
+        let mut core    = self.core.lock().unwrap();
+        let result      = core.next_element_id;
+
+        core.next_element_id += 1;
+
+        ElementId::Assigned(result)
+    }
+
     fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {
         let core                = self.core.lock().unwrap();
         let when_millis         = (to_millis(when.start) as f32)..(to_millis(when.end) as f32);

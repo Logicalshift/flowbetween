@@ -35,7 +35,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Assigns the next element ID and returns it
     ///
-    fn next_element_id(&mut self) -> i64 {
+    pub fn next_element_id(&mut self) -> i64 {
         let result      = self.next_element_id;
         self.next_element_id += 1;
         result

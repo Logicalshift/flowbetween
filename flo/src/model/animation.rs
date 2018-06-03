@@ -66,6 +66,15 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
 
 impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     ///
+    /// Assigns a new unique ID for creating a new motion
+    /// 
+    /// (This ID will not have been used so far and will not be used again)
+    /// 
+    fn assign_motion_id(&self) -> ElementId {
+        self.animation.motion().assign_motion_id()
+    }
+    
+    ///
     /// Retrieves a stream containing all of the motions in a particular time range
     /// 
     fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {

@@ -39,4 +39,13 @@ impl AnimationDb {
             core.db.query_assigned_layer_ids()
         }).unwrap()
     }
+
+    ///
+    /// Assigns an unique element ID
+    /// 
+    pub fn assign_element_id(&self) -> ElementId {
+        ElementId::Assigned(self.core.sync(|core| {
+            core.next_element_id()
+        }))
+    }
 }
