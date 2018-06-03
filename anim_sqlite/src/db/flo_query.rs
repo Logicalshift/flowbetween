@@ -1,4 +1,5 @@
 use super::db_enum::*;
+use super::motion_path_type::*;
 
 use animation::*;
 use std::time::Duration;
@@ -55,6 +56,24 @@ pub struct VectorElementEntry {
     pub brush:                  Option<(i64, DrawingStyleType)>,
     pub brush_properties_id:    Option<i64>,
     pub assigned_id:            ElementId
+}
+
+///
+/// Entry read from the time point table
+/// 
+pub struct TimePointEntry {
+    pub x:              f32,
+    pub y:              f32,
+    pub milliseconds:   f32
+}
+
+///
+/// Entry read for a motion
+/// 
+#[derive(PartialEq)]
+pub struct MotionEntry {
+    pub motion_type:    MotionType,
+    pub origin:         Option<(f32, f32)>,
 }
 
 ///
@@ -140,4 +159,19 @@ pub trait FloQuery {
     /// Queries the brush points associated with a vector element
     /// 
     fn query_vector_element_brush_points(&mut self, element_id: i64) -> Result<Vec<BrushPoint>>;
+
+    ///
+    /// Queries the motion associated with a particular motion ID
+    /// 
+    fn query_motion(&mut self, motion_id: i64) -> Result<Option<MotionEntry>>;
+
+    ///
+    /// Queries the time points attached to a motion
+    /// 
+    fn query_motion_timepoints(&mut self, motion_id: i64, path_type: MotionPathType) -> Result<Vec<TimePointEntry>>;
+
+    ///
+    /// Retrieves the motions
+    /// 
+    fn query_motion_ids_for_element(&mut self, assigned_element_id: i64) -> Result<Vec<i64>>;
 }

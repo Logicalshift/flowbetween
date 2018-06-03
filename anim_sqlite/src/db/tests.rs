@@ -239,6 +239,34 @@ fn can_query_edit_type() {
 }
 
 #[test]
+fn can_query_motion() {
+    let core    = core();
+    let mut db  = core.db;
+
+    db.update(vec![
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::SetMotionType(1, MotionType::Translate),
+        DatabaseUpdate::SetMotionOrigin(1, 100.0, 200.0)
+    ]).unwrap();
+
+    let motion_entry = db.query_motion(1);
+    let motion_entry = motion_entry.unwrap();
+
+    assert!(motion_entry == Some(MotionEntry { motion_type: MotionType::Translate, origin: Some((100.0, 200.0)) }));
+}
+
+#[test]
+fn can_query_missing_motion() {
+    let core    = core();
+    let mut db  = core.db;
+
+    let motion_entry = db.query_motion(1);
+    let motion_entry = motion_entry.unwrap();
+
+    assert!(motion_entry == None);
+}
+
+#[test]
 fn smoke_pop_edit_log_set_size() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 

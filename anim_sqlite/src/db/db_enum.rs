@@ -138,6 +138,14 @@ impl DbEnum {
             _                           => None
         }
     }
+
+    /// Returns the MotionType value for this enum (if there is one)
+    pub fn motion_type(self) -> Option<MotionType> {
+        match self {
+            DbEnum::MotionType(res) => Some(res),
+            _                       => None
+        }
+    }
 }
 
 ///
@@ -150,7 +158,8 @@ pub enum DbEnumType {
     BrushDefinition,
     Color,
     Layer,
-    VectorElement
+    VectorElement,
+    MotionType
 }
 
 impl From<DbEnumType> for Vec<DbEnum> {
@@ -211,6 +220,15 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::VectorElement(BrushDefinition),
                     DbEnum::VectorElement(BrushProperties),
                     DbEnum::VectorElement(BrushStroke),
+                ]
+            },
+
+            MotionType => {
+                use self::MotionType::*;
+
+                vec![
+                    DbEnum::MotionType(None),
+                    DbEnum::MotionType(Translate)
                 ]
             }
         }

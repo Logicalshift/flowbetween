@@ -1,4 +1,5 @@
 use super::*;
+use super::super::motion_path_type::*;
 
 use animation::*;
 
@@ -286,5 +287,37 @@ impl FloQuery for FloSqlite {
                 }
             })
             .map(|rows_with_errors| rows_with_errors.map(|row_with_error| row_with_error.unwrap()).collect())
+    }
+
+    ///
+    /// Queries the motion associated with a particular motion ID
+    /// 
+    fn query_motion(&mut self, motion_id: i64) -> Result<Option<MotionEntry>> {
+        let result = self.query_map(FloStatement::SelectMotion, &[&motion_id], |row| (row.get(0), row.get(1), row.get(2)))?
+            .map(|row| row.unwrap())
+            .map(|(motion_type, x, y): (i64, Option<f64>, Option<f64>)| {
+                let motion_type = self.value_for_enum(DbEnumType::MotionType, Some(motion_type));
+                let motion_type = motion_type.unwrap().motion_type().unwrap();
+                let origin      = x.and_then(|x| y.map(move |y| (x as f32, y as f32)));
+
+                MotionEntry { motion_type, origin }
+            })
+            .nth(0);
+
+        Ok(result)
+    }
+
+    ///
+    /// Queries the time points attached to a motion
+    /// 
+    fn query_motion_timepoints(&mut self, motion_id: i64, path_type: MotionPathType) -> Result<Vec<TimePointEntry>> {
+        unimplemented!()
+    }
+
+    ///
+    /// Retrieves the motions
+    /// 
+    fn query_motion_ids_for_element(&mut self, assigned_element_id: i64) -> Result<Vec<i64>> {
+        unimplemented!()
     }
 }
