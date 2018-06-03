@@ -123,7 +123,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     .map(|&TimePoint(ref x, ref y, ref millis)| PushTimePoint(*x, *y, *millis)))?;
 
                 // Turn into an edit log path
-                self.db.update(vec![PushEditLogMotionPath(curve.points.len()), Pop])?;
+                self.db.update(vec![PushEditLogMotionPath(curve.points.len()*3), Pop])?;
             },
 
             Attach(element_id)      => {

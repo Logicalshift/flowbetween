@@ -238,7 +238,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         .map(|&TimePoint(ref x, ref y, ref millis)| DatabaseUpdate::PushTimePoint(*x, *y, *millis)))?;
 
                     // Turn into a motion path
-                    self.db.update(vec![DatabaseUpdate::SetMotionPath(motion_id, MotionPathType::Position, time_path.points.len())])?;
+                    self.db.update(vec![DatabaseUpdate::SetMotionPath(motion_id, MotionPathType::Position, time_path.points.len()*3)])?;
                 },
 
                 Attach(element_id) => {
