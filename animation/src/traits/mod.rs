@@ -1,4 +1,5 @@
 mod edit;
+mod actions;
 mod animation;
 mod animation_motion;
 mod frame;
@@ -14,6 +15,7 @@ mod time_path;
 mod motion;
 
 pub use self::edit::*;
+pub use self::actions::*;
 pub use self::animation::*;
 pub use self::animation_motion::*;
 pub use self::frame::*;
