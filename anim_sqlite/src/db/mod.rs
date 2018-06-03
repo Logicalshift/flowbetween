@@ -10,6 +10,7 @@ use std::ops::Range;
 use std::collections::HashMap;
 
 #[cfg(test)] mod tests;
+#[cfg(test)] mod tests_smoke;
 
 mod flo_store;
 mod flo_query;
