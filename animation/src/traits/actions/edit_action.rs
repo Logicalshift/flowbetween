@@ -10,5 +10,12 @@ pub trait EditAction {
     ///
     /// Converts this edit action into a set of animation edits for a particular animation
     /// 
-    fn to_animation_edits<Anim: Animation>(&self, &Anim) -> Vec<AnimationEdit>;
+    fn to_animation_edits<Anim: Animation>(&self, animation: &Anim) -> Vec<AnimationEdit>;
+}
+
+impl EditAction for AnimationEdit {
+    #[inline]
+    fn to_animation_edits<Anim: Animation>(&self, animation: &Anim) -> Vec<AnimationEdit> {
+        vec![self.clone()]
+    }
 }
