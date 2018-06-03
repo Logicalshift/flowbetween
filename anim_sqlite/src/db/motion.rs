@@ -2,8 +2,6 @@ use super::*;
 use super::time_path::*;
 use super::motion_path_type::*;
 
-use rusqlite::*;
-
 impl AnimationDb {
     ///
     /// Retrieves a particular time path for a motion
@@ -64,6 +62,16 @@ impl AnimationDb {
     /// Retrieves all of the motion IDs attached to the specified element
     /// 
     pub fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
-        unimplemented!()
+        if let ElementId::Assigned(element_id) = element_id {
+            // Assigned element IDs have attached motions
+            let motion_ids = self.core.sync(move |core| core.db.query_motion_ids_for_element(element_id)).unwrap();
+
+            motion_ids.into_iter()
+                .map(|raw_id| ElementId::Assigned(raw_id))
+                .collect()
+        } else {
+            // Unassigned element IDs have no attached motions
+            vec![]
+        }
     }
 }
