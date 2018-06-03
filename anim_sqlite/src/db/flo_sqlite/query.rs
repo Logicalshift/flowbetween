@@ -311,13 +311,33 @@ impl FloQuery for FloSqlite {
     /// Queries the time points attached to a motion
     /// 
     fn query_motion_timepoints(&mut self, motion_id: i64, path_type: MotionPathType) -> Result<Vec<TimePointEntry>> {
-        unimplemented!()
+        let path_type = self.enum_value(DbEnum::MotionPathType(path_type));
+
+        let result = self.query_map(FloStatement::SelectMotionTimePoints, &[&motion_id, &path_type],
+            |row| (row.get(0), row.get(1), row.get(2)))?
+            .map(|row_with_error| row_with_error.unwrap())
+            .map(|(x, y, millis): (f64, f64, f64)| {
+                let (x, y, millis) = (x as f32, y as f32, millis as f32);
+                TimePointEntry { 
+                    x:              x, 
+                    y:              y, 
+                    milliseconds:   millis 
+                }
+            })
+            .collect();
+        
+        Ok(result)
     }
 
     ///
     /// Retrieves the motions
     /// 
     fn query_motion_ids_for_element(&mut self, assigned_element_id: i64) -> Result<Vec<i64>> {
-        unimplemented!()
+        let result = self.query_map(FloStatement::SelectMotionsForElement, &[&assigned_element_id],
+            |row| row.get(0))?
+            .map(|row_with_error| row_with_error.unwrap())
+            .collect();
+
+        Ok(result)
     }
 }

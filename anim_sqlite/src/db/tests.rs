@@ -267,6 +267,78 @@ fn can_query_missing_motion() {
 }
 
 #[test]
+fn can_query_motion_assigned_elements() {
+    let core    = core();
+    let mut db  = core.db;
+
+    db.update(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke, Duration::from_millis(2500)),
+        DatabaseUpdate::PushElementAssignId(42),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke, Duration::from_millis(2500)),
+        DatabaseUpdate::PushElementAssignId(43),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::CreateMotion(2),
+        DatabaseUpdate::AddMotionAttachedElement(1, 42),
+        DatabaseUpdate::AddMotionAttachedElement(2, 42),
+        DatabaseUpdate::AddMotionAttachedElement(1, 43),
+    ]).unwrap();
+
+    let motion_elements = db.query_motion_ids_for_element(42);
+    let motion_elements = motion_elements.unwrap();
+
+    assert!(motion_elements.iter().any(|item| item == &1));
+    assert!(motion_elements.iter().any(|item| item == &2));
+    assert!(motion_elements.len() == 2);
+
+    let motion_elements = db.query_motion_ids_for_element(43);
+    let motion_elements = motion_elements.unwrap();
+
+    assert!(motion_elements.iter().any(|item| item == &1));
+    assert!(motion_elements.len() == 1);
+}
+
+#[test]
+fn can_query_motion_points() {
+    let core    = core();
+    let mut db  = core.db;
+
+    db.update(vec![
+        DatabaseUpdate::CreateMotion(1),
+        DatabaseUpdate::SetMotionType(1, MotionType::Translate),
+        DatabaseUpdate::SetMotionOrigin(1, 100.0, 200.0),
+
+        DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
+        DatabaseUpdate::PushTimePoint(4.0, 5.0, 6.0),
+        DatabaseUpdate::PushTimePoint(7.0, 8.0, 9.0),
+        DatabaseUpdate::SetMotionPath(1, MotionPathType::Position, 3)
+    ]).unwrap();
+
+    let motion_path = db.query_motion_timepoints(1, MotionPathType::Position);
+    let motion_path = motion_path.unwrap();
+
+    assert!(motion_path == vec![
+        TimePointEntry { x: 1.0, y: 2.0, milliseconds: 3.0 },
+        TimePointEntry { x: 4.0, y: 5.0, milliseconds: 6.0 },
+        TimePointEntry { x: 7.0, y: 8.0, milliseconds: 9.0 }
+    ]);
+}
+
+#[test]
 fn smoke_pop_edit_log_set_size() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 

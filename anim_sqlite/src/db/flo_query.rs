@@ -61,6 +61,7 @@ pub struct VectorElementEntry {
 ///
 /// Entry read from the time point table
 /// 
+#[derive(PartialEq)]
 pub struct TimePointEntry {
     pub x:              f32,
     pub y:              f32,
