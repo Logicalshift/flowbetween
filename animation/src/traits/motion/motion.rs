@@ -23,6 +23,18 @@ pub enum Motion {
 
 impl Motion {
     ///
+    /// Retrieves the type of this motion
+    /// 
+    pub fn motion_type(&self) -> MotionType {
+        use self::Motion::*;
+
+        match self {
+            None            => MotionType::None,
+            Translate(_)    => MotionType::Translate
+        }
+    }
+
+    ///
     /// Sets this motion to be a particular type
     /// 
     pub fn set_type(&mut self, motion_type: MotionType) {

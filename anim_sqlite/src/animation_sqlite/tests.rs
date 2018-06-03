@@ -626,9 +626,23 @@ fn move_existing_element() {
         
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Create),
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetType(MotionType::Translate)),
-        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(0.0, 0.0)),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(50.0, 60.0)),
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Attach(ElementId::Assigned(50)))
     ]);
     anim.panic_on_error();
+
+    let attached = anim.get_motions_for_element(ElementId::Assigned(50));
+    assert!(attached == vec![ElementId::Assigned(100)]);
+
+    let motion = anim.get_motion(ElementId::Assigned(100));
+    assert!(motion.is_some());
+    assert!(motion.as_ref().unwrap().motion_type() == MotionType::Translate);
+
+    if let Some(Motion::Translate(translate)) = motion {
+        assert!(translate.origin == (50.0, 60.0));
+        assert!(translate.translate == TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))));
+    } else {
+        assert!(false)
+    }
 }
