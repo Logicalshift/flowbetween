@@ -198,7 +198,7 @@ mod test {
 
         fn create_model(&self, _flo_model: Arc<FloModel<InMemoryAnimation>>) -> i32 { 94 }
 
-        fn actions_for_input<'a>(&'a self, _data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
+        fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<InMemoryAnimation>>, _data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<_> = input.collect();
             
             if input.len() == 1 {
@@ -226,9 +226,10 @@ mod test {
 
     #[test]
     fn generates_generic_data_for_standard_data() {
-        let generic_tool = TestTool.to_flo_tool();
+        let generic_tool    = TestTool.to_flo_tool();
 
-        let actions         = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
+        let animation       = Arc::new(FloModel::new(InMemoryAnimation::new()));
+        let actions         = generic_tool.actions_for_input(animation, None, Box::new(vec![].into_iter()));
         let actions: Vec<_> = actions.collect();
 
         assert!(actions.len() == 1);
@@ -240,9 +241,10 @@ mod test {
 
     #[test]
     fn data_survives_round_trip() {
-        let generic_tool = TestTool.to_flo_tool();
+        let generic_tool        = TestTool.to_flo_tool();
 
-        let actions             = generic_tool.actions_for_input(None, Box::new(vec![].into_iter()));
+        let animation           = Arc::new(FloModel::new(InMemoryAnimation::new()));
+        let actions             = generic_tool.actions_for_input(animation.clone(), None, Box::new(vec![].into_iter()));
         let mut actions: Vec<_> = actions.collect();
 
         // Should return a data element of '42'
@@ -252,7 +254,7 @@ mod test {
         }.unwrap();
 
         // Feed this back into the tool: should generate a 'clear' brush preview action as a result (see tool definition)
-        let feedback_actions            = generic_tool.actions_for_input(None, Box::new(vec![ToolInput::Data(data)].into_iter()));
+        let feedback_actions            = generic_tool.actions_for_input(animation.clone(), None, Box::new(vec![ToolInput::Data(data)].into_iter()));
         let feedback_actions: Vec<_>    = feedback_actions.collect();
 
         assert!(feedback_actions.len() == 1);
