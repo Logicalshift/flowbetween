@@ -169,13 +169,19 @@ mod test {
 
         let target_point = TimePoint::new(300.0, 400.0, Duration::from_millis(442));
 
-        assert!(static_move == vec![
-            AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Create),
-            AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetType(MotionType::Translate)),
-            AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetOrigin(100.0, 200.0)),
-            AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetPath(TimeCurve::new(target_point, target_point))),
-            AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))),
-            AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2)))
-        ]);
+        assert!(static_move[0] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Create));
+        assert!(static_move[1] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetType(MotionType::Translate)));
+        assert!(static_move[2] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetOrigin(100.0, 200.0)));
+        assert!(static_move[3] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetPath(TimeCurve::new(target_point, target_point))));
+
+        // Attaching can be in either order
+        if (static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1)))) {
+            assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2))));
+        } else {
+            assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))));
+            assert!(static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2))));
+        }
+
+        assert!(static_move.len() == 6);
     }
 }
