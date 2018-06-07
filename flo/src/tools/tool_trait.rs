@@ -62,7 +62,7 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'a>(&'a self, data: Option<Arc<Self::ToolData>>, input: Box<'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<'a+Iterator<Item=ToolAction<Self::ToolData>>>;
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<Self::ToolData>>, input: Box<'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<'a+Iterator<Item=ToolAction<Self::ToolData>>>;
 }
 
 ///

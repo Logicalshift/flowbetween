@@ -9,6 +9,7 @@ use animation::*;
 
 use futures::*;
 use std::sync::*;
+use std::time::Duration;
 use std::collections::HashSet;
 
 ///
@@ -314,7 +315,7 @@ impl Select {
     ///
     /// Processes a paint action (at the top level)
     /// 
-    fn paint(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
+    fn paint<Anim: 'static+Animation>(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, animation: Arc<FloModel<Anim>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
         let mut actions     = actions;
         let mut data        = data;
         let current_action  = data.action;
@@ -436,6 +437,13 @@ impl Select {
                 let new_data = data.with_action(SelectAction::NoAction);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
+
+                // Create a motion for this element
+                let selected_element_ids    = data.selected_elements.iter().cloned().collect();
+                let edit_time               = data.frame.as_ref().map(|frame| frame.time_index()).unwrap_or(Duration::from_millis(0));
+                let move_elements           = MotionEditAction::MoveElements(selected_element_ids, edit_time, data.initial_position.position, paint.location);
+
+                actions.extend(move_elements.to_animation_edits(&*animation).into_iter().map(|elem| ToolAction::Edit(elem)));
 
                 // Redraw the selection highlights
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
@@ -639,7 +647,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     ///
     /// Returns the actions that result from a particular inpiut
     /// 
-    fn actions_for_input<'a>(&self, data: Option<Arc<SelectData>>, input: Box<'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<Iterator<Item=ToolAction<SelectData>>> {
+    fn actions_for_input<'a>(&self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<SelectData>>, input: Box<'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<Iterator<Item=ToolAction<SelectData>>> {
         if let Some(mut data) = data {
             // We build up a vector of actions to perform as we go
             let mut actions = vec![];
@@ -689,7 +697,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     },
 
                     ToolInput::Paint(painting)  => {
-                        let (new_actions, new_data) = self.paint(painting, actions, data);
+                        let (new_actions, new_data) = self.paint(painting, actions, flo_model.clone(), data);
                         actions = new_actions;
                         data    = new_data;
                     },

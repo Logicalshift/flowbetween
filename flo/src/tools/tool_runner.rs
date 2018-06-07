@@ -129,7 +129,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
             let input = Box::new(input);
 
             // Call the tool to get the actions
-            let tool_actions = tool.actions_for_input(self.tool_data.clone(), input);
+            let tool_actions = tool.actions_for_input(self.view_model.clone(), self.tool_data.clone(), input);
 
             // Process any data actions and return the remainder
             for action in tool_actions {

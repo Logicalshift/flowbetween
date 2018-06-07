@@ -157,7 +157,7 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
             .unwrap_or_else(|| Box::new(stream::empty()))
     }
 
-    fn actions_for_input<'a>(&'a self, data: Option<Arc<GenericToolData>>, input: Box<'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<'a+Iterator<Item=ToolAction<GenericToolData>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<GenericToolData>>, input: Box<'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<'a+Iterator<Item=ToolAction<GenericToolData>>> {
         // Generic data items from other tools don't generate data for this tool
         let data    = data.and_then(|data| data.convert_ref());
         let input   = Box::new(input
@@ -166,7 +166,7 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
             .map(|definitely_data|  definitely_data.unwrap()));
 
         // Map the actions back to generic actions
-        Box::new(self.tool.actions_for_input(data, input)
+        Box::new(self.tool.actions_for_input(flo_model, data, input)
             .map(|action| GenericToolData::convert_action_to_generic(action)))
     }
 }
