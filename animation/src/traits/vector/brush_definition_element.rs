@@ -1,11 +1,17 @@
-use super::*;
+use super::vector::*;
+use super::element::*;
+use super::properties::*;
 use super::super::path::*;
 use super::super::edit::*;
+use super::super::motion::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
 
+use canvas::*;
+
 use std::sync::*;
+use std::time::Duration;
 
 ///
 /// Element representing selecting a new brush definition
@@ -79,6 +85,14 @@ impl VectorElement for BrushDefinitionElement {
     /// 
     fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> {
         None
+    }
+
+    ///
+    /// Returns a new element that is this element transformed along a motion at a particular moment
+    /// in time.
+    /// 
+    fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
+        Vector::BrushDefinition(self.clone())
     }
 }
 

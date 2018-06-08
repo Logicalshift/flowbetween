@@ -1,7 +1,7 @@
 use super::translate::*;
 use super::transform::*;
 use super::motion_type::*;
-use super::super::raw_point::*;
+use super::super::brush::*;
 use super::super::time_path::*;
 
 use std::ops::Range;
@@ -81,11 +81,11 @@ impl MotionTransform for Motion {
         }
     }
 
-    fn transform_points<'a, Points: 'a+Iterator<Item=RawPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=RawPoint>> {
+    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=BrushPoint>> {
         use self::Motion::*;
 
         match self {
-            None                    => Box::new(points),
+            None                    => Box::new(points.cloned()),
             Translate(translate)    => translate.transform_points(time, points)
         }
     }

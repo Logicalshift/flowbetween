@@ -1,10 +1,15 @@
-use super::*;
-
+use super::vector::*;
+use super::element::*;
+use super::properties::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::brush::*;
+use super::super::motion::*;
+
+use canvas::*;
 
 use std::sync::*;
+use std::time::Duration;
 
 ///
 /// Element representing a brush stroke
@@ -95,6 +100,19 @@ impl VectorElement for BrushElement {
     /// 
     fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
         Some(vec![Path::from_drawing(properties.brush.render_brush(&properties.brush_properties, &self.points))])
+    }
+
+    ///
+    /// Returns a new element that is this element transformed along a motion at a particular moment
+    /// in time.
+    /// 
+    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
+        let transformed_points = motion.transform_points(when, self.points.iter()).collect();
+
+        Vector::BrushStroke(BrushElement {
+            id:     self.id,
+            points: Arc::new(transformed_points)
+        })
     }
 }
 

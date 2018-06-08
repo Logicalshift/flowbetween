@@ -1,9 +1,12 @@
+use super::vector::*;
 use super::properties::*;
 use super::super::path::*;
 use super::super::edit::*;
+use super::super::motion::*;
 
 use canvas::*;
 
+use std::time::Duration;
 use std::sync::*;
 use std::any::*;
 
@@ -30,4 +33,10 @@ pub trait VectorElement : Send+Any {
     /// Returns the properties to use for future elements
     /// 
     fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { properties }
+
+    ///
+    /// Returns a new element that is this element transformed along a motion at a particular moment
+    /// in time.
+    /// 
+    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector;
 }

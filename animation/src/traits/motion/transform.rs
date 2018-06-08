@@ -1,4 +1,4 @@
-use super::super::raw_point::*;
+use super::super::brush::*;
 
 use std::ops::Range;
 use std::time::Duration;
@@ -15,5 +15,5 @@ pub trait MotionTransform {
     ///
     /// Returns a transformed set of points at the specified time
     /// 
-    fn transform_points<'a, Points: 'a+Iterator<Item=RawPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=RawPoint>>;
+    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=BrushPoint>>;
 }
