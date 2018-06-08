@@ -6,7 +6,7 @@ impl AnimationDb {
     ///
     /// Retrieves a particular time path for a motion
     /// 
-    fn get_motion_path<TFile: FloFile>(core: &TFile, motion_id: i64, path_type: MotionPathType) -> Result<TimeCurve> {
+    fn get_motion_path<TFile: FloFile>(core: &mut TFile, motion_id: i64, path_type: MotionPathType) -> Result<TimeCurve> {
         // Retrieve the entries for this path
         let entries = core.query_motion_timepoints(motion_id, path_type)?;
 
@@ -17,7 +17,7 @@ impl AnimationDb {
     ///
     /// Interprets a motion entry as a translate motion
     /// 
-    fn get_translate_motion<TFile: FloFile>(core: &TFile, motion_id: i64, entry: MotionEntry) -> Result<Motion> {
+    fn get_translate_motion<TFile: FloFile>(core: &mut TFile, motion_id: i64, entry: MotionEntry) -> Result<Motion> {
         // Translations should always have an origin: we use 0,0 as a default if none is supplied
         let origin      = entry.origin.unwrap_or((0.0, 0.0));
 
@@ -34,7 +34,7 @@ impl AnimationDb {
     ///
     /// Turns a motion entry into a motion
     /// 
-    pub fn motion_for_entry<TFile: FloFile>(core: &TFile, motion_id: i64, motion_entry: MotionEntry) -> Result<Motion> {
+    pub fn motion_for_entry<TFile: FloFile>(core: &mut TFile, motion_id: i64, motion_entry: MotionEntry) -> Result<Motion> {
         match motion_entry.motion_type {
             MotionType::None        => Ok(Motion::None),
             MotionType::Translate   => Ok(Self::get_translate_motion(core, motion_id, motion_entry)?)
@@ -53,7 +53,7 @@ impl AnimationDb {
 
                 if let Some(motion_entry) = motion_entry {
                     // Generate a motion from this entry
-                    Ok(Some(Self::motion_for_entry(&core.db, motion_id, motion_entry)?))
+                    Ok(Some(Self::motion_for_entry(&mut core.db, motion_id, motion_entry)?))
                 } else {
                     // No entry with this ID
                     Ok(None)
