@@ -51,6 +51,8 @@ impl Layer for InMemoryVectorLayer {
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
         let core = self.core.lock().unwrap();
 
+        // TODO: apply any motions attached to the elements
+
         // Look up the keyframe in the core
         let keyframe = core.find_nearest_keyframe(time_index);
         if let Some(keyframe) = keyframe {
