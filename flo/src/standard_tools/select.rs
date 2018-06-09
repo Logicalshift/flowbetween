@@ -445,6 +445,9 @@ impl Select {
 
                 actions.extend(move_elements.to_animation_edits(&*animation).into_iter().map(|elem| ToolAction::Edit(elem)));
 
+                // Cause the frame to be redrawn
+                actions.push(ToolAction::InvalidateFrame);
+
                 // Redraw the selection highlights
                 actions.push(ToolAction::Overlay(OverlayAction::Draw(vec![
                     Draw::Layer(1),

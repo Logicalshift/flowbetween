@@ -78,7 +78,8 @@ impl GenericToolData {
             BrushPreview(preview)   => BrushPreview(preview),
             Overlay(overlay)        => Overlay(overlay),
             Select(element)         => Select(element),
-            ClearSelection          => ClearSelection
+            ClearSelection          => ClearSelection,
+            InvalidateFrame         => InvalidateFrame
         }
     }
 

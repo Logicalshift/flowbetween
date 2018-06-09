@@ -11,6 +11,9 @@ pub enum ToolAction<ToolData> {
     /// Changes the data that will be specified at the start of the next tool input stream
     Data(ToolData),
 
+    /// Invalidates the current frame (forcing it to be redrawn from scratch)
+    InvalidateFrame,
+
     /// Specifies an edit to perform
     Edit(AnimationEdit),
 
