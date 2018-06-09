@@ -20,6 +20,9 @@ struct CanvasCore<Anim: Animation+EditableAnimation> {
     /// The canvas renderer
     renderer: CanvasRenderer,
 
+    /// The current frame update
+    current_frame_update: u64,
+
     /// Executes actions for the canvas tools
     canvas_tools: CanvasTools<Anim>,
 
@@ -71,10 +74,11 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
             tool_changed:   tool_changed,
 
             core:               Desync::new(CanvasCore {
-                renderer:           renderer,
-                canvas_tools:       canvas_tools,
-                last_paint_device:  None,
-                current_time:       Duration::new(0, 0)
+                renderer:               renderer,
+                canvas_tools:           canvas_tools,
+                last_paint_device:      None,
+                current_time:           Duration::new(0, 0),
+                current_frame_update:   0
             })
         };
 
@@ -131,12 +135,14 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     /// 
     fn update_layers_to_frame_at_time(&self, time: Duration) {
         // Retrieve the layers from the animation
-        let layers = self.anim_model.frame().layers.get();
+        let layers          = self.anim_model.frame().layers.get();
+        let update_number   = self.anim_model.frame_update_count().get();
 
         // Update the layers in the core
         self.core.async(move |core| {
             // Update the time set in the core
-            core.current_time = time;
+            core.current_time           = time;
+            core.current_frame_update   = update_number;
 
             // Clear any existing canvases
             core.renderer.clear();
@@ -227,10 +233,14 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
         }
 
         // Check that the frame time hasn't changed
-        let displayed_time  = self.core.sync(|core| core.current_time);
-        let target_time     = self.anim_model.timeline().current_time.get();
+        let displayed_update    = self.core.sync(|core| core.current_frame_update);
+        let displayed_time      = self.core.sync(|core| core.current_time);
+        let target_time         = self.anim_model.timeline().current_time.get();
+        let target_update       = self.anim_model.frame_update_count().get();
 
-        if displayed_time != target_time {
+        if displayed_time != target_time || displayed_update != target_update {
+            println!("Canvas regeneration: {:?} -> {:?}", displayed_update, target_update);
+
             // If the selected frame has changed, regenerate the canvas
             self.update_layers_to_frame_at_time(target_time);
             self.draw_frame_layers();

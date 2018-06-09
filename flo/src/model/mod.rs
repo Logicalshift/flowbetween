@@ -102,6 +102,13 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     pub fn selection(&self) -> &SelectionModel {
         &self.selection
     }
+
+    ///
+    /// Retrieves the frame update binding for this animation
+    /// 
+    pub fn frame_update_count(&self) -> BindRef<u64> {
+        BindRef::from(self.frame_edit_counter.clone())
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
