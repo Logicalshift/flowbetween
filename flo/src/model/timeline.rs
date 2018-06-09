@@ -32,6 +32,9 @@ pub struct TimelineModel<Anim: Animation> {
     /// The ID of the layer currently selected for editing
     pub selected_layer: Binding<Option<u64>>,
 
+    /// The number of times the canvas has been invalidated
+    pub canvas_invalidation_count: Binding<u64>,
+
     /// The keyframes that occur during a certain time period
     keyframes: Arc<Mutex<HashMap<Range<u32>, Weak<Binding<Vec<KeyFrameModel>>>>>>
 }
@@ -39,13 +42,14 @@ pub struct TimelineModel<Anim: Animation> {
 impl<Anim: Animation> Clone for TimelineModel<Anim> {
     fn clone(&self) -> TimelineModel<Anim> {
         TimelineModel {
-            animation:      Arc::clone(&self.animation),
-            current_time:   Binding::clone(&self.current_time),
-            frame_duration: Binding::clone(&self.frame_duration),
-            duration:       Binding::clone(&self.duration),
-            layers:         Binding::clone(&self.layers),
-            selected_layer: Binding::clone(&self.selected_layer),
-            keyframes:      Arc::clone(&self.keyframes)
+            animation:                  Arc::clone(&self.animation),
+            current_time:               Binding::clone(&self.current_time),
+            frame_duration:             Binding::clone(&self.frame_duration),
+            duration:                   Binding::clone(&self.duration),
+            layers:                     Binding::clone(&self.layers),
+            selected_layer:             Binding::clone(&self.selected_layer),
+            canvas_invalidation_count:  Binding::clone(&self.canvas_invalidation_count),
+            keyframes:                  Arc::clone(&self.keyframes)
         }
     }
 }
@@ -72,14 +76,23 @@ impl<Anim: Animation> TimelineModel<Anim> {
 
         // Create the timeline view model
         TimelineModel {
-            animation:      animation,
-            current_time:   bind(Duration::from_millis(0)),
-            duration:       bind(duration),
-            frame_duration: bind(frame_duration),
-            layers:         bind(layers),
-            selected_layer: bind(Some(0)),
-            keyframes:      Arc::new(Mutex::new(HashMap::new()))
+            animation:                  animation,
+            current_time:               bind(Duration::from_millis(0)),
+            duration:                   bind(duration),
+            frame_duration:             bind(frame_duration),
+            layers:                     bind(layers),
+            selected_layer:             bind(Some(0)),
+            canvas_invalidation_count:  bind(0),
+            keyframes:                  Arc::new(Mutex::new(HashMap::new()))
         }
+    }
+
+    ///
+    /// Causes the canvas to be invalidated
+    /// 
+    pub fn invalidate_canvas(&self) {
+        let old_count = self.canvas_invalidation_count.get();
+        self.canvas_invalidation_count.clone().set(old_count+1);
     }
 
     ///

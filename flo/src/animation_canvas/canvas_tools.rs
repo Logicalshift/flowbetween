@@ -180,7 +180,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 ToolAction::Overlay(overlay)        => self.process_overlay(canvas, renderer, overlay),
                 ToolAction::Select(element)         => self.animation.selection().select(element),
                 ToolAction::ClearSelection          => self.animation.selection().clear_selection(),
-                ToolAction::InvalidateFrame         => ()
+                ToolAction::InvalidateFrame         => self.animation.timeline().invalidate_canvas()
             }
         }
 
