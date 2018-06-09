@@ -44,7 +44,7 @@ pub struct FloModel<Anim: Animation> {
     /// The underlying size binding
     size_binding: Binding<(f64, f64)>,
 
-    /// Counter used to signal edits affecting the animation frames
+    /// Counter used to set an edit ID for the frame (essentially indicates when the frame has been redrawn)
     frame_edit_counter: Binding<u64>
 }
 
