@@ -20,7 +20,7 @@ struct CanvasCore<Anim: Animation+EditableAnimation> {
     /// The canvas renderer
     renderer: CanvasRenderer,
 
-    /// The current frame update
+    /// The frame update specified in the model when the animation was last drawn
     current_frame_update: u64,
 
     /// Executes actions for the canvas tools
@@ -233,14 +233,10 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
         }
 
         // Check that the frame time hasn't changed
-        let displayed_update    = self.core.sync(|core| core.current_frame_update);
         let displayed_time      = self.core.sync(|core| core.current_time);
         let target_time         = self.anim_model.timeline().current_time.get();
-        let target_update       = self.anim_model.frame_update_count().get();
 
-        if displayed_time != target_time || displayed_update != target_update {
-            println!("Canvas regeneration: {:?} -> {:?}", displayed_update, target_update);
-
+        if displayed_time != target_time {
             // If the selected frame has changed, regenerate the canvas
             self.update_layers_to_frame_at_time(target_time);
             self.draw_frame_layers();
