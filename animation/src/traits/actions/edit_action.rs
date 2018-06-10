@@ -15,7 +15,7 @@ pub trait EditAction {
 
 impl EditAction for AnimationEdit {
     #[inline]
-    fn to_animation_edits<Anim: Animation>(&self, animation: &Anim) -> Vec<AnimationEdit> {
+    fn to_animation_edits<Anim: Animation>(&self, _animation: &Anim) -> Vec<AnimationEdit> {
         vec![self.clone()]
     }
 }
