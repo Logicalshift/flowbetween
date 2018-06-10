@@ -196,6 +196,13 @@ fn can_query_motion_assigned_elements() {
 
     assert!(motion_elements.iter().any(|item| item == &1));
     assert!(motion_elements.len() == 1);
+
+    let motions_for_element = db.query_element_ids_for_motion(1);
+    let motions_for_element = motions_for_element.unwrap();
+
+    assert!(motions_for_element.len() == 2);
+    assert!(motions_for_element.iter().any(|item| item == &42));
+    assert!(motions_for_element.iter().any(|item| item == &43));
 }
 
 #[test]

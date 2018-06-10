@@ -22,4 +22,8 @@ impl AnimationMotion for SqliteAnimation {
     fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
         self.db.get_motions_for_element(element_id)
     }
+
+    fn get_elements_for_motion(&self, motion_id: ElementId) -> Vec<ElementId> {
+        self.db.get_elements_for_motion(motion_id)
+    }
 }

@@ -69,6 +69,7 @@ enum FloStatement {
     SelectVectorElementsBefore,
     SelectBrushPoints,
     SelectMotionsForElement,
+    SelectElementsForMotion,
     SelectMotion,
     SelectMotionTimePoints,
 
@@ -225,6 +226,7 @@ impl FloSqlite {
                                                     ORDER BY Elem.ElementId ASC",
             SelectBrushPoints               => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
             SelectMotionsForElement         => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
+            SelectElementsForMotion         => "SELECT ElementId FROM Flo_MotionAttached WHERE MotionId = ?",
             SelectMotion                    => "SELECT Mot.MotionType, Origin.X, Origin.Y FROM Flo_Motion AS Mot
                                                     LEFT OUTER JOIN Flo_MotionOrigin AS Origin ON Mot.MotionId = Origin.MotionId
                                                     WHERE Mot.MotionId = ?", 
