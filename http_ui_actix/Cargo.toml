@@ -4,7 +4,7 @@ version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
-description = "HTTP+HTML implementation pipe for flo_ui"
+description = "HTTP+HTML implementation pipe for flo_ui built on the Actix web framework"
 
 include     = [ "Cargo.toml", "src/**/*", "js/**/*" ]
 

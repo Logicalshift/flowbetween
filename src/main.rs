@@ -4,6 +4,7 @@
 
 #[cfg(feature="gtk")]   extern crate flo_gtk_ui;
 #[cfg(feature="http")]  extern crate flo_http_ui;
+#[cfg(feature="http")]  extern crate flo_http_ui_actix;
 #[cfg(feature="http")]  extern crate flo_static_files;
 #[cfg(feature="http")]  extern crate iron;
 #[cfg(feature="http")]  extern crate mount;
