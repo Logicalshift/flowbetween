@@ -105,9 +105,10 @@ impl TimeCurve {
                     };
 
                     // Find where to subdivide
-                    let subdivisions = original_section.search_with_bounds(0.01, |min, max| min.milliseconds() <= when_millis && max.milliseconds() >= when_millis);
+                    let subdivisions = original_section.search_with_bounds(0.5, |min, max| min.milliseconds() <= when_millis && max.milliseconds() >= when_millis);
 
-                    for t in subdivisions {
+                    // Move the point at the first subdivision
+                    if let Some(t) = subdivisions.into_iter().nth(0) {
                         // Subdivide at this point
                         let (first_section, next_section) = original_section.subdivide(t);
 
