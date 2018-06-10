@@ -63,9 +63,46 @@ impl TimeCurve {
         } else {
 
             // Point is within the existing curve
-            // TODO!
-            unimplemented!()
-            
+            let mut new_points  = vec![];
+            let num_points      = self.points.len();
+
+            // Start with the initial point already pushed
+            new_points.push(self.points[0].clone());
+
+            // Process each curve section in turn
+            for point_index in 1..num_points {
+                // Curve section is made up of a previous and next point
+                let previous_index  = new_points.len()-1;
+                let mut previous    = new_points[previous_index];
+                let mut next        = self.points[point_index];
+                let mut moved_point = false;
+
+                // Move the previous point if we're close enough to it in time
+                if (previous.point.milliseconds()-when_millis).abs() < MIN_TIME_MILLISECONDS {
+                    let previous_millis = previous.point.milliseconds();
+                    previous.point      = TimePoint(x, y, previous_millis);
+                    moved_point         = true;
+                }
+
+                // Move the next point if we're close enough to it in time
+                if (next.point.milliseconds()-when_millis).abs() < MIN_TIME_MILLISECONDS {
+                    let next_millis = next.point.milliseconds();
+                    next.point      = TimePoint(x, y, next_millis);
+                    moved_point     = true;
+                }
+
+                // Subdivide the curve if we're somewhere in the middle
+                if !moved_point && previous.point.milliseconds() <= when_millis && next.point.milliseconds() >= when_millis {
+                    // TODO!
+                }
+
+                // Update the result
+                new_points[previous_index] = previous;
+                new_points.push(next);
+            }
+
+            TimeCurve { points: new_points }
+
         }
     }
 }
