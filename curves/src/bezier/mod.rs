@@ -7,6 +7,7 @@ mod bounds;
 mod deform;
 mod fit;
 mod offset;
+mod search;
 
 pub use self::basis::*;
 pub use self::subdivide::*;
@@ -17,6 +18,7 @@ pub use self::bounds::*;
 pub use self::deform::*;
 pub use self::fit::*;
 pub use self::offset::*;
+pub use self::search::*;
 
 use super::coordinate::*;
 
@@ -87,6 +89,20 @@ pub trait BezierCurve: Clone+Sized {
         let (cp1, cp2)  = self.control_points();
 
         bounding_box4(start, cp1, cp2, end)
+    }
+
+    ///
+    /// Given a function that determines if a searched-for point is within a bounding box, searches the
+    /// curve for the t values for the corresponding points
+    /// 
+    fn search_with_bounds<MatchFn: Fn(Self::Point, Self::Point) -> bool>(&self, max_error: f64, match_fn: MatchFn) -> Vec<f64> {
+        // Fetch the various points and the derivative of this curve
+        let start       = self.start_point();
+        let end         = self.end_point();
+        let (cp1, cp2)  = self.control_points();
+
+        // Perform the search
+        search_bounds4(max_error, start, cp1, cp2, end, match_fn)
     }
 
     ///
