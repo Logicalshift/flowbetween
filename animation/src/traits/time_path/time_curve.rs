@@ -83,34 +83,11 @@ impl TimeCurveSection {
     /// Solves for the point on this curve at the specified time (if it exists)
     /// 
     pub fn point_at_time(&self, milliseconds: f32) -> Option<TimePoint> {
-        let midpoint = self.point_at_pos(0.5);
+        let t_points = self.search_with_bounds(DELTA as f64, |min, max| min.milliseconds() <= milliseconds && max.milliseconds() >= milliseconds);
 
-        if (midpoint.milliseconds() - milliseconds).abs() < DELTA {
-            // Found a point that's close enough
-            Some(midpoint)
-        } else {
-            // Subdivide this curve
-            let (left, right)           = self.subdivide(0.5);
-            let (left_min, left_max)    = left.bounding_box();
-            let (right_min, right_max)  = right.bounding_box();
-
-            let mut left_time           = None;
-            let mut right_time          = None;
-
-            if left_min.milliseconds() <= milliseconds && left_max.milliseconds() >= milliseconds {
-                // Search the left-hand side for the point
-                left_time = left.point_at_time(milliseconds);
-            }
-
-            if right_min.milliseconds() <= milliseconds && right_max.milliseconds() >= milliseconds {
-                // Search the right-hand side for the point
-                right_time = right.point_at_time(milliseconds);
-            }
-
-            // If there are multiple matches, then use the left most
-            // Idea is not to allow the user to create loops (but we could create 'ghosts' if we wanted)
-            left_time.or(right_time)
-        }
+        t_points.into_iter()
+            .nth(0)
+            .map(|point_t| self.point_at_pos(point_t))
     }
 }
 
