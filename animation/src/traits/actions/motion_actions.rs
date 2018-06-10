@@ -91,7 +91,7 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
 
         let updated_curve       = existing_curve.set_point_at_time(*when, (moved_point.0, moved_point.1));
 
-        // TODO: recreate the curve if the current motion bleongs to any element not in the list
+        // TODO: recreate and reattach the curve if the current motion bleongs to any element not in the list
 
         // Move the existing curve
         vec![
@@ -186,6 +186,10 @@ mod test {
                 vec![]
             }
 
+            fn get_elements_for_motion(&self, _motion_id: ElementId) -> Vec<ElementId> {
+                vec![]
+            }
+
             fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
                 None
             }
@@ -237,11 +241,15 @@ mod test {
                 ElementId::Assigned(43)
             }
 
-            fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
+            fn get_motions_for_element(&self, _element_id: ElementId) -> Vec<ElementId> {
                 vec![ElementId::Assigned(42)]
             }
 
-            fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
+            fn get_elements_for_motion(&self, _motion_id: ElementId) -> Vec<ElementId> {
+                vec![ElementId::Assigned(1)]
+            }
+
+            fn get_motion(&self, _motion_id: ElementId) -> Option<Motion> {
                 Some(Motion::Translate(TranslateMotion::move_to(Duration::from_millis(442), (10.0, 30.0), (30.0, 40.0))))
             }
         }

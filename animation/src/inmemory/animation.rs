@@ -161,6 +161,16 @@ impl AnimationMotion for InMemoryAnimation {
             .cloned()
             .unwrap_or_else(|| vec![])
     }
+
+    fn get_elements_for_motion(&self, target_motion_id: ElementId) -> Vec<ElementId> {
+        let core = self.core.lock().unwrap();
+
+        core.motions_for_element
+            .iter()
+            .filter(|(_element_id, motion_ids)| motion_ids.iter().any(|motion_id| motion_id == &target_motion_id))
+            .map(|(element_id, _motion_id)| *element_id)
+            .collect()
+    }
 }
 
 impl EditableAnimation for InMemoryAnimation {
@@ -332,7 +342,8 @@ mod test {
             AnimationEdit::Motion(ElementId::Assigned(1), MotionEdit::Attach(ElementId::Assigned(10)))
         ]);
 
-        assert!(animation.motion().get_motions_for_element(ElementId::Assigned(10)) == vec![ElementId::Assigned(1)])
+        assert!(animation.motion().get_motions_for_element(ElementId::Assigned(10)) == vec![ElementId::Assigned(1)]);
+        assert!(animation.motion().get_elements_for_motion(ElementId::Assigned(1)) == vec![ElementId::Assigned(10)]);
     }
 
     #[test]
