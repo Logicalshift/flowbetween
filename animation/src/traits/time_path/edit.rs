@@ -180,6 +180,17 @@ mod test {
     }
 
     #[test]
+    fn setting_mid_point_offset_creates_new_point() {
+        let curve       = TimeCurve::new(TimePoint(40.0, 40.0, 20.0), TimePoint(50.0, 50.0, 100.0));
+        let moved_curve = curve.set_point_at_time(Duration::from_millis(50), (10.0, 10.0));
+
+        assert!(moved_curve.points.len() == 3);
+        assert!(moved_curve.points[1].point == TimePoint(10.0, 10.0, 50.0));
+        assert!(moved_curve.points[0].point == TimePoint(40.0, 40.0, 20.0));
+        assert!(moved_curve.points[2].point == TimePoint(50.0, 50.0, 100.0));
+    }
+
+    #[test]
     fn moving_start_point_only_changes_position() {
         let curve       = TimeCurve::new(TimePoint(40.0, 40.0, 40.0), TimePoint(50.0, 50.0, 50.0));
         let moved_curve = curve.set_point_at_time(Duration::from_millis(40), (10.0, 10.0));
