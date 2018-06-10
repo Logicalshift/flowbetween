@@ -32,7 +32,7 @@ where   Point:      Coordinate,
     while let Some((w1, w2, w3, w4, min_t, max_t)) = pending.pop() {
         // Subdivide at the midpoint
         let midpoint = (min_t + max_t)/2.0;
-        let ((aw1, aw2, aw3, aw4), (bw1, bw2, bw3, bw4)) = subdivide4(midpoint, w1, w2, w3, w4);
+        let ((aw1, aw2, aw3, aw4), (bw1, bw2, bw3, bw4)) = subdivide4(0.5, w1, w2, w3, w4);
         
         // Compute the bounds of either side
         let (amin, amax) = bounding_box4(aw1, aw2, aw3, aw4);
