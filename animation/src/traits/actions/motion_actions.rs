@@ -79,7 +79,29 @@ fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<Elemen
 /// Generates updates for elements attached to an existing motion
 /// 
 fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
-    unimplemented!()
+    if let Some(Motion::Translate(translate)) = animation.motion().get_motion(motion_id) {
+        // Set an existing point in this translate motion
+        let when_millis         = to_millis(*when) as f32;
+        let (move_x, move_y)    = (to.0-from.0, to.1-from.1);
+
+        let existing_curve      = translate.translate;
+        let origin              = translate.origin;
+        let existing_point      = existing_curve.point_at_time(when_millis).unwrap_or_else(|| TimePoint(origin.0, origin.1, when_millis));
+        let moved_point         = existing_point + TimePoint(move_x, move_y, 0.0);
+
+        let updated_curve       = existing_curve.set_point_at_time(*when, (moved_point.0, moved_point.1));
+
+        // TODO: recreate the curve if the current motion bleongs to any element not in the list
+
+        // Move the existing curve
+        vec![
+            AnimationEdit::Motion(motion_id, MotionEdit::SetPath(updated_curve))
+        ]
+
+    } else {
+        // No edits if the motion doesn't exist or is not a translation
+        vec![]
+    }
 }
 
 ///
