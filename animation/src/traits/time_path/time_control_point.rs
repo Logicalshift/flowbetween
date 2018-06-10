@@ -29,4 +29,16 @@ impl TimeControlPoint {
             past, point, future
         }
     }
+
+    ///
+    /// Moves this point to the specified position
+    /// 
+    pub fn move_to(&mut self, x: f32, y: f32, millis: f32) {
+        let TimePoint(old_x, old_y, old_millis) = self.point;
+        let (diff_x, diff_y, diff_millis)       = (x-old_x, y-old_y, millis-old_millis);
+
+        self.point  = TimePoint(x, y, millis);
+        self.past   = self.past + TimePoint(diff_x, diff_y, diff_millis);
+        self.future = self.future + TimePoint(diff_x, diff_y, diff_millis);
+    }
 }
