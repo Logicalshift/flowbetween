@@ -28,31 +28,44 @@ impl TimeCurve {
             // If there's no points in the curve, then just generate a new curve
             TimeCurve::new(TimePoint::new(x, y, when), TimePoint::new(x, y, when))
 
-        } else if when_millis < self.points[0].point.milliseconds() + MIN_TIME_MILLISECONDS {
+        } else if when_millis <= self.points[0].point.milliseconds() - MIN_TIME_MILLISECONDS {
 
             // Time is before the current start of the motion.
             let mut new_points = self.points.clone();
 
-            // If the new point is far enough away, extend the time curve back into the past
-            if (new_points[0].point.milliseconds()-when_millis).abs() > MIN_TIME_MILLISECONDS {
-                let copy_point = new_points[0].clone();
-                new_points.insert(0, copy_point);
-            }
+            // Add a new point at the start
+            let copy_point = new_points[0].clone();
+            new_points.insert(0, copy_point);
 
             // Move the initial point to its new location
             new_points[0].move_to(x, y, when_millis);
 
-            // If the initial point is on top of the following point, also move that (happens if the motion is representing an instantaneous movement)
-            if (new_points[0].point.milliseconds()-new_points[1].point.milliseconds()).abs() < MIN_TIME_MILLISECONDS {
-                new_points[1] = new_points[0];
-            }
+            // Return the new curve
+            TimeCurve { points: new_points }
+
+        } else if when_millis >= self.points[self.points.len()-1].point.milliseconds() + MIN_TIME_MILLISECONDS {
+
+            // Time is after the current start of the motion
+            let mut new_points  = self.points.clone();
+            let final_point     = new_points.len()-1;
+
+            // Add a new point at the end
+            let copy_point  = new_points[final_point].clone();
+            let final_point = final_point + 1;  
+            new_points.push(copy_point);
+
+            // Move the final point to its new location
+            new_points[final_point].move_to(x, y, when_millis);
 
             // Return the new curve
             TimeCurve { points: new_points }
 
         } else {
+
+            // Point is within the existing curve
             // TODO!
             unimplemented!()
+            
         }
     }
 }
@@ -71,6 +84,18 @@ mod test {
         assert!(moved_curve.points[0].future == moved_curve.points[1].future - TimePoint(30.0, 30.0, 35.0));
         assert!(moved_curve.points[1].point == TimePoint(40.0, 40.0, 40.0));
         assert!(moved_curve.points[2].point == TimePoint(50.0, 50.0, 50.0));
+    }
+
+    #[test]
+    fn setting_point_after_end_creates_new_point() {
+        let curve       = TimeCurve::new(TimePoint(40.0, 40.0, 40.0), TimePoint(50.0, 50.0, 50.0));
+        let moved_curve = curve.set_point_at_time(Duration::from_millis(60), (10.0, 10.0));
+
+        assert!(moved_curve.points.len() == 3);
+        assert!(moved_curve.points[2].point == TimePoint(10.0, 10.0, 60.0));
+        assert!(moved_curve.points[2].future == moved_curve.points[1].future + TimePoint(-40.0, -40.0, 10.0));
+        assert!(moved_curve.points[0].point == TimePoint(40.0, 40.0, 40.0));
+        assert!(moved_curve.points[1].point == TimePoint(50.0, 50.0, 50.0));
     }
 
     #[test]
