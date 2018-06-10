@@ -9,6 +9,9 @@ use super::super::coordinate::*;
 /// is within a particular bounding box. The return value is a list of t values for the curve
 /// described by the w values where the bounding box was shrunk to the size specified by min_size.
 /// 
+/// A limitation of this algorithm is that if the target point lies very close to a subdivision point,
+/// it may produce multiple matches (as it will find a nearby point on either side of the subdivision)
+/// 
 pub fn search_bounds4<Point, MatchFn>(min_size: f64, w1: Point, w2: Point, w3: Point, w4: Point, match_fn: MatchFn) -> Vec<f64> 
 where   Point:      Coordinate,
         MatchFn:    Fn(Point, Point) -> bool {
