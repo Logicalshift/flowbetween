@@ -3,7 +3,7 @@ use super::*;
 use flo_curves::bezier;
 
 #[test]
-fn can_subdivide_1() {
+fn subdivide_1() {
     // Initial curve
     let (w1, w2, w3, w4) = (1.0, 2.0, 3.0, 4.0);
 
@@ -22,7 +22,7 @@ fn can_subdivide_1() {
 }
 
 #[test]
-fn can_subdivide_2() {
+fn subdivide_2() {
     // Initial curve
     let (w1, w2, w3, w4) = (1.0, 2.0, 3.0, 4.0);
 
