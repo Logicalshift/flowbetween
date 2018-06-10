@@ -232,7 +232,7 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
             });
         }
 
-        // Check that the frame time hasn't changed
+        // Check that the frame time hasn't changed and the frame has not been invalidated since it was last drawn
         let displayed_invalidation_count    = self.core.sync(|core| core.current_invalidation_count);
         let displayed_time                  = self.core.sync(|core| core.current_time);
         let target_invalidation_count       = self.anim_model.timeline().canvas_invalidation_count.get();
