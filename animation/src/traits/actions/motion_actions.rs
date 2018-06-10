@@ -91,13 +91,36 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
 
         let updated_curve       = existing_curve.set_point_at_time(*when, (moved_point.0, moved_point.1));
 
-        // TODO: recreate and reattach the curve if the current motion bleongs to any element not in the list
+        // Check if there are any elements that are attached to this motion but are not being moved
+        let attached_to             = animation.motion().get_elements_for_motion(motion_id);
+        let elements: HashSet<_>    = elements.into_iter().collect();
+        let motion_in_use_elsewhere = attached_to.into_iter().any(|element_id| !elements.contains(&&element_id));
 
-        // Move the existing curve
-        vec![
-            AnimationEdit::Motion(motion_id, MotionEdit::SetPath(updated_curve))
-        ]
+        if motion_in_use_elsewhere {
+            // Create a new translation motion and attach/detach our elements (so elements outside of our set are not moved)
+            let new_motion_id       = animation.motion().assign_motion_id();
+            let detach_elements     = elements.iter().map(|element_id| AnimationEdit::Motion(motion_id, MotionEdit::Detach(**element_id)));
+            let attach_elements     = elements.iter().map(|element_id| AnimationEdit::Motion(new_motion_id, MotionEdit::Attach(**element_id)));
 
+            let create_new_motion   = vec![
+                MotionEdit::Create,
+                MotionEdit::SetType(MotionType::Translate),
+                MotionEdit::SetOrigin(origin.0, origin.1),
+                MotionEdit::SetPath(updated_curve)
+            ];
+
+            // Paste together to create the overall editing action (creating a new motion)
+            create_new_motion.into_iter()
+                .map(|motion_edit| AnimationEdit::Motion(new_motion_id, motion_edit))
+                .chain(detach_elements)
+                .chain(attach_elements)
+                .collect()
+        } else {
+            // Move the existing curve
+            vec![
+                AnimationEdit::Motion(motion_id, MotionEdit::SetPath(updated_curve))
+            ]
+        }
     } else {
         // No edits if the motion doesn't exist or is not a translation
         vec![]
