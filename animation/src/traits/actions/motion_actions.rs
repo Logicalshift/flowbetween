@@ -160,7 +160,7 @@ mod test {
     use std::ops::{Range, Deref};
 
     #[test]
-    fn can_move_static_element() {
+    fn move_static_element() {
         // Test animation that has no attached motions
         struct TestAnimation;
 
@@ -212,5 +212,49 @@ mod test {
         }
 
         assert!(static_move.len() == 6);
+    }
+
+    #[test]
+    fn move_moving_element() {
+        // Test animation that has no attached motions
+        struct TestAnimation;
+
+        impl Animation for TestAnimation {
+            fn size(&self) -> (f64, f64) { unimplemented!() }
+            fn duration(&self) -> Duration { unimplemented!() }
+            fn frame_length(&self) -> Duration { unimplemented!() }
+            fn get_layer_ids(&self) -> Vec<u64> { unimplemented!() }
+            fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> { unimplemented!() }
+            fn get_num_edits(&self) -> usize { unimplemented!() }
+            fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> { unimplemented!() }
+            fn motion<'a>(&'a self) -> &'a AnimationMotion { self }
+        }
+
+        impl AnimationMotion for TestAnimation {
+            fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> { unimplemented!() }
+
+            fn assign_motion_id(&self) -> ElementId {
+                ElementId::Assigned(43)
+            }
+
+            fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
+                vec![ElementId::Assigned(42)]
+            }
+
+            fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
+                Some(Motion::Translate(TranslateMotion::move_to(Duration::from_millis(442), (10.0, 30.0), (30.0, 40.0))))
+            }
+        }
+
+        // Try to generate the edits for moving an element with this test animation
+        let animation       = TestAnimation;
+        let dynamic_move    = MotionEditAction::MoveElements(vec![ElementId::Assigned(1), ElementId::Assigned(2)], Duration::from_millis(442), (100.0, 200.0), (300.0, 400.0))
+            .to_animation_edits(&animation);
+
+        let target_point = TimePoint::new(220.0, 210.0, Duration::from_millis(442));
+
+        assert!(dynamic_move[0] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetPath(TimeCurve::new(target_point, target_point))));
+
+        assert!(dynamic_move.len() == 1);
     }
 }

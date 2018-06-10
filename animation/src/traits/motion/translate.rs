@@ -19,6 +19,18 @@ pub struct TranslateMotion {
 
 impl TranslateMotion {
     ///
+    /// Creates a translate motion that just instantaneously moves something between two points
+    /// 
+    pub fn move_to(when: Duration, from: (f32, f32), to: (f32, f32)) -> TranslateMotion {
+        let to_point = TimePoint::new(to.0-from.0, to.1-from.1, when);
+
+        TranslateMotion {
+            origin:     from,
+            translate:  TimeCurve::new(to_point, to_point)
+        }
+    }
+
+    ///
     /// Sets the origin of this motion
     ///
     #[inline]
