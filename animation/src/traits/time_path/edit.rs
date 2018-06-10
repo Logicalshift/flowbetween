@@ -1,6 +1,9 @@
 use super::convert::*;
 use super::time_curve::*;
 use super::time_point::*;
+use super::time_control_point::*;
+
+use curves::*;
 
 use std::time::Duration;
 
@@ -80,20 +83,48 @@ impl TimeCurve {
                 // Move the previous point if we're close enough to it in time
                 if (previous.point.milliseconds()-when_millis).abs() < MIN_TIME_MILLISECONDS {
                     let previous_millis = previous.point.milliseconds();
-                    previous.point      = TimePoint(x, y, previous_millis);
+                    previous.move_to(x, y, previous_millis);
                     moved_point         = true;
                 }
 
                 // Move the next point if we're close enough to it in time
                 if (next.point.milliseconds()-when_millis).abs() < MIN_TIME_MILLISECONDS {
                     let next_millis = next.point.milliseconds();
-                    next.point      = TimePoint(x, y, next_millis);
+                    next.move_to(x, y, next_millis);
                     moved_point     = true;
                 }
 
                 // Subdivide the curve if we're somewhere in the middle
                 if !moved_point && previous.point.milliseconds() <= when_millis && next.point.milliseconds() >= when_millis {
-                    // TODO!
+                    // Create the section we want to subdivide
+                    let original_section = TimeCurveSection { 
+                        start:          previous.point,
+                        end:            next.point,
+                        control_point1: previous.future, 
+                        control_point2: next.past 
+                    };
+
+                    // TODO: Find where to subdivide
+                    let t = 0.5;
+
+                    // Subdivide at this point
+                    let (first_section, next_section) = original_section.subdivide(t);
+
+                    // Create a new point for the curve
+                    previous.future     = first_section.control_point1;
+                    next.past           = next_section.control_point2;
+
+                    let mut new_point   = TimeControlPoint {
+                        point:  first_section.end,
+                        past:   first_section.control_point2,
+                        future: next_section.control_point1
+                    };
+
+                    // Move the new point to its new location
+                    new_point.move_to(x, y, when_millis);
+
+                    // Add to the curve
+                    new_points.push(new_point);
                 }
 
                 // Update the result
