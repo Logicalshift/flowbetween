@@ -104,27 +104,29 @@ impl TimeCurve {
                         control_point2: next.past 
                     };
 
-                    // TODO: Find where to subdivide
-                    let t = 0.5;
+                    // Find where to subdivide
+                    let subdivisions = original_section.search_with_bounds(0.01, |min, max| min.milliseconds() <= when_millis && max.milliseconds() >= when_millis);
 
-                    // Subdivide at this point
-                    let (first_section, next_section) = original_section.subdivide(t);
+                    for t in subdivisions {
+                        // Subdivide at this point
+                        let (first_section, next_section) = original_section.subdivide(t);
 
-                    // Create a new point for the curve
-                    previous.future     = first_section.control_point1;
-                    next.past           = next_section.control_point2;
+                        // Create a new point for the curve
+                        previous.future     = first_section.control_point1;
+                        next.past           = next_section.control_point2;
 
-                    let mut new_point   = TimeControlPoint {
-                        point:  first_section.end,
-                        past:   first_section.control_point2,
-                        future: next_section.control_point1
-                    };
+                        let mut new_point   = TimeControlPoint {
+                            point:  first_section.end,
+                            past:   first_section.control_point2,
+                            future: next_section.control_point1
+                        };
 
-                    // Move the new point to its new location
-                    new_point.move_to(x, y, when_millis);
+                        // Move the new point to its new location
+                        new_point.move_to(x, y, when_millis);
 
-                    // Add to the curve
-                    new_points.push(new_point);
+                        // Add to the curve
+                        new_points.push(new_point);
+                    }
                 }
 
                 // Update the result
@@ -164,6 +166,17 @@ mod test {
         assert!(moved_curve.points[2].future == moved_curve.points[1].future + TimePoint(-40.0, -40.0, 10.0));
         assert!(moved_curve.points[0].point == TimePoint(40.0, 40.0, 40.0));
         assert!(moved_curve.points[1].point == TimePoint(50.0, 50.0, 50.0));
+    }
+
+    #[test]
+    fn setting_mid_point_creates_new_point() {
+        let curve       = TimeCurve::new(TimePoint(40.0, 40.0, 20.0), TimePoint(50.0, 50.0, 100.0));
+        let moved_curve = curve.set_point_at_time(Duration::from_millis(60), (10.0, 10.0));
+
+        assert!(moved_curve.points.len() == 3);
+        assert!(moved_curve.points[1].point == TimePoint(10.0, 10.0, 60.0));
+        assert!(moved_curve.points[0].point == TimePoint(40.0, 40.0, 20.0));
+        assert!(moved_curve.points[2].point == TimePoint(50.0, 50.0, 100.0));
     }
 
     #[test]
