@@ -76,6 +76,13 @@ fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<Elemen
 }
 
 ///
+/// Generates updates for elements attached to an existing motion
+/// 
+fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
+    unimplemented!()
+}
+
+///
 /// Generates a move elements edit for a particular animation
 /// 
 fn move_elements_edit<Anim: Animation>(animation: &Anim, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
@@ -110,14 +117,14 @@ fn move_elements_edit<Anim: Animation>(animation: &Anim, elements: &Vec<ElementI
     }
 
     // The existing translations need to be updated (and forked with new IDs if they're attached to elements not being edited)
-    // TODO!
-    let move_existing = vec![];
+    let move_existing = existing_translations.into_iter()
+        .flat_map(|(motion_id, elements)| dynamic_move_edit(animation, motion_id, &elements, when, from, to));
 
     // The static elements need to have a translation attached (we attach the same translation to all)
     let move_static = static_move_edit(animation, &static_elements, when, from, to);
 
     // Combine the edits into the final reuslt
-    move_existing.into_iter()
+    move_existing
         .chain(move_static.into_iter())
         .collect()
 }
