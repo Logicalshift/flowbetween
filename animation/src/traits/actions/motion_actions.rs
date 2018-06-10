@@ -84,11 +84,13 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
         let when_millis         = to_millis(*when) as f32;
         let (move_x, move_y)    = (to.0-from.0, to.1-from.1);
 
+        // Fetch where this point is in the existing curve
         let existing_curve      = translate.translate;
         let origin              = translate.origin;
         let existing_point      = existing_curve.point_at_time(when_millis).unwrap_or_else(|| TimePoint(origin.0, origin.1, when_millis));
         let moved_point         = existing_point + TimePoint(move_x, move_y, 0.0);
 
+        // Create a new curve with the point moved
         let updated_curve       = existing_curve.set_point_at_time(*when, (moved_point.0, moved_point.1));
 
         // Check if there are any elements that are attached to this motion but are not being moved
