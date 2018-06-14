@@ -743,6 +743,7 @@ dependencies = [
 name = "flow_between"
 version = "0.1.0"
 dependencies = [
+ "actix-web 0.6.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo 0.1.0",
  "flo_anim_sqlite 0.1.0",
  "flo_animation 0.1.0",
