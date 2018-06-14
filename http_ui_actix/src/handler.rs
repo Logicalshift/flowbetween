@@ -8,7 +8,7 @@ use std::sync::*;
 ///
 /// Creates the handler for an actix UI session
 /// 
-pub fn create_handler<CoreController: HttpController>() -> impl Handler<Arc<WebSessions<CoreController>>> {
+pub fn session_handler<CoreController: HttpController>() -> impl Handler<Arc<WebSessions<CoreController>>> {
     |req: HttpRequest<Arc<WebSessions<CoreController>>>| {
         println!("{:?} {:?}", req.path(), req.match_info().get("tail"));
 

@@ -9,7 +9,7 @@ include     = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 
 [features]
 gtk         = [ "flo_gtk_ui" ]
-http        = [ "flo_http_ui", "flo_static_files", "iron", "mount" ]
+http        = [ "flo_http_ui", "flo_static_files", "flo_http_ui_actix", "iron", "mount", "actix-web" ]
 
 [dependencies]
 flo_animation       = { path = "animation",     version="^0.1.0" }
@@ -20,7 +20,7 @@ flo                 = { path = "flo",           version="^0.1.0" }
 
 flo_gtk_ui          = { path = "gtk_ui",        version="^0.1.0", optional = true }
 flo_http_ui         = { path = "http_ui",       version="^0.1.0", optional = true }
-flo_http_ui_actix   = { path = "http_ui_actix", version="^0.1.0" }
+flo_http_ui_actix   = { path = "http_ui_actix", version="^0.1.0", optional = true }
 flo_static_files    = { path = "static_files",  version="^0.1.0", optional = true }
 
 serde               = "^1.0.0"
