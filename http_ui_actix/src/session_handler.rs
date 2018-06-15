@@ -23,6 +23,7 @@ pub fn session_handler<CoreController: 'static+HttpController>() -> impl Handler
                         match request {
                             Ok(request) => {
                                 // JSON data is valid: process this UI request
+                                println!("{:?}", request);
 
                                 // Request not implemented
                                 future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not implemented"))
