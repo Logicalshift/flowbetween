@@ -28,6 +28,21 @@ impl StaticService {
             file_for_path: HashMap::from_iter(paths_and_files)
         }
     }
+
+    ///
+    /// Returns the file located at the specified path
+    /// 
+    pub fn file_for_path(&self, path: &str) -> Option<Arc<StaticFile>> {
+        if path.len() == 0 {
+            self.file_for_path("/index.html")
+        } else if path == "/" {
+            self.file_for_path("/index.html")
+        } else if path.chars().nth(0) != Some('/') {
+            self.file_for_path(&format!("/{}", path))
+        } else {
+            self.file_for_path.get(path).cloned()
+        }
+    }
 }
 
 impl Handler for StaticService {
@@ -69,7 +84,7 @@ impl Handler for StaticService {
             file.handle(req)
         } else {
             // 404 response
-            Ok(Response::with((status::NotFound)))
+            Ok(Response::with(status::NotFound))
         }
     }
 }

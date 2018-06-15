@@ -165,7 +165,7 @@ impl Handler for StaticFile {
             Ok(response)
         } else {
             // Only Get or Head are allowed for static resources: posting, deleting etc are not
-            Ok(Response::with((status::BadRequest)))
+            Ok(Response::with(status::BadRequest))
         }
     }
 }
