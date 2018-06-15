@@ -703,6 +703,7 @@ dependencies = [
  "flo_binding 0.1.0",
  "flo_canvas 0.1.0",
  "flo_http_ui 0.1.0",
+ "flo_static_files 0.1.0",
  "flo_ui 0.1.0",
  "futures 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

@@ -1,4 +1,5 @@
 extern crate flo_http_ui;
+extern crate flo_static_files;
 
 extern crate actix_web;
 extern crate futures;

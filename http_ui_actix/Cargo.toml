@@ -12,7 +12,8 @@ include     = [ "Cargo.toml", "src/**/*", "js/**/*" ]
 flo_ui              = { path = "../ui", version = "0.1" }
 flo_binding         = { path = "../binding", version = "0.1" }
 flo_canvas          = { path = "../canvas", version = "0.1" }
-flo_http_ui         = { path = "../http_ui"}
+flo_http_ui         = { path = "../http_ui", version = "0.1" }
+flo_static_files    = { path = "../static_files", version= "0.1" }
 
 actix-web           = "0.6"
 futures             = "0.1"
