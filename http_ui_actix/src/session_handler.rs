@@ -16,18 +16,23 @@ pub fn session_handler<CoreController: 'static+HttpController>() -> impl Handler
         match req.method() {
             &Method::POST => {
                 // POST requests are used to send instructions to sessions
-                let successful_req  = Arc::new(req);
-                let failed_req      = Arc::clone(&successful_req);
 
                 // Request must contain a JSON body
-                let result = Json::<UiHandlerRequest>::extract(&*successful_req)
-                    .and_then(move |request| {
-                        // Request not implemented
-                        future::ok(successful_req.build_response(StatusCode::NOT_FOUND).body("Not implemented"))
-                    })
-                    .or_else(move |_err| {
-                        // Failed to parse the JSON request for some reason
-                        future::ok(failed_req.build_response(StatusCode::BAD_REQUEST).body("FlowBetween session request is not in the expected format"))
+                let result = Json::<UiHandlerRequest>::extract(&req)
+                    .then(move |request| {
+                        match request {
+                            Ok(request) => {
+                                // JSON data is valid: process this UI request
+
+                                // Request not implemented
+                                future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not implemented"))
+                            },
+
+                            Err(_err) => {
+                                // Failed to parse the JSON request for some reason
+                                future::ok(req.build_response(StatusCode::BAD_REQUEST).body("FlowBetween session request is not in the expected format"))
+                            }
+                        }
                     });
                 
                 // Request will be ready in the future
