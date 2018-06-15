@@ -17,6 +17,9 @@ pub struct StaticFile {
 }
 
 impl StaticFile {
+    ///
+    /// Returns the MIME type for a particular path
+    /// 
     fn infer_mime_type<'a>(path: &str) -> &'a str {
         if path.ends_with("html") || path.ends_with("htm") {
             "text/html; charset=utf-8"
