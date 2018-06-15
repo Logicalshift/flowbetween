@@ -391,7 +391,7 @@ impl<CoreController: HttpController+'static> Handler for UiHandler<CoreControlle
 ///
 /// Structure of a request sent to the UI handler
 ///
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct UiHandlerRequest {
     /// The session ID, if there is one
     pub session_id: Option<String>,
@@ -403,7 +403,7 @@ pub struct UiHandlerRequest {
 ///
 /// Structure of a UI handler response
 ///
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct UiHandlerResponse {
     /// Updates generated for this request
     pub updates: Vec<Update>

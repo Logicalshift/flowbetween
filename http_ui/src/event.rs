@@ -3,7 +3,7 @@ use ui::ActionParameter;
 ///
 /// Represents details of an event from the browser side
 ///
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Debug)]
 pub enum Event {
     ///
     /// Request a new session
