@@ -202,7 +202,7 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
         let path = relative_url.path();
 
         // The first part of the path indicates the controller
-        let mut controller: Option<Arc<Controller>> = Some((**session.ui()).clone());
+        let mut controller: Option<Arc<Controller>> = Some(session.ui().controller());
 
         for path_component in 0..(path.len()-1) {
             let next_controller_name = &*percent_decode(path[path_component].as_bytes())

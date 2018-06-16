@@ -11,7 +11,6 @@ use desync::*;
 use binding::*;
 
 use std::sync::*;
-use std::ops::Deref;
 
 ///
 /// UI session provides a raw user interface implementation for a core controller
@@ -62,14 +61,6 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
 impl<CoreController: Controller> Drop for UiSession<CoreController> {
     fn drop(&mut self) {
         self.ui_update_lifetime.lock().unwrap().done();
-    }
-}
-
-impl<CoreController: Controller> Deref for UiSession<CoreController> {
-    type Target = Arc<CoreController>;
-
-    fn deref(&self) -> &Arc<CoreController> {
-        &self.controller
     }
 }
 
