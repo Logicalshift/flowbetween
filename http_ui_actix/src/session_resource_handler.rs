@@ -89,8 +89,6 @@ pub fn session_resource_handler<Session: ActixSession>() -> impl Handler<Arc<Ses
             // Path is valid
             let resource = decode_url(path);
 
-            println!("{:?}", resource);
-
             if let Some(resource) = resource {
                 // Got a valid resource
                 let session = state.get_session(&resource.session_id);
@@ -110,5 +108,23 @@ pub fn session_resource_handler<Session: ActixSession>() -> impl Handler<Arc<Ses
             // No tail path was supplied (likely this handler is being called from the wrong place)
             AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn can_decode_valid_uri() {
+        let decoded = decode_url("/some-session-id/i/controller1/controller2/image.png");
+
+        assert!(decoded.is_some());
+
+        let decoded = decoded.unwrap();
+        assert!(decoded.session_id == "some-session-id".to_string());
+        assert!(decoded.resource_type == ResourceType::Image);
+        assert!(decoded.controller_path == vec!["controller1".to_string(), "controller2".to_string()]);
+        assert!(decoded.resource_name == "image.png".to_string());
     }
 }
