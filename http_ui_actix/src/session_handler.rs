@@ -20,7 +20,11 @@ fn base_url<TState>(req: &HttpRequest<TState>) -> String {
     let tail        = req.match_info().get("tail").unwrap_or("");
     let base_len    = full_url.len() - tail.len();
 
-    full_url[0..base_len].to_string()
+    if tail == "/" {
+        full_url.to_string()
+    } else {
+        full_url[0..base_len].to_string()
+    }
 }
 
 ///
@@ -147,6 +151,7 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
 
             &Method::GET => {
                 // Get requests to sessions are used to retrieve the current state of various resources
+                println!("{:?}", req.match_info().get("tail"));
 
                 // (TODO!)
                 AsyncResult::async(Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))))
