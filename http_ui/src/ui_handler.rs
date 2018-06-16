@@ -317,7 +317,6 @@ impl<CoreController: HttpController+'static> UiHandler<CoreController> {
             return Response::with(status::NotFound);
         }
 
-
         // Try to retrieve the session
         let session_id      = req.url.path()[0];
         let resource_type   = req.url.path()[1];
