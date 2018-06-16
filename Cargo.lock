@@ -700,6 +700,7 @@ name = "flo_http_ui_actix"
 version = "0.1.0"
 dependencies = [
  "actix-web 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bytes 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.0",
  "flo_canvas 0.1.0",
  "flo_http_ui 0.1.0",

@@ -16,4 +16,5 @@ flo_http_ui         = { path = "../http_ui", version = "0.1" }
 flo_static_files    = { path = "../static_files", version= "0.1" }
 
 actix-web           = "0.6"
+bytes               = "0.4"
 futures             = "0.1"

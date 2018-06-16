@@ -2,6 +2,7 @@ use super::actix_session::*;
 
 use flo_ui::*;
 use flo_ui::session::*;
+use flo_canvas::*;
 use flo_http_ui::*;
 
 use actix_web::*;
@@ -10,6 +11,8 @@ use actix_web::http::*;
 use actix_web::dev::{AsyncResult,Handler};
 use futures::*;
 use futures::future;
+use futures::stream;
+use bytes::Bytes;
 
 use std::str::*;
 use std::sync::*;
@@ -148,6 +151,55 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, 
 }
 
 ///
+/// Produces a HTTP response for a canvas request
+/// 
+fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+    // Try to fetch the controller at this path
+    let controller = get_controller(session, controller_path);
+
+    if let Some(controller) = controller {
+        // Final component is the canvas name
+        let canvas_resources    = controller.get_canvas_resources();
+        let canvas              = canvas_resources.map_or(None, |resources| {
+            if let Ok(id) = u32::from_str(&canvas_name) {
+                resources.get_resource_with_id(id)
+            } else {
+                resources.get_named_resource(&canvas_name)
+            }
+        });
+
+        if let Some(canvas) = canvas {
+            // Stream encoding the canvas
+            let drawing         = canvas.get_drawing();
+
+            let encoded_drawing = drawing.into_iter()
+                .map(|cmd| {
+                    let mut encoded = String::new();
+                    cmd.encode_canvas(&mut encoded);
+                    encoded.push('\n');
+
+                    encoded
+                })
+                .map(|encoded| Bytes::from(encoded.as_bytes()));
+            
+            let encoded_drawing = stream::iter_ok(encoded_drawing)
+                .map_err(|_: ()| io::Error::new(ErrorKind::Other, "Unknown error"));
+
+            // Turn into a response
+            future::ok(req.build_response(StatusCode::OK)
+                .header(http::header::CONTENT_TYPE, "application/flocanvas; charset=utf-8")
+                .streaming(encoded_drawing))
+        } else {
+            // Canvas not found
+            future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+        }
+    } else {
+        // Controller not found
+        future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+    }
+}
+
+///
 /// Handler for get requests for a session
 /// 
 pub fn session_resource_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
@@ -168,7 +220,7 @@ pub fn session_resource_handler<Session: 'static+ActixSession>() -> impl Handler
                     // URL is in a valid format and the session could be found
                     match resource.resource_type {
                         ResourceType::Image     => AsyncResult::async(Box::new(handle_image_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))),
-                        ResourceType::Canvas    => AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+                        ResourceType::Canvas    => AsyncResult::async(Box::new(handle_canvas_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)))
                     }
                 } else {
                     // URL is in a valid format but the session could not be found
