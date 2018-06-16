@@ -1,9 +1,17 @@
 use super::actix_session::*;
 
+use flo_ui::*;
+use flo_ui::session::*;
+use flo_http_ui::*;
+
 use actix_web::*;
+use actix_web::Error;
 use actix_web::http::*;
 use actix_web::dev::{AsyncResult,Handler};
+use futures::*;
+use futures::future;
 
+use std::str::*;
 use std::sync::*;
 
 ///
@@ -77,9 +85,56 @@ fn decode_url(path: &str) -> Option<ResourceUrl> {
 }
 
 ///
+/// Finds the controller ont he specified path in the given session
+/// 
+fn get_controller<CoreUi>(session: &HttpSession<CoreUi>, controller_path: Vec<String>) -> Option<Arc<Controller>>
+where CoreUi: 'static+CoreUserInterface+Send+Sync {
+    // Get the root controller
+    let mut controller: Option<Arc<Controller>> = Some(session.ui().controller());
+
+    controller
+}
+
+///
+/// Produces a HTTP response for an image request
+/// 
+fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+    // Try to fetch the controller at this path
+    let controller = get_controller(session, controller_path);
+
+    if let Some(controller) = controller {
+        // Final component is the image name (or id)
+        let image_resources = controller.get_image_resources();
+        let image           = image_resources.map_or(None, |resources| {
+            if let Ok(id) = u32::from_str(&image_name) {
+                resources.get_resource_with_id(id)
+            } else {
+                resources.get_named_resource(&image_name)
+            }
+        });
+
+        /*
+        // Either return the image data, or not found
+        if let Some(image) = image {
+            // Return the image
+            self.image_response(image)
+        } else {
+            // No image found
+            Response::with(status::NotFound)
+        }
+        */
+
+        unimplemented!()
+    } else {
+        // Controller not found
+        future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+    }
+}
+
+///
 /// Handler for get requests for a session
 /// 
-pub fn session_resource_handler<Session: ActixSession>() -> impl Handler<Arc<Session>> {
+pub fn session_resource_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
     |req: HttpRequest<Arc<Session>>| {
         // The path is the tail of the request
         let path    = req.match_info().get("tail");
@@ -95,7 +150,10 @@ pub fn session_resource_handler<Session: ActixSession>() -> impl Handler<Arc<Ses
 
                 if let Some(session) = session {
                     // URL is in a valid format and the session could be found
-                    AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+                    match resource.resource_type {
+                        ResourceType::Image     => AsyncResult::async(Box::new(handle_image_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))),
+                        ResourceType::Canvas    => AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+                    }
                 } else {
                     // URL is in a valid format but the session could not be found
                     AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))

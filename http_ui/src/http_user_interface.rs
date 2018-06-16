@@ -193,6 +193,7 @@ pub type HttpUpdateStream   = Box<Stream<Item=Vec<Update>, Error=()>+Send>;
 impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
     type EventSink      = HttpEventSink;
     type UpdateStream   = HttpUpdateStream;
+    type CoreController = CoreUi::CoreController;
 
     fn get_input_sink(&self) -> Self::EventSink {
         // Get the core event sink
@@ -227,6 +228,10 @@ impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for H
 
         // These are the results
         Box::new(mapped_updates)
+    }
+
+    fn controller(&self) -> Arc<Self::CoreController> {
+        self.core_ui.controller()
     }
 }
 
