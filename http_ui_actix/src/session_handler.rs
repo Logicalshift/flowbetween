@@ -24,6 +24,23 @@ fn base_url<TState>(req: &HttpRequest<TState>) -> String {
 }
 
 ///
+/// Handles a request with a session that exists
+/// 
+fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session::CoreUi>, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
+    // Send the events followed by a tick
+    let mut events  = ui_request.events.clone();
+    events.push(Event::Tick);
+
+    // Send the events to get the updates
+    let updates     = session.send_events(events);
+
+    // Turn the updates into a response
+    updates
+        .map(|updates| UiHandlerResponse { updates })
+        .map_err(|_| unimplemented!())
+}
+
+///
 /// Handles a request for a session that doesn't exist
 /// 
 /// (This creates a new session for this user)
@@ -78,10 +95,19 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest<Arc<Session
     // Generate the response
     let response: Box<Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
         None                => Box::new(handle_no_session(Arc::clone(req.state()), base_url(&req), ui_request)),
-        Some(session_id)    => unimplemented!()
+        Some(session_id)    => {
+            // Try to fetch the session corresponding to this ID
+            let session = req.state().get_session(&session_id);
+
+            // Send the events to the appropriate session if we find one
+            match session {
+                Some(session)   => Box::new(handle_with_session::<Session>(&mut *session.lock().unwrap(), ui_request)),
+                None            => Box::new(handle_no_session(Arc::clone(req.state()), base_url(&req), ui_request))
+            }
+        }
     };
     
-    // Turn the response into a JSON response
+    // Turn the UI response into a JSON response
     response
         .map(move |response| {
             req.build_response(StatusCode::OK)
@@ -104,9 +130,6 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
                     .then(move |ui_request| -> Box<Future<Item=HttpResponse, Error=Error>> {
                         match ui_request {
                             Ok(ui_request) => {
-                                // JSON data is valid: process this UI request
-                                println!("{:?}", ui_request);
-
                                 // Process this UI request
                                 Box::new(handle_ui_request(req, &*ui_request))
                             },
