@@ -729,6 +729,7 @@ dependencies = [
 name = "flo_ui"
 version = "0.1.0"
 dependencies = [
+ "bytes 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "desync 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.0",
  "flo_canvas 0.1.0",

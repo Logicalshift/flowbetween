@@ -1,74 +1,21 @@
 use super::*;
+use super::bytes_iterator::*;
 
-use std::io::{Read, Result};
-use futures::*;
-
-#[derive(Clone)]
-struct ImageStreamIterator {
-    /// The bytes in the image data
-    bytes: Arc<Vec<u8>>,
-
-    /// Current position
-    pos: usize
-}
-
-impl Iterator for ImageStreamIterator {
-    type Item=u8;
-
-    #[inline]
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.pos < self.bytes.len() {
-            let res = (*self.bytes)[self.pos];
-            self.pos += 1;
-            Some(res)
-        } else {
-            None
-        }
-    }
-}
-
-impl Stream for ImageStreamIterator {
-    type Item = u8;
-    type Error = ();
-
-    fn poll(&mut self) -> Poll<Option<u8>, ()> {
-        use self::Async::*;
-
-        Ok(Ready(self.next()))
-    }
-}
-
-impl Read for ImageStreamIterator {
-    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        // Work out how many bytes to read
-        let mut num_to_read = buf.len();
-        if self.pos+num_to_read > self.bytes.len() {
-            num_to_read = self.bytes.len()-self.pos;
-        }
-
-        // Copy to the buffer
-        buf[..num_to_read].copy_from_slice(&self.bytes[self.pos..(self.pos+num_to_read)]);
-        
-        // Update the position
-        self.pos += num_to_read;
-
-        Ok(num_to_read)
-    }
-}
+use std::io::Read;
 
 ///
 /// Represents an image whose data is stored in memory 
 ///
 pub struct InMemoryImageData {
     /// The bytes making up this stream
-    bytes: Arc<Vec<u8>>
+    bytes: Arc<Bytes>
 }
 
 impl InMemoryImageData {
     ///
     /// Creates a new image data object from a set of bytes
     /// 
-    pub fn new(bytes: Vec<u8>) -> InMemoryImageData {
+    pub fn new(bytes: Bytes) -> InMemoryImageData {
         InMemoryImageData {
             bytes: Arc::new(bytes)
         }
@@ -77,20 +24,28 @@ impl InMemoryImageData {
 
 impl From<Vec<u8>> for InMemoryImageData {
     fn from(bytes: Vec<u8>) -> InMemoryImageData {
-        InMemoryImageData::new(bytes)
+        InMemoryImageData::new(Bytes::from(bytes))
     }
 }
 
-impl From<Arc<Vec<u8>>> for InMemoryImageData {
-    fn from(bytes: Arc<Vec<u8>>) -> InMemoryImageData {
+impl From<Bytes> for InMemoryImageData {
+    fn from(bytes: Bytes) -> InMemoryImageData {
+        InMemoryImageData {
+            bytes: Arc::new(bytes)
+        }
+    }
+}
+
+impl From<Arc<Bytes>> for InMemoryImageData {
+    fn from(bytes: Arc<Bytes>) -> InMemoryImageData {
         InMemoryImageData {
             bytes: bytes
         }
     }
 }
 
-impl<'a> From<&'a Arc<Vec<u8>>> for InMemoryImageData {
-    fn from(bytes: &'a Arc<Vec<u8>>) -> InMemoryImageData {
+impl<'a> From<&'a Arc<Bytes>> for InMemoryImageData {
+    fn from(bytes: &'a Arc<Bytes>) -> InMemoryImageData {
         InMemoryImageData {
             bytes: Arc::clone(bytes)
         }
@@ -99,11 +54,11 @@ impl<'a> From<&'a Arc<Vec<u8>>> for InMemoryImageData {
 
 impl ImageData for InMemoryImageData {
     fn read(&self) -> Box<Read+Send> {
-        Box::new(ImageStreamIterator { bytes: self.bytes.clone(), pos: 0 })
+        Box::new(ImageStreamIterator::from(&self.bytes))
     }
 
-    fn read_future(&self) -> Box<Stream<Item=u8, Error=()>> {
-        Box::new(ImageStreamIterator { bytes: self.bytes.clone(), pos: 0 })
+    fn read_future(&self) -> Box<Stream<Item=Bytes, Error=()>> {
+        Box::new(ImageStreamIterator::from(&self.bytes))
     }
 }
 
