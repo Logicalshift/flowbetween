@@ -8,14 +8,86 @@ use actix_web::dev::{Handler, AsyncResult};
 use actix_web::Error;
 use futures::*;
 use futures::future;
+use futures::stream;
 
 use std::sync::*;
 
 ///
+/// Retrieves the base URL for a request
+/// 
+fn base_url<TState>(req: &HttpRequest<TState>) -> String {
+    let full_url    = req.uri().path();
+    let tail        = req.match_info().get("tail").unwrap_or("");
+    let base_len    = full_url.len() - tail.len();
+
+    full_url[0..base_len].to_string()
+}
+
+///
+/// Handles a request for a session that doesn't exist
+/// 
+/// (This creates a new session for this user)
+/// 
+fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
+    // Convert the events into an iterator
+    let ui_request  = ui_request.clone();
+    let events      = stream::iter_ok::<_, Error>(ui_request.events.into_iter());
+
+    // Map each event onto the corresponding update
+    let updates     = events
+        .map(move |event| {
+            match event {
+                Event::NewSession => {
+                    let mut updates = vec![];
+
+                    // Start a new session
+                    let session_controller  = Session::Controller::start_new();
+                    let session_id          = session.new_session(session_controller, &base_url);
+
+                    // Return the new session ID
+                    updates.push(Update::NewSession(session_id));
+
+                    // TODO: With Actix, we run a websocket on the same port, so also send a websocket update
+
+                    // Return the updates
+                    stream::iter_ok(updates)             
+                },
+
+                // For any other event, a session is required, so we indicate that it's missing
+                _ => stream::iter_ok(vec![Update::MissingSession])
+            }
+        })
+        .flatten();
+
+    // Turn the stream into a response
+    let response = updates
+        .collect()
+        .map(|updates| UiHandlerResponse { updates });
+
+    // This is the future we return
+    response
+}
+
+///
 /// Handles a JSON UI request
 /// 
-fn handle_ui_request<Session: ActixSession>(req: HttpRequest<Arc<Session>>, ui_request: &UiHandlerRequest) -> impl Future<Item=HttpResponse, Error=Error> {
-    future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not implemented yet"))
+fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest<Arc<Session>>, ui_request: &UiHandlerRequest) -> impl Future<Item=HttpResponse, Error=Error> {
+    // Fetch the session ID from the request
+    let session_id  = ui_request.session_id.clone();
+
+    // Generate the response
+    let response: Box<Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
+        None                => Box::new(handle_no_session(Arc::clone(req.state()), base_url(&req), ui_request)),
+        Some(session_id)    => unimplemented!()
+    };
+    
+    // Turn the response into a JSON response
+    response
+        .map(move |response| {
+            req.build_response(StatusCode::OK)
+                .header(http::header::CONTENT_TYPE, "application/json; charset=utf8")
+                .json(response)
+        })
 }
 
 ///
