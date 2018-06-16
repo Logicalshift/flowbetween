@@ -13,6 +13,8 @@ use futures::future;
 
 use std::str::*;
 use std::sync::*;
+use std::io;
+use std::io::ErrorKind;
 
 ///
 /// Types of resource that can be retrieved statically
@@ -92,6 +94,11 @@ where CoreUi: 'static+CoreUserInterface+Send+Sync {
     // Get the root controller
     let mut controller: Option<Arc<Controller>> = Some(session.ui().controller());
 
+    // Try to navigate each section of the path
+    for controller_name in controller_path {
+        controller = controller.and_then(|controller| controller.get_subcontroller(&controller_name));
+    }
+
     controller
 }
 
@@ -113,18 +120,27 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, 
             }
         });
 
-        /*
         // Either return the image data, or not found
         if let Some(image) = image {
-            // Return the image
-            self.image_response(image)
-        } else {
-            // No image found
-            Response::with(status::NotFound)
-        }
-        */
+            match &*image {
+                Image::Png(data) => {
+                    // PNG data
+                    future::ok(req.build_response(StatusCode::OK)
+                        .header(http::header::CONTENT_TYPE, "image/png")
+                        .streaming(data.read_future().map_err(|_| io::Error::new(ErrorKind::Other, "Unknown error"))))
+                },
 
-        unimplemented!()
+                Image::Svg(data) => {
+                    // SVG data
+                    future::ok(req.build_response(StatusCode::OK)
+                        .header(http::header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")
+                        .streaming(data.read_future().map_err(|_| io::Error::new(ErrorKind::Other, "Unknown error"))))
+                },
+            }
+        } else {
+            // Image not found
+            future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+        }
     } else {
         // Controller not found
         future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
