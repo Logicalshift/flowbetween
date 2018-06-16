@@ -116,7 +116,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest<Arc<Session
     response
         .map(move |response| {
             req.build_response(StatusCode::OK)
-                .header(http::header::CONTENT_TYPE, "application/json; charset=utf8")
+                .header(http::header::CONTENT_TYPE, "application/json; charset=utf-8")
                 .json(response)
         })
 }
