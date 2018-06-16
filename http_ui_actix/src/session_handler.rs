@@ -1,4 +1,5 @@
 use super::actix_session::*;
+use super::session_resource_handler::*;
 
 use flo_http_ui::*;
 
@@ -124,7 +125,11 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest<Arc<Session
 /// Creates the handler for an actix UI session
 /// 
 pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
-    |req: HttpRequest<Arc<Session>>| {
+    // Create the session resource handler
+    let get_handler = Mutex::new(session_resource_handler());
+
+    // Wrap into a function
+    move |req: HttpRequest<Arc<Session>>| {
         match req.method() {
             &Method::POST => {
                 // POST requests are used to send instructions to sessions
@@ -150,11 +155,14 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
             },
 
             &Method::GET => {
-                // Get requests to sessions are used to retrieve the current state of various resources
-                println!("{:?}", req.match_info().get("tail"));
+                // Get requests are handled by the session resource handler
+                let resource_request    = get_handler.lock().unwrap().handle(req.clone());
+                let response            = resource_request.respond_to(&req);
 
-                // (TODO!)
-                AsyncResult::async(Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))))
+                match response {
+                    Ok(response)    => response.into(),
+                    Err(err)        => AsyncResult::err(err)
+                }
             },
 
             _ => {

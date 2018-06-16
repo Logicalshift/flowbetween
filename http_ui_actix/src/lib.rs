@@ -7,8 +7,10 @@ extern crate futures;
 
 mod actix_session;
 mod session_handler;
+mod session_resource_handler;
 mod static_file_handler;
 
 pub use self::actix_session::*;
 pub use self::session_handler::*;
+pub use self::session_resource_handler::*;
 pub use self::static_file_handler::*;
