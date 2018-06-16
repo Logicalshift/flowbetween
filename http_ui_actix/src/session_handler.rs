@@ -1,3 +1,5 @@
+use super::actix_session::*;
+
 use flo_http_ui::*;
 
 use actix_web::*;
@@ -12,16 +14,15 @@ use std::sync::*;
 ///
 /// Handles a JSON UI request
 /// 
-fn handle_ui_request<CoreController>(req: HttpRequest<Arc<WebSessions<CoreController>>>, ui_request: &UiHandlerRequest) -> impl Future<Item=HttpResponse, Error=Error>
-where CoreController: 'static+HttpController {
+fn handle_ui_request<Session: ActixSession>(req: HttpRequest<Arc<Session>>, ui_request: &UiHandlerRequest) -> impl Future<Item=HttpResponse, Error=Error> {
     future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not implemented yet"))
 }
 
 ///
 /// Creates the handler for an actix UI session
 /// 
-pub fn session_handler<CoreController: 'static+HttpController>() -> impl Handler<Arc<WebSessions<CoreController>>> {
-    |req: HttpRequest<Arc<WebSessions<CoreController>>>| {
+pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
+    |req: HttpRequest<Arc<Session>>| {
         match req.method() {
             &Method::POST => {
                 // POST requests are used to send instructions to sessions
