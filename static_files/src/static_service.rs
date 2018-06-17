@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::iter::FromIterator;
 
-use iron::*;
-
 use super::static_file::*;
 
 ///
@@ -41,50 +39,6 @@ impl StaticService {
             self.file_for_path(&format!("/{}", path))
         } else {
             self.file_for_path.get(path).cloned()
-        }
-    }
-}
-
-impl Handler for StaticService {
-    ///
-    /// Serves a static file as a request (no caching)
-    ///
-    fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        // Canonicalize the path
-        let mut path_components = vec![];
-
-        for component in req.url.path().iter() {
-            if *component == "." {
-                // Ignore
-            } else if *component == "" {
-                // Also ignore; note that if this is at the end the final path should have a '/' at the end
-            } else if *component == ".." {
-                // Up a level
-                if path_components.len() > 0 {
-                    path_components.pop();
-                }
-            } else {
-                path_components.push(String::from(*component));
-            }
-        }
-
-        // Fold into a path string
-        let mut path_string = path_components.iter()
-            .fold(String::new(), |so_far, next_item| so_far + "/" + next_item);
-
-        if req.url.path().last() == Some(&"") {
-            path_string.push('/');
-        }
-
-        // Look up the file
-        let file = self.file_for_path.get(&path_string);
-
-        if let Some(file) = file {
-            // File can handle it
-            file.handle(req)
-        } else {
-            // 404 response
-            Ok(Response::with(status::NotFound))
         }
     }
 }

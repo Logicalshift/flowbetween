@@ -1,9 +1,3 @@
-use iron::*;
-use iron::mime::*;
-use iron::method::*;
-use iron::headers::*;
-use iron::modifiers::*;
-
 use sha2::{Sha256, Digest};
 
 ///
@@ -122,50 +116,5 @@ impl StaticFile {
     ///
     pub fn etag(&self) -> String {
         self.etag.clone()
-    }
-}
-
-impl Handler for StaticFile {
-    ///
-    /// Serves a static file as a request (no caching)
-    ///
-    fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        if req.method == Method::Get || req.method == Method::Head {
-            let content_type    = self.mime_type.parse::<Mime>().unwrap();
-            let etag            = EntityTag::weak(self.etag());
-
-            // See if the browser requested an etag match
-            let if_none_match   = req.headers.get::<headers::IfNoneMatch>();
-            let not_modified    = if let Some(&IfNoneMatch::Items(ref if_none_match)) = if_none_match {
-                if_none_match.iter().any(|possible_etag| possible_etag == &etag)
-            } else {
-                false
-            };
-
-            // Create the basic response headers
-            let mut response = Response::with((
-                    Header(ContentType(content_type)),
-                    Header(ContentLength(self.content().len() as u64)),
-                    Header(ETag(etag)),
-                    Header(CacheControl(vec![CacheDirective::Public, CacheDirective::MaxAge(60)]))));
-
-            if not_modified {
-                // Unchanged
-                response = response.set(status::NotModified);
-            } else {
-                // Create a response with some headers
-                response = response.set(status::Ok);
-                
-                // If the request was not Head, then append the rest of the body
-                if req.method != Method::Head {
-                    response = response.set(Vec::from(self.content()));
-                }
-            }
-
-            Ok(response)
-        } else {
-            // Only Get or Head are allowed for static resources: posting, deleting etc are not
-            Ok(Response::with(status::BadRequest))
-        }
     }
 }
