@@ -113,7 +113,22 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>() -> impl Handle
 
             if let Some(session) = session {
                 // Start a new websocket for this session
-                unimplemented!()
+                let session = FloWsSession::new(session);
+
+                // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
+                let response = ws::handshake(&req);
+                let response = response.map(move |response| {
+                    let stream = ws::WsStream::new(req.clone());
+
+                    let mut ctx = ws::WebsocketContext::new(req, session);
+                    ctx.add_stream(stream);
+
+                    response.body(ctx)
+                });
+
+                // Generate the websocket response
+                response.map(|response| AsyncResult::ok(response))
+                    .unwrap_or_else(|err| AsyncResult::err(err))
             } else {
                 // Session not found
                 AsyncResult::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found"))
