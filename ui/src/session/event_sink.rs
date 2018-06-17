@@ -79,7 +79,7 @@ impl Sink for UiEventSink {
                     core.dispatch_event(events, &*controller);
 
                     // No longer waiting for events
-                    *waiting_for_events.lock().unwrap() = true;
+                    *waiting_for_events.lock().unwrap() = false;
                 });
 
                 // Item went to the sink
