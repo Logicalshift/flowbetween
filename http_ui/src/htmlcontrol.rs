@@ -280,6 +280,7 @@ impl ToHtml for Popup {
 mod test {
     use canvas::*;
     use super::*;
+    use bytes::Bytes;
     use std::sync::*;
 
     #[test]
@@ -338,7 +339,7 @@ mod test {
     #[test]
     fn image_includes_controller() {
         let resource_manager    = ResourceManager::new();
-        let image               = resource_manager.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
+        let image               = resource_manager.register(Image::Png(Arc::new(InMemoryImageData::new(Bytes::from(vec![])))));
         resource_manager.assign_name(&image, "test_image");
 
         let control = Control::empty()
