@@ -1595,7 +1595,7 @@ function flowbetween(root_node) {
         var connect = new Promise((resolve) => {
             // Construct the WS URL from the document URL
             let ws_base_url     = 'ws://' + doc_url.hostname + ':' + websocket_port;
-            let ws_session_url  = ws_base_url + '/' + session_id;
+            let ws_session_url  = ws_base_url + '/ws/' + session_id;
 
             note('Connecting to websocket at ' + ws_session_url);
 
