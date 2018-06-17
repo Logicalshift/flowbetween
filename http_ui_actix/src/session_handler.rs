@@ -50,7 +50,7 @@ fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session:
 /// 
 /// (This creates a new session for this user)
 /// 
-fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
+fn handle_no_session<Session: ActixSession>(session: Arc<Session>, ws_port: u16, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
     // Convert the events into an iterator
     let ui_request  = ui_request.clone();
     let events      = stream::iter_ok::<_, Error>(ui_request.events.into_iter());
@@ -68,6 +68,9 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
 
                     // Return the new session ID
                     updates.push(Update::NewSession(session_id));
+                    
+                    // Websocket runs on the same port as the main session
+                    updates.push(Update::WebsocketPort(ws_port as u32));
 
                     // TODO: With Actix, we run a websocket on the same port, so also send a websocket update
 
@@ -99,7 +102,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest<Arc<Session
 
     // Generate the response
     let response: Box<Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
-        None                => Box::new(handle_no_session(Arc::clone(req.state()), base_url(&req), ui_request)),
+        None                => Box::new(handle_no_session(Arc::clone(req.state()), 3002, base_url(&req), ui_request)),
         Some(session_id)    => {
             // Try to fetch the session corresponding to this ID
             let session = req.state().get_session(&session_id);
@@ -107,7 +110,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest<Arc<Session
             // Send the events to the appropriate session if we find one
             match session {
                 Some(session)   => Box::new(handle_with_session::<Session>(&mut *session.lock().unwrap(), ui_request)),
-                None            => Box::new(handle_no_session(Arc::clone(req.state()), base_url(&req), ui_request))
+                None            => Box::new(handle_no_session(Arc::clone(req.state()), 3002, base_url(&req), ui_request))
             }
         }
     };
