@@ -41,6 +41,7 @@ mod test {
     use super::super::binding_canvas::*;
     use super::super::resource_manager::*;
 
+    use bytes::Bytes;
     use std::sync::*;
 
     #[test]
@@ -116,7 +117,7 @@ mod test {
     #[test]
     fn image_equals_self() {
         let resources       = ResourceManager::new();
-        let image_resource  = resources.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
+        let image_resource  = resources.register(Image::Png(Arc::new(InMemoryImageData::new(Bytes::from(vec![])))));
         let image           = Control::empty()
             .with(image_resource);
 
@@ -126,8 +127,8 @@ mod test {
     #[test]
     fn different_images_are_different() {
         let resources       = ResourceManager::new();
-        let image_resource1 = resources.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
-        let image_resource2 = resources.register(Image::Png(Arc::new(InMemoryImageData::new(vec![]))));
+        let image_resource1 = resources.register(Image::Png(Arc::new(InMemoryImageData::new(Bytes::from(vec![])))));
+        let image_resource2 = resources.register(Image::Png(Arc::new(InMemoryImageData::new(Bytes::from(vec![])))));
         let image1          = Control::empty()
             .with(image_resource1);
         let image2          = Control::empty()
