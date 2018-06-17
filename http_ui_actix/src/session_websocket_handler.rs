@@ -2,7 +2,6 @@ use super::actix_session::*;
 
 use flo_http_ui::*;
 use flo_ui::*;
-use flo_ui::session::*;
 
 use actix::*;
 use actix::fut;
@@ -119,11 +118,17 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>() -> impl Handle
                 // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
                 let response = ws::handshake(&req);
                 let response = response.map(move |mut response| {
+                    // Create the stream
                     let stream = ws::WsStream::new(req.clone());
 
+                    // Apply to the context
                     let mut ctx = ws::WebsocketContext::new(req, session);
                     ctx.add_stream(stream);
 
+                    // Begin sending messages
+                    ctx.spawn(fut::ok(()).map(|_, session: &mut FloWsSession<_>, ctx| session.start_sending_updates(ctx)));
+
+                    // Generate the response
                     response.body(ctx)
                 });
 
