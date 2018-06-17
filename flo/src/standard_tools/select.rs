@@ -185,19 +185,15 @@ impl Select {
     }
 
     ///
-    /// Draws a set of dragged elements
+    /// Returns how the specified selected elements should be rendered (as a selection)
     /// 
-    fn draw_drag(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
+    /// This can be used to cache the standard rendering for a set of selected elements so that we don't
+    /// have to constantly recalculate it (which can be quite slow for a large set of brush elements)
+    /// 
+    fn rendering_for_elements(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>) -> Vec<Draw> {
         let mut drawing = vec![];
 
-        drawing.layer(1);
-        drawing.clear_layer();
-
-        // Draw everything translated by the drag distance
-        drawing.push_state();
-        drawing.transform(Transform2D::translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
-
-        // Draw the 'shadows' of the elements
+        // Draw each of the elements and store the bounding boxes
         let mut bounding_boxes = vec![];
         for (element, properties, bounds) in selected_elements {
             // Update the brush properties to be a 'shadow' of the original
@@ -235,6 +231,26 @@ impl Select {
         drawing.line_width_pixels(0.5);
         drawing.stroke_color(Color::Rgba(0.2, 0.8, 1.0, 1.0));
         drawing.stroke();
+
+        // Return the set of commands for drawing these elements
+        drawing
+    }
+
+    ///
+    /// Draws a set of dragged elements
+    /// 
+    fn draw_drag(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
+        let mut drawing = vec![];
+
+        drawing.layer(1);
+        drawing.clear_layer();
+
+        // Draw everything translated by the drag distance
+        drawing.push_state();
+        drawing.transform(Transform2D::translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
+
+        // Draw the 'shadows' of the elements
+        drawing.extend(Self::rendering_for_elements(data, selected_elements));
 
         // Finish up (popping state to restore the transformation)
         drawing.pop_state();
