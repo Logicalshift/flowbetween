@@ -59,6 +59,9 @@ pub struct SelectData {
     // The current set of selected elements
     selected_elements: Arc<HashSet<ElementId>>,
 
+    // The drawing instructions to render the selected elements (or empty if there's no rendering yet)
+    selected_elements_draw: Arc<Vec<Draw>>,
+
     /// The current select action
     action: SelectAction,
 
@@ -80,12 +83,13 @@ impl SelectData {
     ///
     fn with_action(&self, new_action: SelectAction) -> SelectData {
         SelectData {
-            frame:              self.frame.clone(),
-            bounding_boxes:     self.bounding_boxes.clone(),
-            selected_elements:  self.selected_elements.clone(),
-            action:             new_action,
-            initial_position:   self.initial_position.clone(),
-            drag_position:      self.drag_position.clone()
+            frame:                  self.frame.clone(),
+            bounding_boxes:         self.bounding_boxes.clone(),
+            selected_elements:      self.selected_elements.clone(),
+            selected_elements_draw: self.selected_elements_draw.clone(),
+            action:                 new_action,
+            initial_position:       self.initial_position.clone(),
+            drag_position:          self.drag_position.clone()
         }
     }
     
@@ -94,12 +98,13 @@ impl SelectData {
     ///
     fn with_initial_position(&self, new_initial_position: RawPoint) -> SelectData {
         SelectData {
-            frame:              self.frame.clone(),
-            bounding_boxes:     self.bounding_boxes.clone(),
-            selected_elements:  self.selected_elements.clone(),
-            action:             self.action,
-            initial_position:   new_initial_position,
-            drag_position:      None
+            frame:                  self.frame.clone(),
+            bounding_boxes:         self.bounding_boxes.clone(),
+            selected_elements:      self.selected_elements.clone(),
+            selected_elements_draw: self.selected_elements_draw.clone(),
+            action:                 self.action,
+            initial_position:       new_initial_position,
+            drag_position:          None
         }
     }
 
@@ -108,12 +113,13 @@ impl SelectData {
     /// 
     fn with_drag_position(&self, new_drag_position: RawPoint) -> SelectData {
         SelectData {
-            frame:              self.frame.clone(),
-            bounding_boxes:     self.bounding_boxes.clone(),
-            selected_elements:  self.selected_elements.clone(),
-            action:             self.action,
-            initial_position:   self.initial_position.clone(),
-            drag_position:      Some(new_drag_position)
+            frame:                  self.frame.clone(),
+            bounding_boxes:         self.bounding_boxes.clone(),
+            selected_elements:      self.selected_elements.clone(),
+            selected_elements_draw: self.selected_elements_draw.clone(),
+            action:                 self.action,
+            initial_position:       self.initial_position.clone(),
+            drag_position:          Some(new_drag_position)
         }
     }
 }
@@ -250,7 +256,13 @@ impl Select {
         drawing.transform(Transform2D::translate(drag_point.0-initial_point.0, drag_point.1-initial_point.1));
 
         // Draw the 'shadows' of the elements
-        drawing.extend(Self::rendering_for_elements(data, selected_elements));
+        if data.selected_elements_draw.len() > 0 {
+            // Use the cached version
+            drawing.extend(&*data.selected_elements_draw);
+        } else {
+            // Regenerate every time
+            drawing.extend(Self::rendering_for_elements(data, selected_elements));
+        }
 
         // Finish up (popping state to restore the transformation)
         drawing.pop_state();
@@ -426,7 +438,17 @@ impl Select {
 
             (SelectAction::Reselect, PaintAction::Continue) => {
                 // This begins a dragging operation
-                let new_data = data.with_action(SelectAction::Drag);
+                let mut new_data = data.with_action(SelectAction::Drag);
+
+                // Pre-render the elements so we can draw the drag faster
+                let selected_elements   = Arc::clone(&data.selected_elements);
+                let selected            = data.bounding_boxes.iter()
+                    .filter(|&&(ref id, _, _)| selected_elements.contains(id))
+                    .map(|item| item.clone())
+                    .collect();
+                new_data.selected_elements_draw = Arc::new(Self::rendering_for_elements(&new_data, selected));
+
+                // Update the tool data
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
             },
@@ -649,12 +671,13 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
         let data_for_model  = follow(computed(move || (current_frame.get(), selected_elements.get(), bounding_boxes.get())))
             .map(|(current_frame, selected_elements, bounding_boxes)| {
                 ToolAction::Data(SelectData {
-                    frame:              current_frame,
-                    bounding_boxes:     bounding_boxes,
-                    selected_elements:  Arc::new(selected_elements.into_iter().collect()),
-                    action:             SelectAction::NoAction,
-                    initial_position:   RawPoint::from((0.0, 0.0)),
-                    drag_position:      None
+                    frame:                  current_frame,
+                    bounding_boxes:         bounding_boxes,
+                    selected_elements:      Arc::new(selected_elements.into_iter().collect()),
+                    selected_elements_draw: Arc::new(vec![]),
+                    action:                 SelectAction::NoAction,
+                    initial_position:       RawPoint::from((0.0, 0.0)),
+                    drag_position:          None
                 })
             });
         
@@ -706,7 +729,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
 
                     ToolInput::Select | ToolInput::Deselect => {
                         // Reset the action to 'no action' when the tool is selected or deselected
-                        let new_data = data.with_action(SelectAction::NoAction);
+                        let mut new_data = data.with_action(SelectAction::NoAction);
+
+                        // Clear the element rendering
+                        new_data.selected_elements_draw = Arc::new(vec![]);
 
                         // This replaces the data object
                         data = Arc::new(new_data.clone());
