@@ -76,6 +76,7 @@ impl Sink for UiEventSink {
                     }
 
                     // Dispatch the events
+                    let events = core.reduce_events(events);
                     core.dispatch_event(events, &*controller);
 
                     // No longer waiting for events
