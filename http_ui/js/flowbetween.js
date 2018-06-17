@@ -1601,8 +1601,8 @@ function flowbetween(root_node) {
 
             note('Connecting to websocket at ' + ws_session_url);
 
-            // Connect the websocket, using the flo-web protocol
-            let websocket = new WebSocket(ws_session_url, ['flo-web']);
+            // Connect the websocket
+            let websocket = new WebSocket(ws_session_url);
 
             // Add event handlers for it
             websocket.addEventListener('message', (event) => {
