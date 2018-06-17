@@ -36,6 +36,23 @@ impl<CoreUi: CoreUserInterface+Send+Sync+'static> FloWsSession<CoreUi> {
             event_sink: Box::new(event_sink)
         }
     }
+
+    ///
+    /// Starts sending updates to this actor
+    /// 
+    pub fn start_sending_updates(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
+        // Retrieve the stream of updates we need to send to the websocket
+        let update_stream = self.session.lock().unwrap().http_ui().get_updates();
+        let update_stream = fut::wrap_stream::<_, Self>(update_stream);
+
+        // Updates are sent to the websocket
+        let update_stream = update_stream
+            .map(|update, _actor, _ctx| serde_json::to_string(&update).unwrap())
+            .map(|update, _actor, ctx| ctx.text(update));
+        
+        // Spawn the updates on the context
+        ctx.spawn(update_stream.finish());
+    }
 }
 
 impl<CoreUi: CoreUserInterface+Send+Sync+'static> Actor for FloWsSession<CoreUi> {
