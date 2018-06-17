@@ -3,9 +3,11 @@ use super::super::control::*;
 use super::super::controller::*;
 
 use binding::*;
+use itertools::*;
 
 use std::mem;
 use std::sync::*;
+use std::collections::HashMap;
 
 ///
 /// Core UI session structures
@@ -45,6 +47,50 @@ impl UiSessionCore {
     /// Retrieves a reference to the UI tree for the whole application
     /// 
     pub fn ui_tree(&self) -> BindRef<Control> { BindRef::clone(&self.ui_tree) }
+
+    ///
+    /// Finds any events in an event list that can be combined into a single event and combines them
+    /// 
+    pub fn reduce_events(&mut self, events: Vec<UiEvent>) -> Vec<UiEvent> {
+        // Paint events destined for the same target can all be combined
+        let mut paint_events: HashMap<_, _> = events.iter()
+            .filter(|evt| match evt {
+                UiEvent::Action(_, _, ActionParameter::Paint(_, _)) => true,
+                _ => false
+            })
+            .map(|evt| {
+                match evt {
+                    UiEvent::Action(controller, event_name, ActionParameter::Paint(device, actions)) => (controller, event_name, device, actions),
+                    _ => unimplemented!()
+                }
+            })
+            .map(|paint_ref| paint_ref.clone()) 
+            .group_by(|(controller, event_name, device, _actions)| (*controller, *event_name, *device)).into_iter()
+            .map(|(key, group)| (key, group.into_iter().flat_map(|(_, _, _, actions)| actions).collect::<Vec<_>>()))
+            .collect();
+
+        // Turn into a results event set
+        let mut result = vec![];
+        for evt in events.iter() {
+            match evt {
+                // Paint events are all coalesced onto the first such event
+                UiEvent::Action(controller, event_name, ActionParameter::Paint(device, _)) => {
+                    if let Some(actions) = paint_events.get(&(controller, event_name, device)) {
+                        // Append a paint event
+                        result.push(UiEvent::Action(controller.clone(), event_name.clone(), ActionParameter::Paint(device.clone(), actions.iter().map(|action| (*action).clone()).collect())))
+                    }
+
+                    // Remove from the hashmap so this paint event won't get added again
+                    paint_events.remove(&(controller, event_name, device));
+                },
+
+                // Standard events are just pushed
+                _ => { result.push(evt.clone()); }
+            }
+        }
+
+        result
+    }
 
     ///
     /// Dispatches an event to the specified controller

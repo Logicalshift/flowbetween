@@ -3,7 +3,7 @@ use super::mouse::*;
 ///
 /// The device that caused a painting event
 /// 
-#[derive(Clone, Copy, PartialEq, Hash, Serialize, Deserialize, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
 pub enum PaintDevice {
     /// Unknown paint device
     Other,

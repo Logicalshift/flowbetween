@@ -12,6 +12,7 @@ extern crate modifier;
 extern crate futures;
 extern crate png;
 extern crate bytes;
+extern crate itertools;
 extern crate desync;
 
 mod user_interface;
