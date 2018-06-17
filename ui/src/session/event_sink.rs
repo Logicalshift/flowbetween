@@ -6,6 +6,7 @@ use desync::*;
 use futures::*;
 use futures::task;
 
+use std::mem;
 use std::sync::*;
 
 ///
@@ -19,11 +20,11 @@ pub struct UiEventSink {
     /// The core that is affected by these events
     core: Arc<Desync<UiSessionCore>>,
 
-    /// ID assigned to the most recently dispatched event
-    last_event: Mutex<usize>,
+    /// The events that are waiting to be processed (empty if the sink is idle)
+    pending_events: Arc<Mutex<Vec<UiEvent>>>,
 
-    /// The event that was most recently retired for this sink
-    last_finished_event: Arc<Mutex<usize>>
+    /// True while we've got an async request to process events queued
+    waiting_for_events: Arc<Mutex<bool>>
 }
 
 impl UiEventSink {
@@ -34,8 +35,8 @@ impl UiEventSink {
         UiEventSink {
             controller:             controller,
             core:                   core,
-            last_event:             Mutex::new(0),
-            last_finished_event:    Arc::new(Mutex::new(0))
+            pending_events:         Arc::new(Mutex::new(vec![])),
+            waiting_for_events:     Arc::new(Mutex::new(false))
         }
     }
 }
@@ -45,42 +46,57 @@ impl Sink for UiEventSink {
     type SinkError  = ();
 
     fn start_send(&mut self, item: Vec<UiEvent>) -> StartSend<Vec<UiEvent>, ()> {
-        // Assign an ID to this event
-        let event_id: usize = {
-            let mut last_event  = self.last_event.lock().unwrap();
-            (*last_event)       += 1;
-            let event_id        = *last_event;
+        if item.len() == 0 {
+            // Edge case: no events are able to be sent
+            Ok(AsyncSink::Ready)
+        } else {
+            // Get the events that are pending
+            let pending_events  = self.pending_events.clone();
+            let mut pending     = pending_events.lock().unwrap();
 
-            event_id
-        };
+            if pending.len() == 0 {
+                // No events are pending, so we need to wake the core
+                *pending = item;
 
-        // Need to send some stuff to the core to finish processing the event
-        let controller          = Arc::clone(&self.controller);
-        let last_finished_event = Arc::clone(&self.last_finished_event);
+                // Need to send some stuff to the core to finish processing the event
+                let controller          = Arc::clone(&self.controller);
+                let pending_events      = self.pending_events.clone();
+                let waiting_for_events  = Arc::clone(&self.waiting_for_events);
 
-        // Send to the core (which acts as our sink)
-        self.core.async(move |core| {
-            // Dispatch the event
-            core.dispatch_event(item, &*controller);
+                // Setting the 'waiting for events' causes poll_complete to indicate that we're still busy
+                *waiting_for_events.lock().unwrap() = true;
 
-            // Retire the event
-            let mut last_finished_event = last_finished_event.lock().unwrap();
-            if *last_finished_event < event_id {
-                *last_finished_event = event_id;
+                self.core.async(move |core| {
+                    // Fetch the pending events (only hold the lock long enough to swap them out)
+                    let mut events      = vec![];
+                    {
+                        let mut pending = pending_events.lock().unwrap();
+
+                        mem::swap(&mut *pending, &mut events);
+                    }
+
+                    // Dispatch the events
+                    core.dispatch_event(events, &*controller);
+
+                    // No longer waiting for events
+                    *waiting_for_events.lock().unwrap() = true;
+                });
+
+                // Item went to the sink
+                Ok(AsyncSink::Ready)
+            } else {
+                // Events are already pending, so we just add this new set onto the old set
+                pending.extend(item);
+
+                // Item went to the sink
+                Ok(AsyncSink::Ready)
             }
-        });
-
-        // Item went to the sink
-        Ok(AsyncSink::Ready)
+        }
     }
 
     fn poll_complete(&mut self) -> Poll<(), ()> {
-        // Fetch the last event we dispatched and the last one we retired
-        let current_event = *(self.last_event.lock().unwrap());
-        let retired_event = *(self.last_finished_event.lock().unwrap());
-
-        if current_event == retired_event {
-            // We're ready
+        if *self.waiting_for_events.lock().unwrap() == false {
+            // All events have been pushed to the core (though they may still be running)
             Ok(Async::Ready(()))
         } else {
             // Generate a task and defer until the core is available again
