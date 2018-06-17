@@ -7,6 +7,7 @@ extern crate actix;
 extern crate actix_web;
 extern crate futures;
 extern crate bytes;
+extern crate serde_json;
 
 mod actix_session;
 mod session_handler;
