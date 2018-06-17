@@ -75,17 +75,21 @@ impl From<(PathElement, PathElement)> for Rect {
 /// 
 impl<'a> From<&'a Path> for Rect {
     fn from(p: &'a Path) -> Rect {
-        // We want all the pairs of elements
-        let previous    = p.elements.iter().take(p.elements.len()-1);
-        let following   = p.elements.iter().skip(1);
-        let mut bounds  = Rect::empty();
+        if p.elements.len() == 0 {
+            Rect::empty()
+        } else {
+            // We want all the pairs of elements
+            let previous    = p.elements.iter().take(p.elements.len()-1);
+            let following   = p.elements.iter().skip(1);
+            let mut bounds  = Rect::empty();
 
-        // The bounds of the path is the union of the bounds of all of the elements
-        for (previous, next) in previous.zip(following) {
-            bounds = bounds.union(Rect::from((*previous, *next)));
+            // The bounds of the path is the union of the bounds of all of the elements
+            for (previous, next) in previous.zip(following) {
+                bounds = bounds.union(Rect::from((*previous, *next)));
+            }
+
+            bounds
         }
-
-        bounds
     }
 }
 
