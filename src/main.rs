@@ -61,6 +61,7 @@ fn main_actix() -> Option<JoinHandle<()>> {
         aw::server::new(move || {
                 aw::App::with_state(sessions.clone())
                     .handler("/flowbetween/session", flo_actix::session_handler())
+                    .handler("/ws", flo_actix::session_websocket_handler())
                     .handler("/", flo_actix::flowbetween_static_file_handler())
             })
             .bind(&format!("{}:{}", BIND_ADDRESS, ACTIX_SERVER_PORT))
