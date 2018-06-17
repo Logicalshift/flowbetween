@@ -1,3 +1,5 @@
+use super::actix_session::*;
+
 use flo_http_ui::*;
 use flo_ui::*;
 use flo_ui::session::*;
@@ -5,6 +7,7 @@ use flo_ui::session::*;
 use actix::*;
 use actix::fut;
 use actix_web::*;
+use actix_web::dev::{Handler, AsyncResult};
 use futures::*;
 use futures::future;
 use futures::sync::oneshot;
@@ -38,7 +41,7 @@ impl<CoreUi: CoreUserInterface+Send+Sync+'static> FloWsSession<CoreUi> {
     }
 
     ///
-    /// Starts sending updates to this actor
+    /// Starts sending updates to this actor (once a context is available)
     /// 
     pub fn start_sending_updates(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
         // Retrieve the stream of updates we need to send to the websocket
@@ -61,6 +64,7 @@ impl<CoreUi: CoreUserInterface+Send+Sync+'static> Actor for FloWsSession<CoreUi>
 
 impl<CoreUi: CoreUserInterface+Send+Sync+'static> StreamHandler<ws::Message, ws::ProtocolError> for FloWsSession<CoreUi> {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
+        // Text messages are decoded as arrays of HTTP events and sent to the event sink
         match msg {
             ws::Message::Text(message) => {
                 // Parse the JSON message
@@ -84,6 +88,39 @@ impl<CoreUi: CoreUserInterface+Send+Sync+'static> StreamHandler<ws::Message, ws:
 
             ws::Message::Ping(msg) => ctx.pong(&msg),
             _ => (),
+        }
+    }
+}
+
+///
+/// Creates a handler for requests that should spawn a websocket for a session
+/// 
+pub fn session_websocket_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
+    |req: HttpRequest<Arc<Session>>| {
+        // The tail indicates the session ID
+        let tail = req.match_info().get("tail");
+
+        if let Some(tail) = tail {
+            // Strip any preceeding '/'
+            let session_id = if tail.chars().nth(0) == Some('/') {
+                tail[1..].to_string()
+            } else {
+                tail.to_string()
+            };
+
+            // Look up the session
+            let session = req.state().get_session(&session_id);
+
+            if let Some(session) = session {
+                // Start a new websocket for this session
+                unimplemented!()
+            } else {
+                // Session not found
+                AsyncResult::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found"))
+            }
+        } else {
+            // Handler not properly installed, probably
+            AsyncResult::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found"))
         }
     }
 }
