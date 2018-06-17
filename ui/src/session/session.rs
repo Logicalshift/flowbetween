@@ -71,9 +71,6 @@ impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdat
     /// The type of the update stream for this UI
     type UpdateStream = UiUpdateStream;
 
-    /// The type of the core controller for this session
-    type CoreController = CoreController;
-
     /// Retrieves an input event sink for this user interface
     fn get_input_sink(&self) -> UiEventSink {
         UiEventSink::new(Arc::clone(&self.controller), Arc::clone(&self.core))
@@ -83,15 +80,16 @@ impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdat
     fn get_updates(&self) -> UiUpdateStream {
         UiUpdateStream::new(self.controller.clone(), Arc::clone(&self.core))
     }
-
-    /// Retrieves the controller for this UI
-    fn controller(&self) -> Arc<CoreController> {
-        Arc::clone(&self.controller)
-    }
 }
 
 impl<CoreController: 'static+Controller> CoreUserInterface for UiSession<CoreController> {
+    type CoreController = CoreController;
+
     fn ui_tree(&self) -> BindRef<Control> {
         self.core.sync(|core| core.ui_tree())
+    }
+
+    fn controller(&self) -> Arc<CoreController> {
+        Arc::clone(&self.controller)
     }
 }
