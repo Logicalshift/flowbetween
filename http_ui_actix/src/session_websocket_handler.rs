@@ -19,19 +19,19 @@ use std::sync::*;
 ///
 /// Struct used to represent a websocket session
 /// 
-struct FloWsSession<CoreUi: CoreUserInterface+Send+Sync+'static> {
+struct FloWsSession<Session: ActixSession+'static> {
     /// The session that belongs to this websocket
-    session: Arc<Mutex<HttpSession<CoreUi>>>,
+    session: Arc<Mutex<HttpSession<Session::CoreUi>>>,
 
     /// The event sink for this session
     event_sink: Box<Future<Item=HttpEventSink, Error=()>>
 }
 
-impl<CoreUi: CoreUserInterface+Send+Sync+'static> FloWsSession<CoreUi> {
+impl<Session: ActixSession+'static> FloWsSession<Session> {
     ///
     /// Creates a new websocket session
     /// 
-    pub fn new(session: Arc<Mutex<HttpSession<CoreUi>>>) -> FloWsSession<CoreUi> {
+    pub fn new(session: Arc<Mutex<HttpSession<Session::CoreUi>>>) -> FloWsSession<Session> {
         let event_sink = future::ok(session.lock().unwrap().http_ui().get_input_sink());
 
         FloWsSession {
@@ -43,7 +43,7 @@ impl<CoreUi: CoreUserInterface+Send+Sync+'static> FloWsSession<CoreUi> {
     ///
     /// Starts sending updates to this actor (once a context is available)
     /// 
-    pub fn start_sending_updates(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
+    pub fn start_sending_updates(&mut self, ctx: &mut ws::WebsocketContext<Self, Arc<Session>>) {
         // Retrieve the stream of updates we need to send to the websocket
         let update_stream = self.session.lock().unwrap().http_ui().get_updates();
         let update_stream = fut::wrap_stream::<_, Self>(update_stream);
@@ -58,11 +58,11 @@ impl<CoreUi: CoreUserInterface+Send+Sync+'static> FloWsSession<CoreUi> {
     }
 }
 
-impl<CoreUi: CoreUserInterface+Send+Sync+'static> Actor for FloWsSession<CoreUi> {
-    type Context = ws::WebsocketContext<Self>;
+impl<Session: ActixSession+'static> Actor for FloWsSession<Session> {
+    type Context = ws::WebsocketContext<Self, Arc<Session>>;
 }
 
-impl<CoreUi: CoreUserInterface+Send+Sync+'static> StreamHandler<ws::Message, ws::ProtocolError> for FloWsSession<CoreUi> {
+impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError> for FloWsSession<Session> {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         // Text messages are decoded as arrays of HTTP events and sent to the event sink
         match msg {
@@ -109,15 +109,16 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>() -> impl Handle
             };
 
             // Look up the session
-            let session = req.state().get_session(&session_id);
+            let session = req.state().get_session(&session_id).clone();
 
             if let Some(session) = session {
                 // Start a new websocket for this session
+                let req     = req.clone();
                 let session = FloWsSession::new(session);
 
                 // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
                 let response = ws::handshake(&req);
-                let response = response.map(move |response| {
+                let response = response.map(move |mut response| {
                     let stream = ws::WsStream::new(req.clone());
 
                     let mut ctx = ws::WebsocketContext::new(req, session);
