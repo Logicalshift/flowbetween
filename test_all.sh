@@ -9,5 +9,6 @@ cargo test -p flo_animation
 cargo test -p flo_anim_sqlite
 cargo test -p flo_static_files --features http
 cargo test -p flo_http_ui --features http
+cargo test -p flo_http_ui_actix --features http
 cargo test -p flo
 cargo test --features http

@@ -25,5 +25,5 @@ pub fn png_data_for_rgba(rgba: &[u8], width: u32, height: u32) -> InMemoryImageD
     }
 
     // Generate the image data object for the final PNG
-    InMemoryImageData::new(png_data)
+    InMemoryImageData::from(png_data)
 }

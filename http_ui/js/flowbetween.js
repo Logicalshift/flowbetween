@@ -1592,15 +1592,17 @@ function flowbetween(root_node) {
     /// Connects to a websocket running on a different port on the same server
     ///
     let connect_websocket = (websocket_port, session_id) => {
+        websocket_port = websocket_port || doc_url.port;
+
         var connect = new Promise((resolve) => {
             // Construct the WS URL from the document URL
             let ws_base_url     = 'ws://' + doc_url.hostname + ':' + websocket_port;
-            let ws_session_url  = ws_base_url + '/' + session_id;
+            let ws_session_url  = ws_base_url + '/ws/' + session_id;
 
             note('Connecting to websocket at ' + ws_session_url);
 
-            // Connect the websocket, using the flo-web protocol
-            let websocket = new WebSocket(ws_session_url, ['flo-web']);
+            // Connect the websocket
+            let websocket = new WebSocket(ws_session_url);
 
             // Add event handlers for it
             websocket.addEventListener('message', (event) => {
@@ -1868,6 +1870,11 @@ function flowbetween(root_node) {
 
                     current_promise = current_promise
                         .then(() => connect_websocket(update['WebsocketPort'], running_session_id));
+
+                } else if (update === 'WebsocketSamePort') {
+
+                    current_promise = current_promise
+                        .then(() => connect_websocket(null, running_session_id));
 
                 } else if (update['NewUserInterfaceHtml']) {
 

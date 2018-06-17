@@ -11,7 +11,6 @@ use desync::*;
 use binding::*;
 
 use std::sync::*;
-use std::ops::Deref;
 
 ///
 /// UI session provides a raw user interface implementation for a core controller
@@ -65,20 +64,15 @@ impl<CoreController: Controller> Drop for UiSession<CoreController> {
     }
 }
 
-impl<CoreController: Controller> Deref for UiSession<CoreController> {
-    type Target = Arc<CoreController>;
-
-    fn deref(&self) -> &Arc<CoreController> {
-        &self.controller
-    }
-}
-
 impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()> for UiSession<CoreController> {
     /// The type of the event sink for this UI
     type EventSink = UiEventSink;
 
     /// The type of the update stream for this UI
     type UpdateStream = UiUpdateStream;
+
+    /// The type of the core controller for this session
+    type CoreController = CoreController;
 
     /// Retrieves an input event sink for this user interface
     fn get_input_sink(&self) -> UiEventSink {
@@ -88,6 +82,11 @@ impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdat
     /// Retrieves a view onto the update stream for this user interface
     fn get_updates(&self) -> UiUpdateStream {
         UiUpdateStream::new(self.controller.clone(), Arc::clone(&self.core))
+    }
+
+    /// Retrieves the controller for this UI
+    fn controller(&self) -> Arc<CoreController> {
+        Arc::clone(&self.controller)
     }
 }
 

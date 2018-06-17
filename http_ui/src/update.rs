@@ -56,6 +56,11 @@ pub enum Update {
     WebsocketPort(u32),
 
     ///
+    /// The server supports Flo websockets on the same port as other requests
+    /// 
+    WebsocketSamePort,
+
+    ///
     /// Supplies a new user interface as HTML, alongside the corresponding UI control data
     /// and view model.
     ///

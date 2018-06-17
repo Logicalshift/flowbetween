@@ -2,7 +2,6 @@
 //! The static service provides static files for the flow-between
 //!
 
-extern crate iron;
 extern crate sha2;
 
 pub mod static_file;

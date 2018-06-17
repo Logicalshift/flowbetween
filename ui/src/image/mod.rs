@@ -1,6 +1,7 @@
 use std::sync::*;
 use std::io::Read;
 use futures::stream::*;
+use bytes::Bytes;
 
 ///
 /// Represents a static image
@@ -22,7 +23,7 @@ pub trait ImageData : Send+Sync {
     fn read(&self) -> Box<Read+Send>;
 
     /// Reads the raw data for this image
-    fn read_future(&self) -> Box<Stream<Item=u8, Error=()>>;
+    fn read_future(&self) -> Box<Stream<Item=Bytes, Error=()>>;
 }
 
 impl Image {
@@ -38,6 +39,7 @@ mod inmemory;
 mod static_data;
 mod shortcuts;
 mod png;
+mod bytes_iterator;
 pub use self::inmemory::*;
 pub use self::static_data::*;
 pub use self::shortcuts::*;
