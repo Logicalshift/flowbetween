@@ -6,7 +6,7 @@ use super::super::coordinate::*;
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
 /// 
 pub fn offset<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> Vec<Curve> 
-where Curve::Point: Normalize<Point=Curve::Point> {
+where Curve::Point: Normalize {
     // Pass through the curve if it's 0-length
     let start       = curve.start_point();
     let end         = curve.end_point();
@@ -100,7 +100,7 @@ fn offset_error<Curve: NormalCurve>(original_curve: &Curve, offset_curve: &Curve
 /// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
 /// 
 fn simple_offset<Curve: NormalCurve>(curve: Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) 
-where Curve::Point: Normalize<Point=Curve::Point> {
+where Curve::Point: Normalize {
     // Fetch the original points
     let start       = curve.start_point();
     let end         = curve.end_point();

@@ -9,17 +9,13 @@ use super::super::coordinate::*;
 /// Changes a point and its tangent into a normal
 /// 
 pub trait Normalize {
-    type Point: ?Sized;
-
     /// Computes the normal at a point, given its tangent
-    fn to_normal(point: &Self::Point, tangent: &Self::Point) -> Vec<f64>;
+    fn to_normal(point: &Self, tangent: &Self) -> Vec<f64>;
 }
 
 impl<Point: Coordinate2D> Normalize for Point {
-    type Point = Point;
-
     #[inline]
-    fn to_normal(_point: &Point, tangent: &Point) -> Vec<f64> {
+    fn to_normal(_point: &Self, tangent: &Self) -> Vec<f64> {
         vec![-tangent.y(), tangent.x()]
     }
 }
@@ -67,7 +63,7 @@ pub trait NormalCurve : BezierCurve {
 }
 
 impl<Curve: BezierCurve> NormalCurve for Curve
-where Curve::Point: Normalize<Point=Curve::Point> {
+where Curve::Point: Normalize {
     fn normal_at_pos(&self, t: f64) -> Curve::Point {
         // Extract the points that make up this curve
         let w1          = self.start_point();
