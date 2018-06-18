@@ -1,3 +1,4 @@
+extern crate itertools;
 
 pub mod bezier;
 pub mod arc;

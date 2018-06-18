@@ -2,6 +2,7 @@ use flo_curves::*;
 use flo_curves::bezier;
 
 mod basis;
+mod path;
 mod subdivide;
 mod derivative;
 mod tangent;

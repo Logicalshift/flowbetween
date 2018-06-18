@@ -131,7 +131,7 @@ pub trait BezierCurve: Clone+Sized {
 ///
 /// Represents a Bezier curve
 /// 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Curve {
     pub start_point:    Coord2,
     pub end_point:      Coord2,
