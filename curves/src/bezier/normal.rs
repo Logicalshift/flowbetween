@@ -62,7 +62,8 @@ pub trait NormalCurve<Curve: BezierCurve> {
     fn normal_at_pos(&self, t: f64) -> Curve::Point;
 }
 
-impl<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>> NormalCurve<Curve> for Curve {
+impl<Curve: BezierCurve> NormalCurve<Curve> for Curve
+where Curve::Point: Normalize<Curve::Point> {
     fn normal_at_pos(&self, t: f64) -> Curve::Point {
         // Extract the points that make up this curve
         let w1          = self.start_point();
@@ -77,8 +78,8 @@ impl<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>> Normal
         let tangent     = de_casteljau3(t, d1, d2, d3);
 
         // Compute the normal
-        let normal      = Point::to_normal(&point, &tangent);
+        let normal      = Curve::Point::to_normal(&point, &tangent);
 
-        Point::from_components(&normal)
+        Curve::Point::from_components(&normal)
     }
 }

@@ -23,7 +23,7 @@ const MAX_POINTS_TO_FIT: usize = 100;
 ///   * We only try to fit a certain number of points at once as the algorithm runs
 ///     in quadratic time otherwise
 /// 
-pub fn fit_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], max_error: f64) -> Option<Vec<Curve>> {
+pub fn fit_curve<Curve: BezierCurve>(points: &[Curve::Point], max_error: f64) -> Option<Vec<Curve>> {
     // Need at least 2 points to fit anything
     if points.len() < 2 {
         // Insufficient points for this curve
@@ -65,7 +65,7 @@ pub fn fit_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[P
 ///
 /// Fits a bezier curve to a subset of points
 /// 
-pub fn fit_curve_cubic<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], start_tangent: &Point, end_tangent: &Point, max_error: f64) -> Vec<Curve> {
+pub fn fit_curve_cubic<Curve: BezierCurve>(points: &[Curve::Point], start_tangent: &Curve::Point, end_tangent: &Curve::Point, max_error: f64) -> Vec<Curve> {
     if points.len() <= 2 {
         // 2 points is a line (less than 2 points is an error here)
         fit_line(&points[0], &points[1])
@@ -117,7 +117,7 @@ pub fn fit_curve_cubic<Point: Coordinate, Curve: BezierCurve<Point=Point>>(point
 ///
 /// Creates a curve representing a line between two points
 /// 
-fn fit_line<Point: Coordinate, Curve: BezierCurve<Point=Point>>(p1: &Point, p2: &Point) -> Vec<Curve> {
+fn fit_line<Curve: BezierCurve>(p1: &Curve::Point, p2: &Curve::Point) -> Vec<Curve> {
     // Any bezier curve where the control points line up forms a straight line; we use points around 1/3rd of the way along in our generation here
     let direction   = *p2 - *p1;
     let cp1         = *p1 + (direction * 0.33);
@@ -153,7 +153,7 @@ fn chords_for_points<Point: Coordinate>(points: &[Point]) -> Vec<f64> {
 ///
 /// Generates a bezier curve using the least-squares method
 /// 
-fn generate_bezier<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], chords: &[f64], start_tangent: &Point, end_tangent: &Point) -> Curve {
+fn generate_bezier<Curve: BezierCurve>(points: &[Curve::Point], chords: &[f64], start_tangent: &Curve::Point, end_tangent: &Curve::Point) -> Curve {
     // Precompute the RHS as 'a'
     let a: Vec<_> = chords.iter().map(|chord| {
         let inverse_chord   = 1.0 - chord;
@@ -220,7 +220,7 @@ fn generate_bezier<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &
 /// 
 /// Returns the maximum error and the index of the point with that error.
 /// 
-fn max_error_for_curve<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], chords: &[f64], curve: &Curve) -> (f64, usize) {
+fn max_error_for_curve<Curve: BezierCurve>(points: &[Curve::Point], chords: &[f64], curve: &Curve) -> (f64, usize) {
     let errors = points.iter().zip(chords.iter())
         .map(|(point, chord)| {
             // Get the actual position of this point and the offset
@@ -273,7 +273,7 @@ fn tangent_between<Point: Coordinate>(p1: &Point, p2: &Point, p3: &Point) -> Poi
 ///
 /// Applies the newton-raphson method in order to improve the t values of a curve
 /// 
-fn reparameterize<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[Point], chords: &[f64], curve: &Curve) -> Vec<f64> {
+fn reparameterize<Curve: BezierCurve>(points: &[Curve::Point], chords: &[f64], curve: &Curve) -> Vec<f64> {
     points.iter().zip(chords.iter())
         .map(|(point, chord)| newton_raphson_root_find(curve, point, *chord))
         .collect()
@@ -282,7 +282,7 @@ fn reparameterize<Point: Coordinate, Curve: BezierCurve<Point=Point>>(points: &[
 ///
 /// Uses newton-raphson to find a root for a curve
 /// 
-fn newton_raphson_root_find<Point: Coordinate, Curve: BezierCurve<Point=Point>>(curve: &Curve, point: &Point, estimated_t: f64) -> f64 {
+fn newton_raphson_root_find<Curve: BezierCurve>(curve: &Curve, point: &Curve::Point, estimated_t: f64) -> f64 {
     let start       = curve.start_point();
     let end         = curve.end_point();
     let (cp1, cp2)  = curve.control_points();
