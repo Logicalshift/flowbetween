@@ -1,4 +1,5 @@
-use super::*;
+use super::curve::*;
+use super::super::coordinate::*;
 
 ///
 /// Moves the point at 't' on the curve by the offset vector

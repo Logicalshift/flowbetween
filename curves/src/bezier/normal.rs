@@ -1,4 +1,7 @@
-use super::*;
+use super::curve::*;
+use super::basis::*;
+use super::derivative::*;
+use super::super::coordinate::*;
 
 // TODO: normalize should be a trait associated with coordinate rather than bezier curves (move outwards)
 

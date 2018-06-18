@@ -1,4 +1,7 @@
-use super::*;
+use super::curve::*;
+use super::deform::*;
+use super::normal::*;
+use super::super::coordinate::*;
 
 ///
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
