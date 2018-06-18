@@ -1,5 +1,5 @@
 mod path;
-mod to_curve;
+mod to_curves;
 
 pub use self::path::*;
-pub use self::to_curve::*;
+pub use self::to_curves::*;
