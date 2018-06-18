@@ -10,6 +10,8 @@ mod fit;
 mod offset;
 mod search;
 
+pub mod path;
+
 pub use self::curve::*;
 pub use self::basis::*;
 pub use self::subdivide::*;
