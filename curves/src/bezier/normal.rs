@@ -8,12 +8,16 @@ use super::super::coordinate::*;
 ///
 /// Changes a point and its tangent into a normal
 /// 
-pub trait Normalize<Point: ?Sized> {
+pub trait Normalize {
+    type Point: ?Sized;
+
     /// Computes the normal at a point, given its tangent
-    fn to_normal(point: &Point, tangent: &Point) -> Vec<f64>;
+    fn to_normal(point: &Self::Point, tangent: &Self::Point) -> Vec<f64>;
 }
 
-impl<Point: Coordinate2D> Normalize<Point> for Point {
+impl<Point: Coordinate2D> Normalize for Point {
+    type Point = Point;
+
     #[inline]
     fn to_normal(_point: &Point, tangent: &Point) -> Vec<f64> {
         vec![-tangent.y(), tangent.x()]
@@ -55,15 +59,15 @@ impl Normalize<Coordinate3D> for Coordinate3D {
 ///
 /// Trait implemented by bezier curves where we can compute the normal
 /// 
-pub trait NormalCurve<Curve: BezierCurve> {
+pub trait NormalCurve : BezierCurve {
     ///
     /// Computes the normal vector to the curve at the specified t value
     ///
-    fn normal_at_pos(&self, t: f64) -> Curve::Point;
+    fn normal_at_pos(&self, t: f64) -> Self::Point;
 }
 
-impl<Curve: BezierCurve> NormalCurve<Curve> for Curve
-where Curve::Point: Normalize<Curve::Point> {
+impl<Curve: BezierCurve> NormalCurve for Curve
+where Curve::Point: Normalize<Point=Curve::Point> {
     fn normal_at_pos(&self, t: f64) -> Curve::Point {
         // Extract the points that make up this curve
         let w1          = self.start_point();

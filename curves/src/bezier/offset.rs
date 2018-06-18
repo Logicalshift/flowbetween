@@ -1,4 +1,3 @@
-use super::curve::*;
 use super::deform::*;
 use super::normal::*;
 use super::super::coordinate::*;
@@ -6,7 +5,8 @@ use super::super::coordinate::*;
 ///
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
 /// 
-pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f64, final_offset: f64) -> Vec<Curve> {
+pub fn offset<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> Vec<Curve> 
+where Curve::Point: Normalize<Point=Curve::Point> {
     // Pass through the curve if it's 0-length
     let start       = curve.start_point();
     let end         = curve.end_point();
@@ -43,7 +43,7 @@ pub fn offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point
 /// Splits a curve at a given set of ordered offsets, returning a list of curves and
 /// their final offsets
 /// 
-fn split_offsets<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: &Curve, initial_offset: f64, final_offset: f64, split_points: &[f64]) -> Vec<(Curve, f64)> {
+fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64, split_points: &[f64]) -> Vec<(Curve, f64)> {
     let mut curves_and_offsets  = vec![];
     let mut remaining           = curve.clone();
     let mut remaining_t         = 0.0;
@@ -82,7 +82,7 @@ fn split_offsets<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Po
 /// Computes the offset error between a curve and a proposed offset curve at a given t value
 /// 
 #[inline]
-fn offset_error<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(original_curve: &Curve, offset_curve: &Curve, t: f64, initial_offset: f64, final_offset: f64) -> Point {
+fn offset_error<Curve: NormalCurve>(original_curve: &Curve, offset_curve: &Curve, t: f64, initial_offset: f64, final_offset: f64) -> Curve::Point {
     // Work out how much we need to offset the mid-point
     let midpoint_offset     = (final_offset - initial_offset) * (original_curve.estimate_length(t)/original_curve.estimate_length(1.0)) + initial_offset;
     let midpoint_normal     = original_curve.normal_at_pos(t).to_unit_vector();
@@ -99,17 +99,18 @@ fn offset_error<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Poi
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
 /// 
-fn simple_offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Point>+NormalCurve<Curve>>(curve: Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) {
+fn simple_offset<Curve: NormalCurve>(curve: Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) 
+where Curve::Point: Normalize<Point=Curve::Point> {
     // Fetch the original points
     let start       = curve.start_point();
     let end         = curve.end_point();
     let (cp1, cp2)  = curve.control_points();
 
     // The start and end CPs define the curve tangents at the start and end
-    let normal_start    = Point::to_normal(&start, &(cp1-start));
-    let normal_end      = Point::to_normal(&end, &(end-cp2));
-    let normal_start    = Point::from_components(&normal_start).to_unit_vector();
-    let normal_end      = Point::from_components(&normal_end).to_unit_vector();
+    let normal_start    = Curve::Point::to_normal(&start, &(cp1-start));
+    let normal_end      = Curve::Point::to_normal(&end, &(end-cp2));
+    let normal_start    = Curve::Point::from_components(&normal_start).to_unit_vector();
+    let normal_end      = Curve::Point::from_components(&normal_end).to_unit_vector();
 
     // Offset start & end by the specified amounts to create the first approximation of a curve
     // TODO: scale rather than just move for better accuracy
@@ -133,7 +134,7 @@ fn simple_offset<Point: Coordinate+Normalize<Point>, Curve: BezierCurve<Point=Po
 
     // Use the offset at the curve's midway point as the error
     let error_offset    = offset_error(&curve, &offset_curve, 0.5, initial_offset, final_offset);
-    let error           = Point::origin().distance_to(&error_offset);
+    let error           = Curve::Point::origin().distance_to(&error_offset);
 
     (offset_curve, error)
 }
