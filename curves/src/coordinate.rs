@@ -137,6 +137,9 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f64, Output=Self>+S
 pub trait Coordinate2D {
     fn x(&self) -> f64;
     fn y(&self) -> f64;
+
+    #[inline]
+    fn coords(&self) -> (f64, f64) { (self.x(), self.y()) }
 }
 
 ///
