@@ -4,6 +4,7 @@ use super::search::*;
 use super::bounds::*;
 use super::subdivide::*;
 
+use super::super::geo::*;
 use super::super::coordinate::*;
 
 const LENGTH_SUBDIVISIONS: usize = 16;
@@ -11,9 +12,7 @@ const LENGTH_SUBDIVISIONS: usize = 16;
 ///
 /// Trait implemented by things representing a cubic bezier curve
 /// 
-pub trait BezierCurve: Clone+Sized {
-    type Point: Coordinate;
-
+pub trait BezierCurve: Geo+Clone+Sized {
     ///
     /// Creates a new bezier curve of the same type from some points
     /// 
@@ -138,9 +137,11 @@ pub struct Curve {
     pub control_points: (Coord2, Coord2)
 }
 
-impl BezierCurve for Curve {
+impl Geo for Curve {
     type Point = Coord2;
+}
 
+impl BezierCurve for Curve {
     fn from_points(start: Coord2, end: Coord2, control_point1: Coord2, control_point2: Coord2) -> Curve {
         Curve {
             start_point:    start,

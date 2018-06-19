@@ -23,3 +23,5 @@ pub use self::deform::*;
 pub use self::fit::*;
 pub use self::offset::*;
 pub use self::search::*;
+
+pub use super::geo::*;

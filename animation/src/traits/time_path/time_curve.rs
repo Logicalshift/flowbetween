@@ -172,9 +172,11 @@ impl Coordinate for TimePoint {
     }
 }
 
-impl BezierCurve for TimeCurveSection {
+impl Geo for TimeCurveSection {
     type Point = TimePoint;
+}
 
+impl BezierCurve for TimeCurveSection {
     ///
     /// Creates a new bezier curve of the same type from some points
     /// 

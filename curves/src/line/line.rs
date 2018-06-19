@@ -1,12 +1,10 @@
+use super::super::geo::*;
 use super::super::coordinate::*;
 
 ///
 /// Represents a straight line
 /// 
-pub trait Line {
-    /// The type of a point on this line
-    type Point: Coordinate;
-
+pub trait Line : Geo {
     ///
     /// Creates a new line from points
     /// 
@@ -18,12 +16,14 @@ pub trait Line {
     fn points(&self) -> (Self::Point, Self::Point);
 }
 
+impl<Point: Coordinate+Clone> Geo for (Point, Point) {
+    type Point = Point;
+}
+
 ///
 /// Simplest line is just a tuple of two points
 /// 
 impl<Point: Coordinate+Clone> Line for (Point, Point) {
-    type Point = Point;
-
     ///
     /// Creates a new line from points
     ///

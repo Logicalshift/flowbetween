@@ -7,12 +7,14 @@ use curves::bezier::*;
 #[derive(Copy, Clone)]
 pub struct PathCurve(pub PathPoint, pub PathElement);
 
+impl Geo for PathCurve {
+    type Point = PathPoint;
+}
+
 ///
 /// A point and an element form a bezier curve (ie, a start point and the following element)
 /// 
 impl BezierCurve for PathCurve {
-    type Point = PathPoint;
-
     fn from_points(start: PathPoint, end: PathPoint, control_point1: PathPoint, control_point2: PathPoint) -> PathCurve {
         PathCurve(start, PathElement::Bezier(end, control_point1, control_point2))
     }

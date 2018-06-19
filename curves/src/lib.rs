@@ -7,4 +7,8 @@ pub mod arc;
 pub mod coordinate;
 pub use self::coordinate::*;
 
+pub mod geo;
+pub use self::geo::*;
+
 pub use self::bezier::BezierCurve;
+pub use self::line::Line;

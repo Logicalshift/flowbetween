@@ -1,3 +1,4 @@
+use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
 use std::vec;
@@ -5,10 +6,7 @@ use std::vec;
 ///
 /// Trait representing a path made out of bezier sections
 /// 
-pub trait BezierPath {
-    /// The type of a point in this path
-    type Point: Coordinate;
-
+pub trait BezierPath : Geo {
     /// Type of an iterator over the points in this curve. This tuple contains the points ordered as a hull: ie, two control points followed by a point on the curve
     type PointIter: Iterator<Item=(Self::Point, Self::Point, Self::Point)>;
 
@@ -28,11 +26,14 @@ pub trait BezierPath {
     fn from_points<FromIter: IntoIterator<Item=(Self::Point, Self::Point, Self::Point)>>(start_point: Self::Point, points: FromIter) -> Self;
 }
 
+impl<Point: Clone+Coordinate> Geo for (Point, Vec<(Point, Point, Point)>) {
+    type Point = Point;
+}
+
 ///
 /// The type (start_point, Vec<(Point, Point, Point)>) is the simplest bezier path type
 /// 
 impl<Point: Clone+Coordinate> BezierPath for (Point, Vec<(Point, Point, Point)>) {
-    type Point      = Point;
     type PointIter  = vec::IntoIter<(Point, Point, Point)>;
 
     ///
