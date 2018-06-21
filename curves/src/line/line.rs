@@ -14,6 +14,16 @@ pub trait Line : Geo {
     /// Returns the two points that mark the start and end of this line
     /// 
     fn points(&self) -> (Self::Point, Self::Point);
+
+    ///
+    /// Give a value 't' from 0 to 1, returns the point at that posiition along the line
+    /// 
+    fn point_at_pos(&self, t: f64) -> Self::Point {
+        let (p1, p2)    = self.points();
+        let delta       = p2-p1;
+
+        p1 + delta*t
+    }
 }
 
 impl<Point: Coordinate+Clone> Geo for (Point, Point) {

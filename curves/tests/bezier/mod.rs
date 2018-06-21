@@ -10,6 +10,7 @@ mod normal;
 mod bounds;
 mod deform;
 mod search;
+mod intersection;
 
 pub fn approx_equal(a: f64, b: f64) -> bool {
     f64::floor(f64::abs(a-b)*10000.0) == 0.0
