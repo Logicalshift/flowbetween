@@ -28,7 +28,8 @@ fn find_intersection_on_curve() {
     let intersections   = bezier::curve_intersects_line(&curve, &line);
 
     // TODO: the bezier search algorithm we're using produces too many patches (there should be 3 with this curve)
-    // assert!(intersections.len() == 3);
     println!("{:?}", (0..=20).into_iter().map(|t| { let t = (t as f64)/20.0; line.point_at_pos(t) }).collect::<Vec<_>>());
-    println!("{:?}", intersections.into_iter().map(|t| curve.point_at_pos(t)).collect::<Vec<_>>());
+    println!("{:?}", intersections.iter().map(|t| curve.point_at_pos(*t)).collect::<Vec<_>>());
+
+    assert!(intersections.len() == 3);
 }
