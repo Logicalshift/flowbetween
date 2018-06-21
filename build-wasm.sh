@@ -1,17 +1,7 @@
 #!/bin/sh
 
-cd binding
-cargo build --target wasm32-unknown-unknown
-cd ..
-
-cd curves
-cargo build --target wasm32-unknown-unknown
-cd ..
-
-cd ui
-cargo build --target wasm32-unknown-unknown
-cd ..
-
-cd animation
-cargo build --target wasm32-unknown-unknown
-cd ..
+cargo build -p flo_binding --release --target wasm32-unknown-unknown
+cargo build -p flo_curves --release --target wasm32-unknown-unknown
+cargo build -p flo_ui --release --target wasm32-unknown-unknown
+cargo build -p flo_animation --release --target wasm32-unknown-unknown
+cargo build -p flo_http_ui --release --target wasm32-unknown-unknown
