@@ -9,3 +9,4 @@ description = "Library for manipulating Bezier curves"
 [dependencies]
 rulinalg    = "0.4.2"
 itertools   = "0.7"
+roots       = "0.0.4"
