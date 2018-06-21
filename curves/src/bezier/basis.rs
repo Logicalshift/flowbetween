@@ -1,6 +1,23 @@
 use super::super::coordinate::*;
 
 ///
+/// Computes the bezier coefficients (A, B, C, D) for a bezier curve
+/// 
+pub fn bezier_coefficients<Point: Coordinate>(dimension: usize, w1: &Point, w2: &Point, w3: &Point, w4: &Point) -> (f64, f64, f64, f64) {
+    let w1 = w1.get(dimension);
+    let w2 = w2.get(dimension);
+    let w3 = w3.get(dimension);
+    let w4 = w4.get(dimension);
+
+    (
+        w4-(3.0*w3)+(3.0*w2)-w1,
+        (3.0*w3)-(6.0*w2)+3.0*w1,
+        3.0*w2-3.0*w1,
+        w1
+    )
+}
+
+///
 /// The cubic bezier weighted basis function
 /// 
 #[inline]

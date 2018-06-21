@@ -1,3 +1,4 @@
+extern crate roots;
 extern crate itertools;
 
 pub mod bezier;

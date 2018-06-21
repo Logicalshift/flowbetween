@@ -21,15 +21,19 @@ fn find_intersection_on_curve() {
     let curve   = bezier::Curve {
         start_point:    Coord2(0.0, 2.0),
         end_point:      Coord2(10.0, 8.0),
-        control_points: (Coord2(0.0, 10.0), Coord2(10.0, 0.0))
+        control_points: (Coord2(0.0, 20.0), Coord2(10.0, -10.0))
     };
 
     // Find the intersections
     let intersections   = bezier::curve_intersects_line(&curve, &line);
 
-    // TODO: the bezier search algorithm we're using produces too many patches (there should be 3 with this curve)
-    println!("{:?}", (0..=20).into_iter().map(|t| { let t = (t as f64)/20.0; line.point_at_pos(t) }).collect::<Vec<_>>());
-    println!("{:?}", intersections.iter().map(|t| curve.point_at_pos(*t)).collect::<Vec<_>>());
-
+    // Should be 3 intersections
     assert!(intersections.len() == 3);
+
+    // Curve is symmetrical so the mid-point should be at 5,5
+    assert!(curve.point_at_pos(intersections[1]).distance_to(&Coord2(5.0, 5.0)) < 0.01);
+
+    // Other points are a bit less precise
+    assert!(curve.point_at_pos(intersections[0]).distance_to(&Coord2(0.260, 5.948)) < 0.01);
+    assert!(curve.point_at_pos(intersections[2]).distance_to(&Coord2(9.740, 4.052)) < 0.01);
 }
