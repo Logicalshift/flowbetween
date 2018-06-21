@@ -1,3 +1,5 @@
+#![warn(bare_trait_objects)]
+
 extern crate nanovg;
 extern crate gl;
 

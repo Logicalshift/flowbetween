@@ -1,3 +1,5 @@
+#![warn(bare_trait_objects)]
+
 extern crate flo_ui as ui;
 extern crate flo_canvas as canvas;
 extern crate flo_binding as binding;

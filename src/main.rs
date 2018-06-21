@@ -1,6 +1,7 @@
 //!
 //! # FlowBetween HTTP server
 //!
+#![warn(bare_trait_objects)]
 
 #[cfg(feature="gtk")]   extern crate flo_gtk_ui;
 #[cfg(feature="http")]  extern crate flo_http_ui;

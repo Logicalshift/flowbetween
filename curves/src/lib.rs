@@ -1,3 +1,5 @@
+#![warn(bare_trait_objects)]
+
 extern crate roots;
 extern crate itertools;
 

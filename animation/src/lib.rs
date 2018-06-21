@@ -1,6 +1,8 @@
 //!
 //! Library for describing and editing FlowBetween animations
 //!
+#![warn(bare_trait_objects)]
+
 extern crate flo_curves as curves;
 extern crate flo_canvas as canvas;
 extern crate flo_float_encoder as float_encoder;

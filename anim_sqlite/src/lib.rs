@@ -1,3 +1,5 @@
+#![warn(bare_trait_objects)]
+
 extern crate flo_animation as animation;
 extern crate flo_canvas as canvas;
 

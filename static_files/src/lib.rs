@@ -1,6 +1,7 @@
 //!
 //! The static service provides static files for the flow-between
 //!
+#![warn(bare_trait_objects)]
 
 extern crate sha2;
 

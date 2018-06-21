@@ -60,6 +60,7 @@
 //! values are being updated. Knock-on effects are all accounted for, so if
 //! a future update is queued, it won't trigger further notifications.
 //!
+#![warn(bare_trait_objects)]
 
 extern crate futures;
 

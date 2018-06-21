@@ -4,6 +4,7 @@
 //! This provides a UI pipe that presents a user interface described by `flo_ui` using Gtk+ as the
 //! front-end toolkit.
 //! 
+#![warn(bare_trait_objects)]
 
 extern crate flo_ui;
 extern crate flo_canvas;
