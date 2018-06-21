@@ -32,7 +32,6 @@ where C::Point: Coordinate2D {
     );
 
     let roots       = find_roots_cubic(p.0, p.1, p.2, p.3);
-    println!("{:?}", roots);
     let roots       = match roots {
         Roots::No(_)    => vec![],
         Roots::One(r)   => r.to_vec(),
@@ -42,5 +41,21 @@ where C::Point: Coordinate2D {
     };
 
     roots.into_iter()
+        .filter(|t| {
+            // Coordinates on the curve
+            let pos = basis(*t, w1, w2, w3, w4);
+            let x   = pos.x();
+            let y   = pos.y();
+
+            // Solve for the position on the line
+            let s = if b != 0.0 {
+                (x-p1.x())/(p2.x()-p1.x())
+            } else {
+                (y-p1.y())/(p2.y()-p1.y())
+            };
+
+            // Point must be within the bounds of the line and the curve
+            (t >= &0.0 && t <= &1.0) && (s >= 0.0 && s <= 1.0)
+        })
         .collect()
 }
