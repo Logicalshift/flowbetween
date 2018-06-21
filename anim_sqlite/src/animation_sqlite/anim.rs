@@ -42,18 +42,18 @@ impl Animation for SqliteAnimation {
         self.db.frame_length()
     }
 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> {
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> {
         // Try to retrieve the layer from the editor
         let layer = self.db.get_layer_with_id(layer_id);
 
         // Turn into a reader if it exists
         let layer = layer.map(|layer| {
-            let boxed: Box<Layer> = Box::new(layer);
+            let boxed: Box<dyn Layer> = Box::new(layer);
             boxed
         });
 
         layer.map(|layer| {
-            let boxed: Box<'a+Deref<Target='a+Layer>> = Box::new(layer);
+            let boxed: Box<dyn 'a+Deref<Target=dyn 'a+Layer>> = Box::new(layer);
             boxed
         })
     }
@@ -62,11 +62,11 @@ impl Animation for SqliteAnimation {
         self.db.get_num_edits().unwrap_or(0)
     }
 
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> {
         self.db.read_edit_log(range)
     }
 
-    fn motion<'a>(&'a self) -> &'a AnimationMotion {
+    fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
         self
     }
 }

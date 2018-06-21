@@ -167,7 +167,7 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
     ///
     /// Reads a range of edits from the SQLite edit log
     /// 
-    fn read(core: &mut AnimationDbCore<TFile>, indices: &mut Iterator<Item=usize>) -> Result<Vec<AnimationEdit>> {
+    fn read(core: &mut AnimationDbCore<TFile>, indices: &mut dyn Iterator<Item=usize>) -> Result<Vec<AnimationEdit>> {
         // Turn the indices into ranges (so we can fetch from the database)
         let current_range   = indices.next().map(|pos| pos..(pos+1));
 

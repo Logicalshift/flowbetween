@@ -159,7 +159,7 @@ impl Frame for VectorFrame {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    fn render_to(&self, gc: &mut GraphicsPrimitives) {
+    fn render_to(&self, gc: &mut dyn  GraphicsPrimitives) {
         let mut properties = Arc::new(VectorProperties::default());
 
         self.elements.iter().for_each(move |element| {
@@ -172,7 +172,7 @@ impl Frame for VectorFrame {
     ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     /// 
-    fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>> {
+    fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>> {
         Some(Box::new(self.elements.iter().cloned()))
     }
 

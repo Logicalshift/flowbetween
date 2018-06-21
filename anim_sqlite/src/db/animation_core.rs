@@ -22,7 +22,7 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     pub failure: Option<Error>,
 
     /// Maps layers to the brush that's active
-    pub active_brush_for_layer: HashMap<i64, (Duration, Arc<Brush>)>,
+    pub active_brush_for_layer: HashMap<i64, (Duration, Arc<dyn Brush>)>,
 
     /// Maps the assigned layer IDs to their equivalent real IDs
     pub layer_id_for_assigned_id: HashMap<u64, i64>,
@@ -75,7 +75,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Retrieves the brush that is active on the specified layer at the specified time
     ///
-    pub fn get_active_brush_for_layer(&mut self, layer_id: i64, when: Duration) -> Arc<Brush> {
+    pub fn get_active_brush_for_layer(&mut self, layer_id: i64, when: Duration) -> Arc<dyn Brush> {
         // If the cached active brush is at the right time, then just use that
         if let Some((time, ref brush)) = self.active_brush_for_layer.get(&layer_id) {
             if time == &when {

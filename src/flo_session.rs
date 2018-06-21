@@ -25,7 +25,7 @@ enum SubController {
 ///
 pub struct FlowBetweenSession {
     ui:         Binding<Control>,
-    editor:     Arc<Controller>,
+    editor:     Arc<dyn Controller>,
     images:     Arc<ResourceManager<Image>>
 }
 
@@ -105,7 +105,7 @@ impl Controller for FlowBetweenSession {
         BindRef::new(&self.ui)
     }
 
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         let id = serde_json::from_str(id);
 
         if let Ok(id) = id {

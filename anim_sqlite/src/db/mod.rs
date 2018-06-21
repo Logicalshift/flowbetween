@@ -103,7 +103,7 @@ impl AnimationDb {
     ///
     /// Creates a stream for reading the specified range of elements from this animation
     ///
-    pub fn read_edit_log(&self, range: Range<usize>) -> Box<Stream<Item=AnimationEdit, Error=()>> {
+    pub fn read_edit_log(&self, range: Range<usize>) -> Box<dyn Stream<Item=AnimationEdit, Error=()>> {
         let edit_stream = EditStream::new(&self.core, range);
 
         Box::new(edit_stream)
@@ -112,7 +112,7 @@ impl AnimationDb {
     ///
     /// Creates a sink for writing to the animation
     ///
-    pub fn create_edit_sink(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
+    pub fn create_edit_sink(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         Box::new(EditSink::new(&self.core))
     }
 }

@@ -11,7 +11,7 @@ impl AnimationMotion for SqliteAnimation {
         self.db.assign_element_id()
     }
 
-    fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {
+    fn get_motion_ids(&self, when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> {
         unimplemented!()
     }
 

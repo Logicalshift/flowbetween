@@ -18,7 +18,7 @@ pub struct SqliteVectorLayer<TFile: FloFile+Send> {
 
     /// The currently active brush for this layer (or none if we need to fetch this from the database)
     /// The active brush is the brush most recently added to the keyframe at the specified point in time
-    active_brush: Option<(Duration, Arc<Brush>)>,
+    active_brush: Option<(Duration, Arc<dyn Brush>)>,
 
     /// Database core
     core: Arc<Desync<AnimationDbCore<TFile>>>
@@ -66,7 +66,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
         vec![LayerEditType::Vector]
     }
 
-    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
+    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<dyn Iterator<Item=Duration>> {
         let from        = when.start;
         let until       = when.end;
 
@@ -79,16 +79,16 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
         keyframes
     }
 
-    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>> {
-        let vector_layer = self as &VectorLayer;
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+VectorLayer>>> {
+        let vector_layer = self as &dyn VectorLayer;
 
         Some(Box::new(vector_layer))
     }
 
-    fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
-        let core: Result<Arc<Frame>> = self.core.sync(|core| {
-            let frame               = VectorFrame::frame_at_time(&mut core.db, self.layer_id, time_index)?;
-            let frame: Arc<Frame>   = Arc::new(frame);
+    fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame> {
+        let core: Result<Arc<dyn Frame>>    = self.core.sync(|core| {
+            let frame                       = VectorFrame::frame_at_time(&mut core.db, self.layer_id, time_index)?;
+            let frame: Arc<dyn Frame>       = Arc::new(frame);
 
             Ok(frame)
         });
@@ -98,7 +98,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
 }
 
 impl<TFile: FloFile+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {
-    fn active_brush(&self, when: Duration) -> Arc<Brush> {
+    fn active_brush(&self, when: Duration) -> Arc<dyn Brush> {
         let layer_id = self.layer_id;
         self.core.sync(|core| core.get_active_brush_for_layer(layer_id, when))
     }

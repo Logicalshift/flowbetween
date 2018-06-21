@@ -7,7 +7,7 @@ impl FloSqlite {
     ///
     /// Queries a single row in the database
     /// 
-    fn query_row<T, F: FnOnce(&Row) -> T>(&mut self, statement: FloStatement, params: &[&ToSql], f: F) -> Result<T> {
+    fn query_row<T, F: FnOnce(&Row) -> T>(&mut self, statement: FloStatement, params: &[&dyn ToSql], f: F) -> Result<T> {
         self.flush_pending()?;
 
         let mut statement = Self::prepare(&self.sqlite, statement)?;
@@ -17,7 +17,7 @@ impl FloSqlite {
     ///
     /// Queries and maps some rows
     /// 
-    fn query_map<'a, T: 'a, F: FnMut(&Row) -> T>(&mut self, statement: FloStatement, params: &[&ToSql], f: F) -> Result<Box<'a+Iterator<Item=Result<T>>>> {
+    fn query_map<'a, T: 'a, F: FnMut(&Row) -> T>(&mut self, statement: FloStatement, params: &[&dyn ToSql], f: F) -> Result<Box<dyn 'a+Iterator<Item=Result<T>>>> {
         self.flush_pending()?;
 
         // Prepare the statement
