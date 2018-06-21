@@ -13,7 +13,7 @@ use std::sync::*;
 /// Cloning a `BindRef` will create another reference to the same binding.
 /// 
 pub struct BindRef<Target> {
-    reference: Arc<Bound<Target>>
+    reference: Arc<dyn Bound<Target>>
 }
 
 impl<Value> Bound<Value> for BindRef<Value> {
@@ -25,7 +25,7 @@ impl<Value> Bound<Value> for BindRef<Value> {
 
 impl<Value> Changeable for BindRef<Value> {
     #[inline]
-    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
         self.reference.when_changed(what)
     }
 }

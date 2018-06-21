@@ -101,7 +101,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest<Arc<Session
     let session_id  = ui_request.session_id.clone();
 
     // Generate the response
-    let response: Box<Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
+    let response: Box<dyn Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
         None                => Box::new(handle_no_session(Arc::clone(req.state()), base_url(&req), ui_request)),
         Some(session_id)    => {
             // Try to fetch the session corresponding to this ID
@@ -139,7 +139,7 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
 
                 // Request must contain a JSON body
                 let result = Json::<UiHandlerRequest>::extract(&req)
-                    .then(move |ui_request| -> Box<Future<Item=HttpResponse, Error=Error>> {
+                    .then(move |ui_request| -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
                         match ui_request {
                             Ok(ui_request) => {
                                 // Process this UI request

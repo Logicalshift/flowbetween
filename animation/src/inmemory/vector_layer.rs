@@ -48,7 +48,7 @@ impl Layer for InMemoryVectorLayer {
         self.core.lock().unwrap().id()
     }
 
-    fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame> {
+    fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame> {
         let core = self.core.lock().unwrap();
 
         // TODO: apply any motions attached to the elements
@@ -64,7 +64,7 @@ impl Layer for InMemoryVectorLayer {
         }
     }
 
-    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>> {
+    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<dyn Iterator<Item=Duration>> {
         let core = self.core.lock().unwrap();
 
         let result: Vec<_> = core.keyframes()
@@ -81,8 +81,8 @@ impl Layer for InMemoryVectorLayer {
         ];
     }
 
-    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>> {
-        let core: &Mutex<VectorLayer> = &self.core;
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+VectorLayer>>> {
+        let core: &Mutex<dyn VectorLayer> = &self.core;
 
         Some(Box::new(core.lock().unwrap()))
     }

@@ -127,7 +127,7 @@ impl Rect {
     ///
     /// Draws this rectangle on a graphics context
     /// 
-    pub fn draw(&self, gc: &mut GraphicsContext) {
+    pub fn draw(&self, gc: &mut dyn GraphicsContext) {
         gc.move_to(self.x1, self.y1);
         gc.line_to(self.x2, self.y1);
         gc.line_to(self.x2, self.y2);

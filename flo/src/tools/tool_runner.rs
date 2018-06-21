@@ -27,7 +27,7 @@ pub struct ToolRunner<Anim: Animation> {
     tool_data_updated: bool,
 
     /// The model actions specified by the current tool
-    model_actions: Option<Spawn<Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send>>>
+    model_actions: Option<Spawn<Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send>>>
 }
 
 impl<Anim: Animation> ToolRunner<Anim> {
@@ -74,7 +74,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
     ///
     /// Returns the pending model actions for this object
     /// 
-    pub fn model_actions(&mut self) -> Box<Iterator<Item=ToolAction<GenericToolData>>> {
+    pub fn model_actions(&mut self) -> Box<dyn Iterator<Item=ToolAction<GenericToolData>>> {
         // Flush any pending actions from the model actions stream
         let mut flushed_actions = vec![];
 
@@ -94,7 +94,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
     /// 
     /// If there are any actions resulting from a change in model state, these are also returned here
     /// 
-    pub fn actions_for_input<Iter: Iterator<Item=ToolInput<GenericToolData>>>(&mut self, input: Iter) -> Box<Iterator<Item=ToolAction<GenericToolData>>> {
+    pub fn actions_for_input<Iter: Iterator<Item=ToolInput<GenericToolData>>>(&mut self, input: Iter) -> Box<dyn Iterator<Item=ToolAction<GenericToolData>>> {
         // Create a place to store the updated tool data for this request
         let mut new_tool_data = None;
 

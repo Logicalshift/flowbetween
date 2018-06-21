@@ -28,20 +28,20 @@ pub trait Layer :
     ///
     /// Retrieves a frame from this layer with the specified parameters
     ///
-    fn get_frame_at_time(&self, time_index: Duration) -> Arc<Frame>;
+    fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame>;
 
     ///
     /// Retrieves the times where key frames exist
     ///
-    fn get_key_frames(&self) -> Box<Iterator<Item=Duration>> { self.get_key_frames_during_time(Duration::from_millis(0)..Duration::from_secs(u32::MAX as u64)) }
+    fn get_key_frames(&self) -> Box<dyn Iterator<Item=Duration>> { self.get_key_frames_during_time(Duration::from_millis(0)..Duration::from_secs(u32::MAX as u64)) }
 
     ///
     /// Retrieves the times where key frames exist during a specified time range
     /// 
-    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<Iterator<Item=Duration>>;
+    fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<dyn Iterator<Item=Duration>>;
 
     ///
     /// Retrieves the definition of this layer as a vector layer
     /// 
-    fn as_vector_layer<'a>(&'a self) -> Option<Box<'a+Deref<Target='a+VectorLayer>>>;
+    fn as_vector_layer<'a>(&'a self) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+VectorLayer>>>;
 }

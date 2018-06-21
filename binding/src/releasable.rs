@@ -16,14 +16,14 @@ pub struct ReleasableNotifiable {
     keep_alive: bool,
 
     /// The notifiable object that should be released when it's done
-    target: Arc<Mutex<Option<Arc<Notifiable>>>>
+    target: Arc<Mutex<Option<Arc<dyn Notifiable>>>>
 }
 
 impl ReleasableNotifiable {
     ///
     /// Creates a new releasable notifiable object
     ///
-    pub fn new(target: Arc<Notifiable>) -> ReleasableNotifiable {
+    pub fn new(target: Arc<dyn Notifiable>) -> ReleasableNotifiable {
         ReleasableNotifiable {
             keep_alive: false,
             target:     Arc::new(Mutex::new(Some(target)))
@@ -120,7 +120,7 @@ impl Drop for ReleasableNotifiable {
     }
 }
 
-impl Releasable for Vec<Box<Releasable>> {
+impl Releasable for Vec<Box<dyn Releasable>> {
     fn done(&mut self) {
         for item in self.iter_mut() {
             item.done();

@@ -28,7 +28,7 @@ where TFn: 'static+Fn() -> Value {
     latest_value: ComputedValue<Value>,
 
     /// If there's a notification attached to this item, this can be used to release it
-    existing_notification: Option<Box<Releasable>>,
+    existing_notification: Option<Box<dyn Releasable>>,
 
     /// What to call when the value changes
     when_changed: Vec<ReleasableNotifiable>
@@ -180,7 +180,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
             };
 
             // Extract the releasable so we can release it after the lock has gone
-            let mut releasable: Option<Box<Releasable>> = None;
+            let mut releasable: Option<Box<dyn Releasable>> = None;
             mem::swap(&mut releasable, &mut core.existing_notification);
 
             // These values are needed outside of the lock
@@ -200,7 +200,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     /// Mark this item as changed whenever 'to_monitor' is changed
     /// Core should already be locked
     ///
-    fn monitor_changes(&self, core: &mut ComputedBindingCore<Value, TFn>, to_monitor: &mut Changeable) {
+    fn monitor_changes(&self, core: &mut ComputedBindingCore<Value, TFn>, to_monitor: &mut dyn Changeable) {
         // We only keep a weak reference to the core here
         let to_notify   = Arc::downgrade(&self.core);
 
@@ -243,7 +243,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
 impl<Value: 'static+Clone, TFn> Changeable for ComputedBinding<Value, TFn>
 where TFn: 'static+Send+Sync+Fn() -> Value {
-    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
         let releasable = ReleasableNotifiable::new(what);
 
         // Lock the core and push this as a thing to perform when this value changes

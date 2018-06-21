@@ -21,7 +21,7 @@ pub struct CanvasState {
     core: Arc<Desync<CanvasStateCore>>,
 
     /// Releasable that monitors the lifetime of the control watcher
-    control_watch_lifetime: Box<Releasable>
+    control_watch_lifetime: Box<dyn Releasable>
 }
 
 ///
@@ -41,7 +41,7 @@ struct CanvasPath {
 ///
 struct CanvasTracker {
     /// Stream for this canvas
-    command_stream: Spawn<Box<Stream<Item=Draw,Error=()>+Send>>
+    command_stream: Spawn<Box<dyn Stream<Item=Draw,Error=()>+Send>>
 }
 
 ///

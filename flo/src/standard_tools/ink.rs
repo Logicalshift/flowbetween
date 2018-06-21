@@ -110,14 +110,14 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color)))
     }
 
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<dyn Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
         let brush_properties    = tool_model.brush_properties.clone();
         let selected_layer      = flo_model.timeline().selected_layer.clone();
@@ -138,7 +138,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<InkData>>, input: Box<'a+Iterator<Item=ToolInput<InkData>>>) -> Box<'a+Iterator<Item=ToolAction<InkData>>> {
+    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<InkData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<InkData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<InkData>>> {
         use self::BrushPreviewAction::*;
         use self::ToolAction::*;
         use self::ToolInput::*;

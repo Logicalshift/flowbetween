@@ -18,7 +18,7 @@ use std::collections::HashSet;
 #[derive(Clone)]
 pub struct SelectModel {
     /// Contains a pointer to the current frame
-    frame: BindRef<Option<Arc<Frame>>>,
+    frame: BindRef<Option<Arc<dyn Frame>>>,
 
     /// Contains the bounding boxes of the elements in the current frame
     bounding_boxes: BindRef<Arc<Vec<(ElementId, Arc<VectorProperties>, Rect)>>>
@@ -51,7 +51,7 @@ enum SelectAction {
 #[derive(Clone)]
 pub struct SelectData {
     /// The current frame
-    frame: Option<Arc<Frame>>,
+    frame: Option<Arc<dyn Frame>>,
 
     // The bounding boxes of the elements in the current frame
     bounding_boxes: Arc<Vec<(ElementId, Arc<VectorProperties>, Rect)>>,
@@ -596,14 +596,14 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     ///
     /// Creates the menu bar controller for the select tool
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectModel) -> Option<Arc<Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectModel) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(SelectMenuController::new()))
     }
 
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     /// 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &SelectModel) -> Box<Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &SelectModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
         // The set of currently selected elements
         let selected_elements = flo_model.selection().selected_element.clone();
         let selected_elements = computed(move || -> HashSet<_> { selected_elements.get().into_iter().collect() });
@@ -689,7 +689,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     ///
     /// Returns the actions that result from a particular inpiut
     /// 
-    fn actions_for_input<'a>(&self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<SelectData>>, input: Box<'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<Iterator<Item=ToolAction<SelectData>>> {
+    fn actions_for_input<'a>(&self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<SelectData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<dyn Iterator<Item=ToolAction<SelectData>>> {
         if let Some(mut data) = data {
             // We build up a vector of actions to perform as we go
             let mut actions = vec![];

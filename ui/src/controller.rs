@@ -36,10 +36,10 @@ pub trait Controller : Send+Sync {
     fn ui(&self) -> BindRef<Control>;
 
     /// Retrieves the viewmodel for this controller
-    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> { None }
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> { None }
 
     /// Attempts to retrieve a sub-controller of this controller
-    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> { None }
 
     /// Callback for when a control associated with this controller generates an action
     fn action(&self, _action_id: &str, _action_data: &ActionParameter) { }
@@ -60,7 +60,7 @@ pub trait Controller : Send+Sync {
 ///
 /// Returns the full UI tree for the current state of a controller
 /// 
-fn get_full_ui_tree(base_controller: &Arc<Controller>) -> Control {
+fn get_full_ui_tree(base_controller: &Arc<dyn Controller>) -> Control {
     let base_ui = base_controller.ui();
 
     base_ui.get().map(&|control| {
@@ -115,7 +115,7 @@ pub fn controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>)
 /// controller, so if this is the last reference, it will
 /// return an empty UI instead.
 ///
-pub fn assemble_ui(base_controller: Arc<Controller>) -> BindRef<Control> {
+pub fn assemble_ui(base_controller: Arc<dyn Controller>) -> BindRef<Control> {
     // We keep a weak reference to the controller so the binding will not hold on to it
     let weak_controller = Arc::downgrade(&base_controller);
 
@@ -147,7 +147,7 @@ impl Controller for NullController {
         BindRef::from(bind(Control::empty()))
     }
 
-    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
         None
     }
 }

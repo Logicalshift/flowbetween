@@ -18,7 +18,7 @@ use std::sync::*;
 #[derive(Clone)]
 pub struct VectorProperties {
     /// The active brush
-    pub brush: Arc<Brush>,
+    pub brush: Arc<dyn Brush>,
 
     /// The properties set for the active brush
     pub brush_properties: BrushProperties
@@ -38,7 +38,7 @@ impl VectorProperties {
     ///
     /// Prepares the context to render with these properties
     /// 
-    pub fn prepare_to_render(&self, gc: &mut GraphicsPrimitives) {
+    pub fn prepare_to_render(&self, gc: &mut dyn GraphicsPrimitives) {
         gc.draw_list(self.brush.prepare_to_render(&self.brush_properties));
     }
 }

@@ -10,5 +10,5 @@ pub trait VectorLayer : Send {
     ///
     /// The brush that will be active for the next element that's added to this layer
     /// 
-    fn active_brush(&self, when: Duration) -> Arc<Brush>;
+    fn active_brush(&self, when: Duration) -> Arc<dyn Brush>;
 }

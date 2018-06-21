@@ -23,7 +23,7 @@ struct FloWsSession<Session: ActixSession+'static> {
     session: Arc<Mutex<HttpSession<Session::CoreUi>>>,
 
     /// The event sink for this session
-    event_sink: Box<Future<Item=HttpEventSink, Error=()>>
+    event_sink: Box<dyn Future<Item=HttpEventSink, Error=()>>
 }
 
 impl<Session: ActixSession+'static> FloWsSession<Session> {
@@ -72,7 +72,7 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
                 if let Ok(request) = json {
                     // Create a one-shot future for when the event sink is available again
                     let (send_sink, next_sink)  = oneshot::channel();
-                    let mut next_sink: Box<Future<Item=HttpEventSink, Error=()>> = Box::new(next_sink.map_err(|_| ()));
+                    let mut next_sink: Box<dyn Future<Item=HttpEventSink, Error=()>> = Box::new(next_sink.map_err(|_| ()));
                     mem::swap(&mut self.event_sink, &mut next_sink);
                     
                     // Send to the sink

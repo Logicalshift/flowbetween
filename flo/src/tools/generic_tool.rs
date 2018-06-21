@@ -19,7 +19,7 @@ use std::marker::PhantomData;
 /// 
 /// FloTools eliminate the need to know what the tool data structure stores.
 ///
-pub type FloTool<Anim> = Tool<Anim, ToolData=GenericToolData, Model=GenericToolModel>;
+pub type FloTool<Anim> = dyn Tool<Anim, ToolData=GenericToolData, Model=GenericToolModel>;
 
 ///
 /// The generic tool is used to convert a tool that uses a specific data type
@@ -42,12 +42,12 @@ pub struct GenericTool<ToolData: Send+'static, Model: Send+Sync+'static, Anim: A
 ///
 /// The data structure storing the generic tool data
 /// 
-pub struct GenericToolData(Mutex<Box<Any+Send>>);
+pub struct GenericToolData(Mutex<Box<dyn Any+Send>>);
 
 ///
 /// The data structure storing the generic tool model
 /// 
-pub struct GenericToolModel(Mutex<Box<Any+Send>>);
+pub struct GenericToolModel(Mutex<Box<dyn Any+Send>>);
 
 impl fmt::Debug for GenericToolData {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
@@ -142,23 +142,23 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
         GenericToolModel(Mutex::new(Box::new(Arc::new(self.tool.create_model(flo_model)))))
     }
 
-    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Option<Arc<Controller>> {
+    fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Option<Arc<dyn Controller>> {
         tool_model
             .get_ref()
             .and_then(move |specific_model| self.tool.create_menu_controller(flo_model, &*specific_model))
     }
 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
         // Map the underlying actions to generic actions. There are no actions if we're passed an invalid tool model
         tool_model.get_ref()
-            .map(move |tool_model| -> Box<Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
+            .map(move |tool_model| -> Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
                 Box::new(self.tool.actions_for_model(flo_model, &*tool_model)
                     .map(|action| GenericToolData::convert_action_to_generic(action)))
             })
             .unwrap_or_else(|| Box::new(stream::empty()))
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<GenericToolData>>, input: Box<'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<'a+Iterator<Item=ToolAction<GenericToolData>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<GenericToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<GenericToolData>>> {
         // Generic data items from other tools don't generate data for this tool
         let data    = data.and_then(|data| data.convert_ref());
         let input   = Box::new(input

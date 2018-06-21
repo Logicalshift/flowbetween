@@ -53,11 +53,11 @@ impl<'a> From<&'a Arc<Bytes>> for InMemoryImageData {
 }
 
 impl ImageData for InMemoryImageData {
-    fn read(&self) -> Box<Read+Send> {
+    fn read(&self) -> Box<dyn Read+Send> {
         Box::new(ImageStreamIterator::from(&self.bytes))
     }
 
-    fn read_future(&self) -> Box<Stream<Item=Bytes, Error=()>> {
+    fn read_future(&self) -> Box<dyn Stream<Item=Bytes, Error=()>> {
         Box::new(ImageStreamIterator::from(&self.bytes))
     }
 }

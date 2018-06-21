@@ -35,7 +35,7 @@ pub trait Animation :
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>>;
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>>;
 
     ///
     /// Retrieves the total number of items that have been performed on this animation
@@ -45,12 +45,12 @@ pub trait Animation :
     ///
     /// Reads from the edit log for this animation
     /// 
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>>;
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>>;
 
     ///
     /// Supplies a reference which can be used to find the motions associated with this animation
     /// 
-    fn motion<'a>(&'a self) -> &'a AnimationMotion;
+    fn motion<'a>(&'a self) -> &'a dyn AnimationMotion;
 }
 
 ///
@@ -63,5 +63,5 @@ pub trait EditableAnimation {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     /// 
-    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>;
+    fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>;
 }

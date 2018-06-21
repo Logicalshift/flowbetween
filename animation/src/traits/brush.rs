@@ -36,12 +36,12 @@ pub trait Brush : Send+Sync {
     /// One or more brush strokes of this type are about to be rendered.
     /// This brush should set up the graphics context appropriately.
     /// 
-    fn prepare_to_render<'a>(&'a self, properties: &'a BrushProperties) -> Box<'a+Iterator<Item=Draw>>;
+    fn prepare_to_render<'a>(&'a self, properties: &'a BrushProperties) -> Box<dyn 'a+Iterator<Item=Draw>>;
 
     ///
     /// Renders a brush stroke to the specified graphics context
     ///
-    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<'a+Iterator<Item=Draw>>;
+    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>>;
 
     ///
     /// Retrieves the definition for this brush

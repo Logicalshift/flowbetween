@@ -248,11 +248,11 @@ impl Controller for HsluvPickerController {
         self.ui.clone()
     }
 
-    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
         Some(self.viewmodel.clone())
     }
 
-    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> { None }
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> { None }
 
     fn action(&self, action_id: &str, action_data: &ActionParameter) {
         use ui::ActionParameter::*;

@@ -42,7 +42,7 @@ pub struct FollowStream<TValue, Binding: Bound<TValue>> {
     core: Arc<Mutex<FollowCore<TValue, Binding>>>,
 
     /// Lifetime of the watcher
-    watcher: Box<Releasable>,
+    watcher: Box<dyn Releasable>,
 }
 
 impl<TValue, Binding: Bound<TValue>> Stream for FollowStream<TValue, Binding> {

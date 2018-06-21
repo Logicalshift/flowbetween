@@ -28,7 +28,7 @@ pub struct VirtualCanvas {
     tile_size: Binding<(f32, f32)>,
 
     /// Draws a section of the virtual canvas
-    draw_region: Arc<Fn(f32, f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync>,
+    draw_region: Arc<dyn Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync>,
 
     /// Binding for the control
     control: BindRef<Control>
@@ -38,7 +38,7 @@ impl VirtualCanvas {
     ///
     /// Creates a new virtual canvas
     /// 
-    pub fn new<DrawRegion: Fn(f32, f32) -> Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync+'static>(canvas_resources: Arc<ResourceManager<BindingCanvas>>, draw_region: DrawRegion) -> VirtualCanvas {
+    pub fn new<DrawRegion: Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync+'static>(canvas_resources: Arc<ResourceManager<BindingCanvas>>, draw_region: DrawRegion) -> VirtualCanvas {
         let tiles       = bind(vec![]);
         let top_left    = bind((0, 0));
         let grid_size   = bind((0, 0));

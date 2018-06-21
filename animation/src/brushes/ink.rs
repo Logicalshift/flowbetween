@@ -376,14 +376,14 @@ impl Brush for InkBrush {
         brush_points
     }
 
-    fn prepare_to_render<'a>(&'a self, properties: &BrushProperties) -> Box<'a+Iterator<Item=Draw>> {
+    fn prepare_to_render<'a>(&'a self, properties: &BrushProperties) -> Box<dyn 'a+Iterator<Item=Draw>> {
         Box::new(vec![
             Draw::BlendMode(self.blend_mode),
             Draw::FillColor(properties.color.with_alpha(properties.opacity))
         ].into_iter())
     }
 
-    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<'a+Iterator<Item=Draw>> {
+    fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>> {
         let size_ratio = properties.size / self.max_width;
         
         // Nothing to do if there are too few points

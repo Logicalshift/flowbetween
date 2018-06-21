@@ -38,7 +38,7 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> {
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> {
         self.animation.get_layer_with_id(layer_id)
     }
 
@@ -52,14 +52,14 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     ///
     /// Reads from the edit log for this animation
     /// 
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> {
         self.animation.read_edit_log(range)
     }
 
     ///
     /// Supplies a reference which can be used to find the motions associated with this animation
     /// 
-    fn motion<'a>(&'a self) -> &'a AnimationMotion {
+    fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
         self
     }
 }
@@ -77,7 +77,7 @@ impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     ///
     /// Retrieves a stream containing all of the motions in a particular time range
     /// 
-    fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {
+    fn get_motion_ids(&self, when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> {
         self.animation.motion().get_motion_ids(when)
     }
 
@@ -148,7 +148,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     /// 
-    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
+    fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         // Edit the underlying animation
         let animation_edit  = self.animation.edit();
 

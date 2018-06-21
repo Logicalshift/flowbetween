@@ -91,7 +91,7 @@ impl VectorElement for BrushElement {
     ///
     /// Renders this vector element
     /// 
-    fn render(&self, gc: &mut GraphicsPrimitives, properties: &VectorProperties) {
+    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
         gc.draw_list(properties.brush.render_brush(&properties.brush_properties, &self.points))
     }
 

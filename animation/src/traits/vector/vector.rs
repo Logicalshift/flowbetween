@@ -37,10 +37,10 @@ impl Vector {
 }
 
 impl Deref for Vector {
-    type Target = VectorElement;
+    type Target = dyn VectorElement;
 
     #[inline]
-    fn deref(&self) -> &VectorElement {
+    fn deref(&self) -> &dyn VectorElement {
         use Vector::*;
 
         match self {

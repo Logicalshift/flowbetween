@@ -143,11 +143,11 @@ impl<ContentController: Controller> Controller for PopupController<ContentContro
         self.ui.clone()
     }
 
-    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
         self.content_controller.get_viewmodel()
     }
 
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> { 
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> { 
         self.content_controller.get_subcontroller(id)
     }
 

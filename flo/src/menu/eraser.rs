@@ -224,7 +224,7 @@ impl Controller for EraserMenuController {
         self.ui.clone()
     }
 
-    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
         Some(self.view_model.clone())
     }
 

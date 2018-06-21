@@ -31,11 +31,11 @@ impl<Anim: Animation> Tool<Anim> for Adjust {
 
     fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Option<Arc<Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(AdjustMenuController::new()))
     }
 
-    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, _input: Box<'a+Iterator<Item=ToolInput<()>>>) -> Box<'a+Iterator<Item=ToolAction<()>>> {
+    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, _input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>> {
         Box::new(vec![].into_iter())
     }
 }

@@ -18,7 +18,7 @@ where TFn: Send+FnMut() -> () {
 ///
 /// Creates a notifiable reference from a function
 ///
-pub fn notify<TFn>(when_changed: TFn) -> Arc<Notifiable>
+pub fn notify<TFn>(when_changed: TFn) -> Arc<dyn Notifiable>
 where TFn: 'static+Send+FnMut() -> () {
     Arc::new(NotifyFn { when_changed: Mutex::new(when_changed) })
 }

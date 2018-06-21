@@ -35,7 +35,7 @@ impl Controller for NullSession {
         BindRef::clone(&self.ui)
     }
 
-    fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+    fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
         None
     }
 }

@@ -64,7 +64,7 @@ impl<Value: Clone+PartialEq> BoundValue<Value> {
     ///
     /// Adds something that will be notified when this item changes
     ///
-    fn when_changed(&mut self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&mut self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
         let releasable = ReleasableNotifiable::new(what);
         self.when_changed.push(releasable.clone_as_owned());
 
@@ -92,7 +92,7 @@ impl<Value: Clone+PartialEq> Binding<Value> {
 }
 
 impl<Value: 'static+Clone+PartialEq+Send> Changeable for Binding<Value> {
-    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable> {
+    fn when_changed(&self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
         self.value.lock().unwrap().when_changed(what)
     }
 }

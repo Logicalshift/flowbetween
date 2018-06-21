@@ -39,7 +39,7 @@ impl VectorKeyFrame {
     ///
     /// Retrieves the elements in this keyframe
     /// 
-    pub fn elements<'a>(&'a self) -> Box<'a+Deref<Target=Vec<(Duration, Vector)>>> {
+    pub fn elements<'a>(&'a self) -> Box<dyn 'a+Deref<Target=Vec<(Duration, Vector)>>> {
         let core            = self.core.lock().unwrap();
 
         let elements = DerefMap::map(core, |core| &core.elements);

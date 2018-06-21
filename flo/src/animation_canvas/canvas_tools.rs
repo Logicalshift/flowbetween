@@ -22,7 +22,7 @@ pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     animation: Arc<FloModel<Anim>>,
 
     /// The edit sink for the animation
-    edit_sink: Spawn<Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>,
+    edit_sink: Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>,
 
     /// The effective tool for the animation
     effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,

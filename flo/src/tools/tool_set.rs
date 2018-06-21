@@ -22,8 +22,8 @@ pub trait ToolSet<Anim: Animation>: Send+Sync {
 ///
 /// Equality so that tool objects can be referred to in bindings
 /// 
-impl<Anim: Animation> PartialEq for ToolSet<Anim> {
-    fn eq(&self, other: &ToolSet<Anim>) -> bool {
+impl<Anim: Animation> PartialEq for dyn ToolSet<Anim> {
+    fn eq(&self, other: &dyn ToolSet<Anim>) -> bool {
         self.set_name() == other.set_name()
     }
 }

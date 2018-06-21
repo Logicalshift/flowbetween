@@ -18,7 +18,7 @@ use std::sync::*;
 /// 
 struct UpdateStreamCore {
     /// The controller that will be used to update the state
-    controller: Arc<Controller>,
+    controller: Arc<dyn Controller>,
 
     /// The state of the UI last time an update was generated for the update stream
     state: UiSessionState,
@@ -54,7 +54,7 @@ impl UiUpdateStream {
     ///
     /// Creates a new UI update stream
     /// 
-    pub fn new(controller: Arc<Controller>, core: Arc<Desync<UiSessionCore>>) -> UiUpdateStream {
+    pub fn new(controller: Arc<dyn Controller>, core: Arc<Desync<UiSessionCore>>) -> UiUpdateStream {
         // Create the values that will go into the core
         let session_core    = core;
         let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new(controller)));
@@ -138,7 +138,7 @@ impl UpdateStreamCore {
     ///
     /// Creates a new update stream core
     /// 
-    pub fn new(controller: Arc<Controller>) -> UpdateStreamCore {
+    pub fn new(controller: Arc<dyn Controller>) -> UpdateStreamCore {
         UpdateStreamCore {
             controller:     controller,
             state:          UiSessionState::new(),

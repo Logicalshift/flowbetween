@@ -15,7 +15,7 @@ pub struct FrameLayerModel {
     pub layer_id: u64,
 
     /// The current frmae for this layer
-    pub frame: BindRef<Option<Arc<Frame>>>,
+    pub frame: BindRef<Option<Arc<dyn Frame>>>,
 }
 
 ///

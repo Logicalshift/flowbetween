@@ -71,7 +71,7 @@ impl MotionTransform for TranslateMotion {
         }
     }
 
-    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=BrushPoint>> {
+    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>> {
         let time_millis = ((time.as_secs() as f32) * 1_000.0) + ((time.subsec_nanos() as f32) / 1_000_000.0);
         let origin      = self.origin;
         let position    = self.translate.point_at_time(time_millis);

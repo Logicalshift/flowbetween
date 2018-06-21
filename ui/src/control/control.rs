@@ -98,7 +98,7 @@ impl Control {
     }
 
     /// Returns an iterator over the attributes for this control
-    pub fn attributes<'a>(&'a self) -> Box<Iterator<Item=&'a ControlAttribute>+'a> {
+    pub fn attributes<'a>(&'a self) -> Box<dyn Iterator<Item=&'a ControlAttribute>+'a> {
         Box::new(self.attributes.iter())
     }
 

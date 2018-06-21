@@ -23,7 +23,7 @@ pub struct ToolModel<Anim: Animation> {
     pub effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,
 
     /// The tool sets available for selection
-    pub tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>,
+    pub tool_sets: Binding<Vec<Arc<dyn ToolSet<Anim>>>>,
 
     /// The models for each tool in the toolsets
     tool_models: Arc<Mutex<HashMap<String, Arc<GenericToolModel>>>>
@@ -35,7 +35,7 @@ impl<Anim: Animation+'static> ToolModel<Anim> {
     /// 
     pub fn new() -> ToolModel<Anim> {
         // Create the initial set of tools
-        let default_tool_sets: Vec<Arc<ToolSet<Anim>>> = vec![
+        let default_tool_sets: Vec<Arc<dyn ToolSet<Anim>>> = vec![
             Arc::new(SelectionTools::new()),
             Arc::new(PaintTools::new())
         ];
@@ -70,7 +70,7 @@ impl<Anim: Animation+'static> ToolModel<Anim> {
     ///
     /// Returns a binding for the 'effective tool'
     /// 
-    fn effective_tool(selected_tool: Binding<Option<Arc<FloTool<Anim>>>>, current_pointer: Binding<(PaintDevice, i32)>, tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>) -> BindRef<Option<Arc<FloTool<Anim>>>> {
+    fn effective_tool(selected_tool: Binding<Option<Arc<FloTool<Anim>>>>, current_pointer: Binding<(PaintDevice, i32)>, tool_sets: Binding<Vec<Arc<dyn ToolSet<Anim>>>>) -> BindRef<Option<Arc<FloTool<Anim>>>> {
         let effective_tool = computed(move || {
             let (device, _pointer_id) = current_pointer.get();
 

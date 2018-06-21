@@ -17,7 +17,7 @@ pub use self::empty::*;
 /// Generic DOM node container
 ///
 #[derive(Clone)]
-pub struct DomNode(Arc<RwLock<DomNodeData>>);
+pub struct DomNode(Arc<RwLock<dyn DomNodeData>>);
 
 ///
 /// Possible types of DOM node

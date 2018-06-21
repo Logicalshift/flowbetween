@@ -20,7 +20,7 @@ pub trait AnimationMotion {
     ///
     /// Retrieves a stream containing all of the motions in a particular time range
     /// 
-    fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>>;
+    fn get_motion_ids(&self, when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>>;
 
     ///
     /// Retrieves the IDs of the motions attached to a particular element

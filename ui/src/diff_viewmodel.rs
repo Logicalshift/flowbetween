@@ -25,7 +25,7 @@ lazy_static! {
 /// 
 pub struct DiffViewModel {
     /// The controller that owns the viewmodel (if it's still live)
-    controller: Weak<Controller>,
+    controller: Weak<dyn Controller>,
 }
 
 // TODO: split this into two (one struct for watching the viewmodel for a single controller
@@ -39,7 +39,7 @@ pub struct WatchViewModel {
     subcontrollers: Vec<String>,
 
     /// The controller to watch
-    controller: Weak<Controller>,
+    controller: Weak<dyn Controller>,
 
     /// The subcontrollers that are being watched
     subcontroller_watchers: Vec<(String, WatchViewModel)>,
@@ -48,14 +48,14 @@ pub struct WatchViewModel {
     changed_properties: HashMap<String, Arc<Mutex<bool>>>,
 
     /// Lifetimes of the watchers that update the changed properties
-    watcher_lifetimes: Vec<Box<Releasable>>
+    watcher_lifetimes: Vec<Box<dyn Releasable>>
 }
 
 impl DiffViewModel {
     ///
     /// Creates a new viewmodel tracker for a particular controller
     ///
-    pub fn new(controller: Arc<Controller>) -> DiffViewModel {
+    pub fn new(controller: Arc<dyn Controller>) -> DiffViewModel {
         DiffViewModel { controller: Arc::downgrade(&controller) }
     }
 
@@ -89,7 +89,7 @@ impl WatchViewModel {
     ///
     /// Creates a new watcher that watches the contents of a controller
     ///
-    fn watch_controller(controller: &Weak<Controller>) -> WatchViewModel {
+    fn watch_controller(controller: &Weak<dyn Controller>) -> WatchViewModel {
         // By default, the things we watch are empty
         let mut subcontroller_watchers      = vec![];
         let mut watcher_lifetimes           = vec![];
@@ -242,7 +242,7 @@ impl Drop for WatchViewModel {
 ///
 /// Returns an update for all of the keys in a particular viewmodel
 ///
-pub fn viewmodel_update_all(controller_path: Vec<String>, viewmodel: &ViewModel) -> ViewModelUpdate {
+pub fn viewmodel_update_all(controller_path: Vec<String>, viewmodel: &dyn ViewModel) -> ViewModelUpdate {
     let keys        = viewmodel.get_property_names();
     let mut updates = vec![];
 
@@ -257,12 +257,12 @@ pub fn viewmodel_update_all(controller_path: Vec<String>, viewmodel: &ViewModel)
 ///
 /// Generates the updates to set the viewmodel for an entire controller tree
 ///
-pub fn viewmodel_update_controller_tree(controller: &Controller) -> Vec<ViewModelUpdate> {
+pub fn viewmodel_update_controller_tree(controller: &dyn Controller) -> Vec<ViewModelUpdate> {
     let mut result = vec![];
 
     // Push the controllers to the result
     // Rust could probably capture the 'result' variable in the closure exactly liek this if it were smarter
-    fn add_controller_to_result(controller: &Controller, path: &mut Vec<String>, result: &mut Vec<ViewModelUpdate>) {
+    fn add_controller_to_result(controller: &dyn Controller, path: &mut Vec<String>, result: &mut Vec<ViewModelUpdate>) {
         // Fetch the update for the viewmodel for this controller
         let viewmodel           = controller.get_viewmodel().unwrap_or_else(|| NULL_VIEW_MODEL.clone());
         let viewmodel_update    = viewmodel_update_all(path.clone(), &*viewmodel);

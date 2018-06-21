@@ -62,7 +62,7 @@ impl InMemoryAnimation {
 struct CoreLayerRef<'a, CoreRef: 'a>(CoreRef, u64, PhantomData<&'a CoreRef>);
 
 impl<'a, CoreRef: Deref<Target=AnimationCore>> Deref for CoreLayerRef<'a, CoreRef> {
-    type Target = Layer+'a;
+    type Target = dyn Layer+'a;
 
     fn deref(&self) -> &Self::Target {
         &*self.0.vector_layers.get(&self.1).unwrap()
@@ -87,7 +87,7 @@ impl Animation for InMemoryAnimation {
             .vector_layers.keys().cloned().collect()
     }
 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> {
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> {
         let core = self.core.lock().unwrap();
 
         if core.vector_layers.contains_key(&layer_id) {
@@ -101,7 +101,7 @@ impl Animation for InMemoryAnimation {
         self.core.lock().unwrap().edit_log.len()
     }
 
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> {
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> {
         let core        = self.core.lock().unwrap();
         let log_items   = range.into_iter().map(move |index| core.edit_log[index].clone());
         let log_items   = stream::iter_ok(log_items);
@@ -109,7 +109,7 @@ impl Animation for InMemoryAnimation {
         Box::new(log_items)
     }
 
-    fn motion<'a>(&'a self) -> &'a AnimationMotion {
+    fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
         self
     }
 }
@@ -124,7 +124,7 @@ impl AnimationMotion for InMemoryAnimation {
         ElementId::Assigned(result)
     }
 
-    fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> {
+    fn get_motion_ids(&self, when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> {
         let core                = self.core.lock().unwrap();
         let when_millis         = (to_millis(when.start) as f32)..(to_millis(when.end) as f32);
 
@@ -174,7 +174,7 @@ impl AnimationMotion for InMemoryAnimation {
 }
 
 impl EditableAnimation for InMemoryAnimation {
-    fn edit(&self) -> Box<Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
+    fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         Box::new(AnimationSink::new(Arc::clone(&self.core)))
     }
 }

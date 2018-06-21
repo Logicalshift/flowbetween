@@ -23,7 +23,7 @@ pub struct UiSession<CoreController: Controller> {
     core: Arc<Desync<UiSessionCore>>,
 
     /// A releasable that tracks UI updates
-    ui_update_lifetime: Mutex<Box<Releasable>>
+    ui_update_lifetime: Mutex<Box<dyn Releasable>>
 }
 
 impl<CoreController: Controller+'static> UiSession<CoreController> {
@@ -47,7 +47,7 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
     ///
     /// Causes wake_for_updates to be called on a core when its UI changes
     /// 
-    fn track_ui_updates(core: Arc<Desync<UiSessionCore>>) -> Box<Releasable> {
+    fn track_ui_updates(core: Arc<Desync<UiSessionCore>>) -> Box<dyn Releasable> {
         let update_core = Arc::clone(&core);
 
         core.sync(move |core| {

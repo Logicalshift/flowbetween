@@ -27,10 +27,10 @@ impl Frame for EmptyFrame {
         self.time_index
     }
 
-    fn render_to(&self, _gc: &mut GraphicsPrimitives) {
+    fn render_to(&self, _gc: &mut dyn GraphicsPrimitives) {
     }
 
-    fn vector_elements(&self) -> Option<Box<Iterator<Item=Vector>>> {
+    fn vector_elements(&self) -> Option<Box<dyn Iterator<Item=Vector>>> {
         None
     }
 

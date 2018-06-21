@@ -54,11 +54,11 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
         model
     }
 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(EraserMenuController::new(&tool_model.size, &tool_model.opacity)))
     }
 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<Stream<Item=ToolAction<InkData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<dyn Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
         let brush_properties    = tool_model.brush_properties.clone();
         let selected_layer      = flo_model.timeline().selected_layer.clone();
@@ -76,11 +76,11 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
         Box::new(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<InkData>>, input: Box<'a+Iterator<Item=ToolInput<InkData>>>) -> Box<'a+Iterator<Item=ToolAction<InkData>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<InkData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<InkData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<InkData>>> {
         use self::ToolAction::*;
         use self::BrushPreviewAction::*;
 
-        let ink: &Tool<Anim, ToolData=InkData, Model=InkModel> = &self.ink;
+        let ink: &dyn Tool<Anim, ToolData=InkData, Model=InkModel> = &self.ink;
 
         // As for the ink tool, except that we use the eraser drawing style
         let actions = ink.actions_for_input(flo_model, data, input)

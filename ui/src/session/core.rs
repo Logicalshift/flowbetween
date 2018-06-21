@@ -20,14 +20,14 @@ pub struct UiSessionCore {
     ui_tree: BindRef<Control>,
 
     /// Functions to be called next time the core is updated
-    update_callbacks: Vec<Box<FnMut(&mut UiSessionCore) -> ()+Send>>
+    update_callbacks: Vec<Box<dyn FnMut(&mut UiSessionCore) -> ()+Send>>
 }
 
 impl UiSessionCore {
     ///
     /// Creates a new UI core
     /// 
-    pub fn new(controller: Arc<Controller>) -> UiSessionCore {
+    pub fn new(controller: Arc<dyn Controller>) -> UiSessionCore {
         // Assemble the UI for the controller
         let ui_tree = assemble_ui(controller);
 
@@ -95,7 +95,7 @@ impl UiSessionCore {
     ///
     /// Dispatches an event to the specified controller
     ///  
-    pub fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &Controller) {
+    pub fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &dyn Controller) {
         for event in events {
             // Send the event to the controllers
             match event {
@@ -169,14 +169,14 @@ impl UiSessionCore {
     ///
     /// Dispatches an action to a controller
     /// 
-    fn dispatch_action(&mut self, controller: &Controller, event_name: String, action_parameter: ActionParameter) {
+    fn dispatch_action(&mut self, controller: &dyn Controller, event_name: String, action_parameter: ActionParameter) {
         controller.action(&event_name, &action_parameter);
     }
 
     ///
     /// Sends ticks to the specified controller and all its subcontrollers
     /// 
-    fn dispatch_tick(&mut self, controller: &Controller) {
+    fn dispatch_tick(&mut self, controller: &dyn Controller) {
         // Send ticks to the subcontrollers first
         let ui              = controller.ui().get();
         let subcontrollers  = ui.all_controllers();

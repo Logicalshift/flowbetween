@@ -82,7 +82,7 @@ impl UiSessionState {
     ///
     /// Starts watching the viewmodel for a controller
     /// 
-    pub fn watch_viewmodel(&mut self, controller: Arc<Controller>) {
+    pub fn watch_viewmodel(&mut self, controller: Arc<dyn Controller>) {
         let new_diff    = DiffViewModel::new(controller);
         let watcher     = new_diff.watch();
 

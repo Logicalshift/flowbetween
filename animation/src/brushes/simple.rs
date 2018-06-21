@@ -20,7 +20,7 @@ impl SimpleBrush {
 }
 
 impl Brush for SimpleBrush {
-    fn prepare_to_render<'a>(&'a self, properties: &BrushProperties) -> Box<'a+Iterator<Item=Draw>> {
+    fn prepare_to_render<'a>(&'a self, properties: &BrushProperties) -> Box<dyn 'a+Iterator<Item=Draw>> {
         Box::new(vec![
             Draw::BlendMode(BlendMode::SourceOver),
             Draw::StrokeColor(properties.color)
@@ -86,7 +86,7 @@ impl Brush for SimpleBrush {
         brush_points
     }
 
-    fn render_brush<'a>(&'a self, _properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<'a+Iterator<Item=Draw>> {
+    fn render_brush<'a>(&'a self, _properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>> {
         // Nothing to draw if there are no points in the brush stroke (or only one point)
         if points.len() <= 1 {
             return Box::new(iter::empty());

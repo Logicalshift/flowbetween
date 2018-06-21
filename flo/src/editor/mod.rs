@@ -34,7 +34,7 @@ pub struct EditorController {
     ui: Binding<Control>,
 
     /// The subcontrollers for this editor
-    subcontrollers: HashMap<SubController, Arc<Controller>>
+    subcontrollers: HashMap<SubController, Arc<dyn Controller>>
 }
 
 impl EditorController {
@@ -47,7 +47,7 @@ impl EditorController {
         let toolbox     = Arc::new(ToolboxController::new(&animation));
 
         let ui          = bind(Self::ui());
-        let mut subcontrollers: HashMap<SubController, Arc<Controller>> = HashMap::new();
+        let mut subcontrollers: HashMap<SubController, Arc<dyn Controller>> = HashMap::new();
 
         subcontrollers.insert(SubController::Canvas,    canvas);
         subcontrollers.insert(SubController::Menu,      menu);
@@ -151,7 +151,7 @@ impl Controller for EditorController {
         BindRef::new(&self.ui)
     }
 
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         let decoded_id = serde_json::from_str(id);
 
         if let Ok(decoded_id) = decoded_id {

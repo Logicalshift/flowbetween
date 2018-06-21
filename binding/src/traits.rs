@@ -42,7 +42,7 @@ pub trait Changeable {
     /// be sure to store it in a variable or call keep_alive() to keep it around
     /// (if the event never seems to fire, this is likely to be the problem)
     ///
-    fn when_changed(&self, what: Arc<Notifiable>) -> Box<Releasable>;
+    fn when_changed(&self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable>;
 }
 
 ///

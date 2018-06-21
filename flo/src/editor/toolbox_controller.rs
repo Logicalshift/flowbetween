@@ -58,7 +58,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     ///
     /// Creates the UI binding
     /// 
-    fn create_ui(tool_sets: Binding<Vec<Arc<ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
+    fn create_ui(tool_sets: Binding<Vec<Arc<dyn ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
         BindRef::from(computed(move || {
             // Convert the tool sets into tools (with separators between each individual set)
             let tools_for_sets: Vec<_> = tool_sets.get().iter()
@@ -180,7 +180,7 @@ impl<Anim: 'static+Animation> Controller for ToolboxController<Anim> {
         self.anim_model.tools().choose_tool_with_name(action_id);
     }
 
-    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
         Some(self.view_model.clone())
     }
 

@@ -314,11 +314,11 @@ impl Controller for InkMenuController {
         self.ui.clone()
     }
 
-    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
         Some(self.view_model.clone())
     }
 
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         match id {
             "ColorPopup"        => Some(self.color_picker.clone()),
             _                   => None

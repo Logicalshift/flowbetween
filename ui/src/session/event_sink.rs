@@ -15,7 +15,7 @@ use std::sync::*;
 /// 
 pub struct UiEventSink {
     /// The core controller that will be the target for these events
-    controller: Arc<Controller>,
+    controller: Arc<dyn Controller>,
 
     /// The core that is affected by these events
     core: Arc<Desync<UiSessionCore>>,

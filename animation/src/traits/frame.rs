@@ -20,12 +20,12 @@ pub trait Frame : Send+Sync {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    fn render_to(&self, gc: &mut GraphicsPrimitives);
+    fn render_to(&self, gc: &mut dyn GraphicsPrimitives);
 
     ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     /// 
-    fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>>;
+    fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>>;
 
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists

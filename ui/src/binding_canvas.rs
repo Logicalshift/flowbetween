@@ -28,10 +28,10 @@ struct BindingCanvasCore {
     invalidated: bool,
 
     /// The drawing function, or none if there is no drawing function
-    draw_fn: Option<Box<Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>>,
+    draw_fn: Option<Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>>,
 
     /// The notifications that are currently active for this core
-    active_notifications: Option<Box<Releasable>>
+    active_notifications: Option<Box<dyn Releasable>>
 }
 
 ///
@@ -76,8 +76,8 @@ impl BindingCanvasCore {
     ///
     /// Redraws the content of this core on a canvas and sets the bindings to notify the specified object
     /// 
-    fn redraw(&mut self, canvas: &Canvas, to_notify: Arc<Notifiable>) -> Box<Releasable> {
-        let mut release_notifications: Box<Releasable> = Box::new(vec![]);
+    fn redraw(&mut self, canvas: &Canvas, to_notify: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
+        let mut release_notifications: Box<dyn Releasable> = Box::new(vec![]);
         let draw_fn = &self.draw_fn;
 
         // Draw to the canvas
@@ -148,7 +148,7 @@ impl BindingCanvas {
     ///
     /// Creates a new BindingCanvas with a drawing function
     /// 
-    pub fn with_drawing<DrawingFn: 'static+Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>(draw: DrawingFn) -> BindingCanvas {
+    pub fn with_drawing<DrawingFn: 'static+Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>(draw: DrawingFn) -> BindingCanvas {
         let canvas = Self::new();
         canvas.on_redraw(draw);
 
@@ -164,7 +164,7 @@ impl BindingCanvas {
     /// cause it to become invalidated if they change. Additionally,
     /// setting a drawing function will invalidate the canvas.
     /// 
-    pub fn on_redraw<DrawingFn: 'static+Fn(&mut GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) {
+    pub fn on_redraw<DrawingFn: 'static+Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) {
         self.core.async(move |core| {
             core.done_with_notifications();
 

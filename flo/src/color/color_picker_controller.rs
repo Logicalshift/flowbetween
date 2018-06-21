@@ -46,7 +46,7 @@ impl Controller for ColorPickerController {
         self.ui.clone()
     }
 
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         match id {
             "HSLUV" => Some(self.hsluv.clone()),
             _       => None

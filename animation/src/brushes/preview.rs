@@ -11,7 +11,7 @@ use std::time::Duration;
 /// The brush preview structure is used to create and render a brush preview
 /// 
 pub struct BrushPreview {
-    current_brush:          Arc<Brush>,
+    current_brush:          Arc<dyn Brush>,
     brush_properties:       BrushProperties,
     points:                 Vec<RawPoint>,
 }
@@ -84,7 +84,7 @@ impl BrushPreview {
     ///
     /// Draws this preview brush stroke to the specified graphics object
     /// 
-    pub fn draw_current_brush_stroke(&self, gc: &mut GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {
+    pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {
         if self.points.len() < 2 {
             // Do nothing if there are no points in this brush preview
             return;
@@ -120,7 +120,7 @@ impl BrushPreview {
     ///
     /// Commits this preview to an animation
     /// 
-    pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &EditableAnimation) {
+    pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
         use LayerEdit::*;
         use PaintEdit::*;
 

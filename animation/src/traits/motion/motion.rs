@@ -81,7 +81,7 @@ impl MotionTransform for Motion {
         }
     }
 
-    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=BrushPoint>> {
+    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>> {
         use self::Motion::*;
 
         match self {

@@ -48,28 +48,28 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Arc<Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Option<Arc<dyn Controller>> {
         None
     }
 
     ///
     /// Returns a stream of tool actions that result from changes to the model
     /// 
-    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Box<Stream<Item=ToolAction<Self::ToolData>, Error=()>+Send> {
+    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> Box<dyn Stream<Item=ToolAction<Self::ToolData>, Error=()>+Send> {
         Box::new(stream::empty())
     }
 
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<Self::ToolData>>, input: Box<'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<'a+Iterator<Item=ToolAction<Self::ToolData>>>;
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<Self::ToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<Self::ToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<Self::ToolData>>>;
 }
 
 ///
 /// Equality so that tool objects can be referred to in bindings
 /// 
-impl<ToolData: Send+'static, Model: Send+Sync+'static, Anim: Animation> PartialEq for Tool<Anim, ToolData=ToolData, Model=Model> {
-    fn eq(&self, other: &Tool<Anim, ToolData=ToolData, Model=Model>) -> bool {
+impl<ToolData: Send+'static, Model: Send+Sync+'static, Anim: Animation> PartialEq for dyn Tool<Anim, ToolData=ToolData, Model=Model> {
+    fn eq(&self, other: &dyn Tool<Anim, ToolData=ToolData, Model=Model>) -> bool {
         self.tool_name() == other.tool_name()
     }
 }

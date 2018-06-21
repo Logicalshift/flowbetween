@@ -92,10 +92,10 @@ fn decode_url(path: &str) -> Option<ResourceUrl> {
 ///
 /// Finds the controller ont he specified path in the given session
 /// 
-fn get_controller<CoreUi>(session: &HttpSession<CoreUi>, controller_path: Vec<String>) -> Option<Arc<Controller>>
+fn get_controller<CoreUi>(session: &HttpSession<CoreUi>, controller_path: Vec<String>) -> Option<Arc<dyn Controller>>
 where CoreUi: 'static+CoreUserInterface+Send+Sync {
     // Get the root controller
-    let mut controller: Option<Arc<Controller>> = Some(session.ui().controller());
+    let mut controller: Option<Arc<dyn Controller>> = Some(session.ui().controller());
 
     // Try to navigate each section of the path
     for controller_name in controller_path {

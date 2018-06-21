@@ -9,10 +9,10 @@ use bytes::Bytes;
 #[derive(Clone)]
 pub enum Image {
     /// Represents an image containing PNG data
-    Png(Arc<ImageData>),
+    Png(Arc<dyn ImageData>),
 
     /// Represents an image containing SVG data
-    Svg(Arc<ImageData>)
+    Svg(Arc<dyn ImageData>)
 }
 
 ///
@@ -20,10 +20,10 @@ pub enum Image {
 ///
 pub trait ImageData : Send+Sync {
     /// Reads the raw data for this image
-    fn read(&self) -> Box<Read+Send>;
+    fn read(&self) -> Box<dyn Read+Send>;
 
     /// Reads the raw data for this image
-    fn read_future(&self) -> Box<Stream<Item=Bytes, Error=()>>;
+    fn read_future(&self) -> Box<dyn Stream<Item=Bytes, Error=()>>;
 }
 
 impl Image {

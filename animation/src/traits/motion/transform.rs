@@ -15,5 +15,5 @@ pub trait MotionTransform {
     ///
     /// Returns a transformed set of points at the specified time
     /// 
-    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<'a+Iterator<Item=BrushPoint>>;
+    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>>;
 }

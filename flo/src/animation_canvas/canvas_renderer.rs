@@ -16,7 +16,7 @@ struct FrameLayer {
     layer_id:           u32,
 
     /// The frame data for this layer
-    layer_frame:        Arc<Frame>,
+    layer_frame:        Arc<dyn Frame>,
 
     /// The brush that was last used for this layer
     active_brush:       Option<(BrushDefinition, BrushDrawingStyle)>,
@@ -111,7 +111,7 @@ impl CanvasRenderer {
     ///
     /// Given a set of drawing actions for an overlay, relays them to the specified canvas
     /// 
-    fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: u32, gc: &mut GraphicsPrimitives, drawing: DrawIter) {
+    fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: u32, gc: &mut dyn GraphicsPrimitives, drawing: DrawIter) {
         // Find the first free layer in this object
         let mut free_layer = self.free_layer();
 
@@ -221,7 +221,7 @@ impl CanvasRenderer {
     ///
     /// Draws the canvas background to a context
     /// 
-    fn draw_background(&mut self, gc: &mut GraphicsPrimitives, (width, height): (f64, f64)) {
+    fn draw_background(&mut self, gc: &mut dyn GraphicsPrimitives, (width, height): (f64, f64)) {
         // Work out the width, height to draw the animation to draw
         let (width, height) = (width as f32, height as f32);
         
@@ -353,7 +353,7 @@ impl CanvasRenderer {
     /// and can be replaced at any time. This allows for drawing things like preview
     /// brush strokes without needing to redraw the entire canvas.
     /// 
-    pub fn annotate_layer<DrawFn: FnOnce(&mut GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, draw_annotations: DrawFn) {
+    pub fn annotate_layer<DrawFn: FnOnce(&mut dyn GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, draw_annotations: DrawFn) {
         let previous_layer = self.annotated_layer;
 
         // We can't currently have annotations on more than one layer at once (this is because 'restore' does not function
@@ -397,7 +397,7 @@ impl CanvasRenderer {
     /// In general this is useful at the end of a brush stroke, where we want to finalize
     /// the results of a drawing without having to redraw the entire layer.
     /// 
-    pub fn commit_to_layer<DrawFn: FnOnce(&mut GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, commit_drawing: DrawFn) {
+    pub fn commit_to_layer<DrawFn: FnOnce(&mut dyn GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, commit_drawing: DrawFn) {
         // The currently annotated layer will be selected, so we can elide the layer select command if it's the same layer the user wants to commit drawing to
         let previous_layer = self.annotated_layer;
 

@@ -16,7 +16,7 @@ use std::collections::HashMap;
 pub struct MenuController<Anim: Animation> {
     anim_model:         Arc<FloModel<Anim>>,
     ui:                 BindRef<Control>,
-    tool_controllers:   Mutex<HashMap<String, Arc<Controller>>>,
+    tool_controllers:   Mutex<HashMap<String, Arc<dyn Controller>>>,
 
     empty_menu:         Arc<EmptyMenuController>
 }
@@ -94,7 +94,7 @@ impl<Anim: Animation+'static> Controller for MenuController<Anim>  {
         BindRef::clone(&self.ui)
     }
 
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         use std::collections::hash_map::Entry::*;
 
         // Try to fetch the existing controller for this ID

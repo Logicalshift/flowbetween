@@ -34,7 +34,7 @@ impl Frame for VectorFrame {
         self.keyframe.start_time() + self.offset
     }
 
-    fn render_to(&self, gc: &mut GraphicsPrimitives) {
+    fn render_to(&self, gc: &mut dyn GraphicsPrimitives) {
         let offset          = self.offset;
         let mut properties  = Arc::new(VectorProperties::default());
 
@@ -48,7 +48,7 @@ impl Frame for VectorFrame {
         })
     }
 
-    fn vector_elements<'a>(&'a self) -> Option<Box<'a+Iterator<Item=Vector>>> {
+    fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>> {
         let offset              = self.offset;
         let elements: Vec<_>    = self.keyframe.elements().iter()
             .filter(move |&&(appearance_time, _)| appearance_time <= offset)

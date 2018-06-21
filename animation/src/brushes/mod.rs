@@ -12,7 +12,7 @@ use std::sync::*;
 ///
 /// Creates a brush from a brush definition
 /// 
-pub fn create_brush_from_definition(definition: &BrushDefinition, drawing_style: BrushDrawingStyle) -> Arc<Brush> {
+pub fn create_brush_from_definition(definition: &BrushDefinition, drawing_style: BrushDrawingStyle) -> Arc<dyn Brush> {
     use BrushDefinition::*;
 
     match definition {
