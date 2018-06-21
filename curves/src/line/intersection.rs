@@ -1,8 +1,6 @@
 use super::line::*;
 use super::super::coordinate::*;
 
-use std::f64;
-
 ///
 /// Returns the point at which two lines intersect (if they intersect)
 /// 
@@ -46,39 +44,43 @@ where L::Point: Coordinate2D {
 
     // Our line can be described as '(x1+t*dx, y1+t*dy)' where 0 <= t <= 1
     // We want to solve for the edges, eg (xmin=x1+tmin*dx => txmin=(xmin-x1)/dx)
-    let (txmin, txmax) = if dx == 0.0 {
-        // Parallel to the x axis
-        (f64::INFINITY, f64::INFINITY)
-    } else {
-        ((xmin-x1)/dx, (xmax-x1)/dx)
-    };
+    let delta   = [-dx, dx, -dy, dy];
+    let edge    = [x1-xmin, xmax-x1, y1-ymin, ymax-y1];
 
-    let (tymin, tymax) = if dy == 0.0 {
-        // Parallel to the y axis
-        (f64::INFINITY, f64::INFINITY)
-    } else {
-        ((ymin-y1)/dy, (ymax-y1)/dy)
-    };
+    // t1 and t2 are the points on the line. Initially they describe the entire line (t=0 -> t=1)
+    let mut t1  = 0.0;
+    let mut t2  = 1.0;
 
-    let tmin = txmin.min(tymin);
-    let tmax = txmax.min(tymax);
+    // Clip against each of the 4 edges in turn
+    for (delta, edge) in delta.into_iter().zip(edge.into_iter()) {
+        if delta == &0.0 {
+            // Line is parallel to this edge
+            if edge < &0.0 {
+                // Line is outside of the rectangle
+                return None;
+            }
+        } else {
+            // Compute the 't' value where the line intersects this edge
+            let t = edge/delta;
 
-    if tmin < 0.0 && tmax < 0.0 {
-        // Outside the bounds
+            if delta < &0.0 && t1 < t {
+                // Start of the line is clipped against this edge (if the delta value is <0 the start is closer to this edge)
+                t1 = t;
+            } else if delta > &0.0 && t2 > t {
+                // End of the line is clipped against this edge (if the delta value is >0 the end is closer to this edge)
+                t2 = t;
+            }
+        }
+    }
+
+    if t1 > t2 || t1 > 1.0 || t2 < 0.0 {
+        // Line does not intersect rectangle (intersection is entirely outside the rectangle or ends before it starts)
         None
-    } else if tmin > 1.0 && tmax > 1.0 {
-        // Outside the bounds
-        None
     } else {
-        // t values on the line range from 0-1
-        let tmin = tmin.max(0.0).min(1.0);
-        let tmax = tmax.max(0.0).min(1.0);
+        // Line intersects the rectangle. t1 and t2 indicate where
+        let p1 = L::Point::from_components(&[x1 + t1*dx, y1 + t1*dy]);
+        let p2 = L::Point::from_components(&[x1 + t2*dx, y1 + t2*dy]);
 
-        // Create points from these components
-        let p1 = L::Point::from_components(&[x1+dx*tmin, y1+dy*tmin]);
-        let p2 = L::Point::from_components(&[x1+dx*tmax, y1+dy*tmax]);
-
-        // This is the line clipped to these bounds
         Some(L::from_points(p1, p2))
     }
 }

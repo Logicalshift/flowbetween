@@ -35,7 +35,6 @@ fn horizontal_clipped_line() {
     let bounds  = (Coord2(1.0, 1.0), Coord2(10.0, 10.0));
     let clipped = line_clip_to_bounds(&line, &bounds);
 
-    println!("{:?}", clipped);
     assert!(clipped.is_some());
 
     let clipped = clipped.unwrap();
@@ -65,31 +64,47 @@ fn horizontal_clipped_line_inside_to_outside_reverse() {
     assert!(clipped.is_some());
 
     let clipped = clipped.unwrap();
-    assert!(clipped.0.distance_to(&Coord2(5.0, 4.0)) < 0.01);
-    assert!(clipped.1.distance_to(&Coord2(10.0, 4.0)) < 0.01);
+    assert!(clipped.0.distance_to(&Coord2(10.0, 4.0)) < 0.01);
+    assert!(clipped.1.distance_to(&Coord2(5.0, 4.0)) < 0.01);
 }
 
 #[test]
 fn vertical_clipped_line_inside_to_outside() {
-    let line    = (Coord2(5.0, 4.0), Coord2(4.0, 20.0));
+    let line    = (Coord2(5.0, 4.0), Coord2(5.0, 20.0));
     let bounds  = (Coord2(1.0, 1.0), Coord2(10.0, 10.0));
     let clipped = line_clip_to_bounds(&line, &bounds);
 
-    println!("{:?}", clipped);
     assert!(clipped.is_some());
 
     let clipped = clipped.unwrap();
     assert!(clipped.0.distance_to(&Coord2(5.0, 4.0)) < 0.01);
-    assert!(clipped.1.distance_to(&Coord2(4.0, 10.0)) < 0.01);
+    assert!(clipped.1.distance_to(&Coord2(5.0, 10.0)) < 0.01);
 }
 
 #[test]
-fn line_out_of_bounds() {
-    let line    = (Coord2(0.0, 9.5), Coord2(20.0, 9.0));
+fn line_out_of_bounds_right() {
+    let line    = (Coord2(11.0, 9.5), Coord2(20.0, 9.0));
     let bounds  = (Coord2(1.0, 1.0), Coord2(10.0, 10.0));
     let clipped = line_clip_to_bounds(&line, &bounds);
 
-    println!("{:?}", clipped);
+    assert!(clipped.is_none());
+}
+
+#[test]
+fn line_out_of_bounds_left() {
+    let line    = (Coord2(-11.0, 9.5), Coord2(-20.0, 9.0));
+    let bounds  = (Coord2(1.0, 1.0), Coord2(10.0, 10.0));
+    let clipped = line_clip_to_bounds(&line, &bounds);
 
     assert!(clipped.is_none());
 }
+
+#[test]
+fn line_out_of_bounds_crossing() {
+    let line    = (Coord2(9.0, 0.0), Coord2(20.0, 9.0));
+    let bounds  = (Coord2(1.0, 1.0), Coord2(10.0, 10.0));
+    let clipped = line_clip_to_bounds(&line, &bounds);
+
+    assert!(clipped.is_none());
+}
+
