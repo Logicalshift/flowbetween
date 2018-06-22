@@ -57,3 +57,6 @@ impl<Point: Clone+Coordinate> BezierPath for (Point, Vec<(Point, Point, Point)>)
         (start_point, points.into_iter().collect())
     }
 }
+
+/// Basic Bezier path type
+pub type SimpleBezierPath = (Coord2, Vec<(Coord2, Coord2, Coord2)>);
