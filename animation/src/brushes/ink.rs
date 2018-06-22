@@ -215,7 +215,7 @@ impl InkCurve {
     ///
     /// Converts to a pair of offset curves
     /// 
-    pub fn to_offset_curves(&self, min_width: f64, max_width: f64) -> (Vec<bezier::Curve>, Vec<bezier::Curve>) {
+    pub fn to_offset_curves(&self, min_width: f64, max_width: f64) -> (Vec<bezier::Curve<Coord2>>, Vec<bezier::Curve<Coord2>>) {
         // Fetch the coordinates for the offset curve
         let (start, start_pressure) = self.start_point().to_coord2();
         let (end, end_pressure)     = self.end_point().to_coord2();

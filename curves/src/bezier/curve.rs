@@ -131,18 +131,18 @@ pub trait BezierCurve: Geo+Clone+Sized {
 /// Represents a Bezier curve
 /// 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Curve {
-    pub start_point:    Coord2,
-    pub end_point:      Coord2,
-    pub control_points: (Coord2, Coord2)
+pub struct Curve<Coord: Coordinate> {
+    pub start_point:    Coord,
+    pub end_point:      Coord,
+    pub control_points: (Coord, Coord)
 }
 
-impl Geo for Curve {
-    type Point = Coord2;
+impl<Coord: Coordinate> Geo for Curve<Coord> {
+    type Point = Coord;
 }
 
-impl BezierCurve for Curve {
-    fn from_points(start: Coord2, end: Coord2, control_point1: Coord2, control_point2: Coord2) -> Curve {
+impl<Coord: Coordinate> BezierCurve for Curve<Coord> {
+    fn from_points(start: Coord, end: Coord, control_point1: Coord, control_point2: Coord) -> Self {
         Curve {
             start_point:    start,
             end_point:      end,
@@ -151,22 +151,22 @@ impl BezierCurve for Curve {
     }
 
     #[inline]
-    fn start_point(&self) -> Coord2 {
+    fn start_point(&self) -> Coord {
         self.start_point
     }
 
     #[inline]
-    fn end_point(&self) -> Coord2 {
+    fn end_point(&self) -> Coord {
         self.end_point
     }
 
     #[inline]
-    fn control_points(&self) -> (Coord2, Coord2) {
+    fn control_points(&self) -> (Coord, Coord) {
         self.control_points
     }
 
     #[inline]
-    fn reverse(self) -> Curve {
+    fn reverse(self) -> Self {
         Curve {
             start_point:    self.end_point,
             end_point:      self.start_point,
