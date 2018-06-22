@@ -36,18 +36,22 @@ fn circle_edge_is_inside() {
     let path: SimpleBezierPath = Circle::new(Coord2(5.0, 5.0), 4.0).to_path();
 
     // Points on the edge of the circle should be inside
-    assert!(path_contains_point(&path, &Coord2(9.0, 5.0)));
-    /*
-    assert!(path_contains_point(&path, &Coord2(1.0, 5.0)));
-    assert!(path_contains_point(&path, &Coord2(5.0, 1.0)));
-    assert!(path_contains_point(&path, &Coord2(5.0, 9.0)));
-    */
+    assert!(path_contains_point(&path, &Coord2(8.8, 5.0)));
+    assert!(path_contains_point(&path, &Coord2(8.9, 5.0)));
+    assert!(path_contains_point(&path, &Coord2(8.99, 5.0)));
+    assert!(path_contains_point(&path, &Coord2(8.999, 5.0)));
 
-    // Pick a random point on the curve itself (should be inside)
-    let first_curve = path_to_curves::<_, Curve<_>>(&path).nth(0).unwrap();
-    let curve_point = first_curve.point_at_pos(0.5);
+    assert!(path_contains_point(&path, &Coord2(5.0, 1.2)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 1.1)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 1.01)));
 
-    assert!(path_contains_point(&path, &curve_point));
+    assert!(path_contains_point(&path, &Coord2(1.2, 5.0)));
+    assert!(path_contains_point(&path, &Coord2(1.1, 5.0)));
+    assert!(path_contains_point(&path, &Coord2(1.01, 5.0)));
+
+    assert!(path_contains_point(&path, &Coord2(5.0, 8.8)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 8.9)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 8.99)));
 }
 
 #[test]
