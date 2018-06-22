@@ -139,7 +139,7 @@ mod test {
     fn can_convert_unit_arc() {
         let circle          = Circle::new(Coord2(0.0, 0.0), 1.0);
         let arc             = circle.arc(0.0, f64::consts::PI/2.0);
-        let curve: Curve    = arc.to_bezier_curve();
+        let curve: Curve<_> = arc.to_bezier_curve();
 
         assert!(curve.start_point().distance_to(&Coord2(0.0, 1.0)) < 0.01);
         assert!(curve.end_point().distance_to(&Coord2(1.0, 0.0)) < 0.01);

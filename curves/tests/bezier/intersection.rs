@@ -6,7 +6,7 @@ use flo_curves::line;
 fn find_intersection_on_straight_line() {
     // Cross that intersects at (5.0, 5.0)
     let line    = (Coord2(0.0, 0.0), Coord2(10.0, 10.0));
-    let curve   = line::line_to_bezier::<_, bezier::Curve>(&(Coord2(10.0, 0.0), Coord2(0.0, 10.0)));
+    let curve   = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(10.0, 0.0), Coord2(0.0, 10.0)));
 
     let intersections   = bezier::curve_intersects_line(&curve, &line);
     assert!(intersections.len() == 1);
