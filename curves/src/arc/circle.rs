@@ -1,5 +1,6 @@
 use super::super::coordinate::*;
 use super::super::bezier::*;
+use super::super::bezier::path::*;
 
 use std::f64;
 
@@ -72,6 +73,20 @@ impl<Coord: Coordinate2D+Coordinate> Circle<Coord> {
         angles.into_iter()
             .map(|angle| self.arc(*angle, angle+section_angle).to_bezier_curve())
             .collect()
+    }
+
+    ///
+    /// Returns a path that approximates this circle
+    /// 
+    pub fn to_path<P: BezierPath<Point=Coord>>(&self) -> P {
+        let curves = self.to_curves::<Curve<_>>();
+
+        P::from_points(curves[0].start_point(), curves.into_iter().map(|curve| {
+            let (cp1, cp2)  = curve.control_points();
+            let end_point   = curve.end_point();
+
+            (cp1, cp2, end_point)
+        }))
     }
 }
 
