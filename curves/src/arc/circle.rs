@@ -175,13 +175,13 @@ mod test {
 
     #[test]
     fn circle_path_is_roughly_circular() {
-        let circle = Circle::new(Coord2(0.0, 0.0), 1.0);
+        let circle = Circle::new(Coord2(5.0, 5.0), 4.0);
 
         for curve in path_to_curves::<_, Curve<_>>(&circle.to_path::<SimpleBezierPath>()) {
             for t in 0..=10 {
                 let t = (t as f64)/10.0;
                 let p = curve.point_at_pos(t);
-                assert!((p.distance_to(&Coord2(0.0, 0.0))-1.0).abs() < 0.01);
+                assert!((p.distance_to(&Coord2(5.0, 5.0))-4.0).abs() < 0.01);
             }
         }
     }
