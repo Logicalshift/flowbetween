@@ -159,4 +159,30 @@ mod test {
         assert!(curve.start_point().distance_to(&Coord2(0.0, 1.0)) < 0.01);
         assert!(curve.end_point().distance_to(&Coord2(1.0, 0.0)) < 0.01);
     }
+
+    #[test]
+    fn circle_is_roughly_circular() {
+        let circle = Circle::new(Coord2(0.0, 0.0), 1.0);
+
+        for curve in circle.to_curves::<Curve<_>>() {
+            for t in 0..=10 {
+                let t = (t as f64)/10.0;
+                let p = curve.point_at_pos(t);
+                assert!((p.distance_to(&Coord2(0.0, 0.0))-1.0).abs() < 0.01);
+            }
+        }
+    }
+
+    #[test]
+    fn circle_path_is_roughly_circular() {
+        let circle = Circle::new(Coord2(0.0, 0.0), 1.0);
+
+        for curve in path_to_curves::<_, Curve<_>>(&circle.to_path::<SimpleBezierPath>()) {
+            for t in 0..=10 {
+                let t = (t as f64)/10.0;
+                let p = curve.point_at_pos(t);
+                assert!((p.distance_to(&Coord2(0.0, 0.0))-1.0).abs() < 0.01);
+            }
+        }
+    }
 }
