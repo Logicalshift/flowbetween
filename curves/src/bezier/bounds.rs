@@ -28,6 +28,18 @@ pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: 
 
         if root1 > 0.0 && root1 < 1.0 { t_extremes.push(root1); }
         if root2 > 0.0 && root2 < 1.0 { t_extremes.push(root2); }
+
+        // We also solve for the second derivative
+        let aa = 2.0*(b-a);
+        let bb = 2.0*(c-a);
+
+        // Solve for a'*t+b = 0 (0-b/a')
+        if aa != 0.0 {
+            let root3 = -bb/aa;
+            if root3 > 0.0 && root3 < 1.0 {
+                t_extremes.push(root3);
+            }
+        }
     }
 
     t_extremes
