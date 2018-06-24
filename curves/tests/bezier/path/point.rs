@@ -79,6 +79,9 @@ fn points_outside_bounds_are_outside_path() {
     ]);
 
     // Points far outside the path should be outside
+    assert!(!path_contains_point(&path, &Coord2(5.0, 20.0)));
+    assert!(!path_contains_point(&path, &Coord2(5.0, -5.0)));
+    assert!(!path_contains_point(&path, &Coord2(20.0, 5.0)));
     assert!(!path_contains_point(&path, &Coord2(-5.0, 5.0)));
     assert!(!path_contains_point(&path, &Coord2(3.0, 20.0)));
 }
