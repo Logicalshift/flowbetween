@@ -40,17 +40,17 @@ fn circle_edge_is_inside() {
     assert!(path_contains_point(&path, &Coord2(8.99, 5.0)));
     assert!(path_contains_point(&path, &Coord2(8.999, 5.0)));
 
-    assert!(path_contains_point(&path, &Coord2(5.0, 1.2)));
-    assert!(path_contains_point(&path, &Coord2(5.0, 1.1)));
-    assert!(path_contains_point(&path, &Coord2(5.0, 1.01)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 8.8)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 8.9)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 8.99)));
 
     assert!(path_contains_point(&path, &Coord2(1.2, 5.0)));
     assert!(path_contains_point(&path, &Coord2(1.1, 5.0)));
     assert!(path_contains_point(&path, &Coord2(1.01, 5.0)));
 
-    assert!(path_contains_point(&path, &Coord2(5.0, 8.8)));
-    assert!(path_contains_point(&path, &Coord2(5.0, 8.9)));
-    assert!(path_contains_point(&path, &Coord2(5.0, 8.99)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 1.2)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 1.1)));
+    assert!(path_contains_point(&path, &Coord2(5.0, 1.01)));
 }
 
 #[test]
