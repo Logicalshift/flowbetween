@@ -133,3 +133,11 @@ impl Coordinate for PathPoint {
         }
     }
 }
+
+impl Coordinate2D for PathPoint {
+    #[inline]
+    fn x(&self) -> f64 { self.position.0 as f64 }
+
+    #[inline]
+    fn y(&self) -> f64 { self.position.1 as f64 }
+}

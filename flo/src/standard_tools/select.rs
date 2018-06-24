@@ -6,6 +6,7 @@ use ui::*;
 use canvas::*;
 use binding::*;
 use animation::*;
+use curves::bezier::path::path_contains_point;
 
 use futures::*;
 use std::sync::*;
@@ -316,9 +317,20 @@ impl Select {
     /// 
     fn element_at_point(&self, data: &SelectData, point: (f32, f32)) -> Option<ElementId> {
         // Find the front-most item that matches this point
-        for &(ref id, ref _props, ref bounding_box) in data.bounding_boxes.iter().rev() {
+        for &(ref id, ref props, ref bounding_box) in data.bounding_boxes.iter().rev() {
             if bounding_box.contains(point.0, point.1) {
-                return Some(*id);
+                // Get the paths for this element
+                let paths = data.frame
+                    .as_ref()
+                    .and_then(|frame| frame.element_with_id(*id))
+                    .and_then(|element| element.to_path(props));
+
+                // If there are any paths, then see if the point is inside them
+                if let Some(paths) = paths {
+                    if paths.into_iter().any(|path| path_contains_point(&path, &PathPoint::new(point.0, point.1))) {
+                        return Some(*id)
+                    }
+                }
             }
         }
 
