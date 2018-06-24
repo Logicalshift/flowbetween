@@ -18,7 +18,7 @@ where P::Point: Coordinate2D {
         false
     } else */ {
         // Ray is from the top of the bounds to our point
-        let ray             = (max_bounds, *point);
+        let ray             = (max_bounds + P::Point::from_components(&[0.01, 0.01]), *point);
         let ray_direction   = ray.1 - ray.0;
 
         // Compute all the normals of the intersections of the ray with each line in this curve
