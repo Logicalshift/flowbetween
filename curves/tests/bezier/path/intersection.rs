@@ -6,6 +6,36 @@ use flo_curves::bezier::path::*;
 use std::f64;
 
 #[test]
+fn awkward_line_intersects_circle() {
+    let center = Coord2(5.0, 5.0);
+    let radius = 4.0;
+
+    // Create a path from a circle
+    let circle: SimpleBezierPath = Circle::new(center, radius).to_path();
+
+    // Line from the center to the edge
+    let line            = (Coord2(5.0, 5.0), Coord2(5.0, 9.5));
+    let intersection    = path_intersects_line(&circle, &line).collect::<Vec<_>>();
+
+    // This should be an intersection (straight up from the center)
+    assert!(intersection.len() == 1);
+
+    // Line from the center to the edge
+    let line            = (Coord2(5.0, 5.0), Coord2(5.0, 0.5));
+    let intersection    = path_intersects_line(&circle, &line).collect::<Vec<_>>();
+
+    // This should be an intersection (straight down from the center)
+    assert!(intersection.len() == 1);
+
+    // Line from the center to the edge
+    let line            = (Coord2(5.0, 5.0), Coord2(4.999999999999999, 9.5));
+    let intersection    = path_intersects_line(&circle, &line).collect::<Vec<_>>();
+
+    // This should be an intersection (almost straight up from the center)
+    assert!(intersection.len() == 1);
+}
+
+#[test]
 fn line_intersects_circle() {
     let center = Coord2(5.0, 5.0);
     let radius = 4.0;
@@ -32,13 +62,15 @@ fn line_intersects_circle() {
         let line            = (center, target);
         let intersection    = path_intersects_line(&circle, &line).collect::<Vec<_>>();
         println!("{:?} {:?}", intersection, target);
-        assert!(intersection.len() == 1);
+        //assert!(intersection.len() == 1);
 
-        let intersection    = intersection[0];
-        let intersect_point = circle_sections[intersection.0].point_at_pos(intersection.1);
+        if intersection.len() > 0 {
+            let intersection    = intersection[0];
+            let intersect_point = circle_sections[intersection.0].point_at_pos(intersection.1);
 
-        println!("{:?} {:?}", expected, intersect_point);
-        assert!(expected.distance_to(&intersect_point).abs() < 0.01);
+            println!("{:?} {:?}", expected, intersect_point);
+            //assert!(expected.distance_to(&intersect_point).abs() < 0.01);
+        }
     }
 
     assert!(false);
