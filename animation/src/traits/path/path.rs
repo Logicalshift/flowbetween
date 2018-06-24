@@ -2,6 +2,10 @@ use super::point::*;
 use super::element::*;
 
 use canvas::*;
+use curves::geo::*;
+use curves::bezier::path::*;
+
+use std::iter;
 
 ///
 /// Represents a vector path
@@ -102,5 +106,96 @@ impl<'a> Into<Vec<Draw>> for &'a Path {
             });
         
         drawing.collect()
+    }
+}
+
+impl Geo for Path {
+    type Point = PathPoint;
+}
+
+impl BezierPath for Path {
+    /// Type of an iterator over the points in this curve. This tuple contains the points ordered as a hull: ie, two control points followed by a point on the curve
+    type PointIter = Box<dyn Iterator<Item=(Self::Point, Self::Point, Self::Point)>>;
+
+    ///
+    /// Retrieves the initial point of this path
+    /// 
+    fn start_point(&self) -> Self::Point {
+        use self::PathElement::*;
+
+        match self.elements[0] {
+            Move(p)         => p,
+            Line(p)         => p,
+            Bezier(p, _, _) => p,
+            Close           => PathPoint::new(0.0, 0.0)
+        }
+    }
+
+    ///
+    /// Retrieves an iterator over the points in this path
+    /// 
+    /// Note that the bezier path trait doesn't support Move or Close operations so these will be ignored.
+    /// Operations like point_in_path may be unreliable for 'broken' paths as a result of this limitation.
+    /// (Paths with a 'move' in them are really two seperate paths)
+    /// 
+    fn points(&self) -> Self::PointIter {
+        // Points as a set of bezier curves
+        let mut points = vec![];
+
+        // The last point, which is used to generate the set of points along a line
+        let start_point     = self.start_point();
+        let mut last_point  = start_point;
+
+        // Convert each element to a point in the path
+        for element in self.elements.iter() {
+            match element {
+                PathElement::Bezier(target, cp1, cp2) => {
+                    points.push((*cp1, *cp2, *target));
+                    last_point = *target;
+                },
+
+                PathElement::Line(target)  |
+                PathElement::Move(target) => {
+                    // Generate control points for a line
+                    let diff = *target-last_point;
+                    let cp1 = diff * 0.3;
+                    let cp2 = diff * 0.7;
+                    let cp1 = last_point + cp1;
+                    let cp2 = last_point + cp2;
+
+                    points.push((cp1, cp2, *target));
+                    last_point = *target;
+                },
+
+                PathElement::Close => { 
+                    // Line to the start point
+                    let diff = start_point-last_point;
+                    let cp1 = diff * 0.3;
+                    let cp2 = diff * 0.7;
+                    let cp1 = last_point + cp1;
+                    let cp2 = last_point + cp2;
+
+                    points.push((cp1, cp2, start_point));
+                    last_point = start_point;
+                }
+            }
+        }
+
+        // Turn into an iterator
+        Box::new(points.into_iter())
+    }
+
+    ///
+    /// Creates a new instance of this path from a set of points
+    /// 
+    fn from_points<FromIter: IntoIterator<Item=(Self::Point, Self::Point, Self::Point)>>(start_point: Self::Point, points: FromIter) -> Self {
+        let elements = points.into_iter()
+            .map(|(cp1, cp2, target)| PathElement::Bezier(target, cp1, cp2));
+        let elements = iter::once(PathElement::Move(start_point))
+            .chain(elements);
+
+        Path {
+            elements: elements.collect()
+        }
     }
 }
