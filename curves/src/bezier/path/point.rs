@@ -21,21 +21,44 @@ where P::Point: Coordinate2D {
         let ray             = (max_bounds + P::Point::from_components(&[0.01, 0.01]), *point);
         let ray_direction   = ray.1 - ray.0;
 
-        // Compute all the normals of the intersections of the ray with each line in this curve
-        let intersection_normals = path_to_curves::<_, Curve<_>>(path)
-            .flat_map(|curve| curve_intersects_line(&curve, &ray)
-                .into_iter()
-                .filter(|t| t != &1.0)
-                .map(|t| curve.normal_at_pos(t))
-                .collect::<Vec<_>>());
+        // The total of all of the ray directions
+        let mut total_direction     = 0;
 
-        // Use the dot product to determine the normal direction relative to the ray (-1, 0 or 1)
-        // This indicates whether or not the line being crossed is facing 'inwards' or 'outwards'
-        let directions = intersection_normals
-            .map(|normal| normal.dot(&ray_direction))
-            .map(|direction| if direction < 0.0 { -1 } else if direction > 0.0 { 1 } else { 0 });
-        
-        // If the sum of the directions is 0 then the point is outside of the path (crosses a 'leaving' line as often as it crosses an 'entering' line), otherwise it's inside
-        directions.sum::<i32>() != 0
+        // Whether or not we hit the end this pass
+        // TODO: we may need to exclude the first intersection if it's at 0 and the final intersection is at 1
+        let mut hit_end_last_pass   = false;
+
+        for curve in path_to_curves::<_, Curve<_>>(path) {
+            let mut hit_end_this_pass = false;
+
+            for t in curve_intersects_line(&curve, &ray) {
+                // Intersections at t = 1.0 are at the end of the curve.
+                if t > 0.9999999 { hit_end_this_pass = true; }
+
+                // Don't treat both the start of a curve and the end of a curve as two separate intersections (it's probably the same one caused by a floating point imprecision)
+                if t < 0.0000001 && hit_end_last_pass { continue; }
+
+                // Get the normal at this point
+                let normal = curve.normal_at_pos(t);
+
+                // Dot product determines the direction of the normal relative to the ray (+ve if in the same direction or -ve in the opposite)
+                // That is, the sign of this calculation indicates which direction the line is facing.
+                // One of these directions is 'entering' the shape and one is 'leaving': if we leave as often as we enter, the point is inside
+                // (We don't actually need to worry which is which here as we know the ray starts outside of the curve)
+                let direction = normal.dot(&ray_direction);
+
+                if direction < 0.0 {
+                    total_direction -= 1;
+                } else if direction > 0.0 {
+                    total_direction += 1;
+                }
+            }
+
+            // Pass on whether or not we hit the end of the curve during this pass
+            hit_end_last_pass = hit_end_this_pass;
+        }
+
+        // Point is inside the path if the ray crosses more lines facing in a particular direction
+        total_direction != 0
     }
 }
