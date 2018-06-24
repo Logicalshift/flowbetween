@@ -65,7 +65,7 @@ pub trait BezierCurve: Geo+Clone+Sized {
     ///
     /// Computes the bounds of this bezier curve
     /// 
-    fn bounding_box(&self) -> (Self::Point, Self::Point) {
+    fn bounding_box<Bounds: BoundingBox<Point=Self::Point>>(&self) -> Bounds {
         // Fetch the various points and the derivative of this curve
         let start       = self.start_point();
         let end         = self.end_point();
