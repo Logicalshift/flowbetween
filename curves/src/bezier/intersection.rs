@@ -48,7 +48,7 @@ where C::Point: Coordinate2D {
             let y   = pos.y();
 
             // Solve for the position on the line
-            let s = if b != 0.0 {
+            let s = if b.abs() > 0.01 {
                 (x-p1.x())/(p2.x()-p1.x())
             } else {
                 (y-p1.y())/(p2.y()-p1.y())
