@@ -1,6 +1,7 @@
 use super::*;
 
 use canvas::*;
+use curves::geo::*;
 
 use std::f32;
 
@@ -133,6 +134,42 @@ impl Rect {
         gc.line_to(self.x2, self.y2);
         gc.line_to(self.x1, self.y2);
         gc.close_path();
+    }
+}
+
+impl Geo for Rect {
+    type Point = PathPoint;
+}
+
+impl BoundingBox for Rect {
+    fn from_min_max(min: Self::Point, max: Self::Point) -> Self {
+        Rect::new(min, max)
+    }
+
+    fn min(&self) -> Self::Point {
+        PathPoint::new(self.x1, self.y1)
+    }
+
+    fn max(&self) -> Self::Point {
+        PathPoint::new(self.x2, self.y2)
+    }
+
+    fn empty() -> Self {
+        Rect {
+            x1: 0.0,
+            y1: 0.0,
+            x2: 0.0,
+            y2: 0.0
+        }
+    }
+
+    #[inline]
+    fn is_empty(&self) -> bool {
+        self.is_zero_size()
+    }
+
+    fn union_bounds(self, target: Self) -> Self {
+        self.union(target)
     }
 }
 
