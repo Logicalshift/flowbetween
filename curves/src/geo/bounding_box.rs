@@ -32,9 +32,7 @@ pub trait BoundingBox : Geo+Sized {
     /// 
     #[inline]
     fn is_empty(&self) -> bool {
-        let origin = Self::Point::origin();
-
-        self.min() == origin && self.max() == origin
+        self.min() == self.max()
     }
 
     ///
