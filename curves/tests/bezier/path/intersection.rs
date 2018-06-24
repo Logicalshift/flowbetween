@@ -61,17 +61,13 @@ fn line_intersects_circle() {
         // Should be one intersection with the circle here
         let line            = (center, target);
         let intersection    = path_intersects_line(&circle, &line).collect::<Vec<_>>();
-        println!("{:?} {:?}", intersection, target);
-        //assert!(intersection.len() == 1);
+        assert!(intersection.len() == 1);
 
         if intersection.len() > 0 {
             let intersection    = intersection[0];
             let intersect_point = circle_sections[intersection.0].point_at_pos(intersection.1);
 
-            println!("{:?} {:?}", expected, intersect_point);
-            //assert!(expected.distance_to(&intersect_point).abs() < 0.01);
+            assert!(expected.distance_to(&intersect_point).abs() < 0.01);
         }
     }
-
-    assert!(false);
 }
