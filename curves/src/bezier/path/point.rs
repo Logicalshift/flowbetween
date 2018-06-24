@@ -25,6 +25,7 @@ where P::Point: Coordinate2D {
         let intersection_normals = path_to_curves::<_, Curve<_>>(path)
             .flat_map(|curve| curve_intersects_line(&curve, &ray)
                 .into_iter()
+                .filter(|t| t != &1.0)
                 .map(|t| curve.normal_at_pos(t))
                 .collect::<Vec<_>>());
 
