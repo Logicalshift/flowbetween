@@ -38,7 +38,7 @@ pub trait BoundingBox : Geo+Sized {
     ///
     /// Creates the union of this and another bounding box
     /// 
-    fn union(self, target: Self) -> Self {
+    fn union_bounds(self, target: Self) -> Self {
         if self.is_empty() {
             target
         } else if target.is_empty() {

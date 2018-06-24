@@ -10,7 +10,7 @@ fn circle_path_bounds() {
     // Create a path from a circle
     let circle: SimpleBezierPath = Circle::new(center, radius).to_path();
 
-    let bounds = circle.bounding_box();
+    let bounds: (Coord2, Coord2) = circle.bounding_box();
 
     assert!(bounds.0.distance_to(&Coord2(1.0, 1.0)) < 0.1);
     assert!(bounds.1.distance_to(&Coord2(9.0, 9.0)) < 0.1);

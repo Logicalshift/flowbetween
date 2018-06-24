@@ -32,7 +32,7 @@ pub trait BezierPath : Geo+Clone+Sized {
     /// Finds the bounds of this path
     /// 
     #[inline]
-    fn bounding_box(&self) -> (Self::Point, Self::Point) {
+    fn bounding_box<Bounds: BoundingBox<Point=Self::Point>>(&self) -> Bounds {
         path_bounding_box(self)
     }
 
