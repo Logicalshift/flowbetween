@@ -11,15 +11,18 @@ pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: 
 
     // The derivative is a quadratic function, so we can compute the locations of these (t values) by solving the quadratic formula for them
     for component_index in 0..Point::len() {
+        // Fetch the parameters for this component
         let p1 = w1.get(component_index);
         let p2 = w2.get(component_index);
         let p3 = w3.get(component_index);
         let p4 = w4.get(component_index);
 
+        // Compute the bezier coefficients
         let a = (-p1 + p2*3.0 - p3*3.0 + p4)*3.0;
         let b = (p1 - p2*2.0 + p3)*6.0;
         let c = (p2 - p1)*3.0;
 
+        // Extremeties are points at which the curve has a 0 gradient (in any of its dimensions)
         let root1 = (-b + f64::sqrt(b*b - a*c*4.0)) / (a*2.0);
         let root2 = (-b - f64::sqrt(b*b - a*c*4.0)) / (a*2.0);
 
