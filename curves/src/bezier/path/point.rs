@@ -13,10 +13,10 @@ where P::Point: Coordinate2D {
     // We want to cast a ray from the outer edge of the bounds to our point
     let (min_bounds, max_bounds) = path.bounding_box();
 
-    /* if min_bounds.x() > point.x() || max_bounds.x() < point.x() || min_bounds.y() > point.y() || max_bounds.y() < point.y() {
+    if min_bounds.x() > point.x() || max_bounds.x() < point.x() || min_bounds.y() > point.y() || max_bounds.y() < point.y() {
         // Point is outside the bounds of the path
         false
-    } else */ {
+    } else {
         // Ray is from the top of the bounds to our point
         let ray             = (max_bounds + P::Point::from_components(&[0.01, 0.01]), *point);
         let ray_direction   = ray.1 - ray.0;
