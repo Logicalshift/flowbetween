@@ -4,7 +4,7 @@ use super::super::coordinate::*;
 ///
 /// Trait implemented by things representing axis-aligned bounding boxes
 /// 
-pub trait BoundingBox : Geo {
+pub trait BoundingBox : Geo+Sized {
     ///
     /// Returns a bounding box with the specified minimum and maximum coordinates
     /// 
@@ -19,6 +19,36 @@ pub trait BoundingBox : Geo {
     /// Returns the maximum point of this bounding box
     /// 
     fn max(&self) -> Self::Point;
+
+    ///
+    /// Returns an empty bounding box
+    /// 
+    fn empty() -> Self {
+        Self::from_min_max(Self::Point::origin(), Self::Point::origin())
+    }
+
+    ///
+    /// True if this bounding box is empty
+    /// 
+    #[inline]
+    fn is_empty(&self) -> bool {
+        let origin = Self::Point::origin();
+
+        self.min() == origin && self.max() == origin
+    }
+
+    ///
+    /// Creates the union of this and another bounding box
+    /// 
+    fn union(self, target: Self) -> Self {
+        if self.is_empty() {
+            target
+        } else if target.is_empty() {
+            self
+        } else {
+            Self::from_min_max(Self::Point::from_smallest_components(self.min(), target.min()), Self::Point::from_biggest_components(self.max(), target.max()))
+        }
+    }
 }
 
 ///

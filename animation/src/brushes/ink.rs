@@ -55,7 +55,7 @@ impl InkBrush {
 ///
 /// Ink brush coordinate (used for curve fitting)
 /// 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 struct InkCoord {
     x: f64,
     y: f64,

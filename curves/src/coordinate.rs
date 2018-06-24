@@ -3,7 +3,7 @@ use std::ops::*;
 ///
 /// Represents a value that can be used as a coordinate in a bezier curve
 /// 
-pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f64, Output=Self>+Sub<Self, Output=Self> {
+pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f64, Output=Self>+Sub<Self, Output=Self>+PartialEq {
     ///
     /// Creates a new coordinate from the specified set of components
     /// 
