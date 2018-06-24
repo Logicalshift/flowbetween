@@ -1,5 +1,6 @@
 use super::basis::*;
-use super::super::Coordinate;
+use super::super::geo::*;
+use super::super::coordinate::*;
 
 ///
 /// Finds the t values of the extremities of a curve (these are the points at which
@@ -48,7 +49,7 @@ pub fn find_extremities<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: 
 ///
 /// Finds the upper and lower points in a cubic curve's bounding box
 /// 
-pub fn bounding_box4<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Point) -> (Point, Point) {
+pub fn bounding_box4<Point: Coordinate, Bounds: BoundingBox<Point=Point>>(w1: Point, w2: Point, w3: Point, w4: Point) -> Bounds {
     // The 't' values where this curve has extremities we need to examine
     let t_extremes = find_extremities(w1, w2, w3, w4);
 
@@ -63,5 +64,5 @@ pub fn bounding_box4<Point: Coordinate>(w1: Point, w2: Point, w3: Point, w4: Poi
         max_pos = Point::from_biggest_components(max_pos, point);
     }
 
-    (min_pos, max_pos)
+    Bounds::from_min_max(min_pos, max_pos)
 }
