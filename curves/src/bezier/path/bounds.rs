@@ -8,7 +8,7 @@ use itertools::*;
 ///
 /// Finds the bounds of a path
 /// 
-pub fn path_bounds<P: BezierPath>(path: &P) -> (P::Point, P::Point) {
+pub fn path_bounding_box<P: BezierPath>(path: &P) -> (P::Point, P::Point) {
     path_to_curves(path)
         .map(|curve: Curve<P::Point>| curve.bounding_box())
         .map(|(min, max)| (P::Point::from_smallest_components(min, max), P::Point::from_biggest_components(min, max)))
