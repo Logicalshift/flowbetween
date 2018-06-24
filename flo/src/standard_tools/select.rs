@@ -316,9 +316,17 @@ impl Select {
     /// Returns the ID of the element at the position represented by the specified painting action
     /// 
     fn element_at_point(&self, data: &SelectData, point: (f32, f32)) -> Option<ElementId> {
+        let mut fallback_selection = None;
+
         // Find the front-most item that matches this point
         for &(ref id, ref props, ref bounding_box) in data.bounding_boxes.iter().rev() {
             if bounding_box.contains(point.0, point.1) {
+                // Use this as the fallback if there isn't one already
+                if fallback_selection.is_none() { fallback_selection = Some(*id); }
+
+                // Already selected elements take precedence when picking a fallback
+                if data.selected_elements.contains(id) { fallback_selection = Some(*id); }
+
                 // Get the paths for this element
                 let paths = data.frame
                     .as_ref()
@@ -326,6 +334,7 @@ impl Select {
                     .and_then(|element| element.to_path(props));
 
                 // If there are any paths, then see if the point is inside them
+                // TODO: path_contains_point won't work if the paths contain any move elements apart from the initial one
                 if let Some(paths) = paths {
                     if paths.into_iter().any(|path| path_contains_point(&path, &PathPoint::new(point.0, point.1))) {
                         return Some(*id)
@@ -334,8 +343,8 @@ impl Select {
             }
         }
 
-        // No ID matches
-        None
+        // No ID matches precisely (but we may have found a fallback match based on the bounding box)
+        fallback_selection
     }
 
     ///
