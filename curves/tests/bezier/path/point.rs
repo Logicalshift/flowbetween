@@ -79,8 +79,10 @@ fn corner_is_in_path() {
     ]);
 
     // Points right on the edge but on the corners are in the path
-    assert!(path_contains_point(&path, &Coord2(1.0, 2.0)));
-    assert!(path_contains_point(&path, &Coord2(9.0, 2.0)));
+    assert!(path_contains_point(&path, &Coord2(1.001, 2.001)));
+    assert!(path_contains_point(&path, &Coord2(8.999, 2.001)));
+    assert!(path_contains_point(&path, &Coord2(1.001, 7.999)));
+    assert!(path_contains_point(&path, &Coord2(8.999, 7.999)));
 }
 
 #[test]
