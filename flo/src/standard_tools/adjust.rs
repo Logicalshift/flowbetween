@@ -127,30 +127,20 @@ impl Adjust {
     ///
     /// Creates a binding that contains the vector/vector properties for the currently selected elements in a frame
     /// 
-    fn selected_element_properties<SelectedElements, FrameBinding>(selected_elements: SelectedElements, frame: FrameBinding) -> impl Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>
-    where SelectedElements: 'static+Bound<Arc<HashSet<ElementId>>>, FrameBinding: 'static+Bound<Option<Arc<dyn Frame>>> {
+    fn selected_element_properties<SelectedElements, Anim>(selected_elements: SelectedElements, flo_model: &FloModel<Anim>) -> impl Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>
+    where SelectedElements: 'static+Bound<Arc<HashSet<ElementId>>>, Anim: 'static+Animation {
+        // The elements binding contains the vector elements and their properties for the current frame
+        let elements = flo_model.frame().elements.clone();
+
         computed(move || {
             // Unwrap the bindings
-            let frame                   = frame.get();
+            let elements                = elements.get();
             let selected_elements       = selected_elements.get();
 
-            // Go through all of the elements and store the properties for any that are marked as selected 
-            let mut result: Vec<(Vector, Arc<VectorProperties>)>              = vec![];
-            let mut current_properties  = Arc::new(VectorProperties::default());
-
-            if let Some(frame) = frame {
-                if let Some(elements) = frame.vector_elements() {
-                    for element in elements {
-                        current_properties = element.update_properties(current_properties);
-
-                        if selected_elements.contains(&element.id()) {
-                            result.push((element, Arc::clone(&current_properties)));
-                        }
-                    }
-                }
-            }   
-
-            Arc::new(result)
+            Arc::new(elements.iter()
+                .filter(|(element, _)| selected_elements.contains(&element.id()))
+                .cloned()
+                .collect())
         })
     }
 
@@ -163,7 +153,7 @@ impl Adjust {
         let selected_elements   = computed(move || Arc::new(selected_elements.get().into_iter().collect::<HashSet<_>>()));
 
         // Get the properties for the selected elements
-        let selected_elements   = Self::selected_element_properties(selected_elements, frame);
+        let selected_elements   = Self::selected_element_properties(selected_elements, &*flo_model);
 
         // Redraw the selected elements overlay layer every time the frame or the selection changes
         follow(selected_elements)

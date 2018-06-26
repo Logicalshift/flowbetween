@@ -29,10 +29,8 @@ pub struct FrameModel {
     /// The currently selected frame (the current frame in the selected layer)
     pub frame: BindRef<Option<Arc<dyn Frame>>>,
 
-    /*
     /// The elements in the current frame and their properties (all of the elements in the current frame in the selected layer)
-    pub elements: BindRef<Arc<Vec<(Vector, Arc<VectorProperties)>>>>
-    */
+    pub elements: BindRef<Arc<Vec<(Vector, Arc<VectorProperties>)>>>
 }
 
 impl FrameModel {
@@ -111,12 +109,14 @@ impl FrameModel {
         });
 
         // The current frame tracks the frame the user has got selected from the set of layers
-        let frame = Self::current_frame(selected_layer, layers.clone());
+        let frame       = Self::current_frame(selected_layer, layers.clone());
+        let elements    = Self::element_properties(frame.clone());
 
         // Result is a new FrameModel containing these layers
         FrameModel {
-            layers: BindRef::new(&layers),
-            frame:  frame
+            layers:     BindRef::new(&layers),
+            frame:      frame,
+            elements:   elements
         }
     }
 
@@ -132,6 +132,38 @@ impl FrameModel {
                 .filter(|layer| Some(layer.layer_id) == selected_layer_id)
                 .filter_map(|layer| layer.frame.get())
                 .nth(0)
+        }))
+    }
+
+    ///
+    /// Returns a binding mapping between the elements in a frame and their properties
+    /// 
+    fn element_properties<CurrentFrame: 'static+Bound<Option<Arc<dyn Frame>>>>(current_frame: CurrentFrame) -> BindRef<Arc<Vec<(Vector, Arc<VectorProperties>)>>> {
+        BindRef::new(&computed(move || {
+            let mut result      = vec![];
+
+            // Fetch the current frame
+            let current_frame   = current_frame.get();
+
+            if let Some(current_frame) = current_frame {
+                // Get the elements for the current frame
+                let elements                = current_frame.vector_elements();
+
+                // current_properties will track the properties attached to each element
+                let mut current_properties  = Arc::new(VectorProperties::default());
+
+                if let Some(elements) = elements {
+                    for element in elements {
+                        // Process how the properties change for this element
+                        current_properties = element.update_properties(current_properties);
+
+                        // Add to the result
+                        result.push((element, Arc::clone(&current_properties)));
+                    }
+                }
+            }
+
+            Arc::new(result)
         }))
     }
 }
