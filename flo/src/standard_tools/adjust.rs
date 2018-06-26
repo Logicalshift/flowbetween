@@ -158,7 +158,7 @@ impl Adjust {
     /// Creates an action stream that draws control points for the selection in the specified models
     /// 
     fn draw_control_point_overlay<Anim: 'static+Animation, FrameBinding: 'static+Bound<Option<Arc<dyn Frame>>>>(flo_model: Arc<FloModel<Anim>>, frame: FrameBinding) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
-        // Collec the selected elements into a hash set
+        // Collect the selected elements into a hash set
         let selected_elements   = flo_model.selection().selected_element.clone();
         let selected_elements   = computed(move || Arc::new(selected_elements.get().into_iter().collect::<HashSet<_>>()));
 
