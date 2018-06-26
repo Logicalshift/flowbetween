@@ -50,14 +50,14 @@ impl Adjust {
 
         match cp {
             ControlPoint::BezierPoint(x, y) => {
-                draw.circle(*x, *y, 6.0);
+                draw.circle(*x, *y, 5.0);
                 draw.fill_color(CP_BEZIER);
                 draw.fill();
                 draw.stroke();
             },
 
             ControlPoint::BezierControlPoint(x, y) => {
-                draw.rect(x-4.0, y-4.0, x+4.0, y+4.0);
+                draw.rect(x-3.0, y-3.0, x+3.0, y+3.0);
                 draw.fill_color(CP_BEZIER_CP);
                 draw.fill();
                 draw.stroke();
@@ -239,24 +239,21 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
     }
 
     fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {
-        if let Some(mut data) = data {
-            // Process the input
-            for input in input {
-                match input {
-                    ToolInput::Data(new_data) => {
-                        // Keep tracking the data as it changes
-                        data = new_data
-                    },
+        let mut data = data;
 
-                    _ => ()
-                }
+        // Process the input
+        for input in input {
+            match input {
+                ToolInput::Data(new_data) => {
+                    // Keep tracking the data as it changes
+                    data = Some(new_data)
+                },
+
+                _ => ()
             }
-
-            // No actions
-            Box::new(vec![].into_iter())
-        } else {
-            // Tool has no data yet
-            Box::new(vec![].into_iter())
         }
+
+        // No actions
+        Box::new(vec![].into_iter())
     }
 }
