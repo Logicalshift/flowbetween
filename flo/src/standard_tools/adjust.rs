@@ -5,10 +5,27 @@ use super::super::style::*;
 
 use ui::*;
 use canvas::*;
+use binding::*;
 use animation::*;
 
+use futures::*;
+use futures::stream;
 use itertools::*;
+
 use std::sync::*;
+use std::collections::HashSet;
+
+///
+/// Data for the Adjust tool
+/// 
+#[derive(Clone)]
+pub struct AdjustData {
+    /// The current frame
+    frame: Option<Arc<dyn Frame>>,
+
+    // The current set of selected elements
+    selected_elements: Arc<HashSet<ElementId>>,
+}
 
 ///
 /// The Adjust tool (adjusts control points of existing objects)
@@ -53,7 +70,7 @@ impl Adjust {
     ///
     /// Returns the drawing instructions for the control points for an element
     /// 
-    pub fn control_points_for_element<Elem: VectorElement>(element: &Elem, properties: &VectorProperties) -> Vec<Draw> {
+    pub fn control_points_for_element(element: &dyn VectorElement, properties: &VectorProperties) -> Vec<Draw> {
         // Create the vector where the control points will be drawn
         let mut draw = vec![];
 
@@ -106,10 +123,72 @@ impl Adjust {
 
         draw
     }
+
+    ///
+    /// Creates a binding that contains the vector/vector properties for the currently selected elements in a frame
+    /// 
+    fn selected_element_properties<SelectedElements, FrameBinding>(selected_elements: SelectedElements, frame: FrameBinding) -> impl Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>
+    where SelectedElements: 'static+Bound<Arc<HashSet<ElementId>>>, FrameBinding: 'static+Bound<Option<Arc<dyn Frame>>> {
+        computed(move || {
+            // Unwrap the bindings
+            let frame                   = frame.get();
+            let selected_elements       = selected_elements.get();
+
+            // Go through all of the elements and store the properties for any that are marked as selected 
+            let mut result: Vec<(Vector, Arc<VectorProperties>)>              = vec![];
+            let mut current_properties  = Arc::new(VectorProperties::default());
+
+            if let Some(frame) = frame {
+                if let Some(elements) = frame.vector_elements() {
+                    for element in elements {
+                        current_properties = element.update_properties(current_properties);
+
+                        if selected_elements.contains(&element.id()) {
+                            result.push((element, Arc::clone(&current_properties)));
+                        }
+                    }
+                }
+            }   
+
+            Arc::new(result)
+        })
+    }
+
+    ///
+    /// Creates an action stream that draws control points for the selection in the specified models
+    /// 
+    fn draw_control_point_overlay<Anim: 'static+Animation, FrameBinding: 'static+Bound<Option<Arc<dyn Frame>>>>(flo_model: Arc<FloModel<Anim>>, frame: FrameBinding) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
+        // Collec the selected elements into a hash set
+        let selected_elements   = flo_model.selection().selected_element.clone();
+        let selected_elements   = computed(move || Arc::new(selected_elements.get().into_iter().collect::<HashSet<_>>()));
+
+        // Get the properties for the selected elements
+        let selected_elements   = Self::selected_element_properties(selected_elements, frame);
+
+        // Redraw the selected elements overlay layer every time the frame or the selection changes
+        follow(selected_elements)
+            .map(|selected_elements| {
+                let mut draw_control_points = vec![];
+                
+                // Clear the layer we're going to draw the control points on
+                draw_control_points.layer(0);
+                draw_control_points.clear_layer();
+
+                // Draw the control points for the selected elements
+                for (vector, properties) in selected_elements.iter() {
+                    draw_control_points.extend(Self::control_points_for_element(&**vector, &*properties));
+                }
+
+                // Generate the actions
+                vec![ToolAction::Overlay(OverlayAction::Draw(draw_control_points))]
+            })
+            .map(|actions| stream::iter_ok(actions.into_iter()))
+            .flatten()
+    }
 }
 
-impl<Anim: Animation> Tool<Anim> for Adjust {
-    type ToolData   = ();
+impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
+    type ToolData   = AdjustData;
     type Model      = ();
 
     fn tool_name(&self) -> String { "Adjust".to_string() }
@@ -122,7 +201,62 @@ impl<Anim: Animation> Tool<Anim> for Adjust {
         Some(Arc::new(AdjustMenuController::new()))
     }
 
-    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, _input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<()>>> {
-        Box::new(vec![].into_iter())
+    ///
+    /// Returns a stream containing the actions for the view and tool model for the select tool
+    /// 
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<dyn Stream<Item=ToolAction<AdjustData>, Error=()>+Send> {
+        // Create a binding that works out the frame for the currently selected layer
+        let selected_layer  = flo_model.timeline().selected_layer.clone();
+        let frame_layers    = flo_model.frame().layers.clone();
+
+        let current_frame   = computed(move || {
+            // Get the layer ID and the frame layers
+            let layer_id        = selected_layer.get();
+            let frame_layers    = frame_layers.get();
+
+            let frame           = frame_layers.into_iter().filter(|frame| Some(frame.layer_id) == layer_id).nth(0);
+
+            frame.map(|frame| frame.frame.get()).unwrap_or(None)
+        });
+
+        // Also track the selected elements
+        let selected_elements   = flo_model.selection().selected_element.clone();
+
+        // Draw control points when the frame changes
+        let draw_control_points = Self::draw_control_point_overlay(flo_model, current_frame.clone());
+
+        // Build the model from the current frame and selected elements
+        let update_adjust_data = follow(computed(move || (current_frame.get(), selected_elements.get())))
+            .map(|(frame, selected_elements)| {
+                ToolAction::Data(AdjustData {
+                    frame:              frame,
+                    selected_elements:  Arc::new(selected_elements.into_iter().collect())
+                })
+            });
+        
+        // Actions are to update the data or draw the control points
+        Box::new(update_adjust_data.select(draw_control_points))
+    }
+
+    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {
+        if let Some(mut data) = data {
+            // Process the input
+            for input in input {
+                match input {
+                    ToolInput::Data(new_data) => {
+                        // Keep tracking the data as it changes
+                        data = new_data
+                    },
+
+                    _ => ()
+                }
+            }
+
+            // No actions
+            Box::new(vec![].into_iter())
+        } else {
+            // Tool has no data yet
+            Box::new(vec![].into_iter())
+        }
     }
 }
