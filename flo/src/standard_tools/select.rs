@@ -557,19 +557,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     /// Creates the model for the Select tool
     /// 
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> SelectModel {
-        // Create a binding that works out the frame for the currently selected layer
-        let selected_layer  = flo_model.timeline().selected_layer.clone();
-        let frame_layers    = flo_model.frame().layers.clone();
-
-        let current_frame   = computed(move || {
-            // Get the layer ID and the frame layers
-            let layer_id        = selected_layer.get();
-            let frame_layers    = frame_layers.get();
-
-            let frame           = frame_layers.into_iter().filter(|frame| Some(frame.layer_id) == layer_id).nth(0);
-
-            frame.map(|frame| frame.frame.get()).unwrap_or(None)
-        });
+        let current_frame   = flo_model.frame().frame.clone();
 
         // Create a binding that works out the bounding boxes of the elements in the current frame
         let frame           = current_frame.clone();

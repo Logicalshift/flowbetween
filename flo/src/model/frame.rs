@@ -24,7 +24,15 @@ pub struct FrameLayerModel {
 #[derive(Clone)]
 pub struct FrameModel {
     /// The layers in the current frame
-    pub layers: BindRef<Vec<FrameLayerModel>>
+    pub layers: BindRef<Vec<FrameLayerModel>>,
+
+    /// The currently selected frame (the current frame in the selected layer)
+    pub frame: BindRef<Option<Arc<dyn Frame>>>,
+
+    /*
+    /// The elements in the current frame and their properties (all of the elements in the current frame in the selected layer)
+    pub elements: BindRef<Arc<Vec<(Vector, Arc<VectorProperties)>>>>
+    */
 }
 
 impl FrameModel {
@@ -35,7 +43,7 @@ impl FrameModel {
     /// invalidated; the value has no meaning, so any value (for example, the
     /// length of the edit log)
     /// 
-    pub fn new<Anim: Animation+'static>(animation: Arc<Anim>, when: BindRef<Duration>, animation_update: BindRef<u64>) -> FrameModel {
+    pub fn new<Anim: Animation+'static>(animation: Arc<Anim>, when: BindRef<Duration>, animation_update: BindRef<u64>, selected_layer: BindRef<Option<u64>>) -> FrameModel {
         // The hashmap allows us to track frame bindings independently from layer bindings
         let frames: Mutex<HashMap<u64, FrameLayerModel>> = Mutex::new(HashMap::new());
 
@@ -102,9 +110,28 @@ impl FrameModel {
                 .collect()
         });
 
+        // The current frame tracks the frame the user has got selected from the set of layers
+        let frame = Self::current_frame(selected_layer, layers.clone());
+
         // Result is a new FrameModel containing these layers
         FrameModel {
-            layers: BindRef::new(&layers)
+            layers: BindRef::new(&layers),
+            frame:  frame
         }
+    }
+
+    ///
+    /// Returns a binding for the selected frame
+    /// 
+    fn current_frame<SelectedLayer: 'static+Bound<Option<u64>>, LayerModel: 'static+Bound<Vec<FrameLayerModel>>>(selected_layer: SelectedLayer, layers: LayerModel) -> BindRef<Option<Arc<dyn Frame>>> {
+        BindRef::new(&computed(move || {
+            let selected_layer_id = selected_layer.get();
+
+            layers.get()
+                .into_iter()
+                .filter(|layer| Some(layer.layer_id) == selected_layer_id)
+                .filter_map(|layer| layer.frame.get())
+                .nth(0)
+        }))
     }
 }
