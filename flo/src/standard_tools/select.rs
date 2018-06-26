@@ -1,6 +1,7 @@
 use super::super::menu::*;
 use super::super::tools::*;
 use super::super::model::*;
+use super::super::style::*;
 
 use ui::*;
 use canvas::*;
@@ -142,7 +143,7 @@ impl Select {
             Draw::ClearLayer,
 
             Draw::LineWidthPixels(1.0),
-            Draw::StrokeColor(Color::Rgba(0.2, 0.8, 1.0, 1.0)),
+            Draw::StrokeColor(SELECTION_BBOX),
             Draw::NewPath
         ]
     }
@@ -167,18 +168,18 @@ impl Select {
         // Drawing an outer/inner section like this creates an effect that makes the highlight visible over nearly all backgrounds
         let draw_outer = vec![
             Draw::LineWidthPixels(2.0),
-            Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, 0.1)),
+            Draw::StrokeColor(RUBBERBAND_OUTLINE),
             Draw::Stroke
         ];
 
         let draw_inner = vec![
             Draw::LineWidthPixels(0.5),
-            Draw::StrokeColor(Color::Rgba(0.1, 0.7, 0.9, 1.0)),
+            Draw::StrokeColor(RUBBERBAND_LINE),
             Draw::Stroke
         ];
 
         let draw_fill = vec![
-            Draw::FillColor(Color::Rgba(0.6, 0.8, 0.9, 0.25)),
+            Draw::FillColor(RUBBERBAND_FILL),
             Draw::Fill
         ];
 
@@ -232,11 +233,11 @@ impl Select {
 
         // Finish drawing the bounding boxes
         drawing.line_width_pixels(2.0);
-        drawing.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 0.1));
+        drawing.stroke_color(SELECTION_OUTLINE);
         drawing.stroke();
 
         drawing.line_width_pixels(0.5);
-        drawing.stroke_color(Color::Rgba(0.2, 0.8, 1.0, 1.0));
+        drawing.stroke_color(SELECTION_BBOX);
         drawing.stroke();
 
         // Return the set of commands for drawing these elements
@@ -287,14 +288,14 @@ impl Select {
             
             path_draw.insert(0, Draw::NewPath);
 
-            path_draw.push(Draw::FillColor(Color::Rgba(0.6, 0.8, 0.9, 0.3)));
+            path_draw.push(Draw::FillColor(SELECTION_FILL));
             path_draw.push(Draw::Fill);
 
-            path_draw.push(Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, 0.4)));
+            path_draw.push(Draw::StrokeColor(SELECTION_OUTLINE));
             path_draw.push(Draw::LineWidthPixels(2.0));
             path_draw.push(Draw::Stroke);
 
-            path_draw.push(Draw::StrokeColor(Color::Rgba(0.6, 1.0, 1.0, 1.0)));
+            path_draw.push(Draw::StrokeColor(SELECTION_HIGHLIGHT));
             path_draw.push(Draw::LineWidthPixels(0.5));
             path_draw.push(Draw::Stroke);
 
@@ -665,11 +666,11 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                         bounds.draw(&mut selection);
 
                         selection.line_width_pixels(2.0);
-                        selection.stroke_color(Color::Rgba(0.0, 0.0, 0.0, 0.1));
+                        selection.stroke_color(SELECTION_OUTLINE);
                         selection.stroke();
 
                         selection.line_width_pixels(0.5);
-                        selection.stroke_color(Color::Rgba(0.2, 0.8, 1.0, 1.0));
+                        selection.stroke_color(SELECTION_BBOX);
                         selection.stroke();
                     }
                     

@@ -16,3 +16,12 @@ pub const TIMESCALE_INDICATOR2: Color = Color::Rgba(0.5, 0.85, 1.0, 1.0);
 pub const MENU_BACKGROUND:      Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 pub const TOOLS_BACKGROUND:     Color = Color::Rgba(0.20, 0.22, 0.25, 1.0);
 pub const MENU_BACKGROUND_ALT:  Color = Color::Rgba(0.24, 0.26, 0.30, 1.0);
+
+pub const RUBBERBAND_OUTLINE:   Color = Color::Rgba(0.0, 0.0, 0.0, 0.1);
+pub const RUBBERBAND_LINE:      Color = Color::Rgba(0.1, 0.7, 0.9, 1.0);
+pub const RUBBERBAND_FILL:      Color = Color::Rgba(0.6, 0.8, 0.9, 0.25);
+
+pub const SELECTION_OUTLINE:    Color = Color::Rgba(0.0, 0.0, 0.0, 0.1);
+pub const SELECTION_BBOX:       Color = Color::Rgba(0.2, 0.8, 1.0, 1.0);
+pub const SELECTION_HIGHLIGHT:  Color = Color::Rgba(0.6, 1.0, 1.0, 1.0);
+pub const SELECTION_FILL:       Color = Color::Rgba(0.6, 0.8, 0.9, 0.3);
