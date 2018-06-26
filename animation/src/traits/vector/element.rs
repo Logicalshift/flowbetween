@@ -1,5 +1,6 @@
 use super::vector::*;
 use super::properties::*;
+use super::control_point::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::motion::*;
@@ -39,4 +40,9 @@ pub trait VectorElement : Send+Any {
     /// in time.
     /// 
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector;
+
+    ///
+    /// Fetches the control points for this element
+    /// 
+    fn control_points(&self) -> Vec<ControlPoint>;
 }

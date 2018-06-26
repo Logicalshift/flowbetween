@@ -1,6 +1,7 @@
 use super::vector::*;
 use super::element::*;
 use super::properties::*;
+use super::control_point::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::brush::*;
@@ -113,6 +114,22 @@ impl VectorElement for BrushElement {
             id:     self.id,
             points: Arc::new(transformed_points)
         })
+    }
+
+    ///
+    /// Fetches the control points for this element
+    /// 
+    fn control_points(&self) -> Vec<ControlPoint> {
+        self.points.iter()
+            .flat_map(|brush_point| {
+                vec![
+                    ControlPoint::BezierControlPoint(brush_point.cp1.0, brush_point.cp1.1),
+                    ControlPoint::BezierControlPoint(brush_point.cp2.0, brush_point.cp2.1),
+                    ControlPoint::BezierPoint(brush_point.position.0, brush_point.position.1)
+                ]
+            })
+            .skip(2)
+            .collect()
     }
 }
 

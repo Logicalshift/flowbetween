@@ -1,6 +1,7 @@
 use super::vector::*;
 use super::element::*;
 use super::properties::*;
+use super::control_point::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::motion::*;
@@ -93,6 +94,13 @@ impl VectorElement for BrushDefinitionElement {
     /// 
     fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
         Vector::BrushDefinition(self.clone())
+    }
+
+    ///
+    /// Fetches the control points for this element
+    /// 
+    fn control_points(&self) -> Vec<ControlPoint> {
+        vec![]
     }
 }
 
