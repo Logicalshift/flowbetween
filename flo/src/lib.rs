@@ -14,6 +14,7 @@ extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
 extern crate futures;
+extern crate itertools;
 
 pub mod editor;
 pub mod style;
