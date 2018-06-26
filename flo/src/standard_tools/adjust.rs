@@ -137,6 +137,7 @@ impl Adjust {
             let elements                = elements.get();
             let selected_elements       = selected_elements.get();
 
+            // Filter to the selected elements only
             Arc::new(elements.iter()
                 .filter(|(element, _)| selected_elements.contains(&element.id()))
                 .cloned()
