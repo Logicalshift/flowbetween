@@ -316,7 +316,7 @@ impl Select {
     ///
     /// Returns the ID of the element at the position represented by the specified painting action
     /// 
-    fn element_at_point(&self, data: &SelectData, point: (f32, f32)) -> Option<ElementId> {
+    fn element_at_point(data: &SelectData, point: (f32, f32)) -> Option<ElementId> {
         let mut fallback_selection = None;
 
         // Find the front-most item that matches this point
@@ -374,7 +374,7 @@ impl Select {
             (_, PaintAction::Start) => {
                 // Find the element at this point
                 // TODO: preferentially check if the point is within the bounds of an already selected element
-                let element = self.element_at_point(&*data, paint.location);
+                let element = Self::element_at_point(&*data, paint.location);
 
                 if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
                     // Element is already selected: don't change the selection (so we can start dragging an existing selection)
@@ -416,7 +416,7 @@ impl Select {
             (SelectAction::Select, PaintAction::Finish) => {
                 // Select whatever was at the initial position
                 actions.push(ToolAction::ClearSelection);
-                if let Some(selected) = self.element_at_point(&*data, data.initial_position.position) {
+                if let Some(selected) = Self::element_at_point(&*data, data.initial_position.position) {
                     actions.push(ToolAction::Select(selected));
                 }
 
