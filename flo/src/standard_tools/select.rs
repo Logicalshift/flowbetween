@@ -12,19 +12,7 @@ use curves::bezier::path::path_contains_point;
 use futures::*;
 use std::sync::*;
 use std::time::Duration;
-use std::collections::HashSet;
-
-///
-/// The model for the Select tool
-/// 
-#[derive(Clone)]
-pub struct SelectModel {
-    /// Contains a pointer to the current frame
-    frame: BindRef<Option<Arc<dyn Frame>>>,
-
-    /// Contains the bounding boxes of the elements in the current frame
-    bounding_boxes: BindRef<Arc<Vec<(ElementId, Arc<VectorProperties>, Rect)>>>
-}
+use std::collections::{HashSet, HashMap};
 
 ///
 /// The actions that the tool can take
@@ -547,7 +535,7 @@ impl Select {
 
 impl<Anim: 'static+Animation> Tool<Anim> for Select {
     type ToolData   = SelectData;
-    type Model      = SelectModel;
+    type Model      = ();
 
     fn tool_name(&self) -> String { "Select".to_string() }
 
@@ -556,70 +544,25 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     ///
     /// Creates the model for the Select tool
     /// 
-    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> SelectModel {
-        let current_frame   = flo_model.frame().frame.clone();
-
-        // Create a binding that works out the bounding boxes of the elements in the current frame
-        let frame           = current_frame.clone();
-
-        let bounding_boxes  = computed(move || {
-            // Fetch the current frame
-            let frame = frame.get();
-
-            if let Some(frame) = frame {
-                // Get the elements in the current frame
-                let elements            = frame.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
-
-                // We need to track the vector properties through all of the elements in the frame
-                let mut properties      = Arc::new(VectorProperties::default());
-                let mut bounding_boxes  = vec![];
-
-                for element in elements {
-                    // Update the properties
-                    properties = element.update_properties(properties);
-
-                    // Get the paths for this element
-                    let paths = element.to_path(&properties).unwrap_or(vec![]);
-
-                    // Turn into a bounding box
-                    let bounds = paths.into_iter()
-                        .map(|path| path.bounding_box())
-                        .fold(Rect::empty(), |current, next| current.union(next));
-
-                    // Add to the result
-                    bounding_boxes.push((element.id(), Arc::clone(&properties), bounds));
-                }
-
-                Arc::new(bounding_boxes)
-            } else {
-                // No bounding boxes if there's no frame
-                Arc::new(vec![])
-            }
-        });
-
-        SelectModel {
-            frame:          BindRef::new(&current_frame),
-            bounding_boxes: BindRef::new(&bounding_boxes)
-        }
-    }
+    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> () { }
 
     ///
     /// Creates the menu bar controller for the select tool
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectModel) -> Option<Arc<dyn Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(SelectMenuController::new()))
     }
 
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     /// 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &SelectModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
         // The set of currently selected elements
         let selected_elements = flo_model.selection().selected_element.clone();
         let selected_elements = computed(move || -> HashSet<_> { selected_elements.get().into_iter().collect() });
 
         // Create a binding that works out the frame for the currently selected layer
-        let current_frame = tool_model.frame.clone();
+        let current_frame = flo_model.frame().frame.clone();
 
         // Follow it, and draw an overlay showing the bounding boxes of everything that's selected
         let draw_selection_overlay = follow(computed(move || (current_frame.get(), selected_elements.get())))
@@ -672,17 +615,35 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                     ToolAction::Overlay(OverlayAction::Clear)
                 }
             });
+        
+        // Combine the elements and the bounding boxes into a single vector
+        let elements                = flo_model.frame().elements.clone();
+        let bounding_boxes          = flo_model.frame().bounding_boxes.clone();
+        let combined_bounding_boxes = computed(move || {
+            let elements            = elements.get();
+            let bounding_boxes      = bounding_boxes.get();
+
+            let bounding_boxes      = bounding_boxes.iter().cloned()
+                .collect::<HashMap<_, _>>();
+            
+            Arc::new(elements.iter().map(|(element, properties)| {
+                let properties  = Arc::clone(properties);
+                let element_id  = element.id();
+                let bounds      = bounding_boxes.get(&element_id).cloned().unwrap_or_else(|| Rect::empty());
+
+                (element_id, properties, bounds)
+            }).collect())
+        });
 
         // Whenever the frame or the set of bounding boxes changes, we create a new SelectData object
         // (this also resets any in-progress action)
-        let current_frame       = tool_model.frame.clone();
-        let bounding_boxes      = tool_model.bounding_boxes.clone();
+        let current_frame       = flo_model.frame().frame.clone();
         let selected_elements   = flo_model.selection().selected_element.clone();
-        let data_for_model  = follow(computed(move || (current_frame.get(), selected_elements.get(), bounding_boxes.get())))
-            .map(|(current_frame, selected_elements, bounding_boxes)| {
+        let data_for_model  = follow(computed(move || (current_frame.get(), selected_elements.get(), combined_bounding_boxes.get())))
+            .map(|(current_frame, selected_elements, combined_bounding_boxes)| {
                 ToolAction::Data(SelectData {
                     frame:                  current_frame,
-                    bounding_boxes:         bounding_boxes,
+                    bounding_boxes:         combined_bounding_boxes,
                     selected_elements:      Arc::new(selected_elements.into_iter().collect()),
                     selected_elements_draw: Arc::new(vec![]),
                     action:                 SelectAction::NoAction,
