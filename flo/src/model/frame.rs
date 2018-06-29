@@ -30,7 +30,10 @@ pub struct FrameModel {
     pub frame: BindRef<Option<Arc<dyn Frame>>>,
 
     /// The elements in the current frame and their properties (all of the elements in the current frame in the selected layer)
-    pub elements: BindRef<Arc<Vec<(Vector, Arc<VectorProperties>)>>>
+    pub elements: BindRef<Arc<Vec<(Vector, Arc<VectorProperties>)>>>,
+
+    /// The bounding boxes of all of the elements
+    pub bounding_boxes: BindRef<Arc<Vec<(ElementId, Rect)>>>
 }
 
 impl FrameModel {
@@ -109,14 +112,16 @@ impl FrameModel {
         });
 
         // The current frame tracks the frame the user has got selected from the set of layers
-        let frame       = Self::current_frame(selected_layer, layers.clone());
-        let elements    = Self::element_properties(frame.clone());
+        let frame           = Self::current_frame(selected_layer, layers.clone());
+        let elements        = Self::element_properties(frame.clone());
+        let bounding_boxes  = Self::bounding_boxes(elements.clone());
 
         // Result is a new FrameModel containing these layers
         FrameModel {
-            layers:     BindRef::new(&layers),
-            frame:      frame,
-            elements:   elements
+            layers:         BindRef::new(&layers),
+            frame:          frame,
+            elements:       elements,
+            bounding_boxes: bounding_boxes
         }
     }
 
@@ -164,6 +169,25 @@ impl FrameModel {
             }
 
             Arc::new(result)
+        }))
+    }
+
+    ///
+    /// Returns a binding that finds the bounding boxes of all of the vectors in the current frame
+    /// 
+    fn bounding_boxes<Elements:'static+Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>>(elements: Elements) -> BindRef<Arc<Vec<(ElementId, Rect)>>> {
+        BindRef::new(&computed(move || {
+            let elements = elements.get();
+
+            let bounding_boxes = elements.iter()
+                .map(|(vector, properties)| {
+                    let paths   = vector.to_path(properties).unwrap_or_else(|| vec![]);
+                    let bounds  = paths.into_iter().fold(Rect::empty(), |a, b| a.union(b.bounding_box()));
+
+                    (vector.id(), bounds)
+                });
+
+            Arc::new(bounding_boxes.collect())
         }))
     }
 }
