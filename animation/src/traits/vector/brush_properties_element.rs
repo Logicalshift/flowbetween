@@ -89,6 +89,13 @@ impl VectorElement for BrushPropertiesElement {
     fn control_points(&self) -> Vec<ControlPoint> {
         vec![]
     }
+
+    ///
+    /// Creates a new vector element from this one with the control points updated to the specified set of new values
+    ///
+    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
+        Vector::BrushProperties(self.clone())
+    }
 }
 
 impl Into<Vector> for BrushPropertiesElement {

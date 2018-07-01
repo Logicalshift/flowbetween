@@ -45,4 +45,11 @@ pub trait VectorElement : Send+Any {
     /// Fetches the control points for this element
     /// 
     fn control_points(&self) -> Vec<ControlPoint>;
+
+    ///
+    /// Creates a new vector element from this one with the control points updated to the specified set of new values
+    /// 
+    /// The vector here specifies the updated position for each control point in control_points
+    /// 
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector;
 }

@@ -9,6 +9,7 @@ use super::super::motion::*;
 
 use canvas::*;
 
+use itertools::*;
 use std::sync::*;
 use std::time::Duration;
 
@@ -130,6 +131,38 @@ impl VectorElement for BrushElement {
             })
             .skip(2)
             .collect()
+    }
+
+    ///
+    /// Creates a new vector element from this one with the control points updated to the specified set of new values
+    ///
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
+        // The widths are kept the same as they are in this element
+        let widths = self.points.iter().map(|point| point.width);
+
+        // The first element still has two control points, but we only actually care about its position. Generate two fake control points here.
+        let initial_pos             = new_positions[0];
+        let initial_control_points  = vec![initial_pos, initial_pos];
+
+        // Turn the set of control point positions into a set of control points
+        // Using more elements than we already have will just clip the result to the same number of points
+        // Using fewer elements will cause the result to have fewer elements
+        // Neither of these behaviours is a good way to change the number of points in the result
+        let brush_elements          = initial_control_points.into_iter().chain(new_positions.into_iter())
+            .tuples()
+            .zip(widths)
+            .map(|((cp1, cp2, pos), width)| BrushPoint {
+                position:   pos,
+                cp1:        cp1,
+                cp2:        cp2,
+                width:      width
+            });
+
+        // Create a new brush element
+        Vector::BrushStroke(BrushElement {
+            id:     self.id,
+            points: Arc::new(brush_elements.collect())
+        })
     }
 }
 

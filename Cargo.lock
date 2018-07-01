@@ -574,6 +574,7 @@ dependencies = [
  "flo_curves 0.1.0",
  "flo_float_encoder 0.1.0",
  "futures 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "modifier 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.66 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.66 (registry+https://github.com/rust-lang/crates.io-index)",

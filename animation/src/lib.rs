@@ -12,6 +12,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate modifier;
 extern crate futures;
+extern crate itertools;
 
 mod traits;
 pub mod inmemory;
