@@ -38,8 +38,17 @@ pub struct AdjustData {
     /// The current frame
     frame: Option<Arc<dyn Frame>>,
 
+    /// The current state of this data
+    state: Binding<AdjustAction>,
+
     // The current set of selected elements
     selected_elements: Arc<HashSet<ElementId>>,
+
+    // The element, index and location of all of the control points
+    control_points: Arc<Vec<(ElementId, usize, (f32, f32))>>
+}
+
+impl AdjustData {
 }
 
 ///
@@ -214,6 +223,9 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
         // Create a binding that works out the frame for the currently selected layer
         let current_frame   = flo_model.frame().frame.clone();
 
+        // State is initially 'no action'
+        let adjust_state = bind(AdjustAction::NoAction);
+
         // Also track the selected elements
         let selected_elements   = flo_model.selection().selected_element.clone();
 
@@ -222,10 +234,12 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
 
         // Build the model from the current frame and selected elements
         let update_adjust_data = follow(computed(move || (current_frame.get(), selected_elements.get())))
-            .map(|(frame, selected_elements)| {
+            .map(move |(frame, selected_elements)| {
                 ToolAction::Data(AdjustData {
                     frame:              frame,
-                    selected_elements:  Arc::new(selected_elements.into_iter().collect())
+                    state:              adjust_state.clone(),
+                    selected_elements:  Arc::new(selected_elements.into_iter().collect()),
+                    control_points:     Arc::new(vec![])
                 })
             });
         
