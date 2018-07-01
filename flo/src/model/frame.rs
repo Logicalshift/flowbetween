@@ -10,12 +10,22 @@ use std::time::Duration;
 ///
 /// Represents a match against a vector element
 /// 
+#[derive(Clone, Copy, PartialEq)]
 pub enum ElementMatch {
     /// The point is inside the path for the specified element
     InsidePath(ElementId),
 
     /// The point is not inside the element path but is inside the element's bounding box
     OnlyInBounds(ElementId)
+}
+
+impl From<ElementMatch> for ElementId {
+    fn from(item: ElementMatch) -> ElementId {
+        match item {
+            ElementMatch::InsidePath(val) => val,
+            ElementMatch::OnlyInBounds(val) => val
+        }
+    }
 }
 
 ///
@@ -206,7 +216,7 @@ impl FrameModel {
     ///
     /// Returns the elements at the specified point
     /// 
-    pub fn elements_at_point<'a>(&'a self, point: (f32, f32)) -> impl 'a+Iterator<Item=ElementMatch> {
+    pub fn elements_at_point(&self, point: (f32, f32)) -> impl Iterator<Item=ElementMatch> {
         // Fetch the elements and their bounding boxes
         let elements        = self.elements.get();
         let more_elements   = Arc::clone(&elements);

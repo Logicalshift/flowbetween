@@ -7,7 +7,6 @@ use ui::*;
 use canvas::*;
 use binding::*;
 use animation::*;
-use curves::bezier::path::path_contains_point;
 
 use futures::*;
 use std::sync::*;
@@ -304,35 +303,31 @@ impl Select {
     ///
     /// Returns the ID of the element at the position represented by the specified painting action
     /// 
-    fn element_at_point(data: &SelectData, point: (f32, f32)) -> Option<ElementId> {
+    fn element_at_point<IsSelected: Fn(ElementId) -> bool>(model: &FrameModel, element_is_selected: IsSelected, point: (f32, f32)) -> Option<ElementId> {
+        // Find all of the elements at this point
+        let elements = model.elements_at_point(point);
+
+        // Choose an element inside the path if possible, otherwise pick an already selected elements or an element in bounds
         let mut fallback_selection = None;
 
-        // Find the front-most item that matches this point
-        for &(ref id, ref props, ref bounding_box) in data.bounding_boxes.iter().rev() {
-            if bounding_box.contains(point.0, point.1) {
-                // Use this as the fallback if there isn't one already
-                if fallback_selection.is_none() { fallback_selection = Some(*id); }
+        for element_match in elements {
+            match element_match {
+                ElementMatch::OnlyInBounds(element_id) => {
+                    // Use as a fallback
+                    if fallback_selection.is_none() { fallback_selection = Some(element_id) }
 
-                // Already selected elements take precedence when picking a fallback
-                if data.selected_elements.contains(id) { fallback_selection = Some(*id); }
+                    // Already selected elements take precedence over previous fallbacks
+                    if element_is_selected(element_id) { fallback_selection = Some(element_id) }
+                },
 
-                // Get the paths for this element
-                let paths = data.frame
-                    .as_ref()
-                    .and_then(|frame| frame.element_with_id(*id))
-                    .and_then(|element| element.to_path(props));
-
-                // If there are any paths, then see if the point is inside them
-                // TODO: path_contains_point won't work if the paths contain any move elements apart from the initial one
-                if let Some(paths) = paths {
-                    if paths.into_iter().any(|path| path_contains_point(&path, &PathPoint::new(point.0, point.1))) {
-                        return Some(*id)
-                    }
+                ElementMatch::InsidePath(element_id) => {
+                    // Choose this element
+                    return Some(element_id);
                 }
             }
         }
 
-        // No ID matches precisely (but we may have found a fallback match based on the bounding box)
+        // No elements in path, so the result is the fallback selection
         fallback_selection
     }
 
@@ -362,7 +357,7 @@ impl Select {
             (_, PaintAction::Start) => {
                 // Find the element at this point
                 // TODO: preferentially check if the point is within the bounds of an already selected element
-                let element = Self::element_at_point(&*data, paint.location);
+                let element = Self::element_at_point(&*animation.frame(), |element_id| self.is_selected(&data, element_id), paint.location);
 
                 if element.as_ref().map(|element| self.is_selected(&*data, *element)).unwrap_or(false) {
                     // Element is already selected: don't change the selection (so we can start dragging an existing selection)
@@ -404,7 +399,7 @@ impl Select {
             (SelectAction::Select, PaintAction::Finish) => {
                 // Select whatever was at the initial position
                 actions.push(ToolAction::ClearSelection);
-                if let Some(selected) = Self::element_at_point(&*data, data.initial_position.position) {
+                if let Some(selected) = Self::element_at_point(&*animation.frame(), |element_id| self.is_selected(&data, element_id), data.initial_position.position) {
                     actions.push(ToolAction::Select(selected));
                 }
 
