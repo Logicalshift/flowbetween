@@ -48,9 +48,6 @@ pub struct AdjustData {
     control_points: Arc<Vec<(ElementId, usize, (f32, f32))>>
 }
 
-impl AdjustData {
-}
-
 ///
 /// The Adjust tool (adjusts control points of existing objects)
 /// 
@@ -170,6 +167,35 @@ impl Adjust {
     }
 
     ///
+    /// Returns a binding that returns a list of all the control points in the current selection (ie, everything that can be dragged)
+    /// 
+    fn control_points<Anim: 'static+Animation>(flo_model: &FloModel<Anim>) -> BindRef<Arc<Vec<(ElementId, usize, (f32, f32))>>> {
+        // Get references to the bits of the model we need
+        let selected_elements   = flo_model.selection().selected_element.clone();
+        let frame               = flo_model.frame().frame.clone();
+
+        // Create a computed binding
+        BindRef::new(&computed(move || {
+            // Need the selected elements and the current frame
+            let selected        = selected_elements.get();
+            let current_frame   = frame.get();
+
+            let control_points  = selected.into_iter()
+                .map(move |element_id|              (element_id, current_frame.as_ref().and_then(|frame| frame.element_with_id(element_id))))
+                .map(|(element_id, maybe_element)|  (element_id, maybe_element.map(|element| element.control_points()).unwrap_or_else(|| vec![])))
+                .flat_map(|(element_id, control_points)| {
+                    control_points.into_iter()
+                        .enumerate()
+                        .map(move |(index, control_point)| (element_id, index, control_point.position()))
+                })
+                .collect();
+
+            // Final result
+            Arc::new(control_points)
+        }))
+    }
+
+    ///
     /// Creates an action stream that draws control points for the selection in the specified models
     /// 
     fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
@@ -228,18 +254,19 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
 
         // Also track the selected elements
         let selected_elements   = flo_model.selection().selected_element.clone();
+        let control_points      = Self::control_points(&*flo_model);
 
         // Draw control points when the frame changes
         let draw_control_points = Self::draw_control_point_overlay(flo_model);
 
         // Build the model from the current frame and selected elements
-        let update_adjust_data = follow(computed(move || (current_frame.get(), selected_elements.get())))
-            .map(move |(frame, selected_elements)| {
+        let update_adjust_data = follow(computed(move || (current_frame.get(), selected_elements.get(), control_points.get())))
+            .map(move |(frame, selected_elements, control_points)| {
                 ToolAction::Data(AdjustData {
                     frame:              frame,
                     state:              adjust_state.clone(),
                     selected_elements:  Arc::new(selected_elements.into_iter().collect()),
-                    control_points:     Arc::new(vec![])
+                    control_points:     control_points
                 })
             });
         
