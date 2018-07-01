@@ -10,12 +10,12 @@ use std::time::Duration;
 ///
 /// Represents a match against a vector element
 /// 
-pub enum ElementMatch<'a> {
+pub enum ElementMatch {
     /// The point is inside the path for the specified element
-    PointInside(&'a Vector),
+    InsidePath(ElementId),
 
     /// The point is not inside the element path but is inside the element's bounding box
-    InBounds(&'a Vector)
+    OnlyInBounds(ElementId)
 }
 
 ///
@@ -206,27 +206,48 @@ impl FrameModel {
     ///
     /// Returns the elements at the specified point
     /// 
-    pub fn elements_at_point<'a>(&'a self, point: (f32, f32)) -> impl 'a+Iterator<Item=ElementMatch<'a>> {
+    pub fn elements_at_point<'a>(&'a self, point: (f32, f32)) -> impl 'a+Iterator<Item=ElementMatch> {
         // Fetch the elements and their bounding boxes
         let elements        = self.elements.get();
+        let more_elements   = Arc::clone(&elements);
         let bounding_boxes  = self.bounding_boxes.get();
 
         let (x, y)          = point;
         let path_point      = PathPoint::new(x, y);
 
-        // Return the elements that match against this point
-        // (Algorithm is: get the path and bounding box, limit to items where the point is in bounds, categorise the match against the path)
-        elements.iter()
-            .rev()
-            .map(move |(vector, properties)|                (vector, properties, bounding_boxes.get(&vector.id()).cloned()))
-            .filter(move |(_vector, _properties, bounds)|   bounds.map(|bounds| bounds.contains(x, y)).unwrap_or(false))
-            .filter_map(|(vector, properties, _bounds)|     vector.to_path(properties).map(move |paths| (vector, paths)))
-            .map(move |(vector, paths)| {
-                if paths.into_iter().any(|path| path_contains_point(&path, &path_point)) {
-                    ElementMatch::PointInside(vector)
+        // This would be considerably more elegant if rust understood that it could keep the Arc<Vec<_>> around to make the lifetime
+        // of elements.iter() work out. We use array indexes and multiple references to the elements array instead here, so the elements
+        // object can be owned by those functions.
+
+        // Iterate through the elements in reverse
+        let indexes = (0..elements.len()).into_iter().rev();
+
+        // Filter to the elements where the point is inside the bounding box
+        let inside_bounds = indexes.filter(move |element_index| {
+            bounding_boxes.get(&elements[*element_index].0.id())
+                .map(|bounds| bounds.contains(x, y))
+                .unwrap_or(false)
+        });
+
+        // Generate a result based on whether or not the match is inside the path for the element
+        let matches = inside_bounds
+            .map(move |element_index| {
+                // Get the vector properties from the more_elements array (elements is used above so we need two references)
+                let &(ref vector, ref properties)   = &more_elements[element_index];
+                let element_id                      = vector.id();
+
+                // Convert the element to paths and check if the point is inside
+                let paths                           = vector.to_path(properties);
+                let inside_path                     = paths.map(|paths| paths.into_iter().any(|path| path_contains_point(&path, &path_point))).unwrap_or(false);
+
+                // Any match inside the bounds is a match, but we often treat a point inside the path as a stronger match
+                if inside_path {
+                    ElementMatch::InsidePath(element_id)
                 } else {
-                    ElementMatch::InBounds(vector)
+                    ElementMatch::OnlyInBounds(element_id)
                 }
-            })
+            });
+
+        matches
     }
 }
