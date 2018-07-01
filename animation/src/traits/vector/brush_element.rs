@@ -179,7 +179,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn fetch_control_points_for_element() {
+    fn fetch_control_points_for_brush_stroke() {
         let points = vec![
             BrushPoint {
                 position: (1.0, 2.0),
@@ -217,7 +217,7 @@ mod test {
     }
 
     #[test]
-    fn update_control_points_for_element() {
+    fn update_control_points_for_brush_stroke() {
         let points = vec![
             BrushPoint {
                 position: (1.0, 2.0),
