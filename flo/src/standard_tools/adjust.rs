@@ -227,7 +227,7 @@ impl Adjust {
     /// Creates an action stream that draws control points for the selection in the specified models
     /// 
     fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
-        // Collect the selected elements into a hash set
+        // Collect the selected elements into a HashSet
         let selected_elements   = flo_model.selection().selected_element.clone();
         let selected_elements   = computed(move || Arc::new(selected_elements.get().into_iter().collect::<HashSet<_>>()));
 
@@ -250,6 +250,100 @@ impl Adjust {
 
                 // Generate the actions
                 vec![ToolAction::Overlay(OverlayAction::Draw(draw_control_points))]
+            })
+            .map(|actions| stream::iter_ok(actions.into_iter()))
+            .flatten()
+    }
+
+    ///
+    /// Performs an editing action on a vector
+    /// 
+    fn edit_vector(to_edit: &Vector, action: &AdjustAction) -> Vector {
+        match action {
+            AdjustAction::DragControlPoint(_, index, from, to) => {
+                // Fetch the control points for this element (positions only)
+                let mut control_points = to_edit.control_points().into_iter().map(|cp| cp.position()).collect::<Vec<_>>();
+
+                // Move the control point
+                if *index < control_points.len() {
+                    let (pos_x, pos_y)      = control_points[*index];
+                    let (diff_x, diff_y)    = (to.0-from.0, to.1-from.1);
+
+                    control_points[*index]  = (pos_x + diff_x, pos_y + diff_y);
+                }
+
+                // Create the edited element
+                to_edit.with_adjusted_control_points(control_points)
+            },
+
+            // Other editing actions have no effect
+            _ => to_edit.clone()
+        }
+    }
+
+    ///
+    /// Returns the actions required to draw the editing overlay
+    /// 
+    fn draw_edit_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
+        // Get the set of elements from the frame
+        let elements    = flo_model.frame().elements.clone();
+
+        // Create a single binding for the state of the editing overlay
+        let edit_state  = computed(move || {
+            let state = tool_state.get();
+
+            match state {
+                AdjustAction::DragControlPoint(_, _, _, _) =>  {
+                    // Only fetch the elements while actually dragging an element
+                    Some((state, elements.get()))
+                },  
+
+                // No edit state
+                _ => None
+            }
+        });
+
+        // Draw an overlay layer as the edit state is updated
+        follow(edit_state)
+            .map(|edit_state| {
+                match edit_state {
+                    Some((AdjustAction::DragControlPoint(element_id, index, from, to), elements)) => {
+                        // Draw this element in its new position
+                        let mut draw_drag   = vec![];
+                        let action          = AdjustAction::DragControlPoint(element_id, index, from, to);
+
+                        // Clear the edit layer
+                        draw_drag.layer(1);
+                        draw_drag.clear_layer();
+
+                        // Edit the elements
+                        let elements_to_draw    = elements.iter().filter(|(vector, _)|          vector.id() == element_id);
+                        let edited_elements     = elements_to_draw.map(|(vector, properties)|   (Self::edit_vector(vector, &action), properties));
+                        let edited_elements     = edited_elements.collect::<Vec<_>>();
+
+                        // Draw them with their control points
+                        let draw_control_points = edited_elements.iter()
+                            .flat_map(|(vector, properties)| Self::control_points_for_element(&**vector, properties));
+
+                        // Apply to the action
+                        draw_drag.extend(draw_control_points);
+
+                        // Draw the drag operation
+                        vec![ToolAction::Overlay(OverlayAction::Draw(draw_drag))]
+                    },
+
+                    _ => {
+                        // No edits to draw
+                        let mut clear_layer = vec![];
+                        
+                        // Clear the edit layer
+                        clear_layer.layer(1);
+                        clear_layer.clear_layer();
+
+                        // Generate the actions
+                        vec![ToolAction::Overlay(OverlayAction::Draw(clear_layer))]
+                    }
+                }
             })
             .map(|actions| stream::iter_ok(actions.into_iter()))
             .flatten()
@@ -329,7 +423,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
         let control_points      = Self::control_points(&*flo_model);
 
         // Draw control points when the frame changes
-        let draw_control_points = Self::draw_control_point_overlay(flo_model);
+        let draw_control_points = Self::draw_control_point_overlay(flo_model.clone());
+
+        // When the user is dragging an element, draw a preview of the final look of that element
+        let draw_drag_result = Self::draw_edit_overlay(flo_model, BindRef::new(&adjust_state));
 
         // Build the model from the current frame and selected elements
         let update_adjust_data = follow(computed(move || (current_frame.get(), selected_elements.get(), control_points.get())))
@@ -343,7 +440,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
             });
         
         // Actions are to update the data or draw the control points
-        Box::new(update_adjust_data.select(draw_control_points))
+        Box::new(update_adjust_data.select(draw_control_points).select(draw_drag_result))
     }
 
     fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {
