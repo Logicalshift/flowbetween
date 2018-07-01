@@ -215,4 +215,57 @@ mod test {
         assert!(control_points[6] == ControlPoint::BezierPoint(13.0, 14.0));
         assert!(control_points.len() == 7);
     }
+
+    #[test]
+    fn update_control_points_for_element() {
+        let points = vec![
+            BrushPoint {
+                position: (1.0, 2.0),
+                cp1: (3.0, 4.0),
+                cp2: (5.0, 6.0),
+                width: 0.5
+            },
+
+            BrushPoint {
+                position: (7.0, 8.0),
+                cp1: (9.0, 10.0),
+                cp2: (11.0, 12.0),
+                width: 0.6
+            },
+            
+            BrushPoint {
+                position: (13.0, 14.0),
+                cp1: (15.0, 16.0),
+                cp2: (17.0, 18.0),
+                width: 0.7
+            },
+        ];
+        let element = BrushElement::new(ElementId::Assigned(5), Arc::new(points));
+        let updated = element.with_adjusted_control_points(vec![
+            (1.1, 1.2),
+            (2.1, 2.2),
+            (3.1, 3.2),
+            (4.1, 4.2),
+            (5.1, 5.2),
+            (6.1, 6.2),
+            (7.1, 7.2)
+        ]);
+
+        let control_points = updated.control_points();
+
+        assert!(control_points[0] == ControlPoint::BezierPoint(1.1, 1.2));
+        assert!(control_points[1] == ControlPoint::BezierControlPoint(2.1, 2.2));
+        assert!(control_points[2] == ControlPoint::BezierControlPoint(3.1, 3.2));
+        assert!(control_points[3] == ControlPoint::BezierPoint(4.1, 4.2));
+        assert!(control_points[4] == ControlPoint::BezierControlPoint(5.1, 5.2));
+        assert!(control_points[5] == ControlPoint::BezierControlPoint(6.1, 6.2));
+        assert!(control_points[6] == ControlPoint::BezierPoint(7.1, 7.2));
+        assert!(control_points.len() == 7);
+
+        if let Vector::BrushStroke(updated) = updated {
+            assert!(updated.points[0].width == 0.5);
+            assert!(updated.points[1].width == 0.6);
+            assert!(updated.points[2].width == 0.7);
+        }
+    }
 }
