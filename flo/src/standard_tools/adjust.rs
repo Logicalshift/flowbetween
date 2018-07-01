@@ -12,6 +12,7 @@ use futures::*;
 use futures::stream;
 use itertools::*;
 
+use std::f32;
 use std::sync::*;
 use std::collections::HashSet;
 
@@ -27,7 +28,7 @@ enum AdjustAction {
     Select,
 
     /// A control point is being adjusted
-    DragControlPoint
+    DragControlPoint(ElementId, usize, (f32, f32), (f32, f32))
 }
 
 ///
@@ -46,6 +47,33 @@ pub struct AdjustData {
 
     // The element, index and location of all of the control points
     control_points: Arc<Vec<(ElementId, usize, (f32, f32))>>
+}
+
+impl AdjustData {
+    ///
+    /// Finds the nearest control point to a particular location
+    /// 
+    fn nearest_control_point_index(&self, location: (f32, f32)) -> Option<(usize, f32)> {
+        let mut min_dist = f32::MAX;
+        let mut cp_index = None;
+
+        // Find the index of the closest control point
+        for (index, cp) in self.control_points.iter().enumerate() {
+            let pos             = cp.2;
+            let diff_x          = location.0 - pos.0;
+            let diff_y          = location.1 - pos.1;
+
+            let dist_squared    = diff_x*diff_x + diff_y*diff_y;
+
+            if dist_squared < min_dist {
+                min_dist = dist_squared;
+                cp_index = Some(index);
+            }
+        }
+
+        // Return the index and the distance of the nearest control point
+        cp_index.map(|index| (index, min_dist.sqrt()))
+    }
 }
 
 ///
@@ -226,6 +254,50 @@ impl Adjust {
             .map(|actions| stream::iter_ok(actions.into_iter()))
             .flatten()
     }
+    
+    ///
+    /// Generates the tool actions for a painting action
+    /// 
+    fn paint(&self, painting: Painting, data: &AdjustData) -> Vec<ToolAction<AdjustData>> {
+        let state           = data.state.get();
+        let paint_action    = painting.action;
+
+        match (state, paint_action) {
+            // A start paint action might change the selection or start dragging a control point
+            (_, PaintAction::Start) => {
+                if let Some((cp_index, distance)) = data.nearest_control_point_index(painting.location) {
+                    if distance < 8.0 {
+                        // Start dragging this control point
+                        let &(element_id, index, _pos) = &data.control_points[cp_index];
+                        
+                        data.state.clone().set(AdjustAction::DragControlPoint(element_id, index, painting.location, painting.location));
+                    }
+                }
+
+                // No tool actions to perform
+                vec![]
+            },
+
+            (AdjustAction::DragControlPoint(element_id, index, from, to), PaintAction::Continue) => {
+                // Continue the control point drag by updating the 'to' location
+                data.state.clone().set(AdjustAction::DragControlPoint(element_id, index, from, painting.location));
+
+                // No tool actions to perform
+                vec![]
+            },
+
+            // Default 'paint end' action is to reset to the 'no action' state
+            (_, PaintAction::Finish) |
+            (_, PaintAction::Cancel) => {
+                // Reset the action back to 'no action'
+                data.state.clone().set(AdjustAction::NoAction);
+                vec![]
+            },
+
+            // Unknown state: we take no action as a result of this
+            _ => vec![]
+        }
+    }
 }
 
 impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
@@ -276,20 +348,27 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
 
     fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {
         let mut data = data;
+        let mut actions = vec![];
 
         // Process the input
         for input in input {
             match input {
                 ToolInput::Data(new_data) => {
                     // Keep tracking the data as it changes
-                    data = Some(new_data)
+                    data = Some(new_data);
                 },
+
+                ToolInput::Paint(painting) => {
+                    if let Some(data) = data.as_ref() {
+                        actions.extend(self.paint(painting, &**data));
+                    }
+                }
 
                 _ => ()
             }
         }
 
         // No actions
-        Box::new(vec![].into_iter())
+        Box::new(actions.into_iter())
     }
 }
