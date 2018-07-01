@@ -235,6 +235,7 @@ impl Adjust {
         let selected_elements   = Self::selected_element_properties(selected_elements, &*flo_model);
 
         // We hide the element that is being dragged (it'll get drawn on the edit overlay layer)
+        // TODO: this will update too frequently right now as we'll generate an event whenever the state changes
         let hidden_element      = computed(move || {
             match tool_state.get() {
                 AdjustAction::DragControlPoint(element_id, _, _, _) => Some(element_id),
