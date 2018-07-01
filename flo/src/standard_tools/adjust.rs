@@ -226,7 +226,7 @@ impl Adjust {
     ///
     /// Creates an action stream that draws control points for the selection in the specified models
     /// 
-    fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
+    fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
         // Collect the selected elements into a HashSet
         let selected_elements   = flo_model.selection().selected_element.clone();
         let selected_elements   = computed(move || Arc::new(selected_elements.get().into_iter().collect::<HashSet<_>>()));
@@ -234,9 +234,17 @@ impl Adjust {
         // Get the properties for the selected elements
         let selected_elements   = Self::selected_element_properties(selected_elements, &*flo_model);
 
+        // We hide the element that is being dragged (it'll get drawn on the edit overlay layer)
+        let hidden_element      = computed(move || {
+            match tool_state.get() {
+                AdjustAction::DragControlPoint(element_id, _, _, _) => Some(element_id),
+                _ => None
+            }
+        });
+
         // Redraw the selected elements overlay layer every time the frame or the selection changes
-        follow(selected_elements)
-            .map(|selected_elements| {
+        follow(computed(move || (selected_elements.get(), hidden_element.get())))
+            .map(|(selected_elements, hidden_element)| {
                 let mut draw_control_points = vec![];
                 
                 // Clear the layer we're going to draw the control points on
@@ -245,7 +253,9 @@ impl Adjust {
 
                 // Draw the control points for the selected elements
                 for (vector, properties) in selected_elements.iter() {
-                    draw_control_points.extend(Self::control_points_for_element(&**vector, &*properties));
+                    if Some(vector.id()) != hidden_element {
+                        draw_control_points.extend(Self::control_points_for_element(&**vector, &*properties));
+                    }
                 }
 
                 // Generate the actions
@@ -372,7 +382,7 @@ impl Adjust {
                 vec![]
             },
 
-            (AdjustAction::DragControlPoint(element_id, index, from, to), PaintAction::Continue) => {
+            (AdjustAction::DragControlPoint(element_id, index, from, _to), PaintAction::Continue) => {
                 // Continue the control point drag by updating the 'to' location
                 data.state.clone().set(AdjustAction::DragControlPoint(element_id, index, from, painting.location));
 
@@ -423,7 +433,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
         let control_points      = Self::control_points(&*flo_model);
 
         // Draw control points when the frame changes
-        let draw_control_points = Self::draw_control_point_overlay(flo_model.clone());
+        let draw_control_points = Self::draw_control_point_overlay(flo_model.clone(), BindRef::new(&adjust_state));
 
         // When the user is dragging an element, draw a preview of the final look of that element
         let draw_drag_result = Self::draw_edit_overlay(flo_model, BindRef::new(&adjust_state));
