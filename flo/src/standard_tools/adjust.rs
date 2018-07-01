@@ -16,6 +16,21 @@ use std::sync::*;
 use std::collections::HashSet;
 
 ///
+/// The current action being performed by the adjust tool
+/// 
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum AdjustAction {
+    /// The tool is idle
+    NoAction,
+
+    /// Selected an element
+    Select,
+
+    /// A control point is being adjusted
+    DragControlPoint
+}
+
+///
 /// Data for the Adjust tool
 /// 
 #[derive(Clone)]
