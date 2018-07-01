@@ -12,7 +12,7 @@ use curves::bezier::path::path_contains_point;
 use futures::*;
 use std::sync::*;
 use std::time::Duration;
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashSet};
 
 ///
 /// The actions that the tool can take
@@ -544,7 +544,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     ///
     /// Creates the model for the Select tool
     /// 
-    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> () { }
+    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
 
     ///
     /// Creates the menu bar controller for the select tool
@@ -622,9 +622,6 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
         let combined_bounding_boxes = computed(move || {
             let elements            = elements.get();
             let bounding_boxes      = bounding_boxes.get();
-
-            let bounding_boxes      = bounding_boxes.iter().cloned()
-                .collect::<HashMap<_, _>>();
             
             Arc::new(elements.iter().map(|(element, properties)| {
                 let properties  = Arc::clone(properties);

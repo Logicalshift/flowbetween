@@ -1,10 +1,22 @@
 use binding::*;
 use animation::*;
+use curves::bezier::path::path_contains_point;
 
 use std::sync::*;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::time::Duration;
+
+///
+/// Represents a match against a vector element
+/// 
+pub enum ElementMatch<'a> {
+    /// The point is inside the path for the specified element
+    PointInside(&'a Vector),
+
+    /// The point is not inside the element path but is inside the element's bounding box
+    InBounds(&'a Vector)
+}
 
 ///
 /// Provides the model for a layer in the current frame
@@ -33,7 +45,7 @@ pub struct FrameModel {
     pub elements: BindRef<Arc<Vec<(Vector, Arc<VectorProperties>)>>>,
 
     /// The bounding boxes of all of the elements
-    pub bounding_boxes: BindRef<Arc<Vec<(ElementId, Rect)>>>
+    pub bounding_boxes: BindRef<Arc<HashMap<ElementId, Rect>>>
 }
 
 impl FrameModel {
@@ -175,7 +187,7 @@ impl FrameModel {
     ///
     /// Returns a binding that finds the bounding boxes of all of the vectors in the current frame
     /// 
-    fn bounding_boxes<Elements:'static+Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>>(elements: Elements) -> BindRef<Arc<Vec<(ElementId, Rect)>>> {
+    fn bounding_boxes<Elements:'static+Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>>(elements: Elements) -> BindRef<Arc<HashMap<ElementId, Rect>>> {
         BindRef::new(&computed(move || {
             let elements = elements.get();
 
@@ -189,5 +201,32 @@ impl FrameModel {
 
             Arc::new(bounding_boxes.collect())
         }))
+    }
+
+    ///
+    /// Returns the elements at the specified point
+    /// 
+    pub fn elements_at_point<'a>(&'a self, point: (f32, f32)) -> impl 'a+Iterator<Item=ElementMatch<'a>> {
+        // Fetch the elements and their bounding boxes
+        let elements        = self.elements.get();
+        let bounding_boxes  = self.bounding_boxes.get();
+
+        let (x, y)          = point;
+        let path_point      = PathPoint::new(x, y);
+
+        // Return the elements that match against this point
+        // (Algorithm is: get the path and bounding box, limit to items where the point is in bounds, categorise the match against the path)
+        elements.iter()
+            .rev()
+            .map(move |(vector, properties)|                (vector, properties, bounding_boxes.get(&vector.id()).cloned()))
+            .filter(move |(_vector, _properties, bounds)|   bounds.map(|bounds| bounds.contains(x, y)).unwrap_or(false))
+            .filter_map(|(vector, properties, _bounds)|     vector.to_path(properties).map(move |paths| (vector, paths)))
+            .map(move |(vector, paths)| {
+                if paths.into_iter().any(|path| path_contains_point(&path, &path_point)) {
+                    ElementMatch::PointInside(vector)
+                } else {
+                    ElementMatch::InBounds(vector)
+                }
+            })
     }
 }
