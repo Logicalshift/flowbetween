@@ -273,18 +273,28 @@ impl Adjust {
         match action {
             AdjustAction::DragControlPoint(_, index, from, to) => {
                 // Fetch the control points for this element (positions only)
-                let mut control_points = to_edit.control_points().into_iter().map(|cp| cp.position()).collect::<Vec<_>>();
+                let control_points          = to_edit.control_points();
+                let mut new_control_points  = vec![];
+                let (diff_x, diff_y)        = (to.0-from.0, to.1-from.1);
 
-                // Move the control point
-                if *index < control_points.len() {
-                    let (pos_x, pos_y)      = control_points[*index];
-                    let (diff_x, diff_y)    = (to.0-from.0, to.1-from.1);
+                // When moving a point on the line, we need to move its control points with it
+                let should_move_neighbours  = !control_points[*index].is_control_point();
 
-                    control_points[*index]  = (pos_x + diff_x, pos_y + diff_y);
+                for (this_index, cp) in control_points.into_iter().enumerate() {
+                    let pos = cp.position();
+
+                    if this_index == *index 
+                    || ((this_index == *index-1 || this_index == *index+1) && should_move_neighbours) {
+                        // Move this control point
+                        new_control_points.push((pos.0+diff_x, pos.1+diff_y));
+                    } else {
+                        // Control point is unchanged
+                        new_control_points.push(pos);
+                    }
                 }
 
                 // Create the edited element
-                to_edit.with_adjusted_control_points(control_points)
+                to_edit.with_adjusted_control_points(new_control_points)
             },
 
             // Other editing actions have no effect

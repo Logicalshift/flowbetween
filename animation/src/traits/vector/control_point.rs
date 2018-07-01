@@ -22,4 +22,16 @@ impl ControlPoint {
             BezierControlPoint(x, y)    => (*x, *y)
         }
     }
+
+    ///
+    /// Returns true if this is a control point (vs a point on the curve)
+    /// 
+    pub fn is_control_point(&self) -> bool {
+        use self::ControlPoint::*;
+
+        match self {
+            BezierPoint(_, _)           => false,
+            BezierControlPoint(_, _)    => true
+        }
+    }
 }
