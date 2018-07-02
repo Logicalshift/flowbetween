@@ -373,24 +373,62 @@ impl Adjust {
     ///
     /// Generates the tool actions for a painting action
     /// 
-    fn paint(&self, painting: Painting, data: &AdjustData) -> Vec<ToolAction<AdjustData>> {
+    fn paint<Anim: 'static+Animation>(&self, painting: Painting, data: &AdjustData, model: &FloModel<Anim>) -> Vec<ToolAction<AdjustData>> {
         let state           = data.state.get();
         let paint_action    = painting.action;
 
         match (state, paint_action) {
             // A start paint action might change the selection or start dragging a control point
             (_, PaintAction::Start) => {
+                let mut started_drag    = false;
+                let mut actions         = vec![];
+
+                // If the user clicks on a control point, dragging that takes priority
                 if let Some((cp_index, distance)) = data.nearest_control_point_index(painting.location) {
                     if distance < 8.0 {
                         // Start dragging this control point
                         let &(element_id, index, _pos) = &data.control_points[cp_index];
                         
                         data.state.clone().set(AdjustAction::DragControlPoint(element_id, index, painting.location, painting.location));
+                        started_drag = true;
                     }
                 }
 
-                // No tool actions to perform
-                vec![]
+                // If the user has not started a drag, consider changing the selection
+                if !started_drag {
+                    // Find the elements at this point
+                    let frame       = model.frame();
+                    let elements    = frame.elements_at_point(painting.location);
+
+                    // Search for an element to select
+                    let mut selected_element = None;
+                    for elem in elements {
+                        match elem {
+                            ElementMatch::InsidePath(element) => {
+                                selected_element = Some(element);
+                                break;
+                            }
+
+                            ElementMatch::OnlyInBounds(element) => {
+                                if selected_element.is_none() { selected_element = Some(element); }
+                            }
+                        }
+                    }
+
+                    // Select the element if we found one
+                    if let Some(selected_element) = selected_element {
+                        actions.push(ToolAction::ClearSelection);
+                        actions.push(ToolAction::Select(selected_element));
+                    } else {
+                        actions.push(ToolAction::ClearSelection);
+                    }
+
+                    // This is a selection action
+                    data.state.clone().set(AdjustAction::Select);
+                }
+
+                // Result is the list of actions
+                actions
             },
 
             (AdjustAction::DragControlPoint(element_id, index, from, _to), PaintAction::Continue) => {
@@ -464,7 +502,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
         Box::new(update_adjust_data.select(draw_control_points).select(draw_drag_result))
     }
 
-    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {
         let mut data = data;
         let mut actions = vec![];
 
@@ -478,7 +516,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
 
                 ToolInput::Paint(painting) => {
                     if let Some(data) = data.as_ref() {
-                        actions.extend(self.paint(painting, &**data));
+                        actions.extend(self.paint(painting, &**data, &*flo_model));
                     }
                 }
 
