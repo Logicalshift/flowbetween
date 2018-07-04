@@ -88,6 +88,18 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the parameters for an element edit into the edit log
     /// 
     fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
+        use animation::ElementEdit::*;
+
+        match edit {
+            SetControlPoints(points) => {
+                self.db.update(vec![
+                    PushPath(points.clone()),
+                    PushEditLogPath,
+                    Pop
+                ])?;
+            }
+        }
+
         Ok(())
     }
 

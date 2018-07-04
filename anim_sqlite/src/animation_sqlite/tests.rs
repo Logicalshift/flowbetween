@@ -354,6 +354,40 @@ fn draw_brush_strokes() {
 }
 
 #[test]
+fn edit_brush_strokes() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(100), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        
+        AnimationEdit::Element(ElementId::Assigned(9), ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
+    ]);
+    anim.panic_on_error();
+}
+
+#[test]
 fn read_brush_strokes_from_edit_log() {
     let anim = SqliteAnimation::new_in_memory();
 
