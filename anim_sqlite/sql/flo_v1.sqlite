@@ -226,24 +226,23 @@ CREATE TABLE Flo_Color_Hsluv (
  */
 
 /*
- * Represents a collection of control points
+ * Represents a path made up of control points
  */
 CREATE TABLE Flo_Path (
-    PathId      INTEGER NOT NULL,
+    PathId INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT
+);
+
+/*
+ * Represents a collection of control points
+ */
+CREATE TABLE Flo_PathPoints (
+    PathId      INTEGER NOT NULL REFERENCES Flo_Path(PathId),
     PointIndex  INTEGER NOT NULL,
-    PointId     INTEGER NOT NULL REFERENCES Flo_ControlPoint(PointId),
+    X           REAL NOT NULL,
+    Y           REAL NOT NULL,
 
     PRIMARY KEY (PathId, PointIndex)
 ) WITHOUT ROWID;
-
-/*
- * Represents a control point in a path
- */
-CREATE TABLE Flo_ControlPoint (
-    PointId INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
-    X       REAL NOT NULL,
-    Y       REAL NOT NULL
-);
 
 /*
  *  ===== Motions
