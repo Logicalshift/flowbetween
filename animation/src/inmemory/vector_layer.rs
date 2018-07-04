@@ -38,7 +38,7 @@ impl InMemoryVectorLayer {
     ///
     /// Performs an edit on an element contained within this animation
     /// 
-    pub fn edit_element(&self, element_id: ElementId, when: Duration, edit: &ElementEdit) {
+    pub fn edit_element(&self, element_id: ElementId, edit: &ElementEdit) {
         // TODO
     }
 }

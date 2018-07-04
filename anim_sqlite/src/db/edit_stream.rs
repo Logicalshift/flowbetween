@@ -160,7 +160,9 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             MotionSetOrigin             => unimplemented!(),
             MotionSetPath               => unimplemented!(),
             MotionAttach                => unimplemented!(),
-            MotionDetach                => unimplemented!()
+            MotionDetach                => unimplemented!(),
+
+            ElementSetControlPoints     => unimplemented!()
         }
     }
 

@@ -338,7 +338,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.edit_vector_layer(layer_id, layer_edit)?;
             },
 
-            Element(id, when, edit) => {
+            Element(id, edit) => {
                 // TODO!
                 // unimplemented!()
             },

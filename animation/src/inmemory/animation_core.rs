@@ -56,10 +56,10 @@ impl AnimationCore {
                 self.edit_motion(motion_id, edit);
             },
 
-            Element(element_id, when, element_edit) => {
+            Element(element_id, element_edit) => {
                 // We don't know which layer owns the element, so we just tell all of them to perform the edit (layers without the element will ignore the instruction)
                 self.vector_layers.values()
-                    .for_each(move |layer| layer.edit_element(*element_id, *when, element_edit));
+                    .for_each(move |layer| layer.edit_element(*element_id, element_edit));
             }
         }
     }

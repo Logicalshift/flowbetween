@@ -27,7 +27,9 @@ pub enum EditLogType {
     MotionSetOrigin,
     MotionSetPath,
     MotionAttach,
-    MotionDetach
+    MotionDetach,
+
+    ElementSetControlPoints
 }
 
 ///
@@ -238,6 +240,7 @@ impl From<DbEnumType> for Vec<DbEnum> {
 impl<'a> From<&'a AnimationEdit> for EditLogType {
     fn from(t: &AnimationEdit) -> EditLogType {
         use self::AnimationEdit::*;
+        use self::ElementEdit::*;
         use self::MotionEdit::*;
         use self::LayerEdit::*;
         use self::PaintEdit::*;
@@ -261,7 +264,7 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             Motion(_, Attach(_))                        => EditLogType::MotionAttach,
             Motion(_, Detach(_))                        => EditLogType::MotionDetach,
 
-            Element(_, _, _)                            => unimplemented!() // No element edits exist yet
+            Element(_, SetControlPoints(_))             => EditLogType::ElementSetControlPoints
         }
     }
 }
@@ -323,7 +326,9 @@ impl From<EditLogType> for DbEnumName {
             MotionSetOrigin             => DbEnumName("Edit", "Motion::SetOrigin"),
             MotionSetPath               => DbEnumName("Edit", "Motion::SetPath"),
             MotionAttach                => DbEnumName("Edit", "Motion::Attach"),
-            MotionDetach                => DbEnumName("Edit", "Motion::Detach")
+            MotionDetach                => DbEnumName("Edit", "Motion::Detach"),
+
+            ElementSetControlPoints     => DbEnumName("Edit", "Element::SetControlPoints")
         }
     }
 }

@@ -70,9 +70,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.db.update(vec![PushEditLogLayer(layer_id), Pop])?;
             },
 
-            &Element(element_id, when, ref element_edit)    => {
+            &Element(element_id, ref element_edit)          => {
                 Self::insert_element_id(&mut self.db, &element_id)?;
-                self.db.update(vec![PushEditLogWhen(when)])?;
                 self.insert_element_edit(element_edit)?;
             },
 

@@ -13,8 +13,8 @@ pub enum AnimationEdit {
     /// Edit to an existing layer
     Layer(u64, LayerEdit),
 
-    /// Edit to an existing element (at a particular offset from when its keyframe started)
-    Element(ElementId, Duration, ElementEdit),
+    /// Edit to an existing element
+    Element(ElementId, ElementEdit),
 
     /// Edit to a motion (which is a description of how an element moves over time)
     /// Motions have element IDs so can be treated as elements but are not attached to a layer
