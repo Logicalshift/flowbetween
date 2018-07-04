@@ -61,6 +61,12 @@ pub enum DatabaseUpdate {
     /// Pops the specified number of time point IDs from the stack and creates a motion path from them using the edit ID pushed before them (ie, stack shopuld look like `[edit id, point id, point id, ...]`)
     PushEditLogMotionPath(usize),
 
+    /// Pops a path ID and an edit log ID and associates the path with the edit log ID. Leaves the edit log ID on the stack.
+    PushEditLogPath,
+
+    /// Creates a new path from the specified points and pushes the ID
+    PushPath(Vec<(f32, f32)>),
+
     /// Creates a new time point at the specified x, y, time coordinates and pushes its ID to the stack
     PushTimePoint(f32, f32, f32),
 

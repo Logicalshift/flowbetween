@@ -352,6 +352,23 @@ fn smoke_editlog_brush() {
 }
 
 #[test]
+fn smoke_editlog_path() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::ElementSetControlPoints),
+        DatabaseUpdate::PushEditLogElementId(3),
+        DatabaseUpdate::PushPath(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0), (7.0, 8.0), (9.0, 10.0), (11.0, 12.0)]),
+        DatabaseUpdate::PushEditLogPath,
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::PushEditType(EditLogType::ElementSetControlPoints),
+        DatabaseUpdate::PushEditLogElementId(4),
+        DatabaseUpdate::PushPath(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0), (7.0, 8.0), (9.0, 10.0), (11.0, 12.0)]),
+        DatabaseUpdate::PushEditLogPath,
+        DatabaseUpdate::Pop
+    ])
+}
+
+#[test]
 fn smoke_layer_type() {
     test_updates(vec![
         DatabaseUpdate::PushLayerType(LayerType::Vector),

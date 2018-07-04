@@ -89,6 +89,9 @@ enum FloStatement {
     InsertELMotionType,
     InsertELMotionElement,
     InsertELMotionTimePoint,
+    InsertELPath,
+    InsertPath,
+    InsertPathPoint,
     InsertTimePoint,
     InsertBrushType,
     InsertInkBrush,
@@ -251,6 +254,9 @@ impl FloSqlite {
             InsertELMotionType              => "INSERT INTO Flo_EL_MotionType (EditId, MotionType) VALUES (?, ?)",
             InsertELMotionElement           => "INSERT INTO Flo_EL_MotionAttach (EditId, AttachedElement) VALUES (?, ?)",
             InsertELMotionTimePoint         => "INSERT INTO Flo_EL_MotionPath (EditId, PointIndex, TimePointId) VALUES (?, ?, ?)",
+            InsertELPath                    => "INSERT INTO Flo_EL_Path (EditId, PathId) VALUES (?, ?)",
+            InsertPath                      => "INSERT INTO Flo_Path (PathId) VALUES (NULL)",
+            InsertPathPoint                 => "INSERT INTO Flo_PathPoints (PathId, PointIndex, X, Y) VALUES (?, ?, ?, ?)",
             InsertTimePoint                 => "INSERT INTO Flo_TimePoint (X, Y, Milliseconds) VALUES (?, ?, ?)",
             InsertBrushType                 => "INSERT INTO Flo_Brush_Type (BrushType) VALUES (?)",
             InsertInkBrush                  => "INSERT INTO Flo_Brush_Ink (Brush, MinWidth, MaxWidth, ScaleUpDistance) VALUES (?, ?, ?, ?)",
@@ -270,6 +276,7 @@ impl FloSqlite {
             InsertOrReplaceMotionOrigin     => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
             InsertMotionAttachedElement     => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
             InsertMotionPathPoint           => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
+
 
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                     => "DELETE FROM Flo_LayerType WHERE LayerId = ?",

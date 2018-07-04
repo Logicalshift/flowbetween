@@ -126,6 +126,32 @@ impl FloSqlite {
                 }
             },
 
+            PushEditLogPath => {
+                let mut insert_el_path  = Self::prepare(&self.sqlite, FloStatement::InsertELPath)?;
+                let path_id             = self.stack.pop().unwrap_or(-1);
+                let edit_log_id         = self.stack.pop().unwrap_or(-1);
+
+                insert_el_path.insert(&[&edit_log_id, &path_id])?;
+
+                self.stack.push(edit_log_id);
+            },
+
+            PushPath(points) => {
+                let mut insert_point    = Self::prepare(&self.sqlite, FloStatement::InsertPathPoint)?;
+                let mut insert_path     = Self::prepare(&self.sqlite, FloStatement::InsertPath)?;
+                let path_id             = insert_path.insert(&[])?;
+                let path_id             = path_id as i64;
+
+                for point_index in 0..(points.len()) {
+                    let (x, y)      = points[point_index];
+                    let (x, y)      = (x as f64, y as f64);
+                    let point_index = point_index as i64;
+                    insert_point.insert(&[&path_id, &point_index, &x, &y])?;
+                }
+
+                self.stack.push(path_id);
+            },
+
             PushTimePoint(x, y, millis) => {
                 let (x, y, millis)  = (x as f64, y as f64, millis as f64);
                 let mut add_point   = Self::prepare(&self.sqlite, FloStatement::InsertTimePoint)?;
