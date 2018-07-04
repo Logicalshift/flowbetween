@@ -263,6 +263,14 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     }
 
     ///
+    /// Edits the element with the specified ID
+    /// 
+    fn edit_element(&mut self, element_id: ElementId, element_edit: ElementEdit) -> Result<()> {
+        // TODO: implement me!
+        Ok(())
+    }
+
+    ///
     /// Performs a layer edit to a vector layer
     /// 
     pub fn edit_vector_layer(&mut self, layer_id: i64, edit: LayerEdit) -> Result<()> {
@@ -338,9 +346,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.edit_vector_layer(layer_id, layer_edit)?;
             },
 
-            Element(id, edit) => {
-                // TODO!
-                // unimplemented!()
+            Element(element_id, element_edit) => {
+                self.edit_element(element_id, element_edit)?;
             },
 
             Motion(motion_id, motion_edit) => {
