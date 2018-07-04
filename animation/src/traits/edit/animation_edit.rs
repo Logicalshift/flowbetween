@@ -3,8 +3,6 @@ use super::layer_edit::*;
 use super::motion_edit::*;
 use super::element_edit::*;
 
-use std::time::Duration;
-
 ///
 /// Represents an edit to an animation object
 /// 

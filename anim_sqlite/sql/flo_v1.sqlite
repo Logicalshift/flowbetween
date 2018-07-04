@@ -106,6 +106,16 @@ CREATE TABLE Flo_EL_RawPoints (
 ) WITHOUT ROWID;
 
 /*
+ * Associates an edit with a path
+ */
+CREATE TABLE Flo_EL_Path (
+    EditId  INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    PathId  INTEGER NOT NULL REFERENCES Flo_Path,
+    
+    PRIMARY KEY (EditId)
+) WITHOUT ROWID;
+
+/*
  * For a motion edit setting an origin, the location of the motion origin
  */
 CREATE TABLE Flo_EL_MotionOrigin (
@@ -210,6 +220,30 @@ CREATE TABLE Flo_Color_Hsluv (
     S           REAL NOT NULL,
     L           REAL NOT NULL
 ) WITHOUT ROWID;
+
+/*
+ *  ===== Paths
+ */
+
+/*
+ * Represents a collection of control points
+ */
+CREATE TABLE Flo_Path (
+    PathId      INTEGER NOT NULL,
+    PointIndex  INTEGER NOT NULL,
+    PointId     INTEGER NOT NULL REFERENCES Flo_ControlPoint(PointId),
+
+    PRIMARY KEY (PathId, PointIndex)
+) WITHOUT ROWID;
+
+/*
+ * Represents a control point in a path
+ */
+CREATE TABLE Flo_ControlPoint (
+    PointId INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+    X       REAL NOT NULL,
+    Y       REAL NOT NULL
+);
 
 /*
  *  ===== Motions
