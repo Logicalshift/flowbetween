@@ -162,6 +162,11 @@ pub trait FloQuery {
     fn query_vector_element_brush_points(&mut self, element_id: i64) -> Result<Vec<BrushPoint>>;
 
     ///
+    /// Queries the type of a single vector element
+    /// 
+    fn query_vector_element_type(&mut self, element_id: i64) -> Result<Option<VectorElementType>>;
+
+    ///
     /// Queries the motion associated with a particular motion ID
     /// 
     fn query_motion(&mut self, motion_id: i64) -> Result<Option<MotionEntry>>;

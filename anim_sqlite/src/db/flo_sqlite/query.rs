@@ -264,6 +264,17 @@ impl FloQuery for FloSqlite {
                     .collect())
     }
 
+    ///
+    /// Queries the type of a single vector element
+    /// 
+    fn query_vector_element_type(&mut self, element_id: i64) -> Result<Option<VectorElementType>> {
+        self.query_row(FloStatement::SelectVectorElementType, &[&element_id], |row| row.get(0))
+            .map(|element_type| {
+                let element_type    = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
+
+                Some(element_type)
+            })
+    }
 
     ///
     /// Queries the brush points associated with a vector element
