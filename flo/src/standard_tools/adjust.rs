@@ -468,7 +468,10 @@ impl Adjust {
                 // Generate the edit action for this element
                 let edit_element        = if let Some(vector) = vector {
                     let new_control_points  = Self::adjusted_control_points(&vector, &final_action);
-                    vec![ToolAction::Edit(AnimationEdit::Element(element_id, ElementEdit::SetControlPoints(new_control_points)))]
+                    vec![
+                        ToolAction::Edit(AnimationEdit::Element(element_id, ElementEdit::SetControlPoints(new_control_points))),
+                        ToolAction::InvalidateFrame
+                    ]
                 } else {
                     // Element cannot be found in the frame so cannot be edited
                     vec![]
