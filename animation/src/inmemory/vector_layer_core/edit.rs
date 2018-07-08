@@ -85,4 +85,11 @@ impl VectorLayerCore {
             RemoveKeyFrame(when)        => self.remove_key_frame(*when)
         }
     }
+
+    ///
+    /// Sets the control points for an element
+    /// 
+    pub fn set_control_points(&mut self, element_id: ElementId, control_points: &Vec<(f32, f32)>) {
+        unimplemented!()
+    }
 }

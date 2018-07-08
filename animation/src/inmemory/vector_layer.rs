@@ -39,7 +39,11 @@ impl InMemoryVectorLayer {
     /// Performs an edit on an element contained within this animation
     /// 
     pub fn edit_element(&self, element_id: ElementId, edit: &ElementEdit) {
-        // TODO
+        use self::ElementEdit::*;
+
+        match edit {
+            SetControlPoints(points) => self.core.lock().unwrap().set_control_points(element_id, points)
+        }
     }
 }
 
