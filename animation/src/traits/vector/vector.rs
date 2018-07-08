@@ -1,5 +1,6 @@
 use super::element::*;
 use super::brush_element::*;
+use super::transformed_vector::*;
 use super::brush_properties_element::*;
 use super::brush_definition_element::*;
 use super::super::edit::ElementId;
@@ -11,6 +12,9 @@ use std::ops::Deref;
 /// 
 #[derive(Clone)]
 pub enum Vector {
+    /// Vector that has been transformed from a source vector (eg, by applying a motion)
+    Transformed(TransformedVector),
+
     /// Sets the brush properties for future brush strokes
     BrushDefinition(BrushDefinitionElement),
 
@@ -44,6 +48,8 @@ impl Deref for Vector {
         use Vector::*;
 
         match self {
+            &Transformed(ref transform) => transform,
+
             &BrushDefinition(ref defn)  => defn,
             &BrushProperties(ref props) => props,
             &BrushStroke(ref elem)      => elem

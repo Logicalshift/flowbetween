@@ -159,7 +159,7 @@ impl Frame for VectorFrame {
     ///
     /// Renders this frame to a particular graphics context
     ///
-    fn render_to(&self, gc: &mut dyn  GraphicsPrimitives) {
+    fn render_to(&self, gc: &mut dyn GraphicsPrimitives) {
         let mut properties = Arc::new(VectorProperties::default());
 
         self.elements.iter().for_each(move |element| {
