@@ -265,6 +265,12 @@ impl FloSqlite {
                 insert_element_assigned_id.insert(&[element_id, &assigned_id])?;
             },
 
+            PushElementIdForAssignedId(assigned_id)                         => {
+                let mut element_id_for_assigned_id  = Self::prepare(&self.sqlite, FloStatement::SelectElementIdForAssignedId)?;
+                let element_id                      = element_id_for_assigned_id.query_row(&[&assigned_id], |row| row.get(0))?;
+                self.stack.push(element_id);
+            },
+
             PopVectorBrushElement(drawing_style)                            => {
                 let brush_id                            = self.stack.pop().unwrap();
                 let element_id                          = self.stack.pop().unwrap();
@@ -293,6 +299,18 @@ impl FloSqlite {
                         &(point.position.0 as f64), &(point.position.1 as f64),
                         &(point.width as f64)
                     ])?;
+                }
+            },
+
+            UpdateBrushPointCoords(points)                                  => {
+                let element_id              = self.stack.pop().unwrap();
+                let mut update_brush_point  = Self::prepare(&self.sqlite, FloStatement::UpdateBrushPoint)?;
+
+                let num_points = points.len();
+                for (((x1, y1), (x2, y2), (x3, y3)), index) in points.iter().zip((0..num_points).into_iter()) {
+                    let (x1, y1, x2, y2, x3, y3) = (*x1 as f64, *y1 as f64, *x2 as f64, *y2 as f64, *x3 as f64, *y3 as f64);
+
+                    update_brush_point.execute(&[&x1, &y1, &x2, &y2, &x3, &y3, &element_id, &(index as i64)])?;
                 }
             },
 

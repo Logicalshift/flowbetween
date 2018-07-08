@@ -73,9 +73,11 @@ enum FloStatement {
     SelectElementsForMotion,
     SelectMotion,
     SelectMotionTimePoints,
+    SelectElementIdForAssignedId,
 
     UpdateAnimationSize,
     UpdateMotionType,
+    UpdateBrushPoint,
 
     InsertEnumValue,
     InsertEditType,
@@ -239,9 +241,11 @@ impl FloSqlite {
                                                     INNER JOIN Flo_TimePoint AS Point ON Path.PointId = Point.PointId
                                                     WHERE Path.MotionId = ? AND Path.PathType = ?
                                                     ORDER BY Path.PointIndex ASC",
+            SelectElementIdForAssignedId    => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
 
             UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
             UpdateMotionType                => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
+            UpdateBrushPoint                => "UPDATE Flo_BrushPoint SET X1 = ?, Y1 = ?, X2 = ?, Y2 = ?, X3 = ?, Y3 = ?, WHERE ElementId = ? AND PointId = ?",
 
             InsertEnumValue                 => "INSERT INTO Flo_EnumerationDescriptions (FieldName, Value, ApiName, Comment) SELECT ?, (SELECT IFNULL(Max(Value)+1, 0) FROM Flo_EnumerationDescriptions WHERE FieldName = ?), ?, ?",
             InsertEditType                  => "INSERT INTO Flo_EditLog (Edit) VALUES (?)",

@@ -6,6 +6,7 @@ use animation::*;
 use animation::brushes::*;
 
 use rusqlite::*;
+use itertools::*;
 use std::sync::*;
 use std::time::Duration;
 use std::collections::HashMap;
@@ -266,7 +267,38 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Edits the element with the specified ID
     /// 
     fn edit_element(&mut self, element_id: ElementId, element_edit: ElementEdit) -> Result<()> {
-        // TODO: implement me!
+        if let ElementId::Assigned(element_id) = element_id {
+            // Get the type of the element so we can use the appropriate editing method
+            let element_type = self.db.query_vector_element_type(element_id)?;
+
+            if let Some(element_type) = element_type {
+                // Action depends on the element type
+                match (element_type, element_edit) {
+                    (VectorElementType::BrushStroke, ElementEdit::SetControlPoints(points)) => {
+                        // The first point doesn't have 'real' control points, so we duplicate them here
+                        let prefix = vec![points[0], points[0]];
+                        let points = prefix.into_iter().chain(points.into_iter());
+
+                        // Order is cp1, cp2, pos so we need to re-order the points slightly
+                        let points = points.tuples()
+                            .map(|(cp1, cp2, pos)| (pos, cp1, cp2))
+                            .collect();
+                        
+                        // Perform the update
+                        self.db.update(vec![
+                            DatabaseUpdate::PushElementIdForAssignedId(element_id),
+                            DatabaseUpdate::UpdateBrushPointCoords(Arc::new(points))
+                        ])?;
+                    },
+
+                    // Other types have no action
+                    _ => ()
+                }
+            } else {
+                // No action if this element has no type
+            }
+        }
+
         Ok(())
     }
 

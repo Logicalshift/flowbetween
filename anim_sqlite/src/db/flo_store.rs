@@ -119,6 +119,9 @@ pub enum DatabaseUpdate {
     /// Uses the element ID on top of the stack and sets its assigned ID, leaving it on top of the stack
     PushElementAssignId(i64),
 
+    /// Takes the assigned ID from the top of the stack and pushes the corresponding element ID
+    PushElementIdForAssignedId(i64),
+
     /// Pops a brush ID and a vector element ID and creates a vector brush element from them
     PopVectorBrushElement(DrawingStyleType),
 
@@ -127,6 +130,9 @@ pub enum DatabaseUpdate {
 
     /// Pops a vector element ID from the stack and creates a set of brush points for it
     PopBrushPoints(Arc<Vec<BrushPoint>>),
+
+    /// Pops an element ID and updates, the brush point coordinates for it
+    UpdateBrushPointCoords(Arc<Vec<((f32, f32), (f32, f32), (f32, f32))>>),
 
     /// Creates a new motion with the specified ID
     CreateMotion(i64),
