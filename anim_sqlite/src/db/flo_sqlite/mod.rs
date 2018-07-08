@@ -224,7 +224,9 @@ impl FloSqlite {
                                                     LEFT OUTER JOIN Flo_Brush_Ink AS Ink ON Brush.Brush = Ink.Brush \
                                                     WHERE Brush.Brush = ?",
             SelectBrushProperties           => "SELECT Size, Opacity, Color FROM Flo_BrushProperties WHERE BrushProperties = ?",
-            SelectVectorElementType         => "SELECT VectorElementType FROM Flo_VectorElement WHERE ElementId = ?",
+            SelectVectorElementType         => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
+                                                    INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
+                                                    WHERE Assgn.AssignedId = ?",
             SelectVectorElementsBefore      => "SELECT Elem.ElementId, Elem.VectorElementType, Elem.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
                                                     LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
                                                     LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
