@@ -656,34 +656,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
         if let Some(mut data) = data {
             // We build up a vector of actions to perform as we go
             let mut actions = vec![];
-
-            // Filter the input so that there is only a single paint continue event
-            let input: Vec<_>               = input.collect();
-            let mut seen_continue           = false;
-            let mut reversed_filtered_input = vec![];
-
-            // Reverse the inputs so the first continue we see is the most recent
-            for input in input.into_iter().rev() {
-                match input {
-                    ToolInput::Paint(painting) => {
-                        if painting.action == PaintAction::Continue {
-                            if !seen_continue {
-                                // Only push the first continue
-                                reversed_filtered_input.push(ToolInput::Paint(painting));
-                                seen_continue = true;
-                            }
-                        } else {
-                            // All other painting actions make it through
-                            reversed_filtered_input.push(ToolInput::Paint(painting));
-                        }
-                    },
-
-                    input => reversed_filtered_input.push(input)
-                }
-            }
+            let input       = ToolInput::last_paint_actions_only(input);
 
             // Process the inputs (reversing the filter again so they're back in order)
-            for input in reversed_filtered_input.into_iter().rev() {
+            for input in input {
                 match input {
                     ToolInput::Data(new_data) => {
                         // Whenever we get feedback about what the data is set to, update our data
