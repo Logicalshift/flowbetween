@@ -89,4 +89,13 @@ impl MotionTransform for Motion {
             Translate(translate)    => translate.transform_points(time, points)
         }
     }
+
+    fn reverse_transform<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>> {
+        use self::Motion::*;
+
+        match self {
+            None                    => Box::new(points.cloned()),
+            Translate(translate)    => translate.reverse_transform(time, points)
+        }
+    }
 }
