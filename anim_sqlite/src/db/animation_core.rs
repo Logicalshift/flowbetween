@@ -279,9 +279,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         let prefix = vec![points[0], points[0]];
                         let points = prefix.into_iter().chain(points.into_iter());
 
-                        // Order is cp1, cp2, pos so we need to re-order the points slightly
+                        // Convert to tuples. Ordering is cp1, cp2, pos.
                         let points = points.tuples()
-                            .map(|(cp1, cp2, pos)| (pos, cp1, cp2))
                             .collect();
                         
                         // Perform the update
