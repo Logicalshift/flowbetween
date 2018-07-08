@@ -394,6 +394,7 @@ impl From<MotionType> for DbEnumName {
 
         match t {
             None        => DbEnumName("MotionType", "None"),
+            Reverse     => DbEnumName("MotionType", "Reverse"),
             Translate   => DbEnumName("MotionType", "Translate")
         }
     }
