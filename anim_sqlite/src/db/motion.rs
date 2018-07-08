@@ -37,7 +37,7 @@ impl AnimationDb {
     pub fn motion_for_entry<TFile: FloFile>(core: &mut TFile, motion_id: i64, motion_entry: MotionEntry) -> Result<Motion> {
         match motion_entry.motion_type {
             MotionType::None        => Ok(Motion::None),
-            MotionType::Reverse     => unimplemented!(), /* These cannot be represented in the database at the moment */
+            MotionType::Reverse     => unimplemented!(), /* TODO: These cannot be represented in the database at the moment */
 
             MotionType::Translate   => Ok(Self::get_translate_motion(core, motion_id, motion_entry)?)
         }

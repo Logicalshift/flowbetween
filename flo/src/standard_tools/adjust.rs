@@ -14,6 +14,7 @@ use itertools::*;
 
 use std::f32;
 use std::sync::*;
+use std::time::Duration;
 use std::collections::HashSet;
 
 ///
@@ -38,6 +39,9 @@ enum AdjustAction {
 pub struct AdjustData {
     /// The current frame
     frame: Option<Arc<dyn Frame>>,
+
+    /// The time of the current frame
+    frame_time: Duration,
 
     /// The current state of this data
     state: Binding<AdjustAction>,
@@ -319,6 +323,36 @@ impl Adjust {
     }
 
     ///
+    /// Finds the adjust control points for a vector as they would be after the motions applied to an element are reversed
+    /// 
+    /// These are the control points we need to store as the edited control points for an element.
+    /// The element as we have it for editing (in `to_edit`) is how it is represented after the motions
+    /// are applied.
+    /// 
+    fn adjusted_control_points_before_motion<Anim: Animation>(flo_model: &FloModel<Anim>, data: &AdjustData, to_edit: &Vector, action: &AdjustAction) -> Vec<(f32, f32)> {
+        // Apply the edit to the vector
+        let mut adjusted = Self::edit_vector(to_edit, action);
+
+        // Get the motions applied to this element
+        let frame_time  = data.frame_time;
+        let motion_ids  = flo_model.motion().get_motions_for_element(to_edit.id());
+        let motions     = motion_ids.into_iter().filter_map(|id| flo_model.get_motion(id));
+
+        // Reverse the motions
+        for motion in motions.rev() {
+            // Perform the motion in reverse
+            let motion  = motion.reverse();
+            adjusted    = adjusted.motion_transform(&motion, frame_time);
+        }
+
+        // Return the control points for the adjusted vector
+        adjusted.control_points()
+            .into_iter()
+            .map(|cp| cp.position())
+            .collect()
+    }
+
+    ///
     /// Returns the actions required to draw the editing overlay
     /// 
     fn draw_edit_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
@@ -467,7 +501,7 @@ impl Adjust {
 
                 // Generate the edit action for this element
                 let edit_element        = if let Some(vector) = vector {
-                    let new_control_points  = Self::adjusted_control_points(&vector, &final_action);
+                    let new_control_points  = Self::adjusted_control_points_before_motion(model, data, &vector, &final_action);
                     vec![
                         ToolAction::Edit(AnimationEdit::Element(element_id, ElementEdit::SetControlPoints(new_control_points))),
                         ToolAction::InvalidateFrame
@@ -527,13 +561,17 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
         let draw_control_points = Self::draw_control_point_overlay(flo_model.clone(), BindRef::new(&adjust_state));
 
         // When the user is dragging an element, draw a preview of the final look of that element
-        let draw_drag_result = Self::draw_edit_overlay(flo_model, BindRef::new(&adjust_state));
+        let draw_drag_result = Self::draw_edit_overlay(flo_model.clone(), BindRef::new(&adjust_state));
+
+        // We need to know when the user is editing things (to compensate for motions etc)
+        let frame_time = flo_model.timeline().current_time.clone();
 
         // Build the model from the current frame and selected elements
-        let update_adjust_data = follow(computed(move || (current_frame.get(), selected_elements.get(), control_points.get())))
-            .map(move |(frame, selected_elements, control_points)| {
+        let update_adjust_data = follow(computed(move || (current_frame.get(), selected_elements.get(), control_points.get(), frame_time.get())))
+            .map(move |(frame, selected_elements, control_points, frame_time)| {
                 ToolAction::Data(AdjustData {
                     frame:              frame,
+                    frame_time:         frame_time,
                     state:              adjust_state.clone(),
                     selected_elements:  Arc::new(selected_elements.into_iter().collect()),
                     control_points:     control_points
