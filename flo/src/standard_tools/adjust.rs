@@ -583,8 +583,9 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
     }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {
-        let mut data = data;
+        let mut data    = data;
         let mut actions = vec![];
+        let input       = ToolInput::last_paint_actions_only(input);
 
         // Process the input
         for input in input {
