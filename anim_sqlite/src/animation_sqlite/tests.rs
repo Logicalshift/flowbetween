@@ -382,7 +382,7 @@ fn edit_brush_strokes() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
         
-        AnimationEdit::Element(ElementId::Assigned(9), ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
+        AnimationEdit::Element(ElementId::Assigned(100), ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
     ]);
     anim.panic_on_error();
 }
