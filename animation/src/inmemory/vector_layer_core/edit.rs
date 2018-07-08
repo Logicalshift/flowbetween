@@ -90,6 +90,15 @@ impl VectorLayerCore {
     /// Sets the control points for an element
     /// 
     pub fn set_control_points(&mut self, element_id: ElementId, control_points: &Vec<(f32, f32)>) {
-        unimplemented!()
+        // Find the corresponding element
+        let vector = self.vector_map.vector_with_id(element_id);
+
+        // Update it if it exists
+        if let Some(vector) = vector {
+            let edited_vector = vector.with_adjusted_control_points(control_points.clone());
+
+            // Replacing the vector in the map will replace it everywhere else
+            self.vector_map.set_vector_for_id(element_id, edited_vector);
+        }
     }
 }
