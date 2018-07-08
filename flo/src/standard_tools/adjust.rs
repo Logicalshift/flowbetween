@@ -286,7 +286,7 @@ impl Adjust {
                     let pos = cp.position();
 
                     if this_index == *index 
-                    || ((this_index == *index-1 || this_index == *index+1) && should_move_neighbours) {
+                    || (((*index > 0 && this_index == *index-1) || this_index == *index+1) && should_move_neighbours) {
                         // Move this control point
                         new_control_points.push((pos.0+diff_x, pos.1+diff_y));
                     } else {
