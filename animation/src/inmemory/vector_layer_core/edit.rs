@@ -11,7 +11,7 @@ impl VectorLayerCore {
         // TODO: do nothing if the keyframe is already created
 
         // Generate a new keyframe
-        let new_keyframe = VectorKeyFrame::new(time_offset);
+        let new_keyframe = VectorKeyFrame::new(time_offset, self.vector_map.clone());
 
         // Add in order to the existing keyframes
         self.keyframes.push(Arc::new(new_keyframe));

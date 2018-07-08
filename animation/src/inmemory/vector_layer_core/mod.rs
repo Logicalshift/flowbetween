@@ -4,6 +4,7 @@ mod edit;
 pub use self::edit::*;
 
 use super::super::traits::*;
+use super::vector_map::*;
 use super::vector_keyframe::*;
 
 use std::sync::*;
@@ -16,6 +17,9 @@ pub struct VectorLayerCore {
     // The ID assigned to this layer
     id: u64,
 
+    /// The vector map for this layer
+    vector_map: VectorMap,
+
     /// The key frames for this vector, in order
     keyframes: Vec<Arc<VectorKeyFrame>>,
 }
@@ -27,6 +31,7 @@ impl VectorLayerCore {
     pub fn new(id: u64) -> VectorLayerCore {
         VectorLayerCore {
             id:                     id,
+            vector_map:             VectorMap::new(),
             keyframes:              vec![],
         }
     }

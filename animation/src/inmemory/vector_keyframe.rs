@@ -1,8 +1,7 @@
+use super::vector_map::*;
 use super::super::traits::*;
-use super::super::deref_map::*;
 
 use std::time::Duration;
-use std::ops::Deref;
 use std::sync::*;
 
 ///
@@ -20,7 +19,10 @@ struct VectorKeyFrameCore {
     start_time: Duration,
 
     /// The elements in this key frame (ordered from back to front)
-    elements: Vec<(Duration, Vector)>,
+    elements: Vec<(Duration, ElementId)>,
+
+    /// Maps IDs to the corresponding vector
+    vector_map: VectorMap,
 
     /// The properties that will apply to the next element added to this core
     active_properties: Arc<VectorProperties>
@@ -30,9 +32,9 @@ impl VectorKeyFrame {
     ///
     /// Creates a new vector key frame
     /// 
-    pub fn new(start_time: Duration) -> VectorKeyFrame {
+    pub fn new(start_time: Duration, vector_map: VectorMap) -> VectorKeyFrame {
         VectorKeyFrame {
-            core: Mutex::new(VectorKeyFrameCore::new(start_time))
+            core: Mutex::new(VectorKeyFrameCore::new(start_time, vector_map))
         }
     }
 
@@ -53,24 +55,30 @@ impl VectorKeyFrame {
     ///
     /// Retrieves the elements in this keyframe
     /// 
-    pub fn elements<'a>(&'a self) -> Box<dyn 'a+Deref<Target=Vec<(Duration, Vector)>>> {
+    pub fn elements(&self) -> Vec<(Duration, Vector)> {
         let core            = self.core.lock().unwrap();
 
-        let elements = DerefMap::map(core, |core| &core.elements);
+        let elements        = core.elements.iter()
+            .filter_map(|(duration, element_id)| core.vector_map.vector_with_id(*element_id).map(|vector| (*duration, vector)));
 
-        Box::new(elements)
+        elements.collect()
     }
 
     ///
-    /// Searches for an element with the specified ID and returns it if found
+    /// Finds an element in this frame and when it appears
     /// 
-    pub fn element_with_id<'a>(&'a self, id: ElementId) -> Option<(Duration, Vector)> {
+    pub fn element_with_id(&self, element_id: ElementId) -> Option<(Duration, Vector)> {
         let core = self.core.lock().unwrap();
 
-        let mut elements_with_id = core.elements.iter()
-            .filter(|&&(_, ref element)| element.id() == id);
+        let element = core.vector_map
+            .vector_with_id(element_id)
+            .and_then(|vector| {
+                let appearance_time = core.elements.iter().filter(|(_, id)| id == &element_id).nth(0);
+
+                appearance_time.map(|(appearance_time, _)| (*appearance_time, vector))
+            });
         
-        elements_with_id.nth(0).cloned()
+        element
     }
 
     ///
@@ -86,10 +94,11 @@ impl VectorKeyFrameCore {
     ///
     /// Creates a new vector key frame
     /// 
-    pub fn new(start_time: Duration) -> VectorKeyFrameCore {
+    pub fn new(start_time: Duration, vector_map: VectorMap) -> VectorKeyFrameCore {
         VectorKeyFrameCore {
             start_time:         start_time,
             elements:           vec![],
+            vector_map:         vector_map,
             active_properties:  Arc::new(VectorProperties::default())
         }
     }
@@ -115,7 +124,10 @@ impl VectorKeyFrameCore {
     /// 
     #[inline]
     pub fn add_element(&mut self, when: Duration, new_element: Vector) {
+        let element_id = new_element.id();
+
         self.active_properties = new_element.update_properties(Arc::clone(&self.active_properties));
-        self.elements.push((when, new_element));
+        self.vector_map.set_vector_for_id(element_id, new_element);
+        self.elements.push((when, element_id));
     }
 }
