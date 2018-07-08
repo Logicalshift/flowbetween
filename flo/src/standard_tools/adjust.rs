@@ -267,14 +267,16 @@ impl Adjust {
     }
 
     ///
-    /// Performs an editing action on a vector
+    /// Returns the control points as adjusted by an edit actions
     /// 
-    fn edit_vector(to_edit: &Vector, action: &AdjustAction) -> Vector {
+    fn adjusted_control_points(to_edit: &Vector, action: &AdjustAction) -> Vec<(f32, f32)> {
+        // Fetch the control points for this element
+        let control_points          = to_edit.control_points();
+        let mut new_control_points  = vec![];
+
         match action {
+            // Dragging a single control point just updates that one control point
             AdjustAction::DragControlPoint(_, index, from, to) => {
-                // Fetch the control points for this element (positions only)
-                let control_points          = to_edit.control_points();
-                let mut new_control_points  = vec![];
                 let (diff_x, diff_y)        = (to.0-from.0, to.1-from.1);
 
                 // When moving a point on the line, we need to move its control points with it
@@ -292,14 +294,28 @@ impl Adjust {
                         new_control_points.push(pos);
                     }
                 }
-
-                // Create the edited element
-                to_edit.with_adjusted_control_points(new_control_points)
             },
 
-            // Other editing actions have no effect
-            _ => to_edit.clone()
+            // Default is no editing
+            _ => {
+                new_control_points = control_points.into_iter()
+                    .map(|cp| cp.position())
+                    .collect();
+            }
         }
+
+        new_control_points
+    }
+
+    ///
+    /// Performs an editing action on a vector
+    /// 
+    fn edit_vector(to_edit: &Vector, action: &AdjustAction) -> Vector {
+        // Fetch the new control points
+        let new_control_points = Self::adjusted_control_points(to_edit, action);
+
+        // Return the vector updated with these control points
+        to_edit.with_adjusted_control_points(new_control_points)
     }
 
     ///
@@ -437,6 +453,29 @@ impl Adjust {
 
                 // No tool actions to perform
                 vec![]
+            },
+
+            (AdjustAction::DragControlPoint(element_id, index, from, _to), PaintAction::Finish) => {
+                // Continue the control point drag by updating the final 'to' location
+                let final_action = AdjustAction::DragControlPoint(element_id, index, from, painting.location);
+
+                // Action should become 'no action'
+                data.state.clone().set(AdjustAction::NoAction);
+
+                // Fetch the element that will be edited
+                let vector              = data.frame.as_ref().and_then(|frame| frame.element_with_id(element_id));
+
+                // Generate the edit action for this element
+                let edit_element        = if let Some(vector) = vector {
+                    let new_control_points  = Self::adjusted_control_points(&vector, &final_action);
+                    vec![ToolAction::Edit(AnimationEdit::Element(element_id, ElementEdit::SetControlPoints(new_control_points)))]
+                } else {
+                    // Element cannot be found in the frame so cannot be edited
+                    vec![]
+                };
+
+                // Perform these actions
+                edit_element
             },
 
             // Default 'paint end' action is to reset to the 'no action' state
