@@ -12,6 +12,20 @@ pub struct VectorKeyFrame {
     core: Mutex<VectorKeyFrameCore>
 }
 
+///
+/// Data storage for a vector keyframe
+/// 
+struct VectorKeyFrameCore {
+    /// When this frame starts
+    start_time: Duration,
+
+    /// The elements in this key frame (ordered from back to front)
+    elements: Vec<(Duration, Vector)>,
+
+    /// The properties that will apply to the next element added to this core
+    active_properties: Arc<VectorProperties>
+}
+
 impl VectorKeyFrame {
     ///
     /// Creates a new vector key frame
@@ -66,20 +80,6 @@ impl VectorKeyFrame {
     pub fn active_properties(&self) -> VectorProperties {
         self.core.lock().unwrap().active_properties().clone()
     }
-}
-
-///
-/// Data storage for a vector keyframe
-/// 
-struct VectorKeyFrameCore {
-    /// When this frame starts
-    start_time: Duration,
-
-    /// The elements in this key frame (ordered from back to front)
-    elements: Vec<(Duration, Vector)>,
-
-    /// The properties that will apply to the next element added to this core
-    active_properties: Arc<VectorProperties>
 }
 
 impl VectorKeyFrameCore {
