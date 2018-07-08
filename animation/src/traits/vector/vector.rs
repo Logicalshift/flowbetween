@@ -34,9 +34,24 @@ impl Vector {
         from.into()
     }
 
+    ///
+    /// The ID for this vector
+    /// 
     #[inline]
     pub fn id(&self) -> ElementId {
         self.deref().id()
+    }
+
+    ///
+    /// If this element was transformed from an original element, returns that original element
+    /// 
+    pub fn original_without_transformations(&self) -> Vector {
+        use self::Vector::*;
+
+        match self {
+            Transformed(transformed)    => transformed.without_transformations(),
+            not_transformed             => not_transformed.clone()
+        }
     }
 }
 

@@ -2,6 +2,7 @@ use super::vector::*;
 use super::element::*;
 use super::properties::*;
 use super::control_point::*;
+use super::transformed_vector::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::brush::*;
@@ -111,10 +112,12 @@ impl VectorElement for BrushElement {
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
         let transformed_points = motion.transform_points(when, self.points.iter()).collect();
 
-        Vector::BrushStroke(BrushElement {
+        let transformed = Vector::BrushStroke(BrushElement {
             id:     self.id,
             points: Arc::new(transformed_points)
-        })
+        });
+
+        Vector::Transformed(TransformedVector::new(Vector::BrushStroke(self.clone()), transformed))
     }
 
     ///

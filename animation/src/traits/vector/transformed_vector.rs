@@ -24,46 +24,83 @@ pub struct TransformedVector {
     transformed:    Arc<Vector>
 }
 
+impl TransformedVector {
+    ///
+    /// Creates a new transformed vector
+    /// 
+    pub fn new(original: Vector, transformed: Vector) -> TransformedVector {
+        TransformedVector {
+            original: Arc::new(original),
+            transformed: Arc::new(transformed)
+        }
+    }
+
+    ///
+    /// Returns the original vector for this transformed vector without any transformations applied to it
+    /// 
+    pub fn without_transformations(&self) -> Vector {
+        (&*self.original).clone()
+    }
+}
+
 impl VectorElement for TransformedVector {
     ///
     /// The ID of this element
     /// 
+    #[inline]
     fn id(&self) -> ElementId {
-        unimplemented!()
+        self.transformed.id()
     }
 
     ///
     /// Retrieves the paths for this element, if there are any
     /// 
+    #[inline]
     fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
-        unimplemented!()
+        self.transformed.to_path(properties)
     }
 
     ///
     /// Renders this vector element
     /// 
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
-        unimplemented!()
+        self.transformed.render(gc, properties)
     }
 
     ///
     /// Returns the properties to use for future elements
     /// 
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { properties }
+    #[inline]
+    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+        self.transformed.update_properties(properties)
+    }
 
     ///
     /// Returns a new element that is this element transformed along a motion at a particular moment
     /// in time.
     /// 
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
-        unimplemented!()
+        let transformed = self.transformed.motion_transform(motion, when);
+
+        Vector::Transformed(match transformed {
+            Vector::Transformed(transformed) => TransformedVector {
+                original:       Arc::clone(&self.original),
+                transformed:    Arc::clone(&transformed.transformed)
+            },
+
+            transformed => TransformedVector {
+                original:       Arc::clone(&self.original),
+                transformed:    Arc::new(transformed)
+            }
+        })
     }
 
     ///
     /// Fetches the control points for this element
     /// 
+    #[inline]
     fn control_points(&self) -> Vec<ControlPoint> {
-        unimplemented!()
+        self.transformed.control_points()
     }
 
     ///
@@ -71,7 +108,11 @@ impl VectorElement for TransformedVector {
     /// 
     /// The vector here specifies the updated position for each control point in control_points
     /// 
+    #[inline]
     fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
-        unimplemented!()
+        Vector::Transformed(TransformedVector {
+            original:       Arc::clone(&self.original),
+            transformed:    Arc::new(self.transformed.with_adjusted_control_points(new_positions))
+        })
     }
 }
