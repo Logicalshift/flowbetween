@@ -1,0 +1,10 @@
+[package]
+name        = "flo_ui_files"
+version     = "0.1.0"
+authors     = ["Andrew Hunter"]
+license     = "Apache-2.0"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "Routines for implementing user interfaces that manipulate files"
+
+[dependencies]
+flo_ui      = { path = "../ui", version = "^0.1.0" }
