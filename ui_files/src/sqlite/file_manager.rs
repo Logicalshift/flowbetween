@@ -42,19 +42,24 @@ impl SqliteFileManager {
         let _creating = CREATING_DATABASE.lock().unwrap();
 
         // This will be the 'root' data directory for the user
-        let mut data_dir = dirs::data_local_dir()
+        let mut root_path = dirs::data_local_dir()
             .or_else(|| dirs::data_dir())
             .unwrap();
 
         // Append the path components
-        data_dir.push(application_path);
-        data_dir.push(sub_path);
+        root_path.push(application_path);
+        root_path.push(sub_path);
 
         // Create the data directory if it does not exist
+        fs::create_dir_all(root_path.as_path()).unwrap();
+
+        // Create the subdirectories too
+        let mut data_dir = root_path.clone();
+        data_dir.push(DATA_DIR);
         fs::create_dir_all(data_dir.as_path()).unwrap();
 
         // Check for the file list database file
-        let mut database_file = data_dir.clone();
+        let mut database_file = root_path.clone();
         database_file.push(FILES_DB);
 
         // Connect to the Sqlite database
@@ -68,7 +73,7 @@ impl SqliteFileManager {
 
         // Put together the file manager
         SqliteFileManager {
-            root_path:  data_dir,
+            root_path:  root_path,
             core:       Desync::new(SqliteFileManagerCore {
                 file_list: file_list
             })
