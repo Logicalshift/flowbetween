@@ -11,3 +11,5 @@ flo_ui      = { path = "../ui", version = "^0.1.0" }
 
 desync      = "^0.1.2"
 rusqlite    = { version = "0.11", features = ["bundled"] }
+dirs        = "1.0"
+uuid        = { version = "0.6", features = [ "v4" ] }

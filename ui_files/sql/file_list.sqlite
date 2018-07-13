@@ -7,7 +7,7 @@
 /*
  * The paths of files and their display names (if present)
  */
-CREATE TABLE Files (
+CREATE TABLE Flo_Files (
     RelativePath    TEXT PRIMARY KEY NOT NULL,
     DisplayName     TEXT
 ) WITHOUT ROWID;
