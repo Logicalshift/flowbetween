@@ -6,7 +6,7 @@ use std::path::Path;
 /// 
 pub trait FileModel {
     /// The part of model that is shared between all open instances of the file
-    type SharedModel;
+    type SharedModel: Send+Sync;
 
     /// The model used for each session editing a single file 
     type InstanceModel;
