@@ -38,15 +38,11 @@ impl FileList {
     /// Returns the database representation of a path
     /// 
     fn string_for_path(path: &Path) -> String {
-        // We take the canonical form of the path
-        let canonical_path = path.canonicalize().ok();
-
         // As a safety measure, we don't allow any directories so only the last path component is used
-        let final_component = canonical_path
-            .and_then(|path| path.components()
-                .last()
-                .map(|component| component.as_os_str().to_string_lossy())
-                .map(|component| String::from(component)));
+        let final_component = path.components()
+            .last()
+            .map(|component| component.as_os_str().to_string_lossy())
+            .map(|component| String::from(component));
 
         final_component.unwrap_or_else(|| String::from(""))
     }
@@ -102,7 +98,7 @@ impl FileList {
     /// 
     pub fn display_name_for_path(&self, path: &Path) -> Option<String> {
         let path_string = Self::string_for_path(path);
-
+        
         self.connection.query_row("SELECT DisplayName WHERE RelativePath = ?", &[&path_string], |row| row.get(0)).ok()
     }
 }
