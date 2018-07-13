@@ -99,6 +99,6 @@ impl FileList {
     pub fn display_name_for_path(&self, path: &Path) -> Option<String> {
         let path_string = Self::string_for_path(path);
 
-        self.connection.query_row("SELECT DisplayName FROM Flo_Files WHERE RelativePath = ?", &[&path_string], |row| row.get(0)).ok()
+        self.connection.query_row("SELECT DisplayName FROM Flo_Files WHERE RelativePath = ?", &[&path_string], |row| row.get(0)).ok().and_then(|name| name)
     }
 }
