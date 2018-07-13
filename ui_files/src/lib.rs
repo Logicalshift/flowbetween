@@ -4,6 +4,7 @@ extern crate dirs;
 extern crate uuid;
 extern crate desync;
 extern crate rusqlite;
+#[macro_use] extern crate lazy_static;
 
 mod file_model;
 mod file_controller;

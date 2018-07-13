@@ -7,10 +7,16 @@ use desync::*;
 use rusqlite::*;
 
 use std::fs;
+use std::sync::*;
 use std::path::{Path, PathBuf};
 
 const FILES_DB: &str = "files.db";
 const DATA_DIR: &str = "data";
+
+lazy_static! {
+    // Prevents multiple threads from trying to create the database all at the same time
+    static ref CREATING_DATABASE: Mutex<()> = Mutex::new(());
+}
 
 struct SqliteFileManagerCore {
     /// The database containing the list of files
@@ -33,6 +39,8 @@ impl SqliteFileManager {
     /// Creates a new Sqlite file manager (in a sub-path of the main files directory)
     /// 
     pub fn new(application_path: &str, sub_path: &str) -> SqliteFileManager {
+        let _creating = CREATING_DATABASE.lock().unwrap();
+
         // This will be the 'root' data directory for the user
         let mut data_dir = dirs::data_local_dir()
             .or_else(|| dirs::data_dir())
