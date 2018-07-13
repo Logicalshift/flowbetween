@@ -13,6 +13,6 @@ flo_canvas          = { path = "../canvas", version = "^0.1.0" }
 flo_animation       = { path = "../animation", version = "^0.1.0" }
 
 itertools           = "^0.7.4"
-rusqlite            = { version = "0.11.0", features = ["bundled"] }
+rusqlite            = { version = "0.11", features = ["bundled"] }
 futures             = "^0.1.17"
 desync              = "^0.1.2"

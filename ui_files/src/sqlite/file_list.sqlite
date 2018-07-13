@@ -1,0 +1,13 @@
+/***
+ **
+ ** FlowBetween file list format version 1
+ **
+ **/
+
+/*
+ * The paths of files and their display names (if present)
+ */
+CREATE TABLE Files (
+    RelativePath    TEXT PRIMARY KEY NOT NULL,
+    DisplayName     TEXT
+) WITHOUT ROWID;
