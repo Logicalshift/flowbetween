@@ -15,7 +15,7 @@ pub trait FileModel {
     /// Opens the file found at a particular path, returning the model shared across all instances
     /// of this file. This is shared across all controllers using the same file.
     /// 
-    fn open(path: Path) -> Self::SharedModel;
+    fn open(path: &Path) -> Self::SharedModel;
 
     ///
     /// Creates a new instance model from the shared model. This is used for a single session.
