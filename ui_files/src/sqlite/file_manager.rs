@@ -38,6 +38,9 @@ impl SqliteFileManager {
     ///
     /// Creates a new Sqlite file manager (in a sub-path of the main files directory)
     /// 
+    /// Separate sub-paths can be used to allow for multi-user scenarios: in single-user
+    /// scenarios we usually set this to `"default"`.
+    /// 
     pub fn new(application_path: &str, sub_path: &str) -> SqliteFileManager {
         let _creating = CREATING_DATABASE.lock().unwrap();
 
