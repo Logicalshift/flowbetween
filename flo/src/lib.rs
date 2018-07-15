@@ -17,6 +17,7 @@ extern crate lazy_static;
 extern crate futures;
 extern crate itertools;
 
+pub mod chooser;
 pub mod editor;
 pub mod style;
 pub mod animation_canvas;
