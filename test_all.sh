@@ -5,6 +5,7 @@ cargo test -p flo_binding
 cargo test -p flo_curves
 cargo test -p flo_canvas
 cargo test -p flo_ui
+cargo test -p flo_ui_files
 cargo test -p flo_animation
 cargo test -p flo_anim_sqlite
 cargo test -p flo_static_files --features http
