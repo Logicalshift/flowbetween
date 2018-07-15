@@ -40,7 +40,7 @@ const TICK_HEIGHT: f32          = 5.0;
 const LAYER_HEIGHT: f32         = 24.0;
 
 /// Width of the layer name panel
-const LAYER_PANEL_WIDTH: f32    = 256.0;
+// const LAYER_PANEL_WIDTH: f32    = 256.0;
 
 ///
 /// The timeline allows the user to pick a point in time and create layers in the animation
