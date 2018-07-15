@@ -5,6 +5,7 @@ use super::timeline_controller::*;
 use super::super::model::*;
 
 use flo_ui::*;
+use flo_ui_files::*;
 use flo_binding::*;
 use flo_animation::*;
 
@@ -33,6 +34,9 @@ pub struct EditorController {
 }
 
 impl EditorController {
+    ///
+    /// Creates a new editor controller from an animation
+    /// 
     pub fn new<Anim: 'static+Animation+EditableAnimation>(animation: Anim) -> EditorController {
         let animation   = FloModel::new(animation);
 
@@ -156,3 +160,17 @@ impl Controller for EditorController {
         }
     }
 }
+
+/*
+impl<Anim: Animation+'static> FileController for EditorController<Anim> {
+    /// The model that this controller needs to be constructed
+    type Model = FloSharedModel<Anim>;
+
+    ///
+    /// Creates this controller with the specified instance model
+    /// 
+    fn open(model: FloSharedModel<Anim>) -> Self {
+        unimplemented!()
+    }
+}
+*/

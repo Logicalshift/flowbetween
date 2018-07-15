@@ -5,6 +5,7 @@ mod keyframe;
 mod frame;
 mod selection;
 mod animation;
+//mod shared_model;
 
 pub use self::timeline::*;
 pub use self::tools::*;
@@ -13,6 +14,7 @@ pub use self::keyframe::*;
 pub use self::frame::*;
 pub use self::selection::*;
 pub use self::animation::*;
+//pub use self::shared_model::*;
 
 use flo_binding::*;
 use flo_animation::*;
