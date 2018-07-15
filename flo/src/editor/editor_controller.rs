@@ -162,7 +162,7 @@ impl Controller for EditorController {
 }
 
 /*
-impl<Anim: Animation+'static> FileController for EditorController<Anim> {
+impl<Anim: FileAnimation+'static> FileController for EditorController<Anim> {
     /// The model that this controller needs to be constructed
     type Model = FloSharedModel<Anim>;
 
