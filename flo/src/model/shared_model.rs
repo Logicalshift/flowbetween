@@ -3,21 +3,20 @@ use super::flo_model::*;
 use flo_animation::*;
 use flo_ui_files::*;
 
-use std::sync::*;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
 ///
 /// Represents the file model for FlowBetween animations
 /// 
-pub struct SharedModel<Anim> {
+pub struct FloSharedModel<Anim> {
     /// The path where the animation can be opened from
     path: PathBuf,
 
     anim: PhantomData<Anim>
 }
 
-impl<Anim: FileAnimation+'static> FileModel for SharedModel<Anim> {
+impl<Anim: FileAnimation+'static> FileModel for FloSharedModel<Anim> {
     // TODO: we should probably actually share the file between instances :-)
     type InstanceModel = FloModel<Anim>;
 
@@ -25,8 +24,8 @@ impl<Anim: FileAnimation+'static> FileModel for SharedModel<Anim> {
     /// Opens the file found at a particular path, returning the model shared across all instances
     /// of this file. This is shared across all controllers using the same file.
     /// 
-    fn open(path: &Path) -> SharedModel<Anim> {
-        SharedModel {
+    fn open(path: &Path) -> FloSharedModel<Anim> {
+        FloSharedModel {
             path: PathBuf::from(path),
             anim: PhantomData
         }
