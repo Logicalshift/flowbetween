@@ -5,7 +5,6 @@ use super::timeline_controller::*;
 use super::super::model::*;
 
 use flo_ui::*;
-use flo_ui_files::*;
 use flo_ui_files::ui::*;
 use flo_binding::*;
 use flo_animation::*;
@@ -45,6 +44,13 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
     pub fn new(animation: Anim) -> EditorController<Anim> {
         let animation   = FloModel::new(animation);
 
+        Self::from_model(animation)
+    }
+
+    ///
+    /// Creates a new editor controller from a model
+    /// 
+    pub fn from_model(animation: FloModel<Anim>) -> EditorController<Anim> {
         let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new(&animation));
         let timeline    = Arc::new(TimelineController::new(&animation));
@@ -167,16 +173,21 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for EditorController<
     }
 }
 
-/*
-impl<Anim: FileAnimation+'static> FileController for EditorController<Anim> {
+impl<Anim: FileAnimation+EditableAnimation+'static> FileController for EditorController<Anim> {
     /// The model that this controller needs to be constructed
     type Model = FloSharedModel<Anim>;
 
     ///
     /// Creates this controller with the specified instance model
     /// 
-    fn open(model: FloSharedModel<Anim>) -> Self {
-        unimplemented!()
+    fn open(model: FloModel<Anim>) -> Self {
+        Self::from_model(model)
     }
 }
-*/
+
+impl<Anim: Animation> PartialEq for EditorController<Anim> {
+    fn eq(&self, _rhs: &Self) -> bool {
+        // These are never equal at the moment (this is needed for the binding library)
+        false
+    }
+}
