@@ -185,7 +185,7 @@ impl<Anim: 'static+Animation, ToolData: 'static+Send+Sync, T: 'static+Tool<Anim,
 mod test {
     use super::*;
     use super::super::brush_preview_action::*;
-    use animation::inmemory::*;
+    use flo_animation::inmemory::*;
 
     struct TestTool;
 

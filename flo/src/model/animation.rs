@@ -199,7 +199,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use animation::inmemory::*;
+    use flo_animation::inmemory::*;
     use futures::executor;
 
     #[test]
