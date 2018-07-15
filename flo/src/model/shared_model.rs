@@ -35,8 +35,8 @@ impl<Anim: FileAnimation+'static> FileModel for SharedModel<Anim> {
     ///
     /// Creates a new instance model from the shared model. This is used for a single session.
     /// 
-    fn new_instance(model: Arc<SharedModel<Anim>>) -> FloModel<Anim> {
-        let animation = Anim::open(model.path.as_path());
+    fn new_instance(&self) -> FloModel<Anim> {
+        let animation = Anim::open(self.path.as_path());
 
         FloModel::new(animation)
     }

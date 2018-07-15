@@ -1,4 +1,3 @@
-use std::sync::*;
 use std::path::Path;
 
 ///
@@ -17,5 +16,5 @@ pub trait FileModel : Send+Sync {
     ///
     /// Creates a new instance model from the shared model. This is used for a single session.
     /// 
-    fn new_instance(model: Arc<Self>) -> Self::InstanceModel;
+    fn new_instance(&self) -> Self::InstanceModel;
 }
