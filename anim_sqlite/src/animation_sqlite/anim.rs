@@ -6,6 +6,7 @@ use futures::*;
 use rusqlite::*;
 use std::time::Duration;
 use std::ops::{Deref, Range};
+use std::path::Path;
 
 impl SqliteAnimation {
     ///
@@ -68,5 +69,12 @@ impl Animation for SqliteAnimation {
 
     fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
         self
+    }
+}
+
+impl FileAnimation for SqliteAnimation {
+    fn open(path: &Path) -> SqliteAnimation {
+        // TODO: error handling!
+        Self::new_with_file(path).unwrap()
     }
 }
