@@ -35,7 +35,7 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     pub open_file: Binding<Option<PathBuf>>,
 
     /// The list of files to choose from
-    pub file_list: BindRef<Vec<FileModel>>
+    pub file_list: BindRef<Vec<FileModel>>,
 }
 
 impl<Chooser: FileChooser> FileChooserModel<Chooser> {
