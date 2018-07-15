@@ -6,10 +6,12 @@ use super::super::model::*;
 
 use flo_ui::*;
 use flo_ui_files::*;
+use flo_ui_files::ui::*;
 use flo_binding::*;
 use flo_animation::*;
 
 use std::sync::*;
+use std::marker::PhantomData;
 use std::collections::HashMap;
 
 use serde_json;
@@ -25,7 +27,10 @@ enum SubController {
 ///
 /// The editor controller manages the editing of a single file
 ///
-pub struct EditorController {
+pub struct EditorController<Anim: Animation> {
+    /// Phantom data so we can have the animation type
+    anim: PhantomData<Anim>,
+
     /// The main editor UI
     ui: Binding<Control>,
 
@@ -33,11 +38,11 @@ pub struct EditorController {
     subcontrollers: HashMap<SubController, Arc<dyn Controller>>
 }
 
-impl EditorController {
+impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
     ///
     /// Creates a new editor controller from an animation
     /// 
-    pub fn new<Anim: 'static+Animation+EditableAnimation>(animation: Anim) -> EditorController {
+    pub fn new(animation: Anim) -> EditorController<Anim> {
         let animation   = FloModel::new(animation);
 
         let canvas      = Arc::new(CanvasController::new(&animation));
@@ -54,6 +59,7 @@ impl EditorController {
         subcontrollers.insert(SubController::Toolbox,   toolbox);
 
         EditorController {
+            anim:           PhantomData,
             ui:             ui,
             subcontrollers: subcontrollers,
         }
@@ -145,7 +151,7 @@ impl EditorController {
     }
 }
 
-impl Controller for EditorController {
+impl<Anim: 'static+Animation+EditableAnimation> Controller for EditorController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::new(&self.ui)
     }
