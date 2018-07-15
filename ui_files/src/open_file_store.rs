@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 struct OpenFileStoreCore<Model: FileModel> {
     /// The files that are open in this store
-    open_files: HashMap<PathBuf, Arc<Model::SharedModel>>
+    open_files: HashMap<PathBuf, Arc<Model>>
 }
 
 ///
@@ -36,7 +36,7 @@ impl<Model: 'static+FileModel> OpenFileStore<Model> {
     ///
     /// Opens the shared data for a particular path
     /// 
-    pub fn open_shared(&self, path: &Path) -> Arc<Model::SharedModel> {
+    pub fn open_shared(&self, path: &Path) -> Arc<Model> {
         // Fetch the shared data for this path if it's already loaded, or create a new set by opening the file if not
         let shared = self.core.sync(|core| {
             let path_buf = PathBuf::from(path);
