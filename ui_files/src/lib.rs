@@ -1,4 +1,5 @@
 extern crate flo_ui;
+extern crate flo_binding;
 
 extern crate dirs;
 extern crate uuid;
