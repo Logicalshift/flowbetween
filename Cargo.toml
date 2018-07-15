@@ -15,6 +15,7 @@ http        = [ "flo_http_ui", "flo_http_ui_actix", "actix-web" ]
 flo_animation       = { path = "animation",     version="^0.1.0" }
 flo_anim_sqlite     = { path = "anim_sqlite",   version="^0.1.0" }
 flo_binding         = { path = "binding",       version="^0.1.0" }
+flo_ui_files        = { path = "ui_files",      version="^0.1.0" }
 flo_ui              = { path = "ui",            version="^0.1.0" }
 flo                 = { path = "flo",           version="^0.1.0" }
 

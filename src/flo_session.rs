@@ -1,12 +1,13 @@
 use flo_ui::*;
 use flo_ui::Image;
+use flo_ui_files::ui::*;
 use flo_binding::*;
 use flo_animation::*;
 //use flo_animation::inmemory::*;
 use flo_anim_sqlite::*;
 
-use flo::*;
 use flo::style::*;
+use flo::chooser::*;
 
 use std::time::Duration;
 use std::sync::*;
@@ -36,12 +37,13 @@ impl FlowBetweenSession {
     pub fn new() -> FlowBetweenSession {
         let images = Arc::new(ResourceManager::new());
 
-        // Create a new animation
-        let animation = Self::create_inmemory_animation();
-
         // Some images for the root controller
         let flo = images.register(png_static(include_bytes!("../png/Flo-Orb-small.png")));
         images.assign_name(&flo, "flo");
+
+        // Create the file chooser
+        let file_chooser = FloChooser::<SqliteAnimation>::new();
+        let file_chooser = FileChooserController::new(file_chooser, NullController::new());
 
         // Create the session
         FlowBetweenSession {
@@ -50,7 +52,7 @@ impl FlowBetweenSession {
                             .with(Appearance::Foreground(DEFAULT_TEXT))
                             .with(Appearance::Background(MAIN_BACKGROUND))
                             .with_controller(&serde_json::to_string(&SubController::Editor).unwrap())),
-            editor:     Arc::new(EditorController::new(animation)),
+            editor:     Arc::new(file_chooser),
             images:     images
         }
     }
@@ -76,7 +78,6 @@ impl FlowBetweenSession {
         
         animation
     }
-    */
 
     fn create_inmemory_animation() -> SqliteAnimation {
         // Create a new animation
@@ -98,6 +99,7 @@ impl FlowBetweenSession {
         
         animation
     }
+    */
 }
 
 impl Controller for FlowBetweenSession {
