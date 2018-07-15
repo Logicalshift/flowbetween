@@ -1,4 +1,4 @@
-use super::file_model::*;
+use super::super::file_model::*;
 
 use flo_ui::*;
 
