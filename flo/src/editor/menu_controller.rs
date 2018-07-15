@@ -3,9 +3,9 @@ use super::super::style::*;
 use super::super::model::*;
 use super::super::tools::*;
 
-use ui::*;
-use binding::*;
-use animation::*;
+use flo_ui::*;
+use flo_binding::*;
+use flo_animation::*;
 
 use std::sync::*;
 use std::collections::HashMap;

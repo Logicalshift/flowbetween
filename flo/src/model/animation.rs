@@ -1,6 +1,6 @@
 use super::*;
 
-use animation::*;
+use flo_animation::*;
 use futures::*;
 
 use std::ops::{Deref, Range};

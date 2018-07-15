@@ -1,7 +1,7 @@
 use super::generate_images::*;
 
-use ui::*;
-use canvas::*;
+use flo_ui::*;
+use flo_canvas::*;
 
 const HSLUV_LIGHTNESS: f32  = 65.0;
 const HSLUV_SATURATION: f32 = 100.0;

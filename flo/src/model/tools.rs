@@ -2,9 +2,9 @@ use super::super::tools::*;
 use super::super::model::*;
 use super::super::standard_tools::*;
 
-use ui::*;
-use binding::*;
-use animation::*;
+use flo_ui::*;
+use flo_binding::*;
+use flo_animation::*;
 
 use std::sync::*;
 use std::collections::HashMap;

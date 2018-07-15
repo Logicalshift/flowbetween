@@ -2,10 +2,10 @@ use super::super::model::*;
 use super::super::tools::*;
 use super::super::animation_canvas::*;
 
-use ui::*;
+use flo_ui::*;
+use flo_binding::*;
+use flo_animation::*;
 use desync::*;
-use binding::*;
-use animation::*;
 
 use std::sync::*;
 use std::time::Duration;
@@ -246,7 +246,7 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
-        use ui::ActionParameter::*;
+        use self::ActionParameter::*;
 
         match (action_id, action_parameter) {
             (PAINT_ACTION, &Paint(ref device, ref painting))    => self.paint(device, painting),

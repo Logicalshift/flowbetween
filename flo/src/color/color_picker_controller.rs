@@ -1,8 +1,8 @@
 use super::hsluv_picker_controller::*;
 
-use ui::*;
-use canvas::*;
-use binding::*;
+use flo_ui::*;
+use flo_canvas::*;
+use flo_binding::*;
 
 use std::sync::*;
 

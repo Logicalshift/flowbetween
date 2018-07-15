@@ -8,9 +8,9 @@ pub use self::menu_controller::*;
 pub use self::timeline_controller::*;
 pub use self::toolbox_controller::*;
 
-use ui::*;
-use binding::*;
-use animation::*;
+use flo_ui::*;
+use flo_binding::*;
+use flo_animation::*;
 use super::model::*;
 
 use std::sync::*;
@@ -64,7 +64,7 @@ impl EditorController {
     /// Creates the menu bar control for this session
     ///
     fn menu_bar() -> Control {
-        use ui::Position::*;
+        use self::Position::*;
 
         Control::container()
             .with(Bounds {
@@ -80,7 +80,7 @@ impl EditorController {
     /// Creates the timeline control
     ///
     pub fn timeline() -> Control {
-        use ui::Position::*;
+        use self::Position::*;
 
         Control::container()
             .with(Bounds {
@@ -96,7 +96,7 @@ impl EditorController {
     /// Creates the toolbar control
     ///
     pub fn toolbox() -> Control {
-        use ui::Position::*;
+        use self::Position::*;
 
         Control::container()
             .with(Bounds {
@@ -112,7 +112,7 @@ impl EditorController {
     /// Creates the canvas control
     ///
     pub fn canvas() -> Control {
-        use ui::Position::*;
+        use self::Position::*;
 
         Control::container()
             .with(Bounds {
@@ -128,7 +128,7 @@ impl EditorController {
     /// Creates the UI tree for this controller
     ///
     pub fn ui() -> Control {
-        use ui::Position::*;
+        use self::Position::*;
 
         let menu_bar    = Self::menu_bar();
         let timeline    = Self::timeline();

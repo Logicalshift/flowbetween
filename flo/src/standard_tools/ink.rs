@@ -2,10 +2,10 @@ use super::super::menu::*;
 use super::super::tools::*;
 use super::super::model::*;
 
-use ui::*;
-use canvas::*;
-use binding::*;
-use animation::*;
+use flo_ui::*;
+use flo_canvas::*;
+use flo_binding::*;
+use flo_animation::*;
 
 use futures::*;
 use std::sync::*;

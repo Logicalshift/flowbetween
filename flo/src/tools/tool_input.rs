@@ -1,4 +1,4 @@
-use ui::*;
+use flo_ui::*;
 
 use std::sync::*;
 

@@ -1,6 +1,6 @@
-use binding::*;
-use animation::*;
-use curves::bezier::path::path_contains_point;
+use flo_binding::*;
+use flo_animation::*;
+use flo_curves::bezier::path::path_contains_point;
 
 use std::sync::*;
 use std::collections::HashMap;

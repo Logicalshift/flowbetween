@@ -1,5 +1,5 @@
-use ui::*;
-use binding::*;
+use flo_ui::*;
+use flo_binding::*;
 
 ///
 /// Controller used when no other menu controller is available

@@ -1,11 +1,11 @@
 #![warn(bare_trait_objects)]
 
-extern crate flo_ui as ui;
-extern crate flo_curves as curves;
-extern crate flo_canvas as canvas;
-extern crate flo_binding as binding;
+extern crate flo_ui;
+extern crate flo_curves;
+extern crate flo_canvas;
+extern crate flo_binding;
 extern crate flo_ui_files;
-extern crate flo_animation as animation;
+extern crate flo_animation;
 
 extern crate desync;
 extern crate serde;

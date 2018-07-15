@@ -1,10 +1,10 @@
 use super::super::style::*;
 use super::super::model::*;
 
-use ui::*;
-use canvas::*;
-use binding::*;
-use animation::*;
+use flo_ui::*;
+use flo_canvas::*;
+use flo_binding::*;
+use flo_animation::*;
 
 use std::sync::*;
 use std::time::Duration;
@@ -435,7 +435,7 @@ impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
-        use ui::ActionParameter::*;
+        use self::ActionParameter::*;
 
         match (action_id, action_parameter) {
             (SCROLL_TIMELINE, &VirtualScroll((x, y), (width, height))) => {

@@ -1,9 +1,9 @@
 use super::layer::*;
 use super::keyframe::*;
 
-use binding::*;
-use binding::Bound;
-use animation::*;
+use flo_binding::*;
+use flo_binding::Bound;
+use flo_animation::*;
 
 use std::sync::*;
 use std::ops::Range;

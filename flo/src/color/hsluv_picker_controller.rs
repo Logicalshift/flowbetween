@@ -1,8 +1,8 @@
 use super::images::*;
 
-use ui::*;
-use canvas::*;
-use binding::*;
+use flo_ui::*;
+use flo_canvas::*;
+use flo_binding::*;
 
 use std::f32;
 use std::sync::*;
@@ -255,8 +255,8 @@ impl Controller for HsluvPickerController {
     fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> { None }
 
     fn action(&self, action_id: &str, action_data: &ActionParameter) {
-        use ui::ActionParameter::*;
-        use ui::PropertyValue::*;
+        use self::ActionParameter::*;
+        use self::PropertyValue::*;
 
         match (action_id, action_data) {
             ("SetHue", &Value(Float(new_hue))) => {

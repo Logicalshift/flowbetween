@@ -1,7 +1,7 @@
 use super::brush_preview_action::*;
 use super::overlay_action::*;
 
-use animation::*;
+use flo_animation::*;
 
 ///
 /// Represents an editing action for a tool

@@ -1,6 +1,6 @@
 use super::generic_tool::*;
 
-use animation::*;
+use flo_animation::*;
 
 use std::sync::*;
 

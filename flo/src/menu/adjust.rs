@@ -1,7 +1,7 @@
 use super::controls;
 
-use ui::*;
-use binding::*;
+use flo_ui::*;
+use flo_binding::*;
 
 ///
 /// The menu controller for the adjust tool

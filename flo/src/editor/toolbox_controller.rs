@@ -2,9 +2,9 @@ use super::super::tools::*;
 use super::super::style::*;
 use super::super::model::*;
 
-use ui::*;
-use binding::*;
-use animation::*;
+use flo_ui::*;
+use flo_binding::*;
+use flo_animation::*;
 
 use std::sync::*;
 
@@ -125,7 +125,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     /// Creates a new tool control
     ///
     fn make_tool(name: &str, viewmodel: &DynamicViewModel, image: Option<Resource<Image>>) -> Control {
-        use ui::ActionTrigger::*;
+        use self::ActionTrigger::*;
 
         // Decide if this is the selected tool
         let selected_tool   = viewmodel.get_property("SelectedTool");

@@ -14,8 +14,8 @@ pub use self::frame::*;
 pub use self::selection::*;
 pub use self::animation::*;
 
-use binding::*;
-use animation::*;
+use flo_binding::*;
+use flo_animation::*;
 
 use std::sync::*;
 

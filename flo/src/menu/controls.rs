@@ -1,6 +1,6 @@
 use super::super::style::*;
 
-use ui::*;
+use flo_ui::*;
 
 ///
 /// A divider for the menu controls

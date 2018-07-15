@@ -1,4 +1,4 @@
-use canvas::*;
+use flo_canvas::*;
 
 ///
 /// Actions for creating drawing overlays

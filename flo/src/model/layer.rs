@@ -1,5 +1,5 @@
-use binding::*;
-use animation::*;
+use flo_binding::*;
+use flo_animation::*;
 
 ///
 /// Viewmodel for a layer

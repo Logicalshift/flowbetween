@@ -3,7 +3,7 @@ use super::tool_action::*;
 use super::generic_tool::*;
 use super::super::model::*;
 
-use animation::*;
+use flo_animation::*;
 
 use futures::*;
 use futures::executor;

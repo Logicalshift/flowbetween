@@ -3,8 +3,8 @@ use super::tool_input::*;
 use super::tool_action::*;
 use super::super::model::*;
 
-use ui::*;
-use animation::*;
+use flo_ui::*;
+use flo_animation::*;
 
 use futures::*;
 use futures::stream;

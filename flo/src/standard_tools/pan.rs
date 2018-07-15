@@ -1,7 +1,7 @@
 use super::super::tools::*;
 use super::super::model::*;
 
-use animation::*;
+use flo_animation::*;
 
 use std::sync::*;
 

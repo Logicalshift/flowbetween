@@ -1,11 +1,11 @@
 use super::ink::*;
 use super::controls;
 
-use ui::*;
-use canvas::*;
-use binding::*;
-use animation::*;
-use animation::brushes::*;
+use flo_ui::*;
+use flo_canvas::*;
+use flo_binding::*;
+use flo_animation::*;
+use flo_animation::brushes::*;
 
 use std::f32;
 use std::sync::*;
@@ -233,7 +233,7 @@ impl Controller for EraserMenuController {
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
-        use ui::ActionParameter::*;
+        use self::ActionParameter::*;
 
         match (action_id, action_parameter) {
             ("ChangeSizeEdit", &Value(PropertyValue::Float(new_size))) => {

@@ -1,5 +1,5 @@
-use binding::*;
-use animation::*;
+use flo_binding::*;
+use flo_animation::*;
 
 ///
 /// Model representing the item that the user has selected

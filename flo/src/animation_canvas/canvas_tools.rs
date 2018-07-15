@@ -2,11 +2,11 @@ use super::canvas_renderer::*;
 use super::super::tools::*;
 use super::super::model::*;
 
-use ui::*;
-use canvas::*;
-use binding::*;
-use animation::*;
-use animation::brushes::*;
+use flo_ui::*;
+use flo_canvas::*;
+use flo_binding::*;
+use flo_animation::*;
+use flo_animation::brushes::*;
 
 use futures::*;
 use futures::executor::Spawn;
