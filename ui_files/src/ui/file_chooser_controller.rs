@@ -117,7 +117,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                 Control::empty()
                                     .with(Bounds::stretch_horiz(1.0)),
                                 Control::button()
+                                    .with(Bounds::next_horiz(120.0))
                                     .with(vec![Control::label()
+                                        .with(Bounds::fill_all())
+                                        .with(TextAlign::Center)
                                         .with("+ New file")]),
                                 Control::empty()
                                     .with(Bounds::stretch_horiz(1.0))
