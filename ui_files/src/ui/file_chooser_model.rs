@@ -4,6 +4,7 @@ use super::super::file_manager::*;
 use flo_binding::*;
 
 use std::sync::*;
+use std::ops::Range;
 use std::path::PathBuf;
 
 ///
@@ -36,6 +37,9 @@ pub struct FileChooserModel<Chooser: FileChooser> {
 
     /// The list of files to choose from
     pub file_list: BindRef<Vec<FileModel>>,
+
+    /// The range of files to display
+    pub file_range: Binding<Range<u32>>,
 }
 
 impl<Chooser: FileChooser> FileChooserModel<Chooser> {
@@ -54,7 +58,8 @@ impl<Chooser: FileChooser> FileChooserModel<Chooser> {
         FileChooserModel {
             active_controller:  active_controller,
             open_file:          open_file,
-            file_list:          file_list
+            file_list:          file_list,
+            file_range:         bind(0..0)
         }
     }
 
@@ -64,6 +69,10 @@ impl<Chooser: FileChooser> FileChooserModel<Chooser> {
     fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Vec<FileModel>> {
         // Get all of the files from the file manager
         let files = file_manager.get_all_files();
+
+        let files = (0..1024).into_iter()
+            .map(|_index| PathBuf::from("/tmp/flo-test.file"))
+            .collect::<Vec<_>>();
         
         // Create the file models from the paths
         let files = files.into_iter()
