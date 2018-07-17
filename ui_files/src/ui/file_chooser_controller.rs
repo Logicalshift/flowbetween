@@ -11,8 +11,8 @@ use std::sync::*;
 
 const LOGO_HEIGHT: f32      = 256.0;
 const NUM_COLUMNS: u32      = 3;
-const FILE_WIDTH: f32       = 128.0;
-const FILE_HEIGHT: f32      = 80.0;
+const FILE_WIDTH: f32       = 256.0;
+const FILE_HEIGHT: f32      = 120.0;
 const VIRTUAL_HEIGHT: f32   = 512.0;
 
 ///
