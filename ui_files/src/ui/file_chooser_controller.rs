@@ -12,7 +12,7 @@ use std::sync::*;
 const LOGO_HEIGHT: f32      = 256.0;
 const NUM_COLUMNS: u32      = 3;
 const FILE_WIDTH: f32       = 256.0;
-const FILE_HEIGHT: f32      = 120.0;
+const FILE_HEIGHT: f32      = 180.0;
 const VIRTUAL_HEIGHT: f32   = 512.0;
 
 ///
@@ -119,7 +119,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 Control::scrolling_container()
                     .with(Bounds::fill_all())
                     .with((ActionTrigger::VirtualScroll(8192.0, VIRTUAL_HEIGHT), "ScrollFiles"))
-                    .with(Scroll::MinimumContentSize(1024.0, height))
+                    .with(Scroll::MinimumContentSize((NUM_COLUMNS as f32)*FILE_WIDTH, height))
                     .with(vec![
                         // Logo
                         Control::container()
