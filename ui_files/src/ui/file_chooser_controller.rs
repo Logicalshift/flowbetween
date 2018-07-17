@@ -103,7 +103,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
             } else {
                 
-                // The files to display
+                // The file controls that are currently on-screen (virtualised)
                 let file_range  = file_range.get();
                 let file_list   = file_list.get();
 
