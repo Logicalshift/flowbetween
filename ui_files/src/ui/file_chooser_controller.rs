@@ -68,7 +68,16 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     /// 
     fn file_ui(file: &FileModel) -> Control {
         Control::container()
-            .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.9, 1.0)))
+            .with(vec![
+                Control::empty()
+                    .with(Bounds::stretch_vert(1.0))
+                    .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.9, 1.0)))
+                    .with(ControlAttribute::Padding((16, 2), (16, 2))),
+                Control::label()
+                    .with(TextAlign::Center)
+                    .with(Bounds::next_vert(24.0))
+                    .with(file.name.get())
+            ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
     }
 
@@ -160,7 +169,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                     .with(Bounds::stretch_horiz(1.0)),
                                 Control::container()
                                     .with(Bounds::next_horiz(FILE_WIDTH * (NUM_COLUMNS as f32)))
-                                    .with(files),
+                                    .with(files)
+                                    .with(Appearance::Foreground(Color::Rgba(1.0, 1.0, 1.0, 1.0)))
+                                    .with(Font::Size(11.0))
+                                    .with(Font::Weight(FontWeight::Light)),
                                 Control::empty()
                                     .with(Bounds::stretch_horiz(1.0)),
                             ])
