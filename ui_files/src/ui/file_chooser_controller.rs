@@ -9,10 +9,11 @@ use flo_binding::*;
 
 use std::sync::*;
 
-const LOGO_HEIGHT: f32  = 256.0;
-const NUM_COLUMNS: u32  = 3;
-const FILE_WIDTH: f32   = 128.0;
-const FILE_HEIGHT: f32  = 80.0;
+const LOGO_HEIGHT: f32      = 256.0;
+const NUM_COLUMNS: u32      = 3;
+const FILE_WIDTH: f32       = 128.0;
+const FILE_HEIGHT: f32      = 80.0;
+const VIRTUAL_HEIGHT: f32   = 512.0;
 
 ///
 /// The file chooser controller can be used as a front-end for tablet or web-style applications
@@ -65,9 +66,11 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates a control representing a file
     /// 
-    fn file_ui(file: FileModel) -> Control {
+    fn file_ui(file: &FileModel) -> Control {
         Control::container()
-            .with(Bounds { x1: Position::Start, y1: Position::Start, x2: Position::Offset(FILE_WIDTH), y2: Position::Offset(FILE_HEIGHT) })
+            .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.9, 1.0)))
+            .with(ControlAttribute::Padding((2, 2), (2, 2)))
+            .with(Bounds { x1: Position::Start, y1: Position::Start, x2: Position::At(FILE_WIDTH), y2: Position::At(FILE_HEIGHT) })
     }
 
     ///
@@ -75,7 +78,9 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     /// 
     fn ui(model: &FileChooserModel<Chooser>) -> BindRef<Control> {
         // Create references to the parts of the model we need
-        let controller = model.active_controller.clone();
+        let controller  = model.active_controller.clone();
+        let file_list   = model.file_list.clone();
+        let file_range  = model.file_range.clone();
 
         // Generate the UI
         let ui = computed(move || {
@@ -90,10 +95,27 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
             } else {
                 
+                // The files to display
+                let file_range  = file_range.get();
+                let file_list   = file_list.get();
+
+                let files       = file_range.into_iter()
+                    .filter_map(|file_index| file_list.get(file_index as usize).map(|file| (file_index, file)))
+                    .map(|(file_index, file_model)| {
+                        let row     = file_index / NUM_COLUMNS;
+                        let column  = file_index % NUM_COLUMNS;
+                        let x       = (column as f32) * FILE_WIDTH;
+                        let y       = (row as f32) * FILE_HEIGHT;
+
+                        Self::file_ui(file_model)
+                            .with(Bounds { x1: Position::At(x), y1: Position::At(y), x2: Position::Offset(FILE_WIDTH), y2: Position::Offset(FILE_HEIGHT) })
+                    })
+                    .collect::<Vec<_>>();
+
                 // The UI allows the user to pick a file
                 Control::scrolling_container()
                     .with(Bounds::fill_all())
-                    .with((ActionTrigger::VirtualScroll(8192.0, 512.0), "ScrollFiles"))
+                    .with((ActionTrigger::VirtualScroll(8192.0, VIRTUAL_HEIGHT), "ScrollFiles"))
                     .with(Scroll::MinimumContentSize(1024.0, 8192.0))
                     .with(vec![
                         // Logo
@@ -130,6 +152,15 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         // Actual files
                         Control::container()
                             .with(Bounds::fill_vert())
+                            .with(vec![
+                                Control::empty()
+                                    .with(Bounds::stretch_horiz(1.0)),
+                                Control::container()
+                                    .with(Bounds::next_horiz(FILE_WIDTH * (NUM_COLUMNS as f32)))
+                                    .with(files),
+                                Control::empty()
+                                    .with(Bounds::stretch_horiz(1.0)),
+                            ])
                     ])
 
             }
@@ -172,7 +203,31 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
     }
 
     /// Callback for when a control associated with this controller generates an action
-    fn action(&self, _action_id: &str, _action_data: &ActionParameter) { 
+    fn action(&self, action_id: &str, action_data: &ActionParameter) { 
+        match (action_id, action_data) {
+            ("ScrollFiles", ActionParameter::VirtualScroll((_x1, y1), (_x2, y2))) => {
+                // Get the position of the files
+                let top     = (*y1 as f32) * VIRTUAL_HEIGHT;
+                let bottom  = (*y2 as f32) * VIRTUAL_HEIGHT;
+
+                // Correct for logo position
+                let top     = top - LOGO_HEIGHT;
+                let bottom  = bottom - LOGO_HEIGHT;
+
+                // Get the file range
+                let top     = (top/FILE_HEIGHT).floor().max(0.0);
+                let bottom  = (bottom/FILE_HEIGHT).ceil().max(0.0);
+
+                // Update the model
+                let top     = top as u32;
+                let bottom  = bottom as u32;
+                let top     = top * NUM_COLUMNS;
+                let bottom  = bottom * NUM_COLUMNS;
+                self.model.file_range.clone().set(top..(bottom+1));
+            },
+
+            _ => ()
+        }
     }
 
     /// Retrieves a resource manager containing the images used in the UI for this controller
