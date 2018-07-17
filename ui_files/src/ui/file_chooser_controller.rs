@@ -70,7 +70,6 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         Control::container()
             .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.9, 1.0)))
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
-            .with(Bounds { x1: Position::Start, y1: Position::Start, x2: Position::At(FILE_WIDTH), y2: Position::At(FILE_HEIGHT) })
     }
 
     ///
@@ -108,15 +107,19 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         let y       = (row as f32) * FILE_HEIGHT;
 
                         Self::file_ui(file_model)
-                            .with(Bounds { x1: Position::At(x), y1: Position::At(y), x2: Position::Offset(FILE_WIDTH), y2: Position::Offset(FILE_HEIGHT) })
+                            .with(Bounds { x1: Position::At(x), y1: Position::At(y), x2: Position::At(x+FILE_WIDTH), y2: Position::At(y+FILE_HEIGHT) })
                     })
                     .collect::<Vec<_>>();
+                
+                // Work out the height of the container
+                let num_rows    = ((file_list.len() as i32)-1) / (NUM_COLUMNS as i32) + 1;
+                let height      = LOGO_HEIGHT + 8.0 + 24.0 + FILE_HEIGHT * (num_rows as f32);
 
                 // The UI allows the user to pick a file
                 Control::scrolling_container()
                     .with(Bounds::fill_all())
                     .with((ActionTrigger::VirtualScroll(8192.0, VIRTUAL_HEIGHT), "ScrollFiles"))
-                    .with(Scroll::MinimumContentSize(1024.0, 8192.0))
+                    .with(Scroll::MinimumContentSize(1024.0, height))
                     .with(vec![
                         // Logo
                         Control::container()
@@ -205,25 +208,25 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
     /// Callback for when a control associated with this controller generates an action
     fn action(&self, action_id: &str, action_data: &ActionParameter) { 
         match (action_id, action_data) {
-            ("ScrollFiles", ActionParameter::VirtualScroll((_x1, y1), (_x2, y2))) => {
+            ("ScrollFiles", ActionParameter::VirtualScroll((_x, y), (_width, height))) => {
                 // Get the position of the files
-                let top     = (*y1 as f32) * VIRTUAL_HEIGHT;
-                let bottom  = (*y2 as f32) * VIRTUAL_HEIGHT;
+                let top     = (*y as f32) * VIRTUAL_HEIGHT;
+                let bottom  = ((y+height) as f32) * VIRTUAL_HEIGHT;
 
                 // Correct for logo position
                 let top     = top - LOGO_HEIGHT;
                 let bottom  = bottom - LOGO_HEIGHT;
 
                 // Get the file range
-                let top     = (top/FILE_HEIGHT).floor().max(0.0);
-                let bottom  = (bottom/FILE_HEIGHT).ceil().max(0.0);
+                let top     = (top/FILE_HEIGHT - 1.0).floor().max(0.0);
+                let bottom  = (bottom/FILE_HEIGHT + 2.0).ceil().max(0.0);
 
                 // Update the model
                 let top     = top as u32;
                 let bottom  = bottom as u32;
                 let top     = top * NUM_COLUMNS;
                 let bottom  = bottom * NUM_COLUMNS;
-                self.model.file_range.clone().set(top..(bottom+1));
+                self.model.file_range.clone().set(top..bottom);
             },
 
             _ => ()
