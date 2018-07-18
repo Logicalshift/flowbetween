@@ -69,10 +69,6 @@ impl<Chooser: FileChooser> FileChooserModel<Chooser> {
     fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Vec<FileModel>> {
         // Get all of the files from the file manager
         let files = file_manager.get_all_files();
-
-        let files = (0..1024).into_iter()
-            .map(|_index| PathBuf::from("/tmp/flo-test.file"))
-            .collect::<Vec<_>>();
         
         // Create the file models from the paths
         let files = files.into_iter()
