@@ -11,7 +11,7 @@ use std::sync::*;
 /// 
 pub fn bind_stream<S, Value, UpdateFn>(stream: S, initial_value: Value, update: UpdateFn) -> StreamBinding<Value> /* -> impl Bound<Value> */
 where   S:          'static+Send+Stream,
-        Value:      'static+Send+Clone,
+        Value:      'static+Send+Clone+PartialEq,
         UpdateFn:   'static+Send+FnMut(Value, S::Item) -> Value,
         S::Item:    Send,
         S::Error:   Send {
@@ -29,11 +29,16 @@ where   S:          'static+Send+Stream,
         move |core, next_item| {
             if let Ok(next_item) = next_item {
                 // Update the value
-                core.value = update(core.value.clone(), next_item);
+                let new_value = update(core.value.clone(), next_item);
 
-                // Notify anything that's listening
-                core.notifications.retain(|notify| notify.is_in_use());
-                core.notifications.iter().for_each(|notify| { notify.mark_as_changed(); });
+                if new_value != core.value {
+                    // Update the value in the core
+                    core.value = new_value;
+
+                    // Notify anything that's listening
+                    core.notifications.retain(|notify| notify.is_in_use());
+                    core.notifications.iter().for_each(|notify| { notify.mark_as_changed(); });
+                }
             } else {
                 // TODO: stream errors are currently ignored (not clear if we should handle them or not)
             }
@@ -155,5 +160,33 @@ mod test {
         thread::sleep(Duration::from_millis(5));
         assert!(*notified.lock().unwrap() == true);
         assert!(binding.get() == 42);
+    }
+
+    #[test]
+    pub fn no_notification_on_no_change() {
+        // Create somewhere to send our notifications
+        let (sender, receiver) = mpsc::channel(0);
+
+        // Send the receiver stream to a new binding
+        let binding = bind_stream(receiver, 0, |_old_value, new_value| new_value);
+
+        // Create the notification
+        let notified        = Arc::new(Mutex::new(false));
+        let also_notified   = Arc::clone(&notified);
+
+        binding.when_changed(notify(move || *also_notified.lock().unwrap() = true)).keep_alive();
+
+        // Should be initially un-notified
+        thread::sleep(Duration::from_millis(5));
+        assert!(*notified.lock().unwrap() == false);
+
+        // Send a value to the sender. This leaves the final value the same, so no notification should be generated.
+        let mut sender = executor::spawn(sender);
+        sender.wait_send(0).unwrap();
+
+        // Should get notified
+        thread::sleep(Duration::from_millis(5));
+        assert!(*notified.lock().unwrap() == false);
+        assert!(binding.get() == 0);
     }
 }
