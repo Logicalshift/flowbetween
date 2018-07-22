@@ -62,6 +62,7 @@
 //!
 #![warn(bare_trait_objects)]
 
+extern crate desync;
 extern crate futures;
 
 mod traits;
@@ -72,6 +73,7 @@ mod bindref;
 mod notify_fn;
 mod releasable;
 mod follow;
+mod bind_stream;
 
 pub use self::traits::*;
 pub use self::binding::*;
@@ -79,6 +81,7 @@ pub use self::computed::*;
 pub use self::bindref::*;
 pub use self::notify_fn::*;
 pub use self::follow::*;
+pub use self::bind_stream::*;
 
 ///
 /// Creates a simple bound value with the specified initial value
