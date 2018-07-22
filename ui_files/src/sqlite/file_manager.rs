@@ -1,10 +1,13 @@
 use super::file_list::*;
+use super::super::file_update::*;
 use super::super::file_manager::*;
 
 use dirs;
 use uuid::*;
 use desync::*;
 use rusqlite::*;
+use futures::*;
+use futures::sync::mpsc;
 
 use std::fs;
 use std::sync::*;
@@ -20,7 +23,10 @@ lazy_static! {
 
 struct SqliteFileManagerCore {
     /// The database containing the list of files
-    file_list: FileList
+    file_list: FileList,
+
+    /// The senders for updates to this file manager
+    updates: Vec<mpsc::Sender<FileUpdate>>
 }
 
 ///
@@ -78,7 +84,8 @@ impl SqliteFileManager {
         SqliteFileManager {
             root_path:  root_path,
             core:       Desync::new(SqliteFileManagerCore {
-                file_list: file_list
+                file_list:  file_list,
+                updates:    vec![]
             })
         }
     }
@@ -182,6 +189,20 @@ impl FileManager for SqliteFileManager {
         if let Some(path) = path {
             self.core.async(move |core| core.file_list.set_display_name_for_path(path.as_path(), &display_name))
         }
+    }
+
+    ///
+    /// Returns a stream of updates indicating changes made to the file manager
+    /// 
+    fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>> {
+        // Create the channel for sending updates
+        let (sender, receiver) = mpsc::channel(100);
+
+        // Store the sender in the core
+        self.core.async(move |core| core.updates.push(sender));
+
+        // Result is the receiver
+        Box::new(receiver)
     }
 }
 

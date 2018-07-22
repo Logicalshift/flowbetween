@@ -16,3 +16,4 @@ rusqlite    = { version = "0.11", features = ["bundled"] }
 dirs        = "1.0"
 uuid        = { version = "0.6", features = [ "v4" ] }
 lazy_static = "1.0"
+futures     = "0.1"

@@ -1,3 +1,7 @@
+use super::file_update::*;
+
+use futures::*;
+
 use std::path::{Path, PathBuf};
 
 ///
@@ -26,4 +30,9 @@ pub trait FileManager : Send+Sync {
     /// result)
     ///
     fn set_display_name_for_path(&self, path: &Path, display_name: String);
+
+    ///
+    /// Returns a stream of updates indicating changes made to the file manager
+    /// 
+    fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>>;
 }

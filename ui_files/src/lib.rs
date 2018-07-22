@@ -7,6 +7,7 @@ extern crate flo_binding;
 extern crate dirs;
 extern crate uuid;
 extern crate desync;
+extern crate futures;
 extern crate rusqlite;
 #[macro_use] extern crate lazy_static;
 
