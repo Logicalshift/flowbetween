@@ -1,5 +1,6 @@
 use super::traits::*;
 use super::releasable::*;
+use super::binding_context::*;
 
 use futures::*;
 use desync::*;
@@ -52,6 +53,7 @@ where   S:          'static+Send+Stream,
 ///
 /// Binding that represents the result of 
 /// 
+#[derive(Clone)]
 pub struct StreamBinding<Value: Send> {
     /// The current value of this binding
     core: Arc<Desync<StreamBindingCore<Value>>>
@@ -73,6 +75,8 @@ impl<Value: 'static+Send+Clone> Bound<Value> for StreamBinding<Value> {
     /// Retrieves the value stored by this binding
     ///
     fn get(&self) -> Value {
+        BindingContext::add_dependency(self.clone());
+
         self.core.sync(|core| core.value.clone())
     }
 }
