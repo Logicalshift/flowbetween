@@ -1,6 +1,7 @@
 use super::file_chooser::*;
 use super::file_chooser_model::*;
 use super::file_controller::*;
+use super::super::file_manager::*;
 use super::super::open_file_store::*;
 
 use flo_ui::*;
@@ -155,7 +156,8 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                     .with(vec![Control::label()
                                         .with(Bounds::fill_all())
                                         .with(TextAlign::Center)
-                                        .with("+ New file")]),
+                                        .with("+ New file")])
+                                        .with((ActionTrigger::Click, "CreateNewFile")),
                                 Control::empty()
                                     .with(Bounds::stretch_horiz(1.0))
                             ])
@@ -207,7 +209,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                         let controller: Arc<dyn Controller+'static> = controller;
                         controller
                     })
-            }
+            },
 
             // The logo controller is used to display a logo above the list of files
             "Logo" => Some(Arc::clone(&self.logo_controller)),
@@ -239,6 +241,11 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 let top     = top * NUM_COLUMNS;
                 let bottom  = bottom * NUM_COLUMNS;
                 self.model.file_range.clone().set(top..bottom);
+            },
+
+            ("CreateNewFile", _) => {
+                // Create a new file in the file manager
+                self.file_manager.create_new_path();
             },
 
             _ => ()
