@@ -9,7 +9,7 @@ use std::sync::*;
 ///
 /// Uses a stream to update a binding
 /// 
-pub fn bind_stream<S, Value, UpdateFn>(stream: S, initial_value: Value, update: UpdateFn) -> StreamBinding<Value> /* -> impl Bound<Value> */
+pub fn bind_stream<S, Value, UpdateFn>(stream: S, initial_value: Value, update: UpdateFn) -> StreamBinding<Value>
 where   S:          'static+Send+Stream,
         Value:      'static+Send+Clone+PartialEq,
         UpdateFn:   'static+Send+FnMut(Value, S::Item) -> Value,
