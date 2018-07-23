@@ -34,5 +34,5 @@ pub trait FileManager : Send+Sync {
     ///
     /// Returns a stream of updates indicating changes made to the file manager
     /// 
-    fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>>;
+    fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>+Send>;
 }

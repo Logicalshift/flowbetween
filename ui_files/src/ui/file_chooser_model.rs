@@ -1,11 +1,12 @@
 use super::file_chooser::*;
+use super::super::file_update::*;
 use super::super::file_manager::*;
 
 use flo_binding::*;
 
 use std::sync::*;
 use std::ops::Range;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 ///
 /// Model for a file chooser file
@@ -13,10 +14,10 @@ use std::path::PathBuf;
 #[derive(Clone)]
 pub struct FileModel {
     /// The path to this file
-    pub path: BindRef<PathBuf>,
+    pub path: Binding<PathBuf>,
 
     /// The name of this file
-    pub name: BindRef<String>,
+    pub name: Binding<String>,
 }
 
 impl PartialEq for FileModel {
@@ -42,7 +43,7 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     pub file_range: Binding<Range<u32>>,
 }
 
-impl<Chooser: FileChooser> FileChooserModel<Chooser> {
+impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
     ///
     /// Creates a new file chooser model
     /// 
@@ -64,6 +65,18 @@ impl<Chooser: FileChooser> FileChooserModel<Chooser> {
     }
 
     ///
+    /// Creates the file model for a particular path
+    /// 
+    fn model_for_path(file_manager: &Arc<Chooser::FileManager>, path: &Path) -> FileModel {
+        let name = file_manager.display_name_for_path(path).unwrap_or("Untitled".to_string());
+
+        FileModel {
+            path: bind(PathBuf::from(path)),
+            name: bind(name)
+        }
+    }
+
+    ///
     /// Creates the file list binding from a file manager
     /// 
     fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Vec<FileModel>> {
@@ -71,18 +84,35 @@ impl<Chooser: FileChooser> FileChooserModel<Chooser> {
         let files = file_manager.get_all_files();
         
         // Create the file models from the paths
-        let files = files.into_iter()
-            .map(|path| {
-                let name = file_manager.display_name_for_path(path.as_path()).unwrap_or("Untitled".to_string());
-
-                FileModel {
-                    path: BindRef::from(bind(path)),
-                    name: BindRef::from(bind(name))
-                }
-            })
+        let files: Vec<_> = files.into_iter()
+            .map(|path| Self::model_for_path(&file_manager, path.as_path()))
             .collect();
+        
+        // Bind to updates from the file manager
+        let updates = file_manager.update_stream();
+        let files   = bind_stream(updates, files, move |mut files, update| {
+            match update {
+                FileUpdate::NewFile(path) => {
+                    files.push(Self::model_for_path(&file_manager, path.as_path()))
+                },
+
+                FileUpdate::RemovedFile(path) => {
+                    files.retain(|model| model.path.get() != path);
+                },
+
+                FileUpdate::SetDisplayName(path, new_name) => {
+                    files.iter_mut().for_each(|model| {
+                        if model.path.get() == path {
+                            model.name.set(new_name.clone());
+                        }
+                    })
+                }
+            }
+            
+            files
+        });
 
         // Generate the final binding
-        BindRef::from(bind(files))
+        BindRef::from(files)
     }
 }
