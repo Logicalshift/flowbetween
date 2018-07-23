@@ -1,6 +1,7 @@
 use super::traits::*;
 use super::binding::*;
 use super::computed::*;
+use super::bind_stream::*;
 
 use std::sync::*;
 
@@ -112,6 +113,15 @@ impl<'a, Value: 'static+Clone+PartialEq+Send+Into<Binding<Value>>> From<&'a Valu
     fn from(val: &'a Value) -> BindRef<Value> {
         let binding: Binding<Value> = val.into();
         BindRef::from(binding)
+    }
+}
+
+impl<Value: 'static+Clone+Send+PartialEq> From<StreamBinding<Value>> for BindRef<Value> {
+    #[inline]
+    fn from(val: StreamBinding<Value>) -> Self {
+        BindRef {
+            reference: Arc::new(val)
+        }
     }
 }
 
