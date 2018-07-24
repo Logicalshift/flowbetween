@@ -93,7 +93,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         let files   = bind_stream(updates, files, move |mut files, update| {
             match update {
                 FileUpdate::NewFile(path) => {
-                    files.push(Self::model_for_path(&file_manager, path.as_path()))
+                    files.insert(0, Self::model_for_path(&file_manager, path.as_path()))
                 },
 
                 FileUpdate::RemovedFile(path) => {
