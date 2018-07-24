@@ -986,7 +986,7 @@ function flowbetween(root_node) {
             note('Click ' + action_name + ' --> ' + controller_path);
 
             perform_action(controller_path, action_name, null);
-        });
+        }, true);
 
         add_action_event(node, 'touchstart', event => {
             if (event.touches.length === 1) {
