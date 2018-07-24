@@ -9,6 +9,7 @@ use flo_canvas::*;
 use flo_binding::*;
 
 use std::sync::*;
+use std::collections::HashSet;
 
 const LOGO_HEIGHT: f32      = 256.0;
 const NUM_COLUMNS: u32      = 3;
@@ -245,7 +246,21 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
             ("CreateNewFile", _) => {
                 // Create a new file in the file manager
-                self.file_manager.create_new_path();
+                let new_file = self.file_manager.create_new_path();
+
+                // Give it a unique name
+                let all_files       = self.file_manager.get_all_files();
+                let used_names      = all_files.into_iter().filter_map(|path| self.file_manager.display_name_for_path(path.as_path())).collect::<HashSet<_>>();
+
+                let mut new_name    = String::from("New file");
+                let mut name_index  = 0;
+
+                while used_names.contains(&new_name) {
+                    name_index += 1;
+                    new_name = format!("New file ({})", name_index);
+                }
+
+                self.file_manager.set_display_name_for_path(new_file.as_path(), new_name);
             },
 
             _ => ()
