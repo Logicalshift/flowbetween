@@ -926,6 +926,7 @@ function flowbetween(root_node) {
         // We add action events to the node and any decorations it may have
         let event_nodes = [node];
         [].push.apply(event_nodes, get_decorative_subnodes(node));
+        event_nodes = [event_nodes[event_nodes.length-1]];
 
         // Add the event
         if (current_event) {
