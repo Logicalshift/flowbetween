@@ -926,7 +926,6 @@ function flowbetween(root_node) {
         // We add action events to the node and any decorations it may have
         let event_nodes = [node];
         [].push.apply(event_nodes, get_decorative_subnodes(node));
-        event_nodes = [event_nodes[event_nodes.length-1]];
 
         // Add the event
         if (current_event) {
@@ -984,6 +983,7 @@ function flowbetween(root_node) {
     let wire_click = (action_name, node, controller_path) => {
         add_action_event(node, 'click', event => {
             event.preventDefault();
+            event.stopPropagation();
             note('Click ' + action_name + ' --> ' + controller_path);
 
             perform_action(controller_path, action_name, null);
@@ -992,6 +992,7 @@ function flowbetween(root_node) {
         add_action_event(node, 'touchstart', event => {
             if (event.touches.length === 1) {
                 event.preventDefault();
+                event.stopPropagation();
                 note('Click (touch) ' + action_name + ' --> ' + controller_path);
 
                 perform_action(controller_path, action_name, null);
