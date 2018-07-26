@@ -48,10 +48,12 @@ impl BindingDependencies {
         // Add this dependency to the list
         self.dependencies.borrow_mut().push(Box::new(dependency))
     }
-}
 
-impl Changeable for BindingDependencies {
-    fn when_changed(&self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
+    ///
+    /// If the dependencies have not changed since they were registered, registers for changes
+    /// and returns a `Releasable`. If the dependencies are already different, returns `None`.
+    /// 
+    pub fn when_changed_if_unchanged(&self, what: Arc<dyn Notifiable>) -> Option<Box<dyn Releasable>> {
         let mut to_release = vec![];
 
         // Register with all of the dependencies
@@ -62,13 +64,26 @@ impl Changeable for BindingDependencies {
         if *self.recently_changed.lock().unwrap() {
             // If a value changed while we were building these dependencies, then immediately generate the notification
             to_release.into_iter().for_each(|mut releasable| releasable.done());
-            what.mark_as_changed();
 
             // Nothing to release
-            Box::new(vec![])
+            None
         } else {
             // Otherwise, return the set of releasable values
-            Box::new(to_release)
+            Some(Box::new(to_release))
+        }
+    }
+}
+
+impl Changeable for BindingDependencies {
+    fn when_changed(&self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
+        let when_changed_or_not = self.when_changed_if_unchanged(Arc::clone(&what));
+
+        match when_changed_or_not {
+            Some(releasable)    => releasable,
+            None                => {
+                what.mark_as_changed();
+                Box::new(vec![])
+            }
         }
     }
 }
