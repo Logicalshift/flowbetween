@@ -103,7 +103,9 @@ mod test {
     use super::*;
     use super::binding_context::*;
 
+    use std::thread;
     use std::sync::*;
+    use std::time::Duration;
 
     #[test]
     fn can_create_binding() {
@@ -450,7 +452,6 @@ mod test {
         assert!(computed.get() == 4);
     }
 
-
     #[test]
     fn computed_switches_dependencies() {
         let mut switch      = bind(false);
@@ -504,6 +505,38 @@ mod test {
         val1.set(5);
         assert!(changed.get() == false);
         assert!(computed.get() == 5);
+    }
+
+    #[test]
+    fn change_during_computation_recomputes() {
+        // Create a computed binding that delays for a bit while reading
+        let mut some_binding = bind(1);
+        let some_computed = {
+            let some_binding = some_binding.clone();
+            computed(move || {
+                let result = some_binding.get() + 1;
+                thread::sleep(Duration::from_millis(250));
+                result
+            })
+        };
+
+        // Start a thread that reads a value
+        {
+            let some_computed = some_computed.clone();
+            thread::spawn(move || {
+                assert!(some_computed.get() == 2);
+            });
+        }
+
+        // Let the thread start running (give it enough time to start computing and reach the sleep statement)
+        // TODO: thread::sleep might fail on systems that are slow enough or due to glitches (will fail spuriously if we update the binding before the calculation starts)
+        thread::sleep(Duration::from_millis(10));
+
+        // Update the value in the binding while the computed is running
+        some_binding.set(2);
+
+        // Computed value should update
+        assert!(some_computed.get() == 3);
     }
 
     #[test]
