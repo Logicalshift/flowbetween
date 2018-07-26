@@ -399,33 +399,32 @@ mod test {
 
     #[test]
     fn computed_caches_values() {
-        let update_count            = bind(0);
+        let update_count            = Arc::new(Mutex::new(0));
         let mut bound               = bind(1);
 
-        let computed_update_count   = Mutex::new(update_count.clone());
+        let computed_update_count   = Arc::clone(&update_count);
         let computed_from           = bound.clone();
         let computed                = computed(move || {
             let mut computed_update_count = computed_update_count.lock().unwrap();
+            *computed_update_count += 1;
 
-            let new_update_count = computed_update_count.get() + 1;
-            computed_update_count.set(new_update_count);
             computed_from.get() + 1
         });
 
         assert!(computed.get() == 2);
-        assert!(update_count.get() == 1);
+        assert!(*update_count.lock().unwrap() == 1);
 
         assert!(computed.get() == 2);
-        assert!(update_count.get() == 1);
+        assert!(*update_count.lock().unwrap() == 1);
 
         bound.set(2);
         assert!(computed.get() == 3);
-        assert!(update_count.get() == 2);
+        assert!(*update_count.lock().unwrap() == 2);
 
         bound.set(3);
-        assert!(update_count.get() == 2);
+        assert!(*update_count.lock().unwrap() == 2);
         assert!(computed.get() == 4);
-        assert!(update_count.get() == 3);
+        assert!(*update_count.lock().unwrap() == 3);
     }
 
     #[test]
