@@ -161,7 +161,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     ///
     /// Marks this computed binding as having changed
     ///
-    fn mark_changed(&mut self) {
+    fn mark_changed(&self) {
         // We do the notifications and releasing while the lock is not retained
         let (notifiable, releasable) = {
             // Get the core
@@ -198,21 +198,25 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
     ///
     /// Mark this item as changed whenever 'to_monitor' is changed
-    /// Core should already be locked
+    /// Core should already be locked, returns true if the value is already changed and we should immediately notify
     ///
-    fn monitor_changes(&self, core: &mut ComputedBindingCore<Value, TFn>, to_monitor: &mut dyn Changeable) {
+    fn monitor_changes(&self, core: &mut ComputedBindingCore<Value, TFn>, to_monitor: &mut BindingDependencies) -> bool {
         // We only keep a weak reference to the core here
-        let to_notify   = Arc::downgrade(&self.core);
+        let to_notify       = Arc::downgrade(&self.core);
 
         // Monitor for changes (see below for the implementation against to_notify's type)
-        let lifetime    = to_monitor.when_changed(Arc::new(to_notify));
+        let lifetime        = to_monitor.when_changed_if_unchanged(Arc::new(to_notify));
+        let already_changed = lifetime.is_none();
 
         // Store the lifetime
-        let mut last_notification = Some(lifetime);
+        let mut last_notification = lifetime;
         mem::swap(&mut last_notification, &mut core.existing_notification);
 
         // Any lifetime that was in the core before this one should be finished
         last_notification.map(|mut last_notification| last_notification.done());
+
+        // Return if the value is already changed
+        already_changed
     }
 }
 
@@ -262,36 +266,55 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
         // This is a dependency of the current binding context
         BindingContext::add_dependency(self.clone());
 
-        // Borrow the core
-        let mut core = self.core.lock().unwrap();
+        // Set to true if the value changes while we're reading it
+        // (presumably because it's updating rapidly)
+        let mut notify_immediately = false;
+        let result;
 
-        if let Cached(value) = core.get() {
-            // The value already exists in this item
-            value
-        } else {
-            // TODO: really want to recalculate without locking the core - can do this by moving the function out and doing the recalculation here
-            // TODO: locking the core and calling a function can result in deadlocks due to user code structure in particular against other bindings
-            // TODO: when we do recalculate without locking, we need to make sure that no extra invalidations arrived between when we started the calculation and when we stored the result
-            // TODO: if multiple calculations do occur outside the lock, we need to return only the most recent result so when_changed is fired correctly
+        {
+            // Borrow the core
+            let mut core = self.core.lock().unwrap();
 
-            // Stop responding to notifications
-            let mut old_notification = None;
-            mem::swap(&mut old_notification, &mut core.existing_notification);
+            if let Cached(value) = core.get() {
+                // The value already exists in this item
+                result = value;
+            } else {
+                // TODO: really want to recalculate without locking the core - can do this by moving the function out and doing the recalculation here
+                // TODO: locking the core and calling a function can result in deadlocks due to user code structure in particular against other bindings
+                // TODO: when we do recalculate without locking, we need to make sure that no extra invalidations arrived between when we started the calculation and when we stored the result
+                // TODO: if multiple calculations do occur outside the lock, we need to return only the most recent result so when_changed is fired correctly
 
-            if let Some(mut last_notification) = old_notification {
-                last_notification.done();
+                // Stop responding to notifications
+                let mut old_notification = None;
+                mem::swap(&mut old_notification, &mut core.existing_notification);
+
+                if let Some(mut last_notification) = old_notification {
+                    last_notification.done();
+                }
+
+                // Need to re-calculate the core
+                let (value, mut dependencies) = core.recalculate();
+
+                // If any of the dependencies change, mark this item as changed too
+                notify_immediately = self.monitor_changes(&mut core, &mut dependencies);
+
+                // If we're going to notify, unset the value we've cached
+                if notify_immediately {
+                    core.latest_value = ComputedValue::Unknown;
+                }
+
+                // TODO: also need to make sure that any hooks we have are removed if we're only referenced via a hook
+
+                // Return the value
+                result = value;
             }
-
-            // Need to re-calculate the core
-            let (value, mut dependencies) = core.recalculate();
-
-            // If any of the dependencies change, mark this item as changed too
-            self.monitor_changes(&mut core, &mut dependencies);
-
-            // TODO: also need to make sure that any hooks we have are removed if we're only referenced via a hook
-
-            // Return the value
-            value
         }
+
+        // If there was a change while we were calculating the value, generate a notification
+        if notify_immediately {
+            self.mark_changed();
+        }
+
+        result
     }
 }
