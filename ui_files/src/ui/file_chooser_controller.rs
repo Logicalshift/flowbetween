@@ -283,6 +283,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
                     // Set as the main controller
                     *self.model.shared_state.lock().unwrap() = Some(shared_state);
+                    self.model.open_file.clone().set(Some(path));
                     self.model.active_controller.clone().set(Some(new_controller));
                 }
             }
