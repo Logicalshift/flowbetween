@@ -1,4 +1,5 @@
 use super::file_chooser::*;
+use super::file_controller::*;
 use super::super::file_update::*;
 use super::super::file_manager::*;
 
@@ -33,6 +34,9 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     /// The controller displaying the open file
     pub active_controller: Binding<Option<Arc<Chooser::Controller>>>,
 
+    /// The shared state in use by the active controller (or none if there is no active controller)
+    pub shared_state: Mutex<Option<Arc<<Chooser::Controller as FileController>::Model>>>,
+
     /// The path of the currently open file
     pub open_file: Binding<Option<PathBuf>>,
 
@@ -40,7 +44,7 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     pub file_list: BindRef<Vec<FileUiModel>>,
 
     /// The range of files to display
-    pub file_range: Binding<Range<u32>>,
+    pub file_range: Binding<Range<u32>>
 }
 
 impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
@@ -58,6 +62,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         // Combine into the final file chooser model
         FileChooserModel {
             active_controller:  active_controller,
+            shared_state:       Mutex::new(None),
             open_file:          open_file,
             file_list:          file_list,
             file_range:         bind(0..0)

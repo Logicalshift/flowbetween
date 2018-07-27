@@ -282,6 +282,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     let new_controller  = Arc::new(new_controller);
 
                     // Set as the main controller
+                    *self.model.shared_state.lock().unwrap() = Some(shared_state);
                     self.model.active_controller.clone().set(Some(new_controller));
                 }
             }
