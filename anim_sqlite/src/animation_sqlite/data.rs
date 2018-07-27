@@ -27,6 +27,18 @@ impl SqliteAnimation {
     }
 
     ///
+    /// Opens an existing file
+    /// 
+    pub fn open_file<P: AsRef<Path>>(path: P) -> Result<SqliteAnimation> {
+        let connection  = Connection::open_with_flags(path, SQLITE_OPEN_READ_WRITE)?;
+        let db          = AnimationDb::from_connection(connection);
+
+        Ok(SqliteAnimation {
+            db: db
+        })
+    }
+
+    ///
     /// Takes an existing SQLite connection and creates a new animation in it
     /// 
     pub fn set_up_existing_database(sqlite: Connection) -> Result<SqliteAnimation> {

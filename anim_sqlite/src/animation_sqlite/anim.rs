@@ -75,6 +75,11 @@ impl Animation for SqliteAnimation {
 impl FileAnimation for SqliteAnimation {
     fn open(path: &Path) -> SqliteAnimation {
         // TODO: error handling!
-        Self::new_with_file(path).unwrap()
+
+        if path.exists() {
+            Self::open_file(path).unwrap()
+        } else {
+            Self::new_with_file(path).unwrap()
+        }
     }
 }
