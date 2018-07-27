@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 /// Model for a file chooser file
 /// 
 #[derive(Clone)]
-pub struct FileModel {
+pub struct FileUiModel {
     /// The path to this file
     pub path: Binding<PathBuf>,
 
@@ -20,8 +20,8 @@ pub struct FileModel {
     pub name: Binding<String>,
 }
 
-impl PartialEq for FileModel {
-    fn eq(&self, other: &FileModel) -> bool {
+impl PartialEq for FileUiModel {
+    fn eq(&self, other: &FileUiModel) -> bool {
         self.path.get() == other.path.get() && self.name.get() == other.name.get()
     }
 }
@@ -37,7 +37,7 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     pub open_file: Binding<Option<PathBuf>>,
 
     /// The list of files to choose from
-    pub file_list: BindRef<Vec<FileModel>>,
+    pub file_list: BindRef<Vec<FileUiModel>>,
 
     /// The range of files to display
     pub file_range: Binding<Range<u32>>,
@@ -67,10 +67,10 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
     ///
     /// Creates the file model for a particular path
     /// 
-    fn model_for_path(file_manager: &Arc<Chooser::FileManager>, path: &Path) -> FileModel {
+    fn model_for_path(file_manager: &Arc<Chooser::FileManager>, path: &Path) -> FileUiModel {
         let name = file_manager.display_name_for_path(path).unwrap_or("Untitled".to_string());
 
-        FileModel {
+        FileUiModel {
             path: bind(PathBuf::from(path)),
             name: bind(name)
         }
@@ -79,7 +79,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
     ///
     /// Creates the file list binding from a file manager
     /// 
-    fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Vec<FileModel>> {
+    fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Vec<FileUiModel>> {
         // Get all of the files from the file manager
         let files = file_manager.get_all_files();
         

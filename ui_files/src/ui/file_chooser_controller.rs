@@ -1,6 +1,7 @@
 use super::file_chooser::*;
 use super::file_chooser_model::*;
 use super::file_controller::*;
+use super::super::file_model::*;
 use super::super::file_manager::*;
 use super::super::open_file_store::*;
 
@@ -68,7 +69,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates a control representing a file
     /// 
-    fn file_ui(file: &FileModel, index: u32) -> Control {
+    fn file_ui(file: &FileUiModel, index: u32) -> Control {
         Control::container()
             .with(vec![
                 Control::empty()
@@ -264,7 +265,26 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 self.file_manager.set_display_name_for_path(new_file.as_path(), new_name);
             },
 
-            (action, _) => { println!("{:?}", action); }
+            (action, _) => { 
+                if action.starts_with("Open-") {
+                    // Get the index of the file being opened
+                    let (_, file_index) = action.split_at("Open-".len());
+                    let file_index      = usize::from_str_radix(file_index, 10).unwrap();
+
+                    // ... and the file itself
+                    let file_model      = &self.model.file_list.get()[file_index];
+                    let path            = file_model.path.get();
+
+                    // Create a new controller for the file
+                    let shared_state    = self.open_file_store.open_shared(path.as_path());
+                    let instance_state  = shared_state.new_instance();
+                    let new_controller  = Chooser::Controller::open(instance_state);
+                    let new_controller  = Arc::new(new_controller);
+
+                    // Set as the main controller
+                    self.model.active_controller.clone().set(Some(new_controller));
+                }
+            }
         }
     }
 
