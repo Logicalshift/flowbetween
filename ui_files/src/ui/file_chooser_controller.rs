@@ -68,7 +68,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates a control representing a file
     /// 
-    fn file_ui(file: &FileModel) -> Control {
+    fn file_ui(file: &FileModel, index: u32) -> Control {
         Control::container()
             .with(vec![
                 Control::empty()
@@ -81,6 +81,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                     .with(file.name.get())
             ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
+            .with((ActionTrigger::Click, format!("Open-{}", index)))
     }
 
     ///
@@ -117,7 +118,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         let x       = (column as f32) * FILE_WIDTH;
                         let y       = (row as f32) * FILE_HEIGHT;
 
-                        Self::file_ui(file_model)
+                        Self::file_ui(file_model, file_index)
                             .with(Bounds { x1: Position::At(x), y1: Position::At(y), x2: Position::At(x+FILE_WIDTH), y2: Position::At(y+FILE_HEIGHT) })
                     })
                     .collect::<Vec<_>>();
@@ -263,7 +264,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 self.file_manager.set_display_name_for_path(new_file.as_path(), new_name);
             },
 
-            _ => ()
+            (action, _) => { println!("{:?}", action); }
         }
     }
 
