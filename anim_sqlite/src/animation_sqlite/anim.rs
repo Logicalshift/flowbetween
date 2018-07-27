@@ -77,9 +77,20 @@ impl FileAnimation for SqliteAnimation {
         // TODO: error handling!
 
         if path.exists() {
+            // Open an existing file
             Self::open_file(path).unwrap()
         } else {
-            Self::new_with_file(path).unwrap()
+            // Create a new file
+            let animation = Self::new_with_file(path).unwrap();
+
+            // Add a single layer and an initial keyframe
+            animation.perform_edits(vec![
+                AnimationEdit::SetSize(1980.0, 1080.0),
+                AnimationEdit::AddNewLayer(0),
+                AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0)))
+            ]);
+
+            animation
         }
     }
 }
