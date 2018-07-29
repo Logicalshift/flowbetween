@@ -101,7 +101,11 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
             let frame               = current_time_ns / frame_duration_ns;
 
             let tick_length         = TICK_LENGTH as f64;
-            PropertyValue::Float((frame as f64) * tick_length + (tick_length/2.0))
+            let tick_x              = (frame as f64) * tick_length;
+            let tick_x              = tick_x + (tick_length/2.0);
+            let tick_x              = tick_x + (LAYER_PANEL_WIDTH as f64);
+
+            PropertyValue::Float(tick_x)
         });
 
         // UI
@@ -220,8 +224,11 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
             let last_layer  = ((y+VIRTUAL_HEIGHT)/VIRTUAL_HEIGHT).ceil() as u32 + 1;
 
             // ... and the keyframes in this time region
-            let start_tick  = (x/TICK_LENGTH).floor() as u32;
-            let end_tick    = ((x+VIRTUAL_WIDTH)/TICK_LENGTH).ceil() as u32 + 1;
+            let tick_x      = x - LAYER_PANEL_WIDTH;
+            let start_tick  = (tick_x/TICK_LENGTH).floor();
+            let end_tick    = ((tick_x+VIRTUAL_WIDTH)/TICK_LENGTH).ceil() + 1.0;
+            let start_tick  = start_tick.max(0.0) as u32;
+            let end_tick    = end_tick.max(0.0) as u32;
             let keyframes   = timeline.get_keyframe_binding(start_tick..end_tick);
             let layers      = BindRef::new(&timeline.layers);
 
@@ -241,6 +248,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
                 // Draw the cell dividers
                 let end_x = (end_tick as f32) * TICK_LENGTH;
+                let end_x = end_x + LAYER_PANEL_WIDTH;
                 let end_y = (last_layer as f32) * LAYER_HEIGHT;
 
                 gc.stroke_color(TIMESCALE_CELL);
@@ -249,6 +257,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 for cell_index in start_tick..end_tick {
                     let cell_x = (cell_index as f32) * TICK_LENGTH;
                     let cell_x = cell_x + TICK_LENGTH/2.0;
+                    let cell_x = cell_x + LAYER_PANEL_WIDTH;
 
                     gc.move_to(cell_x, y);
                     gc.line_to(cell_x, end_y);
@@ -281,6 +290,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         if layer_index >= first_layer && layer_index < last_layer {
                             // Top-left corner of this frame
                             let xpos = (frame as f32) * TICK_LENGTH;
+                            let xpos = xpos + LAYER_PANEL_WIDTH;
                             let ypos = (layer_index as f32) * LAYER_HEIGHT;
 
                             // Draw the frame marker
@@ -311,14 +321,21 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
             gc.fill();
 
             // Draw the ticks
-            let start_tick  = (x / TICK_LENGTH).floor() as i32;
-            let end_tick    = ((x+VIRTUAL_WIDTH)/TICK_LENGTH).ceil() as i32;
+            let tick_x      = x - LAYER_PANEL_WIDTH;
+            let start_tick  = (tick_x / TICK_LENGTH).floor();
+            let start_tick  = start_tick.max(0.0);
+            let end_tick    = ((tick_x+VIRTUAL_WIDTH)/TICK_LENGTH).ceil();
+            let end_tick    = end_tick.max(0.0);
+
+            let start_tick  = start_tick as i32;
+            let end_tick    = end_tick as i32;
 
             gc.stroke_color(TIMESCALE_TICK);
 
             for tick in start_tick..(end_tick+1) {
                 let tick_x = (tick as f32) * TICK_LENGTH;
                 let tick_x = tick_x + (TICK_LENGTH/2.0);
+                let tick_x = tick_x + LAYER_PANEL_WIDTH;
 
                 gc.new_path();
 
