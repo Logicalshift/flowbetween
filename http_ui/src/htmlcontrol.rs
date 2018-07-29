@@ -306,8 +306,8 @@ mod test {
     fn can_combine_background_scroll_fix_and_z_index() {
         let ctrl = Control::container()
             .with(Appearance::Background(Color::Rgba(0.0, 1.0, 0.0, 1.0)))
-            .with(ControlAttribute::ZIndex(5))
-            .with(Scroll::Fix(FixedAxis::Horizontal));
+            .with(Scroll::Fix(FixedAxis::Horizontal))
+            .with(ControlAttribute::ZIndex(5));
 
         assert!(ctrl.to_html("").to_string() == "<flo-container style=\"background-color: rgba(0, 255, 0, 1); z-index: 5;\" flo-scroll-fix=\"horiz\"></flo-container>");
     }
