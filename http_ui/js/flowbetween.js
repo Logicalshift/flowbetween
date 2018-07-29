@@ -7,6 +7,7 @@
 //                                                
 
 /* exported flowbetween */
+/* exported resize_svg_control */
 /* exported replace_object_with_content */
 /* global flo_canvas, flo_paint, flo_control */
 
@@ -308,6 +309,7 @@ function flowbetween(root_node) {
         let templates           = {};
         let template_on_load    = {};
         let template_layout     = {};
+        let template_resize     = {};
 
         ///
         /// Loads the UI templates for a particular DOM node
@@ -345,7 +347,17 @@ function flowbetween(root_node) {
                         flo_layout = null;
                     }
 
+                    // They can also supply an on resize value
+                    let flo_resize = template_node.getAttribute('flo-resize');
+                    if (flo_resize) {
+                        let resize_fn = new Function('', flo_resize);
+                        flo_resize = (width, height, node) => resize_fn.apply([width, height, node]);
+                    } else {
+                        flo_resize = null;
+                    }
+
                     template_layout[template_name] = flo_layout;
+                    template_resize[template_name] = flo_resize;
                 }
             }
         };
@@ -363,6 +375,7 @@ function flowbetween(root_node) {
             let template_for_node   = templates[template_name];
             let load_node           = template_on_load[template_name];
             let layout_node         = template_layout[template_name];
+            let resize_node         = template_resize[template_name];
 
             if (template_for_node) {
                 // Remove any existing template nodes
@@ -389,6 +402,10 @@ function flowbetween(root_node) {
 
                 // The layout engine will use the flo_layout property if it exists to lay out a node
                 node.flo_layout = layout_node;
+
+                if (resize_node) {
+                    node.flo_resize = resize_node;
+                }
             }
         };
 
@@ -2089,6 +2106,18 @@ function flowbetween(root_node) {
         enable_commands();
     });
 }
+
+///
+/// For controls with an SVG element underneath them, this will set the width and height
+/// attributes to the width and height of the control when it is resized
+///
+let resize_svg_control = (width, height, parent_element) => {
+    let svg = parent_element.getElementsByTagName('svg');
+    for (let element_id=0; element_id<svg.length; ++element_id) {
+        svg[element_id].setAttribute('width', width);
+        svg[element_id].setAttribute('height', height);
+    }
+};
 
 ///
 /// For behavioural reasons we'd like svgs to be inline but for general work reasons
