@@ -31,6 +31,7 @@ impl DomNodeData for DomElement {
 
         // Merge any attributes that have the same name
         let attributes = self.content.iter().filter(|item| item.node_type() == DomNodeType::Attribute);
+        let attributes = attributes.sorted_by_key(|attr| attr.element_name().unwrap()).into_iter();
         let attributes = attributes.group_by(|attr| attr.element_name().unwrap());
         let attributes = attributes.into_iter().map(|(name, attributes)| {
             let mut value = String::new();

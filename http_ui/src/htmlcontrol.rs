@@ -309,7 +309,7 @@ mod test {
             .with(Scroll::Fix(FixedAxis::Horizontal))
             .with(ControlAttribute::ZIndex(5));
 
-        assert!(ctrl.to_html("").to_string() == "<flo-container style=\"background-color: rgba(0, 255, 0, 1); z-index: 5;\" flo-scroll-fix=\"horiz\"></flo-container>");
+        assert!(ctrl.to_html("").to_string() == "<flo-container flo-scroll-fix=\"horiz\" style=\"background-color: rgba(0, 255, 0, 1); z-index: 5;\"></flo-container>");
     }
 
     #[test]
@@ -330,7 +330,7 @@ mod test {
 
         let control = Control::canvas().with(canvas.clone());
 
-        assert!(control.to_html("test/base").to_string() == "<flo-canvas flo-canvas=\"test/base/c/test_canvas\" flo-name=\"test_canvas\" flo-controller=\"\"></flo-canvas>")
+        assert!(control.to_html("test/base").to_string() == "<flo-canvas flo-canvas=\"test/base/c/test_canvas\" flo-controller=\"\" flo-name=\"test_canvas\"></flo-canvas>")
     }
 
     #[test]
@@ -343,7 +343,7 @@ mod test {
             .with_controller("Test")
             .with(vec![Control::canvas().with(canvas.clone())]);
 
-        assert!(control.to_html("test/base").to_string() == "<flo-empty><flo-canvas flo-canvas=\"test/base/c/Test/test_canvas\" flo-name=\"test_canvas\" flo-controller=\"Test\"></flo-canvas></flo-empty>");
+        assert!(control.to_html("test/base").to_string() == "<flo-empty><flo-canvas flo-canvas=\"test/base/c/Test/test_canvas\" flo-controller=\"Test\" flo-name=\"test_canvas\"></flo-canvas></flo-empty>");
     }
 
     #[test]
