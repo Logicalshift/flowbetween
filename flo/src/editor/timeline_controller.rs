@@ -390,18 +390,36 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     fn draw_frame_indicator(gc: &mut dyn GraphicsPrimitives) -> () {
         gc.canvas_height(2.05);
 
-        gc.fill_color(TIMESCALE_INDICATOR);
-
         gc.new_path();
-        gc.circle(0.0, 0.2, 0.6);
-        gc.fill();
+        gc.move_to(-0.35, -0.1);
+        gc.line_to(-0.35, 0.8);
+        gc.line_to(0.35, 0.8);
+        gc.line_to(0.35, -0.1);
 
-        gc.new_path();
-        gc.move_to(-0.6, 0.2);
         gc.line_to(0.0, -1.0);
-        gc.line_to(0.6, 0.2);
+        gc.line_to(-0.35, -0.1);
         gc.close_path();
+
+        gc.stroke_color(TIMESCALE_INDICATOR_OUTER_GLOW);
+        gc.line_width_pixels(1.0);
+        gc.stroke();
+
+        gc.fill_color(TIMESCALE_INDICATOR);
         gc.fill();
+
+        gc.stroke_color(TIMESCALE_INDICATOR_INNER_BORDER);
+        gc.line_width_pixels(0.5);
+        gc.stroke();
+
+        gc.stroke_color(TIMESCALE_INDICATOR_GRIP);
+        gc.new_path();
+        gc.move_to(-0.15, 0.05);
+        gc.line_to(-0.15, 0.45);
+        gc.move_to(0.15, 0.05);
+        gc.line_to(0.15, 0.45);
+        gc.move_to(0.0, -0.1);
+        gc.line_to(0.0, 0.6);
+        gc.stroke();
     }
 
     ///
