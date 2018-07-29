@@ -170,7 +170,14 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             y1: Position::At(0.0),
                             y2: Position::End
                         })
-                        .with(Appearance::Background(Color::Rgba(0.3, 0.8, 0.0, 1.0)))
+                        .with(vec![
+                            Control::empty()
+                                .with(Bounds::stretch_horiz(1.0)),
+                            Control::empty()
+                                .with(Bounds::next_horiz(1.0))
+                                .with(Appearance::Background(TIMESCALE_BORDER))
+                        ])
+                        .with(Appearance::Background(TIMELINE_BACKGROUND))
                         .with(Scroll::Fix(FixedAxis::Horizontal))
                         .with(ControlAttribute::ZIndex(5)),
                     Control::container()        // Scale
