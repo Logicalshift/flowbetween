@@ -62,6 +62,7 @@
 //!
 #![warn(bare_trait_objects)]
 
+extern crate desync;
 extern crate futures;
 
 mod traits;
@@ -72,6 +73,7 @@ mod bindref;
 mod notify_fn;
 mod releasable;
 mod follow;
+mod bind_stream;
 
 pub use self::traits::*;
 pub use self::binding::*;
@@ -79,6 +81,7 @@ pub use self::computed::*;
 pub use self::bindref::*;
 pub use self::notify_fn::*;
 pub use self::follow::*;
+pub use self::bind_stream::*;
 
 ///
 /// Creates a simple bound value with the specified initial value
@@ -100,7 +103,9 @@ mod test {
     use super::*;
     use super::binding_context::*;
 
+    use std::thread;
     use std::sync::*;
+    use std::time::Duration;
 
     #[test]
     fn can_create_binding() {
@@ -394,33 +399,32 @@ mod test {
 
     #[test]
     fn computed_caches_values() {
-        let update_count            = bind(0);
+        let update_count            = Arc::new(Mutex::new(0));
         let mut bound               = bind(1);
 
-        let computed_update_count   = Mutex::new(update_count.clone());
+        let computed_update_count   = Arc::clone(&update_count);
         let computed_from           = bound.clone();
         let computed                = computed(move || {
             let mut computed_update_count = computed_update_count.lock().unwrap();
+            *computed_update_count += 1;
 
-            let new_update_count = computed_update_count.get() + 1;
-            computed_update_count.set(new_update_count);
             computed_from.get() + 1
         });
 
         assert!(computed.get() == 2);
-        assert!(update_count.get() == 1);
+        assert!(*update_count.lock().unwrap() == 1);
 
         assert!(computed.get() == 2);
-        assert!(update_count.get() == 1);
+        assert!(*update_count.lock().unwrap() == 1);
 
         bound.set(2);
         assert!(computed.get() == 3);
-        assert!(update_count.get() == 2);
+        assert!(*update_count.lock().unwrap() == 2);
 
         bound.set(3);
-        assert!(update_count.get() == 2);
+        assert!(*update_count.lock().unwrap() == 2);
         assert!(computed.get() == 4);
-        assert!(update_count.get() == 3);
+        assert!(*update_count.lock().unwrap() == 3);
     }
 
     #[test]
@@ -446,7 +450,6 @@ mod test {
         assert!(changed.get() == true);
         assert!(computed.get() == 4);
     }
-
 
     #[test]
     fn computed_switches_dependencies() {
@@ -501,6 +504,38 @@ mod test {
         val1.set(5);
         assert!(changed.get() == false);
         assert!(computed.get() == 5);
+    }
+
+    #[test]
+    fn change_during_computation_recomputes() {
+        // Create a computed binding that delays for a bit while reading
+        let mut some_binding = bind(1);
+        let some_computed = {
+            let some_binding = some_binding.clone();
+            computed(move || {
+                let result = some_binding.get() + 1;
+                thread::sleep(Duration::from_millis(250));
+                result
+            })
+        };
+
+        // Start a thread that reads a value
+        {
+            let some_computed = some_computed.clone();
+            thread::spawn(move || {
+                assert!(some_computed.get() == 2);
+            });
+        }
+
+        // Let the thread start running (give it enough time to start computing and reach the sleep statement)
+        // TODO: thread::sleep might fail on systems that are slow enough or due to glitches (will fail spuriously if we update the binding before the calculation starts)
+        thread::sleep(Duration::from_millis(10));
+
+        // Update the value in the binding while the computed is running
+        some_binding.set(2);
+
+        // Computed value should update
+        assert!(some_computed.get() == 3);
     }
 
     #[test]

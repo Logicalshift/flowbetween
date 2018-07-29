@@ -1,4 +1,5 @@
 use super::traits::*;
+use super::notify_fn::*;
 
 use std::rc::*;
 use std::sync::*;
@@ -13,6 +14,12 @@ thread_local! {
 ///
 #[derive(Clone)]
 pub struct BindingDependencies {
+    /// Set to true if the binding dependencies have been changed since they were registered in the dependencies
+    recently_changed: Arc<Mutex<bool>>,
+
+    /// The when_changed monitors for the recently_changed flag
+    recent_change_monitors: Rc<RefCell<Vec<Box<dyn Releasable>>>>,
+
     /// The list of changables that are dependent on this context
     dependencies: Rc<RefCell<Vec<Box<dyn Changeable>>>>
 }
@@ -22,26 +29,62 @@ impl BindingDependencies {
     /// Creates a new binding dependencies object
     ///
     pub fn new() -> BindingDependencies {
-        BindingDependencies { dependencies: Rc::new(RefCell::new(vec![])) }
+        BindingDependencies {
+            recently_changed:       Arc::new(Mutex::new(false)),
+            recent_change_monitors: Rc::new(RefCell::new(vec![])),
+            dependencies:           Rc::new(RefCell::new(vec![]))
+        }
     }
 
     ///
     /// Adds a new dependency to this object
     ///
     pub fn add_dependency<TChangeable: Changeable+'static>(&mut self, dependency: TChangeable) {
+        // Set the recently changed flag so that we can tell if the dependencies are already out of date before when_changed is called
+        let recently_changed            = Arc::clone(&self.recently_changed);
+        let mut recent_change_monitors  = self.recent_change_monitors.borrow_mut();
+        recent_change_monitors.push(dependency.when_changed(notify(move || { *recently_changed.lock().unwrap() = true; })));
+
+        // Add this dependency to the list
         self.dependencies.borrow_mut().push(Box::new(dependency))
+    }
+
+    ///
+    /// If the dependencies have not changed since they were registered, registers for changes
+    /// and returns a `Releasable`. If the dependencies are already different, returns `None`.
+    /// 
+    pub fn when_changed_if_unchanged(&self, what: Arc<dyn Notifiable>) -> Option<Box<dyn Releasable>> {
+        let mut to_release = vec![];
+
+        // Register with all of the dependencies
+        for dep in self.dependencies.borrow_mut().iter_mut() {
+            to_release.push(dep.when_changed(Arc::clone(&what)));
+        }
+
+        if *self.recently_changed.lock().unwrap() {
+            // If a value changed while we were building these dependencies, then immediately generate the notification
+            to_release.into_iter().for_each(|mut releasable| releasable.done());
+
+            // Nothing to release
+            None
+        } else {
+            // Otherwise, return the set of releasable values
+            Some(Box::new(to_release))
+        }
     }
 }
 
 impl Changeable for BindingDependencies {
     fn when_changed(&self, what: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
-        let mut to_release = vec![];
+        let when_changed_or_not = self.when_changed_if_unchanged(Arc::clone(&what));
 
-        for dep in self.dependencies.borrow_mut().iter_mut() {
-            to_release.push(dep.when_changed(Arc::clone(&what)));
+        match when_changed_or_not {
+            Some(releasable)    => releasable,
+            None                => {
+                what.mark_as_changed();
+                Box::new(vec![])
+            }
         }
-
-        Box::new(to_release)
     }
 }
 

@@ -9,6 +9,7 @@
 #[cfg(feature="http")]  extern crate actix_web;
 
 extern crate flo_ui;
+extern crate flo_ui_files;
 extern crate flo;
 extern crate flo_binding;
 extern crate flo_animation;

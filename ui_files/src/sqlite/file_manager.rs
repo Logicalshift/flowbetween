@@ -1,12 +1,17 @@
 use super::file_list::*;
+use super::super::file_update::*;
 use super::super::file_manager::*;
 
 use dirs;
 use uuid::*;
 use desync::*;
 use rusqlite::*;
+use futures::*;
+use futures::executor;
+use futures::sync::mpsc;
 
 use std::fs;
+use std::mem;
 use std::sync::*;
 use std::path::{Path, PathBuf};
 
@@ -20,7 +25,10 @@ lazy_static! {
 
 struct SqliteFileManagerCore {
     /// The database containing the list of files
-    file_list: FileList
+    file_list: FileList,
+
+    /// The senders for updates to this file manager
+    updates: Vec<mpsc::Sender<FileUpdate>>
 }
 
 ///
@@ -32,6 +40,45 @@ pub struct SqliteFileManager {
 
     /// The core of this file manager
     core: Desync<SqliteFileManagerCore>
+}
+
+impl SqliteFileManagerCore {
+    ///
+    /// Sends an update to everything that's listening for them
+    /// 
+    pub fn send_update(&mut self, update: FileUpdate) {
+        // Swap out the updates (we'll push back the updates that are still alive when we're done)
+        let mut updates = vec![];
+        mem::swap(&mut updates, &mut self.updates);
+
+        // Try to send to all of the update sinks
+        for mut update_sink in updates.into_iter() {
+            // Send the update to this sink
+            let send_result = update_sink.try_send(update.clone());
+
+            match send_result {
+                // Send to this sink again if the update is successful
+                Ok(_) => self.updates.push(update_sink),
+
+                // Handle various error cases
+                Err(try_err) => {
+                    if try_err.is_full() {
+                        // Wait using a normal executor if we've generated too many events
+                        let mut sink_spawn  = executor::spawn(update_sink);
+                        let send_result     = sink_spawn.wait_send(update.clone());
+
+                        // If sent OK, keep sending to this sink
+                        if send_result.is_ok() {
+                            self.updates.push(sink_spawn.into_inner());
+                        }
+                    } else {
+                        // Otherwise, don't update this sink next time (assume it's disconnected)
+                    }
+                }
+            }
+            
+        }
+    }
 }
 
 impl SqliteFileManager {
@@ -78,7 +125,8 @@ impl SqliteFileManager {
         SqliteFileManager {
             root_path:  root_path,
             core:       Desync::new(SqliteFileManagerCore {
-                file_list: file_list
+                file_list:  file_list,
+                updates:    vec![]
             })
         }
     }
@@ -162,10 +210,15 @@ impl FileManager for SqliteFileManager {
         full_path.push(DATA_DIR);
         full_path.push(&filename);
 
+        let update          = FileUpdate::NewFile(full_path.clone());
+
         // Add to the database
         let mut filename_buf = PathBuf::new();
         filename_buf.push(filename);
-        self.core.async(move |core| core.file_list.add_path(filename_buf.as_path()));
+        self.core.async(move |core| {
+            core.file_list.add_path(filename_buf.as_path());
+            core.send_update(update);
+        });
 
         // Result is the full path
         full_path
@@ -176,12 +229,31 @@ impl FileManager for SqliteFileManager {
     /// returned via get_all_files: setting the name for a non-existent path will just
     /// result)
     ///
-    fn set_display_name_for_path(&self, path: &Path, display_name: String) {
-        let path = self.file_list_path(path);
+    fn set_display_name_for_path(&self, full_path: &Path, display_name: String) {
+        let path = self.file_list_path(full_path);
 
         if let Some(path) = path {
-            self.core.async(move |core| core.file_list.set_display_name_for_path(path.as_path(), &display_name))
+            let update = FileUpdate::SetDisplayName(PathBuf::from(full_path), display_name.clone());
+
+            self.core.async(move |core| {
+                core.file_list.set_display_name_for_path(path.as_path(), &display_name);
+                core.send_update(update);
+            });
         }
+    }
+
+    ///
+    /// Returns a stream of updates indicating changes made to the file manager
+    /// 
+    fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>+Send> {
+        // Create the channel for sending updates
+        let (sender, receiver) = mpsc::channel(10);
+
+        // Store the sender in the core
+        self.core.async(move |core| core.updates.push(sender));
+
+        // Result is the receiver
+        Box::new(receiver)
     }
 }
 
@@ -212,5 +284,17 @@ mod test {
 
         test_files.set_display_name_for_path(new_path.as_path(), "Test display name".to_string());
         assert!(test_files.display_name_for_path(new_path.as_path()) == Some("Test display name".to_string()));
+    }
+
+    #[test]
+    fn will_send_updates_to_stream() {
+        let test_files          = SqliteFileManager::new("app.flowbetween.test", "default");
+        let mut update_stream   = executor::spawn(test_files.update_stream());
+
+        let new_path            = test_files.create_new_path();
+        test_files.set_display_name_for_path(new_path.as_path(), "Another display name".to_string());
+
+        assert!(update_stream.wait_stream() == Some(Ok(FileUpdate::NewFile(new_path.clone()))));
+        assert!(update_stream.wait_stream() == Some(Ok(FileUpdate::SetDisplayName(new_path.clone(), "Another display name".to_string()))));
     }
 }

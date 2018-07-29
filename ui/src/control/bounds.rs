@@ -53,6 +53,14 @@ impl Bounds {
     }
 
     ///
+    /// Bounding box that stretchs to occupy the remaining vertical space
+    ///
+    pub fn stretch_vert(ratio: f32) -> Bounds {
+        use Position::*;
+        Bounds { x1: After, y1: Start, x2: End, y2: Stretch(ratio) }
+    }
+
+    ///
     /// Bounding box that fills the remaining vertical space
     ///
     pub fn fill_vert() -> Bounds {
