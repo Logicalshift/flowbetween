@@ -40,7 +40,7 @@ const TICK_HEIGHT: f32          = 5.0;
 const LAYER_HEIGHT: f32         = 24.0;
 
 /// Width of the layer name panel
-// const LAYER_PANEL_WIDTH: f32    = 256.0;
+const LAYER_PANEL_WIDTH: f32    = 256.0;
 
 ///
 /// The timeline allows the user to pick a point in time and create layers in the animation
@@ -211,10 +211,10 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     ///
     /// Creates the function for drawing the keyframes
     /// 
-    fn create_draw_keyframes_fn(timeline: &TimelineModel<Anim>) -> Box<dyn Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync> {
+    fn create_draw_keyframes_fn(timeline: &TimelineModel<Anim>) -> impl Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync {
         let timeline    = timeline.clone();
 
-        Box::new(move |x, y| {
+        move |x, y| {
             // Get the layers that we'll draw
             let first_layer = (y/VIRTUAL_HEIGHT).floor() as u32;
             let last_layer  = ((y+VIRTUAL_HEIGHT)/VIRTUAL_HEIGHT).ceil() as u32 + 1;
@@ -291,7 +291,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                     }
                 }
             })
-        })
+        }
     }
 
     ///
