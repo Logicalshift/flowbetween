@@ -163,6 +163,16 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
                 .with(Appearance::Background(TIMELINE_BACKGROUND))
                 .with(vec![
+                    Control::container()        // Layer editor
+                        .with(Bounds {
+                            x1: Position::At(0.0),
+                            x2: Position::At(LAYER_PANEL_WIDTH),
+                            y1: Position::At(0.0),
+                            y2: Position::End
+                        })
+                        .with(Appearance::Background(Color::Rgba(0.3, 0.8, 0.0, 1.0)))
+                        .with(Scroll::Fix(FixedAxis::Horizontal))
+                        .with(ControlAttribute::ZIndex(5)),
                     Control::container()        // Scale
                         .with(Bounds {
                             x1: Position::At(0.0),
