@@ -5,23 +5,35 @@ use flo_ui::*;
 use flo_binding::*;
 use flo_animation::*;
 
+use desync::*;
+use futures::*;
+use futures::executor;
+use futures::executor::Spawn;
+
+use std::time::Duration;
+
 ///
 /// Controller that provides controls for adding/deleting/editing layers (generally displayed above the main layer list)
 /// 
 pub struct TimelineLayerControlsController {
-    /// the UI for this controller
-    ui: BindRef<Control>
+    /// The UI for this controller
+    ui: BindRef<Control>,
+
+    /// The animation where this will send updates
+    animation: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>
 }
 
 impl TimelineLayerControlsController {
     ///
     /// Creates a new timeline layer controls controller
     /// 
-    pub fn new<Anim: 'static+Animation>(_model: &FloModel<Anim>) -> TimelineLayerControlsController {
-        let ui = Self::ui();
+    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> TimelineLayerControlsController {
+        let ui          = Self::ui();
+        let animation   = executor::spawn(model.edit());
 
         TimelineLayerControlsController {
-            ui: ui
+            ui:         ui,
+            animation:  Desync::new(animation)
         }
     }
 
@@ -67,5 +79,20 @@ impl TimelineLayerControlsController {
 impl Controller for TimelineLayerControlsController {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
+    }
+
+    fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
+        match action_id {
+            "AddNewLayer" => {
+                self.animation.sync(|animation| {
+                    animation.wait_send(vec![
+                        AnimationEdit::AddNewLayer(1),
+                        AnimationEdit::Layer(1, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+                    ]).unwrap();
+                });
+            },
+
+            _ => { }
+        }
     }
 }

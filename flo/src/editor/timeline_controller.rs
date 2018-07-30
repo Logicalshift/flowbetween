@@ -76,7 +76,7 @@ pub struct TimelineController<Anim: Animation> {
     ui:                         BindRef<Control>
 }
 
-impl<Anim: 'static+Animation> TimelineController<Anim> {
+impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Creates a new timeline controller
     /// 
@@ -509,7 +509,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     }
 }
 
-impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
+impl<Anim: EditableAnimation+Animation+'static> Controller for TimelineController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
