@@ -25,7 +25,7 @@ const VIRTUAL_WIDTH: f32        = 400.0;
 const VIRTUAL_HEIGHT: f32       = 256.0;
 
 /// Height of the time scale control
-const SCALE_HEIGHT: f32         = 24.0;
+pub const TIMELINE_SCALE_HEIGHT: f32         = 24.0;
 
 /// Length of a tick on the timeline (in pixels)
 const TICK_LENGTH: f32          = 7.0;
@@ -37,7 +37,7 @@ const TICK_MAIN_HEIGHT: f32     = 10.0;
 const TICK_HEIGHT: f32          = 5.0;
 
 /// Height of a layer in pixels
-const LAYER_HEIGHT: f32         = 24.0;
+pub const TIMELINE_LAYER_HEIGHT: f32         = 24.0;
 
 /// Width of the layer name panel
 const LAYER_PANEL_WIDTH: f32    = 256.0;
@@ -153,12 +153,12 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
             let frame_duration_ns   = frame_duration.as_secs()*1_000_000_000 + (frame_duration.subsec_nanos() as u64);
 
             let width               = TICK_LENGTH * ((duration_ns / frame_duration_ns) as f32);
-            let height              = (layers.len() as f32) * LAYER_HEIGHT;
+            let height              = (layers.len() as f32) * TIMELINE_LAYER_HEIGHT;
 
             // Build the final control
             Control::scrolling_container()
                 .with(Bounds::fill_all())
-                .with(Scroll::MinimumContentSize(width, height + SCALE_HEIGHT))
+                .with(Scroll::MinimumContentSize(width, height + TIMELINE_SCALE_HEIGHT))
                 .with(Scroll::HorizontalScrollBar(ScrollBarVisibility::Always))
                 .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
                 .with(Appearance::Background(TIMELINE_BACKGROUND))
@@ -185,7 +185,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             x1: Position::At(0.0),
                             x2: Position::End,
                             y1: Position::At(0.0),
-                            y2: Position::At(SCALE_HEIGHT)
+                            y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with((ActionTrigger::Drag, CLICK_AND_DRAG_TIMELINE_POSITION))
                         .with(ControlAttribute::ZIndex(3))
@@ -197,7 +197,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         .with(Bounds {
                             x1: Position::At(0.0),
                             x2: Position::End,
-                            y1: Position::At(SCALE_HEIGHT),
+                            y1: Position::At(TIMELINE_SCALE_HEIGHT),
                             y2: Position::End
                         })
                         .with(vec![
@@ -210,7 +210,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
                             y1: Position::Start,
-                            y2: Position::At(SCALE_HEIGHT)
+                            y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
                         .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
@@ -220,7 +220,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
-                            y1: Position::At(SCALE_HEIGHT),
+                            y1: Position::At(TIMELINE_SCALE_HEIGHT),
                             y2: Position::End
                         })
                         .with(ControlAttribute::ZIndex(1))
@@ -266,7 +266,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 // Draw the cell dividers
                 let end_x = (end_tick as f32) * TICK_LENGTH;
                 let end_x = end_x + LAYER_PANEL_WIDTH;
-                let end_y = (last_layer as f32) * LAYER_HEIGHT;
+                let end_y = (last_layer as f32) * TIMELINE_LAYER_HEIGHT;
 
                 gc.stroke_color(TIMESCALE_CELL);
 
@@ -286,10 +286,10 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
                 gc.new_path();
                 for layer_index in first_layer..last_layer {
-                    let layer_y = ((layer_index as f32) * LAYER_HEIGHT) - 0.5;
+                    let layer_y = ((layer_index as f32) * TIMELINE_LAYER_HEIGHT) - 0.5;
 
-                    gc.move_to(x, layer_y + LAYER_HEIGHT);
-                    gc.line_to(end_x, layer_y + LAYER_HEIGHT);
+                    gc.move_to(x, layer_y + TIMELINE_LAYER_HEIGHT);
+                    gc.line_to(end_x, layer_y + TIMELINE_LAYER_HEIGHT);
                 }
                 gc.stroke();
 
@@ -308,11 +308,11 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                             // Top-left corner of this frame
                             let xpos = (frame as f32) * TICK_LENGTH;
                             let xpos = xpos + LAYER_PANEL_WIDTH;
-                            let ypos = (layer_index as f32) * LAYER_HEIGHT;
+                            let ypos = (layer_index as f32) * TIMELINE_LAYER_HEIGHT;
 
                             // Draw the frame marker
                             gc.new_path();
-                            gc.circle(xpos + TICK_LENGTH/2.0, ypos + LAYER_HEIGHT/2.0, TICK_LENGTH/2.0 - 0.5);
+                            gc.circle(xpos + TICK_LENGTH/2.0, ypos + TIMELINE_LAYER_HEIGHT/2.0, TICK_LENGTH/2.0 - 0.5);
                             gc.fill();
                         }
                     }
@@ -327,14 +327,14 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
     fn draw_scale(x: f32, _y: f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync> {
         Box::new(move |gc| {
             // Set up the canvas
-            gc.canvas_height(SCALE_HEIGHT);
-            gc.center_region(x, 0.0, x+VIRTUAL_WIDTH, SCALE_HEIGHT);
+            gc.canvas_height(TIMELINE_SCALE_HEIGHT);
+            gc.center_region(x, 0.0, x+VIRTUAL_WIDTH, TIMELINE_SCALE_HEIGHT);
             gc.line_width(1.0);
 
             // Fill the background
             gc.fill_color(TIMESCALE_BACKGROUND);
             gc.new_path();
-            gc.rect(x, 0.0, x+VIRTUAL_WIDTH, SCALE_HEIGHT);
+            gc.rect(x, 0.0, x+VIRTUAL_WIDTH, TIMELINE_SCALE_HEIGHT);
             gc.fill();
 
             // Draw the ticks
@@ -494,7 +494,7 @@ impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
                 // The virtual scale is always drawn at the top, so we hard-code the top and height values
                 // Expanding the grid width by 2 allows for a 'buffer' on either side to prevent pop-in
                 let virtual_x = if x > 0 { x-1 } else { x };
-                self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, SCALE_HEIGHT), (virtual_x, 0), (width+2, 1));
+                self.virtual_scale.virtual_scroll((VIRTUAL_WIDTH, TIMELINE_SCALE_HEIGHT), (virtual_x, 0), (width+2, 1));
                 self.virtual_keyframes.virtual_scroll((VIRTUAL_WIDTH, VIRTUAL_HEIGHT), (virtual_x, y), (width+2, height));
             },
 
