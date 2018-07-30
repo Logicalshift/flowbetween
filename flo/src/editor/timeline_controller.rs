@@ -1,4 +1,5 @@
 use super::timeline_layer_list_controller::*;
+use super::timeline_layer_controls_controller::*;
 use super::super::style::*;
 use super::super::model::*;
 
@@ -51,25 +52,28 @@ pub struct TimelineController<Anim: Animation> {
     anim_model:         FloModel<Anim>,
 
     /// The UI view model
-    view_model:         Arc<DynamicViewModel>,
+    view_model:                 Arc<DynamicViewModel>,
 
     /// The canvases for the timeline
-    canvases:           Arc<ResourceManager<BindingCanvas>>,
+    canvases:                   Arc<ResourceManager<BindingCanvas>>,
 
     /// The current_time at the most recent drag start position
-    drag_start_time:    Binding<Duration>,
+    drag_start_time:            Binding<Duration>,
 
     /// A virtual control that draws the timeline scale
-    virtual_scale:      VirtualCanvas,
+    virtual_scale:              VirtualCanvas,
 
     /// A virtual control that draws the keyframes
-    virtual_keyframes:  VirtualCanvas,
+    virtual_keyframes:          VirtualCanvas,
 
     /// A controller to display the UI for managing the layers
-    layer_controller:   Arc<TimelineLayerListController>,
+    layer_list_controller:      Arc<TimelineLayerListController>,
+
+    /// A controller to display the UI for adding/removing layers
+    layer_controls_controller:  Arc<TimelineLayerControlsController>,
 
     /// The UI for the timeline
-    ui:                 BindRef<Control>
+    ui:                         BindRef<Control>
 }
 
 impl<Anim: 'static+Animation> TimelineController<Anim> {
@@ -113,7 +117,8 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         });
 
         // UI
-        let layer_controller            = TimelineLayerListController::new(&anim_model);
+        let layer_list_controller       = TimelineLayerListController::new(&anim_model);
+        let layer_controls_controller   = TimelineLayerControlsController::new(&anim_model);
 
         let duration                    = BindRef::new(&anim_model.timeline().duration);
         let frame_duration              = BindRef::new(&anim_model.timeline().frame_duration);
@@ -126,14 +131,15 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
 
         // Piece it together
         TimelineController {
-            anim_model:         anim_model,
-            ui:                 ui,
-            virtual_scale:      virtual_scale,
-            virtual_keyframes:  virtual_keyframes,
-            drag_start_time:    bind(Duration::from_millis(0)),
-            canvases:           canvases,
-            layer_controller:   Arc::new(layer_controller),
-            view_model:         Arc::new(view_model)
+            anim_model:                 anim_model,
+            ui:                         ui,
+            virtual_scale:              virtual_scale,
+            virtual_keyframes:          virtual_keyframes,
+            drag_start_time:            bind(Duration::from_millis(0)),
+            canvases:                   canvases,
+            layer_list_controller:      Arc::new(layer_list_controller),
+            layer_controls_controller:  Arc::new(layer_controls_controller),
+            view_model:                 Arc::new(view_model)
         }
     }
 
@@ -170,7 +176,25 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                 .with(Scroll::VerticalScrollBar(ScrollBarVisibility::OnlyIfNeeded))
                 .with(Appearance::Background(TIMELINE_BACKGROUND))
                 .with(vec![
-                    Control::container()        // Layer editor
+                    Control::container()        // Layer controls
+                        .with(Bounds {
+                            x1: Position::At(0.0),
+                            x2: Position::At(LAYER_PANEL_WIDTH),
+                            y1: Position::At(0.0),
+                            y2: Position::At(TIMELINE_SCALE_HEIGHT)
+                        })
+                        .with(vec![
+                            Control::container()
+                                .with(Bounds::stretch_horiz(1.0))
+                                .with_controller("LayerControls"),
+                            Control::empty()
+                                .with(Bounds::next_horiz(1.0))
+                                .with(Appearance::Background(TIMESCALE_BORDER))
+                        ])
+                        .with(Appearance::Background(TIMESCALE_BACKGROUND))
+                        .with(Scroll::Fix(FixedAxis::Both))
+                        .with(ControlAttribute::ZIndex(6)),
+                    Control::container()        // Layer list`
                         .with(Bounds {
                             x1: Position::At(0.0),
                             x2: Position::At(LAYER_PANEL_WIDTH),
@@ -180,7 +204,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         .with(vec![
                             Control::container()
                                 .with(Bounds::stretch_horiz(1.0))
-                                .with_controller("LayerController"),
+                                .with_controller("LayerList"),
                             Control::empty()
                                 .with(Bounds::next_horiz(1.0))
                                 .with(Appearance::Background(TIMESCALE_BORDER))
@@ -549,7 +573,8 @@ impl<Anim: Animation+'static> Controller for TimelineController<Anim> {
 
     fn get_subcontroller(&self, controller: &str) -> Option<Arc<dyn Controller>> {
         match controller {
-            "LayerController"   => Some(self.layer_controller.clone()),
+            "LayerList"         => Some(self.layer_list_controller.clone()),
+            "LayerControls"     => Some(self.layer_controls_controller.clone()),
             _                   => None
         }
     }

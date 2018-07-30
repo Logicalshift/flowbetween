@@ -7,7 +7,7 @@ use flo_binding::*;
 use flo_animation::*;
 
 ///
-/// Controller class that displays and edits the layer names and allows adding new layers to the drawing
+/// Controller class that displays and edits the layer names
 /// 
 pub struct TimelineLayerListController {
     /// The user interface binding for this controller
