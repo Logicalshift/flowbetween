@@ -174,7 +174,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
                         .with(Bounds {
                             x1: Position::At(0.0),
                             x2: Position::At(LAYER_PANEL_WIDTH),
-                            y1: Position::At(0.0),
+                            y1: Position::At(TIMELINE_SCALE_HEIGHT),
                             y2: Position::End
                         })
                         .with(vec![
