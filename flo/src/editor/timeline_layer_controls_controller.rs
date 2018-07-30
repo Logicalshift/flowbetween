@@ -19,8 +19,11 @@ pub struct TimelineLayerControlsController {
     /// The UI for this controller
     ui: BindRef<Control>,
 
-    /// The animation where this will send updates
-    animation: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>
+    /// The animation editing stream where this will send updates
+    edit: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
+
+    /// The animation that this will edit
+    animation: Box<dyn Animation>
 }
 
 impl TimelineLayerControlsController {
@@ -29,11 +32,13 @@ impl TimelineLayerControlsController {
     /// 
     pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> TimelineLayerControlsController {
         let ui          = Self::ui();
-        let animation   = executor::spawn(model.edit());
+        let edit        = executor::spawn(model.edit());
+        let animation   = Box::new(model.clone());
 
         TimelineLayerControlsController {
             ui:         ui,
-            animation:  Desync::new(animation)
+            edit:       Desync::new(edit),
+            animation:  animation
         }
     }
 
@@ -84,10 +89,14 @@ impl Controller for TimelineLayerControlsController {
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
             "AddNewLayer" => {
-                self.animation.sync(|animation| {
+                // Pick a layer ID for the new layer
+                let new_layer_id = self.animation.get_layer_ids().into_iter().max().unwrap_or(0) + 1;
+
+                // Send to the animation
+                self.edit.sync(|animation| {
                     animation.wait_send(vec![
-                        AnimationEdit::AddNewLayer(1),
-                        AnimationEdit::Layer(1, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+                        AnimationEdit::AddNewLayer(new_layer_id),
+                        AnimationEdit::Layer(new_layer_id, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
                     ]).unwrap();
                 });
             },
