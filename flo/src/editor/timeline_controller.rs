@@ -1,4 +1,4 @@
-use super::timeline_layer_controller::*;
+use super::timeline_layer_list_controller::*;
 use super::super::style::*;
 use super::super::model::*;
 
@@ -66,7 +66,7 @@ pub struct TimelineController<Anim: Animation> {
     virtual_keyframes:  VirtualCanvas,
 
     /// A controller to display the UI for managing the layers
-    layer_controller:   Arc<TimelineLayerController>,
+    layer_controller:   Arc<TimelineLayerListController>,
 
     /// The UI for the timeline
     ui:                 BindRef<Control>
@@ -113,7 +113,7 @@ impl<Anim: 'static+Animation> TimelineController<Anim> {
         });
 
         // UI
-        let layer_controller            = TimelineLayerController::new(&anim_model);
+        let layer_controller            = TimelineLayerListController::new(&anim_model);
 
         let duration                    = BindRef::new(&anim_model.timeline().duration);
         let frame_duration              = BindRef::new(&anim_model.timeline().frame_duration);

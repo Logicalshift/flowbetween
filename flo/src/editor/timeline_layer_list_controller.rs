@@ -9,20 +9,20 @@ use flo_animation::*;
 ///
 /// Controller class that displays and edits the layer names and allows adding new layers to the drawing
 /// 
-pub struct TimelineLayerController {
+pub struct TimelineLayerListController {
     /// The user interface binding for this controller
     ui: BindRef<Control>
 }
 
-impl TimelineLayerController {
+impl TimelineLayerListController {
     ///
     /// Creates a new timeline layer controller
     /// 
-    pub fn new<Anim: 'static+Animation>(model: &FloModel<Anim>) -> TimelineLayerController {
+    pub fn new<Anim: 'static+Animation>(model: &FloModel<Anim>) -> TimelineLayerListController {
         // Create the UI from the model
         let ui = Self::ui(model);
 
-        TimelineLayerController {
+        TimelineLayerListController {
             ui: ui
         }
     }
@@ -92,7 +92,7 @@ impl TimelineLayerController {
     }
 }
 
-impl Controller for TimelineLayerController {
+impl Controller for TimelineLayerListController {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
