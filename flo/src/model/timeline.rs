@@ -60,15 +60,7 @@ impl<Anim: Animation> TimelineModel<Anim> {
     /// 
     pub fn new(animation: Arc<Anim>) -> TimelineModel<Anim> {
         // Load the layers from the animation
-        let layer_ids   = animation.get_layer_ids();
-        let mut layers  = vec![];
-
-        for id in layer_ids {
-            let layer = animation.get_layer_with_id(id);
-            if let Some(layer) = layer {
-                layers.push(LayerModel::new(&*layer));
-            }
-        }
+        let layers = Self::get_layers(&animation);
 
         // Read the animation properties
         let duration        = animation.duration();
@@ -85,6 +77,31 @@ impl<Anim: Animation> TimelineModel<Anim> {
             canvas_invalidation_count:  bind(0),
             keyframes:                  Arc::new(Mutex::new(HashMap::new()))
         }
+    }
+
+    ///
+    /// Retrieves the layers for an animation
+    /// 
+    fn get_layers(animation: &Arc<Anim>) -> Vec<LayerModel> {
+        // Load the layers from the animation
+        let layer_ids   = animation.get_layer_ids();
+        let mut layers  = vec![];
+
+        for id in layer_ids {
+            let layer = animation.get_layer_with_id(id);
+            if let Some(layer) = layer {
+                layers.push(LayerModel::new(&*layer));
+            }
+        }
+        
+        layers
+    }
+
+    ///
+    /// Updates the layers from the animation
+    /// 
+    pub fn update_layers(&self) {
+        self.layers.clone().set(Self::get_layers(&self.animation));
     }
 
     ///

@@ -15,7 +15,7 @@ use std::time::Duration;
 ///
 /// Controller that provides controls for adding/deleting/editing layers (generally displayed above the main layer list)
 /// 
-pub struct TimelineLayerControlsController {
+pub struct TimelineLayerControlsController<Anim: Animation> {
     /// The UI for this controller
     ui: BindRef<Control>,
 
@@ -23,22 +23,27 @@ pub struct TimelineLayerControlsController {
     edit: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
 
     /// The animation that this will edit
-    animation: Box<dyn Animation>
+    animation: Box<dyn Animation>,
+
+    /// The timeline model we're editing
+    timeline: TimelineModel<Anim>
 }
 
-impl TimelineLayerControlsController {
+impl<Anim: 'static+Animation+EditableAnimation> TimelineLayerControlsController<Anim> {
     ///
     /// Creates a new timeline layer controls controller
     /// 
-    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> TimelineLayerControlsController {
+    pub fn new(model: &FloModel<Anim>) -> TimelineLayerControlsController<Anim> {
         let ui          = Self::ui();
         let edit        = executor::spawn(model.edit());
         let animation   = Box::new(model.clone());
+        let timeline    = model.timeline().clone();
 
         TimelineLayerControlsController {
             ui:         ui,
             edit:       Desync::new(edit),
-            animation:  animation
+            animation:  animation,
+            timeline:   timeline
         }
     }
 
@@ -81,7 +86,7 @@ impl TimelineLayerControlsController {
     }
 }
 
-impl Controller for TimelineLayerControlsController {
+impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerControlsController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
@@ -99,6 +104,9 @@ impl Controller for TimelineLayerControlsController {
                         AnimationEdit::Layer(new_layer_id, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
                     ]).unwrap();
                 });
+
+                // Update the model
+                self.timeline.update_layers();
             },
 
             _ => { }

@@ -70,7 +70,7 @@ pub struct TimelineController<Anim: Animation> {
     layer_list_controller:      Arc<TimelineLayerListController>,
 
     /// A controller to display the UI for adding/removing layers
-    layer_controls_controller:  Arc<TimelineLayerControlsController>,
+    layer_controls_controller:  Arc<TimelineLayerControlsController<Anim>>,
 
     /// The UI for the timeline
     ui:                         BindRef<Control>

@@ -226,7 +226,7 @@ impl FileManager for SqliteFileManager {
 
     ///
     /// Updates or creates the display name associated with a particular path (which must be
-    /// returned via get_all_files: setting the name for a non-existent path will just
+    /// returned via get_all_xfiles: setting the name for a non-existent path will just
     /// result)
     ///
     fn set_display_name_for_path(&self, full_path: &Path, display_name: String) {
