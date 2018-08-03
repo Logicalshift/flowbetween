@@ -269,8 +269,8 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
         move |x, y| {
             // Get the layers that we'll draw
-            let first_layer = (y/VIRTUAL_HEIGHT).floor() as u32;
-            let last_layer  = ((y+VIRTUAL_HEIGHT)/VIRTUAL_HEIGHT).ceil() as u32 + 1;
+            let first_layer = (y/TIMELINE_LAYER_HEIGHT).floor() as u32;
+            let last_layer  = ((y+VIRTUAL_HEIGHT)/TIMELINE_LAYER_HEIGHT).ceil() as u32 + 1;
 
             // ... and the keyframes in this time region
             let tick_x      = x - LAYER_PANEL_WIDTH;
