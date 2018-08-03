@@ -102,6 +102,25 @@ impl<Anim: Animation> TimelineModel<Anim> {
     /// 
     pub fn update_layers(&self) {
         self.layers.clone().set(Self::get_layers(&self.animation));
+        self.update_keyframe_bindings();
+    }
+
+    ///
+    /// Updates all of the existing keyframe bindings
+    /// 
+    pub fn update_keyframe_bindings(&self) {
+        // Iterate through the keyframes
+        for (frames, model) in self.keyframes.lock().unwrap().iter_mut() {
+            // Only update the model items that are still in use
+            if let Some(model) = model.upgrade() {
+                // Recreate the keyframes in this range
+                let keyframes = self.get_keyframe_model(frames);
+
+                // Update the model with the new keyframes
+                let mut model = Binding::clone(&*model);
+                model.set(keyframes);
+            }
+        }
     }
 
     ///
@@ -110,6 +129,40 @@ impl<Anim: Animation> TimelineModel<Anim> {
     pub fn invalidate_canvas(&self) {
         let old_count = self.canvas_invalidation_count.get();
         self.canvas_invalidation_count.clone().set(old_count+1);
+    }
+
+    ///
+    /// Creates a keyframe model from a frame range
+    /// 
+    fn get_keyframe_model(&self, frames: &Range<u32>) -> Vec<KeyFrameModel> {
+        let frame_duration      = self.frame_duration.get();
+        let when                = (frame_duration*frames.start)..(frame_duration*frames.end);
+        let layers              = self.animation.get_layer_ids();
+
+        let keyframe_model  = layers.into_iter()
+            .map(|layer_id|     self.animation.get_layer_with_id(layer_id))
+            .filter(|reader|    reader.is_some())
+            .map(|reader|       reader.unwrap())
+            .map(move |reader| {
+                let keyframes = reader.get_key_frames_during_time(when.clone());
+                (reader, keyframes)
+            })
+            .flat_map(|(reader, keyframes)| {
+                let layer_id = reader.id();
+                keyframes.map(move |keyframe_time| {
+                    let frame_duration_nanos: u64   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
+                    let frame_time_nanos: u64       = keyframe_time.as_secs() * 1_000_000_000 + (keyframe_time.subsec_nanos() as u64);
+
+                    KeyFrameModel {
+                        when:       keyframe_time,
+                        frame:      (frame_time_nanos/frame_duration_nanos) as u32,
+                        layer_id:   layer_id
+                    }
+                })
+            })
+            .collect();
+
+        keyframe_model
     }
 
     ///
@@ -131,32 +184,7 @@ impl<Anim: Animation> TimelineModel<Anim> {
             existing_binding
         } else {
             // Create a new binding
-            let frame_duration      = self.frame_duration.get();
-            let when                = (frame_duration*frames.start)..(frame_duration*frames.end);
-            let layers              = self.animation.get_layer_ids();
-
-            let keyframe_viewmodel  = layers.into_iter()
-                .map(|layer_id|     self.animation.get_layer_with_id(layer_id))
-                .filter(|reader|    reader.is_some())
-                .map(|reader|       reader.unwrap())
-                .map(move |reader| {
-                    let keyframes = reader.get_key_frames_during_time(when.clone());
-                    (reader, keyframes)
-                })
-                .flat_map(|(reader, keyframes)| {
-                    let layer_id = reader.id();
-                    keyframes.map(move |keyframe_time| {
-                        let frame_duration_nanos: u64   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
-                        let frame_time_nanos: u64       = keyframe_time.as_secs() * 1_000_000_000 + (keyframe_time.subsec_nanos() as u64);
-
-                        KeyFrameModel {
-                            when:       keyframe_time,
-                            frame:      (frame_time_nanos/frame_duration_nanos) as u32,
-                            layer_id:   layer_id
-                        }
-                    })
-                })
-                .collect();
+            let keyframe_viewmodel = self.get_keyframe_model(&frames);
             
             let new_binding = Arc::new(Binding::new(keyframe_viewmodel));
             keyframes.insert(frames, Arc::downgrade(&new_binding));
