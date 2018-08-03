@@ -101,7 +101,10 @@ impl<Anim: Animation> TimelineModel<Anim> {
     /// Updates the layers from the animation
     /// 
     pub fn update_layers(&self) {
+        // Refresh the layers
         self.layers.clone().set(Self::get_layers(&self.animation));
+
+        // The keyframe bindings always change when the layers change
         self.update_keyframe_bindings();
     }
 
