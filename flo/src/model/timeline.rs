@@ -62,6 +62,9 @@ impl<Anim: Animation> TimelineModel<Anim> {
         // Load the layers from the animation
         let layers = Self::get_layers(&animation);
 
+        // Initial selected layer is the first in the list
+        let selected_layer = animation.get_layer_ids().into_iter().nth(0);
+
         // Read the animation properties
         let duration        = animation.duration();
         let frame_duration  = animation.frame_length();
@@ -73,7 +76,7 @@ impl<Anim: Animation> TimelineModel<Anim> {
             duration:                   bind(duration),
             frame_duration:             bind(frame_duration),
             layers:                     bind(layers),
-            selected_layer:             bind(Some(0)),
+            selected_layer:             bind(selected_layer),
             canvas_invalidation_count:  bind(0),
             keyframes:                  Arc::new(Mutex::new(HashMap::new()))
         }
