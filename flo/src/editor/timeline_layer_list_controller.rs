@@ -11,7 +11,10 @@ use flo_animation::*;
 /// 
 pub struct TimelineLayerListController {
     /// The user interface binding for this controller
-    ui: BindRef<Control>
+    ui: BindRef<Control>,
+
+    /// The currently selected layer
+    selected_layer_id: Binding<Option<u64>>
 }
 
 impl TimelineLayerListController {
@@ -20,10 +23,12 @@ impl TimelineLayerListController {
     /// 
     pub fn new<Anim: 'static+Animation>(model: &FloModel<Anim>) -> TimelineLayerListController {
         // Create the UI from the model
-        let ui = Self::ui(model);
+        let ui                  = Self::ui(model);
+        let selected_layer_id   = model.timeline().selected_layer.clone();
 
         TimelineLayerListController {
-            ui: ui
+            ui:                 ui,
+            selected_layer_id:  selected_layer_id
         }
     }
 
@@ -49,6 +54,7 @@ impl TimelineLayerListController {
                 Control::label()
                     .with(name)
                     .with(Bounds::stretch_horiz(1.0))
+                    .with((ActionTrigger::Click, format!("SelectLayer-{}", layer_id)))
             ])
     }
 
@@ -95,5 +101,21 @@ impl TimelineLayerListController {
 impl Controller for TimelineLayerListController {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
+    }
+
+    fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
+        match action_id {
+            _ => {
+                // 'SelectLayer-x' should select layer 'x'
+                if action_id.starts_with("SelectLayer-") {
+                    // Get the layer ID that should be selected
+                    let (_, layer_id)   = action_id.split_at("SelectLayer-".len());
+                    let layer_id        = u64::from_str_radix(layer_id, 10).unwrap();
+
+                    // Update the model
+                    self.selected_layer_id.clone().set(Some(layer_id));
+                }
+            }
+        }
     }
 }
