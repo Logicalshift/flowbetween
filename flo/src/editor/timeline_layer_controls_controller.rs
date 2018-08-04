@@ -105,6 +105,9 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                     ]).unwrap();
                 });
 
+                // Select the new layer
+                self.timeline.selected_layer.clone().set(Some(new_layer_id));
+
                 // Update the model
                 self.timeline.update_layers();
                 self.timeline.invalidate_canvas();
