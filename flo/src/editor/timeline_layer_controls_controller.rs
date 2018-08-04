@@ -107,6 +107,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
 
                 // Update the model
                 self.timeline.update_layers();
+                self.timeline.invalidate_canvas();
             },
 
             _ => { }
