@@ -102,8 +102,8 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                     animation.wait_send(vec![
                         AnimationEdit::AddNewLayer(new_layer_id),
                         AnimationEdit::Layer(new_layer_id, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
-                    ]).unwrap();
-                });
+                    ])
+                }).unwrap();
 
                 // Select the new layer
                 self.timeline.selected_layer.clone().set(Some(new_layer_id));
@@ -111,6 +111,51 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                 // Update the model
                 self.timeline.update_layers();
                 self.timeline.invalidate_canvas();
+            },
+
+            "RemoveLayer" => {
+                // This will remove the selected layer
+                let layer_to_remove = self.timeline.selected_layer.get();
+
+                // Check that the layer actually exists
+                let layer_ids = self.animation.get_layer_ids();
+                if layer_ids.iter().any(|layer_id| Some(*layer_id) == layer_to_remove) {
+                    let layer_to_remove = layer_to_remove.unwrap();
+
+                    // Remove the layer
+                    self.edit.sync(|animation| {
+                        animation.wait_send(vec![
+                            AnimationEdit::RemoveLayer(layer_to_remove)
+                        ])
+                    }).unwrap();
+
+                    // Update the model
+                    self.timeline.update_layers();
+                    self.timeline.invalidate_canvas();
+
+                    // Select the layer after the one we just deleted (or the one before if it was the last in the list)
+                    let old_layer_index = layer_ids.iter()
+                        .enumerate()
+                        .filter(|(_, layer_id)| **layer_id == layer_to_remove)
+                        .nth(0);
+                    
+                    let new_selected_layer = if let Some((old_layer_index, _)) = old_layer_index {
+                        if layer_ids.len() == 1 {
+                            // No layers left after the deletion
+                            None
+                        } else if old_layer_index+1 >= layer_ids.len() {
+                            // No next layer
+                            Some(layer_ids[old_layer_index-1])
+                        } else {
+                            // Default behaviour: pick the next layer
+                            Some(layer_ids[old_layer_index+1])
+                        }
+                    } else {
+                        None
+                    };
+
+                    self.timeline.selected_layer.clone().set(new_selected_layer);
+                }
             },
 
             _ => { }
