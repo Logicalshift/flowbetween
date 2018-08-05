@@ -10,6 +10,10 @@ use std::collections::{HashMap, VecDeque};
 ///
 /// A publisher represents a sink that sends messages to zero or more subscribers
 /// 
+/// Call `subscribe()` to create subscribers. Any messages sent to this sink will be relayed to all connected
+/// subscribers. If the publisher is dropped, any connected subscribers will relay all sent messages and then
+/// indicate that they have finished.
+/// 
 pub struct Publisher<Message> {
     /// The next ID to assign to a new subscriber
     next_subscriber_id: usize,
