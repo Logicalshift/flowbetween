@@ -37,3 +37,7 @@ assert!(subscriber.wait_stream() == Some(Ok(1)));
 assert!(subscriber.wait_stream() == Some(Ok(2)));
 assert!(subscriber.wait_stream() == Some(Ok(3)));
 ```
+
+It's also possible to call `subscriber.clone()` to create a new subscription from an existing one without needing to 
+keep a reference to the publisher. This can be used to reduce the amount of effort needed in passing objects around, and
+to hide implementation details from the caller.
