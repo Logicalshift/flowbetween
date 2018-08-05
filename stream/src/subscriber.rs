@@ -7,9 +7,13 @@ use std::sync::*;
 /// 
 pub struct Subscriber<Message> {
     /// The publisher core (shared between all subscribers)
+    /// 
+    /// Note that when locking the pub_core must always be locked first (if it needs to be locked)
     pub_core: Weak<Mutex<PubCore<Message>>>,
 
     /// The subscriber core (used only by this subscriber)
+    /// 
+    /// Note that when locking the pub_core must always be locked first (if it needs to be locked)
     sub_core: Arc<Mutex<SubCore<Message>>>
 }
 

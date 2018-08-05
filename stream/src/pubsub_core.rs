@@ -1,3 +1,4 @@
+use futures::task;
 use futures::task::Task;
 
 use std::sync::*;
@@ -63,5 +64,33 @@ impl<Message: Clone> PubCore<Message> {
             // Result is the notifications to fire
             Some(notifications)
         }
+    }
+
+    ///
+    /// Checks this core for readiness. If the core is not ready, returns false and sets the 'notify_ready' task
+    /// 
+    pub fn ready(&mut self) -> bool {
+        // The core is ready if there are currently no subscribers using > max_queue_size slots
+        let max_queue_size = self.max_queue_size;
+
+        // Collect the subscribers into one place
+        let subscribers = self.subscribers.values()
+            .map(|subscriber| subscriber.lock().unwrap())
+            .collect::<Vec<_>>();
+
+        // Determine if we're ready or not
+        let mut ready = true;
+        for subscriber in subscribers.iter() {
+            if subscriber.waiting.len() >= max_queue_size {
+                ready = false;
+            }
+        }
+
+        // If we're not ready, set the notification
+        if !ready {
+            self.notify_ready = Some(task::current());
+        }
+
+        ready
     }
 }

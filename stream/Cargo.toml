@@ -4,7 +4,7 @@ version     = "0.1.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
-description = "Pubsub and other streams for FlowBetween"
+description = "Pubsub and other streams for Rust futures"
 
 [dependencies]
 futures = "0.1"

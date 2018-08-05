@@ -91,6 +91,12 @@ impl<Message: Clone> Sink for Publisher<Message> {
     }
 
     fn poll_complete(&mut self) -> Poll<(), ()> {
-        unimplemented!()
+        if self.core.lock().unwrap().ready() {
+            // All subscribers are ready to receive a message
+            Ok(Async::Ready(()))
+        } else {
+            // At least one subscriber has a full buffer
+            Ok(Async::NotReady)
+        }
     }
 }
