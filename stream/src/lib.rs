@@ -4,5 +4,9 @@
 
 extern crate futures;
 
-mod publisher;
-mod subscriber;
+pub mod publisher;
+pub mod subscriber;
+mod pubsub_core;
+
+pub use self::publisher::*;
+pub use self::subscriber::*;
