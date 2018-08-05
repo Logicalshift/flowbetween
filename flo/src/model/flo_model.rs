@@ -3,9 +3,13 @@ use super::frame::*;
 use super::timeline::*;
 use super::selection::*;
 
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 use futures::*;
+use futures::executor;
+use futures::executor::Spawn;
+use desync::*;
 
 use std::ops::{Deref, Range};
 use std::time::Duration;
@@ -37,7 +41,10 @@ pub struct FloModel<Anim: Animation> {
     size_binding: Binding<(f64, f64)>,
 
     /// Counter used to set an edit ID for the frame (essentially indicates when the frame has been redrawn)
-    frame_edit_counter: Binding<u64>
+    frame_edit_counter: Binding<u64>,
+
+    /// Publisher where we send edits to this stream
+    edit_publisher: Arc<Desync<Spawn<Publisher<Arc<Vec<AnimationEdit>>>>>>
 }
 
 impl<Anim: Animation+'static> FloModel<Anim> {
@@ -54,6 +61,9 @@ impl<Anim: Animation+'static> FloModel<Anim> {
 
         let size_binding        = bind(animation.size());
 
+        let edit_publisher      = executor::spawn(Publisher::new(10));
+        let edit_publisher      = Arc::new(Desync::new(edit_publisher));
+
         FloModel {
             animation:          animation,
             tools:              tools,
@@ -63,7 +73,9 @@ impl<Anim: Animation+'static> FloModel<Anim> {
             selection:          selection,
 
             size:               BindRef::from(size_binding.clone()),
-            size_binding:       size_binding
+            size_binding:       size_binding,
+
+            edit_publisher:     edit_publisher
         }
     }
 
@@ -101,6 +113,13 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     pub fn frame_update_count(&self) -> BindRef<u64> {
         BindRef::from(self.frame_edit_counter.clone())
     }
+
+    ///
+    /// Returns a stream containing any edits that have occurred on this stream
+    /// 
+    pub fn subscribe_edits(&self) -> impl Stream<Item=Arc<Vec<AnimationEdit>>, Error=()> {
+        self.edit_publisher.sync(|publisher| publisher.get_mut().subscribe())
+    }
 }
 
 // Clone because for some reason #[derive(Clone)] does something weird
@@ -115,7 +134,9 @@ impl<Anim: Animation> Clone for FloModel<Anim> {
             selection:          self.selection.clone(),
 
             size:               self.size.clone(),
-            size_binding:       self.size_binding.clone()
+            size_binding:       self.size_binding.clone(),
+
+            edit_publisher:     self.edit_publisher.clone()
         }
     }
 }
@@ -265,6 +286,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         // Edit the underlying animation
         let animation_edit  = self.animation.edit();
+        let edit_publisher  = Arc::clone(&self.edit_publisher);
 
         // Borrow the bits of the viewmodel we can change
         let frame_edit_counter  = self.frame_edit_counter.clone();
@@ -304,6 +326,10 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
             if advance_edit_counter {
                 frame_edit_counter.clone().set(frame_edit_counter.get()+1);
             }
+
+            // Publish the edits to any subscribers that there might be
+            let edits = Arc::new(edits.clone());
+            edit_publisher.sync(move |publisher| publisher.wait_send(edits)).unwrap();
         });
 
         Box::new(model_edit)

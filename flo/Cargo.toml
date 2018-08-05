@@ -11,6 +11,7 @@ include     = [ "Cargo.toml", "src/**/*", "svg/**/*" ]
 [dependencies]
 flo_animation   = { path = "../animation", version = "^0.1.0" }
 flo_curves      = { path = "../curves", version = "^0.1.0" }
+flo_stream      = { path = "../stream", version = "^0.1.0" }
 flo_binding     = { path = "../binding", version = "^0.1.0" }
 flo_ui          = { path = "../ui", version = "^0.1.0" }
 flo_canvas      = { path = "../canvas", version = "^0.1.0" }

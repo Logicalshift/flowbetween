@@ -2,6 +2,7 @@
 
 extern crate flo_ui;
 extern crate flo_curves;
+extern crate flo_stream;
 extern crate flo_canvas;
 extern crate flo_binding;
 extern crate flo_ui_files;
