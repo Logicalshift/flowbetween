@@ -8,7 +8,7 @@ use futures::executor;
 use futures::executor::{Notify, NotifyHandle};
 
 #[test]
-fn can_receive_on_one_subscriber() {
+fn receive_on_one_subscriber() {
     let mut publisher   = Publisher::new(10);
     let subscriber      = publisher.subscribe();
 
@@ -43,7 +43,7 @@ fn subscriber_closes_when_publisher_closes() {
 }
 
 #[test]
-fn can_read_on_multiple_subscribers() {
+fn read_on_multiple_subscribers() {
     let mut publisher   = Publisher::new(10);
     let subscriber1     = publisher.subscribe();
     let subscriber2     = publisher.subscribe();
@@ -66,7 +66,7 @@ fn can_read_on_multiple_subscribers() {
 }
 
 #[test]
-fn will_skip_messages_sent_before_subscription() {
+fn skip_messages_sent_before_subscription() {
     let publisher       = Publisher::new(10);
     let mut publisher   = executor::spawn(publisher);
 
@@ -93,7 +93,7 @@ impl Notify for NotifyNothing {
 }
 
 #[test]
-fn will_block_if_subscribers_are_full() {
+fn blocks_if_subscribers_are_full() {
     let mut publisher   = Publisher::new(10);
     let subscriber      = publisher.subscribe();
 
