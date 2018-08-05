@@ -49,7 +49,18 @@ impl<Message: Clone> PubCore<Message> {
             .collect::<Vec<_>>();
 
         // All subscribers must have enough space (we do not queue the message if any subscribe cannot accept it)
-        if subscribers.iter().any(|subscriber| subscriber.waiting.len() >= max_queue_size) {
+        let mut ready = true;
+        for mut subscriber in subscribers.iter_mut() {
+            if subscriber.waiting.len() >= max_queue_size {
+                // This subscriber needs to notify us when it's ready
+                subscriber.notify_ready = Some(task::current());
+
+                // Not ready
+                ready = false;
+            }
+        }
+
+        if !ready {
             // At least one subscriber has a full queue
             None
         } else {
