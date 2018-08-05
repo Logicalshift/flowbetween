@@ -260,14 +260,22 @@ impl<TargetSink, ProcessingFn> FloModelSink<TargetSink, ProcessingFn> {
     }
 }
 
-impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: FnMut(&Vec<AnimationEdit>) -> ()> Sink for FloModelSink<TargetSink, ProcessingFn> {
+impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: FnMut(Arc<Vec<AnimationEdit>>) -> ()> Sink for FloModelSink<TargetSink, ProcessingFn> {
     type SinkItem   = Vec<AnimationEdit>;
     type SinkError  = ();
 
     fn start_send(&mut self, item: Vec<AnimationEdit>) -> StartSend<Vec<AnimationEdit>, ()> {
-        (self.processing_fn)(&item);
+        // Send to the target
+        let edit_clone  = item.clone();
+        let send_result = self.target_sink.start_send(item);
 
-        self.target_sink.start_send(item)
+        // If the target accepts the edit, perform processing
+        if send_result == Ok(AsyncSink::Ready) {
+            (self.processing_fn)(Arc::new(edit_clone));
+        }
+
+        // Pass on the result from the target
+        send_result
     }
 
     fn poll_complete(&mut self) -> Poll<(), ()> {
@@ -292,7 +300,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
         let mut size_binding    = self.size_binding.clone();
 
         // Pipe the edits so they modify the model as a side-effect
-        let model_edit          = FloModelSink::new(animation_edit, move |edits: &Vec<AnimationEdit>| {
+        let model_edit          = FloModelSink::new(animation_edit, move |edits: Arc<Vec<AnimationEdit>>| {
             use self::AnimationEdit::*;
             use self::LayerEdit::*;
 
@@ -327,7 +335,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
             }
 
             // Publish the edits to any subscribers that there might be
-            let edits = Arc::new(edits.clone());
+            let edits = Arc::clone(&edits);
             edit_publisher.sync(move |publisher| publisher.wait_send(edits)).unwrap();
         });
 
