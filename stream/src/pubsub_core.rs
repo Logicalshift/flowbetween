@@ -49,7 +49,7 @@ impl<Message: Clone> PubCore<Message> {
             .collect::<Vec<_>>();
 
         // All subscribers must have enough space (we do not queue the message if any subscribe cannot accept it)
-        if subscribers.iter().any(|subscriber| subscriber.waiting.len() > max_queue_size) {
+        if subscribers.iter().any(|subscriber| subscriber.waiting.len() >= max_queue_size) {
             // At least one subscriber has a full queue
             None
         } else {
