@@ -39,7 +39,7 @@ impl<Message: Clone> PubCore<Message> {
     /// Attempts to publish a message to all subscribers, returning the list of notifications that need to be generated
     /// if successful, or None if the message could not be sent
     /// 
-    pub fn publish(&mut self, message: Message) -> Option<Vec<Task>> {
+    pub fn publish(&mut self, message: &Message) -> Option<Vec<Task>> {
         let max_queue_size = self.max_queue_size;
         
         // Lock all of the subscribers
