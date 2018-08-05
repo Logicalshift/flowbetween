@@ -119,7 +119,7 @@ impl<Message: Clone> Sink for Publisher<Message> {
 
     fn start_send(&mut self, item: Message) -> StartSend<Message, ()> {
         // Publish the message to the core
-        let notify = self.core.lock().unwrap().publish(&item);
+        let notify = { self.core.lock().unwrap().publish(&item) };
 
         if let Some(notify) = notify {
             // Notify all the subscribers that the item has been published
