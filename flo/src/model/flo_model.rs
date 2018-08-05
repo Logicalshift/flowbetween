@@ -55,7 +55,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
         let mut edit_publisher  = executor::spawn(Publisher::new(10));
         let animation           = Arc::new(animation);
         let tools               = ToolModel::new();
-        let timeline            = TimelineModel::new(Arc::clone(&animation), edit_publisher.get_mut().subscribe());
+        let timeline            = TimelineModel::new(Arc::clone(&animation), edit_publisher.subscribe());
         let frame_edit_counter  = bind(0);
         let frame               = FrameModel::new(Arc::clone(&animation), BindRef::new(&timeline.current_time), BindRef::new(&frame_edit_counter), BindRef::new(&timeline.selected_layer));
         let selection           = SelectionModel::new();
@@ -117,7 +117,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     /// Returns a stream containing any edits that have occurred on this stream
     /// 
     pub fn subscribe_edits(&self) -> impl Send+Stream<Item=Arc<Vec<AnimationEdit>>, Error=()> {
-        self.edit_publisher.sync(|publisher| publisher.get_mut().subscribe())
+        self.edit_publisher.sync(|publisher| publisher.subscribe())
     }
 }
 

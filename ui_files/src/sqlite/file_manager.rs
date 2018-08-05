@@ -223,7 +223,7 @@ impl FileManager for SqliteFileManager {
     /// 
     fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>+Send> {
         // Get a subscription from the core
-        let subscription = self.core.sync(|core| core.updates.get_mut().subscribe());
+        let subscription = self.core.sync(|core| core.updates.subscribe());
 
         // Return to the caller
         Box::new(subscription)

@@ -15,8 +15,7 @@
 //! this is called is relayed to all subscriptions. A subscription is a `Stream` so can interact with other parts of the
 //! futures library in the usual way.
 //! 
-//! Here's a full worked example with a single subscriber. Note the use of `get_mut()` with the spawned executor to create 
-//! a new subscriber:
+//! Here's a full worked example with a single subscriber.
 //! 
 //! ```
 //! # extern crate flo_stream;
@@ -26,7 +25,7 @@
 //! let publisher       = Publisher::new(10);
 //! let mut publisher   = executor::spawn(publisher);
 //! 
-//! let subscriber      = publisher.get_mut().subscribe();
+//! let subscriber      = publisher.subscribe();
 //! let mut subscriber  = executor::spawn(subscriber);
 //! 
 //! publisher.wait_send(1).unwrap();
@@ -45,8 +44,10 @@ mod publisher;
 mod blocking_publisher;
 mod subscriber;
 mod pubsub_core;
+mod spawn;
 
 pub use self::publisher_sink::*;
 pub use self::publisher::*;
 pub use self::subscriber::*;
 pub use self::blocking_publisher::*;
+pub use self::spawn::*;

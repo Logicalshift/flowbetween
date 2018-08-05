@@ -30,7 +30,7 @@ pub fn blocks_if_there_are_no_subscribers() {
 pub fn blocks_if_there_are_insufficient_subscribers() {
     let publisher       = BlockingPublisher::new(2, 10);
     let mut publisher   = executor::spawn(publisher);
-    let _subscriber     = publisher.get_mut().subscribe();
+    let _subscriber     = publisher.subscribe();
 
     assert!(publisher.start_send_notify(1, &NotifyHandle::from(&NotifyNothing), 0) == Ok(AsyncSink::NotReady(1)));
 }
@@ -39,8 +39,8 @@ pub fn blocks_if_there_are_insufficient_subscribers() {
 pub fn unblocks_if_there_are_sufficient_subscribers() {
     let publisher       = BlockingPublisher::new(2, 10);
     let mut publisher   = executor::spawn(publisher);
-    let _subscriber1    = publisher.get_mut().subscribe();
-    let _subscriber2    = publisher.get_mut().subscribe();
+    let _subscriber1    = publisher.subscribe();
+    let _subscriber2    = publisher.subscribe();
 
     assert!(publisher.start_send_notify(1, &NotifyHandle::from(&NotifyNothing), 0) == Ok(AsyncSink::Ready));
 }
@@ -49,8 +49,8 @@ pub fn unblocks_if_there_are_sufficient_subscribers() {
 pub fn read_from_subscribers() {
     let publisher       = BlockingPublisher::new(2, 10);
     let mut publisher   = executor::spawn(publisher);
-    let subscriber1     = publisher.get_mut().subscribe();
-    let subscriber2     = publisher.get_mut().subscribe();
+    let subscriber1     = publisher.subscribe();
+    let subscriber2     = publisher.subscribe();
 
     let mut subscriber1 = executor::spawn(subscriber1);
     let mut subscriber2 = executor::spawn(subscriber2);
@@ -91,7 +91,7 @@ pub fn read_from_thread() {
         thread::sleep(Duration::from_millis(20));
 
         // Subscribe to the thread (which should now wake up)
-        let subscriber = publisher.lock().unwrap().get_mut().subscribe();
+        let subscriber = publisher.lock().unwrap().subscribe();
         subscriber
     };
 
@@ -129,7 +129,7 @@ pub fn read_from_thread_late_start() {
         });
 
         // Subscribe to the thread (which should now wake up)
-        let subscriber = publisher.lock().unwrap().get_mut().subscribe();
+        let subscriber = publisher.lock().unwrap().subscribe();
         subscriber
     };
 

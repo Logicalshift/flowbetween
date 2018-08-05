@@ -192,9 +192,9 @@ fn skip_messages_sent_before_subscription() {
     let mut publisher   = executor::spawn(publisher);
 
     publisher.wait_send(1).unwrap();
-    let subscriber1     = publisher.get_mut().subscribe();
+    let subscriber1     = publisher.subscribe();
     publisher.wait_send(2).unwrap();
-    let subscriber2     = publisher.get_mut().subscribe();
+    let subscriber2     = publisher.subscribe();
     publisher.wait_send(3).unwrap();
 
     let mut subscriber1 = executor::spawn(subscriber1);
