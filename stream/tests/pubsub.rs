@@ -104,6 +104,66 @@ fn read_on_multiple_subscribers() {
 }
 
 #[test]
+fn clone_subscribers() {
+    let mut publisher   = Publisher::new(10);
+    let subscriber1     = publisher.subscribe();
+
+    let mut publisher   = executor::spawn(publisher);
+    let mut subscriber1 = executor::spawn(subscriber1);
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
+
+    publisher.wait_send(1).unwrap();
+    publisher.wait_send(2).unwrap();
+    publisher.wait_send(3).unwrap();
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::NotReady));
+
+    let mut subscriber2 = executor::spawn(subscriber1.get_ref().clone());
+
+    assert!(subscriber1.wait_stream() == Some(Ok(1)));
+    assert!(subscriber1.wait_stream() == Some(Ok(2)));
+    assert!(subscriber1.wait_stream() == Some(Ok(3)));
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::NotReady));
+
+    assert!(subscriber2.wait_stream() == Some(Ok(1)));
+    assert!(subscriber2.wait_stream() == Some(Ok(2)));
+    assert!(subscriber2.wait_stream() == Some(Ok(3)));
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
+}
+
+#[test]
+fn clone_subscribers_after_reading() {
+    let mut publisher   = Publisher::new(10);
+    let subscriber1     = publisher.subscribe();
+
+    let mut publisher   = executor::spawn(publisher);
+    let mut subscriber1 = executor::spawn(subscriber1);
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
+
+    publisher.wait_send(1).unwrap();
+    publisher.wait_send(2).unwrap();
+    publisher.wait_send(3).unwrap();
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::NotReady));
+
+    assert!(subscriber1.wait_stream() == Some(Ok(1)));
+    assert!(subscriber1.wait_stream() == Some(Ok(2)));
+
+    let mut subscriber2 = executor::spawn(subscriber1.get_ref().clone());
+    assert!(subscriber1.wait_stream() == Some(Ok(3)));
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::NotReady));
+
+    assert!(subscriber2.wait_stream() == Some(Ok(3)));
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
+}
+
+#[test]
 fn complete_on_multiple_subscribers() {
     let mut publisher   = Publisher::new(10);
     let subscriber1     = publisher.subscribe();

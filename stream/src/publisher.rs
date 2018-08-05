@@ -16,9 +16,6 @@ use std::collections::{HashMap, VecDeque};
 /// indicate that they have finished.
 /// 
 pub struct Publisher<Message> {
-    /// The next ID to assign to a new subscriber
-    next_subscriber_id: usize,
-
     /// The shared core of this publisher
     core: Arc<Mutex<PubCore<Message>>>
 }
@@ -30,13 +27,13 @@ impl<Message: Clone> Publisher<Message> {
     pub fn new(buffer_size: usize) -> Publisher<Message> {
         // Create the core
         let core = PubCore {
-            subscribers:    HashMap::new(),
-            max_queue_size: buffer_size
+            next_subscriber_id: 0,
+            subscribers:        HashMap::new(),
+            max_queue_size:     buffer_size
         };
 
         // Build the publisher itself
         Publisher {
-            next_subscriber_id: 0,
             core:               Arc::new(Mutex::new(core))
         }
     }
@@ -57,8 +54,13 @@ impl<Message: Clone> PublisherSink<Message> for Publisher<Message> {
     /// 
     fn subscribe(&mut self) -> Subscriber<Message> {
         // Assign a subscriber ID
-        let subscriber_id = self.next_subscriber_id;
-        self.next_subscriber_id += 1;
+        let subscriber_id = {
+            let mut core    = self.core.lock().unwrap();
+            let id          = core.next_subscriber_id;
+            core.next_subscriber_id += 1;
+
+            id
+        };
 
         // Create the subscriber core
         let sub_core = SubCore {
