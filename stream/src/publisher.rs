@@ -11,6 +11,9 @@ use std::collections::{HashMap, VecDeque};
 /// A publisher represents a sink that sends messages to zero or more subscribers
 /// 
 pub struct Publisher<Message> {
+    /// The next ID to assign to a new subscriber
+    next_subscriber_id: usize,
+
     /// The shared core of this publisher
     core: Arc<Mutex<PubCore<Message>>>
 }
@@ -29,7 +32,8 @@ impl<Message: Clone> Publisher<Message> {
 
         // Build the publisher itself
         Publisher {
-            core: Arc::new(Mutex::new(core))
+            next_subscriber_id: 0,
+            core:               Arc::new(Mutex::new(core))
         }
     }
 
@@ -39,7 +43,30 @@ impl<Message: Clone> Publisher<Message> {
     /// Subscribers only receive messages sent to the publisher after they are created.
     /// 
     pub fn subscribe(&mut self) -> Subscriber<Message> {
-        unimplemented!()
+        // Assign a subscriber ID
+        let subscriber_id = self.next_subscriber_id;
+        self.next_subscriber_id += 1;
+
+        // Create the subscriber core
+        let sub_core = SubCore {
+            id:             subscriber_id,
+            subscribed:     true,
+            waiting:        VecDeque::new(),
+            notify_waiting: None
+        };
+
+        // The new subscriber needs a reference to the sub_core and the pub_core
+        let sub_core = Arc::new(Mutex::new(sub_core));
+        let pub_core = Arc::downgrade(&self.core);
+
+        // Register the subscriber with the core, so it will start receiving messages
+        {
+            let mut core = self.core.lock().unwrap();
+            core.subscribers.insert(subscriber_id, Arc::clone(&sub_core));
+        }
+
+        // Create the subscriber
+        Subscriber::new(pub_core, sub_core)
     }
 }
 

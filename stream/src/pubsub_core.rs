@@ -6,7 +6,7 @@ use std::collections::{VecDeque, HashMap};
 ///
 /// The shared publisher core, used when subscribers need to send messages to their publisher
 /// 
-pub struct PubCore<Message> {
+pub (crate) struct PubCore<Message> {
     /// The subscribers to this publisher
     pub subscribers: HashMap<usize, Arc<Mutex<SubCore<Message>>>>,
 
@@ -20,7 +20,7 @@ pub struct PubCore<Message> {
 ///
 /// The core shared structure between a publisher and subscriber
 /// 
-pub struct SubCore<Message> {
+pub (crate) struct SubCore<Message> {
     /// Unique ID for the subscriber represented by this core
     pub id: usize,
 
