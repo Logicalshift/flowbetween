@@ -133,12 +133,11 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
             })
             .filter_map(|edits| {
                 if edits.len() > 0 {
-                    Some(edits)
+                    Some(stream::iter_ok::<_, ()>(edits))
                 } else {
                     None
                 }
             })
-            .map(|edits| stream::iter_ok::<_, ()>(edits))
             .flatten();
 
         // Get the initial set of layers
