@@ -105,3 +105,41 @@ pub fn read_from_thread() {
     // As we don't retain the publisher, the thread is its only owner. When it finishes, the stream should close.
     assert!(subscriber.wait_stream() == None);
 }
+
+#[test]
+pub fn read_from_thread_late_start() {
+    let subscriber = {
+        // Create a shared publisher
+        let publisher = BlockingPublisher::new(1, 1);
+        let publisher = executor::spawn(publisher);
+        let publisher = Arc::new(Mutex::new(publisher));
+
+        // Create a thread to publish some values
+        let thread_publisher = publisher.clone();
+        thread::spawn(move || {
+            // Wait for the subscriber to be created
+            thread::sleep(Duration::from_millis(20));
+
+            let wait_for_subscribers = thread_publisher.lock().unwrap().get_mut().when_ready();
+            executor::spawn(wait_for_subscribers).wait_future().unwrap();
+
+            thread_publisher.lock().unwrap().wait_send(1).unwrap();
+            thread_publisher.lock().unwrap().wait_send(2).unwrap();
+            thread_publisher.lock().unwrap().wait_send(3).unwrap();
+        });
+
+        // Subscribe to the thread (which should now wake up)
+        let subscriber = publisher.lock().unwrap().get_mut().subscribe();
+        subscriber
+    };
+
+    let mut subscriber = executor::spawn(subscriber);
+
+    // Should receive the values from the thread
+    assert!(subscriber.wait_stream() == Some(Ok(1)));
+    assert!(subscriber.wait_stream() == Some(Ok(2)));
+    assert!(subscriber.wait_stream() == Some(Ok(3)));
+
+    // As we don't retain the publisher, the thread is its only owner. When it finishes, the stream should close.
+    assert!(subscriber.wait_stream() == None);
+}
