@@ -116,7 +116,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     ///
     /// Returns a stream containing any edits that have occurred on this stream
     /// 
-    pub fn subscribe_edits(&self) -> impl Send+Stream<Item=Arc<Vec<AnimationEdit>>, Error=()> {
+    pub fn subscribe_edits(&self) -> impl Stream<Item=Arc<Vec<AnimationEdit>>, Error=()>+Clone+Send {
         self.edit_publisher.sync(|publisher| publisher.subscribe())
     }
 }
