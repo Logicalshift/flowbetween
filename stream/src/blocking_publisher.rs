@@ -26,8 +26,11 @@ pub struct BlockingPublisher<Message> {
     /// The publisher where messages will be relayed
     publisher: Publisher<Message>,
 
-    /// Notification to be sent when there are enough subscribers in this publisher
+    /// Notification to be sent when there are enough subscribers in this publisher (waiting to send)
     notify_full: Option<Task>,
+
+    /// Notification to be sent when there are enough subscribers in this publisher (waiting for completion)
+    notify_complete: Option<Task>,
 
     /// Futures to be notified when there are enough subscribers for this publisher
     notify_futures: Vec<oneshot::Sender<()>>
@@ -46,6 +49,7 @@ impl<Message: Clone> BlockingPublisher<Message> {
             required_subscribers:       required_subscribers,
             publisher:                  Publisher::new(buffer_size),
             notify_full:                None,
+            notify_complete:            None,
             notify_futures:             vec![]
         }
     }
@@ -83,6 +87,7 @@ impl<Message: Clone> PublisherSink<Message> for BlockingPublisher<Message> {
             
             // Notify anything that is blocking on this publisher
             self.notify_full.take().map(|notify| notify.notify());
+            self.notify_complete.take().map(|notify| notify.notify());
 
             // Mark any futures that are waiting on this publisher
             self.notify_futures.drain(..)
@@ -112,7 +117,7 @@ impl<Message: Clone> Sink for BlockingPublisher<Message> {
     fn poll_complete(&mut self) -> Poll<(), ()> {
         if self.insufficient_subscribers {
             // Not enough subscribers, so refuse to send
-            self.notify_full = Some(task::current());
+            self.notify_complete = Some(task::current());
             Ok(Async::NotReady)
         } else {
             // Have reached the required number of subscribers, so pass through to the main publisher
