@@ -40,10 +40,13 @@
 
 extern crate futures;
 
-pub mod publisher;
-pub mod blocking_publisher;
-pub mod subscriber;
+mod publisher_sink;
+mod publisher;
+mod blocking_publisher;
+mod subscriber;
 mod pubsub_core;
 
+pub use self::publisher_sink::*;
 pub use self::publisher::*;
 pub use self::subscriber::*;
+pub use self::blocking_publisher::*;

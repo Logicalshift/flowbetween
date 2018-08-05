@@ -1,5 +1,6 @@
 use super::subscriber::*;
 use super::pubsub_core::*;
+use super::publisher_sink::*;
 
 use futures::*;
 use futures::sink::Sink;
@@ -39,13 +40,15 @@ impl<Message: Clone> Publisher<Message> {
             core:               Arc::new(Mutex::new(core))
         }
     }
+}
 
+impl<Message: Clone> PublisherSink<Message> for Publisher<Message> {
     ///
     /// Subscribes to this publisher
     /// 
     /// Subscribers only receive messages sent to the publisher after they are created.
     /// 
-    pub fn subscribe(&mut self) -> Subscriber<Message> {
+    fn subscribe(&mut self) -> Subscriber<Message> {
         // Assign a subscriber ID
         let subscriber_id = self.next_subscriber_id;
         self.next_subscriber_id += 1;
