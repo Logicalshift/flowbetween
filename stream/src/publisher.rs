@@ -49,7 +49,6 @@ impl<Message: Clone> Publisher<Message> {
         // Create the subscriber core
         let sub_core = SubCore {
             id:             subscriber_id,
-            subscribed:     true,
             published:      true,
             waiting:        VecDeque::new(),
             notify_waiting: None,

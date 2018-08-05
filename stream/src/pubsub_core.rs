@@ -22,9 +22,6 @@ pub (crate) struct SubCore<Message> {
     /// Unique ID for the subscriber represented by this core
     pub id: usize,
 
-    /// True while the subscriber owning this core is alive
-    pub subscribed: bool,
-
     /// True while the publisher owning this core is alive
     pub published: bool,
 
