@@ -70,6 +70,35 @@ impl<Message: Clone> Publisher<Message> {
     }
 }
 
+impl<Message> Drop for Publisher<Message> {
+    fn drop(&mut self) {
+        let to_notify = {
+            // Lock the core
+            let pub_core = self.core.lock().unwrap();
+
+            // Mark all the subscribers as unpublished and notify them so that they close
+            let mut to_notify = vec![];
+
+            for mut subscriber in pub_core.subscribers.values() {
+                let mut subscriber = subscriber.lock().unwrap();
+
+                // Unpublish the subscriber (so that it hits the end of the stream)
+                subscriber.published    = false;
+                subscriber.notify_ready = None;
+
+                // Add to the things to notify once the lock is released
+                to_notify.push(subscriber.notify_waiting.take());
+            }
+
+            // Return the notifications outside of the lock
+            to_notify
+        };
+
+        // Notify any subscribers that are waiting that we're unpublished
+        to_notify.into_iter().filter_map(|notify| notify).for_each(|notify| notify.notify());
+    }
+}
+
 impl<Message: Clone> Sink for Publisher<Message> {
     type SinkItem   = Message;
     type SinkError  = ();
