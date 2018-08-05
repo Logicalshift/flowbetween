@@ -46,7 +46,7 @@ impl<Message> Stream for Subscriber<Message> {
         if let Some(next_message) = next_message {
             // Return the next message if it's available
             Ok(Async::Ready(Some(next_message)))
-        } else if self.pub_core.upgrade().is_none() {
+        } else if !sub_core.published {
             // Stream has finished if the publisher core is no longer available
             Ok(Async::Ready(None))
         } else {

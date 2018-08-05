@@ -13,9 +13,6 @@ pub (crate) struct PubCore<Message> {
 
     /// The maximum size of queue to allow in any one subscriber
     pub max_queue_size: usize,
-
-    /// Notification task for when a subscriber's 'waiting' queue becomes empty
-    pub notify_ready: Option<Task>
 }
 
 ///
@@ -28,11 +25,17 @@ pub (crate) struct SubCore<Message> {
     /// True while the subscriber owning this core is alive
     pub subscribed: bool,
 
+    /// True while the publisher owning this core is alive
+    pub published: bool,
+
     /// Messages ready to be sent to this core
     pub waiting: VecDeque<Message>,
 
     /// Notification task for when the 'waiting' queue becomes non-empty
-    pub notify_waiting: Option<Task>
+    pub notify_waiting: Option<Task>,
+
+    /// If the publisher is waiting on this subscriber, this is the notification to send
+    pub notify_ready: Option<Task>
 }
 
 impl<Message: Clone> PubCore<Message> {
@@ -74,21 +77,23 @@ impl<Message: Clone> PubCore<Message> {
         let max_queue_size = self.max_queue_size;
 
         // Collect the subscribers into one place
-        let subscribers = self.subscribers.values()
+        let mut subscribers = self.subscribers.values()
             .map(|subscriber| subscriber.lock().unwrap())
             .collect::<Vec<_>>();
 
         // Determine if we're ready or not
         let mut ready = true;
-        for subscriber in subscribers.iter() {
+        for subscriber in subscribers.iter_mut() {
             if subscriber.waiting.len() >= max_queue_size {
+                // Not ready
                 ready = false;
-            }
-        }
 
-        // If we're not ready, set the notification
-        if !ready {
-            self.notify_ready = Some(task::current());
+                // This subscriber needs to notify this task when it becomes ready
+                subscriber.notify_ready = Some(task::current());
+            } else {
+                // This subscriber doesn't need to notify anyone when it becomes ready
+                subscriber.notify_ready = None;
+            }
         }
 
         ready

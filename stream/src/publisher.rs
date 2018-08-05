@@ -26,8 +26,7 @@ impl<Message: Clone> Publisher<Message> {
         // Create the core
         let core = PubCore {
             subscribers:    HashMap::new(),
-            max_queue_size: buffer_size,
-            notify_ready:   None
+            max_queue_size: buffer_size
         };
 
         // Build the publisher itself
@@ -51,8 +50,10 @@ impl<Message: Clone> Publisher<Message> {
         let sub_core = SubCore {
             id:             subscriber_id,
             subscribed:     true,
+            published:      true,
             waiting:        VecDeque::new(),
-            notify_waiting: None
+            notify_waiting: None,
+            notify_ready:   None
         };
 
         // The new subscriber needs a reference to the sub_core and the pub_core
