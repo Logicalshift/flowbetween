@@ -40,6 +40,13 @@ impl<Message: Clone> Publisher<Message> {
             core:               Arc::new(Mutex::new(core))
         }
     }
+
+    ///
+    /// Counts the number of subscribers in this publisher
+    /// 
+    pub fn count_subscribers(&self) -> usize {
+        self.core.lock().unwrap().subscribers.len()
+    }
 }
 
 impl<Message: Clone> PublisherSink<Message> for Publisher<Message> {
