@@ -34,7 +34,7 @@ impl<Message> Subscriber<Message> {
 
 impl<Message> Drop for Subscriber<Message> {
     fn drop(&mut self) {
-        let notify = {
+        let (notify_ready, notify_complete) = {
             // Lock the publisher and subscriber cores (note that the publisher core must always be locked first)
             let pub_core = self.pub_core.upgrade();
 
@@ -47,18 +47,17 @@ impl<Message> Drop for Subscriber<Message> {
                 pub_core.subscribers.remove(&sub_core.id);
 
                 // Need to notify the core if it's waiting on this subscriber (might now be unblocked)
-                sub_core.notify_ready.take()
+                (sub_core.notify_ready.take(), sub_core.notify_complete.take())
             } else {
                 // Need to notify the core if it's waiting on this subscriber (might now be unblocked)
                 let mut sub_core = self.sub_core.lock().unwrap();
-                sub_core.notify_ready.take()
+                (sub_core.notify_ready.take(), sub_core.notify_complete.take())
             }
         };
 
         // After releasing the locks, notify the publisher if it's waiting on this subscriber
-        if let Some(notify) = notify {
-            notify.notify()
-        }
+        notify_ready.map(|notify| notify.notify());
+        notify_complete.map(|notify| notify.notify());
     }
 }
 
