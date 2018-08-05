@@ -41,6 +41,7 @@
 extern crate futures;
 
 pub mod publisher;
+pub mod blocking_publisher;
 pub mod subscriber;
 mod pubsub_core;
 
