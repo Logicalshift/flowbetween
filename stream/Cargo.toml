@@ -5,8 +5,8 @@ authors         = ["Andrew Hunter"]
 license         = "Apache-2.0"
 repository      = "https://github.com/Logicalshift/flowbetween"
 
-description     = "Pubsub and other streams for Rust futures"
-documentation   = "http://docs.rs/desync/"
+description     = "Pubsub and related streams for Rust futures"
+documentation   = "http://docs.rs/flo_stream/"
 readme          = "README.md"
 keywords        = ["pubsub", "futures", "concurrency"]
 categories      = ["concurrency","asynchronous","algorithms","data-structures"]
