@@ -2,16 +2,17 @@ use super::file_list::*;
 use super::super::file_update::*;
 use super::super::file_manager::*;
 
+use flo_stream::*;
+
 use dirs;
 use uuid::*;
 use desync::*;
 use rusqlite::*;
 use futures::*;
 use futures::executor;
-use futures::sync::mpsc;
+use futures::executor::Spawn;
 
 use std::fs;
-use std::mem;
 use std::sync::*;
 use std::path::{Path, PathBuf};
 
@@ -28,7 +29,7 @@ struct SqliteFileManagerCore {
     file_list: FileList,
 
     /// The senders for updates to this file manager
-    updates: Vec<mpsc::Sender<FileUpdate>>
+    updates: Spawn<Publisher<FileUpdate>>
 }
 
 ///
@@ -47,37 +48,8 @@ impl SqliteFileManagerCore {
     /// Sends an update to everything that's listening for them
     /// 
     pub fn send_update(&mut self, update: FileUpdate) {
-        // Swap out the updates (we'll push back the updates that are still alive when we're done)
-        let mut updates = vec![];
-        mem::swap(&mut updates, &mut self.updates);
-
-        // Try to send to all of the update sinks
-        for mut update_sink in updates.into_iter() {
-            // Send the update to this sink
-            let send_result = update_sink.try_send(update.clone());
-
-            match send_result {
-                // Send to this sink again if the update is successful
-                Ok(_) => self.updates.push(update_sink),
-
-                // Handle various error cases
-                Err(try_err) => {
-                    if try_err.is_full() {
-                        // Wait using a normal executor if we've generated too many events
-                        let mut sink_spawn  = executor::spawn(update_sink);
-                        let send_result     = sink_spawn.wait_send(update.clone());
-
-                        // If sent OK, keep sending to this sink
-                        if send_result.is_ok() {
-                            self.updates.push(sink_spawn.into_inner());
-                        }
-                    } else {
-                        // Otherwise, don't update this sink next time (assume it's disconnected)
-                    }
-                }
-            }
-            
-        }
+        // Send to the update publisher
+        self.updates.wait_send(update).unwrap();
     }
 }
 
@@ -121,12 +93,16 @@ impl SqliteFileManager {
             file_list.initialize().unwrap();
         }
 
+        // Create the update publisher
+        let update_publisher = Publisher::new(100);
+        let update_publisher = executor::spawn(update_publisher);
+
         // Put together the file manager
         SqliteFileManager {
             root_path:  root_path,
             core:       Desync::new(SqliteFileManagerCore {
                 file_list:  file_list,
-                updates:    vec![]
+                updates:    update_publisher
             })
         }
     }
@@ -246,14 +222,11 @@ impl FileManager for SqliteFileManager {
     /// Returns a stream of updates indicating changes made to the file manager
     /// 
     fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>+Send> {
-        // Create the channel for sending updates
-        let (sender, receiver) = mpsc::channel(10);
+        // Get a subscription from the core
+        let subscription = self.core.sync(|core| core.updates.get_mut().subscribe());
 
-        // Store the sender in the core
-        self.core.async(move |core| core.updates.push(sender));
-
-        // Result is the receiver
-        Box::new(receiver)
+        // Return to the caller
+        Box::new(subscription)
     }
 }
 

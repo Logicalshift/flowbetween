@@ -2,6 +2,7 @@
 
 cargo test -p flo_float_encoder
 cargo test -p flo_binding
+cargo test -p flo_stream
 cargo test -p flo_curves
 cargo test -p flo_canvas
 cargo test -p flo_ui

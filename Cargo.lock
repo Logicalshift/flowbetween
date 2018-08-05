@@ -701,6 +701,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "flo_stream"
+version = "0.1.0"
+dependencies = [
+ "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "flo_ui"
 version = "0.1.0"
 dependencies = [
@@ -726,6 +733,7 @@ dependencies = [
  "dirs 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.0",
  "flo_canvas 0.1.0",
+ "flo_stream 0.1.0",
  "flo_ui 0.1.0",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
