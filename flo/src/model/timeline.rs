@@ -5,6 +5,9 @@ use flo_binding::*;
 use flo_binding::Bound;
 use flo_animation::*;
 
+use futures::*;
+use futures::stream;
+
 use std::sync::*;
 use std::ops::Range;
 use std::collections::*;
@@ -27,7 +30,7 @@ pub struct TimelineModel<Anim: Animation> {
     pub duration: Binding<Duration>,
 
     /// The layers in the timeline
-    pub layers: Binding<Vec<LayerModel>>,
+    pub layers: BindRef<Vec<LayerModel>>,
 
     /// The ID of the layer currently selected for editing
     pub selected_layer: Binding<Option<u64>>,
@@ -46,7 +49,7 @@ impl<Anim: Animation> Clone for TimelineModel<Anim> {
             current_time:               Binding::clone(&self.current_time),
             frame_duration:             Binding::clone(&self.frame_duration),
             duration:                   Binding::clone(&self.duration),
-            layers:                     Binding::clone(&self.layers),
+            layers:                     BindRef::clone(&self.layers),
             selected_layer:             Binding::clone(&self.selected_layer),
             canvas_invalidation_count:  Binding::clone(&self.canvas_invalidation_count),
             keyframes:                  Arc::clone(&self.keyframes)
@@ -54,13 +57,14 @@ impl<Anim: Animation> Clone for TimelineModel<Anim> {
     }
 }
 
-impl<Anim: Animation> TimelineModel<Anim> {
+impl<Anim: Animation+'static> TimelineModel<Anim> {
     ///
     /// Creates a new timeline viewmodel
     /// 
-    pub fn new(animation: Arc<Anim>) -> TimelineModel<Anim> {
-        // Load the layers from the animation
-        let layers = Self::get_layers(&animation);
+    pub fn new<EditStream>(animation: Arc<Anim>, edits: EditStream) -> TimelineModel<Anim> 
+    where EditStream: 'static+Send+Stream<Item=Arc<Vec<AnimationEdit>>, Error=()> {
+        // Create the layers binding
+        let layers = Self::layers_binding(&animation, edits);
 
         // Initial selected layer is the first in the list
         let selected_layer = animation.get_layer_ids().into_iter().nth(0);
@@ -75,7 +79,7 @@ impl<Anim: Animation> TimelineModel<Anim> {
             current_time:               bind(Duration::from_millis(0)),
             duration:                   bind(duration),
             frame_duration:             bind(frame_duration),
-            layers:                     bind(layers),
+            layers:                     layers,
             selected_layer:             bind(selected_layer),
             canvas_invalidation_count:  bind(0),
             keyframes:                  Arc::new(Mutex::new(HashMap::new()))
@@ -101,14 +105,77 @@ impl<Anim: Animation> TimelineModel<Anim> {
     }
 
     ///
-    /// Updates the layers from the animation
+    /// Returns a binding for the layers in an animation
     /// 
-    pub fn update_layers(&self) {
-        // Refresh the layers
-        self.layers.clone().set(Self::get_layers(&self.animation));
+    fn layers_binding<EditStream>(animation: &Arc<Anim>, edits: EditStream) -> BindRef<Vec<LayerModel>>
+    where EditStream: 'static+Send+Stream<Item=Arc<Vec<AnimationEdit>>, Error=()> {
+        // The animation is used to create the initial layer models in the binding
+        let animation = Arc::clone(animation);
 
-        // The keyframe bindings always change when the layers change
-        self.update_keyframe_bindings();
+        // Create a stream filtered to only layer edits
+        let layer_edits = edits
+            .map(|edits| {
+                edits.iter()
+                    .filter(|edit| {
+                        use self::AnimationEdit::*;
+
+                        match edit {
+                            // Layer edits
+                            AddNewLayer(_)  |
+                            RemoveLayer(_)  => true,
+
+                            // Everything else is excluded
+                            _               => false
+                        }
+                    })
+                    .cloned()
+                    .collect::<Vec<_>>()
+            })
+            .filter_map(|edits| {
+                if edits.len() > 0 {
+                    Some(edits)
+                } else {
+                    None
+                }
+            })
+            .map(|edits| stream::iter_ok::<_, ()>(edits))
+            .flatten();
+
+        // Get the initial set of layers
+        let layers = Self::get_layers(&animation);
+
+        // Create a stream binding to update them
+        let layers = bind_stream(layer_edits, layers, move |layers, edit| {
+            use self::AnimationEdit::*;
+
+            // We'll edit the layers in place
+            let mut layers = layers;
+
+            match edit {
+                AddNewLayer(layer_id) => {
+                    // Create a new layer model
+                    let layer = animation.get_layer_with_id(layer_id);
+
+                    if let Some(layer) = layer {
+                        let model = LayerModel::new(&*layer);
+                        layers.push(model);
+                    }
+                },
+
+                RemoveLayer(layer_id) => {
+                    // Remove the layer(s?) with the old ID
+                    layers.retain(|model| model.id.get() != layer_id)
+                },
+
+                _ => { }
+            }
+
+            // These are the new layers
+            layers
+        });
+
+        // Convert to a bindref
+        BindRef::from(layers)
     }
 
     ///

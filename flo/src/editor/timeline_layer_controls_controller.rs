@@ -109,7 +109,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                 self.timeline.selected_layer.clone().set(Some(new_layer_id));
 
                 // Update the model
-                self.timeline.update_layers();
+                self.timeline.update_keyframe_bindings();
                 self.timeline.invalidate_canvas();
             },
 
@@ -130,7 +130,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                     }).unwrap();
 
                     // Update the model
-                    self.timeline.update_layers();
+                    self.timeline.update_keyframe_bindings();
                     self.timeline.invalidate_canvas();
 
                     // Select the layer after the one we just deleted (or the one before if it was the last in the list)
