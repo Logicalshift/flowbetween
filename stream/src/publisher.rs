@@ -1,44 +1,49 @@
 use super::subscriber::*;
+use super::pubsub_core::*;
 
 use futures::*;
 use futures::sink::Sink;
 
-use std::collections::VecDeque;
+use std::sync::*;
+use std::collections::{HashMap, VecDeque};
 
 ///
 /// A publisher represents a sink that sends messages to zero or more subscribers
 /// 
 pub struct Publisher<Message> {
-    /// The maximum number of messages to buffer
-    max_buffer_size: usize,
-
-    /// The buffer for this publisher
-    buffer: VecDeque<Message>
+    /// The shared core of this publisher
+    core: Arc<Mutex<PubCore<Message>>>
 }
 
-impl<Message> Publisher<Message> {
+impl<Message: Clone> Publisher<Message> {
     ///
     /// Creates a new publisher with a particular buffer size
     /// 
     pub fn new(buffer_size: usize) -> Publisher<Message> {
+        // Create the core
+        let core = PubCore {
+            subscribers:    HashMap::new(),
+            max_queue_size: buffer_size,
+            notify_ready:   None
+        };
+
+        // Build the publisher itself
         Publisher {
-            max_buffer_size:    buffer_size,
-            buffer:             VecDeque::new()
+            core: Arc::new(Mutex::new(core))
         }
     }
 
     ///
     /// Subscribes to this publisher
     /// 
-    /// The first subscriber will receive all messages that have been queued before it was created. Future subscribers
-    /// will only receive messages that are sent after it is created.
+    /// Subscribers only receive messages sent to the publisher after they are created.
     /// 
     pub fn subscribe(&mut self) -> Subscriber<Message> {
-        unimplemented!()        
+        unimplemented!()
     }
 }
 
-impl<Message> Sink for Publisher<Message> {
+impl<Message: Clone> Sink for Publisher<Message> {
     type SinkItem   = Message;
     type SinkError  = ();
 
