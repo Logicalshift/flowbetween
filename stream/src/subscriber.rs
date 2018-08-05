@@ -67,28 +67,37 @@ impl<Message> Stream for Subscriber<Message> {
     type Error  = ();
 
     fn poll(&mut self) -> Poll<Option<Message>, ()> {
-        let (result, notify) = {
+        let (result, notify_ready, notify_complete) = {
             // Try to read a message from the waiting list
             let mut sub_core    = self.sub_core.lock().unwrap();
             let next_message    = sub_core.waiting.pop_front();
 
             if let Some(next_message) = next_message {
+                // If the core is empty and we have a 'complete' notification, then send that
+                let notify_complete = if sub_core.waiting.len() == 0 {
+                    sub_core.notify_complete.take()
+                } else {
+                    None
+                };
+
+                // If something is waiting for this subscriber to become ready, then notify it as well
+                let notify_ready = sub_core.notify_ready.take();
+
                 // Return the next message if it's available
-                (Ok(Async::Ready(Some(next_message))), sub_core.notify_ready.take())
+                (Ok(Async::Ready(Some(next_message))), notify_ready, notify_complete)
             } else if !sub_core.published {
                 // Stream has finished if the publisher core is no longer available
-                (Ok(Async::Ready(None)), None)
+                (Ok(Async::Ready(None)), None, None)
             } else {
                 // If the publisher is still alive and there are no messages available, store notification and carry on
                 sub_core.notify_waiting = Some(task::current());
-                (Ok(Async::NotReady), None)
+                (Ok(Async::NotReady), None, None)
             }
         };
 
         // If there's something to notify as a result of this request, do so (note that we do this after releasing the core lock)
-        if let Some(notify) = notify {
-            notify.notify();
-        }
+        notify_ready.map(|ready| ready.notify());
+        notify_complete.map(|complete| complete.notify());
 
         // Return the result
         result

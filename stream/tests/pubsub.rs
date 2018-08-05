@@ -7,6 +7,13 @@ use futures::*;
 use futures::executor;
 use futures::executor::{Notify, NotifyHandle};
 
+#[derive(Clone)]
+struct NotifyNothing;
+
+impl Notify for NotifyNothing {
+    fn notify(&self, _: usize) { }
+}
+
 #[test]
 fn receive_on_one_subscriber() {
     let mut publisher   = Publisher::new(10);
@@ -22,6 +29,29 @@ fn receive_on_one_subscriber() {
     assert!(subscriber.wait_stream() == Some(Ok(1)));
     assert!(subscriber.wait_stream() == Some(Ok(2)));
     assert!(subscriber.wait_stream() == Some(Ok(3)));
+}
+
+#[test]
+fn complete_when_empty() {
+    let mut publisher   = Publisher::new(10);
+    let subscriber      = publisher.subscribe();
+
+    let mut publisher   = executor::spawn(publisher);
+    let mut subscriber  = executor::spawn(subscriber);
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
+
+    publisher.wait_send(1).unwrap();
+    publisher.wait_send(2).unwrap();
+    publisher.wait_send(3).unwrap();
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::NotReady));
+
+    assert!(subscriber.wait_stream() == Some(Ok(1)));
+    assert!(subscriber.wait_stream() == Some(Ok(2)));
+    assert!(subscriber.wait_stream() == Some(Ok(3)));
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
 }
 
 #[test]
@@ -44,6 +74,37 @@ fn subscriber_closes_when_publisher_closes() {
 
 #[test]
 fn read_on_multiple_subscribers() {
+    let mut publisher   = Publisher::new(10);
+    let subscriber1     = publisher.subscribe();
+    let subscriber2     = publisher.subscribe();
+
+    let mut publisher   = executor::spawn(publisher);
+    let mut subscriber1 = executor::spawn(subscriber1);
+    let mut subscriber2 = executor::spawn(subscriber2);
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
+
+    publisher.wait_send(1).unwrap();
+    publisher.wait_send(2).unwrap();
+    publisher.wait_send(3).unwrap();
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::NotReady));
+
+    assert!(subscriber1.wait_stream() == Some(Ok(1)));
+    assert!(subscriber1.wait_stream() == Some(Ok(2)));
+    assert!(subscriber1.wait_stream() == Some(Ok(3)));
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::NotReady));
+
+    assert!(subscriber2.wait_stream() == Some(Ok(1)));
+    assert!(subscriber2.wait_stream() == Some(Ok(2)));
+    assert!(subscriber2.wait_stream() == Some(Ok(3)));
+
+    assert!(publisher.poll_flush_notify(&NotifyHandle::from(&NotifyNothing), 1) == Ok(Async::Ready(())));
+}
+
+#[test]
+fn complete_on_multiple_subscribers() {
     let mut publisher   = Publisher::new(10);
     let subscriber1     = publisher.subscribe();
     let subscriber2     = publisher.subscribe();
@@ -83,13 +144,6 @@ fn skip_messages_sent_before_subscription() {
     assert!(subscriber1.wait_stream() == Some(Ok(3)));
 
     assert!(subscriber2.wait_stream() == Some(Ok(3)));
-}
-
-#[derive(Clone)]
-struct NotifyNothing;
-
-impl Notify for NotifyNothing {
-    fn notify(&self, _: usize) { }
 }
 
 #[test]

@@ -32,7 +32,10 @@ pub (crate) struct SubCore<Message> {
     pub notify_waiting: Option<Task>,
 
     /// If the publisher is waiting on this subscriber, this is the notification to send
-    pub notify_ready: Option<Task>
+    pub notify_ready: Option<Task>,
+
+    /// If the publisher is waiting for this subscriber to complete, this is the notification to send
+    pub notify_complete: Option<Task>
 }
 
 impl<Message: Clone> PubCore<Message> {
@@ -57,6 +60,9 @@ impl<Message: Clone> PubCore<Message> {
 
                 // Not ready
                 ready = false;
+            } else {
+                // This subscriber is already ready and doesn't need to notify us any more
+                subscriber.notify_ready = None;
             }
         }
 
@@ -78,32 +84,31 @@ impl<Message: Clone> PubCore<Message> {
     }
 
     ///
-    /// Checks this core for readiness. If the core is not ready, returns false and sets the 'notify_ready' task
+    /// Checks this core for completion. If any messages are still waiting to be processed, returns false and sets the 'notify_complete' task
     /// 
-    pub fn ready(&mut self) -> bool {
-        // The core is ready if there are currently no subscribers using > max_queue_size slots
-        let max_queue_size = self.max_queue_size;
+    pub fn complete(&mut self) -> bool {
+        // The core is ready if there are currently no subscribers with any waiting messages
 
         // Collect the subscribers into one place
         let mut subscribers = self.subscribers.values()
             .map(|subscriber| subscriber.lock().unwrap())
             .collect::<Vec<_>>();
 
-        // Determine if we're ready or not
-        let mut ready = true;
+        // Determine if we're complete or not
+        let mut complete = true;
         for subscriber in subscribers.iter_mut() {
-            if subscriber.waiting.len() >= max_queue_size {
-                // Not ready
-                ready = false;
+            if subscriber.waiting.len() > 0 {
+                // Not compelte
+                complete = false;
 
                 // This subscriber needs to notify this task when it becomes ready
-                subscriber.notify_ready = Some(task::current());
+                subscriber.notify_complete = Some(task::current());
             } else {
                 // This subscriber doesn't need to notify anyone when it becomes ready
-                subscriber.notify_ready = None;
+                subscriber.notify_complete = None;
             }
         }
 
-        ready
+        complete
     }
 }

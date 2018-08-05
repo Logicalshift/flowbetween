@@ -62,11 +62,12 @@ impl<Message: Clone> PublisherSink<Message> for Publisher<Message> {
 
         // Create the subscriber core
         let sub_core = SubCore {
-            id:             subscriber_id,
-            published:      true,
-            waiting:        VecDeque::new(),
-            notify_waiting: None,
-            notify_ready:   None
+            id:                 subscriber_id,
+            published:          true,
+            waiting:            VecDeque::new(),
+            notify_waiting:     None,
+            notify_ready:       None,
+            notify_complete:    None
         };
 
         // The new subscriber needs a reference to the sub_core and the pub_core
@@ -134,7 +135,7 @@ impl<Message: Clone> Sink for Publisher<Message> {
     }
 
     fn poll_complete(&mut self) -> Poll<(), ()> {
-        if self.core.lock().unwrap().ready() {
+        if self.core.lock().unwrap().complete() {
             // All subscribers are ready to receive a message
             Ok(Async::Ready(()))
         } else {
