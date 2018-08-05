@@ -37,22 +37,30 @@ impl<Message> Stream for Subscriber<Message> {
     type Error  = ();
 
     fn poll(&mut self) -> Poll<Option<Message>, ()> {
-        // TODO: notify the publisher if necessary
+        let (result, notify) = {
+            // Try to read a message from the waiting list
+            let mut sub_core    = self.sub_core.lock().unwrap();
+            let next_message    = sub_core.waiting.pop_front();
 
-        // Try to read a message from the waiting list
-        let mut sub_core    = self.sub_core.lock().unwrap();
-        let next_message    = sub_core.waiting.pop_front();
+            if let Some(next_message) = next_message {
+                // Return the next message if it's available
+                (Ok(Async::Ready(Some(next_message))), sub_core.notify_ready.take())
+            } else if !sub_core.published {
+                // Stream has finished if the publisher core is no longer available
+                (Ok(Async::Ready(None)), None)
+            } else {
+                // If the publisher is still alive and there are no messages available, store notification and carry on
+                sub_core.notify_waiting = Some(task::current());
+                (Ok(Async::NotReady), None)
+            }
+        };
 
-        if let Some(next_message) = next_message {
-            // Return the next message if it's available
-            Ok(Async::Ready(Some(next_message)))
-        } else if !sub_core.published {
-            // Stream has finished if the publisher core is no longer available
-            Ok(Async::Ready(None))
-        } else {
-            // If the publisher is still alive and there are no messages available, store notification and carry on
-            sub_core.notify_waiting = Some(task::current());
-            Ok(Async::NotReady)
+        // If there's something to notify as a result of this request, do so (note that we do this after releasing the core lock)
+        if let Some(notify) = notify {
+            notify.notify();
         }
+
+        // Return the result
+        result
     }
 }
