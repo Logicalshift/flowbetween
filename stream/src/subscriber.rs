@@ -32,6 +32,36 @@ impl<Message> Subscriber<Message> {
     }
 }
 
+impl<Message> Drop for Subscriber<Message> {
+    fn drop(&mut self) {
+        let notify = {
+            // Lock the publisher and subscriber cores (note that the publisher core must always be locked first)
+            let pub_core = self.pub_core.upgrade();
+
+            if let Some(pub_core) = pub_core {
+                // Lock the cores
+                let mut pub_core = pub_core.lock().unwrap();
+                let mut sub_core = self.sub_core.lock().unwrap();
+
+                // Remove this subscriber from the publisher core
+                pub_core.subscribers.remove(&sub_core.id);
+
+                // Need to notify the core if it's waiting on this subscriber (might now be unblocked)
+                sub_core.notify_ready.take()
+            } else {
+                // Need to notify the core if it's waiting on this subscriber (might now be unblocked)
+                let mut sub_core = self.sub_core.lock().unwrap();
+                sub_core.notify_ready.take()
+            }
+        };
+
+        // After releasing the locks, notify the publisher if it's waiting on this subscriber
+        if let Some(notify) = notify {
+            notify.notify()
+        }
+    }
+}
+
 impl<Message> Stream for Subscriber<Message> {
     type Item   = Message;
     type Error  = ();
@@ -62,35 +92,5 @@ impl<Message> Stream for Subscriber<Message> {
 
         // Return the result
         result
-    }
-}
-
-impl<Message> Drop for Subscriber<Message> {
-    fn drop(&mut self) {
-        let notify = {
-            // Lock the publisher and subscriber cores (note that the publisher core must always be locked first)
-            let pub_core = self.pub_core.upgrade();
-
-            if let Some(pub_core) = pub_core {
-                // Lock the cores
-                let mut pub_core = pub_core.lock().unwrap();
-                let mut sub_core = self.sub_core.lock().unwrap();
-
-                // Remove this subscriber from the publisher core
-                pub_core.subscribers.remove(&sub_core.id);
-
-                // Need to notify the core if it's waiting on this subscriber (might now be unblocked)
-                sub_core.notify_ready.take()
-            } else {
-                // Need to notify the core if it's waiting on this subscriber (might now be unblocked)
-                let mut sub_core = self.sub_core.lock().unwrap();
-                sub_core.notify_ready.take()
-            }
-        };
-
-        // After releasing the locks, notify the publisher if it's waiting on this subscriber
-        if let Some(notify) = notify {
-            notify.notify()
-        }
     }
 }
