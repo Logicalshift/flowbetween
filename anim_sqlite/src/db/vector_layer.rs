@@ -87,6 +87,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
 
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame> {
         let core: Result<Arc<dyn Frame>>    = self.core.sync(|core| {
+            // TODO: this call is returning a 'QueryReturnedNoRows' error sometimes (which isn't too helpful as we don't know what's failing)
             let frame                       = VectorFrame::frame_at_time(&mut core.db, self.layer_id, time_index)?;
             let frame: Arc<dyn Frame>       = Arc::new(frame);
 

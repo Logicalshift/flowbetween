@@ -56,8 +56,13 @@ impl FloQuery for FloSqlite {
     ///
     /// Queries the nearest keyframe to the specified time in the specified layer
     /// 
-    fn query_nearest_key_frame<'a>(&'a mut self, layer_id: i64, when: Duration) -> Result<(i64, Duration)> {
-        self.query_row(FloStatement::SelectNearestKeyFrame, &[&layer_id, &Self::get_micros(&when)], |row| (row.get(0), Self::from_micros(row.get(1))))
+    fn query_nearest_key_frame<'a>(&'a mut self, layer_id: i64, when: Duration) -> Result<Option<(i64, Duration)>> {
+        let res = self.query_row(FloStatement::SelectNearestKeyFrame, &[&layer_id, &Self::get_micros(&when)], |row| (row.get(0), Self::from_micros(row.get(1))));
+
+        match res {
+            Err(Error::QueryReturnedNoRows) => Ok(None),
+            other                           => Ok(Some(other?))
+        }
     }
 
     ///

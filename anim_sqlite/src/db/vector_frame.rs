@@ -82,69 +82,77 @@ impl VectorFrame {
     /// 
     pub fn frame_at_time<TFile: FloFile+Send>(db: &mut TFile, layer_id: i64, when: Duration) -> Result<VectorFrame> {
         // Fetch the keyframe times
-        let (keyframe_id, keyframe_time)    = db.query_nearest_key_frame(layer_id, when)?;
-        let keyframe_offset                 = when - keyframe_time;
+        if let Some((keyframe_id, keyframe_time))   = db.query_nearest_key_frame(layer_id, when)? {
+            let keyframe_offset = when - keyframe_time;
 
-        // Read the elements for this layer
-        let vector_entries  = db.query_vector_keyframe_elements_before(keyframe_id, keyframe_offset)?;
+            // Read the elements for this layer
+            let vector_entries  = db.query_vector_keyframe_elements_before(keyframe_id, keyframe_offset)?;
 
-        // If there are any motions for the elements, we cache them here
-        let mut motions     = HashMap::new();
+            // If there are any motions for the elements, we cache them here
+            let mut motions     = HashMap::new();
 
-        // Process the elements
-        let mut elements = vec![];
-        for entry in vector_entries {
-            // Fetch the vector element from the key frame
-            let mut vector  = Self::vector_for_entry(db, entry)?;
+            // Process the elements
+            let mut elements = vec![];
+            for entry in vector_entries {
+                // Fetch the vector element from the key frame
+                let mut vector  = Self::vector_for_entry(db, entry)?;
 
-            // Fetch the motions that are attached to this element
-            let mut element_motions = vec![];
-            if let ElementId::Assigned(id) = vector.id() {
-                // Get the motions attached to this element
-                let motion_ids = db.query_motion_ids_for_element(id)?;
+                // Fetch the motions that are attached to this element
+                let mut element_motions = vec![];
+                if let ElementId::Assigned(id) = vector.id() {
+                    // Get the motions attached to this element
+                    let motion_ids = db.query_motion_ids_for_element(id)?;
 
-                // Collect them into a list
-                for motion_id in motion_ids {
-                    // Fetch the motion (from the cache or the database)
-                    let motion = match motions.entry(motion_id) {
-                        Entry::Occupied(cached_motion)  => Rc::clone(cached_motion.get()),
+                    // Collect them into a list
+                    for motion_id in motion_ids {
+                        // Fetch the motion (from the cache or the database)
+                        let motion = match motions.entry(motion_id) {
+                            Entry::Occupied(cached_motion)  => Rc::clone(cached_motion.get()),
 
-                        Entry::Vacant(vacant_motion)    => {
-                            // Motion is not cached: fetch from the database
-                            let motion_entry = db.query_motion(motion_id)?;
+                            Entry::Vacant(vacant_motion)    => {
+                                // Motion is not cached: fetch from the database
+                                let motion_entry = db.query_motion(motion_id)?;
 
-                            // Convert to an actual motion
-                            let motion = motion_entry
-                                .map(|motion_entry| AnimationDb::motion_for_entry(db, motion_id, motion_entry))
-                                .unwrap_or(Ok(Motion::None))?;
-                            let motion = Rc::new(motion);
-                            
-                            // Store in the entry
-                            vacant_motion.insert(Rc::clone(&motion));
-                            motion
-                        }
-                    };
-                    
-                    // Store this as a motion applying to this element
-                    element_motions.push(motion);
+                                // Convert to an actual motion
+                                let motion = motion_entry
+                                    .map(|motion_entry| AnimationDb::motion_for_entry(db, motion_id, motion_entry))
+                                    .unwrap_or(Ok(Motion::None))?;
+                                let motion = Rc::new(motion);
+                                
+                                // Store in the entry
+                                vacant_motion.insert(Rc::clone(&motion));
+                                motion
+                            }
+                        };
+                        
+                        // Store this as a motion applying to this element
+                        element_motions.push(motion);
+                    }
                 }
+
+                // Apply each motion in turn to this element
+                for motion in element_motions {
+                    vector = vector.motion_transform(&*motion, when);
+                }
+
+                // This is the final vector for this frame
+                elements.push(vector);
             }
 
-            // Apply each motion in turn to this element
-            for motion in element_motions {
-                vector = vector.motion_transform(&*motion, when);
-            }
-
-            // This is the final vector for this frame
-            elements.push(vector);
+            // Can create the frame now
+            Ok(VectorFrame {
+                keyframe_time:      keyframe_time,
+                keyframe_offset:    keyframe_offset,
+                elements:           elements
+            })
+        } else {
+            // No keyframe
+            Ok(VectorFrame {
+                keyframe_time:      Duration::from_micros(0),
+                keyframe_offset:    when,
+                elements:           vec![]
+            })
         }
-
-        // Can create the frame now
-        Ok(VectorFrame {
-            keyframe_time:      keyframe_time,
-            keyframe_offset:    keyframe_offset,
-            elements:           elements
-        })
     }
 }
 
