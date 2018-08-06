@@ -548,16 +548,16 @@ dependencies = [
 
 [[package]]
 name = "flo"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_animation 0.1.0",
- "flo_binding 0.1.0",
- "flo_canvas 0.1.0",
- "flo_curves 0.1.0",
+ "flo_animation 0.1.1",
+ "flo_binding 0.1.1",
+ "flo_canvas 0.1.1",
+ "flo_curves 0.1.1",
  "flo_stream 0.1.1",
- "flo_ui 0.1.0",
- "flo_ui_files 0.1.0",
+ "flo_ui 0.1.1",
+ "flo_ui_files 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -568,11 +568,11 @@ dependencies = [
 
 [[package]]
 name = "flo_anim_sqlite"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_animation 0.1.0",
- "flo_canvas 0.1.0",
+ "flo_animation 0.1.1",
+ "flo_canvas 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusqlite 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -580,11 +580,11 @@ dependencies = [
 
 [[package]]
 name = "flo_animation"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
- "flo_canvas 0.1.0",
- "flo_curves 0.1.0",
- "flo_float_encoder 0.1.0",
+ "flo_canvas 0.1.1",
+ "flo_curves 0.1.1",
+ "flo_float_encoder 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "modifier 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -595,7 +595,7 @@ dependencies = [
 
 [[package]]
 name = "flo_binding"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -603,10 +603,10 @@ dependencies = [
 
 [[package]]
 name = "flo_canvas"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_curves 0.1.0",
+ "flo_curves 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-hsluv 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -615,7 +615,7 @@ dependencies = [
 
 [[package]]
 name = "flo_curves"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "roots 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -624,18 +624,18 @@ dependencies = [
 
 [[package]]
 name = "flo_float_encoder"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "flo_gtk_ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anymap 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cairo-rs 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "epoxy 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_canvas 0.1.0",
- "flo_nanovg_canvas 0.1.0",
- "flo_ui 0.1.0",
+ "flo_canvas 0.1.1",
+ "flo_nanovg_canvas 0.1.1",
+ "flo_ui 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "gdk 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gdk-pixbuf 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -652,13 +652,13 @@ dependencies = [
 
 [[package]]
 name = "flo_http_ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytes 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.0",
- "flo_canvas 0.1.0",
- "flo_ui 0.1.0",
+ "flo_binding 0.1.1",
+ "flo_canvas 0.1.1",
+ "flo_ui 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "percent-encoding 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -671,32 +671,32 @@ dependencies = [
 
 [[package]]
 name = "flo_http_ui_actix"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "actix 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-web 0.6.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.0",
- "flo_canvas 0.1.0",
- "flo_http_ui 0.1.0",
- "flo_static_files 0.1.0",
- "flo_ui 0.1.0",
+ "flo_binding 0.1.1",
+ "flo_canvas 0.1.1",
+ "flo_http_ui 0.1.1",
+ "flo_static_files 0.1.1",
+ "flo_ui 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "flo_nanovg_canvas"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
- "flo_canvas 0.1.0",
+ "flo_canvas 0.1.1",
  "gl 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nanovg 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "flo_static_files"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sha2 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -710,12 +710,12 @@ dependencies = [
 
 [[package]]
 name = "flo_ui"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytes 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.0",
- "flo_canvas 0.1.0",
+ "flo_binding 0.1.1",
+ "flo_canvas 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -728,14 +728,14 @@ dependencies = [
 
 [[package]]
 name = "flo_ui_files"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.0",
- "flo_canvas 0.1.0",
+ "flo_binding 0.1.1",
+ "flo_canvas 0.1.1",
  "flo_stream 0.1.1",
- "flo_ui 0.1.0",
+ "flo_ui 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusqlite 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -744,18 +744,18 @@ dependencies = [
 
 [[package]]
 name = "flow_between"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "actix-web 0.6.15 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo 0.1.0",
- "flo_anim_sqlite 0.1.0",
- "flo_animation 0.1.0",
- "flo_binding 0.1.0",
- "flo_gtk_ui 0.1.0",
- "flo_http_ui 0.1.0",
- "flo_http_ui_actix 0.1.0",
- "flo_ui 0.1.0",
- "flo_ui_files 0.1.0",
+ "flo 0.1.1",
+ "flo_anim_sqlite 0.1.1",
+ "flo_animation 0.1.1",
+ "flo_binding 0.1.1",
+ "flo_gtk_ui 0.1.1",
+ "flo_http_ui 0.1.1",
+ "flo_http_ui_actix 0.1.1",
+ "flo_ui 0.1.1",
+ "flo_ui_files 0.1.1",
  "serde 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.24 (registry+https://github.com/rust-lang/crates.io-index)",
