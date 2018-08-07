@@ -91,10 +91,9 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
         if let Some((keyframe_id, _)) = keyframe {
             // Need to query the last brush definition element and the last brush properties elements
-            let brush_properties = self.db.query_most_recent_element_of_type(keyframe_id, when, VectorElementType::BrushProperties).unwrap();
             let brush_definition = self.db.query_most_recent_element_of_type(keyframe_id, when, VectorElementType::BrushDefinition).unwrap();
 
-            if let Some((brush_properties, brush_definition)) = brush_properties.and_then(move |props| brush_definition.map(move |defn| (props, defn))) {
+            if let Some(brush_definition) = brush_definition {
                 // Turn these properties into a brush
                 let (brush_id, drawing_style)   = brush_definition.brush.unwrap();
                 let brush_defn                  = Self::get_brush_definition(&mut self.db, brush_id).unwrap();
