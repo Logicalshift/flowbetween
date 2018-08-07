@@ -354,6 +354,46 @@ fn draw_brush_strokes() {
 }
 
 #[test]
+fn draw_brush_strokes_in_future() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(440), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(440), PaintEdit::
+            BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
+    ]);
+    anim.panic_on_error();
+    anim.perform_edits(vec![
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(440), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(450), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(500), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+    ]);
+    anim.panic_on_error();
+}
+
+#[test]
 fn edit_brush_strokes() {
     let anim = SqliteAnimation::new_in_memory();
 
