@@ -78,10 +78,7 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
         // Convert drawing style
-        let drawing_style = match drawing_style {
-            DrawingStyleType::Draw  => BrushDrawingStyle::Draw,
-            DrawingStyleType::Erase => BrushDrawingStyle::Erase
-        };
+        let drawing_style = drawing_style.into();
 
         // Paint edits create elements, so there may be an element ID
         // (These are optional, but should have been assigned during the commit process)

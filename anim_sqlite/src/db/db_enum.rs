@@ -280,6 +280,15 @@ impl<'a> From<&'a BrushDrawingStyle> for DrawingStyleType {
     }
 }
 
+impl Into<BrushDrawingStyle> for DrawingStyleType {
+    fn into(self) -> BrushDrawingStyle {
+        match self {
+            DrawingStyleType::Draw  => BrushDrawingStyle::Draw,
+            DrawingStyleType::Erase => BrushDrawingStyle::Erase
+        }
+    }
+}
+
 impl<'a> From<&'a PaintEdit> for VectorElementType {
     fn from(t: &PaintEdit) -> VectorElementType {
         use self::PaintEdit::*;

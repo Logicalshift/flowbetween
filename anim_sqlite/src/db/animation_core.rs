@@ -81,13 +81,38 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         if let Some((time, ref brush)) = self.active_brush_for_layer.get(&layer_id) {
             if time == &when {
                 return Arc::clone(&brush);
-            } else {
-                unimplemented!("TODO: got a brush but for the wrong time ({:?} vs {:?})", time, when);
             }
         }
 
         // If the time doesn't match, or nothing is cached then we need to fetch from the database
-        unimplemented!("TODO: store/fetch active brush for keyframes in the database");
+
+        // Fetch the keyframe that this brush is for
+        let keyframe = self.db.query_nearest_key_frame(layer_id, when).unwrap();
+
+        if let Some((keyframe_id, _)) = keyframe {
+            // Need to query the last brush definition element and the last brush properties elements
+            let brush_properties = self.db.query_most_recent_element_of_type(keyframe_id, when, VectorElementType::BrushProperties).unwrap();
+            let brush_definition = self.db.query_most_recent_element_of_type(keyframe_id, when, VectorElementType::BrushDefinition).unwrap();
+
+            if let Some((brush_properties, brush_definition)) = brush_properties.and_then(move |props| brush_definition.map(move |defn| (props, defn))) {
+                // Turn these properties into a brush
+                let (brush_id, drawing_style)   = brush_definition.brush.unwrap();
+                let brush_defn                  = Self::get_brush_definition(&mut self.db, brush_id).unwrap();
+                let brush                       = create_brush_from_definition(&brush_defn, drawing_style.into());
+
+                // Cache the brush for faster retrieval next time
+                self.active_brush_for_layer.insert(layer_id, (when, Arc::clone(&brush)));
+
+                // This is our result
+                brush
+            } else {
+                // There's a keyframe but no brush definition has been defined at the specified time
+                unimplemented!("TODO: there is a keyframe but no most recent brush properties or brush definition")
+            }
+        } else {
+            // If there's no keyframe at this time, then there's no brush to set
+            unimplemented!("TODO: there is no brush if there's no keyframe")
+        }
 
         // create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw)
     }

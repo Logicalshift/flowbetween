@@ -68,6 +68,7 @@ enum FloStatement {
     SelectBrushProperties,
     SelectVectorElementType,
     SelectVectorElementsBefore,
+    SelectMostRecentElementOfTypeBefore,
     SelectBrushPoints,
     SelectMotionsForElement,
     SelectElementsForMotion,
@@ -233,6 +234,13 @@ impl FloSqlite {
                                                     LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
                                                     WHERE Elem.KeyFrameId = ? AND Elem.AtTime <= ? \
                                                     ORDER BY Elem.ElementId ASC",
+            SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Elem.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+                                                    LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
+                                                    LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
+                                                    LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
+                                                    WHERE Elem.KeyFrameId = ? AND Elem.AtTime <= ? AND Elem.VectorElementType = ? \
+                                                    ORDER BY Elem.AtTime DESC \
+                                                    LIMIT 1",
             SelectBrushPoints               => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
             SelectMotionsForElement         => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
             SelectElementsForMotion         => "SELECT ElementId FROM Flo_MotionAttached WHERE MotionId = ?",

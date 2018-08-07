@@ -157,6 +157,11 @@ pub trait FloQuery {
     fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>>;
 
     ///
+    /// Queries the single most recent element of the specified type in the specified keyframe
+    /// 
+    fn query_most_recent_element_of_type(&mut self, keyframe_id: i64, before: Duration, element_type: VectorElementType) -> Result<Option<VectorElementEntry>>;
+
+    ///
     /// Queries the brush points associated with a vector element
     /// 
     fn query_vector_element_brush_points(&mut self, element_id: i64) -> Result<Vec<BrushPoint>>;
