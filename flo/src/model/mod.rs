@@ -1,5 +1,6 @@
 mod flo_model;
 mod timeline;
+mod timeline_updates;
 mod tools;
 mod layer;
 mod keyframe;
