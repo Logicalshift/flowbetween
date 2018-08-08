@@ -163,7 +163,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
                 RemoveLayer(layer_id) => {
                     // Remove the layer(s?) with the old ID
-                    layers.retain(|model| model.id.get() != layer_id)
+                    layers.retain(|model| model.id != layer_id)
                 },
 
                 _ => { }

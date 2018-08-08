@@ -37,7 +37,7 @@ impl TimelineLayerListController {
     /// 
     fn layer_label(model: &LayerModel, selected_layer_id: Option<u64>) -> Control {
         let name        = model.name.get();
-        let layer_id    = model.id.get();
+        let layer_id    = model.id;
 
         let is_selected = Some(layer_id) == selected_layer_id;
         let background  = if is_selected { TIMELINE_SELECTED_LAYER } else { TIMELINE_BACKGROUND };

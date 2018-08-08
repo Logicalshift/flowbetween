@@ -6,8 +6,8 @@ use flo_animation::*;
 /// 
 #[derive(Clone)]
 pub struct LayerModel {
-    /// The ID for this layer
-    pub id: Binding<u64>,
+    /// The ID for this layer (not a binding as it never changes)
+    pub id: u64,
 
     /// The name of this layer
     pub name: Binding<String>
@@ -15,14 +15,14 @@ pub struct LayerModel {
 
 impl PartialEq for LayerModel {
     fn eq(&self, other: &LayerModel) -> bool {
-        other.id.get() == self.id.get()
+        other.id == self.id
     }
 }
 
 impl LayerModel {
     pub fn new<'a>(layer: &'a dyn Layer) -> LayerModel {
         LayerModel {
-            id:     bind(layer.id()),
+            id:     layer.id(),
             name:   bind(format!("Layer {}", layer.id()))
         }
     }

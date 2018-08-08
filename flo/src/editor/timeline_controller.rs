@@ -292,7 +292,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
                 let index_for_layer = layers.iter()
                     .enumerate()
-                    .map(|(index, layer)| (layer.id.get(), index))
+                    .map(|(index, layer)| (layer.id, index))
                     .collect::<HashMap<_, _>>();
 
                 // Center the drawing region
