@@ -10,6 +10,7 @@ use flo_animation::*;
 
 use std::sync::*;
 use std::time::Duration;
+use std::collections::HashMap;
 
 /// Action when the user drags the timeline 'time' indicator
 const DRAG_TIMELINE_POSITION: &str = "DragTime";
@@ -269,8 +270,8 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
         move |x, y| {
             // Get the layers that we'll draw
-            let first_layer = (y/TIMELINE_LAYER_HEIGHT).floor() as u32;
-            let last_layer  = ((y+VIRTUAL_HEIGHT)/TIMELINE_LAYER_HEIGHT).ceil() as u32 + 1;
+            let first_layer = (y/TIMELINE_LAYER_HEIGHT).floor() as usize;
+            let last_layer  = ((y+VIRTUAL_HEIGHT)/TIMELINE_LAYER_HEIGHT).ceil() as usize + 1;
 
             // ... and the keyframes in this time region
             let tick_x      = x - LAYER_PANEL_WIDTH;
@@ -286,8 +287,13 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                 let layers      = layers.get();
                 let keyframes   = keyframes.get();
 
-                let last_layer  = last_layer.min(layers.len() as u32);
+                let last_layer  = last_layer.min(layers.len());
                 let end_tick    = end_tick;
+
+                let index_for_layer = layers.iter()
+                    .enumerate()
+                    .map(|(index, layer)| (layer.id.get(), index))
+                    .collect::<HashMap<_, _>>();
 
                 // Center the drawing region
                 gc.canvas_height(-VIRTUAL_HEIGHT);
@@ -331,16 +337,15 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                     // Fetch where this frame occurs
                     let frame       = keyframe.frame;
                     let layer_id    = keyframe.layer_id;
-                    //let layer_index = layers.iter().filter(|layer| layer.id.get() == layer_id).nth(0);
-                    let layer_index = Some(layer_id as u32); // TODO: need the index, not the ID but we'll use the ID for now
+                    let layer_index = index_for_layer.get(&layer_id);
 
                     // Draw it if it's in this view
                     if let Some(layer_index) = layer_index {
-                        if layer_index >= first_layer && layer_index < last_layer {
+                        if layer_index >= &first_layer && layer_index < &last_layer {
                             // Top-left corner of this frame
                             let xpos = (frame as f32) * TICK_LENGTH;
                             let xpos = xpos + LAYER_PANEL_WIDTH;
-                            let ypos = (layer_index as f32) * TIMELINE_LAYER_HEIGHT;
+                            let ypos = (*layer_index as f32) * TIMELINE_LAYER_HEIGHT;
 
                             // Draw the frame marker
                             gc.new_path();
