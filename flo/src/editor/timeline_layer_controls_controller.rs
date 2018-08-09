@@ -10,8 +10,6 @@ use futures::*;
 use futures::executor;
 use futures::executor::Spawn;
 
-use std::time::Duration;
-
 ///
 /// Controller that provides controls for adding/deleting/editing layers (generally displayed above the main layer list)
 /// 
@@ -101,7 +99,6 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                 self.edit.sync(|animation| {
                     animation.wait_send(vec![
                         AnimationEdit::AddNewLayer(new_layer_id),
-                        AnimationEdit::Layer(new_layer_id, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
                     ])
                 }).unwrap();
 
