@@ -164,7 +164,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                 Control::empty()
                                     .with(Bounds::stretch_horiz(1.0))
                             ])
-                            .with(Bounds::next_vert(24.0)),
+                            .with(Bounds::next_vert(32.0)),
+                        
+                        Control::empty()
+                            .with(Bounds::next_vert(4.0)),
 
                         // Actual files
                         Control::container()
