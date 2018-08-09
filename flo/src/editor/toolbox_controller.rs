@@ -159,6 +159,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
             .with(State::Badged(Property::Bind(badged_property_name)))
             .with(State::Selected(Property::Bind(selected_property_name)))
             .with(Bounds::next_vert(48.0))
+            .with(Hint::Class("tool-button".to_string()))
             .with(vec![
                 Control::empty()
                     .with(Bounds::fill_all())

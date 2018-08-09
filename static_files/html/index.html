@@ -9,8 +9,13 @@
 <script src="js/flowbetween.js"></script>
 
 <template>
-    <flo-button flo-resize="resize_svg_control(this[0], this[1], this[2])">
+    <flo-button class="tool-button" flo-resize="resize_svg_control(this[0], this[1], this[2])">
         <object data="/svg/controls/button.svg" onload="replace_object_with_content(this)" />
+    </flo-button>
+</template>
+
+<template>
+    <flo-button>
     </flo-button>
 </template>
 

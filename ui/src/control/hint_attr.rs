@@ -6,10 +6,13 @@ use modifier::*;
 ///
 /// Hints that can be applied to a control
 /// 
-#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Hint {
     // Prefer fast drawing over correctness
-    FastDrawing
+    FastDrawing,
+
+    /// Provides a class for this control (modifying its behaviour or appearance)
+    Class(String)
 }
 
 impl Modifier<Control> for Hint {

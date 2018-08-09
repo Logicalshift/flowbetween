@@ -326,11 +326,13 @@ function flowbetween(root_node) {
                 let template_parent = root_templates[template_number].content;
                 
                 for (let nodeIndex=0; nodeIndex<template_parent.children.length; ++nodeIndex) {
-                    let template_node = template_parent.children[nodeIndex];
-                    let template_name = template_node.tagName.toLowerCase();
+                    let template_node   = template_parent.children[nodeIndex];
+                    let template_name   = template_node.tagName.toLowerCase();
+                    let template_class  = template_node.classList.item(0) || '';
 
-                    templates[template_name]        = [].slice.apply(template_node.children);
-                    template_on_load[template_name] = null;
+                    templates[template_name]                    = templates[template_name] || {};
+                    templates[template_name][template_class]    = [].slice.apply(template_node.children);
+                    template_on_load[template_name]             = null;
 
                     // There is an onload attribute but it's set to null regardless for things that don't normally support onload
                     let on_load = template_node.getAttribute('onload');
@@ -372,10 +374,14 @@ function flowbetween(root_node) {
         let apply_template = (node) => {
             // Get the template elements for this node
             let template_name       = node.tagName.toLowerCase();
-            let template_for_node   = templates[template_name];
+            let templates_for_node  = templates[template_name] || {};
+            let template_for_node   = templates_for_node[''];
             let load_node           = template_on_load[template_name];
             let layout_node         = template_layout[template_name];
             let resize_node         = template_resize[template_name];
+
+            // If the template has a subclass, use that
+            node.classList.forEach((className) => { if (templates_for_node[className]) { template_for_node = templates_for_node[className]; } });
 
             if (template_for_node) {
                 // Remove any existing template nodes
