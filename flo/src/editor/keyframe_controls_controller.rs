@@ -61,8 +61,11 @@ impl KeyFrameControlsController {
                             Control::button()
                                 .with(vec![Control::label().with("*").with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(Bounds::next_horiz(22.0)),
+                            Control::button()
+                                .with(vec![Control::label().with("*").with(TextAlign::Center).with(Bounds::fill_all())])
+                                .with(Bounds::next_horiz(22.0)),
                         ])
-                        .with(Bounds::next_horiz(22.0*4.0))
+                        .with(Bounds::next_horiz(22.0*5.0))
 
                 ])
                 .with(Bounds::fill_all())
