@@ -125,7 +125,7 @@ flo-button:active {
 }
 
 .button-group flo-button:first-child {
-    border-radius: 16px 0px 0px 16px;
+    border-radius:  16px 0px 0px 16px;
 }
 
 .button-group flo-button:last-child {

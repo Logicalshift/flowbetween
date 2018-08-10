@@ -50,7 +50,7 @@ impl ControlBarController {
                     .with(Bounds::stretch_horiz(1.0)),
                 Control::container()
                     .with_controller("KeyFrameControls")
-                    .with(Bounds::next_horiz(168.0)),
+                    .with(Bounds::next_horiz(166.0)),
                 Control::empty()
                     .with(Bounds::next_horiz(32.0))
             ]);
