@@ -147,7 +147,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
         Control::container()
             .with(Bounds::next_vert(28.0))
             .with(Appearance::Background(TIMESCALE_BACKGROUND))
-            .with(Font::Size(11.0))
+            .with(Font::Size(12.0))
             .with(Font::Weight(FontWeight::Light))
             .with_controller(&serde_json::to_string(&SubController::ControlBar).unwrap())
     }
