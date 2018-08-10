@@ -2,7 +2,9 @@ use super::menu_controller::*;
 use super::canvas_controller::*;
 use super::toolbox_controller::*;
 use super::timeline_controller::*;
+use super::controlbar_controller::*;
 use super::super::model::*;
+use super::super::style::*;
 
 use flo_ui::*;
 use flo_ui_files::ui::*;
@@ -19,6 +21,7 @@ use serde_json;
 enum SubController {
     Canvas,
     Menu,
+    ControlBar,
     Timeline,
     Toolbox
 }
@@ -55,14 +58,16 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
         let menu        = Arc::new(MenuController::new(&animation));
         let timeline    = Arc::new(TimelineController::new(&animation));
         let toolbox     = Arc::new(ToolboxController::new(&animation));
+        let control_bar = Arc::new(ControlBarController::new(&animation));
 
         let ui          = bind(Self::ui());
         let mut subcontrollers: HashMap<SubController, Arc<dyn Controller>> = HashMap::new();
 
-        subcontrollers.insert(SubController::Canvas,    canvas);
-        subcontrollers.insert(SubController::Menu,      menu);
-        subcontrollers.insert(SubController::Timeline,  timeline);
-        subcontrollers.insert(SubController::Toolbox,   toolbox);
+        subcontrollers.insert(SubController::Canvas,        canvas);
+        subcontrollers.insert(SubController::Menu,          menu);
+        subcontrollers.insert(SubController::Timeline,      timeline);
+        subcontrollers.insert(SubController::Toolbox,       toolbox);
+        subcontrollers.insert(SubController::ControlBar,    control_bar);
 
         EditorController {
             anim:           PhantomData,
@@ -136,6 +141,18 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
     }
 
     ///
+    /// Creates the control bar control
+    /// 
+    pub fn control_bar() -> Control {
+        Control::container()
+            .with(Bounds::next_vert(28.0))
+            .with(Appearance::Background(TIMESCALE_BACKGROUND))
+            .with(Font::Size(11.0))
+            .with(Font::Weight(FontWeight::Light))
+            .with_controller(&serde_json::to_string(&SubController::ControlBar).unwrap())
+    }
+
+    ///
     /// Creates the UI tree for this controller
     ///
     pub fn ui() -> Control {
@@ -145,6 +162,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
         let timeline    = Self::timeline();
         let toolbar     = Self::toolbox();
         let canvas      = Self::canvas();
+        let control_bar = Self::control_bar();
 
         Control::container()
             .with(Bounds::fill_all())
@@ -153,6 +171,13 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
                 Control::container()
                     .with((vec![toolbar, canvas],
                         Bounds { x1: Start, y1: After, x2: End, y2: Stretch(1.0) })),
+                Control::empty()
+                    .with(Bounds::next_vert(1.0))
+                    .with(Appearance::Background(TIMESCALE_BORDER)),
+                control_bar,
+                Control::empty()
+                    .with(Bounds::next_vert(1.0))
+                    .with(Appearance::Background(TIMESCALE_LAYERS)),
                 timeline])
     }
 }
