@@ -76,27 +76,15 @@ flo-label {
     -ms-user-select:        none;
 }
 
-flo-button.tool-button {
-    background:     none;
-    border-width:   0px;
-    transition:     none;
-    box-shadow:     none;
-    padding:        0 0 0 0;
-}
-
-flo-button.tool-button:hover {
-    background:     none;
-    border-width:   0px;
-    transition:     none;
-    box-shadow:     none;
-}
-
+flo-button.tool-button,
+flo-button.tool-button:hover,
 flo-button.tool-button:active {
     background:     none;
     border-width:   0px;
     text-shadow:    none;
     transition:     none;
     box-shadow:     none;
+    padding:        0 0 0 0;
 }
 
 flo-button {
@@ -126,6 +114,25 @@ flo-button:active {
     text-shadow:            0px 0px 2px rgba(0, 0, 0, 0.7);
     background-color:       rgba(80, 100, 100, 0.8);
     transition:             text-shadow 0.1s ease-in, box-shadow 0.1s ease-in, background-color 0.1s ease-in;
+}
+
+.button-group flo-button,
+.button-group flo-button:hover,
+.button-group flo-button:active {
+    box-shadow:             none;
+    border-radius:          0px;
+    border-right-style:     none;
+}
+
+.button-group flo-button:first-child {
+    border-radius: 16px 0px 0px 16px;
+}
+
+.button-group flo-button:last-child {
+    border-left-style:  solid;
+    border-right-style: solid; 
+    border-radius:      0px 16px 16px 0px;
+    margin-right:       -1px;
 }
 
 flo-slider {

@@ -45,7 +45,7 @@ impl KeyFrameControlsController {
                         .with(TextAlign::Right)
                         .with(Bounds::stretch_horiz(1.0)),
                     Control::empty()
-                        .with(Bounds::next_horiz(8.0)),
+                        .with(Bounds::next_horiz(12.0)),
                     Control::container()
                         .with(Hint::Class("button-group".to_string()))
                         .with(vec![
