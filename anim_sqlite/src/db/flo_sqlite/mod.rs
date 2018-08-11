@@ -54,6 +54,8 @@ enum FloStatement {
     SelectEnumValue,
     SelectLayerId,
     SelectNearestKeyFrame,
+    SelectPreviousKeyFrame,
+    SelectNextKeyFrame,
     SelectKeyFrameTimes,
     SelectAnimationSize,
     SelectAnimationDuration,
@@ -202,6 +204,8 @@ impl FloSqlite {
                                                        INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
                                                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
             SelectNearestKeyFrame           => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
+            SelectPreviousKeyFrame          => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime < ? ORDER BY AtTime DESC LIMIT 1",
+            SelectNextKeyFrame              => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime > ? ORDER BY AtTime ASC LIMIT 1",
             SelectKeyFrameTimes             => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime >= ? AND AtTime < ?",
             SelectAnimationSize             => "SELECT SizeX, SizeY FROM Flo_Animation WHERE AnimationId = ?",
             SelectAnimationDuration         => "SELECT Duration FROM Flo_Animation WHERE AnimationId = ?",

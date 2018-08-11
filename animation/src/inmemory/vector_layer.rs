@@ -85,6 +85,30 @@ impl Layer for InMemoryVectorLayer {
         ];
     }
 
+    fn previous_and_next_key_frame(&self, when: Duration) -> (Option<Duration>, Option<Duration>) {
+        let core = self.core.lock().unwrap();
+
+        let mut previous    = None;
+        let mut next        = None;
+
+        // Search the frames in order
+        for keyframe in core.keyframes() {
+            let frame_time = keyframe.start_time();
+
+            if (frame_time + Duration::from_millis(2)) < when {
+                // Update the previous frame if this frame is before the search time
+                previous    = Some(frame_time);
+            } else if frame_time > (when + Duration::from_millis(2)) {
+                // Set the next frame and stop if this frame is after the search time
+                next        = Some(frame_time);
+                break;
+            }
+        }
+
+        // Return the frames we found
+        (previous, next)
+    }
+
     fn as_vector_layer<'a>(&'a self) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+VectorLayer>>> {
         let core: &Mutex<dyn VectorLayer> = &self.core;
 

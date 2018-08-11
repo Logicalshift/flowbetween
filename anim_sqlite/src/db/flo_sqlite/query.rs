@@ -43,7 +43,7 @@ impl FloQuery for FloSqlite {
     ///
     /// Returns an iterator over the key frame times for a particular layer ID
     /// 
-    fn query_key_frame_times_for_layer_id<'a>(&'a mut self, layer_id: i64, from: Duration, until: Duration) -> Result<Vec<Duration>> {
+    fn query_key_frame_times_for_layer_id(&mut self, layer_id: i64, from: Duration, until: Duration) -> Result<Vec<Duration>> {
         let from    = Self::get_micros(&from);
         let until   = Self::get_micros(&until);
 
@@ -63,6 +63,35 @@ impl FloQuery for FloSqlite {
             Err(Error::QueryReturnedNoRows) => Ok(None),
             other                           => Ok(Some(other?))
         }
+    }
+
+    ///
+    /// Similar to query_nearest_key_frame except finds the previous and next keyframes instead
+    /// 
+    fn query_previous_and_next_key_frame(&mut self, layer_id: i64, when: Duration) -> Result<(Option<(i64, Duration)>, Option<(i64, Duration)>)> {
+        let when            = Self::get_micros(&when);
+
+        // Allow a 1ms buffer for the 'current' frame
+        let previous_when   = when - 1000;
+        let next_when       = when + 1000;
+
+        // Query for the previous and next keyframe
+        let previous        = self.query_row(FloStatement::SelectPreviousKeyFrame, &[&layer_id, &previous_when], |row| (row.get(0), Self::from_micros(row.get(1))));
+        let next            = self.query_row(FloStatement::SelectNextKeyFrame, &[&layer_id, &next_when], |row| (row.get(0), Self::from_micros(row.get(1))));
+
+        // The 'no rows' query result just means 'no match'
+        let previous        = match previous {
+            Err(Error::QueryReturnedNoRows) => None,
+            other                           => Some(other?)
+        };
+
+        let next            = match next {
+            Err(Error::QueryReturnedNoRows) => None,
+            other                           => Some(other?)
+        };
+
+        // Return the previous and next frames that we found
+        Ok((previous, next))
     }
 
     ///

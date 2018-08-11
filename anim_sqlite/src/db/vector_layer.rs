@@ -96,6 +96,14 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
 
         core.unwrap()
     }
+
+    fn previous_and_next_key_frame(&self, when: Duration) -> (Option<Duration>, Option<Duration>) {
+        // Get the previous, next keyframes from the core
+        let (previous, next) = self.core.sync(|core| core.db.query_previous_and_next_key_frame(self.layer_id, when)).unwrap();
+
+        // Just want the durations and not the frame IDs here
+        (previous.map(|(_, when)| when), next.map(|(_, when)| when))
+    }
 }
 
 impl<TFile: FloFile+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {

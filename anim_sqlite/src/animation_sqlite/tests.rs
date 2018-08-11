@@ -292,6 +292,42 @@ fn retrieve_keyframe() {
 }
 
 #[test]
+fn find_previus_and_next_keyframe() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250))),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(500))),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(750)))
+    ]);
+
+    anim.panic_on_error();
+
+    let layer = anim.get_layer_with_id(2).unwrap();
+
+    let (previous, next) = layer.previous_and_next_key_frame(Duration::from_millis(375));
+    assert!(previous == Some(Duration::from_millis(250)));
+    assert!(next == Some(Duration::from_millis(500)));
+
+    let (previous, next) = layer.previous_and_next_key_frame(Duration::from_millis(625));
+    assert!(previous == Some(Duration::from_millis(500)));
+    assert!(next == Some(Duration::from_millis(750)));
+
+    let (previous, next) = layer.previous_and_next_key_frame(Duration::from_millis(1000));
+    assert!(previous == Some(Duration::from_millis(750)));
+    assert!(next == None);
+
+    let (previous, next) = layer.previous_and_next_key_frame(Duration::from_millis(0));
+    assert!(previous == None);
+    assert!(next == Some(Duration::from_millis(250)));
+
+    let (previous, next) = layer.previous_and_next_key_frame(Duration::from_millis(500));
+    assert!(previous == Some(Duration::from_millis(250)));
+    assert!(next == Some(Duration::from_millis(750)));
+}
+
+#[test]
 fn remove_layer_with_keyframe() {
     let anim = SqliteAnimation::new_in_memory();
 
