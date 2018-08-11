@@ -127,6 +127,7 @@ flo-button:active {
 .button-group flo-button.selected:active {
     border-left-style:  solid;
     border-right-style: solid;
+    transition:         border 0.4s ease-in;
 }
 
 .button-group flo-button,
@@ -135,6 +136,7 @@ flo-button:active {
     box-shadow:             none;
     border-radius:          0px;
     border-right-style:     none;
+    transition:             border 0.4s ease-in;
 }
 
 .button-group flo-button:first-child {
