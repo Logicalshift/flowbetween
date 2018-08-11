@@ -87,7 +87,8 @@ impl KeyFrameControlsController {
                             Control::button()
                                 .with(vec![Control::label().with(new_on_paint).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                                .with(State::Enabled(Property::Bool(false)))
+                                .with(State::Selected(Property::Bool(true)))
+                                .with(State::Enabled(Property::Bool(true)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(next_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
