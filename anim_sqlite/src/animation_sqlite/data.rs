@@ -19,7 +19,7 @@ impl SqliteAnimation {
     /// Creates an animation in a file
     /// 
     pub fn new_with_file<P: AsRef<Path>>(path: P) -> Result<SqliteAnimation> {
-        let db = AnimationDb::new_from_connection(Connection::open_with_flags(path, SQLITE_OPEN_READ_WRITE | SQLITE_OPEN_CREATE)?);
+        let db = AnimationDb::new_from_connection(Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE)?);
 
         Ok(SqliteAnimation {
             db: db
@@ -30,7 +30,7 @@ impl SqliteAnimation {
     /// Opens an existing file
     /// 
     pub fn open_file<P: AsRef<Path>>(path: P) -> Result<SqliteAnimation> {
-        let connection  = Connection::open_with_flags(path, SQLITE_OPEN_READ_WRITE)?;
+        let connection  = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_WRITE)?;
         let db          = AnimationDb::from_connection(connection);
 
         Ok(SqliteAnimation {
