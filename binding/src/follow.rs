@@ -84,14 +84,17 @@ pub fn follow<TValue: 'static+Send, Binding: 'static+Bound<TValue>>(binding: Bin
     let core        = Arc::new(Mutex::new(core));
     let weak_core   = Arc::downgrade(&core);
     let watcher     = core.lock().unwrap().binding.when_changed(notify(move || {
-        if let Some(core) = weak_core.upgrade() {
+        let notify = if let Some(core) = weak_core.upgrade() {
             let mut core = core.lock().unwrap();
 
             core.state = FollowState::Changed;
+            core.notify.take()
+        } else {
+            None
+        };
 
-            if let Some(notify) = core.notify.take() {
-                notify.notify()
-            }
+        if let Some(notify) = notify {
+            notify.notify()
         }
     }));
 
