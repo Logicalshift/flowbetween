@@ -202,7 +202,7 @@ impl FrameModel {
     ///
     /// Stream of notifications that the current frame has updated
     /// 
-    fn frame_update_stream(edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> impl Stream<Item=(), Error=()> {
+    fn frame_update_stream(edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> Box<dyn Stream<Item=(), Error=()>+Send> {
         // Events indicating a new key frame
         let selected_layer_2    = selected_layer.clone();
         let new_key_frame       = edits
@@ -228,7 +228,7 @@ impl FrameModel {
         let selected_layer_changed  = follow(selected_layer).map(|_| ());
 
         // If any of these events occur, then the keyframe may have changed
-        new_key_frame.select(when_changed).select(selected_layer_changed)
+        Box::new(new_key_frame.select(when_changed).select(selected_layer_changed))
     }
 
     ///
