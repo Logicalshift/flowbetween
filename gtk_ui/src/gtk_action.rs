@@ -161,6 +161,9 @@ pub enum WidgetState {
     /// Sets whether or not this widget shows a badge next to it
     SetBadged(bool),
 
+    /// Sets whether or not this widget is enabled
+    SetEnabled(bool),
+
     /// Sets the value of this widget
     SetValueFloat(f64),
 

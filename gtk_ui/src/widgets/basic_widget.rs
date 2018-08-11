@@ -226,6 +226,10 @@ pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, state: &WidgetStat
                 .get_style_context()
                 .map(|context| if badged { context.add_class("badged") } else { context.remove_class("badged") });
         },
+        &SetEnabled(enabled)        => {
+            widget.get_underlying()
+                .set_sensitive(enabled)
+        },
 
         &SetValueFloat(_value)      => (),
         &SetRangeMin(_from)         => (),
