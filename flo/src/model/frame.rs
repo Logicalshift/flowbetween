@@ -84,7 +84,7 @@ impl FrameModel {
     pub fn new<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, animation_update: BindRef<u64>, selected_layer: BindRef<Option<u64>>) -> FrameModel {
         // Create the bindings for the current frame state
         let keyframe_selected           = Self::keyframe_selected(Arc::clone(&animation), edits.resubscribe(), when.clone(), selected_layer.clone());
-        let previous_and_next_keyframe  = BindRef::from(bind((None, None)));
+        let previous_and_next_keyframe  = Self::previous_next_keyframes(Arc::clone(&animation), edits.resubscribe(), when.clone(), selected_layer.clone());
 
         // The hashmap allows us to track frame bindings independently from layer bindings
         let frames: Mutex<HashMap<u64, FrameLayerModel>> = Mutex::new(HashMap::new());
@@ -259,6 +259,33 @@ impl FrameModel {
         BindRef::from(keyframe_selected)
     }
 
+    ///
+    /// Returns a binding of the previous and next keyframes
+    /// 
+    fn previous_next_keyframes<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> BindRef<(Option<Duration>, Option<Duration>)> {
+        // Get a stream of frame update events
+        let frame_updates = Self::frame_update_stream(edits, when.clone(), selected_layer.clone());
+
+        // Update the binding whenever they change
+        let previous_and_next = bind_stream(frame_updates, (None, None), move |_, _| {
+            // Get the current position in the timeline
+            let when    = when.get();
+            let layer   = selected_layer.get();
+
+            if let Some(layer) = layer {
+                // See if there's a keyframe at this exact time (well, within a millisecond)
+                let layer       = animation.get_layer_with_id(layer);
+                let keyframes:Option<(Option<Duration>, Option<Duration>)>   = layer.map(|layer| layer.previous_and_next_key_frame(when));
+
+                keyframes.unwrap_or((None, None))
+            } else {
+                // No selected layer
+                (None, None)
+            }
+        });
+
+        BindRef::from(previous_and_next)
+    }
     ///
     /// Returns a binding mapping between the elements in a frame and their properties
     /// 
