@@ -892,26 +892,30 @@ function flowbetween(root_node) {
             // Set the positions, performing viewmodel binding if necessary
             let x1 = pos.x1+padding.left;
             let y1 = pos.y1+padding.top;
-            let x2 = pos.x2;
-            let y2 = pos.y2;
+            let x2 = pos.x2+padding.left;
+            let y2 = pos.y2+padding.top;
 
-            bind_property_position(node_index, x1,  (bounds) => bounds.x1, (pos) => { 
-                x1 = pos; 
-                element.style.left      = pos + 'px';
+            bind_property_position(node_index, pos.x1,  (bounds) => bounds.x1, (pos) => { 
+                if (padding.left === 5) {
+                    console.log('Padding:', padding.left, x1, pos);
+                }
+
+                x1 = pos+padding.left;
+                element.style.left      = x1 + 'px';
                 element.style.width     = (x2-x1) + 'px';
             });
-            bind_property_position(node_index, x2,  (bounds) => bounds.x2, (pos) => { 
-                x2 = pos; 
-                element.style.width     = (pos-x1) + 'px';
+            bind_property_position(node_index, pos.x2,  (bounds) => bounds.x2, (pos) => { 
+                x2 = pos+padding.left; 
+                element.style.width     = (x2-x1) + 'px';
             });
-            bind_property_position(node_index, y1,  (bounds) => bounds.y1, (pos) => {
-                y1 = pos; 
-                element.style.top       = pos + 'px'; 
+            bind_property_position(node_index, pos.y1,  (bounds) => bounds.y1, (pos) => {
+                y1 = pos+padding.top; 
+                element.style.top       = y1 + 'px'; 
                 element.style.height    = (y2-y1) + 'px';
             });
-            bind_property_position(node_index, y2,  (bounds) => bounds.y2, (pos) => { 
-                y2 = pos;
-                element.style.height    = (pos-y1) + 'px'; 
+            bind_property_position(node_index, pos.y2,  (bounds) => bounds.y2, (pos) => { 
+                y2 = pos+padding.top;
+                element.style.height    = (y2-y1) + 'px'; 
             });
 
             // If the node has an on resize property, then call that after laying it out
