@@ -896,10 +896,6 @@ function flowbetween(root_node) {
             let y2 = pos.y2+padding.top;
 
             bind_property_position(node_index, pos.x1,  (bounds) => bounds.x1, (pos) => { 
-                if (padding.left === 5) {
-                    console.log('Padding:', padding.left, x1, pos);
-                }
-
                 x1 = pos+padding.left;
                 element.style.left      = x1 + 'px';
                 element.style.width     = (x2-x1) + 'px';
