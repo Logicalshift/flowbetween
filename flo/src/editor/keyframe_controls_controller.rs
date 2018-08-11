@@ -21,7 +21,10 @@ pub struct KeyFrameControlsController {
     view_model: Arc<DynamicViewModel>,
 
     /// Model binding: the 'create frame on draw' binding
-    create_keyframe_on_draw: Binding<bool>
+    create_keyframe_on_draw: Binding<bool>,
+
+    /// Model binding: the 'show onion skins' binding
+    show_onion_skins: Binding<bool>
 }
 
 impl KeyFrameControlsController {
@@ -31,10 +34,21 @@ impl KeyFrameControlsController {
     pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> KeyFrameControlsController {
         // Create the viewmodel
         let frame       = model.frame();
+        let timeline    = model.timeline();
         let view_model  = Arc::new(DynamicViewModel::new());
 
+        let selected_layer          = timeline.selected_layer.clone();
         let create_keyframe_on_draw = frame.create_keyframe_on_draw.clone();
+        let show_onion_skins        = frame.show_onion_skins.clone();
+        let keyframe_selected       = frame.keyframe_selected.clone();
+        let next_keyframe           = frame.next_keyframe.clone();
+        let previous_keyframe       = frame.previous_keyframe.clone();
+
         view_model.set_computed("CreateKeyFrameOnDrawSelected", move || PropertyValue::Bool(create_keyframe_on_draw.get()));
+        view_model.set_computed("ShowOnionSkinsSelected",       move || PropertyValue::Bool(show_onion_skins.get()));
+        view_model.set_computed("CanCreateKeyFrame",            move || PropertyValue::Bool(selected_layer.get().is_some() && !keyframe_selected.get()));
+        view_model.set_computed("CanMoveToNextKeyFrame",        move || PropertyValue::Bool(next_keyframe.get().is_some()));
+        view_model.set_computed("CanMoveToPreviousKeyFrame",    move || PropertyValue::Bool(previous_keyframe.get().is_some()));
 
         // Create the images and the UI
         let images  = Arc::new(Self::images());
@@ -44,7 +58,8 @@ impl KeyFrameControlsController {
             ui:                         ui,
             images:                     images,
             view_model:                 view_model,
-            create_keyframe_on_draw:    frame.create_keyframe_on_draw.clone()
+            create_keyframe_on_draw:    frame.create_keyframe_on_draw.clone(),
+            show_onion_skins:           frame.show_onion_skins.clone()
         }
     }
 
@@ -88,29 +103,38 @@ impl KeyFrameControlsController {
                             Control::button()
                                 .with(vec![Control::label().with(previous_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((9, 4), (4, 4)))
-                                .with(State::Enabled(Property::Bool(true)))
+                                .with(State::Enabled(Property::bound("CanMoveToPreviousKeyFrame")))
+                                .with((ActionTrigger::Click, "MoveToPreviousKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
+
                             Control::button()
                                 .with(vec![Control::label().with(new_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                                .with(State::Enabled(Property::Bool(true)))
+                                .with(State::Enabled(Property::bound("CanCreateKeyFrame")))
+                                .with((ActionTrigger::Click, "CreateKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
+
                             Control::button()
                                 .with(vec![Control::label().with(onion_skins).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
+                                .with(State::Selected(Property::bound("ShowOnionSkinsSelected")))
                                 .with(State::Enabled(Property::Bool(true)))
+                                .with((ActionTrigger::Click, "ToggleShowOnionSkins"))
                                 .with(Bounds::next_horiz(22.0)),
+
                             Control::button()
                                 .with(vec![Control::label().with(new_on_paint).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                                .with(State::Selected(Property::Bind("CreateKeyFrameOnDrawSelected".to_string())))
+                                .with(State::Selected(Property::bound("CreateKeyFrameOnDrawSelected")))
                                 .with(State::Enabled(Property::Bool(true)))
                                 .with((ActionTrigger::Click, "ToggleCreateKeyFrameOnDraw"))
                                 .with(Bounds::next_horiz(22.0)),
+
                             Control::button()
                                 .with(vec![Control::label().with(next_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (9, 4)))
-                                .with(State::Enabled(Property::Bool(true)))
+                                .with(State::Enabled(Property::bound("CanMoveToNextKeyFrame")))
+                                .with((ActionTrigger::Click, "MoveToNextKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
                         ])
                         .with(Bounds::next_horiz(22.0*5.0))
@@ -164,6 +188,15 @@ impl Controller for KeyFrameControlsController {
                 let current_value = self.create_keyframe_on_draw.get();
                 self.create_keyframe_on_draw.clone().set(!current_value);
             },
+
+            "ToggleShowOnionSkins" => {
+                let current_value = self.show_onion_skins.get();
+                self.show_onion_skins.clone().set(!current_value);
+            },
+
+            "MoveToPreviousKeyFrame" => { },
+            "MoveToNextKeyFrame" => { },
+            "CreateKeyFrame" => { },
 
             _ => { }
         }
