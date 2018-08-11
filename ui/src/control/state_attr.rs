@@ -14,6 +14,9 @@ pub enum State {
     /// Whether or not this control has a badge attached to it
     Badged(Property),
 
+    /// Whether or not this control is enabled
+    Enabled(Property),
+
     /// The value of this control (when it is not being edited)
     Value(Property),
 

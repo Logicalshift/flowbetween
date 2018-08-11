@@ -11,23 +11,24 @@ impl ToJsonValue for ControlAttribute {
         use State::*;
 
         match self {
-            &BoundingBox(ref bounds)                => json!({ "BoundingBox": bounds }),
-            &Text(ref property)                     => json!({ "Text": property }),
-            &ZIndex(zindex)                         => json!({ "ZIndex": zindex }),
-            &Padding((left, top), (right, bottom))  => json!({ "Padding": { "left": left, "top": top, "right": right, "bottom": bottom } }),
-            &FontAttr(attr)                         => json!({ "Font": attr }),
-            &StateAttr(Selected(ref property))      => json!({ "Selected": property }),
-            &StateAttr(Badged(ref property))        => json!({ "Badged": property }),
-            &StateAttr(Value(ref property))         => json!({ "Value": property }),
-            &StateAttr(Range((ref min, ref max)))   => json!({ "Range": [min, max] }),
-            &PopupAttr(ref popup)                   => json!({ "Popup": popup }),
-            &ScrollAttr(ref scroll)                 => json!({ "Scroll": scroll }),
-            &Id(ref id)                             => json!({ "Id": id }),
-            &Controller(ref name)                   => json!({ "Controller": name }),
-            &Action(ref trigger, ref action)        => json!({ "Action": (trigger, action) }),
-            &HintAttr(ref hint)                     => json!({ "Hint": hint }),
+            BoundingBox(bounds)                     => json!({ "BoundingBox": bounds }),
+            Text(property)                          => json!({ "Text": property }),
+            ZIndex(zindex)                          => json!({ "ZIndex": zindex }),
+            Padding((left, top), (right, bottom))   => json!({ "Padding": { "left": left, "top": top, "right": right, "bottom": bottom } }),
+            FontAttr(attr)                          => json!({ "Font": attr }),
+            StateAttr(Selected(property))           => json!({ "Selected": property }),
+            StateAttr(Badged(property))             => json!({ "Badged": property }),
+            StateAttr(Value(property))              => json!({ "Value": property }),
+            StateAttr(Range((min, max)))            => json!({ "Range": [min, max] }),
+            StateAttr(Enabled(property))            => json!({ "Enabled": property }),
+            PopupAttr(popup)                        => json!({ "Popup": popup }),
+            ScrollAttr(scroll)                      => json!({ "Scroll": scroll }),
+            Id(id)                                  => json!({ "Id": id }),
+            Controller(name)                        => json!({ "Controller": name }),
+            Action(trigger, action)                 => json!({ "Action": (trigger, action) }),
+            HintAttr(hint)                          => json!({ "Hint": hint }),
 
-            &SubComponents(ref components)          => {
+            SubComponents(components)               => {
                 let json_components: Vec<_> = components.iter()
                     .map(|component| component.to_json())
                     .collect();
@@ -35,7 +36,7 @@ impl ToJsonValue for ControlAttribute {
                 json!({ "SubComponents": json_components })
             },
 
-            &AppearanceAttr(Image(ref image_resource))  => {
+            AppearanceAttr(Image(image_resource))   => {
                 // For images, we only store the ID: callers need to look it up from the resource manager in the controller that made this control
                 json!({ 
                     "Image": {
@@ -45,10 +46,10 @@ impl ToJsonValue for ControlAttribute {
                 })
             },
 
-            &AppearanceAttr(Background(ref color))  => json!({ "Background": color.to_rgba_components() }),
-            &AppearanceAttr(Foreground(ref color))  => json!({ "Foreground": color.to_rgba_components() }),
+            AppearanceAttr(Background(color))       => json!({ "Background": color.to_rgba_components() }),
+            AppearanceAttr(Foreground(color))       => json!({ "Foreground": color.to_rgba_components() }),
 
-            &Canvas(ref canvas_resource)            => {
+            Canvas(canvas_resource)                 => {
                 json!({
                     "Image": {
                         "id":   canvas_resource.id(),
