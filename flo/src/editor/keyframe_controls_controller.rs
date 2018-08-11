@@ -71,23 +71,23 @@ impl KeyFrameControlsController {
                         .with(vec![
                             Control::button()
                                 .with(vec![Control::label().with(previous_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
-                                .with(ControlAttribute::Padding((5, 2), (2, 2)))
+                                .with(ControlAttribute::Padding((9, 4), (4, 4)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(new_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
-                                .with(ControlAttribute::Padding((2, 2), (2, 2)))
+                                .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(onion_skins).with(TextAlign::Center).with(Bounds::fill_all())])
-                                .with(ControlAttribute::Padding((2, 2), (2, 2)))
+                                .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(new_on_paint).with(TextAlign::Center).with(Bounds::fill_all())])
-                                .with(ControlAttribute::Padding((2, 2), (2, 2)))
+                                .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(next_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
-                                .with(ControlAttribute::Padding((2, 2), (5, 2)))
+                                .with(ControlAttribute::Padding((4, 4), (9, 4)))
                                 .with(Bounds::next_horiz(22.0)),
                         ])
                         .with(Bounds::next_horiz(22.0*5.0))
