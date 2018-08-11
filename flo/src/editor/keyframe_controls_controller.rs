@@ -20,11 +20,8 @@ pub struct KeyFrameControlsController {
     /// The view model for this controller
     view_model: Arc<DynamicViewModel>,
 
-    /// Model binding: the 'create frame on draw' binding
-    create_keyframe_on_draw: Binding<bool>,
-
-    /// Model binding: the 'show onion skins' binding
-    show_onion_skins: Binding<bool>
+    /// The frame model
+    frame: FrameModel,
 }
 
 impl KeyFrameControlsController {
@@ -58,8 +55,7 @@ impl KeyFrameControlsController {
             ui:                         ui,
             images:                     images,
             view_model:                 view_model,
-            create_keyframe_on_draw:    frame.create_keyframe_on_draw.clone(),
-            show_onion_skins:           frame.show_onion_skins.clone()
+            frame:                      frame.clone()
         }
     }
 
@@ -185,13 +181,13 @@ impl Controller for KeyFrameControlsController {
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
             "ToggleCreateKeyFrameOnDraw" => {
-                let current_value = self.create_keyframe_on_draw.get();
-                self.create_keyframe_on_draw.clone().set(!current_value);
+                let current_value = self.frame.create_keyframe_on_draw.get();
+                self.frame.create_keyframe_on_draw.clone().set(!current_value);
             },
 
             "ToggleShowOnionSkins" => {
-                let current_value = self.show_onion_skins.get();
-                self.show_onion_skins.clone().set(!current_value);
+                let current_value = self.frame.show_onion_skins.get();
+                self.frame.show_onion_skins.clone().set(!current_value);
             },
 
             "MoveToPreviousKeyFrame" => { },
