@@ -45,6 +45,9 @@ pub struct FrameLayerModel {
 /// 
 #[derive(Clone)]
 pub struct FrameModel {
+    /// Set to true if we should create a new keyframe when drawing (and there is no current keyframe)
+    pub create_keyframe_on_draw: Binding<bool>,
+
     /// The layers in the current frame
     pub layers: BindRef<Vec<FrameLayerModel>>,
 
@@ -134,16 +137,19 @@ impl FrameModel {
         });
 
         // The current frame tracks the frame the user has got selected from the set of layers
-        let frame           = Self::current_frame(selected_layer, layers.clone());
-        let elements        = Self::element_properties(frame.clone());
-        let bounding_boxes  = Self::bounding_boxes(elements.clone());
+        let frame                   = Self::current_frame(selected_layer, layers.clone());
+        let elements                = Self::element_properties(frame.clone());
+        let bounding_boxes          = Self::bounding_boxes(elements.clone());
+
+        let create_keyframe_on_draw = bind(true);
 
         // Result is a new FrameModel containing these layers
         FrameModel {
-            layers:         BindRef::new(&layers),
-            frame:          frame,
-            elements:       elements,
-            bounding_boxes: bounding_boxes
+            create_keyframe_on_draw:    create_keyframe_on_draw,
+            layers:                     BindRef::new(&layers),
+            frame:                      frame,
+            elements:                   elements,
+            bounding_boxes:             bounding_boxes
         }
     }
 

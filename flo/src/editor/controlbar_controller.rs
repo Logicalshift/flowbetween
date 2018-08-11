@@ -22,7 +22,7 @@ impl ControlBarController {
     ///
     /// Creates a new control bar controller
     /// 
-    pub fn new<Anim: Animation+EditableAnimation>(model: &FloModel<Anim>) -> ControlBarController {
+    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> ControlBarController {
         // Create the UI
         let ui                  = Self::ui();
 

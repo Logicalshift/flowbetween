@@ -15,20 +15,36 @@ pub struct KeyFrameControlsController {
     ui: BindRef<Control>,
 
     /// The images for this controller
-    images: Arc<ResourceManager<Image>>
+    images: Arc<ResourceManager<Image>>,
+
+    /// The view model for this controller
+    view_model: Arc<DynamicViewModel>,
+
+    /// Model binding: the 'create frame on draw' binding
+    create_keyframe_on_draw: Binding<bool>
 }
 
 impl KeyFrameControlsController {
     ///
     /// Creates a new keyframes controls controller
     /// 
-    pub fn new<Anim: Animation+EditableAnimation>(model: &FloModel<Anim>) -> KeyFrameControlsController {
+    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> KeyFrameControlsController {
+        // Create the viewmodel
+        let frame       = model.frame();
+        let view_model  = Arc::new(DynamicViewModel::new());
+
+        let create_keyframe_on_draw = frame.create_keyframe_on_draw.clone();
+        view_model.set_computed("CreateKeyFrameOnDrawSelected", move || PropertyValue::Bool(create_keyframe_on_draw.get()));
+
+        // Create the images and the UI
         let images  = Arc::new(Self::images());
         let ui      = Self::ui(model, Arc::clone(&images));
 
         KeyFrameControlsController {
-            ui:     ui,
-            images: images
+            ui:                         ui,
+            images:                     images,
+            view_model:                 view_model,
+            create_keyframe_on_draw:    frame.create_keyframe_on_draw.clone()
         }
     }
 
@@ -72,28 +88,29 @@ impl KeyFrameControlsController {
                             Control::button()
                                 .with(vec![Control::label().with(previous_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((9, 4), (4, 4)))
-                                .with(State::Enabled(Property::Bool(false)))
+                                .with(State::Enabled(Property::Bool(true)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(new_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                                .with(State::Enabled(Property::Bool(false)))
+                                .with(State::Enabled(Property::Bool(true)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(onion_skins).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                                .with(State::Enabled(Property::Bool(false)))
+                                .with(State::Enabled(Property::Bool(true)))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(new_on_paint).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
-                                .with(State::Selected(Property::Bool(true)))
+                                .with(State::Selected(Property::Bind("CreateKeyFrameOnDrawSelected".to_string())))
                                 .with(State::Enabled(Property::Bool(true)))
+                                .with((ActionTrigger::Click, "ToggleCreateKeyFrameOnDraw"))
                                 .with(Bounds::next_horiz(22.0)),
                             Control::button()
                                 .with(vec![Control::label().with(next_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (9, 4)))
-                                .with(State::Enabled(Property::Bool(false)))
+                                .with(State::Enabled(Property::Bool(true)))
                                 .with(Bounds::next_horiz(22.0)),
                         ])
                         .with(Bounds::next_horiz(22.0*5.0))
@@ -135,5 +152,20 @@ impl Controller for KeyFrameControlsController {
 
     fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
         Some(Arc::clone(&self.images))
+    }
+
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
+        Some(self.view_model.clone())
+    }
+
+    fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
+        match action_id {
+            "ToggleCreateKeyFrameOnDraw" => {
+                let current_value = self.create_keyframe_on_draw.get();
+                self.create_keyframe_on_draw.clone().set(!current_value);
+            },
+
+            _ => { }
+        }
     }
 }
