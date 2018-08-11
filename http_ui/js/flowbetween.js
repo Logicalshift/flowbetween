@@ -1246,6 +1246,20 @@ function flowbetween(root_node) {
                 return true;
             });
 
+        } else if (attribute['Enabled']) {
+            // The enabled property updates the node class
+            remove_action = on_property_change(controller_path, attribute['Enabled'], is_enabled => {
+                if (is_enabled['Bool']) {
+                    add_class(node, 'enabled');
+                    remove_class(node, 'disabled');
+                } else {
+                    remove_class(node, 'enabled');
+                    add_class(node, 'disabled');
+                }
+
+                return true;
+            });
+
         } else if (attribute['Badged']) {
             // The badged property updates the node class
             remove_action = on_property_change(controller_path, attribute['Badged'], is_badged => {
