@@ -15,8 +15,8 @@ flo_canvas          = { path = "../canvas", version = "0.1" }
 flo_http_ui         = { path = "../http_ui", version = "0.1" }
 flo_static_files    = { path = "../static_files", version= "0.1" }
 
-actix               = "0.5"
-actix-web           = "0.6"
+actix               = "0.7"
+actix-web           = "0.7"
 bytes               = "0.4"
 futures             = "0.1"
 serde_json          = "1.0"

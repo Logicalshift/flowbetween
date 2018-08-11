@@ -132,10 +132,11 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
     let get_handler = Mutex::new(session_resource_handler());
 
     // Wrap into a function
-    move |req: HttpRequest<Arc<Session>>| {
+    move |req: &HttpRequest<Arc<Session>>| {
         match req.method() {
             &Method::POST => {
                 // POST requests are used to send instructions to sessions
+                let req = req.clone();
 
                 // Request must contain a JSON body
                 let result = Json::<UiHandlerRequest>::extract(&req)
@@ -159,7 +160,7 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
 
             &Method::GET => {
                 // Get requests are handled by the session resource handler
-                let resource_request    = get_handler.lock().unwrap().handle(req.clone());
+                let resource_request    = get_handler.lock().unwrap().handle(req);
                 let response            = resource_request.respond_to(&req);
 
                 match response {

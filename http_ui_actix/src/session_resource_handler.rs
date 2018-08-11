@@ -203,7 +203,7 @@ fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>,
 /// Handler for get requests for a session
 /// 
 pub fn session_resource_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
-    |req: HttpRequest<Arc<Session>>| {
+    |req: &HttpRequest<Arc<Session>>| {
         // The path is the tail of the request
         let path    = req.match_info().get("tail");
         let state   = Arc::clone(req.state());

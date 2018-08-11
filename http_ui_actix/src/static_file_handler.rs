@@ -16,7 +16,7 @@ pub fn flowbetween_static_file_handler<TState>() -> impl Handler<TState> {
 /// Creates a handler for serving static files from a service
 ///
 pub fn static_file_handler<TState>(static_files: StaticService) -> impl Handler<TState> {
-    move |req: HttpRequest<TState>| {
+    move |req: &HttpRequest<TState>| {
         // The tail specifies the file
         let tail = req.match_info().get("tail");
 

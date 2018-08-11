@@ -89,13 +89,17 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
             _ => (),
         }
     }
+
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.start_sending_updates(ctx);
+    }
 }
 
 ///
 /// Creates a handler for requests that should spawn a websocket for a session
 /// 
 pub fn session_websocket_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
-    |req: HttpRequest<Arc<Session>>| {
+    |req: &HttpRequest<Arc<Session>>| {
         // The tail indicates the session ID
         let tail = req.match_info().get("tail");
 
@@ -119,14 +123,10 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>() -> impl Handle
                 let response = ws::handshake(&req);
                 let response = response.map(move |mut response| {
                     // Create the stream
-                    let stream = ws::WsStream::new(req.clone());
+                    let stream = ws::WsStream::new(req.payload());
 
                     // Apply to the context
-                    let mut ctx = ws::WebsocketContext::new(req, session);
-                    ctx.add_stream(stream);
-
-                    // Begin sending messages
-                    ctx.spawn(fut::ok(()).map(|_, session: &mut FloWsSession<_>, ctx| session.start_sending_updates(ctx)));
+                    let ctx = ws::WebsocketContext::create(req, session, stream);
 
                     // Generate the response
                     response.body(ctx)
