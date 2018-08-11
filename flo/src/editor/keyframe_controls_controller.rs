@@ -38,14 +38,14 @@ impl KeyFrameControlsController {
         let create_keyframe_on_draw = frame.create_keyframe_on_draw.clone();
         let show_onion_skins        = frame.show_onion_skins.clone();
         let keyframe_selected       = frame.keyframe_selected.clone();
-        let next_keyframe           = frame.next_keyframe.clone();
-        let previous_keyframe       = frame.previous_keyframe.clone();
+        let prev_next_1             = frame.previous_and_next_keyframe.clone();
+        let prev_next_2             = frame.previous_and_next_keyframe.clone();
 
         view_model.set_computed("CreateKeyFrameOnDrawSelected", move || PropertyValue::Bool(create_keyframe_on_draw.get()));
         view_model.set_computed("ShowOnionSkinsSelected",       move || PropertyValue::Bool(show_onion_skins.get()));
         view_model.set_computed("CanCreateKeyFrame",            move || PropertyValue::Bool(selected_layer.get().is_some() && !keyframe_selected.get()));
-        view_model.set_computed("CanMoveToNextKeyFrame",        move || PropertyValue::Bool(next_keyframe.get().is_some()));
-        view_model.set_computed("CanMoveToPreviousKeyFrame",    move || PropertyValue::Bool(previous_keyframe.get().is_some()));
+        view_model.set_computed("CanMoveToPreviousKeyFrame",    move || PropertyValue::Bool(prev_next_1.get().0.is_some()));
+        view_model.set_computed("CanMoveToNextKeyFrame",        move || PropertyValue::Bool(prev_next_2.get().1.is_some()));
 
         // Create the images and the UI
         let images  = Arc::new(Self::images());

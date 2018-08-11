@@ -54,11 +54,8 @@ pub struct FrameModel {
     /// True if the current layer/selected time is on a keyframe
     pub keyframe_selected: BindRef<bool>,
 
-    /// The next keyframe time (None if there is no next keyframe)
-    pub next_keyframe: BindRef<Option<Duration>>,
-
-    /// The previous keyframe time
-    pub previous_keyframe: BindRef<Option<Duration>>,
+    /// The previous and next keyframes
+    pub previous_and_next_keyframe: BindRef<(Option<Duration>, Option<Duration>)>,
 
     /// The layers in the current frame
     pub layers: BindRef<Vec<FrameLayerModel>>,
@@ -153,19 +150,17 @@ impl FrameModel {
         let elements                = Self::element_properties(frame.clone());
         let bounding_boxes          = Self::bounding_boxes(elements.clone());
 
-        let create_keyframe_on_draw = bind(true);
-        let show_onion_skins        = bind(false);
-        let keyframe_selected       = BindRef::from(bind(true));
-        let next_keyframe           = BindRef::from(bind(None));
-        let previous_keyframe       = BindRef::from(bind(None));
+        let create_keyframe_on_draw     = bind(true);
+        let show_onion_skins            = bind(false);
+        let keyframe_selected           = BindRef::from(bind(true));
+        let previous_and_next_keyframe  = BindRef::from(bind((None, None)));
 
         // Result is a new FrameModel containing these layers
         FrameModel {
             create_keyframe_on_draw:    create_keyframe_on_draw,
             show_onion_skins:           show_onion_skins,
             keyframe_selected:          keyframe_selected,
-            next_keyframe:              next_keyframe,
-            previous_keyframe:          previous_keyframe,
+            previous_and_next_keyframe: previous_and_next_keyframe,
             layers:                     BindRef::new(&layers),
             frame:                      frame,
             elements:                   elements,
