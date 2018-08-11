@@ -1,6 +1,9 @@
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_curves::bezier::path::path_contains_point;
+
+use futures::*;
 
 use std::sync::*;
 use std::collections::HashMap;
@@ -78,7 +81,11 @@ impl FrameModel {
     /// invalidated; the value has no meaning, so any value (for example, the
     /// length of the edit log)
     /// 
-    pub fn new<Anim: Animation+'static>(animation: Arc<Anim>, when: BindRef<Duration>, animation_update: BindRef<u64>, selected_layer: BindRef<Option<u64>>) -> FrameModel {
+    pub fn new<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, animation_update: BindRef<u64>, selected_layer: BindRef<Option<u64>>) -> FrameModel {
+        // Create the bindings for the current frame state
+        let keyframe_selected           = Self::keyframe_selected(Arc::clone(&animation), edits.resubscribe(), when.clone(), selected_layer.clone());
+        let previous_and_next_keyframe  = BindRef::from(bind((None, None)));
+
         // The hashmap allows us to track frame bindings independently from layer bindings
         let frames: Mutex<HashMap<u64, FrameLayerModel>> = Mutex::new(HashMap::new());
 
@@ -152,8 +159,6 @@ impl FrameModel {
 
         let create_keyframe_on_draw     = bind(true);
         let show_onion_skins            = bind(false);
-        let keyframe_selected           = BindRef::from(bind(true));
-        let previous_and_next_keyframe  = BindRef::from(bind((None, None)));
 
         // Result is a new FrameModel containing these layers
         FrameModel {
@@ -181,6 +186,77 @@ impl FrameModel {
                 .filter_map(|layer| layer.frame.get())
                 .nth(0)
         }))
+    }
+
+    ///
+    /// True if the animation edit affects the keyframes on the specified layer
+    /// 
+    fn is_key_frame_update(layer_id: u64, edit: &AnimationEdit) -> bool {
+        match edit {
+            AnimationEdit::Layer(edit_layer_id, LayerEdit::AddKeyFrame(_)) |
+            AnimationEdit::Layer(edit_layer_id, LayerEdit::RemoveKeyFrame(_)) => edit_layer_id == &layer_id,
+            _ => false
+        }
+    }
+
+    ///
+    /// Stream of notifications that the current frame has updated
+    /// 
+    fn frame_update_stream(edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> impl Stream<Item=(), Error=()> {
+        // Events indicating a new key frame
+        let selected_layer_2    = selected_layer.clone();
+        let new_key_frame       = edits
+            .filter_map(move |edits| {
+                // Get the active layer
+                let layer_id = selected_layer_2.get();
+
+                if let Some(layer_id) = layer_id {
+                    // Generate an event if the edits contain a Add or Remove for the current layer
+                    if edits.iter().any(|edit| Self::is_key_frame_update(layer_id, edit)) {
+                        Some(())
+                    } else {
+                        None
+                    }
+                } else {
+                    // No events if there is no layer
+                    None
+                }
+            });
+        
+        // Events indicating the selection has changed
+        let when_changed            = follow(when).map(|_| ());
+        let selected_layer_changed  = follow(selected_layer).map(|_| ());
+
+        // If any of these events occur, then the keyframe may have changed
+        new_key_frame.select(when_changed).select(selected_layer_changed)
+    }
+
+    ///
+    /// Returns a binding indicating if a keyframe is currently selected
+    /// 
+    fn keyframe_selected<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> BindRef<bool> {
+        // Get a stream of frame update events
+        let frame_updates = Self::frame_update_stream(edits, when.clone(), selected_layer.clone());
+
+        // Update the binding whenever they change
+        let keyframe_selected = bind_stream(frame_updates, false, move |_, _| {
+            // Get the current position in the timeline
+            let when    = when.get();
+            let layer   = selected_layer.get();
+
+            if let Some(layer) = layer {
+                // See if there's a keyframe at this exact time (well, within a millisecond)
+                let layer       = animation.get_layer_with_id(layer);
+                let keyframes   = layer.map(|layer| layer.get_key_frames_during_time(when..(when+Duration::from_millis(1))).collect::<Vec<_>>());
+
+                keyframes.map(|frames| frames.len() > 0).unwrap_or(false)
+            } else {
+                // No selected layer
+                false
+            }
+        });
+
+        BindRef::from(keyframe_selected)
     }
 
     ///
