@@ -6,12 +6,11 @@ use flo_binding::*;
 use flo_animation::*;
 
 use std::sync::*;
-use std::time::Duration;
 
 ///
 /// Provides the buttons for controlling the keyframes
 /// 
-pub struct KeyFrameControlsController {
+pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation> {
     /// The UI for this controller
     ui: BindRef<Control>,
 
@@ -21,18 +20,15 @@ pub struct KeyFrameControlsController {
     /// The view model for this controller
     view_model: Arc<DynamicViewModel>,
 
-    /// The frame model
-    frame: FrameModel,
-
-    /// The current frame binding
-    pub current_time: Binding<Duration>
+    /// The animation
+    animation: FloModel<Anim>
 }
 
-impl KeyFrameControlsController {
+impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim> {
     ///
     /// Creates a new keyframes controls controller
     /// 
-    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> KeyFrameControlsController {
+    pub fn new(model: &FloModel<Anim>) -> KeyFrameControlsController<Anim> {
         // Create the viewmodel
         let frame       = model.frame();
         let timeline    = model.timeline();
@@ -53,21 +49,20 @@ impl KeyFrameControlsController {
 
         // Create the images and the UI
         let images  = Arc::new(Self::images());
-        let ui      = Self::ui(model, Arc::clone(&images));
+        let ui      = Self::ui(Arc::clone(&images));
 
         KeyFrameControlsController {
             ui:             ui,
             images:         images,
             view_model:     view_model,
-            frame:          frame.clone(),
-            current_time:   timeline.current_time.clone()
+            animation:      model.clone()
         }
     }
 
     ///
     /// Creates the UI for this controller
     /// 
-    fn ui<Anim: Animation+EditableAnimation>(model: &FloModel<Anim>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
+    fn ui(images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
         // Fetch the icon images
         let new_key_frame       = images.get_named_resource("new_key_frame").unwrap();
         let new_on_paint        = images.get_named_resource("new_on_paint").unwrap();
@@ -170,7 +165,7 @@ impl KeyFrameControlsController {
     }
 }
 
-impl Controller for KeyFrameControlsController {
+impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
@@ -186,30 +181,32 @@ impl Controller for KeyFrameControlsController {
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
             "ToggleCreateKeyFrameOnDraw" => {
-                let current_value = self.frame.create_keyframe_on_draw.get();
-                self.frame.create_keyframe_on_draw.clone().set(!current_value);
+                let current_value = self.animation.frame().create_keyframe_on_draw.get();
+                self.animation.frame().create_keyframe_on_draw.clone().set(!current_value);
             },
 
             "ToggleShowOnionSkins" => {
-                let current_value = self.frame.show_onion_skins.get();
-                self.frame.show_onion_skins.clone().set(!current_value);
+                let current_value = self.animation.frame().show_onion_skins.get();
+                self.animation.frame().show_onion_skins.clone().set(!current_value);
             },
 
             "MoveToPreviousKeyFrame" => { 
-                let previous_frame = self.frame.previous_and_next_keyframe.get().0;
+                let previous_frame = self.animation.frame().previous_and_next_keyframe.get().0;
                 if let Some(previous_frame) = previous_frame {
-                    self.current_time.clone().set(previous_frame);
+                    self.animation.timeline().current_time.clone().set(previous_frame);
                 }
             },
 
             "MoveToNextKeyFrame" => { 
-                let next_frame = self.frame.previous_and_next_keyframe.get().1;
+                let next_frame = self.animation.frame().previous_and_next_keyframe.get().1;
                 if let Some(next_frame) = next_frame {
-                    self.current_time.clone().set(next_frame);
+                    self.animation.timeline().current_time.clone().set(next_frame);
                 }
             },
 
-            "CreateKeyFrame" => { },
+            "CreateKeyFrame" => { 
+
+            },
 
             _ => { }
         }

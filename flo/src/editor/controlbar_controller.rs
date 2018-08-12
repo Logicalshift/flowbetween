@@ -10,19 +10,19 @@ use std::sync::*;
 ///
 /// The control bar provides a home for the basic animation editing and playback controls
 /// 
-pub struct ControlBarController {
+pub struct ControlBarController<Anim: 'static+EditableAnimation+Animation> {
     /// The UI for this control bar
     ui: BindRef<Control>,
 
     /// The keyframe controls controller
-    keyframe_controls: Arc<KeyFrameControlsController>
+    keyframe_controls: Arc<KeyFrameControlsController<Anim>>
 }
 
-impl ControlBarController {
+impl<Anim: 'static+EditableAnimation+Animation> ControlBarController<Anim> {
     ///
     /// Creates a new control bar controller
     /// 
-    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> ControlBarController {
+    pub fn new(model: &FloModel<Anim>) -> ControlBarController<Anim> {
         // Create the UI
         let ui                  = Self::ui();
 
@@ -61,7 +61,7 @@ impl ControlBarController {
     }
 }
 
-impl Controller for ControlBarController {
+impl<Anim: 'static+EditableAnimation+Animation> Controller for ControlBarController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
