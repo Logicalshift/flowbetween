@@ -5,12 +5,18 @@ use flo_ui::*;
 use flo_binding::*;
 use flo_animation::*;
 
+use desync::*;
+use futures::*;
+use futures::executor;
+use futures::executor::Spawn;
+
 use std::sync::*;
+use std::time::Duration;
 
 ///
 /// Provides the buttons for controlling the keyframes
 /// 
-pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation> {
+pub struct KeyFrameControlsController {
     /// The UI for this controller
     ui: BindRef<Control>,
 
@@ -20,15 +26,24 @@ pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation>
     /// The view model for this controller
     view_model: Arc<DynamicViewModel>,
 
-    /// The animation
-    animation: FloModel<Anim>
+    /// The frame model
+    frame: FrameModel,
+
+    /// The current frame binding
+    current_time: Binding<Duration>,
+
+    // The currently selected layer ID
+    selected_layer: Binding<Option<u64>>,
+
+    /// The edit sink for the animation
+    edit_sink: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
 }
 
-impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim> {
+impl KeyFrameControlsController {
     ///
     /// Creates a new keyframes controls controller
     /// 
-    pub fn new(model: &FloModel<Anim>) -> KeyFrameControlsController<Anim> {
+    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> KeyFrameControlsController {
         // Create the viewmodel
         let frame       = model.frame();
         let timeline    = model.timeline();
@@ -47,15 +62,21 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
         view_model.set_computed("CanMoveToPreviousKeyFrame",    move || PropertyValue::Bool(prev_next_1.get().0.is_some()));
         view_model.set_computed("CanMoveToNextKeyFrame",        move || PropertyValue::Bool(prev_next_2.get().1.is_some()));
 
+        // The edit sink lets us send edits to the animation (in particular, the 'new keyframe' edits)
+        let edit_sink       = executor::spawn(model.edit());
+
         // Create the images and the UI
-        let images  = Arc::new(Self::images());
-        let ui      = Self::ui(Arc::clone(&images));
+        let images          = Arc::new(Self::images());
+        let ui              = Self::ui(Arc::clone(&images));
 
         KeyFrameControlsController {
             ui:             ui,
             images:         images,
             view_model:     view_model,
-            animation:      model.clone()
+            frame:          frame.clone(),
+            current_time:   timeline.current_time.clone(),
+            selected_layer: timeline.selected_layer.clone(),
+            edit_sink:      Desync::new(edit_sink)
         }
     }
 
@@ -165,7 +186,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
     }
 }
 
-impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsController<Anim> {
+impl Controller for KeyFrameControlsController {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
@@ -181,31 +202,43 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
             "ToggleCreateKeyFrameOnDraw" => {
-                let current_value = self.animation.frame().create_keyframe_on_draw.get();
-                self.animation.frame().create_keyframe_on_draw.clone().set(!current_value);
+                let current_value = self.frame.create_keyframe_on_draw.get();
+                self.frame.create_keyframe_on_draw.clone().set(!current_value);
             },
 
             "ToggleShowOnionSkins" => {
-                let current_value = self.animation.frame().show_onion_skins.get();
-                self.animation.frame().show_onion_skins.clone().set(!current_value);
+                let current_value = self.frame.show_onion_skins.get();
+                self.frame.show_onion_skins.clone().set(!current_value);
             },
 
             "MoveToPreviousKeyFrame" => { 
-                let previous_frame = self.animation.frame().previous_and_next_keyframe.get().0;
+                let previous_frame = self.frame.previous_and_next_keyframe.get().0;
                 if let Some(previous_frame) = previous_frame {
-                    self.animation.timeline().current_time.clone().set(previous_frame);
+                    self.current_time.clone().set(previous_frame);
                 }
             },
 
             "MoveToNextKeyFrame" => { 
-                let next_frame = self.animation.frame().previous_and_next_keyframe.get().1;
+                let next_frame = self.frame.previous_and_next_keyframe.get().1;
                 if let Some(next_frame) = next_frame {
-                    self.animation.timeline().current_time.clone().set(next_frame);
+                    self.current_time.clone().set(next_frame);
                 }
             },
 
             "CreateKeyFrame" => { 
+                let current_time        = self.current_time.get();
+                let selected_layer      = self.selected_layer.get();
+                let keyframe_selected   = self.frame.keyframe_selected.get();
 
+                // If we can create a keyframe (got a current layer and no keyframe selected)
+                if let Some(selected_layer) = selected_layer {
+                    if !keyframe_selected {
+                        // Send a new keyframe edit request at the current time
+                        self.edit_sink.sync(|edit_sink| edit_sink.wait_send(vec![
+                            AnimationEdit::Layer(selected_layer, LayerEdit::AddKeyFrame(current_time))
+                        ])).unwrap();
+                    }
+                }
             },
 
             _ => { }
