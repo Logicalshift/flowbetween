@@ -302,6 +302,9 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                         // Will need to define the brush & properties
                         need_brush = true;
                         need_props = true;
+
+                        // Canvas should be invalidated
+                        self.animation.timeline().invalidate_canvas();
                     }
                 }
 
