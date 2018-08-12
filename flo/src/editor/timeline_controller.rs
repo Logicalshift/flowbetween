@@ -107,7 +107,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
             let current_time_ns     = current_time.as_secs() * 1_000_000_000 + (current_time.subsec_nanos() as u64);
             let frame_duration_ns   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
 
-            let frame               = current_time_ns / frame_duration_ns;
+            let frame               = (current_time_ns+(frame_duration_ns/2)) / frame_duration_ns;
 
             let tick_length         = TICK_LENGTH as f64;
             let tick_x              = (frame as f64) * tick_length;
