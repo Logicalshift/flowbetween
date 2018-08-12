@@ -202,9 +202,11 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
                     let frame_duration_nanos: u64   = frame_duration.as_secs() * 1_000_000_000 + (frame_duration.subsec_nanos() as u64);
                     let frame_time_nanos: u64       = keyframe_time.as_secs() * 1_000_000_000 + (keyframe_time.subsec_nanos() as u64);
 
+                    let frame_num                   = (frame_time_nanos+(frame_duration_nanos/2))/frame_duration_nanos;
+
                     KeyFrameModel {
                         when:       keyframe_time,
-                        frame:      (frame_time_nanos/frame_duration_nanos) as u32,
+                        frame:      frame_num as u32,
                         layer_id:   layer_id
                     }
                 })
