@@ -16,7 +16,7 @@ use std::time::Duration;
 ///
 /// Provides the buttons for controlling the keyframes
 /// 
-pub struct KeyFrameControlsController {
+pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation> {
     /// The UI for this controller
     ui: BindRef<Control>,
 
@@ -29,6 +29,9 @@ pub struct KeyFrameControlsController {
     /// The frame model
     frame: FrameModel,
 
+    /// The timeline model
+    timeline: TimelineModel<Anim>,
+
     /// The current frame binding
     current_time: Binding<Duration>,
 
@@ -39,11 +42,11 @@ pub struct KeyFrameControlsController {
     edit_sink: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
 }
 
-impl KeyFrameControlsController {
+impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim> {
     ///
     /// Creates a new keyframes controls controller
     /// 
-    pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> KeyFrameControlsController {
+    pub fn new(model: &FloModel<Anim>) -> KeyFrameControlsController<Anim> {
         // Create the viewmodel
         let frame       = model.frame();
         let timeline    = model.timeline();
@@ -74,6 +77,7 @@ impl KeyFrameControlsController {
             images:         images,
             view_model:     view_model,
             frame:          frame.clone(),
+            timeline:       timeline.clone(),
             current_time:   timeline.current_time.clone(),
             selected_layer: timeline.selected_layer.clone(),
             edit_sink:      Desync::new(edit_sink)
@@ -186,7 +190,7 @@ impl KeyFrameControlsController {
     }
 }
 
-impl Controller for KeyFrameControlsController {
+impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }
@@ -237,6 +241,9 @@ impl Controller for KeyFrameControlsController {
                         self.edit_sink.sync(|edit_sink| edit_sink.wait_send(vec![
                             AnimationEdit::Layer(selected_layer, LayerEdit::AddKeyFrame(current_time))
                         ])).unwrap();
+
+                        // Invalidate the canvas
+                        self.timeline.invalidate_canvas();
                     }
                 }
             },
