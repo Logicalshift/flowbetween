@@ -247,7 +247,10 @@ impl FrameModel {
             if let Some(layer) = layer {
                 // See if there's a keyframe at this exact time (well, within a millisecond)
                 let layer       = animation.get_layer_with_id(layer);
-                let keyframes   = layer.map(|layer| layer.get_key_frames_during_time(when..(when+Duration::from_millis(1))).collect::<Vec<_>>());
+                let one_ms      = Duration::from_millis(1);
+                let start       = if when > one_ms { when - one_ms } else { Duration::from_millis(0) };
+                let end         = when + one_ms;
+                let keyframes   = layer.map(|layer| layer.get_key_frames_during_time(start..end).collect::<Vec<_>>());
 
                 keyframes.map(|frames| frames.len() > 0).unwrap_or(false)
             } else {
