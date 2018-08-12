@@ -6,6 +6,7 @@ use flo_binding::*;
 use flo_animation::*;
 
 use std::sync::*;
+use std::time::Duration;
 
 ///
 /// Provides the buttons for controlling the keyframes
@@ -22,6 +23,9 @@ pub struct KeyFrameControlsController {
 
     /// The frame model
     frame: FrameModel,
+
+    /// The current frame binding
+    pub current_time: Binding<Duration>
 }
 
 impl KeyFrameControlsController {
@@ -52,10 +56,11 @@ impl KeyFrameControlsController {
         let ui      = Self::ui(model, Arc::clone(&images));
 
         KeyFrameControlsController {
-            ui:                         ui,
-            images:                     images,
-            view_model:                 view_model,
-            frame:                      frame.clone()
+            ui:             ui,
+            images:         images,
+            view_model:     view_model,
+            frame:          frame.clone(),
+            current_time:   timeline.current_time.clone()
         }
     }
 
@@ -190,8 +195,20 @@ impl Controller for KeyFrameControlsController {
                 self.frame.show_onion_skins.clone().set(!current_value);
             },
 
-            "MoveToPreviousKeyFrame" => { },
-            "MoveToNextKeyFrame" => { },
+            "MoveToPreviousKeyFrame" => { 
+                let previous_frame = self.frame.previous_and_next_keyframe.get().0;
+                if let Some(previous_frame) = previous_frame {
+                    self.current_time.clone().set(previous_frame);
+                }
+            },
+
+            "MoveToNextKeyFrame" => { 
+                let next_frame = self.frame.previous_and_next_keyframe.get().1;
+                if let Some(next_frame) = next_frame {
+                    self.current_time.clone().set(next_frame);
+                }
+            },
+
             "CreateKeyFrame" => { },
 
             _ => { }
