@@ -324,7 +324,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 
                     Layer(_, AddKeyFrame(_))    |
                     Layer(_, RemoveKeyFrame(_)) => {
-                        ()
+                        advance_edit_counter = true;
                     },
                 }
             }
