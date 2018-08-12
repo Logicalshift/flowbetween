@@ -27,6 +27,9 @@ pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     /// The effective tool for the animation
     effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,
 
+    /// Whether or not we should create a keyframe if one doesn't already exist before committing an action
+    create_keyframe: BindRef<bool>,
+
     /// The time where editing is taking place
     current_time: BindRef<Duration>,
 
@@ -58,12 +61,14 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         let effective_tool  = BindRef::from(view_model.tools().effective_tool.clone());
         let current_time    = BindRef::from(view_model.timeline().current_time.clone());
         let tool_runner     = ToolRunner::new(view_model);
+        let create_keyframe = BindRef::from(view_model.frame().create_keyframe_on_draw.clone());
         let edit_sink       = executor::spawn(animation.edit());
 
         CanvasTools {
             animation:          animation,
             edit_sink:          edit_sink,
             effective_tool:     effective_tool,
+            create_keyframe:    create_keyframe,
             current_time:       current_time,
             preview:            None,
             preview_layer:      None,
@@ -252,6 +257,28 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     }
 
     ///
+    /// Returns true if the current time in the preview layer isn't currently on a keyframe
+    /// 
+    fn need_new_keyframe(&self) -> bool {
+        if let Some(preview_layer) = self.preview_layer {
+            // Look for a frame around the current time
+            let current_time    = self.current_time.get();
+            let one_ms          = Duration::from_millis(1);
+            let earliest_time   = if current_time > one_ms { current_time - one_ms } else { Duration::from_millis(0) };
+            let latest_time     = current_time + one_ms;
+
+            let layer           = self.animation.get_layer_with_id(preview_layer);
+            let keyframes       = layer.map(|layer| layer.get_key_frames_during_time(earliest_time..latest_time).collect::<Vec<_>>());
+
+            // If there is no keyframe at this time, then we need to create a new keyframe here
+            keyframes.map(|keyframes| keyframes.len() == 0).unwrap_or(false)
+        } else {
+            // No preview layer (so we can't create a keyframe)
+            false
+        }
+    }
+
+    ///
     /// Commits the current brush preview to the animation
     /// 
     fn commit_brush_preview(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
@@ -259,14 +286,30 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         if let Some(mut preview) = self.preview.take() {
             // The preview layer is left behind: the next brush stroke will be on the same layer if a new one is not specified
             if let Some(preview_layer) = self.preview_layer {
-                let need_brush = self.need_brush_definition(preview_layer, renderer);
-                let need_props = self.need_brush_properties(preview_layer, renderer);
+                let mut need_brush  = self.need_brush_definition(preview_layer, renderer);
+                let mut need_props  = self.need_brush_properties(preview_layer, renderer);
+
+                let current_time    = self.current_time.get();
+
+                // Create a new keyframe for this brush stroke if necessary
+                if self.create_keyframe.get() {
+                    if self.need_new_keyframe() {
+                        // Create a keyframe at this time
+                        self.edit_sink.wait_send(vec![
+                            AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))
+                        ]).unwrap();
+
+                        // Will need to define the brush & properties
+                        need_brush = true;
+                        need_props = true;
+                    }
+                }
 
                 // Commit the brush stroke to the renderer
                 renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
 
                 // Commit the preview to the animation
-                preview.commit_to_animation(need_brush, need_props, self.current_time.get(), preview_layer, &*self.animation);
+                preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
 
                 // Update the properties in the renderer if they've changed
                 if need_brush || need_props {
