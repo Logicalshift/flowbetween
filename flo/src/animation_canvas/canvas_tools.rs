@@ -305,6 +305,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
                         // Canvas should be invalidated
                         self.animation.timeline().invalidate_canvas();
+                        self.animation.timeline().update_keyframe_bindings();
                     }
                 }
 

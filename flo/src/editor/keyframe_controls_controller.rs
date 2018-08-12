@@ -244,6 +244,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
 
                         // Invalidate the canvas
                         self.timeline.invalidate_canvas();
+                        self.timeline.update_keyframe_bindings();
                     }
                 }
             },
