@@ -72,7 +72,7 @@ impl FloScrollWidget {
         scroll_window.set_min_content_width(16);
         scroll_window.set_min_content_height(16);
 
-        // Stick them together
+        // Add the layout widget to the scroll widget
         scroll_window.set_policy(gtk::PolicyType::Always, gtk::PolicyType::Always);
         scroll_window.add(&layout);
 
