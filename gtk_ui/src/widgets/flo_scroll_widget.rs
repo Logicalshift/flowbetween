@@ -76,6 +76,8 @@ impl FloScrollWidget {
         scroll_window.set_policy(gtk::PolicyType::Always, gtk::PolicyType::Always);
         scroll_window.add(&layout);
 
+        layout.show();
+
         // Generate the widget
         let as_widget       = scroll_window.clone().upcast::<gtk::Widget>();
         let fixed_widget    = FloFixedWidget::new(id, layout.clone(), widget_data);
