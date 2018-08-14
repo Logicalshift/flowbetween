@@ -44,7 +44,7 @@ impl GtkUiWidget for BasicWidget {
         process_basic_widget_action(self, flo_gtk, action);
     }
 
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         let BasicWidget(_id, ref widget) = *self;
 
         // If this widget is a container, add this as a child widget

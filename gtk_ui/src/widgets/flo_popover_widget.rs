@@ -236,7 +236,7 @@ impl GtkUiWidget for FloPopoverWidget {
         }
     }
 
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Pass on to the content widget
         self.content.set_children(children);
     }

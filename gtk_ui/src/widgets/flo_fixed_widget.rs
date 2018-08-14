@@ -169,7 +169,7 @@ impl GtkUiWidget for FloFixedWidget {
     ///
     /// Sets the children of this widget
     /// 
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         {
             let widget_data = &self.widget_data;
             let container   = &self.container;

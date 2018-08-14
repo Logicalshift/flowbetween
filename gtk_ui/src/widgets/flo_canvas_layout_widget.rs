@@ -52,7 +52,7 @@ impl GtkUiWidget for FloCanvasLayoutWidget {
         }
     }
 
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Act as a layout widget most of the time
         self.as_fixed.set_children(children)
     }

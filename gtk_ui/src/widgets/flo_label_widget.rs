@@ -66,7 +66,7 @@ impl GtkUiWidget for FloLabelWidget {
         }
     }
 
-    fn set_children(&mut self, _children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, _children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Labels have no child widgets
     }
 

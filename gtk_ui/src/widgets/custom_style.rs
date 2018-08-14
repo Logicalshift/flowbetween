@@ -145,16 +145,16 @@ pub trait CustomStyleForWidget {
     ///
     /// Retrieves the custom style for a widget
     /// 
-    fn get_custom_style(&self, widget: &GtkUiWidget) -> WidgetDataEntry<CustomStyle>;
+    fn get_custom_style(&self, widget: &dyn GtkUiWidget) -> WidgetDataEntry<CustomStyle>;
 
     ///
     /// Causes the custom style for a particular widget to be updated
     /// 
-    fn update_custom_style(&self, widget: &GtkUiWidget);
+    fn update_custom_style(&self, widget: &dyn GtkUiWidget);
 }
 
 impl CustomStyleForWidget for WidgetData {
-    fn get_custom_style(&self, widget: &GtkUiWidget) -> WidgetDataEntry<CustomStyle> {
+    fn get_custom_style(&self, widget: &dyn GtkUiWidget) -> WidgetDataEntry<CustomStyle> {
         let widget_id = widget.id();
 
         if let Some(existing_style) = self.get_widget_data(widget_id) {
@@ -175,7 +175,7 @@ impl CustomStyleForWidget for WidgetData {
         }
     }
 
-    fn update_custom_style(&self, widget: &GtkUiWidget) {
+    fn update_custom_style(&self, widget: &dyn GtkUiWidget) {
         if let Some(existing_style) = self.get_widget_data::<CustomStyle>(widget.id()) {
             existing_style.borrow_mut().reload_if_needed();
         }

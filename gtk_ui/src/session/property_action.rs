@@ -5,7 +5,7 @@ use flo_ui::*;
 /// 
 pub enum PropertyAction<Action> {
     Unbound(Action),
-    Bound(Property, Box<Fn(PropertyValue) -> Vec<Action>>)
+    Bound(Property, Box<dyn Fn(PropertyValue) -> Vec<Action>>)
 }
 
 impl<Action> PropertyAction<Action> {

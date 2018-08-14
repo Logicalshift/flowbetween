@@ -185,7 +185,7 @@ impl GtkUiWidget for FloBinWidget {
         }
     }
     
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Child widgets are always added to the fixed widget
         self.fixed.as_mut().map(move |fixed| fixed.set_children(children));
     }

@@ -329,7 +329,7 @@ impl GtkUiWidget for FloDrawingWidget {
         }
     }
 
-    fn set_children(&mut self, _children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, _children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Drawing areas can't have child widgets
     }
 

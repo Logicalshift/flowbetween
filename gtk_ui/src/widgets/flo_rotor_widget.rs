@@ -28,7 +28,7 @@ struct RotorData {
     image: Option<gdk_pixbuf::Pixbuf>,
 
     /// Child widgets (manually drawn)
-    child_widgets: Vec<Rc<RefCell<GtkUiWidget>>>,
+    child_widgets: Vec<Rc<RefCell<dyn GtkUiWidget>>>,
     
     /// Value the rotor is set to
     value: f64,
@@ -341,7 +341,7 @@ impl GtkUiWidget for FloRotorWidget {
         }
     }
 
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Child widgets are drawn manually
         let mut allocation = self.widget.get_allocation();
         allocation.x = 0;

@@ -13,7 +13,7 @@ pub struct GtkSessionViewModel {
     values: HashMap<Vec<String>, HashMap<String, PropertyValue>>,
 
     /// The bindings in this viewmodel
-    bindings: HashMap<Vec<String>, HashMap<String, Vec<(WidgetId, Box<Fn(PropertyValue) -> Vec<GtkWidgetAction>>)>>>
+    bindings: HashMap<Vec<String>, HashMap<String, Vec<(WidgetId, Box<dyn Fn(PropertyValue) -> Vec<GtkWidgetAction>>)>>>
 }
 
 impl GtkSessionViewModel {
@@ -43,7 +43,7 @@ impl GtkSessionViewModel {
     ///
     /// Binds a property to an action to be performed every time it's changed
     /// 
-    pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property: &Property, action_fn: Box<Fn(PropertyValue) -> Vec<GtkWidgetAction>>) -> Vec<GtkWidgetAction> {
+    pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property: &Property, action_fn: Box<dyn Fn(PropertyValue) -> Vec<GtkWidgetAction>>) -> Vec<GtkWidgetAction> {
         match property {
             // Bindings need to be stored for future updates
             &Property::Bind(ref binding) => {

@@ -37,7 +37,7 @@ pub struct WidgetData {
     // passed around GTK signal handlers, but otherwise a bit ugly)
 
     /// Hashmap for the widgets that are being managed by this object
-    widgets: RefCell<HashMap<WidgetId, Rc<RefCell<GtkUiWidget>>>>,
+    widgets: RefCell<HashMap<WidgetId, Rc<RefCell<dyn GtkUiWidget>>>>,
 
     /// Data attached to a particular widget ID
     widget_data: RefCell<HashMap<WidgetId, AnyMap>>
@@ -74,7 +74,7 @@ impl WidgetData {
     ///
     /// Attempts to retrieve the widget with the specified ID
     /// 
-    pub fn get_widget(&self, widget_id: WidgetId) -> Option<Rc<RefCell<GtkUiWidget>>> {
+    pub fn get_widget(&self, widget_id: WidgetId) -> Option<Rc<RefCell<dyn GtkUiWidget>>> {
         self.widgets.borrow().get(&widget_id).cloned()
     }
 

@@ -19,7 +19,7 @@ thread_local!(static GTK_INSTANCES: RefCell<Vec<FloGtk>> = RefCell::new(vec![]))
 
 /// Queue of messages waiting to be sent to the GTK thread
 #[derive(Clone)]
-struct MessageQueue(Arc<Mutex<VecDeque<Box<FloGtkMessage>>>>);
+struct MessageQueue(Arc<Mutex<VecDeque<Box<dyn FloGtkMessage>>>>);
 
 ///
 /// Represents a target for GTK-related messages
@@ -43,7 +43,7 @@ pub struct FloGtk {
     pending_messages: MessageQueue,
 
     /// Hashmap for the windows that are being managed by this object
-    windows: HashMap<WindowId, Rc<RefCell<GtkUiWindow>>>,
+    windows: HashMap<WindowId, Rc<RefCell<dyn GtkUiWindow>>>,
     
     /// Data associated with Flo widgets
     widget_data: Rc<WidgetData>,
@@ -192,7 +192,7 @@ impl FloGtk {
     ///
     /// Attempts to retrieve the window with the specified ID
     /// 
-    pub fn get_window(&self, window_id: WindowId) -> Option<Rc<RefCell<GtkUiWindow>>> {
+    pub fn get_window(&self, window_id: WindowId) -> Option<Rc<RefCell<dyn GtkUiWindow>>> {
         self.windows.get(&window_id).cloned()
     }
 
@@ -213,7 +213,7 @@ impl FloGtk {
     ///
     /// Retrieves a stream that will return all future events generated for this object
     /// 
-    pub fn get_event_stream(&mut self) -> Box<Stream<Item=GtkEvent, Error=()>> {
+    pub fn get_event_stream(&mut self) -> Box<dyn Stream<Item=GtkEvent, Error=()>> {
         // Generate a stream from our event sink
         Box::new(self.event_sink.get_stream())
     }

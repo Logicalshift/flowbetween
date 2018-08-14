@@ -53,7 +53,7 @@ pub fn pixbuf_from_image(image: Resource<Image>) -> gdk_pixbuf::Pixbuf {
 ///
 /// Creates some glib bytes from an image data object
 /// 
-fn bytes_from_data(image_data: &ImageData) -> glib::Bytes {
+fn bytes_from_data(image_data: &dyn ImageData) -> glib::Bytes {
     // Read the image data out into a byte buffer
     let mut data = vec![];
     image_data.read()
@@ -67,7 +67,7 @@ fn bytes_from_data(image_data: &ImageData) -> glib::Bytes {
 ///
 /// Creates a pixbuf from PNG data
 /// 
-fn pixbuf_from_png(image_data: &ImageData) -> gdk_pixbuf::Pixbuf {
+fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
     let input_stream    = gio::MemoryInputStream::new_from_bytes(&bytes);
 
@@ -77,7 +77,7 @@ fn pixbuf_from_png(image_data: &ImageData) -> gdk_pixbuf::Pixbuf {
 ///
 /// Creates a pixbuf from SVG data
 /// 
-fn pixbuf_from_svg(image_data: &ImageData) -> gdk_pixbuf::Pixbuf {
+fn pixbuf_from_svg(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
     let input_stream    = gio::MemoryInputStream::new_from_bytes(&bytes);
 

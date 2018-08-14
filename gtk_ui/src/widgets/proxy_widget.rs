@@ -17,7 +17,7 @@ use std::ops::{Deref, DerefMut};
 ///
 pub struct ProxyWidget<Widget> {
     /// The underlying widget
-    underlying_widget: Rc<RefCell<GtkUiWidget>>,
+    underlying_widget: Rc<RefCell<dyn GtkUiWidget>>,
 
     /// The widget that we're proxying
     proxy_widget: Widget,
@@ -30,7 +30,7 @@ impl<Widget: Clone+Cast+IsA<gtk::Widget>> ProxyWidget<Widget> {
     ///
     /// Creates a new proxy widget
     /// 
-    pub fn new(underlying_widget: Rc<RefCell<GtkUiWidget>>, proxy_widget: Widget) -> ProxyWidget<Widget> {
+    pub fn new(underlying_widget: Rc<RefCell<dyn GtkUiWidget>>, proxy_widget: Widget) -> ProxyWidget<Widget> {
         ProxyWidget {
             underlying_widget:  underlying_widget,
             as_widget:          proxy_widget.clone().upcast::<gtk::Widget>(),
@@ -85,7 +85,7 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
         }
     }
 
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         self.underlying_widget.borrow_mut().set_children(children)
     }
 

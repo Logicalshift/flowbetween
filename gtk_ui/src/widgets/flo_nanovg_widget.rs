@@ -305,7 +305,7 @@ impl GtkUiWidget for FloNanoVgWidget {
         }
     }
 
-    fn set_children(&mut self, _children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, _children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // NanoVG widgets cannot have child widgets
     }
 

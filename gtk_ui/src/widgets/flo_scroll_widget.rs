@@ -237,7 +237,7 @@ impl GtkUiWidget for FloScrollWidget {
         }
     }
 
-    fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         self.fixed_widget.set_children(children);
     }
 

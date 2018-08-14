@@ -30,8 +30,8 @@ impl GtkUserInterface {
 }
 
 impl UserInterface<Vec<GtkAction>, GtkEvent, ()> for GtkUserInterface {
-    type EventSink      = Box<Sink<SinkItem=Vec<GtkAction>, SinkError=()>>;
-    type UpdateStream   = Box<Stream<Item=GtkEvent, Error=()>>;
+    type EventSink      = Box<dyn Sink<SinkItem=Vec<GtkAction>, SinkError=()>>;
+    type UpdateStream   = Box<dyn Stream<Item=GtkEvent, Error=()>>;
 
     fn get_input_sink(&self) -> Self::EventSink {
         let sink = ActionSink::new(Arc::clone(&self.thread));

@@ -150,7 +150,7 @@ impl GtkUiWidget for FloScaleWidget {
         }
     }
 
-    fn set_children(&mut self, _children: Vec<Rc<RefCell<GtkUiWidget>>>) {
+    fn set_children(&mut self, _children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Scales cannot have child widgets
     }
 
