@@ -122,21 +122,21 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                         .with(Hint::Class("button-group".to_string()))
                         .with(vec![
                             Control::button()
-                                .with(vec![Control::label().with(previous_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
+                                .with(vec![Control::empty().with(previous_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((9, 4), (4, 4)))
                                 .with(State::Enabled(Property::bound("CanMoveToPreviousKeyFrame")))
                                 .with((ActionTrigger::Click, "MoveToPreviousKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
 
                             Control::button()
-                                .with(vec![Control::label().with(new_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
+                                .with(vec![Control::empty().with(new_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(State::Enabled(Property::bound("CanCreateKeyFrame")))
                                 .with((ActionTrigger::Click, "CreateKeyFrame"))
                                 .with(Bounds::next_horiz(22.0)),
 
                             Control::button()
-                                .with(vec![Control::label().with(onion_skins).with(TextAlign::Center).with(Bounds::fill_all())])
+                                .with(vec![Control::empty().with(onion_skins).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(State::Selected(Property::bound("ShowOnionSkinsSelected")))
                                 .with(State::Enabled(Property::Bool(true)))
@@ -144,7 +144,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                                 .with(Bounds::next_horiz(22.0)),
 
                             Control::button()
-                                .with(vec![Control::label().with(new_on_paint).with(TextAlign::Center).with(Bounds::fill_all())])
+                                .with(vec![Control::empty().with(new_on_paint).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (4, 4)))
                                 .with(State::Selected(Property::bound("CreateKeyFrameOnDrawSelected")))
                                 .with(State::Enabled(Property::Bool(true)))
@@ -152,7 +152,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
                                 .with(Bounds::next_horiz(22.0)),
 
                             Control::button()
-                                .with(vec![Control::label().with(next_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
+                                .with(vec![Control::empty().with(next_key_frame).with(TextAlign::Center).with(Bounds::fill_all())])
                                 .with(ControlAttribute::Padding((4, 4), (9, 4)))
                                 .with(State::Enabled(Property::bound("CanMoveToNextKeyFrame")))
                                 .with((ActionTrigger::Click, "MoveToNextKeyFrame"))
