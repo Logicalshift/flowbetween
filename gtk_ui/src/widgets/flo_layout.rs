@@ -364,7 +364,7 @@ mod test {
         widget_data.set_widget_data(bottom, Layout { bounds: Some(bottom_bounds), padding: None, z_index: None });
 
         // Create a layout for these bounds
-        let mut layout = FloWidgetLayout::new(Rc::clone(&widget_data));
+        let mut layout = FloWidgetLayout::new(WidgetId::Assigned(4), Rc::clone(&widget_data));
         layout.set_children(vec![ top, middle, bottom ]);
 
         // Perform the layout
