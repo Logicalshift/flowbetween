@@ -115,7 +115,10 @@ impl FloFixedWidget {
         
         // Add the new image widget if we created one
         self.image = new_image_widget;
-        self.image.as_ref().map(|new_image| container.add(new_image));
+        self.image.as_ref().map(|new_image| {
+            container.add(new_image);
+            new_image.show();
+        });
     }
 }
 
