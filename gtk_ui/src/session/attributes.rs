@@ -180,7 +180,10 @@ impl ToGtkActions for ControlAttribute {
 
 impl ToGtkActions for Hint {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
-        vec![]
+        match self {
+            Hint::FastDrawing       => vec![],
+            Hint::Class(class_name) => vec![ GtkWidgetAction::Content(WidgetContent::AddClass(class_name.clone())) ].into_actions()
+        }
     }
 }
 
