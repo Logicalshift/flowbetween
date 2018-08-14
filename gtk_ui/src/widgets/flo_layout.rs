@@ -31,7 +31,6 @@ pub struct WidgetPosition {
     pub x2: f64,
     pub y2: f64,
 
-    pub padding: (u32, u32, u32, u32),
     pub z_index: u32
 }
 
@@ -39,6 +38,9 @@ pub struct WidgetPosition {
 /// Manages layout of a set of child widgets according to the standard flo layout rules
 /// 
 pub struct FloWidgetLayout {
+    /// The ID of the parent widget
+    parent_widget_id: WidgetId,
+
     /// The child widgets that need to be laid out (in the order that they should be laid out)
     child_widget_ids: Vec<WidgetId>,
 
@@ -50,8 +52,9 @@ impl FloWidgetLayout {
     ///
     /// Creates a new Gtk widget layout object
     /// 
-    pub fn new(widget_data: Rc<WidgetData>) -> FloWidgetLayout {
+    pub fn new(parent_widget_id: WidgetId, widget_data: Rc<WidgetData>) -> FloWidgetLayout {
         FloWidgetLayout {
+            parent_widget_id:   parent_widget_id,
             child_widget_ids:   vec![],
             widget_data:        widget_data
         }
@@ -152,7 +155,6 @@ impl FloWidgetLayout {
 
             // Most important part is the bounds
             let bounds  = layout.bounds.unwrap_or(Bounds::fill_all());
-            let padding = layout.padding.unwrap_or((0,0,0,0));
             let z_index = layout.z_index.unwrap_or(0);
 
             // Decide on the bounds for this element
@@ -165,7 +167,6 @@ impl FloWidgetLayout {
             positions.push(WidgetPosition {
                 id: *widget_id,
                 x1, x2, y1, y2,
-                padding,
                 z_index
             });
 
@@ -201,21 +202,34 @@ impl FloWidgetLayout {
     }
 
     ///
+    /// Retrieves the padding to use for the layout
+    /// 
+    fn get_padding(&self) -> ((i32, i32), (i32, i32)) {
+        let layout                      = self.widget_data.get_widget_data::<Layout>(self.parent_widget_id);
+        let padding                     = layout.map(|layout| layout.borrow().padding.unwrap_or((0,0,0,0))).unwrap_or((0,0,0,0));
+
+        let (left, top, right, bottom)  = padding;
+        ((left as i32, top as i32), (right as i32, bottom as i32))
+    }
+
+    ///
     /// Lays out the widgets in a particular container (with 'Fixed' semantics - ie, GtkFixed or GtkLayout)
     /// 
     pub fn layout_fixed(&self, target: &gtk::Container) {
-        let allocation  = target.get_allocation();
+        let ((left, top), (right, bottom))  = self.get_padding();
+        let allocation                      = target.get_allocation();
 
-        self.layout_in_container(target, allocation.x, allocation.y, allocation.width, allocation.height);
+        self.layout_in_container(target, allocation.x + left, allocation.y + top, allocation.width - (left+right), allocation.height - (top+bottom));
     }
 
     ///
     /// Lays out the widgets in a gtk::Layout continue
     /// 
     pub fn layout_in_layout(&self, target: &gtk::Layout) {
-        let (width, height) = target.get_size();
+        let ((left, top), (right, bottom))  = self.get_padding();
+        let (width, height)                 = target.get_size();
 
-        self.layout_in_container(target, 0, 0, width as i32, height as i32)
+        self.layout_in_container(target, left, top, (width as i32) - (left+right), (height as i32) - (top+bottom));
     }
 
     ///
@@ -240,13 +254,12 @@ impl FloWidgetLayout {
             if let Some(widget) = widget {
                 // Get the position from the layout
                 let (x1, y1, x2, y2)            = (widget_layout.x1 as f64, widget_layout.y1 as f64, widget_layout.x2 as f64, widget_layout.y2 as f64);
-                let (left, top, right, bottom)  = (widget_layout.padding.0 as f64, widget_layout.padding.1 as f64, widget_layout.padding.2 as f64, widget_layout.padding.3 as f64);
 
                 // Convert to x, y and width and height
-                let mut x   = x1+left;
-                let mut y   = y1+top;
-                let width   = (x2-x1)-(left+right);
-                let height  = (y2-y1)-(top+bottom);
+                let mut x   = x1;
+                let mut y   = y1;
+                let width   = x2-x1;
+                let height  = y2-y1;
 
                 // Adjust by the floating position if there is one (this will be value as it was last updated via the viewmodel)
                 if let Some(floating) = self.widget_data.get_widget_data::<FloatingPosition>(widget_layout.id) {

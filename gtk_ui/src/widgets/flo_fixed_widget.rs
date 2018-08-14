@@ -59,7 +59,7 @@ impl FloFixedWidget {
         let container = container_widget.clone().upcast::<gtk::Container>();
 
         // Create the widget
-        let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(Rc::clone(&widget_data))));
+        let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(id, Rc::clone(&widget_data))));
 
         // Attach events to it
         Container::attach_layout_signal(container_widget, Rc::clone(&layout));
