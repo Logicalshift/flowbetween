@@ -6,6 +6,7 @@ mod level;
 mod privilege;
 mod message;
 mod log;
+mod context;
 mod publisher;
 
 pub use self::level::*;
