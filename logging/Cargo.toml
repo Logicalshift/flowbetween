@@ -1,0 +1,12 @@
+[package]
+name        = "flo_logging"
+version     = "0.1.1"
+authors     = ["Andrew Hunter"]
+license     = "Apache-2.0"
+repository  = "https://github.com/Logicalshift/flowbetween"
+description = "Pubsub logging framework"
+
+[dependencies]
+flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "^0.1.0" }
+
+futures         = "0.1"
