@@ -57,20 +57,33 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineLayerControlsController<
                     Control::container()
                         .with(Font::Size(13.0))
                         .with(Font::Weight(FontWeight::ExtraBold))
-                        .with(ControlAttribute::Padding((4, 1), (4, 1)))
+                        .with(ControlAttribute::Padding((4, 2), (4, 2)))
                         .with(vec![
                             Control::empty()
                                 .with(Bounds::stretch_horiz(1.0)),
-                            Control::label()
-                                .with(Bounds::next_horiz(14.0))
-                                .with(TextAlign::Center)
-                                .with((ActionTrigger::Click, "AddNewLayer"))
-                                .with("+"),
-                            Control::label()
-                                .with(Bounds::next_horiz(14.0))
-                                .with(TextAlign::Center)
-                                .with((ActionTrigger::Click, "RemoveLayer"))
-                                .with("-"),
+                            Control::container()
+                                .with(Hint::Class("button-group".to_string()))
+                                .with(Bounds::next_horiz(36.0))
+                                .with(vec![
+                                    Control::button()
+                                        .with(Bounds::next_horiz(18.0))
+                                        .with((ActionTrigger::Click, "AddNewLayer"))
+                                        .with(vec![
+                                            Control::label()
+                                                .with(Bounds::fill_all())
+                                                .with(TextAlign::Center)
+                                                .with("+")
+                                        ]),
+                                    Control::button()
+                                        .with(Bounds::next_horiz(18.0))
+                                        .with((ActionTrigger::Click, "RemoveLayer"))
+                                        .with(vec![
+                                            Control::label()
+                                                .with(Bounds::fill_all())
+                                                .with(TextAlign::Center)
+                                                .with("-")
+                                        ])
+                                ])
                         ])
                         .with(Bounds::stretch_vert(1.0)),
                     Control::empty()
