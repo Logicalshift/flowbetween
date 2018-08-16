@@ -46,7 +46,7 @@ impl LogPublisher {
     /// Sends a message to the subscribers for this log
     /// 
     pub fn log<Msg: 'static+LogMessage>(&self, message: Msg) {
-        self.context.async(|context| {
+        self.context.sync(|context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
             let message = Arc::new(Log::from(message));
             Self::log_in_context(context, message);
