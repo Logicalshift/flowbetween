@@ -1,6 +1,8 @@
 use super::level::*;
 use super::privilege::*;
 
+use std::sync::*;
+
 ///
 /// Trait implemented by items representing a log message
 /// 
@@ -52,4 +54,14 @@ impl<'a, Msg: LogMessage> LogMessage for (LogPrivilege, Msg) {
     fn privilege(&self) -> LogPrivilege { self.0 }
 
     fn fields(&self) -> Vec<(String, String)> { self.1.fields() }
+}
+
+impl<Msg: Send+Sync+LogMessage> LogMessage for Arc<Msg> {
+    fn message(&self) -> String { (**self).message() }
+
+    fn level(&self) -> LogLevel { (**self).level() }
+
+    fn privilege(&self) -> LogPrivilege { (**self).privilege() }
+
+    fn fields(&self) -> Vec<(String, String)> { (**self).fields() }
 }
