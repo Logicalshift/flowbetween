@@ -14,6 +14,7 @@ extern crate flo;
 extern crate flo_binding;
 extern crate flo_animation;
 extern crate flo_anim_sqlite;
+extern crate flo_logging;
 
 extern crate serde_json;
 #[macro_use]
@@ -27,6 +28,8 @@ mod flo_session;
 use std::sync::*;
 use std::thread;
 use std::thread::JoinHandle;
+
+use flo_logging::*;
 
 #[cfg(feature="http")]  use flo_http_ui::*;
 #[cfg(feature="http")]  use flo_http_ui_actix as flo_actix;
@@ -46,7 +49,7 @@ fn main_actix() -> Option<JoinHandle<()>> {
         let sessions: Arc<WebSessions<FlowBetweenSession>> = Arc::new(WebSessions::new());
 
         // Log that we're getting ready
-        println!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT));
+        log().log(format!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT)));
 
         // Run the actix server
         aw::server::new(move || {
