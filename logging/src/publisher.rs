@@ -72,6 +72,19 @@ impl LogPublisher {
     pub fn subscribe(&self) -> impl Stream<Item=Log, Error=()> {
         self.context.sync(|context| context.publisher.subscribe())
     }
+
+    ///
+    /// Creates a 'default' subscriber for this log stream (messages will be sent here only if there are no other subscribers to this log)
+    /// 
+    pub fn subscribe_default(&self) -> impl Stream<Item=Log, Error=()> {
+        self.context.sync(|context| {
+            if context.default.is_none() {
+                context.default = Some(executor::spawn(Publisher::new(100)));
+            }
+
+            context.default.as_mut().unwrap().subscribe()
+        })
+    }
 }
 
 ///
