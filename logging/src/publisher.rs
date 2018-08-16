@@ -36,7 +36,21 @@ impl LogPublisher {
     /// Sends a message to the subscribers for this log
     /// 
     pub fn log<Msg: LogMessage>(&mut self, message: Msg) {
-        self.publisher.wait_send(Arc::new(Log::from(message))).unwrap()
+        let num_subscribers = self.publisher.get_ref().count_subscribers();
+        let mut context     = self.context.lock().unwrap();
+
+        // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
+        let message         = Arc::new(Log::from(message));
+
+        // Send to the subscribers of this log
+        self.publisher.wait_send(Arc::clone(&message)).unwrap();
+
+        // Send to the parent or the default log
+        if num_subscribers == 0 {
+            context.default.as_mut().map(|default| default.wait_send(Arc::clone(&message)).unwrap());
+        }
+
+        context.parent.as_mut().map(move |parent| parent.wait_send(message).unwrap());
     }
 
     ///
