@@ -4,7 +4,7 @@ use super::privilege::*;
 ///
 /// Trait implemented by items representing a log message
 /// 
-pub trait LogMessage {
+pub trait LogMessage : Send {
     ///
     /// Returns a string representation of this log message
     /// 

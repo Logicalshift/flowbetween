@@ -1,5 +1,6 @@
 extern crate futures;
 
+extern crate desync;
 extern crate flo_stream;
 
 mod level;

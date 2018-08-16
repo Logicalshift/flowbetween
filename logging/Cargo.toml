@@ -8,5 +8,6 @@ description = "Pubsub logging framework"
 
 [dependencies]
 flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "^0.1.0" }
+desync          = "0.2"
 
 futures         = "0.1"
