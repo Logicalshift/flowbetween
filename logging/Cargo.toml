@@ -11,3 +11,4 @@ flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version 
 desync          = "0.2"
 
 futures         = "0.1"
+lazy_static     = "1.0"

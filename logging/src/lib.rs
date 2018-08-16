@@ -1,4 +1,5 @@
 extern crate futures;
+#[macro_use] extern crate lazy_static;
 
 extern crate desync;
 extern crate flo_stream;
