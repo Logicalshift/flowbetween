@@ -5,17 +5,15 @@ use flo_stream::*;
 use futures::executor;
 use futures::executor::Spawn;
 
-use std::sync::*;
-
 ///
 /// Represents the context of a publisher
 /// 
 pub struct LogContext {
     /// Where messages for this context should be published
-    pub (crate) publisher: Spawn<Publisher<Arc<Log>>>,
+    pub (crate) publisher: Spawn<Publisher<Log>>,
 
     /// If there are no subscribers to a particular log, messages are sent here instead
-    pub (crate) default: Option<Spawn<Publisher<Arc<Log>>>>
+    pub (crate) default: Option<Spawn<Publisher<Log>>>
 }
 
 impl LogContext {

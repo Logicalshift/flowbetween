@@ -30,15 +30,15 @@ impl LogPublisher {
     ///
     /// Sends a log message to the context
     /// 
-    fn log_in_context(context: &mut LogContext, message: Arc<Log>) {
+    fn log_in_context(context: &mut LogContext, message: Log) {
         let num_subscribers = context.publisher.get_ref().count_subscribers();
 
         // Send to the subscribers of this log
-        context.publisher.wait_send(Arc::clone(&message)).unwrap();
+        context.publisher.wait_send(message.clone()).unwrap();
 
         // Send to the parent or the default log
         if num_subscribers == 0 {
-            context.default.as_mut().map(|default| default.wait_send(Arc::clone(&message)).unwrap());
+            context.default.as_mut().map(|default| default.wait_send(message).unwrap());
         }
     }
 
@@ -48,7 +48,7 @@ impl LogPublisher {
     pub fn log<Msg: 'static+LogMessage>(&self, message: Msg) {
         self.context.sync(|context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
-            let message = Arc::new(Log::from(message));
+            let message = Log::from(message);
             Self::log_in_context(context, message);
         });
     }
@@ -60,7 +60,7 @@ impl LogPublisher {
         // Pipe the stream through to the context
         pipe_in(Arc::clone(&self.context), stream, |context, message| {
             if let Ok(message) = message {
-                let message = Arc::new(Log::from(message));
+                let message = Log::from(message);
                 Self::log_in_context(context, message);
             }
         });
@@ -69,7 +69,7 @@ impl LogPublisher {
     ///
     /// Subscribes to this log stream
     /// 
-    pub fn subscribe(&self) -> impl Stream<Item=Arc<Log>, Error=()> {
+    pub fn subscribe(&self) -> impl Stream<Item=Log, Error=()> {
         self.context.sync(|context| context.publisher.subscribe())
     }
 }
