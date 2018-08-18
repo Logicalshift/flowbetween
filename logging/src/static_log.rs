@@ -1,17 +1,10 @@
-use super::message::*;
 use super::publisher::*;
-
-use desync::*;
+use super::log_subscriber::*;
 
 use std::cell::*;
-use std::sync::*;
 
 thread_local! {
     static THREAD_LOGGER: RefCell<Option<LogPublisher>> = RefCell::new(None);
-}
-
-lazy_static! {
-    static ref PRINTLN_LOGGER: Arc<Desync<()>> = Arc::new(Desync::new(()));
 }
 
 ///
@@ -26,10 +19,10 @@ pub fn log() -> LogPublisher {
             logger.as_ref().unwrap().clone()
         } else {
             // New logger
-            let new_logger = LogPublisher::new();
+            let new_logger = LogPublisher::new_empty();
             
             // Default to printing the message (via the println logger desync object)
-            pipe_in(Arc::clone(&PRINTLN_LOGGER), new_logger.subscribe_default(), |_, log| { log.map(|log| println!("{}", log.message())).ok(); });
+            send_to_logs(new_logger.subscribe_default());
 
             *logger = Some(new_logger);
             logger.as_ref().unwrap().clone()

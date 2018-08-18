@@ -12,3 +12,4 @@ desync          = "0.2"
 
 futures         = "0.1"
 lazy_static     = "1.0"
+log             = "0.4"

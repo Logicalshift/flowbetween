@@ -17,8 +17,8 @@ extern crate flo_anim_sqlite;
 extern crate flo_logging;
 
 extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
+#[macro_use] extern crate serde_derive;
+extern crate flexi_logger;
 
 mod flo_session;
 #[cfg(feature="http")]  mod http_session;
@@ -29,6 +29,7 @@ use std::sync::*;
 use std::thread;
 use std::thread::JoinHandle;
 
+use flexi_logger::*;
 use flo_logging::*;
 
 #[cfg(feature="http")]  use flo_http_ui::*;
@@ -89,6 +90,11 @@ fn main_gtk() -> Option<JoinHandle<()>> {
 compile_error!("You must pick a UI implementation as a feature to compile FlowBetween (cargo build scripts cannot autodetect, sadly). Build with cargo --features gtk,http");
 
 fn main() {
+    // Set up logging
+    Logger::with_env()
+        .start()
+        .unwrap();
+
     // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
 
     let gtk_thread      = main_gtk();

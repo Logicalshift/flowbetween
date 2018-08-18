@@ -1,6 +1,7 @@
 #!/bin/sh
 
 cargo test -p flo_float_encoder
+cargo test -p flo_logger
 cargo test -p flo_binding
 cargo test -p flo_stream
 cargo test -p flo_curves

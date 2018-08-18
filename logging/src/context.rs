@@ -1,4 +1,4 @@
-use super::log::*;
+use super::log_msg::*;
 
 use flo_stream::*;
 

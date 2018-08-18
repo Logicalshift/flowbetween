@@ -1,6 +1,7 @@
-use super::log::*;
+use super::log_msg::*;
 use super::context::*;
 use super::message::*;
+use super::static_log::*;
 
 use flo_stream::*;
 
@@ -14,14 +15,29 @@ use std::sync::*;
 /// 
 pub struct LogPublisher {
     /// The context for this log
-    context: Arc<Desync<LogContext>>
+    context: Arc<Desync<LogContext>>,
 }
 
 impl LogPublisher {
     ///
     /// Creates a new log publisher
     /// 
+    /// Log publishers will republish to the current thread logger by default
+    /// 
     pub fn new() -> LogPublisher {
+        let log_default = Self::new_empty();
+
+        pipe_in(Arc::clone(&log_default.context), log_default.subscribe_default(), |_context, log_msg| {
+            log_msg.map(|log_msg| log().log(log_msg)).ok();
+        });
+
+        log_default        
+    }
+
+    ///
+    /// Creates a new log publisher with no default behaviour
+    /// 
+    pub (crate) fn new_empty() -> LogPublisher {
         LogPublisher {
             context: Arc::new(Desync::new(LogContext::new()))
         }
@@ -49,7 +65,7 @@ impl LogPublisher {
         self.context.sync(|context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
             let message = Log::from(message);
-            Self::log_in_context(context, message);
+            Self::log_in_context (context, message);
         });
     }
 
