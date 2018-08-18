@@ -18,6 +18,7 @@ extern crate flo_logging;
 
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
+extern crate log;
 extern crate pretty_env_logger;
 
 mod flo_session;
@@ -29,6 +30,7 @@ use std::sync::*;
 use std::thread;
 use std::thread::JoinHandle;
 
+use log::*;
 use flo_logging::*;
 
 #[cfg(feature="http")]  use flo_http_ui::*;
@@ -90,7 +92,13 @@ compile_error!("You must pick a UI implementation as a feature to compile FlowBe
 
 fn main() {
     // Set up logging
-    pretty_env_logger::init();
+    pretty_env_logger::formatted_builder()
+        .unwrap()
+        .filter_level(LevelFilter::Trace)
+        .filter_module("mio", LevelFilter::Warn)
+        .filter_module("tokio_reactor", LevelFilter::Warn)
+        .filter_module("actix_web", LevelFilter::Info)
+        .init();
 
     // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
 
