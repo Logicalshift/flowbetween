@@ -18,7 +18,7 @@ extern crate flo_logging;
 
 extern crate serde_json;
 #[macro_use] extern crate serde_derive;
-extern crate simple_logger;
+extern crate pretty_env_logger;
 
 mod flo_session;
 #[cfg(feature="http")]  mod http_session;
@@ -90,7 +90,7 @@ compile_error!("You must pick a UI implementation as a feature to compile FlowBe
 
 fn main() {
     // Set up logging
-    simple_logger::init().unwrap();
+    pretty_env_logger::init();
 
     // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
 
