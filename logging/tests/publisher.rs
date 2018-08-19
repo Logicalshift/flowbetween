@@ -27,6 +27,33 @@ fn publish_log_messages_to_subscriber() {
 }
 
 #[test]
+fn publish_log_messages_to_two_subscribers() {
+    let log         = LogPublisher::new("test");
+    let messages1   = Arc::new(Desync::new(vec![]));
+    let messages2   = Arc::new(Desync::new(vec![]));
+
+    pipe_in(Arc::clone(&messages1), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages2), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+
+    log.log("Hello, world");
+    log.log("... goodbye, world :-(");
+
+    let messages    = messages1.sync(|messages| messages.clone());
+
+    assert!(messages.len() != 0);
+    assert!(&messages[0].message() == "Hello, world");
+    assert!(&messages[1].message() == "... goodbye, world :-(");
+    assert!(messages.len() == 2);
+
+    let messages    = messages2.sync(|messages| messages.clone());
+
+    assert!(messages.len() != 0);
+    assert!(&messages[0].message() == "Hello, world");
+    assert!(&messages[1].message() == "... goodbye, world :-(");
+    assert!(messages.len() == 2);
+}
+
+#[test]
 fn log_message_message_set_properly() {
     let log         = LogPublisher::new("test");
     let messages    = Arc::new(Desync::new(vec![]));
