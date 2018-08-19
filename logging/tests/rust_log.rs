@@ -1,5 +1,6 @@
 extern crate flo_logging;
 extern crate desync;
+#[macro_use] extern crate log;
 
 use flo_logging::*;
 use desync::*;
@@ -9,14 +10,14 @@ use std::thread;
 use std::time::Duration;
 
 #[test]
-fn publish_log_messages_to_static_log() {
-    let tgt         = LogPublisher::new("Test");
+fn rust_log_to_flo_log() {
+    send_rust_logs_to_flo_logs().unwrap();
+
     let messages    = Arc::new(Desync::new(vec![]));
 
     pipe_in(Arc::clone(&messages), subscribe_to_logs(), |messages, new_message| messages.push(new_message.unwrap()));
 
-    tgt.log("Hello, world");
-    tgt.log("... goodbye, world :-(");
+    info!("Hello, world");
 
     thread::sleep(Duration::from_millis(20));
 
@@ -24,7 +25,5 @@ fn publish_log_messages_to_static_log() {
 
     assert!(messages.len() != 0);
     assert!(messages[0].message() == "Hello, world");
-    assert!(messages.len() != 1);
-    assert!(messages[1].message() == "... goodbye, world :-(");
-    assert!(messages.len() == 2);
+    assert!(messages.len() == 1);
 }
