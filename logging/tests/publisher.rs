@@ -21,8 +21,8 @@ fn publish_log_messages_to_subscriber() {
     let messages    = messages.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
-    assert!(&messages[0].message() == "Hello, world");
-    assert!(&messages[1].message() == "... goodbye, world :-(");
+    assert!(messages[0].message() == "Hello, world");
+    assert!(messages[1].message() == "... goodbye, world :-(");
     assert!(messages.len() == 2);
 }
 
@@ -41,15 +41,15 @@ fn publish_log_messages_to_two_subscribers() {
     let messages    = messages1.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
-    assert!(&messages[0].message() == "Hello, world");
-    assert!(&messages[1].message() == "... goodbye, world :-(");
+    assert!(messages[0].message() == "Hello, world");
+    assert!(messages[1].message() == "... goodbye, world :-(");
     assert!(messages.len() == 2);
 
     let messages    = messages2.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
-    assert!(&messages[0].message() == "Hello, world");
-    assert!(&messages[1].message() == "... goodbye, world :-(");
+    assert!(messages[0].message() == "Hello, world");
+    assert!(messages[1].message() == "... goodbye, world :-(");
     assert!(messages.len() == 2);
 }
 
@@ -100,8 +100,8 @@ fn publish_log_messages_to_default() {
     let messages    = messages.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
-    assert!(&messages[0].message() == "Hello, world");
-    assert!(&messages[1].message() == "... goodbye, world :-(");
+    assert!(messages[0].message() == "Hello, world");
+    assert!(messages[1].message() == "... goodbye, world :-(");
     assert!(messages.len() == 2);
 }
 
@@ -121,8 +121,8 @@ fn no_messages_to_default_with_subscriber() {
     let messages_default    = messages_default.sync(|messages_default| messages_default.clone());    
 
     assert!(messages_nondefault.len() != 0);
-    assert!(&messages_nondefault[0].message() == "Hello, world");
-    assert!(&messages_nondefault[1].message() == "... goodbye, world :-(");
+    assert!(messages_nondefault[0].message() == "Hello, world");
+    assert!(messages_nondefault[1].message() == "... goodbye, world :-(");
     assert!(messages_nondefault.len() == 2);
 
     assert!(messages_default.len() == 0);
@@ -148,7 +148,7 @@ fn stream_between_logs() {
     let messages    = messages.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
-    assert!(&messages[0].message() == "Hello, world");
-    assert!(&messages[1].message() == "... goodbye, world :-(");
+    assert!(messages[0].message() == "Hello, world");
+    assert!(messages[1].message() == "... goodbye, world :-(");
     assert!(messages.len() == 2);
 }
