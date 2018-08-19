@@ -75,8 +75,6 @@ fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_o
     let mut curves_and_offsets  = VecDeque::new();
     let mut remaining           = curve.clone();
     let mut remaining_t         = 0.0;
-    
-    let overall_length          = curve.estimate_length(1.0);
 
     for point in split_points {
         // Don't subdivide at point 0 (it doesn't produce a curve) or point 1 (this is just the remaining curve we add at the end)
@@ -89,8 +87,7 @@ fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_o
         let (left_curve, right_curve) = remaining.subdivide(t);
 
         // Work out the offset at this point
-        let left_len    = curve.estimate_length(*point);
-        let offset      = (final_offset-initial_offset)*(left_len/overall_length) + initial_offset;
+        let offset      = (final_offset-initial_offset)*(point) + initial_offset;
 
         // Add the left curve to the result
         curves_and_offsets.push_back((left_curve, offset));
