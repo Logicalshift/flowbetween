@@ -31,7 +31,7 @@ impl LogPublisher {
 
         // Pipe to the default subscriber if there is one
         pipe_in(Arc::clone(&log_default.context), log_default.subscribe_default(), |_context, log_msg| {
-            log_msg.map(|log_msg| log().log(log_msg)).ok();
+            log_msg.map(|log_msg| current_log().log(log_msg)).ok();
         });
 
         log_default        

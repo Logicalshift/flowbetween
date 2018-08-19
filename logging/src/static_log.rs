@@ -11,7 +11,7 @@ thread_local! {
 ///
 /// Retrieves a reference to the log publisher for the current thread
 /// 
-pub fn log() -> LogPublisher {
+pub fn current_log() -> LogPublisher {
     THREAD_LOGGER.with(|logger| {
         let mut logger = logger.borrow_mut();
 
