@@ -58,9 +58,6 @@ pub (crate) fn current_log() -> LogPublisher {
 pub fn send_logs_to(logger: Box<Log+Send+'static>) {
     pipe_in(Arc::clone(&CORE_PROCESSOR), CORE_LOGGER.subscribe(), move |_, message| {
         if let Ok(message) = message {
-            let msg     = message.message().to_string();
-            let args    = format_args!("How to fix lifetime?").to_owned();
-
             // Generate metadata for the level/target
             let metadata = MetadataBuilder::new()
                 .level(message.level().into())
@@ -68,15 +65,12 @@ pub fn send_logs_to(logger: Box<Log+Send+'static>) {
                 .build();
             
             // Metadata for the log message itself (we don't actually format a whole lot of arguments)
-            let record = RecordBuilder::new()
+            logger.log(&RecordBuilder::new()
                 .metadata(metadata)
                 .file(message.field_value("file"))
                 .line(message.field_value("line").and_then(|line_str| line_str.parse::<u32>().ok()))
-                .args(args)
-                .build();
-            
-            // Send to the standard logger
-            logger.log(&record);
+                .args(format_args!("{}", message.message()))
+                .build());
         }
     })
 }
