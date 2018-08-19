@@ -2,6 +2,11 @@ use super::deform::*;
 use super::normal::*;
 use super::super::coordinate::*;
 
+use std::collections::VecDeque;
+
+/// Maximum error before we split a subcurve
+const MAX_ERROR: f64 = 0.03;
+
 ///
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
 /// 
@@ -18,22 +23,45 @@ where Curve::Point: Normalize {
 
     // Split the curve at its extremities to generate a set of simpler curves
     let split_points    = curve.find_extremities();
-    let curves          = split_offsets(curve, initial_offset, final_offset, &split_points);
+    let mut curves      = split_offsets(curve, initial_offset, final_offset, &split_points);
 
     // Offset the curves
     let mut offset_curves   = vec![];
     let mut previous_offset = initial_offset;
+    let mut split_count     = 0;
 
-    for (curve, next_offset) in curves {
+    while let Some((curve, next_offset)) = curves.pop_front() {
         // Offset this curve
-        let (offset_curve, _error) = simple_offset(curve, previous_offset, next_offset);
-        offset_curves.push(offset_curve);
+        let (offset_curve, error) = simple_offset(&curve, previous_offset, next_offset);
 
-        // This is the initial offset of the next curve
-        previous_offset = next_offset;
+        if error > MAX_ERROR {
+            // Split the curve further if there is too big an error
+            let mut split_offset_curve = split_offsets(&curve, previous_offset, next_offset, &[0.5]);
+
+            if split_offset_curve.len() > 1 && split_count < 8 {
+                // Increase the split count (so really bad cases don't run forever)
+                split_count += 1;
+
+                // Managed to split the curve
+                while let Some((curve, next_offset)) = split_offset_curve.pop_back() {
+                    curves.push_front((curve, next_offset));
+                }
+            } else {
+                // Store as a result
+                offset_curves.push(offset_curve);
+
+                // The next offset is the previous offset of the next curve
+                previous_offset = next_offset;
+            }
+        } else {
+            // Store as a result
+            offset_curves.push(offset_curve);
+
+            // The next offset is the previous offset of the next curve
+            previous_offset = next_offset;
+        }
     }
 
-    // TODO: check the offset curve against an error bound and subdivide further if it doesn't make it
     // TODO: we sometimes generate NaN curves (though not very often)
     // This is the final result
     offset_curves
@@ -43,8 +71,8 @@ where Curve::Point: Normalize {
 /// Splits a curve at a given set of ordered offsets, returning a list of curves and
 /// their final offsets
 /// 
-fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64, split_points: &[f64]) -> Vec<(Curve, f64)> {
-    let mut curves_and_offsets  = vec![];
+fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64, split_points: &[f64]) -> VecDeque<(Curve, f64)> {
+    let mut curves_and_offsets  = VecDeque::new();
     let mut remaining           = curve.clone();
     let mut remaining_t         = 0.0;
     
@@ -65,7 +93,7 @@ fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_o
         let offset      = (final_offset-initial_offset)*(left_len/overall_length) + initial_offset;
 
         // Add the left curve to the result
-        curves_and_offsets.push((left_curve, offset));
+        curves_and_offsets.push_back((left_curve, offset));
 
         // Update the remaining curve according to the offset
         remaining   = right_curve;
@@ -73,7 +101,7 @@ fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_o
     }
 
     // Add the final remaining curve
-    curves_and_offsets.push((remaining, final_offset));
+    curves_and_offsets.push_back((remaining, final_offset));
 
     curves_and_offsets
 }
@@ -99,7 +127,7 @@ fn offset_error<Curve: NormalCurve>(original_curve: &Curve, offset_curve: &Curve
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
 /// 
-fn simple_offset<Curve: NormalCurve>(curve: Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) 
+fn simple_offset<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) 
 where Curve::Point: Normalize {
     // Fetch the original points
     let start       = curve.start_point();
@@ -126,14 +154,14 @@ where Curve::Point: Normalize {
         let sample_t = *sample_t;
 
         // Work out th error at this point
-        let move_offset = offset_error(&curve, &offset_curve, sample_t, initial_offset, final_offset);
+        let move_offset = offset_error(curve, &offset_curve, sample_t, initial_offset, final_offset);
 
         // Adjust the curve by the offset
         offset_curve = move_point(&offset_curve, sample_t, move_offset);
     }
 
     // Use the offset at the curve's midway point as the error
-    let error_offset    = offset_error(&curve, &offset_curve, 0.5, initial_offset, final_offset);
+    let error_offset    = offset_error(curve, &offset_curve, 0.5, initial_offset, final_offset);
     let error           = Curve::Point::origin().distance_to(&error_offset);
 
     (offset_curve, error)
