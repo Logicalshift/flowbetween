@@ -70,8 +70,11 @@ impl LogPublisher {
     ///
     /// Sends a log message to the context
     /// 
-    fn log_in_context(context: &mut LogContext, message: LogMsg) {
+    fn log_in_context(context: &mut LogContext, mut message: LogMsg) {
         let num_subscribers = context.publisher.get_ref().count_subscribers();
+
+        // Make sure that all the log fields are set properly
+        message.merge_fields(&context.fields);
 
         // Send to the subscribers of this log
         context.publisher.wait_send(message.clone()).unwrap();

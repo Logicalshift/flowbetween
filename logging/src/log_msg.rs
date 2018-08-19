@@ -3,6 +3,7 @@ use super::message::*;
 use super::privilege::*;
 
 use std::sync::*;
+use std::collections::HashMap;
 
 ///
 /// Structure that stores the data from a log message
@@ -12,7 +13,7 @@ struct LogCore {
     message:    String,
     level:      LogLevel,
     privilege:  LogPrivilege,
-    fields:     Vec<(String, String)>
+    fields:     HashMap<String, String>
 }
 
 ///
@@ -32,7 +33,7 @@ impl LogMessage for LogMsg {
 
     fn privilege(&self) -> LogPrivilege { self.core.privilege }
 
-    fn fields(&self) -> Vec<(String, String)> { self.core.fields.clone() }
+    fn fields(&self) -> Vec<(String, String)> { self.core.fields.iter().map(|(a, b)| (a.clone(), b.clone())).collect() }
 }
 
 impl LogMsg {
@@ -44,11 +45,33 @@ impl LogMsg {
             message:    msg.message(),
             level:      msg.level(),
             privilege:  msg.privilege(),
-            fields:     msg.fields()
+            fields:     msg.fields().into_iter().collect()
         };
 
         LogMsg {
             core: Arc::new(core)
+        }
+    }
+
+    ///
+    /// Merges a set of fields into this log message
+    /// 
+    /// If any fields in the new fields list are already set to a value, the original value is left in place
+    /// 
+    pub fn merge_fields(&mut self, new_fields: &Vec<(String, String)>) {
+        if new_fields.len() > 0 {
+            // Create a replacement core
+            let mut new_core = (*self.core).clone();
+
+            // Merge in the new fields
+            for (field_name, field_value) in new_fields {
+                if !new_core.fields.contains_key(field_name) {
+                    new_core.fields.insert(field_name.clone(), field_value.clone());
+                }
+            }
+
+            // Store in this object, replacing the old core
+            self.core = Arc::new(new_core);
         }
     }
 }

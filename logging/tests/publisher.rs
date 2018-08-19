@@ -10,7 +10,7 @@ use std::time::Duration;
 
 #[test]
 fn publish_log_messages_to_subscriber() {
-    let log         = LogPublisher::new();
+    let log         = LogPublisher::new("test");
     let messages    = Arc::new(Desync::new(vec![]));
 
     pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
@@ -27,8 +27,42 @@ fn publish_log_messages_to_subscriber() {
 }
 
 #[test]
+fn log_message_message_set_properly() {
+    let log         = LogPublisher::new("test");
+    let messages    = Arc::new(Desync::new(vec![]));
+
+    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+
+    log.log("Hello, world");
+    log.log("... goodbye, world :-(");
+
+    let messages    = messages.sync(|messages| messages.clone());
+
+    assert!(messages.len() != 0);
+    assert!(messages[0].fields().iter().any(|(field_name, field_msg)| field_name == "message" && field_msg == "Hello, world"));
+    assert!(messages.len() == 2);
+}
+
+#[test]
+fn log_message_target_set_properly() {
+    let log         = LogPublisher::new("test");
+    let messages    = Arc::new(Desync::new(vec![]));
+
+    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+
+    log.log("Hello, world");
+    log.log("... goodbye, world :-(");
+
+    let messages    = messages.sync(|messages| messages.clone());
+
+    assert!(messages.len() != 0);
+    assert!(messages[0].fields().iter().any(|(field_name, field_msg)| field_name == "target" && field_msg == "test"));
+    assert!(messages.len() == 2);
+}
+
+#[test]
 fn publish_log_messages_to_default() {
-    let log         = LogPublisher::new();
+    let log         = LogPublisher::new("test");
     let messages    = Arc::new(Desync::new(vec![]));
 
     pipe_in(Arc::clone(&messages), log.subscribe_default(), |messages, new_message| messages.push(new_message.unwrap()));
@@ -46,7 +80,7 @@ fn publish_log_messages_to_default() {
 
 #[test]
 fn no_messages_to_default_with_subscriber() {
-    let log                 = LogPublisher::new();
+    let log                 = LogPublisher::new("test");
     let messages_default    = Arc::new(Desync::new(vec![]));
     let messages_nondefault = Arc::new(Desync::new(vec![]));
 
@@ -69,8 +103,8 @@ fn no_messages_to_default_with_subscriber() {
 
 #[test]
 fn stream_between_logs() {
-    let src         = LogPublisher::new();
-    let tgt         = LogPublisher::new();
+    let src         = LogPublisher::new("testSrc");
+    let tgt         = LogPublisher::new("testTgt");
     let messages    = Arc::new(Desync::new(vec![]));
 
     // Result is messages from target
