@@ -130,5 +130,6 @@ impl Log for FloLog {
 /// for the thread
 /// 
 pub fn send_rust_logs_to_flo_logs() -> Result<(), SetLoggerError> {
+    set_max_level(LevelFilter::Debug);
     set_logger(&FLO_LOG)
 }
