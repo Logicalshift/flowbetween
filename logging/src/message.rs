@@ -1,8 +1,9 @@
-use super::level::*;
 use super::privilege::*;
 
 use std::sync::*;
 use std::collections::HashMap;
+
+use log;
 
 ///
 /// Trait implemented by items representing a log message
@@ -16,7 +17,7 @@ pub trait LogMessage : Send {
     ///
     /// Returns the verbosity/seriousness level of this log message
     /// 
-    fn level(&self) -> LogLevel { LogLevel::Info }
+    fn level(&self) -> log::Level { log::Level::Info }
 
     ///
     /// Returns the privilege level of this log message (who can read it) 
@@ -37,10 +38,10 @@ impl<'a> LogMessage for &'a str {
     fn message<'b>(&'b self) -> &'b str { self }
 }
 
-impl<Msg: LogMessage> LogMessage for (LogLevel, Msg) {
+impl<Msg: LogMessage> LogMessage for (log::Level, Msg) {
     fn message<'a>(&'a self) -> &'a str { self.1.message() }
 
-    fn level(&self) -> LogLevel { self.0 }
+    fn level(&self) -> log::Level { self.0 }
 
     fn privilege(&self) -> LogPrivilege { self.1.privilege() }
 
@@ -50,7 +51,7 @@ impl<Msg: LogMessage> LogMessage for (LogLevel, Msg) {
 impl<Msg: LogMessage> LogMessage for (LogPrivilege, Msg) {
     fn message<'a>(&'a self) -> &'a str { self.1.message() }
 
-    fn level(&self) -> LogLevel { self.1.level() }
+    fn level(&self) -> log::Level { self.1.level() }
 
     fn privilege(&self) -> LogPrivilege { self.0 }
 
@@ -72,7 +73,7 @@ impl<'a> LogMessage for HashMap<&'a str, &'a str> {
 impl<Msg: Send+Sync+LogMessage> LogMessage for Arc<Msg> {
     fn message<'a>(&'a self) -> &'a str { (**self).message() }
 
-    fn level(&self) -> LogLevel { (**self).level() }
+    fn level(&self) -> log::Level { (**self).level() }
 
     fn privilege(&self) -> LogPrivilege { (**self).privilege() }
 

@@ -1,6 +1,7 @@
-use super::level::*;
 use super::message::*;
 use super::privilege::*;
+
+use log;
 
 use std::sync::*;
 use std::collections::HashMap;
@@ -11,7 +12,7 @@ use std::collections::HashMap;
 #[derive(Clone, PartialEq, Debug)]
 struct LogCore {
     message:    String,
-    level:      LogLevel,
+    level:      log::Level,
     privilege:  LogPrivilege,
     fields:     HashMap<String, String>
 }
@@ -29,7 +30,7 @@ pub struct LogMsg {
 impl LogMessage for LogMsg {
     fn message<'a>(&'a self) -> &'a str { &*self.core.message }
 
-    fn level(&self) -> LogLevel { self.core.level }
+    fn level(&self) -> log::Level { self.core.level }
 
     fn privilege(&self) -> LogPrivilege { self.core.privilege }
 

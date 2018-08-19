@@ -38,7 +38,7 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
         // Generate a session ID using the UUID library
         let session_id          = Uuid::new_v4().simple().to_string();
 
-        self.log.log((LogLevel::Verbose, format!("Starting session ID {}", session_id)));
+        self.log.log((Level::Info, format!("Starting session ID {}", session_id)));
 
         // Produce the URI for this session
         let session_uri         = format!("{}/{}", base_path, session_id);

@@ -1,7 +1,7 @@
-use super::level::*;
 use super::log_msg::*;
 use super::message::*;
 
+use log;
 use desync::*;
 use futures::*;
 
@@ -24,12 +24,11 @@ pub fn send_to_stderr<LogStream: 'static+Send+Stream<Item=LogMsg, Error=()>>(str
             let target  = msg.field_value("target").unwrap_or("");
 
             match msg.level() {
-                LogLevel::Debug     => { eprintln!("DEBUG    {}: {}", target, message); },
-                LogLevel::Verbose   => { eprintln!("VERBOSE  {}: {}", target, message); },
-                LogLevel::Info      => { eprintln!("INFO     {}: {}", target, message); },
-                LogLevel::Warning   => { eprintln!("WARNING  {}: {}", target, message); },
-                LogLevel::Error     => { eprintln!("ERROR    {}: {}", target, message); },
-                LogLevel::Critical  => { eprintln!("CRITICAL {}: {}", target, message); },
+                log::Level::Trace   => { eprintln!("TRACE   {}: {}", target, message); },
+                log::Level::Debug   => { eprintln!("DEBUG   {}: {}", target, message); },
+                log::Level::Info    => { eprintln!("INFO    {}: {}", target, message); },
+                log::Level::Warn    => { eprintln!("WARNING {}: {}", target, message); },
+                log::Level::Error   => { eprintln!("ERROR   {}: {}", target, message); }
             }
         }).ok();
     });

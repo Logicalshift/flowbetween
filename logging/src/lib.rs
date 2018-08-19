@@ -5,7 +5,6 @@ extern crate log;
 extern crate desync;
 extern crate flo_stream;
 
-mod level;
 mod privilege;
 mod message;
 mod log_msg;
@@ -15,7 +14,7 @@ mod static_log;
 mod log_stream;
 mod log_subscriber;
 
-pub use self::level::*;
+pub use log::Level;
 pub use self::privilege::*;
 pub use self::message::*;
 pub use self::log_msg::*;

@@ -1,8 +1,8 @@
-use super::level::*;
 use super::message::*;
 use super::publisher::*;
 use super::log_subscriber::*;
 
+use log;
 use log::*;
 use desync::*;
 
@@ -114,7 +114,7 @@ impl Log for FloLog {
             ("target", record.target()),
             ("message", &msg)
         ].into_iter().collect::<HashMap<_, _>>();
-        let msg: (LogLevel, _) = (record.level().into(), msg);
+        let msg: (log::Level, _) = (record.level().into(), msg);
 
         // Send to the log
         log.log(msg);
