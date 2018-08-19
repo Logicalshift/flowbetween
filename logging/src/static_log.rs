@@ -1,6 +1,7 @@
 use super::publisher::*;
 use super::log_subscriber::*;
 
+use std::thread;
 use std::cell::*;
 
 thread_local! {
@@ -19,7 +20,7 @@ pub fn log() -> LogPublisher {
             logger.as_ref().unwrap().clone()
         } else {
             // New logger
-            let new_logger = LogPublisher::new_empty();
+            let new_logger = LogPublisher::new_empty(vec![("target", &format!("{:?}", thread::current().id()) as &str )]);
             
             // Default to printing the message (via the println logger desync object)
             send_to_logs(new_logger.subscribe_default());

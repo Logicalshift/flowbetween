@@ -27,10 +27,7 @@ impl LogPublisher {
     /// 
     pub fn new(target: &str) -> LogPublisher {
         // Create an empty publisher
-        let log_default = Self::new_empty();
-
-        // Set the target
-        log_default.context.sync(|context| context.fields = vec![("target".to_string(), target.to_string())]);
+        let log_default = Self::new_empty(vec![("target", target)]);
 
         // Pipe to the default subscriber if there is one
         pipe_in(Arc::clone(&log_default.context), log_default.subscribe_default(), |_context, log_msg| {
@@ -61,10 +58,20 @@ impl LogPublisher {
     ///
     /// Creates a new log publisher with no default behaviour
     /// 
-    pub (crate) fn new_empty() -> LogPublisher {
-        LogPublisher {
+    pub (crate) fn new_empty<'a, FieldIter: 'a+IntoIterator<Item=(&'a str, &'a str)>>(fields: FieldIter) -> LogPublisher {
+        let logger = LogPublisher {
             context: Arc::new(Desync::new(LogContext::new()))
+        };
+
+        // Extend the set of fields in its context
+        let fields = fields.into_iter()
+            .map(|(field_name, field_value)| (field_name.to_string(), field_value.to_string()))
+            .collect::<Vec<_>>();
+        logger.context.sync(move |context| context.fields.extend(fields));
+
+        logger
         }
+
     }
 
     ///
