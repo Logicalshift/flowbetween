@@ -22,16 +22,40 @@ impl LogPublisher {
     ///
     /// Creates a new log publisher
     /// 
-    /// Log publishers will republish to the current thread logger by default
+    /// Log publishers will republish to the current thread logger by default. Messages that originate from
+    /// this publisher will have the target field added to it
     /// 
-    pub fn new() -> LogPublisher {
+    pub fn new(target: &str) -> LogPublisher {
+        // Create an empty publisher
         let log_default = Self::new_empty();
 
+        // Set the target
+        log_default.context.sync(|context| context.fields = vec![("target".to_string(), target.to_string())]);
+
+        // Pipe to the default subscriber if there is one
         pipe_in(Arc::clone(&log_default.context), log_default.subscribe_default(), |_context, log_msg| {
             log_msg.map(|log_msg| log().log(log_msg)).ok();
         });
 
         log_default        
+    }
+
+    ///
+    /// Cretes a new log publisher that will set some field values on messages before publishing them
+    /// 
+    /// Field values set this way are only specified 
+    /// 
+    pub fn new_with_fields<'a, FieldIter: 'a+IntoIterator<Item=(&'a str, &'a str)>>(target: &str, fields: FieldIter) -> LogPublisher {
+        // Create a new logger with this target
+        let logger = Self::new(target);
+
+        // Extend the set of fields in its context
+        let fields = fields.into_iter()
+            .map(|(field_name, field_value)| (field_name.to_string(), field_value.to_string()))
+            .collect::<Vec<_>>();
+        logger.context.sync(move |context| context.fields.extend(fields));
+
+        logger
     }
 
     ///

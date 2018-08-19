@@ -13,7 +13,10 @@ pub struct LogContext {
     pub (crate) publisher: Spawn<Publisher<LogMsg>>,
 
     /// If there are no subscribers to a particular log, messages are sent here instead
-    pub (crate) default: Option<Spawn<Publisher<LogMsg>>>
+    pub (crate) default: Option<Spawn<Publisher<LogMsg>>>,
+
+    /// The fields to add to log messages sent to this context
+    pub (crate) fields: Vec<(String, String)>
 }
 
 impl LogContext {
@@ -23,7 +26,8 @@ impl LogContext {
     pub fn new() -> LogContext {
         LogContext {
             publisher:  executor::spawn(Publisher::new(100)),
-            default:    None
+            default:    None,
+            fields:     vec![]
         }
     }
 }
