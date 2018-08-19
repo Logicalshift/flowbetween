@@ -21,3 +21,4 @@ pub use self::message::*;
 pub use self::log_msg::*;
 pub use self::publisher::*;
 pub use self::log_stream::*;
+pub use self::static_log::*;

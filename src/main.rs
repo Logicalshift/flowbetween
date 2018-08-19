@@ -47,11 +47,13 @@ use self::flo_session::*;
 #[cfg(feature="http")]
 fn main_actix() -> Option<JoinHandle<()>> {
     Some(thread::spawn(|| {
+        let log = LogPublisher::new("main_actix");
+
         // Create the web session structure
         let sessions: Arc<WebSessions<FlowBetweenSession>> = Arc::new(WebSessions::new());
 
         // Log that we're getting ready
-        log().log(format!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT)));
+        log.log(format!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT)));
 
         // Run the actix server
         aw::server::new(move || {
@@ -92,13 +94,13 @@ compile_error!("You must pick a UI implementation as a feature to compile FlowBe
 
 fn main() {
     // Set up logging
-    pretty_env_logger::formatted_builder()
+    send_logs_to(Box::new(pretty_env_logger::formatted_builder()
         .unwrap()
         .filter_level(LevelFilter::Trace)
         .filter_module("mio", LevelFilter::Warn)
         .filter_module("tokio_reactor", LevelFilter::Warn)
         .filter_module("actix_web", LevelFilter::Info)
-        .init();
+        .build()));
 
     // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
 
