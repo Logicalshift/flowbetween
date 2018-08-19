@@ -5,6 +5,8 @@ use flo_logging::*;
 use desync::*;
 
 use std::sync::*;
+use std::thread;
+use std::time::Duration;
 
 #[test]
 fn publish_log_messages_to_static_log() {
@@ -15,6 +17,8 @@ fn publish_log_messages_to_static_log() {
 
     tgt.log("Hello, world");
     tgt.log("... goodbye, world :-(");
+
+    thread::sleep(Duration::from_millis(20));
 
     let messages    = messages.sync(|messages| messages.clone());
 

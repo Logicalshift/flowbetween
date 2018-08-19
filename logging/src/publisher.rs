@@ -29,12 +29,11 @@ impl LogPublisher {
         // Create an empty publisher
         let log_default = Self::new_empty(vec![("target", target)]);
 
-        // Pipe to the default subscriber if there is one
-        pipe_in(Arc::clone(&log_default.context), log_default.subscribe_default(), |_context, log_msg| {
-            log_msg.map(|log_msg| current_log().log(log_msg)).ok();
-        });
+        // Messages are piped to the current logger if there is one
+        let parent_log = current_log();
+        parent_log.stream(log_default.subscribe_default());
 
-        log_default        
+        log_default
     }
 
     ///
