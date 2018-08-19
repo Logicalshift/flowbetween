@@ -147,7 +147,7 @@ where Curve::Point: Normalize {
     let mut offset_curve = Curve::from_points(new_start, new_end, new_cp1, new_cp2);
 
     // Tweak the curve at some sample points to improve the accuracy of our guess
-    for sample_t in [0.5, 0.25, 0.75].into_iter() {
+    for sample_t in [0.25, 0.75].into_iter() {
         let sample_t = *sample_t;
 
         // Work out th error at this point
