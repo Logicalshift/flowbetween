@@ -13,6 +13,18 @@ pub enum LogLevel {
     Critical
 }
 
+impl From<log::Level> for LogLevel {
+    fn from(level: log::Level) -> LogLevel {
+        match level {
+            log::Level::Trace   => LogLevel::Debug,
+            log::Level::Debug   => LogLevel::Verbose,
+            log::Level::Info    => LogLevel::Info,
+            log::Level::Warn    => LogLevel::Warning,
+            log::Level::Error   => LogLevel::Error
+        }
+    }
+}
+
 impl Into<log::Level> for LogLevel {
     fn into(self) -> log::Level {
         match self {

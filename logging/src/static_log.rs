@@ -1,3 +1,4 @@
+use super::level::*;
 use super::message::*;
 use super::publisher::*;
 use super::log_subscriber::*;
@@ -7,6 +8,7 @@ use desync::*;
 
 use std::sync::*;
 use std::cell::*;
+use std::collections::HashMap;
 
 thread_local! {
     static THREAD_LOGGER: RefCell<Option<LogPublisher>> = RefCell::new(None);
@@ -29,6 +31,24 @@ impl LogPublisher {
         send_to_stderr(new_logger.subscribe_default());
 
         new_logger
+    }
+
+    ///
+    /// Performs the specified function with this log publisher registered as the current publisher
+    /// 
+    pub fn with<Res, ActionFn: FnOnce() -> Res>(&self, action: ActionFn) -> Res {
+        // Remember the previous logger and set the current logger to this
+        let previous_log = current_log();
+        THREAD_LOGGER.with(|logger| *logger.borrow_mut() = Some(self.clone()));
+
+        // Perform the action with the new current logger
+        let result = action();
+
+        // Reset the logger
+        THREAD_LOGGER.with(|logger| *logger.borrow_mut() = Some(previous_log));
+
+        // Return the result of the operation
+        result
     }
 }
 
@@ -73,4 +93,42 @@ pub fn send_logs_to(logger: Box<Log+Send+'static>) {
                 .build());
         }
     })
+}
+
+struct FloLog;
+static FLO_LOG: FloLog = FloLog;
+
+impl Log for FloLog {
+    fn enabled(&self, _metadata: &Metadata) -> bool {
+        // No filtering for now
+        true
+    }
+
+    fn log(&self, record: &Record) {
+        // Get the current log
+        let log = current_log();
+
+        // Format into a log message
+        let msg = format!("{}", record.args());
+        let msg = vec![
+            ("target", record.target()),
+            ("message", &msg)
+        ].into_iter().collect::<HashMap<_, _>>();
+        let msg: (LogLevel, _) = (record.level().into(), msg);
+
+        // Send to the log
+        log.log(msg);
+    }
+
+    fn flush(&self) {
+        // Nothing to flush
+    }
+}
+
+///
+/// Creates a Rust logger that sends any log messages received for the main log crate to the current flo logger
+/// for the thread
+/// 
+pub fn send_rust_logs_to_flo_logs() -> Result<(), SetLoggerError> {
+    set_logger(&FLO_LOG)
 }

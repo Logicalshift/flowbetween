@@ -101,6 +101,7 @@ fn main() {
         .filter_module("tokio_reactor", LevelFilter::Warn)
         .filter_module("actix_web", LevelFilter::Info)
         .build()));
+    send_rust_logs_to_flo_logs().unwrap(); 
 
     // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
 

@@ -2,6 +2,7 @@ use super::level::*;
 use super::privilege::*;
 
 use std::sync::*;
+use std::collections::HashMap;
 
 ///
 /// Trait implemented by items representing a log message
@@ -54,6 +55,18 @@ impl<Msg: LogMessage> LogMessage for (LogPrivilege, Msg) {
     fn privilege(&self) -> LogPrivilege { self.0 }
 
     fn fields(&self) -> Vec<(String, String)> { self.1.fields() }
+}
+
+impl LogMessage for HashMap<String, String> {
+    fn message<'a>(&'a self) -> &'a str { self.get("message").map(|msg| &**msg).unwrap_or("") }
+
+    fn fields(&self) -> Vec<(String, String)> { self.iter().map(|(a, b)| (a.clone(), b.clone())).collect() }
+}
+
+impl<'a> LogMessage for HashMap<&'a str, &'a str> {
+    fn message<'b>(&'b self) -> &'b str { self.get("message").map(|msg| *msg).unwrap_or("") }
+
+    fn fields(&self) -> Vec<(String, String)> { self.iter().map(|(a, b)| (a.to_string(), b.to_string())).collect() }
 }
 
 impl<Msg: Send+Sync+LogMessage> LogMessage for Arc<Msg> {
