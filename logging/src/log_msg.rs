@@ -27,7 +27,7 @@ pub struct LogMsg {
 }
 
 impl LogMessage for LogMsg {
-    fn message(&self) -> String { self.core.message.clone() }
+    fn message<'a>(&'a self) -> &'a str { &*self.core.message }
 
     fn level(&self) -> LogLevel { self.core.level }
 
@@ -42,7 +42,7 @@ impl LogMsg {
     /// 
     pub fn from<Msg: LogMessage>(msg: Msg) -> LogMsg {
         let core = LogCore {
-            message:    msg.message(),
+            message:    msg.message().to_string(),
             level:      msg.level(),
             privilege:  msg.privilege(),
             fields:     msg.fields().into_iter().collect()

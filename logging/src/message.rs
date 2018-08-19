@@ -10,7 +10,7 @@ pub trait LogMessage : Send {
     ///
     /// Returns a string representation of this log message
     /// 
-    fn message(&self) -> String;
+    fn message<'a>(&'a self) -> &'a str;
 
     ///
     /// Returns the verbosity/seriousness level of this log message
@@ -25,19 +25,19 @@ pub trait LogMessage : Send {
     ///
     /// Returns this log message formatted into a series of named fields
     /// 
-    fn fields(&self) -> Vec<(String, String)> { vec![("message".to_string(), self.message())] }
+    fn fields(&self) -> Vec<(String, String)> { vec![("message".to_string(), self.message().to_string())] }
 }
 
 impl LogMessage for String {
-    fn message(&self) -> String { self.clone() }
+    fn message<'a>(&'a self) -> &'a str { &*self }
 }
 
 impl<'a> LogMessage for &'a str {
-    fn message(&self) -> String { self.to_string() }
+    fn message<'b>(&'b self) -> &'b str { self }
 }
 
-impl<'a, Msg: LogMessage> LogMessage for (LogLevel, Msg) {
-    fn message(&self) -> String { self.1.message() }
+impl<Msg: LogMessage> LogMessage for (LogLevel, Msg) {
+    fn message<'a>(&'a self) -> &'a str { self.1.message() }
 
     fn level(&self) -> LogLevel { self.0 }
 
@@ -46,8 +46,8 @@ impl<'a, Msg: LogMessage> LogMessage for (LogLevel, Msg) {
     fn fields(&self) -> Vec<(String, String)> { self.1.fields() }
 }
 
-impl<'a, Msg: LogMessage> LogMessage for (LogPrivilege, Msg) {
-    fn message(&self) -> String { self.1.message() }
+impl<Msg: LogMessage> LogMessage for (LogPrivilege, Msg) {
+    fn message<'a>(&'a self) -> &'a str { self.1.message() }
 
     fn level(&self) -> LogLevel { self.1.level() }
 
@@ -57,7 +57,7 @@ impl<'a, Msg: LogMessage> LogMessage for (LogPrivilege, Msg) {
 }
 
 impl<Msg: Send+Sync+LogMessage> LogMessage for Arc<Msg> {
-    fn message(&self) -> String { (**self).message() }
+    fn message<'a>(&'a self) -> &'a str { (**self).message() }
 
     fn level(&self) -> LogLevel { (**self).level() }
 
