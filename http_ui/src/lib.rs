@@ -3,6 +3,7 @@
 extern crate flo_ui as ui;
 extern crate flo_canvas as canvas;
 extern crate flo_binding as binding;
+extern crate flo_logging;
 
 extern crate serde;
 extern crate serde_json;

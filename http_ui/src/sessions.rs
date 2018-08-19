@@ -4,6 +4,7 @@ use super::http_user_interface::*;
 use ui::*;
 use ui::session::*;
 
+use flo_logging::*;
 use uuid::*;
 
 use std::sync::*;
@@ -13,6 +14,8 @@ use std::collections::*;
 /// Manages the active sessions
 /// 
 pub struct WebSessions<CoreController: Controller> {
+    log: LogPublisher,
+
     /// The sessions
     sessions: Mutex<HashMap<String, Arc<Mutex<HttpSession<UiSession<CoreController>>>>>>
 }
@@ -23,7 +26,8 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
     /// 
     pub fn new() -> WebSessions<CoreController> {
         WebSessions {
-            sessions: Mutex::new(HashMap::new())
+            log:        LogPublisher::new(module_path!()),
+            sessions:   Mutex::new(HashMap::new())
         }
     }
 
@@ -33,6 +37,8 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
     pub fn new_session(&self, controller: CoreController, base_path: &str) -> String {
         // Generate a session ID using the UUID library
         let session_id          = Uuid::new_v4().simple().to_string();
+
+        self.log.log((LogLevel::Verbose, format!("Starting session ID {}", session_id)));
 
         // Produce the URI for this session
         let session_uri         = format!("{}/{}", base_path, session_id);
