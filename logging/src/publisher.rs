@@ -70,8 +70,6 @@ impl LogPublisher {
         logger.context.sync(move |context| context.fields.extend(fields));
 
         logger
-        }
-
     }
 
     ///
