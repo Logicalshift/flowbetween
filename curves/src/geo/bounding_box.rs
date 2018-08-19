@@ -47,6 +47,21 @@ pub trait BoundingBox : Geo+Sized {
             Self::from_min_max(Self::Point::from_smallest_components(self.min(), target.min()), Self::Point::from_biggest_components(self.max(), target.max()))
         }
     }
+
+    ///
+    /// Returns true if this bounding box overlaps another
+    /// 
+    fn overlaps(&self, target: &Self) -> bool {
+        let (min1, max1) = (self.min(), self.max());
+        let (min2, max2) = (target.min(), target.max());
+
+        for p_index in 0..Self::Point::len() {
+            if min1.get(p_index) >= max2.get(p_index) { return false; }
+            if min2.get(p_index) >= max1.get(p_index) { return false; }
+        }
+
+        true
+    }
 }
 
 ///
