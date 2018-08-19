@@ -74,4 +74,10 @@ impl LogMsg {
             self.core = Arc::new(new_core);
         }
     }
+
+    pub fn field_value<'a>(&'a self, field_name: &str) -> Option<&'a str> {
+        self.core.fields
+            .get(field_name)
+            .map(|field_value| &**field_value)
+    }
 }

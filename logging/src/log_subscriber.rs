@@ -1,4 +1,5 @@
 use super::level::*;
+use super::log_msg::*;
 use super::message::*;
 
 use desync::*;
@@ -16,18 +17,19 @@ lazy_static! {
 ///
 /// Subscribes log messages on a particular stream to the log framework
 /// 
-pub fn send_to_logs<Msg: LogMessage, LogStream: 'static+Send+Stream<Item=Msg, Error=()>>(stream: LogStream) {
+pub fn send_to_stderr<LogStream: 'static+Send+Stream<Item=LogMsg, Error=()>>(stream: LogStream) {
     pipe_in(Arc::clone(&LOGGER), stream, |_, msg| {
         msg.map(|msg| {
             let message = msg.message();
+            let target  = msg.field_value("target").unwrap_or("");
 
             match msg.level() {
-                LogLevel::Debug     => { trace!("{}", message); },
-                LogLevel::Verbose   => { debug!("{}", message); },
-                LogLevel::Info      => { info!("{}", message); },
-                LogLevel::Warning   => { warn!("{}", message); },
-                LogLevel::Error     => { error!("{}", message); },
-                LogLevel::Critical  => { error!("{}", message); }
+                LogLevel::Debug     => { eprintln!("DEBUG    {}: {}", target, message); },
+                LogLevel::Verbose   => { eprintln!("VERBOSE  {}: {}", target, message); },
+                LogLevel::Info      => { eprintln!("INFO     {}: {}", target, message); },
+                LogLevel::Warning   => { eprintln!("WARNING  {}: {}", target, message); },
+                LogLevel::Error     => { eprintln!("ERROR    {}: {}", target, message); },
+                LogLevel::Critical  => { eprintln!("CRITICAL {}: {}", target, message); },
             }
         }).ok();
     });

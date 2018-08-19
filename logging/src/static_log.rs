@@ -20,7 +20,7 @@ impl LogPublisher {
         let new_logger = LogPublisher::new_empty(vec![("target", "flo_logger::core")]);
 
         // Default messages here get the default behaviour
-        send_to_logs(new_logger.subscribe_default());
+        send_to_stderr(new_logger.subscribe_default());
 
         new_logger
     }
