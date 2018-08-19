@@ -10,10 +10,10 @@ use futures::executor::Spawn;
 /// 
 pub struct LogContext {
     /// Where messages for this context should be published
-    pub (crate) publisher: Spawn<Publisher<Log>>,
+    pub (crate) publisher: Spawn<Publisher<LogMsg>>,
 
     /// If there are no subscribers to a particular log, messages are sent here instead
-    pub (crate) default: Option<Spawn<Publisher<Log>>>
+    pub (crate) default: Option<Spawn<Publisher<LogMsg>>>
 }
 
 impl LogContext {

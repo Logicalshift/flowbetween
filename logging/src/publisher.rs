@@ -46,7 +46,7 @@ impl LogPublisher {
     ///
     /// Sends a log message to the context
     /// 
-    fn log_in_context(context: &mut LogContext, message: Log) {
+    fn log_in_context(context: &mut LogContext, message: LogMsg) {
         let num_subscribers = context.publisher.get_ref().count_subscribers();
 
         // Send to the subscribers of this log
@@ -64,7 +64,7 @@ impl LogPublisher {
     pub fn log<Msg: 'static+LogMessage>(&self, message: Msg) {
         self.context.sync(|context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
-            let message = Log::from(message);
+            let message = LogMsg::from(message);
             Self::log_in_context (context, message);
         });
     }
@@ -76,7 +76,7 @@ impl LogPublisher {
         // Pipe the stream through to the context
         pipe_in(Arc::clone(&self.context), stream, |context, message| {
             if let Ok(message) = message {
-                let message = Log::from(message);
+                let message = LogMsg::from(message);
                 Self::log_in_context(context, message);
             }
         });
@@ -85,14 +85,14 @@ impl LogPublisher {
     ///
     /// Subscribes to this log stream
     /// 
-    pub fn subscribe(&self) -> impl Stream<Item=Log, Error=()> {
+    pub fn subscribe(&self) -> impl Stream<Item=LogMsg, Error=()> {
         self.context.sync(|context| context.publisher.subscribe())
     }
 
     ///
     /// Creates a 'default' subscriber for this log stream (messages will be sent here only if there are no other subscribers to this log)
     /// 
-    pub fn subscribe_default(&self) -> impl Stream<Item=Log, Error=()> {
+    pub fn subscribe_default(&self) -> impl Stream<Item=LogMsg, Error=()> {
         self.context.sync(|context| {
             if context.default.is_none() {
                 context.default = Some(executor::spawn(Publisher::new(100)));
