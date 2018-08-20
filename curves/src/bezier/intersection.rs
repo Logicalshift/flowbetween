@@ -80,18 +80,18 @@ where C::Point: Coordinate2D {
         vec![]
     } else {
         // Overlap: curves may intersect (subdivide to search for intersections)
-        let accuracy    = accuracy * accuracy;
+        let area_accuracy   = accuracy * accuracy;
 
-        let size1       = bounds1.max() - bounds1.min();
-        let area1       = size1.dot(&size1);
-        let size2       = bounds2.max() - bounds2.min();
-        let area2       = size2.dot(&size2);
+        let size1           = bounds1.max() - bounds1.min();
+        let area1           = size1.dot(&size1);
+        let size2           = bounds2.max() - bounds2.min();
+        let area2           = size2.dot(&size2);
 
-        if area1 <= accuracy && area2 <= accuracy {
+        if area1 <= accuracy && area2 <= area_accuracy {
             // Both curves are smaller than the required accuracy (assume they meet in the middle)
             vec![(0.5, 0.5)]
 
-        } else if area1 <= accuracy {
+        } else if area1 <= area_accuracy {
 
             // Subdivide curve2 only
             let (curve2a, curve2b) = curve2.subdivide(0.5);
@@ -112,7 +112,7 @@ where C::Point: Coordinate2D {
 
             res
 
-        } else if area2 <= accuracy {
+        } else if area2 <= area_accuracy {
 
             // Subdivide curve1 only
             let (curve1a, curve1b) = curve1.subdivide(0.5);
@@ -140,16 +140,24 @@ where C::Point: Coordinate2D {
             let (curve2a, curve2b) = curve2.subdivide(0.5);
 
             // Find the intersections of both sides
-            let left_intersections  = curve_intersects_curve(&curve1a, &curve2a, accuracy);
-            let right_intersections = curve_intersects_curve(&curve1b, &curve2b, accuracy);
+            let curve1_left         = curve_intersects_curve(&curve1a, &curve2a, accuracy);
+            let curve1_right        = curve_intersects_curve(&curve1b, &curve2a, accuracy);
+            let curve2_left         = curve_intersects_curve(&curve1a, &curve2b, accuracy);
+            let curve2_right        = curve_intersects_curve(&curve1b, &curve2b, accuracy);
 
             // Adjust the result to the t values of our curve
             // TODO: it's inefficient to do this repeatedly, would be better to pass in a t range and calculate it once
             let mut res = vec![];
-            for (t1, t2) in left_intersections.into_iter() {
+            for (t1, t2) in curve1_left.into_iter() {
                 res.push((t1*0.5, t2*0.5));
             }
-            for (t1, t2) in right_intersections.into_iter() {
+            for (t1, t2) in curve1_right.into_iter() {
+                res.push((t1*0.5+0.5, t2*0.5));
+            }
+            for (t1, t2) in curve2_left.into_iter() {
+                res.push((t1*0.5, t2*0.5+0.5));
+            }
+            for (t1, t2) in curve2_right.into_iter() {
                 res.push((t1*0.5+0.5, t2*0.5+0.5));
             }
 
