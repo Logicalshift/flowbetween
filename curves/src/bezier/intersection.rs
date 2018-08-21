@@ -61,6 +61,84 @@ where C::Point: Coordinate2D {
 }
 
 ///
+/// Possible results of a curve intersection test
+/// 
+enum CurveIntersection {
+    /// Curves do not intersect
+    None,
+
+    /// Curves might intersect but need to be subdivided
+    Subdivide,
+
+    /// Found an intersection between the two curves
+    Match(f64, f64)
+}
+
+///
+/// Returns the approximate bounds of a curve
+/// 
+/// BezierCurve::bounding_box is more precise but takes much longer to compute
+/// 
+#[inline]
+fn simple_bounds<C: BezierCurve>(curve: &C) -> Bounds<C::Point> {
+    let start           = curve.start_point();
+    let end             = curve.end_point();
+    let control_points  = curve.control_points();
+
+    Bounds::bounds_for_points(vec![ start, end, control_points.0, control_points.1 ])
+}
+
+///
+/// Determines where two curves intersect
+/// 
+/// This can return one of three possible values: a found intersection, an indication that the curves
+/// should be subdivided and checked again or an indication that the curves do not intersect
+/// 
+fn curve_intersection_inner<C: BezierCurve>(curve1: &C, curve2: &C, accuracy_area: f64) -> CurveIntersection
+where C::Point: Coordinate2D {
+    // The bounds formed by the control points is faster to calculate than the exact curve bounds and good enough for our purposes
+    let bounds1 = simple_bounds(curve1);
+    let bounds2 = simple_bounds(curve2);
+
+    if bounds1.overlaps(&bounds2) {
+        // Compute the areas covered by the two curves
+        let diff1   = bounds1.max()-bounds1.min();
+        let diff2   = bounds2.max()-bounds2.min();
+        let area1   = diff1.dot(&diff1);
+        let area2   = diff2.dot(&diff2);
+
+        if area1 <= accuracy_area {
+            // If the area of the first curve is below the accuracy threshold, use a simple line intersection to return the result
+            // Curves tend to become lines as we get more accurate
+            let curve1_t = 0.5;
+            let curve2_t = curve_intersects_line(curve2, &(curve1.start_point(), curve1.end_point()));
+
+            if curve2_t.len() > 0 {
+                CurveIntersection::Match(curve1_t, curve2_t[0])
+            } else {
+                CurveIntersection::None
+            }
+        } else if area2 <= accuracy_area {
+            // Same, except the second curve has hit the accuracy threshold
+            let curve1_t = curve_intersects_line(curve1, &(curve2.start_point(), curve2.end_point()));
+            let curve2_t = 0.5;
+
+            if curve1_t.len() > 0 {
+                CurveIntersection::Match(curve1_t[0], curve2_t)
+            } else {
+                CurveIntersection::None
+            }
+        } else {
+            // Both bounding boxes are above the accuracy threshold: need to subdivide further
+            CurveIntersection::Subdivide
+        }
+    } else {
+        // Bounding boxes don't overlap
+        CurveIntersection::None
+    }
+}
+
+///
 /// Determines the points where two curves intersect (using an approximation)
 /// 
 /// The accuracy level determines the smallest bounding box used before we estimate an intersection
@@ -71,98 +149,55 @@ where C::Point: Coordinate2D {
     // TODO: as will curves that have sections that are the same
     // TODO: repeatedly recalculating the t values as the recursion unwinds is inefficient
 
-    // Curves do not intersect if their bounding boxes do not overlap
-    let bounds1 = curve1.bounding_box::<Bounds<C::Point>>();
-    let bounds2 = curve2.bounding_box::<Bounds<C::Point>>();
+    // Calculate the accuracy area (we consider that we've got a match if we shrink one or both curves bounding boxes to this size)
+    let accuracy_area = accuracy*accuracy;
 
-    if !bounds1.overlaps(&bounds2) {
-        // No overlap: curves do not intersect
-        vec![]
-    } else {
-        // Overlap: curves may intersect (subdivide to search for intersections)
-        let area_accuracy   = accuracy * accuracy;
+    // Subdivide both curves
+    let (curve1a, curve1b) = curve1.subdivide(0.5);
+    let (curve2a, curve2b) = curve2.subdivide(0.5);
 
-        let size1           = bounds1.max() - bounds1.min();
-        let area1           = size1.dot(&size1);
-        let size2           = bounds2.max() - bounds2.min();
-        let area2           = size2.dot(&size2);
+    // Curves needing to be subdivided after this intersection. This contains two pairs of (curve, offset) structures
+    // offset is 0.5 if the curve if on the RHS, so we can do t*0.5+offset to get the t value to return before the
+    // subdivision
+    let mut to_subdivide = vec![];
 
-        if area1 <= accuracy && area2 <= area_accuracy {
-            // Both curves are smaller than the required accuracy (assume they meet in the middle)
-            vec![(0.5, 0.5)]
+    // Try intersecting them. If we get a match, stop and don't subdivide further
+    match curve_intersection_inner(&curve1a, &curve2a, accuracy_area) {
+        CurveIntersection::None             => (),
+        CurveIntersection::Match(t1, t2)    => { return vec![(t1*0.5, t2*0.5)]; },
+        CurveIntersection::Subdivide        => to_subdivide.push(((&curve1a, 0.0), (&curve2a, 0.0)))
+    }
 
-        } else if area1 <= area_accuracy {
+    match curve_intersection_inner(&curve1a, &curve2b, accuracy_area) {
+        CurveIntersection::None             => (),
+        CurveIntersection::Match(t1, t2)    => { return vec![(t1*0.5, t2*0.5+0.5)]; },
+        CurveIntersection::Subdivide        => to_subdivide.push(((&curve1a, 0.0), (&curve2b, 0.5)))
+    }
 
-            // Subdivide curve2 only
-            let (curve2a, curve2b) = curve2.subdivide(0.5);
+    match curve_intersection_inner(&curve1b, &curve2a, accuracy_area) {
+        CurveIntersection::None             => (),
+        CurveIntersection::Match(t1, t2)    => { return vec![(t1*0.5+0.5, t2*0.5)]; },
+        CurveIntersection::Subdivide        => to_subdivide.push(((&curve1b, 0.5), (&curve2a, 0.0)))
+    }
 
-            // Find the intersections of both sides
-            let left_intersections  = curve_intersects_curve(curve1, &curve2a, accuracy);
-            let right_intersections = curve_intersects_curve(curve1, &curve2b, accuracy);
+    match curve_intersection_inner(&curve1a, &curve2b, accuracy_area) {
+        CurveIntersection::None             => (),
+        CurveIntersection::Match(t1, t2)    => { return vec![(t1*0.5+0.5, t2*0.5+0.5)]; },
+        CurveIntersection::Subdivide        => to_subdivide.push(((&curve1a, 0.5), (&curve2b, 0.5)))
+    }
 
-            // Adjust the result to the t values of our curve
-            // TODO: it's inefficient to do this repeatedly, would be better to pass in a t range and calculate it once
-            let mut res = vec![];
-            for (t1, t2) in left_intersections.into_iter() {
-                res.push((t1, t2*0.5));
-            }
-            for (t1, t2) in right_intersections.into_iter() {
-                res.push((t1, t2*0.5+0.5));
-            }
+    // Search for matches in the curves to subdivide
+    let mut result = vec![];
+    for ((curve1, offset1), (curve2, offset2)) in to_subdivide {
+        // Recursively search for more intersections
+        let matches = curve_intersects_curve(curve1, curve2, accuracy);
 
-            res
-
-        } else if area2 <= area_accuracy {
-
-            // Subdivide curve1 only
-            let (curve1a, curve1b) = curve1.subdivide(0.5);
-
-            // Find the intersections of both sides
-            let left_intersections  = curve_intersects_curve(&curve1a, curve2, accuracy);
-            let right_intersections = curve_intersects_curve(&curve1b, curve2, accuracy);
-
-            // Adjust the result to the t values of our curve
-            // TODO: it's inefficient to do this repeatedly, would be better to pass in a t range and calculate it once
-            let mut res = vec![];
-            for (t1, t2) in left_intersections.into_iter() {
-                res.push((t1*0.5, t2));
-            }
-            for (t1, t2) in right_intersections.into_iter() {
-                res.push((t1*0.5+0.5, t2));
-            }
-
-            res
-
-        } else {
-
-            // Subdivide both curves
-            let (curve1a, curve1b) = curve1.subdivide(0.5);
-            let (curve2a, curve2b) = curve2.subdivide(0.5);
-
-            // Find the intersections of both sides
-            let curve1_left         = curve_intersects_curve(&curve1a, &curve2a, accuracy);
-            let curve1_right        = curve_intersects_curve(&curve1b, &curve2a, accuracy);
-            let curve2_left         = curve_intersects_curve(&curve1a, &curve2b, accuracy);
-            let curve2_right        = curve_intersects_curve(&curve1b, &curve2b, accuracy);
-
-            // Adjust the result to the t values of our curve
-            // TODO: it's inefficient to do this repeatedly, would be better to pass in a t range and calculate it once
-            let mut res = vec![];
-            for (t1, t2) in curve1_left.into_iter() {
-                res.push((t1*0.5, t2*0.5));
-            }
-            for (t1, t2) in curve1_right.into_iter() {
-                res.push((t1*0.5+0.5, t2*0.5));
-            }
-            for (t1, t2) in curve2_left.into_iter() {
-                res.push((t1*0.5, t2*0.5+0.5));
-            }
-            for (t1, t2) in curve2_right.into_iter() {
-                res.push((t1*0.5+0.5, t2*0.5+0.5));
-            }
-
-            res
-            
+        // If we find any, translate the 't' values to be in the range for our source curve
+        // TODO: it'd be more efficient to do this in a single operation rather than at each recursion level
+        for (t1, t2) in matches {
+            result.push((t1*0.5+offset1, t2*0.5+offset2));
         }
     }
+
+    result
 }
