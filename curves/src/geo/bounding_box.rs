@@ -11,6 +11,31 @@ pub trait BoundingBox : Geo+Sized {
     fn from_min_max(min: Self::Point, max: Self::Point) -> Self;
 
     ///
+    /// Returns a bounding box containing the specified points
+    /// 
+    fn bounds_for_points<PointIter: IntoIterator<Item=Self::Point>>(points: PointIter) -> Self {
+        let mut points = points.into_iter();
+
+        // Initialise the bounding box with the first point
+        let first_point = points.next();
+        if let Some(first_point) = first_point {
+            // min, max is just the first point initially
+            let (mut min, mut max) = (first_point.clone(), first_point);
+
+            // Update with the remainder of the points
+            for point in points {
+                min = Self::Point::from_smallest_components(min, point);
+                max = Self::Point::from_biggest_components(max, point);
+            }
+
+            Self::from_min_max(min, max)
+        } else {
+            // If there are no points, then the result is the empty bounding box
+            Self::empty()
+        }
+    }
+
+    ///
     /// Returns the minimum point of this bounding box
     ///
     fn min(&self) -> Self::Point;
@@ -69,6 +94,7 @@ pub trait BoundingBox : Geo+Sized {
 /// 
 /// (Unlike a normal point tuple this always represents its bounds in minimum/maximum order)
 /// 
+#[derive(Clone, Copy, PartialEq)]
 pub struct Bounds<Point: Coordinate>(Point, Point);
 
 impl<Point: Coordinate> BoundingBox for (Point, Point) {
