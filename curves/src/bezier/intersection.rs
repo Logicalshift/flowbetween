@@ -180,15 +180,15 @@ where C::Point: Coordinate2D {
         CurveIntersection::Subdivide        => to_subdivide.push(((&curve1b, 0.5), (&curve2a, 0.0)))
     }
 
-    match curve_intersection_inner(&curve1a, &curve2b, accuracy_area) {
+    match curve_intersection_inner(&curve1b, &curve2b, accuracy_area) {
         CurveIntersection::None             => (),
         CurveIntersection::Match(t1, t2)    => { return vec![(t1*0.5+0.5, t2*0.5+0.5)]; },
-        CurveIntersection::Subdivide        => to_subdivide.push(((&curve1a, 0.5), (&curve2b, 0.5)))
+        CurveIntersection::Subdivide        => to_subdivide.push(((&curve1b, 0.5), (&curve2b, 0.5)))
     }
 
     // Search for matches in the curves to subdivide
     let mut result = vec![];
-    for ((curve1, offset1), (curve2, offset2)) in to_subdivide {
+    for ((curve1, offset1), (curve2, offset2)) in to_subdivide.into_iter() {
         // Recursively search for more intersections
         let matches = curve_intersects_curve(curve1, curve2, accuracy);
 
