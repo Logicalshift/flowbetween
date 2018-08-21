@@ -161,7 +161,7 @@ where C::Point: Coordinate2D {
     // subdivision
     let mut to_subdivide = vec![];
 
-    // Try intersecting them. If we get a match, stop and don't subdivide further
+    // Try intersecting them. If we get a match, stop and don't subdivide further (assume that if all our subdivisions generate a match that it's really the same one)
     match curve_intersection_inner(&curve1a, &curve2a, accuracy_area) {
         CurveIntersection::None             => (),
         CurveIntersection::Match(t1, t2)    => { return vec![(t1*0.5, t2*0.5)]; },
