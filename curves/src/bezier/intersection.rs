@@ -94,8 +94,8 @@ fn simple_bounds<C: BezierCurve>(curve: &C) -> Bounds<C::Point> {
 /// This can return one of three possible values: a found intersection, an indication that the curves
 /// should be subdivided and checked again or an indication that the curves do not intersect
 /// 
-fn curve_intersection_inner<C: BezierCurve>(curve1: &C, curve2: &C, accuracy_area: f64) -> CurveIntersection
-where C::Point: Coordinate2D {
+fn curve_intersection_inner<'a, C: BezierCurve>(curve1: &'a C, curve2: &'a C, accuracy_area: f64) -> CurveIntersection
+where C::Point: 'a+Coordinate2D {
     // The bounds formed by the control points is faster to calculate than the exact curve bounds and good enough for our purposes
     let bounds1 = simple_bounds(curve1);
     let bounds2 = simple_bounds(curve2);
@@ -143,8 +143,8 @@ where C::Point: Coordinate2D {
 /// 
 /// The accuracy level determines the smallest bounding box used before we estimate an intersection
 /// 
-pub fn curve_intersects_curve<C: BezierCurve>(curve1: &C, curve2: &C, accuracy: f64) -> Vec<(f64, f64)>
-where C::Point: Coordinate2D {
+pub fn curve_intersects_curve<'a, C: BezierCurve>(curve1: &'a C, curve2: &'a C, accuracy: f64) -> Vec<(f64, f64)>
+where C::Point: 'a+Coordinate2D {
     // TODO: curves that are the same will produce far too many points of overlap
     // TODO: as will curves that have sections that are the same
     // TODO: repeatedly recalculating the t values as the recursion unwinds is inefficient
