@@ -96,3 +96,32 @@ fn line_does_not_intersect_circle() {
         assert!(intersection.len() == 0);
     }
 }
+
+#[test]
+fn circle_intersects_circle() {
+    let center = Coord2(5.0, 5.0);
+    let radius = 4.0;
+
+    // Create a couple of circles (which should )
+    let circle1: SimpleBezierPath = Circle::new(center, radius).to_path();
+    let circle2: SimpleBezierPath = Circle::new(center + Coord2(1.0, 0.5), radius).to_path();
+
+    // Get the intersections for these two circles
+    let intersections = path_intersects_path(&circle1, &circle2, 0.5);
+
+    // The circles should intersect at least once
+    assert!(intersections.len() > 0);
+
+    // Convert to curves
+    let curves1 = circle1.to_curves::<Curve<_>>();
+    let curves2 = circle2.to_curves::<Curve<_>>();
+
+    // Check that the intersections are in roughly the same place in each circle
+    for ((index1, t1), (index2, t2)) in intersections {
+        let point1 = curves1[index1].point_at_pos(t1);
+        let point2 = curves2[index2].point_at_pos(t2);
+
+        // Should be within the tolerance specified by the accuracy value
+        assert!(point1.distance_to(&point2) < 0.5);
+    }
+}
