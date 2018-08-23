@@ -96,6 +96,8 @@ fn simple_bounds<C: BezierCurve>(curve: &C) -> Bounds<C::Point> {
 /// 
 fn curve_intersection_inner<'a, C: BezierCurve>(curve1: &'a C, curve2: &'a C, accuracy_area: f64) -> CurveIntersection
 where C::Point: 'a+Coordinate2D {
+    // TODO: we can calculate if curve1 or curve2 is approximately linear and switch to the line intersection algorithm
+
     // The bounds formed by the control points is faster to calculate than the exact curve bounds and good enough for our purposes
     let bounds1 = simple_bounds(curve1);
     let bounds2 = simple_bounds(curve2);
