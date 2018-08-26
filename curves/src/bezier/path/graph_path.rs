@@ -193,7 +193,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// Searches two ranges of points in this object and detects collisions between them, subdividing the edges
     /// and creating branch points at the appropriate places.
     /// 
-    fn detect_collisions(&mut self, collide_from: Range<usize>, collide_to: Range<usize>) {
+    fn detect_collisions(&mut self, collide_from: Range<usize>, collide_to: Range<usize>, accuracy: f64) {
 
     }
 
@@ -214,7 +214,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Search for collisions between our original path and the new one
         let total_points = self.points.len();
-        self.detect_collisions(0..collision_offset, collision_offset..total_points);
+        self.detect_collisions(0..collision_offset, collision_offset..total_points, accuracy);
 
         // Return the result
         self
