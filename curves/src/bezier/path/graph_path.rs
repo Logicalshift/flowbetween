@@ -186,6 +186,27 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             points: new_points
         }
     }
+
+    ///
+    /// Collides this path against another, generating a merged path
+    /// 
+    /// Anywhere this graph intersects the second graph, a point with two edges will be generated. All edges will be left as
+    /// interior or exterior depending on how they're set on the graph they originate from.
+    /// 
+    /// Working out the collision points is the first step to performing path arithmetic: the resulting graph can be altered
+    /// to specify edge types - knowing if an edge is an interior or exterior edge makes it possible to tell the difference
+    /// between a hole cut into a shape and an intersection.
+    /// 
+    pub fn collide(mut self, collide_path: GraphPath<Point>) -> GraphPath<Point> {
+        // Generate a merged path with all of the edges
+        let collision_offset    = self.points.len();
+        self                    = self.merge(collide_path);
+
+        // TODO: Search for collisions between our original path and the new one
+
+        // Return the result
+        self
+    }
 }
 
 ///
@@ -212,6 +233,22 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// 
     pub fn kind(&self) -> GraphPathEdgeKind {
         self.kind
+    }
+
+    ///
+    /// Returns the index of the start point of this edge
+    /// 
+    #[inline]
+    pub fn start_point_index(&self) -> usize {
+        self.start_point
+    }
+
+    ///
+    /// Returns the index of the end point of this edge
+    /// 
+    #[inline]
+    pub fn end_point_index(&self) -> usize {
+        self.end_point
     }
 }
 
