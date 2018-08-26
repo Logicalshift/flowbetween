@@ -19,6 +19,15 @@ pub trait BezierCurveFactory: BezierCurve {
     fn from_points(start: Self::Point, end: Self::Point, control_point1: Self::Point, control_point2: Self::Point) -> Self;
 
     ///
+    /// Creates a new bezier curve of this type from an equivalent curve of another type
+    /// 
+    #[inline]
+    fn from_curve<Curve: BezierCurve<Point=Self::Point>>(curve: Curve) -> Self {
+        let (cp1, cp2) = curve.control_points();
+        Self::from_points(curve.start_point(), curve.end_point(), cp1, cp2)
+    }
+
+    ///
     /// Generates a curve by attempting to find a best fit against a set of points
     /// 
     #[inline]
