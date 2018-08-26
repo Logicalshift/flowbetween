@@ -199,11 +199,11 @@ mod test {
             BindRef::clone(&self.ui)
         }
 
-        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
             Some(self.label_controller.clone())
         }
 
-        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
             Some(self.view_model.clone())
         }
     }
@@ -213,11 +213,11 @@ mod test {
             BindRef::clone(&self.ui)
         }
 
-        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
             None
         }
 
-        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
             Some(self.view_model.clone())
         }
     }

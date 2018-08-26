@@ -194,20 +194,20 @@ mod test {
             fn duration(&self) -> Duration { unimplemented!() }
             fn frame_length(&self) -> Duration { unimplemented!() }
             fn get_layer_ids(&self) -> Vec<u64> { unimplemented!() }
-            fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> { unimplemented!() }
+            fn get_layer_with_id<'a>(&'a self, _layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> { unimplemented!() }
             fn get_num_edits(&self) -> usize { unimplemented!() }
-            fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> { unimplemented!() }
-            fn motion<'a>(&'a self) -> &'a AnimationMotion { self }
+            fn read_edit_log<'a>(&'a self, _range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> { unimplemented!() }
+            fn motion<'a>(&'a self) -> &'a dyn AnimationMotion { self }
         }
 
         impl AnimationMotion for TestAnimation {
-            fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> { unimplemented!() }
+            fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
 
             fn assign_motion_id(&self) -> ElementId {
                 ElementId::Assigned(42)
             }
 
-            fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
+            fn get_motions_for_element(&self, _element_id: ElementId) -> Vec<ElementId> {
                 vec![]
             }
 
@@ -215,7 +215,7 @@ mod test {
                 vec![]
             }
 
-            fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
+            fn get_motion(&self, _motion_id: ElementId) -> Option<Motion> {
                 None
             }
         }
@@ -233,7 +233,7 @@ mod test {
         assert!(static_move[3] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetPath(TimeCurve::new(target_point, target_point))));
 
         // Attaching can be in either order
-        if (static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1)))) {
+        if static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))) {
             assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2))));
         } else {
             assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))));
@@ -253,14 +253,14 @@ mod test {
             fn duration(&self) -> Duration { unimplemented!() }
             fn frame_length(&self) -> Duration { unimplemented!() }
             fn get_layer_ids(&self) -> Vec<u64> { unimplemented!() }
-            fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<'a+Deref<Target='a+Layer>>> { unimplemented!() }
+            fn get_layer_with_id<'a>(&'a self, _layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> { unimplemented!() }
             fn get_num_edits(&self) -> usize { unimplemented!() }
-            fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<'a+Stream<Item=AnimationEdit, Error=()>> { unimplemented!() }
-            fn motion<'a>(&'a self) -> &'a AnimationMotion { self }
+            fn read_edit_log<'a>(&'a self, _range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> { unimplemented!() }
+            fn motion<'a>(&'a self) -> &'a dyn AnimationMotion { self }
         }
 
         impl AnimationMotion for TestAnimation {
-            fn get_motion_ids(&self, when: Range<Duration>) -> Box<Stream<Item=ElementId, Error=()>> { unimplemented!() }
+            fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
 
             fn assign_motion_id(&self) -> ElementId {
                 ElementId::Assigned(43)

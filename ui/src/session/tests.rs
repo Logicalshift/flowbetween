@@ -20,7 +20,7 @@ impl Controller for TestController {
         BindRef::new(&self.ui)
     }
 
-    fn get_viewmodel(&self) -> Option<Arc<ViewModel>> { 
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> { 
         match self.viewmodel {
             Some(ref viewmodel) => Some(viewmodel.clone()),
             None                => None

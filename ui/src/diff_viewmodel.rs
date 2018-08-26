@@ -332,7 +332,7 @@ mod test {
             BindRef::from_arc(Arc::clone(&self.controls))
         }
 
-        fn get_subcontroller(&self, id: &str) -> Option<Arc<Controller>> {
+        fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
             let res = self.subcontrollers.lock().unwrap().get(id).map(|x| x.clone());
 
             if let Some(res) = res {
@@ -342,7 +342,7 @@ mod test {
             }
         }
 
-        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
             Some(self.view_model.clone())
         }
     }
@@ -510,11 +510,11 @@ mod test {
             ])))
         }
 
-        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
             Some(self.model_controler.clone())
         }
 
-        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
             Some(self.view_model.clone())
         }
     }
@@ -524,11 +524,11 @@ mod test {
             BindRef::from(bind(Control::label()))
         }
 
-        fn get_subcontroller(&self, _id: &str) -> Option<Arc<Controller>> {
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
             None
         }
 
-        fn get_viewmodel(&self) -> Option<Arc<ViewModel>> {
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
             Some(self.view_model.clone())
         }
     }

@@ -199,7 +199,7 @@ mod test {
 
         fn create_model(&self, _flo_model: Arc<FloModel<InMemoryAnimation>>) -> i32 { 94 }
 
-        fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<InMemoryAnimation>>, _data: Option<Arc<i32>>, input: Box<'a+Iterator<Item=ToolInput<i32>>>) -> Box<'a+Iterator<Item=ToolAction<i32>>> {
+        fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<InMemoryAnimation>>, _data: Option<Arc<i32>>, input: Box<dyn 'a+Iterator<Item=ToolInput<i32>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<_> = input.collect();
             
             if input.len() == 1 {
