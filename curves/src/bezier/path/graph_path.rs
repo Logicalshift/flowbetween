@@ -219,6 +219,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         let collisions          = curve_intersects_curve(&src_edge, &tgt_edge, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
+
+                        // Need to break the edges at each of these points
+                        // Points at 0 and 1 just add branches without subdividing
+                        // Subdivisions from source and target need to be put back in the source/target lists
                     }
                 }
             }
