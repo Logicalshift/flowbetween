@@ -116,6 +116,7 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     ///
     /// The start point of this curve
     /// 
+    #[inline]
     fn start_point(&self) -> Self::Point {
         self.graph.points[self.start_point].2.clone()
     }
@@ -123,6 +124,7 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     ///
     /// The end point of this curve
     /// 
+    #[inline]
     fn end_point(&self) -> Self::Point {
         self.graph.points[self.end_point].2.clone()
     }
@@ -130,6 +132,7 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     ///
     /// The control points in this curve
     /// 
+    #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
         (self.graph.points[self.end_point].0.clone(), self.graph.points[self.end_point].1.clone())
     }
