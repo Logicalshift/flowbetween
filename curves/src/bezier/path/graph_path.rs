@@ -197,7 +197,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// to specify edge types - knowing if an edge is an interior or exterior edge makes it possible to tell the difference
     /// between a hole cut into a shape and an intersection.
     /// 
-    pub fn collide(mut self, collide_path: GraphPath<Point>) -> GraphPath<Point> {
+    pub fn collide(mut self, collide_path: GraphPath<Point>, accuracy: f64) -> GraphPath<Point> {
         // Generate a merged path with all of the edges
         let collision_offset    = self.points.len();
         self                    = self.merge(collide_path);
