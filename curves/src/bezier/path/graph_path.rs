@@ -98,7 +98,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                 // Need to draw a line to the last point
                 let close_vector = points[last_point].2 - start_point;
                 points[0].0 = close_vector * 0.33;
-                points[1].1 = close_vector * 0.66;
+                points[0].1 = close_vector * 0.66;
             }
 
             // Add an edge from the start point to the end point
