@@ -6,7 +6,7 @@ use itertools::*;
 ///
 /// Converts a path to a series of bezier curves
 /// 
-pub fn path_to_curves<Path: BezierPath, Curve: BezierCurve<Point=Path::Point>>(path: &Path) -> impl Iterator<Item=Curve> {
+pub fn path_to_curves<Path: BezierPath, Curve: BezierCurveFactory<Point=Path::Point>>(path: &Path) -> impl Iterator<Item=Curve> {
     let just_start_point    = vec![(path.start_point(), path.start_point(), path.start_point())].into_iter();
     let points              = path.points();
 

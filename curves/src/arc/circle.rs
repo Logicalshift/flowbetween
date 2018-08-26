@@ -59,7 +59,7 @@ impl<Coord: Coordinate2D+Coordinate> Circle<Coord> {
     ///
     /// Returns a set of bezier curves that approximate this circle
     /// 
-    pub fn to_curves<Curve: BezierCurve<Point=Coord>>(&self) -> Vec<Curve> {
+    pub fn to_curves<Curve: BezierCurveFactory<Point=Coord>>(&self) -> Vec<Curve> {
         // Angles to put the curves at (we need 4 curves for a decent approximation of a circle)
         let start_angle     = f64::consts::PI/4.0;
         let section_angle   = f64::consts::PI/2.0;
@@ -97,7 +97,7 @@ impl<'a, Coord: Coordinate2D+Coordinate> CircularArc<'a, Coord> {
     /// If this arc covers an angle > 90 degrees, the curve will
     /// be very inaccurate.
     /// 
-    pub fn to_bezier_curve<Curve: BezierCurve<Point=Coord>>(&self) -> Curve {
+    pub fn to_bezier_curve<Curve: BezierCurveFactory<Point=Coord>>(&self) -> Curve {
         // Algorithm described here: https://www.tinaja.com/glib/bezcirc2.pdf
         // Curve for the unit arc with its center at (1,0)
         let theta       = self.end_radians - self.start_radians;

@@ -176,7 +176,7 @@ impl Geo for TimeCurveSection {
     type Point = TimePoint;
 }
 
-impl BezierCurve for TimeCurveSection {
+impl BezierCurveFactory for TimeCurveSection {
     ///
     /// Creates a new bezier curve of the same type from some points
     /// 
@@ -186,7 +186,9 @@ impl BezierCurve for TimeCurveSection {
             start, end, control_point1, control_point2
         }
     }
+}
 
+impl BezierCurve for TimeCurveSection {
     ///
     /// The start point of this curve
     /// 

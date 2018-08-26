@@ -40,7 +40,7 @@ pub trait BezierPath : Geo+Clone+Sized {
     /// Changes this path into a set of bezier curves
     /// 
     #[inline]
-    fn to_curves<Curve: BezierCurve<Point=Self::Point>>(&self) -> Vec<Curve> {
+    fn to_curves<Curve: BezierCurveFactory<Point=Self::Point>>(&self) -> Vec<Curve> {
         path_to_curves(self).collect()
     }
 }

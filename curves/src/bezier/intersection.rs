@@ -155,8 +155,8 @@ where C::Point: 'a+Coordinate2D {
     let accuracy_area = accuracy*accuracy;
 
     // Subdivide both curves
-    let (curve1a, curve1b) = curve1.subdivide::<C>(0.5);
-    let (curve2a, curve2b) = curve2.subdivide::<C>(0.5);
+    let (curve1a, curve1b) = curve1.subdivide::<Curve<_>>(0.5);
+    let (curve2a, curve2b) = curve2.subdivide::<Curve<_>>(0.5);
 
     // Curves needing to be subdivided after this intersection. This contains two pairs of (curve, offset) structures
     // offset is 0.5 if the curve if on the RHS, so we can do t*0.5+offset to get the t value to return before the

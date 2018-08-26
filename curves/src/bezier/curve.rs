@@ -10,14 +10,27 @@ use super::super::coordinate::*;
 const LENGTH_SUBDIVISIONS: usize = 16;
 
 ///
-/// Trait implemented by things representing a cubic bezier curve
+/// Trait implemented by bezier curves that can create new versions of themselves
 /// 
-pub trait BezierCurve: Geo+Clone+Sized {
+pub trait BezierCurveFactory: BezierCurve {
     ///
     /// Creates a new bezier curve of the same type from some points
     /// 
     fn from_points(start: Self::Point, end: Self::Point, control_point1: Self::Point, control_point2: Self::Point) -> Self;
 
+    ///
+    /// Generates a curve by attempting to find a best fit against a set of points
+    /// 
+    #[inline]
+    fn fit_from_points(points: &[Self::Point], max_error: f64) -> Option<Vec<Self>> {
+        fit_curve(points, max_error)
+    }
+}
+
+///
+/// Trait implemented by things representing a cubic bezier curve
+/// 
+pub trait BezierCurve: Geo+Clone+Sized {
     ///
     /// The start point of this curve
     /// 
@@ -36,7 +49,7 @@ pub trait BezierCurve: Geo+Clone+Sized {
     ///
     /// Reverses the direction of this curve
     /// 
-    fn reverse<Curve: BezierCurve<Point=Self::Point>>(self) -> Curve {
+    fn reverse<Curve: BezierCurveFactory<Point=Self::Point>>(self) -> Curve {
         let (cp1, cp2) = self.control_points();
         Curve::from_points(self.end_point(), self.start_point(), cp2, cp1)
     }
@@ -54,7 +67,7 @@ pub trait BezierCurve: Geo+Clone+Sized {
     /// Given a value t from 0 to 1, finds a point on this curve and subdivides it, returning the two resulting curves
     /// 
     #[inline]
-    fn subdivide<Curve: BezierCurve<Point=Self::Point>>(&self, t: f64) -> (Curve, Curve) {
+    fn subdivide<Curve: BezierCurveFactory<Point=Self::Point>>(&self, t: f64) -> (Curve, Curve) {
         let control_points              = self.control_points();
         let (first_curve, second_curve) = subdivide4(t, self.start_point(), control_points.0, control_points.1, self.end_point());
 
@@ -101,14 +114,6 @@ pub trait BezierCurve: Geo+Clone+Sized {
     }
 
     ///
-    /// Generates a curve by attempting to find a best fit against a set of points
-    /// 
-    #[inline]
-    fn fit_from_points(points: &[Self::Point], max_error: f64) -> Option<Vec<Self>> {
-        fit_curve(points, max_error)
-    }
-
-    ///
     /// Attempts to estimate the length of this curve
     /// 
     fn estimate_length(&self, max_t: f64) -> f64 {
@@ -141,7 +146,7 @@ impl<Coord: Coordinate> Geo for Curve<Coord> {
     type Point = Coord;
 }
 
-impl<Coord: Coordinate> BezierCurve for Curve<Coord> {
+impl<Coord: Coordinate> BezierCurveFactory for Curve<Coord> {
     fn from_points(start: Coord, end: Coord, control_point1: Coord, control_point2: Coord) -> Self {
         Curve {
             start_point:    start,
@@ -149,7 +154,9 @@ impl<Coord: Coordinate> BezierCurve for Curve<Coord> {
             control_points: (control_point1, control_point2)
         }
     }
+}
 
+impl<Coord: Coordinate> BezierCurve for Curve<Coord> {
     #[inline]
     fn start_point(&self) -> Coord {
         self.start_point

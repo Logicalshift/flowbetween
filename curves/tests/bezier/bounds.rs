@@ -1,4 +1,4 @@
-use flo_curves::bezier::BezierCurve;
+use flo_curves::bezier::{BezierCurve, BezierCurveFactory};
 use flo_curves::bezier;
 use flo_curves::Coord2;
 use flo_curves::Coordinate;

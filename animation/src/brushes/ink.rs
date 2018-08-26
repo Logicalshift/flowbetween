@@ -238,7 +238,7 @@ impl Geo for InkCurve {
     type Point = InkCoord;
 }
 
-impl BezierCurve for InkCurve {
+impl BezierCurveFactory for InkCurve {
     fn from_points(start: InkCoord, end: InkCoord, control_point1: InkCoord, control_point2: InkCoord) -> InkCurve {
         InkCurve {
             start_point:    start,
@@ -246,7 +246,9 @@ impl BezierCurve for InkCurve {
             control_points: (control_point1, control_point2)
         }
     }
+}
 
+impl BezierCurve for InkCurve {
     #[inline]
     fn start_point(&self) -> InkCoord {
         self.start_point

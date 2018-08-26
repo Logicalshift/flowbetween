@@ -1,3 +1,4 @@
+use super::curve::*;
 use super::deform::*;
 use super::normal::*;
 use super::super::coordinate::*;
@@ -10,7 +11,7 @@ const MAX_ERROR: f64 = 0.03;
 ///
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
 /// 
-pub fn offset<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> Vec<Curve> 
+pub fn offset<Curve: BezierCurveFactory+NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> Vec<Curve> 
 where Curve::Point: Normalize {
     // Pass through the curve if it's 0-length
     let start       = curve.start_point();
@@ -71,7 +72,7 @@ where Curve::Point: Normalize {
 /// Splits a curve at a given set of ordered offsets, returning a list of curves and
 /// their final offsets
 /// 
-fn split_offsets<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64, split_points: &[f64]) -> VecDeque<(Curve, f64)> {
+fn split_offsets<Curve: BezierCurveFactory+NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64, split_points: &[f64]) -> VecDeque<(Curve, f64)> {
     let mut curves_and_offsets  = VecDeque::new();
     let mut remaining           = curve.clone();
     let mut remaining_t         = 0.0;
@@ -124,7 +125,7 @@ fn offset_error<Curve: NormalCurve>(original_curve: &Curve, offset_curve: &Curve
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
 /// 
-fn simple_offset<Curve: NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) 
+fn simple_offset<Curve: NormalCurve+BezierCurveFactory>(curve: &Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) 
 where Curve::Point: Normalize {
     // Fetch the original points
     let start       = curve.start_point();
