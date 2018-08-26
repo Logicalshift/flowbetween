@@ -6,6 +6,7 @@ use super::super::super::coordinate::*;
 /// Enum representing an edge in a graph path. There are three points associated with an edge: two control points
 /// and an end point
 /// 
+#[derive(Copy, Clone, Debug)]
 pub enum GraphPathEdge {
     /// An exterior edge
     Exterior(usize, usize, usize),
@@ -19,6 +20,7 @@ pub enum GraphPathEdge {
 /// into interior and exterior edges depending on if they are on the outside or the inside of the combined
 /// shape.
 /// 
+#[derive(Clone, Debug)]
 pub struct GraphPath<Point> {
     /// The points in this graph and their edges
     points: Vec<(Point, Vec<GraphPathEdge>)>
