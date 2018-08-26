@@ -1,5 +1,6 @@
 use super::path::*;
 use super::super::curve::*;
+use super::super::intersection::*;
 use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
@@ -194,7 +195,34 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// and creating branch points at the appropriate places.
     /// 
     fn detect_collisions(&mut self, collide_from: Range<usize>, collide_to: Range<usize>, accuracy: f64) {
+        // Iterate through the points in the 'from' range
+        for src_idx in collide_from {
+            for src_edge in 0..self.points[src_idx].3.len() {
+                // Compare to each point in the collide_to range
+                for tgt_idx in collide_to.clone() {
+                    for tgt_edge in 0..self.points[tgt_idx].3.len() {
+                        // Don't collide edges against themselves
+                        if src_idx == tgt_idx && src_edge == tgt_edge { continue; }
 
+                        // Create edge objects for each side
+                        let (_, src_end_idx)    = self.points[src_idx].3[src_edge].to_kind();
+                        let (_, tgt_end_idx)    = self.points[tgt_idx].3[tgt_edge].to_kind();
+                        let src_edge            = GraphEdge::new(self, src_idx, src_end_idx);
+                        let tgt_edge            = GraphEdge::new(self, tgt_idx, tgt_end_idx);
+
+                        // Quickly reject edges with non-overlapping bounding boxes
+                        let src_edge_bounds     = src_edge.fast_bounding_box::<Bounds<_>>();
+                        let tgt_edge_bounds     = tgt_edge.fast_bounding_box::<Bounds<_>>();
+                        if !src_edge_bounds.overlaps(&tgt_edge_bounds) { continue; }
+
+                        // Find the collisions between these two edges (these a)
+                        let collisions          = curve_intersects_curve(&src_edge, &tgt_edge, accuracy);
+
+                        // The are the points we need to divide the existing edges at and add branches
+                    }
+                }
+            }
+        }
     }
 
     ///
@@ -226,11 +254,11 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 /// 
 #[derive(Clone)]
 pub struct GraphEdge<'a, Point: 'a> {
-    /// The kind of edge that this represents
-    kind: GraphPathEdgeKind,
-
     /// The graph that this point is for
     graph: &'a GraphPath<Point>,
+
+    /// The kind of edge that this represents
+    kind: GraphPathEdgeKind,
 
     /// The initial point of this edge
     start_point: usize,
@@ -240,6 +268,19 @@ pub struct GraphEdge<'a, Point: 'a> {
 }
 
 impl<'a, Point: 'a> GraphEdge<'a, Point> {
+    ///
+    /// Creates a new graph edge (with an edge kind of 'exterior')
+    /// 
+    #[inline]
+    fn new(graph: &'a GraphPath<Point>, start_point: usize, end_point: usize) -> GraphEdge<'a, Point> {
+        GraphEdge {
+            graph:          graph,
+            kind:           GraphPathEdgeKind::Exterior,
+            start_point:    start_point,
+            end_point:      end_point
+        }
+    }
+
     ///
     /// Returns if this is an interior or an exterior edge in the path
     /// 
