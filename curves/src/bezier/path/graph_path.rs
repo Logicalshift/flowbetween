@@ -3,6 +3,8 @@ use super::super::curve::*;
 use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
+use std::ops::Range;
+
 const CLOSE_DISTANCE: f64 = 0.01;
 
 ///
@@ -188,6 +190,14 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     }
 
     ///
+    /// Searches two ranges of points in this object and detects collisions between them, subdividing the edges
+    /// and creating branch points at the appropriate places.
+    /// 
+    fn detect_collisions(&mut self, collide_from: Range<usize>, collide_to: Range<usize>) {
+
+    }
+
+    ///
     /// Collides this path against another, generating a merged path
     /// 
     /// Anywhere this graph intersects the second graph, a point with two edges will be generated. All edges will be left as
@@ -202,7 +212,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         let collision_offset    = self.points.len();
         self                    = self.merge(collide_path);
 
-        // TODO: Search for collisions between our original path and the new one
+        // Search for collisions between our original path and the new one
+        let total_points = self.points.len();
+        self.detect_collisions(0..collision_offset, collision_offset..total_points);
 
         // Return the result
         self
