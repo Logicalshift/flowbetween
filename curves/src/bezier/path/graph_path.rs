@@ -10,7 +10,14 @@ const CLOSE_DISTANCE: f64 = 0.01;
 /// 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum GraphPathEdgeKind {
+    /// An exterior edge
+    /// 
+    /// These edges represent a transition between the inside and the outside of the path
     Exterior, 
+
+    /// An interior edge
+    /// 
+    /// These edges are on the inside of the path
     Interior
 }
 
@@ -35,6 +42,17 @@ impl GraphPathEdge {
         match self {
             GraphPathEdge::Exterior(point_index) => (GraphPathEdgeKind::Exterior, *point_index),
             GraphPathEdge::Interior(point_index) => (GraphPathEdgeKind::Interior, *point_index)
+        }
+    }
+
+    ///
+    /// Sets the target point index for this edge
+    /// 
+    #[inline]
+    pub fn set_target(&mut self, new_target: usize) {
+        match self {
+            GraphPathEdge::Exterior(ref mut point_index) => *point_index = new_target,
+            GraphPathEdge::Interior(ref mut point_index) => *point_index = new_target
         }
     }
 }
@@ -138,6 +156,35 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                     end_point:      end_point
                 }
             })
+    }
+
+    ///
+    /// Merges in another path
+    /// 
+    /// This adds the edges in the new path to this path without considering if they are internal or external 
+    ///
+    pub fn merge(self, merge_path: GraphPath<Point>) -> GraphPath<Point> {
+        // Copy the points from this graph
+        let mut new_points  = self.points;
+
+        // Add in points from the merge path
+        let offset          = new_points.len();
+        new_points.extend(merge_path.points.into_iter()
+            .map(|(cp1, cp2, p, mut edges)| {
+                // Update the offsets in the edges
+                for mut edge in &mut edges {
+                    let (_, index) = edge.to_kind();
+                    edge.set_target(index + offset);
+                }
+
+                // Generate the new edge
+                (cp1, cp2, p, edges)
+            }));
+
+        // Combined path
+        GraphPath {
+            points: new_points
+        }
     }
 }
 
