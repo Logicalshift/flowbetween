@@ -195,20 +195,23 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// and creating branch points at the appropriate places.
     /// 
     fn detect_collisions(&mut self, collide_from: Range<usize>, collide_to: Range<usize>, accuracy: f64) {
+        // Put the collide_to items in a vec, so if we subdivide any of these items, we can re-read them next time through
+        let collide_to = collide_to.into_iter().collect::<Vec<_>>();
+
         // Iterate through the points in the 'from' range
         for src_idx in collide_from {
             for src_edge in 0..self.points[src_idx].3.len() {
                 // Compare to each point in the collide_to range
-                for tgt_idx in collide_to.clone() {
-                    for tgt_edge in 0..self.points[tgt_idx].3.len() {
+                for tgt_idx in collide_to.iter() {
+                    for tgt_edge in 0..self.points[*tgt_idx].3.len() {
                         // Don't collide edges against themselves
-                        if src_idx == tgt_idx && src_edge == tgt_edge { continue; }
+                        if src_idx == *tgt_idx && src_edge == tgt_edge { continue; }
 
                         // Create edge objects for each side
                         let (_, src_end_idx)    = self.points[src_idx].3[src_edge].to_kind();
-                        let (_, tgt_end_idx)    = self.points[tgt_idx].3[tgt_edge].to_kind();
+                        let (_, tgt_end_idx)    = self.points[*tgt_idx].3[tgt_edge].to_kind();
                         let src_edge            = GraphEdge::new(self, src_idx, src_end_idx);
-                        let tgt_edge            = GraphEdge::new(self, tgt_idx, tgt_end_idx);
+                        let tgt_edge            = GraphEdge::new(self, *tgt_idx, tgt_end_idx);
 
                         // Quickly reject edges with non-overlapping bounding boxes
                         let src_edge_bounds     = src_edge.fast_bounding_box::<Bounds<_>>();
@@ -223,6 +226,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         // Need to break the edges at each of these points
                         // Points at 0 and 1 just add branches without subdividing
                         // Subdivisions from source and target need to be put back in the source/target lists
+                        // Any extra edges added to the src edge need to be processed with future curves from the target
+                        // Extra target edges need to be processed next time through
+
+                        // ... or, we can add all of the subdivisions to an array and do them all at once
                     }
                 }
             }
