@@ -1,4 +1,5 @@
 use super::path::*;
+use super::super::curve::*;
 use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
@@ -89,5 +90,47 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         GraphPath {
             points: points
         }
+    }
+}
+
+///
+/// Represents an edge in a graph path
+/// 
+#[derive(Clone)]
+pub struct GraphEdge<'a, Point: 'a> {
+    /// The graph that this point is for
+    graph: &'a GraphPath<Point>,
+
+    /// The initial point of this edge
+    start_point: usize,
+
+    /// The end point of this edge
+    end_point: usize
+}
+
+impl<'a, Point: 'a+Coordinate> Geo for GraphEdge<'a, Point> {
+    type Point = Point;
+}
+
+impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
+    ///
+    /// The start point of this curve
+    /// 
+    fn start_point(&self) -> Self::Point {
+        self.graph.points[self.start_point].2.clone()
+    }
+
+    ///
+    /// The end point of this curve
+    /// 
+    fn end_point(&self) -> Self::Point {
+        self.graph.points[self.end_point].2.clone()
+    }
+
+    ///
+    /// The control points in this curve
+    /// 
+    fn control_points(&self) -> (Self::Point, Self::Point) {
+        (self.graph.points[self.end_point].0.clone(), self.graph.points[self.end_point].1.clone())
     }
 }
