@@ -428,7 +428,7 @@ impl Brush for InkBrush {
         let lower_curves = lower_curves.into_iter()
             .rev()
             .flat_map(|curve_list|  curve_list.into_iter().rev())
-            .map(|curve_section|    Draw::from(&curve_section.reverse()));
+            .map(|curve_section|    Draw::from(&curve_section.reverse::<bezier::Curve<_>>()));
 
         // Finish up
         let finish = Draw::Fill;

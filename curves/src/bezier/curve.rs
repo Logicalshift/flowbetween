@@ -36,9 +36,9 @@ pub trait BezierCurve: Geo+Clone+Sized {
     ///
     /// Reverses the direction of this curve
     /// 
-    fn reverse(self) -> Self {
+    fn reverse<Curve: BezierCurve<Point=Self::Point>>(self) -> Curve {
         let (cp1, cp2) = self.control_points();
-        Self::from_points(self.end_point(), self.start_point(), cp2, cp1)
+        Curve::from_points(self.end_point(), self.start_point(), cp2, cp1)
     }
 
     ///
@@ -54,12 +54,12 @@ pub trait BezierCurve: Geo+Clone+Sized {
     /// Given a value t from 0 to 1, finds a point on this curve and subdivides it, returning the two resulting curves
     /// 
     #[inline]
-    fn subdivide(&self, t: f64) -> (Self, Self) {
+    fn subdivide<Curve: BezierCurve<Point=Self::Point>>(&self, t: f64) -> (Curve, Curve) {
         let control_points              = self.control_points();
         let (first_curve, second_curve) = subdivide4(t, self.start_point(), control_points.0, control_points.1, self.end_point());
 
-        (Self::from_points(first_curve.0, first_curve.3, first_curve.1, first_curve.2),
-            Self::from_points(second_curve.0, second_curve.3, second_curve.1, second_curve.2))
+        (Curve::from_points(first_curve.0, first_curve.3, first_curve.1, first_curve.2),
+            Curve::from_points(second_curve.0, second_curve.3, second_curve.1, second_curve.2))
     }
 
     ///
@@ -163,14 +163,5 @@ impl<Coord: Coordinate> BezierCurve for Curve<Coord> {
     #[inline]
     fn control_points(&self) -> (Coord, Coord) {
         self.control_points
-    }
-
-    #[inline]
-    fn reverse(self) -> Self {
-        Curve {
-            start_point:    self.end_point,
-            end_point:      self.start_point,
-            control_points: (self.control_points.1, self.control_points.0)
-        }
     }
 }

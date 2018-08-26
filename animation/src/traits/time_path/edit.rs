@@ -110,7 +110,7 @@ impl TimeCurve {
                     // Move the point at the first subdivision
                     if let Some(t) = subdivisions.into_iter().nth(0) {
                         // Subdivide at this point
-                        let (first_section, next_section) = original_section.subdivide(t);
+                        let (first_section, next_section) = original_section.subdivide::<TimeCurveSection>(t);
 
                         // Create a new point for the curve
                         previous.future     = first_section.control_point1;
