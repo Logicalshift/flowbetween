@@ -6,6 +6,14 @@ use super::super::super::coordinate::*;
 const CLOSE_DISTANCE: f64 = 0.01;
 
 ///
+/// Kind of a graph path edge
+/// 
+pub enum GraphPathEdgeKind {
+    Exterior, 
+    Interior
+}
+
+///
 /// Enum representing an edge in a graph path
 /// 
 #[derive(Copy, Clone, Debug)]
@@ -15,6 +23,19 @@ pub enum GraphPathEdge {
 
     /// An interior edge
     Interior(usize)
+}
+
+impl GraphPathEdge {
+    ///
+    /// Converts this edge into a kind and a edge number
+    /// 
+    #[inline]
+    pub fn to_kind(&self) -> (GraphPathEdgeKind, usize) {
+        match self {
+            GraphPathEdge::Exterior(point_index) => (GraphPathEdgeKind::Exterior, *point_index),
+            GraphPathEdge::Interior(point_index) => (GraphPathEdgeKind::Interior, *point_index)
+        }
+    }
 }
 
 ///
@@ -90,6 +111,31 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         GraphPath {
             points: points
         }
+    }
+
+    ///
+    /// Returns the number of points in this graph. Points are numbered from 0 to this value.
+    /// 
+    #[inline]
+    pub fn num_points(&self) -> usize {
+        self.points.len()
+    }
+
+    ///
+    /// Returns an iterator of the edges connected to a particular point
+    ///
+    #[inline]
+    pub fn edges<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=(GraphPathEdgeKind, GraphEdge<'a, Point>)> {
+        self.points[point_num].3
+            .iter()
+            .map(move |edge| {
+                let (kind, end_point) = edge.to_kind();
+                (kind, GraphEdge {
+                    graph:          self,
+                    start_point:    point_num,
+                    end_point:      end_point
+                })
+            })
     }
 }
 
