@@ -8,6 +8,7 @@ const CLOSE_DISTANCE: f64 = 0.01;
 ///
 /// Kind of a graph path edge
 /// 
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum GraphPathEdgeKind {
     Exterior, 
     Interior
@@ -125,16 +126,17 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// Returns an iterator of the edges connected to a particular point
     ///
     #[inline]
-    pub fn edges<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=(GraphPathEdgeKind, GraphEdge<'a, Point>)> {
+    pub fn edges<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
         self.points[point_num].3
             .iter()
             .map(move |edge| {
                 let (kind, end_point) = edge.to_kind();
-                (kind, GraphEdge {
+                GraphEdge {
+                    kind:           kind,
                     graph:          self,
                     start_point:    point_num,
                     end_point:      end_point
-                })
+                }
             })
     }
 }
@@ -144,6 +146,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 /// 
 #[derive(Clone)]
 pub struct GraphEdge<'a, Point: 'a> {
+    /// The kind of edge that this represents
+    kind: GraphPathEdgeKind,
+
     /// The graph that this point is for
     graph: &'a GraphPath<Point>,
 
@@ -152,6 +157,15 @@ pub struct GraphEdge<'a, Point: 'a> {
 
     /// The end point of this edge
     end_point: usize
+}
+
+impl<'a, Point: 'a> GraphEdge<'a, Point> {
+    ///
+    /// Returns if this is an interior or an exterior edge in the path
+    /// 
+    pub fn kind(&self) -> GraphPathEdgeKind {
+        self.kind
+    }
 }
 
 impl<'a, Point: 'a+Coordinate> Geo for GraphEdge<'a, Point> {
