@@ -95,6 +95,20 @@ pub trait BezierCurve: Geo+Clone+Sized {
 
         bounding_box4(start, cp1, cp2, end)
     }
+    
+    ///
+    /// Faster but less accurate bounding box for a curve
+    /// 
+    /// This will produce a bounding box that contains the curve but which may be larger than necessary
+    /// 
+    #[inline]
+    fn fast_bounding_box<Bounds: BoundingBox<Point=Self::Point>>(&self) -> Bounds {
+        let start           = self.start_point();
+        let end             = self.end_point();
+        let control_points  = self.control_points();
+
+        Bounds::bounds_for_points(vec![ start, end, control_points.0, control_points.1 ])
+    }
 
     ///
     /// Given a function that determines if a searched-for point is within a bounding box, searches the

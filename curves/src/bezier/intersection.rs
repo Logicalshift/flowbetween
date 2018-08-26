@@ -75,20 +75,6 @@ enum CurveIntersection {
 }
 
 ///
-/// Returns the approximate bounds of a curve
-/// 
-/// BezierCurve::bounding_box is more precise but takes much longer to compute
-/// 
-#[inline]
-fn simple_bounds<C: BezierCurve>(curve: &C) -> Bounds<C::Point> {
-    let start           = curve.start_point();
-    let end             = curve.end_point();
-    let control_points  = curve.control_points();
-
-    Bounds::bounds_for_points(vec![ start, end, control_points.0, control_points.1 ])
-}
-
-///
 /// Determines where two curves intersect
 /// 
 /// This can return one of three possible values: a found intersection, an indication that the curves
@@ -99,8 +85,8 @@ where C::Point: 'a+Coordinate2D {
     // TODO: we can calculate if curve1 or curve2 is approximately linear and switch to the line intersection algorithm
 
     // The bounds formed by the control points is faster to calculate than the exact curve bounds and good enough for our purposes
-    let bounds1 = simple_bounds(curve1);
-    let bounds2 = simple_bounds(curve2);
+    let bounds1 = curve1.fast_bounding_box::<Bounds<_>>();
+    let bounds2 = curve2.fast_bounding_box::<Bounds<_>>();
 
     if bounds1.overlaps(&bounds2) {
         // Compute the areas covered by the two curves
