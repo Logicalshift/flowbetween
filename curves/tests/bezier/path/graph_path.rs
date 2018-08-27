@@ -179,3 +179,55 @@ fn multiple_collisions_on_one_edge() {
         }
     }
 }
+
+#[test]
+fn multiple_collisions_on_one_edge_opposite_direction() {
+    // Create the two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(4.0, 0.0))
+        .line_to(Coord2(4.0, 6.0))
+        .line_to(Coord2(2.0, 6.0))
+        .line_to(Coord2(2.0, 0.0))
+        .line_to(Coord2(4.0, 0.0))
+        .build();
+    
+    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle2 = GraphPath::from_path(&rectangle2);
+
+    // Collide them
+    let collision = rectangle1.collide(rectangle2, 0.1);
+
+    // 12 points in the collision
+    assert!(collision.num_points() == 12);
+
+    // Check the intersection points
+    for point_idx in 0..12 {
+        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.len() <= 2);
+        if edges.len() == 2 {
+            if edges[0].start_point().distance_to(&Coord2(2.0, 1.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 0.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(1.0, 1.0)) < 0.1));
+            } else if edges[0].start_point().distance_to(&Coord2(4.0, 1.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 1.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 5.0)) < 0.1));
+            } else if edges[0].start_point().distance_to(&Coord2(2.0, 5.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 1.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 5.0)) < 0.1));
+            } else if edges[0].start_point().distance_to(&Coord2(4.0, 5.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(5.0, 5.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 6.0)) < 0.1));
+            } else {
+                // These are the only four intersection points that should exist
+                println!("{:?}", edges[0].start_point());
+                assert!(false)
+            }
+        }
+    }
+}
