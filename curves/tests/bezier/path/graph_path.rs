@@ -74,6 +74,9 @@ pub fn collide_two_rectangles() {
         assert!(edges.len() <= 2);
         assert!(edges.len() >= 1);
 
+        assert!(edges[0].kind() == GraphPathEdgeKind::Exterior);
+        assert!(edges.len() == 1 || edges[1].kind() == GraphPathEdgeKind::Exterior);
+
         // Edges leading up to the collision
         if edges[0].start_point() == Coord2(5.0, 1.0) {
             check_count += 1;
