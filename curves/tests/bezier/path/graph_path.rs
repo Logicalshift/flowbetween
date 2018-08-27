@@ -152,4 +152,26 @@ fn multiple_collisions_on_one_edge() {
 
     // 12 points in the collision
     assert!(collision.num_points() == 12);
+
+    // Check the intersection points
+    for point_idx in 0..12 {
+        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.len() <= 2);
+        if edges.len() == 2 {
+            if edges[0].start_point().distance_to(&Coord2(2.0, 1.0)) < 0.1 {
+
+            } else if edges[0].start_point().distance_to(&Coord2(4.0, 1.0)) < 0.1 {
+
+            } else if edges[0].start_point().distance_to(&Coord2(2.0, 5.0)) < 0.1 {
+
+            } else if edges[0].start_point().distance_to(&Coord2(4.0, 5.0)) < 0.1 {
+
+            } else {
+                // These are the only four intersection points that should exist
+                println!("{:?}", edges[0].start_point());
+                assert!(false)
+            }
+        }
+    }
 }
