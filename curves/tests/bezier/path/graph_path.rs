@@ -39,3 +39,88 @@ pub fn create_and_read_simple_graph_path() {
         assert!(edges[0].end_point() == Coord2(10.0, 11.0));
     }
 }
+
+#[test]
+pub fn collide_two_rectangles() {
+    // Create the two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(4.0, 4.0))
+        .line_to(Coord2(9.0, 4.0))
+        .line_to(Coord2(9.0, 9.0))
+        .line_to(Coord2(4.0, 9.0))
+        .line_to(Coord2(4.0, 4.0))
+        .build();
+    
+    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle2 = GraphPath::from_path(&rectangle2);
+
+    // Collide them
+    let collision = rectangle1.collide(rectangle2, 0.1);
+
+    // 10 points in the collision
+    assert!(collision.num_points() == 10);
+
+    let mut check_count = 0;
+
+    for point_idx in 0..10 {
+        // Check the edges for each point
+        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.len() <= 2);
+        assert!(edges.len() >= 1);
+
+        // Edges leading up to the collision
+        if edges[0].start_point() == Coord2(5.0, 1.0) {
+            check_count += 1;
+
+            assert!(edges.len() == 1);
+            assert!(edges[0].end_point().distance_to(&Coord2(5.0, 4.0)) < 0.1);
+        }
+
+        if edges[0].start_point() == Coord2(5.0, 5.0) {
+            check_count += 1;
+
+            assert!(edges.len() == 1);
+            assert!(edges[0].end_point().distance_to(&Coord2(4.0, 5.0)) < 0.1);
+        }
+
+        if edges[0].start_point() == Coord2(1.0, 5.0) {
+            check_count += 1;
+
+            assert!(edges.len() == 1);
+            assert!(edges[0].end_point().distance_to(&Coord2(1.0, 1.0)) < 0.1);
+        }
+
+        if edges[0].start_point() == Coord2(4.0, 4.0) {
+            check_count += 1;
+
+            assert!(edges.len() == 1);
+            assert!(edges[0].end_point().distance_to(&Coord2(5.0, 4.0)) < 0.1);
+        }
+
+        // Collision edges
+        if edges[0].start_point().distance_to(&Coord2(4.0, 5.0)) < 0.1 {
+            check_count += 1;
+
+            assert!(edges.len() == 2);
+            assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 4.0)) < 0.1));
+            assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(1.0, 5.0)) < 0.1));
+        }
+
+        if edges[0].start_point().distance_to(&Coord2(5.0, 4.0)) < 0.1 {
+            check_count += 1;
+
+            assert!(edges.len() == 2);
+            assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(9.0, 4.0)) < 0.1));
+            assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(5.0, 5.0)) < 0.1));
+        }
+    }
+
+    // Checked 6 (of 10) edges
+    assert!(check_count == 6);
+}
