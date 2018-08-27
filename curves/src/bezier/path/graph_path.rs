@@ -230,6 +230,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         // Extra target edges need to be processed next time through
 
                         // ... or, we can add all of the subdivisions to an array and do them all at once
+
+                        // ... or, we can do the subdivisions after we've calculated them all for this source item
+
+                        // There's a problem with the control point design (in that while these two lines have the same end point, they also have different control points...)
                     }
                 }
             }
