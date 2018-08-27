@@ -27,35 +27,28 @@ pub enum GraphPathEdgeKind {
 ///
 /// Enum representing an edge in a graph path
 /// 
-#[derive(Copy, Clone, Debug)]
-pub enum GraphPathEdge {
-    /// An exterior edge
-    Exterior(usize),
+#[derive(Clone, Debug)]
+struct GraphPathEdge<Point> {
+    /// The kind of this edge
+    kind: GraphPathEdgeKind,
 
-    /// An interior edge
-    Interior(usize)
+    /// Position of the first control point
+    cp1: Point,
+
+    /// Position of the second control point
+    cp2: Point,
+
+    /// The index of the target point
+    end_idx: usize
 }
 
-impl GraphPathEdge {
+impl<Point: Coordinate> GraphPathEdge<Point> {
     ///
-    /// Converts this edge into a kind and a edge number
+    /// Creates a new graph path edge
     /// 
-    #[inline]
-    pub fn to_kind(&self) -> (GraphPathEdgeKind, usize) {
-        match self {
-            GraphPathEdge::Exterior(point_index) => (GraphPathEdgeKind::Exterior, *point_index),
-            GraphPathEdge::Interior(point_index) => (GraphPathEdgeKind::Interior, *point_index)
-        }
-    }
-
-    ///
-    /// Sets the target point index for this edge
-    /// 
-    #[inline]
-    pub fn set_target(&mut self, new_target: usize) {
-        match self {
-            GraphPathEdge::Exterior(ref mut point_index) => *point_index = new_target,
-            GraphPathEdge::Interior(ref mut point_index) => *point_index = new_target
+    fn new(kind: GraphPathEdgeKind, cp1: Point, cp2: Point, end_idx: usize) -> GraphPathEdge<Point> {
+        GraphPathEdge {
+            kind, cp1, cp2, end_idx
         }
     }
 }
@@ -68,7 +61,7 @@ impl GraphPathEdge {
 #[derive(Clone, Debug)]
 pub struct GraphPath<Point> {
     /// The points in this graph and their edges. Each 'point' here consists of two control points and an end point
-    points: Vec<(Point, Point, Point, Vec<GraphPathEdge>)>
+    points: Vec<(Point, Vec<GraphPathEdge<Point>>)>
 }
 
 impl<Point: Coordinate> Geo for GraphPath<Point> {
@@ -85,7 +78,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Push the start point (with an open path)
         let start_point = path.start_point();
-        points.push((Point::origin(), Point::origin(), start_point, vec![]));
+        points.push((start_point, vec![]));
 
         // We'll add edges to the previous point
         let mut last_point = 0;
@@ -94,10 +87,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // Iterate through the points in the path
         for (cp1, cp2, end_point) in path.points() {
             // Push the points
-            points.push((cp1, cp2, end_point, vec![]));
+            points.push((end_point, vec![]));
 
             // Add an edge from the last point to the next point
-            points[last_point].3.push(GraphPathEdge::Exterior(next_point));
+            points[last_point].1.push(GraphPathEdge::new(GraphPathEdgeKind::Exterior, cp1, cp2, next_point));
 
             // Update the last/next pooints
             last_point += 1;
@@ -107,23 +100,21 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // Close the path
         if last_point > 0 {
             // Graph actually has some edges
-            if start_point.distance_to(&points[last_point].2) < CLOSE_DISTANCE {
-                // Start point the same as the last point. Change initial control points
-                points[0].0 = points[last_point].0.clone();
-                points[0].1 = points[last_point].1.clone();
-
+            if start_point.distance_to(&points[last_point].0) < CLOSE_DISTANCE {
                 // Remove the last point (we're replacing it with an edge back to the start)
                 points.pop();
                 last_point -= 1;
+
+                // Change the edge to point back to the start
+                points[last_point].1[0].end_idx = 0;
             } else {
                 // Need to draw a line to the last point
-                let close_vector = points[last_point].2 - start_point;
-                points[0].0 = close_vector * 0.33;
-                points[0].1 = close_vector * 0.66;
-            }
+                let close_vector    = points[last_point].0 - start_point;
+                let cp1             = close_vector * 0.33;
+                let cp2             = close_vector * 0.66;
 
-            // Add an edge from the start point to the end point
-            points[last_point].3.push(GraphPathEdge::Exterior(0));
+                points[last_point].1.push(GraphPathEdge::new(GraphPathEdgeKind::Exterior, cp1, cp2, 0));
+            }
         } else {
             // Just a start point and no edges: remove the start point as it doesn't really make sense
             points.pop();
@@ -148,17 +139,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     ///
     #[inline]
     pub fn edges<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
-        self.points[point_num].3
+        self.points[point_num].1
             .iter()
-            .map(move |edge| {
-                let (kind, end_point) = edge.to_kind();
-                GraphEdge {
-                    kind:           kind,
-                    graph:          self,
-                    start_point:    point_num,
-                    end_point:      end_point
-                }
-            })
+            .map(move |edge| GraphEdge::new(self, point_num, edge))
     }
 
     ///
@@ -173,15 +156,14 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // Add in points from the merge path
         let offset          = new_points.len();
         new_points.extend(merge_path.points.into_iter()
-            .map(|(cp1, cp2, p, mut edges)| {
+            .map(|(point, mut edges)| {
                 // Update the offsets in the edges
                 for mut edge in &mut edges {
-                    let (_, index) = edge.to_kind();
-                    edge.set_target(index + offset);
+                    edge.end_idx += offset;
                 }
 
                 // Generate the new edge
-                (cp1, cp2, p, edges)
+                (point, edges)
             }));
 
         // Combined path
@@ -200,26 +182,26 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Iterate through the points in the 'from' range
         for src_idx in collide_from {
-            for src_edge in 0..self.points[src_idx].3.len() {
+            for src_edge in 0..self.points[src_idx].1.len() {
                 // Compare to each point in the collide_to range
                 for tgt_idx in collide_to.iter() {
-                    for tgt_edge in 0..self.points[*tgt_idx].3.len() {
+                    for tgt_edge in 0..self.points[*tgt_idx].1.len() {
                         // Don't collide edges against themselves
                         if src_idx == *tgt_idx && src_edge == tgt_edge { continue; }
 
                         // Create edge objects for each side
-                        let (_, src_end_idx)    = self.points[src_idx].3[src_edge].to_kind();
-                        let (_, tgt_end_idx)    = self.points[*tgt_idx].3[tgt_edge].to_kind();
-                        let src_edge            = GraphEdge::new(self, src_idx, src_end_idx);
-                        let tgt_edge            = GraphEdge::new(self, *tgt_idx, tgt_end_idx);
+                        let src_edge            = &self.points[src_idx].1[src_edge];
+                        let tgt_edge            = &self.points[*tgt_idx].1[tgt_edge];
+                        let src_curve           = GraphEdge::new(self, src_idx, src_edge);
+                        let tgt_curve           = GraphEdge::new(self, *tgt_idx, tgt_edge);
 
                         // Quickly reject edges with non-overlapping bounding boxes
-                        let src_edge_bounds     = src_edge.fast_bounding_box::<Bounds<_>>();
-                        let tgt_edge_bounds     = tgt_edge.fast_bounding_box::<Bounds<_>>();
+                        let src_edge_bounds     = src_curve.fast_bounding_box::<Bounds<_>>();
+                        let tgt_edge_bounds     = tgt_curve.fast_bounding_box::<Bounds<_>>();
                         if !src_edge_bounds.overlaps(&tgt_edge_bounds) { continue; }
 
                         // Find the collisions between these two edges (these a)
-                        let collisions          = curve_intersects_curve(&src_edge, &tgt_edge, accuracy);
+                        let collisions          = curve_intersects_curve(&src_curve, &tgt_curve, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
 
@@ -272,14 +254,11 @@ pub struct GraphEdge<'a, Point: 'a> {
     /// The graph that this point is for
     graph: &'a GraphPath<Point>,
 
-    /// The kind of edge that this represents
-    kind: GraphPathEdgeKind,
+    /// The point where the edge starts
+    start_idx: usize,
 
-    /// The initial point of this edge
-    start_point: usize,
-
-    /// The end point of this edge
-    end_point: usize
+    /// The edge in the graph that this represents
+    edge: &'a GraphPathEdge<Point>
 }
 
 impl<'a, Point: 'a> GraphEdge<'a, Point> {
@@ -287,12 +266,11 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// Creates a new graph edge (with an edge kind of 'exterior')
     /// 
     #[inline]
-    fn new(graph: &'a GraphPath<Point>, start_point: usize, end_point: usize) -> GraphEdge<'a, Point> {
+    fn new(graph: &'a GraphPath<Point>, start_idx: usize, edge: &'a GraphPathEdge<Point>) -> GraphEdge<'a, Point> {
         GraphEdge {
             graph:          graph,
-            kind:           GraphPathEdgeKind::Exterior,
-            start_point:    start_point,
-            end_point:      end_point
+            start_idx:      start_idx,
+            edge:           edge
         }
     }
 
@@ -300,7 +278,7 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// Returns if this is an interior or an exterior edge in the path
     /// 
     pub fn kind(&self) -> GraphPathEdgeKind {
-        self.kind
+        self.edge.kind
     }
 
     ///
@@ -308,7 +286,7 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// 
     #[inline]
     pub fn start_point_index(&self) -> usize {
-        self.start_point
+        self.start_idx
     }
 
     ///
@@ -316,7 +294,7 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// 
     #[inline]
     pub fn end_point_index(&self) -> usize {
-        self.end_point
+        self.edge.end_idx
     }
 }
 
@@ -330,7 +308,7 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     /// 
     #[inline]
     fn start_point(&self) -> Self::Point {
-        self.graph.points[self.start_point].2.clone()
+        self.graph.points[self.start_idx].0.clone()
     }
 
     ///
@@ -338,7 +316,7 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     /// 
     #[inline]
     fn end_point(&self) -> Self::Point {
-        self.graph.points[self.end_point].2.clone()
+        self.graph.points[self.edge.end_idx].0.clone()
     }
 
     ///
@@ -346,6 +324,6 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     /// 
     #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
-        (self.graph.points[self.end_point].0.clone(), self.graph.points[self.end_point].1.clone())
+        (self.edge.cp1.clone(), self.edge.cp2.clone())
     }
 }
