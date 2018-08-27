@@ -268,6 +268,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // Vector of all of the collisions found in the graph
         let mut collisions = vec![];
 
+        // TODO: for complicated paths, maybe some pre-processing for bounding boxes to eliminate trivial cases would be beneficial for performance
+
         // Iterate through the edges in the 'from' range
         for src_idx in collide_from {
             for src_edge_idx in 0..self.points[src_idx].1.len() {
