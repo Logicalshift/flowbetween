@@ -180,7 +180,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // Put the collide_to items in a vec, so if we subdivide any of these items, we can re-read them next time through
         let collide_to = collide_to.into_iter().collect::<Vec<_>>();
 
-        // Iterate through the points in the 'from' range
+        // Vector of all of the collisions found in the graph
+        let mut collisions = vec![];
+
+        // Iterate through the edges in the 'from' range
         for src_idx in collide_from {
             for src_edge in 0..self.points[src_idx].1.len() {
                 // Compare to each point in the collide_to range
@@ -201,21 +204,12 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         if !src_edge_bounds.overlaps(&tgt_edge_bounds) { continue; }
 
                         // Find the collisions between these two edges (these a)
-                        let collisions          = curve_intersects_curve(&src_curve, &tgt_curve, accuracy);
+                        let curve_collisions    = curve_intersects_curve(&src_curve, &tgt_curve, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
-
-                        // Need to break the edges at each of these points
-                        // Points at 0 and 1 just add branches without subdividing
-                        // Subdivisions from source and target need to be put back in the source/target lists
-                        // Any extra edges added to the src edge need to be processed with future curves from the target
-                        // Extra target edges need to be processed next time through
-
-                        // ... or, we can add all of the subdivisions to an array and do them all at once
-
-                        // ... or, we can do the subdivisions after we've calculated them all for this source item
-
-                        // There's a problem with the control point design (in that while these two lines have the same end point, they also have different control points...)
+                        for (src_t, tgt_t) in curve_collisions {
+                            collisions.push(((src_idx, src_edge, src_t), (tgt_idx, tgt_edge, tgt_t)));
+                        }
                     }
                 }
             }
