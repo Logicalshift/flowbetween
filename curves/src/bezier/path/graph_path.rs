@@ -301,11 +301,43 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         }
 
         // Apply the divisions to the edges
-        for ((src_idx, src_edge, src_t), (tgt_idx, tgt_edge, tgt_t)) in collisions {
+        while let Some(((src_idx, src_edge, src_t), (tgt_idx, tgt_edge, tgt_t))) = collisions.pop() {
             // Join the edges
             let new_mid_point = self.join_edges_at_intersection((src_idx, src_edge), (tgt_idx, tgt_edge), src_t, tgt_t);
 
-            // TODO: update the remainder of the collisions if any point at the source or target edge
+            // Update the remainder of the collisions if any point at the source or target edge
+            if let Some(new_mid_point) = new_mid_point {
+                // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
+                // TODO: deal with the case where the midpoint only affects one edge or the other
+                // TODO: deal with the case where the target is the source on a future collision
+                for ((ref mut other_src_idx, ref mut other_src_edge, ref mut other_src_t), (ref mut other_tgt_idx, ref mut other_tgt_edge, ref mut other_tgt_t)) in collisions.iter_mut() {
+                    // If the src edge was divided...
+                    if other_src_idx == &src_idx && other_src_edge == &src_edge {
+                        if *other_src_t < src_t {
+                            // Before the midpoint. Edge is the same, just needs to be modified.
+                            *other_src_t /= src_t;
+                        } else {
+                            // After the midpoint. Edge needs to be adjusted. Source edge is always the first on the midpoint
+                            *other_src_t     = (*other_src_t - src_t) / (1.0-src_t);
+                            *other_src_idx   = new_mid_point;
+                            *other_src_edge  = 0;
+                        }
+                    }
+
+                    // If the target edge was divided...
+                    if other_tgt_idx == &tgt_idx && other_tgt_edge == &tgt_edge {
+                        if *other_tgt_t < tgt_t {
+                            // Before the midpoint. Edge is the same, just needs to be modified.
+                            *other_tgt_t /= tgt_t;
+                        } else {
+                            // After the midpoint. Edge needs to be adjusted. Target edge is always the second on the midpoint.
+                            *other_tgt_t     = (*other_tgt_t - tgt_t) / (1.0-tgt_t);
+                            *other_tgt_idx   = new_mid_point;
+                            *other_tgt_edge  = 1;
+                        }
+                    }
+                }
+            }
         }
     }
 
