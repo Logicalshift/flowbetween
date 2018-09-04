@@ -196,7 +196,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     fn t_is_one(t: f64) -> bool { t > 0.99 }
 
     ///
-    /// Joins two edges at an intersection
+    /// Joins two edges at an intersection, returning the index of the intersection point
+    /// 
+    /// For t=0 or 1 the intersection point may be one of the ends of the edges, otherwise
+    /// this will divide the existing edges so that they both meet at the specified mid-point
     /// 
     #[inline]
     fn join_edges_at_intersection(&mut self, edge1: (usize, usize), edge2: (usize, usize), t1: f64, t2: f64) -> Option<usize> {
@@ -207,54 +210,81 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         let (edge1_idx, edge1_edge_idx) = edge1;
         let (edge2_idx, edge2_edge_idx) = edge2;
 
-        if Self::t_is_zero(t1) && Self::t_is_zero(t2) {
-            // Merge the start points
-            unimplemented!()
-        } else if Self::t_is_one(t1) && Self::t_is_one(t2) {
-            // Merge the end points
-            unimplemented!()
+        // Create representations of the two edges
+        let edge1 = Curve::from_curve(GraphEdge::new(self, edge1_idx, &self.points[edge1_idx].1[edge1_edge_idx]));
+        let edge2 = Curve::from_curve(GraphEdge::new(self, edge2_idx, &self.points[edge2_idx].1[edge2_edge_idx]));
+
+        // Create or choose a point to collide at
+        // (If t1 or t2 is 0 or 1 we collide on the edge1 or edge2 points, otherwise we create a new point to collide at)
+        let collision_point = if Self::t_is_zero(t1) {
+            edge1_idx
+        } else if Self::t_is_one(t1) {
+            self.points[edge1_idx].1[edge1_edge_idx].end_idx
+        } else if Self::t_is_zero(t2) {
+            edge2_idx
+        } else if Self::t_is_one(t2) {
+            self.points[edge2_idx].1[edge1_edge_idx].end_idx
         } else {
-            // TODO: t1=0, t1=1 and t0=1, t1=0
+            // Point is a mid-point of both lines
 
-            // For 0-t we use the existing edge in both cases and from t-1 we add a new edge. These both go to a
-            // single new point.
+            // Work out where the mid-point is (use edge1 for this always: as this is supposed to be an intersection this shouldn't matter)
+            // Note that if we use de Casteljau's algorithm here we get a subdivision for 'free' but organizing the code around it is painful
+            let mid_point = edge1.point_at_pos(t1);
 
-            // Deal with the most common case where the join is in the middle of both edges
-            // TODO: if either side is effectively 0 we need to join the points instead of splitting them
-            let (edge1a, edge1b, edge2a, edge2b, mid_point) = {
-                let edge1 = GraphEdge::new(self, edge1_idx, &self.points[edge1_idx].1[edge1_edge_idx]);
-                let edge2 = GraphEdge::new(self, edge2_idx, &self.points[edge2_idx].1[edge2_edge_idx]);
+            // Add to this list of points
+            let mid_point_idx = self.points.len();
+            self.points.push((mid_point, vec![]));
 
-                let mid_point = edge1.point_at_pos(t1);
+            // New point is the mid-point
+            mid_point_idx
+        };
 
-                let (edge1a, edge1b) = edge1.subdivide::<Curve<_>>(t1);
-                let (edge2a, edge2b) = edge2.subdivide::<Curve<_>>(t2);
+        // Subdivide the edges
+        let (edge1a, edge1b) = edge1.subdivide::<Curve<_>>(t1);
+        let (edge2a, edge2b) = edge2.subdivide::<Curve<_>>(t2);
 
-                (edge1a, edge1b, edge2a, edge2b, mid_point)
-            };
+        // The new edges have the same kinds as their ancestors
+        let edge1_kind      = self.points[edge1_idx].1[edge1_edge_idx].kind;
+        let edge2_kind      = self.points[edge2_idx].1[edge2_edge_idx].kind;
+        let edge1_end_idx   = self.points[edge1_idx].1[edge1_edge_idx].end_idx;
+        let edge2_end_idx   = self.points[edge2_idx].1[edge2_edge_idx].end_idx;
 
-            // Gather some more info about the edges we're splitting
-            let edge1_kind      = self.points[edge1_idx].1[edge1_edge_idx].kind;
-            let edge1_end_idx   = self.points[edge1_idx].1[edge1_edge_idx].end_idx;
-            let edge2_kind      = self.points[edge2_idx].1[edge2_edge_idx].kind;
-            let edge2_end_idx   = self.points[edge2_idx].1[edge2_edge_idx].end_idx;
-
-            // We create a new point with two edges (edge1b and edge2b)
-            let mid_point_idx   = self.points.len();
-            let mid_point_edges = vec![
-                GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx),
-                GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx)
-            ];
-
-            self.points.push((mid_point, mid_point_edges));
-
-            // Update edge1 and edge2 to go to the control points
-            self.points[edge1_idx].1[edge1_edge_idx].set_control_points(edge1a.control_points(), mid_point_idx);
-            self.points[edge2_idx].1[edge2_edge_idx].set_control_points(edge2a.control_points(), mid_point_idx);
-
-            // Result is the new mid-point we just added
-            Some(mid_point_idx)
+        // The 'b' edges both extend from our mid-point to the existing end point (provided
+        // t < 1.0)
+        if !Self::t_is_one(t1) {
+            // If t1 is zero or one, we're not subdividing edge1
+            // TODO: if zero, we're just adding the existing edge again to the collision point
+            self.points[collision_point].1.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx));
         }
+        if !Self::t_is_one(t2) {
+            // If t2 is zero or one, we're not subdividing edge2
+            // TODO: if zero, we're just adding the existing edge again to the collision point
+            self.points[collision_point].1.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx));
+        }
+
+        // The 'a' edges both update the initial edge, provided t is not 0
+        if !Self::t_is_zero(t1) {
+            self.points[edge1_idx].1[edge1_edge_idx].set_control_points(edge1a.control_points(), collision_point);
+
+            // If t1 is zero, we're not subdividing edge1
+            // If t1 is one this should leave the edge alone
+            // If t1 is not one, then the previous step will have added the remaining part of
+            // edge1 to the collision point
+        }
+        if !Self::t_is_zero(t2) {
+            self.points[edge2_idx].1[edge2_edge_idx].set_control_points(edge2a.control_points(), collision_point);
+
+            // If t1 is one, this should leave the edge alone
+            // TODO: if t2 is one, this will have redirected the end point of t2 to the 
+            // collision point: we need to move all of the edges
+        }
+        
+        // TODO: if t1 is zero and t2 is zero we need to replace all the places that end at 
+        // edge2_idx with the collision point (which will be edge1_idx). 
+        // Same if t1 is one and t2 is zero
+        // If t2 is one there's a similar issue explained above
+
+        Some(collision_point)
     }
 
     ///
