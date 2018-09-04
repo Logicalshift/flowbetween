@@ -36,6 +36,6 @@ fn read_curve_points() {
         let point           = curve.point_at_pos(t);
         let another_point   = bezier::de_casteljau4(t, Coord2(1.0, 1.0), Coord2(3.0, 3.0), Coord2(4.0, 4.0), Coord2(2.0, 2.0));
 
-        assert!(point == another_point);
+        assert!(point.distance_to(&another_point) < 0.001);
     }
 }

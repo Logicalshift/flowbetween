@@ -69,7 +69,7 @@ pub trait BezierCurve: Geo+Clone+Sized {
     #[inline]
     fn point_at_pos(&self, t: f64) -> Self::Point {
         let control_points = self.control_points();
-        de_casteljau4(t, self.start_point(), control_points.0, control_points.1, self.end_point())
+        basis(t, self.start_point(), control_points.0, control_points.1, self.end_point())
     }
 
     ///
