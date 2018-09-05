@@ -254,6 +254,7 @@ fn collision_at_same_point() {
     let rectangle2 = GraphPath::from_path(&rectangle2);
 
     // Collide them
+    // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision
     let collision = rectangle1.collide(rectangle2, 0.05);
 
     // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
