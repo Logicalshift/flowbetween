@@ -41,6 +41,12 @@ where C::Point: Coordinate2D {
     };
 
     roots.into_iter()
+        .map(|t| {
+            // Allow a small amount of 'slop' for items at the start/end as the root finding is not exact
+            if t < 0.0 && t > -0.001 { 0.0 }
+            else if t > 1.0 && t < 1.001 { 1.0 }
+            else { t }
+        })
         .filter(|t| {
             // Coordinates on the curve
             let pos = basis(*t, w1, w2, w3, w4);
