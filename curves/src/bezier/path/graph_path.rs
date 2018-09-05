@@ -5,6 +5,7 @@ use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
 use std::ops::Range;
+use std::mem;
 
 const CLOSE_DISTANCE: f64 = 0.01;
 
@@ -282,10 +283,21 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         }
         
         if Self::t_is_zero(t2) && collision_point != edge2_idx {
-            // TODO: if t1 is zero and t2 is zero we need to replace all the places that end at 
-            // edge2_idx with the collision point (which will be edge1_idx). 
-            // Same if t1 is one and t2 is zero
-            // If t2 is one there's a similar issue explained above
+            // If t2 is zero and the collision point is not the start of edge2, then edge2 should start at the collision point instead of where it does now
+
+            // All edges that previously went to the collision point now go to the collision point
+            for point in self.points.iter_mut() {
+                for edge in point.1.iter_mut() {
+                    if edge.end_idx == edge2_idx {
+                        edge.end_idx = collision_point;
+                    }
+                }
+            }
+
+            // All edges that currently come from edge2 need to be moved to the collision point
+            let mut edge2_edges = vec![];
+            mem::swap(&mut self.points[edge2_idx].1, &mut edge2_edges);
+            self.points[collision_point].1.extend(edge2_edges);
         }
 
         Some(collision_point)
