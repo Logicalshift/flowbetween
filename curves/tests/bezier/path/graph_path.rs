@@ -254,7 +254,7 @@ fn collision_at_same_point() {
     let rectangle2 = GraphPath::from_path(&rectangle2);
 
     // Collide them
-    let collision = rectangle1.collide(rectangle2, 0.1);
+    let collision = rectangle1.collide(rectangle2, 0.05);
 
     // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
     assert!(collision.num_points() == 12 || collision.num_points() == 13);
