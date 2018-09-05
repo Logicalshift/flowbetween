@@ -231,3 +231,31 @@ fn multiple_collisions_on_one_edge_opposite_direction() {
         }
     }
 }
+
+#[test]
+fn collision_at_same_point() {
+    // Two rectangles, with the collision point already subdivided
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(2.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(4.0, 0.0))
+        .line_to(Coord2(4.0, 6.0))
+        .line_to(Coord2(2.0, 6.0))
+        .line_to(Coord2(2.0, 1.0))
+        .line_to(Coord2(2.0, 0.0))
+        .line_to(Coord2(4.0, 0.0))
+        .build();
+    
+    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle2 = GraphPath::from_path(&rectangle2);
+
+    // Collide them
+    let collision = rectangle1.collide(rectangle2, 0.1);
+
+    // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
+    assert!(collision.num_points() == 12 || collision.num_points() == 13);
+}
