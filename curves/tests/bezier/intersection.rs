@@ -73,3 +73,29 @@ fn dot_intersects_nothing() {
     // Should be no intersections
     assert!(intersections.len() == 0);
 }
+
+#[test]
+fn lines_intersect_at_start() {
+    let line1   = (Coord2(4.0, 4.0), Coord2(5.0, 8.0));
+    let line2   = (Coord2(4.0, 4.0), Coord2(8.0, 5.0));
+    let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&line2);
+
+    let intersections = bezier::curve_intersects_line(&curve2, &line1);
+
+    assert!(intersections.len() == 1);
+    assert!(intersections[0] < 0.01);
+    assert!(curve2.point_at_pos(intersections[0]).distance_to(&Coord2(4.0, 4.0)) < 0.01);
+}
+
+#[test]
+fn lines_intersect_at_end() {
+    let line1   = (Coord2(5.0, 8.0), Coord2(4.0, 4.0));
+    let line2   = (Coord2(8.0, 5.0), Coord2(4.0, 4.0));
+    let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&line2);
+
+    let intersections = bezier::curve_intersects_line(&curve2, &line1);
+
+    assert!(intersections.len() == 1);
+    assert!(intersections[0] > 0.99);
+    assert!(curve2.point_at_pos(intersections[0]).distance_to(&Coord2(4.0, 4.0)) < 0.01);
+}
