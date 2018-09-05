@@ -25,23 +25,30 @@ where P::Point: Coordinate2D {
         let mut total_direction     = 0;
 
         // Whether or not we hit the end this pass
-        // TODO: we may need to exclude the first intersection if it's at 0 and the final intersection is at 1
         let mut hit_end_last_pass   = false;
 
         // True if we're on the first path
         let mut first_path          = true;
+        let mut hit_first_point     = false;
 
-        for curve in path_to_curves::<_, Curve<_>>(path) {
+        // Generate the set of curves for this path
+        let curves                  = path_to_curves::<_, Curve<_>>(path);
+        let mut curves              = curves.into_iter().peekable();
+
+        while let Some(curve) = curves.next() {
             let mut hit_end_this_pass = false;
 
             for t in curve_intersects_line(&curve, &ray) {
-                // Ignore a hit on the very point of the first path (it should be matched by a hit on the same point on the last path)
-                if t == 0.0 && first_path { continue; }
+                // If we precisely hit the first point, we need to make sure we don't also precisely hit the last point
+                if t < 0.0000001 && first_path { hit_first_point = true; }
+
+                // Hitting both the end and first point precisely should count as hitting only the first point
+                if t > 0.9999999 && hit_first_point && curves.peek().is_none() { continue; }
 
                 // Intersections at t = 1.0 are at the end of the curve.
                 if t > 0.9999999 { hit_end_this_pass = true; }
 
-                // Don't treat both the start of a curve and the end of a curve as two separate intersections (it's probably the same one caused by a floating point imprecision)
+                // If we hit the start point of this curve after hitting the end point of the preceding curve, assume that we've just received the same hit twice
                 if t < 0.0000001 && hit_end_last_pass { continue; }
 
                 // Get the normal at this point
