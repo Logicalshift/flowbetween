@@ -19,6 +19,13 @@ fn non_overlapping_rects() {
 }
 
 #[test]
+fn same_rects() {
+    let r1 = (Coord2(30.0, 30.0), Coord2(60.0, 40.0));
+
+    assert!(r1.overlaps(&r1));
+}
+
+#[test]
 fn touching_rects() {
     let r1 = (Coord2(30.0, 30.0), Coord2(60.0, 40.0));
     let r2 = (Coord2(20.0, 25.0), Coord2(30.0, 30.0));
