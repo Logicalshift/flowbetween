@@ -251,14 +251,14 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // The 'b' edges both extend from our mid-point to the existing end point (provided
         // t < 1.0)
-        if !Self::t_is_one(t1) {
+        if !Self::t_is_one(t1) && !Self::t_is_zero(t1) {
             // If t1 is zero or one, we're not subdividing edge1
-            // TODO: if zero, we're just adding the existing edge again to the collision point
+            // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
             self.points[collision_point].1.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx));
         }
-        if !Self::t_is_one(t2) {
+        if !Self::t_is_one(t2) && !Self::t_is_zero(t2) {
             // If t2 is zero or one, we're not subdividing edge2
-            // TODO: if zero, we're just adding the existing edge again to the collision point
+            // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
             self.points[collision_point].1.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx));
         }
 
