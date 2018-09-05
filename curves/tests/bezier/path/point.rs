@@ -110,5 +110,14 @@ fn circle_edges_do_not_contain_point() {
 
     // Points should be inside the bounds but not in the circle
     assert!(!path_contains_point(&path, &Coord2(8.5, 8.5)));
+    assert!(!path_contains_point(&path, &Coord2(1.4, 1.5)));
+}
+
+#[test]
+fn crossing_first_point_leaves_us_outside_circle() {
+    // Path is a circle
+    let path: SimpleBezierPath = Circle::new(Coord2(5.0, 5.0), 4.0).to_path();
+
+    // This line crosses the first point of the circle (which can appear as a crossing at both the start and end of the path, which might fool the algorithm into thinking the point is inside)
     assert!(!path_contains_point(&path, &Coord2(1.5, 1.5)));
 }
