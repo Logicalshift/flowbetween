@@ -263,7 +263,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         }
 
         // The 'a' edges both update the initial edge, provided t is not 0
-        if !Self::t_is_zero(t1) {
+        if !Self::t_is_zero(t1) && !Self::t_is_one(t1) {
             self.points[edge1_idx].1[edge1_edge_idx].set_control_points(edge1a.control_points(), collision_point);
 
             // If t1 is zero, we're not subdividing edge1
@@ -275,14 +275,18 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             self.points[edge2_idx].1[edge2_edge_idx].set_control_points(edge2a.control_points(), collision_point);
 
             // If t1 is one, this should leave the edge alone
-            // TODO: if t2 is one, this will have redirected the end point of t2 to the 
-            // collision point: we need to move all of the edges
+            if Self::t_is_one(t2) {
+                // TODO: if t2 is one, this will have redirected the end point of t2 to the 
+                // collision point: we need to move all of the edges
+            }
         }
         
-        // TODO: if t1 is zero and t2 is zero we need to replace all the places that end at 
-        // edge2_idx with the collision point (which will be edge1_idx). 
-        // Same if t1 is one and t2 is zero
-        // If t2 is one there's a similar issue explained above
+        if Self::t_is_zero(t2) && collision_point != edge2_idx {
+            // TODO: if t1 is zero and t2 is zero we need to replace all the places that end at 
+            // edge2_idx with the collision point (which will be edge1_idx). 
+            // Same if t1 is one and t2 is zero
+            // If t2 is one there's a similar issue explained above
+        }
 
         Some(collision_point)
     }
