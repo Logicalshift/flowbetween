@@ -28,10 +28,16 @@ where P::Point: Coordinate2D {
         // TODO: we may need to exclude the first intersection if it's at 0 and the final intersection is at 1
         let mut hit_end_last_pass   = false;
 
+        // True if we're on the first path
+        let mut first_path          = true;
+
         for curve in path_to_curves::<_, Curve<_>>(path) {
             let mut hit_end_this_pass = false;
 
             for t in curve_intersects_line(&curve, &ray) {
+                // Ignore a hit on the very point of the first path (it should be matched by a hit on the same point on the last path)
+                if t == 0.0 && first_path { continue; }
+
                 // Intersections at t = 1.0 are at the end of the curve.
                 if t > 0.9999999 { hit_end_this_pass = true; }
 
@@ -56,6 +62,9 @@ where P::Point: Coordinate2D {
 
             // Pass on whether or not we hit the end of the curve during this pass
             hit_end_last_pass = hit_end_this_pass;
+
+            // No longer the first path
+            first_path = false;
         }
 
         // Point is inside the path if the ray crosses more lines facing in a particular direction
