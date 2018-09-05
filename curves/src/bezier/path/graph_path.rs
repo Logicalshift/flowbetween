@@ -277,8 +277,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
             // If t1 is one, this should leave the edge alone
             if Self::t_is_one(t2) {
-                // TODO: if t2 is one, this will have redirected the end point of t2 to the 
-                // collision point: we need to move all of the edges
+                // If t2 is one, this will have redirected the end point of t2 to the collision point: we need to move all of the edges
+                let mut edge2_end_edges = vec![];
+                mem::swap(&mut self.points[edge2_end_idx].1, &mut edge2_end_edges);
+                self.points[collision_point].1.extend(edge2_end_edges);
             }
         }
         
