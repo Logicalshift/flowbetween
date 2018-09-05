@@ -61,7 +61,7 @@ fn find_intersection_on_straight_line_start() {
 #[test]
 fn find_intersection_on_straight_line_end() {
     // Intersection at the start of two curves
-    let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(10.0, 10.0), Coord2(10.0, 10.0)));
+    let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(10.0, 10.0), Coord2(5.0, 5.0)));
     let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(0.0, 10.0), Coord2(5.0, 5.0)));
 
     let intersections   = bezier::curve_intersects_curve(&curve1, &curve2, 0.1);
