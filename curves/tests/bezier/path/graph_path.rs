@@ -258,4 +258,15 @@ fn collision_at_same_point() {
 
     // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
     assert!(collision.num_points() == 12 || collision.num_points() == 13);
+
+    // If there are 13 points, one should have no edges any more (as another should have been chosen as the shared point)
+    if collision.num_points() == 13 {
+        let mut found_orphaned_point = false;
+        for point_idx in 0..13 {
+            let edges = collision.edges(point_idx).collect::<Vec<_>>();
+            if edges.len() == 0 { found_orphaned_point = true; }
+        }
+
+        assert!(found_orphaned_point);
+    }
 }
