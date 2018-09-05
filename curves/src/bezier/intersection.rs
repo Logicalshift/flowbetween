@@ -104,7 +104,7 @@ where C::Point: 'a+Coordinate2D {
             if curve2_t.len() > 0 {
                 CurveIntersection::Match(curve1_t, curve2_t[0])
             } else {
-                CurveIntersection::None
+                CurveIntersection::Match(0.5, 0.5)
             }
         } else if area2 <= accuracy_area {
             // Same, except the second curve has hit the accuracy threshold
@@ -114,7 +114,7 @@ where C::Point: 'a+Coordinate2D {
             if curve1_t.len() > 0 {
                 CurveIntersection::Match(curve1_t[0], curve2_t)
             } else {
-                CurveIntersection::None
+                CurveIntersection::Match(0.5, 0.5)
             }
         } else {
             // Both bounding boxes are above the accuracy threshold: need to subdivide further
