@@ -61,7 +61,7 @@ where C::Point: Coordinate2D {
             };
 
             // Point must be within the bounds of the line and the curve
-            (t >= &0.0 && t <= &1.0) && (s >= 0.0 && s < 1.0)
+            (t >= &0.0 && t <= &1.0) && (s >= 0.0 && s <= 1.0)
         })
         .collect()
 }
@@ -110,13 +110,7 @@ where C::Point: 'a+Coordinate2D {
             if curve2_t.len() > 0 {
                 CurveIntersection::Match(curve1_t, curve2_t[0])
             } else {
-                if curve1.end_point() == curve2.end_point() {
-                    CurveIntersection::Match(1.0, 1.0)
-                } else if curve1.start_point() == curve2.start_point() {
-                    CurveIntersection::Match(0.0, 0.0)
-                } else {
-                    CurveIntersection::None
-                }
+                CurveIntersection::None
             }
         } else if area2 <= accuracy_area {
             // Same, except the second curve has hit the accuracy threshold
@@ -126,13 +120,7 @@ where C::Point: 'a+Coordinate2D {
             if curve1_t.len() > 0 {
                 CurveIntersection::Match(curve1_t[0], curve2_t)
             } else {
-                if curve1.end_point() == curve2.end_point() {
-                    CurveIntersection::Match(1.0, 1.0)
-                } else if curve1.start_point() == curve2.start_point() {
-                    CurveIntersection::Match(0.0, 0.0)
-                } else {
-                    CurveIntersection::None
-                }
+                CurveIntersection::None
             }
         } else {
             // Both bounding boxes are above the accuracy threshold: need to subdivide further
