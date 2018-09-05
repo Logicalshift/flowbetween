@@ -79,6 +79,26 @@ fn find_intersection_on_straight_line_end() {
 }
 
 #[test]
+fn find_intersection_on_straight_line_end_to_start() {
+    // Intersection at the start of two curves
+    let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(10.0, 10.0), Coord2(5.0, 5.0)));
+    let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(5.0, 5.0), Coord2(0.0, 10.0)));
+
+    let intersections   = bezier::curve_intersects_curve(&curve1, &curve2, 0.1);
+    assert!(intersections.len() != 0);
+
+    let intersect_point = curve1.point_at_pos(intersections[0].0);
+    assert!(intersections[0].0 > 0.99);
+    assert!(intersect_point.distance_to(&Coord2(5.0, 5.0)) < 0.1);
+
+    let intersect_point = curve2.point_at_pos(intersections[0].1);
+    assert!(intersections[0].1 < 0.01);
+    assert!(intersect_point.distance_to(&Coord2(5.0, 5.0)) < 0.1);
+
+    assert!(intersections.len() == 1);
+}
+
+#[test]
 fn find_intersections_on_curve() {
     // Two curves with three intersections
     let curve1  = bezier::Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
