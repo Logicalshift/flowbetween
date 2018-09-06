@@ -357,6 +357,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
             // Update the remainder of the collisions if any point at the source or target edge
             if let Some(new_mid_point) = new_mid_point {
+                // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
+
                 // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
                 // TODO: deal with the case where the midpoint only affects one edge or the other
                 // TODO: deal with the case where the target is the source on a future collision
