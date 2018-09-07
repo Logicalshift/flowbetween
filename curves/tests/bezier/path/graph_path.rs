@@ -262,12 +262,42 @@ fn collision_at_same_point() {
 
     // If there are 13 points, one should have no edges any more (as another should have been chosen as the shared point)
     if collision.num_points() == 13 {
-        let mut found_orphaned_point = false;
+        let mut num_orphaned_points = 0;
         for point_idx in 0..13 {
             let edges = collision.edges(point_idx).collect::<Vec<_>>();
-            if edges.len() == 0 { found_orphaned_point = true; }
+            if edges.len() == 0 { num_orphaned_points += 1; }
         }
 
-        assert!(found_orphaned_point);
+        assert!(num_orphaned_points <= 1);
+    }
+
+    // Check the intersection points
+    for point_idx in 0..collision.num_points() {
+        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+
+        if edges.len() == 2 {
+            if edges[0].start_point().distance_to(&Coord2(2.0, 1.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 0.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(1.0, 1.0)) < 0.1));
+            } else if edges[0].start_point().distance_to(&Coord2(4.0, 1.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 1.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 5.0)) < 0.1));
+            } else if edges[0].start_point().distance_to(&Coord2(2.0, 5.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 1.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 5.0)) < 0.1));
+            } else if edges[0].start_point().distance_to(&Coord2(4.0, 5.0)) < 0.1 {
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(5.0, 5.0)) < 0.1));
+                assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 6.0)) < 0.1));
+            } else {
+                // These are the only four intersection points that should exist
+                println!("{:?}", edges[0].start_point());
+                assert!(false)
+            }
+        } else {
+            if edges.len() > 2 {
+                println!("{:?}", edges);
+            }
+            assert!(edges.len() <= 2);
+        }
     }
 }
