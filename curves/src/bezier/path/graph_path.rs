@@ -5,6 +5,7 @@ use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
 use std::ops::Range;
+use std::fmt;
 use std::mem;
 
 const CLOSE_DISTANCE: f64 = 0.01;
@@ -496,5 +497,11 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
         (self.edge.cp1.clone(), self.edge.cp2.clone())
+    }
+}
+
+impl<'a, Point: fmt::Debug> fmt::Debug for GraphEdge<'a, Point> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.start_idx, self.edge.end_idx, self.graph.points[self.start_idx].0, self.graph.points[self.edge.end_idx].0, self.edge.cp1, self.edge.cp2)
     }
 }
