@@ -206,12 +206,15 @@ fn multiple_collisions_on_one_edge_opposite_direction() {
     assert!(collision.num_points() == 12);
 
     // Check the intersection points
+    let mut num_intersects = 0;
     for point_idx in 0..12 {
         let edges = collision.edges(point_idx).collect::<Vec<_>>();
 
         assert!(edges.len() <= 2);
         assert!(edges.len() > 0);
         if edges.len() == 2 {
+            num_intersects += 1;
+
             if edges[0].start_point().distance_to(&Coord2(2.0, 1.0)) < 0.1 {
                 assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 0.0)) < 0.1));
                 assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(1.0, 1.0)) < 0.1));
@@ -243,6 +246,8 @@ fn multiple_collisions_on_one_edge_opposite_direction() {
                     (start_point.y()-6.0).abs() < 0.01);
         }
     }
+
+    assert!(num_intersects == 4);
 }
 
 #[test]
@@ -285,10 +290,13 @@ fn collision_at_same_point() {
     }
 
     // Check the intersection points
+    let mut num_intersects = 0;
     for point_idx in 0..collision.num_points() {
         let edges = collision.edges(point_idx).collect::<Vec<_>>();
 
         if edges.len() == 2 {
+            num_intersects += 1;
+
             if edges[0].start_point().distance_to(&Coord2(2.0, 1.0)) < 0.1 {
                 assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 0.0)) < 0.1));
                 assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(1.0, 1.0)) < 0.1));
@@ -324,4 +332,6 @@ fn collision_at_same_point() {
             assert!(edges.len() <= 2);
         }
     }
+
+    assert!(num_intersects == 4);
 }
