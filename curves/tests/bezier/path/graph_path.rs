@@ -210,6 +210,7 @@ fn multiple_collisions_on_one_edge_opposite_direction() {
         let edges = collision.edges(point_idx).collect::<Vec<_>>();
 
         assert!(edges.len() <= 2);
+        assert!(edges.len() > 0);
         if edges.len() == 2 {
             if edges[0].start_point().distance_to(&Coord2(2.0, 1.0)) < 0.1 {
                 assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(2.0, 0.0)) < 0.1));
@@ -228,6 +229,18 @@ fn multiple_collisions_on_one_edge_opposite_direction() {
                 println!("{:?}", edges[0].start_point());
                 assert!(false)
             }
+        } else if edges.len() == 1 {
+            let edge        = edges.iter().nth(0).unwrap();
+            let start_point = edge.start_point();
+
+            assert!((start_point.x()-1.0).abs() < 0.01 ||
+                    (start_point.x()-5.0).abs() < 0.01 ||
+                    (start_point.x()-2.0).abs() < 0.01 ||
+                    (start_point.x()-4.0).abs() < 0.01);
+            assert!((start_point.y()-1.0).abs() < 0.01 ||
+                    (start_point.y()-5.0).abs() < 0.01 ||
+                    (start_point.y()-0.0).abs() < 0.01 ||
+                    (start_point.y()-6.0).abs() < 0.01);
         }
     }
 }
@@ -293,10 +306,21 @@ fn collision_at_same_point() {
                 println!("{:?}", edges[0].start_point());
                 assert!(false)
             }
+        } else if edges.len() == 1 {
+            let edge        = edges.iter().nth(0).unwrap();
+            let start_point = edge.start_point();
+
+            assert!((start_point.x()-1.0).abs() < 0.01 ||
+                    (start_point.x()-5.0).abs() < 0.01 ||
+                    (start_point.x()-2.0).abs() < 0.01 ||
+                    (start_point.x()-4.0).abs() < 0.01);
+            assert!((start_point.y()-1.0).abs() < 0.01 ||
+                    (start_point.y()-5.0).abs() < 0.01 ||
+                    (start_point.y()-0.0).abs() < 0.01 ||
+                    (start_point.y()-6.0).abs() < 0.01);
         } else {
-            if edges.len() > 2 {
-                println!("{:?}", edges);
-            }
+            // Should only be 1 edge (corners) or 2 edges (collision points)
+            println!("{:?}", edges);
             assert!(edges.len() <= 2);
         }
     }
