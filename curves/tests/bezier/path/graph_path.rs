@@ -328,6 +328,7 @@ fn collision_at_same_point() {
                     (start_point.y()-6.0).abs() < 0.01);
         } else {
             // Should only be 1 edge (corners) or 2 edges (collision points)
+            // TODO: currently we end up here because we're generating point -> same point 'edges' for some reason
             println!("{:?}", edges);
             assert!(edges.len() <= 2);
         }
