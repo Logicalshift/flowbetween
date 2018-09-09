@@ -12,7 +12,7 @@ mod deform;
 mod search;
 mod solve;
 mod intersection;
-mod curve_intersection;
+mod curve_intersection_bbox;
 
 pub fn approx_equal(a: f64, b: f64) -> bool {
     f64::floor(f64::abs(a-b)*10000.0) == 0.0
