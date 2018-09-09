@@ -319,6 +319,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // TODO: for complicated paths, maybe some pre-processing for bounding boxes to eliminate trivial cases would be beneficial for performance
 
+        // The points that have had collisions exactly on them (we only collide them once)
+        let mut collided = vec![false; self.points.len()];
+
         // Iterate through the edges in the 'from' range
         for src_idx in collide_from {
             for src_edge_idx in 0..self.points[src_idx].1.len() {
@@ -343,8 +346,41 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         let curve_collisions    = curve_intersects_curve(&src_curve, &tgt_curve, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
+                        let tgt_idx = *tgt_idx;
                         for (src_t, tgt_t) in curve_collisions {
-                            collisions.push(((src_idx, src_edge_idx, src_t), (*tgt_idx, tgt_edge_idx, tgt_t)));
+                            // A collision at t=1 is the same as a collision on t=0 on a following edge
+                            // Edge doesn't actually matter for these (as the point will collide with )
+                            let (src_idx, src_edge_idx, src_t) = if Self::t_is_one(src_t) {
+                                (self.points[src_idx].1[src_edge_idx].end_idx, 0, 0.0)
+                            } else {
+                                (src_idx, src_edge_idx, src_t)
+                            };
+
+                            let (tgt_idx, tgt_edge_idx, tgt_t) = if Self::t_is_one(tgt_t) {
+                                (self.points[tgt_idx].1[tgt_edge_idx].end_idx, 0, 0.0)
+                            } else {
+                                (tgt_idx, tgt_edge_idx, tgt_t)
+                            };
+
+                            // Allow only one collision exactly on a point
+                            if Self::t_is_zero(src_t) {
+                                if collided[src_idx] { 
+                                    continue;
+                                } else {
+                                    collided[src_idx] = true;
+                                }
+                            }
+
+                            if Self::t_is_zero(tgt_t) {
+                                if collided[tgt_idx] { 
+                                    continue;
+                                } else {
+                                    collided[tgt_idx] = true;
+                                }
+                            }
+
+                            // Add this as a collision
+                            collisions.push(((src_idx, src_edge_idx, src_t), (tgt_idx, tgt_edge_idx, tgt_t)));
                         }
                     }
                 }
@@ -353,12 +389,6 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Apply the divisions to the edges
         while let Some(((src_idx, src_edge, src_t), (tgt_idx, tgt_edge, tgt_t))) = collisions.pop() {
-            // Ignore collisions at t = 1 as they'll also be collisions at t = 0 on a different point
-            // TODO: except it's possible to see a collision at t=1 and not t=0 in edge cases
-            if Self::t_is_one(src_t) || Self::t_is_one(tgt_t) {
-                continue;
-            }
-
             // Join the edges
             let new_mid_point = self.join_edges_at_intersection((src_idx, src_edge), (tgt_idx, tgt_edge), src_t, tgt_t);
 
