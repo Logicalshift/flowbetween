@@ -360,7 +360,7 @@ fn collision_exactly_on_edge_src() {
     // Collide them
     // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision (hm, seems to be a limitation of the precision of the algorithm)
     // (turns out to be precision: setting the accuracy too high causes the subdivisions to never collide)
-    let collision = rectangle1.collide(rectangle2, 0.02);
+    let collision = rectangle1.collide(rectangle2, 0.05);
 
     // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
     assert!(collision.num_points() == 12 || collision.num_points() == 13);
