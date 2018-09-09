@@ -70,11 +70,11 @@ where C::Point: 'a+Coordinate2D {
 }
 
 ///
-/// Determines the points where two curves intersect (using an approximation)
+/// Determines the points where two curves intersect (using an approximation and subdividing using the bounding-box)
 /// 
 /// The accuracy level determines the smallest bounding box used before we estimate an intersection
 /// 
-pub fn curve_intersects_curve<'a, C: BezierCurve>(curve1: &'a C, curve2: &'a C, accuracy: f64) -> Vec<(f64, f64)>
+pub fn curve_intersects_curve_bbox<'a, C: BezierCurve>(curve1: &'a C, curve2: &'a C, accuracy: f64) -> Vec<(f64, f64)>
 where C::Point: 'a+Coordinate2D {
     // TODO: curves that are the same will produce far too many points of overlap
     // TODO: as will curves that have sections that are the same
@@ -121,7 +121,7 @@ where C::Point: 'a+Coordinate2D {
     let mut result = vec![];
     for ((curve1, offset1), (curve2, offset2)) in to_subdivide.into_iter() {
         // Recursively search for more intersections
-        let matches = curve_intersects_curve(curve1, curve2, accuracy);
+        let matches = curve_intersects_curve_bbox(curve1, curve2, accuracy);
 
         // If we find any, translate the 't' values to be in the range for our source curve
         // TODO: it'd be more efficient to do this in a single operation rather than at each recursion level
