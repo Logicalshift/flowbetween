@@ -353,6 +353,12 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Apply the divisions to the edges
         while let Some(((src_idx, src_edge, src_t), (tgt_idx, tgt_edge, tgt_t))) = collisions.pop() {
+            // Ignore collisions at t = 1 as they'll also be collisions at t = 0 on a different point
+            // TODO: except it's possible to see a collision at t=1 and not t=0 in edge cases
+            if Self::t_is_one(src_t) || Self::t_is_one(tgt_t) {
+                continue;
+            }
+
             // Join the edges
             let new_mid_point = self.join_edges_at_intersection((src_idx, src_edge), (tgt_idx, tgt_edge), src_t, tgt_t);
 
