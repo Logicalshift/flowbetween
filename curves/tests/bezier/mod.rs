@@ -10,6 +10,7 @@ mod normal;
 mod bounds;
 mod deform;
 mod search;
+mod solve;
 mod intersection;
 mod curve_intersection;
 

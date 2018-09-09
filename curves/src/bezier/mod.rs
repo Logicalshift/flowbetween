@@ -9,6 +9,7 @@ mod deform;
 mod fit;
 mod offset;
 mod search;
+mod solve;
 mod intersection;
 
 pub mod path;
@@ -24,6 +25,7 @@ pub use self::deform::*;
 pub use self::fit::*;
 pub use self::offset::*;
 pub use self::search::*;
+pub use self::solve::*;
 pub use self::intersection::*;
 
 pub use super::geo::*;
