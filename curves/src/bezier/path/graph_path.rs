@@ -201,7 +201,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// Joins two edges at an intersection, returning the index of the intersection point
     /// 
     /// For t=0 or 1 the intersection point may be one of the ends of the edges, otherwise
-    /// this will divide the existing edges so that they both meet at the specified mid-point
+    /// this will divide the existing edges so that they both meet at the specified mid-point.
+    /// 
+    /// Note that the case where t=1 is the same as the case where t=0 on a following edge.
+    /// The split algorithm is simpler if only the t=0 case is considered.
     /// 
     #[inline]
     fn join_edges_at_intersection(&mut self, edge1: (usize, usize), edge2: (usize, usize), t1: f64, t2: f64) -> Option<usize> {
