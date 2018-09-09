@@ -92,6 +92,17 @@ pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<f64, Output=Self>+S
     }
 
     ///
+    /// True if this point is within max_distance of another point
+    /// 
+    #[inline]
+    fn is_near_to(&self, other: &Self, max_distance: f64) -> bool {
+        let offset              = *self - *other;
+        let squared_distance    = offset.dot(&offset);
+
+        squared_distance <= (max_distance*max_distance)
+    }
+
+    ///
     /// Generates a smoothed version of a set of coordinates, using the specified weights
     /// (weights should add up to 1.0).
     /// 
