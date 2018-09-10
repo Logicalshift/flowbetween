@@ -528,7 +528,7 @@ version = "0.1.1"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_animation 0.1.1",
- "flo_binding 0.1.1",
+ "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "flo_curves 0.2.0",
  "flo_stream 0.1.2 (git+https://github.com/Logicalshift/flo_stream)",
@@ -571,7 +571,7 @@ dependencies = [
 
 [[package]]
 name = "flo_binding"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -632,7 +632,7 @@ version = "0.1.1"
 dependencies = [
  "bytes 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.1",
+ "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "flo_logging 0.1.1",
  "flo_ui 0.1.1",
@@ -653,7 +653,7 @@ dependencies = [
  "actix 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-web 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.1",
+ "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "flo_http_ui 0.1.1",
  "flo_static_files 0.1.1",
@@ -703,7 +703,7 @@ version = "0.1.1"
 dependencies = [
  "bytes 0.4.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.1",
+ "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -721,7 +721,7 @@ version = "0.1.1"
 dependencies = [
  "desync 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_binding 0.1.1",
+ "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "flo_stream 0.1.2 (git+https://github.com/Logicalshift/flo_stream)",
  "flo_ui 0.1.1",
@@ -740,7 +740,7 @@ dependencies = [
  "flo 0.1.1",
  "flo_anim_sqlite 0.1.1",
  "flo_animation 0.1.1",
- "flo_binding 0.1.1",
+ "flo_binding 0.1.2",
  "flo_gtk_ui 0.1.1",
  "flo_http_ui 0.1.1",
  "flo_http_ui_actix 0.1.1",
