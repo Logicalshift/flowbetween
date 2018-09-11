@@ -51,7 +51,7 @@ where   S:          'static+Send+Stream,
 }
 
 ///
-/// Binding that represents the result of 
+/// Binding that represents the result of binding a stream to a value
 /// 
 #[derive(Clone)]
 pub struct StreamBinding<Value: Send> {
