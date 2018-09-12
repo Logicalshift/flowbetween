@@ -7,7 +7,7 @@ use super::super::coordinate::*;
 /// 
 /// This will return (0,0,0) for a line where the start and end point are the same.
 /// 
-pub fn line_coefficients_2d<P: Coordinate+Coordinate2D, L: Line<Point=P>>(line: &L) -> (f64, f64, f64) {
+pub fn line_coefficients_2d<P: Coordinate+Coordinate2D, L: Line<Point=P>+?Sized>(line: &L) -> (f64, f64, f64) {
     // Compute the offset 
     let (from, to)  = line.points();
     let offset      = to - from;
@@ -22,7 +22,7 @@ pub fn line_coefficients_2d<P: Coordinate+Coordinate2D, L: Line<Point=P>>(line: 
         let b = -1.0;
         let c = -(a*from.x() + b*from.y());
 
-        if offset.x() < 0.0 {
+        if offset.x() > 0.0 {
             (-a, -b, -c)
         } else {
             (a, b, c)
@@ -33,7 +33,7 @@ pub fn line_coefficients_2d<P: Coordinate+Coordinate2D, L: Line<Point=P>>(line: 
         let b = offset.x() / offset.y();
         let c = -(a*from.x() + b*from.y());
 
-        if offset.y() < 0.0 {
+        if offset.y() > 0.0 {
             (-a, -b, -c)
         } else {
             (a, b, c)
