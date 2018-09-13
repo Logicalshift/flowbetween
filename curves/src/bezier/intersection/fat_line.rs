@@ -36,6 +36,34 @@ where L::Point: Coordinate2D {
             coeff:  (a, b, c)
         }
     }
+
+    ///
+    /// Returns the distance between the point and the central line
+    /// 
+    #[inline]
+    pub fn distance(&self, point: &L::Point) -> f64 {
+        let (a, b, c) = self.coeff;
+        a*point.x() + b*point.y() + c
+    }
+
+    ///
+    /// Given a bezier curve, returns another curve whose X axis is the distance
+    /// from the central line and the Y axis varies from 0 to 1, with a uniform
+    /// distribution of t values.
+    /// 
+    /// This is used in the bezier clipping algorithm to discover where a bezier
+    /// curve clips against this line.
+    /// 
+    pub fn distance_curve<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> C {
+        let (cp1, cp2)  = curve.control_points();
+
+        let start       = L::Point::from_components(&[self.distance(&curve.start_point()), 0.0]);
+        let end         = L::Point::from_components(&[self.distance(&curve.end_point()), 1.0]);
+        let cp1         = L::Point::from_components(&[self.distance(&cp1), 1.0/3.0]);
+        let cp2         = L::Point::from_components(&[self.distance(&cp2), 2.0/3.0]);
+
+        C::from_points(start, end, cp1, cp2)
+    }
 }
 
 impl<P: Coordinate+Coordinate2D> FatLine<(P, P)> {
