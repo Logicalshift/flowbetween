@@ -2,6 +2,8 @@ use super::super::curve::*;
 use super::super::super::line::*;
 use super::super::super::coordinate::*;
 
+use std::f64;
+
 ///
 /// A 'fat line' is a line with a width. It's used in bezier intersection algorithms,
 /// in particular the clipping algorithm described by Sederberg and Nishita
@@ -111,16 +113,10 @@ where L::Point: Coordinate2D {
     }
 
     ///
-    /// Given an x pos on a line, solves for the y point
+    /// Rounds values very close to 0 or 1 to 0 or 1
     /// 
     #[inline]
-    fn solve_line_y(x: f64, (p1, p2): (&L::Point, &L::Point)) -> f64 {
-        let m = (p1.y()-p2.y())/(p1.x()-p2.x());
-        let c = p1.y() - m * p1.x();
-
-        let y = m*x + c;
-
-        // Clipping to account for floating-point inaccuracies
+    fn round_y_value(y: f64) -> f64 {
         if y < 0.0 && y > -0.001 {
             0.0
         } else if y > 1.0 && y < 1.001 {
@@ -128,6 +124,20 @@ where L::Point: Coordinate2D {
         } else {
             y
         }
+    }
+
+    ///
+    /// Given an x pos on a line, solves for the y point
+    /// 
+    #[inline]
+    fn solve_line_y((x1, x2): (f64, f64), (p1, p2): (&L::Point, &L::Point)) -> (f64, f64) {
+        let m = (p1.y()-p2.y())/(p1.x()-p2.x());
+        let c = p1.y() - m * p1.x();
+
+        let y1 = Self::round_y_value(m*x1 + c);
+        let y2 = Self::round_y_value(m*x2 + c);
+
+        (y1, y2)
     }
 
     ///
@@ -145,13 +155,21 @@ where L::Point: Coordinate2D {
 
         // To solve for t, we need to find where the two edge lines cross d_min and d_max
         let num_points  = distance_convex_hull.len();
-        let l1          = (&distance_convex_hull[0], &distance_convex_hull[1]);
-        let l2          = (&distance_convex_hull[num_points-2], &distance_convex_hull[num_points-1]);
+        let mut t1 = f64::MAX;
+        let mut t2 = f64::MIN;
+        for idx in 0..num_points {
+            // Solve where this part of the convex hull crosses this line
+            let l           = (&distance_convex_hull[idx], &distance_convex_hull[(idx+1)%num_points]);
+            let (t1a, t2a)  = Self::solve_line_y((self.d_min, self.d_max), l);
 
-        let t1          = Self::solve_line_y(self.d_min, l1);
-        let t2          = Self::solve_line_y(self.d_max, l2);
+            if t1a > 0.0 && t1a < 1.0 { t1 = t1.min(t1a) }
+            if t2a > 0.0 && t2a < 1.0 { t2 = t2.max(t2a) }
+        }
 
-        if t1 < 0.0 {
+        if t1 > t2 {
+            // No part of the hull crossed the line
+            None
+        } else if t1 < 0.0 {
             // t2 may still be > 0.0 and form a valid line
             if t2 < 0.0 {
                 None
