@@ -72,7 +72,7 @@ where L::Point: Coordinate2D {
     /// is worked out (specifically, we know the points are sorted vertically already
     /// so we only need to know if the two control points are on the same side or not)
     /// 
-    fn distance_curve_convex_hull<C: BezierCurve<Point=L::Point>>(&self, distance_curve: &C) -> Vec<L::Point> {
+    fn distance_curve_convex_hull<C: BezierCurve<Point=L::Point>>(distance_curve: &C) -> Vec<L::Point> {
         // Read the points from the curve
         let start       = distance_curve.start_point();
         let (cp1, cp2)  = distance_curve.control_points();
@@ -141,7 +141,7 @@ where L::Point: Coordinate2D {
         // The convex hull encloses the distance curve, and can be used to find the y values where it's between d_min and d_max
         // As y=t due to how we construct the distance curve these are also the t values
         // We make use of the fact that the hull always has the start point at the start
-        let distance_convex_hull    = self.distance_curve_convex_hull(&distance_curve);
+        let distance_convex_hull    = Self::distance_curve_convex_hull(&distance_curve);
 
         // To solve for t, we need to find where the two edge lines cross d_min and d_max
         let num_points  = distance_convex_hull.len();
@@ -242,6 +242,73 @@ mod test {
 
         assert!((fat_line.distance(&Coord2(200.0, 8.0))-4.0).abs() < 0.0001);
         assert!((fat_line.distance(&Coord2(200.0, 0.0))- -4.0).abs() < 0.0001);
+    }
+
+    #[test]
+    fn convex_hull_basic() {
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(5.0, 1.0/3.0), Coord2(6.0, 2.0/3.0));
+        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+
+        println!("{:?}", hull);
+
+        assert!(hull.len()==4);
+        assert!(hull[0].distance_to(&Coord2(1.0, 0.0)) < 0.001);
+        assert!(hull[1].distance_to(&Coord2(5.0, 1.0/3.0)) < 0.001);
+        assert!(hull[2].distance_to(&Coord2(6.0, 2.0/3.0)) < 0.001);
+        assert!(hull[3].distance_to(&Coord2(4.0, 1.0)) < 0.001);
+    }
+
+    #[test]
+    fn convex_hull_concave_cp2() {
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(3.0, 2.0/3.0));
+        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+
+        println!("{:?}", hull);
+
+        assert!(hull.len()==3);
+        assert!(hull[0].distance_to(&Coord2(1.0, 0.0)) < 0.001);
+        assert!(hull[1].distance_to(&Coord2(4.0, 1.0/3.0)) < 0.001);
+        assert!(hull[2].distance_to(&Coord2(4.0, 1.0)) < 0.001);
+    }
+
+    #[test]
+    fn convex_hull_concave_cp1() {
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(8.0, 2.0/3.0));
+        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+
+        println!("{:?}", hull);
+
+        assert!(hull.len()==3);
+        assert!(hull[0].distance_to(&Coord2(1.0, 0.0)) < 0.001);
+        assert!(hull[1].distance_to(&Coord2(8.0, 2.0/3.0)) < 0.001);
+        assert!(hull[2].distance_to(&Coord2(4.0, 1.0)) < 0.001);
+    }
+
+    #[test]
+    fn convex_hull_opposite_sides() {
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(1.0, 2.0/3.0));
+        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+
+        println!("{:?}", hull);
+
+        assert!(hull.len()==4);
+        assert!(hull[0].distance_to(&Coord2(1.0, 0.0)) < 0.001);
+        assert!(hull[1].distance_to(&Coord2(4.0, 1.0/3.0)) < 0.001);
+        assert!(hull[2].distance_to(&Coord2(4.0, 1.0)) < 0.001);
+        assert!(hull[3].distance_to(&Coord2(1.0, 2.0/3.0)) < 0.001);
+    }
+
+    #[test]
+    fn distance_curve_1() {
+        // Horizontal line, with a y range of 2.0 to 7.0
+        let fat_line        = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
+        let clip_curve      = line_to_bezier::<_, Curve<_>>(&(Coord2(0.0, 0.0), Coord2(5.0, 8.0)));
+        let distance_curve  = fat_line.distance_curve(&clip_curve);
+
+        println!("{:?} {:?}", distance_curve.point_at_pos(0.0), distance_curve.point_at_pos(1.0));
+
+        assert!((distance_curve.point_at_pos(0.0).x()- -4.0).abs() < 0.0001);
+        assert!((distance_curve.point_at_pos(1.0).x()-4.0).abs() < 0.0001);
     }
 
     #[test]
