@@ -115,8 +115,8 @@ where L::Point: Coordinate2D {
     /// 
     #[inline]
     fn solve_line_y(x: f64, (p1, p2): (&L::Point, &L::Point)) -> f64 {
-        let c = p1.y();
-        let m = (p2.y()-p1.y())/(p2.x()-p1.x());
+        let m = (p1.y()-p2.y())/(p1.x()-p2.x());
+        let c = p1.y() - m * p1.x();
 
         let y = m*x + c;
 
@@ -333,7 +333,7 @@ mod test {
         // Horizontal line, with a y range of 2.0 to 7.0
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
         let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
-        
+
         let clipped     = fat_line.clip(&clip_curve).unwrap();
         let start_point = clipped.point_at_pos(0.0);
         let end_point   = clipped.point_at_pos(1.0);
