@@ -74,9 +74,9 @@ where L::Point: Coordinate2D {
     /// 
     fn distance_curve_convex_hull<C: BezierCurve<Point=L::Point>>(&self, distance_curve: &C) -> Vec<L::Point> {
         // Read the points from the curve
-        let start       = curve.start_point();
-        let (cp1, cp2)  = curve.control_points();
-        let end         = curve.end_point();
+        let start       = distance_curve.start_point();
+        let (cp1, cp2)  = distance_curve.control_points();
+        let end         = distance_curve.end_point();
 
         // Compute the x component of the distances of cp1 and cp2 from the central line defined by start->end
         // These are the m and c values for y=mx+c assuming that start.y() = 0 and end.y() = 1 which is true for the distance curve
@@ -107,6 +107,76 @@ where L::Point: Coordinate2D {
         } else {
             // It's not possible to have a point inside the hull
             vec![start, cp1, end, cp2]
+        }
+    }
+
+    ///
+    /// Given an x pos on a line, solves for the y point
+    /// 
+    #[inline]
+    fn solve_line_y(x: f64, (p1, p2): (&L::Point, &L::Point)) -> f64 {
+        let c = p1.y();
+        let m = (p2.y()-p1.y())/(p2.x()-p1.x());
+
+        let y = m*x + c;
+
+        // Clipping to account for floating-point inaccuracies
+        if y < 0.0 && y > -0.001 {
+            0.0
+        } else if y > 1.0 && y < 1.001 {
+            1.0
+        } else {
+            y
+        }
+    }
+
+    ///
+    /// Finds the t values where a bezier curve clips against this fat line, or returns
+    /// None if there are no t values on the specified curve that are inside the line
+    /// 
+    pub fn clip_t<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> Option<(f64, f64)> {
+        // The 'distance' curve is a bezier curve where 'x' is the distance to the central line from the curve and 'y' is the t value where that distance occurs
+        let distance_curve          = self.distance_curve(curve);
+
+        // The convex hull encloses the distance curve, and can be used to find the y values where it's between d_min and d_max
+        // As y=t due to how we construct the distance curve these are also the t values
+        // We make use of the fact that the hull always has the start point at the start
+        let distance_convex_hull    = self.distance_curve_convex_hull(&distance_curve);
+
+        // To solve for t, we need to find where the two edge lines cross d_min and d_max
+        let num_points  = distance_convex_hull.len();
+        let l1          = (&distance_convex_hull[0], &distance_convex_hull[1]);
+        let l2          = (&distance_convex_hull[num_points-2], &distance_convex_hull[num_points-1]);
+
+        let t1          = Self::solve_line_y(self.d_min, l1);
+        let t2          = Self::solve_line_y(self.d_max, l2);
+
+        if t1 < 0.0 {
+            // t2 may still be > 0.0 and form a valid line
+            if t2 < 0.0 {
+                None
+            } else if t2 > 1.0 {
+                Some((0.0, 1.0))
+            } else {
+                Some((0.0, t2))
+            }
+        } else if t1 > 1.0 {
+            // t2 must be larger than t1 so no clip
+            None
+        } else {
+            // Both in the range 0-1
+            Some((t1, t2))
+        }
+    }
+
+    ///
+    /// Clips a bezier curve against this fat line
+    /// 
+    pub fn clip<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> Option<C> {
+        if let Some((t1, t2)) = self.clip_t(curve) {
+            Some(curve.subdivide::<C>(t1).1.subdivide((t2-t1)/(1.0-t1)).0)
+        } else {
+            None
         }
     }
 }
