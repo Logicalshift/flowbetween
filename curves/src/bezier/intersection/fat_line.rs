@@ -64,6 +64,51 @@ where L::Point: Coordinate2D {
 
         C::from_points(start, end, cp1, cp2)
     }
+
+    ///
+    /// Returns the convex hull of a curve returned by distance_curve
+    /// 
+    /// We can use some of the properties of the distance_curve to simplify how this
+    /// is worked out (specifically, we know the points are sorted vertically already
+    /// so we only need to know if the two control points are on the same side or not)
+    /// 
+    fn distance_curve_convex_hull<C: BezierCurve<Point=L::Point>>(&self, distance_curve: &C) -> Vec<L::Point> {
+        // Read the points from the curve
+        let start       = curve.start_point();
+        let (cp1, cp2)  = curve.control_points();
+        let end         = curve.end_point();
+
+        // Compute the x component of the distances of cp1 and cp2 from the central line defined by start->end
+        // These are the m and c values for y=mx+c assuming that start.y() = 0 and end.y() = 1 which is true for the distance curve
+        let m = end.x()-start.x();
+        let c = start.x();
+
+        let dx1 = cp1.x() - (m*(1.0/3.0)+c);
+        let dx2 = cp2.x() - (m*(2.0/3.0)+c);
+
+        // If they have the same sign, they're on the same side
+        let on_same_side = dx1*dx2 >= 0.0;
+
+        // Ordering on the convex hull depends only on if cp1 and cp2 are on the same side or not
+        if on_same_side {
+            // cp1 or cp2 might be inside the hull
+            let dist_ratio = dx1/dx2;
+
+            if dist_ratio >= 2.0 {
+                // cp2 is in the hull (between the line cp1->end and start->end)
+                vec![start, cp1, end]
+            } else if dist_ratio <= 0.5 {
+                // cp1 is in the hull (between the line cp2->end and start->end)
+                vec![start, cp2, end]
+            } else {
+                // All points are on the hull
+                vec![start, cp1, cp2, end]
+            }
+        } else {
+            // It's not possible to have a point inside the hull
+            vec![start, cp1, end, cp2]
+        }
+    }
 }
 
 impl<P: Coordinate+Coordinate2D> FatLine<(P, P)> {
