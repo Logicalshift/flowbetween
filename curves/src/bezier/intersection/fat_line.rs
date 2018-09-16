@@ -144,8 +144,11 @@ where L::Point: Coordinate2D {
     }
 
     ///
-    /// Finds the t values where a bezier curve clips against this fat line, or returns
-    /// None if there are no t values on the specified curve that are inside the line
+    /// Clips the curve against this fat line. This attempts to find two new t values such
+    /// that values outside that range are guaranteed not to lie within this fat line.
+    /// 
+    /// (This doesn't guarantee that the t values lie precisely within the line, though it's
+    /// usually possible to iterate to improve the precision of the match)
     /// 
     pub fn clip_t<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> Option<(f64, f64)> {
         // The 'distance' curve is a bezier curve where 'x' is the distance to the central line from the curve and 'y' is the t value where that distance occurs
@@ -195,7 +198,12 @@ where L::Point: Coordinate2D {
     }
 
     ///
-    /// Clips a bezier curve against this fat line
+    /// Clips a bezier curve against this fat line. This returns a new bezier curve where
+    /// parts that are outside the line have been clipped away, but does not necessarily
+    /// guarantee that it's just the portion within the line.
+    /// 
+    /// This call can be iterated to improve the fit in many cases, and will return none
+    /// in the case where the curve is not within the line.
     /// 
     pub fn clip<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> Option<C> {
         if let Some((t1, t2)) = self.clip_t(curve) {
