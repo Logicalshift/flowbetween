@@ -130,12 +130,15 @@ where L::Point: Coordinate2D {
     /// Given an x pos on a line, solves for the y point
     /// 
     #[inline]
-    fn solve_line_y((x1, x2): (f64, f64), (p1, p2): (&L::Point, &L::Point)) -> (f64, f64) {
+    fn solve_line_y((x1, x2): (f64, f64), (p1, p2): (&L::Point, &L::Point)) -> (Option<f64>, Option<f64>) {
+        let min_x = p1.x().min(p2.x());
+        let max_x = p1.x().max(p2.x());
+
         let m = (p2.y()-p1.y())/(p2.x()-p1.x());
         let c = p1.y() - m * p1.x();
 
-        let y1 = Self::round_y_value(m*x1 + c);
-        let y2 = Self::round_y_value(m*x2 + c);
+        let y1 = if x1 >= min_x && x1 <= max_x { Some(Self::round_y_value(m*x1 + c)) } else { None };
+        let y2 = if x2 >= min_x && x2 <= max_x { Some(Self::round_y_value(m*x2 + c)) } else { None };
 
         (y1, y2)
     }
@@ -162,8 +165,12 @@ where L::Point: Coordinate2D {
             let l           = (&distance_convex_hull[idx], &distance_convex_hull[(idx+1)%num_points]);
             let (t1a, t2a)  = Self::solve_line_y((self.d_min, self.d_max), l);
 
-            if t1a > 0.0 && t1a < 1.0 { t1 = t1.min(t1a) }
-            if t2a > 0.0 && t2a < 1.0 { t2 = t2.max(t2a) }
+            if let Some(t1a) = t1a {
+                if t1a > 0.0 && t1a < 1.0 { t1 = t1.min(t1a) }
+            }
+            if let Some(t2a) = t2a {
+                if t2a > 0.0 && t2a < 1.0 { t2 = t2.max(t2a) }
+            }
         }
 
         if t1 > t2 {
