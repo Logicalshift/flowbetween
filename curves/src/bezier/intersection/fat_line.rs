@@ -28,7 +28,6 @@ where L::Point: Coordinate2D {
     /// Creates a new fat line
     /// 
     pub fn new(line: L, d_min: f64, d_max: f64) -> FatLine<L> {
-        let (from, to)  = line.points();
         let (a, b, c)   = line_coefficients_2d(&line);
 
         FatLine {
