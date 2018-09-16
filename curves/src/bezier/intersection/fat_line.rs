@@ -378,8 +378,8 @@ mod test {
         println!("Distance-y: {:?} {:?}", distance_curve.point_at_pos(t1).y(), distance_curve.point_at_pos(t2).y());
         println!("T: {:?}", fat_line.clip_t(&clip_curve));
 
-        assert!((start_point.y()-2.0).abs() < 0.0001);
-        assert!((end_point.y()-7.0).abs() < 0.0001);
+        assert!(start_point.y() <= 2.0);
+        assert!(end_point.y() >= 7.0);
     }
 
     #[test]
