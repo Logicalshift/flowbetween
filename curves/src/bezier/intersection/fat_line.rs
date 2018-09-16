@@ -183,7 +183,17 @@ where L::Point: Coordinate2D {
                     Some((0.0, t2))
                 } else {
                     // No part of the hull crossed the line (either entirely inside or outside)
-                    None
+                    let hull_x      = distance_convex_hull.into_iter().map(|p| p.x()).collect::<Vec<_>>();
+                    let hull_min_x  = hull_x.iter().cloned().fold(f64::INFINITY, f64::min);
+                    let hull_max_x  = hull_x.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+
+                    if self.d_min > hull_max_x || self.d_max < hull_min_x {
+                        // Convex hull is outside the line
+                        None
+                    } else {
+                        // Convex hull is contained within the line
+                        Some((0.0, 1.0))
+                    }
                 }
             } else {
                 // Only clipped against the lower portion of the hull
