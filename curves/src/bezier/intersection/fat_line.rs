@@ -407,4 +407,30 @@ mod test {
         assert!((start_point.y()-2.0).abs() < 0.0001);
         assert!((end_point.y()-7.0).abs() < 0.0001);
     }
+
+    #[test]
+    fn can_always_refine() {
+        // Horizontal line, with a y range of 2.0 to 7.0
+        let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+
+        let mut clipped = clip_curve.clone();
+
+        for x in 0..100 {
+            let start_point = clipped.point_at_pos(0.0);
+            let end_point   = clipped.point_at_pos(1.0);
+
+            let next_clipped = fat_line.clip(&clipped).unwrap();
+            clipped = next_clipped;
+        }
+
+        let start_point = clipped.point_at_pos(0.0);
+        let end_point   = clipped.point_at_pos(1.0);
+
+        println!("{:?} {:?}", start_point, end_point);
+        println!("{:?}", fat_line.clip_t(&clip_curve));
+
+        assert!((start_point.y()-2.0).abs() < 0.0001);
+        assert!((end_point.y()-7.0).abs() < 0.0001);
+    }
 }
