@@ -351,14 +351,15 @@ mod test {
         let clip_curve  = line_to_bezier::<_, Curve<_>>(&(Coord2(0.0, 0.0), Coord2(5.0, 8.0)));
 
         let clipped     = fat_line.clip(&clip_curve).unwrap();
+        let clipped     = fat_line.clip(&clipped).unwrap();
         let start_point = clipped.point_at_pos(0.0);
         let end_point   = clipped.point_at_pos(1.0);
 
         println!("{:?} {:?}", start_point, end_point);
         println!("{:?}", fat_line.clip_t(&clip_curve));
 
-        assert!((start_point.y()-2.0).abs() < 0.001);
-        assert!((end_point.y()-7.0).abs() < 0.001);
+        assert!((start_point.y()-2.0).abs() < 0.0001);
+        assert!((end_point.y()-7.0).abs() < 0.0001);
     }
 
     #[test]
