@@ -498,6 +498,16 @@ mod test {
     }
 
     #[test]
+    fn clip_curve_outside_line() {
+        // If the curve is entirely outside the line, we should return None
+        let fat_line    = FatLine::new((Coord2(0.0, 20.0), Coord2(5.0, 20.0)), -2.0, 2.0);
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+
+        let clipped = fat_line.clip(&clip_curve);
+        assert!(clipped.is_none());
+    }
+
+    #[test]
     fn can_always_refine() {
         // Horizontal line, with a y range of 2.0 to 7.0
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
