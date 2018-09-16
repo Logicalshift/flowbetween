@@ -420,8 +420,9 @@ mod test {
             let start_point = clipped.point_at_pos(0.0);
             let end_point   = clipped.point_at_pos(1.0);
 
-            let next_clipped = fat_line.clip(&clipped).unwrap();
-            clipped = next_clipped;
+            let next_clipped = fat_line.clip(&clipped);
+            assert!(next_clipped.is_some());
+            clipped = next_clipped.unwrap();
         }
 
         let start_point = clipped.point_at_pos(0.0);
