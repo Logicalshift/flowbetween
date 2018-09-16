@@ -177,8 +177,18 @@ where L::Point: Coordinate2D {
         }
 
         if t1 > t2 {
-            // No part of the hull crossed the line
-            None
+            if t1 == f64::MAX {
+                if t2 != f64::MIN {
+                    // Only clipped against upper portion of the hull
+                    Some((0.0, t2))
+                } else {
+                    // No part of the hull crossed the line (either entirely inside or outside)
+                    None
+                }
+            } else {
+                // Only clipped against the lower portion of the hull
+                Some((t1, 1.0))
+            }
         } else if t1 < 0.0 {
             // t2 may still be > 0.0 and form a valid line
             if t2 < 0.0 {
