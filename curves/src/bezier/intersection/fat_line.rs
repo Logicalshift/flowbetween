@@ -342,8 +342,8 @@ mod test {
         println!("{:?} {:?}", start_point, end_point);
         println!("{:?}", fat_line.clip_t(&clip_curve));
 
-        assert!((start_point.y()-2.0).abs() < 0.0001);
-        assert!((end_point.y()-7.0).abs() < 0.0001);
+        assert!((start_point.y()-2.0).abs() < 0.001);
+        assert!((end_point.y()-7.0).abs() < 0.001);
     }
 
     #[test]
