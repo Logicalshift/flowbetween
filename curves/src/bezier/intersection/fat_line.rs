@@ -55,7 +55,7 @@ where L::Point: Coordinate2D {
     /// This is used in the bezier clipping algorithm to discover where a bezier
     /// curve clips against this line.
     /// 
-    pub fn distance_curve<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> C {
+    pub fn distance_curve<FromCurve: BezierCurve<Point=L::Point>, ToCurve: BezierCurveFactory<Point=L::Point>>(&self, curve: &FromCurve) -> ToCurve {
         let (cp1, cp2)  = curve.control_points();
 
         let start       = L::Point::from_components(&[self.distance(&curve.start_point()), 0.0]);
@@ -63,7 +63,7 @@ where L::Point: Coordinate2D {
         let cp1         = L::Point::from_components(&[self.distance(&cp1), 1.0/3.0]);
         let cp2         = L::Point::from_components(&[self.distance(&cp2), 2.0/3.0]);
 
-        C::from_points(start, end, cp1, cp2)
+        ToCurve::from_points(start, end, cp1, cp2)
     }
 
     ///
@@ -149,9 +149,9 @@ where L::Point: Coordinate2D {
     /// (This doesn't guarantee that the t values lie precisely within the line, though it's
     /// usually possible to iterate to improve the precision of the match)
     /// 
-    pub fn clip_t<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> Option<(f64, f64)> {
+    pub fn clip_t<C: BezierCurve<Point=L::Point>>(&self, curve: &C) -> Option<(f64, f64)> {
         // The 'distance' curve is a bezier curve where 'x' is the distance to the central line from the curve and 'y' is the t value where that distance occurs
-        let distance_curve          = self.distance_curve(curve);
+        let distance_curve          = self.distance_curve::<_, Curve<L::Point>>(curve);
 
         // The convex hull encloses the distance curve, and can be used to find the y values where it's between d_min and d_max
         // As y=t due to how we construct the distance curve these are also the t values
@@ -224,9 +224,9 @@ where L::Point: Coordinate2D {
     /// This call can be iterated to improve the fit in many cases, and will return none
     /// in the case where the curve is not within the line.
     /// 
-    pub fn clip<C: BezierCurveFactory<Point=L::Point>>(&self, curve: &C) -> Option<C> {
+    pub fn clip<FromCurve: BezierCurve<Point=L::Point>, ToCurve: BezierCurveFactory<Point=L::Point>>(&self, curve: &FromCurve) -> Option<ToCurve> {
         if let Some((t1, t2)) = self.clip_t(curve) {
-            Some(curve.subdivide::<C>(t1).1.subdivide((t2-t1)/(1.0-t1)).0)
+            Some(curve.subdivide::<ToCurve>(t1).1.subdivide((t2-t1)/(1.0-t1)).0)
         } else {
             None
         }
@@ -355,7 +355,7 @@ mod test {
         // Horizontal line, with a y range of 2.0 to 7.0
         let fat_line        = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
         let clip_curve      = line_to_bezier::<_, Curve<_>>(&(Coord2(0.0, 0.0), Coord2(5.0, 8.0)));
-        let distance_curve  = fat_line.distance_curve(&clip_curve);
+        let distance_curve  = fat_line.distance_curve::<_, Curve<Coord2>>(&clip_curve);
 
         println!("{:?} {:?}", distance_curve.point_at_pos(0.0), distance_curve.point_at_pos(1.0));
 
@@ -369,8 +369,8 @@ mod test {
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
         let clip_curve  = line_to_bezier::<_, Curve<_>>(&(Coord2(0.0, 0.0), Coord2(5.0, 8.0)));
 
-        let clipped     = fat_line.clip(&clip_curve).unwrap();
-        let clipped     = fat_line.clip(&clipped).unwrap();
+        let clipped     = fat_line.clip::<_, Curve<Coord2>>(&clip_curve).unwrap();
+        let clipped     = fat_line.clip::<_, Curve<Coord2>>(&clipped).unwrap();
         let start_point = clipped.point_at_pos(0.0);
         let end_point   = clipped.point_at_pos(1.0);
 
@@ -386,7 +386,7 @@ mod test {
         // Horizontal line, with a y range of 2.0 to 7.0
         let fat_line        = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
         let clip_curve      = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
-        let distance_curve  = fat_line.distance_curve(&clip_curve);
+        let distance_curve  = fat_line.distance_curve::<_, Curve<Coord2>>(&clip_curve);
 
         let (t1, t2)    = fat_line.clip_t(&clip_curve).unwrap();
         let start_point = clip_curve.point_at_pos(t1);
@@ -433,7 +433,7 @@ mod test {
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -16.0, 16.0);
         let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
 
-        let clipped = fat_line.clip(&clip_curve);
+        let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_some());
         let clipped = clipped.unwrap();
 
@@ -456,7 +456,7 @@ mod test {
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -16.0, 3.0);
         let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
 
-        let clipped = fat_line.clip(&clip_curve);
+        let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_some());
         let clipped = clipped.unwrap();
 
@@ -479,7 +479,7 @@ mod test {
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 16.0);
         let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
 
-        let clipped = fat_line.clip(&clip_curve);
+        let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_some());
         let clipped = clipped.unwrap();
 
@@ -502,7 +502,7 @@ mod test {
         let fat_line    = FatLine::new((Coord2(0.0, 20.0), Coord2(5.0, 20.0)), -2.0, 2.0);
         let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
 
-        let clipped = fat_line.clip(&clip_curve);
+        let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_none());
     }
 
