@@ -9,6 +9,7 @@ fn find_intersection_on_straight_line_not_middle() {
     let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(9.0, 1.0), Coord2(0.0, 10.0)));
 
     let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.1);
+    println!("{:?} {:?}", intersections, intersections.iter().map(|(t1, t2)| (curve1.point_at_pos(*t1), curve2.point_at_pos(*t2))).collect::<Vec<_>>());
     assert!(intersections.len() != 0);
 
     let intersect_point = curve1.point_at_pos(intersections[0].0);
@@ -27,6 +28,7 @@ fn find_intersection_on_straight_line_middle() {
     let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(10.0, 0.0), Coord2(0.0, 10.0)));
 
     let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.1);
+    println!("{:?} {:?}", intersections, intersections.iter().map(|(t1, t2)| (curve1.point_at_pos(*t1), curve2.point_at_pos(*t2))).collect::<Vec<_>>());
     assert!(intersections.len() != 0);
 
     let intersect_point = curve1.point_at_pos(intersections[0].0);
@@ -105,6 +107,7 @@ fn find_intersections_on_curve() {
     let curve2  = bezier::Curve::from_points(Coord2(5.0, 150.0), Coord2(210.0, 190.0), Coord2(180.0, 20.0), Coord2(80.0, 250.0));
 
     let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.1);
+    println!("{:?} {:?}", intersections, intersections.iter().map(|(t1, t2)| (curve1.point_at_pos(*t1), curve2.point_at_pos(*t2))).collect::<Vec<_>>());
 
     // Three intersections
     assert!(intersections.len() == 3);
