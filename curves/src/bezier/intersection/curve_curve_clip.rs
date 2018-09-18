@@ -21,13 +21,79 @@ fn curve_hull_length_sq<C: BezierCurve>(curve: &C) -> f64 {
 /// 
 fn curve_intersects_curve_clip_inner<'a, C: BezierCurve>(curve1: CurveSection<'a, C>, curve2: CurveSection<'a, C>, accuracy_squared: f64) -> Vec<(f64, f64)>
 where C::Point: 'a+Coordinate2D {
-    // Create the fat line from the first curve
-    let fat_line = FatLine::from_curve(&curve1);
+    // We'll iterate on the two curves
+    let mut curve1 = curve1;
+    let mut curve2 = curve2;
 
-    // Clip the second curve to the line
-    let curve2_clip = fat_line.clip::<_, Curve<C::Point>>(&curve2);
+    // If a curve stops shrinking, we need to subdivide it to continue the match
+    let mut curve1_last_len = curve_hull_length_sq(&curve1);
+    let mut curve2_last_len = curve_hull_length_sq(&curve2);
 
-    unimplemented!()
+    // Edge case: 0-length curves have no match
+    if curve1_last_len == 0.0 { return vec![]; }
+    if curve2_last_len == 0.0 { return vec![]; }
+
+    // Iterate to refine the match
+    loop {
+        if curve2_last_len > accuracy_squared {
+            // Clip curve2 against curve1
+            let fat_line    = FatLine::from_curve(&curve1);
+            let clip_t      = fat_line.clip_t(&curve2);
+            let clip_t      = match clip_t {
+                None => { return vec![]; }
+                Some(clip_t) => clip_t
+            };
+
+            curve2 = curve2.section(clip_t.0, clip_t.1);
+
+            // Work out the length of the new curve
+            let curve2_len = curve_hull_length_sq(&curve2);
+
+            // If the curve doesn't shrink at least 20%, subdivide it
+            if curve2_last_len*0.8 < curve2_len {
+                let (left, right)   = (curve2.section(0.0, 0.5), curve2.section(0.5, 1.0));
+                let left            = curve_intersects_curve_clip_inner(curve1.clone(), left, accuracy_squared);
+                let right           = curve_intersects_curve_clip_inner(curve1, right, accuracy_squared);
+
+                return left.into_iter().chain(right.into_iter()).collect();
+            }
+
+            // Update the length of the curve
+            curve2_last_len = curve2_len;
+        }
+
+        if curve1_last_len > accuracy_squared {
+            // Clip curve1 against curve2
+            let fat_line    = FatLine::from_curve(&curve2);
+            let clip_t      = fat_line.clip_t(&curve1);
+            let clip_t      = match clip_t {
+                None => { return vec![]; }
+                Some(clip_t) => clip_t
+            };
+
+            curve1 = curve1.section(clip_t.0, clip_t.1);
+
+            // Work out the length of the new curve
+            let curve1_len = curve_hull_length_sq(&curve1);
+
+            // If the curve doesn't shrink at least 20%, subdivide it
+            if curve1_last_len*0.8 < curve1_len {
+                let (left, right)   = (curve1.section(0.0, 0.5), curve1.section(0.5, 1.0));
+                let left            = curve_intersects_curve_clip_inner(left, curve2.clone(), accuracy_squared);
+                let right           = curve_intersects_curve_clip_inner(right, curve2, accuracy_squared);
+
+                return left.into_iter().chain(right.into_iter()).collect();
+            }
+
+            // Update the length of the curve
+            curve1_last_len = curve1_len;
+        }
+
+        if curve1_last_len <= accuracy_squared && curve2_last_len <= accuracy_squared {
+            // Found a point to the required accuracy: return it
+            unimplemented!()
+        }
+    }
 }
 
 ///

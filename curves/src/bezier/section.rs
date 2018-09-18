@@ -49,7 +49,7 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     ///
     /// Creates a section from this curve section
     /// 
-    pub fn section(self, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
+    pub fn section(&self, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
         CurveSection::new(self.curve, self.t_for_t(t_min), self.t_for_t(t_max))
     }
 }
