@@ -276,7 +276,6 @@ impl<P: Coordinate+Coordinate2D> FatLine<(P, P)> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::super::super::*;
     use super::super::super::super::bezier::*;
 
     #[test]
