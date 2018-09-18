@@ -3,6 +3,7 @@ use flo_curves::bezier;
 
 mod basis;
 mod path;
+mod section;
 mod subdivide;
 mod derivative;
 mod tangent;
