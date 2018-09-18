@@ -39,6 +39,13 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     fn t_for_t(&self, t: f64) -> f64 {
         t*self.t_m + self.t_c
     }
+
+    ///
+    /// Creates a section from this curve section
+    /// 
+    pub fn section(self, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
+        CurveSection::new(self.curve, self.t_for_t(t_min), self.t_for_t(t_max))
+    }
 }
 
 impl<'a, C: 'a+BezierCurve> Geo for CurveSection<'a, C> {
@@ -110,5 +117,26 @@ impl<'a, C: 'a+BezierCurve> BezierCurve for CurveSection<'a, C> {
     #[inline]
     fn point_at_pos(&self, t: f64) -> Self::Point {
         self.curve.point_at_pos(self.t_for_t(t))
+    }
+}
+
+///
+/// Trait implemented by curves that can have sections taken from them
+/// 
+pub trait BezierCurveWithSections {
+    /// The type of a section of this curve
+    type SectionCurve: BezierCurve;
+
+    ///
+    /// Create a section from this curve
+    /// 
+    fn section(self, t_min: f64, t_max: f64) -> Self::SectionCurve;
+}
+
+impl<'a, C: 'a+BezierCurve> BezierCurveWithSections for &'a C {
+    type SectionCurve = CurveSection<'a, C>;
+
+    fn section(self, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
+        CurveSection::new(self, t_min, t_max)
     }
 }

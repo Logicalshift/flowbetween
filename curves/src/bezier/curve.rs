@@ -2,7 +2,6 @@ use super::fit::*;
 use super::basis::*;
 use super::search::*;
 use super::bounds::*;
-use super::section::*;
 use super::subdivide::*;
 
 use super::super::geo::*;
@@ -83,14 +82,6 @@ pub trait BezierCurve: Geo+Clone+Sized {
 
         (Curve::from_points(first_curve.0, first_curve.3, first_curve.1, first_curve.2),
             Curve::from_points(second_curve.0, second_curve.3, second_curve.1, second_curve.2))
-    }
-
-    ///
-    /// Returns a curve representing a section of this curve between two t values
-    /// 
-    #[inline]
-    fn section<'a>(&'a self, t_min: f64, t_max: f64) -> CurveSection<'a, Self> {
-        CurveSection::new(self, t_min, t_max)
     }
 
     ///
