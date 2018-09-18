@@ -47,10 +47,21 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     }
 
     ///
-    /// Creates a section from this curve section
+    /// Creates a sub-section from this curve section (dividing it further)
     /// 
-    pub fn section(&self, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
+    /// Unlike calling `section`, this keeps the same type and avoids the need
+    /// for recursive recalculation for things like the control points.
+    /// 
+    pub fn subsection(&self, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
         CurveSection::new(self.curve, self.t_for_t(t_min), self.t_for_t(t_max))
+    }
+
+    ///
+    /// Returns the original t values (t_min, t_max) that this section was creted from
+    /// 
+    #[inline]
+    pub fn original_curve_t_values(&self) -> (f64, f64) {
+        (self.t_c, self.t_m+self.t_c)
     }
 }
 
@@ -138,7 +149,8 @@ pub trait BezierCurveWithSections {
     type SectionCurve: BezierCurve;
 
     ///
-    /// Create a section from this curve
+    /// Create a section from this curve. Consider calling `subsection` for curves
+    /// that are already `CurveSections`.
     /// 
     fn section(self, t_min: f64, t_max: f64) -> Self::SectionCurve;
 }
