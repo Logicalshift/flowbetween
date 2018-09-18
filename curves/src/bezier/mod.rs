@@ -1,4 +1,5 @@
 mod curve;
+mod section;
 mod basis;
 mod subdivide;
 mod derivative;
@@ -15,6 +16,7 @@ mod intersection;
 pub mod path;
 
 pub use self::curve::*;
+pub use self::section::*;
 pub use self::basis::*;
 pub use self::subdivide::*;
 pub use self::derivative::*;

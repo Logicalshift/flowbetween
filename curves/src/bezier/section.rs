@@ -1,0 +1,114 @@
+use super::curve::*;
+use super::basis::*;
+use super::super::geo::*;
+
+///
+/// Represents a subsection of a bezier curve
+/// 
+#[derive(Clone)]
+pub struct CurveSection<'a, C: 'a+BezierCurve> {
+    /// Full curve
+    curve: &'a C,
+
+    /// Value to add to a t value to convert to this curve
+    t_c: f64,
+
+    /// Value to multiply a t value by to convert to this curve
+    t_m: f64
+}
+
+impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
+    ///
+    /// Creates a new curve section from a region of another bezier curve
+    /// 
+    pub fn new(curve: &'a C, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
+        let t_c = t_min;
+        let t_m = t_max - t_c;
+
+        CurveSection {
+            curve:  curve,
+            t_m:    t_m,
+            t_c:    t_c
+        }
+    }
+
+    ///
+    /// Returns the t value on the full curve for a t value on the section
+    /// 
+    #[inline]
+    fn t_for_t(&self, t: f64) -> f64 {
+        t*self.t_m + self.t_c
+    }
+}
+
+impl<'a, C: 'a+BezierCurve> Geo for CurveSection<'a, C> {
+    type Point = C::Point;
+}
+
+impl<'a, C: 'a+BezierCurve> BezierCurve for CurveSection<'a, C> {
+    ///
+    /// The start point of this curve
+    /// 
+    #[inline]
+    fn start_point(&self) -> Self::Point {
+        self.curve.point_at_pos(self.t_for_t(0.0))
+    }
+
+    ///
+    /// The end point of this curve
+    /// 
+    #[inline]
+    fn end_point(&self) -> Self::Point {
+        self.curve.point_at_pos(self.t_for_t(1.0))
+    }
+
+    ///
+    /// The control points in this curve
+    /// 
+    fn control_points(&self) -> (Self::Point, Self::Point) {
+        // This is the de-casteljau subdivision algorithm (ran twice to cut out a section of the curve)
+        let t_min = self.t_c;
+
+        // Get the weights from the curve
+        let w1          = self.curve.start_point();
+        let (w2, w3)    = self.curve.control_points();
+        let w4          = self.curve.end_point();
+
+        // Weights (from de casteljau)
+        let wn1 = w1*(1.0-t_min) + w2*t_min;
+        let wn2 = w2*(1.0-t_min) + w3*t_min;
+        let wn3 = w3*(1.0-t_min) + w4*t_min;
+
+        // Further refine the weights
+        let wnn1 = wn1*(1.0-t_min) + wn2*t_min;
+        let wnn2 = wn2*(1.0-t_min) + wn3*t_min;
+
+        // Get the point at which the two curves join
+        let p = de_casteljau2(t_min, wnn1, wnn2);
+        
+        // Curve from t_min to 1 is in (p, wnn2, wn3, w4), we need to subdivide again
+        let (w1, w2, w3)    = (p, wnn2, wn3);
+        let t_max           = self.t_m/(1.0-self.t_c);
+
+        // Weights (from de casteljau)
+        let wn1 = w1*(1.0-t_max) + w2*t_max;
+        let wn2 = w2*(1.0-t_max) + w3*t_max;
+        // let wn3 = w3*(1.0-t_max) + w4*t_max;
+
+        // Further refine the weights
+        let wnn1 = wn1*(1.0-t_max) + wn2*t_max;
+        // let wnn2 = wn2*(1.0-t_max) + wn3*t_max;
+        // let p = de_casteljau2(t_min, wnn1, wnn2);
+
+        // Curve is (w1, wn1, wnn1, p) so control points are wn1 and wnn1
+        (wn1, wnn1)
+    }
+
+    ///
+    /// Given a value t from 0 to 1, returns a point on this curve
+    /// 
+    #[inline]
+    fn point_at_pos(&self, t: f64) -> Self::Point {
+        self.curve.point_at_pos(self.t_for_t(t))
+    }
+}
