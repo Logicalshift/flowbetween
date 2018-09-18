@@ -22,7 +22,7 @@ pub trait BezierCurveFactory: BezierCurve {
     /// Creates a new bezier curve of this type from an equivalent curve of another type
     /// 
     #[inline]
-    fn from_curve<Curve: BezierCurve<Point=Self::Point>>(curve: Curve) -> Self {
+    fn from_curve<Curve: BezierCurve<Point=Self::Point>>(curve: &Curve) -> Self {
         let (cp1, cp2) = curve.control_points();
         Self::from_points(curve.start_point(), curve.end_point(), cp1, cp2)
     }

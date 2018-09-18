@@ -216,8 +216,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         let (edge2_idx, edge2_edge_idx) = edge2;
 
         // Create representations of the two edges
-        let edge1 = Curve::from_curve(GraphEdge::new(self, edge1_idx, &self.points[edge1_idx].1[edge1_edge_idx]));
-        let edge2 = Curve::from_curve(GraphEdge::new(self, edge2_idx, &self.points[edge2_idx].1[edge2_edge_idx]));
+        let edge1 = Curve::from_curve(&GraphEdge::new(self, edge1_idx, &self.points[edge1_idx].1[edge1_edge_idx]));
+        let edge2 = Curve::from_curve(&GraphEdge::new(self, edge2_idx, &self.points[edge2_idx].1[edge2_edge_idx]));
 
         // Create or choose a point to collide at
         // (If t1 or t2 is 0 or 1 we collide on the edge1 or edge2 points, otherwise we create a new point to collide at)
