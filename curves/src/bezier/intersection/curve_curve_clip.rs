@@ -94,7 +94,7 @@ where C::Point: 'a+Coordinate2D {
             let (t_min1, t_max1) = curve1.original_curve_t_values();
             let (t_min2, t_max2) = curve2.original_curve_t_values();
 
-            return vec![(t_min1+t_max1*0.5, t_min2+t_max2*0.5)];
+            return vec![((t_min1+t_max1)*0.5, (t_min2+t_max2)*0.5)];
         }
     }
 }
