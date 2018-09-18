@@ -2,6 +2,8 @@ use super::curve::*;
 use super::basis::*;
 use super::super::geo::*;
 
+use std::cell::*;
+
 ///
 /// Represents a subsection of a bezier curve
 /// 
@@ -14,7 +16,10 @@ pub struct CurveSection<'a, C: 'a+BezierCurve> {
     t_c: f64,
 
     /// Value to multiply a t value by to convert to this curve
-    t_m: f64
+    t_m: f64,
+
+    /// Cached version of the control points for this curve section
+    cached_control_points: RefCell<Option<(C::Point, C::Point)>>
 }
 
 impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
@@ -26,9 +31,10 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
         let t_m = t_max - t_c;
 
         CurveSection {
-            curve:  curve,
-            t_m:    t_m,
-            t_c:    t_c
+            curve:                  curve,
+            t_m:                    t_m,
+            t_c:                    t_c,
+            cached_control_points:  RefCell::new(None)
         }
     }
 
@@ -73,42 +79,46 @@ impl<'a, C: 'a+BezierCurve> BezierCurve for CurveSection<'a, C> {
     /// The control points in this curve
     /// 
     fn control_points(&self) -> (Self::Point, Self::Point) {
-        // This is the de-casteljau subdivision algorithm (ran twice to cut out a section of the curve)
-        let t_min = self.t_c;
+        self.cached_control_points.borrow_mut()
+            .get_or_insert_with(move || {
+                // This is the de-casteljau subdivision algorithm (ran twice to cut out a section of the curve)
+                let t_min = self.t_c;
 
-        // Get the weights from the curve
-        let w1          = self.curve.start_point();
-        let (w2, w3)    = self.curve.control_points();
-        let w4          = self.curve.end_point();
+                // Get the weights from the curve
+                let w1          = self.curve.start_point();
+                let (w2, w3)    = self.curve.control_points();
+                let w4          = self.curve.end_point();
 
-        // Weights (from de casteljau)
-        let wn1 = w1*(1.0-t_min) + w2*t_min;
-        let wn2 = w2*(1.0-t_min) + w3*t_min;
-        let wn3 = w3*(1.0-t_min) + w4*t_min;
+                // Weights (from de casteljau)
+                let wn1 = w1*(1.0-t_min) + w2*t_min;
+                let wn2 = w2*(1.0-t_min) + w3*t_min;
+                let wn3 = w3*(1.0-t_min) + w4*t_min;
 
-        // Further refine the weights
-        let wnn1 = wn1*(1.0-t_min) + wn2*t_min;
-        let wnn2 = wn2*(1.0-t_min) + wn3*t_min;
+                // Further refine the weights
+                let wnn1 = wn1*(1.0-t_min) + wn2*t_min;
+                let wnn2 = wn2*(1.0-t_min) + wn3*t_min;
 
-        // Get the point at which the two curves join
-        let p = de_casteljau2(t_min, wnn1, wnn2);
-        
-        // Curve from t_min to 1 is in (p, wnn2, wn3, w4), we need to subdivide again
-        let (w1, w2, w3)    = (p, wnn2, wn3);
-        let t_max           = self.t_m/(1.0-self.t_c);
+                // Get the point at which the two curves join
+                let p = de_casteljau2(t_min, wnn1, wnn2);
+                
+                // Curve from t_min to 1 is in (p, wnn2, wn3, w4), we need to subdivide again
+                let (w1, w2, w3)    = (p, wnn2, wn3);
+                let t_max           = self.t_m/(1.0-self.t_c);
 
-        // Weights (from de casteljau)
-        let wn1 = w1*(1.0-t_max) + w2*t_max;
-        let wn2 = w2*(1.0-t_max) + w3*t_max;
-        // let wn3 = w3*(1.0-t_max) + w4*t_max;
+                // Weights (from de casteljau)
+                let wn1 = w1*(1.0-t_max) + w2*t_max;
+                let wn2 = w2*(1.0-t_max) + w3*t_max;
+                // let wn3 = w3*(1.0-t_max) + w4*t_max;
 
-        // Further refine the weights
-        let wnn1 = wn1*(1.0-t_max) + wn2*t_max;
-        // let wnn2 = wn2*(1.0-t_max) + wn3*t_max;
-        // let p = de_casteljau2(t_min, wnn1, wnn2);
+                // Further refine the weights
+                let wnn1 = wn1*(1.0-t_max) + wn2*t_max;
+                // let wnn2 = wn2*(1.0-t_max) + wn3*t_max;
+                // let p = de_casteljau2(t_min, wnn1, wnn2);
 
-        // Curve is (w1, wn1, wnn1, p) so control points are wn1 and wnn1
-        (wn1, wnn1)
+                // Curve is (w1, wn1, wnn1, p) so control points are wn1 and wnn1
+                (wn1, wnn1)
+            })
+            .clone()
     }
 
     ///
