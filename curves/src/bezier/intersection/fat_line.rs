@@ -8,10 +8,7 @@ use std::f64;
 /// A 'fat line' is a line with a width. It's used in bezier intersection algorithms,
 /// in particular the clipping algorithm described by Sederberg and Nishita
 /// 
-pub struct FatLine<Line> {
-    /// The thin line L'
-    line: Line,
-
+pub struct FatLine {
     /// The distance from the line to the upper part of the 'fat line'
     d_min: f64,
 
@@ -22,16 +19,15 @@ pub struct FatLine<Line> {
     coeff: (f64, f64, f64)
 }
 
-impl<L: Line> FatLine<L>
-where L::Point: Coordinate2D {
+impl FatLine {
     ///
     /// Creates a new fat line
     /// 
-    pub fn new(line: L, d_min: f64, d_max: f64) -> FatLine<L> {
+    pub fn new<L: Line>(line: L, d_min: f64, d_max: f64) -> FatLine
+    where L::Point: Coordinate2D {
         let (a, b, c)   = line_coefficients_2d(&line);
 
         FatLine {
-            line:   line,
             d_min:  d_min,
             d_max:  d_max,
             coeff:  (a, b, c)
@@ -42,7 +38,7 @@ where L::Point: Coordinate2D {
     /// Returns the distance between the point and the central line
     /// 
     #[inline]
-    pub fn distance(&self, point: &L::Point) -> f64 {
+    pub fn distance<Point: Coordinate2D>(&self, point: &Point) -> f64 {
         let (a, b, c) = self.coeff;
         a*point.x() + b*point.y() + c
     }
@@ -55,13 +51,14 @@ where L::Point: Coordinate2D {
     /// This is used in the bezier clipping algorithm to discover where a bezier
     /// curve clips against this line.
     /// 
-    pub fn distance_curve<FromCurve: BezierCurve<Point=L::Point>, ToCurve: BezierCurveFactory<Point=L::Point>>(&self, curve: &FromCurve) -> ToCurve {
+    pub fn distance_curve<FromCurve: BezierCurve, ToCurve: BezierCurveFactory<Point=FromCurve::Point>>(&self, curve: &FromCurve) -> ToCurve
+    where FromCurve::Point: Coordinate2D {
         let (cp1, cp2)  = curve.control_points();
 
-        let start       = L::Point::from_components(&[self.distance(&curve.start_point()), 0.0]);
-        let end         = L::Point::from_components(&[self.distance(&curve.end_point()), 1.0]);
-        let cp1         = L::Point::from_components(&[self.distance(&cp1), 1.0/3.0]);
-        let cp2         = L::Point::from_components(&[self.distance(&cp2), 2.0/3.0]);
+        let start       = FromCurve::Point::from_components(&[self.distance(&curve.start_point()), 0.0]);
+        let end         = FromCurve::Point::from_components(&[self.distance(&curve.end_point()), 1.0]);
+        let cp1         = FromCurve::Point::from_components(&[self.distance(&cp1), 1.0/3.0]);
+        let cp2         = FromCurve::Point::from_components(&[self.distance(&cp2), 2.0/3.0]);
 
         ToCurve::from_points(start, end, cp1, cp2)
     }
@@ -73,7 +70,8 @@ where L::Point: Coordinate2D {
     /// is worked out (specifically, we know the points are sorted vertically already
     /// so we only need to know if the two control points are on the same side or not)
     /// 
-    fn distance_curve_convex_hull<C: BezierCurve<Point=L::Point>>(distance_curve: &C) -> Vec<L::Point> {
+    fn distance_curve_convex_hull<C: BezierCurve>(distance_curve: &C) -> Vec<C::Point> 
+    where C::Point: Coordinate2D {
         // Read the points from the curve
         let start       = distance_curve.start_point();
         let (cp1, cp2)  = distance_curve.control_points();
@@ -129,7 +127,7 @@ where L::Point: Coordinate2D {
     /// Given an x pos on a line, solves for the y point
     /// 
     #[inline]
-    fn solve_line_y((x1, x2): (f64, f64), (p1, p2): (&L::Point, &L::Point)) -> (Option<f64>, Option<f64>) {
+    fn solve_line_y<Point: Coordinate2D>((x1, x2): (f64, f64), (p1, p2): (&Point, &Point)) -> (Option<f64>, Option<f64>) {
         let min_x = p1.x().min(p2.x());
         let max_x = p1.x().max(p2.x());
 
@@ -149,9 +147,10 @@ where L::Point: Coordinate2D {
     /// (This doesn't guarantee that the t values lie precisely within the line, though it's
     /// usually possible to iterate to improve the precision of the match)
     /// 
-    pub fn clip_t<C: BezierCurve<Point=L::Point>>(&self, curve: &C) -> Option<(f64, f64)> {
+    pub fn clip_t<C: BezierCurve>(&self, curve: &C) -> Option<(f64, f64)> 
+    where C::Point: Coordinate2D {
         // The 'distance' curve is a bezier curve where 'x' is the distance to the central line from the curve and 'y' is the t value where that distance occurs
-        let distance_curve          = self.distance_curve::<_, Curve<L::Point>>(curve);
+        let distance_curve          = self.distance_curve::<_, Curve<C::Point>>(curve);
 
         // The convex hull encloses the distance curve, and can be used to find the y values where it's between d_min and d_max
         // As y=t due to how we construct the distance curve these are also the t values
@@ -224,7 +223,8 @@ where L::Point: Coordinate2D {
     /// This call can be iterated to improve the fit in many cases, and will return none
     /// in the case where the curve is not within the line.
     /// 
-    pub fn clip<FromCurve: BezierCurve<Point=L::Point>, ToCurve: BezierCurveFactory<Point=L::Point>>(&self, curve: &FromCurve) -> Option<ToCurve> {
+    pub fn clip<FromCurve: BezierCurve, ToCurve: BezierCurveFactory<Point=FromCurve::Point>>(&self, curve: &FromCurve) -> Option<ToCurve> 
+    where FromCurve::Point: Coordinate2D {
         if let Some((t1, t2)) = self.clip_t(curve) {
             Some(curve.subdivide::<ToCurve>(t1).1.subdivide((t2-t1)/(1.0-t1)).0)
         } else {
@@ -233,11 +233,12 @@ where L::Point: Coordinate2D {
     }
 }
 
-impl<P: Coordinate+Coordinate2D> FatLine<(P, P)> {
+impl FatLine {
     ///
     /// Creates a new fatline from a curve
     /// 
-    pub fn from_curve<C: BezierCurve<Point=P>>(curve: &C) -> FatLine<(P, P)> {
+    pub fn from_curve<C: BezierCurve>(curve: &C) -> FatLine
+    where C::Point: Coordinate+Coordinate2D {
         // Line between the start and end points of the curve
         let line        = (curve.start_point(), curve.end_point());
         
@@ -265,7 +266,6 @@ impl<P: Coordinate+Coordinate2D> FatLine<(P, P)> {
         };
 
         FatLine {
-            line:   line,
             d_min:  d_min,
             d_max:  d_max,
             coeff:  (a, b, c)
@@ -298,7 +298,7 @@ mod test {
     #[test]
     fn convex_hull_basic() {
         let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(5.0, 1.0/3.0), Coord2(6.0, 2.0/3.0));
-        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+        let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
 
@@ -312,7 +312,7 @@ mod test {
     #[test]
     fn convex_hull_concave_cp2() {
         let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(3.0, 2.0/3.0));
-        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+        let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
 
@@ -325,7 +325,7 @@ mod test {
     #[test]
     fn convex_hull_concave_cp1() {
         let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(8.0, 2.0/3.0));
-        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+        let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
 
@@ -338,7 +338,7 @@ mod test {
     #[test]
     fn convex_hull_opposite_sides() {
         let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(1.0, 2.0/3.0));
-        let hull        = FatLine::<(Coord2, Coord2)>::distance_curve_convex_hull(&hull_curve);
+        let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
 
