@@ -17,6 +17,20 @@ fn curve_hull_length_sq<C: BezierCurve>(curve: &C) -> f64 {
 }
 
 ///
+/// Performs the fat-line clipping algorithm on two curves, returning the t values if they overlap
+/// 
+#[inline]
+fn clip<'a, C: BezierCurve>(curve_to_clip: &CurveSection<'a, C>, curve_to_clip_against: &CurveSection<'a, C>) -> Option<(f64, f64)>
+where C::Point: 'a+Coordinate2D {
+    // Clip against the fat line
+    let fat_line    = FatLine::from_curve(curve_to_clip_against);
+    let clip_t      = fat_line.clip_t(curve_to_clip);
+
+    // t1 and t2 must not match (exact matches produce an invalid curve)
+    clip_t.map(|(t1, t2)| if t1 == t2 { (t1-0.01, t2) } else { (t1, t2) })
+}
+
+///
 /// Determines the points at which two curves intersect using the Bezier clipping algorithm
 /// 
 fn curve_intersects_curve_clip_inner<'a, C: BezierCurve>(curve1: CurveSection<'a, C>, curve2: CurveSection<'a, C>, accuracy_squared: f64) -> Vec<(f64, f64)>
@@ -37,11 +51,10 @@ where C::Point: 'a+Coordinate2D {
     loop {
         if curve2_last_len > accuracy_squared {
             // Clip curve2 against curve1
-            let fat_line    = FatLine::from_curve(&curve1);
-            let clip_t      = fat_line.clip_t(&curve2);
-            let clip_t      = match clip_t {
-                None => { return vec![]; }
-                Some(clip_t) => clip_t
+            let clip_t  = clip(&curve2, &curve1);
+            let clip_t  = match clip_t {
+                None            => { return vec![]; }
+                Some(clip_t)    => clip_t
             };
 
             curve2 = curve2.subsection(clip_t.0, clip_t.1);
@@ -64,11 +77,10 @@ where C::Point: 'a+Coordinate2D {
 
         if curve1_last_len > accuracy_squared {
             // Clip curve1 against curve2
-            let fat_line    = FatLine::from_curve(&curve2);
-            let clip_t      = fat_line.clip_t(&curve1);
-            let clip_t      = match clip_t {
-                None => { return vec![]; }
-                Some(clip_t) => clip_t
+            let clip_t  = clip(&curve1, &curve2);
+            let clip_t  = match clip_t {
+                None            => { return vec![]; }
+                Some(clip_t)    => clip_t
             };
 
             curve1 = curve1.subsection(clip_t.0, clip_t.1);
