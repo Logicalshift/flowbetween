@@ -168,10 +168,10 @@ where L::Point: Coordinate2D {
             let (t1a, t2a)  = Self::solve_line_y((self.d_min, self.d_max), l);
 
             if let Some(t1a) = t1a {
-                if t1a > 0.0 && t1a < 1.0 { t1 = t1.min(t1a) }
+                if t1a >= 0.0 && t1a <= 1.0 { t1 = t1.min(t1a) }
             }
             if let Some(t2a) = t2a {
-                if t2a > 0.0 && t2a < 1.0 { t2 = t2.max(t2a) }
+                if t2a >= 0.0 && t2a <= 1.0 { t2 = t2.max(t2a) }
             }
         }
 
