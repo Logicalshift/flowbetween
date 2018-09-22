@@ -1,4 +1,5 @@
 use super::super::curve::*;
+use super::super::section::*;
 use super::super::super::line::*;
 use super::super::super::coordinate::*;
 
@@ -226,7 +227,7 @@ impl FatLine {
     pub fn clip<FromCurve: BezierCurve, ToCurve: BezierCurveFactory<Point=FromCurve::Point>>(&self, curve: &FromCurve) -> Option<ToCurve> 
     where FromCurve::Point: Coordinate2D {
         if let Some((t1, t2)) = self.clip_t(curve) {
-            Some(curve.subdivide::<ToCurve>(t1).1.subdivide((t2-t1)/(1.0-t1)).0)
+            Some(ToCurve::from_curve(&curve.section(t1, t2)))
         } else {
             None
         }
