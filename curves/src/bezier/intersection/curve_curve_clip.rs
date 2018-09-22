@@ -30,6 +30,17 @@ where C::Point: 'a+Coordinate2D {
     clip_t.map(|(t1, t2)| if t1 == t2 { (t1-0.01, t2) } else { (t1, t2) })
 }
 
+fn format_curve<C: BezierCurve>(curve: &C) -> String
+where C::Point: Coordinate2D {
+    let start_point = curve.start_point();
+    let end_point = curve.end_point();
+    let (cp1, cp2) = curve.control_points();
+
+    format!("[B({:?}, {:?}, {:?}, {:?}, u), B({:?}, {:?}, {:?}, {:?}, u)]", 
+        start_point.x(), cp1.x(), cp2.x(), end_point.x(),
+        start_point.y(), cp1.y(), cp2.y(), end_point.y())
+}
+
 ///
 /// Determines the points at which two curves intersect using the Bezier clipping algorithm
 /// 
