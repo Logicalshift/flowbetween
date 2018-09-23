@@ -130,15 +130,15 @@ fn find_intersections_on_curve() {
     let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.1);
     println!("{:?} {:?}", intersections, intersections.iter().map(|(t1, t2)| (curve1.point_at_pos(*t1), curve2.point_at_pos(*t2))).collect::<Vec<_>>());
 
-    // Three intersections
-    assert!(intersections.len() == 3);
-
     // All intersections should be approximately the same location
-    for intersect in intersections {
+    for intersect in intersections.iter() {
         let point1 = curve1.point_at_pos(intersect.0);
         let point2 = curve2.point_at_pos(intersect.1);
 
         assert!(point1.distance_to(&point2) < 1.0);
         assert!(point1.distance_to(&point2) < 0.1);
     }
+
+    // Three intersections
+    assert!(intersections.len() == 3);
 }
