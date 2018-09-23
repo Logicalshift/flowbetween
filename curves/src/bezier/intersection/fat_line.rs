@@ -160,18 +160,33 @@ impl FatLine {
 
         // To solve for t, we need to find where the two edge lines cross d_min and d_max
         let num_points  = distance_convex_hull.len();
-        let mut t1 = f64::MAX;
-        let mut t2 = f64::MIN;
+        let mut t1      = f64::MAX;
+        let mut t2      = f64::MIN;
+        let d_min       = self.d_min;
+        let d_max       = self.d_max;
         for idx in 0..num_points {
             // Solve where this part of the convex hull crosses this line
-            let l           = (&distance_convex_hull[idx], &distance_convex_hull[(idx+1)%num_points]);
-            let (t1a, t2a)  = Self::solve_line_y((self.d_min, self.d_max), l);
+            let (p1, p2)    = (&distance_convex_hull[idx], &distance_convex_hull[(idx+1)%num_points]);
+            let hull_line   = (p1, p2);
+            let (t1a, t2a)  = Self::solve_line_y((d_min, d_max), hull_line);
 
+            // The y axis indicates where the hull crosses from inside to outside the fat line
             if let Some(t1a) = t1a {
+                // Line crossed d_min
                 if t1a >= 0.0 && t1a <= 1.0 { t1 = t1.min(t1a) }
+            } else {
+                // If the start or end point is inside the fat line then it is also within the clipping area
+                if p1.x() <= d_max && p1.x() >= d_min { t1 = t1.min(p1.y()); }
+                if p2.x() <= d_max && p2.x() >= d_min { t1 = t1.min(p2.y()); }
             }
+            
             if let Some(t2a) = t2a {
+                // Line crossed d_max
                 if t2a >= 0.0 && t2a <= 1.0 { t2 = t2.max(t2a) }
+            } else {
+                // If the start or end point is inside the fat line then it is also within the clipping area
+                if p1.x() <= d_max && p1.x() >= d_min { t2 = t2.max(p1.y()); }
+                if p2.x() <= d_max && p2.x() >= d_min { t2 = t2.max(p2.y()); }
             }
         }
 
