@@ -50,7 +50,9 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     /// Creates a sub-section from this curve section (dividing it further)
     /// 
     /// Unlike calling `section`, this keeps the same type and avoids the need
-    /// for recursive recalculation for things like the control points.
+    /// for recursive recalculation for things like the control points. This means
+    /// that `original_curve_t_values` will return the coordinates for the same
+    /// original curve as the curve that this subsection was created from.
     /// 
     pub fn subsection(&self, t_min: f64, t_max: f64) -> CurveSection<'a, C> {
         CurveSection::new(self.curve, self.t_for_t(t_min), self.t_for_t(t_max))
