@@ -346,7 +346,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         if !src_edge_bounds.overlaps(&tgt_edge_bounds) { continue; }
 
                         // Find the collisions between these two edges (these a)
-                        let curve_collisions    = curve_intersects_curve_bbox(&src_curve, &tgt_curve, accuracy);
+                        let curve_collisions    = curve_intersects_curve_clip(&src_curve, &tgt_curve, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
                         let tgt_idx = *tgt_idx;
