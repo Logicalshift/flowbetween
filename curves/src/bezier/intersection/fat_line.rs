@@ -232,6 +232,14 @@ impl FatLine {
             None
         }
     }
+
+    pub fn format_line(&self) -> String {
+        let (a, b, c) = self.coeff;
+        format!("[L({}, {}, u), L({}, {}, u)], [L({}, {}, u), L({}, {}, u)], [L({}, {}, u), L({}, {}, u)]", 
+            1.0, 0.0, a/-b, c/-b, 
+            1.0, 0.0, a/-b, (c-self.d_min)/-b, 
+            1.0, 0.0, a/-b, (c-self.d_max)/-b)
+    }
 }
 
 impl FatLine {
@@ -250,6 +258,8 @@ impl FatLine {
         let (cp1, cp2)  = curve.control_points();
         let d1          = a*cp1.x() + b*cp1.y() + c;
         let d2          = a*cp2.x() + b*cp2.y() + c;
+
+        println!("/* {:?} {:?} */", d1, d2);
 
         // This is the 'estimated fit' shortcut suggested by Sederberg/Nishta in their paper rather than the tighest ffitting line
         let (d_min, d_max) = if d1*d2 > 0.0 {
