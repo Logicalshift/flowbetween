@@ -259,8 +259,6 @@ impl FatLine {
         let d1          = a*cp1.x() + b*cp1.y() + c;
         let d2          = a*cp2.x() + b*cp2.y() + c;
 
-        println!("/* {:?} {:?} */", d1, d2);
-
         // This is the 'estimated fit' shortcut suggested by Sederberg/Nishta in their paper rather than the tighest ffitting line
         let (d_min, d_max) = if d1*d2 > 0.0 {
             // Both control points on the same side of the line
@@ -541,5 +539,27 @@ mod test {
 
         assert!((start_point.y()-2.0).abs() < 0.0001);
         assert!((end_point.y()-7.0).abs() < 0.0001);
+    }
+
+    #[test]
+    fn clip_curves() {
+        // Two curves that clip incorrectly from the clip intersection test
+        let curve1 = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
+        let curve2 = Curve::from_points(Coord2(67.25, 113.48), Coord2(181.38, 199.44), Coord2(146.18, 85.98), Coord2(109.35, 211.01));
+
+        // Clip curve1 against curve2
+        let fat_line = FatLine::from_curve(&curve2);
+        let (t1, t2) = fat_line.clip_t(&curve1).unwrap();
+
+        // Intersection points:
+        //
+        // Coord2(81.78, 109.88)
+        // Coord2(133.16, 167.13)
+        // Coord2(179.87, 199.67)
+
+        println!("{:?} {:?}", (t1, t2), (curve1.point_at_pos(t2).x(), curve1.point_at_pos(t2).y()));
+
+        assert!(curve1.point_at_pos(t1).x() < 81.79);
+        assert!(curve1.point_at_pos(t2).x() > 179.86);
     }
 }
