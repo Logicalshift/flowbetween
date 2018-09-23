@@ -692,6 +692,8 @@ mod test {
         //
         // Coord2(81.78, 109.88)
 
+        // Curve1 here forms a line that intercepts close to the start of Curve2, which seems to cause some accuracy issues
+
         let curve1 = Curve::from_points(Coord2(80.317, 107.796), Coord2(88.615, 119.383), Coord2(82.851, 111.424), Coord2(85.591, 115.301));
         let curve2 = Curve::from_points(Coord2(81.248, 109.971), Coord2(134.936, 171.219), Coord2(118.038, 104.934), Coord2(122.245, 142.970));       
 
@@ -717,7 +719,7 @@ mod test {
         println!("{:?} {:?}", (t1, t2), (curve1.point_at_pos(t2).x(), curve1.point_at_pos(t2).y()));
 
         assert!(curve1.point_at_pos(t1).x() < 81.79);
-        assert!(curve1.point_at_pos(t2).x() > 179.86);
+        assert!(curve1.point_at_pos(t2).x() > 81.78);
     }
 
     #[test]
@@ -751,6 +753,6 @@ mod test {
         println!("{:?} {:?}", (t1, t2), (curve1.point_at_pos(t2).x(), curve1.point_at_pos(t2).y()));
 
         assert!(curve1.point_at_pos(t1).x() < 81.79);
-        assert!(curve1.point_at_pos(t2).x() > 179.86);
+        assert!(curve1.point_at_pos(t2).x() > 81.78);
     }
 }
