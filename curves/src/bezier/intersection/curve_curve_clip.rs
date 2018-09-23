@@ -27,6 +27,31 @@ where C::Point: 'a+Coordinate2D {
     let fat_line    = FatLine::from_curve(curve_to_clip_against);
     let clip_t      = fat_line.clip_t(curve_to_clip);
 
+    let clip_t = if let Some(clip_t) = clip_t {
+        // Also try clipping against the perpendicular line
+        let perpendicular_line      = FatLine::from_curve_perpendicular(curve_to_clip_against);
+        let clip_t_perpendicular    = perpendicular_line.clip_t(curve_to_clip);
+
+        // Use the perpendicular version if better
+        if let Some(clip_t_perpendicular) = clip_t_perpendicular {
+            // The clip that produces a shorter range is better
+            let len1 = clip_t.1 - clip_t.0;
+            let len2 = clip_t_perpendicular.1 - clip_t_perpendicular.0;
+
+            if len1 < len2 {
+                Some(clip_t)
+            } else {
+                Some(clip_t_perpendicular)
+            }
+        } else {
+            // If the perpendicular line excludes this point then there's no overlap
+            None
+        }
+    } else {
+        // Failed to clip
+        None
+    };
+
     // t1 and t2 must not match (exact matches produce an invalid curve)
     clip_t.map(|(t1, t2)| if t1 == t2 { (t1-0.01, t2) } else { (t1, t2) })
 }
