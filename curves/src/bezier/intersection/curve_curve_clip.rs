@@ -1,4 +1,5 @@
 use super::fat_line::*;
+use super::super::super::geo::*;
 use super::super::super::bezier::*;
 
 ///
@@ -174,12 +175,17 @@ where C::Point: 'a+Coordinate2D {
 
         if curve1_last_len <= accuracy_squared && curve2_last_len <= accuracy_squared {
             // Found a point to the required accuracy: return it, in coordinates relative to the original curve
-            let (t_min1, t_max1) = curve1.original_curve_t_values();
-            let (t_min2, t_max2) = curve2.original_curve_t_values();
+            if curve1.fast_bounding_box::<Bounds<_>>().overlaps(&curve2.fast_bounding_box::<Bounds<_>>()) {
+                let (t_min1, t_max1) = curve1.original_curve_t_values();
+                let (t_min2, t_max2) = curve2.original_curve_t_values();
 
-            println!("/* Found {:?} */", (t_min1, t_min2));
+                println!("/* Found {:?} ({:?} {:?}) */", (t_min1, t_min2), curve1_last_len, curve2_last_len);
 
-            return vec![((t_min1+t_max1)*0.5, (t_min2+t_max2)*0.5)];
+                return vec![((t_min1+t_max1)*0.5, (t_min2+t_max2)*0.5)];
+            } else {
+                // Clipping algorithm found a point, but the two curves do not actually overlap, so reject them
+                return vec![];
+            }
         }
     }
 }
