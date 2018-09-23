@@ -173,7 +173,10 @@ impl FatLine {
             // The y axis indicates where the hull crosses from inside to outside the fat line
             if let Some(t1a) = t1a {
                 // Line crossed d_min
-                if t1a >= 0.0 && t1a <= 1.0 { t1 = t1.min(t1a) }
+                if t1a >= 0.0 && t1a <= 1.0 { 
+                    t1 = t1.min(t1a);
+                    t2 = t2.max(t1a);
+                }
             } else {
                 // If the start or end point is inside the fat line then it is also within the clipping area
                 if p1.x() <= d_max && p1.x() >= d_min { t1 = t1.min(p1.y()); }
@@ -182,7 +185,10 @@ impl FatLine {
             
             if let Some(t2a) = t2a {
                 // Line crossed d_max
-                if t2a >= 0.0 && t2a <= 1.0 { t2 = t2.max(t2a) }
+                if t2a >= 0.0 && t2a <= 1.0 { 
+                    t1 = t1.min(t2a);
+                    t2 = t2.max(t2a);
+                }
             } else {
                 // If the start or end point is inside the fat line then it is also within the clipping area
                 if p1.x() <= d_max && p1.x() >= d_min { t2 = t2.max(p1.y()); }
@@ -557,10 +563,53 @@ mod test {
     }
 
     #[test]
-    fn clip_curves() {
-        // Two curves that clip incorrectly from the clip intersection test
+    fn clip_curves_1() {
+        // Two curves that clipped incorrectly from the clip intersection test
         let curve1 = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
         let curve2 = Curve::from_points(Coord2(67.25, 113.48), Coord2(181.38, 199.44), Coord2(146.18, 85.98), Coord2(109.35, 211.01));
+
+        // Clip curve1 against curve2
+        let fat_line = FatLine::from_curve(&curve2);
+        let (t1, t2) = fat_line.clip_t(&curve1).unwrap();
+
+        // Intersection points:
+        //
+        // Coord2(81.78, 109.88)
+        // Coord2(133.16, 167.13)
+        // Coord2(179.87, 199.67)
+
+        println!("D_min: {:?}, D_max: {:?}", fat_line.d_min, fat_line.d_max);
+
+        let distance = fat_line.distance_curve::<_, Curve<Coord2>>(&curve1);
+        let hull = FatLine::distance_curve_convex_hull(&distance);
+        println!("Distance convex hull: {:?}", hull);
+
+        for t in 0..=10 {
+            let t = (t as f64) / 10.0;
+
+            let p1 = curve1.point_at_pos(t);
+            let d1 = distance.point_at_pos(t);
+            let d2 = fat_line.distance(&p1);
+
+            println!("{} pos {:?}, dist {:?}, actual {:?}", t, p1, d1, d2);
+        }
+        println!("{:?} {:?}", (t1, t2), (curve1.point_at_pos(t2).x(), curve1.point_at_pos(t2).y()));
+
+        assert!(curve1.point_at_pos(t1).x() < 81.79);
+        assert!(curve1.point_at_pos(t2).x() > 179.86);
+    }
+
+    #[test]
+    fn clip_curves_2() {
+        // Intersection points:
+        //
+        // Coord2(81.78, 109.88)
+        // Coord2(133.16, 167.13)
+        // Coord2(179.87, 199.67)
+
+        // Two curves that clipped incorrectly from the clip intersection test
+        let curve1 = Curve::from_points(Coord2(67.25, 113.48), Coord2(210.0, 190.0), Coord2(155.03, 82.90), Coord2(99.65, 240.93));
+        let curve2 = Curve::from_points(Coord2(77.5, 103.75), Coord2(220.0, 220.0), Coord2(97.5, 132.5), Coord2(130.0, 180.0));       
 
         // Clip curve1 against curve2
         let fat_line = FatLine::from_curve(&curve2);
