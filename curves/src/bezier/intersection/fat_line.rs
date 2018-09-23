@@ -22,20 +22,6 @@ pub struct FatLine {
 
 impl FatLine {
     ///
-    /// Creates a new fat line
-    /// 
-    pub fn new<L: Line>(line: L, d_min: f64, d_max: f64) -> FatLine
-    where L::Point: Coordinate2D {
-        let (a, b, c)   = line_coefficients_2d(&line);
-
-        FatLine {
-            d_min:  d_min,
-            d_max:  d_max,
-            coeff:  (a, b, c)
-        }
-    }
-
-    ///
     /// Returns the distance between the point and the central line
     /// 
     #[inline]
@@ -237,23 +223,6 @@ impl FatLine {
         }
     }
 
-    ///
-    /// Clips a bezier curve against this fat line. This returns a new bezier curve where
-    /// parts that are outside the line have been clipped away, but does not necessarily
-    /// guarantee that it's just the portion within the line.
-    /// 
-    /// This call can be iterated to improve the fit in many cases, and will return none
-    /// in the case where the curve is not within the line.
-    /// 
-    pub fn clip<FromCurve: BezierCurve, ToCurve: BezierCurveFactory<Point=FromCurve::Point>>(&self, curve: &FromCurve) -> Option<ToCurve> 
-    where FromCurve::Point: Coordinate2D {
-        if let Some((t1, t2)) = self.clip_t(curve) {
-            Some(ToCurve::from_curve(&curve.section(t1, t2)))
-        } else {
-            None
-        }
-    }
-
     pub fn format_line(&self) -> String {
         let (a, b, c) = self.coeff;
         format!("[L({}, {}, u), L({}, {}, u)], [L({}, {}, u), L({}, {}, u)], [L({}, {}, u), L({}, {}, u)]", 
@@ -307,6 +276,39 @@ impl FatLine {
 mod test {
     use super::*;
     use super::super::super::super::bezier::*;
+
+    impl FatLine {
+        ///
+        /// Creates a new fat line
+        /// 
+        pub fn new<L: Line>(line: L, d_min: f64, d_max: f64) -> FatLine
+        where L::Point: Coordinate2D {
+            let (a, b, c)   = line_coefficients_2d(&line);
+
+            FatLine {
+                d_min:  d_min,
+                d_max:  d_max,
+                coeff:  (a, b, c)
+            }
+        }
+
+        ///
+        /// Clips a bezier curve against this fat line. This returns a new bezier curve where
+        /// parts that are outside the line have been clipped away, but does not necessarily
+        /// guarantee that it's just the portion within the line.
+        /// 
+        /// This call can be iterated to improve the fit in many cases, and will return none
+        /// in the case where the curve is not within the line.
+        /// 
+        pub fn clip<FromCurve: BezierCurve, ToCurve: BezierCurveFactory<Point=FromCurve::Point>>(&self, curve: &FromCurve) -> Option<ToCurve> 
+        where FromCurve::Point: Coordinate2D {
+            if let Some((t1, t2)) = self.clip_t(curve) {
+                Some(ToCurve::from_curve(&curve.section(t1, t2)))
+            } else {
+                None
+            }
+        }
+    }
 
     #[test]
     fn distance_to_horizontal_line() {
