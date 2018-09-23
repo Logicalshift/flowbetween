@@ -557,6 +557,16 @@ mod test {
         // Coord2(133.16, 167.13)
         // Coord2(179.87, 199.67)
 
+        let distance = fat_line.distance_curve::<_, Curve<Coord2>>(&curve1);
+        for t in 0..=10 {
+            let t = (t as f64) / 10.0;
+
+            let p1 = curve1.point_at_pos(t);
+            let d1 = distance.point_at_pos(t);
+            let d2 = fat_line.distance(&p1);
+
+            println!("{} pos {:?}, dist {:?}, actual {:?}", t, p1, d1, d2);
+        }
         println!("{:?} {:?}", (t1, t2), (curve1.point_at_pos(t2).x(), curve1.point_at_pos(t2).y()));
 
         assert!(curve1.point_at_pos(t1).x() < 81.79);
