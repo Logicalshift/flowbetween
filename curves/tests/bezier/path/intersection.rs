@@ -121,6 +121,8 @@ fn circle_intersects_circle() {
         let point1 = curves1[index1].point_at_pos(t1);
         let point2 = curves2[index2].point_at_pos(t2);
 
+        println!("{:?} {:?} {:?}", point1, point2, point1.distance_to(&point2));
+
         // Should be within the tolerance specified by the accuracy value
         assert!(point1.distance_to(&point2) < 0.5);
     }
