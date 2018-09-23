@@ -65,6 +65,14 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     pub fn original_curve_t_values(&self) -> (f64, f64) {
         (self.t_c, self.t_m+self.t_c)
     }
+
+    ///
+    /// Given a 't' value on the original curve, returns the equivalent value on this section
+    /// 
+    #[inline]
+    pub fn section_t_for_original_t(&self, t: f64) -> f64 {
+        (t-self.t_c)/self.t_m
+    }
 }
 
 impl<'a, C: 'a+BezierCurve> Geo for CurveSection<'a, C> {

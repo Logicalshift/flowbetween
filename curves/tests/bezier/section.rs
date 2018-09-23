@@ -59,6 +59,16 @@ fn recover_original_t_values() {
 }
 
 #[test]
+fn map_t_values_back_to_section() {
+    let original_curve  = Curve::from_points(Coord2(2.0, 3.0), Coord2(6.0, 2.0), Coord2(4.0, 5.0), Coord2(5.0, 0.0));
+    let mid_section     = original_curve.section(0.2, 0.6);
+
+    assert!((mid_section.section_t_for_original_t(0.2)-0.0).abs() < 0.01);
+    assert!((mid_section.section_t_for_original_t(0.4)-0.5).abs() < 0.01);
+    assert!((mid_section.section_t_for_original_t(0.6)-1.0).abs() < 0.01);
+}
+
+#[test]
 fn recover_original_t_values_from_subsection() {
     let original_curve  = Curve::from_points(Coord2(2.0, 3.0), Coord2(6.0, 2.0), Coord2(4.0, 5.0), Coord2(5.0, 0.0));
     let mid_section     = original_curve.section(0.25, 0.75);
