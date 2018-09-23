@@ -557,7 +557,12 @@ mod test {
         // Coord2(133.16, 167.13)
         // Coord2(179.87, 199.67)
 
+        println!("D_min: {:?}, D_max: {:?}", fat_line.d_min, fat_line.d_max);
+
         let distance = fat_line.distance_curve::<_, Curve<Coord2>>(&curve1);
+        let hull = FatLine::distance_curve_convex_hull(&distance);
+        println!("Distance convex hull: {:?}", hull);
+
         for t in 0..=10 {
             let t = (t as f64) / 10.0;
 
