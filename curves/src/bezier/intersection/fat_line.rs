@@ -233,20 +233,16 @@ impl FatLine {
 
 impl FatLine {
     ///
-    /// Creates a new fatline from a curve
+    /// Creates a new fatline from a central line and two points representing its outer edges
     /// 
-    pub fn from_curve<C: BezierCurve>(curve: &C) -> FatLine
-    where C::Point: Coordinate+Coordinate2D {
-        // Line between the start and end points of the curve
-        let line        = (curve.start_point(), curve.end_point());
-        
+    fn from_line_and_points<L: Line>(line: L, p1: L::Point, p2: L::Point) -> FatLine
+    where L::Point: Coordinate+Coordinate2D {
         // Coefficients for the line
         let (a, b, c)   = line_coefficients_2d(&line);
 
         // Compute the distances to the control points
-        let (cp1, cp2)  = curve.control_points();
-        let d1          = a*cp1.x() + b*cp1.y() + c;
-        let d2          = a*cp2.x() + b*cp2.y() + c;
+        let d1          = a*p1.x() + b*p1.y() + c;
+        let d2          = a*p2.x() + b*p2.y() + c;
 
         // This is the 'estimated fit' shortcut suggested by Sederberg/Nishta in their paper rather than the tighest ffitting line
         let (d_min, d_max) = if d1*d2 > 0.0 {
@@ -268,6 +264,18 @@ impl FatLine {
             d_max:  d_max,
             coeff:  (a, b, c)
         }
+    }
+
+    ///
+    /// Creates a new fatline from a curve
+    /// 
+    pub fn from_curve<C: BezierCurve>(curve: &C) -> FatLine
+    where C::Point: Coordinate+Coordinate2D {
+        // Line between the start and end points of the curve
+        let line        = (curve.start_point(), curve.end_point());
+        let (cp1, cp2)  = curve.control_points();
+
+        Self::from_line_and_points(line, cp1, cp2)
     }
 }
 
