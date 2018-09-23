@@ -1,5 +1,4 @@
 use super::super::curve::*;
-use super::super::section::*;
 use super::super::super::line::*;
 use super::super::super::coordinate::*;
 
