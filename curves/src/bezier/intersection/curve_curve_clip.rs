@@ -106,6 +106,8 @@ where C::Point: 'a+Coordinate2D {
     if curve1_last_len == 0.0 { return vec![]; }
     if curve2_last_len == 0.0 { return vec![]; }
 
+    println!("/* Search {:?} {:?} */ ParametricPlot([{}, {}], u=[0,1])", curve1.original_curve_t_values(), curve2.original_curve_t_values(), format_curve(&curve1), format_curve(&curve2));
+
     // Iterate to refine the match
     loop {
         if curve2_last_len > accuracy_squared {
@@ -118,13 +120,19 @@ where C::Point: 'a+Coordinate2D {
 
             curve2 = curve2.subsection(clip_t.0, clip_t.1);
 
+            println!("ParametricPlot([{}, {}], u=[0,1])", format_curve(&curve1), format_curve(&curve2));
+
             // Work out the length of the new curve
             let curve2_len = curve_hull_length_sq(&curve2);
 
             // If the curve doesn't shrink at least 20%, subdivide it
             if curve2_last_len*0.8 < curve2_len {
                 let (left, right)   = (curve2.subsection(0.0, 0.5), curve2.subsection(0.5, 1.0));
+
+                println!("/* SubLeft */");
                 let left            = curve_intersects_curve_clip_inner(curve1.clone(), left, accuracy_squared);
+
+                println!("/* SubRight */");
                 let right           = curve_intersects_curve_clip_inner(curve1.clone(), right, accuracy_squared);
 
                 return join_subsections(&curve1, left, right, accuracy_squared);
@@ -150,7 +158,11 @@ where C::Point: 'a+Coordinate2D {
             // If the curve doesn't shrink at least 20%, subdivide it
             if curve1_last_len*0.8 < curve1_len {
                 let (left, right)   = (curve1.subsection(0.0, 0.5), curve1.subsection(0.5, 1.0));
+
+                println!("/* SubLeft */");
                 let left            = curve_intersects_curve_clip_inner(left, curve2.clone(), accuracy_squared);
+
+                println!("/* SubRight */");
                 let right           = curve_intersects_curve_clip_inner(right, curve2, accuracy_squared);
 
                 return join_subsections(&curve1, left, right, accuracy_squared);
@@ -165,6 +177,8 @@ where C::Point: 'a+Coordinate2D {
             let (t_min1, t_max1) = curve1.original_curve_t_values();
             let (t_min2, t_max2) = curve2.original_curve_t_values();
 
+            println!("/* Found {:?} */", (t_min1, t_min2));
+
             return vec![((t_min1+t_max1)*0.5, (t_min2+t_max2)*0.5)];
         }
     }
@@ -176,6 +190,8 @@ where C::Point: 'a+Coordinate2D {
 /// 
 pub fn curve_intersects_curve_clip<'a, C: BezierCurve>(curve1: &'a C, curve2: &'a C, accuracy: f64) -> Vec<(f64, f64)>
 where C::Point: 'a+Coordinate2D {
+    println!("B(a,b,c,d,t) = a*(1-t)^3 + 3*b*(1-t)^2*t + 3*c*(1-t)*t^2 + d*t^3");
+
     // Start with the entire span of both curves
     let curve1 = curve1.section(0.0, 1.0);
     let curve2 = curve2.section(0.0, 1.0);
