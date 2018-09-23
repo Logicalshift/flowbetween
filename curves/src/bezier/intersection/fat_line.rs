@@ -277,6 +277,47 @@ impl FatLine {
 
         Self::from_line_and_points(line, cp1, cp2)
     }
+
+    ///
+    /// Creates a perpendicular fatline from a curve
+    /// 
+    pub fn from_curve_perpendicular<C: BezierCurve>(curve: &C) -> FatLine
+    where C::Point: Coordinate+Coordinate2D {
+        let (start_point, end_point) = (curve.start_point(), curve.end_point());
+
+        // Line between the start and end points of the curve
+        let line            = (start_point, end_point);
+
+        // Mid-point of the line
+        let mid_point       = line.point_at_pos(0.5);
+
+        // Target point to generate a perpendicular line
+        let offset          = mid_point - start_point;
+        let offset          = C::Point::from_components(&[offset.y(), offset.x()]);
+        let target_point    = mid_point + offset;
+
+        // Perpendicular line
+        let line            = (mid_point, target_point);
+
+        // Compute the distances to all of the points
+        let (cp1, cp2)      = curve.control_points();
+        let (a, b, c)       = line_coefficients_2d(&line);
+
+        let d1              = a*start_point.x() + b*start_point.y() + c;
+        let d2              = a*cp1.x() + b*cp1.y() + c;
+        let d3              = a*cp2.x() + b*cp2.y() + c;
+        let d4              = a*end_point.x() + b*end_point.y() + c;
+
+        // No approximation to improve the line fit here
+        let d_min           = d1.min(d2).min(d3).min(d4);
+        let d_max           = d1.max(d2).max(d3).max(d4);
+
+        FatLine {
+            coeff:  (a, b, c),
+            d_min:  d_min,
+            d_max:  d_max
+        }
+    }
 }
 
 #[cfg(test)]
