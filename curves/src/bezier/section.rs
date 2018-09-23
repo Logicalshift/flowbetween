@@ -57,7 +57,7 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     }
 
     ///
-    /// Returns the original t values (t_min, t_max) that this section was creted from
+    /// Returns the original t values (t_min, t_max) that this section was created from
     /// 
     #[inline]
     pub fn original_curve_t_values(&self) -> (f64, f64) {
