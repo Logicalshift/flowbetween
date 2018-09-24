@@ -63,6 +63,8 @@ fn log_message_message_set_properly() {
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
 
+    thread::sleep(Duration::from_millis(10));
+
     let messages    = messages.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
@@ -80,6 +82,8 @@ fn log_message_target_set_properly() {
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
 
+    thread::sleep(Duration::from_millis(10));
+
     let messages    = messages.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
@@ -96,6 +100,8 @@ fn publish_log_messages_to_default() {
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
+
+    thread::sleep(Duration::from_millis(10));
 
     let messages    = messages.sync(|messages| messages.clone());
 
