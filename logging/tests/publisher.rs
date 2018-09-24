@@ -18,6 +18,8 @@ fn publish_log_messages_to_subscriber() {
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
 
+    thread::sleep(Duration::from_millis(10));
+
     let messages    = messages.sync(|messages| messages.clone());
 
     assert!(messages.len() != 0);
@@ -37,6 +39,8 @@ fn publish_log_messages_to_two_subscribers() {
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
+
+    thread::sleep(Duration::from_millis(10));
 
     let messages    = messages1.sync(|messages| messages.clone());
 
@@ -122,6 +126,8 @@ fn no_messages_to_default_with_subscriber() {
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
+
+    thread::sleep(Duration::from_millis(10));
 
     let messages_nondefault = messages_nondefault.sync(|messages_nondefault| messages_nondefault.clone());
     let messages_default    = messages_default.sync(|messages_default| messages_default.clone());    
