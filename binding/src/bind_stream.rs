@@ -121,6 +121,8 @@ mod test {
         // Send the stream to a new binding
         let binding = bind_stream(stream, 0, |_old_value, new_value| new_value);
 
+        thread::sleep(Duration::from_millis(10));
+
         // Binding should have the value of the last value in the stream
         assert!(binding.get() == 3);
     }
@@ -133,6 +135,8 @@ mod test {
 
         // Send the stream to a new binding (with some processing)
         let binding = bind_stream(stream, 0, |_old_value, new_value| new_value + 42);
+
+        thread::sleep(Duration::from_millis(10));
 
         // Binding should have the value of the last value in the stream
         assert!(binding.get() == 45);
