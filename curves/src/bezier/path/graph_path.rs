@@ -5,6 +5,8 @@ use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
 use std::ops::Range;
+use std::fmt;
+use std::mem;
 
 const CLOSE_DISTANCE: f64 = 0.01;
 
@@ -199,7 +201,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// Joins two edges at an intersection, returning the index of the intersection point
     /// 
     /// For t=0 or 1 the intersection point may be one of the ends of the edges, otherwise
-    /// this will divide the existing edges so that they both meet at the specified mid-point
+    /// this will divide the existing edges so that they both meet at the specified mid-point.
+    /// 
+    /// Note that the case where t=1 is the same as the case where t=0 on a following edge.
+    /// The split algorithm is simpler if only the t=0 case is considered.
     /// 
     #[inline]
     fn join_edges_at_intersection(&mut self, edge1: (usize, usize), edge2: (usize, usize), t1: f64, t2: f64) -> Option<usize> {
@@ -211,8 +216,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         let (edge2_idx, edge2_edge_idx) = edge2;
 
         // Create representations of the two edges
-        let edge1 = Curve::from_curve(GraphEdge::new(self, edge1_idx, &self.points[edge1_idx].1[edge1_edge_idx]));
-        let edge2 = Curve::from_curve(GraphEdge::new(self, edge2_idx, &self.points[edge2_idx].1[edge2_edge_idx]));
+        let edge1 = Curve::from_curve(&GraphEdge::new(self, edge1_idx, &self.points[edge1_idx].1[edge1_edge_idx]));
+        let edge2 = Curve::from_curve(&GraphEdge::new(self, edge2_idx, &self.points[edge2_idx].1[edge2_edge_idx]));
 
         // Create or choose a point to collide at
         // (If t1 or t2 is 0 or 1 we collide on the edge1 or edge2 points, otherwise we create a new point to collide at)
@@ -251,19 +256,19 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // The 'b' edges both extend from our mid-point to the existing end point (provided
         // t < 1.0)
-        if !Self::t_is_one(t1) {
+        if !Self::t_is_one(t1) && !Self::t_is_zero(t1) {
             // If t1 is zero or one, we're not subdividing edge1
-            // TODO: if zero, we're just adding the existing edge again to the collision point
+            // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
             self.points[collision_point].1.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx));
         }
-        if !Self::t_is_one(t2) {
+        if !Self::t_is_one(t2) && !Self::t_is_zero(t2) {
             // If t2 is zero or one, we're not subdividing edge2
-            // TODO: if zero, we're just adding the existing edge again to the collision point
+            // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
             self.points[collision_point].1.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx));
         }
 
         // The 'a' edges both update the initial edge, provided t is not 0
-        if !Self::t_is_zero(t1) {
+        if !Self::t_is_zero(t1) && !Self::t_is_one(t1) {
             self.points[edge1_idx].1[edge1_edge_idx].set_control_points(edge1a.control_points(), collision_point);
 
             // If t1 is zero, we're not subdividing edge1
@@ -275,14 +280,31 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             self.points[edge2_idx].1[edge2_edge_idx].set_control_points(edge2a.control_points(), collision_point);
 
             // If t1 is one, this should leave the edge alone
-            // TODO: if t2 is one, this will have redirected the end point of t2 to the 
-            // collision point: we need to move all of the edges
+            if Self::t_is_one(t2) {
+                // If t2 is one, this will have redirected the end point of t2 to the collision point: we need to move all of the edges
+                let mut edge2_end_edges = vec![];
+                mem::swap(&mut self.points[edge2_end_idx].1, &mut edge2_end_edges);
+                self.points[collision_point].1.extend(edge2_end_edges);
+            }
         }
         
-        // TODO: if t1 is zero and t2 is zero we need to replace all the places that end at 
-        // edge2_idx with the collision point (which will be edge1_idx). 
-        // Same if t1 is one and t2 is zero
-        // If t2 is one there's a similar issue explained above
+        if Self::t_is_zero(t2) && collision_point != edge2_idx {
+            // If t2 is zero and the collision point is not the start of edge2, then edge2 should start at the collision point instead of where it does now
+
+            // All edges that previously went to the collision point now go to the collision point
+            for point in self.points.iter_mut() {
+                for edge in point.1.iter_mut() {
+                    if edge.end_idx == edge2_idx {
+                        edge.end_idx = collision_point;
+                    }
+                }
+            }
+
+            // All edges that currently come from edge2 need to be moved to the collision point
+            let mut edge2_edges = vec![];
+            mem::swap(&mut self.points[edge2_idx].1, &mut edge2_edges);
+            self.points[collision_point].1.extend(edge2_edges);
+        }
 
         Some(collision_point)
     }
@@ -299,6 +321,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         let mut collisions = vec![];
 
         // TODO: for complicated paths, maybe some pre-processing for bounding boxes to eliminate trivial cases would be beneficial for performance
+
+        // The points that have had collisions exactly on them (we only collide them once)
+        let mut collided = vec![false; self.points.len()];
 
         // Iterate through the edges in the 'from' range
         for src_idx in collide_from {
@@ -321,11 +346,44 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         if !src_edge_bounds.overlaps(&tgt_edge_bounds) { continue; }
 
                         // Find the collisions between these two edges (these a)
-                        let curve_collisions    = curve_intersects_curve(&src_curve, &tgt_curve, accuracy);
+                        let curve_collisions    = curve_intersects_curve_clip(&src_curve, &tgt_curve, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
+                        let tgt_idx = *tgt_idx;
                         for (src_t, tgt_t) in curve_collisions {
-                            collisions.push(((src_idx, src_edge_idx, src_t), (*tgt_idx, tgt_edge_idx, tgt_t)));
+                            // A collision at t=1 is the same as a collision on t=0 on a following edge
+                            // Edge doesn't actually matter for these (as the point will collide with )
+                            let (src_idx, src_edge_idx, src_t) = if Self::t_is_one(src_t) {
+                                (self.points[src_idx].1[src_edge_idx].end_idx, 0, 0.0)
+                            } else {
+                                (src_idx, src_edge_idx, src_t)
+                            };
+
+                            let (tgt_idx, tgt_edge_idx, tgt_t) = if Self::t_is_one(tgt_t) {
+                                (self.points[tgt_idx].1[tgt_edge_idx].end_idx, 0, 0.0)
+                            } else {
+                                (tgt_idx, tgt_edge_idx, tgt_t)
+                            };
+
+                            // Allow only one collision exactly on a point
+                            if Self::t_is_zero(src_t) {
+                                if collided[src_idx] { 
+                                    continue;
+                                } else {
+                                    collided[src_idx] = true;
+                                }
+                            }
+
+                            if Self::t_is_zero(tgt_t) {
+                                if collided[tgt_idx] { 
+                                    continue;
+                                } else {
+                                    collided[tgt_idx] = true;
+                                }
+                            }
+
+                            // Add this as a collision
+                            collisions.push(((src_idx, src_edge_idx, src_t), (tgt_idx, tgt_edge_idx, tgt_t)));
                         }
                     }
                 }
@@ -339,6 +397,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
             // Update the remainder of the collisions if any point at the source or target edge
             if let Some(new_mid_point) = new_mid_point {
+                // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
+
                 // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
                 // TODO: deal with the case where the midpoint only affects one edge or the other
                 // TODO: deal with the case where the target is the source on a future collision
@@ -476,5 +536,11 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
         (self.edge.cp1.clone(), self.edge.cp2.clone())
+    }
+}
+
+impl<'a, Point: fmt::Debug> fmt::Debug for GraphEdge<'a, Point> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.start_idx, self.edge.end_idx, self.graph.points[self.start_idx].0, self.graph.points[self.edge.end_idx].0, self.edge.cp1, self.edge.cp2)
     }
 }
