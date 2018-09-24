@@ -162,10 +162,6 @@ impl FatLine {
                     t1 = t1.min(t1a);
                     t2 = t2.max(t1a);
                 }
-            } else {
-                // If the start or end point is inside the fat line then it is also within the clipping area
-                if p1.x() <= d_max && p1.x() >= d_min { t1 = t1.min(p1.y()); }
-                if p2.x() <= d_max && p2.x() >= d_min { t1 = t1.min(p2.y()); }
             }
             
             if let Some(t2a) = t2a {
@@ -174,11 +170,11 @@ impl FatLine {
                     t1 = t1.min(t2a);
                     t2 = t2.max(t2a);
                 }
-            } else {
-                // If the start or end point is inside the fat line then it is also within the clipping area
-                if p1.x() <= d_max && p1.x() >= d_min { t2 = t2.max(p1.y()); }
-                if p2.x() <= d_max && p2.x() >= d_min { t2 = t2.max(p2.y()); }
             }
+
+            // If the start or end point is inside the fat line then it is also within the clipping area
+            if p1.x() <= d_max && p1.x() >= d_min { t1 = t1.min(p1.y()); t2 = t2.max(p1.y()); }
+            if p2.x() <= d_max && p2.x() >= d_min { t1 = t1.min(p2.y()); t2 = t2.max(p2.y()); }
         }
 
         if t1 > t2 {
