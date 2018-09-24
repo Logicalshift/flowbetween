@@ -217,14 +217,6 @@ impl FatLine {
             Some((t1, t2))
         }
     }
-
-    pub fn format_line(&self) -> String {
-        let (a, b, c) = self.coeff;
-        format!("[L({}, {}, u), L({}, {}, u)], [L({}, {}, u), L({}, {}, u)], [L({}, {}, u), L({}, {}, u)]", 
-            1.0, 0.0, a/-b, c/-b, 
-            1.0, 0.0, a/-b, (c-self.d_min)/-b, 
-            1.0, 0.0, a/-b, (c-self.d_max)/-b)
-    }
 }
 
 impl FatLine {
