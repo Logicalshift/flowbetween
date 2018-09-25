@@ -16,6 +16,9 @@ const CLOSE_DISTANCE: f64 = 0.01;
 /// 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum GraphPathEdgeKind {
+    /// An edge that hasn't been categorised yet
+    Uncategorised,
+
     /// An exterior edge
     /// 
     /// These edges represent a transition between the inside and the outside of the path
@@ -104,7 +107,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             points.push((end_point, vec![]));
 
             // Add an edge from the last point to the next point
-            points[last_point].1.push(GraphPathEdge::new(GraphPathEdgeKind::Exterior, (cp1, cp2), next_point));
+            points[last_point].1.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point));
 
             // Update the last/next pooints
             last_point += 1;
@@ -127,7 +130,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                 let cp1             = close_vector * 0.33;
                 let cp2             = close_vector * 0.66;
 
-                points[last_point].1.push(GraphPathEdge::new(GraphPathEdgeKind::Exterior, (cp1, cp2), 0));
+                points[last_point].1.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0));
             }
         } else {
             // Just a start point and no edges: remove the start point as it doesn't really make sense
