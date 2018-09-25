@@ -2,6 +2,7 @@ use super::path::*;
 use super::super::curve::*;
 use super::super::intersection::*;
 use super::super::super::geo::*;
+use super::super::super::line::*;
 use super::super::super::coordinate::*;
 
 use std::ops::Range;
@@ -454,6 +455,41 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Return the result
         self
+    }
+
+    ///
+    /// Finds the exterior edge (and t value) where a line first collides with this path (closest to the line
+    /// start point)
+    /// 
+    pub fn line_collision<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Option<(GraphEdge<'a, Point>, f64)> {
+        // We'll store the result after visiting all of the edges
+        let mut collision_result = None;
+
+        // Visit every edge in this graph
+        for point_idx in 0..(self.points.len()) {
+            for edge in self.edges(point_idx) {
+                // Find out where the line collides with this edge
+                let collisions = curve_intersects_line(&edge, ray);
+
+                for (curve_t, line_t, _collide_pos) in collisions {
+                    collision_result = match collision_result {
+                        None                                            => { Some((edge.clone(), line_t, curve_t)) },
+                        Some((last_edge, last_line_t, last_curve_t))    => {
+                            if line_t < last_line_t {
+                                // This match is closer to the start of the line
+                                Some((edge.clone(), line_t, curve_t))
+                            } else {
+                                // Last match is closer to the start of the line
+                                Some((last_edge, last_line_t, last_curve_t))
+                            }
+                        }
+                    };
+                }
+            }
+        }
+
+        // Return the result
+        collision_result.map(|(edge, _line_t, curve_t)| (edge, curve_t))
     }
 }
 
