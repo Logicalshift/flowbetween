@@ -533,6 +533,28 @@ fn cast_ray_to_rectangle_corner() {
 }
 
 #[test]
+fn cast_ray_across_rectangle() {
+    // Create a rectangle
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle1 = GraphPath::from_path(&rectangle1);
+
+    // Collide against the top-left corner
+    let collision = rectangle1.line_collision(&(Coord2(0.0, 3.0), Coord2(6.0, 3.0)));
+
+    assert!(collision.is_some());
+
+    let collision = collision.unwrap();
+    assert!(collision.0.point_at_pos(collision.1).distance_to(&Coord2(1.0, 3.0)) < 0.001);
+    assert!(collision.0.start_point() == Coord2(1.0, 1.0));
+    assert!((collision.1-0.5).abs() < 0.01);
+}
+
+#[test]
 fn cast_ray_to_rectangle_far_corner() {
     // Create a rectangle
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
