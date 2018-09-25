@@ -38,7 +38,7 @@ where P::Point: Coordinate2D {
         while let Some(curve) = curves.next() {
             let mut hit_end_this_pass = false;
 
-            for t in curve_intersects_line(&curve, &ray) {
+            for (t, _pos) in curve_intersects_line(&curve, &ray) {
                 // If we precisely hit the first point, we need to make sure we don't also precisely hit the last point
                 if t < 0.0000001 && first_path { hit_first_point = true; }
 

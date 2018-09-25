@@ -8,7 +8,7 @@ use roots::{find_roots_cubic, Roots};
 ///
 /// Find the t values where a curve intersects a line
 /// 
-pub fn curve_intersects_line<C: BezierCurve, L: Line<Point=C::Point>>(curve: &C, line: &L) -> Vec<f64>
+pub fn curve_intersects_line<C: BezierCurve, L: Line<Point=C::Point>>(curve: &C, line: &L) -> Vec<(f64, C::Point)>
 where C::Point: Coordinate2D {
     // Based upon https://www.particleincell.com/2013/cubic-line-intersection/
 
@@ -47,9 +47,11 @@ where C::Point: Coordinate2D {
             else if t > 1.0 && t < 1.001 { 1.0 }
             else { t }
         })
-        .filter(|t| {
+        .map(|t| {
+            (t, de_casteljau4(t, w1, w2, w3, w4))
+        })
+        .filter(|(t, pos)| {
             // Coordinates on the curve
-            let pos = basis(*t, w1, w2, w3, w4);
             let x   = pos.x();
             let y   = pos.y();
 

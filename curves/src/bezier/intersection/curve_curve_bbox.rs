@@ -45,7 +45,7 @@ where C::Point: 'a+Coordinate2D {
             let curve2_t = curve_intersects_line(curve2, &(curve1.start_point(), curve1.end_point()));
 
             if curve2_t.len() > 0 {
-                CurveIntersection::Match(curve1_t, curve2_t[0])
+                CurveIntersection::Match(curve1_t, curve2_t[0].0)
             } else {
                 CurveIntersection::None
             }
@@ -55,7 +55,7 @@ where C::Point: 'a+Coordinate2D {
             let curve2_t = 0.5;
 
             if curve1_t.len() > 0 {
-                CurveIntersection::Match(curve1_t[0], curve2_t)
+                CurveIntersection::Match(curve1_t[0].0, curve2_t)
             } else {
                 CurveIntersection::None
             }
