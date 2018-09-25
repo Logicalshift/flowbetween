@@ -404,8 +404,6 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                 // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
 
                 // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
-                // TODO: deal with the case where the midpoint only affects one edge or the other
-                // TODO: deal with the case where the target is the source on a future collision
                 for ((ref mut other_src_idx, ref mut other_src_edge, ref mut other_src_t), (ref mut other_tgt_idx, ref mut other_tgt_edge, ref mut other_tgt_t)) in collisions.iter_mut() {
                     // If the src edge was divided...
                     if other_src_idx == &src_idx && other_src_edge == &src_edge {
