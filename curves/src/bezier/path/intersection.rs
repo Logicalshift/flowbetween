@@ -14,7 +14,7 @@ pub fn path_intersects_line<'a, Path: BezierPath, L: Line<Point=Path::Point>>(pa
 where Path::Point: 'a+Coordinate2D {
     path_to_curves::<_, Curve<_>>(path)
         .enumerate()
-        .flat_map(move |(section_id, curve)| curve_intersects_line(&curve, line).into_iter().map(move |(t, _pos)| (section_id, t)))
+        .flat_map(move |(section_id, curve)| curve_intersects_line(&curve, line).into_iter().map(move |(t, _s, _pos)| (section_id, t)))
 }
 
 ///
