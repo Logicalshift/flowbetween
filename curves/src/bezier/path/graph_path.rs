@@ -491,6 +491,15 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // Return the result
         collision_result.map(|(edge, _line_t, curve_t)| (edge, curve_t))
     }
+
+    ///
+    /// Remove any edges marked as interior
+    ///
+    pub fn remove_interior_edges(&mut self) {
+        for point_idx in 0..(self.points.len()) {
+            self.points[point_idx].1.retain(|edge| edge.kind != GraphPathEdgeKind::Interior);
+        }
+    }
 }
 
 ///
