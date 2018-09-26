@@ -31,6 +31,17 @@ pub enum GraphPathEdgeKind {
 }
 
 ///
+/// Reference to a graph edge
+///
+pub struct GraphEdgeRef {
+    /// The index of the point this edge starts from
+    start_idx: usize,
+
+    /// The index of the edge within the point
+    edge_idx: usize
+}
+
+///
 /// Enum representing an edge in a graph path
 /// 
 #[derive(Clone, Debug)]
@@ -501,6 +512,13 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             self.points[point_idx].1.retain(|edge| edge.kind != GraphPathEdgeKind::Interior);
         }
     }
+
+    ///
+    /// Given a descision function, determines which edge
+    ///
+    pub fn classify_exterior_edges(&mut self, start_edge: GraphEdgeRef) {
+
+    }
 }
 
 ///
@@ -582,6 +600,29 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
         (self.edge.cp1.clone(), self.edge.cp2.clone())
+    }
+}
+
+///
+/// A GraphEdgeRef can be created from a GraphEdge in order to release the borrow
+///
+impl<'a, Point: 'a+Coordinate> From<GraphEdge<'a, Point>> for GraphEdgeRef {
+    fn from(edge: GraphEdge<'a, Point>) -> GraphEdgeRef {
+        // Get the edges for our start point
+        let point_edges = &edge.graph.points[edge.start_idx].1;
+
+        // Find the edge that ends on the same end point (assume it's this edge)
+        for edge_idx in 0..(point_edges.len()) {
+            if point_edges[edge_idx].end_idx == edge.edge.end_idx {
+                return GraphEdgeRef {
+                    start_idx:  edge.start_idx,
+                    edge_idx:   edge_idx
+                };
+            }
+        }
+
+        // Shouldn't actually be possible to reach here (as we're borrowing the graph we reference)
+        panic!("Edge has been lost from graph");
     }
 }
 
