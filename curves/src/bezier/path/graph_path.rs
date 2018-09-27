@@ -646,9 +646,11 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
             // Fetch the next external edge using the decision function (pick_external_edge)
             let next_edge = {
-                // Gather the edges for the current point
-                // TODO: we need to have the 'reverse' edges as well here
+                // Gather the uncategorised edges for the current point
+                // The edge we just visited will just have been marked as exterior so it will be excluded here
+                // Also, if we revisit a point we'll only ask the algorithm to pick from the remaining edges
                 let edges = self.edges_for_point(current_point_idx)
+                    .chain(self.reverse_edges_for_point(current_point_idx))
                     .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
                     .collect();
 
