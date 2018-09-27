@@ -33,6 +33,7 @@ pub enum GraphPathEdgeKind {
 ///
 /// Reference to a graph edge
 ///
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GraphEdgeRef {
     /// The index of the point this edge starts from
     start_idx: usize,
@@ -188,9 +189,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     ///
     #[inline]
     pub fn edges<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
-        self.points[point_num].edges
-            .iter()
-            .map(move |edge| GraphEdge::new(self, point_num, edge))
+        (0..(self.points[point_num].edges.len()))
+            .into_iter()
+            .map(move |edge_idx| GraphEdge::new(self, GraphEdgeRef { start_idx: point_num, edge_idx: edge_idx }))
     }
 
     ///
@@ -252,8 +253,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         let (edge2_idx, edge2_edge_idx) = edge2;
 
         // Create representations of the two edges
-        let edge1 = Curve::from_curve(&GraphEdge::new(self, edge1_idx, &self.points[edge1_idx].edges[edge1_edge_idx]));
-        let edge2 = Curve::from_curve(&GraphEdge::new(self, edge2_idx, &self.points[edge2_idx].edges[edge2_edge_idx]));
+        let edge1 = Curve::from_curve(&GraphEdge::new(self, GraphEdgeRef { start_idx: edge1_idx, edge_idx: edge1_edge_idx }));
+        let edge2 = Curve::from_curve(&GraphEdge::new(self, GraphEdgeRef { start_idx: edge2_idx, edge_idx: edge2_edge_idx }));
 
         // Create or choose a point to collide at
         // (If t1 or t2 is 0 or 1 we collide on the edge1 or edge2 points, otherwise we create a new point to collide at)
@@ -373,8 +374,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         // Create edge objects for each side
                         let src_edge            = &self.points[src_idx].edges[src_edge_idx];
                         let tgt_edge            = &self.points[*tgt_idx].edges[tgt_edge_idx];
-                        let src_curve           = GraphEdge::new(self, src_idx, src_edge);
-                        let tgt_curve           = GraphEdge::new(self, *tgt_idx, tgt_edge);
+                        let src_curve           = GraphEdge::new(self, GraphEdgeRef { start_idx: src_idx, edge_idx: src_edge_idx });
+                        let tgt_curve           = GraphEdge::new(self, GraphEdgeRef { start_idx: *tgt_idx, edge_idx: tgt_edge_idx});
 
                         // Quickly reject edges with non-overlapping bounding boxes
                         let src_edge_bounds     = src_curve.fast_bounding_box::<Bounds<_>>();
@@ -592,9 +593,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             let next_edge = {
                 // Gather the edges for the current point
                 // TODO: we need to have the 'reverse' edges as well here
-                let edges = self.points[current_point_idx].edges.iter()
-                    .filter(|edge| edge.kind == GraphPathEdgeKind::Uncategorised)
-                    .map(|edge| GraphEdge::new(self, current_point_idx, edge))
+                let edges = (0..(self.points[current_point_idx].edges.len()))
+                    .filter(|edge_idx| self.points[current_point_idx].edges[*edge_idx].kind == GraphPathEdgeKind::Uncategorised)
+                    .map(|edge_idx| GraphEdge::new(self, GraphEdgeRef { start_idx: current_point_idx, edge_idx: edge_idx }))
                     .collect();
 
                 // Pass to the selection function to pick the next edge we go to
@@ -618,11 +619,8 @@ pub struct GraphEdge<'a, Point: 'a> {
     /// The graph that this point is for
     graph: &'a GraphPath<Point>,
 
-    /// The point where the edge starts
-    start_idx: usize,
-
-    /// The edge in the graph that this represents
-    edge: &'a GraphPathEdge<Point>
+    /// A reference to the edge this point is for
+    edge: GraphEdgeRef
 }
 
 impl<'a, Point: 'a> GraphEdge<'a, Point> {
@@ -630,19 +628,22 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// Creates a new graph edge (with an edge kind of 'exterior')
     /// 
     #[inline]
-    fn new(graph: &'a GraphPath<Point>, start_idx: usize, edge: &'a GraphPathEdge<Point>) -> GraphEdge<'a, Point> {
+    fn new(graph: &'a GraphPath<Point>, edge: GraphEdgeRef) -> GraphEdge<'a, Point> {
         GraphEdge {
-            graph:          graph,
-            start_idx:      start_idx,
-            edge:           edge
+            graph:  graph,
+            edge:   edge
         }
+    }
+
+    fn edge<'b>(&'b self) -> &'b GraphPathEdge<Point> {
+        &self.graph.points[self.edge.start_idx].edges[self.edge.edge_idx]
     }
 
     ///
     /// Returns if this is an interior or an exterior edge in the path
     /// 
     pub fn kind(&self) -> GraphPathEdgeKind {
-        self.edge.kind
+        self.edge().kind
     }
 
     ///
@@ -650,7 +651,7 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// 
     #[inline]
     pub fn start_point_index(&self) -> usize {
-        self.start_idx
+        self.edge.start_idx
     }
 
     ///
@@ -658,7 +659,7 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// 
     #[inline]
     pub fn end_point_index(&self) -> usize {
-        self.edge.end_idx
+        self.edge().end_idx
     }
 }
 
@@ -672,7 +673,7 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     /// 
     #[inline]
     fn start_point(&self) -> Self::Point {
-        self.graph.points[self.start_idx].position.clone()
+        self.graph.points[self.edge.start_idx].position.clone()
     }
 
     ///
@@ -680,7 +681,7 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     /// 
     #[inline]
     fn end_point(&self) -> Self::Point {
-        self.graph.points[self.edge.end_idx].position.clone()
+        self.graph.points[self.edge().end_idx].position.clone()
     }
 
     ///
@@ -688,7 +689,8 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
     /// 
     #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
-        (self.edge.cp1.clone(), self.edge.cp2.clone())
+        let edge = self.edge();
+        (edge.cp1.clone(), edge.cp2.clone())
     }
 }
 
@@ -697,26 +699,12 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
 ///
 impl<'a, Point: 'a+Coordinate> From<GraphEdge<'a, Point>> for GraphEdgeRef {
     fn from(edge: GraphEdge<'a, Point>) -> GraphEdgeRef {
-        // Get the edges for our start point
-        let point_edges = &edge.graph.points[edge.start_idx].edges;
-
-        // Find the edge that ends on the same end point (assume it's this edge)
-        for edge_idx in 0..(point_edges.len()) {
-            if point_edges[edge_idx].end_idx == edge.edge.end_idx {
-                return GraphEdgeRef {
-                    start_idx:  edge.start_idx,
-                    edge_idx:   edge_idx
-                };
-            }
-        }
-
-        // Shouldn't actually be possible to reach here (as we're borrowing the graph we reference)
-        panic!("Edge has been lost from graph");
+        edge.edge
     }
 }
 
 impl<'a, Point: fmt::Debug> fmt::Debug for GraphEdge<'a, Point> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.start_idx, self.edge.end_idx, self.graph.points[self.start_idx].position, self.graph.points[self.edge.end_idx].position, self.edge.cp1, self.edge.cp2)
+        write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.edge.start_idx, self.edge().end_idx, self.graph.points[self.edge.start_idx].position, self.graph.points[self.edge().end_idx].position, self.edge().cp1, self.edge().cp2)
     }
 }
