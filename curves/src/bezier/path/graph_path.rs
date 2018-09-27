@@ -69,15 +69,18 @@ struct GraphPathPoint<Point> {
     position: Point,
 
     /// The edges attached to this point
-    forward_edges: Vec<GraphPathEdge<Point>>
+    forward_edges: Vec<GraphPathEdge<Point>>,
+
+    /// The points with edges connecting to this point
+    connected_from: Vec<usize>
 }
 
 impl<Point> GraphPathPoint<Point> {
     ///
     /// Creates a new graph path point
     ///
-    fn new(position: Point, forward_edges: Vec<GraphPathEdge<Point>>) -> GraphPathPoint<Point> {
-        GraphPathPoint { position, forward_edges }
+    fn new(position: Point, forward_edges: Vec<GraphPathEdge<Point>>, connected_from: Vec<usize>) -> GraphPathPoint<Point> {
+        GraphPathPoint { position, forward_edges, connected_from }
     }
 }
 
@@ -128,7 +131,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Push the start point (with an open path)
         let start_point = path.start_point();
-        points.push(GraphPathPoint::new(start_point, vec![]));
+        points.push(GraphPathPoint::new(start_point, vec![], vec![]));
 
         // We'll add edges to the previous point
         let mut last_point = 0;
@@ -137,7 +140,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // Iterate through the points in the path
         for (cp1, cp2, end_point) in path.points() {
             // Push the points
-            points.push(GraphPathPoint::new(end_point, vec![]));
+            points.push(GraphPathPoint::new(end_point, vec![], vec![]));
 
             // Add an edge from the last point to the next point
             points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point));
@@ -171,8 +174,28 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         }
 
         // Create the graph path from the points
-        GraphPath {
+        let mut path = GraphPath {
             points: points
+        };
+        path.recalculate_reverse_connections();
+        path
+    }
+
+    ///
+    /// Recomputes the list of items that have connections to each point
+    ///
+    fn recalculate_reverse_connections(&mut self) {
+        // Reset the list of connections to be empty
+        for point_idx in 0..(self.points.len()) {
+            self.points[point_idx].connected_from = vec![];
+        }
+
+        // Add a reverse connection for every edge
+        for point_idx in 0..(self.points.len()) {
+            for edge_idx in 0..(self.points[point_idx].forward_edges.len()) {
+                let end_idx = self.points[point_idx].forward_edges[edge_idx].end_idx;
+                self.points[end_idx].connected_from.push(point_idx);
+            }
         }
     }
 
@@ -275,7 +298,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
             // Add to this list of points
             let mid_point_idx = self.points.len();
-            self.points.push(GraphPathPoint::new(mid_point, vec![]));
+            self.points.push(GraphPathPoint::new(mid_point, vec![], vec![]));
 
             // New point is the mid-point
             mid_point_idx
@@ -466,6 +489,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                 }
             }
         }
+
+        // Recompute the reverse connections
+        self.recalculate_reverse_connections();
     }
 
     ///
