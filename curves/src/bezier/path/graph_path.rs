@@ -214,7 +214,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// Returns an iterator of the edges connected to a particular point
     ///
     #[inline]
-    pub fn edges<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
+    pub fn edges_for_point<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
         (0..(self.points[point_num].forward_edges.len()))
             .into_iter()
             .map(move |edge_idx| GraphEdge::new(self, GraphEdgeRef { start_idx: point_num, edge_idx: edge_idx, reverse: false }))
@@ -528,7 +528,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 
         // Visit every edge in this graph
         for point_idx in 0..(self.points.len()) {
-            for edge in self.edges(point_idx) {
+            for edge in self.edges_for_point(point_idx) {
                 // Find out where the line collides with this edge
                 let collisions = curve_intersects_line(&edge, ray);
 

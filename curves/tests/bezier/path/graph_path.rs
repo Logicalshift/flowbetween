@@ -10,7 +10,7 @@ pub fn create_and_read_simple_graph_path() {
 
     // Point 0 edges
     {
-        let edges = graph_path.edges(0).collect::<Vec<_>>();
+        let edges = graph_path.edges_for_point(0).collect::<Vec<_>>();
 
         assert!(edges.len() == 1);
         assert!(edges[0].kind() == GraphPathEdgeKind::Uncategorised);
@@ -21,7 +21,7 @@ pub fn create_and_read_simple_graph_path() {
 
     // Point 1 edges
     {
-        let edges = graph_path.edges(1).collect::<Vec<_>>();
+        let edges = graph_path.edges_for_point(1).collect::<Vec<_>>();
 
         assert!(edges.len() == 1);
         assert!(edges[0].kind() == GraphPathEdgeKind::Uncategorised);
@@ -32,7 +32,7 @@ pub fn create_and_read_simple_graph_path() {
 
     // Point 2 edges
     {
-        let edges = graph_path.edges(2).collect::<Vec<_>>();
+        let edges = graph_path.edges_for_point(2).collect::<Vec<_>>();
         assert!(edges.len() == 1);
         assert!(edges[0].kind() == GraphPathEdgeKind::Uncategorised);
         assert!(edges[0].start_point() == Coord2(25.0, 26.0));
@@ -69,7 +69,7 @@ pub fn collide_two_rectangles() {
 
     for point_idx in 0..10 {
         // Check the edges for each point
-        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+        let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
 
         assert!(edges.len() <= 2);
         assert!(edges.len() >= 1);
@@ -155,7 +155,7 @@ fn multiple_collisions_on_one_edge() {
 
     // Check the intersection points
     for point_idx in 0..12 {
-        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+        let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
 
         assert!(edges.len() <= 2);
         if edges.len() == 2 {
@@ -208,7 +208,7 @@ fn multiple_collisions_on_one_edge_opposite_direction() {
     // Check the intersection points
     let mut num_intersects = 0;
     for point_idx in 0..12 {
-        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+        let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
 
         assert!(edges.len() <= 2);
         assert!(edges.len() > 0);
@@ -282,7 +282,7 @@ fn collision_at_same_point() {
     if collision.num_points() == 13 {
         let mut num_orphaned_points = 0;
         for point_idx in 0..13 {
-            let edges = collision.edges(point_idx).collect::<Vec<_>>();
+            let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
             if edges.len() == 0 { num_orphaned_points += 1; }
         }
 
@@ -292,7 +292,7 @@ fn collision_at_same_point() {
     // Check the intersection points
     let mut num_intersects = 0;
     for point_idx in 0..collision.num_points() {
-        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+        let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
 
         if edges.len() == 2 {
             num_intersects += 1;
@@ -369,7 +369,7 @@ fn collision_exactly_on_edge_src() {
     if collision.num_points() == 13 {
         let mut num_orphaned_points = 0;
         for point_idx in 0..13 {
-            let edges = collision.edges(point_idx).collect::<Vec<_>>();
+            let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
             if edges.len() == 0 { num_orphaned_points += 1; }
         }
 
@@ -379,7 +379,7 @@ fn collision_exactly_on_edge_src() {
     // Check the intersection points
     let mut num_intersects = 0;
     for point_idx in 0..collision.num_points() {
-        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+        let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
 
         if edges.len() == 2 {
             num_intersects += 1;
@@ -456,7 +456,7 @@ fn collision_exactly_on_edge_tgt() {
     if collision.num_points() == 13 {
         let mut num_orphaned_points = 0;
         for point_idx in 0..13 {
-            let edges = collision.edges(point_idx).collect::<Vec<_>>();
+            let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
             if edges.len() == 0 { num_orphaned_points += 1; }
         }
 
@@ -466,7 +466,7 @@ fn collision_exactly_on_edge_tgt() {
     // Check the intersection points
     let mut num_intersects = 0;
     for point_idx in 0..collision.num_points() {
-        let edges = collision.edges(point_idx).collect::<Vec<_>>();
+        let edges = collision.edges_for_point(point_idx).collect::<Vec<_>>();
 
         if edges.len() == 2 {
             num_intersects += 1;
