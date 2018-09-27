@@ -166,8 +166,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             } else {
                 // Need to draw a line to the last point
                 let close_vector    = points[last_point].position - start_point;
-                let cp1             = close_vector * 0.33;
-                let cp2             = close_vector * 0.66;
+                let cp1             = close_vector * 0.33 + start_point;
+                let cp2             = close_vector * 0.66 + start_point;
 
                 points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0));
             }
@@ -211,13 +211,41 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     }
 
     ///
-    /// Returns an iterator of the edges connected to a particular point
+    /// Returns an iterator of the edges that leave a particular point
+    /// 
+    /// Edges are directional: this will provide the edges that leave the supplied point
     ///
     #[inline]
     pub fn edges_for_point<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
         (0..(self.points[point_num].forward_edges.len()))
             .into_iter()
             .map(move |edge_idx| GraphEdge::new(self, GraphEdgeRef { start_idx: point_num, edge_idx: edge_idx, reverse: false }))
+    }
+
+    ///
+    /// Returns an iterator of the edges that arrive at a particular point
+    /// 
+    /// Edges are directional: this will provide the edges that connect to the supplied point
+    ///
+    pub fn reverse_edges_for_point<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
+        // Fetch the points that connect to this point
+        self.points[point_num].connected_from
+            .iter()
+            .flat_map(move |connected_from| {
+                let connected_from = *connected_from;
+
+                // Any edge that connects to the current point, in reverse
+                (0..(self.points[connected_from].forward_edges.len()))
+                    .into_iter()
+                    .filter_map(move |edge_idx| {
+                        if self.points[connected_from].forward_edges[edge_idx].end_idx == point_num {
+                            Some(GraphEdgeRef { start_idx: connected_from, edge_idx: edge_idx, reverse: true })
+                        } else {
+                            None
+                        }
+                    })
+            })
+            .map(move |edge_ref| GraphEdge::new(self, edge_ref))
     }
 
     ///
