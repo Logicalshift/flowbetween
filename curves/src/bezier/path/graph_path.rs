@@ -648,9 +648,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             let next_edge = {
                 // Gather the edges for the current point
                 // TODO: we need to have the 'reverse' edges as well here
-                let edges = (0..(self.points[current_point_idx].forward_edges.len()))
-                    .filter(|edge_idx| self.points[current_point_idx].forward_edges[*edge_idx].kind == GraphPathEdgeKind::Uncategorised)
-                    .map(|edge_idx| GraphEdge::new(self, GraphEdgeRef { start_idx: current_point_idx, edge_idx: edge_idx, reverse: false }))
+                let edges = self.edges_for_point(current_point_idx)
+                    .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
                     .collect();
 
                 // Pass to the selection function to pick the next edge we go to
