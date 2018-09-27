@@ -395,8 +395,6 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                         if src_idx == *tgt_idx && src_edge_idx == tgt_edge_idx { continue; }
 
                         // Create edge objects for each side
-                        let src_edge            = &self.points[src_idx].forward_edges[src_edge_idx];
-                        let tgt_edge            = &self.points[*tgt_idx].forward_edges[tgt_edge_idx];
                         let src_curve           = GraphEdge::new(self, GraphEdgeRef { start_idx: src_idx, edge_idx: src_edge_idx });
                         let tgt_curve           = GraphEdge::new(self, GraphEdgeRef { start_idx: *tgt_idx, edge_idx: tgt_edge_idx});
 

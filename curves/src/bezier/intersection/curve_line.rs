@@ -66,7 +66,7 @@ where C::Point: Coordinate2D {
 
             (t, s, pos)
         })
-        .filter(|(t, s, pos)| {
+        .filter(|(t, s, _pos)| {
             // Point must be within the bounds of the line and the curve
             (t >= &0.0 && t <= &1.0) && (s >= &0.0 && s <= &1.0)
         })
