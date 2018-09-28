@@ -11,7 +11,7 @@ pub struct BezierPathBuilder<P: BezierPath> {
     points: Vec<(P::Point, P::Point, P::Point)>
 }
 
-impl<P: BezierPath> BezierPathBuilder<P> {
+impl<P: BezierPathFactory> BezierPathBuilder<P> {
     ///
     /// Creates a new bezier path builder with the specified start point
     /// 
