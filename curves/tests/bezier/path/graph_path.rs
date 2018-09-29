@@ -4,7 +4,7 @@ use flo_curves::bezier::path::*;
 #[test]
 pub fn create_and_read_simple_graph_path() {
     let path            = (Coord2(10.0, 11.0), vec![(Coord2(15.0, 16.0), Coord2(17.0, 18.0), Coord2(19.0, 20.0)), (Coord2(21.0, 22.0), Coord2(23.0, 24.0), Coord2(25.0, 26.0))]);
-    let graph_path      = GraphPath::from_path(&path);
+    let graph_path      = GraphPath::from_path(&path, ());
 
     assert!(graph_path.num_points() == 3);
 
@@ -43,7 +43,7 @@ pub fn create_and_read_simple_graph_path() {
 #[test]
 pub fn create_and_read_simple_graph_path_reverse() {
     let path            = (Coord2(10.0, 11.0), vec![(Coord2(15.0, 16.0), Coord2(17.0, 18.0), Coord2(19.0, 20.0)), (Coord2(21.0, 22.0), Coord2(23.0, 24.0), Coord2(25.0, 26.0))]);
-    let graph_path      = GraphPath::from_path(&path);
+    let graph_path      = GraphPath::from_path(&path, ());
 
     assert!(graph_path.num_points() == 3);
 
@@ -96,8 +96,8 @@ pub fn collide_two_rectangles() {
         .line_to(Coord2(4.0, 4.0))
         .build();
     
-    let rectangle1 = GraphPath::from_path(&rectangle1);
-    let rectangle2 = GraphPath::from_path(&rectangle2);
+    let rectangle1 = GraphPath::from_path(&rectangle1, 1);
+    let rectangle2 = GraphPath::from_path(&rectangle2, 2);
 
     // Collide them
     let collision = rectangle1.collide(rectangle2, 0.1);
@@ -123,6 +123,7 @@ pub fn collide_two_rectangles() {
 
             assert!(edges.len() == 1);
             assert!(edges[0].end_point().distance_to(&Coord2(5.0, 4.0)) < 0.1);
+            assert!(edges.iter().all(|edge| edge.label() == 1));
         }
 
         if edges[0].start_point() == Coord2(5.0, 5.0) {
@@ -130,6 +131,7 @@ pub fn collide_two_rectangles() {
 
             assert!(edges.len() == 1);
             assert!(edges[0].end_point().distance_to(&Coord2(4.0, 5.0)) < 0.1);
+            assert!(edges.iter().all(|edge| edge.label() == 1));
         }
 
         if edges[0].start_point() == Coord2(1.0, 5.0) {
@@ -137,6 +139,7 @@ pub fn collide_two_rectangles() {
 
             assert!(edges.len() == 1);
             assert!(edges[0].end_point().distance_to(&Coord2(1.0, 1.0)) < 0.1);
+            assert!(edges.iter().all(|edge| edge.label() == 1));
         }
 
         if edges[0].start_point() == Coord2(4.0, 4.0) {
@@ -144,6 +147,7 @@ pub fn collide_two_rectangles() {
 
             assert!(edges.len() == 1);
             assert!(edges[0].end_point().distance_to(&Coord2(5.0, 4.0)) < 0.1);
+            assert!(edges.iter().all(|edge| edge.label() == 2));
         }
 
         // Collision edges
@@ -153,6 +157,8 @@ pub fn collide_two_rectangles() {
             assert!(edges.len() == 2);
             assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(4.0, 4.0)) < 0.1));
             assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(1.0, 5.0)) < 0.1));
+            assert!(edges.iter().any(|edge| edge.label() == 1));
+            assert!(edges.iter().any(|edge| edge.label() == 2));
         }
 
         if edges[0].start_point().distance_to(&Coord2(5.0, 4.0)) < 0.1 {
@@ -161,6 +167,8 @@ pub fn collide_two_rectangles() {
             assert!(edges.len() == 2);
             assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(9.0, 4.0)) < 0.1));
             assert!(edges.iter().any(|edge| edge.end_point().distance_to(&Coord2(5.0, 5.0)) < 0.1));
+            assert!(edges.iter().any(|edge| edge.label() == 1));
+            assert!(edges.iter().any(|edge| edge.label() == 2));
         }
     }
 
@@ -184,8 +192,8 @@ fn multiple_collisions_on_one_edge() {
         .line_to(Coord2(2.0, 0.0))
         .build();
     
-    let rectangle1 = GraphPath::from_path(&rectangle1);
-    let rectangle2 = GraphPath::from_path(&rectangle2);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+    let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
     let collision = rectangle1.collide(rectangle2, 0.1);
@@ -236,8 +244,8 @@ fn multiple_collisions_on_one_edge_opposite_direction() {
         .line_to(Coord2(4.0, 0.0))
         .build();
     
-    let rectangle1 = GraphPath::from_path(&rectangle1);
-    let rectangle2 = GraphPath::from_path(&rectangle2);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+    let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
     let collision = rectangle1.collide(rectangle2, 0.1);
@@ -308,8 +316,8 @@ fn collision_at_same_point() {
         .line_to(Coord2(4.0, 0.0))
         .build();
     
-    let rectangle1 = GraphPath::from_path(&rectangle1);
-    let rectangle2 = GraphPath::from_path(&rectangle2);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+    let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
     // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision
@@ -394,8 +402,8 @@ fn collision_exactly_on_edge_src() {
         .line_to(Coord2(4.0, 0.0))
         .build();
     
-    let rectangle1 = GraphPath::from_path(&rectangle1);
-    let rectangle2 = GraphPath::from_path(&rectangle2);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+    let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
     // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision (hm, seems to be a limitation of the precision of the algorithm)
@@ -481,8 +489,8 @@ fn collision_exactly_on_edge_tgt() {
         .line_to(Coord2(4.0, 0.0))
         .build();
     
-    let rectangle1 = GraphPath::from_path(&rectangle1);
-    let rectangle2 = GraphPath::from_path(&rectangle2);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+    let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
     // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision
@@ -560,7 +568,7 @@ fn cast_ray_to_rectangle_corner() {
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(1.0, 1.0))
         .build();
-    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide against the top-left corner
     let collision = rectangle1.line_collision(&(Coord2(0.0, 0.0), Coord2(1.0, 1.0)));
@@ -581,7 +589,7 @@ fn cast_ray_across_rectangle() {
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(1.0, 1.0))
         .build();
-    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide across the center of the rectangle
     let collision = rectangle1.line_collision(&(Coord2(0.0, 3.0), Coord2(6.0, 3.0)));
@@ -603,7 +611,7 @@ fn cast_ray_to_rectangle_far_corner() {
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(1.0, 1.0))
         .build();
-    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide against all corners
     let collision = rectangle1.line_collision(&(Coord2(0.0, 0.0), Coord2(6.0, 6.0)));
@@ -624,7 +632,7 @@ fn cast_ray_to_rectangle_far_corner_backwards() {
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(1.0, 1.0))
         .build();
-    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide against all corners
     let collision = rectangle1.line_collision(&(Coord2(6.0, 6.0), Coord2(0.0, 0.0)));
@@ -645,7 +653,7 @@ fn cast_ray_to_nowhere() {
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(1.0, 1.0))
         .build();
-    let rectangle1 = GraphPath::from_path(&rectangle1);
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Line that entirely misses the rectangle
     let collision = rectangle1.line_collision(&(Coord2(0.0, 0.0), Coord2(0.0, 10.0)));

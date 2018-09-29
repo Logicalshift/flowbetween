@@ -49,7 +49,10 @@ pub struct GraphEdgeRef {
 /// Enum representing an edge in a graph path
 /// 
 #[derive(Clone, Debug)]
-struct GraphPathEdge<Point> {
+struct GraphPathEdge<Point, Label> {
+    /// The label attached to this edge
+    label: Label,
+
     /// The kind of this edge
     kind: GraphPathEdgeKind,
 
@@ -67,34 +70,34 @@ struct GraphPathEdge<Point> {
 /// Struct representing a point in a graph path
 ///
 #[derive(Clone, Debug)]
-struct GraphPathPoint<Point> {
+struct GraphPathPoint<Point, Label> {
     /// The position of this point
     position: Point,
 
     /// The edges attached to this point
-    forward_edges: Vec<GraphPathEdge<Point>>,
+    forward_edges: Vec<GraphPathEdge<Point, Label>>,
 
     /// The points with edges connecting to this point
     connected_from: Vec<usize>
 }
 
-impl<Point> GraphPathPoint<Point> {
+impl<Point, Label> GraphPathPoint<Point, Label> {
     ///
     /// Creates a new graph path point
     ///
-    fn new(position: Point, forward_edges: Vec<GraphPathEdge<Point>>, connected_from: Vec<usize>) -> GraphPathPoint<Point> {
+    fn new(position: Point, forward_edges: Vec<GraphPathEdge<Point, Label>>, connected_from: Vec<usize>) -> GraphPathPoint<Point, Label> {
         GraphPathPoint { position, forward_edges, connected_from }
     }
 }
 
-impl<Point: Coordinate> GraphPathEdge<Point> {
+impl<Point: Coordinate, Label> GraphPathEdge<Point, Label> {
     ///
     /// Creates a new graph path edge
     /// 
     #[inline]
-    fn new(kind: GraphPathEdgeKind, (cp1, cp2): (Point, Point), end_idx: usize) -> GraphPathEdge<Point> {
+    fn new(kind: GraphPathEdgeKind, (cp1, cp2): (Point, Point), end_idx: usize, label: Label) -> GraphPathEdge<Point, Label> {
         GraphPathEdge {
-            kind, cp1, cp2, end_idx
+            label, kind, cp1, cp2, end_idx
         }
     }
 
@@ -115,20 +118,20 @@ impl<Point: Coordinate> GraphPathEdge<Point> {
 /// shape.
 /// 
 #[derive(Clone, Debug)]
-pub struct GraphPath<Point> {
+pub struct GraphPath<Point, Label> {
     /// The points in this graph and their edges. Each 'point' here consists of two control points and an end point
-    points: Vec<GraphPathPoint<Point>>
+    points: Vec<GraphPathPoint<Point, Label>>
 }
 
-impl<Point: Coordinate> Geo for GraphPath<Point> {
+impl<Point: Coordinate, Label> Geo for GraphPath<Point, Label> {
     type Point = Point;
 }
 
-impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
+impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     /// Creates a graph path from a bezier path
     /// 
-    pub fn from_path<P: BezierPath<Point=Point>>(path: &P) -> GraphPath<Point> {
+    pub fn from_path<P: BezierPath<Point=Point>>(path: &P, label: Label) -> GraphPath<Point, Label> {
         // All edges are exterior for a single path
         let mut points = vec![];
 
@@ -146,7 +149,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
             points.push(GraphPathPoint::new(end_point, vec![], vec![]));
 
             // Add an edge from the last point to the next point
-            points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point));
+            points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point, label));
 
             // Update the last/next pooints
             last_point += 1;
@@ -169,7 +172,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
                 let cp1             = close_vector * 0.33 + start_point;
                 let cp2             = close_vector * 0.66 + start_point;
 
-                points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0));
+                points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0, label));
             }
         } else {
             // Just a start point and no edges: remove the start point as it doesn't really make sense
@@ -216,7 +219,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// Edges are directional: this will provide the edges that leave the supplied point
     ///
     #[inline]
-    pub fn edges_for_point<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
+    pub fn edges_for_point<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point, Label>> {
         (0..(self.points[point_num].forward_edges.len()))
             .into_iter()
             .map(move |edge_idx| GraphEdge::new(self, GraphEdgeRef { start_idx: point_num, edge_idx: edge_idx, reverse: false }))
@@ -227,7 +230,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// 
     /// Edges are directional: this will provide the edges that connect to the supplied point
     ///
-    pub fn reverse_edges_for_point<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point>> {
+    pub fn reverse_edges_for_point<'a>(&'a self, point_num: usize) -> impl 'a+Iterator<Item=GraphEdge<'a, Point, Label>> {
         // Fetch the points that connect to this point
         self.points[point_num].connected_from
             .iter()
@@ -253,7 +256,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// 
     /// This adds the edges in the new path to this path without considering if they are internal or external 
     ///
-    pub fn merge(self, merge_path: GraphPath<Point>) -> GraphPath<Point> {
+    pub fn merge(self, merge_path: GraphPath<Point, Label>) -> GraphPath<Point, Label> {
         // Copy the points from this graph
         let mut new_points  = self.points;
 
@@ -342,6 +345,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         // The new edges have the same kinds as their ancestors
         let edge1_kind      = self.points[edge1_idx].forward_edges[edge1_edge_idx].kind;
         let edge2_kind      = self.points[edge2_idx].forward_edges[edge2_edge_idx].kind;
+        let edge1_label     = self.points[edge1_idx].forward_edges[edge1_edge_idx].label;
+        let edge2_label     = self.points[edge2_idx].forward_edges[edge2_edge_idx].label;
         let edge1_end_idx   = self.points[edge1_idx].forward_edges[edge1_edge_idx].end_idx;
         let edge2_end_idx   = self.points[edge2_idx].forward_edges[edge2_edge_idx].end_idx;
 
@@ -350,12 +355,12 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
         if !Self::t_is_one(t1) && !Self::t_is_zero(t1) {
             // If t1 is zero or one, we're not subdividing edge1
             // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
-            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx));
+            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx, edge1_label));
         }
         if !Self::t_is_one(t2) && !Self::t_is_zero(t2) {
             // If t2 is zero or one, we're not subdividing edge2
             // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
-            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx));
+            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx, edge2_label));
         }
 
         // The 'a' edges both update the initial edge, provided t is not 0
@@ -533,7 +538,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// to specify edge types - knowing if an edge is an interior or exterior edge makes it possible to tell the difference
     /// between a hole cut into a shape and an intersection.
     /// 
-    pub fn collide(mut self, collide_path: GraphPath<Point>, accuracy: f64) -> GraphPath<Point> {
+    pub fn collide(mut self, collide_path: GraphPath<Point, Label>, accuracy: f64) -> GraphPath<Point, Label> {
         // Generate a merged path with all of the edges
         let collision_offset    = self.points.len();
         self                    = self.merge(collide_path);
@@ -550,7 +555,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// Finds the exterior edge (and t value) where a line first collides with this path (closest to the line
     /// start point)
     /// 
-    pub fn line_collision<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Option<(GraphEdge<'a, Point>, f64)> {
+    pub fn line_collision<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Option<(GraphEdge<'a, Point, Label>, f64)> {
         // We'll store the result after visiting all of the edges
         let mut collision_result = None;
 
@@ -628,7 +633,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
     /// exterior edge.
     ///
     pub fn classify_exterior_edges<PickEdgeFn>(&mut self, start_edge: GraphEdgeRef, pick_external_edge: PickEdgeFn)
-    where PickEdgeFn: Fn(&Self, &Vec<GraphEdge<'_, Point>>) -> GraphEdgeRef {
+    where PickEdgeFn: Fn(&Self, &Vec<GraphEdge<'_, Point, Label>>) -> GraphEdgeRef {
         let mut current_edge_ref = start_edge;
 
         loop {
@@ -674,20 +679,20 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point> {
 /// Represents an edge in a graph path
 /// 
 #[derive(Clone)]
-pub struct GraphEdge<'a, Point: 'a> {
+pub struct GraphEdge<'a, Point: 'a, Label: 'a> {
     /// The graph that this point is for
-    graph: &'a GraphPath<Point>,
+    graph: &'a GraphPath<Point, Label>,
 
     /// A reference to the edge this point is for
     edge: GraphEdgeRef
 }
 
-impl<'a, Point: 'a> GraphEdge<'a, Point> {
+impl<'a, Point: 'a, Label: 'a+Copy> GraphEdge<'a, Point, Label> {
     ///
     /// Creates a new graph edge (with an edge kind of 'exterior')
     /// 
     #[inline]
-    fn new(graph: &'a GraphPath<Point>, edge: GraphEdgeRef) -> GraphEdge<'a, Point> {
+    fn new(graph: &'a GraphPath<Point, Label>, edge: GraphEdgeRef) -> GraphEdge<'a, Point, Label> {
         GraphEdge {
             graph:  graph,
             edge:   edge
@@ -706,7 +711,7 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
     /// Retrieves a reference to the edge in the graph
     ///
     #[inline]
-    fn edge<'b>(&'b self) -> &'b GraphPathEdge<Point> {
+    fn edge<'b>(&'b self) -> &'b GraphPathEdge<Point, Label> {
         &self.graph.points[self.edge.start_idx].forward_edges[self.edge.edge_idx]
     }
 
@@ -740,13 +745,21 @@ impl<'a, Point: 'a> GraphEdge<'a, Point> {
             self.edge().end_idx
         }
     }
+
+    ///
+    /// The label attached to this edge
+    ///
+    #[inline]
+    pub fn label(&self) -> Label {
+        self.edge().label
+    }
 }
 
-impl<'a, Point: 'a+Coordinate> Geo for GraphEdge<'a, Point> {
+impl<'a, Point: 'a+Coordinate, Label: 'a> Geo for GraphEdge<'a, Point, Label> {
     type Point = Point;
 }
 
-impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
+impl<'a, Point: 'a+Coordinate, Label: 'a+Copy> BezierCurve for GraphEdge<'a, Point, Label> {
     ///
     /// The start point of this curve
     /// 
@@ -781,13 +794,13 @@ impl<'a, Point: 'a+Coordinate> BezierCurve for GraphEdge<'a, Point> {
 ///
 /// A GraphEdgeRef can be created from a GraphEdge in order to release the borrow
 ///
-impl<'a, Point: 'a+Coordinate> From<GraphEdge<'a, Point>> for GraphEdgeRef {
-    fn from(edge: GraphEdge<'a, Point>) -> GraphEdgeRef {
+impl<'a, Point: 'a+Coordinate, Label: 'a+Copy> From<GraphEdge<'a, Point, Label>> for GraphEdgeRef {
+    fn from(edge: GraphEdge<'a, Point, Label>) -> GraphEdgeRef {
         edge.edge
     }
 }
 
-impl<'a, Point: fmt::Debug> fmt::Debug for GraphEdge<'a, Point> {
+impl<'a, Point: fmt::Debug, Label: 'a+Copy> fmt::Debug for GraphEdge<'a, Point, Label> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.edge.start_idx, self.edge().end_idx, self.graph.points[self.edge.start_idx].position, self.graph.points[self.edge().end_idx].position, self.edge().cp1, self.edge().cp2)
     }
