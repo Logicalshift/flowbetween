@@ -811,6 +811,15 @@ impl<'a, Point: 'a+Coordinate, Label: 'a+Copy> From<GraphEdge<'a, Point, Label>>
     }
 }
 
+///
+/// A GraphEdgeRef can be created from a GraphEdge in order to release the borrow
+///
+impl<'a, 'b, Point: 'a+Coordinate, Label: 'a+Copy> From<&'b GraphEdge<'a, Point, Label>> for GraphEdgeRef {
+    fn from(edge: &'b GraphEdge<'a, Point, Label>) -> GraphEdgeRef {
+        edge.edge
+    }
+}
+
 impl<'a, Point: fmt::Debug, Label: 'a+Copy> fmt::Debug for GraphEdge<'a, Point, Label> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.edge.start_idx, self.edge().end_idx, self.graph.points[self.edge.start_idx].position, self.graph.points[self.edge().end_idx].position, self.edge().cp1, self.edge().cp2)
