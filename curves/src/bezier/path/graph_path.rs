@@ -129,6 +129,15 @@ impl<Point: Coordinate, Label> Geo for GraphPath<Point, Label> {
 
 impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
+    /// Creates a new graph path with no points
+    ///
+    pub fn new() -> GraphPath<Point, Label> {
+        GraphPath {
+            points: vec![]
+        }
+    }
+
+    ///
     /// Creates a graph path from a bezier path
     /// 
     pub fn from_path<P: BezierPath<Point=Point>>(path: &P, label: Label) -> GraphPath<Point, Label> {
