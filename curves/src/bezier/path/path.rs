@@ -32,6 +32,15 @@ pub trait BezierPath : Geo+Clone+Sized {
     }
 
     ///
+    /// Finds a loose bounding box for this path (more quickly than bounding_box)
+    /// 
+    /// This will contain the path but might not be tightly aligned to the curves
+    ///
+    fn fast_bounding_box<Bounds: BoundingBox<Point=Self::Point>>(&self) -> Bounds {
+        path_fast_bounding_box(self)
+    }
+
+    ///
     /// Changes this path into a set of bezier curves
     /// 
     #[inline]
