@@ -633,7 +633,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// exterior edge.
     ///
     pub fn classify_exterior_edges<PickEdgeFn>(&mut self, start_edge: GraphEdgeRef, pick_external_edge: PickEdgeFn)
-    where PickEdgeFn: Fn(&Self, &Vec<GraphEdge<'_, Point, Label>>) -> GraphEdgeRef {
+    where PickEdgeFn: Fn(&Self, GraphEdge<'_, Point, Label>, &Vec<GraphEdge<'_, Point, Label>>) -> GraphEdgeRef {
         let mut current_edge_ref = start_edge;
 
         loop {
@@ -654,6 +654,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
             // Fetch the next external edge using the decision function (pick_external_edge)
             let next_edge = {
+                let last_edge = GraphEdge::new(self, current_edge_ref);
+
                 // Gather the uncategorised edges for the current point
                 // The edge we just visited will just have been marked as exterior so it will be excluded here
                 // Also, if we revisit a point we'll only ask the algorithm to pick from the remaining edges
@@ -663,7 +665,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     .collect();
 
                 // Pass to the selection function to pick the next edge we go to
-                pick_external_edge(self, &edges)
+                pick_external_edge(self, last_edge, &edges)
             };
 
             // Set the current edge
