@@ -396,7 +396,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         if Self::t_is_zero(t2) && collision_point != edge2_idx {
             // If t2 is zero and the collision point is not the start of edge2, then edge2 should start at the collision point instead of where it does now
 
-            // All edges that previously went to the collision point now go to the collision point
+            // All edges that previously went to the end point now go to the collision point
             for point in self.points.iter_mut() {
                 for edge in point.forward_edges.iter_mut() {
                     if edge.end_idx == edge2_idx {
