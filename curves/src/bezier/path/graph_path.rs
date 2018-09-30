@@ -663,18 +663,31 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
             // Fetch the next external edge using the decision function (pick_external_edge)
             let next_edge = {
-                let last_edge = GraphEdge::new(self, current_edge_ref);
+                // If there's only one possible edge to follow then always follow that, otherwise ask the picking function
+                if !current_edge_ref.reverse && self.points[end_point_idx].forward_edges.len() == 1 {
+                    // Only one edge in the current direction: no intersection to decide upon
+                    GraphEdgeRef {
+                        start_idx:  end_point_idx,
+                        edge_idx:   0,
+                        reverse:    false
+                    }
+                } else if current_edge_ref.reverse && self.points[end_point_idx].connected_from.len() == 1 {
+                    // Only one edge in the current direction: no intersection to decide upon
+                    self.reverse_edges_for_point(end_point_idx).nth(0).unwrap().into()
+                } else {
+                    let last_edge = GraphEdge::new(self, current_edge_ref);
 
-                // Gather the uncategorised edges for the current point
-                // The edge we just visited will just have been marked as exterior so it will be excluded here
-                // Also, if we revisit a point we'll only ask the algorithm to pick from the remaining edges
-                let edges = self.edges_for_point(end_point_idx)
-                    .chain(self.reverse_edges_for_point(end_point_idx))
-                    .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
-                    .collect();
+                    // Gather the uncategorised edges for the current point
+                    // The edge we just visited will just have been marked as exterior so it will be excluded here
+                    // Also, if we revisit a point we'll only ask the algorithm to pick from the remaining edges
+                    let edges = self.edges_for_point(end_point_idx)
+                        .chain(self.reverse_edges_for_point(end_point_idx))
+                        .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
+                        .collect();
 
-                // Pass to the selection function to pick the next edge we go to
-                pick_external_edge(self, last_edge, &edges)
+                    // Pass to the selection function to pick the next edge we go to
+                    pick_external_edge(self, last_edge, &edges)
+                }
             };
 
             // Set the current edge
