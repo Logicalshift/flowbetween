@@ -448,7 +448,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         let tgt_edge_bounds     = tgt_curve.fast_bounding_box::<Bounds<_>>();
                         if !src_edge_bounds.overlaps(&tgt_edge_bounds) { continue; }
 
-                        // Find the collisions between these two edges (these a)
+                        // Find the collisions between these two edges
                         let curve_collisions    = curve_intersects_curve_clip(&src_curve, &tgt_curve, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
