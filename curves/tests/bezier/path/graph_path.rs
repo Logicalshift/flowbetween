@@ -783,6 +783,14 @@ fn collide_circles() {
     // There are four points in each circle and there should be two collision points for 10 points total
     assert!(graph_path.num_points() == 10);
 
+    // Display the circles
+    println!("Circle1:");
+    println!("  {:?}", circle1.start_point());
+    for (_, _, p) in circle1.points() { println!("  {:?}", p); }
+    println!("Circle2:");
+    println!("  {:?}", circle2.start_point());
+    for (_, _, p) in circle2.points() { println!("  {:?}", p); }
+
     // Display the graph
     for point_idx in 0..10 {
         println!("Point {:?}", point_idx);
