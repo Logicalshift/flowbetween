@@ -1,4 +1,5 @@
 use flo_curves::*;
+use flo_curves::arc::*;
 use flo_curves::bezier::path::*;
 
 #[test]
@@ -767,4 +768,59 @@ fn get_path_from_exterior_lines_multiple_paths() {
     assert!(points[1].2 == Coord2(15.0, 5.0));
     assert!(points[2].2 == Coord2(15.0, 1.0));
     assert!(points[3].2 == Coord2(11.0, 1.0));
+}
+
+#[test]
+fn collide_circles() {
+    // Two overlapping circles
+    let circle1 = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let circle2 = Circle::new(Coord2(8.5, 5.0), 4.0).to_path::<SimpleBezierPath>();
+
+    // Create a graph path from the first one
+    let graph_path = GraphPath::from_path(&circle1, 1);
+    let graph_path = graph_path.collide(GraphPath::from_path(&circle2, 2), 0.01);
+
+    // There are four points in each circle and there should be two collision points for 10 points total
+    assert!(graph_path.num_points() == 10);
+
+    // Display the graph
+    for point_idx in 0..10 {
+        println!("Point {:?}", point_idx);
+        for edge in graph_path.edges_for_point(point_idx) {
+            println!("  {:?} -> {:?} ({:?})", edge.start_point(), edge.end_point(), edge.end_point_index());
+        }
+    }
+
+    // First four points should correspond to the four points in circle1 (and should all have one edge)
+    // Some implementation details depended on here: 
+    //   * we preserve at least the points from the first path when colliding
+    assert!(graph_path.edges_for_point(0).collect::<Vec<_>>().len() == 1);
+    assert!(graph_path.edges_for_point(1).collect::<Vec<_>>().len() == 1);
+    assert!(graph_path.edges_for_point(2).collect::<Vec<_>>().len() == 1);
+    assert!(graph_path.edges_for_point(3).collect::<Vec<_>>().len() == 1);
+
+    // Point 1 should lead to the intersection point
+    let to_intersection     = graph_path.edges_for_point(1).nth(0).unwrap();
+    let intersection_point  = to_intersection.end_point_index();
+
+    assert!(intersection_point > 3);
+
+    // Intersection point should lead to another intersection point
+    let intersection_edges = graph_path.edges_for_point(intersection_point).collect::<Vec<_>>();
+    assert!(intersection_edges.len() == 2);
+
+    // Should lead to one point in the second circle, and one other intersection point
+    let is_intersection = |point_num| { graph_path.edges_for_point(point_num).collect::<Vec<_>>().len() > 1 };
+
+    assert!(intersection_edges.iter().any(|edge| !is_intersection(edge.end_point_index())));
+    assert!(intersection_edges.iter().any(|edge| is_intersection(edge.end_point_index())));
+
+    // The following intersection point should have one point that leads back into our path
+    let following_intersection      = intersection_edges.iter().filter(|edge| is_intersection(edge.end_point_index())).nth(0).unwrap();
+    let second_intersection_edges   = graph_path.edges_for_point(following_intersection.end_point_index()).collect::<Vec<_>>();
+
+    assert!(second_intersection_edges.iter().any(|edge| edge.end_point_index() <= 3));
+
+    // It should also have a point that leads back to the first intersection, forming a loop
+    assert!(second_intersection_edges.iter().any(|edge| edge.end_point_index() == intersection_point));
 }
