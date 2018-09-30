@@ -766,4 +766,5 @@ fn get_path_from_exterior_lines_multiple_paths() {
     assert!(points[0].2 == Coord2(11.0, 5.0));
     assert!(points[1].2 == Coord2(15.0, 5.0));
     assert!(points[2].2 == Coord2(15.0, 1.0));
-    assert!(points[3].2 == Coord2(11.0, 1.0));}
+    assert!(points[3].2 == Coord2(11.0, 1.0));
+}
