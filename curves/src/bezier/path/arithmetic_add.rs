@@ -31,6 +31,20 @@ where P::Point: Coordinate2D {
     }
 }
 
+//
+// There are actually a couple of ways to determine which path continues on the outside edge at an intersection.
+// 
+// One way is to pick the path that has the shallowest angle with the incoming path (anti-clockwise or clockwise depending on
+// the direction of the path containing the incoming edge)
+// 
+// Another way is to assume no self-intersections. This means every intersection should switch from one of the paths to the other
+// and reduces the number of choices. The correct choice should always be the edge from the other path that continues moving in
+// the direction we're going (ie, if we're moving clockwise, we should pick the clockwise edge)
+// 
+// One problem with this approach is that it's technically valid to have 'holes' with points that share a path, which may increase
+// the number of choices beyond just two.
+//
+
 ///
 /// Generates the path formed by adding two sets of paths
 /// 
