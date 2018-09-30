@@ -6,17 +6,29 @@ use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
 /// Source of a path in the graphpath
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 enum SourcePath {
     Path1,
     Path2
 }
 
 /// Target of a path in the graphpath
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 enum PathDirection {
     Clockwise,
     Anticlockwise
+}
+
+impl PathDirection {
+    #[inline]
+    fn reversed(&self) -> PathDirection {
+        use self::PathDirection::*;
+
+        match self {
+            Clockwise       => Anticlockwise,
+            Anticlockwise   => Clockwise
+        }
+    }
 }
 
 impl<'a, P: BezierPath> From<&'a P> for PathDirection
@@ -82,10 +94,44 @@ where   Point: Coordinate+Coordinate2D {
     let point_on_curve  = merged_path.edges_for_point(0).nth(0).unwrap().start_point();
     let outer_edge      = merged_path.line_collision(&(outside_point, point_on_curve)).unwrap().0.into();
 
-    // Trace the external edges from the path to find the exterior edges
-    merged_path.classify_exterior_edges(outer_edge, |graph, start_edge, edge_choices| {
-        edge_choices.into_iter().nth(0).unwrap().into()
-     });
+    // Trace the external edges from the path to find the exterior edges. We always follow an edge moving in the same direction on the other path.
+    merged_path.classify_exterior_edges(outer_edge, |_graph, start_edge, edge_choices| {
+        // Fetch the direction of the source edge
+        let (source_path, source_direction) = start_edge.label();
+        let source_reversed                 = start_edge.is_reversed();
+
+        // At an intersection, the target must be on the other path
+        let target_path = match source_path {
+            SourcePath::Path1 => SourcePath::Path2,
+            SourcePath::Path2 => SourcePath::Path1
+        };
+
+        for edge in edge_choices.into_iter() {
+            let (edge_path, edge_direction) = edge.label();
+            let edge_reversed               = edge.is_reversed();
+
+            // Ignore edges from the source path
+            if edge_path != target_path {
+                continue;
+            }
+
+            if edge_reversed == source_reversed {
+                // The target should be on the other path in the same direction
+                if edge_direction == source_direction {
+                    return edge.into();
+                }
+            } else {
+                // Match against the opposite direction if the edge is reversed
+                if edge_direction == source_direction.reversed() {
+                    return edge.into();
+                }
+            }
+        }
+
+        panic!("Could not find a following edge")
+    });
+
+    // TODO: deal with holes, maybe also multiple paths meeting at a particular point?
 
     unimplemented!()
 }
