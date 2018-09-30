@@ -4,7 +4,9 @@ use super::super::curve::*;
 use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
+use itertools::*;
 use std::vec;
+use std::iter;
 
 ///
 /// Trait representing a path made out of bezier sections
@@ -46,6 +48,24 @@ pub trait BezierPath : Geo+Clone+Sized {
     #[inline]
     fn to_curves<Curve: BezierCurveFactory<Point=Self::Point>>(&self) -> Vec<Curve> {
         path_to_curves(self).collect()
+    }
+
+    ///
+    /// Creates a reversed version of this path
+    ///
+    fn reversed<POut: BezierPathFactory<Point=Self::Point>>(&self) -> POut {
+        // Add in the first point (control points don't matter)
+        let fake_first_point    = (Self::Point::origin(), Self::Point::origin(), self.start_point());
+        let points              = self.points();
+        let points              = iter::once(fake_first_point).chain(points);
+
+        // Reverse the direction of the path
+        let reversed_points = points
+            .tuple_windows()
+            .map(|((_, _, start_point), (cp1, cp2, _))| (cp2, cp1, start_point))
+            .collect::<Vec<_>>();
+
+        POut::from_points(self.start_point(), reversed_points.into_iter().rev())
     }
 }
 
