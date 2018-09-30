@@ -660,3 +660,59 @@ fn cast_ray_to_nowhere() {
 
     assert!(collision.is_none());
 }
+
+#[test]
+fn classify_simple_path() {
+    // Create a rectangle
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let mut rectangle1 = GraphPath::from_path(&rectangle1, ());
+
+    // Mark everything as an exterior path
+    let first_edge = rectangle1.edges_for_point(0).nth(0).unwrap().into();
+    rectangle1.classify_exterior_edges(first_edge, |_graph, _start_edge, _choices| panic!("Should be no intersections"));
+
+    // All edges should be exterior
+    for point_idx in 0..(rectangle1.num_points()) {
+        let edges = rectangle1.edges_for_point(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.len() == 1);
+        assert!(edges[0].kind() == GraphPathEdgeKind::Exterior);
+    }
+}
+
+#[test]
+fn get_path_from_exterior_lines() {
+    // Create a rectangle
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let mut rectangle1 = GraphPath::from_path(&rectangle1, ());
+
+    // Mark everything as an exterior path
+    let first_edge = rectangle1.edges_for_point(0).nth(0).unwrap().into();
+    rectangle1.classify_exterior_edges(first_edge, |_graph, _start_edge, _choices| panic!("Should be no intersections"));
+
+    // Turn back into a path
+    let rectangle2 = rectangle1.exterior_paths::<SimpleBezierPath>();
+
+    println!("{:?}", rectangle2);
+
+    assert!(rectangle2.len() == 1);
+    assert!(rectangle2[0].start_point() == Coord2(1.0, 1.0));
+
+    let points = rectangle2[0].points().collect::<Vec<_>>();
+    assert!(points.len() == 4);
+
+    assert!(points[0].2 == Coord2(1.0, 5.0));
+    assert!(points[1].2 == Coord2(5.0, 5.0));
+    assert!(points[2].2 == Coord2(5.0, 1.0));
+    assert!(points[3].2 == Coord2(1.0, 1.0));
+}

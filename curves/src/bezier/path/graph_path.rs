@@ -697,6 +697,68 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Go around the loop again and mark any edges still uncategorized as interior
         self.mark_connected_edges_as_interior(current_edge_ref.start_idx);
     }
+
+    ///
+    /// Finds the exterior edges and turns them into a series of paths
+    ///
+    pub fn exterior_paths<POut: BezierPathFactory<Point=Point>>(&self) -> Vec<POut> {
+        let mut exterior_paths = vec![];
+
+        // Array of visited points
+        let mut visited = vec![false; self.points.len()];
+
+        for point_idx in 0..(self.points.len()) {
+            // Ignore this point if we've already visited it as part of a path
+            if visited[point_idx] {
+                continue;
+            }
+
+            // Find the first exterior point
+            let exterior_edge_idx = (0..(self.points[point_idx].forward_edges.len())).into_iter()
+                .filter(|edge_idx| self.points[point_idx].forward_edges[*edge_idx].kind == GraphPathEdgeKind::Exterior)
+                .nth(0);
+
+            if let Some(exterior_edge_idx) = exterior_edge_idx {
+                // Follow the edge around to generate the path (we expect exterior edges to form a complete path)
+                let start_point         = self.points[point_idx].position.clone();
+                let mut current_point   = point_idx;
+                let mut current_edge    = exterior_edge_idx;
+                let mut path_points     = vec![];
+
+                while !visited[current_point] {
+                    // Mark the current point as visited
+                    visited[current_point] = true;
+
+                    // Add the next edge to the path
+                    let edge        = &self.points[current_point].forward_edges[current_edge];
+                    let next_point  = &self.points[edge.end_idx];
+                    path_points.push((edge.cp1.clone(), edge.cp2.clone(), next_point.position.clone()));
+
+                    // Find the next edge
+                    let next_edge   = (0..(next_point.forward_edges.len())).into_iter()
+                        .filter(|edge_idx| next_point.forward_edges[*edge_idx].kind == GraphPathEdgeKind::Exterior)
+                        .nth(0);
+
+                    if let Some(next_edge) = next_edge {
+                        // Move on to the next point on this path
+                        current_point   = edge.end_idx;
+                        current_edge    = next_edge;
+                    } else {
+                        // Partial path
+                        // TODO: or, reversal of direction...
+                        break;
+                    }
+                }
+
+                // Turn into a path
+                let path = POut::from_points(start_point, path_points);
+                exterior_paths.push(path);
+            }
+        }
+
+        // Return the set of exterior paths
+        exterior_paths
+    }
 }
 
 ///
