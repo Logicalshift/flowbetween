@@ -714,35 +714,42 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             }
 
             // Find the first exterior point
-            let exterior_edge_idx = (0..(self.points[point_idx].forward_edges.len())).into_iter()
-                .filter(|edge_idx| self.points[point_idx].forward_edges[*edge_idx].kind == GraphPathEdgeKind::Exterior)
+            let exterior_edge = self.edges_for_point(point_idx)
+                .filter(|edge| edge.kind() == GraphPathEdgeKind::Exterior)
                 .nth(0);
 
-            if let Some(exterior_edge_idx) = exterior_edge_idx {
+            if let Some(exterior_edge) = exterior_edge {
                 // Follow the edge around to generate the path (we expect exterior edges to form a complete path)
-                let start_point         = self.points[point_idx].position.clone();
-                let mut current_point   = point_idx;
-                let mut current_edge    = exterior_edge_idx;
+                let start_point         = exterior_edge.start_point();
+                let mut current_edge    = exterior_edge;
                 let mut path_points     = vec![];
 
-                while !visited[current_point] {
+                loop {
+                    let current_point_idx = current_edge.start_point_index();
+
+                    // Stop once we reach a point we've already visited
+                    if visited[current_point_idx] {
+                        break;
+                    }
+
                     // Mark the current point as visited
-                    visited[current_point] = true;
+                    visited[current_point_idx] = true;
 
                     // Add the next edge to the path
-                    let edge        = &self.points[current_point].forward_edges[current_edge];
-                    let next_point  = &self.points[edge.end_idx];
-                    path_points.push((edge.cp1.clone(), edge.cp2.clone(), next_point.position.clone()));
+                    let (cp1, cp2) = current_edge.control_points();
+                    path_points.push((cp1, cp2, current_edge.end_point()));
 
-                    // Find the next edge
-                    let next_edge   = (0..(next_point.forward_edges.len())).into_iter()
-                        .filter(|edge_idx| next_point.forward_edges[*edge_idx].kind == GraphPathEdgeKind::Exterior)
+                    // Find the next edge (next exterior edge in either direction that is not back the way we came)
+                    let next_point_idx  = current_edge.end_point_index();
+                    let next_edge       = self.edges_for_point(next_point_idx)
+                        .chain(self.reverse_edges_for_point(next_point_idx))
+                        .filter(|edge| edge.end_point_index() != current_point_idx)
+                        .filter(|edge| edge.kind() == GraphPathEdgeKind::Exterior)
                         .nth(0);
 
                     if let Some(next_edge) = next_edge {
                         // Move on to the next point on this path
-                        current_point   = edge.end_idx;
-                        current_edge    = next_edge;
+                        current_edge = next_edge;
                     } else {
                         // Partial path
                         // TODO: or, reversal of direction...
