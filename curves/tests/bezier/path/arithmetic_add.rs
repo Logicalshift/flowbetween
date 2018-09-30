@@ -41,7 +41,6 @@ fn add_two_overlapping_circles() {
     assert!(num_points_on_both == 2);
 }
 
-/*
 #[test]
 fn add_two_overlapping_circles_further_apart() {
     // Two overlapping circles
@@ -80,7 +79,6 @@ fn add_two_overlapping_circles_further_apart() {
     assert!(num_points_on_circle2 == 4);
     assert!(num_points_on_both == 2);
 }
-*/
 
 #[test]
 fn add_two_overlapping_circles_with_one_reversed() {
