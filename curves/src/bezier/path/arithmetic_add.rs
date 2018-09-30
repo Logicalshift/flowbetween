@@ -133,5 +133,6 @@ where   Point: Coordinate+Coordinate2D {
 
     // TODO: deal with holes, maybe also multiple paths meeting at a particular point?
 
-    unimplemented!()
+    // Produce the final result
+    merged_path.exterior_paths()
 }
