@@ -774,7 +774,7 @@ fn get_path_from_exterior_lines_multiple_paths() {
 fn collide_circles() {
     // Two overlapping circles
     let circle1 = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
-    let circle2 = Circle::new(Coord2(8.5, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let circle2 = Circle::new(Coord2(12.9, 5.0), 4.0).to_path::<SimpleBezierPath>();
 
     // Create a graph path from the first one
     let graph_path = GraphPath::from_path(&circle1, 1);
@@ -808,7 +808,7 @@ fn collide_circles() {
     assert!(graph_path.edges_for_point(3).collect::<Vec<_>>().len() == 1);
 
     // Point 1 should lead to the intersection point
-    let to_intersection     = graph_path.edges_for_point(1).nth(0).unwrap();
+    let to_intersection     = graph_path.edges_for_point(0).nth(0).unwrap();
     let intersection_point  = to_intersection.end_point_index();
 
     assert!(intersection_point > 3);

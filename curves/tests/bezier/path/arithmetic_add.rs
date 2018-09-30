@@ -45,7 +45,7 @@ fn add_two_overlapping_circles() {
 fn add_two_overlapping_circles_further_apart() {
     // Two overlapping circles
     let circle1 = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
-    let circle2 = Circle::new(Coord2(8.9, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let circle2 = Circle::new(Coord2(12.9, 5.0), 4.0).to_path::<SimpleBezierPath>();
 
     // Combine them
     let combined_circles = path_add::<_, _, _, SimpleBezierPath>(&vec![circle1], &vec![circle2], 0.01);
@@ -61,7 +61,7 @@ fn add_two_overlapping_circles_further_apart() {
 
     for point in points {
         let distance_to_circle1 = Coord2(5.0, 5.0).distance_to(&point);
-        let distance_to_circle2 = Coord2(8.9, 5.0).distance_to(&point);
+        let distance_to_circle2 = Coord2(12.9, 5.0).distance_to(&point);
 
         // Must be on either circle
         assert!((distance_to_circle1-4.0).abs() < 0.01 || (distance_to_circle2-4.0).abs() < 0.01);
