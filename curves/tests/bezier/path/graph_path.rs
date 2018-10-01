@@ -572,11 +572,11 @@ fn cast_ray_to_rectangle_corner() {
     let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide against the top-left corner
-    let collision = rectangle1.line_collision(&(Coord2(0.0, 0.0), Coord2(1.0, 1.0)));
+    let collision = rectangle1.ray_collisions(&(Coord2(0.0, 0.0), Coord2(1.0, 1.0)));
 
-    assert!(collision.is_some());
+    assert!(collision.len() > 0);
 
-    let collision = collision.unwrap();
+    let collision = &collision[0];
     assert!(collision.0.start_point() == Coord2(1.0, 1.0));
     assert!((collision.1-0.0).abs() < 0.01);
 }
@@ -593,11 +593,11 @@ fn cast_ray_across_rectangle() {
     let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide across the center of the rectangle
-    let collision = rectangle1.line_collision(&(Coord2(0.0, 3.0), Coord2(6.0, 3.0)));
+    let collision = rectangle1.ray_collisions(&(Coord2(0.0, 3.0), Coord2(6.0, 3.0)));
 
-    assert!(collision.is_some());
+    assert!(collision.len() > 0);
 
-    let collision = collision.unwrap();
+    let collision = &collision[0];
     assert!(collision.0.point_at_pos(collision.1).distance_to(&Coord2(1.0, 3.0)) < 0.001);
     assert!(collision.0.start_point() == Coord2(1.0, 1.0));
     assert!((collision.1-0.5).abs() < 0.01);
@@ -615,11 +615,11 @@ fn cast_ray_to_rectangle_far_corner() {
     let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide against all corners
-    let collision = rectangle1.line_collision(&(Coord2(0.0, 0.0), Coord2(6.0, 6.0)));
+    let collision = rectangle1.ray_collisions(&(Coord2(0.0, 0.0), Coord2(6.0, 6.0)));
 
-    assert!(collision.is_some());
+    assert!(collision.len() > 0);
 
-    let collision = collision.unwrap();
+    let collision = &collision[0];
     assert!(collision.0.start_point() == Coord2(1.0, 1.0));
     assert!((collision.1-0.0).abs() < 0.01);
 }
@@ -636,11 +636,11 @@ fn cast_ray_to_rectangle_far_corner_backwards() {
     let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Collide against all corners
-    let collision = rectangle1.line_collision(&(Coord2(6.0, 6.0), Coord2(0.0, 0.0)));
+    let collision = rectangle1.ray_collisions(&(Coord2(6.0, 6.0), Coord2(0.0, 0.0)));
 
-    assert!(collision.is_some());
+    assert!(collision.len() > 0);
 
-    let collision = collision.unwrap();
+    let collision = &collision[0];
     assert!(collision.0.start_point() == Coord2(1.0, 5.0));
     assert!((collision.1-1.0).abs() < 0.01);
 }
@@ -657,9 +657,9 @@ fn cast_ray_to_nowhere() {
     let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
     // Line that entirely misses the rectangle
-    let collision = rectangle1.line_collision(&(Coord2(0.0, 0.0), Coord2(0.0, 10.0)));
+    let collision = rectangle1.ray_collisions(&(Coord2(0.0, 0.0), Coord2(0.0, 10.0)));
 
-    assert!(collision.is_none());
+    assert!(collision.len() == 0);
 }
 
 #[test]

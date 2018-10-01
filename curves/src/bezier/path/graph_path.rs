@@ -5,9 +5,10 @@ use super::super::super::geo::*;
 use super::super::super::line::*;
 use super::super::super::coordinate::*;
 
-use std::ops::Range;
 use std::fmt;
 use std::mem;
+use std::ops::Range;
+use std::cmp::Ordering;
 
 const CLOSE_DISTANCE: f64 = 0.01;
 
@@ -564,35 +565,24 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Finds the exterior edge (and t value) where a line first collides with this path (closest to the line
     /// start point)
     /// 
-    pub fn line_collision<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Option<(GraphEdge<'a, Point, Label>, f64)> {
+    pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphEdge<'a, Point, Label>, f64, f64)> {
         // We'll store the result after visiting all of the edges
-        let mut collision_result = None;
+        let mut collision_result = vec![];
 
         // Visit every edge in this graph
         for point_idx in 0..(self.points.len()) {
             for edge in self.edges_for_point(point_idx) {
                 // Find out where the line collides with this edge
-                let collisions = curve_intersects_line(&edge, ray);
+                let collisions = curve_intersects_ray(&edge, ray);
 
                 for (curve_t, line_t, _collide_pos) in collisions {
-                    collision_result = match collision_result {
-                        None                                            => { Some((edge.clone(), line_t, curve_t)) },
-                        Some((last_edge, last_line_t, last_curve_t))    => {
-                            if line_t < last_line_t {
-                                // This match is closer to the start of the line
-                                Some((edge.clone(), line_t, curve_t))
-                            } else {
-                                // Last match is closer to the start of the line
-                                Some((last_edge, last_line_t, last_curve_t))
-                            }
-                        }
-                    };
+                    collision_result.push((edge.clone(), curve_t, line_t));
                 }
             }
         }
 
-        // Return the result
-        collision_result.map(|(edge, _line_t, curve_t)| (edge, curve_t))
+        collision_result.sort_by(|(_edge_a, _curve_t_a, line_t_a), (_edge_b, _curve_t_b, line_t_b)| line_t_a.partial_cmp(line_t_b).unwrap_or(Ordering::Equal));
+        collision_result
     }
 
     ///

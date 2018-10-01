@@ -92,7 +92,7 @@ where   Point: Coordinate+Coordinate2D {
     // Cast a line from a point known to be on the outside to discover an edge on the outside
     let outside_point   = bounds.min() - Point::from_components(&[0.1, 0.1]);
     let point_on_curve  = merged_path.edges_for_point(0).nth(0).unwrap().start_point();
-    let outer_edge      = merged_path.line_collision(&(outside_point, point_on_curve)).unwrap().0.into();
+    let outer_edge      = merged_path.ray_collisions(&(outside_point, point_on_curve)).into_iter().nth(0).unwrap().0.into();
 
     // Trace the external edges from the path to find the exterior edges. We always follow an edge moving in the same direction on the other path.
     merged_path.classify_exterior_edges(outer_edge, |_graph, start_edge, edge_choices| {
