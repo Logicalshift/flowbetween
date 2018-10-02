@@ -224,6 +224,16 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Returns an iterator of all edges in this graph
+    ///
+    #[inline]
+    pub fn all_edges<'a>(&'a self) -> impl 'a+Iterator<Item=GraphEdge<'a, Point, Label>> {
+        (0..(self.points.len()))
+            .into_iter()
+            .flat_map(move |point_num| self.edges_for_point(point_num))
+    }
+
+    ///
     /// Returns an iterator of the edges that leave a particular point
     /// 
     /// Edges are directional: this will provide the edges that leave the supplied point
