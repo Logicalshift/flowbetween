@@ -198,6 +198,22 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Creates a new graph path by merging (not colliding) a set of paths with their labels
+    ///
+    pub fn from_merged_paths<'a, P: 'a+BezierPath<Point=Point>, PathIter: IntoIterator<Item=(&'a P, Label)>>(paths: PathIter) -> GraphPath<Point, Label> {
+        // Create an empty path
+        let mut merged_path = GraphPath::new();
+
+        // Merge each path in turn
+        for (path, label) in paths {
+            let path    = GraphPath::from_path(path, label);
+            merged_path = merged_path.merge(path);
+        }
+
+        merged_path
+    }
+
+    ///
     /// Recomputes the list of items that have connections to each point
     ///
     fn recalculate_reverse_connections(&mut self) {

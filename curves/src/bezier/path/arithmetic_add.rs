@@ -77,16 +77,14 @@ where   Point: Coordinate+Coordinate2D {
     }
 
     // Create the graph path from the source side
-    // TODO: this doesn't add any 'holes'
     let mut merged_path = GraphPath::new();
     let mut bounds      = Bounds::empty();
     
-    merged_path = merged_path.merge(GraphPath::from_path(&path1[0], (SourcePath::Path1, PathDirection::from(&path1[0]))));
+    merged_path = merged_path.merge(GraphPath::from_merged_paths(path1.into_iter().map(|path| (path, (SourcePath::Path1, PathDirection::from(path))))));
     bounds      = bounds.union_bounds(path1[0].fast_bounding_box());
 
     // Collide with the target side to generate a full path
-    // TODO: this doesn't add any 'holes'
-    merged_path = merged_path.collide(GraphPath::from_path(&path2[0], (SourcePath::Path2, PathDirection::from(&path2[0]))), accuracy);
+    merged_path = merged_path.collide(GraphPath::from_merged_paths(path2.into_iter().map(|path| (path, (SourcePath::Path2, PathDirection::from(path))))), accuracy);
     bounds      = bounds.union_bounds(path1[0].fast_bounding_box());
 
     // Cast a line from a point known to be on the outside to discover an edge on the outside
