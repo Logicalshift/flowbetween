@@ -711,6 +711,52 @@ fn set_simple_path_as_interior() {
 }
 
 #[test]
+fn set_collision_as_exterior() {
+    // Create a rectangle
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(4.0, 2.0))
+        .line_to(Coord2(4.0, 3.0))
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(7.0, 2.0))
+        .line_to(Coord2(4.0, 2.0))
+        .build();
+    let rectangle2 = GraphPath::from_path(&rectangle2, ());
+
+    let mut collided = rectangle1.collide(rectangle2, 0.01);
+
+    // Mark everything as an exterior path
+    let first_edge_ref = collided.edges_for_point(0).nth(0).unwrap().into();
+    collided.set_edge_kind_connected(first_edge_ref, GraphPathEdgeKind::Exterior);
+
+    // Edges 0 -> 1, 1 -> <x>, <y> -> 2, 2 -> 3 and 3 -> 0 should all be exterior
+    for point_idx in vec![0, 1, 2, 3].into_iter() {
+        let edges = collided.edges_for_point(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.len() == 1);
+        assert!(edges[0].kind() == GraphPathEdgeKind::Exterior);
+
+        let edges = collided.reverse_edges_for_point(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.len() == 1);
+        assert!(edges[0].kind() == GraphPathEdgeKind::Exterior);
+    }
+
+    // Everything else should be uncategorised
+    for point_idx in 4..(collided.num_points()) {
+        let edges = collided.edges_for_point(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.into_iter().all(|edge| edge.end_point_index() < 4 || edge.kind() == GraphPathEdgeKind::Uncategorised));
+    }
+}
+
+#[test]
 fn get_path_from_exterior_lines() {
     // Create a rectangle
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
