@@ -783,32 +783,33 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Move backwards
         current_edge = edge;
         loop {
-            // Set the kind of the current edge
-            self.set_edge_kind(current_edge, kind);
+            // Mark this point as visited
             visited[current_edge.start_idx] = true;
 
-            // Pick the next edge
-            let previous = &self.points[current_edge.start_idx].connected_from;
-
-            if previous.len() != 1 {
-                // At an intersection
+            if self.points[current_edge.start_idx].connected_from.len() != 1 {
+                // There is more than one incoming edge
                 break;
             } else {
                 // There's a single preceding edge
                 let current_point_idx   = current_edge.start_idx;
-                let previous_point_idx  = previous[0];
+                let previous_point_idx  = self.points[current_edge.start_idx].connected_from[0];
 
+                // Find the index of the preceding edge
                 let previous_edge_idx   = (0..(self.points[previous_point_idx].forward_edges.len()))
                     .into_iter()
                     .filter(|edge_idx| self.points[previous_point_idx].forward_edges[*edge_idx].end_idx == current_point_idx)
                     .nth(0)
                     .unwrap();
 
+                // Move on to the next edge
                 current_edge = GraphEdgeRef {
                     start_idx:  previous_point_idx,
                     edge_idx:   previous_edge_idx,
                     reverse:    false
                 };
+
+                // Change its kind
+                self.set_edge_kind(current_edge, kind);
             }
 
             // Also stop if we've followed the loop all the way around
