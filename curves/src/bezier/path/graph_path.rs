@@ -731,6 +731,78 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Sets the kind of an edge and any connected edge where there are no intersections (only one edge)
+    ///
+    pub fn set_edge_kind_connected(&mut self, edge: GraphEdgeRef, kind: GraphPathEdgeKind) {
+        let mut current_edge    = edge;
+        let mut visited         = vec![false; self.points.len()];
+
+        // Move forward
+        loop {
+            // Set the kind of the current edge
+            self.set_edge_kind(current_edge, kind);
+            visited[current_edge.start_idx] = true;
+
+            // Pick the next edge
+            let edges = &self.points[current_edge.start_idx].forward_edges;
+
+            if edges.len() != 1 {
+                // At an intersection
+                break;
+            } else {
+                // Move on
+                current_edge = GraphEdgeRef {
+                    start_idx:  edges[0].end_idx,
+                    edge_idx:   0,
+                    reverse:    false
+                }
+            }
+
+            // Also stop if we've followed the loop all the way around
+            if visited[current_edge.start_idx] {
+                break;
+            }
+        }
+
+        // Move backwards
+        current_edge = edge;
+        loop {
+            // Set the kind of the current edge
+            self.set_edge_kind(current_edge, kind);
+            visited[current_edge.start_idx] = true;
+
+            // Pick the next edge
+            let previous = &self.points[current_edge.start_idx].connected_from;
+
+            if previous.len() != 1 {
+                // At an intersection
+                break;
+            } else {
+                // There's a single preceding edge
+                let current_point_idx   = current_edge.start_idx;
+                let previous_point_idx  = previous[0];
+
+                let previous_edge_idx   = (0..(self.points[previous_point_idx].forward_edges.len()))
+                    .into_iter()
+                    .filter(|edge_idx| self.points[previous_point_idx].forward_edges[*edge_idx].end_idx == current_point_idx)
+                    .nth(0)
+                    .unwrap();
+
+                current_edge = GraphEdgeRef {
+                    start_idx:  previous_point_idx,
+                    edge_idx:   previous_edge_idx,
+                    reverse:    false
+                };
+            }
+
+            // Also stop if we've followed the loop all the way around
+            if visited[current_edge.start_idx] {
+                break;
+            }
+        }
+    }
+
+    ///
     /// Finds the exterior edges and turns them into a series of paths
     ///
     pub fn exterior_paths<POut: BezierPathFactory<Point=Point>>(&self) -> Vec<POut> {

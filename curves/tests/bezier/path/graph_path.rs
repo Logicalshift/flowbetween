@@ -687,6 +687,30 @@ fn classify_simple_path() {
 }
 
 #[test]
+fn set_simple_path_as_interior() {
+    // Create a rectangle
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let mut rectangle1 = GraphPath::from_path(&rectangle1, ());
+
+    // Mark everything as an exterior path
+    let first_edge_ref = rectangle1.all_edges().nth(0).unwrap().into();
+    rectangle1.set_edge_kind_connected(first_edge_ref, GraphPathEdgeKind::Interior);
+
+    // All edges should be exterior
+    for point_idx in 0..(rectangle1.num_points()) {
+        let edges = rectangle1.edges_for_point(point_idx).collect::<Vec<_>>();
+
+        assert!(edges.len() == 1);
+        assert!(edges[0].kind() == GraphPathEdgeKind::Interior);
+    }
+}
+
+#[test]
 fn get_path_from_exterior_lines() {
     // Create a rectangle
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
