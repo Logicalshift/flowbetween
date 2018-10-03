@@ -648,6 +648,22 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Sets the kind of a single edge
+    ///
+    #[inline]
+    pub fn set_edge_kind(&mut self, edge: GraphEdgeRef, new_type: GraphPathEdgeKind) {
+        self.points[edge.start_idx].forward_edges[edge.edge_idx].kind = new_type;
+    }
+
+    ///
+    /// Returns the type of a single edgeref
+    ///
+    #[inline]
+    pub fn edge_kind(&self, edge: GraphEdgeRef) -> GraphPathEdgeKind {
+        self.points[edge.start_idx].forward_edges[edge.edge_idx].kind
+    }
+
+    ///
     /// Given a descision function, determines which edges should be made exterior. The start edge is always made external.
     /// Any edges connected to the start edge that are not picked by the picking function are marked as interior.
     ///
@@ -663,12 +679,12 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         loop {
             // If we've arrived back at an exterior edge, we've finished marking edges as exterior
-            if self.points[current_edge_ref.start_idx].forward_edges[current_edge_ref.edge_idx].kind == GraphPathEdgeKind::Exterior {
+            if self.edge_kind(current_edge_ref) == GraphPathEdgeKind::Exterior {
                 break;
             }
             
             // Mark the current edge as exterior
-            self.points[current_edge_ref.start_idx].forward_edges[current_edge_ref.edge_idx].kind = GraphPathEdgeKind::Exterior;
+            self.set_edge_kind(current_edge_ref, GraphPathEdgeKind::Exterior);
 
             // Get the end of the current edge
             let end_point_idx = if current_edge_ref.reverse {
