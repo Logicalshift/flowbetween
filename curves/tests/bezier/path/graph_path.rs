@@ -583,6 +583,9 @@ fn cast_ray_to_rectangle_corner() {
 
 #[test]
 fn casting_ray_to_exact_point_produces_one_collision() {
+    // A ray hitting an exact point in the path might produce a collision on both the 'entering' and 'leaving' edge, but should pick
+    // one. t=1 on the 'leaving' edge is the same as t=0 on the 'entering' one so either of these two are valid return values
+
     // Create a rectangle
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(1.0, 5.0))
@@ -601,6 +604,25 @@ fn casting_ray_to_exact_point_produces_one_collision() {
     assert!(collisions_with_corner.len() != 0);
     assert!(collisions_with_corner.len() != 2);
     assert!(collisions_with_corner.len() == 1);
+}
+
+#[test]
+fn casting_ray_to_intersection_point_produces_two_collisions() {
+    // A ray hitting an exact point that is an intersection (has two edges leaving it) should produce two collisions, one on each edge
+    // ... also this case where we have an overlapping line might be weird:
+    // 
+    //   +-----+
+    //   |     |
+    //   |     +----+
+    //   |     |    |
+    //   |     +----+
+    //   |     |
+    //   +-----+
+    // 
+    // (There's an intersection where there are two edges entering it but only one leaving)
+
+    // TODO!
+    assert!(false)
 }
 
 #[test]
