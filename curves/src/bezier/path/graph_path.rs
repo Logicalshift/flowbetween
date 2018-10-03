@@ -648,6 +648,14 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Returns the GraphEdge for an edgeref
+    ///
+    #[inline]
+    pub fn get_edge<'a>(&'a self, edge: GraphEdgeRef) -> GraphEdge<'a, Point, Label> {
+        GraphEdge::new(self, edge)
+    }
+
+    ///
     /// Sets the kind of a single edge
     ///
     #[inline]
@@ -656,11 +664,19 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
-    /// Returns the type of a single edgeref
+    /// Returns the type of the edge pointed to by an edgeref
     ///
     #[inline]
     pub fn edge_kind(&self, edge: GraphEdgeRef) -> GraphPathEdgeKind {
         self.points[edge.start_idx].forward_edges[edge.edge_idx].kind
+    }
+
+    ///
+    /// Returns the label of the edge pointed to by an edgeref
+    ///
+    #[inline]
+    pub fn edge_label(&self, edge: GraphEdgeRef) -> Label {
+        self.points[edge.start_idx].forward_edges[edge.edge_idx].label
     }
 
     ///
