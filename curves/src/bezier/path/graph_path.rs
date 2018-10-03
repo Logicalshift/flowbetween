@@ -760,7 +760,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             visited[current_edge.start_idx] = true;
 
             // Pick the next edge
-            let edges = &self.points[current_edge.start_idx].forward_edges;
+            let end_idx = self.points[current_edge.start_idx].forward_edges[current_edge.edge_idx].end_idx;
+            let edges   = &self.points[end_idx].forward_edges;
 
             if edges.len() != 1 {
                 // At an intersection
@@ -768,7 +769,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             } else {
                 // Move on
                 current_edge = GraphEdgeRef {
-                    start_idx:  edges[0].end_idx,
+                    start_idx:  end_idx,
                     edge_idx:   0,
                     reverse:    false
                 }
