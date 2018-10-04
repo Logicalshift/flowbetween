@@ -74,6 +74,7 @@ where   Point: Coordinate+Coordinate2D {
     loop {
         // Find a point on an uncategorised edge
         // TODO: hitting a point dead on could also create a 'glancing' intersection where the ray doesn't actually enter the shape
+        // TODO: we're mis-categorising edges after hitting a point that's an intersection
         let next_point = merged_path.all_edges()
             .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
             .map(|edge| edge.start_point())
