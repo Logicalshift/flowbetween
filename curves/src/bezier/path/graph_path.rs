@@ -648,33 +648,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
-    /// Starting at a particular point, marks any connected edge that is not marked as exterior as interior
-    ///
-    fn mark_connected_edges_as_interior(&mut self, start_point: usize) {
-        // Points that have been visited
-        let mut visited     = vec![false; self.points.len()];
-
-        // Stack of points waiting to be visited
-        let mut to_visit    = vec![];
-        to_visit.push(start_point);
-
-        while let Some(next_point) = to_visit.pop() {
-            // If we've already visited this point, mark it as visited
-            if visited[next_point] { continue; }
-            visited[next_point] = true;
-
-            // Mark any uncategorised edges as interior, and visit the points they connect to
-            for mut edge in self.points[next_point].forward_edges.iter_mut() {
-                to_visit.push(edge.end_idx);
-
-                if edge.kind == GraphPathEdgeKind::Uncategorised {
-                    edge.kind = GraphPathEdgeKind::Interior;
-                }
-            }
-        }
-    }
-
-    ///
     /// Returns the GraphEdge for an edgeref
     ///
     #[inline]
@@ -704,73 +677,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     #[inline]
     pub fn edge_label(&self, edge: GraphEdgeRef) -> Label {
         self.points[edge.start_idx].forward_edges[edge.edge_idx].label
-    }
-
-    ///
-    /// Given a descision function, determines which edges should be made exterior. The start edge is always made external.
-    /// Any edges connected to the start edge that are not picked by the picking function are marked as interior.
-    ///
-    /// This can be used to implement path arithmetic algorithms by deciding which edges from the shared path should
-    /// become the exterior edges of a new path.
-    ///
-    /// The picking function is supplied a list of possible edges and should pick the edge that represents the following
-    /// exterior edge.
-    ///
-    pub fn classify_exterior_edges<PickEdgeFn>(&mut self, start_edge: GraphEdgeRef, pick_exterior_edge: PickEdgeFn)
-    where PickEdgeFn: Fn(&Self, GraphEdge<'_, Point, Label>, &Vec<GraphEdge<'_, Point, Label>>) -> GraphEdgeRef {
-        let mut current_edge_ref = start_edge;
-
-        loop {
-            // If we've arrived back at an exterior edge, we've finished marking edges as exterior
-            if self.edge_kind(current_edge_ref) == GraphPathEdgeKind::Exterior {
-                break;
-            }
-            
-            // Mark the current edge as exterior
-            self.set_edge_kind(current_edge_ref, GraphPathEdgeKind::Exterior);
-
-            // Get the end of the current edge
-            let end_point_idx = if current_edge_ref.reverse {
-                current_edge_ref.start_idx 
-            } else {
-                self.points[current_edge_ref.start_idx].forward_edges[current_edge_ref.edge_idx].end_idx
-            };
-
-            // Fetch the next external edge using the decision function (pick_external_edge)
-            let next_edge = {
-                // If there's only one possible edge to follow then always follow that, otherwise ask the picking function
-                if !current_edge_ref.reverse && self.points[end_point_idx].forward_edges.len() == 1 {
-                    // Only one edge in the current direction: no intersection to decide upon
-                    GraphEdgeRef {
-                        start_idx:  end_point_idx,
-                        edge_idx:   0,
-                        reverse:    false
-                    }
-                } else if current_edge_ref.reverse && self.points[end_point_idx].connected_from.len() == 1 {
-                    // Only one edge in the current direction: no intersection to decide upon
-                    self.reverse_edges_for_point(end_point_idx).nth(0).unwrap().into()
-                } else {
-                    let last_edge = GraphEdge::new(self, current_edge_ref);
-
-                    // Gather the uncategorised edges for the current point
-                    // The edge we just visited will just have been marked as exterior so it will be excluded here
-                    // Also, if we revisit a point we'll only ask the algorithm to pick from the remaining edges
-                    let edges = self.edges_for_point(end_point_idx)
-                        .chain(self.reverse_edges_for_point(end_point_idx))
-                        .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
-                        .collect();
-
-                    // Pass to the selection function to pick the next edge we go to
-                    pick_exterior_edge(self, last_edge, &edges)
-                }
-            };
-
-            // Set the current edge
-            current_edge_ref = next_edge;
-        }
-
-        // Go around the loop again and mark any edges still uncategorized as interior
-        self.mark_connected_edges_as_interior(current_edge_ref.start_idx);
     }
 
     ///
