@@ -160,3 +160,19 @@ fn add_two_non_overlapping_circles() {
     println!("{:?}", combined_circles);
     assert!(combined_circles.len() == 2);
 }
+
+#[test]
+fn add_two_donuts() {
+    // Two overlapping circles
+    let circle1         = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let inner_circle1   = Circle::new(Coord2(5.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+    let circle2         = Circle::new(Coord2(9.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let inner_circle2   = Circle::new(Coord2(9.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+
+    // Combine them
+    let combined_circles = path_add::<_, _, _, SimpleBezierPath>(&vec![circle1, inner_circle1], &vec![circle2, inner_circle2], 0.1);
+
+    println!("{:?}", combined_circles.len());
+    println!("{:?}", combined_circles);
+    assert!(combined_circles.len() == 4);
+}
