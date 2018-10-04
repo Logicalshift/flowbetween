@@ -305,6 +305,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     edge.end_idx += offset;
                 }
 
+                for mut previous_point in &mut point.connected_from {
+                    *previous_point += offset;
+                }
+
                 // Generate the new edge
                 point
             }));
