@@ -593,7 +593,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// 
     pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphEdge<'a, Point, Label>, f64, f64)> {
         // We'll store the result after visiting all of the edges
-        let mut collision_result = vec![];
+        let mut collision_result    = vec![];
+
+        // List of points where we've hit the start of the line
+        let mut visited_start       = vec![false; self.points.len()];
 
         // Visit every edge in this graph
         for point_idx in 0..(self.points.len()) {
@@ -602,7 +605,31 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 let collisions = curve_intersects_ray(&edge, ray);
 
                 for (curve_t, line_t, _collide_pos) in collisions {
-                    collision_result.push((edge.clone(), curve_t, line_t));
+                    if curve_t > 0.999 {
+                        // Collision is at the end of the curve
+                        if !visited_start[edge.end_point_index()] {
+                            visited_start[edge.end_point_index()] = true;
+
+                            // Push all edges from the end point (ie, always use the start of a curve rather than the end)
+                            for point_edge in self.edges_for_point(edge.end_point_index()) {
+                                collision_result.push((point_edge, 0.0, line_t));
+                            }
+                        }
+                    } else if Self::t_is_zero(curve_t) {
+                        // Collision is at the start of the curve
+                        if !visited_start[point_idx] {
+                            // Mark the start of this point as visited
+                            visited_start[point_idx] = true;
+                            
+                            // Push all the edges from this point
+                            for point_edge in self.edges_for_point(point_idx) {
+                                collision_result.push((point_edge, curve_t, line_t));
+                            }
+                        }
+                    } else {
+                        // Collision is mid-way in the cure
+                        collision_result.push((edge.clone(), curve_t, line_t));
+                    }
                 }
             }
         }

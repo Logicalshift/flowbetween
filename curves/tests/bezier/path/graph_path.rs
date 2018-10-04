@@ -612,6 +612,8 @@ fn casting_ray_to_intersection_point_produces_two_collisions() {
     //   +-----+
     // 
     // (There's an intersection where there are two edges entering it but only one leaving)
+    // 
+    // This test should still be valid if the 'shared' edge is stored in the graph as two edges
 
     // Create a rectangle
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
@@ -704,8 +706,8 @@ fn cast_ray_to_rectangle_far_corner_backwards() {
     assert!(collision.len() > 0);
 
     let collision = &collision[0];
-    assert!(collision.0.start_point() == Coord2(1.0, 5.0));
-    assert!((collision.1-1.0).abs() < 0.01);
+    assert!(collision.0.start_point().distance_to(&Coord2(5.0, 5.0)) < 0.1);
+    assert!((collision.1-0.0).abs() < 0.01);
 }
 
 #[test]
