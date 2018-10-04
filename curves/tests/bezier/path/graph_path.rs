@@ -321,7 +321,6 @@ fn collision_at_same_point() {
     let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
-    // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision
     let collision = rectangle1.collide(rectangle2, 0.05);
 
     // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
@@ -377,7 +376,6 @@ fn collision_at_same_point() {
                     (start_point.y()-6.0).abs() < 0.01);
         } else {
             // Should only be 1 edge (corners) or 2 edges (collision points)
-            // TODO: currently we end up here because we're generating point -> same point 'edges' for some reason
             println!("{:?}", edges);
             assert!(edges.len() <= 2);
         }
@@ -407,8 +405,6 @@ fn collision_exactly_on_edge_src() {
     let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
-    // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision (hm, seems to be a limitation of the precision of the algorithm)
-    // (turns out to be precision: setting the accuracy too high causes the subdivisions to never collide)
     let collision = rectangle1.collide(rectangle2, 0.05);
 
     // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
@@ -464,7 +460,6 @@ fn collision_exactly_on_edge_src() {
                     (start_point.y()-6.0).abs() < 0.01);
         } else {
             // Should only be 1 edge (corners) or 2 edges (collision points)
-            // TODO: currently we end up here because we're generating point -> same point 'edges' for some reason
             println!("{:?}", edges);
             assert!(edges.len() <= 2);
         }
@@ -494,8 +489,6 @@ fn collision_exactly_on_edge_tgt() {
     let rectangle2 = GraphPath::from_path(&rectangle2, ());
 
     // Collide them
-    // TODO: find out why setting accuracy to 0.01 here produces only 10 points in the collision
-    // (turns out to be precision: setting the accuracy too high causes the subdivisions to never collide)
     let collision = rectangle1.collide(rectangle2, 0.02);
 
     // 12 points in the collision (but we can allow for the shared point to be left as 'orphaned')
@@ -551,7 +544,6 @@ fn collision_exactly_on_edge_tgt() {
                     (start_point.y()-6.0).abs() < 0.01);
         } else {
             // Should only be 1 edge (corners) or 2 edges (collision points)
-            // TODO: currently we end up here because we're generating point -> same point 'edges' for some reason
             println!("{:?}", edges);
             assert!(edges.len() <= 2);
         }
@@ -609,7 +601,7 @@ fn casting_ray_to_exact_point_produces_one_collision() {
 #[test]
 fn casting_ray_to_intersection_point_produces_two_collisions() {
     // A ray hitting an exact point that is an intersection (has two edges leaving it) should produce two collisions, one on each edge
-    // ... also this case where we have an overlapping line might be weird:
+    // ... also this case where we have an overlapping line might be weird (but I don't think we'll generate it properly yet):
     // 
     //   +-----+
     //   |     |
@@ -621,8 +613,35 @@ fn casting_ray_to_intersection_point_produces_two_collisions() {
     // 
     // (There's an intersection where there are two edges entering it but only one leaving)
 
-    // TODO!
-    assert!(false)
+    // Create a rectangle
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(4.0, 2.0))
+        .line_to(Coord2(4.0, 3.0))
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(7.0, 2.0))
+        .line_to(Coord2(4.0, 2.0))
+        .build();
+    let rectangle2 = GraphPath::from_path(&rectangle2, ());
+
+    // Collide them
+    let collided = rectangle1.collide(rectangle2, 0.01);
+
+    // Collision should be at (5, 3), so aim a ray there
+    let collision = collided.ray_collisions(&(Coord2(0.0, 0.0), Coord2(5.0, 3.0)));
+
+    let collisions_with_corner = collision.into_iter()
+        .filter(|(edge, curve_t, _line_t)| edge.point_at_pos(*curve_t).distance_to(&Coord2(5.0, 3.0)) < 0.1)
+        .collect::<Vec<_>>();
+    assert!(collisions_with_corner.len() != 0);
+    assert!(collisions_with_corner.len() != 4);
+    assert!(collisions_with_corner.len() == 2);
 }
 
 #[test]
