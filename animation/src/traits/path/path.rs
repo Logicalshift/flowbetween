@@ -184,7 +184,9 @@ impl BezierPath for Path {
         // Turn into an iterator
         Box::new(points.into_iter())
     }
+}
 
+impl BezierPathFactory for Path {
     ///
     /// Creates a new instance of this path from a set of points
     /// 

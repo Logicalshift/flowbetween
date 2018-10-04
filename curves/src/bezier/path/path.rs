@@ -4,7 +4,9 @@ use super::super::curve::*;
 use super::super::super::geo::*;
 use super::super::super::coordinate::*;
 
+use itertools::*;
 use std::vec;
+use std::iter;
 
 ///
 /// Trait representing a path made out of bezier sections
@@ -24,11 +26,6 @@ pub trait BezierPath : Geo+Clone+Sized {
     fn points(&self) -> Self::PointIter;
 
     ///
-    /// Creates a new instance of this path from a set of points
-    /// 
-    fn from_points<FromIter: IntoIterator<Item=(Self::Point, Self::Point, Self::Point)>>(start_point: Self::Point, points: FromIter) -> Self;
-
-    ///
     /// Finds the bounds of this path
     /// 
     #[inline]
@@ -37,11 +34,55 @@ pub trait BezierPath : Geo+Clone+Sized {
     }
 
     ///
+    /// Finds a loose bounding box for this path (more quickly than bounding_box)
+    /// 
+    /// This will contain the path but might not be tightly aligned to the curves
+    ///
+    fn fast_bounding_box<Bounds: BoundingBox<Point=Self::Point>>(&self) -> Bounds {
+        path_fast_bounding_box(self)
+    }
+
+    ///
     /// Changes this path into a set of bezier curves
     /// 
     #[inline]
     fn to_curves<Curve: BezierCurveFactory<Point=Self::Point>>(&self) -> Vec<Curve> {
         path_to_curves(self).collect()
+    }
+
+    ///
+    /// Creates a reversed version of this path
+    ///
+    fn reversed<POut: BezierPathFactory<Point=Self::Point>>(&self) -> POut {
+        // Add in the first point (control points don't matter)
+        let fake_first_point    = (Self::Point::origin(), Self::Point::origin(), self.start_point());
+        let points              = self.points();
+        let points              = iter::once(fake_first_point).chain(points);
+
+        // Reverse the direction of the path
+        let reversed_points = points
+            .tuple_windows()
+            .map(|((_, _, start_point), (cp1, cp2, _))| (cp2, cp1, start_point))
+            .collect::<Vec<_>>();
+
+        POut::from_points(self.start_point(), reversed_points.into_iter().rev())
+    }
+}
+
+///
+/// Trait implemented by types that can construct new bezier paths
+///
+pub trait BezierPathFactory : BezierPath {
+    ///
+    /// Creates a new instance of this path from a set of points
+    /// 
+    fn from_points<FromIter: IntoIterator<Item=(Self::Point, Self::Point, Self::Point)>>(start_point: Self::Point, points: FromIter) -> Self;
+
+    ///
+    /// Creates a new instance of this path from the points in another path
+    ///
+    fn from_path<FromPath: BezierPath<Point=Self::Point>>(path: &FromPath) -> Self {
+        Self::from_points(path.start_point(), path.points())
     }
 }
 
@@ -68,7 +109,9 @@ impl<Point: Clone+Coordinate> BezierPath for (Point, Vec<(Point, Point, Point)>)
     fn points(&self) -> Self::PointIter {
         self.1.clone().into_iter()
     }
+}
 
+impl<Point: Clone+Coordinate> BezierPathFactory for (Point, Vec<(Point, Point, Point)>) {
     ///
     /// Creates a new instance of this path from a set of points
     /// 

@@ -6,9 +6,12 @@ use super::super::super::coordinate::*;
 use roots::{find_roots_cubic, Roots};
 
 ///
-/// Find the t values where a curve intersects a line
+/// Find the t values where a curve intersects a ray
+///
+/// Return value is a vector of (curve_t, line_t, intersection_point) values. The `line_t` value can be outside the
+/// original line, so this will return all the points on the curve that lie on a line of infinite length.
 /// 
-pub fn curve_intersects_line<C: BezierCurve, L: Line<Point=C::Point>>(curve: &C, line: &L) -> Vec<f64>
+pub fn curve_intersects_ray<C: BezierCurve, L: Line<Point=C::Point>>(curve: &C, line: &L) -> Vec<(f64, f64, C::Point)>
 where C::Point: Coordinate2D {
     // Based upon https://www.particleincell.com/2013/cubic-line-intersection/
 
@@ -47,9 +50,11 @@ where C::Point: Coordinate2D {
             else if t > 1.0 && t < 1.001 { 1.0 }
             else { t }
         })
-        .filter(|t| {
+        .map(|t| {
+            (t, de_casteljau4(t, w1, w2, w3, w4))
+        })
+        .map(|(t, pos)| {
             // Coordinates on the curve
-            let pos = basis(*t, w1, w2, w3, w4);
             let x   = pos.x();
             let y   = pos.y();
 
@@ -60,8 +65,24 @@ where C::Point: Coordinate2D {
                 (y-p1.y())/(p2.y()-p1.y())
             };
 
+            (t, s, pos)
+        })
+        .filter(|(t, _s, _pos)| {
             // Point must be within the bounds of the line and the curve
-            (t >= &0.0 && t <= &1.0) && (s >= 0.0 && s <= 1.0)
+            (t >= &0.0 && t <= &1.0)
         })
         .collect()
+}
+
+///
+/// Find the t values where a curve intersects a line
+///
+/// Return value is a vector of (curve_t, line_t, intersection_point) values
+/// 
+pub fn curve_intersects_line<C: BezierCurve, L: Line<Point=C::Point>>(curve: &C, line: &L) -> Vec<(f64, f64, C::Point)>
+where C::Point: Coordinate2D {
+    let mut ray_interections = curve_intersects_ray(curve, line);
+    ray_interections.retain(|(_t, s, _pos)| s >= &0.0 && s <= &1.0);
+
+    ray_interections
 }

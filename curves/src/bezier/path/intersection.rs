@@ -8,13 +8,30 @@ use super::super::super::coordinate::*;
 ///
 /// Determines the intersections of a path and a line
 /// 
-/// Intersections are returned as the path section index and the 't' parameter along that curve
+/// Intersections are returned as the path section index, the 't' parameter along that curve and the 't' value along the line:
+/// ie: `(path_point_idx, curve_t, line_t)`. 
 /// 
-pub fn path_intersects_line<'a, Path: BezierPath, L: Line<Point=Path::Point>>(path: &'a Path, line: &'a L) -> impl 'a+Iterator<Item=(usize, f64)> 
+pub fn path_intersects_line<'a, Path: BezierPath, L: Line<Point=Path::Point>>(path: &'a Path, line: &'a L) -> impl 'a+Iterator<Item=(usize, f64, f64)> 
 where Path::Point: 'a+Coordinate2D {
     path_to_curves::<_, Curve<_>>(path)
         .enumerate()
-        .flat_map(move |(section_id, curve)| curve_intersects_line(&curve, line).into_iter().map(move |t| (section_id, t)))
+        .flat_map(move |(section_id, curve)| curve_intersects_line(&curve, line).into_iter().map(move |(t, s, _pos)| (section_id, t, s)))
+}
+
+///
+/// Determines the intersections of a path and a ray.
+/// 
+///  Return value is `(path_point_idx, curve_t, line_t)`. Ray intersections differ from line intersections
+/// in that there's no requirement for the result to be within the bounds of the supplied line (so any match in the direction of the line is
+/// returned).
+/// 
+/// It's possible to filter for matches that occur after the start of the line by looking for results with an `s` value >= 0
+/// 
+pub fn path_intersects_ray<'a, Path: BezierPath, L: Line<Point=Path::Point>>(path: &'a Path, line: &'a L) -> impl 'a+Iterator<Item=(usize, f64, f64)> 
+where Path::Point: 'a+Coordinate2D {
+    path_to_curves::<_, Curve<_>>(path)
+        .enumerate()
+        .flat_map(move |(section_id, curve)| curve_intersects_line(&curve, line).into_iter().map(move |(t, s, _pos)| (section_id, t, s)))
 }
 
 ///

@@ -78,7 +78,7 @@ impl<Coord: Coordinate2D+Coordinate> Circle<Coord> {
     ///
     /// Returns a path that approximates this circle
     /// 
-    pub fn to_path<P: BezierPath<Point=Coord>>(&self) -> P {
+    pub fn to_path<P: BezierPathFactory<Point=Coord>>(&self) -> P {
         let curves = self.to_curves::<Curve<_>>();
 
         P::from_points(curves[0].start_point(), curves.into_iter().map(|curve| {
