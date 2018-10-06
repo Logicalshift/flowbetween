@@ -57,6 +57,11 @@ impl Normalize<Coordinate3D> for Coordinate3D {
 /// 
 pub trait NormalCurve : BezierCurve {
     ///
+    /// Computes the tangent vector to the curve at the specified t value
+    ///
+    fn tangent_at_pos(&self, t: f64) -> Self::Point;
+
+    ///
     /// Computes the normal vector to the curve at the specified t value
     ///
     fn normal_at_pos(&self, t: f64) -> Self::Point;
@@ -64,6 +69,21 @@ pub trait NormalCurve : BezierCurve {
 
 impl<Curve: BezierCurve> NormalCurve for Curve
 where Curve::Point: Normalize {
+    fn tangent_at_pos(&self, t: f64) -> Curve::Point {
+        // Extract the points that make up this curve
+        let w1          = self.start_point();
+        let (w2, w3)    = self.control_points();
+        let w4          = self.end_point();
+
+        // Get the deriviative
+        let (d1, d2, d3) = derivative4(w1, w2, w3, w4);
+
+        // Get the tangent and the point at the specified t value
+        let tangent     = de_casteljau3(t, d1, d2, d3);
+
+        tangent
+    }
+
     fn normal_at_pos(&self, t: f64) -> Curve::Point {
         // Extract the points that make up this curve
         let w1          = self.start_point();
