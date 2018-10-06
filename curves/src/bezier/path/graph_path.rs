@@ -638,11 +638,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                             visited_start[point_idx] = true;
                             
                             // Intersections are a single collision against multiple edges
-                            let edges       = self.edges_for_point(point_idx);
+                            let mut edges   = self.edges_for_point(point_idx);
                             let first_edge  = edges.next();
 
                             if let Some(first_edge) = first_edge {
-                                let intersection = GraphRayCollision::new(first_edge.into());
+                                let mut intersection = GraphRayCollision::new(first_edge.into());
 
                                 for point_edge in edges {
                                     intersection.push(point_edge.into());
@@ -653,7 +653,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         }
                     } else {
                         // Collision is mid-way in the curve
-                        collision_result.push((GraphRayCollision::new(edge.into()), curve_t, line_t));
+                        collision_result.push((GraphRayCollision::new(edge.clone().into()), curve_t, line_t));
                     }
                 }
             }
