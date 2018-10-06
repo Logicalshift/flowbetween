@@ -16,7 +16,7 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
     /// Given a labelled graph path, marks exterior edges by adding `PathSource::Path1` and `PathSource::Path2`
     ///
     pub fn set_exterior_by_adding(&mut self) {
-        let outside_point = Point::origin();
+        let outside_point = self.outside_point();
 
         loop {
             // Find a point on an uncategorised edge
