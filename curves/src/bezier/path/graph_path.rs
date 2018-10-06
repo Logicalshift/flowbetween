@@ -17,6 +17,7 @@ const CLOSE_DISTANCE: f64 = 0.01;
 ///
 /// Represents a collision between a ray and a GraphPath
 ///
+#[derive(Clone, Debug, PartialEq)]
 pub enum GraphRayCollision {
     /// Collision against a single edge
     SingleEdge(GraphEdgeRef),
@@ -1018,6 +1019,7 @@ impl GraphRayCollision {
     ///
     /// Returns true if this collision is at an intersection
     ///
+    #[inline]
     pub fn is_intersection(&self) -> bool {
         match self {
             GraphRayCollision::SingleEdge(_)    => false,

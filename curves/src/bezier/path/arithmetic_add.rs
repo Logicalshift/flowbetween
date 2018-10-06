@@ -73,52 +73,58 @@ where   Point: Coordinate+Coordinate2D {
 
     loop {
         // Find a point on an uncategorised edge
+        // We aim at the midpoint as if the ray hits an intersection, we can't easily tell which edge is exterior and which is interior (this means that we know the edge we're aiming at here won't be an intersection)
         // TODO: hitting a point dead on could also create a 'glancing' intersection where the ray doesn't actually enter the shape
-        // TODO: we're mis-categorising edges after hitting a point that's an intersection
         let next_point = merged_path.all_edges()
             .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
-            .map(|edge| edge.start_point())
+            .map(|edge| edge.point_at_pos(0.5))
             .nth(0);
 
         if let Some(next_point) = next_point {
             // Cast a ray to this point from the outside point and categorise any edges we encounter
             let collisions = merged_path.ray_collisions(&(outside_point, next_point))
                 .into_iter()
-                .map(|(edge, curve_t, _line_t)| (edge.into(), curve_t))
+                .map(|(collision, curve_t, _line_t)| (collision, curve_t))
                 .collect::<Vec<_>>();
 
             // Collisions are ordered from the outer point, so we know the start of the line is outside the path
             let mut inside_path1 = false;
             let mut inside_path2 = false;
 
-            for (edge, _curve_t) in collisions {
-                // Fetch information about these edges
-                let edge_kind                   = merged_path.edge_kind(edge);
-                let (source_path, _direction)   = merged_path.edge_label(edge);
-
+            for (collision, _curve_t) in collisions {
                 // If the ray was in path1 or path2, it's coming from inside the combined shape
-                let was_inside = inside_path1 || inside_path2;
+                let was_inside      = inside_path1 || inside_path2;
+                let is_intersection = collision.is_intersection();
 
-                // Update the state of the ray. All source edges are considered to be exterior edges
-                match source_path {
-                    SourcePath::Path1 => { inside_path1 = !inside_path1 },
-                    SourcePath::Path2 => { inside_path2 = !inside_path2 }
-                }
+                for edge in collision {
+                    // Fetch information about these edges
+                    let edge_kind                   = merged_path.edge_kind(edge);
+                    let (source_path, _direction)   = merged_path.edge_label(edge);
 
-                // If the ray will be insde path1 or path2, then it's inside further on
-                let is_inside = inside_path1 || inside_path2;
+                    // Update the state of the ray. All source edges are considered to be exterior edges
+                    match source_path {
+                        SourcePath::Path1 => { inside_path1 = !inside_path1 },
+                        SourcePath::Path2 => { inside_path2 = !inside_path2 }
+                    }
 
-                // The edge is an exterior edge when crossing from inside to outside
-                let is_exterior = was_inside ^ is_inside;
+                    // Intersections will have multiple edges which can need to be categorised differently
+                    if !is_intersection {
+                        // If the ray will be insde path1 or path2, then it's inside further on
+                        let is_inside = inside_path1 || inside_path2;
 
-                // If the edge is uncategorised, categorise it
-                if edge_kind == GraphPathEdgeKind::Uncategorised {
-                    if is_exterior {
-                        // Mark this edge and any connected to it as exterior
-                        merged_path.set_edge_kind_connected(edge, GraphPathEdgeKind::Exterior);
-                    } else {
-                        // Mark this edge and any connected to it as interior
-                        merged_path.set_edge_kind_connected(edge, GraphPathEdgeKind::Interior);
+                        // The edge is an exterior edge when crossing from inside to outside
+                        let is_exterior = was_inside ^ is_inside;
+
+                        // If the edge is uncategorised, categorise it
+                        if edge_kind == GraphPathEdgeKind::Uncategorised {
+                            if is_exterior {
+                                // Mark this edge and any connected to it as exterior
+                                merged_path.set_edge_kind_connected(edge, GraphPathEdgeKind::Exterior);
+                            } else {
+                                // Mark this edge and any connected to it as interior
+                                merged_path.set_edge_kind_connected(edge, GraphPathEdgeKind::Interior);
+                            }
+                        }
                     }
                 }
             }
