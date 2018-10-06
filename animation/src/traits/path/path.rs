@@ -135,7 +135,7 @@ impl BezierPath for Path {
     /// Retrieves an iterator over the points in this path
     /// 
     /// Note that the bezier path trait doesn't support Move or Close operations so these will be ignored.
-    /// Operations like point_in_path may be unreliable for 'broken' paths as a result of this limitation.
+    /// Operations like `path_contains_point` may be unreliable for 'broken' paths as a result of this limitation.
     /// (Paths with a 'move' in them are really two seperate paths)
     /// 
     fn points(&self) -> Self::PointIter {
