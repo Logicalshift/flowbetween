@@ -612,6 +612,25 @@ fn casting_ray_to_exact_point_produces_one_collision() {
 }
 
 #[test]
+fn casting_ray_across_corner_produces_no_collision() {
+    // If a ray hits a point such that it doesn't cross into or out of the shape, it should not count as a collision
+    // (For a closed path, this should ensure there are never an odd number of collisions)
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle1 = GraphPath::from_path(&rectangle1, ());
+
+    // Cast a ray so that it 'grazes' the corner of the rectangle (without crossing into it)
+    let collision = rectangle1.ray_collisions(&(Coord2(0.0, 2.0), Coord2(2.0, 0.0)));
+
+    assert!(collision.len() != 1);
+    assert!(collision.len() == 0);
+}
+
+#[test]
 fn casting_ray_to_intersection_point_produces_two_collisions() {
     // A ray hitting an exact point that is an intersection (has two edges leaving it) should produce two collisions, one on each edge
     // ... also this case where we have an overlapping line might be weird (but I don't think we'll generate it properly yet):
