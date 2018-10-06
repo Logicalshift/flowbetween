@@ -7,6 +7,8 @@ use super::super::super::coordinate::*;
 
 use std::fmt;
 use std::mem;
+use std::vec;
+use std::iter;
 use std::ops::Range;
 use std::cmp::Ordering;
 
@@ -1012,5 +1014,45 @@ impl GraphRayCollision {
             }
         }
     }
+
+    ///
+    /// Returns true if this collision is at an intersection
+    ///
+    pub fn is_intersection(&self) -> bool {
+        match self {
+            GraphRayCollision::SingleEdge(_)    => false,
+            GraphRayCollision::Intersection(_)  => true
+        }
+    }
 }
 
+impl IntoIterator for GraphRayCollision {
+    type Item       = GraphEdgeRef;
+    type IntoIter   = GraphRayIterator;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            GraphRayCollision::SingleEdge(edge)     => GraphRayIterator::SingleEdge(iter::once(edge)),
+            GraphRayCollision::Intersection(vec)    => GraphRayIterator::Intersection(vec.into_iter())
+        }
+    }
+}
+
+///
+/// Iterator over the edges in a collision
+///
+pub enum GraphRayIterator {
+    SingleEdge(iter::Once<GraphEdgeRef>),
+    Intersection(vec::IntoIter<GraphEdgeRef>)
+}
+
+impl Iterator for GraphRayIterator {
+    type Item = GraphEdgeRef;
+
+    fn next(&mut self) -> Option<GraphEdgeRef> {
+        match self {
+            GraphRayIterator::SingleEdge(once)  => once.next(),
+            GraphRayIterator::Intersection(vec) => vec.next()
+        }
+    }
+}
