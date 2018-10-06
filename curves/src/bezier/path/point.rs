@@ -3,6 +3,7 @@ use super::to_curves::*;
 use super::super::curve::*;
 use super::super::normal::*;
 use super::super::intersection::*;
+use super::super::super::line::*;
 use super::super::super::coordinate::*;
 
 ///
@@ -19,7 +20,6 @@ where P::Point: Coordinate2D {
     } else {
         // Ray is from the top of the bounds to our point
         let ray             = (max_bounds + P::Point::from_components(&[0.01, 0.01]), *point);
-        let ray_direction   = ray.1 - ray.0;
 
         // The total of all of the ray directions
         let mut total_direction     = 0;
@@ -38,7 +38,7 @@ where P::Point: Coordinate2D {
         while let Some(curve) = curves.next() {
             let mut hit_end_this_pass = false;
 
-            for (t, _s, _pos) in curve_intersects_line(&curve, &ray) {
+            for (t, _s, pos) in curve_intersects_line(&curve, &ray) {
                 // If we precisely hit the first point, we need to make sure we don't also precisely hit the last point
                 if t < 0.0000001 && first_path { hit_first_point = true; }
 
@@ -51,18 +51,15 @@ where P::Point: Coordinate2D {
                 // If we hit the start point of this curve after hitting the end point of the preceding curve, assume that we've just received the same hit twice
                 if t < 0.0000001 && hit_end_last_pass { continue; }
 
-                // Get the normal at this point
-                let normal = curve.normal_at_pos(t);
+                // Get the tangent at this point
+                let tangent = curve.tangent_at_pos(t);
 
-                // Dot product determines the direction of the normal relative to the ray (+ve if in the same direction or -ve in the opposite)
-                // That is, the sign of this calculation indicates which direction the line is facing.
-                // One of these directions is 'entering' the shape and one is 'leaving': if we leave as often as we enter, the point is inside
-                // (We don't actually need to worry which is which here as we know the ray starts outside of the curve)
-                let direction = normal.dot(&ray_direction);
+                // Can determine which direction the line is moving by using the tangent
+                let direction = ray.which_side(&(pos + tangent));
 
-                if direction < 0.0 {
+                if direction < 0 {
                     total_direction -= 1;
-                } else if direction > 0.0 {
+                } else if direction > 0 {
                     total_direction += 1;
                 }
             }
