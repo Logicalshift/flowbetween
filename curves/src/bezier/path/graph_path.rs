@@ -13,6 +13,17 @@ use std::cmp::Ordering;
 const CLOSE_DISTANCE: f64 = 0.01;
 
 ///
+/// Represents a collision between a ray and a GraphPath
+///
+pub enum GraphPathRayCollision<'a, Point: 'a, Label: 'a> {
+    /// Collision against a single edge
+    SingleEdge(GraphEdge<'a, Point, Label>),
+
+    /// Collision against an intersection point
+    Intersection(Vec<GraphEdge<'a, Point, Label>>)
+}
+
+///
 /// Kind of a graph path edge
 /// 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -595,7 +606,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Finds the exterior edge (and t value) where a line first collides with this path (closest to the line
     /// start point)
     /// 
-    pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphEdge<'a, Point, Label>, f64, f64)> {
+    pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphPathRayCollision<'a, Point, Label>, f64, f64)> {
         // We'll store the result after visiting all of the edges
         let mut collision_result    = vec![];
 
@@ -609,30 +620,37 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 let collisions = curve_intersects_ray(&edge, ray);
 
                 for (curve_t, line_t, _collide_pos) in collisions {
-                    if curve_t > 0.999 {
+                    // Collisions at the end of a curve are treated as collision on the next curve
+                    let (point_idx, curve_t) = if curve_t > 0.999 {
                         // Collision is at the end of the curve
-                        if !visited_start[edge.end_point_index()] {
-                            visited_start[edge.end_point_index()] = true;
+                        (edge.end_point_index(), 0.0)
+                    } else {
+                        (point_idx, curve_t)
+                    };
 
-                            // Push all edges from the end point (ie, always use the start of a curve rather than the end)
-                            for point_edge in self.edges_for_point(edge.end_point_index()) {
-                                collision_result.push((point_edge, 0.0, line_t));
-                            }
-                        }
-                    } else if Self::t_is_zero(curve_t) {
+                    if Self::t_is_zero(curve_t) {
                         // Collision is at the start of the curve
                         if !visited_start[point_idx] {
                             // Mark the start of this point as visited
                             visited_start[point_idx] = true;
                             
-                            // Push all the edges from this point
-                            for point_edge in self.edges_for_point(point_idx) {
-                                collision_result.push((point_edge, curve_t, line_t));
+                            // Intersections are a single collision against multiple edges
+                            let edges       = self.edges_for_point(point_idx);
+                            let first_edge  = edges.next();
+
+                            if let Some(first_edge) = first_edge {
+                                let intersection = GraphPathRayCollision::new(first_edge);
+
+                                for point_edge in edges {
+                                    intersection.push(point_edge);
+                                }
+
+                                collision_result.push((intersection, curve_t, line_t));
                             }
                         }
                     } else {
-                        // Collision is mid-way in the cure
-                        collision_result.push((edge.clone(), curve_t, line_t));
+                        // Collision is mid-way in the curve
+                        collision_result.push((GraphPathRayCollision::new(edge), curve_t, line_t));
                     }
                 }
             }
@@ -966,3 +984,33 @@ impl<'a, Point: fmt::Debug, Label: 'a+Copy> fmt::Debug for GraphEdge<'a, Point, 
         write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.edge.start_idx, self.edge().end_idx, self.graph.points[self.edge.start_idx].position, self.graph.points[self.edge().end_idx].position, self.edge().cp1, self.edge().cp2)
     }
 }
+
+impl<'a, Point: 'a, Label: 'a> GraphPathRayCollision<'a, Point, Label> {
+    ///
+    /// Creates a new collision with a single edge
+    ///
+    #[inline]
+    fn new(edge: GraphEdge<'a, Point, Label>) -> GraphPathRayCollision<'a, Point, Label> {
+        GraphPathRayCollision::SingleEdge(edge)
+    }
+
+    ///
+    /// Adds a new edge to the intersection formed by this collision
+    ///
+    fn push(&mut self, new_edge: GraphEdge<'a, Point, Label>) {
+        use self::GraphPathRayCollision::*;
+
+        match self {
+            Intersection(edges) => { edges.push(new_edge); }
+            SingleEdge(_)       => { 
+                let edge            = mem::replace(self, Intersection(vec![]));
+
+                if let SingleEdge(edge) = edge {
+                    let intersection    = vec![edge, new_edge];
+                    *self = Intersection(intersection);
+                }
+            }
+        }
+    }
+}
+
