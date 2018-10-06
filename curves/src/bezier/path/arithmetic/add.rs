@@ -1,35 +1,9 @@
+use super::arithmetic::*;
 use super::super::path::*;
 use super::super::graph_path::*;
-use super::super::is_clockwise::*;
 use super::super::super::curve::*;
 use super::super::super::super::geo::*;
 use super::super::super::super::coordinate::*;
-
-/// Source of a path in the graphpath
-#[derive(Copy, Clone, PartialEq)]
-enum SourcePath {
-    Path1,
-    Path2
-}
-
-/// Target of a path in the graphpath
-#[derive(Copy, Clone, PartialEq)]
-enum PathDirection {
-    Clockwise,
-    Anticlockwise
-}
-
-impl<'a, P: BezierPath> From<&'a P> for PathDirection
-where P::Point: Coordinate2D {
-    #[inline]
-    fn from(path: &'a P) -> PathDirection {
-        if path.is_clockwise() {
-            PathDirection::Clockwise
-        } else {
-            PathDirection::Anticlockwise
-        }
-    }
-}
 
 //
 // This uses a simple ray casting algorithm to perform the addition
@@ -61,11 +35,11 @@ where   Point: Coordinate+Coordinate2D {
     let mut merged_path = GraphPath::new();
     let mut bounds      = Bounds::empty();
     
-    merged_path = merged_path.merge(GraphPath::from_merged_paths(path1.into_iter().map(|path| (path, (SourcePath::Path1, PathDirection::from(path))))));
+    merged_path = merged_path.merge(GraphPath::from_merged_paths(path1.into_iter().map(|path| (path, PathLabel(PathSource::Path1, PathDirection::from(path))))));
     bounds      = bounds.union_bounds(path1[0].fast_bounding_box());
 
     // Collide with the target side to generate a full path
-    merged_path = merged_path.collide(GraphPath::from_merged_paths(path2.into_iter().map(|path| (path, (SourcePath::Path2, PathDirection::from(path))))), accuracy);
+    merged_path = merged_path.collide(GraphPath::from_merged_paths(path2.into_iter().map(|path| (path, PathLabel(PathSource::Path2, PathDirection::from(path))))), accuracy);
     bounds      = bounds.union_bounds(path1[0].fast_bounding_box());
 
     // Cast a line from a point known to be on the outside to discover an edge on the outside
@@ -98,13 +72,13 @@ where   Point: Coordinate+Coordinate2D {
 
                 for edge in collision {
                     // Fetch information about these edges
-                    let edge_kind                   = merged_path.edge_kind(edge);
-                    let (source_path, _direction)   = merged_path.edge_label(edge);
+                    let edge_kind                           = merged_path.edge_kind(edge);
+                    let PathLabel(source_path, _direction)  = merged_path.edge_label(edge);
 
                     // Update the state of the ray. All source edges are considered to be exterior edges
                     match source_path {
-                        SourcePath::Path1 => { inside_path1 = !inside_path1 },
-                        SourcePath::Path2 => { inside_path2 = !inside_path2 }
+                        PathSource::Path1 => { inside_path1 = !inside_path1 },
+                        PathSource::Path2 => { inside_path2 = !inside_path2 }
                     }
 
                     // Intersections will have multiple edges which can need to be categorised differently
