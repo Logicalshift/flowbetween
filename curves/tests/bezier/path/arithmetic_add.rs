@@ -176,3 +176,24 @@ fn add_two_donuts() {
     println!("{:?}", combined_circles);
     assert!(combined_circles.len() == 4);
 }
+
+#[test]
+fn remove_interior_points_basic() {
+    let with_interior_point = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(2.0, 2.0))
+        .line_to(Coord2(4.0, 2.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let with_points_removed: Vec<SimpleBezierPath> = path_remove_interior_points(&vec![with_interior_point]);
+
+    println!("{:?}", with_points_removed);
+
+    assert!(with_points_removed.len() == 1);
+    assert!(with_points_removed[0].points().count() != 6);
+    assert!(with_points_removed[0].points().count() == 5);
+    assert!(false);
+}
