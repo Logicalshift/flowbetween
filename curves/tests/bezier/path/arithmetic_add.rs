@@ -195,5 +195,4 @@ fn remove_interior_points_basic() {
     assert!(with_points_removed.len() == 1);
     assert!(with_points_removed[0].points().count() != 6);
     assert!(with_points_removed[0].points().count() == 5);
-    assert!(false);
 }
