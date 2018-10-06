@@ -552,6 +552,17 @@ fn collision_exactly_on_edge_tgt() {
     assert!(num_intersects == 4);
 }
 
+fn to_collision_with_edges<'a, Point, Label>(collisions: Vec<(GraphRayCollision, f64, f64)>, graph_path: &'a GraphPath<Point, Label>) -> Vec<(GraphEdge<'a, Point, Label>, f64, f64)> 
+where   Point: Coordinate+Coordinate2D,
+        Label: Copy {
+    collisions.into_iter()
+        .flat_map(move |(collision, curve_t, line_t)| {
+            collision.into_iter()
+                .map(move |edge| (graph_path.get_edge(edge), curve_t, line_t))
+        })
+        .collect()
+}
+
 #[test]
 fn cast_ray_to_rectangle_corner() {
     // Create a rectangle
@@ -565,6 +576,7 @@ fn cast_ray_to_rectangle_corner() {
 
     // Collide against the top-left corner
     let collision = rectangle1.ray_collisions(&(Coord2(0.0, 0.0), Coord2(1.0, 1.0)));
+    let collision = to_collision_with_edges(collision, &rectangle1);
 
     assert!(collision.len() > 0);
 
@@ -589,6 +601,7 @@ fn casting_ray_to_exact_point_produces_one_collision() {
 
     // Collide against the top-left corner
     let collision = rectangle1.ray_collisions(&(Coord2(0.0, 0.0), Coord2(1.0, 1.0)));
+    let collision = to_collision_with_edges(collision, &rectangle1);
 
     let collisions_with_corner = collision.into_iter()
         .filter(|(edge, curve_t, _line_t)| edge.point_at_pos(*curve_t).distance_to(&Coord2(1.0, 1.0)) < 0.1)
@@ -637,6 +650,7 @@ fn casting_ray_to_intersection_point_produces_two_collisions() {
 
     // Collision should be at (5, 3), so aim a ray there
     let collision = collided.ray_collisions(&(Coord2(0.0, 0.0), Coord2(5.0, 3.0)));
+    let collision = to_collision_with_edges(collision, &collided);
 
     let collisions_with_corner = collision.into_iter()
         .filter(|(edge, curve_t, _line_t)| edge.point_at_pos(*curve_t).distance_to(&Coord2(5.0, 3.0)) < 0.1)
@@ -659,6 +673,7 @@ fn cast_ray_across_rectangle() {
 
     // Collide across the center of the rectangle
     let collision = rectangle1.ray_collisions(&(Coord2(0.0, 3.0), Coord2(6.0, 3.0)));
+    let collision = to_collision_with_edges(collision, &rectangle1);
 
     assert!(collision.len() > 0);
 
@@ -681,6 +696,7 @@ fn cast_ray_to_rectangle_far_corner() {
 
     // Collide against all corners
     let collision = rectangle1.ray_collisions(&(Coord2(0.0, 0.0), Coord2(6.0, 6.0)));
+    let collision = to_collision_with_edges(collision, &rectangle1);
 
     assert!(collision.len() > 0);
 
@@ -702,6 +718,7 @@ fn cast_ray_to_rectangle_far_corner_backwards() {
 
     // Collide against all corners
     let collision = rectangle1.ray_collisions(&(Coord2(6.0, 6.0), Coord2(0.0, 0.0)));
+    let collision = to_collision_with_edges(collision, &rectangle1);
 
     assert!(collision.len() > 0);
 
