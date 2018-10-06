@@ -622,6 +622,14 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Finds any collisions between existing points in the graph path
+    ///
+    pub fn self_collide(&mut self, accuracy: f64) {
+        let total_points = self.points.len();
+        self.detect_collisions(0..total_points, 0..total_points, accuracy);
+    }
+
+    ///
     /// Returns true if a particular ray is 'grazing' the start of a particular edge. The ray is assumed to intersect the edge.
     /// 'Grazing' means that the corner at the edge is of an angle such that the ray never enters/leaves the shape by this
     /// intersection.
