@@ -188,7 +188,7 @@ fn remove_interior_points_basic() {
         .line_to(Coord2(1.0, 1.0))
         .build();
 
-    let with_points_removed: Vec<SimpleBezierPath> = path_remove_interior_points(&vec![with_interior_point]);
+    let with_points_removed: Vec<SimpleBezierPath> = path_remove_interior_points(&vec![with_interior_point], 0.1);
 
     println!("{:?}", with_points_removed);
 

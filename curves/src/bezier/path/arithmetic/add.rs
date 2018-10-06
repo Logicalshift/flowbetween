@@ -184,7 +184,7 @@ where   Point: Coordinate+Coordinate2D {
 ///
 /// Generates the path formed by removing any interior points from an existing path
 ///
-pub fn path_remove_interior_points<Point, P1: BezierPath<Point=Point>, POut: BezierPathFactory<Point=Point>>(path: &Vec<P1>) -> Vec<POut>
+pub fn path_remove_interior_points<Point, P1: BezierPath<Point=Point>, POut: BezierPathFactory<Point=Point>>(path: &Vec<P1>, accuracy: f64) -> Vec<POut>
 where   Point: Coordinate+Coordinate2D {
     // Create the graph path from the source side
     let mut merged_path = GraphPath::new();
@@ -192,6 +192,9 @@ where   Point: Coordinate+Coordinate2D {
 
     // Set the exterior edges using the 'add' algorithm
     merged_path.set_exterior_by_removing_interior_points();
+
+    // Collide the path with itself to find the intersections
+    merged_path.self_collide(accuracy);
 
     // Produce the final result
     merged_path.exterior_paths()
