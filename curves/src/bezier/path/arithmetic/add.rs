@@ -1,9 +1,9 @@
-use super::path::*;
-use super::graph_path::*;
-use super::is_clockwise::*;
-use super::super::curve::*;
-use super::super::super::geo::*;
-use super::super::super::coordinate::*;
+use super::super::path::*;
+use super::super::graph_path::*;
+use super::super::is_clockwise::*;
+use super::super::super::curve::*;
+use super::super::super::super::geo::*;
+use super::super::super::super::coordinate::*;
 
 /// Source of a path in the graphpath
 #[derive(Copy, Clone, PartialEq)]
