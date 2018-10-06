@@ -672,9 +672,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         if !visited_start[point_idx] {
                             // Mark the start of this point as visited
                             visited_start[point_idx] = true;
-                            
+
                             // Intersections are a single collision against multiple edges
-                            let mut edges   = self.edges_for_point(point_idx);
+                            let mut edges   = self.edges_for_point(point_idx)
+                                .filter(|edge| !self.ray_is_grazing(ray, edge.edge.start_idx, edge.edge.edge_idx));
                             let first_edge  = edges.next();
 
                             if let Some(first_edge) = first_edge {
