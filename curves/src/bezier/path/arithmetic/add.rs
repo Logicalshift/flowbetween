@@ -190,11 +190,11 @@ where   Point: Coordinate+Coordinate2D {
     let mut merged_path = GraphPath::new();
     merged_path         = merged_path.merge(GraphPath::from_merged_paths(path.into_iter().map(|path| (path, PathLabel(PathSource::Path1, PathDirection::from(path))))));
 
-    // Set the exterior edges using the 'add' algorithm
-    merged_path.set_exterior_by_removing_interior_points();
-
     // Collide the path with itself to find the intersections
     merged_path.self_collide(accuracy);
+
+    // Set the exterior edges using the 'add' algorithm
+    merged_path.set_exterior_by_removing_interior_points();
 
     // Produce the final result
     merged_path.exterior_paths()
