@@ -649,13 +649,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             let cp1     = &self.points[point_idx].forward_edges[edge_idx].cp1;
             let cp2     = &self.points[previous_point_idx].forward_edges[previous_edge_idx].cp2;
 
-            // We can determine which side of the ray the control points are on by using the cross product
-            let (ray_start, ray_end)    = ray.points();
-
             // The ray is 'grazing' if both control points are on the same side of the collision
             // ... in the event of an intersection, if any of the incoming edges are 'grazing' (TODO: this might not work so well if it happens while trying to determine what parts of a ray are inside or outside of a shape)
-            let side1 = ((cp1.x()-ray_start.x())*(ray_end.y()-ray_start.y()) - (cp1.y()-ray_start.y())*(ray_end.x()-ray_start.x())).signum();
-            let side2 = ((cp2.x()-ray_start.x())*(ray_end.y()-ray_start.y()) - (cp2.y()-ray_start.y())*(ray_end.x()-ray_start.x())).signum();
+            let side1 = ray.which_side(cp1);
+            let side2 = ray.which_side(cp2);
 
             if side1 == side2 {
                 return true;
