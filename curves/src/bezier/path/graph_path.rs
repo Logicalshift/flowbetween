@@ -264,6 +264,22 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Returns an iterator of all the edges in this graph, as references
+    ///
+    #[inline]
+    pub fn all_edge_refs<'a>(&'a self) -> impl 'a+Iterator<Item=GraphEdgeRef> {
+        (0..(self.points.len()))
+            .into_iter()
+            .flat_map(move |point_idx| (0..(self.points[point_idx].forward_edges.len()))
+                .into_iter()
+                .map(move |edge_idx| GraphEdgeRef {
+                    start_idx:  point_idx,
+                    edge_idx:   edge_idx,
+                    reverse:    false
+                }))
+    }
+
+    ///
     /// Returns an iterator of the edges that leave a particular point
     /// 
     /// Edges are directional: this will provide the edges that leave the supplied point
@@ -741,6 +757,14 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     #[inline]
     pub fn set_edge_kind(&mut self, edge: GraphEdgeRef, new_type: GraphPathEdgeKind) {
         self.points[edge.start_idx].forward_edges[edge.edge_idx].kind = new_type;
+    }
+
+    ///
+    /// Sets the label of a single edge
+    ///
+    #[inline]
+    pub fn set_edge_label(&mut self, edge: GraphEdgeRef, new_label: Label) {
+        self.points[edge.start_idx].forward_edges[edge.edge_idx].label = new_label;
     }
 
     ///
