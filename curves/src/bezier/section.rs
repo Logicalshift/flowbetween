@@ -55,6 +55,14 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     }
 
     ///
+    /// Returns true if this section is so small as to represent a point
+    ///
+    #[inline]
+    pub fn is_tiny(&self) -> bool {
+        (self.t_max-self.t_min).abs() < 0.000001
+    }
+
+    ///
     /// Creates a sub-section from this curve section (dividing it further)
     /// 
     /// Unlike calling `section`, this keeps the same type and avoids the need

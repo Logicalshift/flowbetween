@@ -5,16 +5,20 @@ use super::super::super::bezier::*;
 ///
 /// Determines the length of a curve's hull as a sum of squares
 /// 
-fn curve_hull_length_sq<C: BezierCurve>(curve: &C) -> f64 {
-    let start       = curve.start_point();
-    let end         = curve.end_point();
-    let (cp1, cp2)  = curve.control_points();
+fn curve_hull_length_sq<'a, C: BezierCurve>(curve: &CurveSection<'a, C>) -> f64 {
+    if curve.is_tiny() {
+        0.0
+    } else {
+        let start       = curve.start_point();
+        let end         = curve.end_point();
+        let (cp1, cp2)  = curve.control_points();
 
-    let offset1 = cp1-start;
-    let offset2 = cp2-cp1;
-    let offset3 = cp2-end;
+        let offset1 = cp1-start;
+        let offset2 = cp2-cp1;
+        let offset3 = cp2-end;
 
-    offset1.dot(&offset1) + offset2.dot(&offset2) + offset3.dot(&offset3)
+        offset1.dot(&offset1) + offset2.dot(&offset2) + offset3.dot(&offset3)
+    }
 }
 
 ///
