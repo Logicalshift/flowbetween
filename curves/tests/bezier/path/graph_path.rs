@@ -971,3 +971,27 @@ fn collide_circles() {
     // It should also have a point that leads back to the first intersection, forming a loop
     assert!(second_intersection_edges.iter().any(|edge| edge.end_point_index() == intersection_point));
 }
+
+#[test]
+fn self_collide_simple_path() {
+    let with_interior_point = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(2.0, 2.0))
+        .line_to(Coord2(4.0, 2.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let mut with_interior_point = GraphPath::from_path(&with_interior_point, ());
+
+    assert!(with_interior_point.num_points() == 6);
+
+    // TODO: we get stuck with refining when this is set to 0.01, which should work
+    with_interior_point.self_collide(0.1);
+
+    println!("{:?}", with_interior_point.num_points());
+    println!("{:?}", with_interior_point);
+
+    // Should be a single collision (so one extra point)
+    assert!(with_interior_point.num_points() == 7);
+}
