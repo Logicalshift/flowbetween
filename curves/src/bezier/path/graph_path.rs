@@ -493,14 +493,14 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Iterate through the edges in the 'from' range
         for src_idx in collide_from {
             for src_edge_idx in 0..self.points[src_idx].forward_edges.len() {
-                let collide_to = collide_to.clone();
+                // Only visit target points that have not already been visited as a source point (assume that collide_to is always a higher range than collide_from)
+                let tgt_start   = collide_to.start.max(src_idx+1);
+                let tgt_end     = collide_to.end.max(src_idx+1);
+                let collide_to  = tgt_start..tgt_end;
 
                 // Compare to each point in the collide_to range
                 for tgt_idx in collide_to.into_iter() {
                     for tgt_edge_idx in 0..self.points[tgt_idx].forward_edges.len() {
-                        // Avoid colliding edges that have already been used as a source index
-                        if tgt_idx <= src_idx { continue; }
-
                         // Don't collide edges against themselves
                         if src_idx == tgt_idx && src_edge_idx == tgt_edge_idx { continue; }
 
