@@ -134,6 +134,7 @@ impl<'a, C: 'a+BezierCurve> BezierCurve for CurveSection<'a, C> {
                 let p = de_casteljau2(t_min, wnn1, wnn2);
                 
                 // Curve from t_min to 1 is in (p, wnn2, wn3, w4), we need to subdivide again
+                // Ie, we've removed the section of the curve from 0-t_min here and now need to remove t_max to 1. We're subdividing the curve t_min to 1, so the t_max value is relative to that curve rather than the source.
                 let (w1, w2, w3)    = (p, wnn2, wn3);
                 let t_max           = self.t_m/(1.0-self.t_c);
 
