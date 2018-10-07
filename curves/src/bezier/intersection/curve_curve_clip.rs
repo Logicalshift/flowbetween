@@ -137,7 +137,7 @@ where C::Point: 'a+Coordinate2D {
             let curve2_len = curve_hull_length_sq(&curve2);
 
             // If the curve doesn't shrink at least 20%, subdivide it
-            if curve2_last_len*0.8 < curve2_len {
+            if curve2_len > accuracy_squared && curve2_last_len*0.8 < curve2_len {
                 let (left, right)   = (curve2.subsection(0.0, 0.5), curve2.subsection(0.5, 1.0));
                 let left            = curve_intersects_curve_clip_inner(curve1.clone(), left, accuracy_squared);
                 let right           = curve_intersects_curve_clip_inner(curve1.clone(), right, accuracy_squared);
@@ -163,7 +163,7 @@ where C::Point: 'a+Coordinate2D {
             let curve1_len = curve_hull_length_sq(&curve1);
 
             // If the curve doesn't shrink at least 20%, subdivide it
-            if curve1_last_len*0.8 < curve1_len {
+            if curve1_len > accuracy_squared && curve1_last_len*0.8 < curve1_len {
                 let (left, right)   = (curve1.subsection(0.0, 0.5), curve1.subsection(0.5, 1.0));
                 let left            = curve_intersects_curve_clip_inner(left, curve2.clone(), accuracy_squared);
                 let right           = curve_intersects_curve_clip_inner(right, curve2, accuracy_squared);
