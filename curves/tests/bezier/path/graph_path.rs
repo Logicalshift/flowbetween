@@ -994,4 +994,10 @@ fn self_collide_simple_path() {
 
     // Should be a single collision (so one extra point)
     assert!(with_interior_point.num_points() == 7);
+
+    // One intersection
+    let num_intersections = (0..(with_interior_point.num_points())).into_iter()
+        .filter(|point_idx| with_interior_point.edges_for_point(*point_idx).count() > 1)
+        .count();
+    assert!(num_intersections == 1);
 }
