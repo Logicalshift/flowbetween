@@ -51,7 +51,10 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     ///
     #[inline]
     pub fn is_tiny(&self) -> bool {
-        (self.t_max-self.t_min).abs() < 0.000001
+        let t_min = self.t_c;
+        let t_max = self.t_for_t(1.0);
+
+        (t_max-t_min).abs() < 0.000001
     }
 
     ///

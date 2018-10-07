@@ -987,7 +987,7 @@ fn self_collide_simple_path() {
     assert!(with_interior_point.num_points() == 6);
 
     // TODO: we get stuck with refining when this is set to 0.01, which should work
-    with_interior_point.self_collide(0.1);
+    with_interior_point.self_collide(0.01);
 
     println!("{:?}", with_interior_point.num_points());
     println!("{:?}", with_interior_point);
