@@ -190,9 +190,21 @@ fn remove_interior_points_basic() {
 
     let with_points_removed: Vec<SimpleBezierPath> = path_remove_interior_points(&vec![with_interior_point], 0.1);
 
-    println!("{:?}", with_points_removed);
-
+    // Should be 5 points in the path with points removed
     assert!(with_points_removed.len() == 1);
     assert!(with_points_removed[0].points().count() != 6);
     assert!(with_points_removed[0].points().count() == 5);
+
+    let expected_points = vec![
+        Coord2(1.0, 1.0),
+        Coord2(1.0, 5.0),
+        Coord2(5.0, 5.0),
+        Coord2(5.0, 1.0),
+        Coord2(3.0, 3.0)
+    ];
+
+    assert!(expected_points.iter().any(|expected| with_points_removed[0].start_point().distance_to(expected) < 0.1));
+    for (_cp1, _cp2, point) in with_points_removed[0].points() {
+        assert!(expected_points.iter().any(|expected| point.distance_to(expected) < 0.1));
+    }
 }
