@@ -479,10 +479,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Searches two ranges of points in this object and detects collisions between them, subdividing the edges
     /// and creating branch points at the appropriate places.
     /// 
+    /// collide_from must indicate indices lower than collide_to
+    /// 
     fn detect_collisions(&mut self, collide_from: Range<usize>, collide_to: Range<usize>, accuracy: f64) {
-        // Put the collide_to items in a vec, so if we subdivide any of these items, we can re-read them next time through
-        let collide_to = collide_to.into_iter().collect::<Vec<_>>();
-
         // Vector of all of the collisions found in the graph
         let mut collisions = vec![];
 
@@ -494,15 +493,20 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Iterate through the edges in the 'from' range
         for src_idx in collide_from {
             for src_edge_idx in 0..self.points[src_idx].forward_edges.len() {
+                let collide_to = collide_to.clone();
+
                 // Compare to each point in the collide_to range
-                for tgt_idx in collide_to.iter() {
-                    for tgt_edge_idx in 0..self.points[*tgt_idx].forward_edges.len() {
+                for tgt_idx in collide_to.into_iter() {
+                    for tgt_edge_idx in 0..self.points[tgt_idx].forward_edges.len() {
+                        // Avoid colliding edges that have already been used as a source index
+                        if tgt_idx <= src_idx { continue; }
+
                         // Don't collide edges against themselves
-                        if src_idx == *tgt_idx && src_edge_idx == tgt_edge_idx { continue; }
+                        if src_idx == tgt_idx && src_edge_idx == tgt_edge_idx { continue; }
 
                         // Create edge objects for each side
                         let src_curve           = GraphEdge::new(self, GraphEdgeRef { start_idx: src_idx, edge_idx: src_edge_idx, reverse: false });
-                        let tgt_curve           = GraphEdge::new(self, GraphEdgeRef { start_idx: *tgt_idx, edge_idx: tgt_edge_idx, reverse: false });
+                        let tgt_curve           = GraphEdge::new(self, GraphEdgeRef { start_idx: tgt_idx, edge_idx: tgt_edge_idx, reverse: false });
 
                         // Quickly reject edges with non-overlapping bounding boxes
                         let src_edge_bounds     = src_curve.fast_bounding_box::<Bounds<_>>();
@@ -513,7 +517,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         let curve_collisions    = curve_intersects_curve_clip(&src_curve, &tgt_curve, accuracy);
 
                         // The are the points we need to divide the existing edges at and add branches
-                        let tgt_idx = *tgt_idx;
+                        let tgt_idx = tgt_idx;
                         for (src_t, tgt_t) in curve_collisions {
                             // A collision at t=1 is the same as a collision on t=0 on a following edge
                             // Edge doesn't actually matter for these (as the point will collide with )
