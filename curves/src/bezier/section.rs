@@ -12,12 +12,6 @@ pub struct CurveSection<'a, C: 'a+BezierCurve> {
     /// Full curve
     curve: &'a C,
 
-    /// Minimum t value for the curve section
-    t_min: f64,
-
-    /// Maximum t value for the curve section
-    t_max: f64,
-
     /// Value to add to a t value to convert to this curve
     t_c: f64,
 
@@ -38,8 +32,6 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
 
         CurveSection {
             curve:                  curve,
-            t_min:                  t_min,
-            t_max:                  t_max,
             t_m:                    t_m,
             t_c:                    t_c,
             cached_control_points:  RefCell::new(None)
@@ -119,7 +111,7 @@ impl<'a, C: 'a+BezierCurve> BezierCurve for CurveSection<'a, C> {
         self.cached_control_points.borrow_mut()
             .get_or_insert_with(move || {
                 // This is the de-casteljau subdivision algorithm (ran twice to cut out a section of the curve)
-                let t_min = self.t_min;
+                let t_min = self.t_c;
 
                 // Get the weights from the curve
                 let w1          = self.curve.start_point();
@@ -140,7 +132,7 @@ impl<'a, C: 'a+BezierCurve> BezierCurve for CurveSection<'a, C> {
                 
                 // Curve from t_min to 1 is in (p, wnn2, wn3, w4), we need to subdivide again
                 let (w1, w2, w3)    = (p, wnn2, wn3);
-                let t_max           = self.t_max;
+                let t_max           = self.t_m/(1.0-self.t_c);
 
                 // Weights (from de casteljau)
                 let wn1 = w1*(1.0-t_max) + w2*t_max;
