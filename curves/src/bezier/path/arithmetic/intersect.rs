@@ -5,21 +5,21 @@ use super::super::super::super::coordinate::*;
 
 impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
     ///
-    /// Given a labelled graph path, marks exterior edges by subtracting `PathSource::Path1` and `PathSource::Path2`
+    /// Given a labelled graph path, marks exterior edges by intersecting `PathSource::Path1` and `PathSource::Path2`
     ///
-    pub fn set_exterior_by_subtracting(&mut self) {
+    pub fn set_exterior_by_intersecting(&mut self) {
         // Use an even-odd winding rule (all edges are considered 'external')
-        self.set_edge_kinds_by_ray_casting(|path1_crossings, path2_crossings| (path1_crossings&1) != 0 && (path2_crossings&1) == 0);
+        self.set_edge_kinds_by_ray_casting(|path1_crossings, path2_crossings| (path1_crossings&1) != 0 && (path2_crossings&1) != 0);
     }
 }
 
 ///
-/// Generates the path formed by subtracting two sets of paths
+/// Generates the path formed by intersecting two sets of paths
 /// 
-/// The input vectors represent the external edges of the path to subtract (a single BezierPath cannot have any holes in it, so a set of them
+/// The input vectors represent the external edges of the path to intersect (a single BezierPath cannot have any holes in it, so a set of them
 /// effectively represents a path intended to be rendered with an even-odd winding rule)
 ///
-pub fn path_sub<Point, P1: BezierPath<Point=Point>, P2: BezierPath<Point=Point>, POut: BezierPathFactory<Point=Point>>(path1: &Vec<P1>, path2: &Vec<P2>, accuracy: f64) -> Vec<POut>
+pub fn path_intersect<Point, P1: BezierPath<Point=Point>, P2: BezierPath<Point=Point>, POut: BezierPathFactory<Point=Point>>(path1: &Vec<P1>, path2: &Vec<P2>, accuracy: f64) -> Vec<POut>
 where   Point: Coordinate+Coordinate2D {
     // If either path is empty, short-circuit by returning the other
     if path1.len() == 0 {
@@ -39,8 +39,8 @@ where   Point: Coordinate+Coordinate2D {
     // Collide with the target side to generate a full path
     merged_path         = merged_path.collide(GraphPath::from_merged_paths(path2.into_iter().map(|path| (path, PathLabel(PathSource::Path2, PathDirection::from(path))))), accuracy);
 
-    // Set the exterior edges using the 'subtract' algorithm
-    merged_path.set_exterior_by_subtracting();
+    // Set the exterior edges using the 'intersect' algorithm
+    merged_path.set_exterior_by_intersecting();
 
     // Produce the final result
     merged_path.exterior_paths()

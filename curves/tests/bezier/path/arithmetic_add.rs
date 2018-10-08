@@ -162,7 +162,7 @@ fn add_two_non_overlapping_circles() {
 }
 
 #[test]
-fn add_two_donuts() {
+fn add_two_doughnuts() {
     // Two overlapping circles
     let circle1         = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
     let inner_circle1   = Circle::new(Coord2(5.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
