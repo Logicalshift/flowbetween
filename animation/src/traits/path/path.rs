@@ -56,6 +56,23 @@ impl Path {
             elements: elements.collect()
         }
     }
+
+    ///
+    /// Returns this path as an iterator of draw elements
+    ///
+    pub fn to_drawing<'a>(&'a self) -> impl 'a+Iterator<Item=Draw> {
+        self.elements.iter()
+            .map(|path| {
+                use self::Draw::*;
+
+                match path {
+                    &PathElement::Move(point)       => Move(point.x(), point.y()),
+                    &PathElement::Line(point)       => Line(point.x(), point.y()),
+                    &PathElement::Bezier(p, c1, c2) => BezierCurve(p.position, c1.position, c2.position),
+                    &PathElement::Close             => ClosePath
+                }
+            })
+    }
 }
 
 impl From<(f32, f32)> for PathPoint {
@@ -93,19 +110,7 @@ impl From<Vec<Draw>> for Path {
 /// 
 impl<'a> Into<Vec<Draw>> for &'a Path {
     fn into(self) -> Vec<Draw> {
-        let drawing = self.elements.iter()
-            .map(|path| {
-                use self::Draw::*;
-
-                match path {
-                    &PathElement::Move(point)       => Move(point.x(), point.y()),
-                    &PathElement::Line(point)       => Line(point.x(), point.y()),
-                    &PathElement::Bezier(p, c1, c2) => BezierCurve(p.position, c1.position, c2.position),
-                    &PathElement::Close             => ClosePath
-                }
-            });
-        
-        drawing.collect()
+        self.to_drawing().collect()
     }
 }
 

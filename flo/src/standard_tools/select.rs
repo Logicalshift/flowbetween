@@ -7,6 +7,7 @@ use flo_ui::*;
 use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
+use flo_curves::bezier::path::{path_add, path_remove_interior_points};
 
 use futures::*;
 use std::sync::*;
@@ -187,6 +188,7 @@ impl Select {
     /// 
     fn rendering_for_elements(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>) -> Vec<Draw> {
         let mut drawing = vec![];
+        let mut paths   = vec![];
 
         // Draw each of the elements and store the bounding boxes
         let mut bounding_boxes = vec![];
@@ -200,14 +202,25 @@ impl Select {
             let element = data.frame.as_ref().and_then(|frame| frame.element_with_id(element));
 
             // Render the element using the selection style
-            element.map(|element| {
-                properties.prepare_to_render(&mut drawing);
-                element.render(&mut drawing, &properties);
-            });
+            element
+                .and_then(|element| element.to_path(&properties))
+                .map(|path| {
+                    let path    = path_remove_interior_points::<_, _, Path>(&path, 0.01);
+                    paths       = path_add::<_, _, _, Path>(&paths, &path, 0.01);
+                });
 
             // We'll draw the bounding rectangles later on
             bounding_boxes.push(bounds);
         }
+
+        // Draw the elements
+        drawing.new_path();
+        paths.into_iter().for_each(|path| drawing.extend(path.to_drawing()));
+
+        drawing.fill_color(Color::Rgba(0.6, 0.8, 0.9, 1.0));
+        drawing.fill();
+        drawing.stroke_color(SELECTION_OUTLINE);
+        drawing.stroke();
 
         // Draw the bounding boxes
         drawing.new_path();
