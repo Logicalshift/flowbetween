@@ -99,6 +99,90 @@ struct GraphPathPoint<Point, Label> {
     connected_from: Vec<usize>
 }
 
+///
+/// Struct representing a collision in the graph path
+///
+struct Collision {
+    idx:    usize,
+    edge:   usize,
+    t:      f64
+}
+
+///
+/// Struct representing a set of collisions in the graph path
+///
+struct CollisionList {
+    /// List of collisions on the source and target side
+    collisions: Vec<(Collision, Collision)>
+}
+
+impl CollisionList {
+    ///
+    /// Creates a new list of collisions
+    ///
+    pub fn new() -> CollisionList {
+        CollisionList { 
+            collisions: vec![]
+        }
+    }
+
+    ///
+    /// Adds a collision to this list
+    ///
+    pub fn push(&mut self, collision: (Collision, Collision)) {
+        self.collisions.push(collision);
+    }
+
+    ///
+    /// Removes the last collision from this list
+    ///
+    pub fn pop(&mut self) -> Option<(Collision, Collision)> {
+        self.collisions.pop()
+    }
+
+    ///
+    /// For all remaining collisions, finds any that use the specified edge and change them so they are subdivided at 
+    /// the specified t value
+    ///
+    pub fn move_after_midpoint<Point, Label>(&mut self, graph: &mut GraphPath<Point, Label>, midpoint: usize, src_idx: usize, src_edge_idx: usize, src_t: f64, tgt_idx: usize, tgt_edge_idx: usize, tgt_t: f64) {
+        // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
+        debug_assert!(midpoint < graph.points.len());
+
+        // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
+        for (ref mut collision_src, ref mut collision_tgt) in self.collisions.iter_mut() {
+            // If the src edge was divided...
+            if collision_src.idx == src_idx && collision_src.edge == src_edge_idx {
+                if collision_src.t < src_t {
+                    // Before the midpoint. Edge is the same, just needs to be modified.
+                    collision_src.t /= src_t;
+                } else {
+                    debug_assert!(graph.points[midpoint].forward_edges.len() > 0);
+
+                    // After the midpoint. Edge needs to be adjusted. Source edge is always the first on the midpoint
+                    collision_src.t     = (collision_src.t - src_t) / (1.0-src_t);
+                    collision_src.idx   = midpoint;
+                    collision_src.edge  = 0;
+                }
+            }
+
+            // If the target edge was divided...
+            if collision_tgt.idx == tgt_idx && collision_tgt.edge == tgt_edge_idx {
+                if collision_tgt.t < tgt_t {
+                    // Before the midpoint. Edge is the same, just needs to be modified.
+                    collision_tgt.t /= tgt_t;
+                } else {
+                    debug_assert!(graph.points[midpoint].forward_edges.len() > 0);
+
+                    // After the midpoint. Edge needs to be adjusted. Target edge is always the second on the midpoint.
+                    collision_tgt.t     = (collision_tgt.t - tgt_t) / (1.0-tgt_t);
+                    collision_tgt.idx   = midpoint;
+                    collision_tgt.edge  = 1;
+                }
+            }
+        }
+    }
+}
+
 impl<Point, Label> GraphPathPoint<Point, Label> {
     ///
     /// Creates a new graph path point
@@ -374,7 +458,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// The split algorithm is simpler if only the t=0 case is considered.
     /// 
     #[inline]
-    fn join_edges_at_intersection(&mut self, edge1: (usize, usize), edge2: (usize, usize), t1: f64, t2: f64) -> Option<usize> {
+    fn join_edges_at_intersection(&mut self, edge1: (usize, usize), edge2: (usize, usize), t1: f64, t2: f64, collisions: &mut CollisionList) -> Option<usize> {
         // Do nothing if the edges are the same (they're effectively already joined)
         if edge1 == edge2 { return None; }
 
@@ -445,6 +529,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             // If t1 is not one, then the previous step will have added the remaining part of
             // edge1 to the collision point
         }
+
+        // The source and target edges will be divided at the midpoint: update any future collisions to take account of that
+        // TODO, we probably want to move these edges if they're on either the source or the target side of the collision
+        collisions.move_after_midpoint(self, collision_point, edge1_idx, edge1_edge_idx, t1, edge2_idx, edge2_edge_idx, t2);
+
         if !Self::t_is_zero(t2) {
             self.points[edge2_idx].forward_edges[edge2_edge_idx].set_control_points(edge2a.control_points(), collision_point);
 
@@ -486,7 +575,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// 
     fn detect_collisions(&mut self, collide_from: Range<usize>, collide_to: Range<usize>, accuracy: f64) {
         // Vector of all of the collisions found in the graph
-        let mut collisions = vec![];
+        let mut collisions = CollisionList::new();
 
         // TODO: for complicated paths, maybe some pre-processing for bounding boxes to eliminate trivial cases would be beneficial for performance
 
@@ -559,7 +648,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                             debug_assert!(tgt_edge_idx < self.points[tgt_idx].forward_edges.len());
 
                             // Add this as a collision
-                            collisions.push(((src_idx, src_edge_idx, src_t), (tgt_idx, tgt_edge_idx, tgt_t)));
+                            let src = Collision { idx: src_idx, edge: src_edge_idx, t: src_t };
+                            let tgt = Collision { idx: tgt_idx, edge: tgt_edge_idx, t: tgt_t };
+                            collisions.push((src, tgt));
                         }
                     }
                 }
@@ -567,48 +658,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         }
 
         // Apply the divisions to the edges
-        while let Some(((src_idx, src_edge, src_t), (tgt_idx, tgt_edge, tgt_t))) = collisions.pop() {
+        while let Some((src, tgt)) = collisions.pop() {
             // Join the edges
-            let new_mid_point = self.join_edges_at_intersection((src_idx, src_edge), (tgt_idx, tgt_edge), src_t, tgt_t);
-
-            // Update the remainder of the collisions if any point at the source or target edge
-            if let Some(new_mid_point) = new_mid_point {
-                // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
-                debug_assert!(new_mid_point < self.points.len());
-
-                // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
-                for ((ref mut other_src_idx, ref mut other_src_edge, ref mut other_src_t), (ref mut other_tgt_idx, ref mut other_tgt_edge, ref mut other_tgt_t)) in collisions.iter_mut() {
-                    // If the src edge was divided...
-                    if other_src_idx == &src_idx && other_src_edge == &src_edge {
-                        if *other_src_t < src_t {
-                            // Before the midpoint. Edge is the same, just needs to be modified.
-                            *other_src_t /= src_t;
-                        } else {
-                            debug_assert!(self.points[new_mid_point].forward_edges.len() > 0);
-
-                            // After the midpoint. Edge needs to be adjusted. Source edge is always the first on the midpoint
-                            *other_src_t     = (*other_src_t - src_t) / (1.0-src_t);
-                            *other_src_idx   = new_mid_point;
-                            *other_src_edge  = 0;
-                        }
-                    }
-
-                    // If the target edge was divided...
-                    if other_tgt_idx == &tgt_idx && other_tgt_edge == &tgt_edge {
-                        if *other_tgt_t < tgt_t {
-                            // Before the midpoint. Edge is the same, just needs to be modified.
-                            *other_tgt_t /= tgt_t;
-                        } else {
-                            debug_assert!(self.points[new_mid_point].forward_edges.len() > 0);
-
-                            // After the midpoint. Edge needs to be adjusted. Target edge is always the second on the midpoint.
-                            *other_tgt_t     = (*other_tgt_t - tgt_t) / (1.0-tgt_t);
-                            *other_tgt_idx   = new_mid_point;
-                            *other_tgt_edge  = 1;
-                        }
-                    }
-                }
-            }
+            let _new_mid_point = self.join_edges_at_intersection((src.idx, src.edge), (tgt.idx, tgt.edge), src.t, tgt.t, &mut collisions);
         }
 
         // Recompute the reverse connections
