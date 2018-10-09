@@ -553,6 +553,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                                 }
                             }
 
+                            debug_assert!(src_idx < self.points.len());
+                            debug_assert!(tgt_idx < self.points.len());
+                            debug_assert!(src_edge_idx < self.points[src_idx].forward_edges.len());
+                            debug_assert!(tgt_edge_idx < self.points[tgt_idx].forward_edges.len());
+
                             // Add this as a collision
                             collisions.push(((src_idx, src_edge_idx, src_t), (tgt_idx, tgt_edge_idx, tgt_t)));
                         }
@@ -569,6 +574,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             // Update the remainder of the collisions if any point at the source or target edge
             if let Some(new_mid_point) = new_mid_point {
                 // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
+                debug_assert!(new_mid_point < self.points.len());
 
                 // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
                 for ((ref mut other_src_idx, ref mut other_src_edge, ref mut other_src_t), (ref mut other_tgt_idx, ref mut other_tgt_edge, ref mut other_tgt_t)) in collisions.iter_mut() {
@@ -578,6 +584,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                             // Before the midpoint. Edge is the same, just needs to be modified.
                             *other_src_t /= src_t;
                         } else {
+                            debug_assert!(self.points[new_mid_point].forward_edges.len() > 0);
+
                             // After the midpoint. Edge needs to be adjusted. Source edge is always the first on the midpoint
                             *other_src_t     = (*other_src_t - src_t) / (1.0-src_t);
                             *other_src_idx   = new_mid_point;
@@ -591,6 +599,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                             // Before the midpoint. Edge is the same, just needs to be modified.
                             *other_tgt_t /= tgt_t;
                         } else {
+                            debug_assert!(self.points[new_mid_point].forward_edges.len() > 0);
+
                             // After the midpoint. Edge needs to be adjusted. Target edge is always the second on the midpoint.
                             *other_tgt_t     = (*other_tgt_t - tgt_t) / (1.0-tgt_t);
                             *other_tgt_idx   = new_mid_point;
@@ -957,6 +967,9 @@ impl<'a, Point: 'a, Label: 'a+Copy> GraphEdge<'a, Point, Label> {
     /// 
     #[inline]
     fn new(graph: &'a GraphPath<Point, Label>, edge: GraphEdgeRef) -> GraphEdge<'a, Point, Label> {
+        debug_assert!(edge.start_idx < graph.points.len());
+        debug_assert!(edge.edge_idx < graph.points[edge.start_idx].forward_edges.len());
+
         GraphEdge {
             graph:  graph,
             edge:   edge
