@@ -523,7 +523,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         let tgt_idx = tgt_idx;
                         for (src_t, tgt_t) in curve_collisions {
                             // A collision at t=1 is the same as a collision on t=0 on a following edge
-                            // Edge doesn't actually matter for these (as the point will collide with )
+                            // Edge doesn't actually matter for these (as the ray will collide with all of the following edges)
                             let (src_idx, src_edge_idx, src_t) = if Self::t_is_one(src_t) {
                                 (self.points[src_idx].forward_edges[src_edge_idx].end_idx, 0, 0.0)
                             } else {
