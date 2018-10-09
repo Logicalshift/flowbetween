@@ -34,6 +34,9 @@ pub enum GraphPathEdgeKind {
     /// An edge that hasn't been categorised yet
     Uncategorised,
 
+    /// An edge that is uncategorised but has been visited
+    Visited,
+
     /// An exterior edge
     /// 
     /// These edges represent a transition between the inside and the outside of the path

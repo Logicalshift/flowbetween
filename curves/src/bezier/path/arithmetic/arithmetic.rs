@@ -51,10 +51,13 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
             // Cast a ray at the next uncategorised edge
             let next_point = self.all_edges()
                 .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
-                .map(|edge| edge.point_at_pos(0.5))
+                .map(|edge| (edge.point_at_pos(0.5), edge.into()))
                 .nth(0);
 
-            if let Some(next_point) = next_point {
+            if let Some((next_point, next_edge)) = next_point {
+                // Mark the next edge as visited (this prevents an infinite loop in the event the edge we're aiming at has a length of 0 and thus will always be an intersection)
+                self.set_edge_kind(next_edge, GraphPathEdgeKind::Visited);
+
                 // The 'total direction' indicates how often we've crossed an edge moving in a particular direction
                 // We're inside the path when it's non-zero
                 let mut path1_crossings = 0;
