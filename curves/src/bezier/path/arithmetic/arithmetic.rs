@@ -98,7 +98,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
                         let is_inside = is_inside(path1_crossings, path2_crossings);
 
                         // If this isn't an intersection, set whether or not the edge is exterior
-                        if !is_intersection && self.edge_kind(edge) == GraphPathEdgeKind::Uncategorised {
+                        let edge_kind = self.edge_kind(edge);
+                        if !is_intersection && (edge_kind == GraphPathEdgeKind::Uncategorised || edge_kind == GraphPathEdgeKind::Visited) {
                             // Exterior edges move from inside to outside or vice-versa
                             if was_inside ^ is_inside {
                                 // Exterior edge
