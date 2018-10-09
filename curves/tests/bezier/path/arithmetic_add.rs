@@ -208,3 +208,151 @@ fn remove_interior_points_basic() {
         assert!(expected_points.iter().any(|expected| point.distance_to(expected) < 0.1));
     }
 }
+
+#[test]
+fn rectangle_add() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(7.0, 7.0))
+        .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 3.0))
+        .build();
+
+    // Add them
+    let shared_point = path_add::<_, _, _, SimpleBezierPath>(&vec![rectangle1], &vec![rectangle2], 0.01);
+
+    assert!(shared_point.len() == 1);
+
+    let shared_point    = &shared_point[0];
+    let points          = shared_point.points().collect::<Vec<_>>();
+
+    assert!(shared_point.start_point().distance_to(&Coord2(1.0, 1.0)) < 0.1);
+    assert!(points[0].2.distance_to(&Coord2(5.0, 1.0)) < 0.1);
+    assert!(points[1].2.distance_to(&Coord2(5.0, 3.0)) < 0.1);
+    assert!(points[2].2.distance_to(&Coord2(7.0, 3.0)) < 0.1);
+    assert!(points[3].2.distance_to(&Coord2(7.0, 7.0)) < 0.1);
+    assert!(points[4].2.distance_to(&Coord2(3.0, 7.0)) < 0.1);
+    assert!(points[5].2.distance_to(&Coord2(3.0, 5.0)) < 0.1);
+    assert!(points[6].2.distance_to(&Coord2(1.0, 5.0)) < 0.1);
+    assert!(points[7].2.distance_to(&Coord2(1.0, 1.0)) < 0.1);
+}
+
+#[test]
+fn rectangle_add_with_shared_point() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(7.0, 7.0))
+        .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 3.0))
+        .build();
+
+    // Add them
+    let shared_point = path_add::<_, _, _, SimpleBezierPath>(&vec![rectangle1], &vec![rectangle2], 0.01);
+
+    assert!(shared_point.len() == 1);
+
+    let shared_point    = &shared_point[0];
+    let points          = shared_point.points().collect::<Vec<_>>();
+
+    assert!(shared_point.start_point().distance_to(&Coord2(1.0, 1.0)) < 0.1);
+    assert!(points[0].2.distance_to(&Coord2(5.0, 1.0)) < 0.1);
+    assert!(points[1].2.distance_to(&Coord2(5.0, 3.0)) < 0.1);
+    assert!(points[2].2.distance_to(&Coord2(7.0, 3.0)) < 0.1);
+    assert!(points[3].2.distance_to(&Coord2(7.0, 7.0)) < 0.1);
+    assert!(points[4].2.distance_to(&Coord2(3.0, 7.0)) < 0.1);
+    assert!(points[5].2.distance_to(&Coord2(3.0, 5.0)) < 0.1);
+    assert!(points[6].2.distance_to(&Coord2(1.0, 5.0)) < 0.1);
+    assert!(points[7].2.distance_to(&Coord2(1.0, 1.0)) < 0.1);
+}
+
+#[test]
+fn rectangle_add_with_shared_point_2() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(7.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 3.0))
+        .build();
+
+    // Add them
+    let shared_point = path_add::<_, _, _, SimpleBezierPath>(&vec![rectangle1], &vec![rectangle2], 0.01);
+
+    assert!(shared_point.len() == 1);
+
+    let shared_point    = &shared_point[0];
+    let points          = shared_point.points().collect::<Vec<_>>();
+
+    assert!(shared_point.start_point().distance_to(&Coord2(1.0, 1.0)) < 0.1);
+    assert!(points[0].2.distance_to(&Coord2(5.0, 1.0)) < 0.1);
+    assert!(points[1].2.distance_to(&Coord2(5.0, 3.0)) < 0.1);
+    assert!(points[2].2.distance_to(&Coord2(7.0, 3.0)) < 0.1);
+    assert!(points[3].2.distance_to(&Coord2(7.0, 7.0)) < 0.1);
+    assert!(points[4].2.distance_to(&Coord2(3.0, 7.0)) < 0.1);
+    assert!(points[5].2.distance_to(&Coord2(3.0, 5.0)) < 0.1);
+    assert!(points[6].2.distance_to(&Coord2(1.0, 5.0)) < 0.1);
+    assert!(points[7].2.distance_to(&Coord2(1.0, 1.0)) < 0.1);
+}
+
+#[test]
+fn rectangle_add_with_shared_point_3() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(7.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 3.0))
+        .build();
+
+    // Add them
+    let shared_point = path_add::<_, _, _, SimpleBezierPath>(&vec![rectangle1], &vec![rectangle2], 0.01);
+
+    assert!(shared_point.len() == 1);
+
+    let shared_point    = &shared_point[0];
+    let points          = shared_point.points().collect::<Vec<_>>();
+
+    assert!(shared_point.start_point().distance_to(&Coord2(1.0, 1.0)) < 0.1);
+    assert!(points[0].2.distance_to(&Coord2(5.0, 1.0)) < 0.1);
+    assert!(points[1].2.distance_to(&Coord2(5.0, 3.0)) < 0.1);
+    assert!(points[2].2.distance_to(&Coord2(7.0, 3.0)) < 0.1);
+    assert!(points[3].2.distance_to(&Coord2(7.0, 7.0)) < 0.1);
+    assert!(points[4].2.distance_to(&Coord2(3.0, 7.0)) < 0.1);
+    assert!(points[5].2.distance_to(&Coord2(3.0, 5.0)) < 0.1);
+    assert!(points[6].2.distance_to(&Coord2(1.0, 5.0)) < 0.1);
+    assert!(points[7].2.distance_to(&Coord2(1.0, 1.0)) < 0.1);
+}
