@@ -144,9 +144,10 @@ impl CollisionList {
     /// For all remaining collisions, finds any that use the specified edge and change them so they are subdivided at 
     /// the specified t value
     ///
-    fn move_after_midpoint<Point, Label>(&mut self, graph: &mut GraphPath<Point, Label>, midpoint: usize, point_idx: usize, edge_idx: usize, t: f64) {
+    fn move_after_midpoint<Point, Label>(&mut self, graph: &mut GraphPath<Point, Label>, midpoint: usize, point_idx: usize, edge_idx: usize, t: f64, new_edge_idx: usize) {
         // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
         debug_assert!(midpoint < graph.points.len());
+        debug_assert!(new_edge_idx < graph.points[midpoint].forward_edges.len());
 
         // TODO(?): this just iterates through the collisions, not clear if this will always be fast enough
         for (ref mut collision_src, ref mut collision_tgt) in self.collisions.iter_mut() {
@@ -158,10 +159,10 @@ impl CollisionList {
                 } else {
                     debug_assert!(graph.points[midpoint].forward_edges.len() > 0);
 
-                    // After the midpoint. Edge needs to be adjusted. Source edge is always the first on the midpoint
+                    // After the midpoint. Edge needs to be adjusted.
                     collision_src.t     = (collision_src.t - t) / (1.0-t);
                     collision_src.idx   = midpoint;
-                    collision_src.edge  = 0;
+                    collision_src.edge  = new_edge_idx;
                 }
             }
 
@@ -173,10 +174,10 @@ impl CollisionList {
                 } else {
                     debug_assert!(graph.points[midpoint].forward_edges.len() > 1);
 
-                    // After the midpoint. Edge needs to be adjusted. Target edge is always the second on the midpoint.
+                    // After the midpoint. Edge needs to be adjusted.
                     collision_tgt.t     = (collision_tgt.t - t) / (1.0-t);
                     collision_tgt.idx   = midpoint;
-                    collision_tgt.edge  = 1;
+                    collision_tgt.edge  = new_edge_idx;
                 }
             }
         }
@@ -551,16 +552,21 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         let edge1_end_idx   = self.points[edge1_idx].forward_edges[edge1_edge_idx].end_idx;
         let edge2_end_idx   = self.points[edge2_idx].forward_edges[edge2_edge_idx].end_idx;
 
+        // List of edges we've added to the collision point (in the form of the edge that's divided, the position it was divided at and the index on the collision point)
+        let mut new_edges   = vec![];
+
         // The 'b' edges both extend from our mid-point to the existing end point (provided
         // t < 1.0)
         if !Self::t_is_one(t1) && !Self::t_is_zero(t1) {
             // If t1 is zero or one, we're not subdividing edge1
             // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
+            new_edges.push((edge1_idx, edge1_edge_idx, t1, self.points[collision_point].forward_edges.len()));
             self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx, edge1_label));
         }
         if !Self::t_is_one(t2) && !Self::t_is_zero(t2) {
             // If t2 is zero or one, we're not subdividing edge2
             // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
+            new_edges.push((edge2_idx, edge2_edge_idx, t2, self.points[collision_point].forward_edges.len()));
             self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx, edge2_label));
         }
 
@@ -574,9 +580,12 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             // edge1 to the collision point
         }
 
+        collisions.check_consistency(self);
+
         // The source and target edges will be divided at the midpoint: update any future collisions to take account of that
-        collisions.move_after_midpoint(self, collision_point, edge1_idx, edge1_edge_idx, t1);
-        collisions.move_after_midpoint(self, collision_point, edge2_idx, edge2_edge_idx, t2);
+        for (point_idx, edge_idx, t, new_edge_idx) in new_edges {
+            collisions.move_after_midpoint(self, collision_point, point_idx, edge_idx, t, new_edge_idx);
+        }
 
         collisions.check_consistency(self);
 
