@@ -529,7 +529,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         } else if Self::t_is_zero(t2) {
             edge2_idx
         } else if Self::t_is_one(t2) {
-            self.points[edge2_idx].forward_edges[edge1_edge_idx].end_idx
+            self.points[edge2_idx].forward_edges[edge2_edge_idx].end_idx
         } else {
             // Point is a mid-point of both lines
 
