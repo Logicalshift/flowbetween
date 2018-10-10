@@ -1251,8 +1251,8 @@ impl GraphRayCollision {
     #[inline]
     pub fn is_intersection(&self) -> bool {
         match self {
-            GraphRayCollision::SingleEdge(_)    => false,
-            GraphRayCollision::Intersection(_)  => true
+            GraphRayCollision::SingleEdge(_)        => false,
+            GraphRayCollision::Intersection(edges)  => edges.len() != 1
         }
     }
 }
