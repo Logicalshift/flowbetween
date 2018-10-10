@@ -198,6 +198,25 @@ impl CollisionList {
             }
         }
     }
+
+    ///
+    /// Checks consistency of the points and edges against a graph path
+    ///
+    #[cfg(debug_assertions)]
+    fn check_consistency<Point, Label>(&self, graph: &GraphPath<Point, Label>) {
+        for (src, tgt) in self.collisions.iter() {
+            debug_assert!(src.idx < graph.points.len());
+            debug_assert!(src.edge < graph.points[src.idx].forward_edges.len());
+
+            debug_assert!(tgt.idx < graph.points.len());
+            debug_assert!(tgt.edge < graph.points[tgt.idx].forward_edges.len());
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[inline]
+    fn check_consistency<Point, Label>(&self, graph: &GraphPath<Point, Label>) {
+    }
 }
 
 impl<Point, Label> GraphPathPoint<Point, Label> {
@@ -559,6 +578,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         collisions.move_after_midpoint(self, collision_point, edge1_idx, edge1_edge_idx, t1);
         collisions.move_after_midpoint(self, collision_point, edge2_idx, edge2_edge_idx, t2);
 
+        collisions.check_consistency(self);
+
         if !Self::t_is_zero(t2) {
             self.points[edge2_idx].forward_edges[edge2_edge_idx].set_control_points(edge2a.control_points(), collision_point);
 
@@ -572,6 +593,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 self.points[collision_point].forward_edges.extend(edge2_end_edges);
 
                 collisions.move_all_edges(edge2_end_idx, collision_point, edge_idx_offset);
+                collisions.check_consistency(self);
             }
         }
         
@@ -595,6 +617,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             self.points[collision_point].forward_edges.extend(edge2_edges);
 
             collisions.move_all_edges(edge2_end_idx, collision_point, edge_idx_offset);
+            collisions.check_consistency(self);
         }
 
         Some(collision_point)
@@ -690,10 +713,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             }
         }
 
+        collisions.check_consistency(self);
+
         // Apply the divisions to the edges
         while let Some((src, tgt)) = collisions.pop() {
             // Join the edges
             let _new_mid_point = self.join_edges_at_intersection((src.idx, src.edge), (tgt.idx, tgt.edge), src.t, tgt.t, &mut collisions);
+            collisions.check_consistency(self);
         }
 
         // Recompute the reverse connections
