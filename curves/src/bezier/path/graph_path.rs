@@ -188,6 +188,11 @@ impl CollisionList {
     /// The edges should still be in sequence, starting at `edge_idx_offset` in the new point
     ///
     fn move_all_edges(&mut self, original_point_idx: usize, new_point_idx: usize, edge_idx_offset: usize) {
+        if original_point_idx == new_point_idx {
+            // Edges will be unchanged
+            return;
+        }
+
         for (ref mut collision_src, ref mut collision_tgt) in self.collisions.iter_mut() {
             if collision_src.idx == original_point_idx {
                 collision_src.idx   = new_point_idx;
