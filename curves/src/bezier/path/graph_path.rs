@@ -396,6 +396,14 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Returns the position of a particular point
+    ///
+    #[inline]
+    pub fn point_position(&self, point_num: usize) -> Point {
+        self.points[point_num].position.clone()
+    }
+
+    ///
     /// Returns an iterator of the edges that arrive at a particular point
     /// 
     /// Edges are directional: this will provide the edges that connect to the supplied point

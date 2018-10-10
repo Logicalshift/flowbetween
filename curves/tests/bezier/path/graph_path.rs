@@ -1001,3 +1001,37 @@ fn self_collide_simple_path() {
         .count();
     assert!(num_intersections == 1);
 }
+
+#[test]
+fn collide_at_shared_point() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(7.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 3.0))
+        .build();
+
+    // Add them together
+    let graph = GraphPath::from_path(&rectangle1, ());
+    let graph = graph.collide(GraphPath::from_path(&rectangle2, ()), 0.01);
+
+    // Should be two points at 3.0, 5.0 with only one having any edges
+    let edges_at_shared = graph.all_edges().filter(|edge| edge.start_point().distance_to(&Coord2(3.0, 5.0)) < 0.1).collect::<Vec<_>>();
+
+    assert!(edges_at_shared.len() == 2);
+    assert!(edges_at_shared[0].start_point_index() == edges_at_shared[1].start_point_index());
+    assert!(edges_at_shared[0].end_point().distance_to(&Coord2(1.0, 5.0)) < 0.1);
+    assert!(edges_at_shared[1].end_point().distance_to(&Coord2(3.0, 7.0)) < 0.1);
+
+    let points_at_shared = (0..(graph.num_points())).into_iter().filter(|point_idx| graph.point_position(*point_idx).distance_to(&Coord2(3.0, 5.0)) < 0.01).collect::<Vec<_>>();
+    assert!(points_at_shared.len() == 2);
+}
