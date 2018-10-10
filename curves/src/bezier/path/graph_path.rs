@@ -625,7 +625,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             mem::swap(&mut self.points[edge2_idx].forward_edges, &mut edge2_edges);
             self.points[collision_point].forward_edges.extend(edge2_edges);
 
-            collisions.move_all_edges(edge2_end_idx, collision_point, edge_idx_offset);
+            collisions.move_all_edges(edge2_idx, collision_point, edge_idx_offset);
             collisions.check_consistency(self);
         }
 
