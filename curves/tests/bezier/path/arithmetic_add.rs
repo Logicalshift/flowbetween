@@ -255,8 +255,8 @@ fn rectangle_add_with_shared_point() {
         .line_to(Coord2(1.0, 1.0))
         .build();
     let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
-        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(7.0, 7.0))
         .line_to(Coord2(3.0, 7.0))
         .line_to(Coord2(3.0, 3.0))
@@ -294,8 +294,8 @@ fn rectangle_add_with_shared_point_2() {
     let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
         .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(7.0, 7.0))
-        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 3.0))
         .build();
 
@@ -330,11 +330,11 @@ fn rectangle_add_with_shared_point_3() {
         .line_to(Coord2(1.0, 1.0))
         .build();
     let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
-        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(7.0, 7.0))
-        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 3.0))
         .build();
 
@@ -369,11 +369,11 @@ fn rectangle_add_with_shared_point_4() {
         .line_to(Coord2(1.0, 1.0))
         .build();
     let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
-        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(7.0, 7.0))
-        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 3.0))
         .build()
         .reversed::<SimpleBezierPath>();
@@ -410,11 +410,11 @@ fn rectangle_add_with_shared_point_5() {
         .build()
         .reversed::<SimpleBezierPath>();
     let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
-        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(7.0, 7.0))
-        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 3.0))
         .build();
 
