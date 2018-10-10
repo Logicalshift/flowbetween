@@ -120,7 +120,7 @@ impl CollisionList {
     ///
     /// Creates a new list of collisions
     ///
-    pub fn new() -> CollisionList {
+    fn new() -> CollisionList {
         CollisionList { 
             collisions: vec![]
         }
@@ -129,14 +129,14 @@ impl CollisionList {
     ///
     /// Adds a collision to this list
     ///
-    pub fn push(&mut self, collision: (Collision, Collision)) {
+    fn push(&mut self, collision: (Collision, Collision)) {
         self.collisions.push(collision);
     }
 
     ///
     /// Removes the last collision from this list
     ///
-    pub fn pop(&mut self) -> Option<(Collision, Collision)> {
+    fn pop(&mut self) -> Option<(Collision, Collision)> {
         self.collisions.pop()
     }
 
@@ -144,7 +144,7 @@ impl CollisionList {
     /// For all remaining collisions, finds any that use the specified edge and change them so they are subdivided at 
     /// the specified t value
     ///
-    pub fn move_after_midpoint<Point, Label>(&mut self, graph: &mut GraphPath<Point, Label>, midpoint: usize, point_idx: usize, edge_idx: usize, t: f64) {
+    fn move_after_midpoint<Point, Label>(&mut self, graph: &mut GraphPath<Point, Label>, midpoint: usize, point_idx: usize, edge_idx: usize, t: f64) {
         // Usually new_mid_point is a new point, but it can be an existing point in the event the collision was at an existing point on the path
         debug_assert!(midpoint < graph.points.len());
 
@@ -178,6 +178,23 @@ impl CollisionList {
                     collision_tgt.idx   = midpoint;
                     collision_tgt.edge  = 1;
                 }
+            }
+        }
+    }
+
+    ///
+    /// Takes all the collisions that were originally on `original_point_idx` and changes them to `new_point_idx`.
+    /// The edges should still be in sequence, starting at `edge_idx_offset` in the new point
+    ///
+    fn move_all_edges(&mut self, original_point_idx: usize, new_point_idx: usize, edge_idx_offset: usize) {
+        for (ref mut collision_src, ref mut collision_tgt) in self.collisions.iter_mut() {
+            if collision_src.idx == original_point_idx {
+                collision_src.idx   = new_point_idx;
+                collision_src.edge  += edge_idx_offset;
+            }
+            if collision_tgt.idx == original_point_idx {
+                collision_tgt.idx   = new_point_idx;
+                collision_tgt.edge  += edge_idx_offset;
             }
         }
     }
@@ -540,9 +557,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             // If t1 is one, this should leave the edge alone
             if Self::t_is_one(t2) {
                 // If t2 is one, this will have redirected the end point of t2 to the collision point: we need to move all of the edges
+                let edge_idx_offset = self.points[collision_point].forward_edges.len();
+
                 let mut edge2_end_edges = vec![];
                 mem::swap(&mut self.points[edge2_end_idx].forward_edges, &mut edge2_end_edges);
                 self.points[collision_point].forward_edges.extend(edge2_end_edges);
+
+                collisions.move_all_edges(edge2_end_idx, collision_point, edge_idx_offset);
             }
         }
         
@@ -559,9 +580,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             }
 
             // All edges that currently come from edge2 need to be moved to the collision point
+            let edge_idx_offset = self.points[collision_point].forward_edges.len();
+
             let mut edge2_edges = vec![];
             mem::swap(&mut self.points[edge2_idx].forward_edges, &mut edge2_edges);
             self.points[collision_point].forward_edges.extend(edge2_edges);
+
+            collisions.move_all_edges(edge2_end_idx, collision_point, edge_idx_offset);
         }
 
         Some(collision_point)
