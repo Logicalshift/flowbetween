@@ -171,7 +171,7 @@ impl CollisionList {
                     // Before the midpoint. Edge is the same, just needs to be modified.
                     collision_tgt.t /= t;
                 } else {
-                    debug_assert!(graph.points[midpoint].forward_edges.len() > 0);
+                    debug_assert!(graph.points[midpoint].forward_edges.len() > 1);
 
                     // After the midpoint. Edge needs to be adjusted. Target edge is always the second on the midpoint.
                     collision_tgt.t     = (collision_tgt.t - t) / (1.0-t);
