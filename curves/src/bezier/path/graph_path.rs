@@ -221,7 +221,7 @@ impl CollisionList {
 
     #[cfg(not(debug_assertions))]
     #[inline]
-    fn check_consistency<Point, Label>(&self, graph: &GraphPath<Point, Label>) {
+    fn check_consistency<Point, Label>(&self, _graph: &GraphPath<Point, Label>) {
     }
 }
 
