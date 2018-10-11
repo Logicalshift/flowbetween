@@ -261,7 +261,7 @@ impl<Point: Coordinate, Label> GraphPathEdge<Point, Label> {
 /// into interior and exterior edges depending on if they are on the outside or the inside of the combined
 /// shape.
 /// 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct GraphPath<Point, Label> {
     /// The points in this graph and their edges. Each 'point' here consists of two control points and an end point
     points: Vec<GraphPathPoint<Point, Label>>
@@ -1226,7 +1226,21 @@ impl<'a, 'b, Point: 'a+Coordinate, Label: 'a+Copy> From<&'b GraphEdge<'a, Point,
 
 impl<'a, Point: fmt::Debug, Label: 'a+Copy> fmt::Debug for GraphEdge<'a, Point, Label> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.edge.start_idx, self.edge().end_idx, self.graph.points[self.edge.start_idx].position, self.graph.points[self.edge().end_idx].position, self.edge().cp1, self.edge().cp2)
+        write!(f, "{:?}: {:?} -> {:?} ({:?} -> {:?} ({:?}, {:?}))", self.kind(), self.edge.start_idx, self.edge().end_idx, self.graph.points[self.edge.start_idx].position, self.graph.points[self.edge().end_idx].position, self.edge().cp1, self.edge().cp2)
+    }
+}
+
+impl<Point: Coordinate2D+Coordinate+fmt::Debug, Label: Copy> fmt::Debug for GraphPath<Point, Label> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for point_idx in 0..(self.points.len()) {
+            write!(f, "\nPoint {:?}:", point_idx)?;
+
+            for edge in self.edges_for_point(point_idx) {
+                write!(f, "\n  {:?}", edge)?;
+            }
+        }
+
+        Ok(())
     }
 }
 
