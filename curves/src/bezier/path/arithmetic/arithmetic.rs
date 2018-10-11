@@ -64,20 +64,20 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
                 let mut path2_crossings = 0;
 
                 // Cast a ray at the target edge
-                let ray         = (outside_point, next_point);
-                let collisions  = self.ray_collisions(&ray);
+                let ray             = (outside_point, next_point);
+                let ray_direction   = next_point - outside_point;
+                let collisions      = self.ray_collisions(&ray);
 
-                for (collision, curve_t, line_t) in collisions {
+                for (collision, curve_t, _line_t) in collisions {
                     let is_intersection = collision.is_intersection();
 
                     for edge in collision {
                         let PathLabel(path, direction) = self.edge_label(edge);
 
                         // The relative direction of the tangent to the ray indicates the direction we're crossing in
-                        let pos     = ray.point_at_pos(line_t);
-                        let tangent = self.get_edge(edge).tangent_at_pos(curve_t);
+                        let normal  = self.get_edge(edge).normal_at_pos(curve_t);
 
-                        let side    = ray.which_side(&(pos+tangent));
+                        let side    = ray_direction.dot(&normal).signum() as i32;
                         let side    = match direction {
                             PathDirection::Clockwise        => { side },
                             PathDirection::Anticlockwise    => { -side }
