@@ -45,16 +45,14 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
     /// if it represents a point outside of the shape.
     ///
     pub fn set_edge_kinds_by_ray_casting<FnIsInside: Fn(i32, i32) -> bool>(&mut self, is_inside: FnIsInside) {
-        let outside_point = self.outside_point();
-
         loop {
             // Cast a ray at the next uncategorised edge
             let next_point = self.all_edges()
                 .filter(|edge| edge.kind() == GraphPathEdgeKind::Uncategorised)
-                .map(|edge| (edge.point_at_pos(0.5), edge.into()))
+                .map(|edge| (edge.point_at_pos(0.5), edge.normal_at_pos(0.5), edge.into()))
                 .nth(0);
 
-            if let Some((next_point, next_edge)) = next_point {
+            if let Some((next_point, next_normal, next_edge)) = next_point {
                 // Mark the next edge as visited (this prevents an infinite loop in the event the edge we're aiming at has a length of 0 and thus will always be an intersection)
                 self.set_edge_kind(next_edge, GraphPathEdgeKind::Visited);
 
@@ -64,8 +62,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
                 let mut path2_crossings = 0;
 
                 // Cast a ray at the target edge
-                let ray             = (outside_point, next_point);
-                let ray_direction   = next_point - outside_point;
+                let ray             = (next_point - next_normal, next_point);
+                let ray_direction   = ray.1 - ray.0;
                 let collisions      = self.ray_collisions(&ray);
 
                 for (collision, curve_t, _line_t) in collisions {
