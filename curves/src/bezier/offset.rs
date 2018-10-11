@@ -6,7 +6,7 @@ use super::super::coordinate::*;
 use std::collections::VecDeque;
 
 /// Maximum error before we split a subcurve
-const MAX_ERROR: f64 = 0.03;
+const MAX_ERROR: f64 = 0.1;
 
 ///
 /// Computes a series of curves that approximate an offset curve from the specified origin curve
