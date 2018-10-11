@@ -293,39 +293,52 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         points.push(GraphPathPoint::new(start_point, vec![], vec![]));
 
         // We'll add edges to the previous point
-        let mut last_point = 0;
-        let mut next_point = 1;
+        let mut last_point_pos  = start_point;
+        let mut last_point_idx  = 0;
+        let mut next_point_idx  = 1;
 
         // Iterate through the points in the path
         for (cp1, cp2, end_point) in path.points() {
+            // Ignore points that are too close to the last point
+            let distance = end_point - last_point_pos;
+            if distance.dot(&distance) < CLOSE_DISTANCE { 
+                let cp1_distance = cp1-last_point_pos;
+                let cp2_distance = cp2-cp1;
+
+                if cp1_distance.dot(&cp1_distance) < CLOSE_DISTANCE && cp2_distance.dot(&cp2_distance) < CLOSE_DISTANCE {
+                    continue;
+                }
+            }
+
             // Push the points
             points.push(GraphPathPoint::new(end_point, vec![], vec![]));
 
             // Add an edge from the last point to the next point
-            points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point, label));
+            points[last_point_idx].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point_idx, label));
 
             // Update the last/next pooints
-            last_point += 1;
-            next_point += 1;
+            last_point_idx  += 1;
+            next_point_idx  += 1;
+            last_point_pos  = end_point;
         }
 
         // Close the path
-        if last_point > 0 {
+        if last_point_idx > 0 {
             // Graph actually has some edges
-            if start_point.distance_to(&points[last_point].position) < CLOSE_DISTANCE {
+            if start_point.distance_to(&points[last_point_idx].position) < CLOSE_DISTANCE {
                 // Remove the last point (we're replacing it with an edge back to the start)
                 points.pop();
-                last_point -= 1;
+                last_point_idx -= 1;
 
                 // Change the edge to point back to the start
-                points[last_point].forward_edges[0].end_idx = 0;
+                points[last_point_idx].forward_edges[0].end_idx = 0;
             } else {
                 // Need to draw a line to the last point
-                let close_vector    = points[last_point].position - start_point;
+                let close_vector    = points[last_point_idx].position - start_point;
                 let cp1             = close_vector * 0.33 + start_point;
                 let cp2             = close_vector * 0.66 + start_point;
 
-                points[last_point].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0, label));
+                points[last_point_idx].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0, label));
             }
         } else {
             // Just a start point and no edges: remove the start point as it doesn't really make sense
