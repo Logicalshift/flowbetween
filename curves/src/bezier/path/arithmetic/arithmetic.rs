@@ -7,14 +7,14 @@ use super::super::super::super::line::*;
 use super::super::super::super::coordinate::*;
 
 /// Source of a path in the graphpath
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum PathSource {
     Path1,
     Path2
 }
 
 /// Target of a path in the graphpath
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum PathDirection {
     Clockwise,
     Anticlockwise
@@ -33,7 +33,7 @@ where P::Point: Coordinate2D {
 }
 
 /// Label attached to a path used for arithmetic
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct PathLabel(pub PathSource, pub PathDirection);
 
 impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
