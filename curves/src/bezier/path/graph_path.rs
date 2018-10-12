@@ -789,7 +789,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// 'Grazing' means that the corner at the edge is of an angle such that the ray never enters/leaves the shape by this
     /// intersection.
     ///
-    fn ray_is_grazing<L: Line<Point=Point>>(&self, ray: &L, point_idx: usize, edge_idx: usize) -> bool {
+    fn ray_is_grazing(&self, point_idx: usize, edge_idx: usize, (a, b, c): (f64, f64, f64)) -> bool {
         // Find the previous edges
         let previous_edges = self.points[point_idx].connected_from
             .iter()
@@ -806,8 +806,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
             // The ray is 'grazing' if both control points are on the same side of the collision
             // ... in the event of an intersection, if any of the incoming edges are 'grazing' (TODO: this might not work so well if it happens while trying to determine what parts of a ray are inside or outside of a shape)
-            let side1 = ray.which_side(cp1);
-            let side2 = ray.which_side(cp2);
+            let side1 = a*cp1.x() + b*cp1.y() + c;
+            let side2 = a*cp2.x() + b*cp2.y() + c;
+
+            let side1 = if side1.abs() < 0.001 { 0.0 } else { side1.signum() };
+            let side2 = if side2.abs() < 0.001 { 0.0 } else { side2.signum() };
 
             if side1 == side2 {
                 return true;
@@ -815,6 +818,28 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         }
 
         return false;
+    }
+
+    ///
+    /// Returns true if a curve is collinear given the set of coefficients for a ray
+    ///
+    fn curve_is_collinear<C: BezierCurve<Point=Point>>(&self, point_idx: usize, edge_idx: usize, (a, b, c): (f64, f64, f64)) -> bool {
+        // Fetch the points of the curve
+        let edge        = &self.points[point_idx].forward_edges[edge_idx];
+        let start_point = &self.points[point_idx].position;
+        let end_point   = &self.points[edge.end_idx].position;
+        let cp1         = &edge.cp1;
+        let cp2         = &edge.cp2;
+
+        // The curve is collinear if all of the points lie on the 
+        if (start_point.x()*a + start_point.y()*b + c) < 0.001
+        && (end_point.x()*a + end_point.y()*b + c) < 0.001
+        && (cp1.x()*a + cp1.y()*b + c < 0.001)
+        && (cp2.x()*a + cp2.y()*b + c < 0.001) {
+            true
+        } else {
+            false
+        }
     }
 
     ///
@@ -843,6 +868,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // We'll store the result after visiting all of the edges
         let mut collision_result    = vec![];
 
+        // Coefficients of the ray
+        let ray_coeffs              = ray.coefficients();
+
         // List of points where we've hit the start of the line
         let mut visited_start       = vec![false; self.points.len()];
 
@@ -869,7 +897,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
                             // Intersections are a single collision against multiple edges
                             let mut edges   = self.edges_for_point(point_idx)
-                                .filter(|edge| !self.ray_is_grazing(ray, edge.edge.start_idx, edge.edge.edge_idx));
+                                .filter(|edge| !self.ray_is_grazing(edge.edge.start_idx, edge.edge.edge_idx, ray_coeffs));
                             let first_edge  = edges.next();
 
                             if let Some(first_edge) = first_edge {
@@ -1330,7 +1358,7 @@ mod test {
             .build();
         let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
-        assert!(rectangle1.ray_is_grazing(&(Coord2(2.0, 0.0), Coord2(0.0, 2.0)), 0, 0));
+        assert!(rectangle1.ray_is_grazing(0, 0, (Coord2(2.0, 0.0), Coord2(0.0, 2.0)).coefficients()));
     }
 
     #[test]
@@ -1343,7 +1371,7 @@ mod test {
             .build();
         let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
-        assert!(rectangle1.ray_is_grazing(&(Coord2(0.0, 1.0001), Coord2(2.0, 0.9999)), 0, 0));
+        assert!(rectangle1.ray_is_grazing(0, 0, (Coord2(0.0, 1.001), Coord2(2.0, 0.999)).coefficients()));
     }
 
     #[test]
@@ -1356,7 +1384,7 @@ mod test {
             .build();
         let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
-        assert!(!rectangle1.ray_is_grazing(&(Coord2(0.0, 0.0), Coord2(5.0, 5.0)), 0, 0));
+        assert!(!rectangle1.ray_is_grazing(0, 0, (Coord2(0.0, 0.0), Coord2(5.0, 5.0)).coefficients()));
     }
 
     #[test]
@@ -1369,6 +1397,6 @@ mod test {
             .build();
         let rectangle1 = GraphPath::from_path(&rectangle1, ());
 
-        assert!(!rectangle1.ray_is_grazing(&(Coord2(0.0, 0.9999), Coord2(2.0, 1.0001)), 0, 0));
+        assert!(!rectangle1.ray_is_grazing(0, 0, (Coord2(0.0, 0.9999), Coord2(2.0, 1.0001)).coefficients()));
     }
 }
