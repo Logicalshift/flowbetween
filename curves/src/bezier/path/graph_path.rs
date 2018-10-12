@@ -896,57 +896,55 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // List of points where we've hit the start of the line
         let mut visited_start       = vec![false; self.points.len()];
 
-        // Visit every edge in this graph
-        for point_idx in 0..(self.points.len()) {
-            for edge in self.edges_for_point(point_idx) {
-                // If all of the points on this edge are on the same side of the ray, then it's not an intersection
-                if !Self::ray_can_intersect(&edge, ray_coeffs) {
-                    continue;
-                }
+        // Visit every edge in this graph and look for collisions
+        for edge in self.all_edges() {
+            // If all of the points on this edge are on the same side of the ray, then it's not an intersection
+            if !Self::ray_can_intersect(&edge, ray_coeffs) {
+                continue;
+            }
 
-                if Self::curve_is_collinear(&edge, ray_coeffs) {
-                    // Ignore collinear curves
-                    // TODO: more complicated than this
-                    visited_start[edge.end_point_index()]   = true;
-                    visited_start[point_idx]                = true;
-                } else {
-                    // Find out where the line collides with this edge
-                    let collisions = curve_intersects_ray(&edge, ray);
+            if Self::curve_is_collinear(&edge, ray_coeffs) {
+                // Ignore collinear curves
+                // TODO: more complicated than this
+                visited_start[edge.end_point_index()]   = true;
+                visited_start[edge.start_point_index()] = true;
+            } else {
+                // Find out where the line collides with this edge
+                let collisions = curve_intersects_ray(&edge, ray);
 
-                    for (curve_t, line_t, _collide_pos) in collisions {
-                        // Collisions at the end of a curve are treated as collision on the next curve
-                        let (point_idx, curve_t) = if curve_t > 0.999 {
-                            // Collision is at the end of the curve
-                            (edge.end_point_index(), 0.0)
-                        } else {
-                            (point_idx, curve_t)
-                        };
+                for (curve_t, line_t, _collide_pos) in collisions {
+                    // Collisions at the end of a curve are treated as collision on the next curve
+                    let (point_idx, curve_t) = if curve_t > 0.999 {
+                        // Collision is at the end of the curve
+                        (edge.end_point_index(), 0.0)
+                    } else {
+                        (edge.start_point_index(), curve_t)
+                    };
 
-                        if Self::t_is_zero(curve_t) {
-                            // Collision is at the start of the curve
-                            if !visited_start[point_idx] {
-                                // Mark the start of this point as visited
-                                visited_start[point_idx] = true;
+                    if Self::t_is_zero(curve_t) {
+                        // Collision is at the start of the curve
+                        if !visited_start[point_idx] {
+                            // Mark the start of this point as visited
+                            visited_start[point_idx] = true;
 
-                                // Intersections are a single collision against multiple edges
-                                let mut edges   = self.edges_for_point(point_idx)
-                                    .filter(|edge| !self.ray_is_grazing(edge.edge.start_idx, edge.edge.edge_idx, ray_coeffs));
-                                let first_edge  = edges.next();
+                            // Intersections are a single collision against multiple edges
+                            let mut edges   = self.edges_for_point(point_idx)
+                                .filter(|edge| !self.ray_is_grazing(edge.edge.start_idx, edge.edge.edge_idx, ray_coeffs));
+                            let first_edge  = edges.next();
 
-                                if let Some(first_edge) = first_edge {
-                                    let mut intersection = GraphRayCollision::new(first_edge.into());
+                            if let Some(first_edge) = first_edge {
+                                let mut intersection = GraphRayCollision::new(first_edge.into());
 
-                                    for point_edge in edges {
-                                        intersection.push(point_edge.into());
-                                    }
-
-                                    collision_result.push((intersection, curve_t, line_t));
+                                for point_edge in edges {
+                                    intersection.push(point_edge.into());
                                 }
+
+                                collision_result.push((intersection, curve_t, line_t));
                             }
-                        } else {
-                            // Collision is mid-way in the curve
-                            collision_result.push((GraphRayCollision::new(edge.clone().into()), curve_t, line_t));
                         }
+                    } else {
+                        // Collision is mid-way in the curve
+                        collision_result.push((GraphRayCollision::new(edge.clone().into()), curve_t, line_t));
                     }
                 }
             }
