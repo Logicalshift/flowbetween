@@ -3,7 +3,6 @@ use super::super::graph_path::*;
 use super::super::is_clockwise::*;
 use super::super::super::curve::*;
 use super::super::super::normal::*;
-use super::super::super::super::line::*;
 use super::super::super::super::coordinate::*;
 
 /// Source of a path in the graphpath
@@ -63,7 +62,6 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
 
                 // Cast a ray at the target edge
                 let ray             = (next_point - next_normal, next_point);
-                let mut ray_coeffs  = None;
                 let ray_direction   = ray.1 - ray.0;
                 let collisions      = self.ray_collisions(&ray);
 
@@ -72,27 +70,6 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
 
                     for edge in collision {
                         let PathLabel(path, direction) = self.edge_label(edge);
-
-                        if curve_t < 0.01 {
-                            // Ignore intersections with an edge if it's collinear with the ray
-                            let (a, b, c)       = ray_coeffs.get_or_insert_with(|| ray.coefficients());
-                            let ray_distance    = move |l: Point| *a*l.x() + *b*l.y() + *c;
-
-                            // Fetch the points for the edge
-                            let (edge_start, cp1, cp2, edge_end) = {
-                                let edge        = self.get_edge(edge);
-                                let (cp1, cp2)  = edge.control_points();
-                                (edge.start_point(), cp1, cp2, edge.end_point())
-                            };
-
-                            // If they're close to the line, then ignore this collision
-                            if ray_distance(edge_start).abs() < 0.001 
-                            && ray_distance(edge_end).abs() < 0.001 
-                            && ray_distance(cp1).abs() < 0.001
-                            && ray_distance(cp2).abs() < 0.001 {
-                                continue;
-                            }
-                        }
 
                         // The relative direction of the tangent to the ray indicates the direction we're crossing in
                         let normal  = self.get_edge(edge).normal_at_pos(curve_t);
@@ -123,10 +100,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
                             // Exterior edges move from inside to outside or vice-versa
                             if was_inside ^ is_inside {
                                 // Exterior edge
-                                self.set_edge_kind_connected(edge, GraphPathEdgeKind::Exterior);
+                                self.set_edge_kind(edge, GraphPathEdgeKind::Exterior);
                             } else {
                                 // Interior edge
-                                self.set_edge_kind_connected(edge, GraphPathEdgeKind::Interior);
+                                self.set_edge_kind(edge, GraphPathEdgeKind::Interior);
                             }
                         }
                     }
