@@ -1035,3 +1035,38 @@ fn collide_at_shared_point() {
     let points_at_shared = (0..(graph.num_points())).into_iter().filter(|point_idx| graph.point_position(*point_idx).distance_to(&Coord2(3.0, 5.0)) < 0.01).collect::<Vec<_>>();
     assert!(points_at_shared.len() == 2);
 }
+
+#[test]
+fn collide_along_seam() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
+        .line_to(Coord2(5.0, 3.0)) // Shared point
+        .line_to(Coord2(7.0, 3.0))
+        .line_to(Coord2(7.0, 7.0))
+        .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(3.0, 3.0))
+        .build()
+        .reversed::<SimpleBezierPath>();
+
+    // Collide along the vertical seam of this graph
+    let gp = GraphPath::from_path(&rectangle1, PathLabel(PathSource::Path1, PathDirection::Clockwise)).collide(GraphPath::from_path(&rectangle2, PathLabel(PathSource::Path2, PathDirection::Clockwise)), 0.01);
+
+    let collisions = gp.ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
+    let collisions2 = gp.ray_collisions(&(Coord2(5.1, 0.0), Coord2(5.1, 5.0)));
+
+    // TODO: issue seems to be the collision with point 3 (collision with point 1 is collinear, but point 3 isn't)
+
+    println!("{:?}", gp);
+    println!("{:?}", collisions);
+    println!("{:?}", collisions2);
+    assert!(false);
+ }
