@@ -832,13 +832,36 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         let cp2         = &edge.cp2;
 
         // The curve is collinear if all of the points lie on the 
-        if (start_point.x()*a + start_point.y()*b + c) < 0.001
-        && (end_point.x()*a + end_point.y()*b + c) < 0.001
-        && (cp1.x()*a + cp1.y()*b + c < 0.001)
-        && (cp2.x()*a + cp2.y()*b + c < 0.001) {
+        if (start_point.x()*a + start_point.y()*b + c).abs() < 0.001
+        && (end_point.x()*a + end_point.y()*b + c).abs() < 0.001
+        && (cp1.x()*a + cp1.y()*b + c).abs() < 0.001
+        && (cp2.x()*a + cp2.y()*b + c).abs() < 0.001 {
             true
         } else {
             false
+        }
+    }
+
+    ///
+    /// Given the coefficients of a ray, returns whether or not an edge can intersect it
+    ///
+    #[inline]
+    fn ray_can_intersect<'a>(edge: &GraphEdge<'a, Point, Label>, (a, b, c): (f64, f64, f64)) -> bool {
+        // Fetch the points of the curve
+        let start_point = edge.start_point();
+        let end_point   = edge.end_point();
+        let (cp1, cp2)  = edge.control_points();
+        
+        let side        = (a*start_point.x() + b*start_point.y() + c).signum()
+                        + (a*cp1.x() + b*cp1.y() + c).signum()
+                        + (a*cp2.x() + b*cp2.y() + c).signum()
+                        + (a*end_point.x()+ b*end_point.y() + c).signum();
+
+        // If all 4 points have the same sign, they're all on the same side of the ray and thus the edge cannot intersect it 
+        if side < -3.99 || side > 3.99 {
+            false
+        } else {
+            true
         }
     }
 
@@ -877,6 +900,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Visit every edge in this graph
         for point_idx in 0..(self.points.len()) {
             for edge in self.edges_for_point(point_idx) {
+                // If all of the points on this edge are on the same side of the ray, then it's not an intersection
+                if !Self::ray_can_intersect(&edge, ray_coeffs) {
+                    continue;
+                }
+
                 // Find out where the line collides with this edge
                 let collisions = curve_intersects_ray(&edge, ray);
 
