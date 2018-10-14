@@ -919,7 +919,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         let enter_side = a*enter_point.x() + b*enter_point.y() + c;
                         let leave_side = a*leave_point.x() + b*leave_point.y() + c;
 
-                        if enter_side.signum() != leave_side.signum() && enter_side.abs() < 0.001 && leave_side.abs() < 0.001 {
+                        if enter_side.signum() != leave_side.signum() && enter_side.abs() > 0.001 && leave_side.abs() > 0.001 {
                             // TODO: set line_t properly
                             collision_result.push((GraphRayCollision::new(edge.clone().into()), 0.0, 0.0));
                         }
