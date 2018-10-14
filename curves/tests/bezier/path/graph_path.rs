@@ -1098,8 +1098,7 @@ fn collide_along_seam_with_intersection() {
         .line_to(Coord2(7.0, 7.0))
         .line_to(Coord2(3.0, 7.0))
         .line_to(Coord2(3.0, 3.0))
-        .build()
-        .reversed::<SimpleBezierPath>();
+        .build();
 
     // Collide along the vertical seam of this graph
     let gp = GraphPath::from_path(&rectangle1, PathLabel(PathSource::Path1, PathDirection::Clockwise)).collide(GraphPath::from_path(&rectangle2, PathLabel(PathSource::Path2, PathDirection::Clockwise)), 0.01);
@@ -1119,6 +1118,8 @@ fn collide_along_seam_with_intersection() {
     let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
     let first_collision     = ray.point_at_pos(collisions_seam[0].2);
     let second_collision    = ray.point_at_pos(collisions_seam[1].2);
+
+    println!("{:?} {:?}", first_collision, second_collision);
 
     assert!(first_collision.distance_to(&Coord2(5.0, 3.0)) < 0.1);
     assert!(second_collision.distance_to(&Coord2(5.0, 7.0)) < 0.1);
