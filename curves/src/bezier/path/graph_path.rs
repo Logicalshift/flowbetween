@@ -1006,8 +1006,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         visited_start[point_idx] = true;
 
                         // Intersections are a single collision against multiple edges
-                        let mut edges   = self.edges_for_point(point_idx)
-                            .filter(|edge| !self.ray_is_grazing(edge.edge.start_idx, edge.edge.edge_idx, ray_coeffs));
+                        let mut edges   = self.crossing_edges(ray_coeffs, vec![point_idx]).into_iter();
                         let first_edge  = edges.next();
 
                         if let Some(first_edge) = first_edge {
