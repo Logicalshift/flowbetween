@@ -1389,6 +1389,13 @@ impl GraphRayCollision {
             GraphRayCollision::Intersection(edges)  => edges.len() != 1
         }
     }
+
+    pub fn len(&self) -> usize {
+        match self {
+            GraphRayCollision::SingleEdge(_)        => 1,
+            GraphRayCollision::Intersection(edges)  => edges.len()
+        }
+    }
 }
 
 impl IntoIterator for GraphRayCollision {
