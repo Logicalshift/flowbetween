@@ -65,6 +65,9 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
                 let ray_direction   = ray.1 - ray.0;
                 let collisions      = self.ray_collisions(&ray);
 
+                // There should always be an even number of collisions on a particular ray cast through a closed shape
+                debug_assert!(collisions.len()&1 == 0);
+
                 for (collision, curve_t, _line_t) in collisions {
                     let is_intersection = collision.is_intersection();
 
