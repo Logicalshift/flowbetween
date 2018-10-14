@@ -901,7 +901,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         for edge in self.all_edges() {
             if Self::curve_is_collinear(&edge, ray_coeffs) {
-                // Collinear edges need to be processed in a different way
+                // Collinear edges need to be processed in a different way. From the point of view of our ray they technically don't
+                // exist, so we need to look at the edges before the collinear edge and the edges after it. If there are edges crossing
+                // from one side to the other, then we need to record a collision for each. If there are no edges crossing, then we need
+                // to just ignore the colinear edge
                 visited_start[edge.end_point_index()]   = true;
                 visited_start[edge.start_point_index()] = true;
             } else {
