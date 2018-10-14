@@ -71,6 +71,9 @@ struct GraphPathEdge<Point, Label> {
     /// The label attached to this edge
     label: Label,
 
+    /// Index of the source path for this edge
+    source_path_idx: usize,
+
     /// The kind of this edge
     kind: GraphPathEdgeKind,
 
@@ -239,9 +242,9 @@ impl<Point: Coordinate, Label> GraphPathEdge<Point, Label> {
     /// Creates a new graph path edge
     /// 
     #[inline]
-    fn new(kind: GraphPathEdgeKind, (cp1, cp2): (Point, Point), end_idx: usize, label: Label) -> GraphPathEdge<Point, Label> {
+    fn new(kind: GraphPathEdgeKind, (cp1, cp2): (Point, Point), end_idx: usize, label: Label, source_path_idx: usize) -> GraphPathEdge<Point, Label> {
         GraphPathEdge {
-            label, kind, cp1, cp2, end_idx
+            label, kind, cp1, cp2, end_idx, source_path_idx
         }
     }
 
@@ -264,7 +267,10 @@ impl<Point: Coordinate, Label> GraphPathEdge<Point, Label> {
 #[derive(Clone)]
 pub struct GraphPath<Point, Label> {
     /// The points in this graph and their edges. Each 'point' here consists of two control points and an end point
-    points: Vec<GraphPathPoint<Point, Label>>
+    points: Vec<GraphPathPoint<Point, Label>>,
+
+    /// The index to assign to the next path added to this path
+    next_path_index: usize
 }
 
 impl<Point: Coordinate, Label> Geo for GraphPath<Point, Label> {
@@ -277,7 +283,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     pub fn new() -> GraphPath<Point, Label> {
         GraphPath {
-            points: vec![]
+            points:             vec![],
+            next_path_index:    0
         }
     }
 
@@ -314,7 +321,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             points.push(GraphPathPoint::new(end_point, vec![], vec![]));
 
             // Add an edge from the last point to the next point
-            points[last_point_idx].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point_idx, label));
+            points[last_point_idx].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), next_point_idx, label, 0));
 
             // Update the last/next pooints
             last_point_idx  += 1;
@@ -338,7 +345,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 let cp1             = close_vector * 0.33 + start_point;
                 let cp2             = close_vector * 0.66 + start_point;
 
-                points[last_point_idx].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0, label));
+                points[last_point_idx].forward_edges.push(GraphPathEdge::new(GraphPathEdgeKind::Uncategorised, (cp1, cp2), 0, label, 0));
             }
         } else {
             // Just a start point and no edges: remove the start point as it doesn't really make sense
@@ -347,7 +354,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         // Create the graph path from the points
         let mut path = GraphPath {
-            points: points
+            points:             points,
+            next_path_index:    1
         };
         path.recalculate_reverse_connections();
         path
@@ -475,6 +483,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     pub fn merge(self, merge_path: GraphPath<Point, Label>) -> GraphPath<Point, Label> {
         // Copy the points from this graph
         let mut new_points  = self.points;
+        let next_path_idx   = self.next_path_index;
 
         // Add in points from the merge path
         let offset          = new_points.len();
@@ -482,7 +491,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             .map(|mut point| {
                 // Update the offsets in the edges
                 for mut edge in &mut point.forward_edges {
-                    edge.end_idx += offset;
+                    edge.end_idx            += offset;
+                    edge.source_path_idx    += next_path_idx;
                 }
 
                 for mut previous_point in &mut point.connected_from {
@@ -495,7 +505,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         // Combined path
         GraphPath {
-            points: new_points
+            points:             new_points,
+            next_path_index:    next_path_idx + merge_path.next_path_index
         }
     }
 
@@ -569,6 +580,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         let edge2_label     = self.points[edge2_idx].forward_edges[edge2_edge_idx].label;
         let edge1_end_idx   = self.points[edge1_idx].forward_edges[edge1_edge_idx].end_idx;
         let edge2_end_idx   = self.points[edge2_idx].forward_edges[edge2_edge_idx].end_idx;
+        let edge1_path_idx  = self.points[edge1_idx].forward_edges[edge1_edge_idx].source_path_idx;
+        let edge2_path_idx  = self.points[edge2_idx].forward_edges[edge2_edge_idx].source_path_idx;
 
         // List of edges we've added to the collision point (in the form of the edge that's divided, the position it was divided at and the index on the collision point)
         let mut new_edges   = vec![];
@@ -579,13 +592,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             // If t1 is zero or one, we're not subdividing edge1
             // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
             new_edges.push((edge1_idx, edge1_edge_idx, t1, self.points[collision_point].forward_edges.len()));
-            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx, edge1_label));
+            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge1_kind, edge1b.control_points(), edge1_end_idx, edge1_label, edge1_path_idx));
         }
         if !Self::t_is_one(t2) && !Self::t_is_zero(t2) {
             // If t2 is zero or one, we're not subdividing edge2
             // If zero, we're just adding the existing edge again to the collision point (so we do nothing)
             new_edges.push((edge2_idx, edge2_edge_idx, t2, self.points[collision_point].forward_edges.len()));
-            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx, edge2_label));
+            self.points[collision_point].forward_edges.push(GraphPathEdge::new(edge2_kind, edge2b.control_points(), edge2_end_idx, edge2_label, edge2_path_idx));
         }
 
         // The 'a' edges both update the initial edge, provided t is not 0
