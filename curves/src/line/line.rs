@@ -25,6 +25,30 @@ pub trait Line : Geo {
 
         p1 + delta*t
     }
+
+    ///
+    /// Given a point (assumed to be on the line), returns the 't' value on the line
+    /// 
+    /// If the point is not on the line, this will return a t value where at least one of the components of the point matches with
+    /// the point on the line.
+    ///
+    fn pos_for_point(&self, point: Self::Point) -> f64 {
+        let (p1, p2)    = self.points();
+        let delta_line  = p2-p1;
+        let delta_point = point-p1;
+
+        for component_idx in 0..Self::Point::len() {
+            let line_component  = delta_line.get(component_idx);
+            let point_component = delta_point.get(component_idx);
+
+            if line_component.abs() > 0.000001 {
+                return point_component/line_component;
+            }
+        }
+
+        // Result is 0 if there are no components that map to the line somehow
+        0.0
+    }
 }
 
 ///

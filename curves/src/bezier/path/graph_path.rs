@@ -921,8 +921,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         let leave_side = a*leave_point.x() + b*leave_point.y() + c;
 
                         if enter_side.signum() != leave_side.signum() && enter_side.abs() > 0.001 && leave_side.abs() > 0.001 {
-                            // TODO: set line_t properly
-                            collision_result.push((GraphRayCollision::new(edge.clone().into()), 0.0, 0.0));
+                            let line_t  = ray.pos_for_point(edge.start_point());
+                            let curve_t = 0.0;
+                            collision_result.push((GraphRayCollision::new(edge.clone().into()), curve_t, line_t));
                         }
                     }
                 }
