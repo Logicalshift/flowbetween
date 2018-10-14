@@ -878,6 +878,47 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Given a list of points, returns the edges that cross the line given by the specified set of coefficients
+    ///
+    fn crossing_edges<'a>(&'a self, (a, b, c): (f64, f64, f64), points: Vec<usize>) -> Vec<GraphEdge<'a, Point, Label>> {
+        // Get the list of 'incoming' edges for each path index in this graph
+        let mut incoming_edge_for_path = vec![None; self.next_path_index];
+
+        for point_idx in points.iter() {
+            for incoming in self.reverse_edges_for_point(*point_idx) {
+                if !Self::curve_is_collinear(&incoming, (a, b, c)) {
+                    let source_path_idx                     = incoming.source_path_idx();
+                    incoming_edge_for_path[source_path_idx] = Some(incoming);
+                }
+            }
+        }
+
+        // For every 'leaving' edge, check if they are on the other side of the path to their corresponding 'incoming' edge, and add to the result if they are
+        let mut crossing_edges = vec![];
+
+        for point_idx in points.iter() {
+            for leaving in self.edges_for_point(*point_idx) {
+                if let Some(incoming) = &incoming_edge_for_path[leaving.source_path_idx()] {
+                    if !Self::curve_is_collinear(&leaving, (a, b, c)) {
+                        let incoming_cp1    = incoming.control_points().0;
+                        let leaving_cp1     = leaving.control_points().0;
+
+                        let incoming_side   = a*incoming_cp1.x() + b*incoming_cp1.y() + c;
+                        let leaving_side    = a*leaving_cp1.x() + b*leaving_cp1.y() + c;
+
+                        if incoming_side.signum() != leaving_side.signum() {
+                            // Control points are on different sides of the line, so this is a crossing edge
+                            crossing_edges.push(leaving);
+                        }
+                    }
+                }
+            }
+        }
+
+        crossing_edges
+    }
+
+    ///
     /// Returns a point outside of this path
     ///
     pub fn outside_point(&self) -> Point {
@@ -918,29 +959,16 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 // exist, so we need to look at the edges before the collinear edge and the edges after it. If there are edges crossing
                 // from one side to the other, then we need to record a collision for each. If there are no edges crossing, then we need
                 // to just ignore the colinear edge
-                let (a, b, c) = ray_coeffs;
 
-                // Fetch the edge entering and leaving the collinear edge
-                // TODO: each collinear line may have another edge crossing that just qualifies as a collision on that edge
                 // TODO: collinear sections may be longer than a single edge
                 // TODO: the control points do provide tangent values for the curve, but they can be equal to the start point which makes this test less good
-                for edge_enter in self.reverse_edges_for_point(edge.start_point_index()) {
-                    for edge_leave in self.edges_for_point(edge.end_point_index()) {
-                        // This is a hit on the leaving if the 'leave' edge is leaving on a different side to the 'enter' edge
-                        let enter_point = edge_enter.control_points().0;
-                        let leave_point = edge_leave.control_points().0;
-
-                        let enter_side = a*enter_point.x() + b*enter_point.y() + c;
-                        let leave_side = a*leave_point.x() + b*leave_point.y() + c;
-
-                        if enter_side.signum() != leave_side.signum() && enter_side.abs() > 0.001 && leave_side.abs() > 0.001 {
-                            let line_t  = ray.pos_for_point(edge.start_point());
-                            let curve_t = 0.0;
-                            collision_result.push((GraphRayCollision::new(edge.clone().into()), curve_t, line_t));
-                        }
-                    }
+                for crossing in self.crossing_edges(ray_coeffs, vec![edge.start_point_index(), edge.end_point_index()]) {
+                    let line_t  = ray.pos_for_point(edge.start_point());
+                    let curve_t = 0.0;
+                    collision_result.push((GraphRayCollision::new(crossing.into()), curve_t, line_t));
                 }
 
+                // Mark these points as visited
                 visited_start[edge.end_point_index()]   = true;
                 visited_start[edge.start_point_index()] = true;
             } else {
@@ -1226,6 +1254,13 @@ impl<'a, Point: 'a, Label: 'a+Copy> GraphEdge<'a, Point, Label> {
     #[inline]
     pub fn is_reversed(&self) -> bool {
         self.edge.reverse
+    }
+
+    ///
+    /// Returns the source path index for this edge
+    ///
+    fn source_path_idx(&self) -> usize {
+        self.graph.points[self.edge.start_idx].forward_edges[self.edge.edge_idx].source_path_idx
     }
 
     ///
