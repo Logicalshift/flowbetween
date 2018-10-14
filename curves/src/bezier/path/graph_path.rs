@@ -965,7 +965,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 for crossing in self.crossing_edges(ray_coeffs, vec![edge.start_point_index(), edge.end_point_index()]) {
                     let line_t  = ray.pos_for_point(edge.start_point());
                     let curve_t = 0.0;
-                    collision_result.push((GraphRayCollision::new(crossing.into()), curve_t, line_t));
+
+                    if !visited_start[crossing.start_point_index()] {
+                        collision_result.push((GraphRayCollision::new(crossing.into()), curve_t, line_t));
+                    }
                 }
 
                 // Mark these points as visited
