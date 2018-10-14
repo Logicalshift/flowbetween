@@ -905,6 +905,27 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 // exist, so we need to look at the edges before the collinear edge and the edges after it. If there are edges crossing
                 // from one side to the other, then we need to record a collision for each. If there are no edges crossing, then we need
                 // to just ignore the colinear edge
+                let (a, b, c) = ray_coeffs;
+
+                // Fetch the edge entering and leaving the collinear edge
+                // TODO: each collinear line may have another edge crossing that just qualifies as a collision on that edge
+                // TODO: collinear sections may be longer than a single edge
+                for edge_enter in self.reverse_edges_for_point(edge.start_point_index()) {
+                    for edge_leave in self.edges_for_point(edge.end_point_index()) {
+                        // This is a hit on the leaving if the 'leave' edge is leaving on a different side to the 'enter' edge
+                        let enter_point = edge_enter.control_points().0;
+                        let leave_point = edge_leave.control_points().0;
+
+                        let enter_side = a*enter_point.x() + b*enter_point.y() + c;
+                        let leave_side = a*leave_point.x() + b*leave_point.y() + c;
+
+                        if enter_side.signum() != leave_side.signum() && enter_side.abs() < 0.001 && leave_side.abs() < 0.001 {
+                            // TODO: set line_t properly
+                            collision_result.push((GraphRayCollision::new(edge.clone().into()), 0.0, 0.0));
+                        }
+                    }
+                }
+
                 visited_start[edge.end_point_index()]   = true;
                 visited_start[edge.start_point_index()] = true;
             } else {

@@ -17,7 +17,7 @@ pub trait Line : Geo {
     fn points(&self) -> (Self::Point, Self::Point);
 
     ///
-    /// Give a value 't' from 0 to 1, returns the point at that posiition along the line
+    /// Given a value 't' from 0 to 1, returns the point at that position along the line
     /// 
     fn point_at_pos(&self, t: f64) -> Self::Point {
         let (p1, p2)    = self.points();
