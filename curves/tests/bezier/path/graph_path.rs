@@ -1037,7 +1037,39 @@ fn collide_at_shared_point() {
 }
 
 #[test]
-fn collide_along_convex_edge() {
+pub fn collide_rectangle_with_self() {
+    // Create the two rectangles
+    let rectangle = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    
+    let rectangle1 = GraphPath::from_path(&rectangle, 1);
+    let rectangle2 = GraphPath::from_path(&rectangle, 2);
+
+    // Collide them
+    let collision = rectangle1.collide(rectangle2, 0.1);
+
+    println!("{:?}", collision);
+
+    // 8 points in the collision (4 'orphaned' with no edges)
+    assert!(collision.num_points() == 8);
+
+    let mut num_connected_points = 0;
+    for point_idx in 0..8 {
+        let num_edges = collision.edges_for_point(point_idx).count();
+
+        assert!(num_edges == 2 || num_edges == 0);
+        if num_edges != 0 { num_connected_points += 1 }
+    }
+
+    assert!(num_connected_points == 4);
+}
+
+#[test]
+fn ray_collide_along_convex_edge() {
     // Two rectangles
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(5.0, 1.0))
@@ -1060,7 +1092,7 @@ fn collide_along_convex_edge() {
 }
 
 #[test]
-fn collide_along_concave_edge() {
+fn ray_collide_along_concave_edge() {
     // Two rectangles
     let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(5.0, 1.0))
@@ -1085,7 +1117,7 @@ fn collide_along_concave_edge() {
 }
 
 #[test]
-fn collide_along_seam_with_intersection() {
+fn ray_collide_along_seam_with_intersection() {
     // Two rectangles
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(5.0, 1.0))
