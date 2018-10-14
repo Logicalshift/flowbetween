@@ -963,7 +963,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 // TODO: collinear sections may be longer than a single edge
                 // TODO: the control points do provide tangent values for the curve, but they can be equal to the start point which makes this test less good
                 for crossing in self.crossing_edges(ray_coeffs, vec![edge.start_point_index(), edge.end_point_index()]) {
-                    let line_t  = ray.pos_for_point(edge.start_point());
+                    let line_t  = ray.pos_for_point(crossing.start_point());
                     let curve_t = 0.0;
 
                     if !visited_start[crossing.start_point_index()] {

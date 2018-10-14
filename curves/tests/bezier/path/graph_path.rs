@@ -1103,6 +1103,8 @@ fn collide_along_seam_with_intersection() {
     // Collide along the vertical seam of this graph
     let gp = GraphPath::from_path(&rectangle1, PathLabel(PathSource::Path1, PathDirection::Clockwise)).collide(GraphPath::from_path(&rectangle2, PathLabel(PathSource::Path2, PathDirection::Clockwise)), 0.01);
 
+    println!("{:?}", gp);
+
     let collisions_seam     = gp.ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
     let collisions_no_seam  = gp.ray_collisions(&(Coord2(5.1, 0.0), Coord2(5.1, 5.0)));
 
