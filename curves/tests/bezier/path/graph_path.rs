@@ -1037,22 +1037,66 @@ fn collide_at_shared_point() {
 }
 
 #[test]
-fn collide_along_seam() {
+fn collide_along_convex_edge() {
     // Two rectangles
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(5.0, 1.0))
-        .line_to(Coord2(5.0, 3.0)) // Shared point
         .line_to(Coord2(5.0, 5.0))
-        .line_to(Coord2(3.0, 5.0)) // Shared point
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    // Collide along the vertical seam of this graph
+    let gp = GraphPath::from_path(&rectangle1, PathLabel(PathSource::Path1, PathDirection::Clockwise));
+
+    let collisions_seam     = gp.ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
+    let collisions_no_seam  = gp.ray_collisions(&(Coord2(4.9, 0.0), Coord2(4.9, 5.0)));
+
+    assert!(collisions_no_seam.len() == 2);
+
+    // As the ray never actually enters the shape along the seam, there should be 0 collisions
+    assert!(collisions_seam.len() != 2);
+    assert!(collisions_seam.len() == 0);
+}
+
+#[test]
+fn collide_along_concave_edge() {
+    // Two rectangles
+    let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(6.0, 7.0))
+        .line_to(Coord2(3.0, 7.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    // Collide along the vertical seam of this graph
+    let gp = GraphPath::from_path(&concave_shape, PathLabel(PathSource::Path1, PathDirection::Clockwise));
+
+    let collisions_seam     = gp.ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
+    let collisions_no_seam  = gp.ray_collisions(&(Coord2(4.9, 0.0), Coord2(4.9, 5.0)));
+
+    assert!(collisions_no_seam.len() == 2);
+
+    // The shape is concave and the ray should enter it
+    assert!(collisions_seam.len() != 1);
+    assert!(collisions_seam.len() == 2);
+}
+
+#[test]
+fn collide_along_seam_with_intersection() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
         .line_to(Coord2(1.0, 5.0))
         .line_to(Coord2(1.0, 1.0))
         .build();
     let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(3.0, 3.0))
-        .line_to(Coord2(5.0, 3.0)) // Shared point
         .line_to(Coord2(7.0, 3.0))
         .line_to(Coord2(7.0, 7.0))
         .line_to(Coord2(3.0, 7.0))
-        .line_to(Coord2(3.0, 5.0)) // Shared point
         .line_to(Coord2(3.0, 3.0))
         .build()
         .reversed::<SimpleBezierPath>();
@@ -1060,13 +1104,15 @@ fn collide_along_seam() {
     // Collide along the vertical seam of this graph
     let gp = GraphPath::from_path(&rectangle1, PathLabel(PathSource::Path1, PathDirection::Clockwise)).collide(GraphPath::from_path(&rectangle2, PathLabel(PathSource::Path2, PathDirection::Clockwise)), 0.01);
 
-    let collisions = gp.ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
-    let collisions2 = gp.ray_collisions(&(Coord2(5.1, 0.0), Coord2(5.1, 5.0)));
+    let collisions_seam     = gp.ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
+    let collisions_no_seam  = gp.ray_collisions(&(Coord2(5.1, 0.0), Coord2(5.1, 5.0)));
 
-    // TODO: issue seems to be the collision with point 3 (collision with point 1 is collinear, but point 3 isn't)
-
-    println!("{:?}", gp);
-    println!("{:?}", collisions);
-    println!("{:?}", collisions2);
-    assert!(false);
- }
+    // Should collide with the line crossing the intersection, and the top line (so two collisions total)
+    assert!(collisions_no_seam.len() == 2);
+    assert!(collisions_seam.len() != 5);
+    assert!(collisions_seam.len() != 4);
+    assert!(collisions_seam.len() != 3);
+    assert!(collisions_seam.len() != 1);
+    assert!(collisions_seam.len()&1 == 0);
+    assert!(collisions_seam.len() == 2);
+}
