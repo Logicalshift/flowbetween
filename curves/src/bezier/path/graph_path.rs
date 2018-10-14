@@ -910,6 +910,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 // Fetch the edge entering and leaving the collinear edge
                 // TODO: each collinear line may have another edge crossing that just qualifies as a collision on that edge
                 // TODO: collinear sections may be longer than a single edge
+                // TODO: the control points do provide tangent values for the curve, but they can be equal to the start point which makes this test less good
                 for edge_enter in self.reverse_edges_for_point(edge.start_point_index()) {
                     for edge_leave in self.edges_for_point(edge.end_point_index()) {
                         // This is a hit on the leaving if the 'leave' edge is leaving on a different side to the 'enter' edge
