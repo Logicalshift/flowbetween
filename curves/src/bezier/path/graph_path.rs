@@ -931,7 +931,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     let curve_t = 0.0;
 
                     if !visited_start[crossing.start_point_index()] {
-                        collision_result.push((GraphRayCollision::new(crossing.into()), curve_t, line_t));
+                        let collision = if self.points[crossing.start_point_index()].forward_edges.len() > 1 {
+                            GraphRayCollision::new(crossing.into()).make_intersection()
+                        } else {
+                            GraphRayCollision::new(crossing.into())
+                        };
+
+                        collision_result.push((collision, curve_t, line_t));
                     }
                 }
 
@@ -1380,13 +1386,25 @@ impl GraphRayCollision {
     }
 
     ///
+    /// Turns this collision into an intersection (with one edge, if it's a single edge)
+    ///
+    fn make_intersection(self) -> Self {
+        use self::GraphRayCollision::*;
+
+        match self {
+            Intersection(edges) => { Intersection(edges) },
+            SingleEdge(edge)    => { Intersection(vec![edge]) }
+        }
+    }
+
+    ///
     /// Returns true if this collision is at an intersection
     ///
     #[inline]
     pub fn is_intersection(&self) -> bool {
         match self {
             GraphRayCollision::SingleEdge(_)        => false,
-            GraphRayCollision::Intersection(edges)  => edges.len() != 1
+            GraphRayCollision::Intersection(edges)  => true
         }
     }
 

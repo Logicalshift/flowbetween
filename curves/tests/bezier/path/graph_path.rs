@@ -1158,3 +1158,29 @@ fn ray_collide_along_seam_with_intersection() {
     assert!(first_collision.distance_to(&Coord2(5.0, 3.0)) < 0.1);
     assert!(second_collision.distance_to(&Coord2(5.0, 7.0)) < 0.1);
 }
+
+#[test]
+fn ray_collide_seam_with_intersection() {
+    // Two rectangles
+    let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let rectangle2 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(4.0, 4.0))
+        .line_to(Coord2(6.0, 4.0))
+        .line_to(Coord2(6.0, 6.0))
+        .line_to(Coord2(4.0, 6.0))
+        .line_to(Coord2(4.0, 4.0))
+        .build();
+
+    let graph_path = GraphPath::from_path(&rectangle1, 1);
+    let graph_path = graph_path.collide(GraphPath::from_path(&rectangle2, 2), 0.01);
+
+    let collisions = graph_path.ray_collisions(&(Coord2(5.0, 6.0), Coord2(5.0, 5.0)));
+
+    assert!(collisions.len() == 2);
+    assert!(!collisions[0].0.is_intersection());
+    assert!(collisions[1].0.is_intersection());
+}
