@@ -1184,3 +1184,27 @@ fn ray_collide_seam_with_intersection() {
     assert!(!collisions[0].0.is_intersection());
     assert!(collisions[1].0.is_intersection());
 }
+
+#[test]
+fn ray_collide_with_edges_and_convex_point_intersection() {
+    let with_interior_point = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(2.0, 2.0))
+        .line_to(Coord2(4.0, 2.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let mut with_interior_point = GraphPath::from_path(&with_interior_point, ());
+    with_interior_point.self_collide(0.01);
+
+    let collisions = with_interior_point.ray_collisions(&(Coord2(0.0, 3.0), Coord2(1.0, 3.0)));
+
+    println!("{:?}", with_interior_point);
+    println!("{:?}", collisions);
+
+    assert!(collisions.len() == 3);
+    assert!(collisions[1].0.is_intersection());
+    assert!(collisions[1].0.len() == 2);
+}
