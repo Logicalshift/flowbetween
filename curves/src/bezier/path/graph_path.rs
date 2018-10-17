@@ -969,7 +969,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     (edge.start_point_index(), curve_t)
                 };
 
-                if Self::t_is_zero(curve_t) {
+                // Check if this collision point is at the start
+                let start_point     = self.points[point_idx].position;
+                let collide_point   = ray.point_at_pos(line_t);
+                let offset          = collide_point - start_point;
+                let distance_sq     = offset.dot(&offset);
+
+                if distance_sq < 0.000001 {
                     // Collision is at the start of the curve
                     if !visited_start[point_idx] {
                         // Mark the start of this point as visited
