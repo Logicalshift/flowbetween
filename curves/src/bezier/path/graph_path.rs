@@ -962,7 +962,12 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
             for (curve_t, line_t, _collide_pos) in collisions {
                 // Collisions at the end of a curve are treated as collision on the next curve
-                let (point_idx, curve_t) = if curve_t > 0.999 {
+                let end_point       = self.points[edge.end_point_index()].position;
+                let collide_point   = ray.point_at_pos(line_t);
+                let end_offset      = end_point - collide_point;
+                let end_distance_sq = end_offset.dot(&end_offset);
+
+                let (point_idx, curve_t) = if end_distance_sq < 0.000001 {
                     // Collision is at the end of the curve
                     (edge.end_point_index(), 0.0)
                 } else {
@@ -971,7 +976,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
                 // Check if this collision point is at the start
                 let start_point     = self.points[point_idx].position;
-                let collide_point   = ray.point_at_pos(line_t);
                 let offset          = collide_point - start_point;
                 let distance_sq     = offset.dot(&offset);
 
