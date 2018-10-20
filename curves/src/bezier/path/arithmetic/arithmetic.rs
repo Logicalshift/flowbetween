@@ -103,10 +103,10 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
                         // Exterior edges move from inside to outside or vice-versa
                         if was_inside ^ is_inside {
                             // Exterior edge
-                            self.set_edge_kind(edge, GraphPathEdgeKind::Exterior);
+                            self.set_edge_kind_connected(edge, GraphPathEdgeKind::Exterior);
                         } else {
                             // Interior edge
-                            self.set_edge_kind(edge, GraphPathEdgeKind::Interior);
+                            self.set_edge_kind_connected(edge, GraphPathEdgeKind::Interior);
                         }
                     }
                 }
