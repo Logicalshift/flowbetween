@@ -983,7 +983,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         .map(|previous| previous.reversed())
                         .filter(|previous| previous.following_edge_idx() == collision.edge_idx)
                         .nth(0)
-                        .unwrap();
+                        .expect("Previous edge for collinear collision");
 
                     if Self::curve_is_collinear(&previous, ray_coeffs) {
                         // Collisions crossing collinear sections are taken care of during the collinear collision phase
@@ -1066,7 +1066,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         .map(|edge| edge.reversed())
                         .filter(|edge| edge.following_edge_idx() == collision.edge_idx)
                         .nth(0)
-                        .unwrap();
+                        .expect("Previous edge for glancing collision");
 
                     // A glancing collision has control points on the same side of the ray
                     let cp_in   = previous_edge.control_points().1;
@@ -1270,7 +1270,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     .into_iter()
                     .filter(|edge_idx| self.points[previous_point_idx].forward_edges[*edge_idx].end_idx == current_point_idx)
                     .nth(0)
-                    .unwrap();
+                    .expect("Previous edge");
 
                 // Move on to the next edge
                 current_edge = GraphEdgeRef {
