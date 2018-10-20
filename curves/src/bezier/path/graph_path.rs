@@ -1443,45 +1443,6 @@ impl<Point: Coordinate2D+Coordinate+fmt::Debug, Label: Copy> fmt::Debug for Grap
 
 impl GraphRayCollision {
     ///
-    /// Creates a new collision with a single edge
-    ///
-    #[inline]
-    fn new(edge: GraphEdgeRef) -> GraphRayCollision {
-        GraphRayCollision::SingleEdge(edge)
-    }
-
-    ///
-    /// Adds a new edge to the intersection formed by this collision
-    ///
-    fn push(&mut self, new_edge: GraphEdgeRef) {
-        use self::GraphRayCollision::*;
-
-        match self {
-            Intersection(edges) => { edges.push(new_edge); }
-            SingleEdge(_)       => { 
-                let edge            = mem::replace(self, Intersection(vec![]));
-
-                if let SingleEdge(edge) = edge {
-                    let intersection    = vec![edge, new_edge];
-                    *self = Intersection(intersection);
-                }
-            }
-        }
-    }
-
-    ///
-    /// Turns this collision into an intersection (with one edge, if it's a single edge)
-    ///
-    fn make_intersection(self) -> Self {
-        use self::GraphRayCollision::*;
-
-        match self {
-            Intersection(edges) => { Intersection(edges) },
-            SingleEdge(edge)    => { Intersection(vec![edge]) }
-        }
-    }
-
-    ///
     /// Returns true if this collision is at an intersection
     ///
     #[inline]
@@ -1499,22 +1460,6 @@ impl GraphRayCollision {
         match self {
             GraphRayCollision::SingleEdge(_)        => 1,
             GraphRayCollision::Intersection(edges)  => edges.len()
-        }
-    }
-
-    ///
-    /// Maps the edgerefs in this collision to new values
-    ///
-    pub fn map<MapFn: Fn(GraphEdgeRef) -> GraphEdgeRef>(self, map_fn: MapFn) -> GraphRayCollision {
-        match self {
-            GraphRayCollision::SingleEdge(edge)         => GraphRayCollision::SingleEdge(map_fn(edge)),
-            GraphRayCollision::Intersection(mut edges)  => {
-                for idx in 0..edges.len() {
-                    edges[idx] = map_fn(edges[idx]);
-                }
-
-                GraphRayCollision::Intersection(edges)
-            }
         }
     }
 }
