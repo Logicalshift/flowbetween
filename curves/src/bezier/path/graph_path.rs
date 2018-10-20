@@ -883,24 +883,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
-    /// Returns a point outside of this path
-    ///
-    pub fn outside_point(&self) -> Point {
-        let mut outside_point = Point::origin();
-
-        for point in self.points.iter() {
-            outside_point = Point::from_smallest_components(outside_point, point.position);
-
-            for edge in point.forward_edges.iter() {
-                outside_point = Point::from_smallest_components(outside_point, edge.cp1);
-                outside_point = Point::from_smallest_components(outside_point, edge.cp2);
-            }
-        }
-
-        outside_point - Point::from_components(&[0.1, 0.1])
-    }
-
-    ///
     /// Finds the exterior edge (and t value) where a line first collides with this path (closest to the line
     /// start point)
     /// 
