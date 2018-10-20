@@ -1092,15 +1092,18 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     #[inline]
     fn remove_duplicate_collisions_at_start<'a, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
-        let mut visited_start = vec![false; self.points.len()];
+        let mut visited_start = vec![vec![]; self.points.len()];
 
         collisions
             .into_iter()
             .filter(move |(collision, curve_t, _line_t, _position)| {
                 if *curve_t < 0.001 {
                     // At the start of the curve
-                    let was_visited = visited_start[collision.start_idx];
-                    visited_start[collision.start_idx] = true;
+                    let was_visited = visited_start[collision.start_idx].contains(&collision.edge_idx);
+
+                    if !was_visited {
+                        visited_start[collision.start_idx].push(collision.edge_idx);
+                    }
 
                     !was_visited
                 } else {
