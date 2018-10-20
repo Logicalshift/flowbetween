@@ -2,6 +2,8 @@ use flo_curves::*;
 use flo_curves::arc::*;
 use flo_curves::bezier::path::*;
 
+use std::f64;
+
 #[test]
 pub fn create_and_read_simple_graph_path() {
     let path            = (Coord2(10.0, 11.0), vec![(Coord2(15.0, 16.0), Coord2(17.0, 18.0), Coord2(19.0, 20.0)), (Coord2(21.0, 22.0), Coord2(23.0, 24.0), Coord2(25.0, 26.0))]);
@@ -1207,4 +1209,31 @@ fn ray_collide_with_edges_and_convex_point_intersection() {
     assert!(collisions.len() == 3);
     assert!(collisions[1].0.is_intersection());
     assert!(collisions[1].0.len() == 2);
+}
+
+#[test]
+fn ray_collide_doughnuts_many_angles() {
+    let circle1         = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let inner_circle1   = Circle::new(Coord2(5.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+    let circle2         = Circle::new(Coord2(9.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let inner_circle2   = Circle::new(Coord2(9.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+
+    let mut circle1     = GraphPath::from_path(&circle1, ());
+    circle1             = circle1.merge(GraphPath::from_path(&inner_circle1, ()));
+    let mut circle2     = GraphPath::from_path(&circle2, ());
+    circle2             = circle2.merge(GraphPath::from_path(&inner_circle2, ()));
+
+    let graph_path      = circle1.collide(circle2, 0.01);
+
+    for angle in 0..3600 {
+        let angle       = (angle as f64)/3600.0;
+        let angle       = (angle/360.0) * 2.0*f64::consts::PI;
+        let ray_start   = Coord2(9.0, 5.0) + Coord2(5.0*angle.sin(), 5.0*angle.cos());
+        let ray_end     = Coord2(5.0, 5.0) - Coord2(5.0*angle.sin(), 5.0*angle.cos());
+
+        let collisions      = graph_path.ray_collisions(&(ray_start, ray_end));
+        let collision_count = collisions.iter().fold(0, |count, collision| count + collision.0.len());
+
+        assert!((collision_count&1) == 0);
+    }
 }
