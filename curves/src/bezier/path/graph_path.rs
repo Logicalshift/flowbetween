@@ -960,6 +960,32 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Given a list of collisions, removes any that are at the end just before a collinear section
+    ///
+    #[inline]
+    fn remove_collisions_just_before_collinear_section<'a, L: Line<Point=Point>, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, ray: &L, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
+        let ray_coeffs = ray.coefficients();
+
+        collisions.into_iter()
+            .filter(move |(collision, curve_t, _line_t, _position)| {
+                if *curve_t > 0.999 {
+                    let edge = GraphEdge::new(self, *collision);
+                    let next = edge.next_edge();
+
+                    if Self::curve_is_collinear(&next, ray_coeffs) {
+                        // Collisions crossing collinear sections are taken care of during the collinear collision phase
+                        false
+                    } else {
+                        true
+                    }
+                } else {
+                    // Not at the end of a curve
+                    true
+                }
+            })
+    }
+
+    ///
     /// Given a list of collisions, finds the collisions that occurred at the end of an edge and move them to the beginning of the next edge
     ///
     #[inline]
@@ -1100,8 +1126,12 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// 
     pub fn ray_collisions<L: Line<Point=Point>>(&self, ray: &L) -> Vec<(GraphRayCollision, f64, f64, Point)> {
         // Raw collisions
-        let collisions = self.collinear_ray_collisions(ray)
-            .chain(self.raw_ray_collisions(ray));
+        let collinear_collisions    = self.collinear_ray_collisions(ray);
+        let normal_collisions       = self.raw_ray_collisions(ray);
+        let normal_collisions       = self.remove_collisions_just_before_collinear_section(ray, normal_collisions);
+
+        // Chain them together
+        let collisions = collinear_collisions.chain(normal_collisions);
 
         // Filter for accuracy
         let collisions = self.move_collisions_at_end_to_beginning(collisions);
