@@ -1072,8 +1072,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     let cp_in   = previous_edge.control_points().1;
                     let cp_out  = edge.control_points().0;
 
-                    let side_in     = (cp_in.x()*a + cp_in.y()*b + c).signum();
-                    let side_out    = (cp_out.x()*a + cp_out.y()*b + c).signum();
+                    let side_in     = cp_in.x()*a + cp_in.y()*b + c;
+                    let side_out    = cp_out.x()*a + cp_out.y()*b + c;
+
+                    let side_in     = if side_in.abs() < 0.001 { 0.0 } else { side_in.signum() };
+                    let side_out    = if side_out.abs() < 0.001 { 0.0 } else { side_out.signum() };
 
                     side_in != side_out
                 } else {
