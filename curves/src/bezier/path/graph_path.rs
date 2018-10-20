@@ -854,21 +854,37 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     fn crossing_edges<'a>(&'a self, (a, b, c): (f64, f64, f64), points: Vec<usize>) -> Vec<GraphEdge<'a, Point, Label>> {
         let mut crossing_edges = vec![];
 
-        for point_idx in points.iter() {
-            for incoming in self.reverse_edges_for_point(*point_idx) {
+        for point_idx in points.into_iter() {
+            for incoming in self.reverse_edges_for_point(point_idx) {
                 // Get the incoming edge going in the right direction
                 let incoming    = incoming.reversed();
 
+                // Ignore collinear incoming edges
+                if Self::curve_is_collinear(&incoming, (a, b, c)) {
+                    continue;
+                }
+
                 // Fetch the leaving edge for the incoming edge
-                let leaving     = GraphEdgeRef { start_idx: *point_idx, edge_idx: incoming.following_edge_idx(), reverse: false };
-                let leaving     = GraphEdge::new(self, leaving);
+                let leaving     = GraphEdgeRef { start_idx: point_idx, edge_idx: incoming.following_edge_idx(), reverse: false };
+                let mut leaving = GraphEdge::new(self, leaving);
+
+                // Follow the path until we complete a loop or find a leaving edge that's not collinear
+                while Self::curve_is_collinear(&leaving, (a, b, c)) {
+                    leaving = leaving.next_edge();
+
+                    if leaving.start_point_index() == point_idx {
+                        // Found a loop that was entirely collinear
+                        // (Provided that the following edges always form a closed path this should always be reached, which is currently always true for the means we have to create a graph path)
+                        break;
+                    }
+                }
 
                 // If it's not colinear, add to the set of crossing edges
                 if !Self::curve_is_collinear(&leaving, (a, b, c)) {
-                    let incoming_cp1    = incoming.control_points().0;
+                    let incoming_cp2    = incoming.control_points().1;
                     let leaving_cp1     = leaving.control_points().0;
 
-                    let incoming_side   = a*incoming_cp1.x() + b*incoming_cp1.y() + c;
+                    let incoming_side   = a*incoming_cp2.x() + b*incoming_cp2.y() + c;
                     let leaving_side    = a*leaving_cp1.x() + b*leaving_cp1.y() + c;
 
                     if incoming_side.signum() != leaving_side.signum() {
@@ -1291,6 +1307,19 @@ impl<'a, Point: 'a, Label: 'a+Copy> GraphEdge<'a, Point, Label> {
     #[inline]
     fn reversed(mut self) -> Self {
         self.edge.reverse = !self.edge.reverse;
+        self
+    }
+
+    ///
+    /// Following the existing path, returns the next edge index
+    ///
+    fn next_edge(mut self) -> Self {
+        let next_point_idx  = self.end_point_index();
+        let next_edge_idx   = self.following_edge_idx();
+
+        self.edge.start_idx = next_point_idx;
+        self.edge.edge_idx  = next_edge_idx;
+
         self
     }
 
