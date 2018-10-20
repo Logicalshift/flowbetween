@@ -1039,111 +1039,23 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     /// Finds all collisions between a ray and this path
     /// 
-    pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphRayCollision, f64, f64)> {
-        // We'll store the result after visiting all of the edges
-        let mut collision_result    = vec![];
+    pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphRayCollision, f64, f64, Point)> {
+        // Raw collisions
+        let collisions = self.collinear_ray_collisions(ray)
+            .chain(self.raw_ray_collisions(ray));
 
-        // Coefficients of the ray
-        let ray_coeffs              = ray.coefficients();
+        // Filter for accuracy
+        let collisions = self.move_collisions_at_end_to_beginning(collisions);
+        let collisions = self.remove_duplicate_collisions_at_start(collisions);
+        let collisions = self.flag_collisions_at_intersections(collisions);
 
-        // List of points where we've hit the start of the line
-        let mut visited_start       = vec![false; self.points.len()];
+        // Convert to a vec and sort by ray position
+        let mut collisions = collisions.collect::<Vec<_>>();
 
-        // Search for any collinear edges
-        let mut remaining_edges = vec![];
+        collisions.sort_by(|(_edge_a, _curve_t_a, line_t_a, _pos_a), (_edge_b, _curve_t_b, line_t_b, _pos_b)| line_t_a.partial_cmp(line_t_b).unwrap_or(Ordering::Equal));
 
-        for edge in self.all_edges() {
-            if Self::curve_is_collinear(&edge, ray_coeffs) {
-                // Collinear edges need to be processed in a different way. From the point of view of our ray they technically don't
-                // exist, so we need to look at the edges before the collinear edge and the edges after it. If there are edges crossing
-                // from one side to the other, then we need to record a collision for each. If there are no edges crossing, then we need
-                // to just ignore the colinear edge
-
-                // TODO: collinear sections may be longer than a single edge
-                // TODO: the control points do provide tangent values for the curve, but they can be equal to the start point which makes this test less good
-                for crossing in self.crossing_edges(ray_coeffs, vec![edge.start_point_index(), edge.end_point_index()]) {
-                    let line_t  = ray.pos_for_point(&crossing.start_point());
-                    let curve_t = 0.0;
-
-                    if !visited_start[crossing.start_point_index()] {
-                        let collision = if self.points[crossing.start_point_index()].forward_edges.len() > 1 {
-                            GraphRayCollision::new(crossing.into()).make_intersection()
-                        } else {
-                            GraphRayCollision::new(crossing.into())
-                        };
-
-                        collision_result.push((collision, curve_t, line_t));
-                    }
-                }
-
-                // Mark these points as visited
-                visited_start[edge.end_point_index()]   = true;
-                visited_start[edge.start_point_index()] = true;
-            } else {
-                // Process this edge normally
-                remaining_edges.push(edge);
-            }
-        }
-
-        // Visit every edge in this graph and look for collisions
-        for edge in remaining_edges.into_iter() {
-            // If all of the points on this edge are on the same side of the ray, then it's not an intersection
-            if !Self::ray_can_intersect(&edge, ray_coeffs) {
-                continue;
-            }
-
-            // Find out where the line collides with this edge
-            let collisions = curve_intersects_ray(&edge, ray);
-
-            for (curve_t, line_t, _collide_pos) in collisions {
-                // Collisions at the end of a curve are treated as collision on the next curve
-                let end_point       = self.points[edge.end_point_index()].position;
-                let collide_point   = ray.point_at_pos(line_t);
-                let end_offset      = end_point - collide_point;
-                let end_distance_sq = end_offset.dot(&end_offset);
-
-                let (point_idx, curve_t) = if end_distance_sq < 0.000001 {
-                    // Collision is at the end of the curve
-                    (edge.end_point_index(), 0.0)
-                } else {
-                    (edge.start_point_index(), curve_t)
-                };
-
-                // Check if this collision point is at the start
-                let start_point     = self.points[point_idx].position;
-                let offset          = collide_point - start_point;
-                let distance_sq     = offset.dot(&offset);
-
-                if distance_sq < 0.000001 {
-                    // Collision is at the start of the curve
-                    if !visited_start[point_idx] {
-                        // Mark the start of this point as visited
-                        visited_start[point_idx] = true;
-
-                        // Intersections are a single collision against multiple edges
-                        let mut edges   = self.crossing_edges(ray_coeffs, vec![point_idx]).into_iter();
-                        let first_edge  = edges.next();
-
-                        if let Some(first_edge) = first_edge {
-                            let mut intersection = GraphRayCollision::new(first_edge.into());
-
-                            for point_edge in edges {
-                                intersection.push(point_edge.into());
-                            }
-
-                            collision_result.push((intersection, curve_t, line_t));
-                        }
-                    }
-                } else {
-                    // Collision is mid-way in the curve
-                    collision_result.push((GraphRayCollision::new(edge.clone().into()), curve_t, line_t));
-                }
-            }
-        }
-
-        collision_result.sort_by(|(_edge_a, _curve_t_a, line_t_a), (_edge_b, _curve_t_b, line_t_b)| line_t_a.partial_cmp(line_t_b).unwrap_or(Ordering::Equal));
-        collision_result
-    }
+        collisions
+   }
 
     ///
     /// Remove any edges marked as interior

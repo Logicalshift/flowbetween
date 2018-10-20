@@ -554,11 +554,11 @@ fn collision_exactly_on_edge_tgt() {
     assert!(num_intersects == 4);
 }
 
-fn to_collision_with_edges<'a, Point, Label>(collisions: Vec<(GraphRayCollision, f64, f64)>, graph_path: &'a GraphPath<Point, Label>) -> Vec<(GraphEdge<'a, Point, Label>, f64, f64)> 
+fn to_collision_with_edges<'a, Point, Label>(collisions: Vec<(GraphRayCollision, f64, f64, Coord2)>, graph_path: &'a GraphPath<Point, Label>) -> Vec<(GraphEdge<'a, Point, Label>, f64, f64)> 
 where   Point: Coordinate+Coordinate2D,
         Label: Copy {
     collisions.into_iter()
-        .flat_map(move |(collision, curve_t, line_t)| {
+        .flat_map(move |(collision, curve_t, line_t, _pos)| {
             collision.into_iter()
                 .map(move |edge| (graph_path.get_edge(edge), curve_t, line_t))
         })
