@@ -883,8 +883,21 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
-    /// Finds the exterior edge (and t value) where a line first collides with this path (closest to the line
-    /// start point)
+    /// Takes a ray and collides it against every edge in this path, returning a list of collisions
+    ///
+    fn raw_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
+        let ray_coeffs              = ray.coefficients();
+
+        self.all_edges()
+            .filter(move |edge| !Self::curve_is_collinear(&edge, ray_coeffs))
+            .filter(move |edge| Self::ray_can_intersect(&edge, ray_coeffs))
+            .flat_map(move |edge| curve_intersects_ray(&edge, ray)
+                    .into_iter()
+                    .map(move |(curve_t, line_t, collide_pos)| (GraphRayCollision::new(GraphEdgeRef::from(&edge)), curve_t, line_t, collide_pos)))
+    }
+
+    ///
+    /// Finds all collisions between a ray and this path
     /// 
     pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphRayCollision, f64, f64)> {
         // We'll store the result after visiting all of the edges
@@ -1396,7 +1409,7 @@ impl GraphRayCollision {
     pub fn is_intersection(&self) -> bool {
         match self {
             GraphRayCollision::SingleEdge(_)        => false,
-            GraphRayCollision::Intersection(edges)  => true
+            GraphRayCollision::Intersection(_edges) => true
         }
     }
 
