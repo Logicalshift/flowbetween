@@ -982,6 +982,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             })
     }
 
+    // TODO: move collisions on collinear edges to the next non-collinear start point
+    // TODO: remove 'glancing' collisions
+
     ///
     /// Finds any collision in the source that's at the start of its curve and filters so that only a single version is returned
     /// 
