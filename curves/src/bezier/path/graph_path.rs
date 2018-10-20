@@ -902,7 +902,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Takes a ray and collides it against every edge in this path, returning a list of collisions
     ///
     #[inline]
-    fn raw_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
+    fn raw_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
         let ray_coeffs  = ray.coefficients();
 
         self.all_edges()
@@ -910,7 +910,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             .filter(move |edge| Self::ray_can_intersect(&edge, ray_coeffs))
             .flat_map(move |edge| curve_intersects_ray(&edge, ray)
                     .into_iter()
-                    .map(move |(curve_t, line_t, collide_pos)| (GraphRayCollision::new(GraphEdgeRef::from(&edge)), curve_t, line_t, collide_pos)))
+                    .map(move |(curve_t, line_t, collide_pos)| (GraphEdgeRef::from(&edge), curve_t, line_t, collide_pos)))
     }
 
     ///
@@ -918,7 +918,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// section (collinear edges have 0 width so can't be crossed themselves)
     ///
     #[inline]
-    fn collinear_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
+    fn collinear_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
         let ray_coeffs = ray.coefficients();
 
         // Find all of the collinear sections (sets of points connected by collinear edges)
@@ -956,11 +956,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     .map(move |crossing_edge| {
                         let point   = crossing_edge.start_point();
                         let line_t  = ray.pos_for_point(&point);
-                        if self.points[crossing_edge.start_point_index()].forward_edges.len() > 1 {
-                            (GraphRayCollision::new(GraphEdgeRef::from(&crossing_edge)).make_intersection(), 0.0, line_t, point)
-                        } else {
-                            (GraphRayCollision::new(GraphEdgeRef::from(&crossing_edge)), 0.0, line_t, point)
-                        }
+
+                        (GraphEdgeRef::from(&crossing_edge), 0.0, line_t, point)
                     }))
     }
 
@@ -968,21 +965,73 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Given a list of collisions, finds the collisions that occurred at the end of an edge and move them to the beginning of the next edge
     ///
     #[inline]
-    fn move_collisions_at_end_to_beginning<'a, Collisions: 'a+IntoIterator<Item=(GraphRayCollision, f64, f64, Point)>>(&'a self, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
+    fn move_collisions_at_end_to_beginning<'a, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
         collisions.into_iter()
             .map(move |(collision, curve_t, line_t, position)| {
                 if curve_t > 0.999 {
                     // Collisions at the very end of the curve should be considered to be at the start of the following curve
                     // (as a ray intersecting a point will collide with both the previous and next curve)
-                    let collision = collision.map(|edge| GraphEdgeRef {
-                        start_idx:  self.points[edge.start_idx].forward_edges[edge.edge_idx].end_idx,
-                        edge_idx:   self.points[edge.start_idx].forward_edges[edge.edge_idx].following_edge_idx,
+                    let collision = GraphEdgeRef {
+                        start_idx:  self.points[collision.start_idx].forward_edges[collision.edge_idx].end_idx,
+                        edge_idx:   self.points[collision.start_idx].forward_edges[collision.edge_idx].following_edge_idx,
                         reverse:    false,
-                    });
+                    };
                     (collision, 0.0, line_t, position)
                 } else {
                     // Not at the end of a curve
                     (collision, curve_t, line_t, position)
+                }
+            })
+    }
+
+    ///
+    /// Finds any collision in the source that's at the start of its curve and filters so that only a single version is returned
+    /// 
+    /// (A collision exactly at the start of an edge will produce two collisions: one of the incoming edge and one on the outgoing one)
+    ///
+    #[inline]
+    fn remove_duplicate_collisions_at_start<'a, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
+        let mut visited_start = vec![false; self.points.len()];
+
+        collisions
+            .into_iter()
+            .filter(move |(collision, curve_t, _line_t, _position)| {
+                if *curve_t < 0.001 {
+                    // At the start of the curve
+                    let was_visited = visited_start[collision.start_idx];
+                    visited_start[collision.start_idx] = true;
+
+                    !was_visited
+                } else {
+                    // Not at the start of the curve
+                    true
+                }
+            })
+    }
+
+    ///
+    /// Finds any collision that occurred too close to an intersection and flags it as such
+    ///
+    #[inline]
+    fn flag_collisions_at_intersections<'a, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
+        collisions
+            .into_iter()
+            .map(move |(collision, curve_t, line_t, position)| {
+                let start_point = &self.points[collision.start_idx].position;
+                let offset      = *start_point - position;
+
+                if curve_t < 0.001 || offset.dot(&offset) < 0.00001 {
+                    // Might be at an intersection (close to the start of the curve)
+                    if self.points[collision.start_idx].forward_edges.len() > 1 {
+                        // Intersection
+                        (GraphRayCollision::Intersection(vec![collision]), curve_t, line_t, position)
+                    } else {
+                        // Edge with only a single following point
+                        (GraphRayCollision::SingleEdge(collision), curve_t, line_t, position)
+                    }
+                } else {
+                    // Not at an intersection
+                    (GraphRayCollision::SingleEdge(collision), curve_t, line_t, position)
                 }
             })
     }
