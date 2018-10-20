@@ -1679,4 +1679,44 @@ mod test {
 
         assert!(collisions.len() == 1);
     }
+
+    #[test]
+    fn concave_collision_breakdown() {
+        let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(6.0, 7.0))
+            .line_to(Coord2(3.0, 7.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp  = GraphPath::from_path(&concave_shape, ());
+        let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
+
+        // Raw collisions
+        let collinear_collisions    = gp.collinear_ray_collisions(&ray).collect::<Vec<_>>();
+        let normal_collisions       = gp.raw_ray_collisions(&ray).collect::<Vec<_>>();
+        let normal_collisions       = gp.remove_collisions_before_or_after_collinear_section(&ray, normal_collisions).collect::<Vec<_>>();
+
+        assert!(collinear_collisions.len() == 1);
+        assert!(normal_collisions.len() == 1);
+
+        // Chain them together
+        let collisions = collinear_collisions.into_iter().chain(normal_collisions.into_iter()).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+
+        // Filter for accuracy
+        let collisions = gp.move_collisions_at_end_to_beginning(collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = gp.move_collinear_collisions_to_end(&ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = gp.remove_glancing_collisions(&ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = gp.remove_duplicate_collisions_at_start(collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = gp.flag_collisions_at_intersections(collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+    }
 }
