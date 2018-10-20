@@ -905,17 +905,45 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     fn collinear_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
         let ray_coeffs = ray.coefficients();
 
-        self.all_edges()
-            .filter(move |edge| Self::curve_is_collinear(&edge, ray_coeffs))
-            .flat_map(move |edge| self.crossing_edges(ray_coeffs, vec![edge.start_point_index(), edge.end_point_index()])
+        // Find all of the collinear sections
+        let mut section_with_point: Vec<Option<usize>>  = vec![None; self.points.len()];
+        let mut collinear_sections: Vec<Vec<_>>         = vec![];
+
+        for edge in self.all_edges().filter(|edge| Self::curve_is_collinear(&edge, ray_coeffs)) {
+            let start_idx   = edge.start_point_index();
+            let end_idx     = edge.end_point_index();
+
+            if let Some(start_section) = section_with_point[start_idx] {
+                if let Some(_end_section) = section_with_point[end_idx] {
+                    // Already seen an edge between these points
+                } else {
+                    // end_idx is new
+                    collinear_sections[start_section].push(end_idx);
+                }
+            } else if let Some(end_section) = section_with_point[end_idx] {
+                // start_idx is new
+                collinear_sections[end_section].push(start_idx);
+            } else {
+                // New section
+                let new_section = collinear_sections.len();
+                collinear_sections.push(vec![start_idx, end_idx]);
+                section_with_point[start_idx]   = Some(new_section);
+                section_with_point[end_idx]     = Some(new_section);
+            }
+        }
+
+        // Find the edges crossing each collinear section
+        collinear_sections
+            .into_iter()
+            .flat_map(move |colinear_edge_points| self.crossing_edges(ray_coeffs, colinear_edge_points)
                     .into_iter()
                     .map(move |crossing_edge| {
                         let point   = crossing_edge.start_point();
                         let line_t  = ray.pos_for_point(&point);
                         if self.points[crossing_edge.start_point_index()].forward_edges.len() > 1 {
-                            (GraphRayCollision::new(GraphEdgeRef::from(&edge)).make_intersection(), 0.0, line_t, point)
+                            (GraphRayCollision::new(GraphEdgeRef::from(&crossing_edge)).make_intersection(), 0.0, line_t, point)
                         } else {
-                            (GraphRayCollision::new(GraphEdgeRef::from(&edge)), 0.0, line_t, point)
+                            (GraphRayCollision::new(GraphEdgeRef::from(&crossing_edge)), 0.0, line_t, point)
                         }
                     }))
     }
