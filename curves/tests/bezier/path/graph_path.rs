@@ -1096,7 +1096,6 @@ fn ray_collide_along_convex_edge() {
 
 #[test]
 fn ray_collide_along_concave_edge() {
-    // Two rectangles
     let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(5.0, 5.0))

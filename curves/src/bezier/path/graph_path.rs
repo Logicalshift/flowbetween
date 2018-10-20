@@ -1617,7 +1617,6 @@ mod test {
         assert!(collisions.len() == 0);
     }
 
-
     #[test]
     fn raw_collision_along_convex_edge_produces_no_collisions() {
         // Just one rectangle
@@ -1635,7 +1634,49 @@ mod test {
         let collisions = gp.remove_collisions_before_or_after_collinear_section(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)), collisions);
         let collisions = collisions.collect::<Vec<_>>();
 
-        println!("{:?}", collisions);
         assert!(collisions.len() == 0);
+    }
+
+    #[test]
+    fn collinear_collision_along_concave_edge_produces_single_collision() {
+        let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(6.0, 7.0))
+            .line_to(Coord2(3.0, 7.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp  = GraphPath::from_path(&concave_shape, ());
+        let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
+
+        let collisions = gp.collinear_ray_collisions(&ray);
+        let collisions = collisions.collect::<Vec<_>>();
+
+        assert!(collisions.len() == 1);
+    }
+
+    #[test]
+    fn raw_collision_along_concave_edge_produces_single_collision() {
+        let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(6.0, 7.0))
+            .line_to(Coord2(3.0, 7.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp  = GraphPath::from_path(&concave_shape, ());
+        let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
+
+        let collisions = gp.raw_ray_collisions(&ray);
+        let collisions = gp.remove_collisions_before_or_after_collinear_section(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)), collisions);
+        let collisions = collisions.collect::<Vec<_>>();
+
+        assert!(collisions.len() == 1);
     }
 }
