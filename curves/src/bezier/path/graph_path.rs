@@ -1452,16 +1452,6 @@ impl GraphRayCollision {
     }
 
     ///
-    /// Returns the number of edges in this intersection
-    ///
-    pub fn len(&self) -> usize {
-        match self {
-            GraphRayCollision::SingleEdge(_)        => 1,
-            GraphRayCollision::Intersection(edges)  => 1
-        }
-    }
-
-    ///
     /// Returns the edge this collision is for
     ///
     #[inline]

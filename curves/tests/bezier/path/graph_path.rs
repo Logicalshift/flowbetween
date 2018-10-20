@@ -1089,6 +1089,7 @@ fn ray_collide_along_convex_edge() {
     assert!(collisions_no_seam.len() == 2);
 
     // As the ray never actually enters the shape along the seam, there should be 0 collisions
+    println!("{:?}", collisions_seam);
     assert!(collisions_seam.len() != 2);
     assert!(collisions_seam.len() == 0);
 }
@@ -1114,6 +1115,7 @@ fn ray_collide_along_concave_edge() {
     assert!(collisions_no_seam.len() == 2);
 
     // The shape is concave and the ray should enter it
+    println!("{:?}", collisions_seam);
     assert!(collisions_seam.len() != 1);
     assert!(collisions_seam.len() == 2);
 }
@@ -1206,9 +1208,9 @@ fn ray_collide_with_edges_and_convex_point_intersection() {
     println!("{:?}", with_interior_point);
     println!("{:?}", collisions);
 
-    assert!(collisions.len() == 3);
+    assert!(collisions.len() == 4);
     assert!(collisions[1].0.is_intersection());
-    assert!(collisions[1].0.len() == 2);
+    assert!(collisions[2].0.is_intersection());
 }
 
 #[test]
@@ -1226,7 +1228,7 @@ fn ray_collide_doughnuts_near_intersection() {
     let graph_path      = circle1.collide(circle2, 0.1);
 
     let collisions      = graph_path.ray_collisions(&(Coord2(7.000584357101389, 8.342524209216537), Coord2(6.941479643691172, 8.441210096108172)));
-    let collision_count = collisions.iter().fold(0, |count, collision| count + collision.0.len());
+    let collision_count = collisions.len();
 
     println!("{:?}", collisions);
 
@@ -1254,7 +1256,7 @@ fn ray_collide_doughnuts_many_angles() {
         let ray_end     = Coord2(5.0, 5.0) - Coord2(5.0*angle.sin(), 5.0*angle.cos());
 
         let collisions      = graph_path.ray_collisions(&(ray_start, ray_end));
-        let collision_count = collisions.iter().fold(0, |count, collision| count + collision.0.len());
+        let collision_count = collisions.len();
 
         assert!((collision_count&1) == 0);
     }
