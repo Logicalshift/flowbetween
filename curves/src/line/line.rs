@@ -32,10 +32,10 @@ pub trait Line : Geo {
     /// If the point is not on the line, this will return a t value where at least one of the components of the point matches with
     /// the point on the line.
     ///
-    fn pos_for_point(&self, point: Self::Point) -> f64 {
+    fn pos_for_point(&self, point: &Self::Point) -> f64 {
         let (p1, p2)    = self.points();
         let delta_line  = p2-p1;
-        let delta_point = point-p1;
+        let delta_point = *point-p1;
 
         for component_idx in 0..Self::Point::len() {
             let line_component  = delta_line.get(component_idx);

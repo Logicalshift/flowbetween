@@ -885,8 +885,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     /// Takes a ray and collides it against every edge in this path, returning a list of collisions
     ///
+    #[inline]
     fn raw_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
-        let ray_coeffs              = ray.coefficients();
+        let ray_coeffs  = ray.coefficients();
 
         self.all_edges()
             .filter(move |edge| !Self::curve_is_collinear(&edge, ray_coeffs))
@@ -894,6 +895,29 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             .flat_map(move |edge| curve_intersects_ray(&edge, ray)
                     .into_iter()
                     .map(move |(curve_t, line_t, collide_pos)| (GraphRayCollision::new(GraphEdgeRef::from(&edge)), curve_t, line_t, collide_pos)))
+    }
+
+    ///
+    /// Takes a ray and collides it against every collinear edge in this path, returning the list of edges that cross the collinear
+    /// section (collinear edges have 0 width so can't be crossed themselves)
+    ///
+    #[inline]
+    fn collinear_ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &'a L) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
+        let ray_coeffs = ray.coefficients();
+
+        self.all_edges()
+            .filter(move |edge| Self::curve_is_collinear(&edge, ray_coeffs))
+            .flat_map(move |edge| self.crossing_edges(ray_coeffs, vec![edge.start_point_index(), edge.end_point_index()])
+                    .into_iter()
+                    .map(move |crossing_edge| {
+                        let point   = crossing_edge.start_point();
+                        let line_t  = ray.pos_for_point(&point);
+                        if self.points[crossing_edge.start_point_index()].forward_edges.len() > 1 {
+                            (GraphRayCollision::new(GraphEdgeRef::from(&edge)).make_intersection(), 0.0, line_t, point)
+                        } else {
+                            (GraphRayCollision::new(GraphEdgeRef::from(&edge)), 0.0, line_t, point)
+                        }
+                    }))
     }
 
     ///
@@ -922,7 +946,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 // TODO: collinear sections may be longer than a single edge
                 // TODO: the control points do provide tangent values for the curve, but they can be equal to the start point which makes this test less good
                 for crossing in self.crossing_edges(ray_coeffs, vec![edge.start_point_index(), edge.end_point_index()]) {
-                    let line_t  = ray.pos_for_point(crossing.start_point());
+                    let line_t  = ray.pos_for_point(&crossing.start_point());
                     let curve_t = 0.0;
 
                     if !visited_start[crossing.start_point_index()] {
@@ -1449,5 +1473,35 @@ impl Iterator for GraphRayIterator {
             GraphRayIterator::SingleEdge(once)  => once.next(),
             GraphRayIterator::Intersection(vec) => vec.next()
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::super::super::arc::*;
+
+    fn donut() -> GraphPath<Coord2, ()> {
+        let circle1         = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+        let inner_circle1   = Circle::new(Coord2(5.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+        let circle2         = Circle::new(Coord2(9.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+        let inner_circle2   = Circle::new(Coord2(9.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+
+        let mut circle1     = GraphPath::from_path(&circle1, ());
+        circle1             = circle1.merge(GraphPath::from_path(&inner_circle1, ()));
+        let mut circle2     = GraphPath::from_path(&circle2, ());
+        circle2             = circle2.merge(GraphPath::from_path(&inner_circle2, ()));
+
+        circle1.collide(circle2, 0.1)
+    }
+
+    #[test]
+    fn raw_donut_collisions() {
+        let donut = donut();
+
+        let raw_collisions = donut.raw_ray_collisions(&(Coord2(7.000584357101389, 8.342524209216537), Coord2(6.941479643691172, 8.441210096108172)));
+        println!("{:?}", raw_collisions.collect::<Vec<_>>());
+
+        assert!(false);
     }
 }
