@@ -1722,4 +1722,41 @@ mod test {
         let collisions = gp.flag_collisions_at_intersections(collisions).collect::<Vec<_>>();
         assert!(collisions.len() == 2);
     }
+
+    #[test]
+    fn interior_point_produces_two_collisions() {
+        let with_interior_point = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(2.0, 2.0))
+            .line_to(Coord2(4.0, 2.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        let mut with_interior_point = GraphPath::from_path(&with_interior_point, ());
+        with_interior_point.self_collide(0.01);
+
+        let ray         = (Coord2(0.0, 3.0), Coord2(1.0, 3.0));
+        let collisions  = with_interior_point.raw_ray_collisions(&ray);
+
+        let collisions = collisions.collect::<Vec<_>>();
+        println!("{:?}", with_interior_point);
+        println!("{:?}", collisions);
+
+        assert!(collisions.len() == 4);
+
+        // Filter for accuracy
+        let collisions = with_interior_point.move_collisions_at_end_to_beginning(collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        let collisions = with_interior_point.move_collinear_collisions_to_end(&ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        let collisions = with_interior_point.remove_glancing_collisions(&ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        println!("{:?}", collisions);
+        let collisions = with_interior_point.remove_duplicate_collisions_at_start(collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        let collisions = with_interior_point.flag_collisions_at_intersections(collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+    }
 }
