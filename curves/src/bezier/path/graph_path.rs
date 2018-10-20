@@ -982,8 +982,66 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             })
     }
 
-    // TODO: move collisions on collinear edges to the next non-collinear start point
-    // TODO: remove 'glancing' collisions
+    ///
+    /// Given a list of collisions, finds any that are on a collinear line and moves them to the end of the collinear section
+    ///
+    #[inline]
+    fn move_collinear_collisions_to_end<'a, L: Line<Point=Point>, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, ray: &L, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
+        let ray_coeffs = ray.coefficients();
+
+        collisions.into_iter()
+            .map(move |(collision, curve_t, line_t, position)| {
+                let edge = GraphEdge::new(self, collision);
+                if Self::curve_is_collinear(&edge, ray_coeffs) {
+                    let mut edge = edge;
+
+                    loop {
+                        edge = edge.next_edge();
+                        if !Self::curve_is_collinear(&edge, ray_coeffs) {
+                            break;
+                        }
+                    }
+
+                    let position = edge.start_point();
+                    (edge.into(), 0.0, line_t, position)
+                } else {
+                    (collision, curve_t, line_t, position)
+                }
+            })
+    }
+
+    ///
+    /// Removes collisions that do not appear to enter the shape
+    ///
+    #[inline]
+    fn remove_glancing_collisions<'a, L: Line<Point=Point>, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, ray: &L, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
+        let (a, b, c) = ray.coefficients();
+
+        collisions
+            .into_iter()
+            .filter(move |(collision, curve_t, _line_t, _position)| {
+                if *curve_t < 0.001 {
+                    // Find the edge before this one
+                    let edge            = GraphEdge::new(self, *collision);
+                    let previous_edge   = self.reverse_edges_for_point(collision.start_idx)
+                        .map(|edge| edge.reversed())
+                        .filter(|edge| edge.following_edge_idx() == collision.edge_idx)
+                        .nth(0)
+                        .unwrap();
+
+                    // A glancing collision has control points on the same side of the ray
+                    let cp_in   = previous_edge.control_points().1;
+                    let cp_out  = edge.control_points().0;
+
+                    let side_in     = (cp_in.x()*a + cp_in.y()*b + c).signum();
+                    let side_out    = (cp_out.x()*a + cp_out.y()*b + c).signum();
+
+                    side_in != side_out
+                } else {
+                    true
+                }
+            })
+    }
 
     ///
     /// Finds any collision in the source that's at the start of its curve and filters so that only a single version is returned
@@ -1040,13 +1098,15 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     /// Finds all collisions between a ray and this path
     /// 
-    pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphRayCollision, f64, f64, Point)> {
+    pub fn ray_collisions<L: Line<Point=Point>>(&self, ray: &L) -> Vec<(GraphRayCollision, f64, f64, Point)> {
         // Raw collisions
         let collisions = self.collinear_ray_collisions(ray)
             .chain(self.raw_ray_collisions(ray));
 
         // Filter for accuracy
         let collisions = self.move_collisions_at_end_to_beginning(collisions);
+        let collisions = self.move_collinear_collisions_to_end(ray, collisions);
+        let collisions = self.remove_glancing_collisions(ray, collisions);
         let collisions = self.remove_duplicate_collisions_at_start(collisions);
         let collisions = self.flag_collisions_at_intersections(collisions);
 
