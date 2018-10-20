@@ -963,7 +963,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Given a list of collisions, removes any that are at the end just before a collinear section
     ///
     #[inline]
-    fn remove_collisions_just_before_collinear_section<'a, L: Line<Point=Point>, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, ray: &L, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
+    fn remove_collisions_before_or_after_collinear_section<'a, L: Line<Point=Point>, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, ray: &L, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
         let ray_coeffs = ray.coefficients();
 
         collisions.into_iter()
@@ -973,6 +973,19 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     let next = edge.next_edge();
 
                     if Self::curve_is_collinear(&next, ray_coeffs) {
+                        // Collisions crossing collinear sections are taken care of during the collinear collision phase
+                        false
+                    } else {
+                        true
+                    }
+                } else if *curve_t < 0.001 {
+                    let previous    = self.reverse_edges_for_point(collision.start_idx)
+                        .map(|previous| previous.reversed())
+                        .filter(|previous| previous.following_edge_idx() == collision.edge_idx)
+                        .nth(0)
+                        .unwrap();
+
+                    if Self::curve_is_collinear(&previous, ray_coeffs) {
                         // Collisions crossing collinear sections are taken care of during the collinear collision phase
                         false
                     } else {
@@ -1128,7 +1141,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Raw collisions
         let collinear_collisions    = self.collinear_ray_collisions(ray);
         let normal_collisions       = self.raw_ray_collisions(ray);
-        let normal_collisions       = self.remove_collisions_just_before_collinear_section(ray, normal_collisions);
+        let normal_collisions       = self.remove_collisions_before_or_after_collinear_section(ray, normal_collisions);
 
         // Chain them together
         let collisions = collinear_collisions.chain(normal_collisions);
@@ -1559,6 +1572,7 @@ impl GraphRayCollision {
 #[cfg(test)]
 mod test {
     use super::*;
+    use super::super::*;
     use super::super::super::super::arc::*;
 
     fn donut() -> GraphPath<Coord2, ()> {
@@ -1583,5 +1597,45 @@ mod test {
         println!("{:?}", raw_collisions.collect::<Vec<_>>());
 
         // assert!(false);
+    }
+
+    #[test]
+    fn collinear_collision_along_convex_edge_produces_no_collisions() {
+        // Just one rectangle
+        let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp = GraphPath::from_path(&rectangle1, ());
+
+        let collisions = gp.collinear_ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)))
+            .collect::<Vec<_>>();
+        assert!(collisions.len() == 0);
+    }
+
+
+    #[test]
+    fn raw_collision_along_convex_edge_produces_no_collisions() {
+        // Just one rectangle
+        let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp = GraphPath::from_path(&rectangle1, ());
+
+        let collisions = gp.raw_ray_collisions(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
+        let collisions = gp.remove_collisions_before_or_after_collinear_section(&(Coord2(5.0, 0.0), Coord2(5.0, 5.0)), collisions);
+        let collisions = collisions.collect::<Vec<_>>();
+
+        println!("{:?}", collisions);
+        assert!(collisions.len() == 0);
     }
 }

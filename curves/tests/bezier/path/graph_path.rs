@@ -1072,7 +1072,7 @@ pub fn collide_rectangle_with_self() {
 
 #[test]
 fn ray_collide_along_convex_edge() {
-    // Two rectangles
+    // Just one rectangle
     let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(5.0, 5.0))
