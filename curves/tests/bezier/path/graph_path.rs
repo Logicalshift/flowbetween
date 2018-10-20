@@ -558,9 +558,9 @@ fn to_collision_with_edges<'a, Point, Label>(collisions: Vec<(GraphRayCollision,
 where   Point: Coordinate+Coordinate2D,
         Label: Copy {
     collisions.into_iter()
-        .flat_map(move |(collision, curve_t, line_t, _pos)| {
-            collision.into_iter()
-                .map(move |edge| (graph_path.get_edge(edge), curve_t, line_t))
+        .map(move |(collision, curve_t, line_t, _pos)| {
+            let edge = collision.edge();
+            (graph_path.get_edge(edge), curve_t, line_t)
         })
         .collect()
 }

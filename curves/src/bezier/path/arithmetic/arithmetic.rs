@@ -70,44 +70,43 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
 
                 for (collision, curve_t, _line_t, _pos) in collisions {
                     let is_intersection = collision.is_intersection();
+                    let edge            = collision.edge();
 
-                    for edge in collision {
-                        let PathLabel(path, direction) = self.edge_label(edge);
+                    let PathLabel(path, direction) = self.edge_label(edge);
 
-                        // The relative direction of the tangent to the ray indicates the direction we're crossing in
-                        let normal  = self.get_edge(edge).normal_at_pos(curve_t);
+                    // The relative direction of the tangent to the ray indicates the direction we're crossing in
+                    let normal  = self.get_edge(edge).normal_at_pos(curve_t);
 
-                        let side    = ray_direction.dot(&normal).signum() as i32;
-                        let side    = match direction {
-                            PathDirection::Clockwise        => { side },
-                            PathDirection::Anticlockwise    => { -side }
-                        };
+                    let side    = ray_direction.dot(&normal).signum() as i32;
+                    let side    = match direction {
+                        PathDirection::Clockwise        => { side },
+                        PathDirection::Anticlockwise    => { -side }
+                    };
 
-                        let was_inside = is_inside(path1_crossings, path2_crossings);
-                        if side < 0 {
-                            match path {
-                                PathSource::Path1 => { path1_crossings -= 1 },
-                                PathSource::Path2 => { path2_crossings -= 1 }
-                            }
-                        } else if side > 0 {
-                            match path {
-                                PathSource::Path1 => { path1_crossings += 1 },
-                                PathSource::Path2 => { path2_crossings += 1 }
-                            }
+                    let was_inside = is_inside(path1_crossings, path2_crossings);
+                    if side < 0 {
+                        match path {
+                            PathSource::Path1 => { path1_crossings -= 1 },
+                            PathSource::Path2 => { path2_crossings -= 1 }
                         }
-                        let is_inside = is_inside(path1_crossings, path2_crossings);
+                    } else if side > 0 {
+                        match path {
+                            PathSource::Path1 => { path1_crossings += 1 },
+                            PathSource::Path2 => { path2_crossings += 1 }
+                        }
+                    }
+                    let is_inside = is_inside(path1_crossings, path2_crossings);
 
-                        // If this isn't an intersection, set whether or not the edge is exterior
-                        let edge_kind = self.edge_kind(edge);
-                        if !is_intersection && (edge_kind == GraphPathEdgeKind::Uncategorised || edge_kind == GraphPathEdgeKind::Visited) {
-                            // Exterior edges move from inside to outside or vice-versa
-                            if was_inside ^ is_inside {
-                                // Exterior edge
-                                self.set_edge_kind_connected(edge, GraphPathEdgeKind::Exterior);
-                            } else {
-                                // Interior edge
-                                self.set_edge_kind_connected(edge, GraphPathEdgeKind::Interior);
-                            }
+                    // If this isn't an intersection, set whether or not the edge is exterior
+                    let edge_kind = self.edge_kind(edge);
+                    if !is_intersection && (edge_kind == GraphPathEdgeKind::Uncategorised || edge_kind == GraphPathEdgeKind::Visited) {
+                        // Exterior edges move from inside to outside or vice-versa
+                        if was_inside ^ is_inside {
+                            // Exterior edge
+                            self.set_edge_kind(edge, GraphPathEdgeKind::Exterior);
+                        } else {
+                            // Interior edge
+                            self.set_edge_kind(edge, GraphPathEdgeKind::Interior);
                         }
                     }
                 }

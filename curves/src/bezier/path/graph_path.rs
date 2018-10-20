@@ -7,8 +7,6 @@ use super::super::super::coordinate::*;
 
 use std::fmt;
 use std::mem;
-use std::vec;
-use std::iter;
 use std::ops::Range;
 use std::cmp::Ordering;
 
@@ -17,13 +15,13 @@ const CLOSE_DISTANCE: f64 = 0.01;
 ///
 /// Represents a collision between a ray and a GraphPath
 ///
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum GraphRayCollision {
     /// Collision against a single edge
     SingleEdge(GraphEdgeRef),
 
     /// Collision against an intersection point
-    Intersection(Vec<GraphEdgeRef>)
+    Intersection(GraphEdgeRef)
 }
 
 ///
@@ -1024,7 +1022,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     // Might be at an intersection (close to the start of the curve)
                     if self.points[collision.start_idx].forward_edges.len() > 1 {
                         // Intersection
-                        (GraphRayCollision::Intersection(vec![collision]), curve_t, line_t, position)
+                        (GraphRayCollision::Intersection(collision), curve_t, line_t, position)
                     } else {
                         // Edge with only a single following point
                         (GraphRayCollision::SingleEdge(collision), curve_t, line_t, position)
@@ -1459,38 +1457,18 @@ impl GraphRayCollision {
     pub fn len(&self) -> usize {
         match self {
             GraphRayCollision::SingleEdge(_)        => 1,
-            GraphRayCollision::Intersection(edges)  => edges.len()
+            GraphRayCollision::Intersection(edges)  => 1
         }
     }
-}
 
-impl IntoIterator for GraphRayCollision {
-    type Item       = GraphEdgeRef;
-    type IntoIter   = GraphRayIterator;
-
-    fn into_iter(self) -> Self::IntoIter {
+    ///
+    /// Returns the edge this collision is for
+    ///
+    #[inline]
+    pub fn edge(&self) -> GraphEdgeRef {
         match self {
-            GraphRayCollision::SingleEdge(edge)     => GraphRayIterator::SingleEdge(iter::once(edge)),
-            GraphRayCollision::Intersection(vec)    => GraphRayIterator::Intersection(vec.into_iter())
-        }
-    }
-}
-
-///
-/// Iterator over the edges in a collision
-///
-pub enum GraphRayIterator {
-    SingleEdge(iter::Once<GraphEdgeRef>),
-    Intersection(vec::IntoIter<GraphEdgeRef>)
-}
-
-impl Iterator for GraphRayIterator {
-    type Item = GraphEdgeRef;
-
-    fn next(&mut self) -> Option<GraphEdgeRef> {
-        match self {
-            GraphRayIterator::SingleEdge(once)  => once.next(),
-            GraphRayIterator::Intersection(vec) => vec.next()
+            GraphRayCollision::SingleEdge(edge)     => *edge,
+            GraphRayCollision::Intersection(edge)   => *edge,
         }
     }
 }
