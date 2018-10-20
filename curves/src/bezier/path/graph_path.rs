@@ -965,6 +965,29 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Given a list of collisions, finds the collisions that occurred at the end of an edge and move them to the beginning of the next edge
+    ///
+    #[inline]
+    fn move_collisions_at_end_to_beginning<'a, Collisions: 'a+IntoIterator<Item=(GraphRayCollision, f64, f64, Point)>>(&'a self, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphRayCollision, f64, f64, Point)> {
+        collisions.into_iter()
+            .map(move |(collision, curve_t, line_t, position)| {
+                if curve_t > 0.999 {
+                    // Collisions at the very end of the curve should be considered to be at the start of the following curve
+                    // (as a ray intersecting a point will collide with both the previous and next curve)
+                    let collision = collision.map(|edge| GraphEdgeRef {
+                        start_idx:  self.points[edge.start_idx].forward_edges[edge.edge_idx].end_idx,
+                        edge_idx:   self.points[edge.start_idx].forward_edges[edge.edge_idx].following_edge_idx,
+                        reverse:    false,
+                    });
+                    (collision, 0.0, line_t, position)
+                } else {
+                    // Not at the end of a curve
+                    (collision, curve_t, line_t, position)
+                }
+            })
+    }
+
+    ///
     /// Finds all collisions between a ray and this path
     /// 
     pub fn ray_collisions<'a, L: Line<Point=Point>>(&'a self, ray: &L) -> Vec<(GraphRayCollision, f64, f64)> {
@@ -1508,10 +1531,29 @@ impl GraphRayCollision {
         }
     }
 
+    ///
+    /// Returns the number of edges in this intersection
+    ///
     pub fn len(&self) -> usize {
         match self {
             GraphRayCollision::SingleEdge(_)        => 1,
             GraphRayCollision::Intersection(edges)  => edges.len()
+        }
+    }
+
+    ///
+    /// Maps the edgerefs in this collision to new values
+    ///
+    pub fn map<MapFn: Fn(GraphEdgeRef) -> GraphEdgeRef>(self, map_fn: MapFn) -> GraphRayCollision {
+        match self {
+            GraphRayCollision::SingleEdge(edge)         => GraphRayCollision::SingleEdge(map_fn(edge)),
+            GraphRayCollision::Intersection(mut edges)  => {
+                for idx in 0..edges.len() {
+                    edges[idx] = map_fn(edges[idx]);
+                }
+
+                GraphRayCollision::Intersection(edges)
+            }
         }
     }
 }
