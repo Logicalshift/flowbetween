@@ -1212,6 +1212,28 @@ fn ray_collide_with_edges_and_convex_point_intersection() {
 }
 
 #[test]
+fn ray_collide_doughnuts_near_intersection() {
+    let circle1         = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let inner_circle1   = Circle::new(Coord2(5.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+    let circle2         = Circle::new(Coord2(9.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
+    let inner_circle2   = Circle::new(Coord2(9.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
+
+    let mut circle1     = GraphPath::from_path(&circle1, ());
+    circle1             = circle1.merge(GraphPath::from_path(&inner_circle1, ()));
+    let mut circle2     = GraphPath::from_path(&circle2, ());
+    circle2             = circle2.merge(GraphPath::from_path(&inner_circle2, ()));
+
+    let graph_path      = circle1.collide(circle2, 0.1);
+
+    let collisions      = graph_path.ray_collisions(&(Coord2(7.000584357101389, 8.342524209216537), Coord2(6.941479643691172, 8.441210096108172)));
+    let collision_count = collisions.iter().fold(0, |count, collision| count + collision.0.len());
+
+    println!("{:?}", collisions);
+
+    assert!((collision_count&1) == 0);
+}
+
+#[test]
 fn ray_collide_doughnuts_many_angles() {
     let circle1         = Circle::new(Coord2(5.0, 5.0), 4.0).to_path::<SimpleBezierPath>();
     let inner_circle1   = Circle::new(Coord2(5.0, 5.0), 3.9).to_path::<SimpleBezierPath>();
