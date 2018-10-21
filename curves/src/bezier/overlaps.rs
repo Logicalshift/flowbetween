@@ -4,9 +4,9 @@ use super::super::line::*;
 use super::super::coordinate::*;
 
 ///
-/// If `curve2` overlaps `curve1`, returns the t values for `curve1` that overlap the second curve
+/// If `curve2` overlaps `curve1`, returns two sets of `t` values (those for `curve1` and those for `curve2`)
 ///
-pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, C2: BezierCurve<Point=P>>(curve1: &C1, curve2: &C2) -> Option<(f64, f64)> {
+pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, C2: BezierCurve<Point=P>>(curve1: &C1, curve2: &C2) -> Option<((f64, f64), (f64, f64))> {
     let mut c2_t1 = 0.0;
     let mut c2_t2 = 1.0;
 
@@ -52,7 +52,7 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
         let (c2_cp1, c2_cp2) = curve2.control_points();
 
         if is_collinear(&c2_cp1, &coeff) && is_collinear(&c2_cp2, &coeff) {
-            return Some((c1_t1, c1_t2));
+            return Some(((c1_t1, c1_t2), (c2_t1, c2_t2)));
         }
     }
 
@@ -84,7 +84,7 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
 
     // If they're about the same, we've found an overlapping region
     if close_enough(&c1_cp1, &c2_cp1) && close_enough(&c1_cp2, &c2_cp2) {
-        Some((c1_t1, c1_t2))
+        Some(((c1_t1, c1_t2), (c2_t1, c2_t2)))
     } else {
         None
     }
