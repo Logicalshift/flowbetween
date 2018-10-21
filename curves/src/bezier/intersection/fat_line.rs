@@ -232,7 +232,7 @@ impl FatLine {
         let d1          = a*p1.x() + b*p1.y() + c;
         let d2          = a*p2.x() + b*p2.y() + c;
 
-        // This is the 'estimated fit' shortcut suggested by Sederberg/Nishta in their paper rather than the tighest ffitting line
+        // This is the 'estimated fit' shortcut suggested by Sederberg/Nishta in their paper rather than the tighest fitting line
         let (d_min, d_max) = if d1*d2 > 0.0 {
             // Both control points on the same side of the line
             (
