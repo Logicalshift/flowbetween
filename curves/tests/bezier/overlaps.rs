@@ -87,8 +87,8 @@ fn overlaps_with_known_curve_1() {
     let curve2 = Curve::from_points(Coord2(350.22574, 706.551), Coord2(361.0284, 690.2511), Coord2(354.72943, 701.2933), Coord2(358.0882, 695.26));
 
     // They currently don't
-    assert!(!curve1.t_for_point(&curve2.start_point()).is_some() || curve2.t_for_point(&curve1.start_point()).is_some());
-    assert!(!curve1.t_for_point(&curve2.end_point()).is_some() || curve2.t_for_point(&curve1.end_point()).is_some());
+    assert!(curve1.t_for_point(&curve2.start_point()).is_some() || curve2.t_for_point(&curve1.start_point()).is_some());
+    assert!(curve1.t_for_point(&curve2.end_point()).is_some() || curve2.t_for_point(&curve1.end_point()).is_some());
 
     assert!(!overlapping_region(&curve1, &curve2).is_some());
 }
@@ -101,7 +101,7 @@ fn overlaps_with_known_curve_2() {
 
     // They currently don't
     assert!(!curve1.t_for_point(&curve2.start_point()).is_some() || curve2.t_for_point(&curve1.start_point()).is_some());
-    assert!(!curve1.t_for_point(&curve2.end_point()).is_some() || curve2.t_for_point(&curve1.end_point()).is_some());
+    assert!(curve1.t_for_point(&curve2.end_point()).is_some() || curve2.t_for_point(&curve1.end_point()).is_some());
 
     assert!(!overlapping_region(&curve1, &curve2).is_some());
 }
