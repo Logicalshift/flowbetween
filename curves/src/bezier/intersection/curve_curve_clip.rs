@@ -272,6 +272,12 @@ where C::Point: 'a+Coordinate2D {
 /// 
 pub fn curve_intersects_curve_clip<'a, C: BezierCurve>(curve1: &'a C, curve2: &'a C, accuracy: f64) -> Vec<(f64, f64)>
 where C::Point: 'a+Coordinate2D {
+    // Overlapping curves should be treated separately (the clipping algorithm will just match all of the points)
+    let overlaps = overlapping_region(curve1, curve2);
+    if let Some(((c1_t1, c1_t2), (c2_t1, c2_t2))) = overlaps {
+        return vec![(c1_t1, c2_t1), (c1_t2, c2_t2)];
+    }
+
     // Start with the entire span of both curves
     let curve1 = curve1.section(0.0, 1.0);
     let curve2 = curve2.section(0.0, 1.0);
