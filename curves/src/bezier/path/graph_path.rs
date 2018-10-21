@@ -1665,22 +1665,24 @@ mod test {
     fn looped_rectangle() -> SimpleBezierPath {
         BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
 
+            //.line_to(Coord2(2.0, 1.0))
             .line_to(Coord2(3.0, 1.0))
             .line_to(Coord2(3.0, 5.0))
             .line_to(Coord2(2.0, 5.0))
             .line_to(Coord2(2.0, 1.0))
             .line_to(Coord2(3.0, 1.0))
-
-            .line_to(Coord2(1.0, 5.0))
-            .line_to(Coord2(5.0, 5.0))
-
-            .line_to(Coord2(2.0, 5.0))
-            .line_to(Coord2(2.0, 1.0))
-            .line_to(Coord2(3.0, 1.0))
-            .line_to(Coord2(3.0, 5.0))
-            .line_to(Coord2(2.0, 5.0))
 
             .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+
+            //.line_to(Coord2(3.0, 5.0))
+            .line_to(Coord2(2.0, 5.0))
+            .line_to(Coord2(2.0, 1.0))
+            .line_to(Coord2(3.0, 1.0))
+            .line_to(Coord2(3.0, 5.0))
+            .line_to(Coord2(2.0, 5.0))
+
+            .line_to(Coord2(1.0, 5.0))
             .line_to(Coord2(1.0, 1.0))
             .build()
     }
