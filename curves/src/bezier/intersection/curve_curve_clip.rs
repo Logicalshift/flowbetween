@@ -166,6 +166,7 @@ where C::Point: Coordinate2D {
 /// 
 fn curve_intersects_curve_clip_inner<'a, C: BezierCurve>(curve1: CurveSection<'a, C>, curve2: CurveSection<'a, C>, accuracy_squared: f64) -> Vec<(f64, f64)>
 where C::Point: 'a+Coordinate2D {
+    // If the curves are the same, there'll be an arbitrary number of intersections: we only want the first and last in this case
     match curves_are_same(&curve1, &curve2) {
         CurveMatch::Different => { },
 
@@ -277,4 +278,26 @@ where C::Point: 'a+Coordinate2D {
 
     // Perform the clipping algorithm on these curves
     curve_intersects_curve_clip_inner(curve1, curve2, accuracy*accuracy)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::super::curve::*;
+
+    #[test]
+    fn identical_lines_are_same() {
+        let line1 = Curve::from_points(Coord2(2.0, 1.0), Coord2(3.0, 1.0), Coord2(2.1, 1.0), Coord2(2.9, 1.0));
+        let line2 = Curve::from_points(Coord2(2.0, 1.0), Coord2(3.0, 1.0), Coord2(2.1, 1.0), Coord2(2.9, 1.0));
+
+        assert!(curves_are_same(&line1, &line2) == CurveMatch::SameCurveSameDirection);
+    }
+
+    #[test]
+    fn reverse_lines_are_same() {
+        let line1 = Curve::from_points(Coord2(2.0, 1.0), Coord2(3.0, 1.0), Coord2(2.1, 1.0), Coord2(2.9, 1.0));
+        let line2 = Curve::from_points(Coord2(3.0, 1.0), Coord2(2.0, 1.0), Coord2(2.9, 1.0), Coord2(2.1, 1.0));
+
+        assert!(curves_are_same(&line1, &line2) == CurveMatch::SameCurveDifferentDirection);
+    }
 }
