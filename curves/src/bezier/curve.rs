@@ -77,36 +77,9 @@ pub trait BezierCurve: Geo+Clone+Sized {
     /// Given a point that is on or very close to the curve, returns the t value where the point can be found
     /// (or None if the point is not very close to the curve)
     ///
+    #[inline]
     fn t_for_point(&self, point: &Self::Point) -> Option<f64> {
-        let close_enough_sq = 0.001 * 0.001;
-
-        let p1              = self.start_point();
-        let (p2, p3)        = self.control_points();
-        let p4              = self.end_point();
-
-        // Solve the basis function for each of the point's dimensions and pick the first that appears close enough (and within the range 0-1)
-        for dimension in 0..(Self::Point::len()) {
-            // Solve for this dimension
-            let (w1, w2, w3, w4)    = (p1.get(dimension), p2.get(dimension), p3.get(dimension), p4.get(dimension));
-            let possible_t_values   = solve_basis_for_t(w1, w2, w3, w4, point.get(dimension));
-
-            for possible_t in possible_t_values {
-                // Ignore values outside the range of the curve
-                if possible_t < -0.001 || possible_t > 1.001 {
-                    continue;
-                }
-
-                // If this is an accurate enough solution, return this as the t value
-                let point_at_t  = self.point_at_pos(possible_t);
-                let offset      = point_at_t - *point;
-                if offset.dot(&offset) <= close_enough_sq {
-                    return Some(possible_t);
-                }
-            }
-        }
-        
-        // No solution: result is None
-        None
+        solve_curve_for_t(self, point)
     }
 
     ///
