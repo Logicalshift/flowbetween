@@ -2,8 +2,6 @@ use super::fat_line::*;
 use super::super::super::geo::*;
 use super::super::super::bezier::*;
 
-const SMALL_DISTANCE: f64 = 0.00001;
-
 ///
 /// Determines the length of a curve's hull as a sum of squares
 /// 
@@ -110,79 +108,15 @@ where C::Point: Coordinate2D {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-enum CurveMatch {
-    Different,
-    SameCurveSameDirection,
-    SameCurveDifferentDirection
-}
-
-///
-/// Returns the square of the distance between two points
-///
-fn square_distance<P: Coordinate+Coordinate2D>(p1: &P, p2: &P) -> f64 {
-    let offset = *p2-*p1;
-    offset.dot(&offset)
-}
-
-///
-/// Returns true if two curves represent the same section
-///
-fn curves_are_same<C: BezierCurve>(curve1: &C, curve2: &C) -> CurveMatch
-where C::Point: Coordinate2D {
-    if square_distance(&curve1.start_point(), &curve2.start_point()) < SMALL_DISTANCE {
-        if square_distance(&curve1.end_point(), &curve2.end_point()) < SMALL_DISTANCE {
-            let (cp1a, cp2a) = curve1.control_points();
-            let (cp1b, cp2b) = curve2.control_points();
-
-            if square_distance(&cp1a, &cp1b) < SMALL_DISTANCE && square_distance(&cp2a, &cp2b) < SMALL_DISTANCE {
-                CurveMatch::SameCurveSameDirection
-            } else {
-                CurveMatch::Different
-            }
-        } else {
-            CurveMatch::Different
-        }
-    } else if square_distance(&curve1.start_point(), &curve2.end_point()) < SMALL_DISTANCE {
-        if square_distance(&curve1.end_point(), &curve2.start_point()) < SMALL_DISTANCE {
-            let (cp1a, cp2a) = curve1.control_points();
-            let (cp1b, cp2b) = curve2.control_points();
-
-            if square_distance(&cp1a, &cp2b) < SMALL_DISTANCE && square_distance(&cp2a, &cp1b) < SMALL_DISTANCE {
-                CurveMatch::SameCurveDifferentDirection
-            } else {
-                CurveMatch::Different
-            }
-        } else {
-            CurveMatch::Different
-        }
-    } else {
-        CurveMatch::Different
-    }
-}
-
 ///
 /// Determines the points at which two curves intersect using the Bezier clipping algorithm
 /// 
 fn curve_intersects_curve_clip_inner<'a, C: BezierCurve>(curve1: CurveSection<'a, C>, curve2: CurveSection<'a, C>, accuracy_squared: f64) -> Vec<(f64, f64)>
 where C::Point: 'a+Coordinate2D {
-    // If the curves are the same, there'll be an arbitrary number of intersections: we only want the first and last in this case
-    match curves_are_same(&curve1, &curve2) {
-        CurveMatch::Different => { },
-
-        CurveMatch::SameCurveSameDirection => {
-            let (t_min1, t_max1) = curve1.original_curve_t_values();
-            let (t_min2, t_max2) = curve2.original_curve_t_values();
-
-            return vec![(t_min1, t_min2), (t_max1, t_max2)];
-        },
-
-        CurveMatch::SameCurveDifferentDirection => {
-            let (t_min1, t_max1) = curve1.original_curve_t_values();
-            let (t_min2, t_max2) = curve2.original_curve_t_values();
-
-            return vec![(t_min1, t_max2), (t_max1, t_min2)];
-        }
+    // Overlapping curves should be treated separately (the clipping algorithm will just match all of the points)
+    let overlaps = overlapping_region(&curve1, &curve2);
+    if let Some(((c1_t1, c1_t2), (c2_t1, c2_t2))) = overlaps {
+        return vec![(c1_t1, c2_t1), (c1_t2, c2_t2)];
     }
 
     // We'll iterate on the two curves
@@ -284,26 +218,4 @@ where C::Point: 'a+Coordinate2D {
 
     // Perform the clipping algorithm on these curves
     curve_intersects_curve_clip_inner(curve1, curve2, accuracy*accuracy)
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use super::super::super::curve::*;
-
-    #[test]
-    fn identical_lines_are_same() {
-        let line1 = Curve::from_points(Coord2(2.0, 1.0), Coord2(3.0, 1.0), Coord2(2.1, 1.0), Coord2(2.9, 1.0));
-        let line2 = Curve::from_points(Coord2(2.0, 1.0), Coord2(3.0, 1.0), Coord2(2.1, 1.0), Coord2(2.9, 1.0));
-
-        assert!(curves_are_same(&line1, &line2) == CurveMatch::SameCurveSameDirection);
-    }
-
-    #[test]
-    fn reverse_lines_are_same() {
-        let line1 = Curve::from_points(Coord2(2.0, 1.0), Coord2(3.0, 1.0), Coord2(2.1, 1.0), Coord2(2.9, 1.0));
-        let line2 = Curve::from_points(Coord2(3.0, 1.0), Coord2(2.0, 1.0), Coord2(2.9, 1.0), Coord2(2.1, 1.0));
-
-        assert!(curves_are_same(&line1, &line2) == CurveMatch::SameCurveDifferentDirection);
-    }
 }
