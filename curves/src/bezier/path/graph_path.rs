@@ -1921,6 +1921,7 @@ mod test {
         let mut looped = GraphPath::from_path(&looped, ());
 
         looped.self_collide(0.01);
+        println!("{:?}", looped);
 
         for edge in looped.all_edges() {
             let target  = edge.point_at_pos(0.5);
