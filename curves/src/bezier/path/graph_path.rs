@@ -1647,6 +1647,21 @@ mod test {
             .build()
     }
 
+    fn overlapping_rectangle() -> SimpleBezierPath {
+        BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 3.0))
+            .line_to(Coord2(7.0, 5.0))
+            .line_to(Coord2(5.0, 7.0))
+            .line_to(Coord2(3.0, 5.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build()
+    }
+
     #[test]
     fn raw_donut_collisions() {
         let donut = donut();
@@ -1858,6 +1873,21 @@ mod test {
         let collisions  = tricky.ray_collisions(&ray);
 
         println!("{:?}", tricky);
+        println!("{:?}", collisions);
+        assert!((collisions.len()&1) == 0);
+    }
+
+    #[test]
+    fn overlapping_rectangle_ray_cast_after_self_collide() {
+        let overlapping     = overlapping_rectangle();
+        let mut overlapping = GraphPath::from_path(&overlapping, ());
+
+        overlapping.self_collide(0.01);
+
+        let ray         = (Coord2(3.0, 0.0), Coord2(3.0, 5.0));
+        let collisions  = overlapping.ray_collisions(&ray);
+
+        println!("{:?}", overlapping);
         println!("{:?}", collisions);
         assert!((collisions.len()&1) == 0);
     }
