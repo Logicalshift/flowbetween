@@ -81,10 +81,23 @@ fn overlapping_lines_with_different_t_values() {
 }
 
 #[test]
-fn overlaps_with_known_curve() {
+fn overlaps_with_known_curve_1() {
     // These curves should overlap
     let curve1 = Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
     let curve2 = Curve::from_points(Coord2(350.22574, 706.551), Coord2(361.0284, 690.2511), Coord2(354.72943, 701.2933), Coord2(358.0882, 695.26));
+
+    // They currently don't
+    assert!(!curve1.t_for_point(&curve2.start_point()).is_some() || curve2.t_for_point(&curve1.start_point()).is_some());
+    assert!(!curve1.t_for_point(&curve2.end_point()).is_some() || curve2.t_for_point(&curve1.end_point()).is_some());
+
+    assert!(!overlapping_region(&curve1, &curve2).is_some());
+}
+
+#[test]
+fn overlaps_with_known_curve_2() {
+    // These curves should overlap
+    let curve1 = Curve::from_points(Coord2(305.86907958984375, 882.2529296875), Coord2(298.0640869140625, 875.537353515625), Coord2(305.41015625, 880.7345581054688), Coord2(303.0707092285156, 879.744140625));
+    let curve2 = Curve::from_points(Coord2(302.7962341308594, 879.1681518554688), Coord2(301.4282531738281, 878.26220703125), Coord2(299.5769348144531, 876.8582763671875), Coord2(297.1976318359375, 874.7939453125));
 
     // They currently don't
     assert!(!curve1.t_for_point(&curve2.start_point()).is_some() || curve2.t_for_point(&curve1.start_point()).is_some());
