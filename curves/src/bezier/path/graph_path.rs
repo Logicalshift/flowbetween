@@ -708,7 +708,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
                         // Find the collisions between these two edges
                         let curve_collisions    = curve_intersects_curve_clip(&src_curve, &tgt_curve, accuracy);
-                        debug_assert!(curve_collisions.len() < 21);
+                        // debug_assert!(curve_collisions.len() < 21); // TODO
 
                         // The are the points we need to divide the existing edges at and add branches
                         let tgt_idx = tgt_idx;
