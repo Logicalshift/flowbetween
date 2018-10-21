@@ -12,6 +12,7 @@ mod bounds;
 mod deform;
 mod search;
 mod solve;
+mod overlaps;
 mod intersection;
 mod curve_intersection_bbox;
 mod curve_intersection_clip;

@@ -11,6 +11,7 @@ mod fit;
 mod offset;
 mod search;
 mod solve;
+mod overlaps;
 mod intersection;
 
 pub mod path;
@@ -28,6 +29,7 @@ pub use self::fit::*;
 pub use self::offset::*;
 pub use self::search::*;
 pub use self::solve::*;
+pub use self::overlaps::*;
 pub use self::intersection::*;
 
 pub use super::geo::*;
