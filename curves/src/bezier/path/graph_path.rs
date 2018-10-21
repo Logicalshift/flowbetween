@@ -1662,6 +1662,20 @@ mod test {
             .build()
     }
 
+    fn looped_rectangle() -> SimpleBezierPath {
+        BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(2.0, 1.0))
+            .line_to(Coord2(2.0, 5.0))
+            .line_to(Coord2(3.0, 5.0))
+            .line_to(Coord2(3.0, 1.0))
+            .line_to(Coord2(2.0, 1.0))
+            .line_to(Coord2(2.0, 5.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build()
+    }
+
     #[test]
     fn raw_donut_collisions() {
         let donut = donut();
@@ -1890,5 +1904,24 @@ mod test {
         println!("{:?}", overlapping);
         println!("{:?}", collisions);
         assert!((collisions.len()&1) == 0);
+    }
+
+    #[test]
+    fn looped_rectangle_ray_cast_after_self_collide() {
+        let looped     = looped_rectangle();
+        let mut looped = GraphPath::from_path(&looped, ());
+
+        looped.self_collide(0.01);
+
+        for edge in looped.all_edges() {
+            let target  = edge.point_at_pos(0.5);
+            let normal  = edge.normal_at_pos(0.5);
+            let ray     = (target, target+normal);
+
+            let collisions = looped.ray_collisions(&ray);
+
+            // Should be an even number of collisions
+            assert!((collisions.len()&1) == 0);
+        }
     }
 }
