@@ -30,3 +30,56 @@ fn basis_solve_many() {
     test_for(2.0, 3.0, 4.0, 5.0);
     test_for(2.0, -1.0, 5.0, 3.0);
 }
+
+#[test]
+fn solve_t_for_pos() {
+    let curve1  = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
+
+    let point_at_one_third  = curve1.point_at_pos(0.3333);
+    let solved              = curve1.t_for_point(&point_at_one_third);
+
+    assert!(solved.is_some());
+    assert!((solved.unwrap()-0.3333).abs() < 0.001);
+}
+
+#[test]
+fn solve_t_for_start() {
+    let curve1  = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
+
+    let solved  = curve1.t_for_point(&Coord2(10.0, 100.0));
+
+    assert!(solved.is_some());
+    assert!((solved.unwrap()-0.0).abs() < 0.001);
+}
+
+#[test]
+fn solve_t_for_end() {
+    let curve1  = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
+
+    let solved  = curve1.t_for_point(&Coord2(220.0, 220.0));
+
+    assert!(solved.is_some());
+    assert!((solved.unwrap()-1.0).abs() < 0.001);
+}
+
+#[test]
+fn solve_t_for_many_positions() {
+    let curve1  = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
+
+    for p in 0..10 {
+        let p       = (p as f64)/10.0;
+        let point   = curve1.point_at_pos(p);
+        let solved  = curve1.t_for_point(&point);
+
+        assert!(solved.is_some());
+        assert!((solved.unwrap()-p).abs() < 0.001);
+    }
+}
+
+#[test]
+fn solve_t_for_out_of_bounds() {
+    let curve1  = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
+
+    let solved  = curve1.t_for_point(&Coord2(45.0, 23.0));
+    assert!(solved.is_none());
+}
