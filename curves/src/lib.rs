@@ -3,6 +3,7 @@
 extern crate roots;
 extern crate itertools;
 
+mod consts;
 pub mod bezier;
 pub mod line;
 pub mod arc;

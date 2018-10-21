@@ -3,6 +3,7 @@ use super::super::curve::*;
 use super::super::intersection::*;
 use super::super::super::geo::*;
 use super::super::super::line::*;
+use super::super::super::consts::*;
 use super::super::super::coordinate::*;
 
 use std::fmt;
@@ -814,10 +815,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         let (cp1, cp2)  = edge.control_points();
 
         // The curve is collinear if all of the points lie on the 
-        if (start_point.x()*a + start_point.y()*b + c).abs() < 0.001
-        && (end_point.x()*a + end_point.y()*b + c).abs() < 0.001
-        && (cp1.x()*a + cp1.y()*b + c).abs() < 0.001
-        && (cp2.x()*a + cp2.y()*b + c).abs() < 0.001 {
+        if (start_point.x()*a + start_point.y()*b + c).abs() < SMALL_DISTANCE
+        && (end_point.x()*a + end_point.y()*b + c).abs() < SMALL_DISTANCE
+        && (cp1.x()*a + cp1.y()*b + c).abs() < SMALL_DISTANCE
+        && (cp2.x()*a + cp2.y()*b + c).abs() < SMALL_DISTANCE {
             true
         } else {
             false
@@ -1125,7 +1126,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 let start_point = &self.points[collision.start_idx].position;
                 let offset      = *start_point - position;
 
-                if curve_t < 0.001 || offset.dot(&offset) < 0.00001 {
+                if curve_t < 0.001 || offset.dot(&offset) < (SMALL_DISTANCE * SMALL_DISTANCE) {
                     // Might be at an intersection (close to the start of the curve)
                     if self.points[collision.start_idx].forward_edges.len() > 1 {
                         // Intersection

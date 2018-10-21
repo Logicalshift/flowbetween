@@ -1,6 +1,7 @@
 use super::curve::*;
 use super::deform::*;
 use super::normal::*;
+use super::super::consts::*;
 use super::super::coordinate::*;
 
 use std::collections::VecDeque;
@@ -18,7 +19,7 @@ where Curve::Point: Normalize {
     let end         = curve.end_point();
     let (cp1, cp2)  = curve.control_points();
 
-    if start.distance_to(&cp1) < 0.00001 && cp1.distance_to(&cp2) < 0.00001 && cp2.distance_to(&end) < 0.00001 {
+    if start.distance_to(&cp1) < SMALL_DISTANCE && cp1.distance_to(&cp2) < SMALL_DISTANCE && cp2.distance_to(&end) < SMALL_DISTANCE {
         return vec![curve.clone()];
     }
 

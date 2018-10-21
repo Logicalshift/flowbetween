@@ -1,6 +1,7 @@
 use super::curve::*;
 use super::section::*;
 use super::super::line::*;
+use super::super::consts::*;
 use super::super::coordinate::*;
 
 ///
@@ -41,7 +42,7 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
     // If curve1 and curve2 are collinear - two overlapping lines - we've already got the results (and the control points will differ anyway)
     #[inline]
     fn is_collinear<P: Coordinate2D>(p: &P, &(a, b, c): &(f64, f64, f64)) -> bool {
-        (a*p.x() + b*p.y() + c).abs() < 0.001
+        (a*p.x() + b*p.y() + c).abs() < SMALL_DISTANCE
     }
 
     let coeff               = (curve1.start_point(), curve1.end_point()).coefficients();
@@ -60,7 +61,7 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
     #[inline]
     fn close_enough<P: Coordinate>(p1: &P, p2: &P) -> bool {
         let offset = *p1 - *p2;
-        offset.dot(&offset) < (0.001 * 0.001)
+        offset.dot(&offset) < (SMALL_DISTANCE * SMALL_DISTANCE)
     }
 
     // Get the control points for the two curves

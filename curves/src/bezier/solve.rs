@@ -1,4 +1,5 @@
 use super::curve::*;
+use super::super::consts::*;
 use super::super::coordinate::*;
 
 use roots::{find_roots_cubic, Roots};
@@ -42,7 +43,7 @@ pub fn solve_basis_for_t(w1: f64, w2: f64, w3: f64, w4: f64, p: f64) -> Vec<f64>
 /// be used to retrieve it
 ///
 pub fn solve_curve_for_t<C: BezierCurve>(curve: &C, point: &C::Point) -> Option<f64> {
-    let close_enough_sq = 0.001 * 0.001;
+    let close_enough_sq = SMALL_DISTANCE * SMALL_DISTANCE;
 
     let p1              = curve.start_point();
     let (p2, p3)        = curve.control_points();

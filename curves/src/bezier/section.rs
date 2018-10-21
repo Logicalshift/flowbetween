@@ -1,6 +1,7 @@
 use super::curve::*;
 use super::basis::*;
 use super::super::geo::*;
+use super::super::consts::*;
 
 use std::cell::*;
 
@@ -54,7 +55,7 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
         let t_min = self.t_c;
         let t_max = self.t_for_t(1.0);
 
-        (t_max-t_min).abs() < 0.000001
+        (t_max-t_min).abs() < SMALL_DISTANCE
     }
 
     ///
