@@ -64,13 +64,23 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
     }
 
     // Get the control points for the two curves
+    #[inline]
+    fn control_points<P: Coordinate+Coordinate2D, C: BezierCurve<Point=P>>(curve: &C, t1: f64, t2: f64) -> (P, P) {
+        if t2 < t1 {
+            let (cp2, cp1) = curve.section(t2, t1).control_points();
+            (cp1, cp2)
+        } else {
+            curve.section(t1, t2).control_points()
+        }
+    }
+
     let (c2_cp1, c2_cp2) = if c2_t1 != 0.0 || c2_t2 != 1.0 {
-        curve2.section(c2_t1, c2_t2).control_points()
+        control_points(curve2, c2_t1, c2_t2)
     } else {
         curve2.control_points()
     };
 
-    let (c1_cp1, c1_cp2) = curve1.section(c1_t1, c1_t2).control_points();
+    let (c1_cp1, c1_cp2) = control_points(curve1, c1_t1, c1_t2);
 
     // If they're about the same, we've found an overlapping region
     if close_enough(&c1_cp1, &c2_cp1) && close_enough(&c1_cp2, &c2_cp2) {

@@ -1,17 +1,6 @@
 use flo_curves::bezier::*;
 
 #[test]
-fn simple_overlapping_reverse_section() {
-    let curve1  = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
-    let section = curve1.section(1.0, 0.0);
-
-    assert!(section.start_point().distance_to(&Coord2(220.0, 220.0)) < 0.001);
-    assert!(section.end_point().distance_to(&Coord2(10.0, 100.0)) < 0.001);
-    assert!(section.control_points().0.distance_to(&Coord2(40.0, 140.0)) < 0.001);
-    assert!(section.control_points().1.distance_to(&Coord2(90.0, 30.0)) < 0.001);
-}
-
-#[test]
 fn simple_overlapping_curves() {
     let curve1  = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
     let section = curve1.section(0.3333, 0.6666);
@@ -36,7 +25,7 @@ fn simple_overlapping_curves_same() {
 #[test]
 fn simple_overlapping_curves_reversed() {
     let curve1  = Curve::from_points(Coord2(220.0, 220.0), Coord2(10.0, 100.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
-    let section = Curve::from_points(Coord2(220.0, 220.0), Coord2(10.0, 100.0), Coord2(40.0, 140.0), Coord2(90.0, 30.0));
+    let section = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(40.0, 140.0), Coord2(90.0, 30.0));
 
     let overlaps = overlapping_region(&curve1, &section).unwrap();
 
