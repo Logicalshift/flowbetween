@@ -70,7 +70,7 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
         curve2.control_points()
     };
 
-    let (c1_cp1, c1_cp2) = curve1.section(c1_t1, c2_t2).control_points();
+    let (c1_cp1, c1_cp2) = curve1.section(c1_t1, c1_t2).control_points();
 
     // If they're about the same, we've found an overlapping region
     if close_enough(&c1_cp1, &c2_cp1) && close_enough(&c1_cp2, &c2_cp2) {
