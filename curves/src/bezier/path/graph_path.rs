@@ -1816,7 +1816,7 @@ mod test {
     }
 
     #[test]
-    fn ray_cast_with_tricky_path() {
+    fn ray_cast_with_tricky_path_after_self_collide() {
         let tricky      = tricky_path1();
         let mut tricky  = GraphPath::from_path(&tricky, ());
 
@@ -1829,10 +1829,36 @@ mod test {
 
             let collisions = tricky.ray_collisions(&ray);
 
-            println!("{:?}", ray);
-
             // Should be an even number of collisions
             assert!((collisions.len()&1) == 0);
         }
+    }
+
+    #[test]
+    fn single_difficult_ray_cast_with_tricky_path_before_self_collide() {
+        let tricky      = tricky_path1();
+        let tricky      = GraphPath::from_path(&tricky, ());
+
+        let ray         = (Coord2(344.7127586558301, 702.311674360346), Coord2(344.6914625870749, 702.2935114955856));
+        let collisions  = tricky.ray_collisions(&ray);
+
+        println!("{:?}", tricky);
+        println!("{:?}", collisions);
+        assert!((collisions.len()&1) == 0);
+    }
+
+    #[test]
+    fn single_difficult_ray_cast_with_tricky_path_after_self_collide() {
+        let tricky      = tricky_path1();
+        let mut tricky  = GraphPath::from_path(&tricky, ());
+
+        tricky.self_collide(0.01);
+
+        let ray         = (Coord2(344.7127586558301, 702.311674360346), Coord2(344.6914625870749, 702.2935114955856));
+        let collisions  = tricky.ray_collisions(&ray);
+
+        println!("{:?}", tricky);
+        println!("{:?}", collisions);
+        assert!((collisions.len()&1) == 0);
     }
 }
