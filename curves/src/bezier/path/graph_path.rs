@@ -11,8 +11,6 @@ use std::mem;
 use std::ops::Range;
 use std::cmp::Ordering;
 
-const CLOSE_DISTANCE: f64 = 0.01;
-
 ///
 /// Represents a collision between a ray and a GraphPath
 ///
