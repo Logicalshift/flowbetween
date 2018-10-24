@@ -7,6 +7,7 @@ mod path_builder;
 mod graph_path;
 mod is_clockwise;
 mod arithmetic;
+pub mod graph_path_debug;
 
 pub use self::path::*;
 pub use self::to_curves::*;
