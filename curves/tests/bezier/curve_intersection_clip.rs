@@ -142,3 +142,48 @@ fn find_intersections_on_curve() {
     // Three intersections
     assert!(intersections.len() == 3);
 }
+
+#[test]
+fn intersections_with_nearby_curves_1() {
+    let curve1 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+    let curve2 = bezier::Curve::from_points(Coord2(350.22574, 706.551), Coord2(361.0284, 690.2511), Coord2(354.72943, 701.2933), Coord2(358.0882, 695.26));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+
+    println!("{:?}", intersections);
+
+    assert!(intersections.len() <= 9);
+}
+
+#[test]
+fn intersections_with_nearby_curves_2() {
+    let curve1 = bezier::Curve::from_points(Coord2(305.86907958984375, 882.2529296875), Coord2(298.0640869140625, 875.537353515625), Coord2(305.41015625, 880.7345581054688), Coord2(303.0707092285156, 879.744140625));
+    let curve2 = bezier::Curve::from_points(Coord2(302.7962341308594, 879.1681518554688), Coord2(301.4282531738281, 878.26220703125), Coord2(299.5769348144531, 876.8582763671875), Coord2(297.1976318359375, 874.7939453125));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+    println!("{:?}", intersections);
+
+    assert!(intersections.len() <= 9);
+}
+
+#[test]
+fn intersections_with_nearby_curves_3() {
+    let curve1 = bezier::Curve::from_points(Coord2(304.6919250488281, 880.6288452148438), Coord2(296.8869323730469, 873.9132690429688), Coord2(304.2330017089844, 879.1104736328125), Coord2(301.8935546875, 878.1200561523438));
+    let curve2 = bezier::Curve::from_points(Coord2(301.61907958984375, 877.5440673828125), Coord2(296.0204772949219, 873.1698608398438), Coord2(300.2510986328125, 876.6381225585938), Coord2(298.3997802734375, 875.2341918945313));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+    println!("{:?}", intersections);
+
+    // assert!(intersections.len() <= 9);
+}
+
+#[test]
+fn intersections_with_nearby_curves_4() {
+    let curve1 = bezier::Curve::from_points(Coord2(436.15716552734375, 869.3236083984375), Coord2(490.6786804199219, 849.5614624023438), Coord2(444.5263671875, 869.2921752929688), Coord2(480.9628601074219, 854.3709106445313));
+    let curve2 = bezier::Curve::from_points(Coord2(462.5539855957031, 861.322021484375), Coord2(462.3448486328125, 861.8137817382813), Coord2(462.4580078125, 861.4293823242188), Coord2(462.3710021972656, 861.5908813476563));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+    println!("{:?}", intersections);
+
+    assert!(intersections.len() <= 9);
+}
