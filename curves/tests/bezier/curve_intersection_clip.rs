@@ -187,3 +187,17 @@ fn intersections_with_nearby_curves_4() {
 
     assert!(intersections.len() <= 9);
 }
+
+#[test]
+fn intersection_curve_1() {
+    let curve1 = bezier::Curve::from_points(Coord2(252.08901977539063, 676.4180908203125), Coord2(244.31190490722656, 686.1041259765625), Coord2(244.0195770263672, 679.6658935546875), Coord2(244.11508178710938, 682.8816528320313));
+    let curve2 = bezier::Curve::from_points(Coord2(244.31190490722656, 686.1041259765625), Coord2(265.2398376464844, 618.4223022460938), Coord2(250.65411376953125, 661.4817504882813), Coord2(255.51109313964844, 635.5418701171875));
+
+    let intersections = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+    assert!(intersections.len() != 0);
+    assert!(intersections.len() == 1);
+
+    let intersections = bezier::curve_intersects_curve_clip(&curve2, &curve1, 0.01);
+    assert!(intersections.len() != 0);
+    assert!(intersections.len() == 1);
+}
