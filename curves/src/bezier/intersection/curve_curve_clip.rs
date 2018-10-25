@@ -1,4 +1,6 @@
 use super::fat_line::*;
+use super::curve_line::*;
+use super::super::solve::*;
 use super::super::super::geo::*;
 use super::super::super::bezier::*;
 
@@ -19,6 +21,25 @@ fn curve_hull_length_sq<'a, C: BezierCurve>(curve: &CurveSection<'a, C>) -> f64 
 
         offset1.dot(&offset1) + offset2.dot(&offset2) + offset3.dot(&offset3)
     }
+}
+
+///
+/// Given a line representing a linear section of a curve, finds the intersection with a curved section and returns the t values
+///
+fn intersections_with_linear_section<'a, C: BezierCurve>(linear_section: &CurveSection<'a, C>, curved_section: &CurveSection<'a, C>) -> Vec<(f64, f64)>
+where C::Point: 'a+Coordinate2D {
+    let ray                 = (linear_section.start_point(), linear_section.end_point());
+    let ray_intersections   = curve_intersects_ray(curved_section, &ray);
+
+    let curve_intersections = ray_intersections.into_iter()
+        .filter_map(|(curved_t, _ray_t, pos)| {
+            let linear_t = solve_curve_for_t(linear_section, &pos);
+
+            linear_t.map(|linear_t| (linear_t, curved_t))
+        })
+        .collect::<Vec<_>>();
+
+    curve_intersections
 }
 
 ///
