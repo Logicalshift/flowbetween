@@ -1,5 +1,6 @@
 use super::super::curve::*;
 use super::super::super::line::*;
+use super::super::super::consts::*;
 use super::super::super::coordinate::*;
 
 use std::f64;
@@ -215,6 +216,17 @@ impl FatLine {
         } else {
             // Both in the range 0-1
             Some((t1, t2))
+        }
+    }
+
+    ///
+    /// Returns true if this line is flat (indicating the source curve is a straight line)
+    ///
+    pub fn is_flat(&self) -> bool {
+        if self.d_min.abs() < SMALL_DISTANCE && self.d_max.abs() < SMALL_DISTANCE {
+            true
+        } else {
+            false
         }
     }
 }
