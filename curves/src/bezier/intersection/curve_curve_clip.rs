@@ -149,11 +149,13 @@ where C::Point: 'a+Coordinate2D {
     // Overlapping curves should be treated separately (the clipping algorithm will just match all of the points)
     let overlaps = overlapping_region(&curve1, &curve2);
     if let Some(((c1_t1, c1_t2), (c2_t1, c2_t2))) = overlaps {
+        // Convert the overlapping region back to t values for the original curve
         let c1_t1 = curve1.t_for_t(c1_t1);
         let c1_t2 = curve1.t_for_t(c1_t2);
         let c2_t1 = curve2.t_for_t(c2_t1);
         let c2_t2 = curve2.t_for_t(c2_t2);
 
+        // Overlapping curves cross at both points
         return vec![(c1_t1, c2_t1), (c1_t2, c2_t2)];
     }
 
