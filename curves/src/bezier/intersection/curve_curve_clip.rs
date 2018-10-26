@@ -88,7 +88,7 @@ where C::Point: 'a+Coordinate2D {
 
     // t1 and t2 must not match (exact matches produce an invalid curve)
     match clip_t {
-        ClipResult::Some((t1, t2))  => if t1 == t2 { ClipResult::Some((t1-0.01, t2)) } else { ClipResult::Some((t1, t2)) }
+        ClipResult::Some((t1, t2))  => if t1 == t2 { ClipResult::Some((t1-0.005, t2+0.005)) } else { ClipResult::Some((t1, t2)) }
         other                       => other
     }
 }
@@ -166,7 +166,8 @@ where C::Point: 'a+Coordinate2D {
 
     // Iterate to refine the match
     loop {
-        if curve2_last_len > accuracy_squared {
+
+        let curve2_len = if curve2_last_len > accuracy_squared {
             // Clip curve2 against curve1
             let clip_t  = clip(&curve2, &curve1);
             let clip_t  = match clip_t {
@@ -183,22 +184,12 @@ where C::Point: 'a+Coordinate2D {
             curve2 = curve2.subsection(clip_t.0, clip_t.1);
 
             // Work out the length of the new curve
-            let curve2_len = curve_hull_length_sq(&curve2);
+            curve_hull_length_sq(&curve2)
+        } else { 
+            curve2_last_len
+        };
 
-            // If the curve doesn't shrink at least 20%, subdivide it
-            if curve2_len > accuracy_squared && curve2_last_len*0.8 < curve2_len {
-                let (left, right)   = (curve2.subsection(0.0, 0.5), curve2.subsection(0.5, 1.0));
-                let left            = curve_intersects_curve_clip_inner(curve1.clone(), left, accuracy_squared);
-                let right           = curve_intersects_curve_clip_inner(curve1.clone(), right, accuracy_squared);
-
-                return join_subsections(&curve1, left, right, accuracy_squared);
-            }
-
-            // Update the length of the curve
-            curve2_last_len = curve2_len;
-        }
-
-        if curve1_last_len > accuracy_squared {
+        let curve1_len = if curve1_last_len > accuracy_squared {
             // Clip curve1 against curve2
             let clip_t  = clip(&curve1, &curve2);
             let clip_t  = match clip_t {
@@ -215,22 +206,12 @@ where C::Point: 'a+Coordinate2D {
             curve1 = curve1.subsection(clip_t.0, clip_t.1);
 
             // Work out the length of the new curve
-            let curve1_len = curve_hull_length_sq(&curve1);
+            curve_hull_length_sq(&curve1)
+        } else {
+            curve1_last_len
+        };
 
-            // If the curve doesn't shrink at least 20%, subdivide it
-            if curve1_len > accuracy_squared && curve1_last_len*0.8 < curve1_len {
-                let (left, right)   = (curve1.subsection(0.0, 0.5), curve1.subsection(0.5, 1.0));
-                let left            = curve_intersects_curve_clip_inner(left, curve2.clone(), accuracy_squared);
-                let right           = curve_intersects_curve_clip_inner(right, curve2, accuracy_squared);
-
-                return join_subsections(&curve1, left, right, accuracy_squared);
-            }
-
-            // Update the length of the curve
-            curve1_last_len = curve1_len;
-        }
-
-        if curve1_last_len <= accuracy_squared && curve2_last_len <= accuracy_squared {
+        if curve1_len <= accuracy_squared && curve2_len <= accuracy_squared {
             // Found a point to the required accuracy: return it, in coordinates relative to the original curve
             if curve1.fast_bounding_box::<Bounds<_>>().overlaps(&curve2.fast_bounding_box::<Bounds<_>>()) {
                 let (t_min1, t_max1) = curve1.original_curve_t_values();
@@ -242,6 +223,29 @@ where C::Point: 'a+Coordinate2D {
                 return vec![];
             }
         }
+
+        if (curve1_last_len*0.8) < curve1_len && (curve2_last_len*0.8) < curve2_len {
+            // If neither curve shrunk by 20%, then subdivide the one that shrunk the least
+            if curve1_len/curve1_last_len > curve2_len/curve2_last_len {
+                // Curve1 shrunk less than curve2
+                let (left, right)   = (curve1.subsection(0.0, 0.5), curve1.subsection(0.5, 1.0));
+                let left            = curve_intersects_curve_clip_inner(left, curve2.clone(), accuracy_squared);
+                let right           = curve_intersects_curve_clip_inner(right, curve2, accuracy_squared);
+
+                return join_subsections(&curve1, left, right, accuracy_squared);
+            } else {
+                // Curve2 shrunk less than curve1
+                let (left, right)   = (curve2.subsection(0.0, 0.5), curve2.subsection(0.5, 1.0));
+                let left            = curve_intersects_curve_clip_inner(curve1.clone(), left, accuracy_squared);
+                let right           = curve_intersects_curve_clip_inner(curve1.clone(), right, accuracy_squared);
+
+                return join_subsections(&curve1, left, right, accuracy_squared);
+            }
+        }
+
+        // Update the last lengths
+        curve1_last_len = curve1_len;
+        curve2_last_len = curve2_len;
     }
 }
 
