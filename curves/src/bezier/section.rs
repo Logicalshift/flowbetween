@@ -43,7 +43,7 @@ impl<'a, C: 'a+BezierCurve> CurveSection<'a, C> {
     /// Returns the t value on the full curve for a t value on the section
     /// 
     #[inline]
-    fn t_for_t(&self, t: f64) -> f64 {
+    pub fn t_for_t(&self, t: f64) -> f64 {
         t*self.t_m + self.t_c
     }
 

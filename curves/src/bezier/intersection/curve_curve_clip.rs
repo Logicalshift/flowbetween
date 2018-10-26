@@ -43,10 +43,19 @@ where C::Point: 'a+Coordinate2D {
 }
 
 ///
+/// The result of the clip operation
+///
+enum ClipResult {
+    None,
+    Some((f64, f64)),
+    SecondCurveIsLinear
+}
+
+///
 /// Performs the fat-line clipping algorithm on two curves, returning the t values if they overlap
 /// 
 #[inline]
-fn clip<'a, C: BezierCurve>(curve_to_clip: &CurveSection<'a, C>, curve_to_clip_against: &CurveSection<'a, C>) -> Option<(f64, f64)>
+fn clip<'a, C: BezierCurve>(curve_to_clip: &CurveSection<'a, C>, curve_to_clip_against: &CurveSection<'a, C>) -> ClipResult
 where C::Point: 'a+Coordinate2D {
     // Clip against the fat line
     let fat_line    = FatLine::from_curve(curve_to_clip_against);
@@ -64,21 +73,24 @@ where C::Point: 'a+Coordinate2D {
             let len2 = clip_t_perpendicular.1 - clip_t_perpendicular.0;
 
             if len1 < len2 {
-                Some(clip_t)
+                ClipResult::Some(clip_t)
             } else {
-                Some(clip_t_perpendicular)
+                ClipResult::Some(clip_t_perpendicular)
             }
         } else {
             // If the perpendicular line excludes this point then there's no overlap
-            None
+            ClipResult::None
         }
     } else {
         // Failed to clip
-        None
+        ClipResult::None
     };
 
     // t1 and t2 must not match (exact matches produce an invalid curve)
-    clip_t.map(|(t1, t2)| if t1 == t2 { (t1-0.01, t2) } else { (t1, t2) })
+    match clip_t {
+        ClipResult::Some((t1, t2))  => if t1 == t2 { ClipResult::Some((t1-0.01, t2)) } else { ClipResult::Some((t1, t2)) }
+        other                       => other
+    }
 }
 
 ///
@@ -158,8 +170,14 @@ where C::Point: 'a+Coordinate2D {
             // Clip curve2 against curve1
             let clip_t  = clip(&curve2, &curve1);
             let clip_t  = match clip_t {
-                None            => { return vec![]; }
-                Some(clip_t)    => clip_t
+                ClipResult::None                    => { return vec![]; },
+                ClipResult::Some(clip_t)            => clip_t,
+                ClipResult::SecondCurveIsLinear     => { 
+                    return intersections_with_linear_section(&curve1, &curve2)
+                        .into_iter()
+                        .map(|(t1, t2)| (curve1.t_for_t(t1), curve2.t_for_t(t2)))
+                        .collect(); 
+                }
             };
 
             curve2 = curve2.subsection(clip_t.0, clip_t.1);
@@ -184,8 +202,14 @@ where C::Point: 'a+Coordinate2D {
             // Clip curve1 against curve2
             let clip_t  = clip(&curve1, &curve2);
             let clip_t  = match clip_t {
-                None            => { return vec![]; }
-                Some(clip_t)    => clip_t
+                ClipResult::None                    => { return vec![]; },
+                ClipResult::Some(clip_t)            => clip_t,
+                ClipResult::SecondCurveIsLinear     => { 
+                    return intersections_with_linear_section(&curve2, &curve1)
+                        .into_iter()
+                        .map(|(t2, t1)| (curve1.t_for_t(t1), curve2.t_for_t(t2)))
+                        .collect(); 
+                }
             };
 
             curve1 = curve1.subsection(clip_t.0, clip_t.1);
