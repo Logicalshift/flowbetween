@@ -155,8 +155,13 @@ where C::Point: 'a+Coordinate2D {
         let c2_t1 = curve2.t_for_t(c2_t1);
         let c2_t2 = curve2.t_for_t(c2_t2);
 
-        // Overlapping curves cross at both points
-        return vec![(c1_t1, c2_t1), (c1_t2, c2_t2)];
+        if c1_t1 == c1_t2 || c2_t1 == c2_t2 {
+            // Overlapped at a single point, so only one intersection
+            return vec![(c1_t1, c2_t1)];
+        } else {
+            // Overlapping curves cross at both points
+            return vec![(c1_t1, c2_t1), (c1_t2, c2_t2)];
+        }
     }
 
     // We'll iterate on the two curves
