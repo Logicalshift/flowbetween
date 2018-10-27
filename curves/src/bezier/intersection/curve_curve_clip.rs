@@ -182,7 +182,6 @@ where C::Point: 'a+Coordinate2D {
 
     // Iterate to refine the match
     loop {
-
         let curve2_len = if curve2_last_len > accuracy_squared {
             // Clip curve2 against curve1
             let clip_t  = clip(&curve2, &curve1);
