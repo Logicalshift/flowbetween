@@ -244,13 +244,10 @@ fn intersection_curve_1() {
     let intersections = bezier::curve_intersects_curve_clip(&curve2, &curve1, 0.01);
     println!("{:?}", intersections);
     assert!(intersections.len() != 0);
-    assert!(intersections.len() == 1);
-
-    // TODO: should be two intersections (one at the start and one later on, but we only get one at the moment)
+    assert!(intersections.len() == 2);
 
     assert!(curve2.point_at_pos(intersections[0].0).distance_to(&curve1.point_at_pos(intersections[0].1)) < 0.01);
-    assert!(intersections[0].0 > 0.01 && intersections[0].0 < 0.99);
-    assert!(intersections[0].1 > 0.01 && intersections[0].1 < 0.99);
+    assert!(curve2.point_at_pos(intersections[1].0).distance_to(&curve1.point_at_pos(intersections[1].1)) < 0.01);
 }
 
 #[test]

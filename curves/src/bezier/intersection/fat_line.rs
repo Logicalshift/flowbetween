@@ -101,9 +101,9 @@ impl FatLine {
     /// 
     #[inline]
     fn round_y_value(y: f64) -> f64 {
-        if y < 0.0 && y > -0.001 {
+        if y < 0.00001 && y > -0.001 {
             0.0
-        } else if y > 1.0 && y < 1.001 {
+        } else if y > 0.99999 && y < 1.001 {
             1.0
         } else {
             y
