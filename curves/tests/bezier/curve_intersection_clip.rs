@@ -144,6 +144,18 @@ fn find_intersections_on_curve() {
 }
 
 #[test]
+fn intersections_with_overlapping_curves() {
+    let curve1 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+    let curve2 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+
+    println!("{:?}", intersections);
+
+    assert!(intersections.len() == 2);
+}
+
+#[test]
 fn intersections_with_nearby_curves_1() {
     let curve1 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
     let curve2 = bezier::Curve::from_points(Coord2(350.22574, 706.551), Coord2(361.0284, 690.2511), Coord2(354.72943, 701.2933), Coord2(358.0882, 695.26));
