@@ -62,7 +62,7 @@ fn find_intersection_on_straight_line_start() {
 }
 
 #[test]
-fn find_intersection_on_straight_line_end() {
+fn find_intersection_on_straight_line_end_1() {
     // Intersection at the start of two curves
     let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(10.0, 10.0), Coord2(5.0, 5.0)));
     let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(0.0, 10.0), Coord2(5.0, 5.0)));
@@ -82,7 +82,7 @@ fn find_intersection_on_straight_line_end() {
 }
 
 #[test]
-fn find_intersection_on_straight_line_end_to_start() {
+fn find_intersection_on_straight_line_end_to_start_1() {
     // Intersection at the start of two curves
     let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(10.0, 10.0), Coord2(5.0, 5.0)));
     let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(5.0, 5.0), Coord2(0.0, 10.0)));
@@ -97,6 +97,60 @@ fn find_intersection_on_straight_line_end_to_start() {
     let intersect_point = curve2.point_at_pos(intersections[0].1);
     assert!(intersections[0].1 < 0.01);
     assert!(intersect_point.distance_to(&Coord2(5.0, 5.0)) < 0.1);
+
+    assert!(intersections.len() == 1);
+}
+
+#[test]
+fn find_intersection_on_line_end_to_end_2() {
+    // Intersection that should be found in self_collide_removes_shared_point_2 in the graph_path tests
+    let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(1.0, 5.0), Coord2(3.0, 3.0)));
+    let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(5.0, 5.0), Coord2(3.0, 3.0)));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.1);
+    assert!(intersections.len() != 0);
+
+    let intersect_point = curve1.point_at_pos(intersections[0].0);
+    assert!(intersect_point.distance_to(&Coord2(3.0, 3.0)) < 0.1);
+
+    let intersect_point = curve2.point_at_pos(intersections[0].1);
+    assert!(intersect_point.distance_to(&Coord2(3.0, 3.0)) < 0.1);
+
+    assert!(intersections.len() == 1);
+}
+
+#[test]
+fn find_intersection_on_line_end_to_end_3() {
+    // Intersection that should be found in self_collide_removes_shared_point_1 in the graph_path tests
+    let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(1.0, 5.0), Coord2(3.0, 3.0)));
+    let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(5.0, 1.0), Coord2(3.0, 3.0)));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.1);
+    assert!(intersections.len() != 0);
+
+    let intersect_point = curve1.point_at_pos(intersections[0].0);
+    assert!(intersect_point.distance_to(&Coord2(3.0, 3.0)) < 0.1);
+
+    let intersect_point = curve2.point_at_pos(intersections[0].1);
+    assert!(intersect_point.distance_to(&Coord2(3.0, 3.0)) < 0.1);
+
+    assert!(intersections.len() == 1);
+}
+
+#[test]
+fn find_intersection_on_line_end_to_start_2() {
+    // Reverse of the intersection that should be found in self_collide_removes_shared_point_2 in the graph_path tests
+    let curve1  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(1.0, 5.0), Coord2(3.0, 3.0)));
+    let curve2  = line::line_to_bezier::<_, bezier::Curve<_>>(&(Coord2(3.0, 3.0), Coord2(5.0, 5.0)));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.1);
+    assert!(intersections.len() != 0);
+
+    let intersect_point = curve1.point_at_pos(intersections[0].0);
+    assert!(intersect_point.distance_to(&Coord2(3.0, 3.0)) < 0.1);
+
+    let intersect_point = curve2.point_at_pos(intersections[0].1);
+    assert!(intersect_point.distance_to(&Coord2(3.0, 3.0)) < 0.1);
 
     assert!(intersections.len() == 1);
 }
