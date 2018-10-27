@@ -511,13 +511,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// True if the t value is effectively at the start of the curve
     /// 
     #[inline]
-    fn t_is_zero(t: f64) -> bool { t < 0.01 }
+    fn t_is_zero(t: f64) -> bool { t < SMALL_T_DISTANCE }
 
     ///
     /// True if the t value is effective at the end of the curve
     /// 
     #[inline]
-    fn t_is_one(t: f64) -> bool { t > 0.99 }
+    fn t_is_one(t: f64) -> bool { t > (1.0-SMALL_T_DISTANCE) }
 
     ///
     /// Joins two edges at an intersection, returning the index of the intersection point
