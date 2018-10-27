@@ -1,6 +1,7 @@
 use flo_curves::*;
 use flo_curves::line;
 use flo_curves::bezier;
+use flo_curves::bezier::BezierCurveWithSections;
 
 #[test]
 fn find_intersection_on_straight_line_not_middle() {
@@ -144,9 +145,35 @@ fn find_intersections_on_curve() {
 }
 
 #[test]
-fn intersections_with_overlapping_curves() {
+fn intersections_with_overlapping_curves_1() {
     let curve1 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
     let curve2 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+
+    println!("{:?}", intersections);
+
+    assert!(intersections.len() == 2);
+}
+
+#[test]
+fn intersections_with_overlapping_curves_2() {
+    let curve1 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+    let curve2 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+    let curve2 = bezier::Curve::from_curve(&curve2.section(0.2, 0.6));
+
+    let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+
+    println!("{:?}", intersections);
+
+    assert!(intersections.len() == 2);
+}
+
+#[test]
+fn intersections_with_overlapping_curves_3() {
+    let curve1 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+    let curve2 = bezier::Curve::from_points(Coord2(346.69864, 710.2048), Coord2(356.28525, 698.20306), Coord2(350.41446, 706.8076), Coord2(353.61026, 702.4266));
+    let curve1 = bezier::Curve::from_curve(&curve1.section(0.2, 0.6));
 
     let intersections   = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
 
