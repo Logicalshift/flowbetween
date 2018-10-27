@@ -39,6 +39,11 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
         return None;
     };
 
+    // If we just found one point where the curve overlaps, then say that they didn't
+    if (c1_t1-c1_t2).abs() < SMALL_T_DISTANCE || (c2_t1-c2_t2).abs() < SMALL_T_DISTANCE {
+        return None;
+    }
+
     // If curve1 and curve2 are collinear - two overlapping lines - we've already got the results (and the control points will differ anyway)
     #[inline]
     fn is_collinear<P: Coordinate2D>(p: &P, &(a, b, c): &(f64, f64, f64)) -> bool {
