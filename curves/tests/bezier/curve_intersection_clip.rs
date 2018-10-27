@@ -210,4 +210,30 @@ fn intersection_curve_1() {
     // TODO: should be two intersections (one at the start and one later on, but we only get one at the moment)
 
     assert!(curve2.point_at_pos(intersections[0].0).distance_to(&curve1.point_at_pos(intersections[0].1)) < 0.01);
+    assert!(intersections[0].0 > 0.01 && intersections[0].0 < 0.99);
+    assert!(intersections[0].1 > 0.01 && intersections[0].1 < 0.99);
+}
+
+#[test]
+fn intersection_curve_2() {
+    let curve1 = bezier::Curve::from_points(Coord2(248.42221069335938, 678.5138549804688), Coord2(258.2634582519531, 745.7745361328125), Coord2(240.33773803710938, 703.49462890625), Coord2(246.20928955078125, 728.5226440429688));
+    let curve2 = bezier::Curve::from_points(Coord2(240.6450958251953, 688.1998901367188), Coord2(248.42221069335938, 678.5138549804688), Coord2(248.51101684570313, 684.6644897460938), Coord2(248.41787719726563, 681.5728759765625));
+
+    let intersections = bezier::curve_intersects_curve_clip(&curve1, &curve2, 0.01);
+    println!("{:?}", intersections);
+    assert!(intersections.len() != 0);
+    assert!(intersections.len() != 1);
+    assert!(intersections.len() == 2);
+
+    assert!(curve1.point_at_pos(intersections[0].0).distance_to(&curve2.point_at_pos(intersections[0].1)) < 0.01);
+    assert!(curve1.point_at_pos(intersections[1].0).distance_to(&curve2.point_at_pos(intersections[1].1)) < 0.01);
+
+    let intersections = bezier::curve_intersects_curve_clip(&curve2, &curve1, 0.01);
+    println!("{:?}", intersections);
+    assert!(intersections.len() != 0);
+    assert!(intersections.len() == 1);
+
+    // TODO: should be two intersections (one at the start and one later on, but we only get one at the moment)
+
+    assert!(curve2.point_at_pos(intersections[0].0).distance_to(&curve1.point_at_pos(intersections[0].1)) < 0.01);
 }
