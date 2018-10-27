@@ -1349,3 +1349,23 @@ fn self_collide_divides_lines_2() {
     println!("{:?}", graph_path);
     assert!(graph_path.all_edges().count() == 9);
 }
+
+#[test]
+fn self_collide_divides_lines_3() {
+    let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(3.0, 0.999))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let mut graph_path  = GraphPath::from_path(&path, ());
+
+    assert!(graph_path.all_edges().count() == 5);
+
+    graph_path.self_collide(0.01);
+
+    println!("{:?}", graph_path);
+    assert!(graph_path.all_edges().count() == 9);
+}
