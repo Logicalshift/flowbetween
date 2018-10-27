@@ -88,7 +88,7 @@ where C::Point: 'a+Coordinate2D {
 
     // t1 and t2 must not match (exact matches produce an invalid curve)
     match clip_t {
-        ClipResult::Some((t1, t2))  => if t1 == t2 { ClipResult::Some((t1-0.005, t2+0.005)) } else { ClipResult::Some((t1, t2)) }
+        ClipResult::Some((t1, t2))  => if t1 == t2 { ClipResult::Some(((t1-0.005).max(0.0), (t2+0.005).min(1.0))) } else { ClipResult::Some((t1, t2)) }
         other                       => other
     }
 }
@@ -236,7 +236,7 @@ where C::Point: 'a+Coordinate2D {
             }
         }
 
-        if (curve1_last_len*0.8) < curve1_len && (curve2_last_len*0.8) < curve2_len {
+        if (curve1_last_len*0.8) <= curve1_len && (curve2_last_len*0.8) <= curve2_len {
             // If neither curve shrunk by 20%, then subdivide the one that shrunk the least
             if curve1_len/curve1_last_len > curve2_len/curve2_last_len {
                 // Curve1 shrunk less than curve2
