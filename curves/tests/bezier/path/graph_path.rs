@@ -1262,7 +1262,7 @@ fn ray_collide_doughnuts_many_angles() {
 }
 
 #[test]
-fn self_collide_removes_shared_point() {
+fn self_collide_removes_shared_point_1() {
     let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(1.0, 5.0))
         .line_to(Coord2(3.0, 3.0))
@@ -1284,4 +1284,68 @@ fn self_collide_removes_shared_point() {
 
     assert!(edges_ending_at_center.len() == 2);
     assert!(edges_ending_at_center.iter().all(|edge| edge.end_point_index() == edges_ending_at_center[0].end_point_index()));
+}
+
+#[test]
+fn self_collide_removes_shared_point_2() {
+    let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(3.0, 3.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(3.0, 3.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let mut graph_path  = GraphPath::from_path(&path, ());
+    graph_path.self_collide(0.01);
+
+    let mut edges_ending_at_center = vec![];
+    for edge in graph_path.all_edges() {
+        if edge.end_point().distance_to(&Coord2(3.0, 3.0)) < 0.01 {
+            edges_ending_at_center.push(edge);
+        }
+    }
+
+    assert!(edges_ending_at_center.len() == 2);
+    assert!(edges_ending_at_center.iter().all(|edge| edge.end_point_index() == edges_ending_at_center[0].end_point_index()));
+}
+
+#[test]
+fn self_collide_divides_lines_1() {
+    let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(3.0, 0.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let mut graph_path  = GraphPath::from_path(&path, ());
+
+    assert!(graph_path.all_edges().count() == 5);
+
+    graph_path.self_collide(0.01);
+
+    assert!(graph_path.all_edges().count() == 9);
+}
+
+#[test]
+fn self_collide_divides_lines_2() {
+    let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(3.0, 0.99))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let mut graph_path  = GraphPath::from_path(&path, ());
+
+    assert!(graph_path.all_edges().count() == 5);
+
+    graph_path.self_collide(0.01);
+
+    println!("{:?}", graph_path);
+    assert!(graph_path.all_edges().count() == 9);
 }
