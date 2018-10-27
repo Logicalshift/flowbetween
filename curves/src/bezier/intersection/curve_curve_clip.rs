@@ -61,6 +61,10 @@ where C::Point: 'a+Coordinate2D {
     let fat_line    = FatLine::from_curve(curve_to_clip_against);
     let clip_t      = fat_line.clip_t(curve_to_clip);
 
+    if fat_line.is_flat() {
+        return ClipResult::SecondCurveIsLinear;
+    }
+
     let clip_t = if let Some(clip_t) = clip_t {
         // Also try clipping against the perpendicular line
         let perpendicular_line      = FatLine::from_curve_perpendicular(curve_to_clip_against);
