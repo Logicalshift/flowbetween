@@ -1367,5 +1367,10 @@ fn self_collide_divides_lines_3() {
     graph_path.self_collide(0.01);
 
     println!("{:?}", graph_path);
-    assert!(graph_path.all_edges().count() == 9);
+
+    // So close we should just collide as if the 3.0, 0.999 point is at 3.0, 1.0
+    assert!(!graph_path.all_edges().any(|edge| edge.start_point().distance_to(&edge.end_point()) < 0.001));
+    assert!(graph_path.all_edges().count() != 9);           // Technically valid, indicates a change in the precision of the collision
+    assert!(graph_path.all_edges().count() != 7);
+    assert!(graph_path.all_edges().count() == 6);
 }
