@@ -541,6 +541,26 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         let edge1 = Curve::from_curve(&GraphEdge::new(self, GraphEdgeRef { start_idx: edge1_idx, edge_idx: edge1_edge_idx, reverse: false }));
         let edge2 = Curve::from_curve(&GraphEdge::new(self, GraphEdgeRef { start_idx: edge2_idx, edge_idx: edge2_edge_idx, reverse: false }));
 
+        // If we're very close to the start or end, round to the start/end
+        let p1  = edge1.point_at_pos(t1);
+        let p2  = edge2.point_at_pos(t2);
+
+        let t1  = if p1.is_near_to(&edge1.start_point(), SMALL_DISTANCE) {
+            0.0
+        } else if p1.is_near_to(&edge1.end_point(), SMALL_DISTANCE) {
+            1.0
+        } else {
+            t1
+        };
+
+        let t2  = if p2.is_near_to(&edge2.start_point(), SMALL_DISTANCE) {
+            0.0
+        } else if p2.is_near_to(&edge2.end_point(), SMALL_DISTANCE) {
+            1.0
+        } else {
+            t2
+        };
+
         // Create or choose a point to collide at
         // (If t1 or t2 is 0 or 1 we collide on the edge1 or edge2 points, otherwise we create a new point to collide at)
         let collision_point = if Self::t_is_zero(t1) {
