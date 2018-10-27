@@ -679,9 +679,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         // TODO: for complicated paths, maybe some pre-processing for bounding boxes to eliminate trivial cases would be beneficial for performance
 
-        // The points that have had collisions exactly on them (we only collide them once)
-        let mut collided = vec![false; self.points.len()];
-
         // Iterate through the edges in the 'from' range
         for src_idx in collide_from {
             for src_edge_idx in 0..self.points[src_idx].forward_edges.len() {
@@ -727,23 +724,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                             } else {
                                 (tgt_idx, tgt_edge_idx, tgt_t)
                             };
-
-                            // Allow only one collision exactly on a point
-                            if Self::t_is_zero(src_t) {
-                                if collided[src_idx] { 
-                                    continue;
-                                } else {
-                                    collided[src_idx] = true;
-                                }
-                            }
-
-                            if Self::t_is_zero(tgt_t) {
-                                if collided[tgt_idx] { 
-                                    continue;
-                                } else {
-                                    collided[tgt_idx] = true;
-                                }
-                            }
 
                             debug_assert!(src_idx < self.points.len());
                             debug_assert!(tgt_idx < self.points.len());
