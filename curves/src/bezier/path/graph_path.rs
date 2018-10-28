@@ -1148,11 +1148,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     pub fn ray_collisions<L: Line<Point=Point>>(&self, ray: &L) -> Vec<(GraphRayCollision, f64, f64, Point)> {
         // Raw collisions
         let collinear_collisions    = self.collinear_ray_collisions(ray);
-        let normal_collisions       = self.raw_ray_collisions(ray);
-        let normal_collisions       = self.remove_collisions_before_or_after_collinear_section(ray, normal_collisions);
+        let crossing_collisions     = self.raw_ray_collisions(ray);
+        let crossing_collisions     = self.remove_collisions_before_or_after_collinear_section(ray, crossing_collisions);
 
         // Chain them together
-        let collisions = collinear_collisions.chain(normal_collisions);
+        let collisions = collinear_collisions.chain(crossing_collisions);
 
         // Filter for accuracy
         let collisions = self.move_collisions_at_end_to_beginning(collisions);
