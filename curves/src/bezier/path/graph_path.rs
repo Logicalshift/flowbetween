@@ -305,12 +305,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Iterate through the points in the path
         for (cp1, cp2, end_point) in path.points() {
             // Ignore points that are too close to the last point
-            let distance = end_point - last_point_pos;
-            if distance.dot(&distance) < CLOSE_DISTANCE { 
-                let cp1_distance = cp1-last_point_pos;
-                let cp2_distance = cp2-cp1;
-
-                if cp1_distance.dot(&cp1_distance) < CLOSE_DISTANCE && cp2_distance.dot(&cp2_distance) < CLOSE_DISTANCE {
+            if end_point.is_near_to(&last_point_pos, CLOSE_DISTANCE) {
+                if cp1.is_near_to(&last_point_pos, CLOSE_DISTANCE) && cp2.is_near_to(&cp1, CLOSE_DISTANCE) {
                     continue;
                 }
             }
