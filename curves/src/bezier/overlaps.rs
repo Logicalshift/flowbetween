@@ -65,8 +65,7 @@ pub fn overlapping_region<P: Coordinate+Coordinate2D, C1: BezierCurve<Point=P>, 
     // Start and end points match at t1, t2
     #[inline]
     fn close_enough<P: Coordinate>(p1: &P, p2: &P) -> bool {
-        let offset = *p1 - *p2;
-        offset.dot(&offset) < (SMALL_DISTANCE * SMALL_DISTANCE)
+        p1.is_near_to(&p2, SMALL_DISTANCE)
     }
 
     // Get the control points for the two curves
