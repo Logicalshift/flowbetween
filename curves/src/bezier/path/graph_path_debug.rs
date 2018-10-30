@@ -8,7 +8,7 @@ use std::fmt::Write;
 ///
 /// Writes out the graph path as an SVG string
 ///
-pub fn graph_path_svg_string<P: Coordinate+Coordinate2D, Label: Copy>(path: &GraphPath<P, Label>) -> String {
+pub fn graph_path_svg_string<P: Coordinate+Coordinate2D, Label: Copy>(path: &GraphPath<P, Label>, rays: Vec<(P, P)>) -> String {
     let mut result = String::new();
 
     let bounds      = path.all_edges().fold(Bounds::empty(), |a, b| a.union_bounds(b.bounding_box()));;
@@ -57,6 +57,21 @@ pub fn graph_path_svg_string<P: Coordinate+Coordinate2D, Label: Copy>(path: &Gra
 
             index += 1;
         }
+    }
+
+    for (p1, p2) in rays {
+        write!(result, "<!-- Ray (Coord2({}, {}), Coord2({}, {})) -->", p1.x(), p1.y(), p2.x(), p2.y());
+
+        let p1 = (p1 - offset) * scale;
+        let p2 = (p2 - offset) * scale;
+
+        let point_offset = p2-p1;
+        let p1 = p1 - (point_offset * 1000.0);
+        let p2 = p2 + (point_offset * 1000.0);
+
+        write!(result, "<path d=\"M {} {} L {} {}\" fill=\"transparent\" stroke-width=\"1\" stroke=\"red\" />",
+            p1.x(), p1.y(),
+            p2.x(), p2.y());
     }
 
     result
