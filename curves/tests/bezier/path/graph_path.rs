@@ -1374,3 +1374,140 @@ fn self_collide_divides_lines_3() {
     assert!(graph_path.all_edges().count() != 7);
     assert!(graph_path.all_edges().count() == 6);
 }
+
+#[test]
+fn ray_cast_at_tiny_line_1() {
+    // Line with two points .011 apart (just above CLOSE_DISTANCE)
+    let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(2.9945, 5.0))
+        .line_to(Coord2(3.0055, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let path = GraphPath::from_path(&path, ());
+
+    // Should be able to cast a ray and hit our line and none of the others
+    let collisions = path.ray_collisions(&(Coord2(3.0, 0.0), Coord2(3.0, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 2);
+
+    // Tiny line is points 2,3
+    let small_edge = path.get_edge(collisions[1].0.edge());
+    assert!(small_edge.start_point_index() == 2);
+    assert!(small_edge.end_point_index() == 3);
+
+    // Not an intersection
+    assert!(!collisions[1].0.is_intersection());
+}
+
+#[test]
+fn ray_cast_at_tiny_line_2() {
+    // Line with several points .011 apart (just above CLOSE_DISTANCE)
+    let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(2.9835, 5.0))
+        .line_to(Coord2(2.9945, 5.0))
+        .line_to(Coord2(3.0055, 5.0))
+        .line_to(Coord2(3.0165, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let path = GraphPath::from_path(&path, ());
+
+    // Should be able to cast a ray and hit our line and none of the others
+    for p in 0..10 {
+        let offset = ((p as f64)/10.0) * 0.01;
+
+        let collisions = path.ray_collisions(&(Coord2(2.9945 + offset, 0.0), Coord2(2.9945+offset, 1.0)));
+        println!("{:?}", collisions);
+        assert!(collisions.len() == 2);
+
+        // Tiny line is points 3,4
+        let small_edge = path.get_edge(collisions[1].0.edge());
+        assert!(small_edge.start_point_index() == 3);
+        assert!(small_edge.end_point_index() == 4);
+
+        // Not an intersection
+        assert!(!collisions[1].0.is_intersection());
+    }
+}
+
+#[test]
+fn ray_cast_at_tiny_line_3() {
+    // Line with several points .011 apart (just above CLOSE_DISTANCE)
+    let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(2.9835, 5.0))
+        .line_to(Coord2(2.9945, 5.0))
+        .line_to(Coord2(3.0055, 5.0))
+        .line_to(Coord2(3.0165, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let path = GraphPath::from_path(&path, ());
+
+    // Aim at the end of the line
+    let collisions = path.ray_collisions(&(Coord2(3.0055, 0.0), Coord2(3.0055, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 2);
+
+    // Tiny line is points 4,5
+    let small_edge = path.get_edge(collisions[1].0.edge());
+    assert!(small_edge.start_point_index() == 4);
+    assert!(small_edge.end_point_index() == 5);
+
+    // Not an intersection
+    assert!(!collisions[1].0.is_intersection());
+}
+
+#[test]
+fn ray_cast_at_tiny_line_4() {
+    // Line with a tiny zig-zag
+    let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(3.0055, 5.0))
+        .line_to(Coord2(2.9945, 4.99))
+        .line_to(Coord2(3.0055, 4.99))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let path = GraphPath::from_path(&path, ());
+
+    // Should be able to cast a ray and hit our line and none of the others
+    let collisions = path.ray_collisions(&(Coord2(3.0, 0.0), Coord2(3.0, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 4);
+
+    // Tiny line is points 3,4
+    let small_edge = path.get_edge(collisions[1].0.edge());
+    assert!(small_edge.start_point_index() == 3);
+    assert!(small_edge.end_point_index() == 4);
+
+    // Not an intersection
+    assert!(!collisions[1].0.is_intersection());
+}
+
+#[test]
+fn ray_cast_at_tiny_line_5() {
+    // Line with two points .011 apart (just above CLOSE_DISTANCE)
+    let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(2.9945, 5.0))
+        .line_to(Coord2(3.0055, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let path1 = GraphPath::from_path(&path, ());
+    let path = path1.merge(GraphPath::from_path(&path, ()));
+
+    // Should be able to cast a ray and hit our line and none of the others
+    let collisions = path.ray_collisions(&(Coord2(3.0, 0.0), Coord2(3.0, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 4);
+}
