@@ -1346,7 +1346,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         current_edge = next_edge;
                     } else {
                         // Partial path
-                        // TODO: or, reversal of direction...
                         break;
                     }
                 }
