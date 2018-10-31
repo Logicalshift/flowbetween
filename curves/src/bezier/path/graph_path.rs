@@ -1006,12 +1006,29 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 if curve_t > 0.999 {
                     // Collisions at the very end of the curve should be considered to be at the start of the following curve
                     // (as a ray intersecting a point will collide with both the previous and next curve)
-                    let collision = GraphEdgeRef {
-                        start_idx:  self.points[collision.start_idx].forward_edges[collision.edge_idx].end_idx,
-                        edge_idx:   self.points[collision.start_idx].forward_edges[collision.edge_idx].following_edge_idx,
-                        reverse:    false,
-                    };
-                    (collision, 0.0, line_t, position)
+                    let next_point_idx  = self.points[collision.start_idx].forward_edges[collision.edge_idx].end_idx;
+
+                    if self.points[next_point_idx].position.is_near_to(&position, SMALL_DISTANCE) {
+                        // Very close to the end of the curve
+                        let collision = GraphEdgeRef {
+                            start_idx:  self.points[collision.start_idx].forward_edges[collision.edge_idx].end_idx,
+                            edge_idx:   self.points[collision.start_idx].forward_edges[collision.edge_idx].following_edge_idx,
+                            reverse:    false,
+                        };
+                        (collision, 0.0, line_t, position)
+                    } else {
+                        // Not at the end of a curve
+                        (collision, curve_t, line_t, position)
+                    }
+                } else if curve_t < 0.001 {
+                    // Also check for points very close to the start of a curve and move those
+                    if self.points[collision.start_idx].position.is_near_to(&position, SMALL_DISTANCE) {
+                        // Very close to the start of the curve
+                        (collision, 0.0, line_t, position)
+                    } else {
+                        // Not at the start of a curve
+                        (collision, curve_t, line_t, position)
+                    }
                 } else {
                     // Not at the end of a curve
                     (collision, curve_t, line_t, position)
