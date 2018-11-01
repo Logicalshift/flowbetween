@@ -60,7 +60,8 @@ pub fn graph_path_svg_string<P: Coordinate+Coordinate2D, Label: Copy>(path: &Gra
     }
 
     for (p1, p2) in rays {
-        write!(result, "<!-- Ray (Coord2({}, {}), Coord2({}, {})) -->", p1.x(), p1.y(), p2.x(), p2.y());
+        write!(result, "<!-- Ray (Coord2({}, {}), Coord2({}, {})) -->\n", p1.x(), p1.y(), p2.x(), p2.y());
+        let collisions = path.ray_collisions(&(p1, p2));
 
         let p1 = (p1 - offset) * scale;
         let p2 = (p2 - offset) * scale;
@@ -69,9 +70,14 @@ pub fn graph_path_svg_string<P: Coordinate+Coordinate2D, Label: Copy>(path: &Gra
         let p1 = p1 - (point_offset * 1000.0);
         let p2 = p2 + (point_offset * 1000.0);
 
-        write!(result, "<path d=\"M {} {} L {} {}\" fill=\"transparent\" stroke-width=\"1\" stroke=\"red\" />",
+        write!(result, "<path d=\"M {} {} L {} {}\" fill=\"transparent\" stroke-width=\"1\" stroke=\"red\" />\n",
             p1.x(), p1.y(),
             p2.x(), p2.y());
+
+        for (_collision, _curve_t, _line_t, pos) in collisions {
+            let pos = (pos - offset)*scale;
+            write!(result, "<circle cx=\"{}\" cy=\"{}\" r=\"1.0\" fill=\"transparent\" stroke=\"red\" />\n", pos.x(), pos.y());
+        }
     }
 
     result
