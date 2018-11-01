@@ -1530,3 +1530,23 @@ fn ray_cast_at_tiny_line_5() {
     println!("{:?}", collisions);
     assert!(collisions.len() == 2);
 }
+
+#[test]
+fn ray_cast_at_tiny_line_6() {
+    // Path with a pair of lines with a known failure on them
+    let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(525.2388916015625, 931.7135009765625))
+        .curve_to((Coord2(525.4012451171875, 931.7196044921875), Coord2(525.5686645507813, 931.7201538085938)), Coord2(525.7626342773438, 931.6915893554688))
+        .curve_to((Coord2(526.2460327148438, 931.761962890625), Coord2(526.3161010742188, 931.8532104492188)), Coord2(526.6378173828125, 931.9375610351563))
+        .curve_to((Coord2(529.997314453125, 935.0886840820313), Coord2(508.8724365234375, 903.5847778320313)), Coord2(508.7933654785156, 901.745849609375))
+        .line_to(Coord2(700.0, 900.0))
+        .line_to(Coord2(1.0, 900.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+    let path = GraphPath::from_path(&path, ());
+
+    let collisions = path.ray_collisions(&(Coord2(543.606689453125, 925.3496704101563), Coord2(553.524658203125, 921.505126953125)));
+    println!("{:?}", collisions);
+    assert!((collisions.len()&1) == 0);
+    assert!(collisions.len() == 4);
+}
