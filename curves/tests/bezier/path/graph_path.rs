@@ -1494,20 +1494,39 @@ fn ray_cast_at_tiny_line_4() {
 
 #[test]
 fn ray_cast_at_tiny_line_5() {
-    // Line with two points .011 apart (just above CLOSE_DISTANCE)
+    // Very long line followed by very short line
     let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(1.0, 5.0))
-        .line_to(Coord2(2.9945, 5.0))
-        .line_to(Coord2(3.0055, 5.0))
-        .line_to(Coord2(5.0, 5.0))
-        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(10000.0, 5.0))
+        .line_to(Coord2(10000.02, 5.0))
+        .line_to(Coord2(20000.0, 5.0))
+        .line_to(Coord2(20000.0, 1.0))
         .line_to(Coord2(1.0, 1.0))
         .build();
-    let path1 = GraphPath::from_path(&path, ());
-    let path = path1.merge(GraphPath::from_path(&path, ()));
+    let path = GraphPath::from_path(&path, ());
 
     // Should be able to cast a ray and hit our line and none of the others
-    let collisions = path.ray_collisions(&(Coord2(3.0, 0.0), Coord2(3.0, 1.0)));
+    let collisions = path.ray_collisions(&(Coord2(9999.99, 0.0), Coord2(9999.99, 1.0)));
     println!("{:?}", collisions);
-    assert!(collisions.len() == 4);
+    assert!(collisions.len() == 2);
+
+    let collisions = path.ray_collisions(&(Coord2(9999.999, 0.0), Coord2(9999.999, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 2);
+
+    let collisions = path.ray_collisions(&(Coord2(10000.001, 0.0), Coord2(10000.001, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 2);
+
+    let collisions = path.ray_collisions(&(Coord2(10000.0195, 0.0), Coord2(10000.0195, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 2);
+
+    let collisions = path.ray_collisions(&(Coord2(10000.01999, 0.0), Coord2(10000.01999, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 2);
+
+    let collisions = path.ray_collisions(&(Coord2(10000.0201, 0.0), Coord2(10000.0201, 1.0)));
+    println!("{:?}", collisions);
+    assert!(collisions.len() == 2);
 }
