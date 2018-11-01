@@ -1003,7 +1003,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     fn move_collisions_at_end_to_beginning<'a, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, Point)>>(&'a self, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, Point)> {
         collisions.into_iter()
             .map(move |(collision, curve_t, line_t, position)| {
-                if curve_t > 0.99 {
+                if curve_t > 0.99999 {
                     // Collisions at the very end of the curve should be considered to be at the start of the following curve
                     // (as a ray intersecting a point will collide with both the previous and next curve)
                     let next_point_idx  = self.points[collision.start_idx].forward_edges[collision.edge_idx].end_idx;
@@ -1020,7 +1020,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                         // Not at the end of a curve
                         (collision, curve_t, line_t, position)
                     }
-                } else if curve_t < 0.01 {
+                } else if curve_t < 0.00001 {
                     // Also check for points very close to the start of a curve and move those
                     if self.points[collision.start_idx].position.is_near_to(&position, SMALL_DISTANCE) {
                         // Very close to the start of the curve
@@ -1074,7 +1074,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         collisions
             .into_iter()
             .filter(move |(collision, curve_t, _line_t, position)| {
-                if *curve_t < 0.01 && self.points[collision.start_idx].position.is_near_to(&position, SMALL_DISTANCE) {
+                if *curve_t < 0.00001 && self.points[collision.start_idx].position.is_near_to(&position, SMALL_DISTANCE) {
                     // Find the edge before this one
                     let edge            = GraphEdge::new(self, *collision);
                     let previous_edge   = self.reverse_edges_for_point(collision.start_idx)
