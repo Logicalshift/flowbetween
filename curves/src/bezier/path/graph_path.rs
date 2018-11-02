@@ -968,22 +968,16 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             .filter(move |(collision, curve_t, _line_t, _position)| {
                 if *curve_t > 0.999 {
                     let edge = GraphEdge::new(self, *collision);
-                    let next = edge.next_edge();
 
-                    if Self::curve_is_collinear(&next, ray_coeffs) {
-                        // Collisions crossing collinear sections are taken care of during the collinear collision phase
+                    // If any following edge is collinear, remove this collision
+                    if self.edges_for_point(edge.end_point_index()).any(|next| Self::curve_is_collinear(&next, ray_coeffs)) {
                         false
                     } else {
                         true
                     }
                 } else if *curve_t < 0.001 {
-                    let previous    = self.reverse_edges_for_point(collision.start_idx)
-                        .map(|previous| previous.reversed())
-                        .filter(|previous| previous.following_edge_idx() == collision.edge_idx)
-                        .nth(0)
-                        .expect("Previous edge for collinear collision");
-
-                    if Self::curve_is_collinear(&previous, ray_coeffs) {
+                    // If any preceding edge is collinear, remove this collision
+                    if self.reverse_edges_for_point(collision.start_idx).any(|previous| Self::curve_is_collinear(&previous, ray_coeffs)) {
                         // Collisions crossing collinear sections are taken care of during the collinear collision phase
                         false
                     } else {
