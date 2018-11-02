@@ -965,19 +965,21 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         let ray_coeffs = ray.coefficients();
 
         collisions.into_iter()
-            .filter(move |(collision, curve_t, _line_t, _position)| {
-                if *curve_t > 0.999 {
+            .filter(move |(collision, curve_t, _line_t, position)| {
+                if *curve_t > 0.9 {
                     let edge = GraphEdge::new(self, *collision);
 
                     // If any following edge is collinear, remove this collision
-                    if self.edges_for_point(edge.end_point_index()).any(|next| Self::curve_is_collinear(&next, ray_coeffs)) {
+                    if position.is_near_to(&edge.end_point(), SMALL_DISTANCE) && self.edges_for_point(edge.end_point_index()).any(|next| Self::curve_is_collinear(&next, ray_coeffs)) {
                         false
                     } else {
                         true
                     }
-                } else if *curve_t < 0.001 {
+                } else if *curve_t < 0.1 {
+                    let edge = GraphEdge::new(self, *collision);
+
                     // If any preceding edge is collinear, remove this collision
-                    if self.reverse_edges_for_point(collision.start_idx).any(|previous| Self::curve_is_collinear(&previous, ray_coeffs)) {
+                    if position.is_near_to(&edge.start_point(), SMALL_DISTANCE) && self.reverse_edges_for_point(collision.start_idx).any(|previous| Self::curve_is_collinear(&previous, ray_coeffs)) {
                         // Collisions crossing collinear sections are taken care of during the collinear collision phase
                         false
                     } else {
