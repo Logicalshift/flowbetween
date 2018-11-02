@@ -17,7 +17,9 @@ where C::Point: Coordinate2D {
 
     // Line coefficients
     let (p1, p2)    = line.points();
-    let (a, b, c)   = line.coefficients();
+    let a           = p2.y()-p1.y();
+    let b           = p1.x()-p2.x();
+    let c           = p1.x()*(p1.y()-p2.y()) + p1.y()*(p2.x()-p1.x());
 
     // Bezier coefficients
     let (w2, w3)    = curve.control_points();
@@ -45,14 +47,20 @@ where C::Point: Coordinate2D {
         .map(|t| {
             // Allow a small amount of 'slop' for items at the start/end as the root finding is not exact
             if t < 0.0 && t > -0.01 {
+                let factor      = (a*a + b*b).sqrt();
+                let (a, b, c)   = (a/factor, b/factor, c/factor);
                 let start_point = curve.start_point();
+                
                 if (start_point.x()*a + start_point.y()*b + c).abs() < 0.00001 {
                     0.0 
                 } else {
                     t
                 }
             } else if t > 1.0 && t < 1.01 { 
-                let end_point = curve.end_point();
+                let factor      = (a*a + b*b).sqrt();
+                let (a, b, c)   = (a/factor, b/factor, c/factor);
+                let end_point   = curve.end_point();
+
                 if (end_point.x()*a + end_point.y()*b + c).abs() < 0.00001 {
                     1.0
                 } else {
