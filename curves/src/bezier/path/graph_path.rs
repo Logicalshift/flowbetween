@@ -1305,9 +1305,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Finds the exterior edges and turns them into a series of paths
     ///
     pub fn exterior_paths<POut: BezierPathFactory<Point=Point>>(&self) -> Vec<POut> {
+        // List of paths returned by this function
         let mut exterior_paths = vec![];
 
-        // Array of visited points
+        // Array of points visited on a path that we've added to the result
         let mut visited = vec![false; self.points.len()];
 
         for point_idx in 0..(self.points.len()) {
@@ -1316,52 +1317,95 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 continue;
             }
 
-            // Find the first exterior point
-            let exterior_edge = self.edges_for_point(point_idx)
-                .filter(|edge| edge.kind() == GraphPathEdgeKind::Exterior)
-                .nth(0);
+            // Use Dijkstra's algorithm to search for the shortest path that returns to point_idx
+            // This allows for loops or other constructs to exist within the edges, which can happen with sufficiently complicated arithmetic operations
+            // The result will sometimes be incorrect for these situations.
+            // (Ideally we'd try to find a path that visits some points multiple times when this happens)
+            let mut previous_point  = vec![None; self.points.len()];
+            let mut points_to_check = vec![(point_idx, point_idx)];
 
-            if let Some(exterior_edge) = exterior_edge {
-                // Follow the edge around to generate the path (we expect exterior edges to form a complete path)
-                let start_point         = exterior_edge.start_point();
-                let mut current_edge    = exterior_edge;
-                let mut path_points     = vec![];
+            // Loop until we find a previous point for the initial point (indicating we've got a loop of points)
+            while previous_point[point_idx].is_none() {
+                if points_to_check.len() == 0 {
+                    // Ran out of points to check to find a loop (there is no loop for this point)
+                    break;
+                }
 
-                loop {
-                    let current_point_idx = current_edge.start_point_index();
+                let mut next_points_to_check = vec![];
 
-                    // Stop once we reach a point we've already visited
-                    if visited[current_point_idx] {
-                        break;
-                    }
-
-                    // Mark the current point as visited
-                    visited[current_point_idx] = true;
-
-                    // Add the next edge to the path
-                    let (cp1, cp2) = current_edge.control_points();
-                    path_points.push((cp1, cp2, current_edge.end_point()));
-
-                    // Find the next edge (next exterior edge in either direction that is not back the way we came)
-                    let next_point_idx  = current_edge.end_point_index();
-                    let next_edge       = self.edges_for_point(next_point_idx)
-                        .chain(self.reverse_edges_for_point(next_point_idx))
-                        .filter(|edge| edge.end_point_index() != current_point_idx)
-                        .filter(|edge| edge.kind() == GraphPathEdgeKind::Exterior)
-                        .nth(0);
-
-                    if let Some(next_edge) = next_edge {
-                        // Move on to the next point on this path
-                        current_edge = next_edge;
+                // Check all of the points we found last time (ie, breadth-first search of the graph)
+                for (previous_point_idx, current_point_idx) in points_to_check {
+                    let edges = if current_point_idx == point_idx {
+                        // For the first point, only search forward
+                        self.reverse_edges_for_point(current_point_idx).collect::<Vec<_>>()
                     } else {
-                        // Partial path
+                        // For all other points, search all edges
+                        self.edges_for_point(current_point_idx)
+                            .chain(self.reverse_edges_for_point(current_point_idx))
+                            .collect::<Vec<_>>()
+                    };
+
+                    // Follow the edges for this point
+                    for edge in edges {
+                        // Only following exterior edges
+                        if edge.kind() != GraphPathEdgeKind::Exterior {
+                            continue;
+                        }
+
+                        // Find the point that this edge goes to
+                        let next_point_idx = edge.end_point_index();
+
+                        if previous_point[next_point_idx].is_some() {
+                            // We've already visited this point
+                            continue;
+                        }
+
+                        if next_point_idx == previous_point_idx {
+                            // This edge is going backwards around the graph
+                            continue;
+                        }
+
+                        // Record the current point as the previous point for the end point of this edge
+                        previous_point[next_point_idx] = Some((current_point_idx, edge));
+
+                        // Check the edges connected to this point next
+                        next_points_to_check.push((current_point_idx, next_point_idx));
+                    }
+                }
+
+                // Check the set of points we found during this run through the loop next time
+                points_to_check = next_points_to_check;
+            }
+
+            // If we found a loop, generate a path
+            if previous_point[point_idx].is_some() {
+                let mut path_points     = vec![];
+                let mut cur_point_idx   = point_idx;
+
+                while let Some((last_point_idx, ref edge)) = previous_point[cur_point_idx] {
+                    // Push to the path points (we're following the edges in reverse, so points are in reverse order)
+                    let (cp1, cp2)  = edge.control_points();
+                    let start_point = edge.start_point();
+
+                    path_points.push((cp2, cp1, start_point));
+
+                    // Mark this point as visited so we don't try to include it in a future path
+                    visited[last_point_idx] = true;
+
+                    // Move back along the path
+                    cur_point_idx = last_point_idx;
+
+                    if cur_point_idx == point_idx {
+                        // Finished the loop
                         break;
                     }
                 }
 
-                // Turn into a path
-                let path = POut::from_points(start_point, path_points);
-                exterior_paths.push(path);
+                // Start point of the path is the initial point we checked
+                let start_point = self.points[point_idx].position.clone();
+
+                let new_path    = POut::from_points(start_point, path_points);
+                exterior_paths.push(new_path);
             }
         }
 
