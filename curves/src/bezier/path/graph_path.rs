@@ -543,10 +543,12 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         let next_point_idx  = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].end_idx;
         let next_edge_idx   = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].following_edge_idx;
 
+        debug_assert!(next_point_idx != edge_ref.start_idx || next_edge_idx != edge_ref.edge_idx);
+
         // Replace the short edge with the next edge (if edges are very short, we don't need to adjust control points here)
         self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx] = self.points[next_point_idx].forward_edges[next_edge_idx];
 
-        // Remove the next edge
+        // Remove the next edge (we just replaced it)
         self.points[next_point_idx].forward_edges.remove(next_edge_idx);
 
         if edge_ref.start_idx == next_point_idx && edge_ref.edge_idx > next_edge_idx {
@@ -564,6 +566,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 new_connected_from.push(previous_idx);
 
                 // Update the edge pointer
+                debug_assert!(edge.following_edge_idx != next_edge_idx);
                 if edge.following_edge_idx > next_edge_idx {
                     edge.following_edge_idx -= 1;
                 }
