@@ -45,8 +45,6 @@ pub fn solve_basis_for_t(w1: f64, w2: f64, w3: f64, w4: f64, p: f64) -> Vec<f64>
 /// be used to retrieve it
 ///
 pub fn solve_curve_for_t<C: BezierCurve>(curve: &C, point: &C::Point) -> Option<f64> {
-    let close_enough_sq = CLOSE_ENOUGH * CLOSE_ENOUGH;
-
     let p1              = curve.start_point();
     let (p2, p3)        = curve.control_points();
     let p4              = curve.end_point();
@@ -65,8 +63,7 @@ pub fn solve_curve_for_t<C: BezierCurve>(curve: &C, point: &C::Point) -> Option<
 
             // If this is an accurate enough solution, return this as the t value
             let point_at_t  = curve.point_at_pos(possible_t);
-            let offset      = point_at_t - *point;
-            if offset.dot(&offset) <= close_enough_sq {
+            if point_at_t.is_near_to(point, CLOSE_ENOUGH) {
                 return Some(possible_t);
             }
         }
