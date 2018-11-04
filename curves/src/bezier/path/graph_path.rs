@@ -572,6 +572,25 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Removes any edges that appear to be 'very short' from this graph
+    ///
+    fn remove_all_very_short_edges(&mut self) {
+        for point_idx in 0..(self.points.len()) {
+            let mut edge_idx = 0;
+            while edge_idx < self.points[point_idx].forward_edges.len() {
+                // Remove this edge if it's very short
+                let edge_ref = GraphEdgeRef { start_idx: point_idx, edge_idx: edge_idx, reverse: false };
+                if self.edge_is_very_short(edge_ref) {
+                    self.remove_very_short_edge(edge_ref);
+                }
+
+                // Next edge
+                edge_idx += 1;
+            }
+        }
+    }
+
+    ///
     /// Joins two edges at an intersection, returning the index of the intersection point
     /// 
     /// For t=0 or 1 the intersection point may be one of the ends of the edges, otherwise
