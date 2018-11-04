@@ -1069,8 +1069,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         collisions
             .into_iter()
-            .filter(move |(collision, curve_t, _line_t, position)| {
-                if *curve_t < 0.00001 && self.points[collision.start_idx].position.is_near_to(&position, SMALL_DISTANCE) {
+            .filter(move |(collision, curve_t, _line_t, _position)| {
+                if *curve_t <= 0.000 {
                     // Find the edge before this one
                     let edge            = GraphEdge::new(self, *collision);
                     let previous_edge   = self.reverse_edges_for_point(collision.start_idx)
@@ -1108,7 +1108,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         collisions
             .into_iter()
             .filter(move |(collision, curve_t, _line_t, _position)| {
-                if *curve_t < 0.001 {
+                if *curve_t <= 0.000 {
                     // At the start of the curve
                     let was_visited = visited_start[collision.start_idx].contains(&collision.edge_idx);
 
@@ -1132,10 +1132,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         collisions
             .into_iter()
             .map(move |(collision, curve_t, line_t, position)| {
-                let start_point = &self.points[collision.start_idx].position;
-                let offset      = *start_point - position;
-
-                if curve_t < 0.001 || offset.dot(&offset) < (SMALL_DISTANCE * SMALL_DISTANCE) {
+                if curve_t <= 0.000 {
                     // Might be at an intersection (close to the start of the curve)
                     if self.points[collision.start_idx].forward_edges.len() > 1 {
                         // Intersection
