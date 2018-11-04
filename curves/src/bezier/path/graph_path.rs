@@ -1170,7 +1170,27 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Convert to a vec and sort by ray position
         let mut collisions = collisions.collect::<Vec<_>>();
 
-        collisions.sort_by(|(_edge_a, _curve_t_a, line_t_a, _pos_a), (_edge_b, _curve_t_b, line_t_b, _pos_b)| line_t_a.partial_cmp(line_t_b).unwrap_or(Ordering::Equal));
+        collisions.sort_by(|(edge_a, _curve_t_a, line_t_a, _pos_a), (edge_b, _curve_t_b, line_t_b, _pos_b)| {
+            let result = line_t_a.partial_cmp(line_t_b).unwrap_or(Ordering::Equal);
+
+            if result != Ordering::Equal {
+                // Position on the line is different
+                result
+            } else {
+                // Position on the line is the same (stabilise ordering by checking the edges)
+                let edge_a = edge_a.edge();
+                let edge_b = edge_b.edge();
+
+                let result = edge_a.start_idx.cmp(&edge_b.start_idx);
+                if result != Ordering::Equal {
+                    // Different start points
+                    result
+                } else {
+                    // Check if these are the same edge or not
+                    edge_a.edge_idx.cmp(&edge_b.edge_idx)
+                }
+            }
+        });
 
         collisions
    }
