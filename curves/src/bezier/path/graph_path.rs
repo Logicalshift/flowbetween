@@ -63,7 +63,7 @@ pub struct GraphEdgeRef {
 ///
 /// Enum representing an edge in a graph path
 /// 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 struct GraphPathEdge<Point, Label> {
     /// The label attached to this edge
     label: Label,
