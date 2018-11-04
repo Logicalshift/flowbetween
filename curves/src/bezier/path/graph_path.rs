@@ -387,6 +387,12 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 self.points[end_idx].connected_from.push(point_idx);
             }
         }
+
+        // Sort and deduplicate them
+        for point_idx in 0..(self.points.len()) {
+            self.points[point_idx].connected_from.sort();
+            self.points[point_idx].connected_from.dedup();
+        }
     }
 
     ///
