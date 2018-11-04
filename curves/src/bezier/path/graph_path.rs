@@ -1631,8 +1631,6 @@ impl<Point: Coordinate2D+Coordinate+fmt::Debug, Label: Copy> fmt::Debug for Grap
 /// errors.
 ///
 fn remove_and_round_close_collisions<P: Coordinate+Coordinate2D, C: BezierCurve<Point=P>>(collisions: &mut Vec<(f64, f64)>, src: &C, tgt: &C) {
-    let close_distance_sq = CLOSE_DISTANCE * CLOSE_DISTANCE;
-
     // Nothing to do if there are no collisions
     if collisions.len() == 0 {
         return;
@@ -1644,12 +1642,8 @@ fn remove_and_round_close_collisions<P: Coordinate+Coordinate2D, C: BezierCurve<
     // Find any pairs of points that are too close together
     let mut collision_idx = 0;
     while collision_idx+1 < collisions.len() {
-        // Work out the distance between this collision and the next
-        let offset      = positions[collision_idx] - positions[collision_idx+1];
-        let distance_sq = offset.dot(&offset);
-
         // Just remove both of these if they are too close together (as each collision crosses the curve once, removing collisions in pairs means that there'll still be at least one collision left if the curves actually end up crossing over)
-        if distance_sq < close_distance_sq {
+        if positions[collision_idx].is_near_to(&positions[collision_idx+1], CLOSE_DISTANCE) {
             collisions.remove(collision_idx); positions.remove(collision_idx);
             collisions.remove(collision_idx); positions.remove(collision_idx);
         } else {
@@ -1669,26 +1663,22 @@ fn remove_and_round_close_collisions<P: Coordinate+Coordinate2D, C: BezierCurve<
         for collision_idx in 0..collisions.len() {
             // Snap the source side
             if collisions[collision_idx].0 > 0.0 && collisions[collision_idx].0 < 1.0 {
-                let start_offset = src_start - positions[collision_idx];
-                if start_offset.dot(&start_offset) < close_distance_sq {
+                if src_start.is_near_to(&positions[collision_idx], CLOSE_DISTANCE) {
                     collisions[collision_idx].0 = 0.0;
                 }
 
-                let end_offset = src_end - positions[collision_idx];
-                if end_offset.dot(&end_offset) < close_distance_sq {
+                if src_end.is_near_to(&positions[collision_idx], CLOSE_DISTANCE) {
                     collisions[collision_idx].0 = 1.0;
                 }
             }
 
             // Snap the target side
             if collisions[collision_idx].1 > 0.0 && collisions[collision_idx].1 < 1.0 {
-                let start_offset = tgt_start - positions[collision_idx];
-                if start_offset.dot(&start_offset) < close_distance_sq {
+                if tgt_start.is_near_to(&positions[collision_idx], CLOSE_DISTANCE) {
                     collisions[collision_idx].1 = 0.0;
                 }
 
-                let end_offset = tgt_end - positions[collision_idx];
-                if end_offset.dot(&end_offset) < close_distance_sq {
+                if tgt_end.is_near_to(&positions[collision_idx], CLOSE_DISTANCE) {
                     collisions[collision_idx].1 = 1.0;
                 }
             }
