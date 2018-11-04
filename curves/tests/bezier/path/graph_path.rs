@@ -1334,7 +1334,7 @@ fn self_collide_divides_lines_1() {
 fn self_collide_divides_lines_2() {
     let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
         .line_to(Coord2(1.0, 5.0))
-        .line_to(Coord2(3.0, 0.99))
+        .line_to(Coord2(3.0, 0.985))
         .line_to(Coord2(5.0, 5.0))
         .line_to(Coord2(5.0, 1.0))
         .line_to(Coord2(1.0, 1.0))
