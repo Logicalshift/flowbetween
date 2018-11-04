@@ -550,8 +550,6 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         // Replace the short edge with the next edge (if edges are very short, we don't need to adjust control points here)
         self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx] = self.points[next_point_idx].forward_edges[next_edge_idx].clone();
 
-        self.check_following_edge_consistency();
-
         // Remove the next edge (we just replaced it)
         self.points[next_point_idx].forward_edges.remove(next_edge_idx);
 
@@ -902,6 +900,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     #[cfg(debug_assertions)]
     fn check_following_edge_consistency(&self) {
+        let mut used_edges = vec![vec![]; self.points.len()];
+
         for point_idx in 0..(self.points.len()) {
             let point = &self.points[point_idx];
 
@@ -910,6 +910,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
                 debug_assert!(edge.end_idx < self.points.len());
                 debug_assert!(edge.following_edge_idx < self.points[edge.end_idx].forward_edges.len());
+                debug_assert!(!used_edges[edge.end_idx].contains(&edge.following_edge_idx));
+
+                used_edges[edge.end_idx].push(edge.following_edge_idx);
             }
         }
     }
