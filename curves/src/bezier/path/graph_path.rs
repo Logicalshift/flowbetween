@@ -518,10 +518,10 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     ///
     /// Returns true if the specified edge is very short
     ///
-    fn edge_is_very_short(&self, edge: GraphEdgeRef) -> bool {
+    fn edge_is_very_short(&self, edge_ref: GraphEdgeRef) -> bool {
         // Find the points on this edge
-        let start_point = &self.points[edge.start_idx].position;
-        let edge        = &self.points[edge.start_idx].forward_edges[edge.edge_idx];
+        let start_point = &self.points[edge_ref.start_idx].position;
+        let edge        = &self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx];
         let cp1         = &edge.cp1;
         let cp2         = &edge.cp2;
         let end_point   = &self.points[edge.end_idx].position;
