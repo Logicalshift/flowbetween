@@ -600,6 +600,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 let edge_ref = GraphEdgeRef { start_idx: point_idx, edge_idx: edge_idx, reverse: false };
                 if self.edge_is_very_short(edge_ref) {
                     self.remove_very_short_edge(edge_ref);
+
+                    // TODO: fix reverse connections properly in remove_very_short_edge
+                    self.recalculate_reverse_connections();
                 }
 
                 // Next edge
