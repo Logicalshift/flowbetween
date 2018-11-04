@@ -507,13 +507,13 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// True if the t value is effectively at the start of the curve
     /// 
     #[inline]
-    fn t_is_zero(t: f64) -> bool { t < SMALL_T_DISTANCE }
+    fn t_is_zero(t: f64) -> bool { t <= 0.0 }
 
     ///
     /// True if the t value is effective at the end of the curve
     /// 
     #[inline]
-    fn t_is_one(t: f64) -> bool { t > (1.0-SMALL_T_DISTANCE) }
+    fn t_is_one(t: f64) -> bool { t >= 1.0 }
 
     ///
     /// Returns true if the specified edge is very short
