@@ -539,6 +539,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     fn remove_very_short_edge(&mut self, edge_ref: GraphEdgeRef) {
         let mut edge_ref = edge_ref;
 
+        self.check_following_edge_consistency();
+
         // Replace the content of this edge with the content of the following edge
         let next_point_idx  = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].end_idx;
         let next_edge_idx   = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].following_edge_idx;
@@ -546,7 +548,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         debug_assert!(next_point_idx != edge_ref.start_idx || next_edge_idx != edge_ref.edge_idx);
 
         // Replace the short edge with the next edge (if edges are very short, we don't need to adjust control points here)
-        self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx] = self.points[next_point_idx].forward_edges[next_edge_idx];
+        self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx] = self.points[next_point_idx].forward_edges[next_edge_idx].clone();
+
+        self.check_following_edge_consistency();
 
         // Remove the next edge (we just replaced it)
         self.points[next_point_idx].forward_edges.remove(next_edge_idx);
@@ -561,7 +565,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         // Iterate over all the previous items
         for previous_idx in self.points[next_point_idx].connected_from.clone() {
-            for mut edge in self.points[next_point_idx].forward_edges.iter_mut().filter(|edge| edge.end_idx == next_point_idx) {
+            for mut edge in self.points[previous_idx].forward_edges.iter_mut().filter(|edge| edge.end_idx == next_point_idx) {
                 // Is connected from this edge
                 new_connected_from.push(previous_idx);
 
@@ -572,6 +576,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                 }
             }
         }
+
+        self.check_following_edge_consistency();
 
         // Remove duplicates
         new_connected_from.sort();
@@ -863,6 +869,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         }
 
         collisions.check_consistency(self);
+        self.check_following_edge_consistency();
 
         // Apply the divisions to the edges
         while let Some((src, tgt)) = collisions.pop() {
@@ -871,11 +878,36 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             collisions.check_consistency(self);
         }
 
+        self.check_following_edge_consistency();
+
         // Recompute the reverse connections
         self.recalculate_reverse_connections();
 
         // Remove any very short edges that might have been generated during the collision detection
         self.remove_all_very_short_edges();
+        self.check_following_edge_consistency();
+    }
+
+    ///
+    /// Checks that the following edges are consistent
+    ///
+    #[cfg(debug_assertions)]
+    fn check_following_edge_consistency(&self) {
+        for point_idx in 0..(self.points.len()) {
+            let point = &self.points[point_idx];
+
+            for edge_idx in 0..(point.forward_edges.len()) {
+                let edge = &point.forward_edges[edge_idx];
+
+                debug_assert!(edge.end_idx < self.points.len());
+                debug_assert!(edge.following_edge_idx < self.points[edge.end_idx].forward_edges.len());
+            }
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
+    fn check_following_edge_consistency(&self) {
+
     }
 
     ///
