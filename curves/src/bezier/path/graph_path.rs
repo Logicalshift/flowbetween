@@ -1363,7 +1363,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     };
 
                     // Only follow exterior edges...
-                    if edges.iter().any(|edge| edge.kind() == GraphPathEdgeKind::Exterior && edge.end_point_index() != previous_point_idx) {
+                    if current_point_idx == point_idx || edges.iter().any(|edge| edge.kind() == GraphPathEdgeKind::Exterior && edge.end_point_index() != previous_point_idx) {
                         // ... unless the only exterior edge is the one we arrived on, in which case we'll follow interior edges to try to bridge gaps as a backup measure
                         edges.retain(|edge| edge.kind() == GraphPathEdgeKind::Exterior);
                     }
