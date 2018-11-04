@@ -21,6 +21,10 @@ where C::Point: Coordinate2D {
     let b           = p1.x()-p2.x();
     let c           = p1.x()*(p1.y()-p2.y()) + p1.y()*(p2.x()-p1.x());
 
+    if a == 0.0 && b == 0.0 {
+        return vec![];
+    }
+
     // Bezier coefficients
     let (w2, w3)    = curve.control_points();
     let (w1, w4)    = (curve.start_point(), curve.end_point());
@@ -77,11 +81,14 @@ where C::Point: Coordinate2D {
             let y   = pos.y();
 
             // Solve for the position on the line
-            let s = if b.abs() > 0.01 {
+            let s = if b.abs() > a.abs() {
                 (x-p1.x())/(p2.x()-p1.x())
             } else {
                 (y-p1.y())/(p2.y()-p1.y())
             };
+
+            debug_assert!(!s.is_nan());
+            debug_assert!(!s.is_infinite());
 
             (t, s, pos)
         })
