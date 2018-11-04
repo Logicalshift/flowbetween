@@ -111,6 +111,8 @@ impl<Point: Coordinate+Coordinate2D> GraphPath<Point, PathLabel> {
                     }
                 }
 
+                // The ray should exit and enter the path an even number of times
+                debug_assert!(path1_crossings == 0 && path2_crossings == 0);
             } else {
                 // All edges are categorised
                 break;
