@@ -842,6 +842,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         // Recompute the reverse connections
         self.recalculate_reverse_connections();
+
+        // Remove any very short edges that might have been generated during the collision detection
+        self.remove_all_very_short_edges();
     }
 
     ///
