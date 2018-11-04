@@ -1352,7 +1352,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
                 // Check all of the points we found last time (ie, breadth-first search of the graph)
                 for (previous_point_idx, current_point_idx) in points_to_check {
-                    let edges = if current_point_idx == point_idx {
+                    let mut edges = if current_point_idx == point_idx {
                         // For the first point, only search forward
                         self.reverse_edges_for_point(current_point_idx).collect::<Vec<_>>()
                     } else {
@@ -1362,13 +1362,14 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                             .collect::<Vec<_>>()
                     };
 
+                    // Only follow exterior edges...
+                    if edges.iter().any(|edge| edge.kind() == GraphPathEdgeKind::Exterior && edge.end_point_index() != previous_point_idx) {
+                        // ... unless the only exterior edge is the one we arrived on, in which case we'll follow interior edges to try to bridge gaps as a backup measure
+                        edges.retain(|edge| edge.kind() == GraphPathEdgeKind::Exterior);
+                    }
+
                     // Follow the edges for this point
                     for edge in edges {
-                        // Only following exterior edges
-                        if edge.kind() != GraphPathEdgeKind::Exterior {
-                            continue;
-                        }
-
                         // Find the point that this edge goes to
                         let next_point_idx = edge.end_point_index();
 
