@@ -567,8 +567,26 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         new_connected_from.sort();
         new_connected_from.dedup();
 
-        // Update the 'connected from' items
+        // Update the 'connected from' items for the new next point
         self.points[next_point_idx].connected_from = new_connected_from;
+
+        // Also update the connected from list for the next point
+        let new_next_point_idx      = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].following_edge_idx;
+        let mut next_connected_from = self.points[new_next_point_idx].connected_from.clone();
+
+        // Is now connected from this edge
+        next_connected_from.push(edge_ref.start_idx);
+        next_connected_from.sort();
+        next_connected_from.dedup();
+
+        // Make sure that all the points are still connected that are supposed to be
+        next_connected_from
+            .retain(|previous_point_idx| self.points[*previous_point_idx].forward_edges
+                .iter()
+                .any(|next_edge| next_edge.end_idx == new_next_point_idx));
+
+        // Finish by updating the connected from list
+        self.points[new_next_point_idx].connected_from = next_connected_from;
     }
 
     ///
