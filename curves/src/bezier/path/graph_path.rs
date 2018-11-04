@@ -537,6 +537,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     /// Removes an edge considered to be very short
     ///
     fn remove_very_short_edge(&mut self, edge_ref: GraphEdgeRef) {
+        let mut edge_ref = edge_ref;
+
         // Replace the content of this edge with the content of the following edge
         let next_point_idx  = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].end_idx;
         let next_edge_idx   = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].following_edge_idx;
@@ -546,6 +548,11 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
 
         // Remove the next edge
         self.points[next_point_idx].forward_edges.remove(next_edge_idx);
+
+        if edge_ref.start_idx == next_point_idx && edge_ref.edge_idx > next_edge_idx {
+            // Loop that starts and ends at the same point
+            edge_ref.edge_idx -= 1;
+        }
 
         // Any other edge coming into next_point_idx needs to be updated
         let mut new_connected_from = vec![edge_ref.start_idx];
