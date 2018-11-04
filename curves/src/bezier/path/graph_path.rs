@@ -628,6 +628,45 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Changes every edge that ends at old_point_idx to end at new_point_idx instead
+    /// 
+    /// Also moves every edge leaving old_point_idx so that it leaves new_point_idx instead
+    ///
+    fn change_all_edges_ending_at_point(&mut self, old_point_idx: usize, new_point_idx: usize, collisions: &mut CollisionList) {
+        // Nothing to do if the indexes are the same
+        if old_point_idx == new_point_idx { return; }
+
+        self.check_following_edge_consistency();
+
+        // Edges pointing at old_point_idx will be added to new_point_idx starting at this point
+        let edge_idx_offset = self.points[new_point_idx].forward_edges.len();
+
+        // Search all of the points to find edges ending at old_point_idx and update them
+        for point_idx in 0..(self.points.len()) {
+            for edge_idx in 0..(self.points[point_idx].forward_edges.len()) {
+                let edge = &mut self.points[point_idx].forward_edges[edge_idx];
+                if edge.end_idx == old_point_idx {
+                    // Move the edge to end at the new point and have a suitable following edge index
+                    edge.end_idx            = new_point_idx;
+                    edge.following_edge_idx += edge_idx_offset;
+                }
+            }
+        }
+
+        // Take the old edges and append them to the new point
+        let mut old_point_edges = vec![];
+        mem::swap(&mut self.points[old_point_idx].forward_edges, &mut old_point_edges);
+
+        self.points[new_point_idx].forward_edges.extend(old_point_edges);
+
+        // Move all of the collisions
+        collisions.move_all_edges(old_point_idx, new_point_idx, edge_idx_offset);
+
+        collisions.check_consistency(self);
+        self.check_following_edge_consistency();
+    }
+
+    ///
     /// Joins two edges at an intersection, returning the index of the intersection point
     /// 
     /// For t=0 or 1 the intersection point may be one of the ends of the edges, otherwise
@@ -729,6 +768,7 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             // edge1 to the collision point
         }
 
+        self.check_following_edge_consistency();
         collisions.check_consistency(self);
 
         if !Self::t_is_one(t2) && !Self::t_is_zero(t2) {
@@ -749,47 +789,14 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
         }
 
         collisions.check_consistency(self);
+        self.check_following_edge_consistency();
 
-        if !Self::t_is_zero(t2) {
-            // If t1 is one, this should leave the edge alone
-            if Self::t_is_one(t2) {
-                // If t2 is one, this will have redirected the end point of t2 to the collision point: we need to move all of the edges
-                let edge_idx_offset = self.points[collision_point].forward_edges.len();
-
-                let mut edge2_end_edges = vec![];
-                mem::swap(&mut self.points[edge2_end_idx].forward_edges, &mut edge2_end_edges);
-                self.points[collision_point].forward_edges.extend(edge2_end_edges);
-
-                collisions.move_all_edges(edge2_end_idx, collision_point, edge_idx_offset);
-                collisions.check_consistency(self);
-            }
-        }
-        
-        if Self::t_is_zero(t2) && collision_point != edge2_idx {
-            // If t2 is zero and the collision point is not the start of edge2, then edge2 should start at the collision point instead of where it does now
-
-            // All edges that previously went to the end point now go to the collision point (and move the edges that come from that point)
-            let mut next_follow_edge_idx = self.points[collision_point].forward_edges.len();
-            for point in self.points.iter_mut() {
-                for edge in point.forward_edges.iter_mut() {
-                    if edge.end_idx == edge2_idx {
-                        edge.end_idx            = collision_point;
-                        edge.following_edge_idx = next_follow_edge_idx;
-
-                        next_follow_edge_idx += 1;
-                    }
-                }
-            }
-
-            // All edges that currently come from edge2 need to be moved to the collision point
-            let edge_idx_offset = self.points[collision_point].forward_edges.len();
-
-            let mut edge2_edges = vec![];
-            mem::swap(&mut self.points[edge2_idx].forward_edges, &mut edge2_edges);
-            self.points[collision_point].forward_edges.extend(edge2_edges);
-
-            collisions.move_all_edges(edge2_idx, collision_point, edge_idx_offset);
-            collisions.check_consistency(self);
+        if Self::t_is_one(t2) {
+            // If t2 is one, then all edges ending at edge2_end_idx should be redirected to the collision point
+            self.change_all_edges_ending_at_point(edge2_end_idx, collision_point, collisions);
+        } else if Self::t_is_zero(t2) {
+            // If t2 is zero, then all edges ending at edge2_idx should be redirected to the collision point
+            self.change_all_edges_ending_at_point(edge2_idx, collision_point, collisions);
         }
 
         Some(collision_point)
@@ -876,6 +883,8 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
             // Join the edges
             let _new_mid_point = self.join_edges_at_intersection((src.idx, src.edge), (tgt.idx, tgt.edge), src.t, tgt.t, &mut collisions);
             collisions.check_consistency(self);
+
+            self.check_following_edge_consistency();
         }
 
         self.check_following_edge_consistency();
