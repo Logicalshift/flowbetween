@@ -105,3 +105,13 @@ fn overlaps_with_known_curve_2() {
 
     assert!(!overlapping_region(&curve1, &curve2).is_some());
 }
+
+#[test]
+fn overlaps_with_known_curve_3() {
+    // These curves should overlap
+    let curve1 = Curve::from_points(Coord2(510.6888427734375, 684.9293212890625), Coord2(513.9757080078125, 681.668212890625), Coord2(511.68206787109375, 683.7874145507813), Coord2(512.7827758789063, 682.6954345703125));
+    let curve2 = Curve::from_points(Coord2(510.6888427734375, 684.9293212890625), Coord2(513.9143676757813, 681.7202758789063), Coord2(511.66473388671875, 683.8077392578125), Coord2(512.7447509765625, 682.73388671875));
+
+    assert!(overlapping_region(&curve1, &curve2).is_some());
+    assert!(overlapping_region(&curve2, &curve1).is_some());
+}
