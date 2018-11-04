@@ -516,6 +516,24 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     fn t_is_one(t: f64) -> bool { t > (1.0-SMALL_T_DISTANCE) }
 
     ///
+    /// Returns true if the specified edge is very short
+    ///
+    fn edge_is_very_short(&self, edge: GraphEdgeRef) -> bool {
+        // Find the points on this edge
+        let start_point = &self.points[edge.start_idx].position;
+        let edge        = &self.points[edge.start_idx].forward_edges[edge.edge_idx];
+        let cp1         = &edge.cp1;
+        let cp2         = &edge.cp2;
+        let end_point   = &self.points[edge.end_idx].position;
+
+        // If all the points are close to each other, then this is a short edge
+        start_point.is_near_to(end_point, CLOSE_DISTANCE)
+            && start_point.is_near_to(cp1, CLOSE_DISTANCE)
+            && cp1.is_near_to(cp2, CLOSE_DISTANCE)
+            && cp2.is_near_to(end_point, CLOSE_DISTANCE)
+    }
+
+    ///
     /// Joins two edges at an intersection, returning the index of the intersection point
     /// 
     /// For t=0 or 1 the intersection point may be one of the ends of the edges, otherwise
