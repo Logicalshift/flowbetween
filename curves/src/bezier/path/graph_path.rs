@@ -534,6 +534,44 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Removes an edge considered to be very short
+    ///
+    fn remove_very_short_edge(&mut self, edge_ref: GraphEdgeRef) {
+        // Replace the content of this edge with the content of the following edge
+        let next_point_idx  = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].end_idx;
+        let next_edge_idx   = self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx].following_edge_idx;
+
+        // Replace the short edge with the next edge (if edges are very short, we don't need to adjust control points here)
+        self.points[edge_ref.start_idx].forward_edges[edge_ref.edge_idx] = self.points[next_point_idx].forward_edges[next_edge_idx];
+
+        // Remove the next edge
+        self.points[next_point_idx].forward_edges.remove(next_edge_idx);
+
+        // Any other edge coming into next_point_idx needs to be updated
+        let mut new_connected_from = vec![edge_ref.start_idx];
+
+        // Iterate over all the previous items
+        for previous_idx in self.points[next_point_idx].connected_from.clone() {
+            for mut edge in self.points[next_point_idx].forward_edges.iter_mut().filter(|edge| edge.end_idx == next_point_idx) {
+                // Is connected from this edge
+                new_connected_from.push(previous_idx);
+
+                // Update the edge pointer
+                if edge.following_edge_idx > next_edge_idx {
+                    edge.following_edge_idx -= 1;
+                }
+            }
+        }
+
+        // Remove duplicates
+        new_connected_from.sort();
+        new_connected_from.dedup();
+
+        // Update the 'connected from' items
+        self.points[next_point_idx].connected_from = new_connected_from;
+    }
+
+    ///
     /// Joins two edges at an intersection, returning the index of the intersection point
     /// 
     /// For t=0 or 1 the intersection point may be one of the ends of the edges, otherwise
