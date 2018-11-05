@@ -1478,6 +1478,16 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Returns true if the specified point has a single exterior edge attached to it
+    ///
+    fn has_single_exterior_edge(&self, point_idx: usize) -> bool {
+        self.edges_for_point(point_idx)
+            .chain(self.reverse_edges_for_point(point_idx))
+            .filter(|edge| edge.kind() == GraphPathEdgeKind::Exterior)
+            .count() == 1
+    }
+
+    ///
     /// Finds the exterior edges and turns them into a series of paths
     ///
     pub fn exterior_paths<POut: BezierPathFactory<Point=Point>>(&self) -> Vec<POut> {
@@ -1525,6 +1535,9 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
                     if current_point_idx == point_idx || edges.iter().any(|edge| edge.kind() == GraphPathEdgeKind::Exterior && edge.end_point_index() != previous_point_idx) {
                         // ... unless the only exterior edge is the one we arrived on, in which case we'll follow interior edges to try to bridge gaps as a backup measure
                         edges.retain(|edge| edge.kind() == GraphPathEdgeKind::Exterior);
+                    } else {
+                        // Search for edges with a single following exterior edge
+                        edges.retain(|edge| self.has_single_exterior_edge(edge.end_point_index()));
                     }
 
                     // Follow the edges for this point
