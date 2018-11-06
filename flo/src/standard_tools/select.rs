@@ -7,7 +7,7 @@ use flo_ui::*;
 use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
-use flo_curves::bezier::path::{path_add, path_remove_interior_points};
+use flo_curves::bezier::path::{path_add, path_sub, path_remove_interior_points};
 
 use futures::*;
 use std::sync::*;
@@ -206,7 +206,12 @@ impl Select {
                 .and_then(|element| element.to_path(&properties))
                 .map(|path| {
                     let path    = path_remove_interior_points::<_, _, Path>(&path, 0.01);
-                    paths       = path_add::<_, _, _, Path>(&paths, &path, 0.01);
+
+                    if properties.brush.to_definition().1 == BrushDrawingStyle::Erase {
+                        paths   = path_sub::<_, _, _, Path>(&paths, &path, 0.01);
+                    } else {
+                        paths   = path_add::<_, _, _, Path>(&paths, &path, 0.01);
+                    }
                 });
 
             // We'll draw the bounding rectangles later on
