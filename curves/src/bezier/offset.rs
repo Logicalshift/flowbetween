@@ -1,108 +1,120 @@
 use super::curve::*;
-use super::deform::*;
 use super::normal::*;
-use super::super::consts::*;
+use super::section::*;
+use super::super::line::*;
 use super::super::coordinate::*;
 
-use std::collections::VecDeque;
-
-/// Maximum error before we split a subcurve
-const MAX_ERROR: f64 = 0.1;
+use std::cmp::Ordering;
 
 ///
-/// Computes a series of curves that approximate an offset curve from the specified origin curve
+/// Returns true if the specified bezier curve is 'safe'
 /// 
-pub fn offset<Curve: BezierCurveFactory+NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> Vec<Curve> 
-where Curve::Point: Normalize {
-    // Pass through the curve if it's 0-length
-    let start       = curve.start_point();
-    let end         = curve.end_point();
+/// A safe curve has both control points on the same side of the base line and the point at t=0.5
+/// roughly in the center of the polygon formed by the points of the curve
+///
+fn is_safe_curve<Curve: BezierCurve>(curve: &Curve) -> bool
+where Curve::Point: Coordinate2D {
+    // Get the points of the curve
+    let start_point = curve.start_point();
+    let end_point   = curve.end_point();
     let (cp1, cp2)  = curve.control_points();
 
-    if start.distance_to(&cp1) < SMALL_DISTANCE && cp1.distance_to(&cp2) < SMALL_DISTANCE && cp2.distance_to(&end) < SMALL_DISTANCE {
-        return vec![curve.clone()];
+    // Determine if the two control points are on the same side
+    let (a, b, c)   = line_coefficients_2d_unnormalized(&(start_point, end_point));
+    let side_cp1    = (a*cp1.x() + b*cp1.y() + c).signum();
+    let side_cp2    = (a*cp2.x() + b*cp2.y() + c).signum();
+
+    debug_assert!(!side_cp1.is_nan());
+    debug_assert!(!side_cp2.is_nan());
+
+    if side_cp1 != side_cp2 {
+        // Control points are on different sides
+        false
+    } else {
+        // Mid point of the polygon is the average of all of the points
+        let polygon_mid_point   = (start_point + cp1 + cp2 + end_point) * 0.25;
+
+        // Maximum distance from the mid point to consider the curve 'safe'
+        let max_mid_distance    = start_point.distance_to(&end_point) * 0.1;
+        let max_mid_distance    = max_mid_distance.max(5.0);
+
+        // Is safe if the point at t = 0.5 is within this distance of the midpoint
+        let curve_mid_point     = curve.point_at_pos(0.5);
+        curve_mid_point.is_near_to(&polygon_mid_point, max_mid_distance)
     }
-
-    // Split the curve at its extremities to generate a set of simpler curves
-    let split_points    = curve.find_extremities();
-    let mut curves      = split_offsets(curve, initial_offset, final_offset, &split_points);
-
-    // Offset the curves
-    let mut offset_curves   = vec![];
-    let mut previous_offset = initial_offset;
-    let mut split_count     = 0;
-
-    while let Some((curve, next_offset)) = curves.pop_front() {
-        // Offset this curve
-        let (offset_curve, error) = simple_offset(&curve, previous_offset, next_offset);
-
-        if error > MAX_ERROR {
-            // Split the curve further if there is too big an error
-            let mut split_offset_curve = split_offsets(&curve, previous_offset, next_offset, &[0.5]);
-
-            if split_offset_curve.len() > 1 && split_count < 8 {
-                // Increase the split count (so really bad cases don't run forever)
-                split_count += 1;
-
-                // Managed to split the curve
-                while let Some((curve, next_offset)) = split_offset_curve.pop_back() {
-                    curves.push_front((curve, next_offset));
-                }
-            } else {
-                // Store as a result
-                offset_curves.push(offset_curve);
-
-                // The next offset is the previous offset of the next curve
-                previous_offset = next_offset;
-            }
-        } else {
-            // Store as a result
-            offset_curves.push(offset_curve);
-
-            // The next offset is the previous offset of the next curve
-            previous_offset = next_offset;
-        }
-    }
-
-    // TODO: we sometimes generate NaN curves (though not very often)
-    // This is the final result
-    offset_curves
 }
 
 ///
-/// Splits a curve at a given set of ordered offsets, returning a list of curves and
-/// their final offsets
+/// Computes a series of curves that approximate an offset curve from the specified origin curve.
 /// 
-fn split_offsets<Curve: BezierCurveFactory+NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64, split_points: &[f64]) -> VecDeque<(Curve, f64)> {
-    let mut curves_and_offsets  = VecDeque::new();
-    let mut remaining           = curve.clone();
-    let mut remaining_t         = 0.0;
+/// Based on the algorithm described in https://pomax.github.io/bezierinfo/#offsetting
+///
+pub fn offset<Curve: BezierCurveFactory+NormalCurve>(curve: &Curve, initial_offset: f64, final_offset: f64) -> Vec<Curve>
+where Curve::Point: Normalize+Coordinate2D {
+    // Cut the curve up into 'safe' sections
+    let mut sections = vec![curve.section(0.0, 1.0)];
+    
+    if !is_safe_curve(curve) {
+        // Start by splitting at the extreme points
+        let mut extremes = curve.find_extremities();
 
-    for point in split_points {
-        // Don't subdivide at point 0 (it doesn't produce a curve) or point 1 (this is just the remaining curve we add at the end)
-        if point <= &0.01 || point >= &0.99 { continue; }
+        extremes.retain(|t| !t.is_nan() && !t.is_infinite() && t > &0.0 && t < &1.0);
+        extremes.sort_by(|t1, t2| t1.partial_cmp(t2).unwrap_or(Ordering::Equal));
 
-        // The offset is between remaining_t and 1
-        let t = (point - remaining_t) / (1.0-remaining_t);
+        // Split up the curve into subsections at the extreme points
+        sections.clear();
+        let mut last_t = 0.0;
 
-        // Subdivide the remaining curve at this point
-        let (left_curve, right_curve) = remaining.subdivide(t);
+        for t in extremes {
+            sections.push(curve.section(last_t, t));
+            last_t = t;
+        }
 
-        // Work out the offset at this point
-        let offset      = (final_offset-initial_offset)*(point) + initial_offset;
+        if last_t < 1.0 {
+            sections.push(curve.section(last_t, 1.0));
+        }
 
-        // Add the left curve to the result
-        curves_and_offsets.push_back((left_curve, offset));
+        // Split 'unsafe' sections into two until all sections are safe
+        loop {
+            let mut all_safe    = true;
+            debug_assert!(sections.len() < 50);
 
-        // Update the remaining curve according to the offset
-        remaining   = right_curve;
-        remaining_t = *point;
+            // Check all of the sections
+            let mut section_idx = 0;
+            while section_idx < sections.len() {
+                // Split this section if it's not safe
+                if !is_safe_curve(&sections[section_idx]) {
+                    all_safe = false;
+
+                    let left    = sections[section_idx].subsection(0.0, 0.5);
+                    let right   = sections[section_idx].subsection(0.5, 1.0);
+
+                    sections[section_idx] = left;
+                    sections.insert(section_idx+1, right);
+
+                    section_idx += 1;
+                }
+
+                section_idx += 1;
+            }
+
+            // Stop once all sections are safe
+            if all_safe { break; }
+        }
     }
 
-    // Add the final remaining curve
-    curves_and_offsets.push_back((remaining, final_offset));
+    // Offset the set of curves that we retrieved
+    let offset_distance = final_offset-initial_offset;
 
-    curves_and_offsets
+    sections.into_iter()
+        .map(|section| {
+            // Compute the offsets for this section (TODO: use the curve length, not the t values)
+            let (t1, t2)            = section.original_curve_t_values();
+            let (offset1, offset2)  = (t1*offset_distance+initial_offset, t2*offset_distance+initial_offset);
+
+            simple_offset(&section, offset1, offset2).0
+        })
+        .collect()
 }
 
 ///
@@ -126,18 +138,18 @@ fn offset_error<Curve: NormalCurve>(original_curve: &Curve, offset_curve: &Curve
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
 /// 
-fn simple_offset<Curve: NormalCurve+BezierCurveFactory>(curve: &Curve, initial_offset: f64, final_offset: f64) -> (Curve, f64) 
-where Curve::Point: Normalize {
+fn simple_offset<P: Coordinate, CurveIn: NormalCurve+BezierCurve<Point=P>, CurveOut: BezierCurveFactory<Point=P>>(curve: &CurveIn, initial_offset: f64, final_offset: f64) -> (CurveOut, f64) 
+where P: Normalize {
     // Fetch the original points
     let start       = curve.start_point();
     let end         = curve.end_point();
     let (cp1, cp2)  = curve.control_points();
 
     // The start and end CPs define the curve tangents at the start and end
-    let normal_start    = Curve::Point::to_normal(&start, &(cp1-start));
-    let normal_end      = Curve::Point::to_normal(&end, &(end-cp2));
-    let normal_start    = Curve::Point::from_components(&normal_start).to_unit_vector();
-    let normal_end      = Curve::Point::from_components(&normal_end).to_unit_vector();
+    let normal_start    = P::to_normal(&start, &(cp1-start));
+    let normal_end      = P::to_normal(&end, &(end-cp2));
+    let normal_start    = P::from_components(&normal_start).to_unit_vector();
+    let normal_end      = P::from_components(&normal_end).to_unit_vector();
 
     // Offset start & end by the specified amounts to create the first approximation of a curve
     // TODO: scale rather than just move for better accuracy
@@ -146,8 +158,10 @@ where Curve::Point: Normalize {
     let new_cp2     = cp2 + (normal_end * final_offset);
     let new_end     = end + (normal_end * final_offset);
 
-    let mut offset_curve = Curve::from_points(new_start, new_end, new_cp1, new_cp2);
+    let offset_curve = CurveOut::from_points(new_start, new_end, new_cp1, new_cp2);
 
+    let error = 0.0;
+    /*
     // Tweak the curve at some sample points to improve the accuracy of our guess
     for sample_t in [0.25, 0.75].into_iter() {
         let sample_t = *sample_t;
@@ -162,6 +176,7 @@ where Curve::Point: Normalize {
     // Use the offset at the curve's midway point as the error
     let error_offset    = offset_error(curve, &offset_curve, 0.5, initial_offset, final_offset);
     let error           = Curve::Point::origin().distance_to(&error_offset);
+    */
 
     (offset_curve, error)
 }
