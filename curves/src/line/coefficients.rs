@@ -3,11 +3,11 @@ use super::super::coordinate::*;
 
 ///
 /// For a two-dimensional line, computes the coefficients of the line equation ax+by+c=0
-/// (such that a^2+b^2 = 1)
+/// These coefficients are not normalized, which is slightly more efficient than computing the normalized form. 
 /// 
 /// This will return (0,0,0) for a line where the start and end point are the same.
 /// 
-pub fn line_coefficients_2d<P: Coordinate+Coordinate2D, L: Line<Point=P>+?Sized>(line: &L) -> (f64, f64, f64) {
+pub fn line_coefficients_2d_unnormalized<P: Coordinate+Coordinate2D, L: Line<Point=P>+?Sized>(line: &L) -> (f64, f64, f64) {
     // Compute the offset 
     let (from, to)  = line.points();
     let offset      = to - from;
@@ -39,6 +39,19 @@ pub fn line_coefficients_2d<P: Coordinate+Coordinate2D, L: Line<Point=P>+?Sized>
             (a, b, c)
         }
     };
+
+    (a, b, c)
+}
+
+///
+/// For a two-dimensional line, computes the coefficients of the line equation ax+by+c=0, such that 
+/// a^2+b^2 = 1. This normalized form means that `a*x + b*y + c` will return the distance that the
+/// point `x`, `y` is from the line.
+/// 
+/// This will return (0,0,0) for a line where the start and end point are the same.
+/// 
+pub fn line_coefficients_2d<P: Coordinate+Coordinate2D, L: Line<Point=P>+?Sized>(line: &L) -> (f64, f64, f64) {
+    let (a, b, c) = line_coefficients_2d_unnormalized(line);
 
     // Normalise so that a^2+b^2 = 1
     let factor      = (a*a + b*b).sqrt();
