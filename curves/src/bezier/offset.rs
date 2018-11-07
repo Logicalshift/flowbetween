@@ -118,22 +118,6 @@ where Curve::Point: Normalize+Coordinate2D {
 }
 
 ///
-/// Computes the offset error between a curve and a proposed offset curve at a given t value
-/// 
-#[inline]
-fn offset_error<Curve: NormalCurve>(original_curve: &Curve, offset_curve: &Curve, t: f64, initial_offset: f64, final_offset: f64) -> Curve::Point {
-    // Work out how much we need to offset the mid-point
-    let midpoint_offset     = (final_offset - initial_offset) * (original_curve.estimate_length(t)/original_curve.estimate_length(1.0)) + initial_offset;
-    let midpoint_normal     = original_curve.normal_at_pos(t).to_unit_vector();
-    let original_midpoint   = original_curve.point_at_pos(t);
-    let new_midpoint        = offset_curve.point_at_pos(t);
-    let target_pos          = original_midpoint + midpoint_normal*midpoint_offset;
-    let offset_error        = target_pos - new_midpoint;
-
-    offset_error
-}
-
-///
 /// Offsets the endpoints and mid-point of a curve by the specified amounts without subdividing
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
