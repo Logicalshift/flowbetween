@@ -56,6 +56,7 @@ where   Point: Coordinate+Coordinate2D {
 
     // Set the exterior edges using the 'add' algorithm
     merged_path.set_exterior_by_adding();
+    merged_path.heal_exterior_gaps();
 
     // Produce the final result
     merged_path.exterior_paths()
@@ -75,6 +76,7 @@ where   Point: Coordinate+Coordinate2D {
 
     // Set the exterior edges using the 'add' algorithm
     merged_path.set_exterior_by_removing_interior_points();
+    merged_path.heal_exterior_gaps();
 
     // Produce the final result
     merged_path.exterior_paths()
