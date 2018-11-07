@@ -1376,6 +1376,58 @@ fn self_collide_divides_lines_3() {
 }
 
 #[test]
+fn heal_one_line_gap() {
+    let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let mut graph_path  = GraphPath::from_path(&path, ());
+    let edges           = (0..4).into_iter()
+        .map(|point_idx| graph_path.edges_for_point(point_idx).nth(0).unwrap().into())
+        .collect::<Vec<_>>();
+
+    graph_path.set_edge_kind(edges[0], GraphPathEdgeKind::Exterior);
+    graph_path.set_edge_kind(edges[2], GraphPathEdgeKind::Exterior);
+    graph_path.set_edge_kind(edges[3], GraphPathEdgeKind::Exterior);
+
+    assert!(graph_path.get_edge(edges[1]).kind() == GraphPathEdgeKind::Uncategorised);
+
+    assert!(graph_path.heal_exterior_gaps());
+
+    assert!(graph_path.get_edge(edges[1]).kind() == GraphPathEdgeKind::Exterior);
+}
+
+
+#[test]
+fn heal_two_line_gap() {
+    let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+        .line_to(Coord2(1.0, 5.0))
+        .line_to(Coord2(5.0, 5.0))
+        .line_to(Coord2(5.0, 1.0))
+        .line_to(Coord2(1.0, 1.0))
+        .build();
+
+    let mut graph_path  = GraphPath::from_path(&path, ());
+    let edges           = (0..4).into_iter()
+        .map(|point_idx| graph_path.edges_for_point(point_idx).nth(0).unwrap().into())
+        .collect::<Vec<_>>();
+
+    graph_path.set_edge_kind(edges[0], GraphPathEdgeKind::Exterior);
+    graph_path.set_edge_kind(edges[3], GraphPathEdgeKind::Exterior);
+
+    assert!(graph_path.get_edge(edges[1]).kind() == GraphPathEdgeKind::Uncategorised);
+    assert!(graph_path.get_edge(edges[2]).kind() == GraphPathEdgeKind::Uncategorised);
+
+    assert!(graph_path.heal_exterior_gaps());
+
+    assert!(graph_path.get_edge(edges[1]).kind() == GraphPathEdgeKind::Exterior);
+    assert!(graph_path.get_edge(edges[2]).kind() == GraphPathEdgeKind::Exterior);
+}
+
+#[test]
 fn ray_cast_at_tiny_line_1() {
     // Line with two points .011 apart (just above CLOSE_DISTANCE)
     let path = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))

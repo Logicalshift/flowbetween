@@ -11,6 +11,9 @@ use std::mem;
 use std::ops::Range;
 use std::cmp::Ordering;
 
+/// Maximum number of edges to traverse when 'healing' gaps found in an external path
+const MAX_HEAL_DEPTH: usize = 3;
+
 ///
 /// Represents a collision between a ray and a GraphPath
 ///
@@ -1488,6 +1491,138 @@ impl<Point: Coordinate+Coordinate2D, Label: Copy> GraphPath<Point, Label> {
     }
 
     ///
+    /// Returns true if the specified edge has a gap (end point has no following exterior edge)
+    ///
+    fn edge_has_gap(&self, edge: GraphEdgeRef) -> bool {
+        // Interior edges have no gaps
+        if self.points[edge.start_idx].forward_edges[edge.edge_idx].kind != GraphPathEdgeKind::Exterior {
+            false
+        } else {
+            // Get the end point index for this edge
+            let (start_idx, end_idx) = if edge.reverse {
+                (self.points[edge.start_idx].forward_edges[edge.edge_idx].end_idx, edge.start_idx)
+            } else {
+                (edge.start_idx, self.points[edge.start_idx].forward_edges[edge.edge_idx].end_idx)
+            };
+
+            // Result is true if there is no edge attached to the end point that is marked exterior (other than the edge leading back to the initial point)
+            !self.edges_for_point(end_idx)
+                .chain(self.reverse_edges_for_point(end_idx))
+                .filter(|following_edge| following_edge.end_point_index() != start_idx)
+                .any(|following_edge| following_edge.kind() == GraphPathEdgeKind::Exterior)
+        }
+    }
+
+    ///
+    /// Given an edge that ends in a gap, attempts to bridge the gap by finding a following edge that has no following exterior edges on
+    /// its start point.
+    ///
+    fn heal_edge_with_gap(&mut self, point_idx: usize, edge_idx: usize, max_depth: usize) -> bool {
+        // This is Dijsktra's algorithm again: we also use this for a similar purpose in exterior_paths
+        let end_point_idx = self.points[point_idx].forward_edges[edge_idx].end_idx;
+
+        // State of the algorithm
+        let mut preceding_edge      = vec![None; self.points.len()];
+        let mut points_to_process   = vec![(point_idx, end_point_idx)];
+        let mut current_depth       = 0;
+        let mut target_point_idx    = None;
+
+        // Iterate until we hit the maximum depth
+        while current_depth < max_depth && target_point_idx.is_none() {
+            // Points found in this pass that need to be checked
+            let mut next_points_to_process = vec![];
+
+            // Process all the points found in the previous pass
+            for (from_point_idx, next_point_idx) in points_to_process {
+                // Stop once we find a point
+                if target_point_idx.is_some() { break; }
+
+                // Process all edges connected to this point
+                for next_edge in self.edges_for_point(next_point_idx).chain(self.reverse_edges_for_point(next_point_idx)) {
+                    let edge_end_point_idx  = next_edge.end_point_index();
+                    let next_edge_ref       = GraphEdgeRef::from(&next_edge);
+                    let next_edge_idx       = next_edge_ref.edge_idx;
+
+                    // Don't go back the way we came
+                    if edge_end_point_idx == from_point_idx { continue; }
+
+                    // Don't revisit points we already have a trail for
+                    if preceding_edge[edge_end_point_idx].is_some() { continue; }
+
+                    // Ignore exterior edges (except exterior edges where edge_has_gap is true, which indicate we've crossed our gap)
+                    let mut reversed_edge_ref = next_edge_ref;
+                    reversed_edge_ref.reverse = !reversed_edge_ref.reverse;
+                    if next_edge.kind() == GraphPathEdgeKind::Exterior && !self.edge_has_gap(reversed_edge_ref) { continue; }
+
+                    // Add this as a preceding edge
+                    preceding_edge[edge_end_point_idx] = Some((next_point_idx, next_edge_idx));
+
+                    // We've found a path across the gap if we find an exterior edge
+                    if next_edge.kind() == GraphPathEdgeKind::Exterior {
+                        // Set this as the target point
+                        target_point_idx = Some(edge_end_point_idx);
+                        break;
+                    }
+
+                    // Continue searching from this point
+                    next_points_to_process.push((next_point_idx, edge_end_point_idx));
+                }
+            }
+
+            // Process any points we found in the next pass
+            points_to_process = next_points_to_process;
+
+            // Moved down a level in the graph
+            current_depth += 1;
+        }
+
+        if let Some(target_point_idx) = target_point_idx {
+            // Target_point represents the final point in the 
+            let mut current_point_idx = target_point_idx;
+
+            while current_point_idx != end_point_idx {
+                let (previous_point_idx, previous_edge_idx) = preceding_edge[current_point_idx].expect("Previous point during gap healing");
+
+                // Mark this edge as exterior
+                self.points[previous_point_idx].forward_edges[previous_edge_idx].kind = GraphPathEdgeKind::Exterior;
+
+                // Move to the previous point
+                current_point_idx = previous_point_idx;
+            }
+
+            true
+        } else {
+            // Failed to cross the gap
+            false
+        }
+    }
+
+    ///
+    /// Finds any gaps in the edges marked as exterior and attempts to 'heal' them by finding a route to another
+    /// part of the path with a missing edge
+    /// 
+    /// Returns true if all the gaps that were found were 'healed'
+    ///
+    pub fn heal_exterior_gaps(&mut self) -> bool {
+        let mut all_healed = true;
+
+        // Iterate over all the edges in this graph
+        for point_idx in 0..(self.points.len()) {
+            for edge_idx in 0..(self.points[point_idx].forward_edges.len()) {
+                // If this edge has a gap...
+                if self.edge_has_gap(GraphEdgeRef { start_idx: point_idx, edge_idx: edge_idx, reverse: false }) {
+                    // ... try to heal it
+                    if !self.heal_edge_with_gap(point_idx, edge_idx, MAX_HEAL_DEPTH) {
+                        all_healed = false;
+                    }
+                }
+            }
+        }
+
+        all_healed
+    }
+
+    ///
     /// Finds the exterior edges and turns them into a series of paths
     ///
     pub fn exterior_paths<POut: BezierPathFactory<Point=Point>>(&self) -> Vec<POut> {
@@ -2243,5 +2378,33 @@ mod test {
             // Should be an even number of collisions
             assert!((collisions.len()&1) == 0);
         }
+    }
+
+    #[test]
+    fn find_gaps() {
+        let path            = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        let mut graph_path  = GraphPath::from_path(&path, ());
+        let edges           = (0..4).into_iter()
+            .map(|point_idx| graph_path.edges_for_point(point_idx).nth(0).unwrap().into())
+            .collect::<Vec<_>>();
+
+        graph_path.set_edge_kind(edges[0], GraphPathEdgeKind::Exterior);
+        graph_path.set_edge_kind(edges[2], GraphPathEdgeKind::Exterior);
+        graph_path.set_edge_kind(edges[3], GraphPathEdgeKind::Exterior);
+
+        // Edge 0,0 is followed by a gap
+        assert!(graph_path.edge_has_gap(GraphEdgeRef { start_idx: 0, edge_idx: 0, reverse: false }));
+
+        // Edge 1,0 is the gap
+        assert!(!graph_path.edge_has_gap(GraphEdgeRef { start_idx: 1, edge_idx: 0, reverse: false }));
+
+        // Edge 2,0 is preceded by the gap
+        assert!(graph_path.edge_has_gap(GraphEdgeRef { start_idx: 2, edge_idx: 0, reverse: true }));
     }
 }
