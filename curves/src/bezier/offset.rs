@@ -112,7 +112,7 @@ where Curve::Point: Normalize+Coordinate2D {
             let (t1, t2)            = section.original_curve_t_values();
             let (offset1, offset2)  = (t1*offset_distance+initial_offset, t2*offset_distance+initial_offset);
 
-            simple_offset(&section, offset1, offset2).0
+            simple_offset(&section, offset1, offset2)
         })
         .collect()
 }
@@ -122,45 +122,47 @@ where Curve::Point: Normalize+Coordinate2D {
 /// 
 /// This won't produce an accurate offset if the curve doubles back on itself. The return value is the curve and the error
 /// 
-fn simple_offset<P: Coordinate, CurveIn: NormalCurve+BezierCurve<Point=P>, CurveOut: BezierCurveFactory<Point=P>>(curve: &CurveIn, initial_offset: f64, final_offset: f64) -> (CurveOut, f64) 
-where P: Normalize {
+fn simple_offset<P: Coordinate, CurveIn: NormalCurve+BezierCurve<Point=P>, CurveOut: BezierCurveFactory<Point=P>>(curve: &CurveIn, initial_offset: f64, final_offset: f64) -> CurveOut
+where P: Coordinate2D+Normalize {
     // Fetch the original points
-    let start       = curve.start_point();
-    let end         = curve.end_point();
-    let (cp1, cp2)  = curve.control_points();
+    let start           = curve.start_point();
+    let end             = curve.end_point();
+    let (cp1, cp2)      = curve.control_points();
 
-    // The start and end CPs define the curve tangents at the start and end
-    let normal_start    = P::to_normal(&start, &(cp1-start));
-    let normal_end      = P::to_normal(&end, &(end-cp2));
-    let normal_start    = P::from_components(&normal_start).to_unit_vector();
-    let normal_end      = P::from_components(&normal_end).to_unit_vector();
+    // The normals at the start and end of the curve define the direction we should move in
+    let normal_start    = curve.normal_at_pos(0.0);
+    let normal_end      = curve.normal_at_pos(1.0);
+    let normal_start    = normal_start.to_unit_vector();
+    let normal_end      = normal_end.to_unit_vector();
 
-    // Offset start & end by the specified amounts to create the first approximation of a curve
-    // TODO: scale rather than just move for better accuracy
-    let new_start   = start + (normal_start * initial_offset);
-    let new_cp1     = cp1 + (normal_start * initial_offset);
-    let new_cp2     = cp2 + (normal_end * final_offset);
-    let new_end     = end + (normal_end * final_offset);
+    // If we can we want to scale the control points around the intersection of the normals
+    let intersect_point = line_intersects_line(&(start, start+normal_start), &(end, end+normal_end));
 
-    let offset_curve = CurveOut::from_points(new_start, new_end, new_cp1, new_cp2);
+    if let Some(intersect_point) = intersect_point {
+        // The control points point at an intersection point. We want to scale around this point so that start and end wind up at the appropriate offsets
+        let new_start   = start + (normal_start * initial_offset);
+        let new_end     = end + (normal_end * final_offset);
 
-    let error = 0.0;
-    /*
-    // Tweak the curve at some sample points to improve the accuracy of our guess
-    for sample_t in [0.25, 0.75].into_iter() {
-        let sample_t = *sample_t;
+        let start_scale = (intersect_point.distance_to(&new_start))/(intersect_point.distance_to(&start));
+        let end_scale   = (intersect_point.distance_to(&new_end))/(intersect_point.distance_to(&end));
 
-        // Work out th error at this point
-        let move_offset = offset_error(curve, &offset_curve, sample_t, initial_offset, final_offset);
+        let new_cp1     = ((cp1-intersect_point) * start_scale) + intersect_point;
+        let new_cp2     = ((cp2-intersect_point) * end_scale) + intersect_point;
 
-        // Adjust the curve by the offset
-        offset_curve = move_point(&offset_curve, sample_t, move_offset);
+        let offset_curve = CurveOut::from_points(new_start, new_end, new_cp1, new_cp2);
+
+        offset_curve
+    } else {
+        // No intersection point: just move everything along the normal
+
+        // Offset start & end by the specified amounts to create the first approximation of a curve
+        let new_start   = start + (normal_start * initial_offset);
+        let new_cp1     = cp1 + (normal_start * initial_offset);
+        let new_cp2     = cp2 + (normal_end * final_offset);
+        let new_end     = end + (normal_end * final_offset);
+
+        let offset_curve = CurveOut::from_points(new_start, new_end, new_cp1, new_cp2);
+
+        offset_curve
     }
-
-    // Use the offset at the curve's midway point as the error
-    let error_offset    = offset_error(curve, &offset_curve, 0.5, initial_offset, final_offset);
-    let error           = Curve::Point::origin().distance_to(&error_offset);
-    */
-
-    (offset_curve, error)
 }
