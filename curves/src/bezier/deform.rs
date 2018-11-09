@@ -1,4 +1,5 @@
 use super::curve::*;
+use super::super::coordinate::*;
 
 ///
 /// Moves the point at 't' on the curve by the offset vector
@@ -6,7 +7,7 @@ use super::curve::*;
 /// This recomputes the control points such that the point at t on the original curve
 /// is moved by the vector specified by `offset`.
 /// 
-pub fn move_point<Curve: BezierCurveFactory>(curve: &Curve, t: f64, offset: Curve::Point) -> Curve {
+pub fn move_point<P: Coordinate, CurveIn: BezierCurve<Point=P>, CurveOut: BezierCurveFactory<Point=P>>(curve: &CurveIn, t: f64, offset: &P) -> CurveOut {
     // Fetch the points from the curve
     let w1          = curve.start_point();
     let w4          = curve.end_point();
@@ -31,10 +32,10 @@ pub fn move_point<Curve: BezierCurveFactory>(curve: &Curve, t: f64, offset: Curv
     let p = wnn1*(1.0-t) + wnn2*t;
 
     // Translating wnn1 and wnn2 by the offset will give us a new p that is also translated by the offset
-    let pb = p + offset;
+    let pb = p + *offset;
 
-    let wnn1b = wnn1 + offset;
-    let wnn2b = wnn2 + offset;
+    let wnn1b = wnn1 + *offset;
+    let wnn2b = wnn2 + *offset;
 
     // The line c->pb->wn2b has the same ratios as the line c->p->wn2, so we can compute wn2b
     // There's a trick to calculating this for cubic curves (which is handy as it means this will work with straight lines as well as curves)
@@ -53,5 +54,5 @@ pub fn move_point<Curve: BezierCurveFactory>(curve: &Curve, t: f64, offset: Curv
     let w3b = (w4*t-wn3b)*inverse_tminus1;
 
     // Use the values to construct the curve with the moved point
-    Curve::from_points(w1, w4, w2b, w3b)
+    CurveOut::from_points(w1, w4, w2b, w3b)
 }
