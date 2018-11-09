@@ -1,5 +1,6 @@
 use super::curve::*;
 use super::normal::*;
+use super::deform::*;
 use super::section::*;
 use super::super::line::*;
 use super::super::coordinate::*;
@@ -138,7 +139,7 @@ where P: Coordinate2D+Normalize {
     // If we can we want to scale the control points around the intersection of the normals
     let intersect_point = line_intersects_line(&(start, start+normal_start), &(end, end+normal_end));
 
-    if let Some(intersect_point) = intersect_point {
+    let offset_curve = if let Some(intersect_point) = intersect_point {
         // The control points point at an intersection point. We want to scale around this point so that start and end wind up at the appropriate offsets
         let new_start   = start + (normal_start * initial_offset);
         let new_end     = end + (normal_end * final_offset);
@@ -149,9 +150,7 @@ where P: Coordinate2D+Normalize {
         let new_cp1     = ((cp1-intersect_point) * start_scale) + intersect_point;
         let new_cp2     = ((cp2-intersect_point) * end_scale) + intersect_point;
 
-        let offset_curve = CurveOut::from_points(new_start, new_end, new_cp1, new_cp2);
-
-        offset_curve
+        CurveOut::from_points(new_start, new_end, new_cp1, new_cp2)
     } else {
         // No intersection point: just move everything along the normal
 
@@ -161,8 +160,14 @@ where P: Coordinate2D+Normalize {
         let new_cp2     = cp2 + (normal_end * final_offset);
         let new_end     = end + (normal_end * final_offset);
 
-        let offset_curve = CurveOut::from_points(new_start, new_end, new_cp1, new_cp2);
+        CurveOut::from_points(new_start, new_end, new_cp1, new_cp2)
+    };
 
-        offset_curve
-    }
+    // Adjust the center point of the curve
+    let mid_offset  = (initial_offset + final_offset) * 0.5;
+    let mid_normal  = curve.normal_at_pos(0.5).to_unit_vector();
+    let cur_pos     = offset_curve.point_at_pos(0.5);
+    let target_pos  = curve.point_at_pos(0.5) + (mid_normal * mid_offset);
+
+    move_point(&offset_curve, 0.5, &(target_pos-cur_pos))
 }
