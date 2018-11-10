@@ -54,13 +54,13 @@ pub enum GraphPathEdgeKind {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GraphEdgeRef {
     /// The index of the point this edge starts from
-    start_idx: usize,
+    pub (crate) start_idx: usize,
 
     /// The index of the edge within the point
-    edge_idx: usize,
+    pub (crate) edge_idx: usize,
 
     /// True if this reference is for the reverse of this edge
-    reverse: bool
+    pub (crate) reverse: bool
 }
 
 ///
@@ -1991,6 +1991,16 @@ fn remove_and_round_close_collisions<P: Coordinate+Coordinate2D, C: BezierCurve<
                 }
             }
         }
+    }
+}
+
+impl GraphEdgeRef {
+    ///
+    /// Creates a reversed version of this edge ref
+    ///
+    pub fn reversed(mut self) -> GraphEdgeRef {
+        self.reverse = !self.reverse;
+        self
     }
 }
 
