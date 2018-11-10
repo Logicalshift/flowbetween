@@ -422,7 +422,7 @@ dependencies = [
 [[package]]
 name = "desync"
 version = "0.2.4"
-source = "git+https://github.com/logicalshift/desync?branch=develop#41c701c8c0e199c1f62f8e1ad0e77a12e42fc9d6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -584,7 +584,7 @@ dependencies = [
 name = "flo"
 version = "0.1.1"
 dependencies = [
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_animation 0.1.1",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
@@ -604,7 +604,7 @@ dependencies = [
 name = "flo_anim_sqlite"
 version = "0.1.1"
 dependencies = [
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_animation 0.1.1",
  "flo_canvas 0.1.1",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -631,7 +631,7 @@ dependencies = [
 name = "flo_binding"
 version = "0.1.2"
 dependencies = [
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -639,7 +639,7 @@ dependencies = [
 name = "flo_canvas"
 version = "0.1.1"
 dependencies = [
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_curves 0.2.0",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-hsluv 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -688,7 +688,7 @@ name = "flo_http_ui"
 version = "0.1.1"
 dependencies = [
  "bytes 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "flo_logging 0.1.1",
@@ -723,7 +723,7 @@ dependencies = [
 name = "flo_logging"
 version = "0.1.1"
 dependencies = [
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_stream 0.1.3 (git+https://github.com/Logicalshift/flo_stream)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -759,7 +759,7 @@ name = "flo_ui"
 version = "0.1.1"
 dependencies = [
  "bytes 0.4.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -776,7 +776,7 @@ dependencies = [
 name = "flo_ui_files"
 version = "0.1.1"
 dependencies = [
- "desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)",
+ "desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
@@ -2345,7 +2345,7 @@ dependencies = [
 "checksum crossbeam-utils 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "677d453a17e8bd2b913fa38e8b9cf04bcdbb5be790aa294f2389661d72036015"
 "checksum crossbeam-utils 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6efda20eef4ccf2a862d442a1e0319d568f9133e16a085a1f8126fe9b6da852d"
 "checksum deflate 0.7.19 (registry+https://github.com/rust-lang/crates.io-index)" = "8a6abb26e16e8d419b5c78662aa9f82857c2386a073da266840e474d5055ec86"
-"checksum desync 0.2.4 (git+https://github.com/logicalshift/desync?branch=develop)" = "<none>"
+"checksum desync 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "37b887040e7eeef15c0780bb65a817fda0cfb618be814da8149264d9b3a40c6a"
 "checksum digest 0.7.6 (registry+https://github.com/rust-lang/crates.io-index)" = "03b072242a8cbaf9c145665af9d250c59af3b958f83ed6824e13533cf76d5b90"
 "checksum dirs 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)" = "88972de891f6118092b643d85a0b28e0678e0f948d7f879aa32f2d5aafe97d2a"
 "checksum dtoa 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "6d301140eb411af13d3115f9a562c85cc6b541ade9dfa314132244aaee7489dd"

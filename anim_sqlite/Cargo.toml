@@ -15,4 +15,4 @@ flo_animation       = { path = "../animation", version = "^0.1.0" }
 itertools           = "^0.7.4"
 rusqlite            = { version = "0.14", features = ["bundled"] }
 futures             = "^0.1.17"
-desync              = { version = "0.2", git = "https://github.com/logicalshift/desync", branch = "develop" }
+desync              = "0.2"

@@ -7,5 +7,5 @@ repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Declarative binding library for Rust"
 
 [dependencies]
-desync          = { version = "0.2", git = "https://github.com/logicalshift/desync", branch = "develop" }
+desync          = "0.2"
 futures         = "^0.1.17"

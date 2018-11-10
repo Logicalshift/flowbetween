@@ -21,6 +21,6 @@ svg                 = "^0.5.6"
 uuid                = { version = "^0.6", features = [ "v4" ] }
 percent-encoding    = "^1.0.1"
 futures             = "^0.1.17"
-desync              = { version = "0.2", git = "https://github.com/logicalshift/desync", branch = "develop" }
+desync              = "0.2"
 itertools           = "^0.7.4"
 bytes               = "^0.4"
