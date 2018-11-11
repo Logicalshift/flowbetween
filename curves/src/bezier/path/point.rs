@@ -1,10 +1,120 @@
+use super::ray::*;
 use super::path::*;
 use super::to_curves::*;
+use super::graph_path::*;
 use super::super::curve::*;
 use super::super::normal::*;
-use super::super::intersection::*;
-use super::super::super::line::*;
+use super::super::super::geo::*;
 use super::super::super::coordinate::*;
+
+///
+/// Represents a curve that can be represented either forwards or backwards
+///
+#[derive(Clone)]
+pub (crate) enum ReversableCurve<Curve> {
+    Forward(Curve),
+    Reversed(Curve)
+}
+
+impl<Curve: BezierCurve> Geo for ReversableCurve<Curve> {
+    type Point=Curve::Point;
+}
+
+impl<Curve: BezierCurve> BezierCurve for ReversableCurve<Curve> {
+    #[inline]
+    fn start_point(&self) -> Curve::Point { 
+        match self {
+            ReversableCurve::Forward(curve)     => curve.start_point(),
+            ReversableCurve::Reversed(curve)    => curve.end_point()
+        }
+    }
+
+    #[inline]
+    fn end_point(&self) -> Curve::Point { 
+        match self {
+            ReversableCurve::Forward(curve)     => curve.end_point(),
+            ReversableCurve::Reversed(curve)    => curve.start_point()
+        }
+    }
+
+    #[inline]
+    fn control_points(&self) -> (Curve::Point, Curve::Point) {
+        match self {
+            ReversableCurve::Forward(curve)     => curve.control_points(),
+            ReversableCurve::Reversed(curve)    => {
+                let (cp1, cp2) = curve.control_points();
+                (cp2, cp1)
+            }
+        }
+    }
+}
+
+impl<Curve: BezierCurve> RayPath for Vec<Curve> 
+where Curve::Point: Coordinate2D {
+    type Curve = ReversableCurve<Curve>;
+    type Point = Curve::Point;
+
+    #[inline] fn num_points(&self) -> usize {
+        self.len()
+    }
+
+    #[inline] fn num_edges(&self, _point_idx: usize) -> usize {
+        1
+    }
+
+    #[inline] fn reverse_edges_for_point(&self, point_idx: usize) -> Vec<GraphEdgeRef> {
+        if point_idx == 0 {
+            vec![GraphEdgeRef { start_idx: self.len()-1, edge_idx: 0, reverse: true }]
+        } else {
+            vec![GraphEdgeRef { start_idx: point_idx-1, edge_idx: 0, reverse: true }]
+        }
+    }
+
+    #[inline] fn edges_for_point(&self, point_idx: usize) -> Vec<GraphEdgeRef> {
+        vec![GraphEdgeRef { start_idx: point_idx, edge_idx: 0, reverse: false }]
+    }
+
+    #[inline] fn get_edge(&self, edge: GraphEdgeRef) -> Self::Curve {
+        if edge.reverse {
+            ReversableCurve::Reversed(self[edge.start_idx].clone())
+        } else {
+            ReversableCurve::Forward(self[edge.start_idx].clone())
+        }
+    }
+
+    #[inline] fn get_next_edge(&self, edge: GraphEdgeRef) -> (GraphEdgeRef, Self::Curve) {
+        let next_ref = GraphEdgeRef { start_idx: self.edge_end_point_idx(edge), edge_idx: 0, reverse: edge.reverse };
+        (next_ref, self.get_edge(next_ref))
+    }
+
+    #[inline] fn point_position(&self, point: usize) -> Self::Point {
+        self[point].start_point()
+    }
+
+    #[inline] fn edge_start_point_idx(&self, edge: GraphEdgeRef) -> usize {
+        if edge.reverse {
+            unimplemented!()
+        } else {
+            edge.start_idx
+        }
+    }
+
+    #[inline] fn edge_end_point_idx(&self, edge: GraphEdgeRef) -> usize {
+        if edge.reverse {
+            unimplemented!()
+        } else {
+            if edge.start_idx+1 == self.len() {
+                0
+            } else {
+                edge.start_idx+1
+            }
+        }
+    }
+
+    #[inline] fn edge_following_edge_idx(&self, _edge: GraphEdgeRef) -> usize {
+        0
+    }
+}
 
 ///
 /// Returns true if a particular point is within a bezier path
@@ -20,55 +130,28 @@ where P::Point: Coordinate2D {
     } else {
         // Ray is from the top of the bounds to our point
         let ray             = (max_bounds + P::Point::from_components(&[0.01, 0.01]), *point);
+        let ray_direction   = ray.1 - ray.0;
+
+        // Call through to ray_collisions to get the collisions
+        let curves          = path_to_curves::<_, Curve<_>>(path).collect::<Vec<_>>();
+        let collisions      = ray_collisions(&curves, &ray);
 
         // The total of all of the ray directions
         let mut total_direction     = 0;
 
-        // Whether or not we hit the end this pass
-        let mut hit_end_last_pass   = false;
+        for (collision, curve_t, line_t, _pos) in collisions {
+            // Stop once the ray reaches the desired point
+            if line_t > 1.0 { break; }
 
-        // True if we're on the first path
-        let mut first_path          = true;
-        let mut hit_first_point     = false;
+            // Curve this collision was is just the start index of the edge
+            let curve_idx   = collision.edge().start_idx;
 
-        // Generate the set of curves for this path
-        let curves                  = path_to_curves::<_, Curve<_>>(path);
-        let mut curves              = curves.into_iter().peekable();
+            // Use the normal at this point to determine the direction relative to the ray
+            let normal      = curves[curve_idx].normal_at_pos(curve_t);
+            let direction   = ray_direction.dot(&normal).signum() as i32;
 
-        while let Some(curve) = curves.next() {
-            let mut hit_end_this_pass = false;
-
-            for (t, _s, pos) in curve_intersects_line(&curve, &ray) {
-                // If we precisely hit the first point, we need to make sure we don't also precisely hit the last point
-                if t < 0.0000001 && first_path { hit_first_point = true; }
-
-                // Hitting both the end and first point precisely should count as hitting only the first point
-                if t > 0.9999999 && hit_first_point && curves.peek().is_none() { continue; }
-
-                // Intersections at t = 1.0 are at the end of the curve.
-                if t > 0.9999999 { hit_end_this_pass = true; }
-
-                // If we hit the start point of this curve after hitting the end point of the preceding curve, assume that we've just received the same hit twice
-                if t < 0.0000001 && hit_end_last_pass { continue; }
-
-                // Get the tangent at this point
-                let tangent = curve.tangent_at_pos(t);
-
-                // Can determine which direction the line is moving by using the tangent
-                let direction = ray.which_side(&(pos + tangent));
-
-                if direction < 0 {
-                    total_direction -= 1;
-                } else if direction > 0 {
-                    total_direction += 1;
-                }
-            }
-
-            // Pass on whether or not we hit the end of the curve during this pass
-            hit_end_last_pass = hit_end_this_pass;
-
-            // No longer the first path
-            first_path = false;
+            // Add to the total direction
+            total_direction += direction;
         }
 
         // Point is inside the path if the ray crosses more lines facing in a particular direction

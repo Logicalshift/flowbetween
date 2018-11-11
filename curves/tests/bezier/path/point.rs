@@ -54,7 +54,7 @@ fn circle_edge_is_inside() {
 }
 
 #[test]
-fn point_on_edge_is_in_path() {
+fn point_on_edge_is_not_in_path() {
     // Path is a square
     let path = (Coord2(1.0, 2.0), vec![
         (Coord2(3.0, 2.0), Coord2(6.0, 2.0), Coord2(9.0, 2.0)), 
@@ -63,9 +63,9 @@ fn point_on_edge_is_in_path() {
         (Coord2(1.0, 6.0), Coord2(1.0, 4.0), Coord2(1.0, 2.0))
     ]);
 
-    // Points just on the boundary should be inside
-    // assert!(path_contains_point(&path, &Coord2(5.0, 2.0))); -- TODO
-    // assert!(path_contains_point(&path, &Coord2(1.0, 4.0))); -- TODO
+    // Points just on the boundary should be outside of the path
+    assert!(!path_contains_point(&path, &Coord2(5.0, 2.0)));
+    assert!(!path_contains_point(&path, &Coord2(1.0, 4.0)));
 }
 
 #[test]
