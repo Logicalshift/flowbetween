@@ -416,17 +416,25 @@ fn remove_glancing_collisions<'a, P: Coordinate+Coordinate2D, Path: RayPath<Poin
 ///
 #[inline]
 fn remove_duplicate_collisions_at_start<'a, P: Coordinate+Coordinate2D, Path: RayPath<Point=P>, Collisions: 'a+IntoIterator<Item=(GraphEdgeRef, f64, f64, P)>>(path: &'a Path, collisions: Collisions) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, P)> {
-    let mut visited_start = vec![vec![]; path.num_points()];
+    let mut visited_start = vec![];
 
     collisions
         .into_iter()
         .filter(move |(collision, curve_t, _line_t, _position)| {
             if *curve_t <= 0.000 {
+                if visited_start.len() == 0 {
+                    // Only allocate space if there are any collisions at the start
+                    visited_start = vec![None; path.num_points()];
+                }
+
                 // At the start of the curve
-                let was_visited = visited_start[collision.start_idx].contains(&collision.edge_idx);
+                let was_visited = visited_start[collision.start_idx]
+                    .as_ref()
+                    .map(|collisions: &Vec<_>| collisions.contains(&collision.edge_idx))
+                    .unwrap_or(false);
 
                 if !was_visited {
-                    visited_start[collision.start_idx].push(collision.edge_idx);
+                    visited_start[collision.start_idx].get_or_insert_with(|| vec![]).push(collision.edge_idx);
                 }
 
                 !was_visited
