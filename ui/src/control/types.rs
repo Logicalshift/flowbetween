@@ -32,5 +32,8 @@ pub enum ControlType {
     Slider,
 
     /// A circular slider that represents its value by how much it is rotated
-    Rotor
+    Rotor,
+
+    /// A single-line text editor
+    TextBox
 }

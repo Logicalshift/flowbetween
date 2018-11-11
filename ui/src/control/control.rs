@@ -58,6 +58,11 @@ impl Control {
         Self::new(Label)
     }
 
+    /// Creates a new text box control
+    pub fn text_box() -> Control {
+        Self::new(TextBox)
+    }
+
     /// Create a new empty control
     pub fn empty() -> Control {
         Self::new(Empty)

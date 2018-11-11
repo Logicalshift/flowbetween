@@ -57,7 +57,8 @@ fn control_class(ctrl: &Control) -> &str {
         Label               => "flo-label",
         Canvas              => "flo-canvas",
         Slider              => "flo-slider",
-        Rotor               => "flo-rotor"
+        Rotor               => "flo-rotor",
+        TextBox             => "flo-textbox"
     }
 }
 
