@@ -485,3 +485,185 @@ pub (crate) fn ray_collisions<P: Coordinate+Coordinate2D, Path: RayPath<Point=P>
     collisions
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use super::super::path::*;
+    use super::super::path_builder::*;
+    use super::super::graph_path::test::*;
+
+    #[test]
+    fn raw_donut_collisions() {
+        let donut = donut();
+        let donut = &donut;
+
+        let raw_collisions = raw_ray_collisions(&donut, &(Coord2(7.000584357101389, 8.342524209216537), Coord2(6.941479643691172, 8.441210096108172)));
+        println!("{:?}", raw_collisions.collect::<Vec<_>>());
+
+        // assert!(false);
+    }
+
+    #[test]
+    fn collinear_collision_along_convex_edge_produces_no_collisions() {
+        // Just one rectangle
+        let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp = GraphPath::from_path(&rectangle1, ());
+        let gp = &gp;
+
+        let collisions = collinear_ray_collisions(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)))
+            .collect::<Vec<_>>();
+        assert!(collisions.len() == 0);
+    }
+
+    #[test]
+    fn raw_collision_along_convex_edge_produces_no_collisions() {
+        // Just one rectangle
+        let rectangle1 = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp = GraphPath::from_path(&rectangle1, ());
+        let gp = &gp;
+
+        let collisions = raw_ray_collisions(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
+        let collisions = remove_collisions_before_or_after_collinear_section(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)), collisions);
+        let collisions = collisions.collect::<Vec<_>>();
+
+        assert!(collisions.len() == 0);
+    }
+
+    #[test]
+    fn collinear_collision_along_concave_edge_produces_single_collision() {
+        let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(6.0, 7.0))
+            .line_to(Coord2(3.0, 7.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp  = GraphPath::from_path(&concave_shape, ());
+        let gp  = &gp;
+        let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
+
+        let collisions = collinear_ray_collisions(&gp, &ray);
+        let collisions = collisions.collect::<Vec<_>>();
+
+        assert!(collisions.len() == 1);
+    }
+
+    #[test]
+    fn raw_collision_along_concave_edge_produces_single_collision() {
+        let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(6.0, 7.0))
+            .line_to(Coord2(3.0, 7.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp  = GraphPath::from_path(&concave_shape, ());
+        let gp  = &gp;
+        let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
+
+        let collisions = raw_ray_collisions(&gp, &ray);
+        let collisions = remove_collisions_before_or_after_collinear_section(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)), collisions);
+        let collisions = collisions.collect::<Vec<_>>();
+
+        assert!(collisions.len() == 1);
+    }
+
+    #[test]
+    fn concave_collision_breakdown() {
+        let concave_shape = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(6.0, 7.0))
+            .line_to(Coord2(3.0, 7.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        // Collide along the vertical seam of this graph
+        let gp  = GraphPath::from_path(&concave_shape, ());
+        let gp  = &gp;
+        let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
+
+        // Raw collisions
+        let collinear_collisions    = collinear_ray_collisions(&gp, &ray).collect::<Vec<_>>();
+        let normal_collisions       = raw_ray_collisions(&gp, &ray).collect::<Vec<_>>();
+        let normal_collisions       = remove_collisions_before_or_after_collinear_section(&gp, &ray, normal_collisions).collect::<Vec<_>>();
+
+        assert!(collinear_collisions.len() == 1);
+        assert!(normal_collisions.len() == 1);
+
+        // Chain them together
+        let collisions = collinear_collisions.into_iter().chain(normal_collisions.into_iter()).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+
+        // Filter for accuracy
+        let collisions = move_collisions_at_end_to_beginning(&gp, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = move_collinear_collisions_to_end(&gp, &ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = remove_glancing_collisions(&gp, &ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = remove_duplicate_collisions_at_start(&gp, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+        let collisions = flag_collisions_at_intersections(&gp, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 2);
+    }
+
+    #[test]
+    fn interior_point_produces_two_collisions() {
+        let with_interior_point = BezierPathBuilder::<SimpleBezierPath>::start(Coord2(1.0, 1.0))
+            .line_to(Coord2(5.0, 1.0))
+            .line_to(Coord2(5.0, 5.0))
+            .line_to(Coord2(2.0, 2.0))
+            .line_to(Coord2(4.0, 2.0))
+            .line_to(Coord2(1.0, 5.0))
+            .line_to(Coord2(1.0, 1.0))
+            .build();
+
+        let mut with_interior_point = GraphPath::from_path(&with_interior_point, ());
+        with_interior_point.self_collide(0.01);
+        let with_interior_point     = &with_interior_point;
+
+        let ray         = (Coord2(0.0, 3.0), Coord2(1.0, 3.0));
+        let collisions  = raw_ray_collisions(&with_interior_point, &ray);
+
+        let collisions = collisions.collect::<Vec<_>>();
+        println!("{:?}", with_interior_point);
+        println!("{:?}", collisions);
+
+        assert!(collisions.len() == 4);
+
+        // Filter for accuracy
+        let collisions = move_collisions_at_end_to_beginning(&with_interior_point, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        let collisions = move_collinear_collisions_to_end(&with_interior_point, &ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        let collisions = remove_glancing_collisions(&with_interior_point, &ray, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        println!("{:?}", collisions);
+        let collisions = remove_duplicate_collisions_at_start(&with_interior_point, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+        let collisions = flag_collisions_at_intersections(&with_interior_point, collisions).collect::<Vec<_>>();
+        assert!(collisions.len() == 4);
+    }
+}
