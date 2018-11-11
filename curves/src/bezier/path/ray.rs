@@ -328,7 +328,7 @@ fn move_collinear_collisions_to_end<'a, P: Coordinate+Coordinate2D, Path: RayPat
             let edge = path.get_edge(collision);
             if curve_is_collinear(&edge, ray_coeffs) {
                 let mut edge_ref    = collision;
-                let mut edge        = edge;
+                let mut edge;
 
                 // Skip over collinear sections (they have 0 width from the point of view of the ray)
                 loop {
