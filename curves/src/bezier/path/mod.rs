@@ -1,5 +1,6 @@
 mod path;
 mod to_curves;
+mod ray;
 mod point;
 mod bounds;
 mod intersection;

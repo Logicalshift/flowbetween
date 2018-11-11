@@ -1,3 +1,4 @@
+use super::ray::*;
 use super::path::*;
 use super::super::curve::*;
 use super::super::intersection::*;
@@ -2024,6 +2025,77 @@ impl GraphRayCollision {
         match self {
             GraphRayCollision::SingleEdge(edge)     => *edge,
             GraphRayCollision::Intersection(edge)   => *edge,
+        }
+    }
+}
+
+impl<'a, Point, Label> RayPath for &'a GraphPath<Point, Label> 
+where   Point: Coordinate+Coordinate2D,
+        Label: Copy {
+    type Point = Point;
+    type Curve = GraphEdge<'a, Point, Label>;
+
+    #[inline] fn num_points(&self) -> usize { self.points.len() }
+
+    #[inline] fn num_edges(&self, point_idx: usize) -> usize { self.points[point_idx].forward_edges.len() }
+
+    #[inline] fn edges_for_point(&self, point_idx: usize) -> Vec<GraphEdgeRef> {
+        let num_edges = self.points[point_idx].forward_edges.len();
+        (0..num_edges).into_iter()
+            .map(move |edge_idx| GraphEdgeRef { start_idx: point_idx, edge_idx: edge_idx, reverse: false })
+            .collect()
+    }
+
+    #[inline] fn reverse_edges_for_point(&self, point_idx: usize) -> Vec<GraphEdgeRef> {
+        self.points[point_idx].connected_from.iter()
+            .flat_map(|connected_point_idx| {
+                let num_edges = self.points[*connected_point_idx].forward_edges.len();
+
+                (0..num_edges).into_iter()
+                    .filter(move |edge_idx| self.points[*connected_point_idx].forward_edges[*edge_idx].end_idx == point_idx)
+                    .map(move |edge_idx| GraphEdgeRef { start_idx: *connected_point_idx, edge_idx: edge_idx, reverse: true })
+            })
+            .collect()
+    }
+
+    #[inline] fn get_edge(&self, edge: GraphEdgeRef) -> Self::Curve {
+        GraphEdge { graph: *self, edge: edge }
+    }
+
+    #[inline] fn get_next_edge(&self, edge: GraphEdgeRef) -> (GraphEdgeRef, Self::Curve) {
+        let next_point_idx  = self.edge_end_point_idx(edge);
+        let next_edge_idx   = self.edge_following_edge_idx(edge);
+
+        let next_edge_ref   = GraphEdgeRef { start_idx: next_point_idx, edge_idx: next_edge_idx, reverse: edge.reverse };
+
+        (next_edge_ref, self.get_edge(next_edge_ref))
+    }
+
+    #[inline] fn point_position(&self, point: usize) -> Self::Point {
+        self.points[point].position
+    }
+
+    #[inline] fn edge_start_point_idx(&self, edge: GraphEdgeRef) -> usize {
+        if edge.reverse {
+            self.points[edge.start_idx].forward_edges[edge.edge_idx].end_idx
+        } else {
+            edge.start_idx
+        }
+    }
+
+    #[inline] fn edge_end_point_idx(&self, edge: GraphEdgeRef) -> usize {
+        if edge.reverse {
+            edge.start_idx
+        } else {
+            self.points[edge.start_idx].forward_edges[edge.edge_idx].end_idx
+        }
+    }
+
+    #[inline] fn edge_following_edge_idx(&self, edge: GraphEdgeRef) -> usize {
+        if edge.reverse {
+            unimplemented!("Finding the following edge for a reversed reference not implemented yet")
+        } else {
+            self.points[edge.start_idx].forward_edges[edge.edge_idx].following_edge_idx
         }
     }
 }
