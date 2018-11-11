@@ -117,7 +117,15 @@ pub trait BezierCurve: Geo+Clone+Sized {
         let end             = self.end_point();
         let control_points  = self.control_points();
 
-        Bounds::bounds_for_points(vec![ start, end, control_points.0, control_points.1 ])
+        let min             = Self::Point::from_smallest_components(start, end);
+        let min             = Self::Point::from_smallest_components(min, control_points.0);
+        let min             = Self::Point::from_smallest_components(min, control_points.1);
+
+        let max             = Self::Point::from_biggest_components(start, end);
+        let max             = Self::Point::from_biggest_components(max, control_points.0);
+        let max             = Self::Point::from_biggest_components(max, control_points.1);
+
+        Bounds::from_min_max(min, max)
     }
 
     ///
