@@ -176,57 +176,63 @@ fn crossing_edges<Path: RayPath>(path: &Path, (a, b, c): (f64, f64, f64), points
 }
 
 ///
-/// Takes a ray and collides it against every edge in this path, returning a list of collisions
+/// Performs a basic search for collisions, returning them grouped into two sets.
+/// 
+/// The first set is crossing collisions. These are places where the ray met and edge at an angle and crossed it.
+/// The second set is collinear collisions. These occur on straight edges that follow the same path as the ray.
 ///
-#[inline]
-fn raw_ray_collisions<'a, P: 'a+Coordinate+Coordinate2D, Path: RayPath<Point=P>, L: Line<Point=P>>(path: &'a Path, ray: &'a L) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, P)> {
-    let ray_coeffs  = ray.coefficients();
+fn crossing_and_collinear_collisions<P: Coordinate+Coordinate2D, Path: RayPath<Point=P>, L: Line<Point=P>>(path: &Path, ray: &L) -> (Vec<(GraphEdgeRef, f64, f64, P)>, Vec<(GraphEdgeRef, f64, f64, P)>) {
+    let mut raw_collisions          = vec![];
 
-    all_edges(path)
-        .filter(move |(_edge_ref, edge)| !curve_is_collinear(edge, ray_coeffs))
-        .filter(move |(_edge_ref, edge)| ray_can_intersect(edge, ray_coeffs))
-        .flat_map(move |(edge_ref, edge)| curve_intersects_ray(&edge, ray)
-                .into_iter()
-                .map(move |(curve_t, line_t, collide_pos)| (edge_ref, curve_t, line_t, collide_pos)))
-}
-
-///
-/// Takes a ray and collides it against every collinear edge in this path, returning the list of edges that cross the collinear
-/// section (collinear edges have 0 width so can't be crossed themselves)
-///
-#[inline]
-fn collinear_ray_collisions<'a, P: Coordinate+Coordinate2D, Path: RayPath<Point=P>, L: Line<Point=P>>(path: &'a Path, ray: &'a L) -> impl 'a+Iterator<Item=(GraphEdgeRef, f64, f64, P)> {
-    let ray_coeffs = ray.coefficients();
-
-    // Find all of the collinear sections (sets of points connected by collinear edges)
-    let mut section_with_point: Vec<Option<usize>>  = vec![None; path.num_points()];
+    // If there are multiple collinear sections grouped together, these give them each a common identifier
+    let mut section_with_point: Vec<Option<usize>>  = vec![];
     let mut collinear_sections: Vec<Vec<_>>         = vec![];
 
-    for (edge_ref, _edge) in all_edges(path).filter(|(_edge_ref, edge)| curve_is_collinear(edge, ray_coeffs)) {
-        let start_idx   = path.edge_start_point_idx(edge_ref);
-        let end_idx     = path.edge_end_point_idx(edge_ref);
+    // The coefficients are used to determine if a particular edge can collide with the curve and if it's collinear or not
+    let ray_coeffs = ray.coefficients();
 
-        if let Some(start_section) = section_with_point[start_idx] {
-            if let Some(_end_section) = section_with_point[end_idx] {
-                // Already seen an edge between these points
-            } else {
-                // end_idx is new
-                collinear_sections[start_section].push(end_idx);
+    for (edge_ref, edge) in all_edges(path) {
+        if !curve_is_collinear(&edge, ray_coeffs) {
+            // This edge may intersect the ray
+            if ray_can_intersect(&edge, ray_coeffs) {
+                // Find any intersections
+                for (curve_t, line_t, collide_pos) in curve_intersects_ray(&edge, ray) {
+                    // Store in the list of raw collisions
+                    raw_collisions.push((edge_ref, curve_t, line_t, collide_pos));
+                }
             }
-        } else if let Some(end_section) = section_with_point[end_idx] {
-            // start_idx is new
-            collinear_sections[end_section].push(start_idx);
         } else {
-            // New section
-            let new_section = collinear_sections.len();
-            collinear_sections.push(vec![start_idx, end_idx]);
-            section_with_point[start_idx]   = Some(new_section);
-            section_with_point[end_idx]     = Some(new_section);
+            // There are usually no collinear collisions, so only allocate our array if we find some
+            if section_with_point.len() == 0 {
+                section_with_point = vec![None; path.num_points()];
+            }
+
+            // This edge is collinear with the ray
+            let start_idx   = path.edge_start_point_idx(edge_ref);
+            let end_idx     = path.edge_end_point_idx(edge_ref);
+
+            if let Some(start_section) = section_with_point[start_idx] {
+                if let Some(_end_section) = section_with_point[end_idx] {
+                    // Already seen an edge between these points
+                } else {
+                    // end_idx is new
+                    collinear_sections[start_section].push(end_idx);
+                }
+            } else if let Some(end_section) = section_with_point[end_idx] {
+                // start_idx is new
+                collinear_sections[end_section].push(start_idx);
+            } else {
+                // New section
+                let new_section = collinear_sections.len();
+                collinear_sections.push(vec![start_idx, end_idx]);
+                section_with_point[start_idx]   = Some(new_section);
+                section_with_point[end_idx]     = Some(new_section);
+            }
         }
     }
 
-    // Find the edges crossing each collinear section
-    collinear_sections
+    // Collect any collinear collisions into a vec
+    let collinear_collisions = collinear_sections
         .into_iter()
         .flat_map(move |colinear_edge_points| crossing_edges(path, ray_coeffs, colinear_edge_points)
                 .into_iter()
@@ -237,6 +243,9 @@ fn collinear_ray_collisions<'a, P: Coordinate+Coordinate2D, Path: RayPath<Point=
 
                     (crossing_edge, 0.0, line_t, point)
                 }))
+        .collect();
+
+    (raw_collisions, collinear_collisions)
 }
 
 ///
@@ -443,8 +452,9 @@ fn flag_collisions_at_intersections<'a, P: Coordinate+Coordinate2D, Path: RayPat
 /// 
 pub (crate) fn ray_collisions<P: Coordinate+Coordinate2D, Path: RayPath<Point=P>, L: Line<Point=P>>(path: &Path, ray: &L) -> Vec<(GraphRayCollision, f64, f64, P)> {
     // Raw collisions
-    let collinear_collisions    = collinear_ray_collisions(path, ray);
-    let crossing_collisions     = raw_ray_collisions(path, ray);
+    let (crossing_collisions, collinear_collisions) = crossing_and_collinear_collisions(path, ray);
+    let collinear_collisions    = collinear_collisions.into_iter();
+    let crossing_collisions     = crossing_collisions.into_iter();
     let crossing_collisions     = remove_collisions_before_or_after_collinear_section(path, ray, crossing_collisions);
 
     // Chain them together
