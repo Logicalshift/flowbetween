@@ -97,26 +97,41 @@ fn curve_is_collinear<P: Coordinate+Coordinate2D, Edge: BezierCurve<Point=P>>(ed
     }
 }
 
+#[derive(PartialEq)]
+enum RayCanIntersect {
+    WrongSide,
+    Collinear,
+    CrossesRay
+}
+
 ///
 /// Given the coefficients of a ray, returns whether or not an edge can intersect it
 ///
 #[inline]
-fn ray_can_intersect<P: Coordinate+Coordinate2D, Edge: BezierCurve<Point=P>>(edge: &Edge, (a, b, c): (f64, f64, f64)) -> bool {
+fn ray_can_intersect<P: Coordinate+Coordinate2D, Edge: BezierCurve<Point=P>>(edge: &Edge, (a, b, c): (f64, f64, f64)) -> RayCanIntersect {
     // Fetch the points of the curve
     let start_point = edge.start_point();
     let end_point   = edge.end_point();
     let (cp1, cp2)  = edge.control_points();
-    
-    let side        = (a*start_point.x() + b*start_point.y() + c).signum()
-                    + (a*cp1.x() + b*cp1.y() + c).signum()
-                    + (a*cp2.x() + b*cp2.y() + c).signum()
-                    + (a*end_point.x()+ b*end_point.y() + c).signum();
 
-    // If all 4 points have the same sign, they're all on the same side of the ray and thus the edge cannot intersect it 
-    if side < -3.99 || side > 3.99 {
-        false
+    // Calculate distances to each of the points
+    let start_distance  = a*start_point.x() + b*start_point.y() + c;
+    let cp1_distance    = a*cp1.x() + b*cp1.y() + c;
+    let cp2_distance    = a*cp2.x() + b*cp2.y() + c;
+    let end_distance    = a*end_point.x()+ b*end_point.y() + c;
+
+    // The sign of the distances indicate which side they're on
+    let side            = start_distance.signum() + end_distance.signum() + cp1_distance.signum() + cp2_distance.signum();
+
+    if start_distance.abs() < SMALL_DISTANCE && end_distance.abs() < SMALL_DISTANCE && cp1_distance.abs() < SMALL_DISTANCE && cp2_distance.abs() < SMALL_DISTANCE {
+        // If all the distances are small enough, this section is collinear
+        RayCanIntersect::Collinear
+    } else if side < -3.99 || side > 3.99 {
+        // If the side sums to 4, all points are on the same side
+        RayCanIntersect::WrongSide
     } else {
-        true
+        // Otherwise, the ray can intersect this line
+        RayCanIntersect::CrossesRay
     }
 }
 
@@ -192,16 +207,15 @@ fn crossing_and_collinear_collisions<P: Coordinate+Coordinate2D, Path: RayPath<P
     let ray_coeffs = ray.coefficients();
 
     for (edge_ref, edge) in all_edges(path) {
-        if !curve_is_collinear(&edge, ray_coeffs) {
+        let intersection_type = ray_can_intersect(&edge, ray_coeffs);
+
+        if intersection_type == RayCanIntersect::CrossesRay {
             // This edge may intersect the ray
-            if ray_can_intersect(&edge, ray_coeffs) {
-                // Find any intersections
-                for (curve_t, line_t, collide_pos) in curve_intersects_ray(&edge, ray) {
-                    // Store in the list of raw collisions
-                    raw_collisions.push((edge_ref, curve_t, line_t, collide_pos));
-                }
+            for (curve_t, line_t, collide_pos) in curve_intersects_ray(&edge, ray) {
+                // Store in the list of raw collisions
+                raw_collisions.push((edge_ref, curve_t, line_t, collide_pos));
             }
-        } else {
+        } else if intersection_type == RayCanIntersect::Collinear {
             // There are usually no collinear collisions, so only allocate our array if we find some
             if section_with_point.len() == 0 {
                 section_with_point = vec![None; path.num_points()];
@@ -507,7 +521,7 @@ mod test {
         let donut = donut();
         let donut = &donut;
 
-        let raw_collisions = raw_ray_collisions(&donut, &(Coord2(7.000584357101389, 8.342524209216537), Coord2(6.941479643691172, 8.441210096108172)));
+        let raw_collisions = crossing_and_collinear_collisions(&donut, &(Coord2(7.000584357101389, 8.342524209216537), Coord2(6.941479643691172, 8.441210096108172))).0.into_iter();
         println!("{:?}", raw_collisions.collect::<Vec<_>>());
 
         // assert!(false);
@@ -527,8 +541,7 @@ mod test {
         let gp = GraphPath::from_path(&rectangle1, ());
         let gp = &gp;
 
-        let collisions = collinear_ray_collisions(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)))
-            .collect::<Vec<_>>();
+        let collisions = crossing_and_collinear_collisions(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0))).1;
         assert!(collisions.len() == 0);
     }
 
@@ -546,7 +559,7 @@ mod test {
         let gp = GraphPath::from_path(&rectangle1, ());
         let gp = &gp;
 
-        let collisions = raw_ray_collisions(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)));
+        let collisions = crossing_and_collinear_collisions(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0))).0.into_iter();
         let collisions = remove_collisions_before_or_after_collinear_section(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)), collisions);
         let collisions = collisions.collect::<Vec<_>>();
 
@@ -569,8 +582,7 @@ mod test {
         let gp  = &gp;
         let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
 
-        let collisions = collinear_ray_collisions(&gp, &ray);
-        let collisions = collisions.collect::<Vec<_>>();
+        let collisions = crossing_and_collinear_collisions(&gp, &ray).1;
 
         assert!(collisions.len() == 1);
     }
@@ -591,7 +603,7 @@ mod test {
         let gp  = &gp;
         let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
 
-        let collisions = raw_ray_collisions(&gp, &ray);
+        let collisions = crossing_and_collinear_collisions(&gp, &ray).0.into_iter();
         let collisions = remove_collisions_before_or_after_collinear_section(&gp, &(Coord2(5.0, 0.0), Coord2(5.0, 5.0)), collisions);
         let collisions = collisions.collect::<Vec<_>>();
 
@@ -615,8 +627,7 @@ mod test {
         let ray = (Coord2(5.0, 0.0), Coord2(5.0, 5.0));
 
         // Raw collisions
-        let collinear_collisions    = collinear_ray_collisions(&gp, &ray).collect::<Vec<_>>();
-        let normal_collisions       = raw_ray_collisions(&gp, &ray).collect::<Vec<_>>();
+        let (normal_collisions, collinear_collisions) = crossing_and_collinear_collisions(&gp, &ray);
         let normal_collisions       = remove_collisions_before_or_after_collinear_section(&gp, &ray, normal_collisions).collect::<Vec<_>>();
 
         assert!(collinear_collisions.len() == 1);
@@ -655,9 +666,8 @@ mod test {
         let with_interior_point     = &with_interior_point;
 
         let ray         = (Coord2(0.0, 3.0), Coord2(1.0, 3.0));
-        let collisions  = raw_ray_collisions(&with_interior_point, &ray);
+        let collisions  = crossing_and_collinear_collisions(&with_interior_point, &ray).0;
 
-        let collisions = collisions.collect::<Vec<_>>();
         println!("{:?}", with_interior_point);
         println!("{:?}", collisions);
 
