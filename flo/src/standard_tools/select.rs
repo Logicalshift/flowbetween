@@ -188,7 +188,11 @@ impl Select {
     /// 
     fn rendering_for_elements(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>) -> Vec<Draw> {
         let mut drawing = vec![];
-        let mut paths   = vec![];
+        // let mut paths   = vec![];
+
+        drawing.fill_color(Color::Rgba(0.6, 0.8, 0.9, 1.0));
+        drawing.stroke_color(SELECTION_OUTLINE);
+        drawing.new_path();
 
         // Draw each of the elements and store the bounding boxes
         let mut bounding_boxes = vec![];
@@ -204,7 +208,11 @@ impl Select {
             // Render the element using the selection style
             element
                 .and_then(|element| element.to_path(&properties))
-                .map(|path| {
+                .map(|element_paths| {
+                    for path in element_paths {
+                        drawing.extend(path.to_drawing());
+                    }
+                    /*
                     let path    = path_remove_interior_points::<_, _, Path>(&path, 0.01);
 
                     if properties.brush.to_definition().1 == BrushDrawingStyle::Erase {
@@ -212,6 +220,7 @@ impl Select {
                     } else {
                         paths   = path_add::<_, _, _, Path>(&paths, &path, 0.01);
                     }
+                    */
                 });
 
             // We'll draw the bounding rectangles later on
@@ -219,12 +228,7 @@ impl Select {
         }
 
         // Draw the elements
-        drawing.new_path();
-        paths.into_iter().for_each(|path| drawing.extend(path.to_drawing()));
-
-        drawing.fill_color(Color::Rgba(0.6, 0.8, 0.9, 1.0));
         drawing.fill();
-        drawing.stroke_color(SELECTION_OUTLINE);
         drawing.stroke();
 
         // Draw the bounding boxes
