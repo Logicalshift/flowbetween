@@ -1,3 +1,15 @@
+//!
+//! # Describing coordinates
+//!
+//! The `Coordinate` trait provides a way to represent coordinates in arbitary numbers of dimensions. Most of the
+//! types in `flo_curves` support arbitrary coordinate types through this trait.
+//! 
+//! `Coordinate2D` coordinates are a special case of coordinates with only two dimensions. Some operations are
+//! only defined for two dimensions: for example, taking the normal of a Bezier curve. The `Coord2` type is
+//! supplied as a generic implementation of a 2-dimensional coordinate, though these operations will work on
+//! any type for which the `Coordinate2D` trait is defined.
+//!
+
 use std::ops::*;
 
 ///
