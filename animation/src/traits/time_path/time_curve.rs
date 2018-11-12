@@ -23,9 +23,9 @@ pub struct TimeCurve {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct TimeCurveSection {
     pub start: TimePoint,
-    pub end: TimePoint,
     pub control_point1: TimePoint,
-    pub control_point2: TimePoint
+    pub control_point2: TimePoint,
+    pub end: TimePoint
 }
 
 impl TimeCurve {
@@ -181,9 +181,9 @@ impl BezierCurveFactory for TimeCurveSection {
     /// Creates a new bezier curve of the same type from some points
     /// 
     #[inline]
-    fn from_points(start: Self::Point, end: Self::Point, control_point1: Self::Point, control_point2: Self::Point) -> Self {
+    fn from_points(start: Self::Point, (control_point1, control_point2): (Self::Point, Self::Point), end: Self::Point) -> Self {
         TimeCurveSection {
-            start, end, control_point1, control_point2
+            start, control_point1, control_point2, end
         }
     }
 }

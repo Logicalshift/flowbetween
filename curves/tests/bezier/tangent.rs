@@ -3,7 +3,7 @@ use flo_curves::bezier;
 
 #[test]
 fn calculate_tangent_for_straight_line() {
-    let straight_line   = bezier::Curve::from_points(Coord2(0.0, 1.0), Coord2(2.0, 3.0), Coord2(0.5, 1.5), Coord2(1.5, 2.5));
+    let straight_line   = bezier::Curve::from_points(Coord2(0.0, 1.0), (Coord2(0.5, 1.5), Coord2(1.5, 2.5)), Coord2(2.0, 3.0));
     let tangent         = bezier::Tangent::from(&straight_line);
 
     assert!(tangent.tangent(0.5) == Coord2(2.25, 2.25));

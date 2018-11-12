@@ -15,7 +15,7 @@ impl Geo for PathCurve {
 /// A point and an element form a bezier curve (ie, a start point and the following element)
 /// 
 impl BezierCurveFactory for PathCurve {
-    fn from_points(start: PathPoint, end: PathPoint, control_point1: PathPoint, control_point2: PathPoint) -> PathCurve {
+    fn from_points(start: PathPoint, (control_point1, control_point2): (PathPoint, PathPoint), end: PathPoint) -> PathCurve {
         PathCurve(start, PathElement::Bezier(end, control_point1, control_point2))
     }
 }

@@ -47,7 +47,7 @@ impl FatLine {
         let cp1         = FromCurve::Point::from_components(&[self.distance(&cp1), 1.0/3.0]);
         let cp2         = FromCurve::Point::from_components(&[self.distance(&cp2), 2.0/3.0]);
 
-        ToCurve::from_points(start, end, cp1, cp2)
+        ToCurve::from_points(start, (cp1, cp2), end)
     }
 
     ///
@@ -377,7 +377,7 @@ mod test {
 
     #[test]
     fn convex_hull_basic() {
-        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(5.0, 1.0/3.0), Coord2(6.0, 2.0/3.0));
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), (Coord2(5.0, 1.0/3.0), Coord2(6.0, 2.0/3.0)), Coord2(4.0, 1.0));
         let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
@@ -391,7 +391,7 @@ mod test {
 
     #[test]
     fn convex_hull_concave_cp2() {
-        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(3.0, 2.0/3.0));
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), (Coord2(4.0, 1.0/3.0), Coord2(3.0, 2.0/3.0)), Coord2(4.0, 1.0));
         let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
@@ -404,7 +404,7 @@ mod test {
 
     #[test]
     fn convex_hull_concave_cp1() {
-        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(8.0, 2.0/3.0));
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), (Coord2(4.0, 1.0/3.0), Coord2(8.0, 2.0/3.0)), Coord2(4.0, 1.0));
         let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
@@ -417,7 +417,7 @@ mod test {
 
     #[test]
     fn convex_hull_opposite_sides() {
-        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), Coord2(4.0, 1.0), Coord2(4.0, 1.0/3.0), Coord2(1.0, 2.0/3.0));
+        let hull_curve  = Curve::from_points(Coord2(1.0, 0.0), (Coord2(4.0, 1.0/3.0), Coord2(1.0, 2.0/3.0)), Coord2(4.0, 1.0));
         let hull        = FatLine::distance_curve_convex_hull(&hull_curve);
 
         println!("{:?}", hull);
@@ -464,7 +464,7 @@ mod test {
     fn clip_t_1() {
         // Horizontal line, with a y range of 2.0 to 7.0
         let fat_line        = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
-        let clip_curve      = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+        let clip_curve      = Curve::from_points(Coord2(0.0, 0.0), (Coord2(0.0, 5.0), Coord2(5.0, 4.0)), Coord2(5.0, 8.0));
         let distance_curve  = fat_line.distance_curve::<_, Curve<Coord2>>(&clip_curve);
 
         let (t1, t2)    = fat_line.clip_t(&clip_curve).unwrap();
@@ -484,7 +484,7 @@ mod test {
     fn clip_curve_1() {
         // Horizontal line, with a y range of 2.0 to 7.0
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
-        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), (Coord2(0.0, 5.0), Coord2(5.0, 4.0)), Coord2(5.0, 8.0));
 
         let mut clipped = clip_curve.clone();
 
@@ -507,7 +507,7 @@ mod test {
     #[test]
     fn clip_curve_in_line() {
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -16.0, 16.0);
-        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), (Coord2(0.0, 5.0), Coord2(5.0, 4.0)), Coord2(5.0, 8.0));
 
         let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_some());
@@ -530,7 +530,7 @@ mod test {
     fn clip_curve_start_in_line() {
         // If the start point is inside the fat line, we should only clip the end point
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -16.0, 3.0);
-        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), (Coord2(0.0, 5.0), Coord2(5.0, 4.0)), Coord2(5.0, 8.0));
 
         let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_some());
@@ -553,7 +553,7 @@ mod test {
     fn clip_curve_end_in_line() {
         // If the end point is inside the fat line, we should only clip the start point
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 16.0);
-        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), (Coord2(0.0, 5.0), Coord2(5.0, 4.0)), Coord2(5.0, 8.0));
 
         let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_some());
@@ -576,7 +576,7 @@ mod test {
     fn clip_curve_outside_line() {
         // If the curve is entirely outside the line, we should return None
         let fat_line    = FatLine::new((Coord2(0.0, 20.0), Coord2(5.0, 20.0)), -2.0, 2.0);
-        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), (Coord2(0.0, 5.0), Coord2(5.0, 4.0)), Coord2(5.0, 8.0));
 
         let clipped = fat_line.clip::<_, Curve<Coord2>>(&clip_curve);
         assert!(clipped.is_none());
@@ -586,7 +586,7 @@ mod test {
     fn can_always_refine() {
         // Horizontal line, with a y range of 2.0 to 7.0
         let fat_line    = FatLine::new((Coord2(0.0, 4.0), Coord2(5.0, 4.0)), -2.0, 3.0);
-        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), Coord2(5.0, 8.0), Coord2(0.0, 5.0), Coord2(5.0, 4.0));
+        let clip_curve  = Curve::from_points(Coord2(0.0, 0.0), (Coord2(0.0, 5.0), Coord2(5.0, 4.0)), Coord2(5.0, 8.0));
 
         let mut clipped = clip_curve.clone();
 
@@ -609,8 +609,8 @@ mod test {
     #[test]
     fn clip_curves_1() {
         // Two curves that clipped incorrectly from the clip intersection test
-        let curve1 = Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
-        let curve2 = Curve::from_points(Coord2(67.25, 113.48), Coord2(181.38, 199.44), Coord2(146.18, 85.98), Coord2(109.35, 211.01));
+        let curve1 = Curve::from_points(Coord2(10.0, 100.0), (Coord2(90.0, 30.0), Coord2(40.0, 140.0)), Coord2(220.0, 220.0));
+        let curve2 = Curve::from_points(Coord2(67.25, 113.48), (Coord2(146.18, 85.98), Coord2(109.35, 211.01)), Coord2(181.38, 199.44));
 
         // Clip curve1 against curve2
         let fat_line = FatLine::from_curve(&curve2);
@@ -652,8 +652,8 @@ mod test {
         // Coord2(179.87, 199.67)
 
         // Two curves that clipped incorrectly from the clip intersection test
-        let curve1 = Curve::from_points(Coord2(67.25, 113.48), Coord2(210.0, 190.0), Coord2(155.03, 82.90), Coord2(99.65, 240.93));
-        let curve2 = Curve::from_points(Coord2(77.5, 103.75), Coord2(220.0, 220.0), Coord2(97.5, 132.5), Coord2(130.0, 180.0));       
+        let curve1 = Curve::from_points(Coord2(67.25, 113.48), (Coord2(155.03, 82.90), Coord2(99.65, 240.93)), Coord2(210.0, 190.0));
+        let curve2 = Curve::from_points(Coord2(77.5, 103.75), (Coord2(97.5, 132.5), Coord2(130.0, 180.0)), Coord2(220.0, 220.0));       
 
         // Clip curve1 against curve2
         let fat_line = FatLine::from_curve(&curve2);
@@ -688,8 +688,8 @@ mod test {
 
         // Curve1 here forms a line that intercepts close to the start of Curve2, which seems to cause some accuracy issues
 
-        let curve1 = Curve::from_points(Coord2(80.317, 107.796), Coord2(88.615, 119.383), Coord2(82.851, 111.424), Coord2(85.591, 115.301));
-        let curve2 = Curve::from_points(Coord2(81.248, 109.971), Coord2(134.936, 171.219), Coord2(118.038, 104.934), Coord2(122.245, 142.970));       
+        let curve1 = Curve::from_points(Coord2(80.317, 107.796), (Coord2(82.851, 111.424), Coord2(85.591, 115.301)), Coord2(88.615, 119.383));
+        let curve2 = Curve::from_points(Coord2(81.248, 109.971), (Coord2(118.038, 104.934), Coord2(122.245, 142.970)), Coord2(134.936, 171.219));       
 
         // Clip curve1 against curve2
         let fat_line = FatLine::from_curve(&curve2);
@@ -722,8 +722,8 @@ mod test {
         //
         // Coord2(81.78, 109.88)
 
-        let curve2 = Curve::from_points(Coord2(80.317, 107.796), Coord2(88.615, 119.383), Coord2(82.851, 111.424), Coord2(85.591, 115.301));
-        let curve1 = Curve::from_points(Coord2(81.248, 109.971), Coord2(134.936, 171.219), Coord2(118.038, 104.934), Coord2(122.245, 142.970));       
+        let curve2 = Curve::from_points(Coord2(80.317, 107.796), (Coord2(82.851, 111.424), Coord2(85.591, 115.301)), Coord2(88.615, 119.383));
+        let curve1 = Curve::from_points(Coord2(81.248, 109.971), (Coord2(118.038, 104.934), Coord2(122.245, 142.970)), Coord2(134.936, 171.219));       
 
         // Clip curve1 against curve2
         let fat_line = FatLine::from_curve(&curve2);

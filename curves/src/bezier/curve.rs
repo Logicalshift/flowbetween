@@ -17,15 +17,14 @@ pub trait BezierCurveFactory: BezierCurve {
     ///
     /// Creates a new bezier curve of the same type from some points
     /// 
-    fn from_points(start: Self::Point, end: Self::Point, control_point1: Self::Point, control_point2: Self::Point) -> Self;
+    fn from_points(start: Self::Point, control_points: (Self::Point, Self::Point), end: Self::Point) -> Self;
 
     ///
     /// Creates a new bezier curve of this type from an equivalent curve of another type
     /// 
     #[inline]
     fn from_curve<Curve: BezierCurve<Point=Self::Point>>(curve: &Curve) -> Self {
-        let (cp1, cp2) = curve.control_points();
-        Self::from_points(curve.start_point(), curve.end_point(), cp1, cp2)
+        Self::from_points(curve.start_point(), curve.control_points(), curve.end_point())
     }
 
     ///
@@ -61,7 +60,7 @@ pub trait BezierCurve: Geo+Clone+Sized {
     /// 
     fn reverse<Curve: BezierCurveFactory<Point=Self::Point>>(self) -> Curve {
         let (cp1, cp2) = self.control_points();
-        Curve::from_points(self.end_point(), self.start_point(), cp2, cp1)
+        Curve::from_points(self.end_point(), (cp2, cp1), self.start_point())
     }
 
     ///
@@ -90,8 +89,8 @@ pub trait BezierCurve: Geo+Clone+Sized {
         let control_points              = self.control_points();
         let (first_curve, second_curve) = subdivide4(t, self.start_point(), control_points.0, control_points.1, self.end_point());
 
-        (Curve::from_points(first_curve.0, first_curve.3, first_curve.1, first_curve.2),
-            Curve::from_points(second_curve.0, second_curve.3, second_curve.1, second_curve.2))
+        (Curve::from_points(first_curve.0, (first_curve.1, first_curve.2), first_curve.3),
+            Curve::from_points(second_curve.0, (second_curve.1, second_curve.2), second_curve.3))
     }
 
     ///
@@ -188,11 +187,11 @@ impl<Coord: Coordinate> Geo for Curve<Coord> {
 }
 
 impl<Coord: Coordinate> BezierCurveFactory for Curve<Coord> {
-    fn from_points(start: Coord, end: Coord, control_point1: Coord, control_point2: Coord) -> Self {
+    fn from_points(start: Coord, (control_point1, control_point2): (Coord, Coord), end: Coord) -> Self {
         Curve {
             start_point:    start,
-            end_point:      end,
-            control_points: (control_point1, control_point2)
+            control_points: (control_point1, control_point2),
+            end_point:      end
         }
     }
 }

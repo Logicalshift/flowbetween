@@ -54,5 +54,5 @@ pub fn move_point<P: Coordinate, CurveIn: BezierCurve<Point=P>, CurveOut: Bezier
     let w3b = (w4*t-wn3b)*inverse_tminus1;
 
     // Use the values to construct the curve with the moved point
-    CurveOut::from_points(w1, w4, w2b, w3b)
+    CurveOut::from_points(w1, (w2b, w3b), w4)
 }

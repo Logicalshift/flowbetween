@@ -123,7 +123,7 @@ fn fit_line<Curve: BezierCurveFactory>(p1: &Curve::Point, p2: &Curve::Point) -> 
     let cp1         = *p1 + (direction * 0.33);
     let cp2         = *p1 + (direction * 0.66);
 
-    vec![Curve::from_points(*p1, *p2, cp1, cp2)]
+    vec![Curve::from_points(*p1, (cp1, cp2), *p2)]
 }
 
 ///
@@ -206,10 +206,10 @@ fn generate_bezier<Curve: BezierCurveFactory>(points: &[Curve::Point], chords: &
     if alpha_l < epsilon || alpha_r < epsilon {
         // Much less accurate means of estimating a curve
         let dist = seg_length/3.0;
-        Curve::from_points(points[0], last_point, points[0]+(*start_tangent*dist), last_point+(*end_tangent*dist))
+        Curve::from_points(points[0], (points[0]+(*start_tangent*dist), last_point+(*end_tangent*dist)), last_point)
     } else {
         // The control points are positioned an alpha distance out along the tangent vectors
-        Curve::from_points(points[0], last_point, points[0]+(*start_tangent*alpha_l), last_point+(*end_tangent*alpha_r))
+        Curve::from_points(points[0], (points[0]+(*start_tangent*alpha_l), last_point+(*end_tangent*alpha_r)), last_point)
     }
 }
 

@@ -13,6 +13,6 @@ pub fn path_to_curves<Path: BezierPath, Curve: BezierCurveFactory<Point=Path::Po
     just_start_point.chain(points)
         .tuple_windows()
         .map(|((_, _, start_point), (cp1, cp2, end_point))| {
-            Curve::from_points(start_point, end_point, cp1, cp2)
+            Curve::from_points(start_point, (cp1, cp2), end_point)
         })
 }

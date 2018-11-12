@@ -225,7 +225,7 @@ impl InkCurve {
         // Create the top and bottom offsets
         let start_offset    = start_pressure*(max_width-min_width) + min_width;
         let end_offset      = end_pressure*(max_width-min_width) + min_width;
-        let base_curve      = bezier::Curve::from_points(start, end, cp1, cp2);
+        let base_curve      = bezier::Curve::from_points(start, (cp1, cp2), end);
 
         let offset_up       = bezier::offset(&base_curve, start_offset, end_offset);
         let offset_down     = bezier::offset(&base_curve, -start_offset, -end_offset);
@@ -239,11 +239,11 @@ impl Geo for InkCurve {
 }
 
 impl BezierCurveFactory for InkCurve {
-    fn from_points(start: InkCoord, end: InkCoord, control_point1: InkCoord, control_point2: InkCoord) -> InkCurve {
+    fn from_points(start: InkCoord, control_points: (InkCoord, InkCoord), end: InkCoord) -> InkCurve {
         InkCurve {
             start_point:    start,
             end_point:      end,
-            control_points: (control_point1, control_point2)
+            control_points: control_points
         }
     }
 }

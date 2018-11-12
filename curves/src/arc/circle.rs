@@ -141,7 +141,7 @@ impl<'a, Coord: Coordinate2D+Coordinate> CircularArc<'a, Coord> {
         let p2 = Coord::from_components(&[x2, y2]);
         let p3 = Coord::from_components(&[x3, y3]);
 
-        Curve::from_points(p0, p3, p1, p2)
+        Curve::from_points(p0, (p1, p2), p3)
     }
 }
 

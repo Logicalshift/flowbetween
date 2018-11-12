@@ -101,8 +101,8 @@ fn find_intersection_on_straight_line_end_to_start() {
 #[test]
 fn find_intersections_on_curve() {
     // Two curves with three intersections
-    let curve1  = bezier::Curve::from_points(Coord2(10.0, 100.0), Coord2(220.0, 220.0), Coord2(90.0, 30.0), Coord2(40.0, 140.0));
-    let curve2  = bezier::Curve::from_points(Coord2(5.0, 150.0), Coord2(210.0, 190.0), Coord2(180.0, 20.0), Coord2(80.0, 250.0));
+    let curve1  = bezier::Curve::from_points(Coord2(10.0, 100.0), (Coord2(90.0, 30.0), Coord2(40.0, 140.0)), Coord2(220.0, 220.0));
+    let curve2  = bezier::Curve::from_points(Coord2(5.0, 150.0), (Coord2(180.0, 20.0), Coord2(80.0, 250.0)), Coord2(210.0, 190.0));
 
     let intersections   = bezier::curve_intersects_curve_bbox(&curve1, &curve2, 0.1);
 
