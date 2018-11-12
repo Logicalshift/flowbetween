@@ -5,6 +5,7 @@ authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Library for manipulating Bezier curves"
+readme      = "README.md"
 
 [dependencies]
 itertools   = "0.7"
