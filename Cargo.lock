@@ -799,6 +799,7 @@ dependencies = [
  "flo_anim_sqlite 0.1.1",
  "flo_animation 0.1.1",
  "flo_binding 0.1.2",
+ "flo_canvas 0.1.1",
  "flo_gtk_ui 0.1.1",
  "flo_http_ui 0.1.1",
  "flo_http_ui_actix 0.1.1",

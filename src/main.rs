@@ -10,6 +10,7 @@
 
 extern crate flo_ui;
 extern crate flo_ui_files;
+extern crate flo_canvas;
 extern crate flo;
 extern crate flo_binding;
 extern crate flo_animation;
@@ -21,6 +22,7 @@ extern crate serde_json;
 extern crate log;
 extern crate pretty_env_logger;
 
+mod logo_controller;
 mod flo_session;
 #[cfg(feature="http")]  mod http_session;
 

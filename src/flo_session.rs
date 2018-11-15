@@ -1,3 +1,5 @@
+use super::logo_controller::*;
+
 use flo_ui::*;
 use flo_ui::Image;
 use flo_ui_files::ui::*;
@@ -41,7 +43,7 @@ impl FlowBetweenSession {
 
         // Create the file chooser
         let file_chooser = FloChooser::<SqliteAnimation>::new();
-        let file_chooser = FileChooserController::new(file_chooser, NullController::new());
+        let file_chooser = FileChooserController::new(file_chooser, FloLogoController::new());
 
         // Create the session
         FlowBetweenSession {
