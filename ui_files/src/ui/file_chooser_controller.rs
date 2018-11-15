@@ -32,6 +32,9 @@ pub struct FileChooserController<Chooser: FileChooser> {
     /// The user interface binding
     ui: BindRef<Control>,
 
+    /// The background colour for the controller
+    background_color: Binding<Color>,
+
     /// The file manager used for finding the files to be displayed by this controller
     file_manager: Arc<Chooser::FileManager>,
 
@@ -44,17 +47,18 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     /// Creates a new file chooser controller
     /// 
     pub fn new<LogoController: Controller+'static>(chooser: Chooser, logo_controller: LogoController) -> FileChooserController<Chooser> {
-        let logo_controller = Arc::new(logo_controller);
+        let logo_controller     = Arc::new(logo_controller);
 
         // Fetch the file manager and file store from the chooser
-        let file_manager    = chooser.get_file_manager();
-        let open_file_store = chooser.get_file_store();
+        let file_manager        = chooser.get_file_manager();
+        let open_file_store     = chooser.get_file_store();
 
         // Create the model
-        let model           = FileChooserModel::new(&chooser);
+        let model               = FileChooserModel::new(&chooser);
 
         // Create the UI
-        let ui              = Self::ui(&model);
+        let background_color    = bind(Color::Rgba(0.1, 0.1, 0.1, 1.0));
+        let ui                  = Self::ui(&model, BindRef::from(background_color.clone()));
 
         // Create the chooser controller
         FileChooserController {
@@ -62,8 +66,16 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
             logo_controller:    logo_controller,
             ui:                 ui,
             file_manager:       file_manager,
+            background_color:   background_color,
             open_file_store:    open_file_store
         }
+    }
+
+    ///
+    /// Changes the background of the file chooser
+    ///
+    pub fn set_background(&self, new_background: Color) {
+        self.background_color.clone().set(new_background)
     }
 
     ///
@@ -88,7 +100,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates the UI binding from the model
     /// 
-    fn ui(model: &FileChooserModel<Chooser>) -> BindRef<Control> {
+    fn ui(model: &FileChooserModel<Chooser>, background: BindRef<Color>) -> BindRef<Control> {
         // Create references to the parts of the model we need
         let controller  = model.active_controller.clone();
         let file_list   = model.file_list.clone();
@@ -130,6 +142,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
                 // The UI allows the user to pick a file
                 Control::scrolling_container()
+                    .with(Appearance::Background(background.get()))
                     .with(Bounds::fill_all())
                     .with((ActionTrigger::VirtualScroll(8192.0, VIRTUAL_HEIGHT), "ScrollFiles"))
                     .with(Scroll::MinimumContentSize((NUM_COLUMNS as f32)*FILE_WIDTH, height))

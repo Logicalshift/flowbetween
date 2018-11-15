@@ -33,3 +33,5 @@ pub const SELECTION_FILL:                   Color = Color::Rgba(0.6, 0.8, 0.9, 0
 pub const CP_BEZIER:                        Color = Color::Rgba(0.9, 0.7, 0.5, 0.85);
 pub const CP_BEZIER_CP:                     Color = Color::Rgba(0.6, 0.8, 0.9, 0.85);
 pub const CP_LINES:                         Color = Color::Rgba(0.6, 0.6, 0.6, 0.7);
+
+pub const FILE_CHOOSER_BACKGROUND:          Color = Color::Rgba(0.165, 0.250, 0.198, 1.0);

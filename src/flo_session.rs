@@ -45,6 +45,8 @@ impl FlowBetweenSession {
         let file_chooser = FloChooser::<SqliteAnimation>::new();
         let file_chooser = FileChooserController::new(file_chooser, FloLogoController::new());
 
+        file_chooser.set_background(FILE_CHOOSER_BACKGROUND);
+
         // Create the session
         FlowBetweenSession {
             ui:         bind(Control::container()
