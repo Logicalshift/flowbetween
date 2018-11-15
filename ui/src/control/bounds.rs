@@ -57,7 +57,7 @@ impl Bounds {
     ///
     pub fn stretch_vert(ratio: f32) -> Bounds {
         use Position::*;
-        Bounds { x1: After, y1: Start, x2: End, y2: Stretch(ratio) }
+        Bounds { x1: Start, y1: After, x2: End, y2: Stretch(ratio) }
     }
 
     ///
