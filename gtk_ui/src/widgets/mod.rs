@@ -19,6 +19,7 @@ mod layout;
 mod run_action;
 mod factory;
 mod image;
+mod click;
 mod drag;
 mod paint;
 mod events;
