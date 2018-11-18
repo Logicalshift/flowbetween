@@ -26,6 +26,9 @@ pub struct FileChooserController<Chooser: FileChooser> {
     /// The model for the controller
     model: FileChooserModel<Chooser>,
 
+    /// The viewmodel for the controller
+    viewmodel: Arc<DynamicViewModel>,
+
     /// The controller that displays the logo UI
     logo_controller: Arc<dyn Controller>,
 
@@ -56,6 +59,14 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         // Create the model
         let model               = FileChooserModel::new(&chooser);
 
+        // Set up the viewmodel
+        let viewmodel           = DynamicViewModel::new();
+
+        let drag_offset         = model.dragging_offset.clone();
+        viewmodel.set_computed("DragX", move || PropertyValue::Float(drag_offset.get().0));
+        let drag_offset         = model.dragging_offset.clone();
+        viewmodel.set_computed("DragY", move || PropertyValue::Float(drag_offset.get().1));
+
         // Create the UI
         let background_color    = bind(Color::Rgba(0.1, 0.1, 0.1, 1.0));
         let ui                  = Self::ui(&model, BindRef::from(background_color.clone()));
@@ -63,6 +74,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         // Create the chooser controller
         FileChooserController {
             model:              model,
+            viewmodel:          Arc::new(viewmodel),
             logo_controller:    logo_controller,
             ui:                 ui,
             file_manager:       file_manager,
@@ -102,9 +114,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     /// 
     fn ui(model: &FileChooserModel<Chooser>, background: BindRef<Color>) -> BindRef<Control> {
         // Create references to the parts of the model we need
-        let controller  = model.active_controller.clone();
-        let file_list   = model.file_list.clone();
-        let file_range  = model.file_range.clone();
+        let controller      = model.active_controller.clone();
+        let file_list       = model.file_list.clone();
+        let file_range      = model.file_range.clone();
+        let dragging_file   = model.dragging_file.clone();
 
         // Generate the UI
         let ui = computed(move || {
@@ -120,8 +133,9 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
             } else {
                 
                 // The file controls that are currently on-screen (virtualised)
-                let file_range  = file_range.get();
-                let file_list   = file_list.get();
+                let file_range      = file_range.get();
+                let file_list       = file_list.get();
+                let dragging_file   = dragging_file.get();
 
                 let files       = file_range.into_iter()
                     .filter_map(|file_index| file_list.get(file_index as usize).map(|file| (file_index, file)))
@@ -131,8 +145,26 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         let x       = (column as f32) * FILE_WIDTH;
                         let y       = (row as f32) * FILE_HEIGHT;
 
-                        Self::file_ui(file_model, file_index)
-                            .with(Bounds { x1: Position::At(x), y1: Position::At(y), x2: Position::At(x+FILE_WIDTH), y2: Position::At(y+FILE_HEIGHT) })
+                        if dragging_file == Some(file_index as usize) {
+                            // File that is being dragged has a high z-index and moves with the drag position
+                            Self::file_ui(file_model, file_index)
+                                .with(Bounds { 
+                                    x1: Position::Floating(Property::bound("DragX"), x), 
+                                    y1: Position::Floating(Property::bound("DragY"), y), 
+                                    x2: Position::Floating(Property::bound("DragX"), x+FILE_WIDTH), 
+                                    y2: Position::Floating(Property::bound("DragY"), y+FILE_HEIGHT) 
+                                })
+                                .with(ControlAttribute::ZIndex(10))
+                        } else {
+                            // Keep the file in its usual position
+                            Self::file_ui(file_model, file_index)
+                                .with(Bounds { 
+                                    x1: Position::At(x), 
+                                    y1: Position::At(y), 
+                                    x2: Position::At(x+FILE_WIDTH), 
+                                    y2: Position::At(y+FILE_HEIGHT) })
+                                .with(ControlAttribute::ZIndex(0))
+                        }
                     })
                     .collect::<Vec<_>>();
                 
@@ -215,7 +247,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
     /// Retrieves the viewmodel for this controller
     fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> { 
-        None 
+        Some(self.viewmodel.clone())
     }
 
     /// Attempts to retrieve a sub-controller of this controller
