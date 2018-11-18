@@ -140,7 +140,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
                 let files       = file_range.into_iter()
                     .filter_map(|file_index| file_list.get(file_index as usize).map(|file| (file_index, file)))
-                    .map(|(file_index, file_model)| {
+                    .flat_map(|(file_index, file_model)| {
                         let row     = file_index / NUM_COLUMNS;
                         let column  = file_index % NUM_COLUMNS;
                         let x       = (column as f32) * FILE_WIDTH;
@@ -148,23 +148,37 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
                         if dragging_file == Some(file_index as usize) {
                             // File that is being dragged has a high z-index and moves with the drag position
-                            Self::file_ui(file_model, file_index)
-                                .with(Bounds { 
-                                    x1: Position::Floating(Property::bound("DragX"), x), 
-                                    y1: Position::Floating(Property::bound("DragY"), y), 
-                                    x2: Position::Floating(Property::bound("DragX"), x+FILE_WIDTH), 
-                                    y2: Position::Floating(Property::bound("DragY"), y+FILE_HEIGHT) 
-                                })
-                                .with(ControlAttribute::ZIndex(10))
+                            vec![
+                                Control::empty()
+                                    .with(Bounds {
+                                        x1: Position::At(x+4.0), 
+                                        y1: Position::At(y+2.0), 
+                                        x2: Position::At(x+FILE_WIDTH-4.0), 
+                                        y2: Position::At(y+FILE_HEIGHT-26.0)
+                                    })
+                                    .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.4, 0.1))),
+
+                                Self::file_ui(file_model, file_index)
+                                    .with(Bounds { 
+                                        x1: Position::Floating(Property::bound("DragX"), x), 
+                                        y1: Position::Floating(Property::bound("DragY"), y), 
+                                        x2: Position::Floating(Property::bound("DragX"), x+FILE_WIDTH), 
+                                        y2: Position::Floating(Property::bound("DragY"), y+FILE_HEIGHT) 
+                                    })
+                                    .with(ControlAttribute::ZIndex(10))
+                                    .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.0, 0.15)))
+                            ]
                         } else {
-                            // Keep the file in its usual position
-                            Self::file_ui(file_model, file_index)
-                                .with(Bounds { 
-                                    x1: Position::At(x), 
-                                    y1: Position::At(y), 
-                                    x2: Position::At(x+FILE_WIDTH), 
-                                    y2: Position::At(y+FILE_HEIGHT) })
-                                .with(ControlAttribute::ZIndex(0))
+                            // File that is static and not being dragged
+                            vec![
+                                Self::file_ui(file_model, file_index)
+                                    .with(Bounds { 
+                                        x1: Position::At(x), 
+                                        y1: Position::At(y), 
+                                        x2: Position::At(x+FILE_WIDTH), 
+                                        y2: Position::At(y+FILE_HEIGHT) })
+                                    .with(ControlAttribute::ZIndex(0))
+                            ]
                         }
                     })
                     .collect::<Vec<_>>();
