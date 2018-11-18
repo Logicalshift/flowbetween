@@ -43,13 +43,16 @@ pub struct FloScrollWidget {
     layout:         gtk::Layout,
 
     /// We delegate the actual layout tasks (along with things like setting the image and text) to FloFixedWidget
-    fixed_widget:   FloFixedWidget,
+    fixed_widget:   Rc<RefCell<FloFixedWidget>>,
 
     /// The horizontal scrollbar policy
     h_policy:       gtk::PolicyType,
 
     /// The vertical scrollbar policy
-    v_policy:       gtk::PolicyType
+    v_policy:       gtk::PolicyType,
+
+    /// The minimum size of this widget
+    min_size:       Rc<RefCell<(f64, f64)>>
 }
 
 impl FloScrollWidget {
@@ -81,16 +84,24 @@ impl FloScrollWidget {
         // Generate the widget
         let as_widget       = scroll_window.clone().upcast::<gtk::Widget>();
         let fixed_widget    = FloFixedWidget::new(id, layout.clone(), widget_data);
+        let fixed_widget    = Rc::new(RefCell::new(fixed_widget));
+        let min_size        = (1.0, 1.0);
 
-        FloScrollWidget {
+        let widget = FloScrollWidget {
             id:             id,
             scroll_window:  scroll_window,
             layout:         layout,
             as_widget:      as_widget,
             fixed_widget:   fixed_widget,
+            min_size:       Rc::new(RefCell::new(min_size)),
             h_policy:       gtk::PolicyType::Always,
             v_policy:       gtk::PolicyType::Always
-        }
+        };
+
+        // Wire up events
+        widget.connect_update_on_resize();
+
+        widget
     }
 
     ///
@@ -157,7 +168,7 @@ impl FloScrollWidget {
     }
 
     ///
-    /// Generates a virtual scroll event when an adjustment changes
+    /// Generates a virtual scroll event when the size allocation changes
     /// 
     fn connect_virtual_scroll_on_resize(&self, state: Rc<RefCell<VirtualScrollState>>, sink: GtkEventSink, action_name: String, width: f32, height: f32) {
         let weak_layout = self.layout.clone().downgrade();
@@ -170,6 +181,53 @@ impl FloScrollWidget {
                 Self::generate_virtual_scroll_event(widget_id, Rc::clone(&state), &mut *sink.borrow_mut(), &action_name, &layout, width, height);
             }
         });
+    }
+
+    ///
+    /// Connects an event that updates the layout when the size allocation changes
+    ///
+    fn connect_update_on_resize(&self) {
+        let weak_layout = self.layout.clone().downgrade();
+        let weak_fixed  = Rc::downgrade(&self.fixed_widget);
+        let min_size    = Rc::clone(&self.min_size);
+
+        self.scroll_window.connect_size_allocate(move |_scroll_window, allocation| {
+            let mut size_changed = false;
+
+            if let Some(layout) = weak_layout.upgrade() {
+                size_changed = Self::set_scroll_window_size(&layout, *min_size.borrow(), allocation);
+            }
+
+            if let Some(fixed_widget) = weak_fixed.upgrade() {
+                if size_changed {
+                    // TODO: actually relayout
+                    // fixed_widget.force_relayout();
+                }
+            }
+        });
+    }
+
+    ///
+    /// Updates the size of the scroll window content
+    ///
+    fn set_scroll_window_size(layout: &gtk::Layout, min_size: (f64, f64), allocation: &gtk::Allocation) -> bool{
+        // Fetch the minimum size of the scroll window
+        let (width, height) = min_size;
+
+        // The layout should fill at least one page of the scroll window
+        let min_width       = allocation.width.max(1) as f64;
+        let min_height      = allocation.height.max(1) as f64;
+
+        // Update the layout
+        let (width, height) = ((width.max(min_width)) as u32, (height.max(min_height)) as u32);
+        let (current_width, current_height) = layout.get_size();
+
+        if current_width != width || current_height != height {
+            layout.set_size(width, height);
+            true
+        } else {
+            false
+        }
     }
 
     ///
@@ -221,13 +279,16 @@ impl GtkUiWidget for FloScrollWidget {
 
         match action {
             // Scroll actions are handled by this control
-            &Scroll(MinimumContentSize(width, height))  => { self.layout.set_size((width.max(1.0)) as u32, (height.max(1.0)) as u32); },
+            &Scroll(MinimumContentSize(width, height))  => {
+                *self.min_size.borrow_mut() = (width as f64, height as f64);
+                Self::set_scroll_window_size(&self.layout, *self.min_size.borrow(), &self.scroll_window.get_allocation());
+            },
             &Scroll(HorizontalScrollBar(visibility))    => { self.h_policy = Self::policy_for_visibility(visibility); self.update_policy(); },
             &Scroll(VerticalScrollBar(visibility))      => { self.v_policy = Self::policy_for_visibility(visibility); self.update_policy(); },
 
             // Content actions are handled by the fixed widget
-            &Content(SetText(_))                        => { self.fixed_widget.process(flo_gtk, action); },
-            &Appearance(Image(_))                       => { self.fixed_widget.process(flo_gtk, action); },
+            &Content(SetText(_))                        => { self.fixed_widget.borrow_mut().process(flo_gtk, action); },
+            &Appearance(Image(_))                       => { self.fixed_widget.borrow_mut().process(flo_gtk, action); },
 
             // This can generate virtual scroll events
             &RequestEvent(GtkWidgetEventType::VirtualScroll(width, height), ref name) => self.start_virtual_scrolling(flo_gtk.get_event_sink(), name.clone(), width, height),
@@ -238,7 +299,7 @@ impl GtkUiWidget for FloScrollWidget {
     }
 
     fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
-        self.fixed_widget.set_children(children);
+        self.fixed_widget.borrow_mut().set_children(children);
     }
 
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
