@@ -357,7 +357,6 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     match action_parameter {
                         ActionParameter::Drag(DragAction::Start, _, _) => {
                             self.model.dragging_offset.clone().set((0.0, 0.0));
-                            self.model.dragging_file.clone().set(Some(file_index as usize));
                         },
 
                         ActionParameter::Drag(DragAction::Finish, _, _) => {
@@ -369,6 +368,9 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                         },
 
                         ActionParameter::Drag(DragAction::Drag, (from_x, from_y), (to_x, to_y)) => {
+                            if (from_x-to_x).abs() > 6.0 || (from_y-to_y).abs() > 6.0 {
+                                self.model.dragging_file.clone().set(Some(file_index as usize));
+                            }
                             self.model.dragging_offset.clone().set(((to_x-from_x) as f64, (to_y-from_y) as f64))
                         },
 
