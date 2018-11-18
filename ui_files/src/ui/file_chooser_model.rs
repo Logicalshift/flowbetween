@@ -69,8 +69,8 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         FileChooserModel {
             active_controller:  active_controller,
             shared_state:       Mutex::new(None),
-            dragging_file:      bind(Some(0)),
-            dragging_offset:    bind((20.0, 20.0)),
+            dragging_file:      bind(None),
+            dragging_offset:    bind((0.0, 0.0)),
             open_file:          open_file,
             file_list:          file_list,
             file_range:         bind(0..0)
