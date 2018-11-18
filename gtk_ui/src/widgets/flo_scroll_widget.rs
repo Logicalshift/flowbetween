@@ -200,8 +200,8 @@ impl FloScrollWidget {
 
             if let Some(fixed_widget) = weak_fixed.upgrade() {
                 if size_changed {
-                    // TODO: actually relayout
-                    // fixed_widget.force_relayout();
+                    // Setting the size during the allocation event doesn't generate a new one, so manually trigger the layout resize event
+                    fixed_widget.borrow().force_relayout();
                 }
             }
         });

@@ -21,6 +21,9 @@ pub struct FloFixedWidget {
     /// The ID assigned to this widget
     id: WidgetId,
 
+    /// Callback that forces a re-layout of the widget
+    force_relayout_fn: Box<dyn Fn() -> ()>,
+
     /// Widget data
     widget_data: Rc<WidgetData>,
 
@@ -47,6 +50,7 @@ pub struct FloFixedWidget {
 /// Trait used to describe how to perform layout in a fixed widget
 /// 
 pub trait FixedWidgetLayout {
+    fn force_layout(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>);
     fn attach_layout_signal(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>);
 }
 
@@ -54,27 +58,46 @@ impl FloFixedWidget {
     ///
     /// Creates a new FloWidget that can contain generic controls using the fixed layout style
     /// 
-    pub fn new<Container: Cast+Clone+IsA<gtk::Container>+FixedWidgetLayout>(id: WidgetId, container_widget: Container, widget_data: Rc<WidgetData>) -> FloFixedWidget {
+    pub fn new<Container: 'static+Cast+Clone+IsA<gtk::Container>+FixedWidgetLayout>(id: WidgetId, container_widget: Container, widget_data: Rc<WidgetData>) -> FloFixedWidget {
         // Cast the container to a gtk container
         let container = container_widget.clone().upcast::<gtk::Container>();
 
         // Create the widget
         let layout  = Rc::new(RefCell::new(FloWidgetLayout::new(id, Rc::clone(&widget_data))));
 
+        // Create the 'force relayout' function
+        let force_relayout = {
+            let container_widget    = container_widget.clone();
+            let layout              = Rc::clone(&layout);
+
+            move || {
+                Container::force_layout(container_widget.clone(), layout.clone());
+            }
+        };
+
         // Attach events to it
         Container::attach_layout_signal(container_widget, Rc::clone(&layout));
             
         // Build the final structure
         FloFixedWidget {
-            id:             id,
-            widget_data:    widget_data,
-            child_ids:      vec![],
-            container:      container.clone(),
-            as_widget:      container.upcast::<gtk::Widget>(),
-            text:           None,
-            image:          None,
-            layout:         layout
+            id:                 id,
+            widget_data:        widget_data,
+            force_relayout_fn:  Box::new(force_relayout),
+            child_ids:          vec![],
+            container:          container.clone(),
+            as_widget:          container.upcast::<gtk::Widget>(),
+            text:               None,
+            image:              None,
+            layout:             layout
         }
+    }
+
+    ///
+    /// Forces a re-layout of the content of this widget
+    ///
+    pub fn force_relayout(&self) {
+        let relayout = &self.force_relayout_fn;
+        relayout();
     }
 
     ///
@@ -123,6 +146,12 @@ impl FloFixedWidget {
 }
 
 impl FixedWidgetLayout for gtk::Fixed {
+    fn force_layout(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
+        let container = fixed.upcast::<gtk::Container>();
+
+        layout.borrow().layout_fixed(&container);
+    }
+
     fn attach_layout_signal(fixed: gtk::Fixed, layout: Rc<RefCell<FloWidgetLayout>>) {
         let container = fixed.upcast::<gtk::Container>();
 
@@ -133,6 +162,10 @@ impl FixedWidgetLayout for gtk::Fixed {
 }
 
 impl FixedWidgetLayout for gtk::Layout {
+    fn force_layout(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
+        layout.borrow().layout_in_layout(&layout_widget);
+    }
+
     fn attach_layout_signal(layout_widget: gtk::Layout, layout: Rc<RefCell<FloWidgetLayout>>) {
         layout_widget.connect_size_allocate(move |layout_widget, _allocation| {
             layout.borrow().layout_in_layout(layout_widget);

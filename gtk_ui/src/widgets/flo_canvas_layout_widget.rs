@@ -27,7 +27,7 @@ impl FloCanvasLayoutWidget {
     ///
     /// Creates a new drawing widget
     /// 
-    pub fn new<W: Clone+Cast+IsA<gtk::Widget>+IsA<gtk::Container>+FixedWidgetLayout>(widget_id: WidgetId, drawing_area: W, data: Rc<WidgetData>) -> FloCanvasLayoutWidget {
+    pub fn new<W: 'static+Clone+Cast+IsA<gtk::Widget>+IsA<gtk::Container>+FixedWidgetLayout>(widget_id: WidgetId, drawing_area: W, data: Rc<WidgetData>) -> FloCanvasLayoutWidget {
         // This takes on some aspects of the drawing widget and some aspects of the fixed widget
         let drawing = FloDrawingWidget::new(widget_id, drawing_area.clone(), Rc::clone(&data));
         let fixed   = FloFixedWidget::new(widget_id, drawing_area, data);
