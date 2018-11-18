@@ -107,6 +107,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
             ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
             .with((ActionTrigger::Click, format!("Open-{}", index)))
+            .with((ActionTrigger::Drag, format!("Drag-{}", index)))
     }
 
     ///
@@ -313,7 +314,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 self.file_manager.set_display_name_for_path(new_file.as_path(), new_name);
             },
 
-            (action, _) => { 
+            (action, action_parameter) => { 
                 if action.starts_with("Open-") {
                     // Get the index of the file being opened
                     let (_, file_index) = action.split_at("Open-".len());
@@ -333,6 +334,32 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     *self.model.shared_state.lock().unwrap() = Some(shared_state);
                     self.model.open_file.clone().set(Some(path));
                     self.model.active_controller.clone().set(Some(new_controller));
+                } else if action.starts_with("Drag-") {
+                    // Get the index of the file being dragged
+                    let (_, file_index) = action.split_at("Drag-".len());
+                    let file_index      = usize::from_str_radix(file_index, 10).unwrap();
+
+                    // Action depends on the parameter
+                    match action_parameter {
+                        ActionParameter::Drag(DragAction::Start, _, _) => {
+                            self.model.dragging_offset.clone().set((0.0, 0.0));
+                            self.model.dragging_file.clone().set(Some(file_index as usize));
+                        },
+
+                        ActionParameter::Drag(DragAction::Finish, _, _) => {
+                            self.model.dragging_file.clone().set(None);
+                        },
+
+                        ActionParameter::Drag(DragAction::Cancel, _, _) => {
+                            self.model.dragging_file.clone().set(None);
+                        },
+
+                        ActionParameter::Drag(DragAction::Drag, (from_x, from_y), (to_x, to_y)) => {
+                            self.model.dragging_offset.clone().set(((to_x-from_x) as f64, (to_y-from_y) as f64))
+                        },
+
+                        _ => {}
+                    }
                 }
             }
         }
