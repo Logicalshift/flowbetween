@@ -13,10 +13,15 @@ INSERT INTO Flo_Files_Version(VersionNumber) VALUES (2);
  */
 CREATE TABLE Flo_Entity_Ordering (
     EntityId        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    ParentEntityId  INTEGER NOT NULL DEFAULT -1,
     NextEntity      INTEGER
 );
 
-CREATE UNIQUE INDEX Idx_Entity_Ordering ON Flo_Entity_Ordering (NextEntity);
+/* Entity -1 is the 'root' entity, which things with no parent have as their parent. It forms a loop */
+INSERT INTO Flo_Entity_Ordering (EntityId, ParentEntityId, NextEntity) VALUES (-1, -1, NULL);
+
+CREATE UNIQUE INDEX Idx_Entity_Parent ON Flo_Entity_Ordering (ParentEntityId, EntityId);
+CREATE UNIQUE INDEX Idx_Entity_Ordering ON Flo_Entity_Ordering (NextEntity, EntityId);
 
 /*
  * The paths of files and their display names (if present)

@@ -14,6 +14,9 @@ const UPGRADE_V1_TO_V2: &[u8]   = include_bytes!["../../sql/file_list_v1_to_v2.s
 /// The maximum supported version number
 const MAX_VERSION: i64      = 2;
 
+/// The ID of the root entity (where the standard file directory is located)
+const ROOT_ENTITY: i64      = -1;
+
 ///
 /// Manages a file list database
 /// 
@@ -168,22 +171,61 @@ impl FileList {
     ///
     /// Creates a new entity in the database
     ///
-    fn add_entity(&self) -> result::Result<i64, FileListError> {
-        let mut add_entity = self.connection.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)")?;
+    fn add_entity(transaction: &Transaction) -> result::Result<i64, FileListError> {
+        let mut add_entity = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)")?;
         Ok(add_entity.insert(&[])?)
+    }
+
+    ///
+    /// Makes the specified entity the first entity in the database for the specified parent entity
+    ///
+    fn make_first_entity(transaction: &Transaction, entity_id: i64, parent_entity_id: i64) -> result::Result<(), FileListError> {
+        // 'Orphan' entities are entities with no previous entity
+        let mut orphan_entities = transaction.prepare("SELECT EntityId FROM Flo_Entity_Ordering WHERE ParentEntityId = ? AND EntityId != ? AND EntityId NOT IN (SELECT NextEntity FROM Flo_Entity_Ordering)")?;
+        let orphan_entities     = orphan_entities.query_map(&[&parent_entity_id, &entity_id], |row| row.get(0))?;
+        let orphan_entities     = orphan_entities.filter_map(|item| item.ok()).collect::<Vec<i64>>();
+
+        if orphan_entities.len() == 0 {
+            // Is the first entity in the list
+            Ok(())
+        } else if orphan_entities.len() == 1 {
+            // Set the next entity of the current entity to the first 'orphan' entity
+            let mut set_next_entity = transaction.prepare("UPDATE Flo_Entity_Ordering SET NextEntity = ? WHERE EntityId = ?")?;
+            set_next_entity.execute(&[&orphan_entities[0], &entity_id])?;
+
+            Ok(())
+        } else {
+            // There's more than one start point for the list. Reduce to a single 'orphan' entity
+            let mut set_next_entity = transaction.prepare("UPDATE Flo_Entity_Ordering SET NextEntity = ? WHERE EntityId = ?")?;
+            set_next_entity.execute(&[&orphan_entities[0], &entity_id])?;
+
+            for next_idx in 1..orphan_entities.len() {
+                set_next_entity.execute(&[&orphan_entities[next_idx], &orphan_entities[next_idx-1]])?;
+            }
+
+            Ok(())
+        }
     }
 
     ///
     /// Adds a path to the database
     /// 
     pub fn add_path(&mut self, path: &Path) -> result::Result<(), FileListError> {
+        let transaction = self.connection.transaction()?;
+
         let path_string = Self::string_for_path(path);
 
         // Create an entity for this new file
-        let entity_id = self.add_entity()?;
+        let entity_id = Self::add_entity(&transaction)?;
 
         // Create the file
-        self.connection.execute("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id])?;
+        transaction.execute("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id])?;
+
+        // Make the file the first entity in the database
+        Self::make_first_entity(&transaction, entity_id, ROOT_ENTITY)?;
+
+        // Finish the transaction
+        transaction.commit()?;
 
         Ok(())
     }
