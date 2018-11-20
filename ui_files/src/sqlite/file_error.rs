@@ -14,3 +14,9 @@ pub enum FileListError {
     /// SQLite error of some kind
     SqlError(rusqlite::Error)
 }
+
+impl From<rusqlite::Error> for FileListError {
+    fn from(err: rusqlite::Error) -> FileListError {
+        FileListError::SqlError(err)
+    }
+}

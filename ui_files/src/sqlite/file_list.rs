@@ -70,7 +70,7 @@ impl FileList {
         let connection_version = Self::version_number(&self.connection);
 
         match connection_version {
-            None                => { self.initialize().map_err(|sqlerr| FileListError::SqlError(sqlerr))?; },
+            None                => { self.initialize()?; },
             Some(1)             => { self.upgrade_v1_to_v2()?; self.upgrade_to_latest()?; }
             Some(MAX_VERSION)   => { }
 
@@ -85,43 +85,43 @@ impl FileList {
     ///
     fn upgrade_v1_to_v2(&mut self) -> result::Result<(), FileListError> {
         // Perform the upgrade in a transaction
-        let transaction = self.connection.transaction().map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+        let transaction = self.connection.transaction()?;
 
         {
             // Create the version table marking this as a v2 database
-            transaction.execute_batch(&String::from_utf8_lossy(UPGRADE_V1_TO_V2)).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            transaction.execute_batch(&String::from_utf8_lossy(UPGRADE_V1_TO_V2))?;
 
             // Assign IDs to everything
-            let mut existing_files  = transaction.prepare("SELECT RelativePath FROM Flo_Files").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
-            let existing_files      = existing_files.query_map::<String, _>(&[], |file| file.get(0)).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            let mut existing_files  = transaction.prepare("SELECT RelativePath FROM Flo_Files")?;
+            let existing_files      = existing_files.query_map::<String, _>(&[], |file| file.get(0))?;
 
             let mut file_ids        = vec![];
-            let mut add_id          = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
-            let mut update_id       = transaction.prepare("UPDATE Flo_Files SET EntityId = ? WHERE RelativePath = ?").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            let mut add_id          = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)")?;
+            let mut update_id       = transaction.prepare("UPDATE Flo_Files SET EntityId = ? WHERE RelativePath = ?")?;
 
             for relative_path in existing_files {
-                let relative_path = relative_path.map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+                let relative_path = relative_path?;
 
                 // Generate an ID
-                let new_id = add_id.insert(&[]).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+                let new_id = add_id.insert(&[])?;
                 file_ids.push(new_id);
 
                 // Update this file
-                update_id.execute(&[&new_id, &relative_path]).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+                update_id.execute(&[&new_id, &relative_path])?;
             }
 
             // Entity ID should now be unique
-            transaction.execute_batch("CREATE UNIQUE INDEX Idx_Files_Entity ON Flo_Files (EntityId);").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            transaction.execute_batch("CREATE UNIQUE INDEX Idx_Files_Entity ON Flo_Files (EntityId);")?;
 
             // Set the file ordering
-            let mut set_next_entity = transaction.prepare("UPDATE Flo_Entity_Ordering SET NextEntity = ? WHERE EntityId = ?").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            let mut set_next_entity = transaction.prepare("UPDATE Flo_Entity_Ordering SET NextEntity = ? WHERE EntityId = ?")?;
             for next_id_idx in 1..file_ids.len() {
-                set_next_entity.execute(&[&file_ids[next_id_idx], &file_ids[next_id_idx-1]]).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+                set_next_entity.execute(&[&file_ids[next_id_idx], &file_ids[next_id_idx-1]])?;
             }
         }
 
         // Commit the transaction
-        transaction.commit().map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+        transaction.commit()?;
 
         // Upgrade was successful
         Ok(())
@@ -168,9 +168,9 @@ impl FileList {
     ///
     /// Creates a new entity in the database
     ///
-    fn add_entity(&self) -> i64 {
-        let mut add_entity = self.connection.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)").unwrap();
-        add_entity.insert(&[]).unwrap()
+    fn add_entity(&self) -> result::Result<i64, FileListError> {
+        let mut add_entity = self.connection.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)")?;
+        Ok(add_entity.insert(&[])?)
     }
 
     ///
@@ -180,7 +180,7 @@ impl FileList {
         let path_string = Self::string_for_path(path);
 
         // Create an entity for this new file
-        let entity_id = self.add_entity();
+        let entity_id = self.add_entity().unwrap();
 
         // Create the file
         self.connection.execute("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id]).unwrap();
