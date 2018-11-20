@@ -2,7 +2,11 @@ use rusqlite::*;
 
 use std::path::{Path, PathBuf};
 
-const DEFINITION: &[u8]      = include_bytes!["../../sql/file_list_v2.sqlite"];
+/// The definition file for the latest version of the database
+const DEFINITION: &[u8]     = include_bytes!["../../sql/file_list_v2.sqlite"];
+
+/// The maximum supported version number
+const MAX_VERSION: i64      = 2;
 
 ///
 /// Manages a file list database
@@ -32,6 +36,31 @@ impl FileList {
         self.connection.execute_batch(&definition)?;
 
         Ok(())
+    }
+
+    ///
+    /// Returns the version number of this file list
+    ///
+    fn version_number(connection: &Connection) -> Option<i64> {
+        // Try to fetch from the version number table
+        let version_number  = connection.prepare("SELECT MAX(VersionNumber) FROM Flo_Files_Version");
+        let version_number  = version_number.and_then(|mut version_number| version_number.query_row(&[], |row| row.get(0)));
+
+        if let Ok(version_number) = version_number {
+            // Database has a version number in it
+            version_number
+        } else {
+            // V1 had no version number
+            let all_files = connection.prepare("SELECT COUNT(*) FROM Flo_Files");
+
+            if all_files.and_then(|mut all_files| all_files.query_row::<i64, _>(&[], |row| row.get(0))).is_ok() {
+                // V1
+                Some(1)
+            } else {
+                // Not a flo_files database
+                None
+            }
+        }
     }
 
     ///
@@ -174,6 +203,29 @@ mod test {
         file_list.set_display_name_for_path(&PathBuf::from("test").as_path(), "TestDisplayName");
 
         assert!(file_list.display_name_for_path(&PathBuf::from("test").as_path()) == Some("TestDisplayName".to_string()));
+    }
+
+    #[test]
+    fn get_version_uninitialized() {
+        let db          = Connection::open_in_memory().unwrap();
+
+        assert!(FileList::version_number(&db) == None);
+    }
+
+    #[test]
+    fn get_version_v1() {
+        let db          = v1_database();
+
+        assert!(FileList::version_number(&db) == Some(1));
+    }
+
+    #[test]
+    fn get_version_latest() {
+        let db          = Connection::open_in_memory().unwrap();
+        let file_list   = FileList::new(db);
+
+        file_list.initialize().unwrap();
+        assert!(FileList::version_number(&file_list.connection) == Some(MAX_VERSION));
     }
 
     #[test]
