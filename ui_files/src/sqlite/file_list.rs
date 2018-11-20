@@ -176,14 +176,16 @@ impl FileList {
     ///
     /// Adds a path to the database
     /// 
-    pub fn add_path(&mut self, path: &Path) {
+    pub fn add_path(&mut self, path: &Path) -> result::Result<(), FileListError> {
         let path_string = Self::string_for_path(path);
 
         // Create an entity for this new file
-        let entity_id = self.add_entity().unwrap();
+        let entity_id = self.add_entity()?;
 
         // Create the file
-        self.connection.execute("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id]).unwrap();
+        self.connection.execute("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id])?;
+
+        Ok(())
     }
 
     /*
@@ -199,8 +201,8 @@ impl FileList {
     ///
     /// Lists the paths in the database
     /// 
-    pub fn list_paths(&self) -> Vec<PathBuf> {
-        let mut select_paths    = self.connection.prepare("SELECT RelativePath FROM Flo_Files").unwrap();
+    pub fn list_paths(&self) -> result::Result<Vec<PathBuf>, FileListError> {
+        let mut select_paths    = self.connection.prepare("SELECT RelativePath FROM Flo_Files")?;
         let paths               = select_paths
             .query_map(&[], |row| {
                 let path_string = row.get::<_, String>(0);
@@ -208,20 +210,22 @@ impl FileList {
                 path.push(path_string);
 
                 path
-            }).unwrap()
+            })?
             .filter_map(|row| row.ok())
             .collect();
         
-        paths
+        Ok(paths)
     }
 
     ///
     /// Updates the display name for a path
     /// 
-    pub fn set_display_name_for_path(&self, path: &Path, display_name: &str) {
+    pub fn set_display_name_for_path(&self, path: &Path, display_name: &str) -> result::Result<(), FileListError> {
         let path_string = Self::string_for_path(path);
 
-        self.connection.execute("UPDATE Flo_Files SET DisplayName = ? WHERE RelativePath = ?", &[&display_name, &path_string]).unwrap();
+        self.connection.execute("UPDATE Flo_Files SET DisplayName = ? WHERE RelativePath = ?", &[&display_name, &path_string])?;
+
+        Ok(())
     }
 
     ///
@@ -261,7 +265,7 @@ mod test {
         let db              = Connection::open_in_memory().unwrap();
         let mut file_list   = FileList::new(db).unwrap();
 
-        file_list.add_path(&PathBuf::from("test").as_path());
+        file_list.add_path(&PathBuf::from("test").as_path()).unwrap();
     }
 
     #[test]
@@ -269,10 +273,10 @@ mod test {
         let db              = Connection::open_in_memory().unwrap();
         let mut file_list   = FileList::new(db).unwrap();
 
-        file_list.add_path(&PathBuf::from("test1").as_path());
-        file_list.add_path(&PathBuf::from("test2").as_path());
-        file_list.add_path(&PathBuf::from("test3").as_path());
-        file_list.add_path(&PathBuf::from("test4").as_path());
+        file_list.add_path(&PathBuf::from("test1").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
     }
 
     #[test]
@@ -280,8 +284,8 @@ mod test {
         let db              = Connection::open_in_memory().unwrap();
         let mut file_list   = FileList::new(db).unwrap();
 
-        file_list.add_path(&PathBuf::from("test").as_path());
-        file_list.set_display_name_for_path(&PathBuf::from("test").as_path(), "TestDisplayName");
+        file_list.add_path(&PathBuf::from("test").as_path()).unwrap();
+        file_list.set_display_name_for_path(&PathBuf::from("test").as_path(), "TestDisplayName").unwrap();
 
         assert!(file_list.display_name_for_path(&PathBuf::from("test").as_path()) == Some("TestDisplayName".to_string()));
     }
@@ -321,6 +325,6 @@ mod test {
         let db              = v1_database();
         let mut file_list   = FileList::new(db).unwrap();
 
-        file_list.add_path(&PathBuf::from("test").as_path());
+        file_list.add_path(&PathBuf::from("test").as_path()).unwrap();
     }
 }

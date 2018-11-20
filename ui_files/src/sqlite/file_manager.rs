@@ -145,7 +145,7 @@ impl FileManager for SqliteFileManager {
     /// 
     fn get_all_files(&self) -> Vec<PathBuf> {
         // Retrieve from the file list and append the folder we're using
-        self.core.sync(|core| core.file_list.list_paths())
+        self.core.sync(|core| core.file_list.list_paths().unwrap())
             .into_iter()
             .map(|last_component| {
                 let mut full_path = self.root_path.clone();
@@ -187,7 +187,7 @@ impl FileManager for SqliteFileManager {
         let mut filename_buf = PathBuf::new();
         filename_buf.push(filename);
         self.core.async(move |core| {
-            core.file_list.add_path(filename_buf.as_path());
+            core.file_list.add_path(filename_buf.as_path()).unwrap();
             core.send_update(update);
         });
 
@@ -207,7 +207,7 @@ impl FileManager for SqliteFileManager {
             let update = FileUpdate::SetDisplayName(PathBuf::from(full_path), display_name.clone());
 
             self.core.async(move |core| {
-                core.file_list.set_display_name_for_path(path.as_path(), &display_name);
+                core.file_list.set_display_name_for_path(path.as_path(), &display_name).unwrap();
                 core.send_update(update);
             });
         }
