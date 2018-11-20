@@ -301,6 +301,14 @@ mod test {
     }
 
     #[test]
+    fn upgrade_v1() {
+        let db          = v1_database();
+        let file_list   = FileList::new(db).unwrap();
+
+        assert!(FileList::version_number(&file_list.connection) == Some(MAX_VERSION));
+    }
+
+    #[test]
     fn get_version_latest() {
         let db          = Connection::open_in_memory().unwrap();
         let file_list   = FileList::new(db).unwrap();
