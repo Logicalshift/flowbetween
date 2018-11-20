@@ -25,7 +25,7 @@ impl FileList {
             let existing_files      = existing_files.query_map::<String, _>(&[], |file| file.get(0))?;
 
             let mut file_ids        = vec![];
-            let mut add_id          = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)")?;
+            let mut add_id          = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (-1)")?;
             let mut update_id       = transaction.prepare("UPDATE Flo_Files SET EntityId = ? WHERE RelativePath = ?")?;
 
             for relative_path in existing_files {
