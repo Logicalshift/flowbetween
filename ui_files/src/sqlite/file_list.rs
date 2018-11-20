@@ -122,8 +122,8 @@ impl FileList {
     /// Creates a new entity in the database
     ///
     fn add_entity(transaction: &Transaction) -> result::Result<i64, FileListError> {
-        let mut add_entity = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)")?;
-        Ok(add_entity.insert(&[])?)
+        let mut add_entity = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (?)")?;
+        Ok(add_entity.insert(&[&ROOT_ENTITY])?)
     }
 
     ///
@@ -131,7 +131,7 @@ impl FileList {
     ///
     fn make_first_entity(transaction: &Transaction, entity_id: i64, parent_entity_id: i64) -> result::Result<(), FileListError> {
         // 'Orphan' entities are entities with no previous entity
-        let mut orphan_entities = transaction.prepare("SELECT EntityId FROM Flo_Entity_Ordering WHERE ParentEntityId = ? AND EntityId != ? AND EntityId NOT IN (SELECT ifnull(NextEntity, -1) FROM Flo_Entity_Ordering)")?;
+        let mut orphan_entities = transaction.prepare("SELECT EntityId FROM Flo_Entity_Ordering WHERE ParentEntityId = ? AND EntityId != ? AND EntityId NOT IN (SELECT NextEntity FROM Flo_Entity_Ordering)")?;
         let orphan_entities     = orphan_entities.query_map(&[&parent_entity_id, &entity_id], |row| row.get(0))?;
         let orphan_entities     = orphan_entities.filter_map(|item| item.ok()).collect::<Vec<i64>>();
 
@@ -198,7 +198,7 @@ impl FileList {
             WITH RECURSIVE RootEntities AS (
                 SELECT 0 AS idx, EntityId, NextEntity 
                     FROM    Flo_Entity_Ordering 
-                    WHERE   ParentEntityId = ? AND EntityId NOT IN (SELECT ifnull(NextEntity,-1) FROM Flo_Entity_Ordering)
+                    WHERE   ParentEntityId = ? AND EntityId NOT IN (SELECT NextEntity FROM Flo_Entity_Ordering)
                 UNION 
                 SELECT RootEntities.idx+1, Flo_Entity_Ordering.EntityId, Flo_Entity_Ordering.NextEntity 
                     FROM    Flo_Entity_Ordering, RootEntities 
