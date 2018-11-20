@@ -176,7 +176,7 @@ impl FileList {
     ///
     /// Adds a path to the database
     /// 
-    pub fn add_path(&self, path: &Path) {
+    pub fn add_path(&mut self, path: &Path) {
         let path_string = Self::string_for_path(path);
 
         // Create an entity for this new file
@@ -258,16 +258,16 @@ mod test {
 
     #[test]
     pub fn add_path() {
-        let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db).unwrap();
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
 
         file_list.add_path(&PathBuf::from("test").as_path());
     }
 
     #[test]
     pub fn add_many_paths() {
-        let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db).unwrap();
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
 
         file_list.add_path(&PathBuf::from("test1").as_path());
         file_list.add_path(&PathBuf::from("test2").as_path());
@@ -277,8 +277,8 @@ mod test {
 
     #[test]
     pub fn set_display_name() {
-        let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db).unwrap();
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
 
         file_list.add_path(&PathBuf::from("test").as_path());
         file_list.set_display_name_for_path(&PathBuf::from("test").as_path(), "TestDisplayName");
@@ -318,8 +318,8 @@ mod test {
 
     #[test]
     fn add_path_v1() {
-        let db          = v1_database();
-        let file_list   = FileList::new(db).unwrap();
+        let db              = v1_database();
+        let mut file_list   = FileList::new(db).unwrap();
 
         file_list.add_path(&PathBuf::from("test").as_path());
     }
