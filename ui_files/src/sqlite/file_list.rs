@@ -6,7 +6,10 @@ use std::result;
 use std::path::{Path, PathBuf};
 
 /// The definition file for the latest version of the database
-const DEFINITION: &[u8]     = include_bytes!["../../sql/file_list_v2.sqlite"];
+const DEFINITION: &[u8]         = include_bytes!["../../sql/file_list_v2.sqlite"];
+
+/// Performs the v1 to v2 upgrade steps
+const UPGRADE_V1_TO_V2: &[u8]   = include_bytes!["../../sql/file_list_v1_to_v2.sqlite"];
 
 /// The maximum supported version number
 const MAX_VERSION: i64      = 2;
@@ -35,21 +38,92 @@ impl FileList {
             }
         }
 
-        Ok(FileList {
-            connection: database_connection
-        })
+        // Create the result
+        let mut result = FileList {
+            connection: database_connection 
+        };
+
+        // Upgrade the contents if necessary
+        result.upgrade_to_latest()?;
+
+        Ok(result)
     }
 
     ///
     /// Initializes this file list
     /// 
-    pub fn initialize(&self) -> Result<()> {
+    fn initialize(&self) -> Result<()> {
         // Create the definition string
         let definition   = String::from_utf8_lossy(DEFINITION);
 
         // Execute against the database
         self.connection.execute_batch(&definition)?;
 
+        Ok(())
+    }
+
+    ///
+    /// Attempts to upgrade the database to the latest version
+    ///
+    fn upgrade_to_latest(&mut self) -> result::Result<(), FileListError> {
+        // Get the current version
+        let connection_version = Self::version_number(&self.connection);
+
+        match connection_version {
+            None                => { self.initialize().map_err(|sqlerr| FileListError::SqlError(sqlerr))?; },
+            Some(1)             => { self.upgrade_v1_to_v2()?; self.upgrade_to_latest()?; }
+            Some(MAX_VERSION)   => { }
+
+            _                   => { return result::Result::Err(FileListError::CannotUpgradeVersion); }
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Upgrades from version 1 of the database to version 2
+    ///
+    fn upgrade_v1_to_v2(&mut self) -> result::Result<(), FileListError> {
+        // Perform the upgrade in a transaction
+        let transaction = self.connection.transaction().map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+
+        {
+            // Create the version table marking this as a v2 database
+            transaction.execute_batch(&String::from_utf8_lossy(UPGRADE_V1_TO_V2)).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+
+            // Assign IDs to everything
+            let mut existing_files  = transaction.prepare("SELECT RelativePath FROM Flo_Files").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            let existing_files      = existing_files.query_map::<String, _>(&[], |file| file.get(0)).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+
+            let mut file_ids        = vec![];
+            let mut add_id          = transaction.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            let mut update_id       = transaction.prepare("UPDATE Flo_Files SET EntityId = ? WHERE RelativePath = ?").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+
+            for relative_path in existing_files {
+                let relative_path = relative_path.map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+
+                // Generate an ID
+                let new_id = add_id.insert(&[]).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+                file_ids.push(new_id);
+
+                // Update this file
+                update_id.execute(&[&new_id, &relative_path]).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            }
+
+            // Entity ID should now be unique
+            transaction.execute_batch("CREATE UNIQUE INDEX Idx_Files_Entity ON Flo_Files (EntityId);").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+
+            // Set the file ordering
+            let mut set_next_entity = transaction.prepare("UPDATE Flo_Entity_Ordering SET NextEntity = ? WHERE EntityId = ?").map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            for next_id_idx in 1..file_ids.len() {
+                set_next_entity.execute(&[&file_ids[next_id_idx], &file_ids[next_id_idx-1]]).map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+            }
+        }
+
+        // Commit the transaction
+        transaction.commit().map_err(|sqlerr| FileListError::SqlError(sqlerr))?;
+
+        // Upgrade was successful
         Ok(())
     }
 
@@ -179,17 +253,13 @@ mod test {
     #[test]
     pub fn initialize() {
         let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db).unwrap();
-
-        file_list.initialize().unwrap();
+        let _file_list  = FileList::new(db).unwrap();
     }
 
     #[test]
     pub fn add_path() {
         let db          = Connection::open_in_memory().unwrap();
         let file_list   = FileList::new(db).unwrap();
-
-        file_list.initialize().unwrap();
 
         file_list.add_path(&PathBuf::from("test").as_path());
     }
@@ -198,8 +268,6 @@ mod test {
     pub fn add_many_paths() {
         let db          = Connection::open_in_memory().unwrap();
         let file_list   = FileList::new(db).unwrap();
-
-        file_list.initialize().unwrap();
 
         file_list.add_path(&PathBuf::from("test1").as_path());
         file_list.add_path(&PathBuf::from("test2").as_path());
@@ -211,8 +279,6 @@ mod test {
     pub fn set_display_name() {
         let db          = Connection::open_in_memory().unwrap();
         let file_list   = FileList::new(db).unwrap();
-
-        file_list.initialize().unwrap();
 
         file_list.add_path(&PathBuf::from("test").as_path());
         file_list.set_display_name_for_path(&PathBuf::from("test").as_path(), "TestDisplayName");
@@ -239,7 +305,6 @@ mod test {
         let db          = Connection::open_in_memory().unwrap();
         let file_list   = FileList::new(db).unwrap();
 
-        file_list.initialize().unwrap();
         assert!(FileList::version_number(&file_list.connection) == Some(MAX_VERSION));
     }
 

@@ -1,0 +1,27 @@
+/***
+ **
+ ** Upgrades FlowBetween file list format version 1 to version 2
+ **
+ **/
+
+/* Database version number, used for upgrading */
+CREATE TABLE Flo_Files_Version (VersionNumber);
+INSERT INTO Flo_Files_Version(VersionNumber) VALUES (2);
+
+/*
+ * Specifies the ordering of the entities in the file display
+ */
+CREATE TABLE Flo_Entity_Ordering (
+    EntityId        INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    NextEntity      INTEGER
+);
+
+CREATE UNIQUE INDEX Idx_Entity_Ordering ON Flo_Entity_Ordering (NextEntity);
+
+/*
+ * The paths of files and their display names (if present)
+ *
+ * Nullable for now as the existing files may not have entities associated with them
+ */
+ALTER TABLE Flo_Files
+    ADD COLUMN EntityId INTEGER NOT NULL DEFAULT 0;
