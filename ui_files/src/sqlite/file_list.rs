@@ -1,5 +1,8 @@
+use super::file_error::*;
+
 use rusqlite::*;
 
+use std::result;
 use std::path::{Path, PathBuf};
 
 /// The definition file for the latest version of the database
@@ -19,10 +22,22 @@ impl FileList {
     ///
     /// Creates a new file list from a Sqlite connection
     /// 
-    pub fn new(database_connection: Connection) -> FileList {
-        FileList {
-            connection: database_connection
+    pub fn new(database_connection: Connection) -> result::Result<FileList, FileListError> {
+        let connection_version = Self::version_number(&database_connection);
+
+        if let Some(connection_version) = connection_version {
+            // Check the version is in the valid ranges
+            if connection_version <= 0 {
+                // Minimum version is 1
+                return result::Result::Err(FileListError::BadVersionNumber("Files database has an invalid version number (less than zero)".to_string()));
+            } else if connection_version > MAX_VERSION {
+                return result::Result::Err(FileListError::BadVersionNumber("Files database appears to be from a newer version of this tool".to_string()));
+            }
         }
+
+        Ok(FileList {
+            connection: database_connection
+        })
     }
 
     ///
@@ -164,7 +179,7 @@ mod test {
     #[test]
     pub fn initialize() {
         let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db);
+        let file_list   = FileList::new(db).unwrap();
 
         file_list.initialize().unwrap();
     }
@@ -172,7 +187,7 @@ mod test {
     #[test]
     pub fn add_path() {
         let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db);
+        let file_list   = FileList::new(db).unwrap();
 
         file_list.initialize().unwrap();
 
@@ -182,7 +197,7 @@ mod test {
     #[test]
     pub fn add_many_paths() {
         let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db);
+        let file_list   = FileList::new(db).unwrap();
 
         file_list.initialize().unwrap();
 
@@ -195,7 +210,7 @@ mod test {
     #[test]
     pub fn set_display_name() {
         let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db);
+        let file_list   = FileList::new(db).unwrap();
 
         file_list.initialize().unwrap();
 
@@ -222,7 +237,7 @@ mod test {
     #[test]
     fn get_version_latest() {
         let db          = Connection::open_in_memory().unwrap();
-        let file_list   = FileList::new(db);
+        let file_list   = FileList::new(db).unwrap();
 
         file_list.initialize().unwrap();
         assert!(FileList::version_number(&file_list.connection) == Some(MAX_VERSION));
@@ -231,7 +246,7 @@ mod test {
     #[test]
     fn add_path_v1() {
         let db          = v1_database();
-        let file_list   = FileList::new(db);
+        let file_list   = FileList::new(db).unwrap();
 
         file_list.add_path(&PathBuf::from("test").as_path());
     }

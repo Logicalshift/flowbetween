@@ -87,7 +87,7 @@ impl SqliteFileManager {
         // Connect to the Sqlite database
         let database_file_exists    = database_file.is_file();
         let database_connection     = Connection::open(database_file.as_path()).unwrap();
-        let file_list               = FileList::new(database_connection);
+        let file_list               = FileList::new(database_connection).unwrap();
 
         if !database_file_exists {
             file_list.initialize().unwrap();
