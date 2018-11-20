@@ -131,7 +131,7 @@ impl FileList {
     ///
     fn make_first_entity(transaction: &Transaction, entity_id: i64, parent_entity_id: i64) -> result::Result<(), FileListError> {
         // 'Orphan' entities are entities with no previous entity
-        let mut orphan_entities = transaction.prepare("SELECT EntityId FROM Flo_Entity_Ordering WHERE ParentEntityId = ? AND EntityId != ? AND EntityId NOT IN (SELECT NextEntity FROM Flo_Entity_Ordering)")?;
+        let mut orphan_entities = transaction.prepare("SELECT EntityId FROM Flo_Entity_Ordering WHERE ParentEntityId = ? AND EntityId != ? AND EntityId NOT IN (SELECT ifnull(NextEntity, -1) FROM Flo_Entity_Ordering)")?;
         let orphan_entities     = orphan_entities.query_map(&[&parent_entity_id, &entity_id], |row| row.get(0))?;
         let orphan_entities     = orphan_entities.filter_map(|item| item.ok()).collect::<Vec<i64>>();
 
@@ -194,9 +194,23 @@ impl FileList {
     /// Lists the paths in the database
     /// 
     pub fn list_paths(&self) -> result::Result<Vec<PathBuf>, FileListError> {
-        let mut select_paths    = self.connection.prepare("SELECT RelativePath FROM Flo_Files")?;
+        let mut select_paths    = self.connection.prepare("
+            WITH RECURSIVE RootEntities AS (
+                SELECT 0 AS idx, EntityId, NextEntity 
+                    FROM    Flo_Entity_Ordering 
+                    WHERE   ParentEntityId = ? AND EntityId NOT IN (SELECT ifnull(NextEntity,-1) FROM Flo_Entity_Ordering)
+                UNION 
+                SELECT RootEntities.idx+1, Flo_Entity_Ordering.EntityId, Flo_Entity_Ordering.NextEntity 
+                    FROM    Flo_Entity_Ordering, RootEntities 
+                    WHERE   Flo_Entity_Ordering.EntityId = RootEntities.NextEntity
+                    AND     Flo_Entity_Ordering.EntityId != -1
+            )
+            SELECT RelativePath FROM Flo_Files
+            INNER JOIN RootEntities ON Flo_Files.EntityId = RootEntities.EntityId
+            ORDER BY RootEntities.idx
+        ")?;
         let paths               = select_paths
-            .query_map(&[], |row| {
+            .query_map(&[&ROOT_ENTITY], |row| {
                 let path_string = row.get::<_, String>(0);
                 let mut path    = PathBuf::new();
                 path.push(path_string);
@@ -269,6 +283,27 @@ mod test {
         file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
+    }
+
+    #[test]
+    pub fn paths_list_in_reverse_order_by_default() {
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
+
+        file_list.add_path(&PathBuf::from("test1").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
+
+        let paths = file_list.list_paths().unwrap();
+        let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
+
+        assert!(paths == vec![
+            "test4".to_string(),
+            "test3".to_string(),
+            "test2".to_string(),
+            "test1".to_string()
+        ]);
     }
 
     #[test]
