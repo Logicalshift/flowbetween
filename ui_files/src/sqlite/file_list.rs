@@ -2,7 +2,7 @@ use rusqlite::*;
 
 use std::path::{Path, PathBuf};
 
-const DEFINITION: &[u8]      = include_bytes!["../../sql/file_list.sqlite"];
+const DEFINITION: &[u8]      = include_bytes!["../../sql/file_list_v2.sqlite"];
 
 ///
 /// Manages a file list database
@@ -48,11 +48,24 @@ impl FileList {
     }
 
     ///
+    /// Creates a new entity in the database
+    ///
+    fn add_entity(&self) -> i64 {
+        let mut add_entity = self.connection.prepare("INSERT INTO Flo_Entity_Ordering(NextEntity) VALUES (NULL)").unwrap();
+        add_entity.insert(&[]).unwrap()
+    }
+
+    ///
     /// Adds a path to the database
     /// 
     pub fn add_path(&self, path: &Path) {
         let path_string = Self::string_for_path(path);
-        self.connection.execute("INSERT INTO Flo_Files (RelativePath) VALUES (?)", &[&path_string]).unwrap();
+
+        // Create an entity for this new file
+        let entity_id = self.add_entity();
+
+        // Create the file
+        self.connection.execute("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id]).unwrap();
     }
 
     /*
@@ -100,5 +113,74 @@ impl FileList {
         let path_string = Self::string_for_path(path);
 
         self.connection.query_row("SELECT DisplayName FROM Flo_Files WHERE RelativePath = ?", &[&path_string], |row| row.get(0)).ok().and_then(|name| name)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn v1_database() -> Connection {
+        let db          = Connection::open_in_memory().unwrap();
+
+        // Create the definition string
+        let definition   = String::from_utf8_lossy(include_bytes!["../../sql/file_list_v1.sqlite"]);
+
+        // Execute against the database
+        db.execute_batch(&definition).unwrap();
+
+        db
+    }
+
+    #[test]
+    pub fn initialize() {
+        let db          = Connection::open_in_memory().unwrap();
+        let file_list   = FileList::new(db);
+
+        file_list.initialize().unwrap();
+    }
+
+    #[test]
+    pub fn add_path() {
+        let db          = Connection::open_in_memory().unwrap();
+        let file_list   = FileList::new(db);
+
+        file_list.initialize().unwrap();
+
+        file_list.add_path(&PathBuf::from("test").as_path());
+    }
+
+    #[test]
+    pub fn add_many_paths() {
+        let db          = Connection::open_in_memory().unwrap();
+        let file_list   = FileList::new(db);
+
+        file_list.initialize().unwrap();
+
+        file_list.add_path(&PathBuf::from("test1").as_path());
+        file_list.add_path(&PathBuf::from("test2").as_path());
+        file_list.add_path(&PathBuf::from("test3").as_path());
+        file_list.add_path(&PathBuf::from("test4").as_path());
+    }
+
+    #[test]
+    pub fn set_display_name() {
+        let db          = Connection::open_in_memory().unwrap();
+        let file_list   = FileList::new(db);
+
+        file_list.initialize().unwrap();
+
+        file_list.add_path(&PathBuf::from("test").as_path());
+        file_list.set_display_name_for_path(&PathBuf::from("test").as_path(), "TestDisplayName");
+
+        assert!(file_list.display_name_for_path(&PathBuf::from("test").as_path()) == Some("TestDisplayName".to_string()));
+    }
+
+    #[test]
+    fn add_path_v1() {
+        let db          = v1_database();
+        let file_list   = FileList::new(db);
+
+        file_list.add_path(&PathBuf::from("test").as_path());
     }
 }
