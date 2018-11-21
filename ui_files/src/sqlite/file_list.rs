@@ -224,6 +224,123 @@ impl FileList {
     }
 
     ///
+    /// Retrieves the entity for a particular path
+    ///
+    fn entity_id_for_path(transaction: &Transaction, path: &Path) -> result::Result<i64, FileListError> {
+        let entity_id = transaction.query_row("SELECT EntityId FROM Flo_Files WHERE RelativePath = ?", &[&Self::string_for_path(path)], |row| row.get(0))?;
+        Ok(entity_id)
+    }
+
+    ///
+    /// Retrieve the following entity ID for a given entity
+    ///
+    fn get_next_entity_id(transaction: &Transaction, entity_id: i64) -> result::Result<i64, FileListError> {
+        let next_entity_id = transaction.query_row("SELECT NextEntity FROM Flo_Entity_Ordering WHERE EntityId = ?", &[&entity_id], |row| row.get(0))?;
+
+        Ok(next_entity_id)
+    }
+
+    ///
+    /// Retrieve the previous entity ID for a given entity (ROOT_ENTITY if it has none)
+    ///
+    fn get_previous_entity_id(transaction: &Transaction, entity_id: i64) -> result::Result<i64, FileListError> {
+        let mut previous_entity_id  = transaction.prepare("SELECT EntityId FROM Flo_Entity_Ordering WHERE NextEntity = ?")?;
+        let mut previous_entity_id  = previous_entity_id.query_map(&[&entity_id], |row| row.get(0))?;
+        let previous_entity_id      = previous_entity_id.nth(0);
+
+        Ok(previous_entity_id.unwrap_or(Ok(ROOT_ENTITY)).unwrap_or(ROOT_ENTITY))
+    }
+
+    ///
+    /// Retrieve the first entity for a given parent entity (or ROOT_ENTITY if it has none)
+    ///
+    fn get_first_entity_id(transaction: &Transaction, parent_entity_id: i64) -> result::Result<i64, FileListError> {
+        let mut first_entity_id = transaction.prepare("SELECT EntityId FROM Flo_Entity_Ordering WHERE ParentEntityId = ? AND EntityId NOT IN (SELECT NextEntity FROM Flo_Entity_Ordering)")?;
+        let mut first_entity_id = first_entity_id.query_map(&[&parent_entity_id], |row| row.get(0))?;
+        let first_entity_id     = first_entity_id.nth(0);
+
+        Ok(first_entity_id.unwrap_or(Ok(ROOT_ENTITY)).unwrap_or(ROOT_ENTITY))
+    }
+
+    ///
+    /// Sets the next entity value for a particular entity
+    ///
+    fn set_next_entity(transaction: &Transaction, entity_id: i64, next_entity: i64) -> result::Result<(), FileListError> {
+        transaction.execute("UPDATE Flo_Entity_Ordering SET NextEntity = ? WHERE EntityId = ?", &[&next_entity, &entity_id])?;
+        Ok(())
+    }
+
+    ///
+    /// Removes the links for a particular entity
+    ///
+    fn unlink_entity(transaction: &Transaction, entity_id: i64) -> result::Result<(), FileListError> {
+        // Get the previous and next entities for the current entity
+        let previous_entity = Self::get_previous_entity_id(&transaction, entity_id)?;
+        let next_entity     = Self::get_next_entity_id(&transaction, entity_id)?;
+
+        // Unset the next entity for the current entity
+        Self::set_next_entity(transaction, entity_id, ROOT_ENTITY)?;
+
+        // If there's a previous entity, set its next entity to old value of our entity
+        if previous_entity != ROOT_ENTITY {
+            Self::set_next_entity(transaction, previous_entity, next_entity)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Inserts an entity after the specified entity
+    ///
+    fn insert_after(transaction: &Transaction, entity_id: i64, after: i64) -> result::Result<(), FileListError> {
+        // Move to the beginning if 'after' is the root entity
+        if after == ROOT_ENTITY {
+            // Get the first entity in the list
+            let first_entity_id = Self::get_first_entity_id(transaction, ROOT_ENTITY)?;
+
+            // Remove the entity from the list
+            Self::unlink_entity(transaction, entity_id)?;
+
+            // Next entity becomes the old first entity
+            Self::set_next_entity(transaction, entity_id, first_entity_id)?;
+        } else {
+            // Remove the entity from the list
+            Self::unlink_entity(transaction, entity_id)?;
+
+            // Make the next entity be the same as the one currently after
+            let next_after = Self::get_next_entity_id(transaction, after)?;
+            Self::set_next_entity(transaction, entity_id, next_after)?;
+
+            // Insert the original entity after the specified one
+            Self::set_next_entity(transaction, after, entity_id)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Re-orders a path so that it appears after a particular path (or None to appear at the beginning)
+    ///
+    pub fn move_path_after(&mut self, path_to_move: &Path, path_to_move_after: Option<&Path>) -> result::Result<(), FileListError> {
+        let transaction             = self.connection.transaction()?;
+
+        // Get the entity IDs for the paths
+        let path_to_move_id         = Self::entity_id_for_path(&transaction, path_to_move)?;
+        let path_to_move_after_id   = if let Some(path_to_move_after) = path_to_move_after {
+            Self::entity_id_for_path(&transaction, path_to_move_after)?
+        } else {
+            ROOT_ENTITY
+        };
+
+        // Move the entity ID order
+        Self::insert_after(&transaction, path_to_move_id, path_to_move_after_id)?;
+
+        transaction.commit()?;
+
+        Ok(())
+    }
+
+    ///
     /// Updates the display name for a path
     /// 
     pub fn set_display_name_for_path(&self, path: &Path, display_name: &str) -> result::Result<(), FileListError> {
@@ -307,6 +424,75 @@ mod test {
     }
 
     #[test]
+    pub fn can_move_paths() {
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
+
+        file_list.add_path(&PathBuf::from("test1").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
+        
+        file_list.move_path_after(&PathBuf::from("test3").as_path(), Some(&PathBuf::from("test2").as_path())).unwrap();
+
+        let paths = file_list.list_paths().unwrap();
+        let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
+
+        assert!(paths == vec![
+            "test4".to_string(),
+            "test2".to_string(),
+            "test3".to_string(),
+            "test1".to_string()
+        ]);
+    }
+
+    #[test]
+    pub fn can_move_path_to_start() {
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
+
+        file_list.add_path(&PathBuf::from("test1").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
+        
+        file_list.move_path_after(&PathBuf::from("test3").as_path(), None).unwrap();
+
+        let paths = file_list.list_paths().unwrap();
+        let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
+
+        assert!(paths == vec![
+            "test3".to_string(),
+            "test4".to_string(),
+            "test2".to_string(),
+            "test1".to_string()
+        ]);
+    }
+
+    #[test]
+    pub fn can_move_path_from_start() {
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
+
+        file_list.add_path(&PathBuf::from("test1").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
+        
+        file_list.move_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test1").as_path())).unwrap();
+
+        let paths = file_list.list_paths().unwrap();
+        let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
+
+        assert!(paths == vec![
+            "test3".to_string(),
+            "test2".to_string(),
+            "test1".to_string(),
+            "test4".to_string()
+        ]);
+    }
+
+    #[test]
     pub fn set_display_name() {
         let db              = Connection::open_in_memory().unwrap();
         let mut file_list   = FileList::new(db).unwrap();
@@ -354,4 +540,5 @@ mod test {
 
         file_list.add_path(&PathBuf::from("test").as_path()).unwrap();
     }
+
 }
