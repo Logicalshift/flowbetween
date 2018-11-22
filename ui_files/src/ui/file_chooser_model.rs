@@ -119,6 +119,33 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
                             model.name.set(new_name.clone());
                         }
                     })
+                },
+
+                FileUpdate::ChangedOrder(path, after) => {
+                    // Find the file being moved
+                    let file_idx = files.iter().enumerate()
+                        .filter(|(_idx, model)| model.path.get() == path)
+                        .map(|(idx, _model)| idx)
+                        .nth(0);
+
+                    if let Some(file_idx) = file_idx {
+                        // Remove the file from the list
+                        let moving_file = files.remove(file_idx);;
+
+                        // Find the 'after' index
+                        let after_idx = after.and_then(|after| files.iter().enumerate()
+                            .filter(|(_idx, model)| model.path.get() == after)
+                            .map(|(idx, _model)| idx)
+                            .nth(0));
+
+                        if let Some(after_idx) = after_idx {
+                            // Move after the 'after' file
+                            files.insert(after_idx+1, moving_file);
+                        } else {
+                            // Move to the beginning
+                            files.insert(0, moving_file);
+                        }
+                    }
                 }
             }
             

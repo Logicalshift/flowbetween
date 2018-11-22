@@ -12,5 +12,8 @@ pub enum FileUpdate {
     SetDisplayName(PathBuf, String),
 
     /// The file with the specified path has been removed
-    RemovedFile(PathBuf)
+    RemovedFile(PathBuf),
+
+    /// The file with the specified path has been moved so that it's after the specified file, or at the beginning if that file does not exist
+    ChangedOrder(PathBuf, Option<PathBuf>)
 }
