@@ -330,6 +330,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
             (action, action_parameter) => { 
                 if action.starts_with("Open-") {
+
                     // Get the index of the file being opened
                     let (_, file_index) = action.split_at("Open-".len());
                     let file_index      = usize::from_str_radix(file_index, 10).unwrap();
@@ -348,7 +349,9 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     *self.model.shared_state.lock().unwrap() = Some(shared_state);
                     self.model.open_file.clone().set(Some(path));
                     self.model.active_controller.clone().set(Some(new_controller));
+
                 } else if action.starts_with("Drag-") {
+
                     // Get the index of the file being dragged
                     let (_, file_index) = action.split_at("Drag-".len());
                     let file_index      = usize::from_str_radix(file_index, 10).unwrap();
@@ -361,17 +364,44 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
                         ActionParameter::Drag(DragAction::Finish, _, _) => {
                             self.model.dragging_file.clone().set(None);
+                            self.model.drag_after_index.clone().set(None);
                         },
 
                         ActionParameter::Drag(DragAction::Cancel, _, _) => {
                             self.model.dragging_file.clone().set(None);
+                            self.model.drag_after_index.clone().set(None);
                         },
 
                         ActionParameter::Drag(DragAction::Drag, (from_x, from_y), (to_x, to_y)) => {
                             if (from_x-to_x).abs() > 6.0 || (from_y-to_y).abs() > 6.0 {
                                 self.model.dragging_file.clone().set(Some(file_index as usize));
                             }
-                            self.model.dragging_offset.clone().set(((to_x-from_x) as f64, (to_y-from_y) as f64))
+                            self.model.dragging_offset.clone().set(((to_x-from_x) as f64, (to_y-from_y) as f64));
+
+                            // Work out the distance the file has been dragged in rows and columns
+                            let origin_col  = (file_index % (NUM_COLUMNS as usize)) as i64;
+                            let origin_row  = (file_index / (NUM_COLUMNS as usize)) as i64;
+
+                            let offset_x    = to_x-(FILE_WIDTH/2.0);
+                            let offset_y    = to_y;
+
+                            let offset_cols = (offset_x / FILE_WIDTH).floor() as i64;
+                            let offset_rows = (offset_y / FILE_HEIGHT).floor() as i64;
+
+                            // Work out the target position
+                            let target_col  = origin_col + offset_cols;
+                            let target_row  = origin_row + offset_rows;
+
+                            let target_idx  = target_col + target_row*(NUM_COLUMNS as i64);
+                            let max_idx     = self.model.file_list.get().len();
+
+                            if target_col >= 0 && target_col < (NUM_COLUMNS as i64) && target_idx >= -1 && target_idx < (max_idx as i64) {
+                                // Valid target index
+                                self.model.drag_after_index.clone().set(Some(target_idx));
+                            } else {
+                                // No target index
+                                self.model.drag_after_index.clone().set(None);
+                            }
                         },
 
                         _ => {}

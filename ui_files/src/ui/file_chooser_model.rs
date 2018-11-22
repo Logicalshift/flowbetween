@@ -43,6 +43,9 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     /// The list of files to choose from
     pub file_list: BindRef<Vec<FileUiModel>>,
 
+    /// The index of the file that we'll move the current file after if it is dropped here
+    pub drag_after_index: Binding<Option<i64>>,
+
     /// The file in the index that is being dragged (or None if no file is being dragged)
     pub dragging_file: Binding<Option<usize>>,
 
@@ -70,6 +73,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
             active_controller:  active_controller,
             shared_state:       Mutex::new(None),
             dragging_file:      bind(None),
+            drag_after_index:   bind(None),
             dragging_offset:    bind((0.0, 0.0)),
             open_file:          open_file,
             file_list:          file_list,
