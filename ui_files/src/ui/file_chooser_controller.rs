@@ -115,10 +115,11 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     /// 
     fn ui(model: &FileChooserModel<Chooser>, background: BindRef<Color>) -> BindRef<Control> {
         // Create references to the parts of the model we need
-        let controller      = model.active_controller.clone();
-        let file_list       = model.file_list.clone();
-        let file_range      = model.file_range.clone();
-        let dragging_file   = model.dragging_file.clone();
+        let controller          = model.active_controller.clone();
+        let file_list           = model.file_list.clone();
+        let file_range          = model.file_range.clone();
+        let dragging_file       = model.dragging_file.clone();
+        let drag_after_index    = model.drag_after_index.clone();
 
         // Generate the UI
         let ui = computed(move || {
@@ -134,9 +135,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
             } else {
                 
                 // The file controls that are currently on-screen (virtualised)
-                let file_range      = file_range.get();
-                let file_list       = file_list.get();
-                let dragging_file   = dragging_file.get();
+                let file_range          = file_range.get();
+                let file_list           = file_list.get();
+                let dragging_file       = dragging_file.get();
+                let drag_after_index    = drag_after_index.get();
 
                 let files       = file_range.into_iter()
                     .filter_map(|file_index| file_list.get(file_index as usize).map(|file| (file_index, file)))
@@ -167,6 +169,27 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                     })
                                     .with(ControlAttribute::ZIndex(10))
                                     .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.0, 0.15)))
+                            ]
+                        } else if drag_after_index == Some((file_index as i64)-1) {
+                            // Going to insert before this file
+                            vec![
+                                Self::file_ui(file_model, file_index)
+                                    .with(Bounds { 
+                                        x1: Position::At(x), 
+                                        y1: Position::At(y), 
+                                        x2: Position::At(x+FILE_WIDTH), 
+                                        y2: Position::At(y+FILE_HEIGHT) })
+                                    .with(ControlAttribute::ZIndex(0)),
+
+                                Control::empty()
+                                    .with(Bounds {
+                                        x1: Position::At(x-1.0),
+                                        y1: Position::At(y),
+                                        x2: Position::At(x+1.0),
+                                        y2: Position::At(y+FILE_HEIGHT)
+                                    })
+                                    .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.8, 0.9)))
+                                    .with(ControlAttribute::ZIndex(1))
                             ]
                         } else {
                             // File that is static and not being dragged
@@ -395,7 +418,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                             let target_idx  = target_col + target_row*(NUM_COLUMNS as i64);
                             let max_idx     = self.model.file_list.get().len();
 
-                            if target_col >= 0 && target_col < (NUM_COLUMNS as i64) && target_idx >= -1 && target_idx < (max_idx as i64) {
+                            if target_col >= -1 && target_col < (NUM_COLUMNS as i64) && target_idx >= -1 && target_idx < (max_idx as i64) {
                                 // Valid target index
                                 self.model.drag_after_index.clone().set(Some(target_idx));
                             } else {
