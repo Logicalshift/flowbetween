@@ -386,6 +386,24 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                         },
 
                         ActionParameter::Drag(DragAction::Finish, _, _) => {
+                            let drag_after_index = self.model.drag_after_index.get();
+
+                            // Move the file if there's a drag index
+                            if let Some(drag_after_index) = drag_after_index {
+                                let files       = self.model.file_list.get();
+                                let src_path    = files[file_index].path.get();
+
+                                if drag_after_index < 0 {
+                                    // Drag to beginning
+                                    self.file_manager.order_path_after(src_path.as_path(), None);
+                                } else if drag_after_index < files.len() as i64 {
+                                    // Drag after specific file
+                                    let tgt_path = files[drag_after_index as usize].path.get();
+                                    self.file_manager.order_path_after(src_path.as_path(), Some(tgt_path.as_path()));
+                                }
+                            }
+
+                            // Clear the drag operation
                             self.model.dragging_file.clone().set(None);
                             self.model.drag_after_index.clone().set(None);
                         },
