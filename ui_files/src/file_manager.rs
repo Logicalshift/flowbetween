@@ -25,6 +25,11 @@ pub trait FileManager : Send+Sync {
     fn create_new_path(&self) -> PathBuf;
 
     ///
+    /// Re-orders the files so that `path` is displayed after `after` (or at the beginning if `after` is `None`)
+    ///
+    fn order_path_after(&self, path: &Path, after: Option<&Path>);
+
+    ///
     /// Updates or creates the display name associated with a particular path (which must be
     /// returned via get_all_files: setting the name for a non-existent path will just
     /// result)

@@ -196,6 +196,27 @@ impl FileManager for SqliteFileManager {
     }
 
     ///
+    /// Re-orders the files so that `path` is displayed after `after` (or at the beginning if `after` is `None`)
+    ///
+    fn order_path_after(&self, path: &Path, after: Option<&Path>) {
+        // Turn the paths into pathbufs
+        let path    = PathBuf::from(path);
+        let after   = after.map(|after| PathBuf::from(after));
+
+        // Generate the update
+        let update  = FileUpdate::ChangedOrder(path.clone(), after.clone());
+
+        // Update the file list
+        self.core.async(move |core| {
+            let after = after.as_ref();
+            let after = after.map(|after| after.as_path());
+            core.file_list.move_path_after(path.as_path(), after).unwrap();
+
+            core.send_update(update);
+        });
+    }
+
+    ///
     /// Updates or creates the display name associated with a particular path (which must be
     /// returned via get_all_xfiles: setting the name for a non-existent path will just
     /// result)
@@ -231,15 +252,52 @@ mod test {
 
     #[test]
     fn create_new_path() {
-        let test_files  = SqliteFileManager::new("app.flowbetween.test", "default");
+        let test_files  = SqliteFileManager::new("app.flowbetween.test", "create_new_path");
         let new_path    = test_files.create_new_path();
 
         assert!(new_path.components().count() > 3);
     }
 
     #[test]
+    fn retrieve_new_path_from_all_files() {
+        let test_files  = SqliteFileManager::new("app.flowbetween.test", "retrieve_new_path_from_all_files");
+        
+        let all_files_before    = test_files.get_all_files();
+        let _new_path           = test_files.create_new_path();
+        let all_files_after     = test_files.get_all_files();
+
+        assert!(all_files_before.len()+1 == all_files_after.len());
+    }
+
+    #[test]
+    fn new_paths_are_created_at_start() {
+        let test_files  = SqliteFileManager::new("app.flowbetween.test", "new_paths_are_created_at_start");
+        let new_path1   = test_files.create_new_path();
+        let new_path2   = test_files.create_new_path();
+
+        let paths       = test_files.get_all_files();
+
+        assert!(paths[0] == new_path2);
+        assert!(paths[1] == new_path1);
+    }
+
+    #[test]
+    fn move_path_after() {
+        let test_files  = SqliteFileManager::new("app.flowbetween.test", "move_path_after");
+        let new_path1   = test_files.create_new_path();
+        let new_path2   = test_files.create_new_path();
+
+        test_files.order_path_after(new_path2.as_path(), Some(new_path1.as_path()));
+
+        let paths       = test_files.get_all_files();
+
+        assert!(paths[0] == new_path1);
+        assert!(paths[1] == new_path2);
+    }
+
+    #[test]
     fn display_name_is_initially_none() {
-        let test_files  = SqliteFileManager::new("app.flowbetween.test", "default");
+        let test_files  = SqliteFileManager::new("app.flowbetween.test", "display_name_is_initially_none");
         let new_path    = test_files.create_new_path();
 
         assert!(test_files.display_name_for_path(new_path.as_path()) == None);
@@ -247,7 +305,7 @@ mod test {
 
     #[test]
     fn set_alternative_display_name() {
-        let test_files  = SqliteFileManager::new("app.flowbetween.test", "default");
+        let test_files  = SqliteFileManager::new("app.flowbetween.test", "set_alternative_display_name");
         let new_path    = test_files.create_new_path();
 
         test_files.set_display_name_for_path(new_path.as_path(), "Test display name".to_string());
@@ -256,7 +314,7 @@ mod test {
 
     #[test]
     fn will_send_updates_to_stream() {
-        let test_files          = SqliteFileManager::new("app.flowbetween.test", "default");
+        let test_files          = SqliteFileManager::new("app.flowbetween.test", "will_send_updates_to_stream");
         let mut update_stream   = executor::spawn(test_files.update_stream());
 
         let new_path            = test_files.create_new_path();
