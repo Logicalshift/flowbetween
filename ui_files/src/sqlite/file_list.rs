@@ -293,6 +293,11 @@ impl FileList {
     /// Inserts an entity after the specified entity
     ///
     fn insert_after(transaction: &Transaction, entity_id: i64, after: i64) -> result::Result<(), FileListError> {
+        // Nothing to do if trying to move an item after itself
+        if after == entity_id {
+            return Ok(());
+        }
+
         // Move to the beginning if 'after' is the root entity
         if after == ROOT_ENTITY {
             // Get the first entity in the list
@@ -489,6 +494,29 @@ mod test {
             "test2".to_string(),
             "test1".to_string(),
             "test4".to_string()
+        ]);
+    }
+
+    #[test]
+    pub fn can_move_path_over_self() {
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
+
+        file_list.add_path(&PathBuf::from("test1").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
+        
+        file_list.move_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test4").as_path())).unwrap();
+
+        let paths = file_list.list_paths().unwrap();
+        let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
+
+        assert!(paths == vec![
+            "test4".to_string(),
+            "test3".to_string(),
+            "test2".to_string(),
+            "test1".to_string(),
         ]);
     }
 
