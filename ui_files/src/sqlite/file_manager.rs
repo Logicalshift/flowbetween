@@ -210,7 +210,7 @@ impl FileManager for SqliteFileManager {
         self.core.async(move |core| {
             let after = after.as_ref();
             let after = after.map(|after| after.as_path());
-            core.file_list.move_path_after(path.as_path(), after).unwrap();
+            core.file_list.order_path_after(path.as_path(), after).unwrap();
 
             core.send_update(update);
         });

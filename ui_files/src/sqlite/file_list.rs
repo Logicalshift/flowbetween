@@ -326,7 +326,7 @@ impl FileList {
     ///
     /// Re-orders a path so that it appears after a particular path (or None to appear at the beginning)
     ///
-    pub fn move_path_after(&mut self, path_to_move: &Path, path_to_move_after: Option<&Path>) -> result::Result<(), FileListError> {
+    pub fn order_path_after(&mut self, path_to_move: &Path, path_to_move_after: Option<&Path>) -> result::Result<(), FileListError> {
         let transaction             = self.connection.transaction()?;
 
         // Get the entity IDs for the paths
@@ -438,7 +438,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
         
-        file_list.move_path_after(&PathBuf::from("test3").as_path(), Some(&PathBuf::from("test2").as_path())).unwrap();
+        file_list.order_path_after(&PathBuf::from("test3").as_path(), Some(&PathBuf::from("test2").as_path())).unwrap();
 
         let paths = file_list.list_paths().unwrap();
         let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
@@ -461,7 +461,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
         
-        file_list.move_path_after(&PathBuf::from("test3").as_path(), None).unwrap();
+        file_list.order_path_after(&PathBuf::from("test3").as_path(), None).unwrap();
 
         let paths = file_list.list_paths().unwrap();
         let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
@@ -484,7 +484,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
         
-        file_list.move_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test1").as_path())).unwrap();
+        file_list.order_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test1").as_path())).unwrap();
 
         let paths = file_list.list_paths().unwrap();
         let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
@@ -507,7 +507,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
         
-        file_list.move_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test4").as_path())).unwrap();
+        file_list.order_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test4").as_path())).unwrap();
 
         let paths = file_list.list_paths().unwrap();
         let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
