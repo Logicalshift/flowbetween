@@ -77,7 +77,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
             shared_state:           Mutex::new(None),
             dragging_file:          bind(None),
             drag_after_index:       bind(None),
-            editing_filename_index: bind(Some(0)),
+            editing_filename_index: bind(None),
             dragging_offset:        bind((0.0, 0.0)),
             open_file:              open_file,
             file_list:              file_list,

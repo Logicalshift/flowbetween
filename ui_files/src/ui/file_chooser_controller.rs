@@ -99,12 +99,15 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
             Control::text_box()
                 .with(TextAlign::Center)
                 .with(Bounds::next_vert(24.0))
+                .with((ActionTrigger::Click, "DoNotClickThrough"))
+                .with((ActionTrigger::Dismiss, "StopEditingFilename"))
                 .with(file.name.get())
         } else {
             Control::label()
                 .with(TextAlign::Center)
                 .with(Bounds::next_vert(24.0))
                 .with(file.name.get())
+                .with((ActionTrigger::Click, format!("EditName-{}", index)))
         };
 
         // Control consists of a panel showing a preview of the file and a label showing the 'filename'
@@ -113,12 +116,12 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 Control::empty()
                     .with(Bounds::stretch_vert(1.0))
                     .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.9, 1.0)))
-                    .with(ControlAttribute::Padding((16, 2), (16, 2))),
+                    .with(ControlAttribute::Padding((16, 2), (16, 2)))
+                    .with((ActionTrigger::Click, format!("Open-{}", index)))
+                    .with((ActionTrigger::Drag, format!("Drag-{}", index))),
                 label
             ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
-            .with((ActionTrigger::Click, format!("Open-{}", index)))
-            .with((ActionTrigger::Drag, format!("Drag-{}", index)))
     }
 
     ///
@@ -384,6 +387,11 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 self.file_manager.set_display_name_for_path(new_file.as_path(), new_name);
             },
 
+            ("StopEditingFilename", _) => {
+                // User dismissed the filename editor
+                self.model.editing_filename_index.clone().set(None);
+            },
+
             (action, action_parameter) => { 
                 if action.starts_with("Open-") {
 
@@ -406,7 +414,19 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     self.model.open_file.clone().set(Some(path));
                     self.model.active_controller.clone().set(Some(new_controller));
 
+                } else if action.starts_with("EditName-") {
+
+                    // Get the index of the file being edited
+                    let (_, file_index) = action.split_at("EditName-".len());
+                    let file_index      = usize::from_str_radix(file_index, 10).unwrap();
+
+                    // Set as the editing file
+                    self.model.editing_filename_index.clone().set(Some(file_index));
+
                 } else if action.starts_with("Drag-") {
+
+                    // Stops file editing
+                    self.model.editing_filename_index.clone().set(None);
 
                     // Get the index of the file being dragged
                     let (_, file_index) = action.split_at("Drag-".len());
