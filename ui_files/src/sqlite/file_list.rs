@@ -303,11 +303,13 @@ impl FileList {
             // Get the first entity in the list
             let first_entity_id = Self::get_first_entity_id(transaction, ROOT_ENTITY)?;
 
-            // Remove the entity from the list
-            Self::unlink_entity(transaction, entity_id)?;
+            if first_entity_id != entity_id {
+                // Remove the entity from the list
+                Self::unlink_entity(transaction, entity_id)?;
 
-            // Next entity becomes the old first entity
-            Self::set_next_entity(transaction, entity_id, first_entity_id)?;
+                // Next entity becomes the old first entity
+                Self::set_next_entity(transaction, entity_id, first_entity_id)?;
+            }
         } else {
             // Remove the entity from the list
             Self::unlink_entity(transaction, entity_id)?;
