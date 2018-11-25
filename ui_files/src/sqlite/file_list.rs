@@ -498,6 +498,29 @@ mod test {
     }
 
     #[test]
+    pub fn can_move_path_at_start_back_to_start() {
+        let db              = Connection::open_in_memory().unwrap();
+        let mut file_list   = FileList::new(db).unwrap();
+
+        file_list.add_path(&PathBuf::from("test1").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
+        file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
+        
+        file_list.order_path_after(&PathBuf::from("test4").as_path(), None).unwrap();
+
+        let paths = file_list.list_paths().unwrap();
+        let paths = paths.into_iter().map(|path_buf| path_buf.to_str().unwrap().to_string()).collect::<Vec<_>>();
+
+        assert!(paths == vec![
+            "test4".to_string(),
+            "test3".to_string(),
+            "test2".to_string(),
+            "test1".to_string(),
+        ]);
+    }
+
+    #[test]
     pub fn can_move_path_over_self() {
         let db              = Connection::open_in_memory().unwrap();
         let mut file_list   = FileList::new(db).unwrap();
