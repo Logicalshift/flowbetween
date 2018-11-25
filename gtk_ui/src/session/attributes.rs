@@ -238,14 +238,15 @@ impl ToGtkActions for State {
         use self::State::*;
 
         match self {
-            &Selected(ref selected)     => vec![ PropertyAction::from_property(selected.clone(), |value| vec![ WidgetState::SetSelected(value.to_bool().unwrap_or(false)).into() ]) ],
-            &Badged(ref badged)         => vec![ PropertyAction::from_property(badged.clone(), |value| vec![ WidgetState::SetBadged(value.to_bool().unwrap_or(false)).into() ]) ],
-            &Enabled(ref enabled)       => vec![ PropertyAction::from_property(enabled.clone(), |value| vec![ WidgetState::SetEnabled(value.to_bool().unwrap_or(true)).into() ]) ],
-            &Value(ref value)           => vec![ PropertyAction::from_property(value.clone(), |value| vec![ WidgetState::SetValueFloat(value.to_f64().unwrap_or(0.0)).into() ]) ],
-            &Range((ref min, ref max))  => vec![ 
+            Selected(ref selected)      => vec![ PropertyAction::from_property(selected.clone(), |value| vec![ WidgetState::SetSelected(value.to_bool().unwrap_or(false)).into() ]) ],
+            Badged(ref badged)          => vec![ PropertyAction::from_property(badged.clone(), |value| vec![ WidgetState::SetBadged(value.to_bool().unwrap_or(false)).into() ]) ],
+            Enabled(ref enabled)        => vec![ PropertyAction::from_property(enabled.clone(), |value| vec![ WidgetState::SetEnabled(value.to_bool().unwrap_or(true)).into() ]) ],
+            Value(ref value)            => vec![ PropertyAction::from_property(value.clone(), |value| vec![ WidgetState::SetValueFloat(value.to_f64().unwrap_or(0.0)).into() ]) ],
+            Range((ref min, ref max))   => vec![ 
                 PropertyAction::from_property(min.clone(), |min| vec![ WidgetState::SetRangeMin(min.to_f64().unwrap_or(0.0)).into() ]),
                 PropertyAction::from_property(max.clone(), |max| vec![ WidgetState::SetRangeMax(max.to_f64().unwrap_or(0.0)).into() ]) 
-            ]
+            ],
+            FocusPriority(ref priority) => vec![] /* TODO */
         }
     }
 }

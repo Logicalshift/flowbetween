@@ -93,6 +93,42 @@ impl PropertyValue {
     }
 }
 
+impl From<f64> for Property {
+    fn from(val: f64) -> Property {
+        Property::Float(val)
+    }
+}
+
+impl From<f32> for Property {
+    fn from(val: f32) -> Property {
+        Property::Float(val as f64)
+    }
+}
+
+impl From<i32> for Property {
+    fn from(val: i32) -> Property {
+        Property::Int(val)
+    }
+}
+
+impl From<bool> for Property {
+    fn from(val: bool) -> Property {
+        Property::Bool(val)
+    }
+}
+
+impl<'a> From<&'a str> for Property {
+    fn from(val: &'a str) -> Property {
+        Property::String(val.to_string())
+    }
+}
+
+impl From<String> for Property {
+    fn from(val: String) -> Property {
+        Property::String(val)
+    }
+}
+
 impl ToString for Property {
     fn to_string(&self) -> String {
         match self {

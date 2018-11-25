@@ -21,6 +21,7 @@ impl ToJsonValue for ControlAttribute {
             StateAttr(Value(property))              => json!({ "Value": property }),
             StateAttr(Range((min, max)))            => json!({ "Range": [min, max] }),
             StateAttr(Enabled(property))            => json!({ "Enabled": property }),
+            StateAttr(FocusPriority(property))      => json!({ "FocusPriority": property }),
             PopupAttr(popup)                        => json!({ "Popup": popup }),
             ScrollAttr(scroll)                      => json!({ "Scroll": scroll }),
             Id(id)                                  => json!({ "Id": id }),

@@ -21,7 +21,10 @@ pub enum State {
     Value(Property),
 
     /// The range values that this control can be set to
-    Range((Property, Property))
+    Range((Property, Property)),
+
+    /// The priority for focusing this control (if it's created while no control is focused or a control with a lower priority is focused, then this control will be focused instead)
+    FocusPriority(Property)
 }
 
 impl Modifier<Control> for State {

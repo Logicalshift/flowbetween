@@ -104,6 +104,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                     Control::text_box()
                         .with(TextAlign::Center)
                         .with(FontWeight::Normal)
+                        .with(State::FocusPriority(Property::from(128.0)))
                         .with(Bounds::stretch_horiz(1.0))
                         .with((ActionTrigger::Click, "DoNotClickThrough"))
                         .with((ActionTrigger::Dismiss, "StopEditingFilename"))
