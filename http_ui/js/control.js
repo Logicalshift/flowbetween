@@ -764,10 +764,17 @@ let flo_control = (function () {
         });
 
         add_action_event(node, 'keydown', event => {
-            if (event.key === 'Enter' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
-                event.preventDefault();
-                if (node.flo_set_value) {
-                    node.flo_set_value({ 'String': input.value || '' });
+            if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    if (node.flo_set_value) {
+                        node.flo_set_value({ 'String': input.value || '' });
+                    }
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    if (node.flo_cancel_edit) {
+                        node.flo_cancel_edit();
+                    }
                 }
             }
         });
