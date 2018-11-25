@@ -122,6 +122,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 .with(Bounds::next_vert(22.0))
                 .with(file.name.get())
                 .with((ActionTrigger::Click, format!("EditName-{}", index)))
+                .with((ActionTrigger::Drag, format!("Drag-{}", index)))
         };
 
         // Control consists of a panel showing a preview of the file and a label showing the 'filename'
