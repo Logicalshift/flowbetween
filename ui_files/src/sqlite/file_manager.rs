@@ -203,6 +203,11 @@ impl FileManager for SqliteFileManager {
         let path    = PathBuf::from(path);
         let after   = after.map(|after| PathBuf::from(after));
 
+        // Do nothing if trying to move the path after itself
+        if after.as_ref() == Some(&path) {
+            return;
+        }
+
         // Generate the update
         let update  = FileUpdate::ChangedOrder(path.clone(), after.clone());
 
