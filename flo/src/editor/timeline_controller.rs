@@ -537,7 +537,7 @@ impl<Anim: EditableAnimation+Animation+'static> Controller for TimelineControlle
 
             (CLICK_AND_DRAG_TIMELINE_POSITION, &Drag(DragAction::Start, (start_x, _start_y), _)) => {
                 // Clicking on the scale moves the time to where the user clicked initially
-                let time_ns = self.xpos_to_ns(start_x);
+                let time_ns = self.xpos_to_ns(start_x - LAYER_PANEL_WIDTH - (TICK_LENGTH/2.0));
                 let time    = Self::ns_to_duration(time_ns);
 
                 self.anim_model.timeline().current_time.clone().set(time);
