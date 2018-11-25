@@ -26,6 +26,17 @@ let flo_control = (function () {
         input_element.max = 1000.0;
 
         ///
+        /// The 'focus' event is fired when the slider has focus
+        ///
+        function on_focus() {
+            // This should generate the 'focus' event
+            let input_handler = element.flo_was_focused || (() => {});
+
+            // Pass on the event
+            input_handler();
+        }
+
+        ///
         /// The 'input' event is fired while the user is changing the slider
         ///
         function on_input() {
@@ -44,7 +55,7 @@ let flo_control = (function () {
         }
 
         ///
-        /// The 'change' event is fired when the user drags the slider
+        /// The 'change' event is fired when the user finishes dragging the slider to a new value
         ///
         function on_change() {
             // If the node has the range property set, we'll return values in that range
@@ -110,6 +121,7 @@ let flo_control = (function () {
         });
 
         // Register event handlers
+        input_element.addEventListener('focus', on_focus);
         input_element.addEventListener('input', on_input);
         input_element.addEventListener('change', on_change);
     };
