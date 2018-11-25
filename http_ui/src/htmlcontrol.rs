@@ -66,15 +66,49 @@ fn control_class(ctrl: &Control) -> &str {
 /// Adds the subcomponents for a control to a DOM element
 ///
 fn add_subcomponents(ctrl: &Control, dom_element: &mut DomNode, base_path: &str, controller_path: &str, subcomponent_path: &str) {
-    // By default, we just 
+    // By default, we append subcomponents to the node and apply everything else as attributes
     for attribute in ctrl.attributes() {
         use ui::ControlAttribute::*;
 
         match attribute {
-            &SubComponents(_) => {
+            SubComponents(_) => {
                 // Subcomponents get the subcomponent controller path
                 dom_element.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
             },
+            
+            _ => {
+                // Other attributes are for the current control so they keep the current controller path
+                dom_element.append_child_node(attribute.to_html_subcomponent(base_path, controller_path));
+            }
+        }
+    }
+}
+
+///
+/// Textboxes are a bit of a special case in that they need to know a bit more about their text attribute
+///
+fn add_textbox_subcomponents(ctrl: &Control, dom_element: &mut DomNode, base_path: &str, controller_path: &str, subcomponent_path: &str) {
+    // By default, we append subcomponents to the node and apply everything else as attributes
+    for attribute in ctrl.attributes() {
+        use ui::ControlAttribute::*;
+
+        match attribute {
+            SubComponents(_) => {
+                // Subcomponents get the subcomponent controller path
+                dom_element.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
+            },
+
+            Text(text) => {
+                // Text is applied as an attribute so it can be copied into the target control
+                dom_element.append_child_node(DomAttribute::new("flo-text-value", &text.to_string()));
+            },
+
+            FontAttr(Font::Size(px))                    => { dom_element.append_child_node(DomAttribute::new("flo-text-size", &format!("{}px", px))); }
+            FontAttr(Font::Weight(weight))              => { dom_element.append_child_node(DomAttribute::new("flo-text-weight", &format!("{}", *weight as u32))); }
+
+            FontAttr(Font::Align(TextAlign::Left))      => { dom_element.append_child_node(DomAttribute::new("flo-text-align", "left")); }
+            FontAttr(Font::Align(TextAlign::Right))     => { dom_element.append_child_node(DomAttribute::new("flo-text-align", "right")); }
+            FontAttr(Font::Align(TextAlign::Center))    => { dom_element.append_child_node(DomAttribute::new("flo-text-align", "center")); }
             
             _ => {
                 // Other attributes are for the current control so they keep the current controller path
@@ -100,7 +134,8 @@ impl ToHtml for Control {
 
         // Add any subcomponents or text for this control
         match self.control_type() {
-            _ => add_subcomponents(self, &mut result, base_path, controller_path, subcomponent_path)
+            ControlType::TextBox    => add_textbox_subcomponents(self, &mut result, base_path, controller_path, subcomponent_path),
+            _                       => add_subcomponents(self, &mut result, base_path, controller_path, subcomponent_path)
         }
 
         // Flatten to create a 'clean' DOM without collections or empty nodes

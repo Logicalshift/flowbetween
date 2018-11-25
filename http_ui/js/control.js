@@ -689,10 +689,35 @@ let flo_control = (function () {
         fix_child_positions(node);
     };
 
+    ///
+    /// Sets up a control as a textbox
+    ///
+    let load_textbox = (node, add_action_event) => {
+        // Fetch the values of the attributes that can be set for the text box
+        let initial_text    = node.getAttribute('flo-text-value') || "";
+        let font_size       = node.getAttribute('flo-text-size') || null;
+        let font_weight     = node.getAttribute('flo-text-weight') || null;
+        let align           = node.getAttribute('flo-text-align') || null;
+
+        // Set the initial text value
+        let input           = node.getElementsByTagName('input')[0];
+        input.value         = initial_text;
+
+        // Update the style attributes
+        let style           = '';
+
+        if (font_size)      { style += "font-size: " + font_size + "; " }
+        if (font_weight)    { style += "font-weight: " + font_weight + "; " }
+        if (align)          { style += "text-align: " + align + "; " }
+
+        input.style         = style;
+    };
+
     return {
         load_slider:            load_slider,
         load_rotor:             load_rotor,
         load_popup:             load_popup,
+        load_textbox:           load_textbox,
         layout_popup:           layout_popup,
         on_drag:                on_drag,
         fix_scroll_positions:   fix_scroll_positions

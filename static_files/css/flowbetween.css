@@ -245,6 +245,15 @@ flo-popup > deco-beak:after {
     height:                 20px;
 }
 
+flo-textbox {
+    display:                inline-block;
+}
+
+flo-textbox > input {
+    width:                  100%;
+    height:                 100%;
+}
+
 flo-popup > deco-beak.below:after {
     left:                   2px;
     top:                    5px;
