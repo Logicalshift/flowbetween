@@ -172,11 +172,6 @@ let flo_control = (function () {
             x -= client_rect.left + node.offsetLeft;
             y -= client_rect.top + node.offsetTop;
 
-            for (let scroll_node = node; scroll_node; scroll_node = scroll_node.parentNode) {
-                x += scroll_node.scrollLeft || 0;
-                y += scroll_node.scrollTop || 0;
-            }
-
             start_drag_x = x;
             start_drag_y = y;
     
@@ -211,11 +206,6 @@ let flo_control = (function () {
 
             x -= client_rect.left + node.offsetLeft;
             y -= client_rect.top + node.offsetTop;
-
-            for (let scroll_node = node; scroll_node; scroll_node = scroll_node.parentNode) {
-                x += scroll_node.scrollLeft || 0;
-                y += scroll_node.scrollTop || 0;
-            }
 
             start_drag_x = x;
             start_drag_y = y;
