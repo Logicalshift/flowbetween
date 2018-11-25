@@ -393,7 +393,7 @@ function flowbetween(root_node) {
                 // Add the nodes to this node
                 let first_node = node.children.length > 0 ? node.children[0] : null;
 
-                new_nodes.forEach(newNode => node.insertBefore(newNode, first_node));
+                new_nodes.forEach(new_node => node.insertBefore(new_node, first_node));
 
                 // Call the load function with our newly set up node
                 if (load_node) {
