@@ -401,6 +401,9 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
             },
 
             ("CreateNewFile", _) => {
+                // Stop any editing
+                self.stop_editing_filename();
+
                 // Create a new file in the file manager
                 let new_file = self.file_manager.create_new_path();
 
@@ -416,7 +419,11 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     new_name = format!("New file ({})", name_index);
                 }
 
-                self.file_manager.set_display_name_for_path(new_file.as_path(), new_name);
+                self.file_manager.set_display_name_for_path(new_file.as_path(), new_name.clone());
+
+                // Edit the name
+                self.model.edited_filename.clone().set(new_name);
+                self.model.editing_filename_index.clone().set(Some(0));
             },
 
             ("StopEditingFilename", _) => {
