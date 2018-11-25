@@ -404,7 +404,8 @@ function flowbetween(root_node) {
                     // add_action_event is an important one if they want to set up event handlers
                     // action events added during load are 'intrinsic' and stick around
                     let flowbetween = {
-                        add_action_event: add_intrinsic_action_event
+                        add_action_event:   add_intrinsic_action_event,
+                        on_property_change: on_property_change
                     };
                     load_node.apply(node, [flowbetween]);
                 }
@@ -1717,14 +1718,21 @@ function flowbetween(root_node) {
     ///
     /// Given a node and its control data, wires up any events
     ///
-    let wire_tree = (dom_node, control_data, initial_controller_path) => {
+    let set_tree_attributes = (dom_node, control_data, initial_controller_path) => {
         visit_dom(dom_node, control_data, (node, attributes, controller_path) => {
             // Store the attributes for this node for convenience
             node.flo = {
                 controller: controller_path,
                 attributes: attributes
             };
+        }, initial_controller_path);
+    };
 
+    ///
+    /// Given a node and its control data, wires up any events
+    ///
+    let wire_tree = (dom_node, control_data, initial_controller_path) => {
+        visit_dom(dom_node, control_data, (node, attributes, controller_path) => {
             // Attach any events that this node might require
             wire_events(node, attributes, controller_path);
         }, initial_controller_path);
@@ -1759,6 +1767,7 @@ function flowbetween(root_node) {
             root_control_data   = property_tree;
 
             // Perform initial layout
+            set_tree_attributes(get_flo_subnodes(root)[0], root_control_data);
             apply_templates_to_tree(get_flo_subnodes(root)[0], root_control_data);
             bind_viewmodel_to_tree(get_flo_subnodes(root)[0], root_control_data);
             wire_tree(get_flo_subnodes(root)[0], root_control_data);
@@ -1822,6 +1831,7 @@ function flowbetween(root_node) {
 
             // Reformat/bind/wire the new HTML
             updates.forEach(update => {
+                set_tree_attributes(update.new_element, update.ui_tree);
                 apply_templates_to_tree(update.new_element, update.ui_tree);
                 bind_viewmodel_to_tree(update.new_element, update.ui_tree, update.original_data.controller_path);
                 wire_tree(update.new_element, update.ui_tree, update.original_data.controller_path);

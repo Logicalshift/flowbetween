@@ -692,16 +692,21 @@ let flo_control = (function () {
     ///
     /// Sets up a control as a textbox
     ///
-    let load_textbox = (node, add_action_event) => {
+    let load_textbox = (node, add_action_event, on_property_change) => {
         // Fetch the values of the attributes that can be set for the text box
-        let initial_text    = node.getAttribute('flo-text-value') || "";
+        var attributes      = node.flo.attributes;
+        let controller_path = node.flo.controller;
+
+        let initial_text    = attributes.get_attr('Text') || { 'String': '' };
         let font_size       = node.getAttribute('flo-text-size') || null;
         let font_weight     = node.getAttribute('flo-text-weight') || null;
         let align           = node.getAttribute('flo-text-align') || null;
 
         // Set the initial text value
         let input           = node.getElementsByTagName('input')[0];
-        input.value         = initial_text;
+        on_property_change(controller_path, initial_text, (value) => {
+            input.value = value['String'] || '';
+        });
 
         // Update the style attributes
         let style           = '';
