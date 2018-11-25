@@ -124,6 +124,7 @@ let flo_control = (function () {
         input_element.addEventListener('focus', on_focus);
         input_element.addEventListener('input', on_input);
         input_element.addEventListener('change', on_change);
+        input_element.addEventListener('blur', on_change);
     };
 
     ///
