@@ -108,6 +108,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         .with(Bounds::stretch_horiz(1.0))
                         .with((ActionTrigger::Click, "DoNotClickThrough"))
                         .with((ActionTrigger::Dismiss, "StopEditingFilename"))
+                        .with((ActionTrigger::SetValue, "StopEditingFilename"))
                         .with(file.name.get()),
                     Control::empty()
                         .with(Bounds::next_horiz(8.0)),
