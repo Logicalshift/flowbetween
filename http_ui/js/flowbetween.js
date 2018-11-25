@@ -1148,6 +1148,9 @@ function flowbetween(root_node) {
         } else if (action_type === 'SetValue') {
             node.flo_set_value = new_property_value => perform_action(controller_path, action_name, { 'Value': new_property_value });
 
+        } else if (action_type === 'CancelEdit') {
+            node.flo_cancel_edit = new_property_value => perform_action(controller_path, action_name, null);
+
         } else if (action_type === 'Dismiss') {
             node.flo_dismiss = () => perform_action(controller_path, action_name, null);
 
