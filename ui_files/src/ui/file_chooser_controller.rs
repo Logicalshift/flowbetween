@@ -108,6 +108,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         .with(Bounds::stretch_horiz(1.0))
                         .with((ActionTrigger::Click, "DoNotClickThrough"))
                         .with((ActionTrigger::EditValue, "SetEditedFilename"))
+                        .with((ActionTrigger::CancelEdit, "CancelEditingFilename"))
                         .with((ActionTrigger::Dismiss, "StopEditingFilename"))
                         .with((ActionTrigger::SetValue, "StopEditingFilename"))
                         .with(file.name.get()),
@@ -424,6 +425,11 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 // Edit the name
                 self.model.edited_filename.clone().set(new_name);
                 self.model.editing_filename_index.clone().set(Some(0));
+            },
+
+            ("CancelEditingFilename", _) => {
+                // Just unset the editing index without storing the edited value
+                self.model.editing_filename_index.clone().set(None);
             },
 
             ("StopEditingFilename", _) => {
