@@ -46,6 +46,9 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     /// The index of the file whose name is being edited
     pub editing_filename_index: Binding<Option<usize>>,
 
+    /// The current name of the file after editing
+    pub edited_filename: Binding<String>,
+
     /// The index of the file that we'll move the current file after if it is dropped here
     pub drag_after_index: Binding<Option<i64>>,
 
@@ -78,6 +81,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
             dragging_file:          bind(None),
             drag_after_index:       bind(None),
             editing_filename_index: bind(None),
+            edited_filename:        bind(String::from("")),
             dragging_offset:        bind((0.0, 0.0)),
             open_file:              open_file,
             file_list:              file_list,

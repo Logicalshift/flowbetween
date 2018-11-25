@@ -107,6 +107,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         .with(State::FocusPriority(Property::from(128.0)))
                         .with(Bounds::stretch_horiz(1.0))
                         .with((ActionTrigger::Click, "DoNotClickThrough"))
+                        .with((ActionTrigger::EditValue, "SetEditedFilename"))
                         .with((ActionTrigger::Dismiss, "StopEditingFilename"))
                         .with((ActionTrigger::SetValue, "StopEditingFilename"))
                         .with(file.name.get()),
@@ -324,6 +325,24 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         // Create a binding from it
         BindRef::from(ui)
     }
+
+    ///
+    /// Stops the filename editing process and updates the name of the file
+    ///
+    pub fn stop_editing_filename(&self) {
+        if let Some(edited_file_index) = self.model.editing_filename_index.get() {
+            // Stop editing the filename
+            self.model.editing_filename_index.clone().set(None);
+
+            // Fetch the file that was edited and its new name
+            let file_model      = &self.model.file_list.get()[edited_file_index];
+            let file_path       = file_model.path.get();
+            let new_filename    = self.model.edited_filename.get();
+
+            // Send to the file manager for an update
+            self.file_manager.set_display_name_for_path(&file_path.as_path(), new_filename);
+        }
+    }
 }
 
 impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser> {
@@ -402,11 +421,19 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
             ("StopEditingFilename", _) => {
                 // User dismissed the filename editor
-                self.model.editing_filename_index.clone().set(None);
+                self.stop_editing_filename();
+            },
+
+            ("SetEditedFilename", ActionParameter::Value(PropertyValue::String(new_filename))) => {
+                // Set the edited version of the filename in the model
+                self.model.edited_filename.clone().set(new_filename.clone());
             },
 
             (action, action_parameter) => { 
                 if action.starts_with("Open-") {
+
+                    // Finish up any filename editing that might be occurring
+                    self.stop_editing_filename();
 
                     // Get the index of the file being opened
                     let (_, file_index) = action.split_at("Open-".len());
@@ -432,14 +459,16 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     // Get the index of the file being edited
                     let (_, file_index) = action.split_at("EditName-".len());
                     let file_index      = usize::from_str_radix(file_index, 10).unwrap();
+                    let file_model      = &self.model.file_list.get()[file_index];
 
                     // Set as the editing file
+                    self.model.edited_filename.clone().set(file_model.name.get());
                     self.model.editing_filename_index.clone().set(Some(file_index));
 
                 } else if action.starts_with("Drag-") {
 
                     // Stops file editing
-                    self.model.editing_filename_index.clone().set(None);
+                    self.stop_editing_filename();
 
                     // Get the index of the file being dragged
                     let (_, file_index) = action.split_at("Drag-".len());
