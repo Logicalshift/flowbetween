@@ -704,9 +704,17 @@ let flo_control = (function () {
 
         // Set the initial text value
         let input           = node.getElementsByTagName('input')[0];
-        on_property_change(controller_path, initial_text, (value) => {
+        let remove_action   = on_property_change(controller_path, initial_text, (value) => {
             input.value = value['String'] || '';
         });
+
+        let previous_unbind = node.flo_unbind_viewmodel;
+        node.flo_unbind_viewmodel = () => {
+            remove_action();
+            if (previous_unbind) {
+                previous_unbind();
+            }
+        };
 
         // Update the style attributes
         let style           = '';
