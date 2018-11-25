@@ -140,7 +140,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 let dragging_file       = dragging_file.get();
                 let drag_after_index    = drag_after_index.get();
 
-                let files       = file_range.into_iter()
+                let mut files           = file_range.into_iter()
                     .filter_map(|file_index| file_list.get(file_index as usize).map(|file| (file_index, file)))
                     .flat_map(|(file_index, file_model)| {
                         let row     = file_index / NUM_COLUMNS;
@@ -205,6 +205,25 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         }
                     })
                     .collect::<Vec<_>>();
+
+                // Add an extra indicator if the drag file index is at the end
+                if drag_after_index == Some(file_list.len() as i64 - 1) {
+                    let file_index  = drag_after_index.unwrap() as u32 + 1;
+                    let row         = file_index / NUM_COLUMNS;
+                    let column      = file_index % NUM_COLUMNS;
+                    let x           = (column as f32) * FILE_WIDTH;
+                    let y           = (row as f32) * FILE_HEIGHT;
+
+                    files.push(Control::empty()
+                        .with(Bounds {
+                            x1: Position::At(x-1.0),
+                            y1: Position::At(y),
+                            x2: Position::At(x+1.0),
+                            y2: Position::At(y+FILE_HEIGHT)
+                        })
+                        .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.8, 0.9)))
+                        .with(ControlAttribute::ZIndex(1)));
+                }
                 
                 // Work out the height of the container
                 let num_rows    = ((file_list.len() as i32)-1) / (NUM_COLUMNS as i32) + 1;
