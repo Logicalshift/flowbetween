@@ -384,8 +384,10 @@ function flowbetween(root_node) {
             node.classList.forEach((className) => { if (templates_for_node[className]) { template_for_node = templates_for_node[className]; } });
 
             if (template_for_node) {
-                // Remove any existing template nodes
-                get_decorative_subnodes(node).forEach(decoration => node.removeChild(decoration));
+                // Remove any nodes that might have been added to this node as part of a template
+                get_decorative_subnodes(node)
+                    .filter(decoration => decoration.getAttribute('flo-tmp'))
+                    .forEach(decoration => node.removeChild(decoration));
 
                 // Copy each template element into the document
                 let new_nodes = template_for_node.map(template_node => document.importNode(template_node, true));
@@ -393,6 +395,7 @@ function flowbetween(root_node) {
                 // Add the nodes to this node
                 let first_node = node.children.length > 0 ? node.children[0] : null;
 
+                new_nodes.forEach(new_node => new_node.setAttribute('flo-tmp', ''))
                 new_nodes.forEach(new_node => node.insertBefore(new_node, first_node));
 
                 // Call the load function with our newly set up node
