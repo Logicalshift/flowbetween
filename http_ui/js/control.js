@@ -716,6 +716,9 @@ let flo_control = (function () {
         if (align)          { style += "text-align: " + align + "; " }
 
         input.style         = style;
+
+        // Specify how the node gains focus
+        node.flo_make_focused = () => { input.focus(); }
     };
 
     return {

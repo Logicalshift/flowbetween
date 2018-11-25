@@ -596,6 +596,41 @@ function flowbetween(root_node) {
     };
 
     ///
+    /// Attempts to find the currently focused element (and its priority)
+    ///
+    let get_focused_element = () => {
+        // Get the currently active element
+        let active  = document.activeElement;
+        let focused = active;
+
+        // Move up the tree until we find a node that supplies a focus level (focus levels apply to all child element)
+        while (focused) {
+            // Flo nodes all have a focus level function we can call
+            if (focused.flo_focus_level) {
+                // Query the node for its focus level
+                let focus_level = focused.flo_focus_level();
+
+                if (focus_level !== null) {
+                    // This node can be considered to have focus. Nodes with a 'null' focus level pass focus through
+                    return {
+                        node:       focused,
+                        priority:   focus_level
+                    }
+                }
+            }
+
+            // Move up the tree
+            focused = focused.parentElement;
+        }
+
+        // No node has focus
+        return {
+            node:       null,
+            priority:   0
+        };
+    };
+
+    ///
     /// Adds a class to the className of a DOM node
     ///
     let add_class = (dom_node, class_name) => {
@@ -1315,6 +1350,28 @@ function flowbetween(root_node) {
                 canvas_deco.style.height    = scroll['MinimumContentSize'][1] + 'px';
             }
 
+        } else if (attribute['FocusPriority']) {
+            // Updates the focus priority for this node
+            remove_action = on_property_change(controller_path, attribute['FocusPriority'], focus_priority => {
+                let new_priority = 0;
+
+                // Get the priority of this node
+                if (focus_priority['Int']) {
+                    new_priority = focus_priority['Int'];
+                } else if (focus_priority['Float']) {
+                    new_priority = focus_priority['Float'];
+                }
+
+                // Update the returned priority for this node
+                node.flo_focus_level = () => new_priority;
+
+                // Move focus here if it's greater than the priority of the node that currently has focus
+                let current_focus = get_focused_element();
+                if (current_focus.priority < new_priority && node.flo_make_focused) {
+                    requestAnimationFrame(() => node.flo_make_focused());
+                }
+            });
+
         }
 
         // Update the property that allows us to unbind the viewmodel
@@ -1725,6 +1782,12 @@ function flowbetween(root_node) {
                 controller: controller_path,
                 attributes: attributes
             };
+
+            // Default focus level for an element is 0
+            node.flo_focus_level    = () => 0;
+
+            // Default focus action is 'do nothing'
+            node.flo_make_focused   = () => {};
         }, initial_controller_path);
     };
 
