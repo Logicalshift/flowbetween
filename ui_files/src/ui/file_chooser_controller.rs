@@ -96,18 +96,26 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     fn file_ui(file: &FileUiModel, index: u32, editing_filename_index: BindRef<Option<usize>>) -> Control {
         // If the user is editing the filename, then use a textbox instead of the label
         let label = if editing_filename_index.get() == Some(index as usize) {
-            Control::text_box()
-                .with(TextAlign::Center)
-                .with(FontWeight::Normal)
-                .with(Bounds::next_vert(24.0))
-                .with((ActionTrigger::Click, "DoNotClickThrough"))
-                .with((ActionTrigger::Dismiss, "StopEditingFilename"))
-                .with(file.name.get())
+            Control::container()
+                .with(Bounds::next_vert(22.0))
+                .with(vec![
+                    Control::empty()
+                        .with(Bounds::next_horiz(8.0)),
+                    Control::text_box()
+                        .with(TextAlign::Center)
+                        .with(FontWeight::Normal)
+                        .with(Bounds::stretch_horiz(1.0))
+                        .with((ActionTrigger::Click, "DoNotClickThrough"))
+                        .with((ActionTrigger::Dismiss, "StopEditingFilename"))
+                        .with(file.name.get()),
+                    Control::empty()
+                        .with(Bounds::next_horiz(8.0)),
+                ])
         } else {
             Control::label()
                 .with(TextAlign::Center)
                 .with(FontWeight::Normal)
-                .with(Bounds::next_vert(24.0))
+                .with(Bounds::next_vert(22.0))
                 .with(file.name.get())
                 .with((ActionTrigger::Click, format!("EditName-{}", index)))
         };
@@ -118,9 +126,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 Control::empty()
                     .with(Bounds::stretch_vert(1.0))
                     .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.9, 1.0)))
-                    .with(ControlAttribute::Padding((16, 2), (16, 2)))
                     .with((ActionTrigger::Click, format!("Open-{}", index)))
                     .with((ActionTrigger::Drag, format!("Drag-{}", index))),
+                Control::empty()
+                    .with(Bounds::next_vert(2.0)),
                 label
             ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
