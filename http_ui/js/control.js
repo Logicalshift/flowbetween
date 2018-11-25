@@ -725,6 +725,40 @@ let flo_control = (function () {
 
         input.style         = style;
 
+        // Bind the events for this node
+        let has_focus = false;
+        add_action_event(node, 'focus', event => {
+            has_focus = true;
+            if (node.flo_was_focused) {
+                node.flo_was_focused();
+            }
+        });
+
+        add_action_event(node, 'blur', event => {
+            if (has_focus) {
+                has_focus = false;
+
+                if (node.flo_set_value) {
+                    node.flo_set_value({ 'String': input.value || '' });
+                }
+            }
+        });
+
+        add_action_event(node, 'input', event => {
+            if (node.flo_edit_value) {
+                node.flo_edit_value({ 'String': input.value || '' });
+            }
+        });
+
+        add_action_event(node, 'keydown', event => {
+            if (event.key === 'Enter' && !event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+                event.preventDefault();
+                if (node.flo_set_value) {
+                    node.flo_set_value({ 'String': input.value || '' });
+                }
+            }
+        });
+
         // Specify how the node gains focus
         node.flo_make_focused = () => { input.focus(); }
     };
