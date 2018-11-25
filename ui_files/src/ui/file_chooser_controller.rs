@@ -93,17 +93,28 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates a control representing a file
     /// 
-    fn file_ui(file: &FileUiModel, index: u32) -> Control {
+    fn file_ui(file: &FileUiModel, index: u32, editing_filename_index: BindRef<Option<usize>>) -> Control {
+        // If the user is editing the filename, then use a textbox instead of the label
+        let label = if editing_filename_index.get() == Some(index as usize) {
+            Control::text_box()
+                .with(TextAlign::Center)
+                .with(Bounds::next_vert(24.0))
+                .with(file.name.get())
+        } else {
+            Control::label()
+                .with(TextAlign::Center)
+                .with(Bounds::next_vert(24.0))
+                .with(file.name.get())
+        };
+
+        // Control consists of a panel showing a preview of the file and a label showing the 'filename'
         Control::container()
             .with(vec![
                 Control::empty()
                     .with(Bounds::stretch_vert(1.0))
                     .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.9, 1.0)))
                     .with(ControlAttribute::Padding((16, 2), (16, 2))),
-                Control::label()
-                    .with(TextAlign::Center)
-                    .with(Bounds::next_vert(24.0))
-                    .with(file.name.get())
+                label
             ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
             .with((ActionTrigger::Click, format!("Open-{}", index)))
@@ -115,11 +126,12 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     /// 
     fn ui(model: &FileChooserModel<Chooser>, background: BindRef<Color>) -> BindRef<Control> {
         // Create references to the parts of the model we need
-        let controller          = model.active_controller.clone();
-        let file_list           = model.file_list.clone();
-        let file_range          = model.file_range.clone();
-        let dragging_file       = model.dragging_file.clone();
-        let drag_after_index    = model.drag_after_index.clone();
+        let controller              = model.active_controller.clone();
+        let file_list               = model.file_list.clone();
+        let file_range              = model.file_range.clone();
+        let dragging_file           = model.dragging_file.clone();
+        let drag_after_index        = model.drag_after_index.clone();
+        let editing_filename_index  = model.editing_filename_index.clone();
 
         // Generate the UI
         let ui = computed(move || {
@@ -143,6 +155,8 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 let mut files           = file_range.into_iter()
                     .filter_map(|file_index| file_list.get(file_index as usize).map(|file| (file_index, file)))
                     .flat_map(|(file_index, file_model)| {
+                        let editing_filename_index = BindRef::from(editing_filename_index.clone());
+
                         let row     = file_index / NUM_COLUMNS;
                         let column  = file_index % NUM_COLUMNS;
                         let x       = (column as f32) * FILE_WIDTH;
@@ -160,7 +174,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                     })
                                     .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.4, 0.1))),
 
-                                Self::file_ui(file_model, file_index)
+                                Self::file_ui(file_model, file_index, editing_filename_index)
                                     .with(Bounds { 
                                         x1: Position::Floating(Property::bound("DragX"), x), 
                                         y1: Position::Floating(Property::bound("DragY"), y), 
@@ -173,7 +187,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         } else if drag_after_index == Some((file_index as i64)-1) {
                             // Going to insert before this file
                             vec![
-                                Self::file_ui(file_model, file_index)
+                                Self::file_ui(file_model, file_index, editing_filename_index)
                                     .with(Bounds { 
                                         x1: Position::At(x), 
                                         y1: Position::At(y), 
@@ -194,7 +208,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         } else {
                             // File that is static and not being dragged
                             vec![
-                                Self::file_ui(file_model, file_index)
+                                Self::file_ui(file_model, file_index, editing_filename_index)
                                     .with(Bounds { 
                                         x1: Position::At(x), 
                                         y1: Position::At(y), 
