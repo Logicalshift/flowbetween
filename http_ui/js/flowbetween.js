@@ -1139,6 +1139,9 @@ function flowbetween(root_node) {
         } else if (action_type === 'Drag') {
             wire_drag(action_name, node, controller_path);
 
+        } else if (action_type === 'Focused') {
+            node.flo_was_focused = new_property_value => perform_action(controller_path, action_name, null);
+
         } else if (action_type === 'EditValue') {
             node.flo_edit_value = new_property_value => perform_action(controller_path, action_name, { 'Value': new_property_value });
 

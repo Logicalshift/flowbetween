@@ -21,6 +21,9 @@ pub enum ActionTrigger {
     /// Tracks drag actions for this control
     Drag,
 
+    /// This item has been focused for editing
+    Focused,
+
     /// The value of an item is being edited and has a new intermediate value
     EditValue,
 
