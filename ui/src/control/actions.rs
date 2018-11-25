@@ -30,6 +30,9 @@ pub enum ActionTrigger {
     /// The value of an item has been edited and should be updated
     SetValue,
 
+    /// An edit (which may have sent one or more EditValue updates) has been cancelled
+    CancelEdit,
+
     /// Divides a scrollable region into a grid, and generates an event whenever the region in the top-left corner changes
     VirtualScroll(f32, f32)
 }
