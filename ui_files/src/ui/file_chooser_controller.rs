@@ -98,6 +98,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         let label = if editing_filename_index.get() == Some(index as usize) {
             Control::text_box()
                 .with(TextAlign::Center)
+                .with(FontWeight::Normal)
                 .with(Bounds::next_vert(24.0))
                 .with((ActionTrigger::Click, "DoNotClickThrough"))
                 .with((ActionTrigger::Dismiss, "StopEditingFilename"))
@@ -105,6 +106,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         } else {
             Control::label()
                 .with(TextAlign::Center)
+                .with(FontWeight::Normal)
                 .with(Bounds::next_vert(24.0))
                 .with(file.name.get())
                 .with((ActionTrigger::Click, format!("EditName-{}", index)))
