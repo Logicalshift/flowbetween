@@ -62,6 +62,28 @@ fn control_class(ctrl: &Control) -> &str {
     }
 }
 
+///
+/// Adds the subcomponents for a control to a DOM element
+///
+fn add_subcomponents(ctrl: &Control, dom_element: &mut DomNode, base_path: &str, controller_path: &str, subcomponent_path: &str) {
+    // By default, we just 
+    for attribute in ctrl.attributes() {
+        use ui::ControlAttribute::*;
+
+        match attribute {
+            &SubComponents(_) => {
+                // Subcomponents get the subcomponent controller path
+                dom_element.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
+            },
+            
+            _ => {
+                // Other attributes are for the current control so they keep the current controller path
+                dom_element.append_child_node(attribute.to_html_subcomponent(base_path, controller_path));
+            }
+        }
+    }
+}
+
 impl ToHtml for Control {
     fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode {
         // Start with the main element
@@ -77,20 +99,8 @@ impl ToHtml for Control {
         }
 
         // Add any subcomponents or text for this control
-        for attribute in self.attributes() {
-            use ui::ControlAttribute::*;
-
-            match attribute {
-                &SubComponents(_) => {
-                    // Subcomponents get the subcomponent controller path
-                    result.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
-                },
-                
-                _ => {
-                    // Other attributes are for the current control so they keep the current controller path
-                    result.append_child_node(attribute.to_html_subcomponent(base_path, controller_path));
-                }
-            }
+        match self.control_type() {
+            _ => add_subcomponents(self, &mut result, base_path, controller_path, subcomponent_path)
         }
 
         // Flatten to create a 'clean' DOM without collections or empty nodes
