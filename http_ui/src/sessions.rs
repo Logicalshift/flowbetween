@@ -36,7 +36,7 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
     /// 
     pub fn new_session(&self, controller: CoreController, base_path: &str) -> String {
         // Generate a session ID using the UUID library
-        let session_id          = Uuid::new_v4().simple().to_string();
+        let session_id          = Uuid::new_v4().to_simple().to_string();
 
         self.log.log((Level::Info, format!("Starting session ID {}", session_id)));
 

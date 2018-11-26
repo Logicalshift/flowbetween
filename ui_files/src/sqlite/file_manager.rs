@@ -175,7 +175,7 @@ impl FileManager for SqliteFileManager {
     /// 
     fn create_new_path(&self) -> PathBuf {
         // Generate a filename
-        let filename        = Uuid::new_v4().simple().to_string();
+        let filename        = Uuid::new_v4().to_simple().to_string();
         let mut full_path   = self.root_path.clone();
 
         full_path.push(DATA_DIR);

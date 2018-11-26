@@ -18,7 +18,7 @@ serde               = "^1.0.0"
 serde_json          = "^1.0.0"
 serde_derive        = "^1.0.0"
 svg                 = "^0.5.6"
-uuid                = { version = "^0.6", features = [ "v4" ] }
+uuid                = { version = "^0.7", features = [ "v4" ] }
 percent-encoding    = "^1.0.1"
 futures             = "^0.1.17"
 desync              = "0.2"
