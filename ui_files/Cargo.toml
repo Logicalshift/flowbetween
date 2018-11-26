@@ -15,7 +15,7 @@ flo_canvas  = { path = "../canvas", version = "^0.1.0" }
 flo_binding = { path = "../binding", version = "^0.1.0" }
 
 desync      = "0.2"
-rusqlite    = { version = "0.14", features = ["bundled"] }
+rusqlite    = { version = "0.15", features = ["bundled"] }
 dirs        = "1.0"
 uuid        = { version = "0.6", features = [ "v4" ] }
 lazy_static = "1.0"

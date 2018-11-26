@@ -130,7 +130,7 @@ impl FloSqlite {
     /// Creates a new animation database
     /// 
     pub fn new(sqlite: Connection) -> FloSqlite {
-        let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", &[], |row| row.get(0)).unwrap();
+        let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", NO_PARAMS, |row| row.get(0)).unwrap();
 
         FloSqlite {
             sqlite:         sqlite,
@@ -332,7 +332,7 @@ impl FloSqlite {
                 // If the value doesn't exist, try to insert it as a new value
                 Self::prepare(sqlite, FloStatement::InsertEnumValue)
                     .unwrap()
-                    .insert(&[&field, &field, &name, &String::from("")])
+                    .insert::<&[&dyn ToSql]>(&[&field, &field, &name, &String::from("")])
                     .unwrap();
                 
                 // Try again to fetch the row

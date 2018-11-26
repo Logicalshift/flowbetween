@@ -1,6 +1,7 @@
 use super::file_error::*;
 
 use rusqlite::*;
+use rusqlite::types::*;
 
 use std::result;
 use std::path::{Path, PathBuf};
@@ -86,7 +87,7 @@ impl FileList {
     fn version_number(connection: &Connection) -> Option<i64> {
         // Try to fetch from the version number table
         let version_number  = connection.prepare("SELECT MAX(VersionNumber) FROM Flo_Files_Version");
-        let version_number  = version_number.and_then(|mut version_number| version_number.query_row(&[], |row| row.get(0)));
+        let version_number  = version_number.and_then(|mut version_number| version_number.query_row(NO_PARAMS, |row| row.get(0)));
 
         if let Ok(version_number) = version_number {
             // Database has a version number in it
@@ -95,7 +96,7 @@ impl FileList {
             // V1 had no version number
             let all_files = connection.prepare("SELECT COUNT(*) FROM Flo_Files");
 
-            if all_files.and_then(|mut all_files| all_files.query_row::<i64, _>(&[], |row| row.get(0))).is_ok() {
+            if all_files.and_then(|mut all_files| all_files.query_row::<i64, _, _>(NO_PARAMS, |row| row.get(0))).is_ok() {
                 // V1
                 Some(1)
             } else {
@@ -169,7 +170,7 @@ impl FileList {
         let entity_id = Self::add_entity(&transaction)?;
 
         // Create the file
-        transaction.execute("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id])?;
+        transaction.execute::<&[&dyn ToSql]>("INSERT INTO Flo_Files (RelativePath, EntityId) VALUES (?, ?)", &[&path_string, &entity_id])?;
 
         // Make the file the first entity in the database
         Self::make_first_entity(&transaction, entity_id, ROOT_ENTITY)?;
@@ -353,7 +354,7 @@ impl FileList {
     pub fn set_display_name_for_path(&self, path: &Path, display_name: &str) -> result::Result<(), FileListError> {
         let path_string = Self::string_for_path(path);
 
-        self.connection.execute("UPDATE Flo_Files SET DisplayName = ? WHERE RelativePath = ?", &[&display_name, &path_string])?;
+        self.connection.execute::<&[&dyn ToSql]>("UPDATE Flo_Files SET DisplayName = ? WHERE RelativePath = ?", &[&display_name, &path_string])?;
 
         Ok(())
     }
