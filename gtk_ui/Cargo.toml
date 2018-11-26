@@ -19,7 +19,7 @@ gio                 = { version = "0.5", features = ["v2_34"] }
 glib                = "0.6"
 cairo-rs            = "0.5"
 gl                  = "0.11"
-epoxy               = "^0.0.4"
+epoxy               = "0.1"
 shared_library      = ""
 futures             = "^0.1.17"
 anymap              = "^0.12.1"
