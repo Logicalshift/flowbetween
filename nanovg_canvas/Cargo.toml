@@ -7,5 +7,5 @@ repository  = "https://github.com/Logicalshift/flowbetween"
 
 [dependencies]
 flo_canvas  = { version = "^0.1.0", path="../canvas" }
-nanovg      = { version = "^0.4.0" }
-gl          = "^0.10.0"
+nanovg      = { version = "1.0", features = ["gl3"] }
+gl          = "0.11"

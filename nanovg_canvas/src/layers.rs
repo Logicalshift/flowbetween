@@ -152,8 +152,8 @@ impl NanoVgLayers {
         // Replay them to a frame
         let frame_width     = (viewport.viewport_width as f32)/scale_factor;
         let frame_height    = (viewport.viewport_height as f32)/scale_factor;
-        let frame_width     = frame_width.floor() as i32;
-        let frame_height    = frame_height.floor() as i32;
+        let frame_width     = frame_width.floor();
+        let frame_height    = frame_height.floor();
 
         layer.context.frame((frame_width, frame_height), scale_factor, move |frame| {
             for action in actions {
