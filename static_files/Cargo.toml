@@ -9,4 +9,4 @@ description = "Static files for FlowBetween's HTTP UI"
 include     = [ "Cargo.toml", "src/**/*", "css/**/*", "fonts/**/*", "html/**/*", "js/**/*", "png/**/*", "svg/**/*" ]
 
 [dependencies]
-sha2        = "0.7"
+sha2        = "0.8"
