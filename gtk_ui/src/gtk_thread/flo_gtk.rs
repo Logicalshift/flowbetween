@@ -68,7 +68,7 @@ impl GtkMessageTarget {
     pub fn new() -> GtkMessageTarget {
         GtkMessageTarget {
             queue:          MessageQueue::new(),
-            target_context: glib::MainContext::default()
+            target_context: Some(glib::MainContext::default())
         }
     }
 

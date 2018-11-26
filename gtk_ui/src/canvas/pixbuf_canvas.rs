@@ -83,7 +83,7 @@ impl PixBufCanvas {
         surface_pattern.set_filter(cairo::Filter::Nearest);
 
         // Copy from the layer surface to our stored surface
-        stored_context.set_source(&surface_pattern);
+        stored_context.set_source(&Pattern::SurfacePattern(surface_pattern));
         stored_context.set_antialias(cairo::Antialias::None);
         stored_context.set_operator(cairo::Operator::Source);
         stored_context.paint();
@@ -108,7 +108,7 @@ impl PixBufCanvas {
                 let surface_pattern = cairo::SurfacePattern::create(&saved_layer);
                 surface_pattern.set_filter(cairo::Filter::Nearest);
 
-                layer_context.set_source(&surface_pattern);
+                layer_context.set_source(&Pattern::SurfacePattern(surface_pattern));
                 layer_context.set_antialias(cairo::Antialias::None);
                 layer_context.set_operator(cairo::Operator::Source);
                 layer_context.paint();
@@ -218,7 +218,7 @@ impl PixBufCanvas {
             layer_pattern.set_filter(cairo::Filter::Nearest);
 
             drawable.set_operator(cairo::Operator::Over);
-            drawable.set_source(&layer_pattern);
+            drawable.set_source(&Pattern::SurfacePattern(layer_pattern));
             drawable.paint();
         }
 
