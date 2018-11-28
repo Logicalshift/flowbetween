@@ -19,6 +19,9 @@ pub struct FileUiModel {
 
     /// The name of this file
     pub name: Binding<String>,
+
+    /// Whether or not this file is selected
+    pub selected: Binding<bool>
 }
 
 impl PartialEq for FileUiModel {
@@ -59,7 +62,10 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     pub dragging_offset: Binding<(f64, f64)>,
 
     /// The range of files to display
-    pub file_range: Binding<Range<u32>>
+    pub file_range: Binding<Range<u32>>,
+
+    /// True if any file has been selected
+    pub any_file_selected: BindRef<bool>
 }
 
 impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
@@ -74,6 +80,9 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         // Create the actual file list model
         let file_list           = Self::file_list(chooser.get_file_manager());
 
+        // ... and the value indicating if any file is selected
+        let any_file_selected   = Self::any_file_selected(file_list.clone());
+
         // Combine into the final file chooser model
         FileChooserModel {
             active_controller:      active_controller,
@@ -85,7 +94,8 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
             dragging_offset:        bind((0.0, 0.0)),
             open_file:              open_file,
             file_list:              file_list,
-            file_range:             bind(0..0)
+            file_range:             bind(0..0),
+            any_file_selected:      any_file_selected
         }
     }
 
@@ -96,8 +106,9 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         let name = file_manager.display_name_for_path(path).unwrap_or("Untitled".to_string());
 
         FileUiModel {
-            path: bind(PathBuf::from(path)),
-            name: bind(name)
+            path:       bind(PathBuf::from(path)),
+            name:       bind(name),
+            selected:   bind(false)
         }
     }
 
@@ -166,5 +177,18 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
 
         // Generate the final binding
         BindRef::from(files)
+    }
+
+    ///
+    /// Returns a binding that sets itself to true if any file is selected in the file list
+    ///
+    fn any_file_selected(file_list: BindRef<Vec<FileUiModel>>) -> BindRef<bool> {
+        let any_file_selected = computed(move || {
+            let file_list = file_list.get();
+
+            file_list.iter().any(|file| file.selected.get())
+        });
+
+        BindRef::from(any_file_selected)
     }
 }
