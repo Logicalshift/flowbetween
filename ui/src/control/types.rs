@@ -35,5 +35,8 @@ pub enum ControlType {
     Rotor,
 
     /// A single-line text editor
-    TextBox
+    TextBox,
+
+    /// A checkbox that can be turned on or off, with optional label
+    CheckBox
 }
