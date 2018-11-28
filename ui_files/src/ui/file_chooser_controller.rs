@@ -135,7 +135,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                     .with((ActionTrigger::Drag, format!("Drag-{}", index))),
                 Control::empty()
                     .with(Bounds::next_vert(2.0)),
-                label
+                label,
+                Control::check_box()
+                    .with(ControlAttribute::ZIndex(1))
+                    .with(Bounds { x1: Position::At(2.0), y1: Position::At(2.0), x2: Position::At(22.0), y2: Position::At(22.0) })
             ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
     }
