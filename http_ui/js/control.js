@@ -697,7 +697,7 @@ let flo_control = (function () {
     ///
     let load_textbox = (node, add_action_event, on_property_change) => {
         // Fetch the values of the attributes that can be set for the text box
-        var attributes      = node.flo.attributes;
+        let attributes      = node.flo.attributes;
         let controller_path = node.flo.controller;
 
         let initial_text    = attributes.get_attr('Text') || { 'String': '' };
@@ -773,11 +773,51 @@ let flo_control = (function () {
         node.flo_make_focused = () => { input.focus(); }
     };
 
+    ///
+    /// Sets up a control as a checkbox
+    ///
+    let load_checkbox = (node, add_action_event, on_property_change) => {
+        // Get the input element
+        let attributes              = node.flo.attributes;
+        let controller_path         = node.flo.controller;
+        let input                   = node.getElementsByTagName('input')[0];
+
+        // Fetch the value for the checkbox
+        let value                   = attributes.get_attr('Value') || { 'Bool': false };
+
+        // Bind the value to the checkbox
+        let remove_property_binding = on_property_change(controller_path, value, (new_value) => {
+            input.value = new_value ? true: false;
+        });
+
+        let previous_unbind = node.flo_unbind_viewmodel;
+        node.flo_unbind_viewmodel = () => {
+            remove_property_binding();
+            if (previous_unbind) {
+                previous_unbind();
+            }
+        };
+
+        // Create 'SetValue' events when the checkbox value changes
+        add_action_event(node, 'input', event => {
+            if (node.flo_set_value) {
+                node.flo_set_value({ 'Bool': input.value ? true : false });
+            }
+        });
+
+        add_action_event(node, 'focus', event => {
+            if (node.flo_was_focused) {
+                node.flo_was_focused();
+            }
+        });
+    };
+
     return {
         load_slider:            load_slider,
         load_rotor:             load_rotor,
         load_popup:             load_popup,
         load_textbox:           load_textbox,
+        load_checkbox:          load_checkbox,
         layout_popup:           layout_popup,
         on_drag:                on_drag,
         fix_scroll_positions:   fix_scroll_positions
