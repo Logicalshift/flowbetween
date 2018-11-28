@@ -117,7 +117,8 @@ impl ToGtkActions for Control {
             Canvas              => "flo-canvas",
             Slider              => "flo-slider",
             Rotor               => "flo-rotor",
-            TextBox             => "flo-textbox"
+            TextBox             => "flo-textbox",
+            CheckBox            => "flo-checkbox"
         };
 
         // Build into the 'create control' action
