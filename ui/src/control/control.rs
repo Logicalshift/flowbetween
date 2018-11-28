@@ -63,6 +63,11 @@ impl Control {
         Self::new(TextBox)
     }
 
+    /// Creates a new checkbox control
+    pub fn check_box() -> Control {
+        Self::new(CheckBox)
+    }
+
     /// Create a new empty control
     pub fn empty() -> Control {
         Self::new(Empty)
