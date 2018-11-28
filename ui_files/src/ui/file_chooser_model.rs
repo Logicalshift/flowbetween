@@ -44,7 +44,7 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     pub open_file: Binding<Option<PathBuf>>,
 
     /// The list of files to choose from
-    pub file_list: BindRef<Vec<FileUiModel>>,
+    pub file_list: BindRef<Arc<Vec<FileUiModel>>>,
 
     /// The index of the file whose name is being edited
     pub editing_filename_index: Binding<Option<usize>>,
@@ -115,7 +115,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
     ///
     /// Creates the file list binding from a file manager
     /// 
-    fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Vec<FileUiModel>> {
+    fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Arc<Vec<FileUiModel>>> {
         // Get all of the files from the file manager
         let files = file_manager.get_all_files();
         
@@ -123,10 +123,13 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         let files: Vec<_> = files.into_iter()
             .map(|path| Self::model_for_path(&file_manager, path.as_path()))
             .collect();
+        let files = Arc::new(files);
         
         // Bind to updates from the file manager
         let updates = file_manager.update_stream();
-        let files   = bind_stream(updates, files, move |mut files, update| {
+        let files   = bind_stream(updates, files, move |files, update| {
+            let mut files = (*files).clone();
+
             match update {
                 FileUpdate::NewFile(path) => {
                     files.insert(0, Self::model_for_path(&file_manager, path.as_path()))
@@ -172,7 +175,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
                 }
             }
             
-            files
+            Arc::new(files)
         });
 
         // Generate the final binding
@@ -182,7 +185,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
     ///
     /// Returns a binding that sets itself to true if any file is selected in the file list
     ///
-    fn any_file_selected(file_list: BindRef<Vec<FileUiModel>>) -> BindRef<bool> {
+    fn any_file_selected(file_list: BindRef<Arc<Vec<FileUiModel>>>) -> BindRef<bool> {
         let any_file_selected = computed(move || {
             let file_list = file_list.get();
 
