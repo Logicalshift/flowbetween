@@ -65,6 +65,19 @@ impl DynamicViewModel {
             computed.insert(String::from(property_name), new_binding);
         });
     }
+
+    ///
+    /// Returns true if the specified binding exists in this viewmodel
+    ///
+    pub fn has_binding(&self, property_name: &str) -> bool {
+        if self.bindings.lock().unwrap().contains_key(property_name) {
+            true
+        } else if self.computed.lock().unwrap().contains_key(property_name) {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl ViewModel for DynamicViewModel {
