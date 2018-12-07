@@ -10,11 +10,11 @@ include     = [ "sql/**/*" ]
 
 [dependencies]
 flo_ui      = { path = "../ui", version = "^0.1.0" }
-flo_stream  = { git = "https://github.com/Logicalshift/flo_stream", version = "^0.1.0" }
+flo_stream  = { git = "https://github.com/Logicalshift/flo_stream", version = "0.2" }
 flo_canvas  = { path = "../canvas", version = "^0.1.0" }
 flo_binding = { path = "../binding", version = "^0.1.0" }
 
-desync      = "0.2"
+desync      = "0.3"
 rusqlite    = { version = "0.15", features = ["bundled"] }
 dirs        = "1.0"
 uuid        = { version = "0.7", features = [ "v4" ] }

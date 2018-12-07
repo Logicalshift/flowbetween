@@ -7,8 +7,8 @@ repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Pubsub logging framework"
 
 [dependencies]
-flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "^0.1.0" }
-desync          = "0.2"
+flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "0.2" }
+desync          = "0.3"
 
 futures         = "0.1"
 lazy_static     = "1.0"
