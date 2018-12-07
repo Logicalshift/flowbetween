@@ -97,7 +97,6 @@ compile_error!("You must pick a UI implementation as a feature to compile FlowBe
 fn main() {
     // Set up logging
     send_logs_to(Box::new(pretty_env_logger::formatted_builder()
-        .unwrap()
         .filter_level(LevelFilter::Trace)
         .filter_module("mio", LevelFilter::Warn)
         .filter_module("tokio_reactor", LevelFilter::Warn)
