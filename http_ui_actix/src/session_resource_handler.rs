@@ -219,8 +219,8 @@ pub fn session_resource_handler<Session: 'static+ActixSession>() -> impl Handler
                 if let Some(session) = session {
                     // URL is in a valid format and the session could be found
                     match resource.resource_type {
-                        ResourceType::Image     => AsyncResult::async(Box::new(handle_image_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))),
-                        ResourceType::Canvas    => AsyncResult::async(Box::new(handle_canvas_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)))
+                        ResourceType::Image     => AsyncResult::future(Box::new(handle_image_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))),
+                        ResourceType::Canvas    => AsyncResult::future(Box::new(handle_canvas_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)))
                     }
                 } else {
                     // URL is in a valid format but the session could not be found

@@ -38,7 +38,7 @@ pub fn static_file_handler<TState>(static_files: StaticService) -> impl Handler<
                     .header(http::header::CACHE_CONTROL, "public, max-age=60")
                     .body(Vec::from(file.content()));
 
-                AsyncResult::async(Box::new(future::ok(found)))
+                AsyncResult::future(Box::new(future::ok(found)))
             } else if req.method() == &Method::HEAD {
                 // Just the headers
                 let found           = req.build_response(StatusCode::OK)
@@ -48,16 +48,16 @@ pub fn static_file_handler<TState>(static_files: StaticService) -> impl Handler<
                     .header(http::header::CACHE_CONTROL, "public, max-age=60")
                     .finish();
 
-                AsyncResult::async(Box::new(future::ok(found)))
+                AsyncResult::future(Box::new(future::ok(found)))
             } else {
                 // Unsupported method
                 let not_supported = future::ok(req.build_response(StatusCode::METHOD_NOT_ALLOWED).body("Method not allowed"));
-                AsyncResult::async(Box::new(not_supported))
+                AsyncResult::future(Box::new(not_supported))
             }
         } else {
             // File does not exist
             let not_found = future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"));
-            AsyncResult::async(Box::new(not_found))
+            AsyncResult::future(Box::new(not_found))
         }
     }
 }

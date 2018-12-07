@@ -155,7 +155,7 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
                     });
                 
                 // Request will be ready in the future
-                AsyncResult::async(Box::new(result))
+                AsyncResult::future(Box::new(result))
             },
 
             &Method::GET => {
@@ -171,7 +171,7 @@ pub fn session_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Sess
 
             _ => {
                 // Other requests are not supported
-                AsyncResult::async(Box::new(future::ok(req.build_response(StatusCode::METHOD_NOT_ALLOWED).body("Method not allowed"))))
+                AsyncResult::future(Box::new(future::ok(req.build_response(StatusCode::METHOD_NOT_ALLOWED).body("Method not allowed"))))
             }
         }
     }
