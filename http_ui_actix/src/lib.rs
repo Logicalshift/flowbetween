@@ -12,6 +12,7 @@ extern crate futures;
 extern crate bytes;
 #[macro_use] extern crate lazy_static;
 extern crate serde_json;
+extern crate percent_encoding;
 
 mod actix_session;
 mod session_handler;

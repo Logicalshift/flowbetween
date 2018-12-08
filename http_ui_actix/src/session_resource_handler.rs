@@ -14,6 +14,7 @@ use futures::*;
 use futures::future;
 use futures::stream;
 use bytes::Bytes;
+use percent_encoding::*;
 
 use std::str::*;
 use std::sync::*;
@@ -80,8 +81,14 @@ fn decode_url(path: &str) -> Option<ResourceUrl> {
     } else if let Some(resource_type) = ResourceType::from_path_element(components[1]) {
         // Enough components and we have a valid resource type
         let session_id      = components[0].to_string();
-        let controller_path = components[2..(components.len()-1)].iter().map(|element| element.to_string()).collect();
+        let controller_path = components[2..(components.len()-1)].iter().map(|element| element.to_string());
         let resource_name   = components[components.len()-1].to_string();
+
+        let controller_path = controller_path.map(|element| percent_decode(element.as_bytes())
+            .decode_utf8().ok()
+            .map(|decoded| String::from(decoded))
+            .unwrap_or_else(|| element.clone()));
+        let controller_path = controller_path.collect();
 
         Some(ResourceUrl {
             session_id,
@@ -103,9 +110,12 @@ where CoreUi: 'static+CoreUserInterface+Send+Sync {
     // Get the root controller
     let mut controller: Option<Arc<dyn Controller>> = Some(session.ui().controller());
 
+    if controller.is_none() { println!("Root controller missing"); }
+
     // Try to navigate each section of the path
     for controller_name in controller_path {
         controller = controller.and_then(|controller| controller.get_subcontroller(&controller_name));
+        if controller.is_none() { println!("Controller lookup failed at {:?}", controller_name); }
     }
 
     controller
