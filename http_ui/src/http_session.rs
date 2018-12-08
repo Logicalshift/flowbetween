@@ -6,6 +6,7 @@ use super::http_user_interface::*;
 
 use ui::*;
 use ui::session::*;
+use flo_logging::*;
 
 use futures::*;
 use futures::future;
@@ -17,6 +18,9 @@ use std::sync::*;
 /// Represents a session running on a HTTP connection 
 /// 
 pub struct HttpSession<CoreUi> {
+    /// The publisher for this session
+    log: LogPublisher,
+
     /// The core UI object
     http_ui: Arc<HttpUserInterface<CoreUi>>,
 
@@ -34,12 +38,21 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     pub fn new(http_ui: Arc<HttpUserInterface<CoreUi>>) -> HttpSession<CoreUi> {
         let input   = Box::new(future::ok(http_ui.get_input_sink()));
         let updates = Box::new(future::ok(http_ui.get_updates()));
+        let log     = LogPublisher::new(module_path!());
 
         HttpSession {
+            log:        log,
             http_ui:    http_ui,
             input:      input,
             updates:    updates
         }
+    }
+
+    ///
+    /// Retrieves the log for this session
+    ///
+    pub fn log(&self) -> &LogPublisher {
+        &self.log
     }
 
     ///

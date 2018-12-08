@@ -3,12 +3,14 @@
 extern crate flo_ui;
 extern crate flo_canvas;
 extern crate flo_http_ui;
+extern crate flo_logging;
 extern crate flo_static_files;
 
 extern crate actix;
 extern crate actix_web;
 extern crate futures;
 extern crate bytes;
+#[macro_use] extern crate lazy_static;
 extern crate serde_json;
 
 mod actix_session;

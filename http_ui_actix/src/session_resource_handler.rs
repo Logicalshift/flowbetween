@@ -4,6 +4,7 @@ use flo_ui::*;
 use flo_ui::session::*;
 use flo_canvas::*;
 use flo_http_ui::*;
+use flo_logging::*;
 
 use actix_web::*;
 use actix_web::Error;
@@ -18,6 +19,11 @@ use std::str::*;
 use std::sync::*;
 use std::io;
 use std::io::ErrorKind;
+
+lazy_static! {
+    /// The standard log for the resource handler
+    static ref RESOURCE_HANDLER_LOG: LogPublisher = LogPublisher::new(module_path!());
+}
 
 ///
 /// Types of resource that can be retrieved statically
@@ -110,7 +116,7 @@ where CoreUi: 'static+CoreUserInterface+Send+Sync {
 /// 
 fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
-    let controller = get_controller(session, controller_path);
+    let controller = get_controller(session, controller_path.clone());
 
     if let Some(controller) = controller {
         // Final component is the image name (or id)
@@ -142,10 +148,14 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, 
             }
         } else {
             // Image not found
+            session.log().log((Level::Warn, format!("Image `{}` not found", image_name)));
+
             future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
         }
     } else {
         // Controller not found
+        session.log().log((Level::Warn, format!("Controller `{:?}` not found while looking for an image", controller_path)));
+
         future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
     }
 }
@@ -155,7 +165,7 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, 
 /// 
 fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
-    let controller = get_controller(session, controller_path);
+    let controller = get_controller(session, controller_path.clone());
 
     if let Some(controller) = controller {
         // Final component is the canvas name
@@ -191,10 +201,14 @@ fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>,
                 .streaming(encoded_drawing))
         } else {
             // Canvas not found
+            session.log().log((Level::Warn, format!("Canvas `{}` not found", canvas_name)));
+
             future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
         }
     } else {
         // Controller not found
+        session.log().log((Level::Warn, format!("While searching for a canvas: controller `{:?}` not found", controller_path)));
+
         future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
     }
 }
@@ -224,14 +238,20 @@ pub fn session_resource_handler<Session: 'static+ActixSession>() -> impl Handler
                     }
                 } else {
                     // URL is in a valid format but the session could not be found
+                    RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Session `{}` not found", resource.session_id)));
+
                     AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
                 }
             } else {
                 // Resource URL was not in the expected format
+                RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Path `{}` was not in the expected format", path)));
+
                 AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
             }
         } else {
             // No tail path was supplied (likely this handler is being called from the wrong place)
+            RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Missing tail path")));
+
             AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
         }
     }

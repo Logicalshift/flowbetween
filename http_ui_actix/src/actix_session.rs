@@ -1,6 +1,7 @@
 use flo_ui::*;
 use flo_ui::session::*;
 use flo_http_ui::*;
+use flo_logging::*;
 
 use std::sync::*;
 
@@ -23,6 +24,11 @@ pub trait ActixSession {
     /// Retrieves the session with the specified ID, if present
     /// 
     fn get_session(&self, session_id: &str) -> Option<Arc<Mutex<HttpSession<Self::CoreUi>>>>;
+
+    ///
+    /// Retrieves the log for this session
+    ///
+    fn get_log(&self) -> &LogPublisher;
 }
 
 impl<CoreController: HttpController+Controller+'static> ActixSession for WebSessions<CoreController> {
@@ -43,5 +49,12 @@ impl<CoreController: HttpController+Controller+'static> ActixSession for WebSess
     #[inline]
     fn get_session(&self, session_id: &str) -> Option<Arc<Mutex<HttpSession<Self::CoreUi>>>> {
         WebSessions::<CoreController>::get_session(self, session_id)
+    }
+
+    ///
+    /// Retrieves the log for this session
+    ///
+    fn get_log(&self) -> &LogPublisher {
+        WebSessions::<CoreController>::get_log(self)
     }
 }

@@ -41,7 +41,7 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
         self.log.log((Level::Info, format!("Starting session ID {}", session_id)));
 
         // Produce the URI for this session
-        let session_uri         = format!("{}/{}", base_path, session_id);
+        let session_uri     = format!("{}/{}", base_path, session_id);
 
         // Generate the varioud components of the session
         let ui_session      = UiSession::new(controller);
@@ -60,5 +60,13 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
     /// 
     pub fn get_session(&self, session_id: &str) -> Option<Arc<Mutex<HttpSession<UiSession<CoreController>>>>> {
         self.sessions.lock().unwrap().get(session_id).cloned()
+    }
+
+
+    ///
+    /// Retrieves the log for this session
+    ///
+    pub fn get_log(&self) -> &LogPublisher {
+        &self.log
     }
 }
