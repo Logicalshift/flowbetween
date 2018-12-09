@@ -545,6 +545,25 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 self.model.confirming_deletion.set(true);
             },
 
+            ("DeleteSelectedFiles", _) => {
+                if self.model.confirming_deletion.get() == true {
+                    // Event arrived when the model was set up as expected
+                    self.model.confirming_deletion.set(false);
+
+                    // Send delete messages for all selected files
+                    let selected_paths = self.model.file_list.get()
+                        .iter()
+                        .filter(|file_model| file_model.selected.get())
+                        .map(|file_model| file_model.path.get())
+                        .collect::<Vec<_>>();
+
+                    selected_paths.into_iter()
+                        .for_each(|path_to_delete| {
+                            self.file_manager.delete_path(path_to_delete.as_path());
+                        });
+                }
+            },
+
             ("DismissDeleteSelectedFiles", _) => {
                 self.model.confirming_deletion.set(false);
             },
