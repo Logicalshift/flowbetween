@@ -777,7 +777,7 @@ let flo_control = (function () {
     ///
     /// Sets up a control as a checkbox
     ///
-    let load_checkbox = (node, add_action_event, on_property_change) => {
+    let load_checkbox = (node, add_action_event) => {
         // Get the input element
         let attributes              = node.flo.attributes;
         let controller_path         = node.flo.controller;
@@ -787,18 +787,16 @@ let flo_control = (function () {
         let value                   = attributes.get_attr('Value') || { 'Bool': false };
 
         // Bind the value to the checkbox
-        let remove_property_binding = on_property_change(controller_path, value, (new_value) => {
-            input.checked = new_value['Bool'] ? true: false;
-            return true;
-        });
-
-        let previous_unbind = node.flo_unbind_viewmodel;
-        node.flo_unbind_viewmodel = () => {
-            remove_property_binding();
-            if (previous_unbind) {
-                previous_unbind();
+        node.flo_bind_viewmodel = (node, attribute, controller_path, on_property_change) => {
+            if (attribute['Value']) {
+                return on_property_change(controller_path, value, (new_value) => {
+                    input.checked = new_value['Bool'] ? true: false;
+                    return true;
+                });
+            } else {
+                return null;
             }
-        };
+        }
 
         // Create 'SetValue' events when the checkbox value changes
         add_action_event(node, 'input', event => {

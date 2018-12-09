@@ -1279,7 +1279,11 @@ function flowbetween(root_node) {
     let bind_viewmodel_attribute = (node, attribute, controller_path) => {
         let remove_action = null;
 
-        if (attribute['Selected']) {
+        let node_binding = node.flo_bind_viewmodel;
+        if (node_binding && (remove_action = node_binding(node, attribute, controller_path, on_property_change))) {
+            // Custom controls might have their own binding, which they can set up by adding a flo_bind_viewmodel attribute to the binding
+
+        } else if (attribute['Selected']) {
             // The selected property updates the node class
             remove_action = on_property_change(controller_path, attribute['Selected'], is_selected => {
                 if (is_selected['Bool']) {
