@@ -1328,6 +1328,13 @@ function flowbetween(root_node) {
                 return true;
             });
 
+        } else if (attribute['Text']) {
+            // Value just updates the flo_text property
+            remove_action = on_property_change(controller_path, attribute['Text'], new_value => {
+                node.flo_text = new_value;
+                return true;
+            });
+
         } else if (attribute['Range']) {
             // Range updates the min value and max value properties
             let remove_action1 = on_property_change(controller_path, attribute['Range'][0], new_value => {

@@ -697,28 +697,28 @@ let flo_control = (function () {
     ///
     let load_textbox = (node, add_action_event, on_property_change) => {
         // Fetch the values of the attributes that can be set for the text box
-        let attributes      = node.flo.attributes;
-        let controller_path = node.flo.controller;
-
-        let initial_text    = attributes.get_attr('Text') || { 'String': '' };
+        let flo_text        = node.flo_text || { 'String': '' };
         let font_size       = node.getAttribute('flo-text-size') || null;
         let font_weight     = node.getAttribute('flo-text-weight') || null;
         let align           = node.getAttribute('flo-text-align') || null;
 
         // Set the initial text value
         let input           = node.getElementsByTagName('input')[0];
-        let remove_action   = on_property_change(controller_path, initial_text, (value) => {
-            input.value = value['String'] || '';
-            return true;
-        });
-
-        let previous_unbind = node.flo_unbind_viewmodel;
-        node.flo_unbind_viewmodel = () => {
-            remove_action();
-            if (previous_unbind) {
-                previous_unbind();
-            }
+        let update_text     = (new_text_property) => {
+            input.value = new_text_property['String'] || '';
         };
+
+        update_text(flo_text);
+
+        Object.defineProperty(node, 'flo_text', {
+            get: () => flo_text,
+            set: new_value => {
+                if (new_value !== flo_text) {
+                    flo_text = new_value;
+                    update_text(new_value);
+                }
+            }
+        });
 
         // Update the style attributes
         let style           = '';
