@@ -404,8 +404,7 @@ function flowbetween(root_node) {
                     // add_action_event is an important one if they want to set up event handlers
                     // action events added during load are 'intrinsic' and stick around
                     let flowbetween = {
-                        add_action_event:   add_intrinsic_action_event,
-                        on_property_change: on_property_change
+                        add_action_event:   add_intrinsic_action_event
                     };
                     load_node.apply(node, [flowbetween]);
                 }
