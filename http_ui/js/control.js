@@ -800,7 +800,7 @@ let flo_control = (function () {
         });
 
         // Create 'SetValue' events when the checkbox value changes
-        add_action_event(node, 'input', event => {
+        add_action_event(input, 'change', event => {
             if (node.flo_set_value) {
                 node.flo_set_value({ 'Bool': input.checked ? true : false });
             }
