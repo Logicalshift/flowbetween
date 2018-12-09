@@ -194,6 +194,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         let drag_after_index        = model.drag_after_index.clone();
         let editing_filename_index  = model.editing_filename_index.clone();
         let selected_file_count     = model.selected_file_count.clone();
+        let confirming_deletion     = model.confirming_deletion.clone();
 
         // Generate the UI
         let ui = computed(move || {
@@ -302,7 +303,8 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 }
 
                 // If any files are selected, we display a set of selected file controls
-                let selected_file_count    = selected_file_count.get();
+                let selected_file_count = selected_file_count.get();
+                let confirming_deletion = confirming_deletion.get();
                 let selected_file_controls = if selected_file_count > 0 {
                     // Some files are selected: display the controls
                     vec![
@@ -327,15 +329,27 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                 Control::empty()
                                     .with(Bounds::next_vert(8.0)),
 
-                                Control::button()
-                                    .with(Bounds::next_vert(32.0))
-                                    .with(vec![Control::label()
-                                        .with(Bounds::fill_all())
-                                        .with(TextAlign::Center)
-                                        .with(&format!("Delete {} selected file{}", selected_file_count, if selected_file_count == 1 { "" } else { "s" }))
-                                    ])
-                                    .with((ActionTrigger::Click, "DeleteSelectedFiles"))
-                                    .with(Appearance::Background(Color::Rgba(1.0, 0.0, 0.0, 0.3)))
+                                if confirming_deletion {
+                                    Control::button()
+                                        .with(Bounds::next_vert(32.0))
+                                        .with(vec![Control::label()
+                                            .with(Bounds::fill_all())
+                                            .with(TextAlign::Center)
+                                            .with(&format!("Confirm: delete {} file{}!", selected_file_count, if selected_file_count == 1 { "" } else { "s" }))
+                                        ])
+                                        .with((ActionTrigger::Click, "DeleteSelectedFiles"))
+                                        .with((ActionTrigger::Dismiss, "DismissDeleteSelectedFiles"))
+                                        .with(Appearance::Background(Color::Rgba(1.0, 0.0, 0.0, 0.3)))
+                                } else {
+                                    Control::button()
+                                        .with(Bounds::next_vert(32.0))
+                                        .with(vec![Control::label()
+                                            .with(Bounds::fill_all())
+                                            .with(TextAlign::Center)
+                                            .with(&format!("Delete {} selected file{}", selected_file_count, if selected_file_count == 1 { "" } else { "s" }))
+                                        ])
+                                        .with((ActionTrigger::Click, "ConfirmDeleteSelectedFiles"))
+                                    }
                             ])
                             .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.0, 0.3)))
                             .with(Scroll::Fix(FixedAxis::Vertical))
@@ -518,6 +532,21 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 // Edit the name
                 self.model.edited_filename.set(new_name);
                 self.model.editing_filename_index.set(Some(0));
+            },
+
+            ("ClearSelection", _) => {
+                self.model.confirming_deletion.set(false);
+                self.model.file_list.get()
+                    .iter()
+                    .for_each(|file_model| file_model.selected.set(false));
+            },
+
+            ("ConfirmDeleteSelectedFiles", _) => {
+                self.model.confirming_deletion.set(true);
+            },
+
+            ("DismissDeleteSelectedFiles", _) => {
+                self.model.confirming_deletion.set(false);
             },
 
             ("CancelEditingFilename", _) => {

@@ -64,8 +64,11 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     /// The range of files to display
     pub file_range: Binding<Range<u32>>,
 
-    /// True if any file has been selected
-    pub selected_file_count: BindRef<usize>
+    /// The number of files that have been selected by the user
+    pub selected_file_count: BindRef<usize>,
+
+    /// True if we're confirming a deletion request
+    pub confirming_deletion: Binding<bool>
 }
 
 impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
@@ -95,7 +98,8 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
             open_file:              open_file,
             file_list:              file_list,
             file_range:             bind(0..0),
-            selected_file_count:    selected_file_count
+            selected_file_count:    selected_file_count,
+            confirming_deletion:    bind(false)
         }
     }
 
