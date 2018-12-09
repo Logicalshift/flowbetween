@@ -787,7 +787,7 @@ let flo_control = (function () {
 
         // Bind the value to the checkbox
         let remove_property_binding = on_property_change(controller_path, value, (new_value) => {
-            input.value = new_value ? true: false;
+            input.checked = new_value ? true: false;
         });
 
         let previous_unbind = node.flo_unbind_viewmodel;
@@ -801,7 +801,7 @@ let flo_control = (function () {
         // Create 'SetValue' events when the checkbox value changes
         add_action_event(node, 'input', event => {
             if (node.flo_set_value) {
-                node.flo_set_value({ 'Bool': input.value ? true : false });
+                node.flo_set_value({ 'Bool': input.checked ? true : false });
             }
         });
 

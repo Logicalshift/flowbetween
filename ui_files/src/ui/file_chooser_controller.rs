@@ -9,8 +9,6 @@ use flo_ui::*;
 use flo_canvas::*;
 use flo_binding::*;
 
-use desync::*;
-
 use std::sync::*;
 use std::path::Path;
 use std::collections::HashSet;
