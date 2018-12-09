@@ -88,7 +88,7 @@ fn get_full_ui_tree(base_controller: &Arc<dyn Controller>) -> Control {
 /// path through the controllers that will supply the controller that
 /// owns that node.
 /// 
-pub fn controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>) -> Vec<&'a str> {
+pub fn controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>) -> Option<Vec<&'a str>> {
     let mut result          = vec![];
     let mut current_node    = ui_tree;
 
@@ -100,11 +100,17 @@ pub fn controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>)
 
         // Move to the next node along this address
         if let Some(subcomponents) = current_node.subcomponents() {
-            current_node = &subcomponents[*index as usize];
+            if (*index as usize) < subcomponents.len() {
+                current_node = &subcomponents[*index as usize];
+            } else {
+                return None;
+            }
+        } else {
+            return None;
         }
     }
 
-    result
+    Some(result)
 }
 
 ///

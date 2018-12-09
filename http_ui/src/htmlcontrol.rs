@@ -36,9 +36,11 @@ pub fn append_component_to_controller_path<'a>(controller_path: &str, subcontrol
 /// Given a UI tree and an address, returns the controller path for that component
 /// 
 pub fn html_controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>) -> String {
-    let controller_path = controller_path_for_address(ui_tree, address);
-
-    controller_path.iter().fold(String::new(), |path, &component| append_component_to_controller_path(&path, component))
+    if let Some(controller_path) = controller_path_for_address(ui_tree, address) {
+        controller_path.iter().fold(String::new(), |path, &component| append_component_to_controller_path(&path, component))
+    } else {
+        "%20MISSING_CONTROLLER%20".to_string()
+    }
 }
 
 ///
