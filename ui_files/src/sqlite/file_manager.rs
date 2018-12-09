@@ -22,10 +22,7 @@ const FILES_DB: &str = "files.db";
 const DATA_DIR: &str = "data";
 
 lazy_static! {
-    // Prevents multiple threads from trying to create the database all at the same time
-    static ref CREATING_DATABASE: Desync<()> = Desync::new(());
-
-    // Exising file manager cores for particular application paths
+    // Exising file manager cores for particular application paths (and ensures only one can be being created at once)
     static ref FILE_CORES: Desync<HashMap<(String, String), Arc<Desync<SqliteFileManagerCore>>>> = Desync::new(HashMap::new());
 }
 
@@ -69,47 +66,45 @@ impl SqliteFileManager {
     /// Creates a new file manager core
     ///
     fn new_core(application_path: &str, sub_path: &str) -> Arc<Desync<SqliteFileManagerCore>> {
-        CREATING_DATABASE.sync(|_| {
-            let log         = LogPublisher::new(module_path!());
+        let log         = LogPublisher::new(module_path!());
 
-            // This will be the 'root' data directory for the user
-            let mut root_path = dirs::data_local_dir()
-                .or_else(|| dirs::data_dir())
-                .unwrap();
+        // This will be the 'root' data directory for the user
+        let mut root_path = dirs::data_local_dir()
+            .or_else(|| dirs::data_dir())
+            .unwrap();
 
-            // Append the path components
-            root_path.push(application_path);
-            root_path.push(sub_path);
+        // Append the path components
+        root_path.push(application_path);
+        root_path.push(sub_path);
 
-            // Create the data directory if it does not exist
-            fs::create_dir_all(root_path.as_path()).unwrap();
+        // Create the data directory if it does not exist
+        fs::create_dir_all(root_path.as_path()).unwrap();
 
-            // Create the subdirectories too
-            let mut data_dir = root_path.clone();
-            data_dir.push(DATA_DIR);
-            fs::create_dir_all(data_dir.as_path()).unwrap();
+        // Create the subdirectories too
+        let mut data_dir = root_path.clone();
+        data_dir.push(DATA_DIR);
+        fs::create_dir_all(data_dir.as_path()).unwrap();
 
-            log.log((Level::Info, format!("Using data directory at `{}`", data_dir.to_str().unwrap_or("<Missing path>"))));
+        log.log((Level::Info, format!("Using data directory at `{}`", data_dir.to_str().unwrap_or("<Missing path>"))));
 
-            // Check for the file list database file
-            let mut database_file = root_path.clone();
-            database_file.push(FILES_DB);
+        // Check for the file list database file
+        let mut database_file = root_path.clone();
+        database_file.push(FILES_DB);
 
-            // Connect to the Sqlite database
-            let database_connection     = Connection::open(database_file.as_path()).unwrap();
-            let file_list               = FileList::new(database_connection).unwrap();
+        // Connect to the Sqlite database
+        let database_connection     = Connection::open(database_file.as_path()).unwrap();
+        let file_list               = FileList::new(database_connection).unwrap();
 
-            // Create the update publisher
-            let update_publisher = Publisher::new(100);
-            let update_publisher = executor::spawn(update_publisher);
+        // Create the update publisher
+        let update_publisher = Publisher::new(100);
+        let update_publisher = executor::spawn(update_publisher);
 
-            Arc::new(Desync::new(SqliteFileManagerCore {
-                file_list:  file_list,
-                root_path:  root_path,
-                updates:    update_publisher,
-                log:        log    
-            }))
-        })
+        Arc::new(Desync::new(SqliteFileManagerCore {
+            file_list:  file_list,
+            root_path:  root_path,
+            updates:    update_publisher,
+            log:        log    
+        }))
     }
 
     ///
