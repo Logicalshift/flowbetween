@@ -19,5 +19,5 @@ desync      = "0.3"
 rusqlite    = { version = "0.15", features = ["bundled"] }
 dirs        = "1.0"
 uuid        = { version = "0.7", features = [ "v4" ] }
-lazy_static = "1.0"
+lazy_static = "1.2"
 futures     = "0.1"

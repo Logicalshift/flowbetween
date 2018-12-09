@@ -16,6 +16,7 @@ use futures::executor::Spawn;
 use std::fs;
 use std::sync::*;
 use std::path::{Path, PathBuf};
+use std::collections::HashMap;
 
 const FILES_DB: &str = "files.db";
 const DATA_DIR: &str = "data";
@@ -23,6 +24,9 @@ const DATA_DIR: &str = "data";
 lazy_static! {
     // Prevents multiple threads from trying to create the database all at the same time
     static ref CREATING_DATABASE: Mutex<()> = Mutex::new(());
+
+    // Exising file manager cores for particular application paths
+    static ref FILE_CORES: Mutex<HashMap<(String, String), Arc<Desync<SqliteFileManagerCore>>>> = Mutex::new(HashMap::new());
 }
 
 struct SqliteFileManagerCore {
@@ -114,8 +118,11 @@ impl SqliteFileManager {
     /// scenarios we usually set this to `"default"`.
     /// 
     pub fn new(application_path: &str, sub_path: &str) -> SqliteFileManager {
-        // Create the core
-        let core        = Self::new_core(application_path, sub_path);
+        // Create the core, or use an existing one if there is one
+        let core = FILE_CORES.lock().unwrap()
+            .entry((String::from(application_path), String::from(sub_path)))
+            .or_insert_with(|| Self::new_core(application_path, sub_path))
+            .clone();
 
         // Fetch information from it
         let root_path   = core.sync(|core| core.root_path.clone());
