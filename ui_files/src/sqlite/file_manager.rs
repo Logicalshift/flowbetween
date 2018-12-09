@@ -254,13 +254,13 @@ impl FileManager for SqliteFileManager {
     ///
     /// Removes a path from this manager and deletes the file that was found there
     ///
-    fn delete_path(&self, path: &Path) {
+    fn delete_path(&self, full_path: &Path) {
         // Look up the path that we want to delete
-        let path = self.file_list_path(path);
+        let path = self.file_list_path(full_path);
 
         if let Some(path) = path {
             // Start deleting it if we find it
-            let update = FileUpdate::RemovedFile(PathBuf::from(path));
+            let update = FileUpdate::RemovedFile(PathBuf::from(full_path));
 
             self.core.desync(move |core| {
                 // Delete from the file list
