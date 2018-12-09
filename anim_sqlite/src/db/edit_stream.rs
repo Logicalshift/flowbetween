@@ -229,7 +229,7 @@ impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
                 let range = range.clone();
                 
                 buffer.filling = true;
-                self.core.async(move |core| {
+                self.core.desync(move |core| {
                     EditStreamBuffer::fill(&*buffer_ref, core, range, None);
                 });
             }
@@ -245,7 +245,7 @@ impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
             let task    = task::current();
 
             buffer.filling = true;
-            self.core.async(move |core| {
+            self.core.desync(move |core| {
                 EditStreamBuffer::fill(&*buffer_ref, core, range, Some(task));
             });
 

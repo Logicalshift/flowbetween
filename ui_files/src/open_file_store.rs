@@ -55,7 +55,7 @@ impl<Model: 'static+FileModel> OpenFileStore<Model> {
         let path = PathBuf::from(path);
 
         // Remove the shared data from the core if the reference count gets low enough
-        self.core.async(move |core| {
+        self.core.desync(move |core| {
             let ref_count = core.open_files.get(&path).map(|reference| Arc::strong_count(reference)).unwrap_or(0);
 
             if ref_count == 1 {

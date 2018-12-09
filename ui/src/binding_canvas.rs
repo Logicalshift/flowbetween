@@ -114,7 +114,7 @@ impl Notifiable for CoreNotifiable {
     fn mark_as_changed(&self) {
         // If the reference is still active, reconstitute the core and set it to invalid
         if let Some(to_notify) = self.0.upgrade() {
-            to_notify.async(|core| {
+            to_notify.desync(|core| {
                 core.invalidated = true
             });
         }
@@ -165,7 +165,7 @@ impl BindingCanvas {
     /// setting a drawing function will invalidate the canvas.
     /// 
     pub fn on_redraw<DrawingFn: 'static+Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) {
-        self.core.async(move |core| {
+        self.core.desync(move |core| {
             core.done_with_notifications();
 
             core.invalidated    = true;
@@ -185,7 +185,7 @@ impl BindingCanvas {
     /// Marks this canvas as invalidated (will be redrawn on the next request)
     /// 
     pub fn invalidate(&self) {
-        self.core.async(|core| core.invalidated = true);
+        self.core.desync(|core| core.invalidated = true);
     }
 }
 

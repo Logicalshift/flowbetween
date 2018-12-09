@@ -107,7 +107,7 @@ impl GtkThread {
     /// 
     pub fn perform_actions(&self, actions: Vec<GtkAction>) {
         if actions.len() > 0 {
-            self.message_target.async(|flo_gtk| {
+            self.message_target.desync(|flo_gtk| {
                 // Run all of the actions
                 for action in actions {
                     run_action(flo_gtk, &action)
@@ -130,7 +130,7 @@ impl GtkThread {
 impl Drop for GtkThread {
     fn drop(&mut self) {
         // When a GtkThread is dropped, tell GTK to shut down
-        self.message_target.async(|_gtk| gtk::main_quit());
+        self.message_target.desync(|_gtk| gtk::main_quit());
 
         // Wait for the thread to finish before the object is truely dropped
         self.running_thread.take().map(|running_thread| running_thread.join());

@@ -108,7 +108,7 @@ impl GtkMessageTarget {
         let gtk_result = our_result.clone(); 
 
         // Dispatch the task to the gtk thread
-        self.async(move |gtk| { 
+        self.desync(move |gtk| { 
             // Fetch the result from the function
             let result = action(gtk);
 

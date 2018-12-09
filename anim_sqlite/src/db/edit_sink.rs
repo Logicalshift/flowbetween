@@ -54,7 +54,7 @@ impl<TFile: FloFile+Send+'static> EditSink<TFile> {
         let core = Arc::clone(&self.core);
 
         // Queue a dequeue operation on the database
-        self.db.async(move |db| {
+        self.db.desync(move |db| {
             // Pop the next set of edits
             if let Some(edits) = core.lock().unwrap().pending.pop_front() {
                 // Apply element IDs to the edits

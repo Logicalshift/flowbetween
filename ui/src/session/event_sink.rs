@@ -66,7 +66,7 @@ impl Sink for UiEventSink {
                 // Setting the 'waiting for events' causes poll_complete to indicate that we're still busy
                 *waiting_for_events.lock().unwrap() = true;
 
-                self.core.async(move |core| {
+                self.core.desync(move |core| {
                     // Fetch the pending events (only hold the lock long enough to swap them out)
                     let mut events      = vec![];
                     {
@@ -102,7 +102,7 @@ impl Sink for UiEventSink {
         } else {
             // Generate a task and defer until the core is available again
             let task = task::current();
-            self.core.async(move |_| {
+            self.core.desync(move |_| {
                 // The event we were expecting will be retired at this point, so signal the task
                 // New events might be present so the next poll might also be not ready
                 task.notify();

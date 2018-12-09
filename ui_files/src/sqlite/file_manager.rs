@@ -186,7 +186,7 @@ impl FileManager for SqliteFileManager {
         // Add to the database
         let mut filename_buf = PathBuf::new();
         filename_buf.push(filename);
-        self.core.async(move |core| {
+        self.core.desync(move |core| {
             core.file_list.add_path(filename_buf.as_path()).unwrap();
             core.send_update(update);
         });
@@ -212,7 +212,7 @@ impl FileManager for SqliteFileManager {
         let update  = FileUpdate::ChangedOrder(path.clone(), after.clone());
 
         // Update the file list
-        self.core.async(move |core| {
+        self.core.desync(move |core| {
             let after = after.as_ref();
             let after = after.map(|after| after.as_path());
             core.file_list.order_path_after(path.as_path(), after).unwrap();
@@ -232,7 +232,7 @@ impl FileManager for SqliteFileManager {
         if let Some(path) = path {
             let update = FileUpdate::SetDisplayName(PathBuf::from(full_path), display_name.clone());
 
-            self.core.async(move |core| {
+            self.core.desync(move |core| {
                 core.file_list.set_display_name_for_path(path.as_path(), &display_name).unwrap();
                 core.send_update(update);
             });

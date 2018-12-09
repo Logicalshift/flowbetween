@@ -53,7 +53,7 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
         core.sync(move |core| {
             let ui = core.ui_tree();
 
-            ui.when_changed(notify(move || update_core.async(|core| core.wake_for_updates())))
+            ui.when_changed(notify(move || update_core.desync(|core| core.wake_for_updates())))
         })
     }
 }

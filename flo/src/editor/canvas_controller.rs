@@ -139,7 +139,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         let invalidate_count    = self.anim_model.timeline().canvas_invalidation_count.get();
 
         // Update the layers in the core
-        self.core.async(move |core| {
+        self.core.desync(move |core| {
             // Update the time set in the core
             core.current_time               = time;
             core.current_invalidation_count = invalidate_count;

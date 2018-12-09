@@ -80,12 +80,12 @@ impl UiUpdateStream {
     /// Sets up the stream core with its initial state
     /// 
     fn initialise_core(session_core: Arc<Desync<UiSessionCore>>, stream_core: Arc<Desync<UpdateStreamCore>>) {
-        session_core.async(move |session_core| {
+        session_core.desync(move |session_core| {
             // Need the UI binding from the core
             let ui_binding = session_core.ui_tree();
 
             // Set up the core with its initial state
-            stream_core.async(move |stream_core| {
+            stream_core.desync(move |stream_core| {
                 stream_core.setup_state(&ui_binding);
             })
         })
@@ -99,11 +99,11 @@ impl UiUpdateStream {
         let stream_core     = Arc::clone(&self.stream_core);
         let pending         = Arc::clone(&self.pending);
 
-        session_core.async(move |session_core| {
+        session_core.desync(move |session_core| {
             let update_id  = session_core.last_update_id();
             let ui_binding = session_core.ui_tree();
 
-            stream_core.async(move |stream_core| {
+            stream_core.desync(move |stream_core| {
                 // Get the initial UI tree
                 let ui_tree = ui_binding.get();
 
@@ -206,7 +206,7 @@ impl Stream for UiUpdateStream {
             let update_pending      = Arc::clone(&self.pending);
             let update_stream_core  = Arc::clone(&self.stream_core);
 
-            session_core.async(move |session_core| {
+            session_core.desync(move |session_core| {
                 stream_core.sync(move |stream_core| {
                     let mut pending = pending.lock().unwrap();
 
@@ -227,7 +227,7 @@ impl Stream for UiUpdateStream {
                         session_core.on_next_update(move |session_core| {
                             let this_update_id = session_core.last_update_id();
 
-                            update_stream_core.async(move |stream_core| stream_core.finish_update(&ui_binding, this_update_id, update_pending));
+                            update_stream_core.desync(move |stream_core| stream_core.finish_update(&ui_binding, this_update_id, update_pending));
                         });
                     }
                 });

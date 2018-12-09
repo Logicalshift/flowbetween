@@ -208,7 +208,7 @@ impl CanvasState {
         // Mark the core as changed whenever the controls change
         let watch_core              = core.clone();
         let control_watch_lifetime  = core.sync(move |core| {
-            core.root_control.when_changed(notify(move || watch_core.async(|core| core.controls_updated = true)))
+            core.root_control.when_changed(notify(move || watch_core.desync(|core| core.controls_updated = true)))
         });
 
         // State is just a wrapper for the core

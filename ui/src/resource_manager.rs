@@ -224,7 +224,7 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
 
             // Clean out expired resources the core has grown to a certain size
             if core.resources.len() >= core.clean_size {
-                self.core.async(|core| core.clean_resources());
+                self.core.desync(|core| core.clean_resources());
             }
 
             resource
@@ -267,7 +267,7 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
         let name_string = String::from(name);
 
         // Store the name in the core
-        self.core.async(move |core| {
+        self.core.desync(move |core| {
             // Remove the name from the previous owner
             {
                 let previous_owner = core.named_resources.get(&name_string);
