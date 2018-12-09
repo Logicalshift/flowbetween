@@ -108,7 +108,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         FileUiModel {
             path:       bind(PathBuf::from(path)),
             name:       bind(name),
-            selected:   bind(true)
+            selected:   bind(false)
         }
     }
 
