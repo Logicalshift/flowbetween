@@ -1,6 +1,21 @@
+use super::property::*;
+
 use binding::*;
 
-use super::property::*;
+use futures::*;
+use futures::stream;
+
+///
+/// Specifies a change to a viewmodel
+///
+#[derive(Clone, PartialEq)]
+pub enum ViewModelChange {
+    /// A new property has been created
+    NewProperty(String, PropertyValue),
+
+    /// A property has been changed
+    PropertyChanged(String, PropertyValue),
+}
 
 ///
 /// Represents a viewmodel for a control subtree. ViewModels are
@@ -16,6 +31,9 @@ pub trait ViewModel {
 
     /// Retrieves the names of all of the properties in this item
     fn get_property_names(&self) -> Vec<String>;
+
+    /// Retrieves a stream of updates from this viewmodel
+    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>>;
 }
 
 pub struct NullViewModel {
@@ -38,5 +56,9 @@ impl ViewModel for NullViewModel {
 
     fn get_property_names(&self) -> Vec<String> {
         vec![]
+    }
+
+    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>> {
+        Box::new(stream::empty())
     }
 }

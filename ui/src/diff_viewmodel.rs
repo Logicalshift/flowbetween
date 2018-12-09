@@ -300,6 +300,8 @@ mod test {
     use super::super::property::*;
     use super::super::dynamic_viewmodel::*;
 
+    use futures::*;
+
     ///
     /// A controller that does nothing
     ///
@@ -543,6 +545,10 @@ mod test {
 
         fn get_property_names(&self) -> Vec<String> {
             vec![ "Test1".to_string(), "Test2".to_string(), "Test3".to_string() ]
+        }
+
+        fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>> {
+            unimplemented!()
         }
     }
     

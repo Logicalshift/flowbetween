@@ -777,6 +777,7 @@ dependencies = [
  "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
+ "flo_stream 0.2.1 (git+https://github.com/Logicalshift/flo_stream)",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.7.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -2,6 +2,7 @@
 
 extern crate flo_canvas as canvas;
 extern crate flo_binding as binding;
+extern crate flo_stream;
 
 #[macro_use]
 extern crate serde_derive;
