@@ -195,7 +195,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                         .with(Appearance::Background(TIMESCALE_BACKGROUND))
                         .with(Scroll::Fix(FixedAxis::Both))
                         .with(ControlAttribute::ZIndex(6)),
-                    Control::container()        // Layer list`
+                    Control::container()        // Layer list
                         .with(Bounds {
                             x1: Position::At(0.0),
                             x2: Position::At(LAYER_PANEL_WIDTH),
