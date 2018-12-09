@@ -709,6 +709,7 @@ let flo_control = (function () {
         let input           = node.getElementsByTagName('input')[0];
         let remove_action   = on_property_change(controller_path, initial_text, (value) => {
             input.value = value['String'] || '';
+            return true;
         });
 
         let previous_unbind = node.flo_unbind_viewmodel;
@@ -788,6 +789,7 @@ let flo_control = (function () {
         // Bind the value to the checkbox
         let remove_property_binding = on_property_change(controller_path, value, (new_value) => {
             input.checked = new_value['Bool'] ? true: false;
+            return true;
         });
 
         let previous_unbind = node.flo_unbind_viewmodel;
