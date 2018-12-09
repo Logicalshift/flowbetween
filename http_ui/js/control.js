@@ -779,24 +779,25 @@ let flo_control = (function () {
     ///
     let load_checkbox = (node, add_action_event) => {
         // Get the input element
-        let attributes              = node.flo.attributes;
-        let controller_path         = node.flo.controller;
-        let input                   = node.getElementsByTagName('input')[0];
+        let flo_value   = node.flo_value || { 'Bool': false };
+        let input       = node.getElementsByTagName('input')[0];
 
-        // Fetch the value for the checkbox
-        let value                   = attributes.get_attr('Value') || { 'Bool': false };
+        // Define a property to update the value of the textbox
+        let update_value = (new_property_value) => {
+            input.checked = new_property_value['Bool'] ? true : false;
+        };
 
-        // Bind the value to the checkbox
-        node.flo_bind_viewmodel = (node, attribute, controller_path, on_property_change) => {
-            if (attribute['Value']) {
-                return on_property_change(controller_path, value, (new_value) => {
-                    input.checked = new_value['Bool'] ? true: false;
-                    return true;
-                });
-            } else {
-                return null;
+        update_value(flo_value);
+
+        Object.defineProperty(node, 'flo_value', {
+            get: () => flo_value,
+            set: new_value => {
+                if (new_value !== flo_value) {
+                    flo_value = new_value;
+                    update_value(new_value);
+                }
             }
-        }
+        });
 
         // Create 'SetValue' events when the checkbox value changes
         add_action_event(node, 'input', event => {
