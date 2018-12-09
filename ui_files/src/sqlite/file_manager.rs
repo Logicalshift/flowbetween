@@ -318,6 +318,19 @@ mod test {
     }
 
     #[test]
+    fn remove_created_path() {
+        let test_files  = SqliteFileManager::new("app.flowbetween.test", "remove_created_path");
+        let num_files   = test_files.get_all_files().len();
+        let new_path    = test_files.create_new_path();
+
+        assert!(num_files+1 == test_files.get_all_files().len());
+
+        test_files.delete_path(new_path.as_path());
+
+        assert!(num_files == test_files.get_all_files().len());
+    }
+
+    #[test]
     fn retrieve_new_path_from_all_files() {
         let test_files  = SqliteFileManager::new("app.flowbetween.test", "retrieve_new_path_from_all_files");
         
