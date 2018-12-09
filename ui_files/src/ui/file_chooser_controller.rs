@@ -304,6 +304,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 // If any files are selected, we display a set of selected file controls
                 let selected_file_count    = selected_file_count.get();
                 let selected_file_controls = if selected_file_count > 0 {
+                    // Some files are selected: display the controls
                     vec![
                         Control::container()
                             .with(Bounds {
@@ -341,6 +342,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                             .with(ControlAttribute::ZIndex(5))
                     ]
                 } else {
+                    // The UI has no file selection controls
                     vec![]
                 };
                 
