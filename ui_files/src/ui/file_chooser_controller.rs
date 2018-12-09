@@ -77,7 +77,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
         // Create the UI
         let background_color    = bind(Color::Rgba(0.1, 0.1, 0.1, 1.0));
-        let ui                  = Self::ui(&model, BindRef::from(background_color.clone()));
+        let ui                  = Self::ui(&model, BindRef::from(background_color.clone()), Arc::clone(&viewmodel));
 
         // Create the task that keeps the viewmodel up to date with the file list
         let update_viewmodel    = Self::update_viewmodel(Arc::clone(&viewmodel), model.file_list.clone());
@@ -160,7 +160,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates a control representing a file
     /// 
-    fn file_ui(file: &FileUiModel, index: u32, editing_filename_index: BindRef<Option<usize>>) -> Control {
+    fn file_ui(file: &FileUiModel, index: u32, editing_filename_index: BindRef<Option<usize>>, viewmodel: Arc<DynamicViewModel>) -> Control {
         // If the user is editing the filename, then use a textbox instead of the label
         let label = if editing_filename_index.get() == Some(index as usize) {
             Control::container()
@@ -195,6 +195,9 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         let path        = file.path.get();
         let path_string = Self::string_for_path(path.as_path());
 
+        // Make sure the file is created in the viewmodel
+        Self::create_viewmodel_for_file(viewmodel, file);
+
         // Control consists of a panel showing a preview of the file and a label showing the 'filename'
         Control::container()
             .with(vec![
@@ -218,7 +221,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates the UI binding from the model
     /// 
-    fn ui(model: &FileChooserModel<Chooser>, background: BindRef<Color>) -> BindRef<Control> {
+    fn ui(model: &FileChooserModel<Chooser>, background: BindRef<Color>, viewmodel: Arc<DynamicViewModel>) -> BindRef<Control> {
         // Create references to the parts of the model we need
         let controller              = model.active_controller.clone();
         let file_list               = model.file_list.clone();
@@ -268,7 +271,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                     })
                                     .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.4, 0.1))),
 
-                                Self::file_ui(file_model, file_index, editing_filename_index)
+                                Self::file_ui(file_model, file_index, editing_filename_index, Arc::clone(&viewmodel))
                                     .with(Bounds { 
                                         x1: Position::Floating(Property::bound("DragX"), x), 
                                         y1: Position::Floating(Property::bound("DragY"), y), 
@@ -281,7 +284,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         } else if drag_after_index == Some((file_index as i64)-1) {
                             // Going to insert before this file
                             vec![
-                                Self::file_ui(file_model, file_index, editing_filename_index)
+                                Self::file_ui(file_model, file_index, editing_filename_index, Arc::clone(&viewmodel))
                                     .with(Bounds { 
                                         x1: Position::At(x), 
                                         y1: Position::At(y), 
@@ -302,7 +305,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         } else {
                             // File that is static and not being dragged
                             vec![
-                                Self::file_ui(file_model, file_index, editing_filename_index)
+                                Self::file_ui(file_model, file_index, editing_filename_index, Arc::clone(&viewmodel))
                                     .with(Bounds { 
                                         x1: Position::At(x), 
                                         y1: Position::At(y), 
