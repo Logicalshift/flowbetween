@@ -133,7 +133,7 @@ mod test {
 
     #[test]
     fn follow_stream_updates() {
-        let mut binding = bind(1);
+        let binding     = bind(1);
         let bind_ref    = BindRef::from(binding.clone());
         let mut stream  = executor::spawn(follow(bind_ref));
 
@@ -154,7 +154,7 @@ mod test {
 
     #[test]
     fn stream_is_immediate_ready_after_write() {
-        let mut binding = bind(1);
+        let binding     = bind(1);
         let bind_ref    = BindRef::from(binding.clone());
         let mut stream  = executor::spawn(follow(bind_ref));
 
@@ -165,7 +165,7 @@ mod test {
 
     #[test]
     fn will_wake_when_binding_is_updated() {
-        let mut binding = bind(1);
+        let binding     = bind(1);
         let bind_ref    = BindRef::from(binding.clone());
         let mut stream  = executor::spawn(follow(bind_ref));
 

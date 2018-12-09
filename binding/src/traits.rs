@@ -57,10 +57,13 @@ pub trait Bound<Value> : Changeable+Send+Sync {
 
 ///
 /// Trait implemented by something that is bound to a value that can be changed
+/// 
+/// Bindings are similar in behaviour to Arc<Mutex<Value>>, so it's possible to set 
+/// the value of their target even when the binding itself is not mutable.
 ///
 pub trait MutableBound<Value> : Bound<Value> {
     ///
     /// Sets the value stored by this binding
     ///
-    fn set(&mut self, new_value: Value);
+    fn set(&self, new_value: Value);
 }

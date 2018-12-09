@@ -131,7 +131,7 @@ mod test {
 
     #[test]
     fn bindref_matches_core_value() {
-        let mut bind    = bind(1);
+        let bind        = bind(1);
         let bind_ref    = BindRef::from(bind.clone());
 
         assert!(bind_ref.get() == 1);
@@ -157,7 +157,7 @@ mod test {
 
     #[test]
     fn bindref_matches_core_value_when_created_from_ref() {
-        let mut bind    = bind(1);
+        let bind        = bind(1);
         let bind_ref    = BindRef::new(&bind);
 
         assert!(bind_ref.get() == 1);

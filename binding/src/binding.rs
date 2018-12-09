@@ -106,7 +106,7 @@ impl<Value: 'static+Clone+PartialEq+Send> Bound<Value> for Binding<Value> {
 }
 
 impl<Value: 'static+Clone+PartialEq+Send> MutableBound<Value> for Binding<Value> {
-    fn set(&mut self, new_value: Value) {
+    fn set(&self, new_value: Value) {
         // Update the value with the lock held
         let notifications = {
             let mut cell    = self.value.lock().unwrap();

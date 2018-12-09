@@ -115,7 +115,7 @@ mod test {
 
     #[test]
     fn can_update_binding() {
-        let mut bound = bind(1);
+        let bound = bind(1);
 
         bound.set(2);
         assert!(bound.get() == 2);
@@ -123,10 +123,10 @@ mod test {
 
     #[test]
     fn notified_on_change() {
-        let mut bound   = bind(1);
+        let bound       = bind(1);
         let changed     = bind(false);
 
-        let mut notify_changed = changed.clone();
+        let notify_changed = changed.clone();
         bound.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(changed.get() == false);
@@ -136,10 +136,10 @@ mod test {
 
     #[test]
     fn not_notified_on_no_change() {
-        let mut bound   = bind(1);
+        let bound       = bind(1);
         let changed     = bind(false);
 
-        let mut notify_changed = changed.clone();
+        let notify_changed = changed.clone();
         bound.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(changed.get() == false);
@@ -149,10 +149,10 @@ mod test {
 
     #[test]
     fn notifies_after_each_change() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
         let change_count    = bind(0);
 
-        let mut notify_count = change_count.clone();
+        let notify_count    = change_count.clone();
         bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) })).keep_alive();
 
         assert!(change_count.get() == 0);
@@ -168,11 +168,11 @@ mod test {
 
     #[test]
     fn dispatches_multiple_notifications() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
         let change_count    = bind(0);
 
-        let mut notify_count = change_count.clone();
-        let mut notify_count2 = change_count.clone();
+        let notify_count    = change_count.clone();
+        let notify_count2   = change_count.clone();
         bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) })).keep_alive();
         bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) })).keep_alive();
 
@@ -189,10 +189,10 @@ mod test {
 
     #[test]
     fn stops_notifying_after_release() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
         let change_count    = bind(0);
 
-        let mut notify_count = change_count.clone();
+        let notify_count = change_count.clone();
         let mut lifetime = bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
 
         assert!(change_count.get() == 0);
@@ -207,12 +207,12 @@ mod test {
 
     #[test]
     fn release_only_affects_one_notification() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
         let change_count    = bind(0);
 
-        let mut notify_count = change_count.clone();
-        let mut notify_count2 = change_count.clone();
-        let mut lifetime = bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
+        let notify_count    = change_count.clone();
+        let notify_count2   = change_count.clone();
+        let mut lifetime    = bound.when_changed(notify(move || { let count = notify_count.get(); notify_count.set(count+1) }));
         bound.when_changed(notify(move || { let count = notify_count2.get(); notify_count2.set(count+1) })).keep_alive();
 
         assert!(change_count.get() == 0);
@@ -239,7 +239,7 @@ mod test {
 
     #[test]
     fn binding_context_is_notified() {
-        let mut bound = bind(1);
+        let bound = bind(1);
 
         bound.set(2);
 
@@ -247,7 +247,7 @@ mod test {
         assert!(value == 2);
 
         let changed = bind(false);
-        let mut notify_changed = changed.clone();
+        let notify_changed = changed.clone();
         context.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(changed.get() == false);
@@ -267,7 +267,7 @@ mod test {
 
     #[test]
     fn can_recompute_value() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
 
         let computed_from   = bound.clone();
         let computed        = computed(move || computed_from.get() + 1);
@@ -283,7 +283,7 @@ mod test {
 
     #[test]
     fn can_recursively_compute_values() {
-        let mut bound           = bind(1);
+        let bound               = bind(1);
 
         let computed_from       = bound.clone();
         let computed_val        = computed(move || computed_from.get() + 1);
@@ -305,7 +305,7 @@ mod test {
 
     #[test]
     fn can_recursively_compute_values_2() {
-        let mut bound           = bind(1);
+        let bound               = bind(1);
 
         let computed_from       = bound.clone();
         let computed_val        = computed(move || computed_from.get() + 1);
@@ -322,7 +322,7 @@ mod test {
 
     #[test]
     fn can_recursively_compute_values_3() {
-        let mut bound           = bind(1);
+        let bound               = bind(1);
 
         let computed_from       = bound.clone();
         let computed_val        = computed(move || computed_from.get() + 1);
@@ -341,7 +341,7 @@ mod test {
     #[test]
     #[should_panic]
     fn panics_if_computed_generated_during_binding() {
-        let mut bound           = bind(1);
+        let bound               = bind(1);
 
         let computed_from       = bound.clone();
         let computed_val        = computed(move || computed_from.get() + 1);
@@ -365,7 +365,7 @@ mod test {
 
     #[test]
     fn computed_only_recomputes_as_needed() {
-        let mut bound           = bind(1);
+        let bound               = bind(1);
 
         let counter             = Arc::new(Mutex::new(0));
         let compute_counter     = counter.clone();
@@ -400,7 +400,7 @@ mod test {
     #[test]
     fn computed_caches_values() {
         let update_count            = Arc::new(Mutex::new(0));
-        let mut bound               = bind(1);
+        let bound                   = bind(1);
 
         let computed_update_count   = Arc::clone(&update_count);
         let computed_from           = bound.clone();
@@ -429,13 +429,13 @@ mod test {
 
     #[test]
     fn computed_notifies_of_changes() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
 
         let computed_from   = bound.clone();
         let computed        = computed(move || computed_from.get() + 1);
 
-        let mut changed = bind(false);
-        let mut notify_changed = changed.clone();
+        let changed         = bind(false);
+        let notify_changed  = changed.clone();
         computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(computed.get() == 2);
@@ -453,9 +453,9 @@ mod test {
 
     #[test]
     fn computed_switches_dependencies() {
-        let mut switch      = bind(false);
-        let mut val1        = bind(1);
-        let mut val2        = bind(2);
+        let switch          = bind(false);
+        let val1            = bind(1);
+        let val2            = bind(2);
 
         let computed_switch = switch.clone();
         let computed_val1   = val1.clone();
@@ -469,8 +469,8 @@ mod test {
             }
         });
 
-        let mut changed = bind(false);
-        let mut notify_changed = changed.clone();
+        let changed         = bind(false);
+        let notify_changed  = changed.clone();
         computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         // Initial value of computed (first get 'arms' when_changed too)
@@ -509,7 +509,7 @@ mod test {
     #[test]
     fn change_during_computation_recomputes() {
         // Create a computed binding that delays for a bit while reading
-        let mut some_binding = bind(1);
+        let some_binding = bind(1);
         let some_computed = {
             let some_binding = some_binding.clone();
             computed(move || {
@@ -540,15 +540,15 @@ mod test {
 
     #[test]
     fn computed_propagates_changes() {
-        let mut bound           = bind(1);
+        let bound               = bind(1);
 
         let computed_from       = bound.clone();
         let propagates_from     = computed(move || computed_from.get() + 1);
         let computed_propagated = propagates_from.clone();
         let computed            = computed(move || computed_propagated.get() + 1);
 
-        let mut changed = bind(false);
-        let mut notify_changed = changed.clone();
+        let changed             = bind(false);
+        let notify_changed      = changed.clone();
         computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(propagates_from.get() == 2);
@@ -569,14 +569,14 @@ mod test {
 
     #[test]
     fn computed_stops_notifying_when_released() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
 
         let computed_from   = bound.clone();
         let computed        = computed(move || computed_from.get() + 1);
 
-        let mut changed = bind(false);
-        let mut notify_changed = changed.clone();
-        let mut lifetime = computed.when_changed(notify(move || notify_changed.set(true)));
+        let changed         = bind(false);
+        let notify_changed  = changed.clone();
+        let mut lifetime    = computed.when_changed(notify(move || notify_changed.set(true)));
 
         assert!(computed.get() == 2);
         assert!(changed.get() == false);
@@ -599,13 +599,13 @@ mod test {
 
     #[test]
     fn computed_doesnt_notify_more_than_once() {
-        let mut bound       = bind(1);
+        let bound           = bind(1);
 
         let computed_from   = bound.clone();
         let computed        = computed(move || computed_from.get() + 1);
 
-        let mut changed = bind(false);
-        let mut notify_changed = changed.clone();
+        let changed         = bind(false);
+        let notify_changed  = changed.clone();
         computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
         assert!(computed.get() == 2);
@@ -629,14 +629,14 @@ mod test {
 
     #[test]
     fn computed_stops_notifying_once_out_of_scope() {
-        let mut bound       = bind(1);
-        let mut changed     = bind(false);
+        let bound           = bind(1);
+        let changed         = bind(false);
 
         {
             let computed_from   = bound.clone();
             let computed        = computed(move || computed_from.get() + 1);
 
-            let mut notify_changed = changed.clone();
+            let notify_changed  = changed.clone();
             computed.when_changed(notify(move || notify_changed.set(true))).keep_alive();
 
             assert!(computed.get() == 2);
