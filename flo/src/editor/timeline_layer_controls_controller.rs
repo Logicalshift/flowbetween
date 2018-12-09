@@ -116,7 +116,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                 }).unwrap();
 
                 // Select the new layer
-                self.timeline.selected_layer.clone().set(Some(new_layer_id));
+                self.timeline.selected_layer.set(Some(new_layer_id));
 
                 // Update the model
                 self.timeline.update_keyframe_bindings();
@@ -164,7 +164,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                         None
                     };
 
-                    self.timeline.selected_layer.clone().set(new_selected_layer);
+                    self.timeline.selected_layer.set(new_selected_layer);
                 }
             },
 

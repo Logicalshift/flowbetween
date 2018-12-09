@@ -335,31 +335,31 @@ impl Controller for InkMenuController {
         match (action_id, action_parameter) {
             ("ChangeSizeEdit", &Value(PropertyValue::Float(new_size))) => {
                 // User has dragged the 'size' property
-                self.size.clone().set(new_size as f32);
+                self.size.set(new_size as f32);
                 self.view_model.set_property("EditSize", PropertyValue::Bool(true));
             },
 
             ("ChangeSizeSet", &Value(PropertyValue::Float(new_size))) => {
                 // User has dragged the 'size' property
-                self.size.clone().set(new_size as f32);
+                self.size.set(new_size as f32);
                 self.view_model.set_property("EditSize", PropertyValue::Bool(false));
             },
 
             ("ChangeOpacityEdit", &Value(PropertyValue::Float(new_opacity))) => {
                 // User has dragged the 'opacity' property
-                self.opacity.clone().set(new_opacity as f32);
+                self.opacity.set(new_opacity as f32);
                 self.view_model.set_property("EditOpacity", PropertyValue::Bool(true));
             },
 
             ("ChangeOpacitySet", &Value(PropertyValue::Float(new_opacity))) => {
                 // User has dragged the 'opacity' property
-                self.opacity.clone().set(new_opacity as f32);
+                self.opacity.set(new_opacity as f32);
                 self.view_model.set_property("EditOpacity", PropertyValue::Bool(false));
             },
 
             ("ShowColorPopup", _) => {
                 // User has clicked the colour icon
-                self.color_picker_open.clone().set(true)
+                self.color_picker_open.set(true)
             }
 
             _ => ()

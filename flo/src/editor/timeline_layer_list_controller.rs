@@ -113,7 +113,7 @@ impl Controller for TimelineLayerListController {
                     let layer_id        = u64::from_str_radix(layer_id, 10).unwrap();
 
                     // Update the model
-                    self.selected_layer_id.clone().set(Some(layer_id));
+                    self.selected_layer_id.set(Some(layer_id));
                 }
             }
         }

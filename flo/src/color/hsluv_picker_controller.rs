@@ -261,17 +261,17 @@ impl Controller for HsluvPickerController {
         match (action_id, action_data) {
             ("SetHue", &Value(Float(new_hue))) => {
                 let (_, s, l, a) = self.color.get().to_hsluv_components();
-                self.color.clone().set(Color::Hsluv(new_hue as f32, s, l, a));
+                self.color.set(Color::Hsluv(new_hue as f32, s, l, a));
             },
 
             ("SetSat", &Value(Float(new_sat))) => {
                 let (h, _, l, a) = self.color.get().to_hsluv_components();
-                self.color.clone().set(Color::Hsluv(h, new_sat as f32, l, a));
+                self.color.set(Color::Hsluv(h, new_sat as f32, l, a));
             },
 
             ("SetLum", &Value(Float(new_lum))) => {
                 let (h, s, _, a) = self.color.get().to_hsluv_components();
-                self.color.clone().set(Color::Hsluv(h, s, new_lum as f32, a));
+                self.color.set(Color::Hsluv(h, s, new_lum as f32, a));
             },
 
             _ => ()

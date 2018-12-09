@@ -121,7 +121,7 @@ impl<Anim: Animation+'static> ToolModel<Anim> {
         }
 
         // Set as the selected tool
-        self.selected_tool.clone().set(tool_with_name)
+        self.selected_tool.set(tool_with_name)
     }
 }
 

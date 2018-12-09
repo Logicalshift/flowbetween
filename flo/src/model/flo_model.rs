@@ -331,7 +331,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 
             // Advancing the frame edit counter causes any animation frames to be regenerated
             if advance_edit_counter {
-                frame_edit_counter.clone().set(frame_edit_counter.get()+1);
+                frame_edit_counter.set(frame_edit_counter.get()+1);
             }
 
             // Publish the edits to any subscribers that there might be

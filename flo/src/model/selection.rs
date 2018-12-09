@@ -35,13 +35,13 @@ impl SelectionModel {
 
         let mut new_selection = existing_selection;
         new_selection.push(element);
-        self.selected_element_binding.clone().set(new_selection);
+        self.selected_element_binding.set(new_selection);
     }
 
     ///
     /// Clears the current selection
     /// 
     pub fn clear_selection(&self) {
-        self.selected_element_binding.clone().set(vec![]);
+        self.selected_element_binding.set(vec![]);
     }
 }

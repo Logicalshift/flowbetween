@@ -207,25 +207,25 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
         match action_id {
             "ToggleCreateKeyFrameOnDraw" => {
                 let current_value = self.frame.create_keyframe_on_draw.get();
-                self.frame.create_keyframe_on_draw.clone().set(!current_value);
+                self.frame.create_keyframe_on_draw.set(!current_value);
             },
 
             "ToggleShowOnionSkins" => {
                 let current_value = self.frame.show_onion_skins.get();
-                self.frame.show_onion_skins.clone().set(!current_value);
+                self.frame.show_onion_skins.set(!current_value);
             },
 
             "MoveToPreviousKeyFrame" => { 
                 let previous_frame = self.frame.previous_and_next_keyframe.get().0;
                 if let Some(previous_frame) = previous_frame {
-                    self.current_time.clone().set(previous_frame);
+                    self.current_time.set(previous_frame);
                 }
             },
 
             "MoveToNextKeyFrame" => { 
                 let next_frame = self.frame.previous_and_next_keyframe.get().1;
                 if let Some(next_frame) = next_frame {
-                    self.current_time.clone().set(next_frame);
+                    self.current_time.set(next_frame);
                 }
             },
 

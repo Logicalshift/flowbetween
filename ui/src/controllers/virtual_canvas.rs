@@ -74,8 +74,8 @@ impl VirtualCanvas {
     pub fn virtual_scroll(&self, tile_size: (f32, f32), top_left: (u32, u32), grid_size: (u32, u32)) {
         if self.tile_size.get() != tile_size {
             // Tile size mainly affects how the regions are drawn. We need to remove the existing tiles whenever this changes
-            self.tiles.clone().set(vec![]);
-            self.tile_size.clone().set(tile_size);
+            self.tiles.set(vec![]);
+            self.tile_size.set(tile_size);
         }
    
         if self.top_left.get() != top_left {
@@ -83,14 +83,14 @@ impl VirtualCanvas {
             // We need to re-order the canvases to avoid having to redraw all of the tiles
             self.reorder_tiles(self.top_left.get(), top_left);
 
-            self.top_left.clone().set(top_left);
+            self.top_left.set(top_left);
         }
 
         if self.grid_size.get() != grid_size {
             // Grid size affects the number of canvases we're drawing overall
             self.resize_tiles(grid_size);
 
-            self.grid_size.clone().set(grid_size);
+            self.grid_size.set(grid_size);
         }
     }
 
@@ -158,7 +158,7 @@ impl VirtualCanvas {
         }
 
         // Update the canvases
-        self.tiles.clone().set(tiles);
+        self.tiles.set(tiles);
     }
 
     ///
@@ -212,7 +212,7 @@ impl VirtualCanvas {
         }
 
         // Update the canvases
-        self.tiles.clone().set(new_tiles);
+        self.tiles.set(new_tiles);
     }
 
     ///

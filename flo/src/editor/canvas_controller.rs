@@ -176,7 +176,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         // Update the paint device in the tool model if we're starting a new paint action
         if actions.len() > 0 && actions[0].action == PaintAction::Start {
-            self.anim_model.tools().current_pointer.clone().set((device, actions[0].pointer_id));
+            self.anim_model.tools().current_pointer.set((device, actions[0].pointer_id));
         }
 
         // Fetch the canvas we're going to draw to

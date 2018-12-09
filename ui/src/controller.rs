@@ -249,7 +249,7 @@ mod test {
 
         assert!(assembly.get() == Control::label().with("Test"));
 
-        label_controller.label_text.clone().set("Changed".to_string());
+        label_controller.label_text.set("Changed".to_string());
         assert!(assembly.get() == Control::label().with("Changed"));
     }
 
@@ -264,7 +264,7 @@ mod test {
                 Control::label().with("Test")
             ]));
 
-        test_controller.label_controller.label_text.clone().set("Changed".to_string());
+        test_controller.label_controller.label_text.set("Changed".to_string());
 
         assert!(assembly.get() == Control::container()
             .with_controller("Test")
@@ -284,7 +284,7 @@ mod test {
                 Control::label().with("Test")
             ]));
 
-        test_controller.label_controller.label_text.clone().set("Changed".to_string());
+        test_controller.label_controller.label_text.set("Changed".to_string());
 
         let assembly        = assemble_ui(test_controller.clone());
         assert!(assembly.get() == Control::container()

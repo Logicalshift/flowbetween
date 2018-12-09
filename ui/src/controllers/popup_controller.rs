@@ -154,7 +154,7 @@ impl<ContentController: Controller> Controller for PopupController<ContentContro
     fn action(&self, action_id: &str, action_data: &ActionParameter) {
         // Hide the popup if our DismissPopup action is fired
         if action_id == "DismissPopup" {
-            self.open.clone().set(false);
+            self.open.set(false);
         }
 
         // Pass the action on to the main controller

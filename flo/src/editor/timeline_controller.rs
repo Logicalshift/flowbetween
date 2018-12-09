@@ -540,13 +540,13 @@ impl<Anim: EditableAnimation+Animation+'static> Controller for TimelineControlle
                 let time_ns = self.xpos_to_ns(start_x - LAYER_PANEL_WIDTH - (TICK_LENGTH/2.0));
                 let time    = Self::ns_to_duration(time_ns);
 
-                self.anim_model.timeline().current_time.clone().set(time);
-                self.drag_start_time.clone().set(time);
+                self.anim_model.timeline().current_time.set(time);
+                self.drag_start_time.set(time);
             },
 
             (DRAG_TIMELINE_POSITION, &Drag(DragAction::Start, _, _)) => {
                 // Remember the start time when a drag begins
-                self.drag_start_time.clone().set(self.anim_model.timeline().current_time.get());
+                self.drag_start_time.set(self.anim_model.timeline().current_time.get());
             },
 
             (DRAG_TIMELINE_POSITION, &Drag(_drag_type, (start_x, _start_y), (x, _y)))
@@ -565,7 +565,7 @@ impl<Anim: EditableAnimation+Animation+'static> Controller for TimelineControlle
                 let new_time            = Self::ns_to_duration(start_time_ns + diff_time_ns);
 
                 // Update the viewmodel time
-                timeline.current_time.clone().set(new_time);
+                timeline.current_time.set(new_time);
             },
 
             _ => ()

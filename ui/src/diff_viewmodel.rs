@@ -319,7 +319,7 @@ mod test {
         }
 
         pub fn set_controls(&self, new_control: Control) {
-            (*self.controls).clone().set(new_control);
+            (*self.controls).set(new_control);
         }
 
         pub fn add_subcontroller(&self, name: String) {

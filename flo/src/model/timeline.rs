@@ -177,7 +177,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
     /// 
     pub fn invalidate_canvas(&self) {
         let old_count = self.canvas_invalidation_count.get();
-        self.canvas_invalidation_count.clone().set(old_count+1);
+        self.canvas_invalidation_count.set(old_count+1);
     }
 
     ///

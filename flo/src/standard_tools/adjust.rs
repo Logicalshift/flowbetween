@@ -439,7 +439,7 @@ impl Adjust {
                         // Start dragging this control point
                         let &(element_id, index, _pos) = &data.control_points[cp_index];
                         
-                        data.state.clone().set(AdjustAction::DragControlPoint(element_id, index, painting.location, painting.location));
+                        data.state.set(AdjustAction::DragControlPoint(element_id, index, painting.location, painting.location));
                         started_drag = true;
                     }
                 }
@@ -474,7 +474,7 @@ impl Adjust {
                     }
 
                     // This is a selection action
-                    data.state.clone().set(AdjustAction::Select);
+                    data.state.set(AdjustAction::Select);
                 }
 
                 // Result is the list of actions
@@ -483,7 +483,7 @@ impl Adjust {
 
             (AdjustAction::DragControlPoint(element_id, index, from, _to), PaintAction::Continue) => {
                 // Continue the control point drag by updating the 'to' location
-                data.state.clone().set(AdjustAction::DragControlPoint(element_id, index, from, painting.location));
+                data.state.set(AdjustAction::DragControlPoint(element_id, index, from, painting.location));
 
                 // No tool actions to perform
                 vec![]
@@ -494,7 +494,7 @@ impl Adjust {
                 let final_action = AdjustAction::DragControlPoint(element_id, index, from, painting.location);
 
                 // Action should become 'no action'
-                data.state.clone().set(AdjustAction::NoAction);
+                data.state.set(AdjustAction::NoAction);
 
                 // Fetch the element that will be edited
                 let vector              = data.frame.as_ref().and_then(|frame| frame.element_with_id(element_id));
@@ -519,7 +519,7 @@ impl Adjust {
             (_, PaintAction::Finish) |
             (_, PaintAction::Cancel) => {
                 // Reset the action back to 'no action'
-                data.state.clone().set(AdjustAction::NoAction);
+                data.state.set(AdjustAction::NoAction);
                 vec![]
             },
 

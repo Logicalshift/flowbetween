@@ -118,7 +118,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     /// Changes the background of the file chooser
     ///
     pub fn set_background(&self, new_background: Color) {
-        self.background_color.clone().set(new_background)
+        self.background_color.set(new_background)
     }
 
     ///
@@ -426,7 +426,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     pub fn stop_editing_filename(&self) {
         if let Some(edited_file_index) = self.model.editing_filename_index.get() {
             // Stop editing the filename
-            self.model.editing_filename_index.clone().set(None);
+            self.model.editing_filename_index.set(None);
 
             // Fetch the file that was edited and its new name
             let file_model      = &self.model.file_list.get()[edited_file_index];
@@ -491,7 +491,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 let bottom  = bottom as u32;
                 let top     = top * NUM_COLUMNS;
                 let bottom  = bottom * NUM_COLUMNS;
-                self.model.file_range.clone().set(top..bottom);
+                self.model.file_range.set(top..bottom);
             },
 
             ("CreateNewFile", _) => {
@@ -516,13 +516,13 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 self.file_manager.set_display_name_for_path(new_file.as_path(), new_name.clone());
 
                 // Edit the name
-                self.model.edited_filename.clone().set(new_name);
-                self.model.editing_filename_index.clone().set(Some(0));
+                self.model.edited_filename.set(new_name);
+                self.model.editing_filename_index.set(Some(0));
             },
 
             ("CancelEditingFilename", _) => {
                 // Just unset the editing index without storing the edited value
-                self.model.editing_filename_index.clone().set(None);
+                self.model.editing_filename_index.set(None);
             },
 
             ("StopEditingFilename", _) => {
@@ -532,7 +532,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
             ("SetEditedFilename", ActionParameter::Value(PropertyValue::String(new_filename))) => {
                 // Set the edited version of the filename in the model
-                self.model.edited_filename.clone().set(new_filename.clone());
+                self.model.edited_filename.set(new_filename.clone());
             },
 
             (action, action_parameter) => { 
@@ -557,8 +557,8 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
                     // Set as the main controller
                     *self.model.shared_state.lock().unwrap() = Some(shared_state);
-                    self.model.open_file.clone().set(Some(path));
-                    self.model.active_controller.clone().set(Some(new_controller));
+                    self.model.open_file.set(Some(path));
+                    self.model.active_controller.set(Some(new_controller));
 
                 } else if action.starts_with("SetSelect-") {
 
@@ -569,7 +569,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                         let file_model      = &self.model.file_list.get()[file_index];
 
                         // Set as the editing file
-                        file_model.selected.clone().set(*is_selected);
+                        file_model.selected.set(*is_selected);
                     }
 
                 } else if action.starts_with("EditName-") {
@@ -580,8 +580,8 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     let file_model      = &self.model.file_list.get()[file_index];
 
                     // Set as the editing file
-                    self.model.edited_filename.clone().set(file_model.name.get());
-                    self.model.editing_filename_index.clone().set(Some(file_index));
+                    self.model.edited_filename.set(file_model.name.get());
+                    self.model.editing_filename_index.set(Some(file_index));
 
                 } else if action.starts_with("Drag-") {
 
@@ -595,7 +595,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     // Action depends on the parameter
                     match action_parameter {
                         ActionParameter::Drag(DragAction::Start, _, _) => {
-                            self.model.dragging_offset.clone().set((0.0, 0.0));
+                            self.model.dragging_offset.set((0.0, 0.0));
                         },
 
                         ActionParameter::Drag(DragAction::Finish, _, _) => {
@@ -617,20 +617,20 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                             }
 
                             // Clear the drag operation
-                            self.model.dragging_file.clone().set(None);
-                            self.model.drag_after_index.clone().set(None);
+                            self.model.dragging_file.set(None);
+                            self.model.drag_after_index.set(None);
                         },
 
                         ActionParameter::Drag(DragAction::Cancel, _, _) => {
-                            self.model.dragging_file.clone().set(None);
-                            self.model.drag_after_index.clone().set(None);
+                            self.model.dragging_file.set(None);
+                            self.model.drag_after_index.set(None);
                         },
 
                         ActionParameter::Drag(DragAction::Drag, (from_x, from_y), (to_x, to_y)) => {
                             if (from_x-to_x).abs() > 6.0 || (from_y-to_y).abs() > 6.0 {
-                                self.model.dragging_file.clone().set(Some(file_index as usize));
+                                self.model.dragging_file.set(Some(file_index as usize));
                             }
-                            self.model.dragging_offset.clone().set(((to_x-from_x) as f64, (to_y-from_y) as f64));
+                            self.model.dragging_offset.set(((to_x-from_x) as f64, (to_y-from_y) as f64));
 
                             // Work out the distance the file has been dragged in rows and columns
                             let origin_col  = (file_index % (NUM_COLUMNS as usize)) as i64;
@@ -651,10 +651,10 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
 
                             if target_col >= -1 && target_col < (NUM_COLUMNS as i64) && target_idx >= -1 && target_idx < (max_idx as i64) {
                                 // Valid target index
-                                self.model.drag_after_index.clone().set(Some(target_idx));
+                                self.model.drag_after_index.set(Some(target_idx));
                             } else {
                                 // No target index
-                                self.model.drag_after_index.clone().set(None);
+                                self.model.drag_after_index.set(None);
                             }
                         },
 

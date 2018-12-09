@@ -99,7 +99,7 @@ impl ViewModel for DynamicViewModel {
 
         if let Some(value) = bindings.get(&String::from(property_name)) {
             // Trick here is that while the bindings aren't mutable, their clones can be (and refer to the same place)
-            (**value).clone().set(new_value);
+            (**value).set(new_value);
 
             // Awkward return because rust keeps the borrow in the else clause even though nothing can reference it
             return;
