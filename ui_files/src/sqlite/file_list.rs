@@ -181,15 +181,27 @@ impl FileList {
         Ok(())
     }
 
-    /*
     ///
     /// Deletes a path from the database
     /// 
-    pub fn remove_path(&self, path: &Path) {
+    pub fn remove_path(&mut self, path: &Path) -> result::Result<(), FileListError> {
+        let transaction = self.connection.transaction()?;
+
+        // Unlink the entity
+        let entity_id = Self::entity_id_for_path(&transaction, path)?;
+        Self::unlink_entity(&transaction, entity_id)?;
+
+        // Remove from the file list
         let path_string = Self::string_for_path(path);
-        self.connection.execute("DELETE FROM Flo_Files WHERE RelativePath = ?", &[&path_string]).unwrap();
+        transaction.execute("DELETE FROM Flo_Files WHERE RelativePath = ?", &[&path_string]).unwrap();
+
+        // Remove from the entity list
+        transaction.execute("DELETE FROM Flo_Entity_Ordering WHERE EntityId = ?", &[&entity_id]).unwrap();
+
+        transaction.commit()?;
+
+        Ok(())
     }
-    */
 
     ///
     /// Lists the paths in the database

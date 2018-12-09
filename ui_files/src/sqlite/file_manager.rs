@@ -264,9 +264,9 @@ impl FileManager for SqliteFileManager {
 
             self.core.desync(move |core| {
                 // Delete from the file list
-                // core.file_list.remove_path(path);
+                core.file_list.remove_path(path.as_path()).unwrap();
 
-                // Delete from disk
+                // TODO: Delete from disk
                 
                 // Notify that the file is gone
                 core.send_update(update);
