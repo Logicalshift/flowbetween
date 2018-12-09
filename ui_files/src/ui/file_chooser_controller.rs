@@ -46,9 +46,6 @@ pub struct FileChooserController<Chooser: FileChooser> {
 
     /// The cache of open files
     open_file_store: Arc<OpenFileStore<<Chooser::Controller as FileController>::Model>>,
-
-    /// The viewmodel updating task
-    _update_viewmodel: Arc<Desync<()>>
 }
 
 impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
@@ -79,9 +76,6 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         let background_color    = bind(Color::Rgba(0.1, 0.1, 0.1, 1.0));
         let ui                  = Self::ui(&model, BindRef::from(background_color.clone()), Arc::clone(&viewmodel));
 
-        // Create the task that keeps the viewmodel up to date with the file list
-        let update_viewmodel    = Self::update_viewmodel(Arc::clone(&viewmodel), model.file_list.clone());
-
         // Create the chooser controller
         FileChooserController {
             model:              model,
@@ -90,8 +84,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
             ui:                 ui,
             file_manager:       file_manager,
             background_color:   background_color,
-            open_file_store:    open_file_store,
-            _update_viewmodel:  update_viewmodel
+            open_file_store:    open_file_store
         }
     }
 
@@ -121,33 +114,6 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         if !viewmodel.has_binding(&property_name) {
             viewmodel.set_computed(&property_name, move || PropertyValue::Bool(selected.get()));
         }
-    }
-
-    ///
-    /// Creates a process that keeps the viewmodel up to date
-    ///
-    fn update_viewmodel(viewmodel: Arc<DynamicViewModel>, file_list: BindRef<Arc<Vec<FileUiModel>>>) -> Arc<Desync<()>> {
-        // Create the process that will update the dynamic view model
-        let state   = Arc::new(Desync::new(()));
-
-        // Create the update stream
-        let updates = follow(file_list);
-
-        // Pipe it to the update state and update the view model with the selection state
-        pipe_in(Arc::clone(&state), updates, move |_core, file_list| { 
-            if let Ok(file_list) = file_list {
-                // Create a 'Selected-x' item in the viewmodel for each file
-                for file in file_list.iter() {
-                    Self::create_viewmodel_for_file(Arc::clone(&viewmodel), file);
-                }
-            }
-        });
-
-        // Wait for the first update to go through
-        state.sync(|_| { });
-
-        // Result is the state
-        state
     }
 
     ///
