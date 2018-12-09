@@ -1900,8 +1900,8 @@ function flowbetween(root_node) {
 
             // Reformat/bind/wire the new HTML
             updates.forEach(update => {
-                set_tree_attributes(update.new_element, update.ui_tree);
-                apply_templates_to_tree(update.new_element, update.ui_tree);
+                set_tree_attributes(update.new_element, update.ui_tree, update.original_data.controller_path);
+                apply_templates_to_tree(update.new_element, update.ui_tree, update.original_data.controller_path);
                 bind_viewmodel_to_tree(update.new_element, update.ui_tree, update.original_data.controller_path);
                 wire_tree(update.new_element, update.ui_tree, update.original_data.controller_path);
             });
