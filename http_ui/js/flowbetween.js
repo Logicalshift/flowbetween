@@ -1604,7 +1604,7 @@ function flowbetween(root_node) {
                     removed = true;
                     actions_for_key[action_index] = null;
                 } else {
-                    note('Double removal of action');
+                    note('Double removal of action for ' + key + ' on controller ' + controller_path);
                 }
             };
 
