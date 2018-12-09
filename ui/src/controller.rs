@@ -319,7 +319,7 @@ mod test {
                     ])
             ]);
         
-        assert!(controller_path_for_address(&control, &vec![]).len() == 0);
+        assert!(controller_path_for_address(&control, &vec![]).unwrap().len() == 0);
     }
 
     #[test]
@@ -341,7 +341,7 @@ mod test {
                     ])
             ]);
         
-        assert!(controller_path_for_address(&control, &vec![0]) == vec!["Test1"]);
+        assert!(controller_path_for_address(&control, &vec![0]) == Some(vec!["Test1"]));
     }
 
     #[test]
@@ -363,7 +363,7 @@ mod test {
                     ])
             ]);
         
-        assert!(controller_path_for_address(&control, &vec![1, 2]) == vec!["Test1", "Test2"]);
-        assert!(controller_path_for_address(&control, &vec![1, 2, 0]) == vec!["Test1", "Test2", "Test3"]);
+        assert!(controller_path_for_address(&control, &vec![1, 2]) == Some(vec!["Test1", "Test2"]));
+        assert!(controller_path_for_address(&control, &vec![1, 2, 0]) == Some(vec!["Test1", "Test2", "Test3"]));
     }
 }

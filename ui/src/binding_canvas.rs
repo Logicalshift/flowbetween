@@ -237,7 +237,7 @@ mod test {
 
     #[test]
     fn redraws_when_binding_changes() {
-        let mut binding = bind((1.0, 2.0));
+        let binding     = bind((1.0, 2.0));
         let canvas      = BindingCanvas::new();
         let mut stream  = executor::spawn(canvas.stream());
         

@@ -188,7 +188,7 @@ mod test {
         let notified    = Arc::new(Mutex::new(false));
 
         // For the viewmodel to work, we need property value changes to trigger a notification
-        let mut property_value      = bind(PropertyValue::Int(1));
+        let property_value          = bind(PropertyValue::Int(1));
 
         let computed_source_value   = property_value.clone();
         let computed_property       = computed(move || computed_source_value.get());

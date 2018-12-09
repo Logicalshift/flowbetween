@@ -270,7 +270,7 @@ mod test {
     fn canvas_updates_when_control_changes()  {
         let resource_manager    = ResourceManager::new();
         let canvas              = resource_manager.register(BindingCanvas::new());
-        let mut control         = Binding::new(Control::canvas().with(canvas));
+        let control             = Binding::new(Control::canvas().with(canvas));
 
         let box_control: BindRef<Control> = BindRef::new(&control);
         let canvas_state        = CanvasState::new(&box_control);

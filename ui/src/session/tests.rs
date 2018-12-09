@@ -127,7 +127,7 @@ fn timeout_after_first_event() {
 #[test]
 fn ui_update_triggers_update() {
     // Create a UI for us to update later on
-    let mut ui = bind(Control::empty());
+    let ui = bind(Control::empty());
 
     // Controller is initially empty
     let controller = TestController { ui: ui.clone(), viewmodel: None };
