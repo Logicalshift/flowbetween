@@ -249,6 +249,30 @@ impl FileManager for SqliteFileManager {
         // Return to the caller
         Box::new(subscription)
     }
+
+
+    ///
+    /// Removes a path from this manager and deletes the file that was found there
+    ///
+    fn delete_path(&self, path: &Path) {
+        // Look up the path that we want to delete
+        let path = self.file_list_path(path);
+
+        if let Some(path) = path {
+            // Start deleting it if we find it
+            let update = FileUpdate::RemovedFile(PathBuf::from(path));
+
+            self.core.desync(move |core| {
+                // Delete from the file list
+                // core.file_list.remove_path(path);
+
+                // Delete from disk
+                
+                // Notify that the file is gone
+                core.send_update(update);
+            });
+        }
+    }
 }
 
 #[cfg(test)]

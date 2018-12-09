@@ -25,6 +25,11 @@ pub trait FileManager : Send+Sync {
     fn create_new_path(&self) -> PathBuf;
 
     ///
+    /// Removes a path from this manager and deletes the file that was found there
+    ///
+    fn delete_path(&self, path: &Path);
+
+    ///
     /// Re-orders the files so that `path` is displayed after `after` (or at the beginning if `after` is `None`)
     ///
     fn order_path_after(&self, path: &Path, after: Option<&Path>);
