@@ -9,7 +9,10 @@ use flo_ui::*;
 use flo_canvas::*;
 use flo_binding::*;
 
+use desync::*;
+
 use std::sync::*;
+use std::path::Path;
 use std::collections::HashSet;
 
 const LOGO_HEIGHT: f32      = 256.0;
@@ -42,7 +45,10 @@ pub struct FileChooserController<Chooser: FileChooser> {
     file_manager: Arc<Chooser::FileManager>,
 
     /// The cache of open files
-    open_file_store: Arc<OpenFileStore<<Chooser::Controller as FileController>::Model>>
+    open_file_store: Arc<OpenFileStore<<Chooser::Controller as FileController>::Model>>,
+
+    /// The viewmodel updating task
+    _update_viewmodel: Arc<Desync<()>>
 }
 
 impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
@@ -67,20 +73,74 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         let drag_offset         = model.dragging_offset.clone();
         viewmodel.set_computed("DragY", move || PropertyValue::Float(drag_offset.get().1));
 
+        let viewmodel           = Arc::new(viewmodel);
+
         // Create the UI
         let background_color    = bind(Color::Rgba(0.1, 0.1, 0.1, 1.0));
         let ui                  = Self::ui(&model, BindRef::from(background_color.clone()));
 
+        // Create the task that keeps the viewmodel up to date with the file list
+        let update_viewmodel    = Self::update_viewmodel(Arc::clone(&viewmodel), model.file_list.clone());
+
         // Create the chooser controller
         FileChooserController {
             model:              model,
-            viewmodel:          Arc::new(viewmodel),
+            viewmodel:          viewmodel,
             logo_controller:    logo_controller,
             ui:                 ui,
             file_manager:       file_manager,
             background_color:   background_color,
-            open_file_store:    open_file_store
+            open_file_store:    open_file_store,
+            _update_viewmodel:  update_viewmodel
         }
+    }
+
+    ///
+    /// Converts a path to a string
+    ///
+    fn string_for_path(path: &Path) -> String {
+        // As a safety measure, we don't allow any directories so only the last path component is used
+        let final_component = path.components()
+            .last()
+            .map(|component| component.as_os_str().to_string_lossy())
+            .map(|component| String::from(component));
+
+        final_component.unwrap_or_else(|| String::from(""))
+    }
+
+    ///
+    /// Creates a process that keeps the viewmodel up to date
+    ///
+    fn update_viewmodel(viewmodel: Arc<DynamicViewModel>, file_list: BindRef<Arc<Vec<FileUiModel>>>) -> Arc<Desync<()>> {
+        // Create the process that will update the dynamic view model
+        let state   = Arc::new(Desync::new(()));
+
+        // Create the update stream
+        let updates = follow(file_list);
+
+        // Pipe it to the update state and update the view model with the selection state
+        pipe_in(Arc::clone(&state), updates, move |_core, file_list| { 
+            if let Ok(file_list) = file_list {
+                // Create a 'Selected-x' item in the viewmodel for each file
+                for file in file_list.iter() {
+                    // Files are keyed on their path
+                    let path            = file.path.get();
+                    let path_string     = Self::string_for_path(path.as_path());
+                    let property_name   = format!("Selected-{}", path_string);
+                    let selected        = file.selected.clone();
+
+                    if !viewmodel.has_binding(&property_name) {
+                        viewmodel.set_computed(&property_name, move || PropertyValue::Bool(selected.get()));
+                    }
+                }
+            }
+        });
+
+        // Wait for the first update to go through
+        state.sync(|_| { });
+
+        // Result is the state
+        state
     }
 
     ///
@@ -125,6 +185,9 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 .with((ActionTrigger::Drag, format!("Drag-{}", index)))
         };
 
+        let path        = file.path.get();
+        let path_string = Self::string_for_path(path.as_path());
+
         // Control consists of a panel showing a preview of the file and a label showing the 'filename'
         Control::container()
             .with(vec![
@@ -138,6 +201,8 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 label,
                 Control::check_box()
                     .with(ControlAttribute::ZIndex(1))
+                    .with(State::Value(Property::Bind(format!("Selected-{}", path_string))))
+                    .with((ActionTrigger::SetValue, format!("SetSelect-{}", index)))
                     .with(Bounds { x1: Position::At(2.0), y1: Position::At(2.0), x2: Position::At(22.0), y2: Position::At(22.0) })
             ])
             .with(ControlAttribute::Padding((2, 2), (2, 2)))
@@ -470,6 +535,18 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                     *self.model.shared_state.lock().unwrap() = Some(shared_state);
                     self.model.open_file.clone().set(Some(path));
                     self.model.active_controller.clone().set(Some(new_controller));
+
+                } else if action.starts_with("SetSelect-") {
+
+                    if let ActionParameter::Value(PropertyValue::Bool(is_selected)) = action_parameter {
+                        // Get the index of the file being selected
+                        let (_, file_index) = action.split_at("SetSelect-".len());
+                        let file_index      = usize::from_str_radix(file_index, 10).unwrap();
+                        let file_model      = &self.model.file_list.get()[file_index];
+
+                        // Set as the editing file
+                        file_model.selected.clone().set(*is_selected);
+                    }
 
                 } else if action.starts_with("EditName-") {
 
