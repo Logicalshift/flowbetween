@@ -47,7 +47,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
     fn image_name(&self) -> String { "eraser".to_string() }
 
     fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> InkModel {
-        let mut model = InkModel::new();
+        let model = InkModel::new();
 
         model.size.set(10.0);
 

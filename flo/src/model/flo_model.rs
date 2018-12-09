@@ -297,7 +297,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
 
         // Borrow the bits of the viewmodel we can change
         let frame_edit_counter  = self.frame_edit_counter.clone();
-        let mut size_binding    = self.size_binding.clone();
+        let size_binding        = self.size_binding.clone();
 
         // Pipe the edits so they modify the model as a side-effect
         let model_edit          = FloModelSink::new(animation_edit, move |edits: Arc<Vec<AnimationEdit>>| {
