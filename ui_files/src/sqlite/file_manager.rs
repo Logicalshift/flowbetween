@@ -44,7 +44,7 @@ pub struct SqliteFileManager {
     root_path: PathBuf,
 
     /// The core of this file manager
-    core: Desync<SqliteFileManagerCore>
+    core: Arc<Desync<SqliteFileManagerCore>>
 }
 
 impl SqliteFileManagerCore {
@@ -102,11 +102,11 @@ impl SqliteFileManager {
         // Put together the file manager
         SqliteFileManager {
             root_path:  root_path,
-            core:       Desync::new(SqliteFileManagerCore {
+            core:       Arc::new(Desync::new(SqliteFileManagerCore {
                 file_list:  file_list,
                 updates:    update_publisher,
                 log:        log
-            })
+            }))
         }
     }
 
