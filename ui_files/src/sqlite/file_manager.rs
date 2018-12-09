@@ -26,8 +26,11 @@ lazy_static! {
 }
 
 struct SqliteFileManagerCore {
-    // The log for this file manager
+    /// The log for this file manager
     log: LogPublisher,
+
+    /// Where we store our files
+    root_path: PathBuf,
 
     /// The database containing the list of files
     file_list: FileList,
@@ -59,12 +62,9 @@ impl SqliteFileManagerCore {
 
 impl SqliteFileManager {
     ///
-    /// Creates a new Sqlite file manager (in a sub-path of the main files directory)
-    /// 
-    /// Separate sub-paths can be used to allow for multi-user scenarios: in single-user
-    /// scenarios we usually set this to `"default"`.
-    /// 
-    pub fn new(application_path: &str, sub_path: &str) -> SqliteFileManager {
+    /// Creates a new file manager core
+    ///
+    fn new_core(application_path: &str, sub_path: &str) -> Arc<Desync<SqliteFileManagerCore>> {
         let _creating   = CREATING_DATABASE.lock().unwrap();
         let log         = LogPublisher::new(module_path!());
 
@@ -99,14 +99,31 @@ impl SqliteFileManager {
         let update_publisher = Publisher::new(100);
         let update_publisher = executor::spawn(update_publisher);
 
+        Arc::new(Desync::new(SqliteFileManagerCore {
+            file_list:  file_list,
+            root_path:  root_path,
+            updates:    update_publisher,
+            log:        log    
+        }))
+    }
+
+    ///
+    /// Creates a new Sqlite file manager (in a sub-path of the main files directory)
+    /// 
+    /// Separate sub-paths can be used to allow for multi-user scenarios: in single-user
+    /// scenarios we usually set this to `"default"`.
+    /// 
+    pub fn new(application_path: &str, sub_path: &str) -> SqliteFileManager {
+        // Create the core
+        let core        = Self::new_core(application_path, sub_path);
+
+        // Fetch information from it
+        let root_path   = core.sync(|core| core.root_path.clone());
+
         // Put together the file manager
         SqliteFileManager {
             root_path:  root_path,
-            core:       Arc::new(Desync::new(SqliteFileManagerCore {
-                file_list:  file_list,
-                updates:    update_publisher,
-                log:        log
-            }))
+            core:       core
         }
     }
 
