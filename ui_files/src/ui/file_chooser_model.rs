@@ -65,7 +65,7 @@ pub struct FileChooserModel<Chooser: FileChooser> {
     pub file_range: Binding<Range<u32>>,
 
     /// True if any file has been selected
-    pub any_file_selected: BindRef<bool>
+    pub selected_file_count: BindRef<usize>
 }
 
 impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
@@ -81,7 +81,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         let file_list           = Self::file_list(chooser.get_file_manager());
 
         // ... and the value indicating if any file is selected
-        let any_file_selected   = Self::any_file_selected(file_list.clone());
+        let selected_file_count = Self::selected_file_count(file_list.clone());
 
         // Combine into the final file chooser model
         FileChooserModel {
@@ -95,7 +95,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
             open_file:              open_file,
             file_list:              file_list,
             file_range:             bind(0..0),
-            any_file_selected:      any_file_selected
+            selected_file_count:    selected_file_count
         }
     }
 
@@ -185,11 +185,11 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
     ///
     /// Returns a binding that sets itself to true if any file is selected in the file list
     ///
-    fn any_file_selected(file_list: BindRef<Arc<Vec<FileUiModel>>>) -> BindRef<bool> {
+    fn selected_file_count(file_list: BindRef<Arc<Vec<FileUiModel>>>) -> BindRef<usize> {
         let any_file_selected = computed(move || {
             let file_list = file_list.get();
 
-            file_list.iter().any(|file| file.selected.get())
+            file_list.iter().filter(|file| file.selected.get()).count()
         });
 
         BindRef::from(any_file_selected)

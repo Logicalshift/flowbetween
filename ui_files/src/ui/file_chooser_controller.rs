@@ -193,7 +193,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         let dragging_file           = model.dragging_file.clone();
         let drag_after_index        = model.drag_after_index.clone();
         let editing_filename_index  = model.editing_filename_index.clone();
-        let any_file_selected       = model.any_file_selected.clone();
+        let selected_file_count     = model.selected_file_count.clone();
 
         // Generate the UI
         let ui = computed(move || {
@@ -302,14 +302,15 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                 }
 
                 // If any files are selected, we display a set of selected file controls
-                let selected_file_controls = if any_file_selected.get() {
+                let selected_file_count    = selected_file_count.get();
+                let selected_file_controls = if selected_file_count > 0 {
                     vec![
                         Control::container()
                             .with(Bounds {
                                 x1: Position::At(8.0),
                                 x2: Position::At(192.0),
                                 y1: Position::At(8.0),
-                                y2: Position::At(48.0)
+                                y2: Position::At(88.0)
                             })
                             .with(ControlAttribute::Padding((4, 4), (4, 4)))
                             .with(vec![
@@ -318,8 +319,22 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                     .with(vec![Control::label()
                                         .with(Bounds::fill_all())
                                         .with(TextAlign::Center)
-                                        .with("Delete selected files")])
-                                        .with((ActionTrigger::Click, "DeleteSelectedFiles"))
+                                        .with("Clear selection")
+                                    ])
+                                    .with((ActionTrigger::Click, "ClearSelection")),
+
+                                Control::empty()
+                                    .with(Bounds::next_vert(8.0)),
+
+                                Control::button()
+                                    .with(Bounds::next_vert(32.0))
+                                    .with(vec![Control::label()
+                                        .with(Bounds::fill_all())
+                                        .with(TextAlign::Center)
+                                        .with(&format!("Delete {} selected file{}", selected_file_count, if selected_file_count == 1 { "" } else { "s" }))
+                                    ])
+                                    .with((ActionTrigger::Click, "DeleteSelectedFiles"))
+                                    .with(Appearance::Background(Color::Rgba(1.0, 0.0, 0.0, 0.3)))
                             ])
                             .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.0, 0.3)))
                             .with(Scroll::Fix(FixedAxis::Vertical))
