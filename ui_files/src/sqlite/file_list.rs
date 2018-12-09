@@ -1,5 +1,7 @@
 use super::file_error::*;
 
+use flo_logging::*;
+
 use rusqlite::*;
 use rusqlite::types::*;
 
@@ -19,6 +21,7 @@ const ROOT_ENTITY: i64      = -1;
 /// Manages a file list database
 /// 
 pub struct FileList {
+    log: LogPublisher,
     connection: Connection
 }
 
@@ -27,9 +30,12 @@ impl FileList {
     /// Creates a new file list from a Sqlite connection
     /// 
     pub fn new(database_connection: Connection) -> result::Result<FileList, FileListError> {
-        let connection_version = Self::version_number(&database_connection);
+        let log                 = LogPublisher::new(module_path!());
+        let connection_version  = Self::version_number(&database_connection);
 
         if let Some(connection_version) = connection_version {
+            log.log((Level::Info, format!("File list database version {}", connection_version)));
+
             // Check the version is in the valid ranges
             if connection_version <= 0 {
                 // Minimum version is 1
@@ -41,6 +47,7 @@ impl FileList {
 
         // Create the result
         let mut result = FileList {
+            log:        log,
             connection: database_connection 
         };
 
@@ -54,6 +61,8 @@ impl FileList {
     /// Initializes this file list
     /// 
     fn initialize(&self) -> Result<()> {
+        self.log.log((Level::Info, "Initializing file list database"));
+
         // Create the definition string
         let definition   = String::from_utf8_lossy(DEFINITION);
 
@@ -72,7 +81,7 @@ impl FileList {
 
         match connection_version {
             None                => { self.initialize()?; },
-            Some(1)             => { Self::upgrade_v1_to_v2(&mut self.connection)?; self.upgrade_to_latest()?; }
+            Some(1)             => { Self::upgrade_v1_to_v2(&self.log, &mut self.connection)?; self.upgrade_to_latest()?; }
             Some(MAX_VERSION)   => { }
 
             _                   => { return result::Result::Err(FileListError::CannotUpgradeVersion); }

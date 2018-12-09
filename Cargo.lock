@@ -795,6 +795,7 @@ dependencies = [
  "dirs 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
+ "flo_logging 0.1.1",
  "flo_stream 0.2.1 (git+https://github.com/Logicalshift/flo_stream)",
  "flo_ui 0.1.1",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",

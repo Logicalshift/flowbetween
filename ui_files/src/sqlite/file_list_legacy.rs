@@ -1,6 +1,8 @@
 use super::file_list::*;
 use super::file_error::*;
 
+use flo_logging::*;
+
 use rusqlite::*;
 use rusqlite::types::ToSql;
 
@@ -13,7 +15,9 @@ impl FileList {
     ///
     /// Upgrades from version 1 of the database to version 2
     ///
-    pub (crate) fn upgrade_v1_to_v2(connection: &mut Connection) -> result::Result<(), FileListError> {
+    pub (crate) fn upgrade_v1_to_v2(log: &LogPublisher, connection: &mut Connection) -> result::Result<(), FileListError> {
+        log.log((Level::Info, "Upgrading file list from v1 to v2"));
+
         // Perform the upgrade in a transaction
         let transaction = connection.transaction()?;
 

@@ -3,6 +3,7 @@ use super::super::file_update::*;
 use super::super::file_manager::*;
 
 use flo_stream::*;
+use flo_logging::*;
 
 use dirs;
 use uuid::*;
@@ -25,6 +26,9 @@ lazy_static! {
 }
 
 struct SqliteFileManagerCore {
+    // The log for this file manager
+    log: LogPublisher,
+
     /// The database containing the list of files
     file_list: FileList,
 
@@ -61,7 +65,8 @@ impl SqliteFileManager {
     /// scenarios we usually set this to `"default"`.
     /// 
     pub fn new(application_path: &str, sub_path: &str) -> SqliteFileManager {
-        let _creating = CREATING_DATABASE.lock().unwrap();
+        let _creating   = CREATING_DATABASE.lock().unwrap();
+        let log         = LogPublisher::new(module_path!());
 
         // This will be the 'root' data directory for the user
         let mut root_path = dirs::data_local_dir()
@@ -80,6 +85,8 @@ impl SqliteFileManager {
         data_dir.push(DATA_DIR);
         fs::create_dir_all(data_dir.as_path()).unwrap();
 
+        log.log((Level::Info, format!("Using data directory at `{}`", data_dir.to_str().unwrap_or("<Missing path>"))));
+
         // Check for the file list database file
         let mut database_file = root_path.clone();
         database_file.push(FILES_DB);
@@ -97,9 +104,17 @@ impl SqliteFileManager {
             root_path:  root_path,
             core:       Desync::new(SqliteFileManagerCore {
                 file_list:  file_list,
-                updates:    update_publisher
+                updates:    update_publisher,
+                log:        log
             })
         }
+    }
+
+    ///
+    /// Retrieves the log for this file manager
+    ///
+    pub fn log(&self) -> LogPublisher {
+        self.core.sync(|core| core.log.clone())
     }
 
     ///
@@ -184,9 +199,12 @@ impl FileManager for SqliteFileManager {
         let update          = FileUpdate::NewFile(full_path.clone());
 
         // Add to the database
+        let log_path         = full_path.clone(); 
         let mut filename_buf = PathBuf::new();
         filename_buf.push(filename);
         self.core.desync(move |core| {
+            core.log.log((Level::Info, format!("Created new file at `{}`", log_path.to_str().unwrap_or("<Missing path>"))));
+
             core.file_list.add_path(filename_buf.as_path()).unwrap();
             core.send_update(update);
         });
@@ -256,17 +274,29 @@ impl FileManager for SqliteFileManager {
     ///
     fn delete_path(&self, full_path: &Path) {
         // Look up the path that we want to delete
-        let path = self.file_list_path(full_path);
+        let path        = self.file_list_path(full_path);
+        let full_path   = PathBuf::from(full_path);
 
         if let Some(path) = path {
             // Start deleting it if we find it
-            let update = FileUpdate::RemovedFile(PathBuf::from(full_path));
+            let update = FileUpdate::RemovedFile(full_path.clone());
 
             self.core.desync(move |core| {
+                core.log.log((Level::Info, format!("Deleting file at path `{}`", full_path.to_str().unwrap_or("<Missing path>"))));
+
                 // Delete from the file list
                 core.file_list.remove_path(path.as_path()).unwrap();
 
-                // TODO: Delete from disk
+                // Delete from disk
+                if full_path.starts_with("/") && full_path.is_file() {
+                    let result = fs::remove_file(full_path.as_path());
+                    match result {
+                        Ok(_)       => { },
+                        Err(erm)    => { core.log.log((Level::Warn, format!("Failed to delete `{}`: {:?}", full_path.to_str().unwrap_or("<Missing path>"), erm))); }
+                    }
+                } else {
+                    core.log.log((Level::Warn, format!("Not deleting `{}` (doesn't exist or path is in wrong format)", full_path.to_str().unwrap_or("<Missing path>"))));
+                }
                 
                 // Notify that the file is gone
                 core.send_update(update);
