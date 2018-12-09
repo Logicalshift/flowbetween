@@ -109,6 +109,21 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     }
 
     ///
+    /// Binds the UI model for a file to the dynamic view model
+    ///
+    fn create_viewmodel_for_file(viewmodel: Arc<DynamicViewModel>, file: &FileUiModel) {
+        // Files are keyed on their path
+        let path            = file.path.get();
+        let path_string     = Self::string_for_path(path.as_path());
+        let property_name   = format!("Selected-{}", path_string);
+        let selected        = file.selected.clone();
+
+        if !viewmodel.has_binding(&property_name) {
+            viewmodel.set_computed(&property_name, move || PropertyValue::Bool(selected.get()));
+        }
+    }
+
+    ///
     /// Creates a process that keeps the viewmodel up to date
     ///
     fn update_viewmodel(viewmodel: Arc<DynamicViewModel>, file_list: BindRef<Arc<Vec<FileUiModel>>>) -> Arc<Desync<()>> {
@@ -123,15 +138,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
             if let Ok(file_list) = file_list {
                 // Create a 'Selected-x' item in the viewmodel for each file
                 for file in file_list.iter() {
-                    // Files are keyed on their path
-                    let path            = file.path.get();
-                    let path_string     = Self::string_for_path(path.as_path());
-                    let property_name   = format!("Selected-{}", path_string);
-                    let selected        = file.selected.clone();
-
-                    if !viewmodel.has_binding(&property_name) {
-                        viewmodel.set_computed(&property_name, move || PropertyValue::Bool(selected.get()));
-                    }
+                    Self::create_viewmodel_for_file(Arc::clone(&viewmodel), file);
                 }
             }
         });
