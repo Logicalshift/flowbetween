@@ -193,6 +193,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
         let dragging_file           = model.dragging_file.clone();
         let drag_after_index        = model.drag_after_index.clone();
         let editing_filename_index  = model.editing_filename_index.clone();
+        let any_file_selected       = model.any_file_selected.clone();
 
         // Generate the UI
         let ui = computed(move || {
@@ -299,6 +300,34 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                         .with(Appearance::Background(Color::Rgba(0.0, 0.6, 0.8, 0.9)))
                         .with(ControlAttribute::ZIndex(1)));
                 }
+
+                // If any files are selected, we display a set of selected file controls
+                let selected_file_controls = if any_file_selected.get() {
+                    vec![
+                        Control::container()
+                            .with(Bounds {
+                                x1: Position::At(8.0),
+                                x2: Position::At(192.0),
+                                y1: Position::At(8.0),
+                                y2: Position::At(48.0)
+                            })
+                            .with(ControlAttribute::Padding((4, 4), (4, 4)))
+                            .with(vec![
+                                Control::button()
+                                    .with(Bounds::next_vert(32.0))
+                                    .with(vec![Control::label()
+                                        .with(Bounds::fill_all())
+                                        .with(TextAlign::Center)
+                                        .with("Delete selected files")])
+                                        .with((ActionTrigger::Click, "DeleteSelectedFiles"))
+                            ])
+                            .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.0, 0.3)))
+                            .with(Scroll::Fix(FixedAxis::Vertical))
+                            .with(ControlAttribute::ZIndex(5))
+                    ]
+                } else {
+                    vec![]
+                };
                 
                 // Work out the height of the container
                 let num_rows    = ((file_list.len() as i32)-1) / (NUM_COLUMNS as i32) + 1;
@@ -361,7 +390,11 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                 Control::empty()
                                     .with(Bounds::stretch_horiz(1.0)),
                             ])
-                    ])
+                    ]
+                    .into_iter()
+                    .chain(selected_file_controls)
+                    .collect::<Vec<_>>()
+                    )
 
             }
         });
