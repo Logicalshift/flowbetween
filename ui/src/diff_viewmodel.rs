@@ -156,7 +156,7 @@ impl WatchViewModel {
 
             // This is the list of properties and values to store in the result
             let properties_and_values: Vec<_> = changed_properties.chain(new_properties)
-                .map(|property_name| (property_name.clone(), viewmodel.get_property(&property_name).get()))
+                .map(|property_name| ViewModelChange::PropertyChanged(property_name.clone(), viewmodel.get_property(&property_name).get()))
                 .collect();
 
             // This is the list of updates
@@ -248,7 +248,7 @@ pub fn viewmodel_update_all(controller_path: Vec<String>, viewmodel: &dyn ViewMo
 
     for property_name in keys.iter() {
         let value = viewmodel.get_property(&*property_name);
-        updates.push(((*property_name).clone(), value.get()));
+        updates.push(ViewModelChange::PropertyChanged((*property_name).clone(), value.get()));
     }
 
     return ViewModelUpdate::new(controller_path, updates);
@@ -370,7 +370,7 @@ mod test {
 
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(2))])]);
+        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))])]);
     }
 
     #[test]
@@ -383,7 +383,7 @@ mod test {
 
         controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
 
-        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("NewValue".to_string(), PropertyValue::Int(2))])]);
+        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("NewValue".to_string(), PropertyValue::Int(2))])]);
     }
 
     #[test]
@@ -397,7 +397,7 @@ mod test {
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
         controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
 
-        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(2)), ("NewValue".to_string(), PropertyValue::Int(3))])]);
+        assert!(watcher.get_updates() == vec![ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2)), ViewModelChange::PropertyChanged("NewValue".to_string(), PropertyValue::Int(3))])]);
     }
 
     #[test]
@@ -420,7 +420,7 @@ mod test {
 
         assert!(updates.len() == 1);
         assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(2))]);
+        assert!(updates[0].updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]);
     }
 
     #[test]
@@ -446,7 +446,7 @@ mod test {
 
         assert!(updates.len() == 1);
         assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(2))]);
+        assert!(updates[0].updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]);
     }
 
     #[test]
@@ -475,7 +475,7 @@ mod test {
 
         assert!(updates.len() == 1);
         assert!(updates[0].controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(updates[0].updates() == &vec![("Test".to_string(), PropertyValue::Int(3))]);
+        assert!(updates[0].updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(3))]);
     }
 
     struct TestViewModel;
@@ -559,9 +559,9 @@ mod test {
 
         assert!(update.controller_path() == &vec!["Test".to_string(), "Path".to_string()]);
         assert!(update.updates() == &vec![
-            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
         ]);
     }
     
@@ -574,16 +574,16 @@ mod test {
 
         assert!(update[0].controller_path() == &vec!["Model1".to_string()]);
         assert!(update[0].updates() == &vec![
-            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
         ]);
 
         assert!(update[1].controller_path() == &vec!["Model2".to_string()]);
         assert!(update[1].updates() == &vec![
-            ("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
         ]);
     }
 

@@ -8,7 +8,7 @@ use futures::stream;
 ///
 /// Specifies a change to a viewmodel
 ///
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub enum ViewModelChange {
     /// A new property has been created
     NewProperty(String, PropertyValue),

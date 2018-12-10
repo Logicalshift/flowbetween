@@ -1,4 +1,4 @@
-use super::property::*;
+use super::viewmodel::*;
 
 ///
 /// Describes an update to the view model
@@ -8,15 +8,15 @@ pub struct ViewModelUpdate {
     /// The controller that owns the view model being updated
     controller_path: Vec<String>,
 
-    /// Key/value pairs of the updates to the view model for this controller
-    updates: Vec<(String, PropertyValue)>
+    /// The updates to the controller for this viewmodel
+    updates: Vec<ViewModelChange>
 }
 
 impl ViewModelUpdate {
     ///
     /// Creates a new view model update
     ///
-    pub fn new(controller_path: Vec<String>, updates: Vec<(String, PropertyValue)>) -> ViewModelUpdate {
+    pub fn new(controller_path: Vec<String>, updates: Vec<ViewModelChange>) -> ViewModelUpdate {
         ViewModelUpdate {
             controller_path:    controller_path,
             updates:            updates
@@ -33,7 +33,7 @@ impl ViewModelUpdate {
     ///
     /// Returns the changes that have been made to this view model
     ///
-    pub fn updates(&self) -> &Vec<(String, PropertyValue)> {
+    pub fn updates(&self) -> &Vec<ViewModelChange> {
         &self.updates
     }
 

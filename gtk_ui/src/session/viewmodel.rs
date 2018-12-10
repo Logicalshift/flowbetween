@@ -88,49 +88,54 @@ impl GtkSessionViewModel {
             let controller_bindings = self.bindings.get(controller_update.controller_path());
 
             // Process each update in turn
-            for &(ref property_name, ref property_value) in controller_update.updates() {
-                // Update the property in the model
-                let property_changed = {
-                    match property_values.entry(property_name.clone()) {
-                        Entry::Occupied(mut occupied)  => {
-                            if occupied.get() == property_value {
-                                // Entry exists but is unchanged
-                                false
-                            } else {
-                                // Entry exists and is changed
-                                *occupied.get_mut() = property_value.clone();
-                                true
+            for viewmodel_update in controller_update.updates().iter() {
+                match viewmodel_update {
+                    ViewModelChange::NewProperty(property_name, property_value)     |
+                    ViewModelChange::PropertyChanged(property_name, property_value) => {
+                        // Update the property in the model
+                        let property_changed = {
+                            match property_values.entry(property_name.clone()) {
+                                Entry::Occupied(mut occupied)  => {
+                                    if occupied.get() == property_value {
+                                        // Entry exists but is unchanged
+                                        false
+                                    } else {
+                                        // Entry exists and is changed
+                                        *occupied.get_mut() = property_value.clone();
+                                        true
+                                    }
+                                },
+
+                                Entry::Vacant(vacant) => {
+                                    // Create a new entry
+                                    vacant.insert(property_value.clone());
+                                    true
+                                }
                             }
-                        },
+                        };
 
-                        Entry::Vacant(vacant) => {
-                            // Create a new entry
-                            vacant.insert(property_value.clone());
-                            true
+                        // If the property is changed, generate the events to send to the GTK sink
+                        if property_changed {
+                            // Get the bindings for this property
+                            let property_bindings = controller_bindings.and_then(|controller_bindings| controller_bindings.get(property_name));
+
+                            // Push actions for this property into the action list
+                            if let Some(property_bindings) = property_bindings {
+                                let new_value = property_value.clone();
+
+                                // Generate the actions for each update
+                                let update_actions = property_bindings
+                                    .iter()
+                                    .map(move |&(ref widget_id, ref action)| {
+                                        (*widget_id, action(new_value.clone()))
+                                    })
+                                    .filter(|&(_, ref actions)| actions.len() > 0)
+                                    .map(|(widget_id, actions)| GtkAction::Widget(widget_id, actions));
+                            
+                                // Put into the list of actions to perform
+                                actions.extend(update_actions)
+                            }
                         }
-                    }
-                };
-
-                // If the property is changed, generate the events to send to the GTK sink
-                if property_changed {
-                    // Get the bindings for this property
-                    let property_bindings = controller_bindings.and_then(|controller_bindings| controller_bindings.get(property_name));
-
-                    // Push actions for this property into the action list
-                    if let Some(property_bindings) = property_bindings {
-                        let new_value = property_value.clone();
-
-                        // Generate the actions for each update
-                        let update_actions = property_bindings
-                            .iter()
-                            .map(move |&(ref widget_id, ref action)| {
-                                (*widget_id, action(new_value.clone()))
-                            })
-                            .filter(|&(_, ref actions)| actions.len() > 0)
-                            .map(|(widget_id, actions)| GtkAction::Widget(widget_id, actions));
-                    
-                        // Put into the list of actions to perform
-                        actions.extend(update_actions)
                     }
                 }
             }

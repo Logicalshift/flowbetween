@@ -1550,12 +1550,24 @@ function flowbetween(root_node) {
                 viewmodel.keys = {};
             }
 
-            updates.forEach(update => viewmodel.keys[update[0]] = update[1]);
+            updates.forEach(update => {
+                let new_property        = update['NewProperty'];
+                let property_changed    = update['PropertyChanged'];
+
+                if (new_property) {
+                    viewmodel.keys[new_property[0]] = new_property[1];
+                } else if (property_changed) {
+                    viewmodel.keys[property_changed[0]] = property_changed[1];
+                } else {
+                    console.error('Viewmodel update', update, 'was not understood');
+                }
+            });
 
             // Notify anything that's listening of the changes
             updates.forEach(update => {
-                let key         = update[0];
-                let new_value   = update[1];
+                let key_value   = update['NewProperty'] || update['PropertyChanged'];
+                let key         = key_value[0];
+                let new_value   = key_value[1];
                 let actions     = viewmodel.actions[key] || [];
 
                 actions.forEach(action => {
