@@ -321,9 +321,6 @@ mod test {
         assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test2"), PropertyValue::Int(5)))));
     }
 
-    use std::thread;
-    use std::time::*;
-
     #[test]
     fn stream_computed_values() {
         let viewmodel = DynamicViewModel::new();
@@ -335,11 +332,25 @@ mod test {
 
         assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
 
-        thread::sleep(Duration::from_millis(1));    // TODO: fix race condition
-
         let mut updates = executor::spawn(viewmodel.get_updates());
-        viewmodel.set_property("TestSource", PropertyValue::Int(2));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2)))));
+
+        viewmodel.set_property("Test", PropertyValue::Int(2));
+        let update1 = updates.wait_stream();
+        let update2 = updates.wait_stream();
+
+        // Order of updates is indeterminate
+        println!("{:?}", update1);
+        println!("{:?}", update2);
+
+        if update1 == Some(Ok(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2)))) {
+            assert!(update2 == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2)))));
+
+        } else if update1 == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2)))) {
+            assert!(update2 == Some(Ok(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2)))));
+
+        } else {
+            assert!(false);
+        }
     }
 
     #[test]
