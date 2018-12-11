@@ -324,17 +324,20 @@ mod test {
     #[test]
     fn stream_computed_values() {
         let viewmodel = DynamicViewModel::new();
+        let mut updates = executor::spawn(viewmodel.get_updates());
 
         viewmodel.set_property("TestSource", PropertyValue::Int(1));
+        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("TestSource"), PropertyValue::Int(1)))));
+        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(1)))));
 
         let test_source = viewmodel.get_property("TestSource");
         viewmodel.set_computed("Test", move || test_source.get());
 
         assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(1)))));
+        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(1)))));
 
-        let mut updates = executor::spawn(viewmodel.get_updates());
-
-        viewmodel.set_property("Test", PropertyValue::Int(2));
+        viewmodel.set_property("TestSource", PropertyValue::Int(2));
         let update1 = updates.wait_stream();
         let update2 = updates.wait_stream();
 
