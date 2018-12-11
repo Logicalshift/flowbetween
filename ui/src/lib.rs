@@ -28,6 +28,7 @@ mod viewmodel;
 mod dynamic_viewmodel;
 mod diff_viewmodel;
 mod viewmodel_update;
+mod viewmodel_stream;
 mod resource_manager;
 mod binding_canvas;
 pub mod control;
