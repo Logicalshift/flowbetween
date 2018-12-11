@@ -209,6 +209,59 @@ mod test {
         }
     }
 
+    #[derive(Clone)]
+    struct NotifyNothing;
+    impl executor::Notify for NotifyNothing {
+        fn notify(&self, _: usize) { }
+    }
+
+    #[test]
+    fn initially_no_changes() {
+        let controller  = Arc::new(DynamicController::new());
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
+
+        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+
+        assert!(stream.poll_stream_notify(&Arc::new(NotifyNothing), 0) == Ok(Async::NotReady));
+    }
+
+    #[test]
+    fn changes_are_picked_up() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
+
+        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+
+        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]))));
+    }
+
+    #[test]
+    fn new_values_are_picked_up() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
+
+        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+
+        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
+
+        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(2)), ViewModelChange::PropertyChanged("NewValue".to_string(), PropertyValue::Int(2))]))));
+    }
+
+    #[test]
+    fn new_values_are_picked_up_alongside_changes() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
+
+        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+
+        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+
+        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]))));
+    }
+
     #[test]
     fn subcontroller_changes_are_picked_up() {
         let controller = DynamicController::new();
