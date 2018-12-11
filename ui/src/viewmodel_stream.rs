@@ -152,3 +152,82 @@ impl Stream for ViewModelUpdateStream {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use super::super::property::*;
+    use super::super::dynamic_viewmodel::*;
+
+    use futures::executor;
+
+    ///
+    /// A controller that does nothing
+    ///
+    pub struct DynamicController {
+        controls: Arc<Binding<Control>>,
+        view_model: Arc<DynamicViewModel>,
+        subcontrollers: Mutex<HashMap<String, Arc<DynamicController>>>
+    }
+
+    impl DynamicController {
+        pub fn new() -> DynamicController {
+            DynamicController { 
+                controls:       Arc::new(bind(Control::empty())),
+                view_model:     Arc::new(DynamicViewModel::new()),
+                subcontrollers: Mutex::new(HashMap::new())
+            }
+        }
+
+        pub fn set_controls(&self, new_control: Control) {
+            (*self.controls).set(new_control);
+        }
+
+        pub fn add_subcontroller(&self, name: String) {
+            self.subcontrollers.lock().unwrap().insert(name, Arc::new(DynamicController::new()));
+        }
+    }
+
+    impl Controller for DynamicController {
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::from_arc(Arc::clone(&self.controls))
+        }
+
+        fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
+            let res = self.subcontrollers.lock().unwrap().get(id).map(|x| x.clone());
+
+            if let Some(res) = res {
+                Some(res)
+            } else {
+                None
+            }
+        }
+
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
+            Some(self.view_model.clone())
+        }
+    }
+
+    #[test]
+    fn subcontroller_changes_are_picked_up() {
+        let controller = DynamicController::new();
+        controller.set_controls(Control::container().with_controller("Subcontroller"));
+        controller.add_subcontroller("Subcontroller".to_string());
+
+        let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
+
+        let controller = Arc::new(controller);
+
+        let update_stream       = ViewModelUpdateStream::new(controller.clone());
+        let mut update_stream   = executor::spawn(update_stream);
+
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+
+        let update = update_stream.wait_stream().unwrap().unwrap();
+
+        assert!(update.controller_path() == &vec!["Subcontroller".to_string()]);
+        assert!(update.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]);
+    }
+}
