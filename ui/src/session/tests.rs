@@ -48,8 +48,12 @@ enum TestItem {
 
 #[test]
 fn session_creates_initial_event() {
+    // Initial viewmodel
+    let viewmodel = Arc::new(DynamicViewModel::new());
+    viewmodel.set_property("Test", PropertyValue::Int(42));
+
     // Controller is initially empty
-    let controller = TestController { ui: bind(Control::empty()), viewmodel: None };
+    let controller = TestController { ui: bind(Control::empty()), viewmodel: Some(viewmodel) };
 
     // Start a UI session for this controller
     let session = UiSession::new(controller);
@@ -70,7 +74,11 @@ fn session_creates_initial_event() {
             new_ui: Control::empty()
         }]),
         
-        UiUpdate::UpdateViewModel(vec![])
+        UiUpdate::UpdateViewModel(vec![ 
+            ViewModelUpdate::new(vec![], vec![
+                ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(42))
+            ])
+        ])
     ])));
 }
 

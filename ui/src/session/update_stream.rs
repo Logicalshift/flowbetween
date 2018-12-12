@@ -67,7 +67,7 @@ impl UiUpdateStream {
         let viewmodel_updates = ViewModelUpdateStream::new(Arc::clone(&controller));
         
         // Generate the stream
-        let new_stream = UiUpdateStream {
+        let mut new_stream = UiUpdateStream {
             session_core:       session_core,
             stream_core:        stream_core,
             viewmodel_updates:  viewmodel_updates,
@@ -98,10 +98,12 @@ impl UiUpdateStream {
     ///
     /// Creates the initial set of pending events (initial UI refresh and viewmodel refresh)
     /// 
-    fn generate_initial_event(&self) {
+    fn generate_initial_event(&mut self) {
         let session_core    = Arc::clone(&self.session_core);
         let stream_core     = Arc::clone(&self.stream_core);
         let pending         = Arc::clone(&self.pending);
+
+        self.viewmodel_updates.generate_initial_update();
 
         session_core.desync(move |session_core| {
             let update_id  = session_core.last_update_id();

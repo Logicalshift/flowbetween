@@ -51,6 +51,37 @@ impl ViewModelUpdateStream {
     }
 
     ///
+    /// Ensures that all viewmodels referenced by this stream generate an update for each of their properties
+    ///
+    pub fn generate_initial_update(&mut self) {
+        if let Some(root_controller) = self.root_controller.upgrade() {
+            // Update the control subcontrollers
+            self.update_subcontrollers(&*root_controller, &root_controller.ui().get());
+
+            // All subcontrollers should generate an initial event too
+            for (_, subcontroller_stream) in self.sub_controllers.iter_mut() {
+                subcontroller_stream.generate_initial_update();
+            }
+
+            // Generate a list of initial values from the viewmodel for the current controller and add to the pending list
+            if let Some(viewmodel) = root_controller.get_viewmodel() {
+                let mut initial_values = vec![];
+
+                // Read through the properties and create 'new property' events for all of them
+                for property_name in viewmodel.get_property_names() {
+                    let property_value = viewmodel.get_property(&property_name).get();
+                    initial_values.push(ViewModelChange::NewProperty(property_name, property_value));
+                }
+
+                // Create an event and add it to the pending list
+                if initial_values.len() > 0 {
+                    self.pending.push_back(ViewModelUpdate::new(vec![], initial_values));
+                }
+            }
+        }
+    }
+
+    ///
     /// When the controller's UI changes, updates the subcontroller streams
     ///
     fn update_subcontrollers(&mut self, root_controller: &dyn Controller, control: &Control) {
