@@ -461,30 +461,32 @@ mod test {
 
     #[test]
     pub fn generate_initial_controller_events() {
-        let controller          = Arc::new(TestController::new());
-        let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
+        for _pass in 0..10 {
+            let controller          = Arc::new(TestController::new());
+            let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
 
-        update_stream.generate_initial_update();
-        let mut update_stream   = executor::spawn(update_stream);
+            update_stream.generate_initial_update();
+            let mut update_stream   = executor::spawn(update_stream);
 
-        let update1 = update_stream.wait_stream().unwrap().unwrap();
-        println!("{:?}", update1);
-        let update2 = update_stream.wait_stream().unwrap().unwrap();
-        println!("{:?}", update2);
+            let update1 = update_stream.wait_stream().unwrap().unwrap();
+            println!("{:?}", update1);
+            let update2 = update_stream.wait_stream().unwrap().unwrap();
+            println!("{:?}", update2);
 
-        assert!(update1.controller_path() == &vec!["Model1".to_string()]);
-        assert!(update1.updates() == &vec![
-            ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-        ]);
+            assert!(update1.controller_path() == &vec!["Model1".to_string()]);
+            assert!(update1.updates() == &vec![
+                ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+                ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+                ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+            ]);
 
-        assert!(update2.controller_path() == &vec!["Model2".to_string()]);
-        assert!(update2.updates() == &vec![
-            ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-        ]);
+            assert!(update2.controller_path() == &vec!["Model2".to_string()]);
+            assert!(update2.updates() == &vec![
+                ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+                ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+                ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+            ]);
+        }
     }
 
     // TODO: detects removed controller
