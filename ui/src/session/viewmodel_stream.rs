@@ -311,6 +311,6 @@ mod test {
         let update = update_stream.wait_stream().unwrap().unwrap();
 
         assert!(update.controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(update.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]);
+        assert!(update.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
     }
 }
