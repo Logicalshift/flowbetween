@@ -385,7 +385,6 @@ mod test {
         assert!(updates.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(3))]);
     }
 
-/*
     struct TestViewModel;
 
     struct TestController {
@@ -456,45 +455,37 @@ mod test {
         }
 
         fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
-            unimplemented!()
+            Box::new(stream::empty())
         }
     }
-    
-    #[test]
-    pub fn can_generate_viewmodel_update_all() {
-        let viewmodel   = TestViewModel;
-        let update      = viewmodel_update_all(vec!["Test".to_string(), "Path".to_string()], &viewmodel);
 
-        assert!(update.controller_path() == &vec!["Test".to_string(), "Path".to_string()]);
-        assert!(update.updates() == &vec![
-            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+    #[test]
+    pub fn generate_initial_controller_events() {
+        let controller          = Arc::new(TestController::new());
+        let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
+
+        update_stream.generate_initial_update();
+        let mut update_stream   = executor::spawn(update_stream);
+
+        let update1 = update_stream.wait_stream().unwrap().unwrap();
+        println!("{:?}", update1);
+        let update2 = update_stream.wait_stream().unwrap().unwrap();
+        println!("{:?}", update2);
+
+        assert!(update1.controller_path() == &vec!["Model1".to_string()]);
+        assert!(update1.updates() == &vec![
+            ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+
+        assert!(update2.controller_path() == &vec!["Model2".to_string()]);
+        assert!(update2.updates() == &vec![
+            ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
         ]);
     }
-    
-    #[test]
-    pub fn can_generate_controller_update_all() {
-        let controller  = Arc::new(TestController::new());
-        let update      = viewmodel_update_controller_tree(&*controller);
-
-        assert!(update.len() == 2);
-
-        assert!(update[0].controller_path() == &vec!["Model1".to_string()]);
-        assert!(update[0].updates() == &vec![
-            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-        ]);
-
-        assert!(update[1].controller_path() == &vec!["Model2".to_string()]);
-        assert!(update[1].updates() == &vec![
-            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-        ]);
-    }
-*/
 
     // TODO: detects removed controller
 }
