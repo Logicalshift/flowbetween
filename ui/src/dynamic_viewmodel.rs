@@ -1,15 +1,17 @@
 use super::property::*;
 use super::viewmodel::*;
 
+use flo_stream::*;
+
 use binding::*;
 use binding::binding_context::*;
-use flo_stream::*;
 
 use futures::*;
 use futures::stream;
 use futures::executor;
+use futures::task;
 use std::sync::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 ///
 /// The dynamic viewmodel lets us define arbitrary properties as bound or
@@ -17,8 +19,8 @@ use std::collections::HashMap;
 /// is set as both, the computed version 'wins'. 
 ///
 pub struct DynamicViewModel {
-    /// Where any changes to this viewmodel are published
-    changes: Mutex<Publisher<ViewModelChange>>,
+    /// Stream of new properties being created for this viewmodel
+    new_properties: Mutex<Publisher<(String, BindRef<PropertyValue>)>>,
 
     /// Maps bindings in this viewmodel to their values
     bindings: Mutex<HashMap<String, Arc<Binding<PropertyValue>>>>,
@@ -26,11 +28,33 @@ pub struct DynamicViewModel {
     /// Maps computed bindings to their values (we ignore these when setting)
     computed: Mutex<HashMap<String, BindRef<PropertyValue>>>,
 
-    /// Changes, forwarded to the publisher
-    forwarded_changes: Arc<Mutex<HashMap<String, Box<dyn Future<Item=(), Error=()>+Send>>>>,
-
     /// Used for properties that don't exist in this model
     nothing: BindRef<PropertyValue>
+}
+
+///
+/// Notifier for a dynamic stream
+///
+struct DynamicStreamNotify {
+    /// Task to notify
+    task: Mutex<task::Task>,
+
+    /// True if this stream has notified
+    was_notified: Mutex<bool>
+}
+
+///
+/// Single property being streamed
+///
+struct DynamicStreamProperty {
+    /// Last value returned to this stream
+    last_value: Option<PropertyValue>,
+
+    /// Stream of values for this item
+    value_stream: executor::Spawn<Box<dyn Stream<Item=PropertyValue, Error=()>+Send>>,
+
+    /// Most recent notifier for this stream
+    notify: Arc<DynamicStreamNotify>
 }
 
 ///
@@ -40,30 +64,122 @@ pub struct DynamicViewModel {
 /// 'pull' changes in on the current thread rather than generate them asynchronously on a
 /// different thread, which is useful when trying to drain all updates from the publisher.
 ///
-struct DynamicViewModelUpdateStream {
-    /// The subscription stream where the updates are coming from
-    subscriber: Subscriber<ViewModelChange>,
+struct DynamicViewModelUpdateStream<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> {
+    /// Stream of new property bindings
+    new_properties: NewProperties,
 
-    /// Changes, forwarded to the publisher
-    forwarded_changes: Arc<Mutex<HashMap<String, Box<dyn Future<Item=(), Error=()>+Send>>>>,
+    // Newly created properties waiting to be returned by the stream
+    pending_changes: VecDeque<ViewModelChange>,
+
+    /// Stream that monitors for any property change in the viewmodel
+    any_property: HashMap<String, DynamicStreamProperty>
 }
 
-impl Stream for DynamicViewModelUpdateStream {
+impl executor::Notify for DynamicStreamNotify {
+    fn notify(&self, _id: usize) {
+        // Set the flag
+        *self.was_notified.lock().unwrap() = true;
+
+        // Notify the task
+        self.task.lock().unwrap().notify();
+    }
+}
+
+impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Stream for DynamicViewModelUpdateStream<NewProperties> {
     type Item = ViewModelChange;
     type Error = ();
 
     fn poll(&mut self) -> Poll<Option<ViewModelChange>, ()> {
-        // Poll all of the forward changes
-        {
-            let mut changes = self.forwarded_changes.lock().unwrap();
+        // Set up any new properties
+        let mut new_property_poll = self.new_properties.poll();
+        while let Ok(Async::Ready(Some((name, binding)))) = new_property_poll {
+            // Create a new property with its notify flag set
+            let notified = DynamicStreamNotify {
+                task:           Mutex::new(task::current()),
+                was_notified:   Mutex::new(true)
+            };
 
-            for (_, future) in changes.iter_mut() {
-                future.poll().ok();
+            let value = binding.get();
+
+            let property = DynamicStreamProperty {
+                last_value:     Some(value.clone()),
+                value_stream:   executor::spawn(Box::new(follow(binding))),
+                notify:         Arc::new(notified)
+            };
+
+            // Push to the pending changes list
+            self.pending_changes.push_back(ViewModelChange::NewProperty(name.clone(), value));
+
+            // Add to the list of properties this stream is following
+            self.any_property.insert(name, property);
+
+            // Get the next new property
+            new_property_poll = self.new_properties.poll();
+        }
+
+        // Return pending changes first
+        if let Some(next_change) = self.pending_changes.pop_front() {
+            return Ok(Async::Ready(Some(next_change)));
+        }
+
+        // If the new properties stream comes to an end, this stream has come to an end
+        if let Ok(Async::Ready(None)) = new_property_poll {
+            return Ok(Async::Ready(None));
+        }
+
+        // Poll for values from any properties with their flag set
+        for (name, property) in self.any_property.iter_mut() {
+            // Update the task to notify
+            *property.notify.task.lock().unwrap() = task::current();
+
+            // If the flag is set...
+            if *property.notify.was_notified.lock().unwrap() {
+                // Try polling this item
+                loop {
+                    let notify_poll = property.value_stream.poll_stream_notify(&Arc::clone(&property.notify), 0);
+
+                    match notify_poll {
+                        Ok(Async::Ready(Some(new_value))) => {
+                            // Got an update for this property
+                            if Some(&new_value) != property.last_value.as_ref() {
+                                // Store the last value so we don't create duplicate updates
+                                property.last_value = Some(new_value.clone());
+
+                                // Value changed: send it on
+                                let update = ViewModelChange::PropertyChanged(name.clone(), new_value);
+                                return Ok(Async::Ready(Some(update)));
+                            } else {
+                                // Poll again in case there is an actual new value (or to start waiting for updates on this property)
+                            }
+                        },
+
+                        Ok(Async::Ready(None)) => {
+                            // Property was deleted
+                            *property.notify.was_notified.lock().unwrap() = false;
+
+                            // Need to keep polling this item
+                            break;
+                        },
+
+                        Err(_) => {
+                            // Just skip errors for now (we shouldn't produce any)
+                            break;
+                        },
+
+                        Ok(Async::NotReady) => {
+                            // Not notified any more
+                            *property.notify.was_notified.lock().unwrap() = false;
+
+                            // Need to keep polling this item
+                            break;
+                        }
+                    }
+                }
             }
         }
 
-        // Final result is polling the subscriber
-        self.subscriber.poll()
+        // No updates available
+        Ok(Async::NotReady)
     }
 }
 
@@ -73,10 +189,9 @@ impl DynamicViewModel {
     /// 
     pub fn new() -> DynamicViewModel {
         DynamicViewModel { 
-            changes:            Mutex::new(Publisher::new(1)),
+            new_properties:     Mutex::new(Publisher::new(20)),
             bindings:           Mutex::new(HashMap::new()), 
             computed:           Mutex::new(HashMap::new()),
-            forwarded_changes:  Arc::new(Mutex::new(HashMap::new())),
             nothing:            BindRef::from(bind(PropertyValue::Nothing)) }
     }
 
@@ -131,35 +246,9 @@ impl DynamicViewModel {
     /// Follows a binding and publishes updates to the update stream
     ///
     fn follow_binding<TBinding: 'static+Bound<PropertyValue>>(&self, property_name: &str, binding: TBinding) {
-        struct NotifyNothing;
-        impl executor::Notify for NotifyNothing {
-            fn notify(&self, _: usize) { }
-        }
-
-        let property_name   = String::from(property_name);
-        let publisher       = self.changes.lock().unwrap().republish();
-        let initial_value   = binding.get();
-
-        // Create the stream of updates for this binding
-        let updates         = follow(binding);
-        let update_name     = property_name.clone();
-        let updates         = updates.map(move |value| ViewModelChange::PropertyChanged(update_name.clone(), value));
-
-        // Update stream starts with a 'new property' message
-        let new_property    = stream::once(Ok(ViewModelChange::NewProperty(property_name.clone(), initial_value)));
-        let updates         = new_property.chain(updates);
-
-        // Send to the publisher
-        let forward         = updates.forward(publisher).fuse();
-
-        // Pump the stream a single time to wake anything up that's checking for the new property to be created
-        let mut exec        = executor::spawn(forward);
-        exec.poll_future_notify(&executor::NotifyHandle::from(&NotifyNothing), 0).ok();
-        let forward         = exec.into_inner();
-
-        // Remember this (we can poll these futures when something tries to read from the stream)
-        let forward         = forward.map(|_| ());
-        self.forwarded_changes.lock().unwrap().insert(property_name, Box::new(forward));
+        self.new_properties.lock().unwrap()
+            .start_send((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
+            .ok();
     }
 }
 
@@ -222,9 +311,27 @@ impl ViewModel for DynamicViewModel {
     }
 
     fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
+        // Gather the existing bindings
+        let existing_properties = self.bindings.lock().unwrap().iter()
+            .map(|(name, binding)| (name.clone(), BindRef::from_arc(Arc::clone(binding))))
+            .collect::<Vec<_>>();
+        let existing_computed   = self.computed.lock().unwrap().iter()
+            .map(|(name, binding)| (name.clone(), binding.clone()))
+            .collect::<Vec<_>>();
+
+        // Subscribe to any new properties that might be added after the stream is generated
+        let new_properties      = self.new_properties.lock().unwrap().subscribe();
+
+        // Initially all properties are new
+        let existing_properties = stream::iter_ok(existing_properties);
+        let existing_computed   = stream::iter_ok(existing_computed);
+        let new_properties      = existing_properties.chain(existing_computed).chain(new_properties);
+
+        // Create the new stream
         let stream = DynamicViewModelUpdateStream {
-            subscriber:         self.changes.lock().unwrap().subscribe(),
-            forwarded_changes:  Arc::clone(&self.forwarded_changes)
+            new_properties:     new_properties,
+            pending_changes:    VecDeque::new(),
+            any_property:       HashMap::new()
         };
 
         Box::new(stream)
