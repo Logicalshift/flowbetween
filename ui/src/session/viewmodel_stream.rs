@@ -1,7 +1,7 @@
-use super::control::*;
-use super::viewmodel::*;
-use super::controller::*;
-use super::viewmodel_update::*;
+use super::super::control::*;
+use super::super::viewmodel::*;
+use super::super::controller::*;
+use super::super::viewmodel_update::*;
 
 use binding::*;
 
@@ -157,8 +157,8 @@ impl Stream for ViewModelUpdateStream {
 mod test {
     use super::*;
 
-    use super::super::property::*;
-    use super::super::dynamic_viewmodel::*;
+    use super::super::super::property::*;
+    use super::super::super::dynamic_viewmodel::*;
 
     use futures::executor;
 
