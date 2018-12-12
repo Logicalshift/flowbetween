@@ -473,6 +473,12 @@ mod test {
             let update2 = update_stream.wait_stream().unwrap().unwrap();
             println!("{:?}", update2);
 
+            let (update1, update2) = if update2.controller_path() == &vec!["Model1".to_string()] {
+                (update2, update1)
+            } else {
+                (update1, update2)
+            };
+
             assert!(update1.controller_path() == &vec!["Model1".to_string()]);
             assert!(update1.updates() == &vec![
                 ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
