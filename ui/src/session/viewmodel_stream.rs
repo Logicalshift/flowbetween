@@ -165,13 +165,16 @@ impl Stream for ViewModelUpdateStream {
             }
 
             // Check for updates to the controller UI
-            let next_ui = self.controller_stream.poll();
-            if let Ok(Async::Ready(Some(ref next_ui))) = next_ui {
+            let mut next_ui_poll = self.controller_stream.poll();
+            while let Ok(Async::Ready(Some(next_ui))) = next_ui_poll {
                 // Refresh the subcontrollers from the UI
-                self.update_subcontrollers(&*root_controller, next_ui);
+                self.update_subcontrollers(&*root_controller, &next_ui);
+
+                // Keep polling
+                next_ui_poll = self.controller_stream.poll();
             }
 
-            if let Ok(Async::Ready(None)) = next_ui {
+            if let Ok(Async::Ready(None)) = next_ui_poll {
                 // If the controller's UI stream ends, then the viewmodel updates also end (presumably the controller has been disposed of)
                 return Ok(Async::Ready(None));
             }
@@ -209,7 +212,6 @@ impl Stream for ViewModelUpdateStream {
 mod test {
     use super::*;
 
-    use super::super::super::property::*;
     use super::super::super::dynamic_viewmodel::*;
 
     use futures::executor;
@@ -335,4 +337,164 @@ mod test {
         assert!(update.controller_path() == &vec!["Subcontroller".to_string()]);
         assert!(update.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
     }
+
+    #[test]
+    fn new_controller_is_picked_up() {
+        let controller = DynamicController::new();
+        controller.set_controls(Control::container());
+
+        let controller = Arc::new(controller);
+
+        let update_stream       = ViewModelUpdateStream::new(controller.clone());
+        let mut update_stream   = executor::spawn(update_stream);
+
+        controller.set_controls(Control::container().with_controller("Subcontroller"));
+        controller.add_subcontroller("Subcontroller".to_string());
+        let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
+
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+
+        let updates = update_stream.wait_stream().unwrap().unwrap();
+
+        assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
+        assert!(updates.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+    }
+
+    #[test]
+    fn changes_after_new_controller_are_picked_up() {
+        let controller = DynamicController::new();
+        controller.set_controls(Control::container());
+
+        let controller = Arc::new(controller);
+
+        let update_stream       = ViewModelUpdateStream::new(controller.clone());
+        let mut update_stream   = executor::spawn(update_stream);
+
+        controller.set_controls(Control::container().with_controller("Subcontroller"));
+        controller.add_subcontroller("Subcontroller".to_string());
+        let subcontroller = controller.get_subcontroller("Subcontroller").unwrap();
+
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+
+        let _updates = update_stream.wait_stream().unwrap().unwrap();
+
+        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(3));
+        let updates = update_stream.wait_stream().unwrap().unwrap();
+
+        assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
+        assert!(updates.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(3))]);
+    }
+
+/*
+    struct TestViewModel;
+
+    struct TestController {
+        model_controler: Arc<ModelController>,
+        view_model: Arc<NullViewModel>
+    }
+    
+    struct ModelController {
+        view_model: Arc<TestViewModel>
+    }
+
+    impl TestController {
+        pub fn new() -> TestController {
+            TestController { 
+                model_controler: Arc::new(ModelController::new()), 
+                view_model: Arc::new(NullViewModel::new()) 
+            }
+        }
+    }
+
+    impl ModelController {
+        pub fn new() -> ModelController {
+            ModelController { view_model: Arc::new(TestViewModel) }
+        }
+    }
+
+    impl Controller for TestController {
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::from(bind(Control::container().with(vec![
+                Control::empty().with_controller("Model1"),
+                Control::empty().with_controller("Model2")
+            ])))
+        }
+
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
+            Some(self.model_controler.clone())
+        }
+
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
+            Some(self.view_model.clone())
+        }
+    }
+
+    impl Controller for ModelController {
+        fn ui(&self) -> BindRef<Control> {
+            BindRef::from(bind(Control::label()))
+        }
+
+        fn get_subcontroller(&self, _id: &str) -> Option<Arc<dyn Controller>> {
+            None
+        }
+
+        fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
+            Some(self.view_model.clone())
+        }
+    }
+
+    impl ViewModel for TestViewModel {
+        fn get_property(&self, property_name: &str) -> BindRef<PropertyValue> {
+            BindRef::from(bind(PropertyValue::String(property_name.to_string())))
+        }
+
+        fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
+        }
+
+        fn get_property_names(&self) -> Vec<String> {
+            vec![ "Test1".to_string(), "Test2".to_string(), "Test3".to_string() ]
+        }
+
+        fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
+            unimplemented!()
+        }
+    }
+    
+    #[test]
+    pub fn can_generate_viewmodel_update_all() {
+        let viewmodel   = TestViewModel;
+        let update      = viewmodel_update_all(vec!["Test".to_string(), "Path".to_string()], &viewmodel);
+
+        assert!(update.controller_path() == &vec!["Test".to_string(), "Path".to_string()]);
+        assert!(update.updates() == &vec![
+            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+    }
+    
+    #[test]
+    pub fn can_generate_controller_update_all() {
+        let controller  = Arc::new(TestController::new());
+        let update      = viewmodel_update_controller_tree(&*controller);
+
+        assert!(update.len() == 2);
+
+        assert!(update[0].controller_path() == &vec!["Model1".to_string()]);
+        assert!(update[0].updates() == &vec![
+            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+
+        assert!(update[1].controller_path() == &vec!["Model2".to_string()]);
+        assert!(update[1].updates() == &vec![
+            ViewModelChange::PropertyChanged("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+            ViewModelChange::PropertyChanged("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+            ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+        ]);
+    }
+*/
+
+    // TODO: detects removed controller
 }
