@@ -19,10 +19,10 @@ pub struct ViewModelUpdateStream {
     root_controller: Weak<dyn Controller>,
 
     /// Stream of updates from the root controller
-    controller_stream: Box<dyn Stream<Item=Control, Error=()>>,
+    controller_stream: Box<dyn Stream<Item=Control, Error=()>+Send>,
 
     /// Updates for the controller viewmodel
-    controller_viewmodel_updates: Option<Box<dyn Stream<Item=ViewModelChange, Error=()>>>,
+    controller_viewmodel_updates: Option<Box<dyn Stream<Item=ViewModelChange, Error=()>+Send>>,
 
     /// The streams for the subcontrollers
     sub_controllers: HashMap<String, ViewModelUpdateStream>,

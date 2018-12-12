@@ -221,7 +221,7 @@ impl ViewModel for DynamicViewModel {
         binding_keys
     }
 
-    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>> {
+    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
         let stream = DynamicViewModelUpdateStream {
             subscriber:         self.changes.lock().unwrap().subscribe(),
             forwarded_changes:  Arc::clone(&self.forwarded_changes)

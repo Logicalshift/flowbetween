@@ -33,7 +33,7 @@ pub trait ViewModel {
     fn get_property_names(&self) -> Vec<String>;
 
     /// Retrieves a stream of updates from this viewmodel
-    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>>;
+    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send>;
 }
 
 pub struct NullViewModel {
@@ -58,7 +58,7 @@ impl ViewModel for NullViewModel {
         vec![]
     }
 
-    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>> {
+    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
         Box::new(stream::empty())
     }
 }

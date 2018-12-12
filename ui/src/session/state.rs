@@ -2,13 +2,8 @@ use super::update::*;
 use super::canvas_state::*;
 use super::super::diff::*;
 use super::super::control::*;
-use super::super::controller::*;
-use super::super::diff_viewmodel::*;
 
 use binding::*;
-
-use std::mem;
-use std::sync::*;
 
 ///
 /// Represents the most recent state of a UI session
@@ -16,12 +11,6 @@ use std::sync::*;
 pub struct UiSessionState {
     /// The control state at the last update
     ui: Option<Control>,
-
-    /// Creates watchers for the viewmodel
-    view_model_diff: Option<DiffViewModel>,
-
-    /// The view model watcher
-    view_model_watcher: Option<WatchViewModel>,
 
     /// The canvas state object
     canvas_state: Option<CanvasState>
@@ -34,8 +23,6 @@ impl UiSessionState {
     pub fn new() -> UiSessionState {
         UiSessionState {
             ui:                 None,
-            view_model_diff:    None,
-            view_model_watcher: None,
             canvas_state:       None
         }
     }
@@ -80,43 +67,6 @@ impl UiSessionState {
     }
 
     ///
-    /// Starts watching the viewmodel for a controller
-    /// 
-    pub fn watch_viewmodel(&mut self, controller: Arc<dyn Controller>) {
-        let new_diff    = DiffViewModel::new(controller);
-        let watcher     = new_diff.watch();
-
-        self.view_model_diff    = Some(new_diff);
-        self.view_model_watcher = Some(watcher);
-    }
-
-    ///
-    /// Retrieves the viewmodel update event, if there is one
-    /// 
-    pub fn get_viewmodel_update(&mut self) -> Option<UiUpdate> {
-        // Pull the watcher out of this object
-        let mut watcher = None;
-        mem::swap(&mut watcher, &mut self.view_model_watcher);
-
-        if let Some((diff, watcher)) = self.view_model_diff.as_ref().and_then(|diff| watcher.map(move |watch| (diff, watch))) {
-            // We're watching a viewmodel; rotate the watch to build the diff
-            let (differences, new_watcher) = diff.rotate_watch(watcher);
-
-            // This becomes our new watcher
-            self.view_model_watcher = Some(new_watcher);
-
-            // No event if there are no differences, otherwise a viewmodel change update
-            if differences.len() == 0 {
-                None
-            } else {
-                Some(UiUpdate::UpdateViewModel(differences))
-            }
-        } else {
-            None
-        }
-    }
-
-    ///
     /// Watches for updates to canvases in the specified UI
     /// 
     pub fn watch_canvases(&mut self, ui_binding: &BindRef<Control>) {
@@ -150,13 +100,11 @@ impl UiSessionState {
     pub fn get_updates(&mut self, ui_binding: &BindRef<Control>) -> Vec<UiUpdate> {
         // Fetch the updates for the various categories
         let ui_updates          = self.update_ui(&ui_binding.get());
-        let viewmodel_updates   = self.get_viewmodel_update();
         let canvas_updates      = self.get_canvas_update();
 
         // Combine into a vector
         let mut combined_updates = vec![];
         if let Some(ui_updates) = ui_updates                { combined_updates.push(ui_updates); }
-        if let Some(viewmodel_updates) = viewmodel_updates  { combined_updates.push(viewmodel_updates); }
         if let Some(canvas_updates) = canvas_updates        { combined_updates.push(canvas_updates); }
 
         combined_updates

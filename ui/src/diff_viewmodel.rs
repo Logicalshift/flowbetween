@@ -547,7 +547,7 @@ mod test {
             vec![ "Test1".to_string(), "Test2".to_string(), "Test3".to_string() ]
         }
 
-        fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>> {
+        fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
             unimplemented!()
         }
     }

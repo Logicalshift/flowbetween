@@ -1,6 +1,7 @@
 use super::core::*;
 use super::state::*;
 use super::update::*;
+use super::viewmodel_stream::*;
 use super::super::control::*;
 use super::super::controller::*;
 use super::super::diff_viewmodel::*;
@@ -46,6 +47,9 @@ pub struct UiUpdateStream {
     /// The stream core
     stream_core: Arc<Desync<UpdateStreamCore>>,
 
+    /// The viewmodel updates
+    viewmodel_updates: ViewModelUpdateStream,
+
     /// Update that was generated for the last poll and is ready to go
     pending: Arc<Mutex<Option<Vec<UiUpdate>>>>,
 }
@@ -57,17 +61,21 @@ impl UiUpdateStream {
     pub fn new(controller: Arc<dyn Controller>, core: Arc<Desync<UiSessionCore>>) -> UiUpdateStream {
         // Create the values that will go into the core
         let session_core    = core;
-        let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new(controller)));
+        let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new(Arc::clone(&controller))));
         let pending         = Arc::new(Mutex::new(None));
 
         // Set up the core to receive updates
         Self::initialise_core(Arc::clone(&session_core), Arc::clone(&stream_core));
+
+        // Stream from the viewmodel
+        let viewmodel_updates = ViewModelUpdateStream::new(Arc::clone(&controller));
         
         // Generate the stream
         let new_stream = UiUpdateStream {
-            session_core:   session_core,
-            stream_core:    stream_core,
-            pending:        pending
+            session_core:       session_core,
+            stream_core:        stream_core,
+            viewmodel_updates:  viewmodel_updates,
+            pending:            pending
         };
 
         // Send the setup event to it
@@ -132,6 +140,26 @@ impl UiUpdateStream {
             });
         })
     }
+
+    ///
+    /// Pulls any viewmodel events into the pending stream
+    ///
+    fn pull_viewmodel_events(&mut self) {
+        // Pending viewmodel updates
+        let mut viewmodel_updates = vec![];
+
+        // For as long as the viewmodel stream has updates, add them to the viewmodel update list
+        while let Ok(Async::Ready(Some(update))) = self.viewmodel_updates.poll() {
+            viewmodel_updates.push(update);
+        }
+
+        // Add a viewmodel update to the pending list if there were any
+        if viewmodel_updates.len() > 0 {
+            self.pending.lock().unwrap()
+                .get_or_insert_with(|| vec![])
+                .push(UiUpdate::UpdateViewModel(viewmodel_updates));
+        }
+    }
 }
 
 impl UpdateStreamCore {
@@ -151,7 +179,6 @@ impl UpdateStreamCore {
     /// Sets up the state object to track updates
     /// 
     pub fn setup_state(&mut self, ui_binding: &BindRef<Control>) {
-        self.state.watch_viewmodel(Arc::clone(&self.controller));
         self.state.watch_canvases(ui_binding);
     }
 
@@ -187,6 +214,9 @@ impl Stream for UiUpdateStream {
     type Error  = ();
 
     fn poll(&mut self) -> Poll<Option<Vec<UiUpdate>>, Self::Error> {
+        // Pull any pending viewmodel events into the pending list
+        self.pull_viewmodel_events();
+
         // Try to read the pending update, if there is one
         let mut pending         = self.pending.lock().unwrap();
         let mut pending_result  = None;
@@ -213,9 +243,12 @@ impl Stream for UiUpdateStream {
                     if pending.is_some() {
                         // If there's now a pending update, then signal the task to return via the stream
                         task.notify();
-                    } else if session_core.last_update_id() != stream_core.last_update_id {
+                    } 
+
+                    if session_core.last_update_id() != stream_core.last_update_id {
                         // If the core has a newer update than we do then start generating a new pending update
-                        *pending = Some(stream_core.state.get_updates(&session_core.ui_tree()));
+                        pending.get_or_insert_with(|| vec![])
+                            .extend(stream_core.state.get_updates(&session_core.ui_tree()));
 
                         stream_core.last_update_id = session_core.last_update_id();
                         task.notify();
