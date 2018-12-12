@@ -4,7 +4,6 @@ use super::update::*;
 use super::viewmodel_stream::*;
 use super::super::control::*;
 use super::super::controller::*;
-use super::super::diff_viewmodel::*;
 
 use desync::*;
 use binding::*;
@@ -18,9 +17,6 @@ use std::sync::*;
 /// Core data for an update stream
 /// 
 struct UpdateStreamCore {
-    /// The controller that will be used to update the state
-    controller: Arc<dyn Controller>,
-
     /// The state of the UI last time an update was generated for the update stream
     state: UiSessionState,
 
@@ -61,7 +57,7 @@ impl UiUpdateStream {
     pub fn new(controller: Arc<dyn Controller>, core: Arc<Desync<UiSessionCore>>) -> UiUpdateStream {
         // Create the values that will go into the core
         let session_core    = core;
-        let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new(Arc::clone(&controller))));
+        let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new()));
         let pending         = Arc::new(Mutex::new(None));
 
         // Set up the core to receive updates
@@ -117,13 +113,11 @@ impl UiUpdateStream {
 
                 // We generate an update that sends the entire UI and viewmodel state to the target
                 let initial_ui          = stream_core.state.update_ui(&ui_tree);
-                let initial_viewmodel   = UiUpdate::UpdateViewModel(viewmodel_update_controller_tree(&*stream_core.controller));
 
                 // Turn into a set of updates
                 // These updates include the start event
                 let mut updates = vec![UiUpdate::Start];
                 if let Some(initial_ui) = initial_ui { updates.push(initial_ui); }
-                updates.push(initial_viewmodel);
 
                 // This is the initial pending update
                 let mut pending = pending.lock().unwrap();
@@ -166,9 +160,8 @@ impl UpdateStreamCore {
     ///
     /// Creates a new update stream core
     /// 
-    pub fn new(controller: Arc<dyn Controller>) -> UpdateStreamCore {
+    pub fn new() -> UpdateStreamCore {
         UpdateStreamCore {
-            controller:     controller,
             state:          UiSessionState::new(),
             last_update_id: 0,
             waiting:        None
