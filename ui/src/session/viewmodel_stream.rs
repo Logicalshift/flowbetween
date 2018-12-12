@@ -58,11 +58,6 @@ impl ViewModelUpdateStream {
             // Update the control subcontrollers
             self.update_subcontrollers(&*root_controller, &root_controller.ui().get());
 
-            // All subcontrollers should generate an initial event too
-            for (_, subcontroller_stream) in self.sub_controllers.iter_mut() {
-                subcontroller_stream.generate_initial_update();
-            }
-
             // Generate a list of initial values from the viewmodel for the current controller and add to the pending list
             if let Some(viewmodel) = root_controller.get_viewmodel() {
                 let mut initial_values = vec![];
@@ -98,7 +93,10 @@ impl ViewModelUpdateStream {
 
                 } else if let Some(subcontroller) = root_controller.get_subcontroller(&subcontroller_name) {
                     // Need to track with a new subcontroller
-                    let subcontroller_stream = ViewModelUpdateStream::new(subcontroller);
+                    let mut subcontroller_stream = ViewModelUpdateStream::new(subcontroller);
+
+                    // Subcontroller should generate an initial update so we know what the initial properties are
+                    subcontroller_stream.generate_initial_update();
 
                     new_sub_controllers.insert(subcontroller_name.clone(), subcontroller_stream);
                 }
