@@ -1,6 +1,7 @@
 use super::core::*;
 use super::state::*;
 use super::update::*;
+use super::canvas_stream::*;
 use super::viewmodel_stream::*;
 use super::super::control::*;
 use super::super::controller::*;
@@ -46,6 +47,9 @@ pub struct UiUpdateStream {
     /// The viewmodel updates
     viewmodel_updates: ViewModelUpdateStream,
 
+    // The canvas updates
+    canvas_updates: CanvasUpdateStream,
+
     /// Update that was generated for the last poll and is ready to go
     pending: Arc<Mutex<Option<Vec<UiUpdate>>>>,
 }
@@ -60,17 +64,18 @@ impl UiUpdateStream {
         let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new()));
         let pending         = Arc::new(Mutex::new(None));
 
-        // Set up the core to receive updates
-        Self::initialise_core(Arc::clone(&session_core), Arc::clone(&stream_core));
-
         // Stream from the viewmodel
         let viewmodel_updates = ViewModelUpdateStream::new(Arc::clone(&controller));
+
+        // Stream from the canvases
+        let canvas_updates = CanvasUpdateStream::new(Arc::clone(&controller));
         
         // Generate the stream
         let mut new_stream = UiUpdateStream {
             session_core:       session_core,
             stream_core:        stream_core,
             viewmodel_updates:  viewmodel_updates,
+            canvas_updates:     canvas_updates,
             pending:            pending
         };
 
@@ -78,21 +83,6 @@ impl UiUpdateStream {
         new_stream.generate_initial_event();
 
         new_stream
-    }
-
-    ///
-    /// Sets up the stream core with its initial state
-    /// 
-    fn initialise_core(session_core: Arc<Desync<UiSessionCore>>, stream_core: Arc<Desync<UpdateStreamCore>>) {
-        session_core.desync(move |session_core| {
-            // Need the UI binding from the core
-            let ui_binding = session_core.ui_tree();
-
-            // Set up the core with its initial state
-            stream_core.desync(move |stream_core| {
-                stream_core.setup_state(&ui_binding);
-            })
-        })
     }
 
     ///
@@ -154,6 +144,26 @@ impl UiUpdateStream {
                 .push(UiUpdate::UpdateViewModel(viewmodel_updates));
         }
     }
+
+    ///
+    /// Pulls any viewmodel events into the pending stream
+    ///
+    fn pull_canvas_events(&mut self) {
+        // Pending canvas updates
+        let mut canvas_updates = vec![];
+
+        // For as long as the canvas stream has updates, add them to the viewmodel update list
+        while let Ok(Async::Ready(Some(update))) = self.canvas_updates.poll() {
+            canvas_updates.push(update);
+        }
+
+        // Add a canvas update to the pending list if there were any
+        if canvas_updates.len() > 0 {
+            self.pending.lock().unwrap()
+                .get_or_insert_with(|| vec![])
+                .push(UiUpdate::UpdateCanvas(canvas_updates));
+        }
+    }
 }
 
 impl UpdateStreamCore {
@@ -166,13 +176,6 @@ impl UpdateStreamCore {
             last_update_id: 0,
             waiting:        None
         }
-    }
-
-    ///
-    /// Sets up the state object to track updates
-    /// 
-    pub fn setup_state(&mut self, ui_binding: &BindRef<Control>) {
-        self.state.watch_canvases(ui_binding);
     }
 
     ///
@@ -207,7 +210,8 @@ impl Stream for UiUpdateStream {
     type Error  = ();
 
     fn poll(&mut self) -> Poll<Option<Vec<UiUpdate>>, Self::Error> {
-        // Pull any pending viewmodel events into the pending list
+        // Pull any pending events into the pending list
+        self.pull_canvas_events();
         self.pull_viewmodel_events();
 
         // Try to read the pending update, if there is one

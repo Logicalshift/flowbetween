@@ -1,5 +1,4 @@
 use super::update::*;
-use super::canvas_state::*;
 use super::super::diff::*;
 use super::super::control::*;
 
@@ -11,9 +10,6 @@ use binding::*;
 pub struct UiSessionState {
     /// The control state at the last update
     ui: Option<Control>,
-
-    /// The canvas state object
-    canvas_state: Option<CanvasState>
 }
 
 impl UiSessionState {
@@ -22,8 +18,7 @@ impl UiSessionState {
     /// 
     pub fn new() -> UiSessionState {
         UiSessionState {
-            ui:                 None,
-            canvas_state:       None
+            ui:                 None
         }
     }
 
@@ -67,45 +62,15 @@ impl UiSessionState {
     }
 
     ///
-    /// Watches for updates to canvases in the specified UI
-    /// 
-    pub fn watch_canvases(&mut self, ui_binding: &BindRef<Control>) {
-        self.canvas_state = Some(CanvasState::new(ui_binding));
-    }
-
-    ///
-    /// Retrieves the updates to any canvases attached to this object
-    /// 
-    pub fn get_canvas_update(&mut self) -> Option<UiUpdate> {
-        if let Some(ref canvas_state) = self.canvas_state {
-            // Fetch the updates from the canvas state
-            let updates = canvas_state.latest_updates();
-
-            if updates.len() == 0 {
-                // No updates
-                None
-            } else {
-                // Got some updates
-                Some(UiUpdate::UpdateCanvas(updates))
-            }
-        } else {
-            // Not watching any canvases
-            None
-        }
-    }
-
-    ///
     /// Retrieves the updates that are pending in this object
     /// 
     pub fn get_updates(&mut self, ui_binding: &BindRef<Control>) -> Vec<UiUpdate> {
         // Fetch the updates for the various categories
         let ui_updates          = self.update_ui(&ui_binding.get());
-        let canvas_updates      = self.get_canvas_update();
 
         // Combine into a vector
         let mut combined_updates = vec![];
         if let Some(ui_updates) = ui_updates                { combined_updates.push(ui_updates); }
-        if let Some(canvas_updates) = canvas_updates        { combined_updates.push(canvas_updates); }
 
         combined_updates
     }
