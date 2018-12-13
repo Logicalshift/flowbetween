@@ -272,16 +272,6 @@ mod test {
     }
 
     #[test]
-    fn initially_no_changes() {
-        let controller  = Arc::new(DynamicController::new());
-        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
-
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
-
-        assert!(stream.poll_stream_notify(&Arc::new(NotifyNothing), 0) == Ok(Async::NotReady));
-    }
-
-    #[test]
     fn changes_are_picked_up() {
         let controller = Arc::new(DynamicController::new());
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
@@ -290,15 +280,16 @@ mod test {
 
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]))));
+        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]))));
     }
 
     #[test]
     fn new_values_are_picked_up() {
-        let controller = Arc::new(DynamicController::new());
+        let controller  = Arc::new(DynamicController::new());
+        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))]))));
 
         controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
 
@@ -311,6 +302,7 @@ mod test {
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
         let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))]))));
 
         controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
