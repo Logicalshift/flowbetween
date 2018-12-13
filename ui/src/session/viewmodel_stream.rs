@@ -169,6 +169,7 @@ impl Stream for ViewModelUpdateStream {
 mod test {
     use super::*;
 
+    use super::super::super::property::*;
     use super::super::super::dynamic_viewmodel::*;
 
     use futures::executor;
