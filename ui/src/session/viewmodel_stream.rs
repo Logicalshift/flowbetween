@@ -59,6 +59,7 @@ impl ViewModelUpdateStream {
     /// Ensures that all viewmodels referenced by this stream generate an update for each of their properties
     ///
     pub fn generate_initial_update(&mut self) {
+        /*
         if let Some(root_controller) = self.root_controller.upgrade() {
             // Update the control subcontrollers
             self.update_subcontrollers(&*root_controller, &root_controller.ui().get());
@@ -79,6 +80,7 @@ impl ViewModelUpdateStream {
                 }
             }
         }
+        */
     }
 
     ///
@@ -455,7 +457,11 @@ mod test {
         }
 
         fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
-            Box::new(stream::empty())
+            Box::new(stream::iter_ok(vec![
+                ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+                ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+                ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string()))
+            ]))
         }
     }
 
