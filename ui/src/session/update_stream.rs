@@ -103,8 +103,6 @@ impl UiUpdateStream {
         let stream_core     = Arc::clone(&self.stream_core);
         let pending         = Arc::clone(&self.pending);
 
-        self.viewmodel_updates.generate_initial_update();
-
         session_core.desync(move |session_core| {
             let update_id  = session_core.last_update_id();
             let ui_binding = session_core.ui_tree();

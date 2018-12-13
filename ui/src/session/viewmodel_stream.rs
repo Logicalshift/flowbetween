@@ -56,34 +56,6 @@ impl ViewModelUpdateStream {
     }
 
     ///
-    /// Ensures that all viewmodels referenced by this stream generate an update for each of their properties
-    ///
-    pub fn generate_initial_update(&mut self) {
-        /*
-        if let Some(root_controller) = self.root_controller.upgrade() {
-            // Update the control subcontrollers
-            self.update_subcontrollers(&*root_controller, &root_controller.ui().get());
-
-            // Generate a list of initial values from the viewmodel for the current controller and add to the pending list
-            if let Some(viewmodel) = root_controller.get_viewmodel() {
-                let mut initial_values = vec![];
-
-                // Read through the properties and create 'new property' events for all of them
-                for property_name in viewmodel.get_property_names() {
-                    let property_value = viewmodel.get_property(&property_name).get();
-                    initial_values.push(ViewModelChange::NewProperty(property_name, property_value));
-                }
-
-                // Create an event and add it to the pending list
-                if initial_values.len() > 0 {
-                    self.pending.push_back(ViewModelUpdate::new(vec![], initial_values));
-                }
-            }
-        }
-        */
-    }
-
-    ///
     /// When the controller's UI changes, updates the subcontroller streams
     ///
     fn update_subcontrollers(&mut self, root_controller: &dyn Controller, control: &Control) {
@@ -101,9 +73,6 @@ impl ViewModelUpdateStream {
                 } else if let Some(subcontroller) = root_controller.get_subcontroller(&subcontroller_name) {
                     // Need to track with a new subcontroller
                     let mut subcontroller_stream = ViewModelUpdateStream::new(subcontroller);
-
-                    // Subcontroller should generate an initial update so we know what the initial properties are
-                    subcontroller_stream.generate_initial_update();
 
                     new_sub_controllers.insert(subcontroller_name.clone(), subcontroller_stream);
                 }
@@ -462,8 +431,6 @@ mod test {
         for _pass in 0..10 {
             let controller          = Arc::new(TestController::new());
             let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
-
-            update_stream.generate_initial_update();
             let mut update_stream   = executor::spawn(update_stream);
 
             let update1 = update_stream.wait_stream().unwrap().unwrap();
