@@ -22,9 +22,6 @@ pub struct ViewModelUpdateStream {
     /// Stream of updates from the root controller
     controller_stream: Box<dyn Stream<Item=Control, Error=()>+Send>,
 
-    /// The values that were previously sent to the stream for the various properties
-    known_values: HashMap<String, PropertyValue>,
-
     /// Updates for the controller viewmodel
     controller_viewmodel_updates: Option<Box<dyn Stream<Item=ViewModelChange, Error=()>+Send>>,
 
@@ -49,7 +46,6 @@ impl ViewModelUpdateStream {
             root_controller:                root_controller,
             controller_stream:              Box::new(controller_stream),
             controller_viewmodel_updates:   controller_viewmodel_updates,
-            known_values:                   HashMap::new(),
             sub_controllers:                HashMap::new(),
             pending:                        VecDeque::new()
         }
@@ -98,34 +94,25 @@ impl Stream for ViewModelUpdateStream {
                 let mut all_updates = vec![];
 
                 // Drain the controller updates
-                let mut full_update = controller_viewmodel_updates.poll();
+                let mut update_poll = controller_viewmodel_updates.poll();
 
-                while let Ok(Async::Ready(Some(update))) = full_update {
+                while let Ok(Async::Ready(Some(update))) = update_poll {
                     match update {
                         ViewModelChange::NewProperty(name, value) => {
-                            // This updates the known value for this property
-                            self.known_values.insert(name.clone(), value.clone());
-
-                            // Always pass on new property updates
                             all_updates.push(ViewModelChange::NewProperty(name, value));
                         }
 
                         ViewModelChange::PropertyChanged(name, value) => {
-                            // Property changed events are only passed on when they change the previously known value
-                            if self.known_values.get(&name) != Some(&value) {
-                                // This updates the known value for this property
-                                self.known_values.insert(name.clone(), value.clone());
-                                all_updates.push(ViewModelChange::PropertyChanged(name, value));
-                            }
+                            all_updates.push(ViewModelChange::PropertyChanged(name, value));
                         }
                     }
 
                     // Poll for the next update
-                    full_update = controller_viewmodel_updates.poll();
+                    update_poll = controller_viewmodel_updates.poll();
                 }
 
                 // Unset the controller updates if we reach the end of the stream (the controller and its subcontrollers presumably still exist, so the stream does not end)
-                if full_update == Ok(Async::Ready(None)) {
+                if update_poll == Ok(Async::Ready(None)) {
                     // self.controller_viewmodel_updates = None;
                 }
 
