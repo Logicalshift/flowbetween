@@ -1,5 +1,4 @@
 use super::super::control::*;
-use super::super::property::*;
 use super::super::viewmodel::*;
 use super::super::controller::*;
 use super::super::viewmodel_update::*;

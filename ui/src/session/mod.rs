@@ -6,12 +6,14 @@ mod update_stream;
 pub mod canvas_state;
 pub mod state;
 pub mod session;
+mod canvas_stream;
 mod viewmodel_stream;
 
 pub use self::event::*;
 pub use self::update::*;
 pub use self::session::*;
 pub use self::event_sink::*;
+pub use self::canvas_stream::*;
 pub use self::viewmodel_stream::*;
 pub use self::update_stream::*;
 
