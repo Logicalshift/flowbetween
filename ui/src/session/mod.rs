@@ -3,7 +3,6 @@ mod update;
 mod core;
 mod event_sink;
 mod update_stream;
-pub mod canvas_state;
 pub mod state;
 pub mod session;
 mod canvas_stream;
