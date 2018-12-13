@@ -391,7 +391,7 @@ mod test {
         let mut updates = executor::spawn(viewmodel.get_updates());
 
         viewmodel.set_property("Test", PropertyValue::Int(3));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(3)))));
+        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3)))));
 
         viewmodel.set_property("Test", PropertyValue::Int(4));
         assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(4)))));
@@ -407,7 +407,7 @@ mod test {
         viewmodel.set_property("Test", PropertyValue::Int(4));
         viewmodel.set_property("Test", PropertyValue::Int(5));
 
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(5)))));
+        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(5)))));
     }
 
     #[test]
