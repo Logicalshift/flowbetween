@@ -3,6 +3,7 @@ use super::state::*;
 use super::update::*;
 use super::canvas_stream::*;
 use super::viewmodel_stream::*;
+use super::super::diff::*;
 use super::super::control::*;
 use super::super::controller::*;
 
@@ -44,13 +45,25 @@ pub struct UiUpdateStream {
     /// The stream core
     stream_core: Arc<Desync<UpdateStreamCore>>,
 
+    /// The UI tree for the core controller
+    _ui_tree: BindRef<Control>,
+
+    /// The state of the UI at the last update
+    last_ui: Option<Control>,
+
+    /// The updates for the UI tree
+    ui_updates: FollowStream<Control, BindRef<Control>>,
+
     /// The viewmodel updates
     viewmodel_updates: ViewModelUpdateStream,
 
     // The canvas updates
     canvas_updates: CanvasUpdateStream,
 
-    /// Update that was generated for the last poll and is ready to go
+    /// Pending updates from the UI (these have priority as we want the UI updates to happen first, but we poll them last)
+    pending_ui: Arc<Mutex<Option<Vec<UiUpdate>>>>,
+
+    /// Pending updates from the canvases and the viewmodels
     pending: Arc<Mutex<Option<Vec<UiUpdate>>>>,
 }
 
@@ -60,22 +73,31 @@ impl UiUpdateStream {
     /// 
     pub fn new(controller: Arc<dyn Controller>, core: Arc<Desync<UiSessionCore>>) -> UiUpdateStream {
         // Create the values that will go into the core
-        let session_core    = core;
-        let stream_core     = Arc::new(Desync::new(UpdateStreamCore::new()));
-        let pending         = Arc::new(Mutex::new(None));
+        let session_core        = core;
+        let stream_core         = Arc::new(Desync::new(UpdateStreamCore::new()));
+        let pending             = Arc::new(Mutex::new(None));
+        let pending_ui          = Arc::new(Mutex::new(None));
+
+        // Stream from the ui
+        let ui_tree             = assemble_ui(Arc::clone(&controller));
+        let ui_updates          = follow(ui_tree.clone());
 
         // Stream from the viewmodel
-        let viewmodel_updates = ViewModelUpdateStream::new(Arc::clone(&controller));
+        let viewmodel_updates   = ViewModelUpdateStream::new(Arc::clone(&controller));
 
         // Stream from the canvases
-        let canvas_updates = CanvasUpdateStream::new(Arc::clone(&controller));
+        let canvas_updates      = CanvasUpdateStream::new(Arc::clone(&controller));
         
         // Generate the stream
         let mut new_stream = UiUpdateStream {
             session_core:       session_core,
             stream_core:        stream_core,
+            _ui_tree:           ui_tree,
+            ui_updates:         ui_updates,
+            last_ui:            None,
             viewmodel_updates:  viewmodel_updates,
             canvas_updates:     canvas_updates,
+            pending_ui:         pending_ui,
             pending:            pending
         };
 
@@ -123,6 +145,52 @@ impl UiUpdateStream {
                 waiting.map(|waiting| waiting.notify());
             });
         })
+    }
+
+    ///
+    /// Pulls any UI events into the pending stream
+    ///
+    fn pull_ui_events(&mut self) {
+        // Pending UI updates
+        let mut ui_updates = vec![];
+
+        // Poll for as many updates as there are
+        while let Ok(Async::Ready(Some(new_ui))) = self.ui_updates.poll() {
+            if let Some(last_ui) = self.last_ui.take() {
+                // Find the differences in the UI
+                let differences = diff_tree(&last_ui, &new_ui);
+
+                if differences.len() != 0 {
+                    // Found some differences: change into a series of UiDiffs
+                    let diffs = differences.into_iter()
+                        .map(|diff| UiDiff {
+                            address:    diff.address().clone(),
+                            new_ui:     diff.replacement().clone()
+                        })
+                        .collect::<Vec<_>>();
+                    
+                    ui_updates.extend(diffs);
+                }
+
+                // The new UI is now the last UI
+                self.last_ui = Some(new_ui);
+            } else {
+                // Create a diff from the entire UI
+                ui_updates.push(UiDiff {
+                    address:    vec![],
+                    new_ui:     new_ui.clone()
+                });
+
+                // This is now the last UI
+                self.last_ui = Some(new_ui);
+            }
+        }
+
+        if ui_updates.len() > 0 {
+            self.pending_ui.lock().unwrap()
+                .get_or_insert_with(|| vec![])
+                .push(UiUpdate::UpdateUi(ui_updates))
+        }
     }
 
     ///
@@ -214,55 +282,29 @@ impl Stream for UiUpdateStream {
         self.pull_canvas_events();
         self.pull_viewmodel_events();
 
-        // Try to read the pending update, if there is one
-        let mut pending         = self.pending.lock().unwrap();
-        let mut pending_result  = None;
+        // UI events are polled last but we return them first (this way the viewmodel and canvas updates apply to the current UI)
+        self.pull_ui_events();
 
+        // Try to read the pending update, if there is one
+        let mut pending_ui          = self.pending_ui.lock().unwrap();
+        let mut pending             = self.pending.lock().unwrap();
+        let mut pending_result_ui   = None;
+        let mut pending_result      = None;
+
+        mem::swap(&mut pending_result_ui, &mut *pending_ui);
         mem::swap(&mut pending_result, &mut *pending);
+
+        // The UI updates are always performed before the canvas and viewmodel updates
+        if let Some(mut pending_result_ui) = pending_result_ui {
+            pending_result_ui.extend(pending_result.take().unwrap_or(vec![]));
+            pending_result = Some(pending_result_ui);
+        }
         
         // Result is OK if we found a pending update
         if let Some(pending) = pending_result {
             // There is a pending update
             Ok(Async::Ready(Some(pending)))
         } else {
-            // No update available yet. We need to register with the core to trigger one
-            let task                = task::current();
-            let pending             = Arc::clone(&self.pending);
-            let session_core        = Arc::clone(&self.session_core);
-            let stream_core         = Arc::clone(&self.stream_core);
-            let update_pending      = Arc::clone(&self.pending);
-            let update_stream_core  = Arc::clone(&self.stream_core);
-
-            session_core.desync(move |session_core| {
-                stream_core.sync(move |stream_core| {
-                    let mut pending = pending.lock().unwrap();
-
-                    if pending.is_some() {
-                        // If there's now a pending update, then signal the task to return via the stream
-                        task.notify();
-                    } 
-
-                    if session_core.last_update_id() != stream_core.last_update_id {
-                        // If the core has a newer update than we do then start generating a new pending update
-                        pending.get_or_insert_with(|| vec![])
-                            .extend(stream_core.state.get_updates(&session_core.ui_tree()));
-
-                        stream_core.last_update_id = session_core.last_update_id();
-                        task.notify();
-                    } else {
-                        // Otherwise, ask the core to notify us when an update is available
-                        stream_core.waiting = Some(task);
-                        let ui_binding      = session_core.ui_tree();
-
-                        session_core.on_next_update(move |session_core| {
-                            let this_update_id = session_core.last_update_id();
-
-                            update_stream_core.desync(move |stream_core| stream_core.finish_update(&ui_binding, this_update_id, update_pending));
-                        });
-                    }
-                });
-            });
-
             // Not ready yet
             Ok(Async::NotReady)
         }
