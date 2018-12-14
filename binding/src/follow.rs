@@ -21,7 +21,7 @@ enum FollowState {
 /// Core data structures for a follow stream
 /// 
 struct FollowCore<TValue, Binding: Bound<TValue>> {
-    /// Changed if the binidng value has changed, or Unchanged if it is not changed
+    /// Changed if the binding value has changed, or Unchanged if it is not changed
     state: FollowState,
 
     /// What to notify when this item is changed
