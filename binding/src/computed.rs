@@ -161,14 +161,14 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
     ///
     /// Marks this computed binding as having changed
     ///
-    fn mark_changed(&self) {
+    fn mark_changed(&self, force_notify: bool) {
         // We do the notifications and releasing while the lock is not retained
         let (notifiable, releasable) = {
             // Get the core
             let mut core = self.core.lock().unwrap();
 
             // Mark it as changed
-            let actually_changed = core.mark_changed();
+            let actually_changed = core.mark_changed() || force_notify;
 
             core.filter_unused_notifications();
 
@@ -230,7 +230,7 @@ where Value: 'static+Clone+Send, TFn: 'static+Send+Sync+Fn() -> Value {
         // If the reference is still active, reconstitute a computed binding in order to call the mark_changed method
         if let Some(to_notify) = self.upgrade() {
             let mut to_notify = ComputedBinding { core: to_notify };
-            to_notify.mark_changed();
+            to_notify.mark_changed(false);
         } else if cfg!(debug_assertions) {
             // We can carry on here, but this suggests a memory leak - if the core has gone, then its owning object should have stopped this event from firing
             panic!("The core of a computed is gone but its notifcations have been left behind");
@@ -312,7 +312,7 @@ where TFn: 'static+Send+Sync+Fn() -> Value {
 
         // If there was a change while we were calculating the value, generate a notification
         if notify_immediately {
-            self.mark_changed();
+            self.mark_changed(true);
         }
 
         result
