@@ -3,6 +3,9 @@ use canvas::*;
 use binding::*;
 use binding::binding_context::*;
 
+use futures::*;
+use futures::task;
+
 use std::sync::*;
 use std::mem;
 use std::ops::Deref;
@@ -31,7 +34,10 @@ struct BindingCanvasCore {
     draw_fn: Option<Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>>,
 
     /// The notifications that are currently active for this core
-    active_notifications: Option<Box<dyn Releasable>>
+    active_notifications: Option<Box<dyn Releasable>>,
+
+    /// Task to wake on the next change
+    notify_task: Option<task::Task>
 }
 
 ///
@@ -115,7 +121,10 @@ impl Notifiable for CoreNotifiable {
         // If the reference is still active, reconstitute the core and set it to invalid
         if let Some(to_notify) = self.0.upgrade() {
             to_notify.desync(|core| {
-                core.invalidated = true
+                core.invalidated = true;
+                core.notify_task
+                    .take()
+                    .map(|task| task.notify());
             });
         }
     }
@@ -136,7 +145,8 @@ impl BindingCanvas {
         let core = BindingCanvasCore {
             invalidated:            false,
             draw_fn:                None,
-            active_notifications:   None
+            active_notifications:   None,
+            notify_task:            None
         };
 
         BindingCanvas {
@@ -170,6 +180,9 @@ impl BindingCanvas {
 
             core.invalidated    = true;
             core.draw_fn        = Some(Box::new(draw));
+            core.notify_task
+                .take()
+                .map(|task| task.notify());
         });
     }
 
@@ -185,7 +198,23 @@ impl BindingCanvas {
     /// Marks this canvas as invalidated (will be redrawn on the next request)
     /// 
     pub fn invalidate(&self) {
-        self.core.desync(|core| core.invalidated = true);
+        self.core.desync(|core| {
+            core.invalidated = true;
+            core.notify_task
+                .take()
+                .map(|task| task.notify());
+        });
+    }
+
+    ///
+    /// Creates a stream from this canvas that will track updates as they occur
+    ///
+    pub fn stream(&self) -> impl Stream<Item=Draw, Error=()>+Send {
+        BindingCanvasStream {
+            canvas:         Arc::downgrade(&self.canvas),
+            canvas_stream:  self.canvas.stream(),
+            binding_core:   Arc::clone(&self.core)
+        }
     }
 }
 
@@ -194,6 +223,52 @@ impl Deref for BindingCanvas {
 
     fn deref(&self) -> &Canvas {
         &*self.canvas
+    }
+}
+
+///
+/// Streams updates from a binding canvas
+///
+struct BindingCanvasStream<CanvasStream> {
+    /// The canvas that this will draw to
+    canvas: Weak<Canvas>,
+
+    /// The stream of updates from the main canvas
+    canvas_stream: CanvasStream,
+
+    /// The core of the binding canvas
+    binding_core: Arc<Desync<BindingCanvasCore>>
+}
+
+impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStream<CanvasStream> {
+    type Item=Draw;
+    type Error=();
+
+    fn poll(&mut self) -> Poll<Option<Draw>, ()> {
+        // Fetch the canvas
+        let canvas = self.canvas.upgrade();
+
+        // Redraw the main canvas if it's invalidated
+        if let Some(canvas) = canvas {
+            // Variables needed to do the redraw
+            let task        = task::current();
+            let canvas      = Arc::clone(&canvas);
+            let change_core = Arc::downgrade(&self.binding_core);
+
+            self.binding_core.sync(move |core| {
+                // Notify this task whenever the canvas changes
+                core.notify_task = Some(task);
+
+                // Redraw the canvas, and notify on changes
+                if core.invalidated {
+                    let notifiable = Arc::new(CoreNotifiable(change_core));
+                    core.redraw(&*canvas, notifiable);
+                }
+            });
+        }
+
+        // Defer to the main canvas stream
+        self.canvas_stream.poll()
     }
 }
 
