@@ -23,7 +23,7 @@ struct CanvasStreamTracker {
 impl CanvasStreamTracker {
     pub fn new(canvas_resource: &Resource<BindingCanvas>) -> CanvasStreamTracker {
         CanvasStreamTracker {
-            stream: canvas_resource.stream()
+            stream: Box::new(canvas_resource.stream())
         }
     }
 }
