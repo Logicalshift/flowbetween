@@ -28,7 +28,7 @@ struct FollowCore<TValue, Binding: Bound<TValue>> {
     notify: Option<Task>,
 
     /// The binding that this is following
-    binding: Binding,
+    binding: Arc<Binding>,
 
     /// Value is stored in the binding
     value: PhantomData<TValue>
@@ -50,20 +50,29 @@ impl<TValue, Binding: Bound<TValue>> Stream for FollowStream<TValue, Binding> {
     type Error  = ();
 
     fn poll(&mut self) -> Poll<Option<TValue>, ()> {
-        let mut core = self.core.lock().unwrap();
+        // If the core is in a 'changed' state, return the binding so we can fetch it
+        // Want to fetch the binding value outside of the lock as it can potentially change during calculation
+        let changed_binding = {
+            let mut core = self.core.lock().unwrap();
 
-        match core.state {
-            FollowState::Unchanged => {
-                // Wake this future when changed
-                core.notify = Some(task::current());
-                Ok(Async::NotReady)
-            },
+            match core.state {
+                FollowState::Unchanged => {
+                    // Wake this future when changed
+                    core.notify = Some(task::current());
+                    None
+                },
 
-            FollowState::Changed => {
-                // Value has changed since we were last notified: return the changed value
-                core.state = FollowState::Unchanged;
-                Ok(Async::Ready(Some(core.binding.get())))
+                FollowState::Changed => {
+                    // Value has changed since we were last notified: return the changed value
+                    core.state = FollowState::Unchanged;
+                    Some(Arc::clone(&core.binding))
+                }
             }
+        };
+
+        match changed_binding {
+            None            => Ok(Async::NotReady),
+            Some(binding)   => Ok(Async::Ready(Some(binding.get())))
         }
     }
 }
@@ -76,7 +85,7 @@ pub fn follow<TValue: 'static+Send, Binding: 'static+Bound<TValue>>(binding: Bin
     let core = FollowCore {
         state:      FollowState::Changed,
         notify:     None,
-        binding:    binding,
+        binding:    Arc::new(binding),
         value:      PhantomData
     };
 
