@@ -78,7 +78,7 @@ impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdat
 
     /// Retrieves a view onto the update stream for this user interface
     fn get_updates(&self) -> UiUpdateStream {
-        UiUpdateStream::new(self.controller.clone(), Arc::clone(&self.core))
+        UiUpdateStream::new(self.controller.clone())
     }
 }
 

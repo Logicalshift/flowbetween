@@ -1,5 +1,3 @@
-use super::core::*;
-use super::state::*;
 use super::update::*;
 use super::canvas_stream::*;
 use super::viewmodel_stream::*;
@@ -7,27 +5,11 @@ use super::super::diff::*;
 use super::super::control::*;
 use super::super::controller::*;
 
-use desync::*;
 use binding::*;
 use futures::*;
-use futures::task::Task;
 
 use std::mem;
 use std::sync::*;
-
-///
-/// Core data for an update stream
-/// 
-struct UpdateStreamCore {
-    /// The state of the UI last time an update was generated for the update stream
-    state: UiSessionState,
-
-    /// The ID of the last update that was generated
-    last_update_id: u64,
-
-    /// Task that's waiting for a pending update
-    waiting: Option<Task>
-}
 
 ///
 /// Stream that can be used to retrieve the most recent set of UI updates from
@@ -39,12 +21,6 @@ struct UpdateStreamCore {
 /// UI.
 /// 
 pub struct UiUpdateStream {
-    /// The session core
-    session_core: Arc<Desync<UiSessionCore>>,
-
-    /// The stream core
-    stream_core: Arc<Desync<UpdateStreamCore>>,
-
     /// The UI tree for the core controller
     _ui_tree: BindRef<Control>,
 
@@ -71,10 +47,8 @@ impl UiUpdateStream {
     ///
     /// Creates a new UI update stream
     /// 
-    pub fn new(controller: Arc<dyn Controller>, core: Arc<Desync<UiSessionCore>>) -> UiUpdateStream {
+    pub fn new(controller: Arc<dyn Controller>) -> UiUpdateStream {
         // Create the values that will go into the core
-        let session_core        = core;
-        let stream_core         = Arc::new(Desync::new(UpdateStreamCore::new()));
         let pending             = Arc::new(Mutex::new(None));
         let pending_ui          = Arc::new(Mutex::new(Some(vec![UiUpdate::Start])));
 
@@ -90,8 +64,6 @@ impl UiUpdateStream {
         
         // Generate the stream
         let new_stream = UiUpdateStream {
-            session_core:       session_core,
-            stream_core:        stream_core,
             _ui_tree:           ui_tree,
             ui_updates:         ui_updates,
             last_ui:            None,
@@ -102,46 +74,6 @@ impl UiUpdateStream {
         };
 
         new_stream
-    }
-
-    ///
-    /// Creates the initial set of pending events (initial UI refresh and viewmodel refresh)
-    /// 
-    fn generate_initial_event(&mut self) {
-        let session_core    = Arc::clone(&self.session_core);
-        let stream_core     = Arc::clone(&self.stream_core);
-        let pending         = Arc::clone(&self.pending);
-
-        session_core.desync(move |session_core| {
-            let update_id  = session_core.last_update_id();
-            let ui_binding = session_core.ui_tree();
-
-            stream_core.desync(move |stream_core| {
-                // Get the initial UI tree
-                let ui_tree = ui_binding.get();
-
-                // We generate an update that sends the entire UI and viewmodel state to the target
-                let initial_ui          = stream_core.state.update_ui(&ui_tree);
-
-                // Turn into a set of updates
-                // These updates include the start event
-                let mut updates = vec![UiUpdate::Start];
-                if let Some(initial_ui) = initial_ui { updates.push(initial_ui); }
-
-                // This is the initial pending update
-                let mut pending = pending.lock().unwrap();
-
-                *pending = Some(updates);
-
-                // Set the update ID where this was triggered
-                stream_core.last_update_id = update_id;
-
-                // Poke anything that's waiting for an update
-                let mut waiting = None;
-                mem::swap(&mut waiting, &mut stream_core.waiting);
-                waiting.map(|waiting| waiting.notify());
-            });
-        })
     }
 
     ///
@@ -227,45 +159,6 @@ impl UiUpdateStream {
             self.pending.lock().unwrap()
                 .get_or_insert_with(|| vec![])
                 .push(UiUpdate::UpdateCanvas(canvas_updates));
-        }
-    }
-}
-
-impl UpdateStreamCore {
-    ///
-    /// Creates a new update stream core
-    /// 
-    pub fn new() -> UpdateStreamCore {
-        UpdateStreamCore {
-            state:          UiSessionState::new(),
-            last_update_id: 0,
-            waiting:        None
-        }
-    }
-
-    ///
-    /// Updates against a pending update
-    /// 
-    pub fn finish_update(&mut self, ui_binding: &BindRef<Control>, update_id: u64, pending: Arc<Mutex<Option<Vec<UiUpdate>>>>) {
-        if update_id == self.last_update_id {
-            // Already dispatched this update
-            return;
-        }
-
-        let mut pending = pending.lock().unwrap();
-        if pending.is_some() {
-            // Different update is already pending
-            return;
-        }
-
-        if let Some(ref waiting) = self.waiting {
-            // Something is waiting for an update, so we're going to generate it now
-            let update  = self.state.get_updates(ui_binding);
-            *pending    = Some(update);
-
-            // Poke whatever's waiting to let it know that its update has arrived
-            self.last_update_id = update_id;
-            waiting.notify();
         }
     }
 }
