@@ -5,6 +5,8 @@ use futures::*;
 use futures::task;
 use futures::task::Task;
 
+use desync::*;
+
 use std::sync::*;
 use std::marker::PhantomData;
 
@@ -37,24 +39,22 @@ struct FollowCore<TValue, Binding: Bound<TValue>> {
 ///
 /// Stream that follows the values of a binding
 /// 
-pub struct FollowStream<TValue, Binding: Bound<TValue>> {
+pub struct FollowStream<TValue: Send, Binding: Bound<TValue>> {
     /// The core of this future
-    core: Arc<Mutex<FollowCore<TValue, Binding>>>,
+    core: Arc<Desync<FollowCore<TValue, Binding>>>,
 
     /// Lifetime of the watcher
     watcher: Box<dyn Releasable>,
 }
 
-impl<TValue, Binding: Bound<TValue>> Stream for FollowStream<TValue, Binding> {
+impl<TValue: 'static+Send, Binding: 'static+Bound<TValue>> Stream for FollowStream<TValue, Binding> {
     type Item   = TValue;
     type Error  = ();
 
     fn poll(&mut self) -> Poll<Option<TValue>, ()> {
         // If the core is in a 'changed' state, return the binding so we can fetch it
         // Want to fetch the binding value outside of the lock as it can potentially change during calculation
-        let changed_binding = {
-            let mut core = self.core.lock().unwrap();
-
+        let changed_binding = self.core.sync(|core| {
             match core.state {
                 FollowState::Unchanged => {
                     // Wake this future when changed
@@ -68,7 +68,7 @@ impl<TValue, Binding: Bound<TValue>> Stream for FollowStream<TValue, Binding> {
                     Some(Arc::clone(&core.binding))
                 }
             }
-        };
+        });
 
         match changed_binding {
             None            => Ok(Async::NotReady),
@@ -90,22 +90,16 @@ pub fn follow<TValue: 'static+Send, Binding: 'static+Bound<TValue>>(binding: Bin
     };
 
     // Notify whenever the binding changes
-    let core        = Arc::new(Mutex::new(core));
+    let core        = Arc::new(Desync::new(core));
     let weak_core   = Arc::downgrade(&core);
-    let watcher     = core.lock().unwrap().binding.when_changed(notify(move || {
-        let notify = if let Some(core) = weak_core.upgrade() {
-            let mut core = core.lock().unwrap();
-
-            core.state = FollowState::Changed;
-            core.notify.take()
-        } else {
-            None
-        };
-
-        if let Some(notify) = notify {
-            notify.notify()
+    let watcher     = core.sync(move |core| core.binding.when_changed(notify(move || {
+        if let Some(core) = weak_core.upgrade() {
+            core.desync(|core| {
+                core.state = FollowState::Changed;
+                core.notify.take().map(|task| task.notify());
+            })
         }
-    }));
+    })));
 
     // Create the stream
     FollowStream {
