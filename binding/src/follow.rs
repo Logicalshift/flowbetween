@@ -54,26 +54,21 @@ impl<TValue: 'static+Send, Binding: 'static+Bound<TValue>> Stream for FollowStre
     fn poll(&mut self) -> Poll<Option<TValue>, ()> {
         // If the core is in a 'changed' state, return the binding so we can fetch it
         // Want to fetch the binding value outside of the lock as it can potentially change during calculation
-        let changed_binding = self.core.sync(|core| {
+        self.core.sync(|core| {
             match core.state {
                 FollowState::Unchanged => {
                     // Wake this future when changed
                     core.notify = Some(task::current());
-                    None
+                    Ok(Async::NotReady)
                 },
 
                 FollowState::Changed => {
                     // Value has changed since we were last notified: return the changed value
                     core.state = FollowState::Unchanged;
-                    Some(Arc::clone(&core.binding))
+                    Ok(Async::Ready(Some(core.binding.get())))
                 }
             }
-        });
-
-        match changed_binding {
-            None            => Ok(Async::NotReady),
-            Some(binding)   => Ok(Async::Ready(Some(binding.get())))
-        }
+        })
     }
 }
 
