@@ -76,7 +76,7 @@ impl UiUpdateStream {
         let session_core        = core;
         let stream_core         = Arc::new(Desync::new(UpdateStreamCore::new()));
         let pending             = Arc::new(Mutex::new(None));
-        let pending_ui          = Arc::new(Mutex::new(None));
+        let pending_ui          = Arc::new(Mutex::new(Some(vec![UiUpdate::Start])));
 
         // Stream from the ui
         let ui_tree             = assemble_ui(Arc::clone(&controller));
@@ -89,7 +89,7 @@ impl UiUpdateStream {
         let canvas_updates      = CanvasUpdateStream::new(Arc::clone(&controller));
         
         // Generate the stream
-        let mut new_stream = UiUpdateStream {
+        let new_stream = UiUpdateStream {
             session_core:       session_core,
             stream_core:        stream_core,
             _ui_tree:           ui_tree,
@@ -100,9 +100,6 @@ impl UiUpdateStream {
             pending_ui:         pending_ui,
             pending:            pending
         };
-
-        // Send the setup event to it
-        new_stream.generate_initial_event();
 
         new_stream
     }
