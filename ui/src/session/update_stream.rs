@@ -7,6 +7,7 @@ use super::super::controller::*;
 
 use binding::*;
 use futures::*;
+use flo_stream::*;
 
 use std::mem;
 use std::sync::*;
@@ -26,6 +27,9 @@ pub struct UiUpdateStream {
 
     /// The state of the UI at the last update
     last_ui: Option<Control>,
+
+    /// Stream of ticks
+    tick: Subscriber<()>,
 
     /// The updates for the UI tree
     ui_updates: FollowStream<Control, BindRef<Control>>,
@@ -47,7 +51,7 @@ impl UiUpdateStream {
     ///
     /// Creates a new UI update stream
     /// 
-    pub fn new(controller: Arc<dyn Controller>) -> UiUpdateStream {
+    pub fn new(controller: Arc<dyn Controller>, tick: Subscriber<()>) -> UiUpdateStream {
         // Create the values that will go into the core
         let pending             = Arc::new(Mutex::new(None));
         let pending_ui          = Arc::new(Mutex::new(Some(vec![UiUpdate::Start])));
@@ -70,7 +74,8 @@ impl UiUpdateStream {
             viewmodel_updates:  viewmodel_updates,
             canvas_updates:     canvas_updates,
             pending_ui:         pending_ui,
-            pending:            pending
+            pending:            pending,
+            tick:               tick
         };
 
         new_stream
@@ -194,6 +199,9 @@ impl Stream for UiUpdateStream {
         if let Some(pending) = pending_result {
             // There is a pending update
             Ok(Async::Ready(Some(pending)))
+        } else if let Ok(Async::Ready(Some(()))) = self.tick.poll() {
+            // There is a pending tick
+            Ok(Async::Ready(Some(vec![])))
         } else {
             // Not ready yet
             Ok(Async::NotReady)

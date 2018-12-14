@@ -2,8 +2,11 @@ use super::event::*;
 use super::super::control::*;
 use super::super::controller::*;
 
+use flo_stream::*;
+
 use binding::*;
 use itertools::*;
+use futures::executor::*;
 
 use std::mem;
 use std::sync::*;
@@ -15,6 +18,9 @@ use std::collections::HashMap;
 pub struct UiSessionCore {
     /// The sequential ID of the last wake for update event
     last_update_id: u64,
+
+    /// Used to publish tick events
+    tick: Spawn<Publisher<()>>,
 
     /// The UI tree for the applicaiton
     ui_tree: BindRef<Control>,
@@ -34,6 +40,7 @@ impl UiSessionCore {
         UiSessionCore {
             last_update_id:     0,
             ui_tree:            ui_tree,
+            tick:               spawn(Publisher::new(100)),
             update_callbacks:   vec![]
         }
     }
@@ -167,6 +174,13 @@ impl UiSessionCore {
     }
 
     ///
+    /// Returns a subscriber for tick events
+    ///
+    pub fn subscribe_ticks(&mut self) -> Subscriber<()> {
+        self.tick.get_mut().subscribe()
+    }
+
+    ///
     /// Dispatches an action to a controller
     /// 
     fn dispatch_action(&mut self, controller: &dyn Controller, event_name: String, action_parameter: ActionParameter) {
@@ -188,5 +202,13 @@ impl UiSessionCore {
 
         // Send the tick to the controller
         controller.tick();
+
+        // Dispatch to any streams that are listening
+        struct NotifyNothing;
+        impl Notify for NotifyNothing {
+            fn notify(&self, _: usize) { }
+        }
+
+        self.tick.start_send_notify((), &NotifyHandle::from(&NotifyNothing), 0).ok();
     }
 }
