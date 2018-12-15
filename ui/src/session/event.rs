@@ -14,6 +14,7 @@ pub enum UiEvent {
     /// Performs the specified action
     Action(Vec<String>, String, ActionParameter),
 
-    /// Sends a tick to all the controllers
+    /// Sends a tick to all the controllers. If updates are suspended, ticks are only sent when they resume,
+    /// and only one tick is sent regardless of how many were requested during the suspension.
     Tick
 }
