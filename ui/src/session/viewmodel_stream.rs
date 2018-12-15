@@ -438,7 +438,7 @@ mod test {
                 ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
                 ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
                 ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string()))
-            ]))
+            ]).chain(stream::poll_fn(|| Ok(Async::NotReady))) )
         }
     }
 
