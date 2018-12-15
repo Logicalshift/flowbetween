@@ -112,11 +112,8 @@ impl Stream for ViewModelUpdateStream {
 
                 // Unset the controller updates if we reach the end of the stream (the controller and its subcontrollers presumably still exist, so the stream does not end)
                 if update_poll == Ok(Async::Ready(None)) {
-                    // Reached the end of the viewmodel updates
-                    if all_updates.len() == 0 {
-                        // End of the viewmodel updates overall
-                        return Ok(Async::Ready(None));
-                    }
+                    // TODO: remove the viewmodel updates from self (borrowed, so doesn't work)
+                    // self.controller_viewmodel_updates = None;
                 }
 
                 // Return the updates if there were any
