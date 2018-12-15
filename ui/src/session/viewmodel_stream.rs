@@ -137,10 +137,11 @@ impl Stream for ViewModelUpdateStream {
             }
 
             // Poll the subcontrollers
+            let mut removed_subcontrollers = vec![];
             for (name, stream) in self.sub_controllers.iter_mut() {
-                let mut subcontroller_update = stream.poll();
+                let mut subcontroller_poll = stream.poll();
 
-                while let Ok(Async::Ready(Some(mut update))) = subcontroller_update {
+                while let Ok(Async::Ready(Some(mut update))) = subcontroller_poll {
                     // Add the name of this subcontroller
                     update.add_to_start_of_path(name.clone());
 
@@ -148,7 +149,29 @@ impl Stream for ViewModelUpdateStream {
                     self.pending.push_back(update);
 
                     // Fetch as many updates as we can from the subcontroller
-                    subcontroller_update = stream.poll();
+                    subcontroller_poll = stream.poll();
+                }
+
+                if let Ok(Async::Ready(None)) = subcontroller_poll {
+                    // This subcontroller has gone away and is no longer producing updates
+                    removed_subcontrollers.push(name.clone());
+                }
+            }
+
+            // Remove and try to recreate any subcontrollers that have stopped responding
+            for removed_name in removed_subcontrollers {
+                // Stop checking this subcontroller for updates
+                self.sub_controllers.remove(&removed_name);
+
+                // Try to get it back from the root controller
+                let new_subcontroller = root_controller.get_subcontroller(&removed_name);
+                if let Some(new_subcontroller) = new_subcontroller {
+                    // Got a replacement
+                    let new_viewmodel_stream = ViewModelUpdateStream::new(new_subcontroller);
+                    self.sub_controllers.insert(removed_name, new_viewmodel_stream);
+
+                    // Make sure the task is notified to re-poll for the changes from the replacement subcontroller
+                    task::current().notify();
                 }
             }
 
