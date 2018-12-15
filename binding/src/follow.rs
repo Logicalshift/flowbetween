@@ -141,6 +141,35 @@ mod test {
     }
 
     #[test]
+    fn computed_updates_during_read() {
+        let binding     = bind(1);
+        let bind_ref    = BindRef::from(binding.clone());
+        let computed    = computed(move || {
+            let val = bind_ref.get();
+            thread::sleep(Duration::from_millis(300));
+            val
+        });
+        let stream      = executor::spawn(follow(computed));
+
+        // Read from the stream in the background
+        let reader = Desync::new((stream, None));
+        reader.desync(|(stream, ref mut val)| *val = stream.wait_stream());
+
+        // Short delay so the reader starts
+        thread::sleep(Duration::from_millis(10));
+
+        // Update the binding
+        binding.set(2);
+
+        // First read should return '1'
+        assert!(reader.sync(|(_, val)| *val) == Some(Ok(1)));
+
+        // Second read should return '2'
+        let next = reader.sync(|(stream, _)| stream.wait_stream());
+        assert!(next == Some(Ok(2)));
+    }
+
+    #[test]
     fn stream_is_unready_after_first_read() {
         let binding     = bind(1);
         let bind_ref    = BindRef::from(binding.clone());
