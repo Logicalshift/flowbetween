@@ -1,5 +1,4 @@
 use super::event::*;
-use super::update_latch::*;
 use super::super::control::*;
 use super::super::controller::*;
 
@@ -21,10 +20,13 @@ pub struct UiSessionCore {
     last_update_id: u64,
 
     /// Used to publish tick events
-    tick: Spawn<Publisher<()>>,
+    tick: Spawn<ExpiringPublisher<()>>,
 
     /// Used to temporarily suspend event processing
-    suspend_updates: Spawn<Publisher<UpdateLatch>>,
+    suspend_updates: Spawn<ExpiringPublisher<bool>>,
+
+    /// Number of times this has been suspended
+    suspension_count: i32,
 
     /// The UI tree for the applicaiton
     ui_tree: BindRef<Control>,
@@ -44,8 +46,9 @@ impl UiSessionCore {
         UiSessionCore {
             last_update_id:     0,
             ui_tree:            ui_tree,
-            tick:               spawn(Publisher::new(100)),
-            suspend_updates:    spawn(Publisher::new(100)),
+            tick:               spawn(ExpiringPublisher::new(1)),
+            suspend_updates:    spawn(ExpiringPublisher::new(1)),
+            suspension_count:   0,
             update_callbacks:   vec![]
         }
     }
@@ -132,11 +135,13 @@ impl UiSessionCore {
                 },
 
                 UiEvent::SuspendUpdates => {
-                    self.suspend_updates.wait_send(UpdateLatch::Suspend).ok();
+                    self.suspension_count += 1;
+                    self.suspend_updates.wait_send(self.suspension_count > 0).ok();
                 },
 
                 UiEvent::ResumeUpdates => {
-                    self.suspend_updates.wait_send(UpdateLatch::Resume).ok();
+                    self.suspension_count -= 1;
+                    self.suspend_updates.wait_send(self.suspension_count > 0).ok();
                 },
 
                 UiEvent::Tick => {
@@ -196,7 +201,7 @@ impl UiSessionCore {
     ///
     /// Returns a subscriber for update suspension events
     ///
-    pub fn subscribe_update_suspend(&mut self) -> Subscriber<UpdateLatch> {
+    pub fn subscribe_update_suspend(&mut self) -> Subscriber<bool> {
         self.suspend_updates.get_mut().subscribe()
     }
 

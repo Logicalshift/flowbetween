@@ -1,5 +1,4 @@
 use super::update::*;
-use super::update_latch::*;
 use super::canvas_stream::*;
 use super::viewmodel_stream::*;
 use super::super::diff::*;
@@ -30,7 +29,7 @@ pub struct UiUpdateStream {
     last_ui: Option<Control>,
 
     /// Stream of 'update suspend' events
-    update_suspend: Subscriber<UpdateLatch>,
+    update_suspend: Subscriber<bool>,
 
     /// Stream of ticks
     tick: Subscriber<()>,
@@ -51,14 +50,14 @@ pub struct UiUpdateStream {
     pending: Arc<Mutex<Option<Vec<UiUpdate>>>>,
 
     /// Number of times the update stream has been suspended
-    suspension_count: i32
+    is_suspended: bool
 }
 
 impl UiUpdateStream {
     ///
     /// Creates a new UI update stream
     /// 
-    pub fn new(controller: Arc<dyn Controller>, tick: Subscriber<()>, update_suspend: Subscriber<UpdateLatch>) -> UiUpdateStream {
+    pub fn new(controller: Arc<dyn Controller>, tick: Subscriber<()>, update_suspend: Subscriber<bool>) -> UiUpdateStream {
         // Create the values that will go into the core
         let pending             = Arc::new(Mutex::new(None));
         let pending_ui          = Arc::new(Mutex::new(Some(vec![UiUpdate::Start])));
@@ -84,7 +83,7 @@ impl UiUpdateStream {
             pending_ui:         pending_ui,
             pending:            pending,
             tick:               tick,
-            suspension_count:   0
+            is_suspended:       false
         };
 
         new_stream
@@ -184,15 +183,11 @@ impl Stream for UiUpdateStream {
     fn poll(&mut self) -> Poll<Option<Vec<UiUpdate>>, Self::Error> {
         // Check for suspensions
         let suspend_poll = self.update_suspend.poll();
-        if let Ok(Async::Ready(Some(UpdateLatch::Suspend))) = suspend_poll {
-            self.suspension_count += 1;
+        if let Ok(Async::Ready(Some(is_suspended))) = suspend_poll {
+            self.is_suspended = is_suspended;
         }
 
-        if let Ok(Async::Ready(Some(UpdateLatch::Resume))) = suspend_poll {
-            self.suspension_count -= 1;
-        }
-
-        if self.suspension_count > 0 {
+        if self.is_suspended {
             // Stay 'not ready' for as long as we're suspended for
             Ok(Async::NotReady)
         } else {
