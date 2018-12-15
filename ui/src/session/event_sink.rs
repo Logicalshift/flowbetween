@@ -75,6 +75,10 @@ impl Sink for UiEventSink {
                         mem::swap(&mut *pending, &mut events);
                     }
 
+                    // Suspend and resume updates before and after the pending list
+                    events.insert(0, UiEvent::SuspendUpdates);
+                    events.push(UiEvent::ResumeUpdates);
+
                     // Dispatch the events
                     let events = core.reduce_events(events);
                     core.dispatch_event(events, &*controller);
