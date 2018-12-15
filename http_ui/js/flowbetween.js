@@ -2068,13 +2068,16 @@ function flowbetween(root_node) {
     ///
     let send_request = (function() {
         // Events waiting to be sent
-        let pending_events  = [];
+        let pending_events      = [];
 
         // Set to true when we're going to send the events we gathered
-        let sending_events  = null;
+        let sending_events      = null;
 
         // Promise sending the last set of events
-        let last_promise    = null;
+        let last_promise        = null;
+
+        // Waiting for the previous update
+        let previous_update    = null;
 
         return (request) => {
             let session_id  = request.session_id;
@@ -2093,6 +2096,15 @@ function flowbetween(root_node) {
                         requestAnimationFrame(() => resolve());
                     });
 
+                    if (previous_update != null) {
+                        // Also wait for the last update to process
+                        let wait_for_update = previous_update;
+                        animation_frame = animation_frame.then(() => wait_for_update);
+                    }
+
+                    // The update that will follow this one is what's current set as the next update
+                    previous_update = next_update_promise;
+
                     // Send to the websocket after the event
                     let promise = animation_frame.then(() => {
                         // Get the events we're going to send and reset the state
@@ -2109,7 +2121,7 @@ function flowbetween(root_node) {
                         websocket.send(JSON.stringify(events));
                     });
 
-                    last_promise = promise;
+                    last_promise     = promise;
 
                     // Resolve once the update from this message is generated
                     let next_update = next_update_promise;
