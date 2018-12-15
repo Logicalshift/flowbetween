@@ -290,7 +290,9 @@ mod test {
         controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]))));
+        let events = stream.wait_stream();
+        println!("{:?}", events);
+        assert!(events == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]))));
     }
 
     #[test]
@@ -447,10 +449,13 @@ mod test {
             let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
             let mut update_stream   = executor::spawn(update_stream);
 
-            let update1 = update_stream.wait_stream().unwrap().unwrap();
+            let update1 = update_stream.wait_stream();
             println!("{:?}", update1);
-            let update2 = update_stream.wait_stream().unwrap().unwrap();
+            let update2 = update_stream.wait_stream();
             println!("{:?}", update2);
+
+            let update1 = update1.unwrap().unwrap();
+            let update2 = update2.unwrap().unwrap();
 
             let (update1, update2) = if update2.controller_path() == &vec!["Model1".to_string()] {
                 (update2, update1)
