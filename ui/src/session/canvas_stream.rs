@@ -148,22 +148,54 @@ impl Stream for CanvasUpdateStream {
             }
 
             // Poll each of the subcontrollers to see if they produce a diff
+            let mut removed_subcontrollers = vec![];
             for (name, stream) in self.sub_controllers.iter_mut() {
-                if let Ok(Async::Ready(Some(mut subcontroller_update))) = stream.poll() {
+                let subcontroller_poll = stream.poll();
+
+                if let Ok(Async::Ready(Some(mut subcontroller_update))) = subcontroller_poll {
                     // Insert the controller name at the start of the path
                     subcontroller_update.controller.insert(0, name.clone());
 
                     // This is the result of this poll
                     return Ok(Async::Ready(Some(subcontroller_update)));
                 }
+
+                if let Ok(Async::Ready(None)) = subcontroller_poll {
+                    removed_subcontrollers.push(name.clone());
+                }
+            }
+
+            // Try to re-create any removed subcontrollers
+            for removed_subcontroller_name in removed_subcontrollers {
+                // Remove the old instance of this subcontroller
+                self.sub_controllers.remove(&removed_subcontroller_name);
+
+                // If it still exists, recreate it
+                if let Some(subcontroller) = root_controller.get_subcontroller(&removed_subcontroller_name) {
+                    // Create a new canvas stream from the subcontroller
+                    let new_stream = CanvasUpdateStream::new(subcontroller);
+                    self.sub_controllers.insert(removed_subcontroller_name, new_stream);
+
+                    // Notify the task immediately to check the new controller for updates
+                    task::current().notify();
+                }
             }
 
             // Poll each of the canvases to see if they have any updates
+            let mut removed_canvases = vec![];
             for (canvas_name, tracker) in self.canvas_trackers.iter_mut() {
                 let mut updates = vec![];
 
-                while let Ok(Async::Ready(Some(mut canvas_command))) = tracker.stream.poll() {
+                let mut canvas_poll = tracker.stream.poll();
+                while let Ok(Async::Ready(Some(mut canvas_command))) = canvas_poll {
                     updates.push(canvas_command);
+
+                    canvas_poll = tracker.stream.poll();
+                }
+
+                if let Ok(Async::Ready(None)) = canvas_poll {
+                    // Canvas stream has ended
+                    removed_canvases.push(canvas_name.clone());
                 }
 
                 if updates.len() > 0 {
@@ -175,6 +207,22 @@ impl Stream for CanvasUpdateStream {
                     };
 
                     return Ok(Async::Ready(Some(canvas_diff)));
+                }
+            }
+
+            // Try to re-create any removed canvases (whose streams have come to an end)
+            for removed_canvas_name in removed_canvases {
+                // Remove the old instance of this canvas
+                self.canvas_trackers.remove(&removed_canvas_name);
+
+                // If it still exists, recreate it
+                if let Some(canvas) = root_controller.get_canvas_resources().and_then(|res| res.get_named_resource(&removed_canvas_name)) {
+                    // Create a new canvas stream from the subcontroller
+                    let new_tracker = CanvasStreamTracker::new(&canvas);
+                    self.canvas_trackers.insert(removed_canvas_name, new_tracker);
+
+                    // Notify the task immediately to check the new canvas for updates
+                    task::current().notify();
                 }
             }
 
