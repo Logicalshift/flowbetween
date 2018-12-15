@@ -28,6 +28,9 @@ pub struct UiSessionCore {
     /// Number of times this has been suspended
     suspension_count: i32,
 
+    /// True if we should send a tick just before resuming the UI
+    tick_on_resume: bool,
+
     /// The UI tree for the applicaiton
     ui_tree: BindRef<Control>,
 
@@ -49,6 +52,7 @@ impl UiSessionCore {
             tick:               spawn(ExpiringPublisher::new(1)),
             suspend_updates:    spawn(ExpiringPublisher::new(1)),
             suspension_count:   0,
+            tick_on_resume:     false,
             update_callbacks:   vec![]
         }
     }
@@ -140,13 +144,24 @@ impl UiSessionCore {
                 },
 
                 UiEvent::ResumeUpdates => {
+                    if self.suspension_count == 1 && self.tick_on_resume {
+                        // If a tick occurred while updates were suspended, send it now as we're just about to release the suspension
+                        self.tick_on_resume = false;
+                        self.dispatch_tick(controller);
+                    }
+
                     self.suspension_count -= 1;
                     self.suspend_updates.wait_send(self.suspension_count > 0).ok();
                 },
 
                 UiEvent::Tick => {
-                    // Send a tick to this controller
-                    self.dispatch_tick(controller);
+                    if self.suspension_count <= 0 {
+                        // Send a tick to this controller
+                        self.dispatch_tick(controller);
+                    } else {
+                        // Send a tick when updates resume
+                        self.tick_on_resume = true;
+                    }
                 }
             }
         }
