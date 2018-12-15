@@ -147,6 +147,11 @@ impl Stream for CanvasUpdateStream {
                 control_update_poll = self.controller_updates.poll();
             }
 
+            if let Ok(Async::Ready(None)) = control_update_poll {
+                // Subcontroller was deleted, so there are no more updates to process for this subcontroller
+                return Ok(Async::Ready(None));
+            }
+
             // Poll each of the subcontrollers to see if they produce a diff
             let mut removed_subcontrollers = vec![];
             for (name, stream) in self.sub_controllers.iter_mut() {
