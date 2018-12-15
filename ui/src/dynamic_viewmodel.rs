@@ -191,7 +191,7 @@ impl DynamicViewModel {
     /// 
     pub fn new() -> DynamicViewModel {
         DynamicViewModel { 
-            new_properties:     Desync::new(executor::spawn(Publisher::new(20))),
+            new_properties:     Desync::new(executor::spawn(Publisher::new(100))),
             bindings:           Mutex::new(HashMap::new()), 
             computed:           Mutex::new(HashMap::new()),
             nothing:            BindRef::from(bind(PropertyValue::Nothing)) }
@@ -249,7 +249,7 @@ impl DynamicViewModel {
     ///
     fn follow_binding<TBinding: 'static+Bound<PropertyValue>>(&self, property_name: &str, binding: TBinding) {
         let property_name = String::from(property_name);
-        self.new_properties.desync(move |new_properties| {
+        self.new_properties.sync(move |new_properties| {
             new_properties
                 .wait_send((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
                 .ok();
