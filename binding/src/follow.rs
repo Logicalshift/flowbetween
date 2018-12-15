@@ -27,7 +27,7 @@ struct FollowCore<TValue, Binding: Bound<TValue>> {
     state: FollowState,
 
     /// What to notify when this item is changed
-    notify: Desync<Option<Task>>,
+    notify: Option<Task>,
 
     /// The binding that this is following
     binding: Arc<Binding>,
@@ -58,8 +58,7 @@ impl<TValue: 'static+Send, Binding: 'static+Bound<TValue>> Stream for FollowStre
             match core.state {
                 FollowState::Unchanged => {
                     // Wake this future when changed
-                    let current_task = task::current();
-                    core.notify.desync(move |task| *task = Some(current_task));
+                    core.notify = Some(task::current());
                     Ok(Async::NotReady)
                 },
 
@@ -80,7 +79,7 @@ pub fn follow<TValue: 'static+Send, Binding: 'static+Bound<TValue>>(binding: Bin
     // Generate the initial core
     let core = FollowCore {
         state:      FollowState::Changed,
-        notify:     Desync::new(None),
+        notify:     None,
         binding:    Arc::new(binding),
         value:      PhantomData
     };
@@ -90,10 +89,11 @@ pub fn follow<TValue: 'static+Send, Binding: 'static+Bound<TValue>>(binding: Bin
     let weak_core   = Arc::downgrade(&core);
     let watcher     = core.sync(move |core| core.binding.when_changed(notify(move || {
         if let Some(core) = weak_core.upgrade() {
-            core.desync(|core| {
+            let task = core.sync(|core| {
                 core.state = FollowState::Changed;
-                core.notify.desync(|task| { task.take().map(|task| task.notify()); });
-            })
+                core.notify.take()
+            });
+            task.map(|task| task.notify());
         }
     })));
 
