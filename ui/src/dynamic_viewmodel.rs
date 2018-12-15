@@ -1,6 +1,7 @@
 use super::property::*;
 use super::viewmodel::*;
 
+use desync::*;
 use flo_stream::*;
 
 use binding::*;
@@ -9,6 +10,7 @@ use binding::binding_context::*;
 use futures::*;
 use futures::stream;
 use futures::executor;
+use futures::executor::Spawn;
 use futures::task;
 use std::sync::*;
 use std::collections::{HashMap, VecDeque};
@@ -20,7 +22,7 @@ use std::collections::{HashMap, VecDeque};
 ///
 pub struct DynamicViewModel {
     /// Stream of new properties being created for this viewmodel
-    new_properties: Mutex<Publisher<(String, BindRef<PropertyValue>)>>,
+    new_properties: Desync<Spawn<Publisher<(String, BindRef<PropertyValue>)>>>,
 
     /// Maps bindings in this viewmodel to their values
     bindings: Mutex<HashMap<String, Arc<Binding<PropertyValue>>>>,
@@ -189,7 +191,7 @@ impl DynamicViewModel {
     /// 
     pub fn new() -> DynamicViewModel {
         DynamicViewModel { 
-            new_properties:     Mutex::new(Publisher::new(20)),
+            new_properties:     Desync::new(executor::spawn(Publisher::new(20))),
             bindings:           Mutex::new(HashMap::new()), 
             computed:           Mutex::new(HashMap::new()),
             nothing:            BindRef::from(bind(PropertyValue::Nothing)) }
@@ -246,9 +248,12 @@ impl DynamicViewModel {
     /// Follows a binding and publishes updates to the update stream
     ///
     fn follow_binding<TBinding: 'static+Bound<PropertyValue>>(&self, property_name: &str, binding: TBinding) {
-        self.new_properties.lock().unwrap()
-            .start_send((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
-            .ok();
+        let property_name = String::from(property_name);
+        self.new_properties.desync(move |new_properties| {
+            new_properties
+                .wait_send((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
+                .ok();
+        });
     }
 }
 
@@ -320,7 +325,7 @@ impl ViewModel for DynamicViewModel {
             .collect::<Vec<_>>();
 
         // Subscribe to any new properties that might be added after the stream is generated
-        let new_properties      = self.new_properties.lock().unwrap().subscribe();
+        let new_properties      = self.new_properties.sync(|new_properties| new_properties.subscribe());
 
         // Initially all properties are new
         let existing_properties = stream::iter_ok(existing_properties);
