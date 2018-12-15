@@ -1,4 +1,5 @@
 use super::event::*;
+use super::update_latch::*;
 use super::super::control::*;
 use super::super::controller::*;
 
@@ -22,6 +23,9 @@ pub struct UiSessionCore {
     /// Used to publish tick events
     tick: Spawn<Publisher<()>>,
 
+    /// Used to temporarily suspend event processing
+    suspend_updates: Spawn<Publisher<UpdateLatch>>,
+
     /// The UI tree for the applicaiton
     ui_tree: BindRef<Control>,
 
@@ -41,6 +45,7 @@ impl UiSessionCore {
             last_update_id:     0,
             ui_tree:            ui_tree,
             tick:               spawn(Publisher::new(100)),
+            suspend_updates:    spawn(Publisher::new(100)),
             update_callbacks:   vec![]
         }
     }
@@ -126,6 +131,14 @@ impl UiSessionCore {
                     }
                 },
 
+                UiEvent::SuspendUpdates => {
+                    self.suspend_updates.wait_send(UpdateLatch::Suspend).ok();
+                },
+
+                UiEvent::ResumeUpdates => {
+                    self.suspend_updates.wait_send(UpdateLatch::Resume).ok();
+                },
+
                 UiEvent::Tick => {
                     // Send a tick to this controller
                     self.dispatch_tick(controller);
@@ -181,6 +194,13 @@ impl UiSessionCore {
     }
 
     ///
+    /// Returns a subscriber for update suspension events
+    ///
+    pub fn subscribe_update_suspend(&mut self) -> Subscriber<UpdateLatch> {
+        self.suspend_updates.get_mut().subscribe()
+    }
+
+    ///
     /// Dispatches an action to a controller
     /// 
     fn dispatch_action(&mut self, controller: &dyn Controller, event_name: String, action_parameter: ActionParameter) {
@@ -203,12 +223,6 @@ impl UiSessionCore {
         // Send the tick to the controller
         controller.tick();
 
-        // Dispatch to any streams that are listening
-        struct NotifyNothing;
-        impl Notify for NotifyNothing {
-            fn notify(&self, _: usize) { }
-        }
-
-        self.tick.start_send_notify((), &NotifyHandle::from(&NotifyNothing), 0).ok();
+        self.tick.wait_send(()).ok();
     }
 }

@@ -1,4 +1,5 @@
 use super::update::*;
+use super::update_latch::*;
 use super::canvas_stream::*;
 use super::viewmodel_stream::*;
 use super::super::diff::*;
@@ -28,6 +29,9 @@ pub struct UiUpdateStream {
     /// The state of the UI at the last update
     last_ui: Option<Control>,
 
+    /// Stream of 'update suspend' events
+    update_suspend: Subscriber<UpdateLatch>,
+
     /// Stream of ticks
     tick: Subscriber<()>,
 
@@ -45,13 +49,16 @@ pub struct UiUpdateStream {
 
     /// Pending updates from the canvases and the viewmodels
     pending: Arc<Mutex<Option<Vec<UiUpdate>>>>,
+
+    /// Number of times the update stream has been suspended
+    suspension_count: i32
 }
 
 impl UiUpdateStream {
     ///
     /// Creates a new UI update stream
     /// 
-    pub fn new(controller: Arc<dyn Controller>, tick: Subscriber<()>) -> UiUpdateStream {
+    pub fn new(controller: Arc<dyn Controller>, tick: Subscriber<()>, update_suspend: Subscriber<UpdateLatch>) -> UiUpdateStream {
         // Create the values that will go into the core
         let pending             = Arc::new(Mutex::new(None));
         let pending_ui          = Arc::new(Mutex::new(Some(vec![UiUpdate::Start])));
@@ -71,11 +78,13 @@ impl UiUpdateStream {
             _ui_tree:           ui_tree,
             ui_updates:         ui_updates,
             last_ui:            None,
+            update_suspend:     update_suspend,
             viewmodel_updates:  viewmodel_updates,
             canvas_updates:     canvas_updates,
             pending_ui:         pending_ui,
             pending:            pending,
-            tick:               tick
+            tick:               tick,
+            suspension_count:   0
         };
 
         new_stream
@@ -173,38 +182,53 @@ impl Stream for UiUpdateStream {
     type Error  = ();
 
     fn poll(&mut self) -> Poll<Option<Vec<UiUpdate>>, Self::Error> {
-        // Pull any pending events into the pending list
-        self.pull_canvas_events();
-        self.pull_viewmodel_events();
-
-        // UI events are polled last but we return them first (this way the viewmodel and canvas updates apply to the current UI)
-        self.pull_ui_events();
-
-        // Try to read the pending update, if there is one
-        let mut pending_ui          = self.pending_ui.lock().unwrap();
-        let mut pending             = self.pending.lock().unwrap();
-        let mut pending_result_ui   = None;
-        let mut pending_result      = None;
-
-        mem::swap(&mut pending_result_ui, &mut *pending_ui);
-        mem::swap(&mut pending_result, &mut *pending);
-
-        // The UI updates are always performed before the canvas and viewmodel updates
-        if let Some(mut pending_result_ui) = pending_result_ui {
-            pending_result_ui.extend(pending_result.take().unwrap_or(vec![]));
-            pending_result = Some(pending_result_ui);
+        // Check for suspensions
+        let suspend_poll = self.update_suspend.poll();
+        if let Ok(Async::Ready(Some(UpdateLatch::Suspend))) = suspend_poll {
+            self.suspension_count += 1;
         }
-        
-        // Result is OK if we found a pending update
-        if let Some(pending) = pending_result {
-            // There is a pending update
-            Ok(Async::Ready(Some(pending)))
-        } else if let Ok(Async::Ready(Some(()))) = self.tick.poll() {
-            // There is a pending tick
-            Ok(Async::Ready(Some(vec![])))
-        } else {
-            // Not ready yet
+
+        if let Ok(Async::Ready(Some(UpdateLatch::Resume))) = suspend_poll {
+            self.suspension_count -= 1;
+        }
+
+        if self.suspension_count > 0 {
+            // Stay 'not ready' for as long as we're suspended for
             Ok(Async::NotReady)
+        } else {
+            // Pull any pending events into the pending list
+            self.pull_canvas_events();
+            self.pull_viewmodel_events();
+
+            // UI events are polled last but we return them first (this way the viewmodel and canvas updates apply to the current UI)
+            self.pull_ui_events();
+
+            // Try to read the pending update, if there is one
+            let mut pending_ui          = self.pending_ui.lock().unwrap();
+            let mut pending             = self.pending.lock().unwrap();
+            let mut pending_result_ui   = None;
+            let mut pending_result      = None;
+
+            mem::swap(&mut pending_result_ui, &mut *pending_ui);
+            mem::swap(&mut pending_result, &mut *pending);
+
+            // The UI updates are always performed before the canvas and viewmodel updates
+            if let Some(mut pending_result_ui) = pending_result_ui {
+                pending_result_ui.extend(pending_result.take().unwrap_or(vec![]));
+                pending_result = Some(pending_result_ui);
+            }
+            
+            // Result is OK if we found a pending update
+            if let Some(pending) = pending_result {
+                // There is a pending update
+                Ok(Async::Ready(Some(pending)))
+            } else if let Ok(Async::Ready(Some(()))) = self.tick.poll() {
+                // There is a pending tick
+                Ok(Async::Ready(Some(vec![])))
+            } else {
+                // Not ready yet
+                Ok(Async::NotReady)
+            }
         }
     }
 }

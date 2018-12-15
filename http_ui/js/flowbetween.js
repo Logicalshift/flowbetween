@@ -2075,6 +2075,8 @@ function flowbetween(root_node) {
             var promise = new Promise((resolve) => {
                 let websocket = websocket_for_session[session_id];
 
+                events.unshift('SuspendUpdates');
+                events.push('ResumeUpdates');
                 events.push('Tick');
                 websocket.send(JSON.stringify(events));
                 

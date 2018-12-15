@@ -78,7 +78,9 @@ impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdat
 
     /// Retrieves a view onto the update stream for this user interface
     fn get_updates(&self) -> UiUpdateStream {
-        UiUpdateStream::new(self.controller.clone(), self.core.sync(|core| core.subscribe_ticks()))
+        let (tick, update_suspend) = self.core.sync(|core| (core.subscribe_ticks(), core.subscribe_update_suspend()));
+
+        UiUpdateStream::new(self.controller.clone(), tick, update_suspend)
     }
 }
 

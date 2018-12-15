@@ -2,6 +2,7 @@ mod event;
 mod update;
 mod core;
 mod event_sink;
+mod update_latch;
 mod update_stream;
 pub mod state;
 pub mod session;
