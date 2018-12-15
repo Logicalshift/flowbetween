@@ -2066,35 +2066,68 @@ function flowbetween(root_node) {
     ///
     /// Sends a request to the session URI and processes the result
     ///
-    let send_request = (request) => {
-        let session_id  = request.session_id;
-        let events      = request.events;
+    let send_request = (function() {
+        // Events waiting to be sent
+        let pending_events  = [];
 
-        if (session_id && websocket_for_session[session_id]) {
-            // Send the request
-            var promise = new Promise((resolve) => {
-                let websocket = websocket_for_session[session_id];
+        // Set to true when we're going to send the events we gathered
+        let sending_events  = null;
 
-                events.unshift('SuspendUpdates');
-                events.push('ResumeUpdates');
-                events.push('Tick');
-                websocket.send(JSON.stringify(events));
-                
-                resolve();
-            });
+        // Promise sending the last set of events
+        let last_promise    = null;
 
-            // Resolve once the update from this message is generated
-            let next_update = next_update_promise;
-            return promise.then(() => next_update);
-        } else {
-            return retry(() => http_post(request), () => warn('UI request failed - retrying'))
-                .then((response) => response_to_object(response))
-                .then((ui_request) => dispatch_updates(ui_request.updates))
-                .catch((err) => {
-                    error('Request failed.', err);
-                });
-        }
-    };
+        return (request) => {
+            let session_id  = request.session_id;
+            let events      = request.events;
+
+            if (session_id && websocket_for_session[session_id]) {
+                // Add the events to the pending list
+                pending_events = pending_events.concat(events);
+
+                // Events are collated and sent at the start of the next frame
+                if (!sending_events) {
+                    sending_events = true;
+
+                    // Promise that will complete after the next animation frame
+                    var animation_frame = new Promise((resolve) => {
+                        requestAnimationFrame(() => resolve());
+                    });
+
+                    // Send to the websocket after the event
+                    let promise = animation_frame.then(() => {
+                        // Get the events we're going to send and reset the state
+                        sending_events = null;
+                        let events     = pending_events;
+                        pending_events = [];
+
+                        // Send to the websocket
+                        let websocket = websocket_for_session[session_id];
+
+                        events.unshift('SuspendUpdates');
+                        events.push('ResumeUpdates');
+                        events.push('Tick');
+                        websocket.send(JSON.stringify(events));
+                    });
+
+                    last_promise = promise;
+
+                    // Resolve once the update from this message is generated
+                    let next_update = next_update_promise;
+                    return promise.then(() => next_update);
+                } else {
+                    // Resolve when the pending update resolves
+                    return last_promise;
+                }
+            } else {
+                return retry(() => http_post(request), () => warn('UI request failed - retrying'))
+                    .then((response) => response_to_object(response))
+                    .then((ui_request) => dispatch_updates(ui_request.updates))
+                    .catch((err) => {
+                        error('Request failed.', err);
+                    });
+            }
+        };
+    })();
 
     ///
     /// Makes a request to refresh the current state of the UI
