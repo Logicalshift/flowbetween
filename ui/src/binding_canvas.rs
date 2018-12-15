@@ -213,7 +213,7 @@ impl BindingCanvas {
         BindingCanvasStream {
             canvas:         Arc::downgrade(&self.canvas),
             canvas_stream:  self.canvas.stream(),
-            binding_core:   Arc::clone(&self.core)
+            binding_core:   Arc::downgrade(&self.core)
         }
     }
 }
@@ -237,7 +237,7 @@ struct BindingCanvasStream<CanvasStream> {
     canvas_stream: CanvasStream,
 
     /// The core of the binding canvas
-    binding_core: Arc<Desync<BindingCanvasCore>>
+    binding_core: Weak<Desync<BindingCanvasCore>>
 }
 
 impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStream<CanvasStream> {
@@ -246,16 +246,18 @@ impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStr
 
     fn poll(&mut self) -> Poll<Option<Draw>, ()> {
         // Fetch the canvas
-        let canvas = self.canvas.upgrade();
+        let canvas          = self.canvas.upgrade();
+        let binding_core    = self.binding_core.upgrade();
+        let canvas_core     = binding_core.and_then(|binding_core| canvas.map(move |canvas| (binding_core, canvas)));
 
         // Redraw the main canvas if it's invalidated
-        if let Some(canvas) = canvas {
+        if let Some((binding_core, canvas)) = canvas_core {
             // Variables needed to do the redraw
             let task        = task::current();
             let canvas      = Arc::clone(&canvas);
-            let change_core = Arc::downgrade(&self.binding_core);
+            let change_core = Arc::downgrade(&binding_core);
 
-            self.binding_core.sync(move |core| {
+            binding_core.sync(move |core| {
                 // Notify this task whenever the canvas changes
                 core.notify_task = Some(task);
 
