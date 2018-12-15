@@ -7,7 +7,6 @@ use futures::*;
 use futures::task;
 
 use std::sync::*;
-use std::mem;
 use std::ops::Deref;
 
 ///
@@ -51,8 +50,7 @@ impl BindingCanvasCore {
     /// 
     fn done_with_notifications(&mut self) {
         // Swap out the notifications
-        let mut notifications = None;
-        mem::swap(&mut notifications, &mut self.active_notifications);
+        let notifications = self.active_notifications.take();
 
         // Mark as done if there are any
         if let Some(mut notifications) = notifications {
@@ -263,8 +261,15 @@ impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStr
 
                 // Redraw the canvas, and notify on changes
                 if core.invalidated {
-                    let notifiable = Arc::new(CoreNotifiable(change_core));
-                    core.redraw(&*canvas, notifiable);
+                    // Clear any pending notifications
+                    core.done_with_notifications();
+
+                    // Redraw the canvass
+                    let notifiable  = Arc::new(CoreNotifiable(change_core));
+                    let lifetime    = core.redraw(&*canvas, notifiable);
+
+                    // This becomes the active notification
+                    core.active_notifications = Some(lifetime);
                 }
             });
         }
