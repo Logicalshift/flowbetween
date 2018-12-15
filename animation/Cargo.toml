@@ -12,7 +12,7 @@ flo_curves          = { git = "https://github.com/Logicalshift/flo_curves", vers
 flo_float_encoder   = { path = "../float_encoder", version = "^0.1.0" }
 
 futures             = "^0.1.17"
-itertools           = "0.7"
+itertools           = "0.8"
 typemap             = "^0.3.3"
 modifier            = "^0.1.0"
 serde               = "^1.0.0"

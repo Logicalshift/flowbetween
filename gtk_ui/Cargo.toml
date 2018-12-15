@@ -23,6 +23,6 @@ epoxy               = "0.1"
 shared_library      = ""
 futures             = "^0.1.17"
 anymap              = "^0.12.1"
-itertools           = "^0.7.4"
+itertools           = "^0.8"
 time                = "0.1"
 nanovg              = { version = "1.0", features = ["gl3"] }
