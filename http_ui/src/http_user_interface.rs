@@ -56,9 +56,11 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
         use Event::*;
 
         match http_event {
-            NewSession  => UiEvent::Tick,
-            UiRefresh   => UiEvent::Tick,
-            Tick        => UiEvent::Tick,
+            NewSession      => UiEvent::Tick,
+            UiRefresh       => UiEvent::Tick,
+            Tick            => UiEvent::Tick,
+            SuspendUpdates  => UiEvent::SuspendUpdates,
+            ResumeUpdates   => UiEvent::ResumeUpdates,
 
             Action(controller_path, action_name, action_parameter) => UiEvent::Action(controller_path, action_name, action_parameter)
         }
