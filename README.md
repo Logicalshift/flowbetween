@@ -1,6 +1,6 @@
 # FlowBetween
 
-![Screenshot](./png/screenshot-Nov18.png)
+![Screenshot](./png/screenshot-Dec16.png)
 
 FlowBetween is a tool for creating animations. It is also a vector editor designed to provide a 'painterly'
 workflow, differing from most other tools in that editing is more about painting using brushes than tweaking
