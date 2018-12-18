@@ -134,6 +134,47 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
     }
 
     ///
+    /// Decodes a 'create path' entry
+    ///
+    fn create_path_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
+        // A create path is just a 'when' and a bunch of points
+        let points      = Self::raw_points_for_entry(core, entry.edit_id);
+        let when        = entry.when.unwrap_or(Duration::from_millis(0));
+        let element_id  = ElementId::from(entry.element_id);
+
+        LayerEdit::Path(when, PathEdit::CreatePath(element_id, points))
+    }
+
+    ///
+    /// Decodes a path 'brush properties' entry
+    ///
+    fn path_properties_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
+        // Decode the brush properties
+        let properties  = entry.brush_properties_id
+            .map(|brush_properties_id| AnimationDbCore::get_brush_properties(&mut core.db, brush_properties_id).unwrap_or(BrushProperties::new()))
+            .unwrap_or(BrushProperties::new());
+        let when        = entry.when.unwrap_or(Duration::from_millis(0));
+        let element_id  = ElementId::from(entry.element_id);
+
+        LayerEdit::Path(when, PathEdit::BrushProperties(element_id, properties))
+    }
+
+    ///
+    /// Decodes a path 'brush' entry
+    ///
+    fn path_brush_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
+        // Decode the brush to use for this path
+        let (brush, drawing_style) = entry.brush
+            .map(|(brush_id, drawing_style)|        (AnimationDbCore::get_brush_definition(&mut core.db, brush_id), drawing_style))
+            .map(|(brush_or_error, drawing_style)|  (brush_or_error.unwrap_or(BrushDefinition::Simple), drawing_style))
+            .unwrap_or((BrushDefinition::Simple, DrawingStyleType::Draw));
+        let when        = entry.when.unwrap_or(Duration::from_millis(0));
+        let element_id  = ElementId::from(entry.element_id);
+
+        LayerEdit::Path(when, PathEdit::SelectBrush(element_id, brush, drawing_style.into()))
+    }
+
+    ///
     /// Turns an edit log entry into an animation edit
     /// 
     fn animation_edit_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
@@ -150,6 +191,10 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             LayerPaintSelectBrush       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::select_brush_for_entry(core, entry)),
             LayerPaintBrushProperties   => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_properties_for_entry(core, entry)),
             LayerPaintBrushStroke       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_stroke_for_entry(core, entry)),
+
+            LayerPathCreatePath         => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::create_path_for_entry(core, entry)),
+            LayerPathSelectBrush        => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::path_brush_for_entry(core, entry)),
+            LayerPathBrushProperties    => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::path_properties_for_entry(core, entry)),
 
             MotionCreate                => unimplemented!(),
             MotionDelete                => unimplemented!(),

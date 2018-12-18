@@ -318,6 +318,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
                     RemoveLayer(_)              |
                     Element(_, _)               |
                     Motion(_, _)                |
+                    Layer(_, Path(_, _))        |
                     Layer(_, Paint(_, _))       => {
                         advance_edit_counter = true;
                     }

@@ -21,6 +21,10 @@ pub enum EditLogType {
     LayerPaintBrushProperties,
     LayerPaintBrushStroke,
 
+    LayerPathCreatePath,
+    LayerPathSelectBrush,
+    LayerPathBrushProperties,
+
     MotionCreate,
     MotionDelete,
     MotionSetType,
@@ -74,7 +78,11 @@ pub enum LayerType {
 pub enum VectorElementType {
     BrushDefinition,
     BrushProperties,
-    BrushStroke
+    BrushStroke,
+
+    Path,
+    PathBrush,
+    PathBrushProperties,
 }
 
 ///
@@ -244,27 +252,32 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
         use self::MotionEdit::*;
         use self::LayerEdit::*;
         use self::PaintEdit::*;
+        use self::PathEdit::CreatePath;
 
         match t {
-            SetSize(_, _)                               => EditLogType::SetSize,
-            AddNewLayer(_)                              => EditLogType::AddNewLayer,
-            RemoveLayer(_)                              => EditLogType::RemoveLayer,
+            SetSize(_, _)                                       => EditLogType::SetSize,
+            AddNewLayer(_)                                      => EditLogType::AddNewLayer,
+            RemoveLayer(_)                                      => EditLogType::RemoveLayer,
             
-            Layer(_, AddKeyFrame(_))                    => EditLogType::LayerAddKeyFrame,
-            Layer(_, RemoveKeyFrame(_))                 => EditLogType::LayerRemoveKeyFrame,
-            Layer(_, Paint(_, SelectBrush(_, _, _)))    => EditLogType::LayerPaintSelectBrush,
-            Layer(_, Paint(_, BrushProperties(_, _)))   => EditLogType::LayerPaintBrushProperties,
-            Layer(_, Paint(_, BrushStroke(_,_)))        => EditLogType::LayerPaintBrushStroke,
+            Layer(_, AddKeyFrame(_))                            => EditLogType::LayerAddKeyFrame,
+            Layer(_, RemoveKeyFrame(_))                         => EditLogType::LayerRemoveKeyFrame,
+            Layer(_, Paint(_, SelectBrush(_, _, _)))            => EditLogType::LayerPaintSelectBrush,
+            Layer(_, Paint(_, BrushProperties(_, _)))           => EditLogType::LayerPaintBrushProperties,
+            Layer(_, Paint(_, BrushStroke(_,_)))                => EditLogType::LayerPaintBrushStroke,
 
-            Motion(_, Create)                           => EditLogType::MotionCreate,
-            Motion(_, Delete)                           => EditLogType::MotionDelete,
-            Motion(_, SetType(_))                       => EditLogType::MotionSetType,
-            Motion(_, SetOrigin(_, _))                  => EditLogType::MotionSetOrigin,
-            Motion(_, SetPath(_))                       => EditLogType::MotionSetPath,
-            Motion(_, Attach(_))                        => EditLogType::MotionAttach,
-            Motion(_, Detach(_))                        => EditLogType::MotionDetach,
+            Layer(_, Path(_, CreatePath(_, _)))                 => EditLogType::LayerPathCreatePath,
+            Layer(_, Path(_, PathEdit::SelectBrush(_, _, _)))   => EditLogType::LayerPathSelectBrush,
+            Layer(_, Path(_, PathEdit::BrushProperties(_, _)))  => EditLogType::LayerPathBrushProperties,
 
-            Element(_, SetControlPoints(_))             => EditLogType::ElementSetControlPoints
+            Motion(_, Create)                                   => EditLogType::MotionCreate,
+            Motion(_, Delete)                                   => EditLogType::MotionDelete,
+            Motion(_, SetType(_))                               => EditLogType::MotionSetType,
+            Motion(_, SetOrigin(_, _))                          => EditLogType::MotionSetOrigin,
+            Motion(_, SetPath(_))                               => EditLogType::MotionSetPath,
+            Motion(_, Attach(_))                                => EditLogType::MotionAttach,
+            Motion(_, Detach(_))                                => EditLogType::MotionDetach,
+
+            Element(_, SetControlPoints(_))                     => EditLogType::ElementSetControlPoints
         }
     }
 }
@@ -329,6 +342,10 @@ impl From<EditLogType> for DbEnumName {
             LayerPaintBrushProperties   => DbEnumName("Edit", "Layer::Paint::BrushProperties"),
             LayerPaintBrushStroke       => DbEnumName("Edit", "Layer::Paint::BrushStroke"),
 
+            LayerPathCreatePath         => DbEnumName("Edit", "Layer::Path::CreatePath"),
+            LayerPathSelectBrush        => DbEnumName("Edit", "Layer::Path::SelectBrush"),
+            LayerPathBrushProperties    => DbEnumName("Edit", "Layer::Path::BrushProperties"),
+
             MotionCreate                => DbEnumName("Edit", "Motion::Create"),
             MotionDelete                => DbEnumName("Edit", "Motion::Delete"),
             MotionSetType               => DbEnumName("Edit", "Motion::SetType"),
@@ -390,9 +407,13 @@ impl From<VectorElementType> for DbEnumName {
         use self::VectorElementType::*;
 
         match t {
-            BrushDefinition => DbEnumName("VectorElementType", "BrushDefinition"),
-            BrushProperties => DbEnumName("VectorElementType", "BrushProperties"),
-            BrushStroke     => DbEnumName("VectorElementType", "BrushStroke")
+            BrushDefinition     => DbEnumName("VectorElementType", "BrushDefinition"),
+            BrushProperties     => DbEnumName("VectorElementType", "BrushProperties"),
+            BrushStroke         => DbEnumName("VectorElementType", "BrushStroke"),
+
+            Path                => DbEnumName("VectorElementType", "Path"),
+            PathBrush           => DbEnumName("VectorElementType", "PathBrush"),
+            PathBrushProperties => DbEnumName("VectorElementType", "PathBrushProperties"),
         }
     }
 }

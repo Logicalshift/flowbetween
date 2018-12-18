@@ -134,6 +134,8 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
         let files   = bind_stream(updates, files, move |files, update| {
             let mut files = (*files).clone();
 
+            println!(" - File update recv {:?}", update);
+
             match update {
                 FileUpdate::NewFile(path) => {
                     files.insert(0, Self::model_for_path(&file_manager, path.as_path()))

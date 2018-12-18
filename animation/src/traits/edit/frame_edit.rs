@@ -5,7 +5,24 @@ use super::super::brush_properties::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 
+use canvas::*;
+
 use std::sync::*;
+
+///
+/// Represents an edit to a path
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum PathEdit {
+    /// Creates a new path consisting of the specified points
+    CreatePath(ElementId, Arc<Vec<RawPoint>>),
+
+    /// Selects the brush with the specified definition for painting paths
+    SelectBrush(ElementId, BrushDefinition, BrushDrawingStyle),
+
+    /// Sets the properties for brush strokes
+    BrushProperties(ElementId, BrushProperties),
+}
 
 ///
 /// Represents an edit involving painting

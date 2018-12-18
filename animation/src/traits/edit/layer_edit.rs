@@ -22,6 +22,9 @@ pub enum LayerEdit {
     /// Edit to a frame at a specific time
     Paint(Duration, PaintEdit),
 
+    /// Edit to a path at a specific time
+    Path(Duration, PathEdit),
+
     /// Adds a keyframe at a particular point in time
     /// 
     /// Edits don't have to correspond to a keyframe - instead, keyframes

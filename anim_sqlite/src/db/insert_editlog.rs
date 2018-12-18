@@ -164,17 +164,22 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         use animation::LayerEdit::*;
 
         match edit {
-            &Paint(when, ref paint_edit)    => {
-                self.db.update(vec![PushEditLogWhen(when)])?;
+            Paint(when, paint_edit)         => {
+                self.db.update(vec![PushEditLogWhen(*when)])?;
                 self.insert_paint_edit(paint_edit)?;
             }
 
-            &AddKeyFrame(when)              => {
-                self.db.update(vec![PushEditLogWhen(when), Pop])?;
+            Path(when, path_edit)           => {
+                self.db.update(vec![PushEditLogWhen(*when)])?;
+                self.insert_path_edit(path_edit)?;
             }
 
-            &RemoveKeyFrame(when)           => {
-                self.db.update(vec![PushEditLogWhen(when), Pop])?;
+            AddKeyFrame(when)              => {
+                self.db.update(vec![PushEditLogWhen(*when), Pop])?;
+            }
+
+            RemoveKeyFrame(when)           => {
+                self.db.update(vec![PushEditLogWhen(*when), Pop])?;
             }
         }
 
@@ -182,7 +187,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     }
 
     ///
-    /// Inserts the values for a LayerEdit into the edit log (db must have an edit ID pushed. This will be popped when this returns)
+    /// Inserts the values for a PaintEdit into the edit log (db must have an edit ID + a when value pushed. This will be popped when this returns)
     /// 
     fn insert_paint_edit<'a>(&mut self, edit: &PaintEdit) -> Result<()> {
         use animation::PaintEdit::*;
@@ -201,6 +206,34 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             },
 
             &BrushStroke(ref id, ref points)                        => {
+                Self::insert_element_id(&mut self.db, id)?;
+                self.db.update(vec![PushRawPoints(Arc::clone(points)), Pop])?;
+            }
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Inserts the values for a PathEdit into the edit log (db must have an edit ID + a when value pushed pushed)
+    ///
+    fn insert_path_edit<'a>(&mut self, edit: &PathEdit) -> Result<()> {
+        use animation::PathEdit::*;
+
+        match edit {
+            SelectBrush(id, definition, drawing_style)  => {
+                Self::insert_element_id(&mut self.db, id)?;
+                Self::insert_brush(&mut self.db, definition)?;
+                self.db.update(vec![PopEditLogBrush(DrawingStyleType::from(drawing_style))])?;
+            },
+
+            BrushProperties(id, properties)             => {
+                Self::insert_element_id(&mut self.db, id)?;
+                Self::insert_brush_properties(&mut self.db, properties)?;
+                self.db.update(vec![PopEditLogBrushProperties])?;
+            },
+
+            CreatePath(id, points)                      => {
                 Self::insert_element_id(&mut self.db, id)?;
                 self.db.update(vec![PushRawPoints(Arc::clone(points)), Pop])?;
             }

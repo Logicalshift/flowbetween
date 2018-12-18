@@ -73,6 +73,17 @@ impl VectorLayerCore {
     }
 
     ///
+    /// Performs a path edit on this layer
+    ///
+    pub fn path(&mut self, when: Duration, path: &PathEdit) {
+        match path {
+            PathEdit::CreatePath(element, points)               => unimplemented!(),
+            PathEdit::SelectBrush(element, defn, drawing_style) => unimplemented!(),
+            PathEdit::BrushProperties(element, properties)      => unimplemented!(),
+        }
+    }
+
+    ///
     /// Performs a layer edit on this layer
     /// 
     pub fn edit(&mut self, edit: &LayerEdit) {
@@ -80,6 +91,7 @@ impl VectorLayerCore {
 
         match edit {
             Paint(when, edit)           => self.paint(*when, edit),
+            Path(when, edit)            => self.path(*when, edit),
 
             AddKeyFrame(when)           => self.add_key_frame(*when),
             RemoveKeyFrame(when)        => self.remove_key_frame(*when)

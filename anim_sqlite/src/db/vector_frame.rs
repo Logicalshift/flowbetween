@@ -71,9 +71,13 @@ impl VectorFrame {
     /// 
     fn vector_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
         match entry.element_type {
-            VectorElementType::BrushDefinition => Ok(Vector::BrushDefinition(Self::brush_definition_for_entry(db, entry)?)),
-            VectorElementType::BrushProperties => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
-            VectorElementType::BrushStroke     => Ok(Vector::BrushStroke(Self::brush_stroke_for_entry(db, entry)?))
+            VectorElementType::BrushDefinition      => Ok(Vector::BrushDefinition(Self::brush_definition_for_entry(db, entry)?)),
+            VectorElementType::BrushProperties      => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
+            VectorElementType::BrushStroke          => Ok(Vector::BrushStroke(Self::brush_stroke_for_entry(db, entry)?)),
+
+            VectorElementType::Path                 => unimplemented!(),
+            VectorElementType::PathBrush            => unimplemented!(), 
+            VectorElementType::PathBrushProperties  => unimplemented!()
         }
     }
 

@@ -350,6 +350,10 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
             Paint(when, edit) => {
                 self.paint_vector_layer(layer_id, when, edit)?;
+            },
+
+            Path(when, edit) => {
+                unimplemented!()
             }
         }
 
