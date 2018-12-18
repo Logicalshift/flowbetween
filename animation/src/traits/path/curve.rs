@@ -1,5 +1,5 @@
 use super::point::*;
-use super::element::*;
+use super::component::*;
 
 use curves::bezier::*;
 

@@ -1,5 +1,6 @@
+use canvas::Draw::Move;
 use super::point::*;
-use super::element::*;
+use super::component::*;
 
 use canvas::*;
 use curves::geo::*;

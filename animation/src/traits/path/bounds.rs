@@ -1,8 +1,9 @@
+use traits::path::component::PathComponent::Bezier;
 use super::path::*;
 use super::rect::*;
 use super::point::*;
 use super::curve::*;
-use super::element::*;
+use super::component::*;
 
 use curves::*;
 
