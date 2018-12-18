@@ -4,7 +4,7 @@ use super::point::*;
 /// Represents an element of a bezier path
 /// 
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub enum PathElement {
+pub enum PathComponent {
     /// Move to point
     Move(PathPoint),
 

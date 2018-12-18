@@ -19,9 +19,9 @@ pub trait HasBoundingBox {
 ///
 /// An element and its starting point can be converted into a bounding rectangle
 /// 
-impl From<(PathPoint, PathElement)> for Rect {
-    fn from((start_point, element): (PathPoint, PathElement)) -> Rect {
-        use self::PathElement::*;
+impl From<(PathPoint, PathComponent)> for Rect {
+    fn from((start_point, element): (PathPoint, PathComponent)) -> Rect {
+        use self::PathComponent::*;
 
         match element {
             Move(point)     => Rect::new(start_point, point).normalize(),
@@ -41,9 +41,9 @@ impl From<(PathPoint, PathElement)> for Rect {
 ///
 /// Pairs of path elements can also be turned into bounding rectangles
 /// 
-impl From<(PathElement, PathElement)> for Rect {
-    fn from((previous, next): (PathElement, PathElement)) -> Rect {
-        use self::PathElement::*;
+impl From<(PathComponent, PathComponent)> for Rect {
+    fn from((previous, next): (PathComponent, PathComponent)) -> Rect {
+        use self::PathComponent::*;
 
         if let Close = previous {
             // If the previous element is a 'close' element then we only include one point
@@ -113,7 +113,7 @@ mod test {
 
     #[test]
     fn can_get_bounding_box_for_line_element() {
-        let bounds = Rect::from((PathPoint::new(30.0, 30.0), PathElement::Line(PathPoint::new(60.0, 20.0))));
+        let bounds = Rect::from((PathPoint::new(30.0, 30.0), PathComponent::Line(PathPoint::new(60.0, 20.0))));
 
         assert!(bounds.x1 == 30.0);
         assert!(bounds.y1 == 20.0);
@@ -123,7 +123,7 @@ mod test {
 
     #[test]
     fn can_get_bounding_box_for_move_and_line_element() {
-        let bounds = Rect::from((PathElement::Move(PathPoint::new(30.0, 30.0)), PathElement::Line(PathPoint::new(60.0, 20.0))));
+        let bounds = Rect::from((PathComponent::Move(PathPoint::new(30.0, 30.0)), PathComponent::Line(PathPoint::new(60.0, 20.0))));
 
         assert!(bounds.x1 == 30.0);
         assert!(bounds.y1 == 20.0);
@@ -133,7 +133,7 @@ mod test {
 
     #[test]
     fn can_get_bounding_box_for_line_path() {
-        use self::PathElement::*;
+        use self::PathComponent::*;
 
         let line_path = Path::from_elements(vec![
             Move(PathPoint::new(30.0, 30.0)),
@@ -150,7 +150,7 @@ mod test {
 
     #[test]
     fn can_get_bounding_box_for_triangle_path() {
-        use self::PathElement::*;
+        use self::PathComponent::*;
 
         let line_path = Path::from_elements(vec![
             Move(PathPoint::new(30.0, 30.0)),
@@ -168,7 +168,7 @@ mod test {
 
     #[test]
     fn can_get_bounding_box_for_simple_line_bezier_path() {
-        use self::PathElement::*;
+        use self::PathComponent::*;
 
         let line_path = Path::from_elements(vec![
             Move(PathPoint::new(30.0, 30.0)),
@@ -185,7 +185,7 @@ mod test {
 
     #[test]
     fn can_get_bounding_box_for_curved_bezier_path() {
-        use self::PathElement::*;
+        use self::PathComponent::*;
 
         let line_path = Path::from_elements(vec![
             Move(PathPoint::new(0.0, 1.0)),

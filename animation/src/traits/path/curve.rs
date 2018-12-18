@@ -5,7 +5,7 @@ use curves::bezier::*;
 
 /// A start point and a following element describes a bezier curve
 #[derive(Copy, Clone)]
-pub struct PathCurve(pub PathPoint, pub PathElement);
+pub struct PathCurve(pub PathPoint, pub PathComponent);
 
 impl Geo for PathCurve {
     type Point = PathPoint;
@@ -16,7 +16,7 @@ impl Geo for PathCurve {
 /// 
 impl BezierCurveFactory for PathCurve {
     fn from_points(start: PathPoint, (control_point1, control_point2): (PathPoint, PathPoint), end: PathPoint) -> PathCurve {
-        PathCurve(start, PathElement::Bezier(end, control_point1, control_point2))
+        PathCurve(start, PathComponent::Bezier(end, control_point1, control_point2))
     }
 }
 
@@ -33,7 +33,7 @@ impl BezierCurve for PathCurve {
 
     #[inline]
     fn end_point(&self) -> PathPoint {
-        use self::PathElement::*;
+        use self::PathComponent::*;
 
         match self {
             &PathCurve(_, Move(point))                  |
@@ -45,7 +45,7 @@ impl BezierCurve for PathCurve {
 
     #[inline]
     fn control_points(&self) -> (PathPoint, PathPoint) {
-        use self::PathElement::*;
+        use self::PathComponent::*;
 
         match self {
             &PathCurve(start, Move(end))            |

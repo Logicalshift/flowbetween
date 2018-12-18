@@ -12,7 +12,7 @@ use std::iter;
 /// 
 #[derive(Clone)]
 pub struct Path {
-    pub elements: Vec<PathElement>
+    pub elements: Vec<PathComponent>
 }
 
 impl Path {
@@ -26,7 +26,7 @@ impl Path {
     ///
     /// Creates a path from an elements iterator
     /// 
-    pub fn from_elements<Elements: IntoIterator<Item=PathElement>>(elements: Elements) -> Path {
+    pub fn from_elements<Elements: IntoIterator<Item=PathComponent>>(elements: Elements) -> Path {
         Path {
             elements: elements.into_iter().collect()
         }
@@ -41,10 +41,10 @@ impl Path {
                 use self::Draw::*;
 
                 match draw {
-                    Move(x, y)              => Some(PathElement::Move(PathPoint::from((x, y)))),
-                    Line(x, y)              => Some(PathElement::Line(PathPoint::from((x, y)))),
-                    BezierCurve(p, c1, c2)  => Some(PathElement::Bezier(PathPoint::from(p), PathPoint::from(c1), PathPoint::from(c2))),
-                    ClosePath               => Some(PathElement::Close),
+                    Move(x, y)              => Some(PathComponent::Move(PathPoint::from((x, y)))),
+                    Line(x, y)              => Some(PathComponent::Line(PathPoint::from((x, y)))),
+                    BezierCurve(p, c1, c2)  => Some(PathComponent::Bezier(PathPoint::from(p), PathPoint::from(c1), PathPoint::from(c2))),
+                    ClosePath               => Some(PathComponent::Close),
 
                     _                       => None
                 }
@@ -66,10 +66,10 @@ impl Path {
                 use self::Draw::*;
 
                 match path {
-                    &PathElement::Move(point)       => Move(point.x(), point.y()),
-                    &PathElement::Line(point)       => Line(point.x(), point.y()),
-                    &PathElement::Bezier(p, c1, c2) => BezierCurve(p.position, c1.position, c2.position),
-                    &PathElement::Close             => ClosePath
+                    &PathComponent::Move(point)       => Move(point.x(), point.y()),
+                    &PathComponent::Line(point)       => Line(point.x(), point.y()),
+                    &PathComponent::Bezier(p, c1, c2) => BezierCurve(p.position, c1.position, c2.position),
+                    &PathComponent::Close             => ClosePath
                 }
             })
     }
@@ -87,8 +87,8 @@ impl From<(f64, f64)> for PathPoint {
     }
 }
 
-impl From<Vec<PathElement>> for Path {
-    fn from(points: Vec<PathElement>) -> Path {
+impl From<Vec<PathComponent>> for Path {
+    fn from(points: Vec<PathComponent>) -> Path {
         Path {
             elements: points
         }
@@ -126,7 +126,7 @@ impl BezierPath for Path {
     /// Retrieves the initial point of this path
     /// 
     fn start_point(&self) -> Self::Point {
-        use self::PathElement::*;
+        use self::PathComponent::*;
 
         match self.elements[0] {
             Move(p)         => p,
@@ -154,13 +154,13 @@ impl BezierPath for Path {
         // Convert each element to a point in the path
         for element in self.elements.iter() {
             match element {
-                PathElement::Bezier(target, cp1, cp2) => {
+                PathComponent::Bezier(target, cp1, cp2) => {
                     points.push((*cp1, *cp2, *target));
                     last_point = *target;
                 },
 
-                PathElement::Line(target)  |
-                PathElement::Move(target) => {
+                PathComponent::Line(target)  |
+                PathComponent::Move(target) => {
                     // Generate control points for a line
                     let diff = *target-last_point;
                     let cp1 = diff * 0.3;
@@ -172,7 +172,7 @@ impl BezierPath for Path {
                     last_point = *target;
                 },
 
-                PathElement::Close => { 
+                PathComponent::Close => { 
                     // Line to the start point
                     let diff = start_point-last_point;
                     let cp1 = diff * 0.3;
@@ -197,8 +197,8 @@ impl BezierPathFactory for Path {
     /// 
     fn from_points<FromIter: IntoIterator<Item=(Self::Point, Self::Point, Self::Point)>>(start_point: Self::Point, points: FromIter) -> Self {
         let elements = points.into_iter()
-            .map(|(cp1, cp2, target)| PathElement::Bezier(target, cp1, cp2));
-        let elements = iter::once(PathElement::Move(start_point))
+            .map(|(cp1, cp2, target)| PathComponent::Bezier(target, cp1, cp2));
+        let elements = iter::once(PathComponent::Move(start_point))
             .chain(elements);
 
         Path {
