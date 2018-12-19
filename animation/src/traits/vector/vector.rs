@@ -1,4 +1,5 @@
 use super::element::*;
+use super::path_element::*;
 use super::brush_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
@@ -22,7 +23,10 @@ pub enum Vector {
     BrushProperties(BrushPropertiesElement),
 
     /// Brush stroke vector
-    BrushStroke(BrushElement)
+    BrushStroke(BrushElement),
+
+    /// Path vector
+    Path(PathElement)
 }
 
 impl Vector {
@@ -63,11 +67,13 @@ impl Deref for Vector {
         use Vector::*;
 
         match self {
-            &Transformed(ref transform) => transform,
+            Transformed(ref transform)  => transform,
 
-            &BrushDefinition(ref defn)  => defn,
-            &BrushProperties(ref props) => props,
-            &BrushStroke(ref elem)      => elem
+            BrushDefinition(ref defn)   => defn,
+            BrushProperties(ref props)  => props,
+            BrushStroke(ref elem)       => elem,
+
+            Path(elem)                  => elem
         }
     }
 }
