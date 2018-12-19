@@ -1,3 +1,4 @@
+use super::path::*;
 use super::raw_point::*;
 use super::brush_properties::*;
 use super::brush_definition::*;
@@ -39,9 +40,17 @@ pub trait Brush : Send+Sync {
     fn prepare_to_render<'a>(&'a self, properties: &'a BrushProperties) -> Box<dyn 'a+Iterator<Item=Draw>>;
 
     ///
-    /// Renders a brush stroke to the specified graphics context
+    /// Renders a brush stroke to a set of drawing commands
     ///
     fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>>;
+
+    ///
+    /// Renders a path using this brush's style
+    ///
+    fn render_path<'a>(&'a self, properties: &'a BrushProperties, path: &'a Path) -> Box<dyn 'a+Iterator<Item=Draw>> {
+        Box::new(self.prepare_to_render(properties)
+            .chain(path.to_drawing()))
+    }
 
     ///
     /// Retrieves the definition for this brush
