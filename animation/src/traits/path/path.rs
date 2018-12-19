@@ -42,6 +42,13 @@ impl Path {
     }
 
     ///
+    /// Returns references to the elements that make up this path as an iterator
+    ///
+    pub fn elements_ref<'a>(&'a self) -> impl 'a+Iterator<Item=&'a PathComponent> {
+        self.elements.iter()
+    }
+
+    ///
     /// Creates a path from an existing collection of components without copying them
     ///
     pub fn from_elements_arc(elements: Arc<Vec<PathComponent>>) -> Path {

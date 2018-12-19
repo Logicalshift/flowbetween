@@ -53,14 +53,52 @@ impl VectorElement for PathElement {
     /// in time.
     /// 
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
-        unimplemented!()
+        // Gather all the points in this path in one place
+        let all_points          = self.path.elements_ref()
+            .flat_map(|component| {
+                match component {
+                    PathComponent::Move(pos)                => vec![pos],
+                    PathComponent::Line(pos)                => vec![pos],
+                    PathComponent::Bezier(pos, cp1, cp2)    => vec![pos, cp1, cp2],
+                    PathComponent::Close                    => vec![]
+                }
+            });
+
+        // Transform the points
+        let transformed_points  = motion.transform_path_points(when, all_points);
+
+        // Collect into a set of new elements
+        let mut next_position   = transformed_points;
+        let new_elements        = self.path.elements_ref()
+            .map(|component| {
+                match component {
+                    PathComponent::Move(_)          => PathComponent::Move(next_position.next().unwrap()),
+                    PathComponent::Line(_)          => PathComponent::Line(next_position.next().unwrap()),
+                    PathComponent::Bezier(_, _, _)  => {
+                        let cp1 = next_position.next().unwrap();
+                        let cp2 = next_position.next().unwrap();
+                        let pos = next_position.next().unwrap();
+
+                        PathComponent::Bezier(pos, cp1, cp2)
+                    },
+                    PathComponent::Close            => PathComponent::Close
+                }
+            })
+            .collect();
+
+        // Create a new path transformed with these points
+        Vector::Path(PathElement {
+            id:         self.id,
+            properties: Arc::clone(&self.properties),
+            path:       Path::from_elements_arc(Arc::new(new_elements))
+        })
     }
 
     ///
     /// Fetches the control points for this element
     /// 
     fn control_points(&self) -> Vec<ControlPoint> {
-        self.path.elements()
+        self.path.elements_ref()
             .flat_map(|component| {
                 match component {
                     PathComponent::Move(pos)                => vec![ControlPoint::BezierPoint(pos.x(), pos.y())],
@@ -87,7 +125,7 @@ impl VectorElement for PathElement {
             .map(|(x, y)| PathPoint::new(x, y));
 
         // Transform the components to generate a new path
-        let new_elements = self.path.elements()
+        let new_elements = self.path.elements_ref()
             .map(|component| {
                 match component {
                     PathComponent::Move(_)          => PathComponent::Move(next_position.next().unwrap()),
