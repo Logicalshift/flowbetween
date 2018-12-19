@@ -110,7 +110,7 @@ impl VectorElement for BrushElement {
     /// in time.
     /// 
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
-        let transformed_points = motion.transform_points(when, self.points.iter()).collect();
+        let transformed_points = motion.transform_brush_points(when, self.points.iter()).collect();
 
         let transformed = Vector::BrushStroke(BrushElement {
             id:     self.id,

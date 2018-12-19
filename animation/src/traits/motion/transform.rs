@@ -15,7 +15,7 @@ pub trait MotionTransform {
     ///
     /// Returns a transformed set of points at the specified time
     /// 
-    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>>;
+    fn transform_brush_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>>;
 
     ///
     /// For some points transformed by this motion, returns the original points
@@ -24,5 +24,5 @@ pub trait MotionTransform {
     /// needs to adjust the control points of the 'moved' element but adjust them properly for
     /// the underlying element.
     /// 
-    fn reverse_transform<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>>;
+    fn reverse_brush_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>>;
 }

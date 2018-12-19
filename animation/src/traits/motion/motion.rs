@@ -100,25 +100,25 @@ impl MotionTransform for Motion {
         }
     }
 
-    fn transform_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>> {
+    fn transform_brush_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>> {
         use self::Motion::*;
 
         match self {
             None                    => Box::new(points.cloned()),
-            Reverse(motion)         => motion.reverse_transform(time, points),
+            Reverse(motion)         => motion.reverse_brush_points(time, points),
 
-            Translate(translate)    => translate.transform_points(time, points)
+            Translate(translate)    => translate.transform_brush_points(time, points)
         }
     }
 
-    fn reverse_transform<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>> {
+    fn reverse_brush_points<'a, Points: 'a+Iterator<Item=&'a BrushPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=BrushPoint>> {
         use self::Motion::*;
 
         match self {
             None                    => Box::new(points.cloned()),
-            Reverse(motion)         => motion.transform_points(time, points),
+            Reverse(motion)         => motion.transform_brush_points(time, points),
 
-            Translate(translate)    => translate.reverse_transform(time, points)
+            Translate(translate)    => translate.reverse_brush_points(time, points)
         }
     }
 }
