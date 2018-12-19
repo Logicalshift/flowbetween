@@ -1,4 +1,3 @@
-use canvas::Draw::Move;
 use super::point::*;
 use super::component::*;
 
@@ -7,13 +6,14 @@ use curves::geo::*;
 use curves::bezier::path::*;
 
 use std::iter;
+use std::sync::*;
 
 ///
 /// Represents a vector path
 /// 
 #[derive(Clone)]
 pub struct Path {
-    pub elements: Vec<PathComponent>
+    pub elements: Arc<Vec<PathComponent>>
 }
 
 impl Path {
@@ -21,7 +21,7 @@ impl Path {
     /// Creates a new, empty path
     /// 
     pub fn new() -> Path {
-        Path { elements: vec![] }
+        Path { elements: Arc::new(vec![]) }
     }
 
     ///
@@ -29,7 +29,24 @@ impl Path {
     /// 
     pub fn from_elements<Elements: IntoIterator<Item=PathComponent>>(elements: Elements) -> Path {
         Path {
-            elements: elements.into_iter().collect()
+            elements: Arc::new(elements.into_iter().collect())
+        }
+    }
+
+    ///
+    /// Returns the elements that make up this path as an iterator
+    ///
+    pub fn elements<'a>(&'a self) -> impl 'a+Iterator<Item=PathComponent> {
+        self.elements.iter()
+            .map(|component| *component)
+    }
+
+    ///
+    /// Creates a path from an existing collection of components without copying them
+    ///
+    pub fn from_elements_arc(elements: Arc<Vec<PathComponent>>) -> Path {
+        Path {
+            elements
         }
     }
 
@@ -54,7 +71,7 @@ impl Path {
             .map(|element| element.unwrap());
         
         Path {
-            elements: elements.collect()
+            elements: Arc::new(elements.collect())
         }
     }
 
@@ -91,7 +108,7 @@ impl From<(f64, f64)> for PathPoint {
 impl From<Vec<PathComponent>> for Path {
     fn from(points: Vec<PathComponent>) -> Path {
         Path {
-            elements: points
+            elements: Arc::new(points)
         }
     }
 }
@@ -203,7 +220,7 @@ impl BezierPathFactory for Path {
             .chain(elements);
 
         Path {
-            elements: elements.collect()
+            elements: Arc::new(elements.collect())
         }
     }
 }
