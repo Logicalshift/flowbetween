@@ -1,4 +1,5 @@
 use super::transform::*;
+use super::super::path::*;
 use super::super::brush::*;
 use super::super::time_path::*;
 
@@ -110,6 +111,42 @@ impl MotionTransform for TranslateMotion {
                     cp2:        (point.cp2.0 - offset.0, point.cp2.1 - offset.1),
                     width:      point.width,
                 }
+            }))
+        } else {
+            // Points unchanged if we can't find a time
+            Box::new(points.cloned())
+        }
+    }
+
+    fn transform_path_points<'a, Points: 'a+Iterator<Item=&'a PathPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=PathPoint>> {
+        let time_millis = ((time.as_secs() as f32) * 1_000.0) + ((time.subsec_nanos() as f32) / 1_000_000.0);
+        let origin      = self.origin;
+        let position    = self.translate.point_at_time(time_millis);
+
+        if let Some(position) = position {
+            // Points mapped to a new position
+            let offset  = (position.0 - origin.0, position.1 - origin.1);
+
+            Box::new(points.map(move |point| {
+                PathPoint::new(point.x() + offset.0, point.y() + offset.1)
+            }))
+        } else {
+            // Points unchanged if we can't find a time
+            Box::new(points.cloned())
+        }
+    }
+
+    fn reverse_path_points<'a, Points: 'a+Iterator<Item=&'a PathPoint>>(&self, time: Duration, points: Points) -> Box<dyn 'a+Iterator<Item=PathPoint>> {
+        let time_millis = ((time.as_secs() as f32) * 1_000.0) + ((time.subsec_nanos() as f32) / 1_000_000.0);
+        let origin      = self.origin;
+        let position    = self.translate.point_at_time(time_millis);
+
+        if let Some(position) = position {
+            // Points mapped to a new position
+            let offset  = (position.0 - origin.0, position.1 - origin.1);
+
+            Box::new(points.map(move |point| {
+                PathPoint::new(point.x() - offset.0, point.y() - offset.1)
             }))
         } else {
             // Points unchanged if we can't find a time
