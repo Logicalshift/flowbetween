@@ -16,29 +16,35 @@ use std::time::Duration;
 ///
 #[derive(Clone)]
 pub struct PathElement {
+    /// The ID of this path
+    id: ElementId,
 
+    /// The components that make up this path
+    components: Arc<Vec<PathComponent>>,
+
+    /// The properties of this path
+    properties: Arc<VectorProperties>
 }
 
 impl VectorElement for PathElement {
     ///
     /// The ID of this element
     /// 
-    fn id(&self) -> ElementId { unimplemented!() }
+    fn id(&self) -> ElementId { 
+        self.id
+    }
 
     ///
     /// Retrieves the paths for this element, if there are any
     /// 
-    fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> { unimplemented!() }
+    fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> { 
+        Some(vec![Path::from_elements(self.components.iter().map(|component| *component))])
+    }
 
     ///
     /// Renders this vector element
     /// 
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) { unimplemented!() }
-
-    ///
-    /// Returns the properties to use for future elements
-    /// 
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { properties }
 
     ///
     /// Returns a new element that is this element transformed along a motion at a particular moment
