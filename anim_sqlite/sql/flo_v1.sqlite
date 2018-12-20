@@ -19,7 +19,7 @@ CREATE TABLE FlowBetween (
     /* Description of the version of FlowBetween that created this animation */
     FloVersion      TEXT NOT NULL,
 
-    /* 1 if this was generating using a stable schema, 0 if generated using an unstable one */
+    /* 1 if this was generated using a stable schema, 0 if generated using an unstable one */
     Stable          INTEGER NOT NULL
 );
 
