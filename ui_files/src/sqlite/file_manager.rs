@@ -56,8 +56,6 @@ impl SqliteFileManagerCore {
     /// Sends an update to everything that's listening for them
     /// 
     pub fn send_update(&mut self, update: FileUpdate) {
-        println!("File update send {:?}", update);
-
         // Send to the update publisher
         self.updates.wait_send(update).unwrap();
     }
