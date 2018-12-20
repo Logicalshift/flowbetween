@@ -488,6 +488,17 @@ CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
     END;
 
 /*
+ * Vector path element
+ */
+CREATE TABLE Flo_PathElement (
+    ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+    PathId              INTEGER NOT NULL REFERENCES Flo_Path,
+
+    BrushId             INTEGER NOT NULL REFERENCES Flo_BrushElement(ElementId),
+    BrushPropertiesId   INTEGER NOT NULL REFERENCES Flo_BrushPropertiesElement(ElementId)
+) WITHOUT ROWID;
+
+/*
  *  ===== Enumeration descriptions
  */
 
