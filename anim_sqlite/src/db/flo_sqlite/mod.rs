@@ -113,6 +113,7 @@ enum FloStatement {
     InsertBrushDefinitionElement,
     InsertBrushPropertiesElement,
     InsertBrushPoint,
+    InsertPathElement,
     InsertMotion,
     InsertOrReplaceMotionOrigin,
     InsertMotionAttachedElement,
@@ -292,11 +293,11 @@ impl FloSqlite {
             InsertBrushPropertiesElement    => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
             InsertBrushPoint                => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             InsertElementAssignedId         => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
+            InsertPathElement               => "INSERT INTO Flo_PathElement (ElementId, PathId, BrushId, BrushPropertiesId) VALUES (?, ?, ?, ?)",
             InsertMotion                    => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
             InsertOrReplaceMotionOrigin     => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
             InsertMotionAttachedElement     => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
             InsertMotionPathPoint           => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
-
 
             DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                     => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
