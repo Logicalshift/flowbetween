@@ -134,6 +134,9 @@ pub enum DatabaseUpdate {
     /// Pops an element ID and updates, the brush point coordinates for it
     UpdateBrushPointCoords(Arc<Vec<((f32, f32), (f32, f32), (f32, f32))>>),
 
+    /// Pops a path ID, a brush properties ID, a brush ID and a vector element ID and creates a path element from them
+    PopPathElement,
+
     /// Creates a new motion with the specified ID
     CreateMotion(i64),
 

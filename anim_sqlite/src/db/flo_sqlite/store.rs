@@ -286,6 +286,15 @@ impl FloSqlite {
                 insert_brush_props_element.insert::<&[&dyn ToSql]>(&[&element_id, &brush_props_id])?;
             },
 
+            PopPathElement                                                  => {
+                let path_id                 = self.stack.pop().unwrap();
+                let brush_properties_id     = self.stack.pop().unwrap();
+                let brush_id                = self.stack.pop().unwrap();
+                let element_id              = self.stack.pop().unwrap();
+                let mut insert_path_element = Self::prepare(&self.sqlite, FloStatement::InsertPathElement)?;
+                insert_path_element.insert::<&[&dyn ToSql]>(&[&element_id, &path_id, &brush_id, &brush_properties_id])?;
+            },
+
             PopBrushPoints(points)                                          => {
                 let element_id              = self.stack.pop().unwrap();
                 let mut insert_brush_point  = Self::prepare(&self.sqlite, FloStatement::InsertBrushPoint)?;
