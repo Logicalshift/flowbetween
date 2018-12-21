@@ -261,17 +261,19 @@ impl FloSqlite {
             SelectVectorElementType         => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
                                                     INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
                                                     WHERE Assgn.AssignedId = ?",
-            SelectVectorElementsBefore      => "SELECT Elem.ElementId, Elem.VectorElementType, Elem.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+            SelectVectorElementsBefore      => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+                                                    INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
                                                     LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
                                                     LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                     LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
-                                                    WHERE Elem.KeyFrameId = ? AND Elem.AtTime <= ? \
+                                                    WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
                                                     ORDER BY Elem.ElementId ASC",
-            SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Elem.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+            SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+                                                    INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
                                                     LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
                                                     LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                     LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
-                                                    WHERE Elem.KeyFrameId = ? AND Elem.AtTime <= ? AND Elem.VectorElementType = ? \
+                                                    WHERE Time.KeyFrameId = ? AND Elem.AtTime <= ? AND Time.VectorElementType = ? \
                                                     ORDER BY Elem.AtTime DESC \
                                                     LIMIT 1",
             SelectBrushPoints               => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
