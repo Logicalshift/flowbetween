@@ -221,6 +221,22 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     }
 
     ///
+    /// Adds a vector path to a vector layer
+    ///
+    fn path_vector_layer(&mut self, layer_id: i64, when: Duration, new_element: PathEdit) -> Result<()> {
+        use animation::PathEdit::*;
+
+        // Update the state of this object based on the element
+        match new_element {
+            CreatePath(element_id, points)                              => {},
+            SelectBrush(element_id, brush_definition, drawing_style)    => {},
+            BrushProperties(element_id, brush_properties)               => {}
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Performs an editing action on a motion
     /// 
     fn edit_motion(&mut self, motion_id: ElementId, edit: MotionEdit) -> Result<()> {
@@ -353,7 +369,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             },
 
             Path(when, edit) => {
-                unimplemented!()
+                self.path_vector_layer(layer_id, when, edit)?;
             }
         }
 
