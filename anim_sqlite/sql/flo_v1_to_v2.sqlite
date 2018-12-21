@@ -1,0 +1,126 @@
+/***
+ **
+ ** FlowBetween File format version 2
+ **
+ **     - Add path elements
+ **     - Split Flo_VectorElement into a type table and a keyframe/time table
+ **
+ ***/
+
+BEGIN TRANSACTION;
+
+/*
+ *  ===== Paths
+ */
+
+ALTER TABLE Flo_VectorElement RENAME TO Flo_OldVectorElement;
+
+/*
+ * Vector path element
+ */
+CREATE TABLE Flo_PathElement (
+    /* The ID of this element */
+    ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+
+    /* The ID of the path definition */
+    PathId              INTEGER NOT NULL REFERENCES Flo_Path,
+
+    /* The ID of the brush element used to draw this path */
+    BrushId             INTEGER NOT NULL REFERENCES Flo_BrushElement(ElementId),
+
+    /* The ID of the brush properties used to draw this path */
+    BrushPropertiesId   INTEGER NOT NULL REFERENCES Flo_BrushPropertiesElement(ElementId)
+) WITHOUT ROWID;
+
+/*
+ *  ===== Vector elements
+ */
+
+/*
+ * Attaches a vector element to a keyframe and a time
+ */
+CREATE TABLE Flo_VectorElementTime (
+    /* ID of this elemnent */
+    ElementId   INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+
+    /* The ID of the keyframe that this element belongs to */
+    KeyFrameId          INTEGER NOT NULL REFERENCES Flo_LayerKeyFrame(KeyFrameId),
+
+    /* When this element is added to the animation relative to when the keyframe started */
+    AtTime              INTEGER NOT NULL
+) WITHOUT ROWID;
+
+DROP INDEX IF EXISTS FloIdx_ElementTime;
+CREATE INDEX FloIdx_ElementTime ON Flo_VectorElementTime (KeyFrameId, AtTime, ElementId);
+
+/* Populate the table with the current values */
+INSERT INTO Flo_VectorElementTime (ElementId, KeyFrameId, AtTime) SELECT ElementId, KeyFrameId, AtTime FROM Flo_OldVectorElement;
+
+/* Remove the columns from Flo_VectorElement */
+
+/*
+ * Represents an element in a vector layer
+ */
+CREATE TABLE Flo_VectorElement (
+    /* Identifier for this element */
+    ElementId           INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+
+    /* Type of this element */
+    VectorElementType   INTEGER NOT NULL
+);
+
+/* Populate the table with the current values */
+INSERT INTO Flo_VectorElement (ElementId, VectorElementType) SELECT ElementId, VectorElementType FROM Flo_OldVectorElement;
+
+/*
+ *  ===== Triggers
+ */
+
+/* Deleting a key frame also deletes any vector elements it contains */
+DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
+CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
+    BEGIN
+        DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
+    END;
+
+/* Deleting a key frame also deletes any vector elements it contains */
+DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
+CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
+    BEGIN
+        DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
+    END;
+
+/* Deleting a vector element deletes the attached brush elements */
+DROP TRIGGER IF EXISTS Flo_Delete_BrushElements;
+CREATE TRIGGER Flo_Delete_BrushElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the attached brush properties elements */
+DROP TRIGGER IF EXISTS Flo_Delete_BrushPropertiesElements;
+CREATE TRIGGER Flo_Delete_BrushPropertiesElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPropertiesElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the points elements */
+DROP TRIGGER IF EXISTS Flo_Delete_BrushPoints;
+CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPoint WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting an element deletes it from the time table */
+CREATE TRIGGER Flo_DeleteVectorElementTime BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_VectorElementTime WHERE ElementId = Old.ElementId;
+    END;
+
+/* Old vector element table no longer exists */
+DROP TABLE Flo_OldVectorElement;
+
+UPDATE FlowBetween SET DataVersion=2;
+
+COMMIT;
+VACUUM;
