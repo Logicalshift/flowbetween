@@ -14,6 +14,7 @@ use std::time::Duration;
 use std::mem;
 
 const V1_DEFINITION: &[u8]      = include_bytes!["../../../sql/flo_v1.sqlite"];
+const V1_V2_UPGRADE: &[u8]      = include_bytes!["../../../sql/flo_v1_to_v2.sqlite"];
 const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
 const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
 
@@ -128,9 +129,11 @@ enum FloStatement {
 
 impl FloSqlite {
     ///
-    /// Creates a new animation database
+    /// Creates a new animation database. The connection must already have been initialized via `setup`.
     /// 
     pub fn new(sqlite: Connection) -> FloSqlite {
+        Self::upgrade(&sqlite).unwrap();
+
         let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", NO_PARAMS, |row| row.get(0)).unwrap();
 
         FloSqlite {
@@ -141,6 +144,29 @@ impl FloSqlite {
             stack:          vec![],
             pending:        None
         }
+    }
+
+    ///
+    /// Upgrades a connection so that it conforms to the latest version
+    ///
+    fn upgrade(sqlite: &Connection) -> Result<()> {
+        let animation_version: i64 = sqlite.query_row("SELECT DataVersion FROM FlowBetween", NO_PARAMS, |row| row.get(0))?;
+
+        if animation_version == 1 {
+            Self::upgrade_v1_to_v2(sqlite)?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Upgrades a version 1 to a version 2 database
+    ///
+    fn upgrade_v1_to_v2(sqlite: &Connection) -> Result<()> {
+        let v2_upgrade = String::from_utf8_lossy(V1_V2_UPGRADE);
+        sqlite.execute_batch(&v2_upgrade)?;
+
+        Ok(())
     }
 
     ///
@@ -157,9 +183,11 @@ impl FloSqlite {
     pub fn setup(sqlite: &Connection) -> Result<()> {
         // Create the definition string
         let v1_definition   = String::from_utf8_lossy(V1_DEFINITION);
+        let v2_upgrade      = String::from_utf8_lossy(V1_V2_UPGRADE);
 
         // Execute against the database
         sqlite.execute_batch(&v1_definition)?;
+        sqlite.execute_batch(&v2_upgrade)?;
 
         // Set the database version string
         let version_string      = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
