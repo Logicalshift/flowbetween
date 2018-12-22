@@ -372,7 +372,17 @@ impl FloQuery for FloSqlite {
     /// Queries a path element
     ///
     fn query_path_element(&mut self, element_id: i64) -> Result<Option<PathElementEntry>> {
-        unimplemented!()
+        let (path_id, brush, drawing_style, brush_properties) = self.query_row(FloStatement::SelectPathElement, &[&element_id], 
+            |element| (element.get(0), element.get(1), element.get(2), element.get(3)))?;
+
+        let drawing_style = self.value_for_enum(DbEnumType::DrawingStyle, Some(drawing_style)).and_then(|drawing_style| drawing_style.drawing_style()).unwrap();
+
+        Ok(Some(PathElementEntry {
+            element_id:             element_id,
+            path_id:                path_id,
+            brush:                  Some((brush, drawing_style)),
+            brush_properties_id:    brush_properties
+        }))
     }
 
     ///

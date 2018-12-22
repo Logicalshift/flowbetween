@@ -78,6 +78,7 @@ enum FloStatement {
     SelectMotion,
     SelectMotionTimePoints,
     SelectElementIdForAssignedId,
+    SelectPathElement,
     SelectPathPointsWithTypes,
 
     UpdateAnimationSize,
@@ -265,14 +266,16 @@ impl FloSqlite {
             SelectVectorElementType             => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
                                                         INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
                                                         WHERE Assgn.AssignedId = ?",
-            SelectVectorElementsBefore          => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+            SelectVectorElementsBefore          => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
+                                                        FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                         LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
                                                         WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
                                                         ORDER BY Elem.ElementId ASC",
-            SelectMostRecentElementOfTypeBefore     => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+            SelectMostRecentElementOfTypeBefore     => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
+                                                        FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
@@ -283,14 +286,21 @@ impl FloSqlite {
             SelectBrushPoints                   => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
             SelectMotionsForElement             => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
             SelectElementsForMotion             => "SELECT ElementId FROM Flo_MotionAttached WHERE MotionId = ?",
-            SelectMotion                        => "SELECT Mot.MotionType, Origin.X, Origin.Y FROM Flo_Motion AS Mot
-                                                        LEFT OUTER JOIN Flo_MotionOrigin AS Origin ON Mot.MotionId = Origin.MotionId
+            SelectMotion                        => "SELECT Mot.MotionType, Origin.X, Origin.Y \
+                                                        FROM Flo_Motion                     AS Mot
+                                                        LEFT OUTER JOIN Flo_MotionOrigin    AS Origin ON Mot.MotionId = Origin.MotionId
                                                         WHERE Mot.MotionId = ?", 
-            SelectMotionTimePoints              => "SELECT Point.X, Point.Y, Point.Milliseconds FROM Flo_MotionPath AS Path
-                                                        INNER JOIN Flo_TimePoint AS Point ON Path.PointId = Point.PointId
-                                                        WHERE Path.MotionId = ? AND Path.PathType = ?
+            SelectMotionTimePoints              => "SELECT Point.X, Point.Y, Point.Milliseconds \
+                                                        FROM Flo_MotionPath         AS Path \
+                                                        INNER JOIN Flo_TimePoint    AS Point ON Path.PointId = Point.PointId \
+                                                        WHERE Path.MotionId = ? AND Path.PathType = ? \
                                                         ORDER BY Path.PointIndex ASC",
             SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
+            SelectPathElement                   => "SELECT Elem.PathId, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties \
+                                                        FROM Flo_PathElement                    AS Elem \
+                                                        INNER JOIN Flo_BrushElement             AS Brush ON Elem.ElementId = Brush.ElementId \
+                                                        INNER JOIN Flo_BrushPropertiesElement   AS Props ON Elem.ElementId = Props.ElementId \
+                                                        WHERE Elem.ElementId = ?",
             SelectPathPointsWithTypes           => "SELECT Path.X, Path.Y, Types.Type FROM Flo_PathPointType AS Types \
                                                         LEFT OUTER JOIN Flo_PathPoints AS Path ON (Path.PathId = Types.PathId AND Types.PointIndex = Path.PointIndex) \
                                                         WHERE Types.PathId = ? \
