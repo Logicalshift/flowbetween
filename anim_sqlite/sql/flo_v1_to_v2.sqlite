@@ -11,6 +11,13 @@
  *  ===== Paths
  */
 
+/* Drop triggers: will recreate later */
+DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
+DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
+DROP TRIGGER IF EXISTS Flo_Delete_BrushElements;
+DROP TRIGGER IF EXISTS Flo_Delete_BrushPropertiesElements;
+DROP TRIGGER IF EXISTS Flo_Delete_BrushPoints;
+
 ALTER TABLE Flo_VectorElement RENAME TO Flo_OldVectorElement;
 
 /*
@@ -75,35 +82,30 @@ INSERT INTO Flo_VectorElement (ElementId, VectorElementType) SELECT ElementId, V
  */
 
 /* Deleting a key frame also deletes any vector elements it contains */
-DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
 CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
     BEGIN
         DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
     END;
 
 /* Deleting a key frame also deletes any vector elements it contains */
-DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
 CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
     BEGIN
         DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
     END;
 
 /* Deleting a vector element deletes the attached brush elements */
-DROP TRIGGER IF EXISTS Flo_Delete_BrushElements;
 CREATE TRIGGER Flo_Delete_BrushElements BEFORE DELETE ON Flo_VectorElement
     BEGIN
         DELETE FROM Flo_BrushElement WHERE ElementId = Old.ElementId;
     END;
 
 /* Deleting a vector element deletes the attached brush properties elements */
-DROP TRIGGER IF EXISTS Flo_Delete_BrushPropertiesElements;
 CREATE TRIGGER Flo_Delete_BrushPropertiesElements BEFORE DELETE ON Flo_VectorElement
     BEGIN
         DELETE FROM Flo_BrushPropertiesElement WHERE ElementId = Old.ElementId;
     END;
 
 /* Deleting a vector element deletes the points elements */
-DROP TRIGGER IF EXISTS Flo_Delete_BrushPoints;
 CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
     BEGIN
         DELETE FROM Flo_BrushPoint WHERE ElementId = Old.ElementId;
