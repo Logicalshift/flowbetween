@@ -247,13 +247,20 @@ impl FloSqlite {
                 self.stack.push(keyframe_id);
             },
 
-            PushVectorElementType(element_type, when)                       => {
-                let keyframe_id                     = self.stack.pop().unwrap();
-                let start_micros                    = self.stack.pop().unwrap();
+            PushVectorElementType(element_type)                             => {
                 let element_type                    = self.enum_value(DbEnum::VectorElement(element_type));
                 let mut insert_vector_element_type  = Self::prepare(&self.sqlite, FloStatement::InsertVectorElementType)?;
+                let element_id                      = insert_vector_element_type.insert::<&[&dyn ToSql]>(&[&&element_type])?;
+                self.stack.push(element_id);
+            },
+
+            PushVectorElementTime(when)                                     => {
+                let element_id                      = self.stack.pop().unwrap();
+                let keyframe_id                     = self.stack.pop().unwrap();
+                let start_micros                    = self.stack.pop().unwrap();
+                let mut insert_vector_element_time  = Self::prepare(&self.sqlite, FloStatement::InsertOrReplaceVectorElementTime)?;
                 let when                            = Self::get_micros(&when) - start_micros;
-                let element_id                      = insert_vector_element_type.insert::<&[&dyn ToSql]>(&[&keyframe_id, &element_type, &when])?;
+                let element_id                      = insert_vector_element_time.insert::<&[&dyn ToSql]>(&[&element_id, &keyframe_id, &when])?;
                 self.stack.push(start_micros);
                 self.stack.push(keyframe_id);
                 self.stack.push(element_id);

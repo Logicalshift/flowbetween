@@ -110,6 +110,7 @@ enum FloStatement {
     InsertAssignLayer,
     InsertKeyFrame,
     InsertVectorElementType,
+    InsertOrReplaceVectorElementTime,
     InsertElementAssignedId,
     InsertBrushDefinitionElement,
     InsertBrushPropertiesElement,
@@ -229,112 +230,113 @@ impl FloSqlite {
         use self::FloStatement::*;
 
         match statement {
-            SelectEnumValue                 => "SELECT Value FROM Flo_EnumerationDescriptions WHERE FieldName = ? AND ApiName = ?",
-            SelectLayerId                   => "SELECT Layer.LayerId, Layer.LayerType FROM Flo_AnimationLayers AS Anim \
-                                                       INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
-                                                       WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
-            SelectNearestKeyFrame           => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
-            SelectPreviousKeyFrame          => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime < ? ORDER BY AtTime DESC LIMIT 1",
-            SelectNextKeyFrame              => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime > ? ORDER BY AtTime ASC LIMIT 1",
-            SelectKeyFrameTimes             => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime >= ? AND AtTime < ?",
-            SelectAnimationSize             => "SELECT SizeX, SizeY FROM Flo_Animation WHERE AnimationId = ?",
-            SelectAnimationDuration         => "SELECT Duration FROM Flo_Animation WHERE AnimationId = ?",
-            SelectAnimationFrameLength      => "SELECT Frame_Length_ns FROM Flo_Animation WHERE AnimationId = ?",
-            SelectAssignedLayerIds          => "SELECT AssignedLayerId FROM Flo_AnimationLayers WHERE AnimationId = ?",
-            SelectEditLogLength             => "SELECT COUNT(Id) FROM Flo_EditLog",
-            SelectEditLogValues             => "SELECT EL.Id, EL.Edit, Layers.Layer, Time.AtTime, Brush.DrawingStyle, Brush.Brush, BrushProps.BrushProperties, ElementId.ElementId FROM Flo_EditLog AS EL \
-                                                    LEFT OUTER JOIN Flo_EL_Layer           AS Layers        ON EL.Id = Layers.EditId \
-                                                    LEFT OUTER JOIN Flo_EL_When            AS Time          ON EL.Id = Time.EditId \
-                                                    LEFT OUTER JOIN Flo_EL_Brush           AS Brush         ON EL.Id = Brush.EditId \
-                                                    LEFT OUTER JOIN Flo_EL_BrushProperties AS BrushProps    ON EL.Id = BrushProps.EditId \
-                                                    LEFT OUTER JOIN Flo_EL_ElementId       AS ElementId     ON EL.Id = ElementId.EditId \
-                                                    LIMIT ? OFFSET ?",
-            SelectEditLogSize               => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
-            SelectEditLogRawPoints          => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
-            SelectColor                     => "SELECT Col.ColorType, Rgb.R, Rgb.G, Rgb.B, Hsluv.H, Hsluv.S, Hsluv.L FROM Flo_Color_Type AS Col \
-                                                    LEFT OUTER JOIN Flo_Color_Rgb   AS Rgb      ON Col.Color = Rgb.Color \
-                                                    LEFT OUTER JOIN Flo_Color_Hsluv AS Hsluv    ON Col.Color = Hsluv.Color \
-                                                    WHERE Col.Color = ?",
-            SelectBrushDefinition           => "SELECT Brush.BrushType, Ink.MinWidth, Ink.MaxWidth, Ink.ScaleUpDistance FROM Flo_Brush_Type AS Brush \
-                                                    LEFT OUTER JOIN Flo_Brush_Ink AS Ink ON Brush.Brush = Ink.Brush \
-                                                    WHERE Brush.Brush = ?",
-            SelectBrushProperties           => "SELECT Size, Opacity, Color FROM Flo_BrushProperties WHERE BrushProperties = ?",
-            SelectVectorElementType         => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
-                                                    INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
-                                                    WHERE Assgn.AssignedId = ?",
-            SelectVectorElementsBefore      => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
-                                                    INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
-                                                    LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
-                                                    LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
-                                                    LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
-                                                    WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
-                                                    ORDER BY Elem.ElementId ASC",
-            SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
-                                                    INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
-                                                    LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
-                                                    LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
-                                                    LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
-                                                    WHERE Time.KeyFrameId = ? AND Elem.AtTime <= ? AND Time.VectorElementType = ? \
-                                                    ORDER BY Elem.AtTime DESC \
-                                                    LIMIT 1",
-            SelectBrushPoints               => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
-            SelectMotionsForElement         => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
-            SelectElementsForMotion         => "SELECT ElementId FROM Flo_MotionAttached WHERE MotionId = ?",
-            SelectMotion                    => "SELECT Mot.MotionType, Origin.X, Origin.Y FROM Flo_Motion AS Mot
-                                                    LEFT OUTER JOIN Flo_MotionOrigin AS Origin ON Mot.MotionId = Origin.MotionId
-                                                    WHERE Mot.MotionId = ?", 
-            SelectMotionTimePoints          => "SELECT Point.X, Point.Y, Point.Milliseconds FROM Flo_MotionPath AS Path
-                                                    INNER JOIN Flo_TimePoint AS Point ON Path.PointId = Point.PointId
-                                                    WHERE Path.MotionId = ? AND Path.PathType = ?
-                                                    ORDER BY Path.PointIndex ASC",
-            SelectElementIdForAssignedId    => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
+            SelectEnumValue                     => "SELECT Value FROM Flo_EnumerationDescriptions WHERE FieldName = ? AND ApiName = ?",
+            SelectLayerId                       => "SELECT Layer.LayerId, Layer.LayerType FROM Flo_AnimationLayers AS Anim \
+                                                        INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
+                                                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
+            SelectNearestKeyFrame               => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
+            SelectPreviousKeyFrame              => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime < ? ORDER BY AtTime DESC LIMIT 1",
+            SelectNextKeyFrame                  => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime > ? ORDER BY AtTime ASC LIMIT 1",
+            SelectKeyFrameTimes                 => "SELECT AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime >= ? AND AtTime < ?",
+            SelectAnimationSize                 => "SELECT SizeX, SizeY FROM Flo_Animation WHERE AnimationId = ?",
+            SelectAnimationDuration             => "SELECT Duration FROM Flo_Animation WHERE AnimationId = ?",
+            SelectAnimationFrameLength          => "SELECT Frame_Length_ns FROM Flo_Animation WHERE AnimationId = ?",
+            SelectAssignedLayerIds              => "SELECT AssignedLayerId FROM Flo_AnimationLayers WHERE AnimationId = ?",
+            SelectEditLogLength                 => "SELECT COUNT(Id) FROM Flo_EditLog",
+            SelectEditLogValues                 => "SELECT EL.Id, EL.Edit, Layers.Layer, Time.AtTime, Brush.DrawingStyle, Brush.Brush, BrushProps.BrushProperties, ElementId.ElementId FROM Flo_EditLog AS EL \
+                                                        LEFT OUTER JOIN Flo_EL_Layer           AS Layers        ON EL.Id = Layers.EditId \
+                                                        LEFT OUTER JOIN Flo_EL_When            AS Time          ON EL.Id = Time.EditId \
+                                                        LEFT OUTER JOIN Flo_EL_Brush           AS Brush         ON EL.Id = Brush.EditId \
+                                                        LEFT OUTER JOIN Flo_EL_BrushProperties AS BrushProps    ON EL.Id = BrushProps.EditId \
+                                                        LEFT OUTER JOIN Flo_EL_ElementId       AS ElementId     ON EL.Id = ElementId.EditId \
+                                                        LIMIT ? OFFSET ?",
+            SelectEditLogSize                   => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
+            SelectEditLogRawPoints              => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
+            SelectColor                         => "SELECT Col.ColorType, Rgb.R, Rgb.G, Rgb.B, Hsluv.H, Hsluv.S, Hsluv.L FROM Flo_Color_Type AS Col \
+                                                        LEFT OUTER JOIN Flo_Color_Rgb   AS Rgb      ON Col.Color = Rgb.Color \
+                                                        LEFT OUTER JOIN Flo_Color_Hsluv AS Hsluv    ON Col.Color = Hsluv.Color \
+                                                        WHERE Col.Color = ?",
+            SelectBrushDefinition               => "SELECT Brush.BrushType, Ink.MinWidth, Ink.MaxWidth, Ink.ScaleUpDistance FROM Flo_Brush_Type AS Brush \
+                                                        LEFT OUTER JOIN Flo_Brush_Ink AS Ink ON Brush.Brush = Ink.Brush \
+                                                        WHERE Brush.Brush = ?",
+            SelectBrushProperties               => "SELECT Size, Opacity, Color FROM Flo_BrushProperties WHERE BrushProperties = ?",
+            SelectVectorElementType             => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
+                                                        INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
+                                                        WHERE Assgn.AssignedId = ?",
+            SelectVectorElementsBefore          => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+                                                        INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
+                                                        LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
+                                                        LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
+                                                        WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
+                                                        ORDER BY Elem.ElementId ASC",
+            SelectMostRecentElementOfTypeBefore     => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId FROM Flo_VectorElement AS Elem \
+                                                        INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
+                                                        LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
+                                                        LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
+                                                        WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? AND Elem.VectorElementType = ? \
+                                                        ORDER BY Time.AtTime DESC \
+                                                        LIMIT 1",
+            SelectBrushPoints                   => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
+            SelectMotionsForElement             => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
+            SelectElementsForMotion             => "SELECT ElementId FROM Flo_MotionAttached WHERE MotionId = ?",
+            SelectMotion                        => "SELECT Mot.MotionType, Origin.X, Origin.Y FROM Flo_Motion AS Mot
+                                                        LEFT OUTER JOIN Flo_MotionOrigin AS Origin ON Mot.MotionId = Origin.MotionId
+                                                        WHERE Mot.MotionId = ?", 
+            SelectMotionTimePoints              => "SELECT Point.X, Point.Y, Point.Milliseconds FROM Flo_MotionPath AS Path
+                                                        INNER JOIN Flo_TimePoint AS Point ON Path.PointId = Point.PointId
+                                                        WHERE Path.MotionId = ? AND Path.PathType = ?
+                                                        ORDER BY Path.PointIndex ASC",
+            SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
 
-            UpdateAnimationSize             => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
-            UpdateMotionType                => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
-            UpdateBrushPoint                => "UPDATE Flo_BrushPoint SET X1 = ?, Y1 = ?, X2 = ?, Y2 = ?, X3 = ?, Y3 = ? WHERE ElementId = ? AND PointId = ?",
+            UpdateAnimationSize                 => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
+            UpdateMotionType                    => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
+            UpdateBrushPoint                    => "UPDATE Flo_BrushPoint SET X1 = ?, Y1 = ?, X2 = ?, Y2 = ?, X3 = ?, Y3 = ? WHERE ElementId = ? AND PointId = ?",
 
-            InsertEnumValue                 => "INSERT INTO Flo_EnumerationDescriptions (FieldName, Value, ApiName, Comment) SELECT ?, (SELECT IFNULL(Max(Value)+1, 0) FROM Flo_EnumerationDescriptions WHERE FieldName = ?), ?, ?",
-            InsertEditType                  => "INSERT INTO Flo_EditLog (Edit) VALUES (?)",
-            InsertELSetSize                 => "INSERT INTO Flo_EL_Size (EditId, X, Y) VALUES (?, ?, ?)",
-            InsertELLayer                   => "INSERT INTO Flo_EL_Layer (EditId, Layer) VALUES (?, ?)",
-            InsertELWhen                    => "INSERT INTO Flo_EL_When (EditId, AtTime) VALUES (?, ?)",
-            InsertELBrush                   => "INSERT INTO Flo_EL_Brush (EditId, DrawingStyle, Brush) VALUES (?, ?, ?)",
-            InsertELBrushProperties         => "INSERT INTO Flo_EL_BrushProperties (EditId, BrushProperties) VALUES (?, ?)",
-            InsertELElementId               => "INSERT INTO Flo_EL_ElementId (EditId, ElementId) VALUES (?, ?)",
-            InsertELRawPoints               => "INSERT INTO Flo_EL_RawPoints (EditId, Points) VALUES (?, ?)",
-            InsertELMotionOrigin            => "INSERT INTO Flo_EL_MotionOrigin (EditId, X, Y) VALUES (?, ?, ?)",
-            InsertELMotionType              => "INSERT INTO Flo_EL_MotionType (EditId, MotionType) VALUES (?, ?)",
-            InsertELMotionElement           => "INSERT INTO Flo_EL_MotionAttach (EditId, AttachedElement) VALUES (?, ?)",
-            InsertELMotionTimePoint         => "INSERT INTO Flo_EL_MotionPath (EditId, PointIndex, TimePointId) VALUES (?, ?, ?)",
-            InsertELPath                    => "INSERT INTO Flo_EL_Path (EditId, PathId) VALUES (?, ?)",
-            InsertPath                      => "INSERT INTO Flo_Path (PathId) VALUES (NULL)",
-            InsertPathPoint                 => "INSERT INTO Flo_PathPoints (PathId, PointIndex, X, Y) VALUES (?, ?, ?, ?)",
-            InsertTimePoint                 => "INSERT INTO Flo_TimePoint (X, Y, Milliseconds) VALUES (?, ?, ?)",
-            InsertBrushType                 => "INSERT INTO Flo_Brush_Type (BrushType) VALUES (?)",
-            InsertInkBrush                  => "INSERT INTO Flo_Brush_Ink (Brush, MinWidth, MaxWidth, ScaleUpDistance) VALUES (?, ?, ?, ?)",
-            InsertBrushProperties           => "INSERT INTO Flo_BrushProperties (Size, Opacity, Color) VALUES (?, ?, ?)",
-            InsertColorType                 => "INSERT INTO Flo_Color_Type (ColorType) VALUES (?)",
-            InsertRgb                       => "INSERT INTO Flo_Color_Rgb (Color, R, G, B) VALUES (?, ?, ?, ?)",
-            InsertHsluv                     => "INSERT INTO Flo_Color_Hsluv (Color, H, S, L) VALUES (?, ?, ?, ?)",
-            InsertLayerType                 => "INSERT INTO Flo_LayerType (LayerType) VALUES (?)",
-            InsertAssignLayer               => "INSERT INTO Flo_AnimationLayers (AnimationId, LayerId, AssignedLayerId) VALUES (?, ?, ?)",
-            InsertKeyFrame                  => "INSERT INTO Flo_LayerKeyFrame (LayerId, AtTime) VALUES (?, ?)",
-            InsertVectorElementType         => "INSERT INTO Flo_VectorElement (KeyFrameId, VectorElementType, AtTime) VALUES (?, ?, ?)",
-            InsertBrushDefinitionElement    => "INSERT INTO Flo_BrushElement (ElementId, Brush, DrawingStyle) VALUES (?, ?, ?)",
-            InsertBrushPropertiesElement    => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
-            InsertBrushPoint                => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            InsertElementAssignedId         => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
-            InsertPathElement               => "INSERT INTO Flo_PathElement (ElementId, PathId, BrushId, BrushPropertiesId) VALUES (?, ?, ?, ?)",
-            InsertMotion                    => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
-            InsertOrReplaceMotionOrigin     => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
-            InsertMotionAttachedElement     => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
-            InsertMotionPathPoint           => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
+            InsertEnumValue                     => "INSERT INTO Flo_EnumerationDescriptions (FieldName, Value, ApiName, Comment) SELECT ?, (SELECT IFNULL(Max(Value)+1, 0) FROM Flo_EnumerationDescriptions WHERE FieldName = ?), ?, ?",
+            InsertEditType                      => "INSERT INTO Flo_EditLog (Edit) VALUES (?)",
+            InsertELSetSize                     => "INSERT INTO Flo_EL_Size (EditId, X, Y) VALUES (?, ?, ?)",
+            InsertELLayer                       => "INSERT INTO Flo_EL_Layer (EditId, Layer) VALUES (?, ?)",
+            InsertELWhen                        => "INSERT INTO Flo_EL_When (EditId, AtTime) VALUES (?, ?)",
+            InsertELBrush                       => "INSERT INTO Flo_EL_Brush (EditId, DrawingStyle, Brush) VALUES (?, ?, ?)",
+            InsertELBrushProperties             => "INSERT INTO Flo_EL_BrushProperties (EditId, BrushProperties) VALUES (?, ?)",
+            InsertELElementId                   => "INSERT INTO Flo_EL_ElementId (EditId, ElementId) VALUES (?, ?)",
+            InsertELRawPoints                   => "INSERT INTO Flo_EL_RawPoints (EditId, Points) VALUES (?, ?)",
+            InsertELMotionOrigin                => "INSERT INTO Flo_EL_MotionOrigin (EditId, X, Y) VALUES (?, ?, ?)",
+            InsertELMotionType                  => "INSERT INTO Flo_EL_MotionType (EditId, MotionType) VALUES (?, ?)",
+            InsertELMotionElement               => "INSERT INTO Flo_EL_MotionAttach (EditId, AttachedElement) VALUES (?, ?)",
+            InsertELMotionTimePoint             => "INSERT INTO Flo_EL_MotionPath (EditId, PointIndex, TimePointId) VALUES (?, ?, ?)",
+            InsertELPath                        => "INSERT INTO Flo_EL_Path (EditId, PathId) VALUES (?, ?)",
+            InsertPath                          => "INSERT INTO Flo_Path (PathId) VALUES (NULL)",
+            InsertPathPoint                     => "INSERT INTO Flo_PathPoints (PathId, PointIndex, X, Y) VALUES (?, ?, ?, ?)",
+            InsertTimePoint                     => "INSERT INTO Flo_TimePoint (X, Y, Milliseconds) VALUES (?, ?, ?)",
+            InsertBrushType                     => "INSERT INTO Flo_Brush_Type (BrushType) VALUES (?)",
+            InsertInkBrush                      => "INSERT INTO Flo_Brush_Ink (Brush, MinWidth, MaxWidth, ScaleUpDistance) VALUES (?, ?, ?, ?)",
+            InsertBrushProperties               => "INSERT INTO Flo_BrushProperties (Size, Opacity, Color) VALUES (?, ?, ?)",
+            InsertColorType                     => "INSERT INTO Flo_Color_Type (ColorType) VALUES (?)",
+            InsertRgb                           => "INSERT INTO Flo_Color_Rgb (Color, R, G, B) VALUES (?, ?, ?, ?)",
+            InsertHsluv                         => "INSERT INTO Flo_Color_Hsluv (Color, H, S, L) VALUES (?, ?, ?, ?)",
+            InsertLayerType                     => "INSERT INTO Flo_LayerType (LayerType) VALUES (?)",
+            InsertAssignLayer                   => "INSERT INTO Flo_AnimationLayers (AnimationId, LayerId, AssignedLayerId) VALUES (?, ?, ?)",
+            InsertKeyFrame                      => "INSERT INTO Flo_LayerKeyFrame (LayerId, AtTime) VALUES (?, ?)",
+            InsertVectorElementType             => "INSERT INTO Flo_VectorElement (VectorElementType) VALUES (?)",
+            InsertOrReplaceVectorElementTime    => "INSERT OR REPLACE INTO Flo_VectorElementTime (ElementId, KeyFrameId, AtTime) VALUES (?, ?, ?)",
+            InsertBrushDefinitionElement        => "INSERT INTO Flo_BrushElement (ElementId, Brush, DrawingStyle) VALUES (?, ?, ?)",
+            InsertBrushPropertiesElement        => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
+            InsertBrushPoint                    => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            InsertElementAssignedId             => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
+            InsertPathElement                   => "INSERT INTO Flo_PathElement (ElementId, PathId, BrushId, BrushPropertiesId) VALUES (?, ?, ?, ?)",
+            InsertMotion                        => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
+            InsertOrReplaceMotionOrigin         => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
+            InsertMotionAttachedElement         => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
+            InsertMotionPathPoint               => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
 
-            DeleteKeyFrame                  => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
-            DeleteLayer                     => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
-            DeleteMotion                    => "DELETE FROM Flo_Motion WHERE MotionId = ?",
-            DeleteMotionPoints              => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
-            DeleteMotionAttachedElement     => "DELETE FROM Flo_MotionAttached WHERE MotionId = ? AND ElementId = ?"
+            DeleteKeyFrame                      => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
+            DeleteLayer                         => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
+            DeleteMotion                        => "DELETE FROM Flo_Motion WHERE MotionId = ?",
+            DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
+            DeleteMotionAttachedElement         => "DELETE FROM Flo_MotionAttached WHERE MotionId = ? AND ElementId = ?"
         }
     }
 
@@ -384,7 +386,7 @@ impl FloSqlite {
     /// 
     fn value_for_enum(&mut self, enum_type: DbEnumType, convert_value: Option<i64>) -> Option<DbEnum> {
         match convert_value {
-            Some(convert_value) => {
+            Some(convert_value)     => {
                 // Fetch/create the hash of enum values
                 let enum_values = if self.value_for_enum.contains_key(&enum_type) {
                     // Use cached version
@@ -408,7 +410,7 @@ impl FloSqlite {
                 enum_values.get(&convert_value).map(|val| *val)
             },
 
-            None => None
+            None    => None
         }
     }
 }

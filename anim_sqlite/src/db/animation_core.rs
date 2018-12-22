@@ -126,14 +126,16 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             db.update(vec![
                 DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PushNearestKeyFrame(when),
-                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element), when),
+                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element)),
+                DatabaseUpdate::PushVectorElementTime(when),
                 DatabaseUpdate::PushElementAssignId(assigned_id)
             ])?;
         } else {
             db.update(vec![
                 DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PushNearestKeyFrame(when),
-                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element), when)
+                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element)),
+                DatabaseUpdate::PushVectorElementTime(when)
             ])?;
         }
 

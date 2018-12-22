@@ -112,9 +112,12 @@ pub enum DatabaseUpdate {
     /// Pops a layer ID and pushes the time and ID of the key
     PushNearestKeyFrame(Duration),
 
-    /// Uses the keyframe ID and time on top of the stack and creates a new vector element with the specified type and time (from the start of the animation) and pushes its ID
-    /// (Stack has the element ID, the key frame ID and the time left afterwards)
-    PushVectorElementType(VectorElementType, Duration),
+    /// Creates a new vector element with the specified type, leaving the new element ID on the stack
+    PushVectorElementType(VectorElementType),
+
+    /// Pops an element ID, a keyframe ID and a keyframe time and sets the time for the element ID.
+    /// Pushes the element ID, key frame ID and time back onto the stack afterwards
+    PushVectorElementTime(Duration),
 
     /// Uses the element ID on top of the stack and sets its assigned ID, leaving it on top of the stack
     PushElementAssignId(i64),
