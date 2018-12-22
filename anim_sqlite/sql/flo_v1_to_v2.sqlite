@@ -7,17 +7,17 @@
  **
  ***/
 
-/*
- *  ===== Paths
- */
-
-/* Drop triggers: will recreate later */
-DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
+/* Drop the triggers we'll recreate later */
 DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
 DROP TRIGGER IF EXISTS Flo_Delete_BrushElements;
 DROP TRIGGER IF EXISTS Flo_Delete_BrushPropertiesElements;
 DROP TRIGGER IF EXISTS Flo_Delete_BrushPoints;
 
+/*
+ *  ===== Paths
+ */
+
+/* Rename Flo_VectorElement */
 ALTER TABLE Flo_VectorElement RENAME TO Flo_OldVectorElement;
 
 /*
@@ -80,12 +80,6 @@ INSERT INTO Flo_VectorElement (ElementId, VectorElementType) SELECT ElementId, V
 /*
  *  ===== Triggers
  */
-
-/* Deleting a key frame also deletes any vector elements it contains */
-CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
-    BEGIN
-        DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
-    END;
 
 /* Deleting a key frame also deletes any vector elements it contains */
 CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
