@@ -67,6 +67,9 @@ pub enum DatabaseUpdate {
     /// Creates a new path from the specified points and pushes the ID
     PushPath(Vec<(f32, f32)>),
 
+    /// Creates a path from the points in the list of path components and pushes the ID
+    PushPathComponents(Vec<PathComponent>),
+
     /// Creates a new time point at the specified x, y, time coordinates and pushes its ID to the stack
     PushTimePoint(f32, f32, f32),
 

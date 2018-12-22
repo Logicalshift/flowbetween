@@ -86,6 +86,18 @@ pub enum VectorElementType {
 }
 
 ///
+/// Types of path point
+///
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+pub enum PathPointType {
+    MoveTo,
+    LineTo,
+    ControlPoint,
+    BezierTo,
+    Close
+}
+
+///
 /// All of the DB enums in one place
 /// 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -97,7 +109,8 @@ pub enum DbEnum {
     Layer(LayerType),
     MotionType(MotionType),
     MotionPathType(MotionPathType),
-    VectorElement(VectorElementType)
+    VectorElement(VectorElementType),
+    PathPoint(PathPointType)
 }
 
 impl DbEnum {
@@ -169,7 +182,8 @@ pub enum DbEnumType {
     Color,
     Layer,
     VectorElement,
-    MotionType
+    MotionType,
+    PathPoint
 }
 
 impl From<DbEnumType> for Vec<DbEnum> {
@@ -189,7 +203,21 @@ impl From<DbEnumType> for Vec<DbEnum> {
 
                     DbEnum::EditLog(LayerPaintSelectBrush),
                     DbEnum::EditLog(LayerPaintBrushProperties),
-                    DbEnum::EditLog(LayerPaintBrushStroke)
+                    DbEnum::EditLog(LayerPaintBrushStroke),
+
+                    DbEnum::EditLog(LayerPathCreatePath),
+                    DbEnum::EditLog(LayerPathSelectBrush),
+                    DbEnum::EditLog(LayerPathBrushProperties),
+
+                    DbEnum::EditLog(MotionCreate),
+                    DbEnum::EditLog(MotionDelete),
+                    DbEnum::EditLog(MotionSetType),
+                    DbEnum::EditLog(MotionSetOrigin),
+                    DbEnum::EditLog(MotionSetPath),
+                    DbEnum::EditLog(MotionAttach),
+                    DbEnum::EditLog(MotionDetach),
+
+                    DbEnum::EditLog(ElementSetControlPoints)
                 ]
             },
 
@@ -239,6 +267,18 @@ impl From<DbEnumType> for Vec<DbEnum> {
                 vec![
                     DbEnum::MotionType(None),
                     DbEnum::MotionType(Translate)
+                ]
+            },
+
+            PathPoint => {
+                use self::PathPointType::*;
+
+                vec![
+                    DbEnum::PathPoint(MoveTo),
+                    DbEnum::PathPoint(LineTo),
+                    DbEnum::PathPoint(ControlPoint),
+                    DbEnum::PathPoint(BezierTo),
+                    DbEnum::PathPoint(Close)
                 ]
             }
         }
@@ -440,6 +480,20 @@ impl From<MotionPathType> for DbEnumName {
     }
 }
 
+impl From<PathPointType> for DbEnumName {
+    fn from(t: PathPointType) -> DbEnumName {
+        use self::PathPointType::*;
+
+        match t {
+            MoveTo          => DbEnumName("PathPointType", "MoveTo"),
+            LineTo          => DbEnumName("PathPointType", "LineTo"),
+            ControlPoint    => DbEnumName("PathPointType", "ControlPoint"),
+            BezierTo        => DbEnumName("PathPointType", "BezierTo"),
+            Close           => DbEnumName("PathPointType", "Close")
+        }
+    }
+}
+
 impl From<DbEnum> for DbEnumName {
     fn from(t: DbEnum) -> DbEnumName {
         use self::DbEnum::*;
@@ -452,7 +506,8 @@ impl From<DbEnum> for DbEnumName {
             Layer(lt)               => DbEnumName::from(lt),
             VectorElement(vet)      => DbEnumName::from(vet),
             MotionType(mot)         => DbEnumName::from(mot),
-            MotionPathType(mpt)     => DbEnumName::from(mpt)
+            MotionPathType(mpt)     => DbEnumName::from(mpt),
+            PathPoint(ppt)          => DbEnumName::from(ppt)
         }
     }
 }
