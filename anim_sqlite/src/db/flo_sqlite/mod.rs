@@ -78,6 +78,7 @@ enum FloStatement {
     SelectMotion,
     SelectMotionTimePoints,
     SelectElementIdForAssignedId,
+    SelectPathPointsWithTypes,
 
     UpdateAnimationSize,
     UpdateMotionType,
@@ -290,6 +291,10 @@ impl FloSqlite {
                                                         WHERE Path.MotionId = ? AND Path.PathType = ?
                                                         ORDER BY Path.PointIndex ASC",
             SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
+            SelectPathPointsWithTypes           => "SELECT Path.X, Path.Y, Types.Type FROM Flo_PathPointType AS Types \
+                                                        LEFT OUTER JOIN Flo_PathPoints AS Path ON (Path.PathId = Types.PathId AND Types.PointIndex = Path.PointIndex) \
+                                                        WHERE Types.PathId = ? \
+                                                        ORDER BY Types.PointIndex ASC",
 
             UpdateAnimationSize                 => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
             UpdateMotionType                    => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
