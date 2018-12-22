@@ -245,6 +245,17 @@ CREATE TABLE Flo_PathPoints (
 ) WITHOUT ROWID;
 
 /*
+ * Adds type information to path points
+ */
+CREATE TABLE Flo_PathPointType (
+    PathId      INTEGER NOT NULL REFERENCES Flo_Path(PathId),
+    PointIndex  INTEGER NOT NULL,
+    Type        INTEGER NOT NULL,
+
+    PRIMARY KEY (PathId, PointIndex)
+) WITHOUT ROWID;
+
+/*
  * Vector path element
  */
 CREATE TABLE Flo_PathElement (
