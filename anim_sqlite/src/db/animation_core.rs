@@ -175,7 +175,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Writes a brush properties element to the database (popping the element ID)
     ///
     fn create_brush_properties(db: &mut TFile, properties: BrushProperties) -> Result<()> {
-        AnimationDbCore::insert_brush_properties(db, &properties)?;
+        Self::insert_brush_properties(db, &properties)?;
 
         // Create the element
         db.update(vec![
@@ -190,7 +190,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     fn create_brush_definition(db: &mut TFile, definition: BrushDefinition, drawing_style: BrushDrawingStyle) -> Result<()> {
         // Create the brush definition
-        AnimationDbCore::insert_brush(db, &definition)?;
+        Self::insert_brush(db, &definition)?;
 
         // Insert the properties for this element
         db.update(vec![
@@ -260,8 +260,16 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         // Update the state of this object based on the element
         match new_element {
             CreatePath(element_id, points)                              => {},
-            SelectBrush(element_id, brush_definition, drawing_style)    => {},
-            BrushProperties(element_id, brush_properties)               => {}
+
+            SelectBrush(element_id, brush_definition, drawing_style)    => {
+                Self::create_unattached_element(&mut self.db, VectorElementType::BrushDefinition, element_id)?;
+                Self::create_brush_definition(&mut self.db, brush_definition, drawing_style)?;
+            },
+
+            BrushProperties(element_id, brush_properties)               => {
+                Self::create_unattached_element(&mut self.db, VectorElementType::BrushProperties, element_id)?;
+                Self::create_brush_properties(&mut self.db, brush_properties)?;
+            }
         }
 
         Ok(())

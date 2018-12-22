@@ -29,7 +29,7 @@ impl AnimationDb {
         self.core.sync(|core| {
             core.db.query_frame_length()
         }).unwrap()
-    }
+    } 
 
     ///
     /// Queries the active layer IDs for the animation
