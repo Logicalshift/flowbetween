@@ -89,7 +89,8 @@ INSERT INTO Flo_VectorElement (ElementId, VectorElementType) SELECT ElementId, V
 /* Deleting a key frame also deletes any vector elements it contains */
 CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
     BEGIN
-        DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
+        DELETE FROM Flo_VectorElement WHERE ElementId IN (SELECT ElementId FROM Flo_VectorElementTime WHERE KeyFrameId = Old.KeyFrameId);
+        DELETE FROM Flo_VectorElementTime WHERE KeyFrameId = Old.KeyFrameId;
     END;
 
 /* Deleting a vector element deletes the attached brush elements */
