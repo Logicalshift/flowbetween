@@ -60,6 +60,15 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             Layer(layer_id, Paint(when, BrushStroke(ElementId::Unassigned, points))) =>
                 Layer(layer_id, Paint(when, BrushStroke(ElementId::Assigned(self.next_element_id()), points))),
 
+            Layer(layer_id, Path(when, PathEdit::CreatePath(ElementId::Unassigned, points))) =>
+                Layer(layer_id, Path(when, PathEdit::CreatePath(ElementId::Assigned(self.next_element_id()), points))),
+
+            Layer(layer_id, Path(when, PathEdit::SelectBrush(ElementId::Unassigned, definition, style))) =>
+                Layer(layer_id, Path(when, PathEdit::SelectBrush(ElementId::Assigned(self.next_element_id()), definition, style))),
+
+            Layer(layer_id, Path(when, PathEdit::BrushProperties(ElementId::Unassigned, properties))) =>
+                Layer(layer_id, Path(when, PathEdit::BrushProperties(ElementId::Assigned(self.next_element_id()), properties))),
+
             other => other
         }
     }
@@ -136,6 +145,26 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 DatabaseUpdate::PushNearestKeyFrame(when),
                 DatabaseUpdate::PushVectorElementType(VectorElementType::from(element)),
                 DatabaseUpdate::PushVectorElementTime(when)
+            ])?;
+        }
+
+        Ok(())
+    }
+
+    ///
+    /// Creates a new vector element in an animation DB core, leaving the element ID pushed on the DB stack
+    ///
+    /// The element is created without its associated data.
+    ///
+    fn create_unattached_element(db: &mut TFile, element_type: VectorElementType, id: ElementId) -> Result<()> {
+        if let ElementId::Assigned(assigned_id) = id {
+            db.update(vec![
+                DatabaseUpdate::PushVectorElementType(element_type),
+                DatabaseUpdate::PushElementAssignId(assigned_id)
+            ])?;
+        } else {
+            db.update(vec![
+                DatabaseUpdate::PushVectorElementType(element_type),
             ])?;
         }
 
