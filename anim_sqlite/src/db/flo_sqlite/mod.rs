@@ -164,11 +164,8 @@ impl FloSqlite {
     /// Upgrades a version 1 to a version 2 database
     ///
     fn upgrade_v1_to_v2(sqlite: &mut Connection) -> Result<()> {
-        let transaction = sqlite.transaction()?;
         let v2_upgrade  = String::from_utf8_lossy(V1_V2_UPGRADE);
-        transaction.execute_batch(&v2_upgrade)?;
-
-        transaction.commit()?;
+        sqlite.execute_batch(&v2_upgrade)?;
 
         Ok(())
     }

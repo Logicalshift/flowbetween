@@ -7,6 +7,11 @@
  **
  ***/
 
+/* Going to rewrite the Flo_VectorElement table, which will invalidate the foreign key checks */
+PRAGMA foreign_keys=OFF;
+
+BEGIN;
+
 /* Drop the triggers we'll recreate later */
 DROP TRIGGER IF EXISTS Flo_Delete_KeyFrame_Elements;
 DROP TRIGGER IF EXISTS Flo_Delete_BrushElements;
@@ -116,4 +121,9 @@ DROP TABLE Flo_OldVectorElement;
 
 UPDATE FlowBetween SET DataVersion=2;
 
+/* Verify integrity */
+PRAGMA foreign_keys=ON;
+PRAGMA foreign_key_check;
+
+COMMIT;
 VACUUM;
