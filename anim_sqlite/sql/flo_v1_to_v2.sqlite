@@ -18,12 +18,12 @@ DROP TRIGGER IF EXISTS Flo_Delete_BrushElements;
 DROP TRIGGER IF EXISTS Flo_Delete_BrushPropertiesElements;
 DROP TRIGGER IF EXISTS Flo_Delete_BrushPoints;
 
+/* Rename Flo_VectorElement */
+ALTER TABLE Flo_VectorElement RENAME TO Flo_OldVectorElement;
+
 /*
  *  ===== Paths
  */
-
-/* Rename Flo_VectorElement */
-ALTER TABLE Flo_VectorElement RENAME TO Flo_OldVectorElement;
 
 /*
  * Vector path element
@@ -115,6 +115,12 @@ CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
 CREATE TRIGGER Flo_DeleteVectorElementTime BEFORE DELETE ON Flo_VectorElement
     BEGIN
         DELETE FROM Flo_VectorElementTime WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting an element deletes it from the path table */
+CREATE TRIGGER Flo_Delete_PathElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_PathElement WHERE ElementId = Old.ElementId;
     END;
 
 /* Old vector element table no longer exists */
