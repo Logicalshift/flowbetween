@@ -7,8 +7,6 @@
  **
  ***/
 
-BEGIN TRANSACTION;
-
 /*
  *  ===== Paths
  */
@@ -122,5 +120,4 @@ DROP TABLE Flo_OldVectorElement;
 
 UPDATE FlowBetween SET DataVersion=2;
 
-COMMIT;
 VACUUM;

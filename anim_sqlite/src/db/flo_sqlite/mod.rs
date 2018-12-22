@@ -132,7 +132,8 @@ impl FloSqlite {
     /// Creates a new animation database. The connection must already have been initialized via `setup`.
     /// 
     pub fn new(sqlite: Connection) -> FloSqlite {
-        Self::upgrade(&sqlite).unwrap();
+        let mut sqlite = sqlite;
+        Self::upgrade(&mut sqlite).unwrap();
 
         let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", NO_PARAMS, |row| row.get(0)).unwrap();
 
@@ -149,7 +150,7 @@ impl FloSqlite {
     ///
     /// Upgrades a connection so that it conforms to the latest version
     ///
-    fn upgrade(sqlite: &Connection) -> Result<()> {
+    fn upgrade(sqlite: &mut Connection) -> Result<()> {
         let animation_version: i64 = sqlite.query_row("SELECT DataVersion FROM FlowBetween", NO_PARAMS, |row| row.get(0))?;
 
         if animation_version == 1 {
@@ -162,9 +163,12 @@ impl FloSqlite {
     ///
     /// Upgrades a version 1 to a version 2 database
     ///
-    fn upgrade_v1_to_v2(sqlite: &Connection) -> Result<()> {
-        let v2_upgrade = String::from_utf8_lossy(V1_V2_UPGRADE);
-        sqlite.execute_batch(&v2_upgrade)?;
+    fn upgrade_v1_to_v2(sqlite: &mut Connection) -> Result<()> {
+        let transaction = sqlite.transaction()?;
+        let v2_upgrade  = String::from_utf8_lossy(V1_V2_UPGRADE);
+        transaction.execute_batch(&v2_upgrade)?;
+
+        transaction.commit()?;
 
         Ok(())
     }
