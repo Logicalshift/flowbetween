@@ -59,6 +59,16 @@ pub struct VectorElementEntry {
 }
 
 ///
+/// Entry read from the path element table
+///
+pub struct PathElementEntry {
+    pub element_id:             i64,
+    pub path_id:                i64,
+    pub brush:                  Option<(i64, DrawingStyleType)>,
+    pub brush_properties_id:    Option<i64>
+}
+
+///
 /// Entry read from the time point table
 /// 
 #[derive(PartialEq)]
@@ -175,6 +185,16 @@ pub trait FloQuery {
     /// Queries the type of a single vector element
     /// 
     fn query_vector_element_type(&mut self, element_id: i64) -> Result<Option<VectorElementType>>;
+
+    ///
+    /// Queries a path element
+    ///
+    fn query_path_element(&mut self, element_id: i64) -> Result<Option<PathElementEntry>>;
+
+    ///
+    /// Queries the path components associated with a vector element
+    ///
+    fn query_path_components(&mut self, path_id: i64) -> Result<Vec<PathComponent>>;
 
     ///
     /// Queries the motion associated with a particular motion ID

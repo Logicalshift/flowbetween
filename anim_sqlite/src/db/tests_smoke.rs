@@ -384,6 +384,31 @@ fn smoke_path_components() {
 }
 
 #[test]
+fn smoke_query_path_components() {
+    let core    = core();
+    let mut db  = core.db;
+
+    db.update(vec![
+        DatabaseUpdate::PushPathComponents(vec![
+            PathComponent::Move(PathPoint::new(10.0, 20.0)),
+            PathComponent::Line(PathPoint::new(20.0, 30.0)),
+            PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+            PathComponent::Close
+        ]),
+        DatabaseUpdate::Pop
+    ]).unwrap();
+
+    // Should be path ID 1
+    let components = db.query_path_components(1).unwrap();
+
+    assert!(components[0] == PathComponent::Move(PathPoint::new(10.0, 20.0)));
+    assert!(components[1] == PathComponent::Line(PathPoint::new(20.0, 30.0)));
+    assert!(components[2] == PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)));
+    assert!(components[3] == PathComponent::Close);
+    assert!(components.len() == 4);
+}
+
+#[test]
 fn smoke_layer_type() {
     test_updates(vec![
         DatabaseUpdate::PushLayerType(LayerType::Vector),

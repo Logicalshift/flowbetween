@@ -369,6 +369,58 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Queries a path element
+    ///
+    fn query_path_element(&mut self, element_id: i64) -> Result<Option<PathElementEntry>> {
+        unimplemented!()
+    }
+
+    ///
+    /// Queries the path components associated with a vector element
+    ///
+    fn query_path_components(&mut self, path_id: i64) -> Result<Vec<PathComponent>> {
+        // Request the points and types. 'Close' types have no coordinates associated with them, so they can have null x, y coordinates
+        let mut points = self.query_map(FloStatement::SelectPathPointsWithTypes, &[&path_id], 
+            |row| -> (Option<f64>, Option<f64>, i64) { (row.get(0), row.get(1), row.get(2)) })?
+            .map(|row| row.unwrap())
+            .map(|(x, y, point_type)| (x.and_then(|x| y.map(|y| PathPoint::new(x as f32, y as f32))), point_type))
+            .map(|(point, point_type)| (point, self.value_for_enum(DbEnumType::PathPoint, Some(point_type)).unwrap()));
+
+        // Iterate through the points to generate the components
+        let mut components = vec![];
+
+        while let Some((point, point_type)) = points.next() {
+            match point_type {
+                DbEnum::PathPoint(PathPointType::MoveTo) => { 
+                    components.push(PathComponent::Move(point.unwrap()));
+                },
+
+                DbEnum::PathPoint(PathPointType::LineTo) => { 
+                    components.push(PathComponent::Line(point.unwrap()));
+                },
+
+                DbEnum::PathPoint(PathPointType::ControlPoint) => { 
+                    let cp1                 = point;
+                    let (cp2, _cp2_type)    = points.next().unwrap();
+                    let (tgt, _tgt_type)    = points.next().unwrap();
+
+                    components.push(PathComponent::Bezier(tgt.unwrap(), cp1.unwrap(), cp2.unwrap()));
+                },
+
+                DbEnum::PathPoint(PathPointType::BezierTo) => { },
+
+                DbEnum::PathPoint(PathPointType::Close) => {
+                    components.push(PathComponent::Close);
+                },
+
+                _ => unimplemented!("Enum is not a point type")
+            }
+        }
+
+        Ok(components)
+    }
+
+    ///
     /// Queries the motion associated with a particular motion ID
     /// 
     fn query_motion(&mut self, motion_id: i64) -> Result<Option<MotionEntry>> {
