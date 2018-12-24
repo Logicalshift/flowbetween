@@ -152,6 +152,11 @@ pub trait FloQuery {
     fn query_edit_log_raw_points(&mut self, edit_id: i64) -> Result<Vec<RawPoint>>;
 
     ///
+    /// Retrieves the ID of the path associated with the specified edit ID
+    ///
+    fn query_edit_log_path_id(&mut self, edit_id: i64) -> Result<i64>;
+
+    ///
     /// Retrieves a colour with the specified ID
     /// 
     fn query_color(&mut self, color_id: i64) -> Result<ColorEntry>;

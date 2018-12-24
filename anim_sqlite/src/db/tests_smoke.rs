@@ -373,12 +373,12 @@ fn smoke_editlog_path() {
 #[test]
 fn smoke_path_components() {
     test_updates(vec![
-        DatabaseUpdate::PushPathComponents(vec![
+        DatabaseUpdate::PushPathComponents(Arc::new(vec![
             PathComponent::Move(PathPoint::new(10.0, 20.0)),
             PathComponent::Line(PathPoint::new(20.0, 30.0)),
             PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
             PathComponent::Close
-        ]),
+        ])),
         DatabaseUpdate::Pop
     ])
 }
@@ -389,12 +389,12 @@ fn smoke_query_path_components() {
     let mut db  = core.db;
 
     db.update(vec![
-        DatabaseUpdate::PushPathComponents(vec![
+        DatabaseUpdate::PushPathComponents(Arc::new(vec![
             PathComponent::Move(PathPoint::new(10.0, 20.0)),
             PathComponent::Line(PathPoint::new(20.0, 30.0)),
             PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
             PathComponent::Close
-        ]),
+        ])),
         DatabaseUpdate::Pop
     ]).unwrap();
 

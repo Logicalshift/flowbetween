@@ -235,7 +235,11 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
             CreatePath(id, points)                      => {
                 Self::insert_element_id(&mut self.db, id)?;
-                self.db.update(vec![PushRawPoints(Arc::clone(points)), Pop])?;
+                self.db.update(vec![
+                    PushPathComponents(Arc::clone(points)), 
+                    PushEditLogPath, 
+                    Pop
+                ])?;
             }
         }
 

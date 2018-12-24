@@ -116,6 +116,16 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
     }
 
     ///
+    /// Retrieves the path components associated with a particular edit log ID
+    ///
+    fn path_components_for_entry(core: &mut AnimationDbCore<TFile>, edit_id: i64) -> Result<Vec<PathComponent>> {
+        let path_id     = core.db.query_edit_log_path_id(edit_id)?;
+        let components  = core.db.query_path_components(path_id)?;
+
+        Ok(components)
+    }
+
+    ///
     /// Decodes a brush stroke entry
     /// 
     fn brush_stroke_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
@@ -138,11 +148,11 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
     ///
     fn create_path_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
         // A create path is just a 'when' and a bunch of points
-        let points      = Self::raw_points_for_entry(core, entry.edit_id);
+        let points      = Self::path_components_for_entry(core, entry.edit_id).unwrap_or_else(|_err| vec![]);
         let when        = entry.when.unwrap_or(Duration::from_millis(0));
         let element_id  = ElementId::from(entry.element_id);
 
-        LayerEdit::Path(when, PathEdit::CreatePath(element_id, points))
+        LayerEdit::Path(when, PathEdit::CreatePath(element_id, Arc::new(points)))
     }
 
     ///

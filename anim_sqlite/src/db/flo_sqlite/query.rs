@@ -211,6 +211,15 @@ impl FloQuery for FloSqlite {
             read_raw_points(&mut point_bytes).unwrap()
         })
     }
+    
+    ///
+    /// Retrieves the ID of the path associated with the specified edit ID
+    ///
+    fn query_edit_log_path_id(&mut self, edit_id: i64) -> Result<i64> {
+        self.query_row(FloStatement::SelectEditLogPathId, &[&edit_id], |row| {
+            row.get(0)
+        })
+    }
 
     ///
     /// Retrieves a colour with the specified ID

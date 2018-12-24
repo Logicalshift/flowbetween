@@ -274,7 +274,34 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
         // Update the state of this object based on the element
         match new_element {
-            CreatePath(element_id, points)                              => {},
+            CreatePath(element_id, components)                          => {
+                // Get the current path properties
+                let path_properties = self.path_properties_for_layer.entry(layer_id)
+                    .or_insert_with(|| PathPropertiesIds { brush_id: ElementId::Unassigned, properties_id: ElementId::Unassigned });
+
+                match (path_properties.brush_id, path_properties.properties_id) {
+                    (ElementId::Assigned(brush_id), ElementId::Assigned(properties_id)) => {
+                        // Need the stack to be path_id, brush_properties_id, brush_id, element_id to create a path element
+                        Self::create_new_element(&mut self.db, layer_id, when, element_id, VectorElementType::Path)?;
+                        self.db.update(vec![
+                            DatabaseUpdate::PushElementIdForAssignedId(brush_id),
+                            DatabaseUpdate::PushElementIdForAssignedId(properties_id),
+                            DatabaseUpdate::PushPathComponents(components),
+                            DatabaseUpdate::PopVectorPathElement
+                        ])?;
+                    },
+
+                    (ElementId::Assigned(_brush_id), ElementId::Unassigned) => {
+                        // TODO: proper logging
+                        println!("Can't create path: properties ID not defined")
+                    },
+
+                    _ => {
+                        // TODO: proper logging
+                        println!("Can't create path: brush ID not defined")
+                    }
+                }
+            },
 
             SelectBrush(element_id, brush_definition, drawing_style)    => {
                 // Create a new brush definition to use with the path and store it

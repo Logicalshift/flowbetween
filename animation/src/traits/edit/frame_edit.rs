@@ -1,5 +1,6 @@
 use super::element_id::*;
 
+use super::super::path::*;
 use super::super::raw_point::*;
 use super::super::brush_properties::*;
 use super::super::brush_definition::*;
@@ -14,8 +15,8 @@ use std::sync::*;
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum PathEdit {
-    /// Creates a new path consisting of the specified points
-    CreatePath(ElementId, Arc<Vec<RawPoint>>),
+    /// Creates a new path consisting of the specified path components
+    CreatePath(ElementId, Arc<Vec<PathComponent>>),
 
     /// Selects the brush with the specified definition for painting paths
     SelectBrush(ElementId, BrushDefinition, BrushDrawingStyle),

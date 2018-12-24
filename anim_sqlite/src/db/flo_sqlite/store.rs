@@ -169,7 +169,7 @@ impl FloSqlite {
 
                 // Insert the compoennts
                 let mut point_index = 0;
-                for component in components.into_iter() {
+                for component in components.iter() {
                     use self::PathComponent::*;
 
                     match component {
@@ -360,7 +360,7 @@ impl FloSqlite {
                 insert_brush_props_element.insert::<&[&dyn ToSql]>(&[&element_id, &brush_props_id])?;
             },
 
-            PopPathElement                                                  => {
+            PopVectorPathElement                                            => {
                 let path_id                 = self.stack.pop().unwrap();
                 let brush_properties_id     = self.stack.pop().unwrap();
                 let brush_id                = self.stack.pop().unwrap();

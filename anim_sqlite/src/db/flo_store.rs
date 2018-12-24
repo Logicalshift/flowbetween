@@ -68,7 +68,7 @@ pub enum DatabaseUpdate {
     PushPath(Vec<(f32, f32)>),
 
     /// Creates a path from the points in the list of path components and pushes the ID
-    PushPathComponents(Vec<PathComponent>),
+    PushPathComponents(Arc<Vec<PathComponent>>),
 
     /// Creates a new time point at the specified x, y, time coordinates and pushes its ID to the stack
     PushTimePoint(f32, f32, f32),
@@ -141,7 +141,7 @@ pub enum DatabaseUpdate {
     UpdateBrushPointCoords(Arc<Vec<((f32, f32), (f32, f32), (f32, f32))>>),
 
     /// Pops a path ID, a brush properties ID, a brush ID and a vector element ID and creates a path element from them
-    PopPathElement,
+    PopVectorPathElement,
 
     /// Creates a new motion with the specified ID
     CreateMotion(i64),
