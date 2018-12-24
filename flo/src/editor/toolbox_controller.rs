@@ -28,7 +28,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         let viewmodel = Arc::new(DynamicViewModel::new());
 
         // There's a 'SelectedTool' key that describes the currently selected tool
-        viewmodel.set_property("SelectedTool", PropertyValue::String("Pencil".to_string()));
+        viewmodel.set_property("SelectedTool", PropertyValue::String("Ink".to_string()));
 
         // Update the viewmodel whenever the effective tool changes
         let effective_tool = anim_model.tools().effective_tool.clone();
