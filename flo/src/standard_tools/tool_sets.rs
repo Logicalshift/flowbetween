@@ -18,8 +18,9 @@ pub struct SelectionTools<Anim: 'static+Animation> {
 /// The paint toolset
 /// 
 pub struct PaintTools<Anim: 'static+Animation> {
-    ink:    Arc<FloTool<Anim>>,
-    eraser: Arc<FloTool<Anim>>
+    ink:        Arc<FloTool<Anim>>,
+    eraser:     Arc<FloTool<Anim>>,
+    flood_fill: Arc<FloTool<Anim>>
 }
 
 impl<Anim: Animation> SelectionTools<Anim> {
@@ -35,8 +36,9 @@ impl<Anim: Animation> SelectionTools<Anim> {
 impl<Anim: Animation> PaintTools<Anim> {
     pub fn new() -> PaintTools<Anim> {
         PaintTools {
-            ink:    Ink::new().to_flo_tool(),
-            eraser: Eraser::new().to_flo_tool()
+            ink:        Ink::new().to_flo_tool(),
+            eraser:     Eraser::new().to_flo_tool(),
+            flood_fill: FloodFill::new().to_flo_tool()
         }
     }
 }
@@ -59,7 +61,8 @@ impl<Anim: Animation> ToolSet<Anim> for PaintTools<Anim> {
     fn tools(&self) -> Vec<Arc<FloTool<Anim>>> {
         vec![
             Arc::clone(&self.ink),
-            Arc::clone(&self.eraser)
+            Arc::clone(&self.eraser),
+            Arc::clone(&self.flood_fill)
         ]
     }
 }

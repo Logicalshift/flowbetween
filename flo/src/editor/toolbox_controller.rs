@@ -93,13 +93,14 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         let images  = ResourceManager::new();
 
         // Load the tool images
-        let select  = images.register(svg_static(include_bytes!("../../svg/tools/select.svg")));
-        let adjust  = images.register(svg_static(include_bytes!("../../svg/tools/adjust.svg")));
-        let pan     = images.register(svg_static(include_bytes!("../../svg/tools/pan.svg")));
+        let select      = images.register(svg_static(include_bytes!("../../svg/tools/select.svg")));
+        let adjust      = images.register(svg_static(include_bytes!("../../svg/tools/adjust.svg")));
+        let pan         = images.register(svg_static(include_bytes!("../../svg/tools/pan.svg")));
 
-        let pencil  = images.register(svg_static(include_bytes!("../../svg/tools/pencil.svg")));
-        let ink     = images.register(svg_static(include_bytes!("../../svg/tools/ink.svg")));
-        let eraser  = images.register(svg_static(include_bytes!("../../svg/tools/eraser.svg")));
+        let pencil      = images.register(svg_static(include_bytes!("../../svg/tools/pencil.svg")));
+        let ink         = images.register(svg_static(include_bytes!("../../svg/tools/ink.svg")));
+        let eraser      = images.register(svg_static(include_bytes!("../../svg/tools/eraser.svg")));
+        let floodfill   = images.register(svg_static(include_bytes!("../../svg/tools/floodfill.svg")));
 
         // Assign names to them
         images.assign_name(&select, "select");
@@ -109,6 +110,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
         images.assign_name(&pencil, "pencil");
         images.assign_name(&ink, "ink");
         images.assign_name(&eraser, "eraser");
+        images.assign_name(&floodfill, "floodfill");
 
         images
     }
