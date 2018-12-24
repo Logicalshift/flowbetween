@@ -174,7 +174,7 @@ pub trait FloQuery {
     ///
     /// Retrieves the vector element with the specified ID
     ///
-    fn query_vector_element(&mut self, assigned_id: i64) -> Result<VectorElementEntry>;
+    fn query_vector_element(&mut self, id: i64) -> Result<VectorElementEntry>;
 
     ///
     /// Queries the vector elements that appear before a certain time in the specified keyframe
