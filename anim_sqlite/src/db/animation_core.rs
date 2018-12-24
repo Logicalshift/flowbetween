@@ -12,6 +12,18 @@ use std::time::Duration;
 use std::collections::HashMap;
 
 ///
+/// The element IDs for the path properties for a particular layer
+///
+#[derive(Clone, Copy, Debug)]
+pub struct PathPropertiesIds {
+    /// The ID of the element defining the path brush 
+    pub brush_id: ElementId,
+
+    /// The ID of the element defining the path brush properties
+    pub properties_id: ElementId
+}
+
+///
 /// Core data structure used by the animation database
 /// 
 pub struct AnimationDbCore<TFile: FloFile+Send> {
@@ -21,6 +33,9 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
     pub failure: Option<Error>,
+
+    /// Maps a layer ID to the properties that should be associated with the next path created
+    pub path_properties_for_layer: HashMap<i64, PathPropertiesIds>,
 
     /// Maps layers to the brush that's active
     pub active_brush_for_layer: HashMap<i64, (Duration, Arc<dyn Brush>)>,
@@ -130,12 +145,12 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// The element is created without its associated data.
     ///
-    fn create_new_element(db: &mut TFile, layer_id: i64, when: Duration, element: &PaintEdit) -> Result<()> {
-        if let ElementId::Assigned(assigned_id) = element.id() {
+    fn create_new_element(db: &mut TFile, layer_id: i64, when: Duration, element_id: ElementId, element_type: VectorElementType) -> Result<()> {
+        if let ElementId::Assigned(assigned_id) = element_id {
             db.update(vec![
                 DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PushNearestKeyFrame(when),
-                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element)),
+                DatabaseUpdate::PushVectorElementType(element_type),
                 DatabaseUpdate::PushVectorElementTime(when),
                 DatabaseUpdate::PushElementAssignId(assigned_id)
             ])?;
@@ -143,7 +158,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             db.update(vec![
                 DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PushNearestKeyFrame(when),
-                DatabaseUpdate::PushVectorElementType(VectorElementType::from(element)),
+                DatabaseUpdate::PushVectorElementType(element_type),
                 DatabaseUpdate::PushVectorElementTime(when)
             ])?;
         }
@@ -233,7 +248,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         }
 
         // Create a new element
-        Self::create_new_element(&mut self.db, layer_id, when, &new_element)?;
+        Self::create_new_element(&mut self.db, layer_id, when, new_element.id(), VectorElementType::from(&new_element))?;
 
         // Record the details of the element itself
         match new_element {
@@ -262,13 +277,23 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             CreatePath(element_id, points)                              => {},
 
             SelectBrush(element_id, brush_definition, drawing_style)    => {
+                // Create a new brush definition to use with the path and store it
                 Self::create_unattached_element(&mut self.db, VectorElementType::BrushDefinition, element_id)?;
                 Self::create_brush_definition(&mut self.db, brush_definition, drawing_style)?;
+
+                self.path_properties_for_layer.entry(layer_id)
+                    .or_insert_with(|| PathPropertiesIds { brush_id: ElementId::Unassigned, properties_id: ElementId::Unassigned })
+                    .brush_id = element_id;
             },
 
             BrushProperties(element_id, brush_properties)               => {
+                // Create some new brush properties to use with the path and store them
                 Self::create_unattached_element(&mut self.db, VectorElementType::BrushProperties, element_id)?;
                 Self::create_brush_properties(&mut self.db, brush_properties)?;
+
+                self.path_properties_for_layer.entry(layer_id)
+                    .or_insert_with(|| PathPropertiesIds { brush_id: ElementId::Unassigned, properties_id: ElementId::Unassigned })
+                    .properties_id = element_id;
             }
         }
 
