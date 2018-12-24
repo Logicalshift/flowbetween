@@ -44,6 +44,13 @@ CREATE TABLE Flo_PathElement (
 
 /*
  * Adds type information to path points
+ *
+ * This table is used when describing full paths, which we don't always need to do: it attaches
+ * a type per path point stored in the Flo_PathPoints table (for the 'Close' path action, there
+ * may not be an associated point)
+ *
+ * This is always used for example when defining a path element but is not needed when defining
+ * a path edit that doesn't change the point meanings.
  */
 CREATE TABLE Flo_PathPointType (
     PathId      INTEGER NOT NULL REFERENCES Flo_Path(PathId),
