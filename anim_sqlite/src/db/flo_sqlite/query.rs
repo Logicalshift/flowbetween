@@ -276,6 +276,32 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Retrieves the vector element with the specified ID
+    ///
+    fn query_vector_element(&mut self, assigned_id: i64) -> Result<VectorElementEntry> {
+        self.query_row(FloStatement::SelectVectorElementsBefore, &[&assigned_id], |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)))
+            .map(|(element_id, element_type, when, brush_id, drawing_style, brush_properties_id, assigned_id)| {
+                let assigned_id: Option<i64> = assigned_id;
+                let when                    = Self::from_micros(when);
+                let brush_id: Option<i64>   = brush_id;
+                let drawing_style           = self.value_for_enum(DbEnumType::DrawingStyle, drawing_style).and_then(|drawing_style| drawing_style.drawing_style());
+                let element_type            = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
+                let assigned_id             = ElementId::from(assigned_id);
+
+                let brush                   = brush_id.and_then(|brush_id| drawing_style.map(|drawing_style| (brush_id, drawing_style)));
+
+                VectorElementEntry {
+                    element_id,
+                    element_type,
+                    when,
+                    brush,
+                    brush_properties_id,
+                    assigned_id
+                }
+            })
+    }
+
+    ///
     /// Queries the vector elements that appear before a certain time in the specified keyframe
     /// 
     fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>> {

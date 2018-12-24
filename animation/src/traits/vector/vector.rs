@@ -16,11 +16,17 @@ pub enum Vector {
     /// Vector that has been transformed from a source vector (eg, by applying a motion)
     Transformed(TransformedVector),
 
-    /// Sets the brush properties for future brush strokes
+    /// Sets the brush to use for future brush strokes
     BrushDefinition(BrushDefinitionElement),
+
+    /// Defines the brush definition for a path
+    PathBrushDefinition(BrushDefinitionElement),
 
     /// Brush properties for future brush strokes
     BrushProperties(BrushPropertiesElement),
+
+    /// Defines the brush properties for a path
+    PathBrushProperties(BrushPropertiesElement),
 
     /// Brush stroke vector
     BrushStroke(BrushElement),
@@ -67,13 +73,15 @@ impl Deref for Vector {
         use Vector::*;
 
         match self {
-            Transformed(ref transform)  => transform,
+            Transformed(ref transform)      => transform,
 
-            BrushDefinition(ref defn)   => defn,
-            BrushProperties(ref props)  => props,
-            BrushStroke(ref elem)       => elem,
+            BrushDefinition(ref defn)       => defn,
+            PathBrushDefinition(ref defn)   => defn,
+            BrushProperties(ref props)      => props,
+            PathBrushProperties(ref props)  => props,
+            BrushStroke(ref elem)           => elem,
 
-            Path(elem)                  => elem
+            Path(elem)                      => elem
         }
     }
 }

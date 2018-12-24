@@ -67,6 +67,26 @@ impl VectorFrame {
     }
 
     ///
+    /// Returns the path element associated with a particular entry
+    ///
+    fn path_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<PathElement> {
+        let path_entry                  = db.query_path_element(entry.element_id)?;
+        let path_entry                  = path_entry.unwrap();
+
+        let (brush_id, _drawing_style)  = path_entry.brush.unwrap();
+        let properties_id               = path_entry.brush_properties_id.unwrap();
+        let brush_entry                 = db.query_vector_element(brush_id)?;
+        let brush_properties_entry      = db.query_vector_element(properties_id)?;
+
+        let brush                       = Self::brush_definition_for_entry(db, brush_entry)?;
+        let brush_properties            = Self::properties_for_entry(db, brush_properties_entry)?;
+        let path_components             = db.query_path_components(path_entry.path_id)?;
+        let path                        = Path::from(path_components);
+
+        Ok(PathElement::new(entry.assigned_id, path, Arc::new(brush), Arc::new(brush_properties)))
+    }
+
+    ///
     /// Tries to turn a vector element entry into a Vector object
     /// 
     fn vector_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
@@ -75,7 +95,7 @@ impl VectorFrame {
             VectorElementType::BrushProperties      => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
             VectorElementType::BrushStroke          => Ok(Vector::BrushStroke(Self::brush_stroke_for_entry(db, entry)?)),
 
-            VectorElementType::Path                 => unimplemented!(),
+            VectorElementType::Path                 => Ok(Vector::Path(Self::path_for_entry(db, entry)?)),
             VectorElementType::PathBrush            => unimplemented!(), 
             VectorElementType::PathBrushProperties  => unimplemented!()
         }

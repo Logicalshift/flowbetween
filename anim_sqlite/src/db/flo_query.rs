@@ -172,6 +172,11 @@ pub trait FloQuery {
     fn query_brush_properties(&mut self, brush_properties_id: i64) -> Result<BrushPropertiesEntry>;
 
     ///
+    /// Retrieves the vector element with the specified ID
+    ///
+    fn query_vector_element(&mut self, assigned_id: i64) -> Result<VectorElementEntry>;
+
+    ///
     /// Queries the vector elements that appear before a certain time in the specified keyframe
     /// 
     fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>>;

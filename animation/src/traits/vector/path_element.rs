@@ -2,6 +2,8 @@ use super::element::*;
 use super::vector::*;
 use super::properties::*;
 use super::control_point::*;
+use super::brush_definition_element::*;
+use super::brush_properties_element::*;
 use super::super::path::*;
 use super::super::edit::*;
 use super::super::motion::*;
@@ -22,8 +24,25 @@ pub struct PathElement {
     /// The components that make up this path
     path: Path,
 
-    /// The properties of this path
-    properties: Arc<VectorProperties>
+    /// The brush to use for this path
+    brush: Arc<BrushDefinitionElement>,
+
+    /// The properties to use for this path
+    properties: Arc<BrushPropertiesElement>
+}
+
+impl PathElement {
+    ///
+    /// Creates a new path element with the specified properties
+    ///
+    pub fn new(id: ElementId, path: Path, brush: Arc<BrushDefinitionElement>, properties: Arc<BrushPropertiesElement>) -> PathElement {
+        PathElement {
+            id,
+            path,
+            brush,
+            properties
+        }
+    }
 }
 
 impl VectorElement for PathElement {
@@ -45,7 +64,12 @@ impl VectorElement for PathElement {
     /// Renders this vector element
     /// 
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) { 
-        gc.draw_list(properties.brush.render_path(&self.properties.brush_properties, &self.path))
+        let props = Arc::new(VectorProperties::default());
+        let props = self.brush.update_properties(props);
+        let props = self.properties.update_properties(props);
+
+        props.brush.prepare_to_render(&props.brush_properties);
+        gc.draw_list(props.brush.render_path(&props.brush_properties, &self.path));
     }
 
     ///
@@ -89,6 +113,7 @@ impl VectorElement for PathElement {
         // Create a new path transformed with these points
         Vector::Path(PathElement {
             id:         self.id,
+            brush:      Arc::clone(&self.brush),
             properties: Arc::clone(&self.properties),
             path:       Path::from_elements_arc(Arc::new(new_elements))
         })
@@ -144,6 +169,7 @@ impl VectorElement for PathElement {
 
         Vector::Path(PathElement {
             id:         self.id,
+            brush:      Arc::clone(&self.brush),
             properties: Arc::clone(&self.properties),
             path:       Path::from_elements_arc(Arc::new(new_elements))
         })
