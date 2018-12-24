@@ -79,10 +79,7 @@ pub enum VectorElementType {
     BrushDefinition,
     BrushProperties,
     BrushStroke,
-
-    Path,
-    PathBrush,
-    PathBrushProperties,
+    Path
 }
 
 ///
@@ -258,6 +255,7 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::VectorElement(BrushDefinition),
                     DbEnum::VectorElement(BrushProperties),
                     DbEnum::VectorElement(BrushStroke),
+                    DbEnum::VectorElement(Path)
                 ]
             },
 
@@ -450,10 +448,7 @@ impl From<VectorElementType> for DbEnumName {
             BrushDefinition     => DbEnumName("VectorElementType", "BrushDefinition"),
             BrushProperties     => DbEnumName("VectorElementType", "BrushProperties"),
             BrushStroke         => DbEnumName("VectorElementType", "BrushStroke"),
-
             Path                => DbEnumName("VectorElementType", "Path"),
-            PathBrush           => DbEnumName("VectorElementType", "PathBrush"),
-            PathBrushProperties => DbEnumName("VectorElementType", "PathBrushProperties"),
         }
     }
 }

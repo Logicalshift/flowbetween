@@ -94,10 +94,7 @@ impl VectorFrame {
             VectorElementType::BrushDefinition      => Ok(Vector::BrushDefinition(Self::brush_definition_for_entry(db, entry)?)),
             VectorElementType::BrushProperties      => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
             VectorElementType::BrushStroke          => Ok(Vector::BrushStroke(Self::brush_stroke_for_entry(db, entry)?)),
-
             VectorElementType::Path                 => Ok(Vector::Path(Self::path_for_entry(db, entry)?)),
-            VectorElementType::PathBrush            => unimplemented!(), 
-            VectorElementType::PathBrushProperties  => unimplemented!()
         }
     }
 

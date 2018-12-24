@@ -19,14 +19,8 @@ pub enum Vector {
     /// Sets the brush to use for future brush strokes
     BrushDefinition(BrushDefinitionElement),
 
-    /// Defines the brush definition for a path
-    PathBrushDefinition(BrushDefinitionElement),
-
     /// Brush properties for future brush strokes
     BrushProperties(BrushPropertiesElement),
-
-    /// Defines the brush properties for a path
-    PathBrushProperties(BrushPropertiesElement),
 
     /// Brush stroke vector
     BrushStroke(BrushElement),
@@ -76,9 +70,7 @@ impl Deref for Vector {
             Transformed(ref transform)      => transform,
 
             BrushDefinition(ref defn)       => defn,
-            PathBrushDefinition(ref defn)   => defn,
             BrushProperties(ref props)      => props,
-            PathBrushProperties(ref props)  => props,
             BrushStroke(ref elem)           => elem,
 
             Path(elem)                      => elem
