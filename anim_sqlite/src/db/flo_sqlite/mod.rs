@@ -314,10 +314,8 @@ impl FloSqlite {
                                                         WHERE Path.MotionId = ? AND Path.PathType = ? \
                                                         ORDER BY Path.PointIndex ASC",
             SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
-            SelectPathElement                   => "SELECT Elem.PathId, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties \
-                                                        FROM Flo_PathElement                    AS Elem \
-                                                        INNER JOIN Flo_BrushElement             AS Brush ON Elem.ElementId = Brush.ElementId \
-                                                        INNER JOIN Flo_BrushPropertiesElement   AS Props ON Elem.ElementId = Props.ElementId \
+            SelectPathElement                   => "SELECT Elem.PathId, Elem.BrushId, Elem.BrushPropertiesId \
+                                                        FROM Flo_PathElement    AS Elem \
                                                         WHERE Elem.ElementId = ?",
             SelectPathPointsWithTypes           => "SELECT Path.X, Path.Y, Types.Type FROM Flo_PathPointType AS Types \
                                                         LEFT OUTER JOIN Flo_PathPoints AS Path ON (Path.PathId = Types.PathId AND Types.PointIndex = Path.PointIndex) \

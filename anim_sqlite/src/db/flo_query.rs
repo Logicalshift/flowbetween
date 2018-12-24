@@ -64,8 +64,8 @@ pub struct VectorElementEntry {
 pub struct PathElementEntry {
     pub element_id:             i64,
     pub path_id:                i64,
-    pub brush:                  Option<(i64, DrawingStyleType)>,
-    pub brush_properties_id:    Option<i64>
+    pub brush_id:               i64,
+    pub brush_properties_id:    i64
 }
 
 ///

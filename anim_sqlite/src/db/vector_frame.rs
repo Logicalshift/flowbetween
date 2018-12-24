@@ -73,8 +73,8 @@ impl VectorFrame {
         let path_entry                  = db.query_path_element(entry.element_id)?;
         let path_entry                  = path_entry.unwrap();
 
-        let (brush_id, _drawing_style)  = path_entry.brush.unwrap();
-        let properties_id               = path_entry.brush_properties_id.unwrap();
+        let brush_id                    = path_entry.brush_id;
+        let properties_id               = path_entry.brush_properties_id;
         let brush_entry                 = db.query_vector_element(brush_id)?;
         let brush_properties_entry      = db.query_vector_element(properties_id)?;
 
