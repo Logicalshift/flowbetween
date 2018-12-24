@@ -77,9 +77,25 @@ impl VectorLayerCore {
     ///
     pub fn path(&mut self, when: Duration, path: &PathEdit) {
         match path {
-            PathEdit::CreatePath(element, points)               => unimplemented!(),
-            PathEdit::SelectBrush(element, defn, drawing_style) => unimplemented!(),
-            PathEdit::BrushProperties(element, properties)      => unimplemented!(),
+            PathEdit::CreatePath(element, points)               => {
+                let path        = Path::from_elements_arc(Arc::clone(points));
+                let brush       = self.path_brush.clone().unwrap();
+                let properties  = self.path_brush_properties.clone().unwrap();
+
+                let path        = Vector::new(PathElement::new(*element, path, brush, properties));
+
+                self.add_element(when, path);
+            },
+            
+            PathEdit::SelectBrush(element, defn, drawing_style) => {
+                let brush = BrushDefinitionElement::new(*element, defn.clone(), *drawing_style);
+                self.path_brush = Some(Arc::new(brush));
+            },
+
+            PathEdit::BrushProperties(element, properties)      => {
+                let properties = BrushPropertiesElement::new(*element, *properties);
+                self.path_brush_properties = Some(Arc::new(properties));
+            },
         }
     }
 

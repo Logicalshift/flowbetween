@@ -6,8 +6,6 @@ use super::super::brush_properties::*;
 use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 
-use canvas::*;
-
 use std::sync::*;
 
 ///

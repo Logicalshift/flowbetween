@@ -1,4 +1,3 @@
-use traits::path::component::PathComponent::Bezier;
 use super::path::*;
 use super::rect::*;
 use super::point::*;

@@ -22,6 +22,12 @@ pub struct VectorLayerCore {
 
     /// The key frames for this vector, in order
     keyframes: Vec<Arc<VectorKeyFrame>>,
+
+    /// Current path brush element
+    path_brush: Option<Arc<BrushDefinitionElement>>,
+
+    /// Current path brush properties element
+    path_brush_properties: Option<Arc<BrushPropertiesElement>>
 }
 
 impl VectorLayerCore {
@@ -33,6 +39,8 @@ impl VectorLayerCore {
             id:                     id,
             vector_map:             VectorMap::new(),
             keyframes:              vec![],
+            path_brush:             None,
+            path_brush_properties:  None
         }
     }
 

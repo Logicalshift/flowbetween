@@ -63,7 +63,7 @@ impl VectorElement for PathElement {
     ///
     /// Renders this vector element
     /// 
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) { 
+    fn render(&self, gc: &mut dyn GraphicsPrimitives, _properties: &VectorProperties) { 
         let props = Arc::new(VectorProperties::default());
         let props = self.brush.update_properties(props);
         let props = self.properties.update_properties(props);
@@ -173,5 +173,12 @@ impl VectorElement for PathElement {
             properties: Arc::clone(&self.properties),
             path:       Path::from_elements_arc(Arc::new(new_elements))
         })
+    }
+}
+
+impl Into<Vector> for PathElement {
+    #[inline]
+    fn into(self) -> Vector {
+        Vector::Path(self)
     }
 }

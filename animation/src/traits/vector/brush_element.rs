@@ -176,7 +176,6 @@ impl Into<Vector> for BrushElement {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
