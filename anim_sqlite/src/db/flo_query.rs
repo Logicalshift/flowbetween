@@ -52,7 +52,7 @@ pub struct BrushPropertiesEntry {
 pub struct VectorElementEntry {
     pub element_id:             i64,
     pub element_type:           VectorElementType,
-    pub when:                   Duration,
+    pub when:                   Option<Duration>,
     pub brush:                  Option<(i64, DrawingStyleType)>,
     pub brush_properties_id:    Option<i64>,
     pub assigned_id:            ElementId

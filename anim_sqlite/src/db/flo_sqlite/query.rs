@@ -282,7 +282,8 @@ impl FloQuery for FloSqlite {
         self.query_row(FloStatement::SelectVectorElementWithId, &[&id], |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)))
             .map(|(element_id, element_type, when, brush_id, drawing_style, brush_properties_id, assigned_id)| {
                 let assigned_id: Option<i64> = assigned_id;
-                let when                    = Self::from_micros(when);
+                let when: Option<i64>       = when;
+                let when                    = when.map(|when| Self::from_micros(when));
                 let brush_id: Option<i64>   = brush_id;
                 let drawing_style           = self.value_for_enum(DbEnumType::DrawingStyle, drawing_style).and_then(|drawing_style| drawing_style.drawing_style());
                 let element_type            = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
@@ -313,7 +314,7 @@ impl FloQuery for FloSqlite {
                 rows_with_errors.map(|row_with_error| row_with_error.unwrap())
                     .map(|(element_id, element_type, when, brush_id, drawing_style, brush_properties_id, assigned_id)| {
                         let assigned_id: Option<i64> = assigned_id;
-                        let when                    = Self::from_micros(when);
+                        let when                    = Some(Self::from_micros(when));
                         let brush_id: Option<i64>   = brush_id;
                         let drawing_style           = self.value_for_enum(DbEnumType::DrawingStyle, drawing_style).and_then(|drawing_style| drawing_style.drawing_style());
                         let element_type            = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
@@ -347,7 +348,7 @@ impl FloQuery for FloSqlite {
                 rows_with_errors.map(|row_with_error| row_with_error.unwrap())
                     .map(|(element_id, element_type, when, brush_id, drawing_style, brush_properties_id, assigned_id)| {
                         let assigned_id: Option<i64> = assigned_id;
-                        let when                    = Self::from_micros(when);
+                        let when                    = Some(Self::from_micros(when));
                         let brush_id: Option<i64>   = brush_id;
                         let drawing_style           = self.value_for_enum(DbEnumType::DrawingStyle, drawing_style).and_then(|drawing_style| drawing_style.drawing_style());
                         let element_type            = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
