@@ -71,7 +71,6 @@ enum FloStatement {
     SelectBrushDefinition,
     SelectBrushProperties,
     SelectVectorElementWithId,
-    SelectVectorElementWithAssignedId,
     SelectVectorElementType,
     SelectVectorElementsBefore,
     SelectMostRecentElementOfTypeBefore,
@@ -274,13 +273,6 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                         LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
                                                         WHERE Elem.ElementId = ?",
-            SelectVectorElementWithAssignedId   => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
-                                                        FROM Flo_VectorElement                      AS Elem \
-                                                        LEFT OUTER JOIN Flo_VectorElementTime       AS Time  ON Elem.ElementId = Time.ElementId \
-                                                        LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
-                                                        LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
-                                                        LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
-                                                        WHERE Assgn.AssignedId = ?",
             SelectVectorElementType             => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
                                                         INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
                                                         WHERE Assgn.AssignedId = ?",
