@@ -94,6 +94,23 @@ fn brush_stroke() {
 }
 
 #[test]
+fn create_path() {
+    core().insert_edits(&[
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::SelectBrush(ElementId::Unassigned, BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::BrushProperties(ElementId::Unassigned, animation::BrushProperties::new()))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::CreatePath(ElementId::Unassigned, Arc::new(vec![
+                PathComponent::Move(PathPoint::new(10.0, 20.0)),
+                PathComponent::Line(PathPoint::new(20.0, 30.0)),
+                PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+                PathComponent::Close
+            ]))))
+    ]).unwrap();
+}
+
+#[test]
 fn translate_motion() {
     let start_point = TimePoint::new(10.0, 20.0, Duration::from_millis(0));
     let end_point   = TimePoint::new(500.0, 400.0, Duration::from_millis(2000));

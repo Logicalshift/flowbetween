@@ -756,3 +756,41 @@ fn move_existing_element() {
         assert!(false)
     }
 }
+
+#[test]
+fn read_path_element() {
+    use self::LayerEdit::*;
+
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(24),
+        AnimationEdit::Layer(24, LayerEdit::AddKeyFrame(Duration::from_millis(300))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::SelectBrush(ElementId::Unassigned, BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::BrushProperties(ElementId::Unassigned, animation::BrushProperties::new()))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::CreatePath(ElementId::Assigned(100), Arc::new(vec![
+                PathComponent::Move(PathPoint::new(10.0, 20.0)),
+                PathComponent::Line(PathPoint::new(20.0, 30.0)),
+                PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+                PathComponent::Close
+            ]))))
+    ]);
+
+    let layer               = anim.get_layer_with_id(24).unwrap();
+    let frame               = layer.get_frame_at_time(Duration::from_millis(300));
+
+    assert!(frame.vector_elements().is_some());
+    assert!(frame.vector_elements().unwrap().count() > 0);
+
+    let element100          = frame.element_with_id(ElementId::Assigned(100)).unwrap();
+
+    if let Vector::Path(_path) = element100 {
+        assert!(true);
+    } else {
+        // Not a path
+        assert!(false);
+    }
+}
