@@ -1,6 +1,8 @@
 use super::edge::*;
 use super::super::traits::*;
 
+use std::sync::*;
+
 ///
 /// Retrieves a ray-casting function for a particular frame
 /// 
@@ -12,8 +14,14 @@ pub fn vector_frame_raycast<'a, FrameType: Frame>(frame: &'a FrameType) -> impl 
     let all_elements = frame.vector_elements()
         .unwrap_or_else(|| Box::new(vec![].into_iter()));
 
-    // TODO: Convert the elements into edges
-    
+    // Convert the elements into edges
+    let mut edges       = vec![];
+    let mut properties  = Arc::new(VectorProperties::default());
+
+    for element in all_elements {
+        properties = element.update_properties(properties);
+        edges.extend(RaycastEdge::from_vector(&element, Arc::clone(&properties)));
+    }
 
     // Generate the final function
     move |from, to| {
