@@ -1,5 +1,7 @@
 use super::super::traits::*;
 
+use std::iter;
+
 pub enum EdgeKind {
     // Solid edge
     Solid,
@@ -13,10 +15,10 @@ pub enum EdgeKind {
 ///
 pub struct RaycastEdge {
     /// The curve representing this particular edge
-    curve: PathCurve,
+    pub curve: PathCurve,
 
-    /// True if this edge is part of a shape that hides anything beneath it (false if it's an actual edge of a shape)
-    hides_beneath: bool
+    /// The type of this edge
+    pub kind: EdgeKind,
 }
 
 impl RaycastEdge {
@@ -25,11 +27,11 @@ impl RaycastEdge {
     ///
     pub fn from_vector(vector: &Vector) -> Box<dyn Iterator<Item=RaycastEdge>> {
         match vector {
-            Vector::Transformed(transform) => { unimplemented!(); }
-            Vector::BrushDefinition(defn) => { unimplemented!(); }
-            Vector::BrushProperties(props) => { unimplemented!(); }
-            Vector::BrushStroke(brush_stroke) => { unimplemented!(); }
-            Vector::Path(path) => { unimplemented!(); }
+            Vector::Transformed(transform)      => { unimplemented!(); }
+            Vector::BrushDefinition(_defn)      => { Box::new(iter::empty()) }
+            Vector::BrushProperties(_props)     => { Box::new(iter::empty()) }
+            Vector::BrushStroke(brush_stroke)   => { unimplemented!(); }
+            Vector::Path(path)                  => { unimplemented!(); }
         }
     }
 }
