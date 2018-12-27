@@ -41,6 +41,13 @@ impl TransformedVector {
     pub fn without_transformations(&self) -> Vector {
         (&*self.original).clone()
     }
+
+    ///
+    /// Returns the transformed shape of this vector
+    ///
+    pub fn transformed_vector(&self) -> Arc<Vector> {
+        Arc::clone(&self.transformed)
+    }
 }
 
 impl VectorElement for TransformedVector {
