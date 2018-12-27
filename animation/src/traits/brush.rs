@@ -56,4 +56,11 @@ pub trait Brush : Send+Sync {
     /// Retrieves the definition for this brush
     /// 
     fn to_definition(&self) -> (BrushDefinition, BrushDrawingStyle);
+
+    ///
+    /// Retrieves just the drawing style for this brush
+    ///
+    fn drawing_style(&self) -> BrushDrawingStyle {
+        self.to_definition().1
+    }
 }

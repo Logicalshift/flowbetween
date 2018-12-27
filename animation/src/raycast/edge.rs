@@ -1,5 +1,8 @@
 use super::super::traits::*;
 
+use curves::*;
+use itertools::*;
+
 use std::iter;
 use std::sync::*;
 
@@ -36,7 +39,7 @@ impl RaycastEdge {
             Vector::BrushProperties(_props)     => { Box::new(iter::empty()) }
 
             Vector::Transformed(transform)      => { Self::from_transformed(transform, properties) }
-            Vector::BrushStroke(brush_stroke)   => { unimplemented!(); }
+            Vector::BrushStroke(brush_stroke)   => { Self::from_brush_stroke(brush_stroke, properties) }
             Vector::Path(path)                  => { Self::from_path_element(path) }
         }
     }
@@ -66,7 +69,7 @@ impl RaycastEdge {
     }
 
     ///
-    /// Returns the edges for a particular path as ray cast edges
+    /// Returns a particular path as ray cast edges
     ///
     pub fn from_path<'a>(path: &'a Path, edge_kind: RaycastEdgeKind) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
         Box::new(path.to_curves()
@@ -75,6 +78,55 @@ impl RaycastEdge {
                     curve: curve,
                     kind: edge_kind
                 }
+            }))
+    }
+
+    ///
+    /// Returns the edges from a brush stroke element
+    ///
+    pub fn from_brush_stroke<'a>(brush_stroke: &'a BrushElement, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
+        match properties.brush.drawing_style() {
+            BrushDrawingStyle::Erase    => {
+                // Ignore any elements underneath the entire path for an erasing brush stroke
+                Box::new(brush_stroke.to_path(&*properties).unwrap()
+                    .into_iter()
+                    .flat_map(|path| Self::from_path(&path, RaycastEdgeKind::EraseContents).collect::<Vec<_>>()))
+            }
+            
+            BrushDrawingStyle::Draw     => { 
+                // A draw brush stroke just adds a single edge
+                let points  = brush_stroke.points();
+                let paths   = Self::from_brush_points(&*points, RaycastEdgeKind::Solid);
+                let paths   = paths.collect::<Vec<_>>();
+                Box::new(paths.into_iter())
+            }
+        }
+    }
+
+    ///
+    /// Converts a position from a `BrushPoint` to a `PathPoint`
+    ///
+    #[inline] fn brush_to_path_point(brush_point: (f32, f32)) -> PathPoint {
+        PathPoint { position: brush_point }
+    }
+
+    ///
+    /// Converts a set of brush points into a set of 
+    ///
+    pub fn from_brush_points<'a, PointIter: 'a+IntoIterator<Item=&'a BrushPoint>>(points: PointIter, edge_kind: RaycastEdgeKind) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
+        Box::new(points.into_iter()
+            .tuple_windows()
+            .map(|(prev, next)| {
+                let start_point = Self::brush_to_path_point(prev.position);
+                let cp1         = Self::brush_to_path_point(next.cp1);
+                let cp2         = Self::brush_to_path_point(next.cp2);
+                let end_point   = Self::brush_to_path_point(next.position);
+
+                PathCurve::from_points(start_point, (cp1, cp2), end_point)
+            })
+            .map(move |curve| RaycastEdge {
+                curve:  curve,
+                kind:   edge_kind
             }))
     }
 }
