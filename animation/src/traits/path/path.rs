@@ -1,9 +1,14 @@
 use super::point::*;
+use super::curve::*;
 use super::component::*;
 
 use canvas::*;
 use curves::geo::*;
+use curves::line::*;
+use curves::bezier::*;
 use curves::bezier::path::*;
+
+use itertools::*;
 
 use std::iter;
 use std::sync::*;
@@ -95,6 +100,31 @@ impl Path {
                     &PathComponent::Line(point)       => Line(point.x(), point.y()),
                     &PathComponent::Bezier(p, c1, c2) => BezierCurve(p.position, c1.position, c2.position),
                     &PathComponent::Close             => ClosePath
+                }
+            })
+    }
+
+    ///
+    /// Returns the curves in this path
+    ///
+    pub fn to_curves<'a>(&'a self) -> impl 'a+Iterator<Item=PathCurve> {
+        self.elements.iter()
+            .tuple_windows()
+            .flat_map(|(prev, next)| {
+                use self::PathComponent::*;
+
+                let start_point = match prev {
+                    Move(p)          => p,
+                    Line(p)          => p,
+                    Bezier(p, _, _)  => p,
+                    Close            => { return None }
+                };
+
+                match next {
+                    Move(_)                     => None,
+                    Close                       => None,
+                    Line(end_point)             => Some(line_to_bezier(&(*start_point, *end_point))),
+                    Bezier(end_point, cp1, cp2) => Some(PathCurve::from_points(*start_point, (*cp1, *cp2), *end_point))
                 }
             })
     }
