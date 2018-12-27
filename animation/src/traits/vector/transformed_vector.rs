@@ -38,8 +38,8 @@ impl TransformedVector {
     ///
     /// Returns the original vector for this transformed vector without any transformations applied to it
     /// 
-    pub fn without_transformations(&self) -> Vector {
-        (&*self.original).clone()
+    pub fn without_transformations(&self) -> Arc<Vector> {
+        Arc::clone(&self.original)
     }
 
     ///

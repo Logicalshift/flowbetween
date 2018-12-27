@@ -53,7 +53,7 @@ impl Vector {
         use self::Vector::*;
 
         match self {
-            Transformed(transformed)    => transformed.without_transformations(),
+            Transformed(transformed)    => (*transformed.without_transformations()).clone(),
             not_transformed             => not_transformed.clone()
         }
     }
