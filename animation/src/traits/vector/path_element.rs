@@ -43,6 +43,20 @@ impl PathElement {
             properties
         }
     }
+
+    ///
+    /// Returns a reference to the underlying path for this element
+    ///
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    ///
+    /// Returns the brush definition for this path element
+    ///
+    pub fn brush(&self) -> Arc<BrushDefinitionElement> {
+        Arc::clone(&self.brush)
+    }
 }
 
 impl VectorElement for PathElement {
