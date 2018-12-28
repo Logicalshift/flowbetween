@@ -1,7 +1,48 @@
 use super::edge::*;
 use super::super::traits::*;
 
+use curves::bezier::*;
+
 use std::sync::*;
+use std::cmp::Ordering;
+
+///
+/// Represents a collision along a raycast edge
+///
+struct VectorCollision {
+    pos:    PathPoint,
+    line_t: f64,
+    kind:   RaycastEdgeKind
+}
+
+impl Ord for VectorCollision {
+    fn cmp(&self, b: &VectorCollision) -> Ordering {
+        if self.line_t < b.line_t {
+            Ordering::Less
+        } else if self.line_t > b.line_t {
+            Ordering::Greater
+        } else {
+            Ordering::Equal
+        }
+    }
+}
+
+impl PartialOrd for VectorCollision {
+    fn partial_cmp(&self, b: &VectorCollision) -> Option<Ordering> {
+        Some(self.cmp(b))
+    }
+
+}
+
+impl PartialEq for VectorCollision {
+    fn eq(&self, b: &VectorCollision) -> bool{
+        self.line_t == b.line_t
+    }
+}
+
+impl Eq for VectorCollision {
+
+}
 
 ///
 /// Retrieves a ray-casting function for a particular frame
@@ -25,6 +66,26 @@ pub fn vector_frame_raycast<'a, FrameType: Frame>(frame: &'a FrameType) -> impl 
 
     // Generate the final function
     move |from, to| {
-        vec![]
-    }
+        let ray = (from, to);
+
+        // Cast the ray against all edges (simplest algorithm, but slowest too)
+        let collisions = edges.iter()
+            .flat_map(|edge| curve_intersects_ray(&edge.curve, &ray)
+                .into_iter()
+                .map(move |(_curve_t, line_t, pos)| VectorCollision { line_t, pos, kind: edge.kind }));
+
+        // Collect into an ordered list
+        let mut collisions = collisions.collect::<Vec<_>>();
+        if collisions.len() > 0 {
+            // TODO: use the sorted collisions to hide any edge that is underneath an edge that comes from an eraser
+            collisions.sort();
+
+            collisions.into_iter()
+                .map(|collision| collision.pos)
+                .collect()
+        } else {
+            // Short-circuit the case where there are no collisions
+            vec![]
+        }
+   }
 }
