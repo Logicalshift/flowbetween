@@ -67,7 +67,8 @@ impl FloodFill {
                 let actions = actions.into_iter()
                     .map(move |action| LayerEdit::Path(when, action))
                     .map(move |action| AnimationEdit::Layer(layer, action))
-                    .map(|action| ToolAction::Edit(action));
+                    .map(|action| ToolAction::Edit(action))
+                    .chain(iter::once(ToolAction::InvalidateFrame));
 
                 Either::Left(actions)
             } else {
