@@ -6,6 +6,8 @@ use super::brush_drawing_style::*;
 
 use canvas::*;
 
+use std::iter;
+
 ///
 /// Represents a segment of a brush stroke
 /// 
@@ -49,7 +51,8 @@ pub trait Brush : Send+Sync {
     ///
     fn render_path<'a>(&'a self, properties: &'a BrushProperties, path: &'a Path) -> Box<dyn 'a+Iterator<Item=Draw>> {
         Box::new(self.prepare_to_render(properties)
-            .chain(path.to_drawing()))
+            .chain(path.to_drawing())
+            .chain(iter::once(Draw::Fill)))
     }
 
     ///
