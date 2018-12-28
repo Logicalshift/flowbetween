@@ -97,7 +97,7 @@ impl VectorElement for PathElement {
                 match component {
                     PathComponent::Move(pos)                => vec![pos],
                     PathComponent::Line(pos)                => vec![pos],
-                    PathComponent::Bezier(pos, cp1, cp2)    => vec![pos, cp1, cp2],
+                    PathComponent::Bezier(pos, cp1, cp2)    => vec![cp1, cp2, pos],
                     PathComponent::Close                    => vec![]
                 }
             });
