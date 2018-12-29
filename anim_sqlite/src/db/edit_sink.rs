@@ -1,8 +1,6 @@
 use super::*;
 use super::animation_core::*;
 
-use flo_logging::*;
-
 use futures::task;
 
 use std::collections::VecDeque;
@@ -32,7 +30,7 @@ pub struct EditSink<TFile: FloFile+Send> {
 
 impl<TFile: FloFile+Send+'static> EditSink<TFile> {
     ///
-    /// Creates a new 
+    /// Creates a new edit sink
     ///
     pub fn new(db: &Arc<Desync<AnimationDbCore<TFile>>>) -> EditSink<TFile> {
         let db = Arc::clone(db);

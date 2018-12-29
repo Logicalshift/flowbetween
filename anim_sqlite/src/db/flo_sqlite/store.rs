@@ -6,7 +6,7 @@ impl FloSqlite {
     ///
     /// Executes a particular database update
     /// 
-    fn execute_update(&mut self, update: DatabaseUpdate) -> Result<()> {
+    fn execute_update(&mut self, update: &DatabaseUpdate) -> Result<()> {
         use self::DatabaseUpdate::*;
 
         match update {
@@ -27,7 +27,7 @@ impl FloSqlite {
             },
 
             PushEditType(edit_log_type)                                     => {
-                let edit_log_type   = self.enum_value(DbEnum::EditLog(edit_log_type));
+                let edit_log_type   = self.enum_value(DbEnum::EditLog(*edit_log_type));
                 let edit_log_id     = Self::prepare(&self.sqlite, FloStatement::InsertEditType)?.insert::<&[&dyn ToSql]>(&[&edit_log_type])?;
                 self.stack.push(edit_log_id);
             },
@@ -35,13 +35,13 @@ impl FloSqlite {
             PopEditLogSetSize(width, height)                                => {
                 let edit_log_id     = self.stack.pop().unwrap();
                 let mut set_size    = Self::prepare(&self.sqlite, FloStatement::InsertELSetSize)?;
-                set_size.insert::<&[&dyn ToSql]>(&[&edit_log_id, &(width as f64), &(height as f64)])?;
+                set_size.insert::<&[&dyn ToSql]>(&[&edit_log_id, &(*width as f64), &(*height as f64)])?;
             },
 
             PushEditLogLayer(layer_id)                                      => {
                 let edit_log_id     = self.stack.pop().unwrap();
                 let mut set_layer   = Self::prepare(&self.sqlite, FloStatement::InsertELLayer)?;
-                set_layer.insert::<&[&dyn ToSql]>(&[&edit_log_id, &(layer_id as i64)])?;
+                set_layer.insert::<&[&dyn ToSql]>(&[&edit_log_id, &(*layer_id as i64)])?;
                 self.stack.push(edit_log_id);
             },
 
@@ -55,7 +55,7 @@ impl FloSqlite {
             PopEditLogBrush(drawing_style)                                  => {
                 let brush_id        = self.stack.pop().unwrap();
                 let edit_log_id     = self.stack.pop().unwrap();
-                let drawing_style   = self.enum_value(DbEnum::DrawingStyle(drawing_style));
+                let drawing_style   = self.enum_value(DbEnum::DrawingStyle(*drawing_style));
                 let mut set_brush   = Self::prepare(&self.sqlite, FloStatement::InsertELBrush)?;
                 set_brush.insert::<&[&dyn ToSql]>(&[&edit_log_id, &drawing_style, &brush_id])?;
             },
@@ -84,7 +84,7 @@ impl FloSqlite {
             },
 
             PushEditLogMotionOrigin(x, y) => {
-                let (x, y)          = (x as f64, y as f64);
+                let (x, y)          = (*x as f64, *y as f64);
                 let edit_log_id     = self.stack.last().unwrap();
                 let mut add_origin  = Self::prepare(&self.sqlite, FloStatement::InsertELMotionOrigin)?;
                 
@@ -92,7 +92,7 @@ impl FloSqlite {
             },
 
             PushEditLogMotionType(motion_type) => {
-                let motion_type     = self.enum_value(DbEnum::MotionType(motion_type));
+                let motion_type     = self.enum_value(DbEnum::MotionType(*motion_type));
                 let edit_log_id     = self.stack.last().unwrap();
                 let mut add_type    = Self::prepare(&self.sqlite, FloStatement::InsertELMotionType)?;
 
@@ -109,7 +109,7 @@ impl FloSqlite {
             PushEditLogMotionPath(num_points) => {
                 // Collect the IDs of the points
                 let mut point_ids = vec![];
-                for _index in 0..num_points {
+                for _index in 0..*num_points {
                     point_ids.push(self.stack.pop().unwrap_or(-1));
                 }
 
@@ -120,7 +120,7 @@ impl FloSqlite {
                 let mut add_point = Self::prepare(&self.sqlite, FloStatement::InsertELMotionTimePoint)?;
 
                 // Insert each of the points in turn
-                for index in 0..num_points {
+                for index in 0..*num_points {
                     let point_index = ((num_points-1)-index) as i64;
                     add_point.insert::<&[&dyn ToSql]>(&[edit_log_id, &point_index, &point_ids[index]])?;
                 }
@@ -220,14 +220,14 @@ impl FloSqlite {
             },
 
             PushTimePoint(x, y, millis) => {
-                let (x, y, millis)  = (x as f64, y as f64, millis as f64);
+                let (x, y, millis)  = (*x as f64, *y as f64, *millis as f64);
                 let mut add_point   = Self::prepare(&self.sqlite, FloStatement::InsertTimePoint)?;
                 let point_id        = add_point.insert::<&[&dyn ToSql]>(&[&x, &y, &millis])?;
                 self.stack.push(point_id);
             },
 
             PushBrushType(brush_type)                                       => {
-                let brush_type              = self.enum_value(DbEnum::BrushDefinition(brush_type));
+                let brush_type              = self.enum_value(DbEnum::BrushDefinition(*brush_type));
                 let mut insert_brush_type   = Self::prepare(&self.sqlite, FloStatement::InsertBrushType)?;
                 let brush_id                = insert_brush_type.insert::<&[&dyn ToSql]>(&[&brush_type])?;
                 self.stack.push(brush_id);
@@ -236,18 +236,18 @@ impl FloSqlite {
             PushInkBrush(min_width, max_width, scale_up_distance)           => {
                 let brush_id                = self.stack.last().unwrap();
                 let mut insert_ink_brush    = Self::prepare(&self.sqlite, FloStatement::InsertInkBrush)?;
-                insert_ink_brush.insert::<&[&dyn ToSql]>(&[brush_id, &(min_width as f64), &(max_width as f64), &(scale_up_distance as f64)])?;
+                insert_ink_brush.insert::<&[&dyn ToSql]>(&[brush_id, &(*min_width as f64), &(*max_width as f64), &(*scale_up_distance as f64)])?;
             },
 
             PushBrushProperties(size, opacity)                              => {
                 let color_id                    = self.stack.pop().unwrap();
                 let mut insert_brush_properties = Self::prepare(&self.sqlite, FloStatement::InsertBrushProperties)?;
-                let brush_props_id              = insert_brush_properties.insert::<&[&dyn ToSql]>(&[&(size as f64), &(opacity as f64), &color_id])?;
+                let brush_props_id              = insert_brush_properties.insert::<&[&dyn ToSql]>(&[&(*size as f64), &(*opacity as f64), &color_id])?;
                 self.stack.push(brush_props_id);
             },
 
             PushColorType(color_type)                                       => {
-                let color_type              = self.enum_value(DbEnum::Color(color_type));
+                let color_type              = self.enum_value(DbEnum::Color(*color_type));
                 let mut insert_color_type   = Self::prepare(&self.sqlite, FloStatement::InsertColorType)?;
                 let color_id                = insert_color_type.insert::<&[&dyn ToSql]>(&[&color_type])?;
                 self.stack.push(color_id);
@@ -256,13 +256,13 @@ impl FloSqlite {
             PushRgb(r, g, b)                                                => {
                 let color_id        = self.stack.last().unwrap();
                 let mut insert_rgb  = Self::prepare(&self.sqlite, FloStatement::InsertRgb)?;
-                insert_rgb.insert::<&[&dyn ToSql]>(&[color_id, &(r as f64), &(g as f64), &(b as f64)])?;
+                insert_rgb.insert::<&[&dyn ToSql]>(&[color_id, &(*r as f64), &(*g as f64), &(*b as f64)])?;
             },
 
             PushHsluv(h, s, l)                                              => {
                 let color_id            = self.stack.last().unwrap();
                 let mut insert_hsluv    = Self::prepare(&self.sqlite, FloStatement::InsertHsluv)?;
-                insert_hsluv.insert::<&[&dyn ToSql]>(&[color_id, &(h as f64), &(s as f64), &(l as f64)])?;
+                insert_hsluv.insert::<&[&dyn ToSql]>(&[color_id, &(*h as f64), &(*s as f64), &(*l as f64)])?;
             },
 
             PopDeleteLayer                                                  => {
@@ -272,7 +272,7 @@ impl FloSqlite {
             },
 
             PushLayerType(layer_type)                                       => {
-                let layer_type              = self.enum_value(DbEnum::Layer(layer_type));
+                let layer_type              = self.enum_value(DbEnum::Layer(*layer_type));
                 let mut insert_layer_type   = Self::prepare(&self.sqlite, FloStatement::InsertLayerType)?;
                 let layer_id                = insert_layer_type.insert::<&[&dyn ToSql]>(&[&layer_type])?;
                 self.stack.push(layer_id);
@@ -281,16 +281,16 @@ impl FloSqlite {
             PushAssignLayer(assigned_id)                                    => {
                 let layer_id                = self.stack.last().unwrap();
                 let mut insert_assign_layer = Self::prepare(&self.sqlite, FloStatement::InsertAssignLayer)?;
-                insert_assign_layer.insert::<&[&dyn ToSql]>(&[&self.animation_id, layer_id, &(assigned_id as i64)])?;
+                insert_assign_layer.insert::<&[&dyn ToSql]>(&[&self.animation_id, layer_id, &(*assigned_id as i64)])?;
             },
 
             PushLayerId(layer_id)                                           => {
-                self.stack.push(layer_id);
+                self.stack.push(*layer_id);
             },
 
             PushLayerForAssignedId(assigned_id)                             => {
                 let mut select_layer_id = Self::prepare(&self.sqlite, FloStatement::SelectLayerId)?;
-                let layer_id            = select_layer_id.query_row(&[&self.animation_id, &(assigned_id as i64)], |row| row.get(0))?;
+                let layer_id            = select_layer_id.query_row(&[&self.animation_id, &(*assigned_id as i64)], |row| row.get(0))?;
                 self.stack.push(layer_id);
             },
 
@@ -315,7 +315,7 @@ impl FloSqlite {
             },
 
             PushVectorElementType(element_type)                             => {
-                let element_type                    = self.enum_value(DbEnum::VectorElement(element_type));
+                let element_type                    = self.enum_value(DbEnum::VectorElement(*element_type));
                 let mut insert_vector_element_type  = Self::prepare(&self.sqlite, FloStatement::InsertVectorElementType)?;
                 let element_id                      = insert_vector_element_type.insert::<&[&dyn ToSql]>(&[&&element_type])?;
                 self.stack.push(element_id);
@@ -348,7 +348,7 @@ impl FloSqlite {
             PopVectorBrushElement(drawing_style)                            => {
                 let brush_id                            = self.stack.pop().unwrap();
                 let element_id                          = self.stack.pop().unwrap();
-                let drawing_style                       = self.enum_value(DbEnum::DrawingStyle(drawing_style));
+                let drawing_style                       = self.enum_value(DbEnum::DrawingStyle(*drawing_style));
                 let mut insert_brush_definition_element = Self::prepare(&self.sqlite, FloStatement::InsertBrushDefinitionElement)?;
                 insert_brush_definition_element.insert::<&[&dyn ToSql]>(&[&element_id, &brush_id, &drawing_style])?;
             },
@@ -405,7 +405,7 @@ impl FloSqlite {
             },
 
             SetMotionType(motion_id, motion_type)                           => {
-                let motion_type         = self.enum_value(DbEnum::MotionType(motion_type));
+                let motion_type         = self.enum_value(DbEnum::MotionType(*motion_type));
                 let mut update_motion   = Self::prepare(&self.sqlite, FloStatement::UpdateMotionType)?;
 
                 update_motion.insert::<&[&dyn ToSql]>(&[&motion_type, &motion_id])?;
@@ -413,13 +413,13 @@ impl FloSqlite {
 
             SetMotionOrigin(motion_id, x, y)                                => {
                 let mut set_origin  = Self::prepare(&self.sqlite, FloStatement::InsertOrReplaceMotionOrigin)?;
-                let (x, y)          = (x as f64, y as f64);
+                let (x, y)          = (*x as f64, *y as f64);
 
                 set_origin.insert::<&[&dyn ToSql]>(&[&motion_id, &x, &y])?;
             },
 
             SetMotionPath(motion_id, path_type, num_points)                 => {
-                let path_type           = self.enum_value(DbEnum::MotionPathType(path_type));
+                let path_type           = self.enum_value(DbEnum::MotionPathType(*path_type));
                 let mut delete_path     = Self::prepare(&self.sqlite, FloStatement::DeleteMotionPoints)?;
                 let mut insert_point    = Self::prepare(&self.sqlite, FloStatement::InsertMotionPathPoint)?;
 
@@ -428,12 +428,12 @@ impl FloSqlite {
 
                 // Collect the IDs of the points
                 let mut point_ids = vec![];
-                for _index in 0..num_points {
+                for _index in 0..*num_points {
                     point_ids.push(self.stack.pop().unwrap_or(-1));
                 }
 
                 // Insert these points
-                for index in 0..num_points {
+                for index in 0..*num_points {
                     let point_index = ((num_points-1)-index) as i64;
                     insert_point.insert::<&[&dyn ToSql]>(&[&motion_id, &path_type, &point_index, &point_ids[index]])?;
                 }
@@ -463,7 +463,7 @@ impl FloSqlite {
     /// 
     fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
         for update in updates {
-            self.execute_update(update)?;
+            self.execute_update(&update)?;
         }
         Ok(())
     }
