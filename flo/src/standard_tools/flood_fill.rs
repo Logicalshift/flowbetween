@@ -1,3 +1,4 @@
+use super::super::menu::*;
 use super::super::tools::*;
 use super::super::model::*;
 
@@ -14,10 +15,33 @@ use std::iter;
 use std::sync::*;
 
 ///
+/// Model for the flood-fill tool
+///
+pub struct FloodFillModel {
+    /// The opacity of the next flood fill that will be added
+    pub opacity: Binding<f32>,
+
+    /// The color of the next flood fill that will be added
+    pub color: Binding<Color>
+}
+
+///
 /// A tool for flood-filling areas of the canvas
 ///
 pub struct FloodFill {
 
+}
+
+impl FloodFillModel {
+    ///
+    /// Creates the default flood-fill model
+    ///
+    pub fn new() -> FloodFillModel {
+        FloodFillModel {
+            opacity:    bind(1.0),
+            color:      bind(Color::Rgba(0.0, 0.6, 0.35, 1.0))
+        }
+    }
 }
 
 impl FloodFill {
@@ -86,13 +110,25 @@ impl FloodFill {
 
 impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
     type ToolData   = ();
-    type Model      = ();
+    type Model      = FloodFillModel;
 
     fn tool_name(&self) -> String { "Flood Fill".to_string() }
 
     fn image_name(&self) -> String { "floodfill".to_string() }
 
-    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
+    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> FloodFillModel {
+        FloodFillModel::new()
+    }
+
+    ///
+    /// Creates the menu controller for this tool (or None if this tool has no menu controller)
+    /// 
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &FloodFillModel) -> Option<Arc<dyn Controller>> {
+        let color   = tool_model.color.clone();
+        let opacity = tool_model.opacity.clone();
+
+        Some(Arc::new(FloodFillMenuController::new(color, opacity)))
+    }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn Iterator<Item=ToolAction<()>>> {
         Box::new(
