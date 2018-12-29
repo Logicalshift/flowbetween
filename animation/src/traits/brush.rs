@@ -49,8 +49,8 @@ pub trait Brush : Send+Sync {
     ///
     /// Renders a path using this brush's style
     ///
-    fn render_path<'a>(&'a self, properties: &'a BrushProperties, path: &'a Path) -> Box<dyn 'a+Iterator<Item=Draw>> {
-        Box::new(self.prepare_to_render(properties)
+    fn render_path<'a>(&'a self, _properties: &'a BrushProperties, path: &'a Path) -> Box<dyn 'a+Iterator<Item=Draw>> {
+        Box::new(iter::once(Draw::NewPath)
             .chain(path.to_drawing())
             .chain(iter::once(Draw::Fill)))
     }
