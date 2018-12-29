@@ -2,6 +2,7 @@ use super::db_enum::*;
 use super::flo_store::*;
 use super::motion_path_type::*;
 
+use flo_logging::*;
 use flo_animation::*;
 use flo_animation::brushes::*;
 
@@ -27,6 +28,9 @@ pub struct PathPropertiesIds {
 /// Core data structure used by the animation database
 /// 
 pub struct AnimationDbCore<TFile: FloFile+Send> {
+    /// The logger for the core
+    pub log: LogPublisher,
+
     /// The database connection
     pub db: TFile,
 

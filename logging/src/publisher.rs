@@ -96,7 +96,7 @@ impl LogPublisher {
         self.context.sync(|context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
             let message = LogMsg::from(message);
-            Self::log_in_context (context, message);
+            Self::log_in_context(context, message);
         });
     }
 

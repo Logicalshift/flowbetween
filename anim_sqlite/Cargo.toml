@@ -11,6 +11,7 @@ include     = [ "Cargo.toml", "src/**/*", "sql/**/*" ]
 [dependencies]
 flo_canvas          = { path = "../canvas", version = "^0.1.0" }
 flo_animation       = { path = "../animation", version = "^0.1.0" }
+flo_logging         = { path = "../logging", version = "^0.1.0" }
 
 itertools           = "0.8"
 rusqlite            = { version = "0.16", features = ["bundled"] }

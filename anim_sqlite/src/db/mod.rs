@@ -1,3 +1,4 @@
+use flo_logging::*;
 use flo_animation::*;
 
 use desync::*;
@@ -130,6 +131,7 @@ impl AnimationDbCore<FloSqlite> {
 
         // Generate the core
         let core = AnimationDbCore {
+            log:                        LogPublisher::new(module_path!()),
             db:                         db,
             failure:                    None,
             active_brush_for_layer:     HashMap::new(),

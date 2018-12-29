@@ -623,6 +623,7 @@ dependencies = [
  "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_animation 0.1.1",
  "flo_canvas 0.1.1",
+ "flo_logging 0.1.1",
  "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusqlite 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
