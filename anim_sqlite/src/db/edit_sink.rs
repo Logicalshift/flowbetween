@@ -1,6 +1,8 @@
 use super::*;
 use super::animation_core::*;
 
+use flo_logging::*;
+
 use futures::task;
 
 use std::collections::VecDeque;
@@ -71,11 +73,17 @@ impl<TFile: FloFile+Send+'static> EditSink<TFile> {
                     // Perform the edits
                     for edit in edits {
                         db.failure = db.failure.take().or_else(|| db.perform_edit(edit).err());
+
+                        if let Some(ref failure) = db.failure {
+                            db.log.log((Level::Error, format!("Could not write edit log item: `{:?}`", failure)));
+                        }
                     }
 
                     // Update the database and set the final error, if there was one
                     let execute_result  = db.db.execute_queue();
                     db.failure          = db.failure.take().or_else(move || execute_result.err());
+                } else {
+                    db.log.log((Level::Error, format!("Cannot commit edits to animation due to earlier error: `{:?}`", db.failure)));
                 }
             }
 
