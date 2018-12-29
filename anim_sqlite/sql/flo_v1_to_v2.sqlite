@@ -22,6 +22,54 @@ DROP TRIGGER IF EXISTS Flo_Delete_BrushPoints;
 ALTER TABLE Flo_VectorElement RENAME TO Flo_OldVectorElement;
 
 /*
+ *  ===== Other schema changes
+ */
+
+/*
+ * Required as SQLite is smart enough to rename the references to the element ID but is not
+ * smart enough to let us rename it without entirely recreating the tables.
+ */
+
+ALTER TABLE Flo_BrushElement RENAME TO Flo_OldBrushElement;
+ALTER TABLE Flo_BrushPropertiesElement RENAME TO Flo_OldBrushPropertiesElement;
+ALTER TABLE Flo_BrushPoint RENAME TO Flo_OldBrushPoint;
+
+/*
+ * Vector brush element
+ */
+CREATE TABLE Flo_BrushElement (
+    ElementId       INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+    Brush           INTEGER NOT NULL REFERENCES Flo_Brush_Type(Brush),
+    DrawingStyle    INTEGER NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * Vector brush properties element
+ */
+CREATE TABLE Flo_BrushPropertiesElement (
+    ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+    BrushProperties     INTEGER NOT NULL REFERENCES Flo_BrushProperties(BrushProperties)
+) WITHOUT ROWID;
+
+/*
+ * Brush point associated with an element
+ */
+CREATE TABLE Flo_BrushPoint (
+    ElementId           INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+    PointId             INTEGER NOT NULL,
+
+    X1                  REAL NOT NULL,
+    Y1                  REAL NOT NULL,
+    X2                  REAL NOT NULL,
+    Y2                  REAL NOT NULL,
+    X3                  REAL NOT NULL,
+    Y3                  REAL NOT NULL,
+    Width               REAL NOT NULL,
+
+    PRIMARY KEY (ElementId, PointId)
+) WITHOUT ROWID;
+
+/*
  *  ===== Paths
  */
 
@@ -100,6 +148,13 @@ CREATE TABLE Flo_VectorElement (
 /* Populate the table with the current values */
 INSERT INTO Flo_VectorElement (ElementId, VectorElementType) SELECT ElementId, VectorElementType FROM Flo_OldVectorElement;
 
+INSERT INTO Flo_BrushElement(ElementId, Brush, DrawingStyle)
+    SELECT ElementId, Brush, DrawingStyle FROM Flo_OldBrushElement;
+INSERT INTO Flo_BrushPropertiesElement(ElementId, BrushProperties)
+    SELECT ElementId, BrushProperties FROM Flo_OldBrushPropertiesElement;
+INSERT INTO Flo_BrushPoint(ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width)
+    SELECT ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_OldBrushPoint;
+
 /*
  *  ===== Triggers
  */
@@ -142,6 +197,9 @@ CREATE TRIGGER Flo_Delete_PathElements BEFORE DELETE ON Flo_VectorElement
     END;
 
 /* Old vector element table no longer exists */
+DROP TABLE Flo_OldBrushPoint;
+DROP TABLE Flo_OldBrushElement;
+DROP TABLE Flo_OldBrushPropertiesElement;
 DROP TABLE Flo_OldVectorElement;
 
 UPDATE FlowBetween SET DataVersion=2;
