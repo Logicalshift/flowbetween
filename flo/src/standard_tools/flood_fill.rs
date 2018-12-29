@@ -26,6 +26,18 @@ pub struct FloodFillModel {
 }
 
 ///
+/// Data passed through to the flood-fill tool
+///
+#[derive(Clone, PartialEq, Debug)]
+pub struct FloodFillData {
+    /// The colour to draw in
+    pub color: Color,
+
+    // The opacity to draw with
+    pub opacity: f32
+}
+
+///
 /// A tool for flood-filling areas of the canvas
 ///
 pub struct FloodFill {
@@ -56,7 +68,7 @@ impl FloodFill {
     ///
     /// Generates the actions for a flood fill operation
     ///
-    pub fn flood_fill<Anim: 'static+Animation>(&self, model: Arc<FloModel<Anim>>, center_point: (f32, f32)) -> impl Iterator<Item=ToolAction<()>> {
+    pub fn flood_fill<Anim: 'static+Animation>(&self, model: Arc<FloModel<Anim>>, center_point: (f32, f32)) -> impl Iterator<Item=ToolAction<FloodFillData>> {
         // Turn the x, y coordinates into a pathpoint
         let (x, y)          = center_point;
         let center_point    = PathPoint::new(x, y);
@@ -109,7 +121,7 @@ impl FloodFill {
 }
 
 impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
-    type ToolData   = ();
+    type ToolData   = FloodFillData;
     type Model      = FloodFillModel;
 
     fn tool_name(&self) -> String { "Flood Fill".to_string() }
@@ -130,10 +142,10 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
         Some(Arc::new(FloodFillMenuController::new(color, opacity)))
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<()>>, input: Box<dyn 'a+Iterator<Item=ToolInput<()>>>) -> Box<dyn Iterator<Item=ToolAction<()>>> {
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<FloodFillData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<FloodFillData>>>) -> Box<dyn Iterator<Item=ToolAction<FloodFillData>>> {
         Box::new(
             input.flat_map(move |action| {
-                let actions : Box<dyn Iterator<Item=ToolAction<()>>> =
+                let actions : Box<dyn Iterator<Item=ToolAction<FloodFillData>>> =
                     match action {
                         ToolInput::Paint(painting) => {
                             match painting.action {
