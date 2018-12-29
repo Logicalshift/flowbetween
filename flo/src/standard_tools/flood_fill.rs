@@ -9,6 +9,7 @@ use flo_animation::*;
 use flo_animation::raycast::*;
 use flo_curves::bezier::path::algorithms::*;
 
+use futures::*;
 use itertools::*;
 
 use std::iter;
@@ -30,11 +31,8 @@ pub struct FloodFillModel {
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub struct FloodFillData {
-    /// The colour to draw in
-    pub color: Color,
-
-    // The opacity to draw with
-    pub opacity: f32
+    /// The properties to use when drawing flood-fills
+    pub brush_properties: BrushProperties
 }
 
 ///
@@ -68,7 +66,7 @@ impl FloodFill {
     ///
     /// Generates the actions for a flood fill operation
     ///
-    pub fn flood_fill<Anim: 'static+Animation>(&self, model: Arc<FloModel<Anim>>, center_point: (f32, f32)) -> impl Iterator<Item=ToolAction<FloodFillData>> {
+    pub fn flood_fill<Anim: 'static+Animation>(&self, model: Arc<FloModel<Anim>>, center_point: (f32, f32), data: &FloodFillData) -> impl Iterator<Item=ToolAction<FloodFillData>> {
         // Turn the x, y coordinates into a pathpoint
         let (x, y)          = center_point;
         let center_point    = PathPoint::new(x, y);
@@ -90,9 +88,7 @@ impl FloodFill {
                 let fill_path: Path = fill_path;
 
                 let brush_defn      = BrushDefinition::Ink(InkDefinition::default());
-                let mut brush_props = BrushProperties::new();
-
-                brush_props.color   = Color::Rgba(0.0, 0.5, 0.8, 1.0);
+                let mut brush_props = data.brush_properties.clone();
 
                 // Generate the editing actions to create this fill path
                 let actions         = vec![
@@ -132,9 +128,6 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
         FloodFillModel::new()
     }
 
-    ///
-    /// Creates the menu controller for this tool (or None if this tool has no menu controller)
-    /// 
     fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &FloodFillModel) -> Option<Arc<dyn Controller>> {
         let color   = tool_model.color.clone();
         let opacity = tool_model.opacity.clone();
@@ -142,7 +135,30 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
         Some(Arc::new(FloodFillMenuController::new(color, opacity)))
     }
 
-    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<FloodFillData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<FloodFillData>>>) -> Box<dyn Iterator<Item=ToolAction<FloodFillData>>> {
+    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &FloodFillModel) -> Box<dyn Stream<Item=ToolAction<FloodFillData>, Error=()>+Send> {
+        // Compute brush properties from the model
+        let color               = tool_model.color.clone();
+        let opacity             = tool_model.opacity.clone();
+        let brush_properties    = computed(move || {
+            BrushProperties {
+                size:       1.0,
+                opacity:    opacity.get(),
+                color:      color.get()
+            }
+        });
+
+        // Compute the data from that
+        let fill_data           = computed(move || {
+            FloodFillData {
+                brush_properties: brush_properties.get()
+            }
+        });
+
+        // Turn the computed values into a stream and update the brush whenever the values change
+        Box::new(follow(fill_data).map(|fill_data| ToolAction::Data(fill_data)))
+    }
+
+    fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<FloodFillData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<FloodFillData>>>) -> Box<dyn Iterator<Item=ToolAction<FloodFillData>>> {
         Box::new(
             input.flat_map(move |action| {
                 let actions : Box<dyn Iterator<Item=ToolAction<FloodFillData>>> =
@@ -151,7 +167,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
                             match painting.action {
                                 PaintAction::Finish => {
                                     // Perform the flood-fill action when the painting finishes
-                                    Box::new(self.flood_fill(Arc::clone(&flo_model), painting.location))
+                                    Box::new(self.flood_fill(Arc::clone(&flo_model), painting.location, &*(data.clone().unwrap())))
                                 },
 
                                 _ => {
