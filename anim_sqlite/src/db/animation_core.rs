@@ -29,7 +29,7 @@ pub struct PathPropertiesIds {
 /// 
 pub struct AnimationDbCore<TFile: FloFile+Send> {
     /// The logger for the core
-    pub log: LogPublisher,
+    pub log: Arc<LogPublisher>,
 
     /// The database connection
     pub db: TFile,
@@ -477,54 +477,62 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     pub fn perform_edit(&mut self, edit: AnimationEdit) -> Result<()> {
         use self::AnimationEdit::*;
 
-        match edit {
-            SetSize(width, height) => {
-                self.db.update(vec![
-                    DatabaseUpdate::UpdateCanvasSize(width, height)
-                ])?;
-            },
+        let result = self.log.clone().with(|| {
+            match edit {
+                SetSize(width, height) => {
+                    self.db.update(vec![
+                        DatabaseUpdate::UpdateCanvasSize(width, height)
+                    ])?;
+                },
 
-            AddNewLayer(new_layer_id) => {
-                // Create a layer with the new ID
-                self.db.update(vec![
-                    DatabaseUpdate::PushLayerType(LayerType::Vector),
-                    DatabaseUpdate::PushAssignLayer(new_layer_id),
-                    DatabaseUpdate::Pop
-                ])?;
-            },
+                AddNewLayer(new_layer_id) => {
+                    // Create a layer with the new ID
+                    self.db.update(vec![
+                        DatabaseUpdate::PushLayerType(LayerType::Vector),
+                        DatabaseUpdate::PushAssignLayer(new_layer_id),
+                        DatabaseUpdate::Pop
+                    ])?;
+                },
 
-            RemoveLayer(old_layer_id) => {
-                // Delete this layer
-                self.db.update(vec![
-                    DatabaseUpdate::PushLayerForAssignedId(old_layer_id),
-                    DatabaseUpdate::PopDeleteLayer
-                ])?;
-            },
+                RemoveLayer(old_layer_id) => {
+                    // Delete this layer
+                    self.db.update(vec![
+                        DatabaseUpdate::PushLayerForAssignedId(old_layer_id),
+                        DatabaseUpdate::PopDeleteLayer
+                    ])?;
+                },
 
-            Layer(assigned_layer_id, layer_edit) => {
-                // Look up the real layer ID (which is often different to the assigned ID)
-                let layer_id = {
-                    let db                          = &mut self.db;
-                    let layer_id_for_assigned_id    = &mut self.layer_id_for_assigned_id;
-                    let layer_id                    = *layer_id_for_assigned_id.entry(assigned_layer_id)
-                        .or_insert_with(|| db.query_layer_id_for_assigned_id(assigned_layer_id).unwrap_or(-1));
+                Layer(assigned_layer_id, layer_edit) => {
+                    // Look up the real layer ID (which is often different to the assigned ID)
+                    let layer_id = {
+                        let db                          = &mut self.db;
+                        let layer_id_for_assigned_id    = &mut self.layer_id_for_assigned_id;
+                        let layer_id                    = *layer_id_for_assigned_id.entry(assigned_layer_id)
+                            .or_insert_with(|| db.query_layer_id_for_assigned_id(assigned_layer_id).unwrap_or(-1));
 
-                    layer_id
-                };
+                        layer_id
+                    };
 
-                // Edit this layer
-                self.edit_vector_layer(layer_id, layer_edit)?;
-            },
+                    // Edit this layer
+                    self.edit_vector_layer(layer_id, layer_edit)?;
+                },
 
-            Element(element_id, element_edit) => {
-                self.edit_element(element_id, element_edit)?;
-            },
+                Element(element_id, element_edit) => {
+                    self.edit_element(element_id, element_edit)?;
+                },
 
-            Motion(motion_id, motion_edit) => {
-                self.edit_motion(motion_id, motion_edit)?;
+                Motion(motion_id, motion_edit) => {
+                    self.edit_motion(motion_id, motion_edit)?;
+                }
             }
+
+            Ok(())
+        });
+
+        if let Err(ref error) = result {
+            self.log.log((Level::Error, format!("Could not perform edit due to error {:?}", error)));
         }
 
-        Ok(())
+        result
     }
 }
