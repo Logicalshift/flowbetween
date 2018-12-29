@@ -81,6 +81,11 @@ impl<TFile: FloFile+Send+'static> EditSink<TFile> {
 
                     // Update the database and set the final error, if there was one
                     let execute_result  = db.db.execute_queue();
+
+                    if let Err(ref failure) = execute_result {
+                        db.log.log((Level::Error, format!("Could not complete editing operation: `{:?}`", failure)));
+                    }
+
                     db.failure          = db.failure.take().or_else(move || execute_result.err());
                 } else {
                     db.log.log((Level::Error, format!("Cannot commit edits to animation due to earlier error: `{:?}`", db.failure)));
