@@ -2,16 +2,19 @@ use super::db_enum::*;
 use super::flo_store::*;
 use super::flo_query::*;
 
-mod query;
-mod store;
-pub use self::query::*;
-pub use self::store::*;
+use flo_logging::*;
 
 use rusqlite::*;
 use rusqlite::types::ToSql;
 use std::collections::*;
 use std::time::Duration;
+use std::sync::*;
 use std::mem;
+
+mod query;
+mod store;
+pub use self::query::*;
+pub use self::store::*;
 
 const V1_DEFINITION: &[u8]      = include_bytes!["../../../sql/flo_v1.sqlite"];
 const V1_V2_UPGRADE: &[u8]      = include_bytes!["../../../sql/flo_v1_to_v2.sqlite"];
@@ -30,6 +33,9 @@ const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
 /// SQLite. (It also reduces the amount of boilerplate code needed in a lot of places)
 /// 
 pub struct FloSqlite {
+    /// This type's logger
+    log: Arc<LogPublisher>,
+
     /// The SQLite connection
     sqlite: Connection,
 
@@ -144,6 +150,7 @@ impl FloSqlite {
         let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", NO_PARAMS, |row| row.get(0)).unwrap();
 
         FloSqlite {
+            log:            Arc::new(LogPublisher::new(module_path!())),
             sqlite:         sqlite,
             animation_id:   animation_id,
             enum_values:    HashMap::new(),

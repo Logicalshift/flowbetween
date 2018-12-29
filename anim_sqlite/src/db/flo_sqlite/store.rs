@@ -463,7 +463,12 @@ impl FloSqlite {
     /// 
     fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
         for update in updates {
-            self.execute_update(&update)?;
+            let result = self.execute_update(&update);
+
+            if let Err(failure) = result {
+                self.log.log((Level::Error, format!("Update operation `{:?}` failed: `{:?}`", update, failure)));
+                return Err(failure);
+            }
         }
         Ok(())
     }
