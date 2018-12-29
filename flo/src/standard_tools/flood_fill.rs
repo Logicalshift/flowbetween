@@ -68,7 +68,11 @@ impl FloodFill {
                     .map(move |action| LayerEdit::Path(when, action))
                     .map(move |action| AnimationEdit::Layer(layer, action))
                     .map(|action| ToolAction::Edit(action))
-                    .chain(iter::once(ToolAction::InvalidateFrame));
+                    .chain(vec![
+                        ToolAction::BrushPreview(BrushPreviewAction::Layer(layer)),
+                        ToolAction::BrushPreview(BrushPreviewAction::UnsetProperties),
+                        ToolAction::InvalidateFrame
+                    ]);
 
                 Either::Left(actions)
             } else {

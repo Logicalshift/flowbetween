@@ -8,6 +8,9 @@ pub enum BrushPreviewAction {
     /// Clears any existing brush preview
     Clear,
 
+    /// Unsets the brush preview properties (so the next brush stroke will always reload them)
+    UnsetProperties,
+
     /// Specifies the layer whose brush preview is being edited
     Layer(u64),
 

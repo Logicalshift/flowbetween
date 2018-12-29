@@ -236,6 +236,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 self.preview = Some(preview);
             },
 
+            BrushPreviewAction::UnsetProperties                 => { self.preview_layer.map(|layer_id| renderer.set_layer_brush(layer_id, None, None)); }
             BrushPreviewAction::Layer(layer_id)                 => { self.preview_layer = Some(layer_id); },
             BrushPreviewAction::BrushDefinition(defn, style)    => { self.brush_definition = (defn.clone(), style); self.preview.as_mut().map(move |preview| preview.select_brush(&defn, style)); },
             BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.set_brush_properties(&props)); },
