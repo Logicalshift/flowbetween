@@ -1,7 +1,7 @@
 use super::db_enum::*;
 use super::motion_path_type::*;
 
-use animation::*;
+use flo_animation::*;
 use std::time::Duration;
 
 /* TODO: remove dependency on the Sqlite result type */

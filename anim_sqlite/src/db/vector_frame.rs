@@ -3,7 +3,7 @@ use super::db_enum::*;
 use super::flo_store::*;
 use super::flo_query::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use std::rc::*;
 use std::time::Duration;

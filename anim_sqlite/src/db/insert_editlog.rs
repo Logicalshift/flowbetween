@@ -50,7 +50,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the values for an AnimationEdit into the edit log (db must have an edit ID pushed. This will be popped when this returns)
     /// 
     fn insert_animation_edit<'a>(&mut self, edit: &AnimationEdit) -> Result<()> {
-        use animation::AnimationEdit::*;
+        use self::AnimationEdit::*;
 
         match edit {
             &Layer(layer_id, ref layer_edit)            => { 
@@ -88,7 +88,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the parameters for an element edit into the edit log
     /// 
     fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
-        use animation::ElementEdit::*;
+        use self::ElementEdit::*;
 
         match edit {
             SetControlPoints(points) => {
@@ -107,7 +107,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the parameters for a motion edit into the edit log
     /// 
     fn insert_motion_edit(&mut self, edit: &MotionEdit) -> Result<()> {
-        use animation::MotionEdit::*;
+        use self::MotionEdit::*;
 
         match edit {
             Create                  => { 
@@ -161,7 +161,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the values for a LayerEdit into the edit log (db must have an edit ID pushed. This will be popped when this returns)
     /// 
     fn insert_layer_edit(&mut self, edit: &LayerEdit) -> Result<()> {
-        use animation::LayerEdit::*;
+        use self::LayerEdit::*;
 
         match edit {
             Paint(when, paint_edit)         => {
@@ -190,7 +190,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the values for a PaintEdit into the edit log (db must have an edit ID + a when value pushed. This will be popped when this returns)
     /// 
     fn insert_paint_edit<'a>(&mut self, edit: &PaintEdit) -> Result<()> {
-        use animation::PaintEdit::*;
+        use self::PaintEdit::*;
 
         match edit {
             &SelectBrush(ref id, ref definition, ref drawing_style) => {
@@ -218,7 +218,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Inserts the values for a PathEdit into the edit log (db must have an edit ID + a when value pushed pushed)
     ///
     fn insert_path_edit<'a>(&mut self, edit: &PathEdit) -> Result<()> {
-        use animation::PathEdit::*;
+        use self::PathEdit::*;
 
         match edit {
             SelectBrush(id, definition, drawing_style)  => {

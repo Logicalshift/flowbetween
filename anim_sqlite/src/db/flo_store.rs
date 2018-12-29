@@ -5,7 +5,7 @@ use super::motion_path_type::*;
 // TODO: make error type more generic
 use rusqlite::*;
 
-use animation::*;
+use flo_animation::*;
 use std::sync::*;
 use std::time::Duration;
 

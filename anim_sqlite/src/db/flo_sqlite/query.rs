@@ -1,7 +1,7 @@
 use super::*;
 use super::super::motion_path_type::*;
 
-use animation::*;
+use flo_animation::*;
 
 impl FloSqlite {
     ///

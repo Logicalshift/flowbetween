@@ -1,4 +1,4 @@
-use animation::*;
+use flo_animation::*;
 
 use desync::*;
 use futures::*;

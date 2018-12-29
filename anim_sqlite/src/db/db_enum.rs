@@ -1,6 +1,6 @@
 use super::motion_path_type::*;
 
-use animation::*;
+use flo_animation::*;
 
 /// Provides the enum type and name for a database enum value
 pub struct DbEnumName(pub &'static str, pub &'static str);

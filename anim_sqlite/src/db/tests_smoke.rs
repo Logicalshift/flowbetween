@@ -5,7 +5,7 @@ use super::flo_store::*;
 use super::flo_query::*;
 use super::motion_path_type::*;
 
-use animation;
+use flo_animation;
 
 use std::time::Duration;
 
@@ -575,7 +575,7 @@ fn smoke_create_motion() {
 fn smoke_set_motion_type() {
     test_updates(vec![
         DatabaseUpdate::CreateMotion(1),
-        DatabaseUpdate::SetMotionType(1, animation::MotionType::Translate)
+        DatabaseUpdate::SetMotionType(1, flo_animation::MotionType::Translate)
     ])
 }
 

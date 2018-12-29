@@ -2,7 +2,7 @@ use super::*;
 
 use futures::*;
 use futures::executor;
-use animation::*;
+use flo_animation::*;
 
 impl SqliteAnimation {
     ///

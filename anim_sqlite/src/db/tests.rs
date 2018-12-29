@@ -1,9 +1,9 @@
 use super::*;
 use super::flo_query::*;
 
-use animation;
-use animation::LayerEdit::*;
-use animation::PaintEdit::*;
+use flo_animation;
+use flo_animation::LayerEdit::*;
+use flo_animation::PaintEdit::*;
 
 use std::time::Duration;
 
@@ -73,7 +73,7 @@ fn select_brush() {
 fn brush_properties() {
     core().insert_edits(&[AnimationEdit::Layer(24,
         Paint(Duration::from_millis(300),
-            BrushProperties(ElementId::Unassigned, animation::BrushProperties::new())
+            BrushProperties(ElementId::Unassigned, flo_animation::BrushProperties::new())
         )
     )]).unwrap();
 }
@@ -99,7 +99,7 @@ fn create_path() {
         AnimationEdit::Layer(24, Path(Duration::from_millis(300),
             PathEdit::SelectBrush(ElementId::Unassigned, BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
         AnimationEdit::Layer(24, Path(Duration::from_millis(300),
-            PathEdit::BrushProperties(ElementId::Unassigned, animation::BrushProperties::new()))),
+            PathEdit::BrushProperties(ElementId::Unassigned, flo_animation::BrushProperties::new()))),
         AnimationEdit::Layer(24, Path(Duration::from_millis(300),
             PathEdit::CreatePath(ElementId::Unassigned, Arc::new(vec![
                 PathComponent::Move(PathPoint::new(10.0, 20.0)),

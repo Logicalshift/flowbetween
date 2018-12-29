@@ -2,8 +2,8 @@ use super::db_enum::*;
 use super::flo_store::*;
 use super::motion_path_type::*;
 
-use animation::*;
-use animation::brushes::*;
+use flo_animation::*;
+use flo_animation::brushes::*;
 
 use rusqlite::*;
 use itertools::*;
@@ -235,7 +235,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Adds a new vector element to a vector layer
     /// 
     fn paint_vector_layer(&mut self, layer_id: i64, when: Duration, new_element: PaintEdit) -> Result<()> {
-        use animation::PaintEdit::*;
+        use self::PaintEdit::*;
 
         // Update the state of this object based on the element
         match new_element {
@@ -270,7 +270,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Adds a vector path to a vector layer
     ///
     fn path_vector_layer(&mut self, layer_id: i64, when: Duration, new_element: PathEdit) -> Result<()> {
-        use animation::PathEdit::*;
+        use self::PathEdit::*;
 
         // Update the state of this object based on the element
         match new_element {

@@ -1,7 +1,7 @@
 use super::*;
 
-use canvas::*;
-use animation::*;
+use flo_canvas::*;
+use flo_animation::*;
 
 use futures::*;
 use futures::executor;
@@ -769,7 +769,7 @@ fn read_path_element() {
         AnimationEdit::Layer(24, Path(Duration::from_millis(300),
             PathEdit::SelectBrush(ElementId::Unassigned, BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
         AnimationEdit::Layer(24, Path(Duration::from_millis(300),
-            PathEdit::BrushProperties(ElementId::Unassigned, animation::BrushProperties::new()))),
+            PathEdit::BrushProperties(ElementId::Unassigned, flo_animation::BrushProperties::new()))),
         AnimationEdit::Layer(24, Path(Duration::from_millis(300),
             PathEdit::CreatePath(ElementId::Assigned(100), Arc::new(vec![
                 PathComponent::Move(PathPoint::new(10.0, 20.0)),

@@ -1,6 +1,6 @@
 use super::*;
 
-use animation::*;
+use flo_animation::*;
 
 impl FloSqlite {
     ///

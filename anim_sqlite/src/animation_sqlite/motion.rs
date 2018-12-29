@@ -1,6 +1,7 @@
+use flo_animation::AnimationMotion;
 use super::*;
 
-use animation::*;
+use flo_animation::*;
 
 use futures::*;
 use std::ops::Range;

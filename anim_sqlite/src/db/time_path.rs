@@ -1,6 +1,6 @@
 use super::flo_query::*;
 
-use animation::*;
+use flo_animation::*;
 
 use itertools::*;
 

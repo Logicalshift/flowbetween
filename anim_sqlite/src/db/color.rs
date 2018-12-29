@@ -2,7 +2,7 @@ use super::*;
 use super::db_enum::*;
 use super::flo_store::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
