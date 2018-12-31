@@ -8,3 +8,6 @@ repository      = "https://github.com/Logicalshift/flowbetween"
 description     = "Pipes user interface operations between flo_ui and flo_cocoa_ui"
 
 [dependencies]
+flo_ui      = { path = "../../ui", version = "^0.1.0" }
+flo_stream  = { git = "https://github.com/Logicalshift/flo_stream", version = "0.3" }
+flo_canvas  = { path = "../../canvas", version = "^0.1.0" }

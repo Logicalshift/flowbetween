@@ -711,6 +711,11 @@ dependencies = [
 [[package]]
 name = "flo_cocoa_pipe"
 version = "0.1.0"
+dependencies = [
+ "flo_canvas 0.1.1",
+ "flo_stream 0.3.1 (git+https://github.com/Logicalshift/flo_stream)",
+ "flo_ui 0.1.1",
+]
 
 [[package]]
 name = "flo_cocoa_ui"
