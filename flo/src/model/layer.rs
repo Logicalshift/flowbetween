@@ -23,7 +23,7 @@ impl LayerModel {
     pub fn new<'a>(layer: &'a dyn Layer) -> LayerModel {
         LayerModel {
             id:     layer.id(),
-            name:   bind(format!("Layer {}", layer.id()))
+            name:   bind(layer.name().unwrap_or_else(|| format!("Layer {}", layer.id())))
         }
     }
 }
