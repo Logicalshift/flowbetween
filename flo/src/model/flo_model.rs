@@ -283,7 +283,7 @@ impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: 
     }
 }
 
-impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
+impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     ///
     /// Retrieves a sink that can be used to send edits for this animation
     /// 
@@ -298,6 +298,7 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
         // Borrow the bits of the viewmodel we can change
         let frame_edit_counter  = self.frame_edit_counter.clone();
         let size_binding        = self.size_binding.clone();
+        let timeline            = self.timeline.clone();
 
         // Pipe the edits so they modify the model as a side-effect
         let model_edit          = FloModelSink::new(animation_edit, move |edits: Arc<Vec<AnimationEdit>>| {
@@ -327,6 +328,13 @@ impl<Anim: Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
                     Layer(_, RemoveKeyFrame(_)) => {
                         advance_edit_counter = true;
                     },
+
+                    Layer(layer_id, SetName(new_name)) => {
+                        timeline.layers.get()
+                            .iter()
+                            .for_each(|layer| if &layer.id == layer_id { layer.name.set(new_name.clone())} );
+                        advance_edit_counter = true;
+                    }
                 }
             }
 
