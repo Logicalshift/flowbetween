@@ -8,6 +8,9 @@ repository      = "https://github.com/Logicalshift/flowbetween"
 description     = "User interface implementation for FlowBetween using the Cocoa API"
 
 [dependencies]
+flo_cocoa_pipe  = { path = "../cocoa_pipe", version = "0.1" }
+
+futures         = "0.1"
 cocoa           = "0.18"
 core-graphics   = "0.17"
 core-foundation = "0.6"
