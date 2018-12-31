@@ -158,6 +158,14 @@ CREATE TABLE Flo_EL_MotionPath (
 ) WITHOUT ROWID;
 
 /*
+ * The string attached to an edit log entry
+ */
+CREATE TABLE Flo_EL_String (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+    String      Text NOT NULL
+) WITHOUT ROWID;
+
+/*
  *  ===== Colours, brushes and similar resources
  */
 

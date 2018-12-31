@@ -176,6 +176,18 @@ INSERT INTO Flo_BrushPoint(ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width)
     SELECT ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_OldBrushPoint;
 
 /*
+ *  ===== Edit log entries
+ */
+
+/*
+ * The string attached to an edit log entry
+ */
+CREATE TABLE Flo_EL_String (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+    String      Text NOT NULL
+) WITHOUT ROWID;
+
+/*
  *  ===== Triggers
  */
 
