@@ -222,6 +222,15 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Retrieves the string associated with a specific edit ID
+    ///
+    fn query_edit_log_string(&mut self, edit_id: i64) -> Result<String> {
+        self.query_row(FloStatement::SelectEditLogString, &[&edit_id], |row| {
+            row.get(0)
+        })
+    }
+
+    ///
     /// Retrieves a colour with the specified ID
     /// 
     fn query_color(&mut self, color_id: i64) -> Result<ColorEntry> {

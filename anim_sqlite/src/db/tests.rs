@@ -57,6 +57,11 @@ fn remove_key_frame() {
 }
 
 #[test]
+fn set_layer_name() {
+    core().insert_edits(&[AnimationEdit::Layer(24, SetName("Some layer".to_string()))]).unwrap();
+}
+
+#[test]
 fn select_brush() {
     core().insert_edits(&[AnimationEdit::Layer(24, 
         Paint(Duration::from_millis(300), 

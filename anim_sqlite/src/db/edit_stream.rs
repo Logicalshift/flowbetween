@@ -197,7 +197,7 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
 
             LayerAddKeyFrame            => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::AddKeyFrame(entry.when.unwrap_or(Duration::from_millis(0)))),
             LayerRemoveKeyFrame         => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::RemoveKeyFrame(entry.when.unwrap_or(Duration::from_millis(0)))),
-            LayerSetName                => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::SetName(unimplemented!("TODO!"))),
+            LayerSetName                => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::SetName(core.db.query_edit_log_string(entry.edit_id).unwrap())),
 
             LayerPaintSelectBrush       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::select_brush_for_entry(core, entry)),
             LayerPaintBrushProperties   => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_properties_for_entry(core, entry)),

@@ -61,7 +61,9 @@ impl FloSqlite {
             },
 
             PopEditLogString(string)                                        => {
-                // TODO: implement me!
+                let edit_log_id             = self.stack.pop().unwrap();
+                let mut insert_edit_string  = Self::prepare(&self.sqlite, FloStatement::InsertELString)?;
+                insert_edit_string.insert::<&[&dyn ToSql]>(&[&edit_log_id, string])?;
             },
 
             PopEditLogBrushProperties                                       => {
