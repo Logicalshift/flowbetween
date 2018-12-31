@@ -4,8 +4,10 @@
 //! generated in the `flo_ui` library into these events.
 //!
 
-mod cocoa_action;
-mod cocoa_event;
+mod action;
+mod event;
+mod view_type;
 
-pub use self::cocoa_action::*;
-pub use self::cocoa_event::*;
+pub use self::action::*;
+pub use self::event::*;
+pub use self::view_type::*;
