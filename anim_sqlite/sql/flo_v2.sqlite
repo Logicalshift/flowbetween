@@ -399,6 +399,7 @@ CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
     BEGIN
         DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
         DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
+        DELETE FROM Flo_LayerName WHERE LayerId = Old.LayerId;
     END;
 
 /*
@@ -430,6 +431,17 @@ CREATE TABLE Flo_LayerKeyFrame (
 );
 
 CREATE INDEX FloIdx_FrameTime ON Flo_LayerKeyFrame (LayerId, AtTime);
+
+/*
+ * Associates names with layers
+ */
+CREATE TABLE Flo_LayerName (
+    /* Layer ID */
+    LayerId INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_LayerType(LayerId),
+
+    /* Layer name */
+    Name    Text NOT NULL
+) WITHOUT ROWID;
 
 /*
  * Specifies the assigned element ID for an element in a layer

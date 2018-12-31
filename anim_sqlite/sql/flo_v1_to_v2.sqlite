@@ -109,6 +109,26 @@ CREATE TABLE Flo_PathPointType (
 ) WITHOUT ROWID;
 
 /*
+ *  ===== Layer elements
+ */
+
+/*
+ * Associates names with layers
+ */
+CREATE TABLE Flo_LayerName (
+    /* Layer ID */
+    LayerId INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_LayerType(LayerId),
+
+    /* Layer name */
+    Name    Text NOT NULL
+) WITHOUT ROWID;
+
+CREATE TRIGGER Flo_Delete_LayerName BEFORE DELETE ON Flo_LayerType
+    BEGIN
+        DELETE FROM Flo_LayerName WHERE LayerId = Old.LayerId;
+    END;
+
+/*
  *  ===== Vector elements
  */
 
