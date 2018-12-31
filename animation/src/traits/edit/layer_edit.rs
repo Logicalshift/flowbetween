@@ -32,7 +32,10 @@ pub enum LayerEdit {
     AddKeyFrame(Duration),
 
     /// Removes a keyframe previously added at a particular duration
-    RemoveKeyFrame(Duration)
+    RemoveKeyFrame(Duration),
+
+    /// Changes the name of this layer
+    SetName(String)
 }
 
 impl LayerEdit {

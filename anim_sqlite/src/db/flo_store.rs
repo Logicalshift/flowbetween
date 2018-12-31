@@ -43,6 +43,9 @@ pub enum DatabaseUpdate {
     /// Pops two things from the stack: a brush ID and an edit ID and inserts a brush with the specified drawing style
     PopEditLogBrush(DrawingStyleType),
 
+    /// Pops an edit ID and associates a string value with it
+    PopEditLogString(String),
+
     /// Pops two things from the stack: a brush properties ID and an edit ID and inserts a brush properties edit
     PopEditLogBrushProperties,
 
@@ -105,6 +108,9 @@ pub enum DatabaseUpdate {
 
     /// Pushes a known layer ID
     PushLayerId(i64),
+
+    /// Pops a layer ID and sets the name to the specified value for that layer
+    PopLayerName(String),
 
     /// Adds a key frame to the layer with the ID on top of the stack
     PopAddKeyFrame(Duration),

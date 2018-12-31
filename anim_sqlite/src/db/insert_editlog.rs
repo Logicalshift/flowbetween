@@ -181,6 +181,10 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             RemoveKeyFrame(when)           => {
                 self.db.update(vec![PushEditLogWhen(*when), Pop])?;
             }
+
+            SetName(new_name)              => {
+                self.db.update(vec![PopEditLogString(new_name.clone())])?;
+            }
         }
 
         Ok(())

@@ -465,6 +465,17 @@ fn smoke_remove_key_frame() {
 }
 
 #[test]
+fn smoke_set_layer_name() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PopLayerName("Test".to_string())
+    ])
+}
+
+#[test]
 fn smoke_push_nearest_keyframe() {
     test_updates(vec![
         DatabaseUpdate::PushLayerType(LayerType::Vector),

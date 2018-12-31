@@ -16,6 +16,7 @@ pub enum EditLogType {
 
     LayerAddKeyFrame,
     LayerRemoveKeyFrame,
+    LayerSetName,
 
     LayerPaintSelectBrush,
     LayerPaintBrushProperties,
@@ -197,6 +198,7 @@ impl From<DbEnumType> for Vec<DbEnum> {
 
                     DbEnum::EditLog(LayerAddKeyFrame),
                     DbEnum::EditLog(LayerRemoveKeyFrame),
+                    DbEnum::EditLog(LayerSetName),
 
                     DbEnum::EditLog(LayerPaintSelectBrush),
                     DbEnum::EditLog(LayerPaintBrushProperties),
@@ -299,6 +301,7 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             
             Layer(_, AddKeyFrame(_))                            => EditLogType::LayerAddKeyFrame,
             Layer(_, RemoveKeyFrame(_))                         => EditLogType::LayerRemoveKeyFrame,
+            Layer(_, SetName(_))                                => EditLogType::LayerSetName,
             Layer(_, Paint(_, SelectBrush(_, _, _)))            => EditLogType::LayerPaintSelectBrush,
             Layer(_, Paint(_, BrushProperties(_, _)))           => EditLogType::LayerPaintBrushProperties,
             Layer(_, Paint(_, BrushStroke(_,_)))                => EditLogType::LayerPaintBrushStroke,
@@ -375,6 +378,7 @@ impl From<EditLogType> for DbEnumName {
 
             LayerAddKeyFrame            => DbEnumName("Edit", "Layer::AddKeyFrame"),
             LayerRemoveKeyFrame         => DbEnumName("Edit", "Layer::RemoveKeyFrame"),
+            LayerSetName                => DbEnumName("Edit", "Layer::SetName"),
 
             LayerPaintSelectBrush       => DbEnumName("Edit", "Layer::Paint::SelectBrush"),
             LayerPaintBrushProperties   => DbEnumName("Edit", "Layer::Paint::BrushProperties"),

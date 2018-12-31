@@ -466,6 +466,13 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             Path(when, edit) => {
                 self.path_vector_layer(layer_id, when, edit)?;
             }
+
+            SetName(new_name) => {
+                self.db.update(vec![
+                    DatabaseUpdate::PushLayerId(layer_id),
+                    DatabaseUpdate::PopLayerName(new_name.clone())
+                ])?;
+            }
         }
 
         Ok(())

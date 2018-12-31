@@ -110,7 +110,9 @@ impl VectorLayerCore {
             Path(when, edit)            => self.path(*when, edit),
 
             AddKeyFrame(when)           => self.add_key_frame(*when),
-            RemoveKeyFrame(when)        => self.remove_key_frame(*when)
+            RemoveKeyFrame(when)        => self.remove_key_frame(*when),
+
+            SetName(new_name)           => self.name = Some(new_name.clone())
         }
     }
 

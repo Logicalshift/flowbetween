@@ -60,6 +60,10 @@ impl FloSqlite {
                 set_brush.insert::<&[&dyn ToSql]>(&[&edit_log_id, &drawing_style, &brush_id])?;
             },
 
+            PopEditLogString(string)                                        => {
+                // TODO: implement me!
+            },
+
             PopEditLogBrushProperties                                       => {
                 let brush_props_id      = self.stack.pop().unwrap();
                 let edit_log_id         = self.stack.pop().unwrap();
@@ -286,6 +290,12 @@ impl FloSqlite {
 
             PushLayerId(layer_id)                                           => {
                 self.stack.push(*layer_id);
+            },
+
+            PopLayerName(name)                                              => {
+                let layer_id                    = self.stack.pop().unwrap();
+                let mut insert_or_replace_name  = Self::prepare(&self.sqlite, FloStatement::InsertOrReplaceLayerName)?;
+                insert_or_replace_name.insert::<&[&dyn ToSql]>(&[&layer_id, name])?;
             },
 
             PushLayerForAssignedId(assigned_id)                             => {
