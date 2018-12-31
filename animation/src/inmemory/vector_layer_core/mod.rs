@@ -17,6 +17,9 @@ pub struct VectorLayerCore {
     // The ID assigned to this layer
     id: u64,
 
+    /// The name of this layer
+    name: Option<String>,
+
     /// The vector map for this layer
     vector_map: VectorMap,
 
@@ -37,6 +40,7 @@ impl VectorLayerCore {
     pub fn new(id: u64) -> VectorLayerCore {
         VectorLayerCore {
             id:                     id,
+            name:                   None,
             vector_map:             VectorMap::new(),
             keyframes:              vec![],
             path_brush:             None,
@@ -56,6 +60,13 @@ impl VectorLayerCore {
     /// 
     pub fn keyframes<'a>(&'a self) -> impl Iterator<Item=Arc<VectorKeyFrame>>+'a {
         self.keyframes.iter().cloned()
+    }
+
+    ///
+    /// Retrieves the name for this layer
+    ///
+    pub fn name(&self) -> Option<String> {
+        self.name.clone()
     }
 
     ///

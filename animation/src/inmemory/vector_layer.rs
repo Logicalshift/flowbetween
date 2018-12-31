@@ -52,6 +52,10 @@ impl Layer for InMemoryVectorLayer {
         self.core.lock().unwrap().id()
     }
 
+    fn name(&self) -> Option<String> {
+        self.core.lock().unwrap().name()
+    }
+
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame> {
         let core = self.core.lock().unwrap();
 

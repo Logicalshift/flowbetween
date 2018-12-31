@@ -18,6 +18,11 @@ pub trait Layer :
     fn id(&self) -> u64;
 
     ///
+    /// Retrieves the name associated with this layer (or none if no name has been assigned yet)
+    ///
+    fn name(&self) -> Option<String>;
+
+    ///
     /// The types of edit that are supported by this layer
     /// 
     fn supported_edit_types(&self) -> Vec<LayerEditType>;

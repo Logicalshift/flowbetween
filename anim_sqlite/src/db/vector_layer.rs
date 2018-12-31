@@ -16,6 +16,9 @@ pub struct SqliteVectorLayer<TFile: FloFile+Send> {
     /// The ID of this layer
     layer_id: i64,
 
+    /// The name of this layer, if it has one
+    name: Option<String>,
+
     /// The currently active brush for this layer (or none if we need to fetch this from the database)
     /// The active brush is the brush most recently added to the keyframe at the specified point in time
     active_brush: Option<(Duration, Arc<dyn Brush>)>,
@@ -49,6 +52,7 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
             .map(|layer_id| {
                 SqliteVectorLayer {
                     assigned_id:    assigned_id,
+                    name:           None,
                     layer_id:       layer_id,
                     active_brush:   None,
                     core:           Arc::clone(core)
@@ -60,6 +64,10 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
 impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
     fn id(&self) -> u64 {
         self.assigned_id
+    }
+
+    fn name(&self) -> Option<String> {
+        self.name.clone()
     }
 
     fn supported_edit_types(&self) -> Vec<LayerEditType> {
