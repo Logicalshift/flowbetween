@@ -1,1 +1,1 @@
-../../http_ui/js/matrix.js
+../../user_interfaces/http_ui/js/matrix.js

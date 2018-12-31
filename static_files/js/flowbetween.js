@@ -1,1 +1,1 @@
-../../http_ui/js/flowbetween.js
+../../user_interfaces/http_ui/js/flowbetween.js

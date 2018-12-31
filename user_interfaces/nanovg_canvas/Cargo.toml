@@ -6,6 +6,6 @@ license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
 
 [dependencies]
-flo_canvas  = { version = "^0.1.0", path="../canvas" }
+flo_canvas  = { version = "^0.1.0", path="../../canvas" }
 nanovg      = { version = "1.0", features = ["gl3"] }
 gl          = "0.11"

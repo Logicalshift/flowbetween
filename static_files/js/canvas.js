@@ -1,1 +1,1 @@
-../../http_ui/js/canvas.js
+../../user_interfaces/http_ui/js/canvas.js
