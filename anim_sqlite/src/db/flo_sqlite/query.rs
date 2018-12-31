@@ -35,9 +35,9 @@ impl FloQuery for FloSqlite {
     ///
     /// Finds the real layer ID for the specified assigned ID
     /// 
-    fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<i64> {
+    fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<(i64, Option<String>)> {
         let animation_id = self.animation_id;
-        self.query_row(FloStatement::SelectLayerId, &[&animation_id, &(assigned_id as i64)], |row| row.get(0))
+        self.query_row(FloStatement::SelectLayerIdAndName, &[&animation_id, &(assigned_id as i64)], |row| (row.get(0), row.get(2)))
     }
 
     ///

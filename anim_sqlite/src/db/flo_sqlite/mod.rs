@@ -60,6 +60,7 @@ pub struct FloSqlite {
 enum FloStatement {
     SelectEnumValue,
     SelectLayerId,
+    SelectLayerIdAndName,
     SelectNearestKeyFrame,
     SelectPreviousKeyFrame,
     SelectNextKeyFrame,
@@ -245,6 +246,10 @@ impl FloSqlite {
             SelectEnumValue                     => "SELECT Value FROM Flo_EnumerationDescriptions WHERE FieldName = ? AND ApiName = ?",
             SelectLayerId                       => "SELECT Layer.LayerId, Layer.LayerType FROM Flo_AnimationLayers AS Anim \
                                                         INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
+                                                        WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
+            SelectLayerIdAndName                => "SELECT Layer.LayerId, Layer.LayerType, LayerName.Name FROM Flo_AnimationLayers AS Anim \
+                                                        INNER JOIN Flo_LayerType AS Layer ON Layer.LayerId = Anim.LayerId \
+                                                        LEFT OUTER JOIN Flo_LayerName AS LayerName ON Layer.LayerId = LayerName.LayerId \
                                                         WHERE Anim.AnimationId = ? AND Anim.AssignedLayerId = ?",
             SelectNearestKeyFrame               => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime <= ? ORDER BY AtTime DESC LIMIT 1",
             SelectPreviousKeyFrame              => "SELECT KeyFrameId, AtTime FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime < ? ORDER BY AtTime DESC LIMIT 1",

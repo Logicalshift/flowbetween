@@ -92,9 +92,9 @@ pub struct MotionEntry {
 /// 
 pub trait FloQuery {
     ///
-    /// Finds the real layer ID for the specified assigned ID
+    /// Finds the real layer ID and name for the specified assigned ID
     /// 
-    fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<i64>;
+    fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<(i64, Option<String>)>;
 
     ///
     /// Returns an iterator over the key frame times for a particular layer ID

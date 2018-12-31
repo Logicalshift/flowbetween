@@ -49,10 +49,10 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
 
         // If the layer exists, create a SqliteVectorLayer
         layer.ok()
-            .map(|layer_id| {
+            .map(|(layer_id, name)| {
                 SqliteVectorLayer {
                     assigned_id:    assigned_id,
-                    name:           None,
+                    name:           name,
                     layer_id:       layer_id,
                     active_brush:   None,
                     core:           Arc::clone(core)

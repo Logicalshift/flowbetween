@@ -508,7 +508,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         let db                          = &mut self.db;
                         let layer_id_for_assigned_id    = &mut self.layer_id_for_assigned_id;
                         let layer_id                    = *layer_id_for_assigned_id.entry(assigned_layer_id)
-                            .or_insert_with(|| db.query_layer_id_for_assigned_id(assigned_layer_id).unwrap_or(-1));
+                            .or_insert_with(|| db.query_layer_id_for_assigned_id(assigned_layer_id).map(|(id, _name)| id).unwrap_or(-1));
 
                         layer_id
                     };
