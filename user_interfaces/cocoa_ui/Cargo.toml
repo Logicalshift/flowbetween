@@ -10,6 +10,7 @@ description     = "User interface implementation for FlowBetween using the Cocoa
 [dependencies]
 flo_cocoa_pipe  = { path = "../cocoa_pipe", version = "0.1" }
 
+lazy_static     = "1.2"
 futures         = "0.1"
 cocoa           = "0.18"
 core-graphics   = "0.17"
