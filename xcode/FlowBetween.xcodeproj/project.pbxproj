@@ -10,7 +10,7 @@
 		4B1E8C0221DCE1C3006861A8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0121DCE1C3006861A8 /* AppDelegate.swift */; };
 		4B1E8C0421DCE1C5006861A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */; };
 		4B1E8C0721DCE1C5006861A8 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */; };
-		4B1E8C1921DD116A006861A8 /* libflo_cocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */; };
+		4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -30,8 +30,8 @@
 		4B1E8C0621DCE1C5006861A8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		4B1E8C0821DCE1C5006861A8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4B1E8C0921DCE1C5006861A8 /* FlowBetween.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlowBetween.entitlements; sourceTree = "<group>"; };
-		4B1E8C1621DD1024006861A8 /* libflo_cocoa.d */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.dtrace; name = libflo_cocoa.d; path = ../target/debug/libflo_cocoa.d; sourceTree = "<group>"; };
-		4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libflo_cocoa.a; path = ../target/debug/libflo_cocoa.a; sourceTree = "<group>"; };
+		4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.a; path = ../target/debug/libflo_cocoa.a; sourceTree = "<group>"; };
+		4B1E8C1A21DD1228006861A8 /* libflo_cocoa.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.dylib; path = ../target/debug/libflo_cocoa.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4B1E8C1921DD116A006861A8 /* libflo_cocoa.a in Frameworks */,
+				4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,8 +78,8 @@
 		4B1E8C1521DD1024006861A8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4B1E8C1A21DD1228006861A8 /* libflo_cocoa.dylib */,
 				4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */,
-				4B1E8C1621DD1024006861A8 /* libflo_cocoa.d */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -330,6 +330,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/debug;
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
@@ -349,6 +350,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/release;
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
