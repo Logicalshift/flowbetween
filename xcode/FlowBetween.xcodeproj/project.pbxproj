@@ -75,7 +75,7 @@
 /* Begin PBXLegacyTarget section */
 		4B1E8C0F21DCE40B006861A8 /* FlowBetweenRust */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "build -p flo_cocoa_ui --features cocoa ${CARGO_OPTIONS}";
+			buildArgumentsString = "build -p flo_cocoa --features cocoa ${CARGO_OPTIONS}";
 			buildConfigurationList = 4B1E8C1021DCE40B006861A8 /* Build configuration list for PBXLegacyTarget "FlowBetweenRust" */;
 			buildPhases = (
 			);

@@ -709,6 +709,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "flo_cocoa"
+version = "0.1.0"
+dependencies = [
+ "flo 0.1.1",
+ "flo_cocoa_pipe 0.1.0",
+ "flo_cocoa_ui 0.1.0",
+ "objc 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "flo_cocoa_pipe"
 version = "0.1.0"
 dependencies = [
@@ -888,6 +898,7 @@ dependencies = [
  "flo_animation 0.1.1",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
+ "flo_cocoa 0.1.0",
  "flo_cocoa_pipe 0.1.0",
  "flo_cocoa_ui 0.1.0",
  "flo_gtk_ui 0.1.1",
