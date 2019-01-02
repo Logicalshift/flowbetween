@@ -1,18 +1,11 @@
 use super::session::*;
 
-use flo_cocoa_pipe::*;
-
-use futures::*;
-use futures::stream;
 use objc::rc::*;
 use objc::declare::*;
 use objc::runtime::{Object, Class, Sel};
 use cocoa::base::*;
-use cocoa::appkit::*;
-use cocoa::foundation::*;
 
 use std::sync::*;
-use std::thread;
 use std::collections::HashMap;
 
 lazy_static! {

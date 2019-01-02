@@ -68,7 +68,7 @@ impl CocoaSession {
     }
 
     ///
-    /// Creates a user interface for this session
+    /// Creates a user interface implementation for this session
     ///
     pub fn create_user_interface(&mut self) -> impl UserInterface<AppAction, AppEvent, ()> {
         // Start listening for actions if we aren't already, by spawning a subscriber to our publisher
