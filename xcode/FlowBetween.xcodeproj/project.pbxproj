@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -11,6 +11,16 @@
 		4B1E8C0421DCE1C5006861A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */; };
 		4B1E8C0721DCE1C5006861A8 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4B1E8C1321DCE46F006861A8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4B1E8BF621DCE1C3006861A8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4B1E8C0F21DCE40B006861A8;
+			remoteInfo = FlowBetweenRust;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		4B1E8BFE21DCE1C3006861A8 /* FlowBetween.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlowBetween.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -62,6 +72,23 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXLegacyTarget section */
+		4B1E8C0F21DCE40B006861A8 /* FlowBetweenRust */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "build -p flo_cocoa_ui --features cocoa ${CARGO_OPTIONS}";
+			buildConfigurationList = 4B1E8C1021DCE40B006861A8 /* Build configuration list for PBXLegacyTarget "FlowBetweenRust" */;
+			buildPhases = (
+			);
+			buildToolPath = "${HOME}/.cargo/bin/cargo";
+			buildWorkingDirectory = ..;
+			dependencies = (
+			);
+			name = FlowBetweenRust;
+			passBuildSettingsInEnvironment = 1;
+			productName = FlowBetweenRust;
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		4B1E8BFD21DCE1C3006861A8 /* FlowBetween */ = {
 			isa = PBXNativeTarget;
@@ -74,6 +101,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				4B1E8C1421DCE46F006861A8 /* PBXTargetDependency */,
 			);
 			name = FlowBetween;
 			productName = FlowBetween;
@@ -93,10 +121,13 @@
 					4B1E8BFD21DCE1C3006861A8 = {
 						CreatedOnToolsVersion = 10.1;
 					};
+					4B1E8C0F21DCE40B006861A8 = {
+						CreatedOnToolsVersion = 10.1;
+					};
 				};
 			};
 			buildConfigurationList = 4B1E8BF921DCE1C3006861A8 /* Build configuration list for PBXProject "FlowBetween" */;
-			compatibilityVersion = "Xcode 9.3";
+			compatibilityVersion = "Xcode 10.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -109,6 +140,7 @@
 			projectRoot = "";
 			targets = (
 				4B1E8BFD21DCE1C3006861A8 /* FlowBetween */,
+				4B1E8C0F21DCE40B006861A8 /* FlowBetweenRust */,
 			);
 		};
 /* End PBXProject section */
@@ -135,6 +167,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4B1E8C1421DCE46F006861A8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4B1E8C0F21DCE40B006861A8 /* FlowBetweenRust */;
+			targetProxy = 4B1E8C1321DCE46F006861A8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */ = {
@@ -301,6 +341,35 @@
 			};
 			name = Release;
 		};
+		4B1E8C1121DCE40B006861A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CARGO_OPTIONS = "";
+				CODE_SIGN_STYLE = Automatic;
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = FYA69RFVHB;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		4B1E8C1221DCE40B006861A8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CARGO_OPTIONS = "--release";
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = FYA69RFVHB;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -318,6 +387,15 @@
 			buildConfigurations = (
 				4B1E8C0D21DCE1C5006861A8 /* Debug */,
 				4B1E8C0E21DCE1C5006861A8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4B1E8C1021DCE40B006861A8 /* Build configuration list for PBXLegacyTarget "FlowBetweenRust" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4B1E8C1121DCE40B006861A8 /* Debug */,
+				4B1E8C1221DCE40B006861A8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
