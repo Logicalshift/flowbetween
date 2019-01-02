@@ -42,32 +42,6 @@ where ActionStream: Send+Stream<Item=AppAction, Error=()> {
     stream::empty()
 }
 
-// Creating a new instance of the class initializes the session
-extern fn init_flo_control(this: &Object, _cmd: Sel) -> *mut Object {
-    unsafe {
-        let this: *mut Object = msg_send!(super(this, class!(NSObject)), init);
-
-        if this != nil {
-            // Assign a session ID
-            let mut next_session_id = NEXT_SESSION_ID.lock().unwrap();
-            let this_session_id     = *next_session_id;
-            (*next_session_id)      += 1;
-
-            (*this).set_ivar("_sessionId", this_session_id);
-
-            // Retain a copy of this for use with the session
-            let this_ptr = StrongPtr::retain(this);
-
-            // Create the session itself
-            let mut sessions        = FLO_SESSIONS.lock().unwrap();
-            let new_session         = CocoaSession::new(&this_ptr);
-            sessions.insert(this_session_id, Arc::new(Mutex::new(new_session)));
-        }
-
-        this
-    }
-}
-
 ///
 /// Declares the FloControl class to objective-C
 /// 
@@ -79,11 +53,59 @@ fn declare_flo_control_class() -> &'static Class {
     let mut flo_control = ClassDecl::new("FloControl", class!(NSObject)).unwrap();
 
     unsafe {
+        /// Creating a new instance of the class initializes the session
+        extern fn init_flo_control(this: &Object, _cmd: Sel) -> *mut Object {
+            unsafe {
+                let this: *mut Object = msg_send!(super(this, class!(NSObject)), init);
+
+                if this != nil {
+                    // Assign a session ID
+                    let mut next_session_id = NEXT_SESSION_ID.lock().unwrap();
+                    let this_session_id     = *next_session_id;
+                    (*next_session_id)      += 1;
+
+                    (*this).set_ivar("_sessionId", this_session_id);
+
+                    // Retain a copy of this for use with the session
+                    let this_ptr = StrongPtr::retain(this);
+
+                    // Create the session itself
+                    let mut sessions        = FLO_SESSIONS.lock().unwrap();
+                    let new_session         = CocoaSession::new(&this_ptr);
+                    sessions.insert(this_session_id, Arc::new(Mutex::new(new_session)));
+                }
+
+                this
+            }
+        }
+
+        /// Sets the window class for a FloControl object
+        extern fn set_window_class(this: &mut Object, _cmd: Sel, new_window_class: *mut Class) {
+            unsafe {
+                msg_send!(new_window_class, retain);
+                this.set_ivar("_windowClass", new_window_class);
+            }
+        }
+
+        /// Sets the view class for a FloControl object
+        extern fn set_view_class(this: &mut Object, _cmd: Sel, new_view_class: *mut Class) {
+            unsafe {
+                msg_send!(new_view_class, retain);
+                this.set_ivar("_viewClass", new_view_class);
+            }
+        }
+
         // Class contains a session ID we can use to look up the main session
         flo_control.add_ivar::<usize>("_sessionId");
 
+        // We delegate messages to the window and view classes
+        flo_control.add_ivar::<*mut Class>("_windowClass");
+        flo_control.add_ivar::<*mut Class>("_viewClass");
+
         // Register the init function
         flo_control.add_method(sel!(init), init_flo_control as extern fn(&Object, Sel) -> *mut Object);
+        flo_control.add_method(sel!(setWindowClass:), set_window_class as extern fn(&mut Object, Sel, *mut Class));
+        flo_control.add_method(sel!(setViewClass:), set_view_class as extern fn(&mut Object, Sel, *mut Class));
     }
 
     // Seal and register it
