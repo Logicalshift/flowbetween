@@ -12,8 +12,8 @@ import Cocoa
 ///
 /// Represents a window created by FlowBetween
 ///
-class FloWindow {
-    init() {
+class FloWindow : NSObject {
+    override init() {
         NSLog("New window");
     }
 }
