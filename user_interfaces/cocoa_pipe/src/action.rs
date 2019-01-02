@@ -11,21 +11,21 @@ pub enum AppAction {
     OpenWindow(usize),
 
     /// Sends an action to a window
-    Window(usize, WindowAction)
+    Window(usize, WindowAction),
+
+    /// Creates a new view of the specified type
+    CreateView(usize, ViewType),
+
+    /// Performs an action on the specified view
+    View(usize, ViewAction)
 }
 
 ///
 /// Enumeration of possible actions that can be performed by a Cocoa Window
 ///
 pub enum WindowAction {
-    /// Creates a new view of the 
-    CreateView(usize, ViewType),
-
     /// Sets the root view of the window to be the specified view
     SetRootView(usize),
-
-    /// Performs an action on the specified view
-    View(usize, ViewAction)
 }
 
 ///
