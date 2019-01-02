@@ -64,8 +64,10 @@ impl CocoaSession {
         self.actions = Some(executor::spawn(Box::new(actions)));
 
         unsafe {
-            // Wake up the object on the main thread
-            msg_send![class!(NSObject), performSelectorOnMainThread: sel!(actionStreamReady) withObject: self.target_object.clone() waitUntilDone: NO];
+            autoreleasepool(|| {
+                // Wake up the object on the main thread
+                msg_send![class!(NSObject), performSelectorOnMainThread: sel!(actionStreamReady) withObject: self.target_object.clone() waitUntilDone: NO];
+            });
         }
     }
 
@@ -73,34 +75,36 @@ impl CocoaSession {
     /// Drains any pending messages from the actions stream
     ///
     pub fn drain_action_stream(&mut self) {
-        // Create the object to notify when there's an update
-        let notify = Arc::new(CocoaSessionNotify::new(&self.target_object));
+        autoreleasepool(move || {
+            // Create the object to notify when there's an update
+            let notify = Arc::new(CocoaSessionNotify::new(&self.target_object));
 
-        // Drain the stream until it's empty or it blocks
-        loop {
-            let next = self.actions
-                .as_mut()
-                .map(|actions| actions.poll_stream_notify(&notify, 0))
-                .unwrap_or_else(|| Ok(Async::NotReady));
+            // Drain the stream until it's empty or it blocks
+            loop {
+                let next = self.actions
+                    .as_mut()
+                    .map(|actions| actions.poll_stream_notify(&notify, 0))
+                    .unwrap_or_else(|| Ok(Async::NotReady));
 
-            match next {
-                Ok(Async::NotReady)     => { break; }
-                Ok(Async::Ready(None))  => {
-                    // Session has finished
-                    break;
-                }
+                match next {
+                    Ok(Async::NotReady)     => { break; }
+                    Ok(Async::Ready(None))  => {
+                        // Session has finished
+                        break;
+                    }
 
-                Ok(Async::Ready(Some(action))) => {
-                    // Perform the action
-                    self.dispatch_app_action(action);
-                }
+                    Ok(Async::Ready(Some(action))) => {
+                        // Perform the action
+                        self.dispatch_app_action(action);
+                    }
 
-                Err(_) => {
-                    // Action stream should never produce any errors
-                    unimplemented!("Action stream should never produce any errors")
+                    Err(_) => {
+                        // Action stream should never produce any errors
+                        unimplemented!("Action stream should never produce any errors")
+                    }
                 }
             }
-        }
+        });
     }
 
     ///
@@ -121,7 +125,18 @@ impl CocoaSession {
     /// Creates a new window and assigns the specified ID to it
     ///
     fn create_window(&mut self, new_window_id: usize) {
+        unsafe {
+            // Fetch the window class to create
+            let window_class = (**self.target_object).get_ivar::<*mut Class>("_windowClass");
 
+            // Allocate and initialise it
+            let window: *mut Object = msg_send!(*window_class, alloc);
+            let window = msg_send!(window, init);
+            let window = StrongPtr::new(window);
+
+            // Store it away
+            self.windows.insert(new_window_id, window);
+        }
     }
 
     ///
@@ -135,6 +150,24 @@ impl CocoaSession {
     /// Creates a new view and assigns the specified ID to it
     ///
     fn create_view(&mut self, new_view_id: usize, view_type: ViewType) {
+        use self::ViewType::*;
+
+        unsafe {
+            // Fetch the view class to create
+            let view_class = (**self.target_object).get_ivar::<*mut Class>("_viewClass");
+
+            // Allocate and initialise it
+            let view: *mut Object = msg_send!(*view_class, alloc);
+
+            let view = match view_type {
+                Empty => msg_send!(view, initAsEmpty)
+            };
+
+            let view = StrongPtr::new(view);
+
+            // Store it away
+            self.views.insert(new_view_id, view);
+        }
 
     }
 
@@ -173,9 +206,11 @@ impl executor::Notify for CocoaSessionNotify {
 
         // If it still exists, send the message to the object on the main thread
         unsafe {
-            if *target_object != nil {
-                msg_send![class!(NSObject), performSelectorOnMainThread: sel!(actionStreamReady) withObject: target_object waitUntilDone: NO];
-            }
+            autoreleasepool(move || {
+                if *target_object != nil {
+                    msg_send![class!(NSObject), performSelectorOnMainThread: sel!(actionStreamReady) withObject: target_object waitUntilDone: NO];
+                }
+            });
         }
     }
 }
