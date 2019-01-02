@@ -62,7 +62,7 @@ impl CocoaSession {
             windows:            HashMap::new(),
             views:              HashMap::new(),
             actions:            None,
-            action_publisher:   Publisher::new(200),
+            action_publisher:   Publisher::new(1),
             events:             executor::spawn(Publisher::new(20))
         }
     }
