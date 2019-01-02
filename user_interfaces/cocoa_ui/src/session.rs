@@ -38,3 +38,8 @@ impl CocoaSession {
         self.actions = Some(executor::spawn(Box::new(actions)));
     }
 }
+
+/// WeakPtr is not Send because Object is not Send... but we need to be able to send objective-C objects between threads so
+/// we can schedule on the main thread and they are thread-safe at least in objective C itself, so let's assume this is
+/// an oversight for now.
+unsafe impl Send for CocoaSession { }

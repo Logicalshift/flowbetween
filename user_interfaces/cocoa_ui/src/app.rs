@@ -56,7 +56,7 @@ extern fn init_flo_control(this: &Object, _cmd: Sel) -> *mut Object {
 
             // Create the session itself
             let mut sessions        = FLO_SESSIONS.lock().unwrap();
-            let new_session         = CocoaSession::new();
+            let new_session         = CocoaSession::new(&*this);
             sessions.insert(this_session_id, Arc::new(Mutex::new(new_session)));
         }
 
