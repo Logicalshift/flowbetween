@@ -143,7 +143,14 @@ impl CocoaSession {
     /// Dispatches an action to the specified window
     ///
     fn dispatch_window_action(&self, window: &StrongPtr, action: WindowAction) {
+        use self::WindowAction::*;
 
+        unsafe {
+            match action {
+                Open                    => { msg_send!((**window), windowOpen); }
+                SetRootView(view_id)    => { self.views.get(&view_id).map(|view| msg_send!((**window), windowSetRootView: view)); }
+            }
+        }
     }
 
     ///
@@ -174,7 +181,15 @@ impl CocoaSession {
     ///
     /// Dispatches an action to the specified view
     ///
-    fn dispatch_view_action(&self, window: &StrongPtr, action: ViewAction) {
+    fn dispatch_view_action(&self, view: &StrongPtr, action: ViewAction) {
+        use self::ViewAction::*;
+
+        unsafe {
+            match action {
+                RemoveFromSuperview     => { msg_send!((**view), viewRemoveFromSuperview); }
+                AddSubView(view_id)     => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: subview)); }
+            }
+        }
 
     }
 }
