@@ -8,15 +8,15 @@ use std::sync::*;
 /// Basic Cocoa user interface
 ///
 pub struct CocoaUserInterface {
-    actions:    Publisher<AppAction>,
-    events:     Mutex<Publisher<AppEvent>>
+    actions:    Publisher<Vec<AppAction>>,
+    events:     Mutex<Publisher<Vec<AppEvent>>>
 }
 
 impl CocoaUserInterface {
     ///
     /// Creates a new Cocoa user interface
     ///
-    pub fn new(actions: Publisher<AppAction>, events: Publisher<AppEvent>) -> CocoaUserInterface {
+    pub fn new(actions: Publisher<Vec<AppAction>>, events: Publisher<Vec<AppEvent>>) -> CocoaUserInterface {
         CocoaUserInterface {
             actions:    actions,
             events:     Mutex::new(events)
@@ -24,9 +24,9 @@ impl CocoaUserInterface {
     }
 }
 
-impl UserInterface<AppAction, AppEvent, ()> for CocoaUserInterface {
-    type EventSink = Publisher<AppAction>;
-    type UpdateStream = Subscriber<AppEvent>;
+impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> for CocoaUserInterface {
+    type EventSink      = Publisher<Vec<AppAction>>;
+    type UpdateStream   = Subscriber<Vec<AppEvent>>;
 
     fn get_input_sink(&self) -> Self::EventSink {
         self.actions.republish()

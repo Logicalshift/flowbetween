@@ -29,13 +29,13 @@ pub struct CocoaSession {
     views: HashMap<usize, StrongPtr>,
 
     /// Publisher where we send the actions to
-    action_publisher: Publisher<AppAction>,
+    action_publisher: Publisher<Vec<AppAction>>,
 
     /// The stream of actions for this session (or None if we aren't monitoring for actions)
-    actions: Option<Spawn<Subscriber<AppAction>>>,
+    actions: Option<Spawn<Subscriber<Vec<AppAction>>>>,
 
     /// The event publisher for this session
-    events: Spawn<Publisher<AppEvent>>
+    events: Spawn<Publisher<Vec<AppEvent>>>
 }
 
 ///
@@ -70,7 +70,7 @@ impl CocoaSession {
     ///
     /// Creates a user interface implementation for this session
     ///
-    pub fn create_user_interface(&mut self) -> impl UserInterface<AppAction, AppEvent, ()> {
+    pub fn create_user_interface(&mut self) -> impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> {
         // Start listening for actions if we aren't already, by spawning a subscriber to our publisher
         if self.actions.is_none() {
             self.actions = Some(executor::spawn(self.action_publisher.subscribe()));
@@ -119,9 +119,11 @@ impl CocoaSession {
                         break;
                     }
 
-                    Ok(Async::Ready(Some(action))) => {
-                        // Perform the action
-                        self.dispatch_app_action(action);
+                    Ok(Async::Ready(Some(actions))) => {
+                        for action in actions {
+                            // Perform the action
+                            self.dispatch_app_action(action);
+                        }
                     }
 
                     Err(_) => {
