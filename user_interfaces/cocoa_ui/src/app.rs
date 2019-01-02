@@ -4,6 +4,7 @@ use flo_cocoa_pipe::*;
 
 use futures::*;
 use futures::stream;
+use objc::rc::*;
 use objc::declare::*;
 use objc::runtime::{Object, Class, Sel};
 use cocoa::base::*;
@@ -54,9 +55,12 @@ extern fn init_flo_control(this: &Object, _cmd: Sel) -> *mut Object {
 
             (*this).set_ivar("_sessionId", this_session_id);
 
+            // Retain a copy of this for use with the session
+            let this_ptr = StrongPtr::retain(this);
+
             // Create the session itself
             let mut sessions        = FLO_SESSIONS.lock().unwrap();
-            let new_session         = CocoaSession::new(&*this);
+            let new_session         = CocoaSession::new(&this_ptr);
             sessions.insert(this_session_id, Arc::new(Mutex::new(new_session)));
         }
 
