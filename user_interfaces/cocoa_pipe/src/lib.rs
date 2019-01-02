@@ -7,7 +7,9 @@
 mod action;
 mod event;
 mod view_type;
+mod ui_pipe;
 
 pub use self::action::*;
 pub use self::event::*;
 pub use self::view_type::*;
+pub use self::ui_pipe::*;
