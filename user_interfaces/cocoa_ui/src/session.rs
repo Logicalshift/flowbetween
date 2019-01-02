@@ -92,7 +92,7 @@ impl CocoaSession {
         unsafe {
             autoreleasepool(|| {
                 // Wake up the object on the main thread
-                msg_send![class!(NSObject), performSelectorOnMainThread: sel!(actionStreamReady) withObject: self.target_object.clone() waitUntilDone: NO];
+                msg_send!(*self.target_object, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO);
             });
         }
     }
@@ -245,13 +245,14 @@ impl executor::Notify for CocoaSessionNotify {
     fn notify(&self, _: usize) {
         // Load the target object
         let target_object = self.notify_object.lock().unwrap();
-        let target_object = target_object.target_object.load();
 
         // If it still exists, send the message to the object on the main thread
         unsafe {
             autoreleasepool(move || {
+                let target_object = target_object.target_object.load();
+
                 if *target_object != nil {
-                    msg_send![class!(NSObject), performSelectorOnMainThread: sel!(actionStreamReady) withObject: target_object waitUntilDone: NO];
+                    msg_send![*target_object, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO];
                 }
             });
         }
