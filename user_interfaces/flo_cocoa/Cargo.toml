@@ -7,6 +7,10 @@ license         = "Apache-2.0"
 repository      = "https://github.com/Logicalshift/flowbetween"
 description     = "Interoperability between the FlowBetween XCode and Rust projects"
 
+[lib]
+name            = "flo_cocoa"
+crate-type      = ["staticlib", "cdylib"]
+
 [dependencies]
 flo             = { path = "../../flo",     version = "0.1" }
 flo_cocoa_pipe  = { path = "../cocoa_pipe", version = "0.1" }
