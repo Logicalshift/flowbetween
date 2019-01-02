@@ -28,8 +28,11 @@ pub struct CocoaSession {
     /// Maps IDs to views
     views: HashMap<usize, StrongPtr>,
 
+    /// Publisher where we send the actions to
+    action_publisher: Publisher<AppAction>,
+
     /// The stream of actions for this session (or None if we aren't monitoring for actions)
-    actions: Option<Spawn<Box<dyn Stream<Item=AppAction, Error=()>+Send>>>,
+    actions: Option<Spawn<Subscriber<AppAction>>>,
 
     /// The event publisher for this session
     events: Spawn<Publisher<AppEvent>>
@@ -55,11 +58,12 @@ impl CocoaSession {
     ///
     pub fn new(obj: &StrongPtr) -> CocoaSession {
         CocoaSession {
-            target_object:  obj.clone(),
-            windows:        HashMap::new(),
-            views:          HashMap::new(),
-            actions:        None,
-            events:         executor::spawn(Publisher::new(20))
+            target_object:      obj.clone(),
+            windows:            HashMap::new(),
+            views:              HashMap::new(),
+            actions:            None,
+            action_publisher:   Publisher::new(200),
+            events:             executor::spawn(Publisher::new(20))
         }
     }
 
@@ -67,14 +71,15 @@ impl CocoaSession {
     /// Creates a user interface for this session
     ///
     pub fn create_user_interface(&mut self) -> impl UserInterface<AppAction, AppEvent, ()> {
-        // Create the publisher where we send actions to
-        let mut action_publisher = Publisher::new(200);
-
-        // Listen to actions sent to this publisher
-        self.listen_to(action_publisher.subscribe());
+        // Start listening for actions if we aren't already, by spawning a subscriber to our publisher
+        if self.actions.is_none() {
+            self.actions = Some(executor::spawn(self.action_publisher.subscribe()));
+            self.start_listening();
+        }
 
         // Create the subscriber to receive events sent from the user interface
-        let events = self.events.get_ref().republish();
+        let action_publisher    = self.action_publisher.republish();
+        let events              = self.events.get_ref().republish();
 
         // Generate a cocoa user interface
         CocoaUserInterface::new(action_publisher, events)
@@ -83,11 +88,7 @@ impl CocoaSession {
     ///
     /// Listens for actions from the specified stream
     ///
-    pub fn listen_to<Actions>(&mut self, actions: Actions)
-    where Actions: 'static+Send+Stream<Item=AppAction, Error=()> {
-        // Spawn the actions stream
-        self.actions = Some(executor::spawn(Box::new(actions)));
-
+    fn start_listening(&mut self) {
         unsafe {
             autoreleasepool(|| {
                 // Wake up the object on the main thread
