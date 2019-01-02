@@ -8,12 +8,19 @@ use futures::*;
 use futures::executor;
 use futures::executor::Spawn;
 
-use cocoa::base::nil;
+use cocoa::base::{id, nil};
 use objc::rc::*;
 use objc::runtime::*;
 
 use std::sync::*;
 use std::collections::HashMap;
+
+#[link(name = "Foundation", kind = "framework")]
+extern {
+    pub static NSDefaultRunLoopMode: id;
+    pub static NSModalPanelRunLoopMode: id;
+    pub static NSEventTrackingRunLoopMode: id;
+}
 
 ///
 /// Basis class for a Cocoa session
@@ -252,7 +259,15 @@ impl executor::Notify for CocoaSessionNotify {
                 let target_object = target_object.target_object.load();
 
                 if *target_object != nil {
-                    msg_send![*target_object, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO];
+                    let modes: *mut Object  = msg_send!(class!(NSMutableArray), alloc);
+                    let modes               = msg_send!(modes, init);
+                    let modes               = StrongPtr::new(modes);
+
+                    msg_send!(*modes, addObject: NSDefaultRunLoopMode);
+                    msg_send!(*modes, addObject: NSModalPanelRunLoopMode);
+                    msg_send!(*modes, addObject: NSEventTrackingRunLoopMode);
+
+                    msg_send![*target_object, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO modes: modes];
                 }
             });
         }
