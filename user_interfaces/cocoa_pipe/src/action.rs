@@ -3,6 +3,7 @@ use super::view_type::*;
 ///
 /// Enumeration of possible actions that can be performed by a Cocoa application
 ///
+#[derive(Clone, PartialEq, Debug)]
 pub enum AppAction {
     /// Creates a new window with the specified ID
     CreateWindow(usize),
@@ -20,6 +21,7 @@ pub enum AppAction {
 ///
 /// Enumeration of possible actions that can be performed by a Cocoa Window
 ///
+#[derive(Clone, PartialEq, Debug)]
 pub enum WindowAction {
     /// Ensures that this window is displayed on screen
     Open,
@@ -31,6 +33,7 @@ pub enum WindowAction {
 ///
 /// Enumeration of possible actions that can be performed by a Cocoa View
 ///
+#[derive(Clone, PartialEq, Debug)]
 pub enum ViewAction {
     /// Removes the view from its superview
     RemoveFromSuperview,

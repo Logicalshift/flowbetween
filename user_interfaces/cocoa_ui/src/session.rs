@@ -1,3 +1,7 @@
+use super::cocoa_ui::*;
+
+use flo_ui::*;
+use flo_stream::*;
 use flo_cocoa_pipe::*;
 
 use futures::*;
@@ -25,7 +29,10 @@ pub struct CocoaSession {
     views: HashMap<usize, StrongPtr>,
 
     /// The stream of actions for this session (or None if we aren't monitoring for actions)
-    actions: Option<Spawn<Box<dyn Stream<Item=AppAction, Error=()>+Send>>>
+    actions: Option<Spawn<Box<dyn Stream<Item=AppAction, Error=()>+Send>>>,
+
+    /// The event publisher for this session
+    events: Spawn<Publisher<AppEvent>>
 }
 
 ///
@@ -51,8 +58,26 @@ impl CocoaSession {
             target_object:  obj.clone(),
             windows:        HashMap::new(),
             views:          HashMap::new(),
-            actions:        None
+            actions:        None,
+            events:         executor::spawn(Publisher::new(20))
         }
+    }
+
+    ///
+    /// Creates a user interface for this session
+    ///
+    pub fn create_user_interface(&mut self) -> impl UserInterface<AppAction, AppEvent, ()> {
+        // Create the publisher where we send actions to
+        let mut action_publisher = Publisher::new(200);
+
+        // Listen to actions sent to this publisher
+        self.listen_to(action_publisher.subscribe());
+
+        // Create the subscriber to receive events sent from the user interface
+        let events = self.events.get_ref().republish();
+
+        // Generate a cocoa user interface
+        CocoaUserInterface::new(action_publisher, events)
     }
 
     ///

@@ -7,5 +7,6 @@
 
 mod app;
 mod session;
+mod cocoa_ui;
 
 pub use self::app::*;
