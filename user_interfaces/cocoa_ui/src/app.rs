@@ -95,6 +95,20 @@ fn declare_flo_control_class() -> &'static Class {
             }
         }
 
+        /// Drains the action stream when it's ready
+        extern fn action_stream_ready(this: &mut Object, _cmd: Sel) {
+            unsafe {
+                let session_id  = this.get_ivar("_sessionId");
+                let session     = FLO_SESSIONS.lock().unwrap().get(&session_id).cloned();
+
+                if let Some(session) = session {
+                    let mut session = session.lock().unwrap();
+
+                    session.drain_action_stream();
+                }
+            }
+        }
+
         // Class contains a session ID we can use to look up the main session
         flo_control.add_ivar::<usize>("_sessionId");
 
@@ -106,6 +120,7 @@ fn declare_flo_control_class() -> &'static Class {
         flo_control.add_method(sel!(init), init_flo_control as extern fn(&Object, Sel) -> *mut Object);
         flo_control.add_method(sel!(setWindowClass:), set_window_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(setViewClass:), set_view_class as extern fn(&mut Object, Sel, *mut Class));
+        flo_control.add_method(sel!(actionStreamReady), action_stream_ready as extern fn(&mut Object, Sel));
     }
 
     // Seal and register it
