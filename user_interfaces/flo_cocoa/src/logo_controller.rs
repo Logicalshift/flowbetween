@@ -1,0 +1,1 @@
+../../../src/logo_controller.rs

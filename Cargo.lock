@@ -712,10 +712,24 @@ dependencies = [
 name = "flo_cocoa"
 version = "0.1.0"
 dependencies = [
+ "env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo 0.1.1",
+ "flo_anim_sqlite 0.1.1",
+ "flo_animation 0.1.1",
+ "flo_binding 0.1.2",
+ "flo_canvas 0.1.1",
  "flo_cocoa_pipe 0.1.0",
  "flo_cocoa_ui 0.1.0",
+ "flo_logging 0.1.1",
+ "flo_ui 0.1.1",
+ "flo_ui_files 0.1.1",
+ "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "objc 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pretty_env_logger 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.82 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.82 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.33 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -725,6 +739,7 @@ dependencies = [
  "flo_canvas 0.1.1",
  "flo_stream 0.3.1 (git+https://github.com/Logicalshift/flo_stream)",
  "flo_ui 0.1.1",
+ "futures 0.1.25 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
