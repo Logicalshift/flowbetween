@@ -27,22 +27,6 @@ lazy_static! {
 }
 
 ///
-/// Runs a Cocoa application thread
-/// 
-/// The input is the actions the application should take. The output is the events generated from the UI
-/// this forms. The application is ultimately run on a separate 
-///
-pub fn run_cocoa_application<ActionStream>(actions: ActionStream) -> impl Send+Stream<Item=AppEvent, Error=()>
-where ActionStream: Send+Stream<Item=AppAction, Error=()> {
-    // Start a thread to act as the main cocoa thread
-    thread::spawn(|| {
-        run_cocoa_thread();
-    });
-
-    stream::empty()
-}
-
-///
 /// Declares the FloControl class to objective-C
 /// 
 /// The FloControl class is used to dispatch messages from the action stream to objective C. It wraps a Cocoa
@@ -125,22 +109,4 @@ fn declare_flo_control_class() -> &'static Class {
 
     // Seal and register it
     flo_control.register()
-}
-
-///
-/// Actually runs the main Cocoa thread
-///
-fn run_cocoa_thread() {
-    unsafe {
-        let _pool = NSAutoreleasePool::new(nil);
-
-        // Set up the application
-        let app = NSApp();
-        app.setActivationPolicy_(NSApplicationActivationPolicyRegular);
-
-        // msg_send![class!(NSObject), performSelectorOnMainThread: sel!(foo) withObject: nil waitUntilDone: YES];
-
-        // Actually run the applicaiton
-        app.run();
-    }
 }
