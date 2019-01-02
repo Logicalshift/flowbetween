@@ -113,3 +113,14 @@ fn declare_flo_control_class() -> &'static Class {
     // Seal and register it
     flo_control.register()
 }
+
+///
+/// Retrieves the session for a FloControl objective-C object
+///
+pub unsafe fn get_session_for_flo_control(flo_control: &Object) -> Arc<Mutex<CocoaSession>> {
+    let session_id = flo_control.get_ivar("_sessionId");
+    FLO_SESSIONS.lock().unwrap()
+        .get(&session_id)
+        .cloned()
+        .unwrap()
+}
