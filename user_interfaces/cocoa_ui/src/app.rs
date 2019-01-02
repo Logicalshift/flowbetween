@@ -93,6 +93,15 @@ fn declare_flo_control_class() -> &'static Class {
             }
         }
 
+        /// Tidies up the flo_control session once it has finished
+        extern fn dealloc_flo_control(this: &mut Object, _cmd: Sel) {
+            unsafe {
+                // Remove the session from the session hash
+                let session_id = this.get_ivar("_sessionId");
+                FLO_SESSIONS.lock().unwrap().remove(&session_id);
+            }
+        }
+
         // Class contains a session ID we can use to look up the main session
         flo_control.add_ivar::<usize>("_sessionId");
 
@@ -102,6 +111,7 @@ fn declare_flo_control_class() -> &'static Class {
 
         // Register the init function
         flo_control.add_method(sel!(init), init_flo_control as extern fn(&Object, Sel) -> *mut Object);
+        flo_control.add_method(sel!(dealloc), dealloc_flo_control as extern fn(&mut Object, Sel));
         flo_control.add_method(sel!(setWindowClass:), set_window_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(setViewClass:), set_view_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(actionStreamReady), action_stream_ready as extern fn(&mut Object, Sel));
