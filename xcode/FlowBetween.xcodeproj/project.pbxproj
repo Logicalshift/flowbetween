@@ -32,6 +32,8 @@
 		4B1E8C0921DCE1C5006861A8 /* FlowBetween.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FlowBetween.entitlements; sourceTree = "<group>"; };
 		4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.a; path = ../target/debug/libflo_cocoa.a; sourceTree = "<group>"; };
 		4B1E8C1A21DD1228006861A8 /* libflo_cocoa.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.dylib; path = ../target/debug/libflo_cocoa.dylib; sourceTree = "<group>"; };
+		4B1E8C2421DD1668006861A8 /* flo_cocoa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = flo_cocoa.h; sourceTree = "<group>"; };
+		4B1E8C2521DD16DC006861A8 /* FlowBetween.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FlowBetween.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 		4B1E8C0021DCE1C3006861A8 /* FlowBetween */ = {
 			isa = PBXGroup;
 			children = (
+				4B1E8C2321DD164E006861A8 /* CInterop */,
 				4B1E8C0121DCE1C3006861A8 /* AppDelegate.swift */,
 				4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */,
 				4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */,
@@ -82,6 +85,15 @@
 				4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4B1E8C2321DD164E006861A8 /* CInterop */ = {
+			isa = PBXGroup;
+			children = (
+				4B1E8C2421DD1668006861A8 /* flo_cocoa.h */,
+				4B1E8C2521DD16DC006861A8 /* FlowBetween.h */,
+			);
+			path = CInterop;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -333,6 +345,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/debug;
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = FlowBetween/CInterop/FlowBetween.h;
 				SWIFT_VERSION = 4.2;
 			};
 			name = Debug;
@@ -353,6 +366,7 @@
 				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/release;
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = FlowBetween/CInterop/FlowBetween.h;
 				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
