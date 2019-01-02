@@ -7,9 +7,6 @@ pub enum AppAction {
     /// Creates a new window with the specified ID
     CreateWindow(usize),
 
-    /// Ensures that the window with the specified ID is displayed on screen
-    OpenWindow(usize),
-
     /// Sends an action to a window
     Window(usize, WindowAction),
 
@@ -24,6 +21,9 @@ pub enum AppAction {
 /// Enumeration of possible actions that can be performed by a Cocoa Window
 ///
 pub enum WindowAction {
+    /// Ensures that this window is displayed on screen
+    Open,
+
     /// Sets the root view of the window to be the specified view
     SetRootView(usize),
 }
