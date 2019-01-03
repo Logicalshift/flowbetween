@@ -184,7 +184,7 @@ impl CocoaSession {
         unsafe {
             match action {
                 Open                    => { msg_send!((**window), windowOpen); }
-                SetRootView(view_id)    => { self.views.get(&view_id).map(|view| msg_send!((**window), windowSetRootView: view)); }
+                SetRootView(view_id)    => { self.views.get(&view_id).map(|view| msg_send!((**window), windowSetRootView: **view)); }
             }
         }
     }
@@ -203,7 +203,7 @@ impl CocoaSession {
             let view: *mut Object   = msg_send!(*view_class, alloc);
             let view: *mut Object   = msg_send!(view, init);
 
-            let view = match view_type {
+            match view_type {
                 Empty => msg_send!(view, setupAsEmpty)
             };
 
@@ -231,7 +231,7 @@ impl CocoaSession {
         unsafe {
             match action {
                 RemoveFromSuperview     => { msg_send!((**view), viewRemoveFromSuperview); }
-                AddSubView(view_id)     => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: subview)); }
+                AddSubView(view_id)     => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
             }
         }
 
