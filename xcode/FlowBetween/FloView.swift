@@ -20,21 +20,21 @@ public class FloView : NSObject {
     ///
     /// Creates an empty view
     ///
-    public func setupAsEmpty() {
+    @objc public func setupAsEmpty() {
         
     }
     
     ///
     /// Removes this view from its superview
     ///
-    public func viewRemoveFromSuperview() {
+    @objc public func viewRemoveFromSuperview() {
         NSLog("Remove from superview");
     }
     
     ///
     /// Adds a subview to this view
     ///
-    public func viewAddSubView(subview: FloView) {
+    @objc public func viewAddSubView(subview: FloView) {
         NSLog("Add SubView");
     }
 }

@@ -34,14 +34,14 @@ public class FloWindow : NSObject {
     ///
     /// Opens the window
     ///
-    public func windowOpen() {
+    @objc public func windowOpen() {
         _window.makeKeyAndOrderFront(self);
     }
     
     ///
     /// Sets the root view of this window
     ///
-    public func windowSetRootView(view: NSObject) {
+    @objc public func windowSetRootView(view: NSObject) {
         
     }
 }
