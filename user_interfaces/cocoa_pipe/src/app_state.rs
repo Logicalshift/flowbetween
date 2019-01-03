@@ -1,4 +1,5 @@
 use super::action::*;
+use super::view_state::*;
 
 use flo_ui::session::*;
 
@@ -6,7 +7,8 @@ use flo_ui::session::*;
 /// Represents the type
 ///
 pub struct AppState {
-
+    /// The root view
+    root_view: Option<ViewState>
 }
 
 impl AppState {
@@ -15,7 +17,7 @@ impl AppState {
     ///
     pub fn new() -> AppState {
         AppState {
-            
+            root_view: None
         }
     }
 
