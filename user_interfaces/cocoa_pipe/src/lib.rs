@@ -10,6 +10,8 @@ mod view_type;
 mod ui_pipe;
 mod app_state;
 mod view_state;
+mod actions_from;
+mod actions_from_control_attribute;
 
 pub use self::action::*;
 pub use self::event::*;

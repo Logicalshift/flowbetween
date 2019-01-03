@@ -1,5 +1,7 @@
 use super::action::*;
 use super::view_type::*;
+use super::actions_from::*;
+use super::actions_from_control_attribute::*;
 
 use flo_ui::*;
 
@@ -112,6 +114,12 @@ impl ViewState {
 
         // Create the view with the appropriate type
         set_up_steps.push(AppAction::CreateView(self.view_id, ViewType::from(control)));
+
+        // Set up the view from its attributes
+        let view_set_up = control.attributes()
+            .flat_map(|attribute| attribute.actions_from())
+            .map(|view_action| AppAction::View(self.view_id, view_action));
+        set_up_steps.extend(view_set_up);
 
         set_up_steps
     }
