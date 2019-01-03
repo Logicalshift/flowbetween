@@ -60,11 +60,30 @@ impl AppState {
     /// Returns the actions required to perform a single UI diff
     ///
     fn update_ui_from_diff(&mut self, difference: UiDiff) -> Vec<AppAction> {
+        // Create the replacement view states
+        let (view_state, mut actions) = self.create_view(&difference.new_ui);
+
         // The difference specifies a view to replace
         let view_to_replace = self.root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(&difference.address));
 
-        // Create the replacement view states
-        let (view_state, actions) = self.create_view(&difference.new_ui);
+        // Generate the actions to remove the existing view
+        actions.extend(view_to_replace.map(|view_to_replace| view_to_replace.destroy_subtree_actions()).unwrap_or(vec![]));
+
+        // Replace with the new state
+        if difference.address.len() > 0 {
+            // Add as a subview of the view
+            let mut parent_address  = difference.address.clone();
+            parent_address.pop();
+            let parent_view         = self.root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(&parent_address));
+
+            parent_view.map(|parent_view| actions.push(AppAction::View(parent_view.id(), ViewAction::AddSubView(view_state.id()))));
+
+            self.root_view.as_mut().map(|root_view| root_view.replace_child_state(&difference.address, view_state));
+        } else {
+            // Add as the root view
+            actions.push(AppAction::Window(0, WindowAction::SetRootView(view_state.id())));
+            self.root_view = Some(view_state);
+        }
 
         actions
     }

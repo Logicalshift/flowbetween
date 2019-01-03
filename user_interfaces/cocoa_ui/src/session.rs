@@ -152,6 +152,7 @@ impl CocoaSession {
             CreateWindow(window_id)             => { self.create_window(window_id); }
             Window(window_id, window_action)    => { self.windows.get(&window_id).map(|window| self.dispatch_window_action(window, window_action)); }
             CreateView(view_id, view_type)      => { self.create_view(view_id, view_type); },
+            DeleteView(view_id)                 => { self.delete_view(view_id); }
             View(view_id, view_action)          => { self.views.get(&view_id).map(|view| self.dispatch_view_action(view, view_action)); }
         }
     }
@@ -211,6 +212,13 @@ impl CocoaSession {
             self.views.insert(new_view_id, view);
         }
 
+    }
+
+    ///
+    /// Removes a view from this object
+    ///
+    pub fn delete_view(&mut self, old_view_id: usize) {
+        self.views.remove(&old_view_id);
     }
 
     ///

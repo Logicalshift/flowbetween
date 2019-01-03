@@ -14,6 +14,9 @@ pub enum AppAction {
     /// Creates a new view of the specified type
     CreateView(usize, ViewType),
 
+    /// Deletes the view with the specified ID
+    DeleteView(usize),
+
     /// Performs an action on the specified view
     View(usize, ViewAction)
 }
