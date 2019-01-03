@@ -13,6 +13,8 @@
 		4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */; };
 		4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */; };
 		4B57E9DA21DE2CBD00FD0551 /* FloView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9D921DE2CBD00FD0551 /* FloView.swift */; };
+		4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9DC21DE66E600FD0551 /* Position.swift */; };
+		4B57E9DF21DE674000FD0551 /* Bounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9DE21DE674000FD0551 /* Bounds.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +40,8 @@
 		4B1E8C2521DD16DC006861A8 /* FlowBetween.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FlowBetween.h; sourceTree = "<group>"; };
 		4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloWindow.swift; sourceTree = "<group>"; };
 		4B57E9D921DE2CBD00FD0551 /* FloView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloView.swift; sourceTree = "<group>"; };
+		4B57E9DC21DE66E600FD0551 /* Position.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Position.swift; sourceTree = "<group>"; };
+		4B57E9DE21DE674000FD0551 /* Bounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bounds.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +84,8 @@
 				4B1E8C0921DCE1C5006861A8 /* FlowBetween.entitlements */,
 				4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */,
 				4B57E9D921DE2CBD00FD0551 /* FloView.swift */,
+				4B57E9DC21DE66E600FD0551 /* Position.swift */,
+				4B57E9DE21DE674000FD0551 /* Bounds.swift */,
 			);
 			path = FlowBetween;
 			sourceTree = "<group>";
@@ -195,7 +201,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B1E8C0221DCE1C3006861A8 /* AppDelegate.swift in Sources */,
+				4B57E9DF21DE674000FD0551 /* Bounds.swift in Sources */,
 				4B57E9DA21DE2CBD00FD0551 /* FloView.swift in Sources */,
+				4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */,
 				4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

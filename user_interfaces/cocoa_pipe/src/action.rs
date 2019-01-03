@@ -1,3 +1,5 @@
+use flo_ui::*;
+
 use super::view_type::*;
 
 ///
@@ -42,5 +44,8 @@ pub enum ViewAction {
     RemoveFromSuperview,
 
     /// Adds the view with the specified ID as a subview of this view
-    AddSubView(usize)
+    AddSubView(usize),
+
+    /// Sets the bounds of the view for layout
+    SetBounds(Bounds)
 }

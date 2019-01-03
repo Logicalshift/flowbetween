@@ -8,7 +8,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
         use self::ControlAttribute::*;
 
         match self {
-            BoundingBox(bounds)                     => vec![],
+            BoundingBox(bounds)                     => vec![ViewAction::SetBounds(bounds.clone())],
             ZIndex(z_index)                         => vec![],
             Padding((left, top), (right, bottom))   => vec![],
             Text(text_val)                          => vec![],

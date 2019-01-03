@@ -9,6 +9,7 @@ use futures::executor;
 use futures::executor::Spawn;
 
 use cocoa::base::{id, nil};
+use cocoa::foundation::*;
 use objc::rc::*;
 use objc::runtime::*;
 
@@ -232,9 +233,38 @@ impl CocoaSession {
             match action {
                 RemoveFromSuperview     => { msg_send!((**view), viewRemoveFromSuperview); }
                 AddSubView(view_id)     => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
+                SetBounds(bounds)       => { self.set_bounds(view, bounds); }
             }
         }
+    }
 
+    ///
+    /// Sends a request to a view to set its bounding box
+    ///
+    fn set_bounds(&self, view: &StrongPtr, bounds: Bounds) {
+        self.set_position(view, 0, bounds.x1);
+        self.set_position(view, 1, bounds.y1);
+        self.set_position(view, 2, bounds.x2);
+        self.set_position(view, 3, bounds.y2);
+    }
+
+    ///
+    /// Sets a request to set the position of a side of a view
+    ///
+    fn set_position(&self, view: &StrongPtr, side: i32, pos: Position) {
+        use self::Position::*;
+
+        unsafe {
+            match pos {
+                At(pos)                     => { msg_send!(**view, viewSetSide: side at: pos)},
+                Floating(prop, pos)         => { /* TODO */ },
+                Offset(offset)              => { msg_send!(**view, viewSetSide: side offset: offset); },
+                Stretch(amount)             => { msg_send!(**view, viewSetSide: side stretch: amount); },
+                Start                       => { msg_send!(**view, viewSetSideAtStart: side); },
+                End                         => { msg_send!(**view, viewSetSideAtEnd: side); },
+                After                       => { msg_send!(**view, viewSetSideAfter: side); }
+            }
+        }
     }
 }
 
