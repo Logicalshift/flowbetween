@@ -14,14 +14,14 @@ import Cocoa
 ///
 public class FloView : NSObject {
     override init() {
-        
+        NSLog("New view");
     }
     
     ///
     /// Creates an empty view
     ///
     @objc public func setupAsEmpty() {
-        
+        NSLog("Setup as empty");
     }
     
     ///
@@ -34,7 +34,7 @@ public class FloView : NSObject {
     ///
     /// Adds a subview to this view
     ///
-    @objc public func viewAddSubView(subview: FloView) {
+    @objc(viewAddSubView:) public func viewAddSubView(subview: FloView) {
         NSLog("Add SubView");
     }
 }
