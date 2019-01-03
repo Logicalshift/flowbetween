@@ -8,6 +8,7 @@ mod action;
 mod event;
 mod view_type;
 mod ui_pipe;
+mod app_state;
 
 pub use self::action::*;
 pub use self::event::*;
