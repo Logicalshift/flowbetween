@@ -12,27 +12,40 @@ import Cocoa
 ///
 /// Class used to manage a view in FlowBetween
 ///
-public class FloView : NSObject {
+public class FloView : NSView {
     /// The view that this will display
     fileprivate var _view: NSView!;
     
     /// The layout bounds of this view
     fileprivate var _bounds: Bounds;
     
-    override init() {
+    required init?(coder: NSCoder) {
         _bounds = Bounds(
             x1: Position.Start,
             y1: Position.Start,
             x2: Position.End,
             y2: Position.End
         );
+        
+        super.init(coder: coder);
     }
     
+    override init(frame: NSRect) {
+        _bounds = Bounds(
+            x1: Position.Start,
+            y1: Position.Start,
+            x2: Position.End,
+            y2: Position.End
+        );
+        
+        super.init(frame: frame);
+    }
+
     ///
     /// The view that this is managing
     ///
     public var view: NSView! {
-        get { return _view; }
+        get { return self; }
     }
     
     ///
