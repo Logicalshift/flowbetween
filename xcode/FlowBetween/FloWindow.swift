@@ -12,7 +12,7 @@ import Cocoa
 ///
 /// Represents a window created by FlowBetween
 ///
-public class FloWindow : NSObject {
+public class FloWindow : NSObject, NSWindowDelegate {
     ///
     /// The window itself
     ///
@@ -28,7 +28,10 @@ public class FloWindow : NSObject {
             backing:        NSWindow.BackingStoreType.buffered,
             defer:          true);
         
+        super.init();
+        
         _window.title = "FlowBetween session";
+        _window.delegate = self;
     }
     
     ///
