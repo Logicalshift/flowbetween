@@ -39,6 +39,8 @@ public class FloView : NSView {
         );
         
         super.init(frame: frame);
+        
+        self.wantsLayer = true;
     }
 
     ///
@@ -52,11 +54,10 @@ public class FloView : NSView {
     /// Creates an empty view
     ///
     @objc public func setupAsEmpty() {
-        // Just a standard NSView
-        _view = NSView.init();
-        
-        // Create core animation views wherever possible
-        _view.wantsLayer = true;
+        let r = CGFloat.random(in: 0.0..<1.0);
+        let g = CGFloat.random(in: 0.0..<1.0);
+        let b = CGFloat.random(in: 0.0..<1.0);
+        self.layer!.backgroundColor = NSColor.init(deviceRed: r, green: g, blue: b, alpha: 1.0).cgColor;
     }
     
     ///
