@@ -40,7 +40,14 @@ public class FloView : NSView {
         
         super.init(frame: frame);
         
-        self.wantsLayer = true;
+        self.wantsLayer                             = true;
+    }
+    
+    ///
+    /// The bounds of this view
+    ///
+    internal var floBounds: Bounds {
+        get { return _bounds; }
     }
 
     ///
@@ -48,6 +55,19 @@ public class FloView : NSView {
     ///
     public var view: NSView! {
         get { return self; }
+    }
+    
+    override public func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize);
+        self.performLayout();
+    }
+    
+    ///
+    /// Performs layout of this view immediately
+    ///
+    public func performLayout() {
+        // Just pass the request on to the layout class
+        Layout.layoutView(view: self);
     }
     
     ///
@@ -71,8 +91,8 @@ public class FloView : NSView {
     /// Adds a subview to this view
     ///
     @objc(viewAddSubView:) public func viewAddSubView(subview: FloView!) {
-        if let subview = subview._view {
-            _view?.addSubview(subview);
+        if let subview = subview.view {
+            self.addSubview(subview);
         }
     }
     
