@@ -41,7 +41,7 @@ public class FloWindow : NSObject {
     ///
     /// Sets the root view of this window
     ///
-    @objc(windowSetRootView:) public func windowSetRootView(view: NSObject!) {
-        
+    @objc(windowSetRootView:) public func windowSetRootView(view: FloView!) {
+        _window.contentView = view.view;
     }
 }
