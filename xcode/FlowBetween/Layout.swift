@@ -105,7 +105,7 @@ class Layout {
                 let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
                 
                 // Set the new frame for the view
-                let frame = NSRect(x: x1, y: y1, width: x2-x1, height: y2-y1);
+                let frame = NSRect(x: x1, y: max_y-y2, width: x2-x1, height: y2-y1);
                 subview.frame = frame;
 
                 // Update the last_x and last_y values
