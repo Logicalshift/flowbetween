@@ -200,10 +200,11 @@ impl CocoaSession {
             let view_class = (**self.target_object).get_ivar::<*mut Class>("_viewClass");
 
             // Allocate and initialise it
-            let view: *mut Object = msg_send!(*view_class, alloc);
+            let view: *mut Object   = msg_send!(*view_class, alloc);
+            let view: *mut Object   = msg_send!(view, init);
 
             let view = match view_type {
-                Empty => msg_send!(view, initAsEmpty)
+                Empty => msg_send!(view, setupAsEmpty)
             };
 
             let view = StrongPtr::new(view);

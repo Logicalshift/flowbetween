@@ -27,12 +27,12 @@ import Cocoa
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
 
-    @IBOutlet weak var window: NSWindow!
+    var session: NSObject! = nil;
 
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
-        let session = create_flo_session(FloWindow.self, NSObject.self);
+        session = create_flo_session(FloWindow.self, FloView.self);
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

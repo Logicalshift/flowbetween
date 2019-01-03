@@ -9,6 +9,8 @@
 #ifndef FlowBetween_h
 #define FlowBetween_h
 
+#import "Cocoa/Cocoa.h"
+
 #include "flo_cocoa.h"
 
 #endif /* FlowBetween_h */

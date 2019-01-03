@@ -43,7 +43,8 @@ impl AppState {
     ///
     fn start(&mut self) -> Vec<AppAction> {
         vec![
-            AppAction::CreateWindow(0)
+            AppAction::CreateWindow(0),
+            AppAction::Window(0, WindowAction::Open)
         ]
     }
 
