@@ -26,9 +26,9 @@ class Layout {
         case Position.Stretch(let stretch):
             if stretch_total > 0.0 {
                 let proportion = Double(stretch) / stretch_total;
-                return previous + stretch_distance*proportion;
+                return previous + (stretch_distance*proportion);
             } else {
-                return 0.0;
+                return previous;
             }
         }
     }
