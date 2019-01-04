@@ -4,6 +4,9 @@ use super::view_state::*;
 use flo_ui::*;
 use flo_ui::session::*;
 
+use std::sync::*;
+use std::collections::HashMap;
+
 ///
 /// Represents the type
 ///
@@ -12,7 +15,19 @@ pub struct AppState {
     root_view: Option<ViewState>,
 
     /// The ID that will be assigned to the next view we create
-    next_view_id: usize
+    next_view_id: usize,
+
+    /// The IDs for the viewmodels that we're managing
+    view_models: HashMap<Vec<Arc<String>>, usize>,
+
+    /// The IDs for the properties in view models (every name gets a )
+    view_model_properties: HashMap<String, usize>,
+
+    /// The next viewmodel ID to assign
+    next_viewmodel_id: usize,
+
+    /// The next ID to assign to a property
+    next_property_id: usize
 }
 
 impl AppState {
@@ -21,8 +36,12 @@ impl AppState {
     ///
     pub fn new() -> AppState {
         AppState {
-            root_view:      None,
-            next_view_id:   0
+            root_view:              None,
+            view_models:            HashMap::new(),
+            view_model_properties:  HashMap::new(),
+            next_view_id:           0,
+            next_viewmodel_id:      0,
+            next_property_id:       0
         }
     }
 
@@ -120,9 +139,76 @@ impl AppState {
     }
 
     ///
+    /// Retrieves or creates the property ID for the specified name
+    ///
+    fn create_or_retrieve_property_id(&mut self, property_name: &str) -> usize {
+        if let Some(id) = self.view_model_properties.get(property_name) {
+            *id
+        } else {
+            // Assigned a new ID
+            let id = self.next_property_id;
+            self.next_property_id += 1;
+            self.view_model_properties.insert(String::from(property_name), id);
+
+            id
+        }
+    }
+
+    ///
     /// Performs a viewmodel update
     ///
     fn update_viewmodel(&mut self, updates: Vec<ViewModelUpdate>) -> Vec<AppAction> {
-        vec![]
+        updates.into_iter()
+            .flat_map(|update| self.perform_viewmodel_update(update))
+            .collect()
+    }
+
+    ///
+    /// Performs a single viewmodel update
+    ///
+    fn perform_viewmodel_update(&mut self, update: ViewModelUpdate) -> Vec<AppAction> {
+        let mut actions = vec![];
+
+        // Retrieve the viewmodel for this controller
+        let controller_path = update.controller_path()
+            .iter()
+            .map(|path_item| Arc::new(path_item.clone()))
+            .collect();
+
+        let viewmodel_id = if let Some(viewmodel_id) = self.view_models.get(&controller_path) {
+            // Use the existing ID
+            *viewmodel_id
+        } else {
+            // Create a new ID
+            let viewmodel_id = self.next_viewmodel_id;
+            self.next_viewmodel_id += 1;
+            self.view_models.insert(controller_path, viewmodel_id);
+
+            // Send actions to create the viewmodel
+            actions.push(AppAction::CreateViewModel(viewmodel_id));
+
+            viewmodel_id
+        };
+
+        // Add the changes to the actions
+        for change in update.updates().iter() {
+            use self::ViewModelChange::*;
+
+            match change {
+                NewProperty(name, value)      => {
+                    let property_id = self.create_or_retrieve_property_id(name);
+                    actions.push(AppAction::ViewModel(viewmodel_id, ViewModelAction::CreateProperty(property_id)));
+                    actions.push(AppAction::ViewModel(viewmodel_id, ViewModelAction::SetPropertyValue(property_id, value.clone())));
+
+                },
+
+                PropertyChanged(name, value)  => {
+                    let property_id = self.create_or_retrieve_property_id(name);
+                    actions.push(AppAction::ViewModel(viewmodel_id, ViewModelAction::SetPropertyValue(property_id, value.clone())));
+                }
+            }
+        }
+
+        actions
     }
 }
