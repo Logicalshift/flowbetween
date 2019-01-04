@@ -4,6 +4,20 @@ use flo_canvas::Color;
 use super::view_type::*;
 
 ///
+/// Represents a property binding in a Cocoa application
+///
+pub enum AppProperty {
+    Nothing,
+    Bool(bool),
+    Int(i32),
+    Float(f64),
+    String(String),
+
+    /// Property is bound to a value in the view model
+    Bind(usize)
+}
+
+///
 /// Enumeration of possible actions that can be performed by a Cocoa application
 ///
 #[derive(Clone, PartialEq, Debug)]

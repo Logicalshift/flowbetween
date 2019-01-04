@@ -322,17 +322,26 @@ impl CocoaSession {
     ///
     /// Returns the FloProperty object representing the specified UI property
     ///
-    fn flo_property(&self, view_id: usize, property: Property) -> FloProperty {
-        use self::Property::*;
+    fn flo_property(&self, view_id: usize, property: AppProperty) -> FloProperty {
+        use self::AppProperty::*;
 
         match property {
-            Nothing     => FloProperty::from(PropertyValue::Nothing),
-            Bool(val)   => FloProperty::from(PropertyValue::Bool(val)),
-            Int(val)    => FloProperty::from(PropertyValue::Int(val)),
-            Float(val)  => FloProperty::from(PropertyValue::Float(val)),
-            String(val) => FloProperty::from(PropertyValue::String(val)),
+            Nothing             => FloProperty::from(PropertyValue::Nothing),
+            Bool(val)           => FloProperty::from(PropertyValue::Bool(val)),
+            Int(val)            => FloProperty::from(PropertyValue::Int(val)),
+            Float(val)          => FloProperty::from(PropertyValue::Float(val)),
+            String(val)         => FloProperty::from(PropertyValue::String(val)),
 
-            Bind(name)  => FloProperty::from(PropertyValue::String("binding not support yet".to_string()))
+            Bind(property_id)   => {
+                let viewmodel = self.viewmodel_for_view.get(&view_id)
+                    .and_then(|viewmodel_id| self.viewmodels.get(viewmodel_id));
+
+                if let Some(viewmodel) = viewmodel {
+                    unsafe { FloProperty::binding(property_id, **viewmodel) }
+                } else {
+                    FloProperty::from(PropertyValue::String("ViewModel not found".to_string()))
+                }
+            }
         }
     }
 }
