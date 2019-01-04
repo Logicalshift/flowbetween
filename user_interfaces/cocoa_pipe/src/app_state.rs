@@ -34,7 +34,7 @@ impl AppState {
             UiUpdate::Start                     => { self.start() }
             UiUpdate::UpdateUi(differences)     => { self.update_ui(differences) }
             UiUpdate::UpdateCanvas(differences) => { vec![] }
-            UiUpdate::UpdateViewModel(updates)  => { vec![] }
+            UiUpdate::UpdateViewModel(updates)  => { self.update_viewmodel(updates) }
         }
     }
 
@@ -117,5 +117,12 @@ impl AppState {
         }
 
         (view_state, setup_actions)
+    }
+
+    ///
+    /// Performs a viewmodel update
+    ///
+    fn update_viewmodel(&mut self, updates: Vec<ViewModelUpdate>) -> Vec<AppAction> {
+        vec![]
     }
 }
