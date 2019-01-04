@@ -23,7 +23,7 @@ public enum PropertyValue {
 ///
 /// Bridging class used to pass strings from the rust to the swift side of things
 ///
-@objc public class FloProperty : NSObject {
+@objc(FloProperty) public class FloProperty : NSObject {
     var _value: PropertyValue;
     
     override init() {
