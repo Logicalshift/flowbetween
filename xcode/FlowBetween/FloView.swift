@@ -132,4 +132,11 @@ public class FloView : NSView {
     @objc(viewSetSideAfter:) public func viewSetSideAfter(side: Int32) {
         set_side_position(side, Position.After);
     }
+    
+    ///
+    /// Sets the z-ordering of this view
+    ///
+    @objc public func viewSetZIndex(_ zIndex: Float64) {
+        self.layer?.zPosition = CGFloat(zIndex);
+    }
 }

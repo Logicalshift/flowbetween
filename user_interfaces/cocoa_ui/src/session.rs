@@ -240,9 +240,10 @@ impl CocoaSession {
 
         unsafe {
             match action {
-                RemoveFromSuperview     => { msg_send!((**view), viewRemoveFromSuperview); }
+                RemoveFromSuperview     => { msg_send!(**view, viewRemoveFromSuperview); }
                 AddSubView(view_id)     => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
                 SetBounds(bounds)       => { self.set_bounds(view, bounds); }
+                SetZIndex(z_index)      => { msg_send!(**view, viewSetZIndex: z_index); }
             }
         }
     }

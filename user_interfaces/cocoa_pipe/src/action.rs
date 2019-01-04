@@ -56,7 +56,10 @@ pub enum ViewAction {
     AddSubView(usize),
 
     /// Sets the bounds of the view for layout
-    SetBounds(Bounds)
+    SetBounds(Bounds),
+
+    /// Sets the Z-Index of the view
+    SetZIndex(f64)
 }
 
 ///
