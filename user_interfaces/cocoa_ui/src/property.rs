@@ -16,6 +16,20 @@ pub struct FloProperty {
     object: StrongPtr
 }
 
+impl FloProperty {
+    ///
+    /// Creates a property bound to a particular view model
+    ///
+    pub unsafe fn binding(property_id: usize, view_model: *mut Object) -> FloProperty {
+        let flo_property: *mut Object = msg_send!(class!(FloProprty), alloc);
+        let flo_property: *mut Object = msg_send!(flo_property, initWithBinding: property_id as u64 viewModel: view_model);
+
+        FloProperty {
+            object: StrongPtr::new(flo_property)
+        }
+    }
+}
+
 impl From<PropertyValue> for FloProperty {
     fn from(val: PropertyValue) -> FloProperty {
         FloProperty::from(&val)

@@ -56,6 +56,12 @@ public enum PropertyValue {
         
         super.init();
     }
+    
+    @objc(initWithBinding:viewModel:) init(withBinding: UInt64, viewModel: FloViewModel) {
+        _value = PropertyValue.String("Bindings not implemented");
+        
+        super.init();
+    }
 
     var value: PropertyValue {
         get { return _value;}
