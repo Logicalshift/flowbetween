@@ -364,6 +364,7 @@
 				CODE_SIGN_ENTITLEMENTS = FlowBetween/FlowBetween.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = FYA69RFVHB;
 				INFOPLIST_FILE = FlowBetween/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -385,6 +386,7 @@
 				CODE_SIGN_ENTITLEMENTS = FlowBetween/FlowBetween.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = FYA69RFVHB;
 				INFOPLIST_FILE = FlowBetween/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
