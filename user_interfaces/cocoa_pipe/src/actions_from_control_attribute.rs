@@ -74,8 +74,8 @@ impl ActionsFrom<ViewAction> for Appearance {
         use self::Appearance::*;
 
         match self {
-            Foreground(colour)      => vec![],
-            Background(colour)      => vec![],
+            Foreground(color)       => vec![ViewAction::SetForegroundColor(*color)],
+            Background(color)       => vec![ViewAction::SetBackgroundColor(*color)],
             Image(image)            => vec![]
         }
     }

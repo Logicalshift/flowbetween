@@ -1,4 +1,5 @@
 use flo_ui::*;
+use flo_canvas::Color;
 
 use super::view_type::*;
 
@@ -59,7 +60,13 @@ pub enum ViewAction {
     SetBounds(Bounds),
 
     /// Sets the Z-Index of the view
-    SetZIndex(f64)
+    SetZIndex(f64),
+
+    /// Sets the colour of any text or similar element the view might contain
+    SetForegroundColor(Color),
+
+    /// Sets the background colour of this view
+    SetBackgroundColor(Color)
 }
 
 ///

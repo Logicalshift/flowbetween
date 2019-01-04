@@ -43,6 +43,8 @@ public class FloView : NSView {
         self.wantsLayer                             = true;
     }
     
+    override public var isOpaque: Bool { get { return false; } }
+    
     ///
     /// The bounds of this view
     ///
@@ -74,10 +76,7 @@ public class FloView : NSView {
     /// Creates an empty view
     ///
     @objc public func setupAsEmpty() {
-        let r = CGFloat.random(in: 0.0..<1.0);
-        let g = CGFloat.random(in: 0.0..<1.0);
-        let b = CGFloat.random(in: 0.0..<1.0);
-        self.layer!.backgroundColor = NSColor.init(deviceRed: r, green: g, blue: b, alpha: 1.0).cgColor;
+        self.layer!.backgroundColor = NSColor.init(deviceRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor;
     }
     
     ///
@@ -138,5 +137,21 @@ public class FloView : NSView {
     ///
     @objc public func viewSetZIndex(_ zIndex: Float64) {
         self.layer?.zPosition = CGFloat(zIndex);
+    }
+    
+    ///
+    /// Sets the foreground (text) colour of the view
+    ///
+    @objc public func viewSetForegroundRed(_ red: Float64, green: Float64, blue: Float64, alpha: Float64) {
+        let col = NSColor(calibratedRed: CGFloat(red), green: CGFloat(green), blue: CGFloat(blue), alpha: CGFloat(alpha));
+    }
+
+    ///
+    /// Sets the background colour of the view
+    ///
+    @objc public func viewSetBackgroundRed(_ red: Float64, green: Float64, blue: Float64, alpha: Float64) {
+        let col = NSColor(calibratedRed: CGFloat(red), green: CGFloat(green), blue: CGFloat(blue), alpha: CGFloat(alpha));
+        
+        self.layer?.backgroundColor = col.cgColor;
     }
 }

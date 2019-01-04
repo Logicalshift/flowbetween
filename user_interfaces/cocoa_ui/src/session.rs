@@ -244,6 +244,8 @@ impl CocoaSession {
                 AddSubView(view_id)     => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
                 SetBounds(bounds)       => { self.set_bounds(view, bounds); }
                 SetZIndex(z_index)      => { msg_send!(**view, viewSetZIndex: z_index); }
+                SetForegroundColor(col) => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                SetBackgroundColor(col) => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
             }
         }
     }
