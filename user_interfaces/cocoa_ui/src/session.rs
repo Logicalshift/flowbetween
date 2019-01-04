@@ -36,6 +36,9 @@ pub struct CocoaSession {
     /// Maps IDs to views
     views: HashMap<usize, StrongPtr>,
 
+    /// Maps view IDs to their associated viewmodel ID
+    viewmodel_for_view: HashMap<usize, usize>,
+
     /// Maps IDs to viewmodels
     viewmodels: HashMap<usize, StrongPtr>,
 
@@ -73,6 +76,7 @@ impl CocoaSession {
             windows:            HashMap::new(),
             views:              HashMap::new(),
             viewmodels:         HashMap::new(),
+            viewmodel_for_view: HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
             events:             executor::spawn(Publisher::new(20))
@@ -159,7 +163,7 @@ impl CocoaSession {
             
             CreateView(view_id, view_type)      => { self.create_view(view_id, view_type); },
             DeleteView(view_id)                 => { self.delete_view(view_id); }
-            View(view_id, view_action)          => { self.views.get(&view_id).map(|view| self.dispatch_view_action(view, view_action)); }
+            View(view_id, view_action)          => { self.dispatch_view_action(view_id, view_action); }
 
             CreateViewModel(viewmodel_id)       => { self.create_viewmodel(viewmodel_id); },
             DeleteViewModel(viewmodel_id)       => { self.viewmodels.remove(&viewmodel_id); },
@@ -230,22 +234,28 @@ impl CocoaSession {
     ///
     pub fn delete_view(&mut self, old_view_id: usize) {
         self.views.remove(&old_view_id);
+        self.viewmodel_for_view.remove(&old_view_id);
     }
 
     ///
     /// Dispatches an action to the specified view
     ///
-    fn dispatch_view_action(&self, view: &StrongPtr, action: ViewAction) {
+    fn dispatch_view_action(&mut self, view_id: usize, action: ViewAction) {
         use self::ViewAction::*;
 
-        unsafe {
-            match action {
-                RemoveFromSuperview     => { msg_send!(**view, viewRemoveFromSuperview); }
-                AddSubView(view_id)     => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
-                SetBounds(bounds)       => { self.set_bounds(view, bounds); }
-                SetZIndex(z_index)      => { msg_send!(**view, viewSetZIndex: z_index); }
-                SetForegroundColor(col) => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
-                SetBackgroundColor(col) => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+        let views = &self.views;
+
+        if let Some(view) = views.get(&view_id) {
+            unsafe {
+                match action {
+                    RemoveFromSuperview         => { msg_send!(**view, viewRemoveFromSuperview); }
+                    AddSubView(view_id)         => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
+                    SetViewModel(viewmodel_id)  => { self.viewmodel_for_view.insert(view_id, viewmodel_id); }
+                    SetBounds(bounds)           => { self.set_bounds(view, bounds); }
+                    SetZIndex(z_index)          => { msg_send!(**view, viewSetZIndex: z_index); }
+                    SetForegroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    SetBackgroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                }
             }
         }
     }
