@@ -6,6 +6,7 @@ use super::view_type::*;
 ///
 /// Represents a property binding in a Cocoa application
 ///
+#[derive(Clone, PartialEq, Debug)]
 pub enum AppProperty {
     Nothing,
     Bool(bool),
@@ -83,7 +84,10 @@ pub enum ViewAction {
     SetForegroundColor(Color),
 
     /// Sets the background colour of this view
-    SetBackgroundColor(Color)
+    SetBackgroundColor(Color),
+
+    /// Sets the text to display in a control
+    SetText(AppProperty)
 }
 
 ///

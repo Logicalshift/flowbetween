@@ -154,4 +154,11 @@ public class FloView : NSView {
         
         self.layer?.backgroundColor = col.cgColor;
     }
+    
+    ///
+    /// Sets the text of the view
+    ///
+    @objc public func viewSetText(_ text: FloProperty) {
+        
+    }
 }
