@@ -1,7 +1,6 @@
 use super::action::*;
 use super::view_type::*;
 use super::actions_from::*;
-use super::actions_from_control_attribute::*;
 
 use flo_ui::*;
 
@@ -14,8 +13,8 @@ pub struct ViewState {
     /// The identifier that has been assigned to this view
     view_id: usize,
 
-    /// The name of the controller that this view belongs to
-    controller: Option<Arc<String>>,
+    /// The name of the controller that should be applied to subcontrollers
+    subview_controller: Option<Arc<String>>,
 
     /// The child views for this view
     child_views: Vec<ViewState>
@@ -27,9 +26,9 @@ impl ViewState {
     ///
     pub fn new(view_id: usize) -> ViewState {
         ViewState {
-            view_id:        view_id,
-            controller:     None,
-            child_views:    vec![]
+            view_id:            view_id,
+            subview_controller: None,
+            child_views:        vec![]
         }
     }
 
@@ -52,6 +51,33 @@ impl ViewState {
         }
 
         Some(view)
+    }
+
+    ///
+    /// Retrieves the controller path for a given address relative to this view model
+    ///
+    pub fn get_controller_path_at_address(&self, address: &Vec<u32>) -> Vec<Arc<String>> {
+        let mut controller_path = vec![];
+        let mut view            = self;
+
+        // Follow the address to find the controller path
+        for child_index in address.iter() {
+            // If the subviews of this control are under a different controller, then add it to the existing path
+            if let Some(controller) = &view.subview_controller {
+                controller_path.push(Arc::clone(controller));
+            }
+
+            // Move to the subview
+            let child_index = *child_index as usize;
+
+            if child_index < view.child_views.len() {
+                view = &view.child_views[child_index];
+            } else {
+                break;
+            }
+        }
+
+        controller_path
     }
 
     ///
@@ -114,6 +140,11 @@ impl ViewState {
 
         // Create the view with the appropriate type
         set_up_steps.push(AppAction::CreateView(self.view_id, ViewType::from(control)));
+
+        // Specify the controller name, if there is one
+        if let Some(controller_name) = control.controller() {
+            self.subview_controller = Some(Arc::new(String::from(controller_name)));
+        }
 
         // Set up the view from its attributes
         let view_set_up = control.attributes()
