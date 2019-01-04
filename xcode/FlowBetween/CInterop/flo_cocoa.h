@@ -11,6 +11,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-extern NSObject* create_flo_session(Class window_class, Class view_class);
+extern NSObject* create_flo_session(Class window_class, Class view_class, Class view_model_class);
 
 #endif /* flo_cocoa_h */

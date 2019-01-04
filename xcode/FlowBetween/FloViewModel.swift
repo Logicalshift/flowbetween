@@ -1,8 +1,8 @@
 //
-//  AppDelegate.swift
+//  FloViewModel.swift
 //  FlowBetween
 //
-//  Created by Andrew Hunter on 02/01/2019.
+//  Created by Andrew Hunter on 04/01/2019.
 //  Copyright © 2019 Andrew Hunter.
 //
 // FlowBetween is distributed under the terms of the Apache public license
@@ -22,23 +22,11 @@
 // limitations under the License.
 //
 
-import Cocoa
+import Foundation
 
-@NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate {
-
-    var session: NSObject! = nil;
-
-
-    func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Insert code here to initialize your application
-        session = create_flo_session(FloWindow.self, FloView.self, FloViewModel.self);
-    }
-
-    func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
-    }
-
-
+///
+/// Provides the view model implementation methods
+///
+public class FloViewModel : NSObject {
+    
 }
-

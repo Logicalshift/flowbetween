@@ -72,6 +72,14 @@ fn declare_flo_control_class() -> &'static Class {
             }
         }
 
+        /// Sets the viewmodel class for a FloControl object
+        extern fn set_view_model_class(this: &mut Object, _cmd: Sel, new_view_model_class: *mut Class) {
+            unsafe {
+                msg_send!(new_view_model_class, retain);
+                this.set_ivar("_viewModelClass", new_view_model_class);
+            }
+        }
+
         /// Drains the action stream when it's ready
         extern fn action_stream_ready(this: &mut Object, _cmd: Sel) {
             unsafe {
@@ -101,12 +109,14 @@ fn declare_flo_control_class() -> &'static Class {
         // We delegate messages to the window and view classes
         flo_control.add_ivar::<*mut Class>("_windowClass");
         flo_control.add_ivar::<*mut Class>("_viewClass");
+        flo_control.add_ivar::<*mut Class>("_viewModelClass");
 
         // Register the init function
         flo_control.add_method(sel!(init), init_flo_control as extern fn(&Object, Sel) -> *mut Object);
         flo_control.add_method(sel!(dealloc), dealloc_flo_control as extern fn(&mut Object, Sel));
         flo_control.add_method(sel!(setWindowClass:), set_window_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(setViewClass:), set_view_class as extern fn(&mut Object, Sel, *mut Class));
+        flo_control.add_method(sel!(setViewModelClass:), set_view_model_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(actionStreamReady), action_stream_ready as extern fn(&mut Object, Sel));
     }
 
