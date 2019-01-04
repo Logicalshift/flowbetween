@@ -38,23 +38,23 @@ public class FloViewModel : NSObject {
         _properties[propertyId] = PropertyValue.Nothing;
     }
     
-    @objc public func setBool(_ propertyId: UInt64, val: Bool) {
-        _properties[propertyId] = PropertyValue.Bool(val);
+    @objc public func setBool(_ propertyId: UInt64, toValue: Bool) {
+        _properties[propertyId] = PropertyValue.Bool(toValue);
     }
     
-    @objc public func setInt(_ propertyId: UInt64, val: Int64) {
-        _properties[propertyId] = PropertyValue.Int(val);
+    @objc public func setInt(_ propertyId: UInt64, toValue: Int64) {
+        _properties[propertyId] = PropertyValue.Int(toValue);
     }
     
-    @objc public func setFloat(_ propertyId: UInt64, val: Float64) {
-        _properties[propertyId] = PropertyValue.Float(val);
+    @objc public func setFloat(_ propertyId: UInt64, toValue: Float64) {
+        _properties[propertyId] = PropertyValue.Float(toValue);
     }
     
-    @objc public func setString(_ propertyId: UInt64, val: NSString) {
-        _properties[propertyId] = PropertyValue.String(val as String);
+    @objc public func setString(_ propertyId: UInt64, toValue: NSString) {
+        _properties[propertyId] = PropertyValue.String(toValue as String);
     }
     
-    @objc public func setProperty(_ propertyId: UInt64, val: FloProperty) {
-        _properties[propertyId] = val.value;
+    @objc public func setProperty(_ propertyId: UInt64, toValue: FloProperty) {
+        _properties[propertyId] = toValue.value;
     }
 }

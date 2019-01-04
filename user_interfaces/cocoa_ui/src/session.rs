@@ -1,4 +1,5 @@
 use super::cocoa_ui::*;
+use super::property::*;
 
 use flo_ui::*;
 use flo_stream::*;
@@ -35,6 +36,9 @@ pub struct CocoaSession {
     /// Maps IDs to views
     views: HashMap<usize, StrongPtr>,
 
+    /// Maps IDs to viewmodels
+    viewmodels: HashMap<usize, StrongPtr>,
+
     /// Publisher where we send the actions to
     action_publisher: Publisher<Vec<AppAction>>,
 
@@ -68,6 +72,7 @@ impl CocoaSession {
             target_object:      obj.clone(),
             windows:            HashMap::new(),
             views:              HashMap::new(),
+            viewmodels:         HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
             events:             executor::spawn(Publisher::new(20))
@@ -156,9 +161,9 @@ impl CocoaSession {
             DeleteView(view_id)                 => { self.delete_view(view_id); }
             View(view_id, view_action)          => { self.views.get(&view_id).map(|view| self.dispatch_view_action(view, view_action)); }
 
-            CreateViewModel(viewmodel_id)       => { },
-            DeleteViewModel(viewmodel_id)       => { },
-            ViewModel(view_model_id, action)    => { }
+            CreateViewModel(viewmodel_id)       => { self.create_viewmodel(viewmodel_id); },
+            DeleteViewModel(viewmodel_id)       => { self.viewmodels.remove(&viewmodel_id); },
+            ViewModel(view_model_id, action)    => { self.viewmodels.get(&view_model_id).map(|viewmodel| self.dispatch_viewmodel_action(viewmodel, action)); }
         }
     }
 
@@ -267,6 +272,36 @@ impl CocoaSession {
                 Start                       => { msg_send!(**view, viewSetSideAtStart: side); },
                 End                         => { msg_send!(**view, viewSetSideAtEnd: side); },
                 After                       => { msg_send!(**view, viewSetSideAfter: side); }
+            }
+        }
+    }
+
+    ///
+    /// Creates a new viewmodel with the specified ID
+    ///
+    fn create_viewmodel(&mut self, viewmodel_id: usize) {
+        unsafe {
+            // Create the viewmodel
+            let view_model_class            = (**self.target_object).get_ivar::<*mut Class>("_viewModelClass");
+            let new_view_model: *mut Object = msg_send!(*view_model_class, alloc);
+            let new_view_model: *mut Object = msg_send!(new_view_model, init);
+            let new_view_model              = StrongPtr::new(new_view_model);
+
+            // Store in the list of viewmodels
+            self.viewmodels.insert(viewmodel_id, new_view_model);
+        }
+    }
+
+    ///
+    /// Performs a viewmodel action
+    ///
+    fn dispatch_viewmodel_action(&self, viewmodel: &StrongPtr, action: ViewModelAction) {
+        unsafe {
+            use self::ViewModelAction::*;
+
+            match action {
+                CreateProperty(property_id)             => { msg_send!(**viewmodel, setNothing: property_id as u64); }
+                SetPropertyValue(property_id, value)    => { msg_send!(**viewmodel, setProperty: property_id as u64 toValue: &*FloProperty::from(value)); }
             }
         }
     }
