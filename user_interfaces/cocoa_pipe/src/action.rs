@@ -20,7 +20,16 @@ pub enum AppAction {
     DeleteView(usize),
 
     /// Performs an action on the specified view
-    View(usize, ViewAction)
+    View(usize, ViewAction),
+
+    /// Creates a viewmodel with a particular ID
+    CreateViewModel(usize),
+
+    /// Removes the viewmodel with the specified ID
+    DeleteViewModel(usize),
+
+    /// Performs an action on the specified view model
+    ViewModel(usize, ViewModelAction)
 }
 
 ///
@@ -48,4 +57,16 @@ pub enum ViewAction {
 
     /// Sets the bounds of the view for layout
     SetBounds(Bounds)
+}
+
+///
+/// Enumerationof possible actions for a viewmodel
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum ViewModelAction {
+    /// Creates a new viewmodel property with the specified ID
+    CreateProperty(usize),
+
+    /// Sets the value of a property to the specified value
+    SetPropertyValue(usize, PropertyValue)
 }

@@ -9,7 +9,6 @@ use futures::executor;
 use futures::executor::Spawn;
 
 use cocoa::base::{id, nil};
-use cocoa::foundation::*;
 use objc::rc::*;
 use objc::runtime::*;
 
@@ -152,9 +151,14 @@ impl CocoaSession {
         match action {
             CreateWindow(window_id)             => { self.create_window(window_id); }
             Window(window_id, window_action)    => { self.windows.get(&window_id).map(|window| self.dispatch_window_action(window, window_action)); }
+            
             CreateView(view_id, view_type)      => { self.create_view(view_id, view_type); },
             DeleteView(view_id)                 => { self.delete_view(view_id); }
             View(view_id, view_action)          => { self.views.get(&view_id).map(|view| self.dispatch_view_action(view, view_action)); }
+
+            CreateViewModel(viewmodel_id)       => { },
+            DeleteViewModel(viewmodel_id)       => { },
+            ViewModel(view_model_id, action)    => { }
         }
     }
 
