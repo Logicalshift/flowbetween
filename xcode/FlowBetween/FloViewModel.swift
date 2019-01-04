@@ -53,4 +53,8 @@ public class FloViewModel : NSObject {
     @objc public func setString(_ propertyId: UInt64, val: NSString) {
         _properties[propertyId] = PropertyValue.String(val as String);
     }
+    
+    @objc public func setProperty(_ propertyId: UInt64, val: FloProperty) {
+        _properties[propertyId] = val.value;
+    }
 }
