@@ -308,6 +308,23 @@ impl CocoaSession {
             }
         }
     }
+
+    ///
+    /// Returns the FloProperty object representing the specified UI property
+    ///
+    fn flo_property(&self, view_id: usize, property: Property) -> FloProperty {
+        use self::Property::*;
+
+        match property {
+            Nothing     => FloProperty::from(PropertyValue::Nothing),
+            Bool(val)   => FloProperty::from(PropertyValue::Bool(val)),
+            Int(val)    => FloProperty::from(PropertyValue::Int(val)),
+            Float(val)  => FloProperty::from(PropertyValue::Float(val)),
+            String(val) => FloProperty::from(PropertyValue::String(val)),
+
+            Bind(name)  => FloProperty::from(PropertyValue::String("binding not support yet".to_string()))
+        }
+    }
 }
 
 /// WeakPtr is not Send because Object is not Send... but we need to be able to send objective-C objects between threads so
