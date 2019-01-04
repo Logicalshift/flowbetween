@@ -111,6 +111,9 @@ class Layout {
                 // Update the last_x and last_y values
                 last_x = x2;
                 last_y = y2;
+            } else {
+                // Other subviews are set to fill the entire control
+                subview.frame = NSRect(x: 0 y: 0, width: max_x, height: max_y);
             }
         }
     }
