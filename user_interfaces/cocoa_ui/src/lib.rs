@@ -8,5 +8,6 @@
 mod app;
 mod session;
 mod cocoa_ui;
+mod property;
 
 pub use self::app::*;
