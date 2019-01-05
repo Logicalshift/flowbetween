@@ -36,9 +36,6 @@ pub struct CocoaSession {
     /// Maps IDs to views
     views: HashMap<usize, StrongPtr>,
 
-    /// Maps view IDs to their associated viewmodel ID
-    viewmodel_for_view: HashMap<usize, usize>,
-
     /// Maps IDs to viewmodels
     viewmodels: HashMap<usize, StrongPtr>,
 
@@ -76,7 +73,6 @@ impl CocoaSession {
             windows:            HashMap::new(),
             views:              HashMap::new(),
             viewmodels:         HashMap::new(),
-            viewmodel_for_view: HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
             events:             executor::spawn(Publisher::new(20))
@@ -234,7 +230,6 @@ impl CocoaSession {
     ///
     pub fn delete_view(&mut self, old_view_id: usize) {
         self.views.remove(&old_view_id);
-        self.viewmodel_for_view.remove(&old_view_id);
     }
 
     ///
@@ -250,12 +245,11 @@ impl CocoaSession {
                 match action {
                     RemoveFromSuperview         => { msg_send!(**view, viewRemoveFromSuperview); }
                     AddSubView(view_id)         => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
-                    SetViewModel(viewmodel_id)  => { self.viewmodel_for_view.insert(view_id, viewmodel_id); }
                     SetBounds(bounds)           => { self.set_bounds(view, bounds); }
                     SetZIndex(z_index)          => { msg_send!(**view, viewSetZIndex: z_index); }
                     SetForegroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
                     SetBackgroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
-                    SetText(property)           => { msg_send!(**view, viewSetText: &*self.flo_property(view_id, property)); }
+                    SetText(property)           => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
                 }
             }
         }
@@ -323,19 +317,18 @@ impl CocoaSession {
     ///
     /// Returns the FloProperty object representing the specified UI property
     ///
-    fn flo_property(&self, view_id: usize, property: AppProperty) -> FloProperty {
+    fn flo_property(&self, property: AppProperty) -> FloProperty {
         use self::AppProperty::*;
 
         match property {
-            Nothing             => FloProperty::from(PropertyValue::Nothing),
-            Bool(val)           => FloProperty::from(PropertyValue::Bool(val)),
-            Int(val)            => FloProperty::from(PropertyValue::Int(val)),
-            Float(val)          => FloProperty::from(PropertyValue::Float(val)),
-            String(val)         => FloProperty::from(PropertyValue::String(val)),
+            Nothing                         => FloProperty::from(PropertyValue::Nothing),
+            Bool(val)                       => FloProperty::from(PropertyValue::Bool(val)),
+            Int(val)                        => FloProperty::from(PropertyValue::Int(val)),
+            Float(val)                      => FloProperty::from(PropertyValue::Float(val)),
+            String(val)                     => FloProperty::from(PropertyValue::String(val)),
 
-            Bind(property_id)   => {
-                let viewmodel = self.viewmodel_for_view.get(&view_id)
-                    .and_then(|viewmodel_id| self.viewmodels.get(viewmodel_id));
+            Bind(viewmodel_id, property_id) => {
+                let viewmodel = self.viewmodels.get(&viewmodel_id);
 
                 if let Some(viewmodel) = viewmodel {
                     unsafe { FloProperty::binding(property_id, **viewmodel) }

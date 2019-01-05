@@ -112,16 +112,71 @@ impl AppState {
     }
 
     ///
+    /// Converts a UI property into an AppProperty binding
+    /// 
+    /// This returns the property binding and any AppActions that might be required to ensure that it's valid.
+    /// This means that if there is no viewmodel for the specified controller path and the property requires one,
+    /// the actions will be amended to create one.
+    ///
+    fn app_property(&mut self, controller_path: &Vec<Arc<String>>, property: Property) -> (Vec<AppAction>, AppProperty) {
+        use self::Property::*;
+
+        match property {
+            Nothing     => (vec![], AppProperty::Nothing),
+            Bool(val)   => (vec![], AppProperty::Bool(val)),
+            Int(val)    => (vec![], AppProperty::Int(val)),
+            Float(val)  => (vec![], AppProperty::Float(val)),
+            String(val) => (vec![], AppProperty::String(val)),
+
+            Bind(name)  => {
+                // Fetch or create the viewmodel ID
+                let mut actions     = vec![];
+                let viewmodel_id    = if let Some(viewmodel_id) = self.view_models.get(controller_path) {
+                    // Use the existing ID
+                    *viewmodel_id
+                } else {
+                    // Create a new ID
+                    let viewmodel_id = self.next_viewmodel_id;
+                    self.next_viewmodel_id += 1;
+                    self.view_models.insert(controller_path.clone(), viewmodel_id);
+
+                    // Send actions to create the viewmodel
+                    actions.push(AppAction::CreateViewModel(viewmodel_id));
+
+                    viewmodel_id
+                };
+
+                // Fetch or create the property ID
+                let property_id     = self.create_or_retrieve_property_id(&name);
+
+                // Generate the resulting app property
+                (actions, AppProperty::Bind(viewmodel_id, property_id))
+            }
+        }
+    }
+
+    ///
     /// Creates a view (and subviews) from a UI control
     ///
     fn create_view(&mut self, control: &Control, controller_path: &Vec<Arc<String>>) -> (ViewState, Vec<AppAction>) {
         // Create a new view state
-        let view_id             = self.next_view_id;
-        self.next_view_id       += 1;
-        let mut view_state      = ViewState::new(view_id);
+        let view_id                 = self.next_view_id;
+        self.next_view_id           += 1;
+        let mut view_state          = ViewState::new(view_id);
 
         // Initialise from the control
-        let mut setup_actions   = view_state.set_up_from_control(control, |property| { unimplemented!() });
+        let mut property_actions    = vec![];
+        let setup_actions           = view_state.set_up_from_control(control, |property| {
+            let (actions, property) = self.app_property(controller_path, property);
+
+            property_actions.extend(actions);
+
+            property
+        });
+
+        // Property setup actions need to occur before all the other actions associated with this control's setup
+        property_actions.extend(setup_actions);
+        let mut setup_actions = property_actions;
 
         // Work out the controller path for the subcomponents. If the view state has a controller, then add it to the existing path, otherwise keep the existing path
         let mut edited_controller_path;

@@ -63,7 +63,10 @@ public enum PropertyValue {
         super.init();
     }
 
-    var value: PropertyValue {
+    ///
+    /// Retrieves the current value of this property
+    ///
+    public var value: PropertyValue {
         get { return _value;}
     }
 }

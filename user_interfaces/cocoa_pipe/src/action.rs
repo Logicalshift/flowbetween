@@ -15,7 +15,7 @@ pub enum AppProperty {
     String(String),
 
     /// Property is bound to a property ID in the view model
-    Bind(usize)
+    Bind(usize, usize)
 }
 
 ///
@@ -67,9 +67,6 @@ pub enum WindowAction {
 pub enum ViewAction {
     /// Removes the view from its superview
     RemoveFromSuperview,
-
-    /// Sets the viewmodel for this view
-    SetViewModel(usize),
 
     /// Adds the view with the specified ID as a subview of this view
     AddSubView(usize),
