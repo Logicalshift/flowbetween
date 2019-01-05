@@ -18,6 +18,10 @@
 		4B57E9E121DE6A9E00FD0551 /* Layout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9E021DE6A9E00FD0551 /* Layout.swift */; };
 		4B58D90721DFAB8F00BDAE7B /* FloViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */; };
 		4B58D90921DFB16F00BDAE7B /* FloProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B58D90821DFB16F00BDAE7B /* FloProperty.swift */; };
+		4BAC990721E0FC7000CEB87B /* OFL.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4BAC98FC21E0FBD100CEB87B /* OFL.txt */; };
+		4BAC990F21E0FDE900CEB87B /* Lato-Bold.ttf in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4BAC990921E0FDDB00CEB87B /* Lato-Bold.ttf */; };
+		4BAC991021E0FDE900CEB87B /* Lato-Regular.ttf in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4BAC990B21E0FDDB00CEB87B /* Lato-Regular.ttf */; };
+		4BAC991121E0FDE900CEB87B /* Lato-Thin.ttf in CopyFiles */ = {isa = PBXBuildFile; fileRef = 4BAC990A21E0FDDB00CEB87B /* Lato-Thin.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +33,22 @@
 			remoteInfo = FlowBetweenRust;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4BAC990321E0FC3100CEB87B /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = fonts;
+			dstSubfolderSpec = 7;
+			files = (
+				4BAC990721E0FC7000CEB87B /* OFL.txt in CopyFiles */,
+				4BAC990F21E0FDE900CEB87B /* Lato-Bold.ttf in CopyFiles */,
+				4BAC991021E0FDE900CEB87B /* Lato-Regular.ttf in CopyFiles */,
+				4BAC991121E0FDE900CEB87B /* Lato-Thin.ttf in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		4B1E8BFE21DCE1C3006861A8 /* FlowBetween.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlowBetween.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -48,6 +68,14 @@
 		4B57E9E021DE6A9E00FD0551 /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
 		4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewModel.swift; sourceTree = "<group>"; };
 		4B58D90821DFB16F00BDAE7B /* FloProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloProperty.swift; sourceTree = "<group>"; };
+		4BAC98F921E0FBD100CEB87B /* Lato-Thin.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Thin.woff2"; sourceTree = "<group>"; };
+		4BAC98FA21E0FBD100CEB87B /* Lato-Regular.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Regular.woff2"; sourceTree = "<group>"; };
+		4BAC98FB21E0FBD100CEB87B /* README-WEB.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "README-WEB.txt"; sourceTree = "<group>"; };
+		4BAC98FC21E0FBD100CEB87B /* OFL.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
+		4BAC98FD21E0FBD100CEB87B /* Lato-Bold.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Bold.woff2"; sourceTree = "<group>"; };
+		4BAC990921E0FDDB00CEB87B /* Lato-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Bold.ttf"; sourceTree = "<group>"; };
+		4BAC990A21E0FDDB00CEB87B /* Lato-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Thin.ttf"; sourceTree = "<group>"; };
+		4BAC990B21E0FDDB00CEB87B /* Lato-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +110,7 @@
 		4B1E8C0021DCE1C3006861A8 /* FlowBetween */ = {
 			isa = PBXGroup;
 			children = (
+				4BAC98F721E0FBAF00CEB87B /* Fonts */,
 				4B1E8C2321DD164E006861A8 /* CInterop */,
 				4B1E8C0121DCE1C3006861A8 /* AppDelegate.swift */,
 				4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */,
@@ -117,6 +146,30 @@
 			path = CInterop;
 			sourceTree = "<group>";
 		};
+		4BAC98F721E0FBAF00CEB87B /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				4BAC98F821E0FBD100CEB87B /* lato */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		4BAC98F821E0FBD100CEB87B /* lato */ = {
+			isa = PBXGroup;
+			children = (
+				4BAC990921E0FDDB00CEB87B /* Lato-Bold.ttf */,
+				4BAC990B21E0FDDB00CEB87B /* Lato-Regular.ttf */,
+				4BAC990A21E0FDDB00CEB87B /* Lato-Thin.ttf */,
+				4BAC98F921E0FBD100CEB87B /* Lato-Thin.woff2 */,
+				4BAC98FA21E0FBD100CEB87B /* Lato-Regular.woff2 */,
+				4BAC98FB21E0FBD100CEB87B /* README-WEB.txt */,
+				4BAC98FC21E0FBD100CEB87B /* OFL.txt */,
+				4BAC98FD21E0FBD100CEB87B /* Lato-Bold.woff2 */,
+			);
+			name = lato;
+			path = ../../../static_files/fonts/lato;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
@@ -143,6 +196,7 @@
 			buildPhases = (
 				4B1E8BFA21DCE1C3006861A8 /* Sources */,
 				4B1E8BFB21DCE1C3006861A8 /* Frameworks */,
+				4BAC990321E0FC3100CEB87B /* CopyFiles */,
 				4B1E8BFC21DCE1C3006861A8 /* Resources */,
 			);
 			buildRules = (

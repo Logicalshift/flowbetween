@@ -66,9 +66,12 @@ public class FloView : NSView {
                 return control;
             } else {
                 // Default control is a label
-                let label = NSTextField.init(labelWithString: "");
+                let label   = NSTextField.init(labelWithString: "");
+                label.font  = NSFontManager.shared.font(withFamily: "Lato", traits: NSFontTraitMask(), weight: 5, size: 13.0);
+                
                 self.addSubview(label);
                 _control = label;
+
                 return label;
             }
         }
