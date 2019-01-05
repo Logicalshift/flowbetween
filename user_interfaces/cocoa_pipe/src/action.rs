@@ -14,7 +14,7 @@ pub enum AppProperty {
     Float(f64),
     String(String),
 
-    /// Property is bound to a value in the view model
+    /// Property is bound to a property ID in the view model
     Bind(usize)
 }
 

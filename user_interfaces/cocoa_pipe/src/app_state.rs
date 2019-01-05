@@ -80,8 +80,11 @@ impl AppState {
     /// Returns the actions required to perform a single UI diff
     ///
     fn update_ui_from_diff(&mut self, difference: UiDiff) -> Vec<AppAction> {
+        // Get the controller path
+        let controller_path = self.root_view.as_ref().map(|root_view| root_view.get_controller_path_at_address(&difference.address)).unwrap_or(vec![]);
+
         // Create the replacement view states
-        let (view_state, mut actions) = self.create_view(&difference.new_ui);
+        let (view_state, mut actions) = self.create_view(&difference.new_ui, &controller_path);
 
         // The difference specifies a view to replace
         let view_to_replace = self.root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(&difference.address));
@@ -111,19 +114,30 @@ impl AppState {
     ///
     /// Creates a view (and subviews) from a UI control
     ///
-    fn create_view(&mut self, control: &Control) -> (ViewState, Vec<AppAction>) {
+    fn create_view(&mut self, control: &Control, controller_path: &Vec<Arc<String>>) -> (ViewState, Vec<AppAction>) {
         // Create a new view state
         let view_id             = self.next_view_id;
         self.next_view_id       += 1;
         let mut view_state      = ViewState::new(view_id);
 
         // Initialise from the control
-        let mut setup_actions   = view_state.set_up_from_control(control);
+        let mut setup_actions   = view_state.set_up_from_control(control, |property| { unimplemented!() });
+
+        // Work out the controller path for the subcomponents. If the view state has a controller, then add it to the existing path, otherwise keep the existing path
+        let mut edited_controller_path;
+
+        let subcomponent_controller_path    = if let Some(subview_controller) = view_state.get_subview_controller() {
+            edited_controller_path = controller_path.clone();
+            edited_controller_path.push(subview_controller);
+            &edited_controller_path
+        } else {
+            controller_path
+        };
 
         // Also set up any subcomponents
         for subcomponent in control.subcomponents().unwrap_or(&vec![]) {
             // Create the view for the subcomponent
-            let (subcomponent_view, subcomponent_actions) = self.create_view(subcomponent);
+            let (subcomponent_view, subcomponent_actions) = self.create_view(subcomponent, subcomponent_controller_path);
 
             // Add to the setup actions
             setup_actions.extend(subcomponent_actions);

@@ -4,21 +4,21 @@ use super::actions_from::*;
 use flo_ui::*;
 
 impl ActionsFrom<ViewAction> for ControlAttribute {
-    fn actions_from(&self) -> Vec<ViewAction> { 
+    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> { 
         use self::ControlAttribute::*;
 
         match self {
-            FontAttr(font_attr)                     => font_attr.actions_from(),
-            StateAttr(state_attr)                   => state_attr.actions_from(),
-            PopupAttr(popup_attr)                   => popup_attr.actions_from(),
-            AppearanceAttr(appearance_attr)         => appearance_attr.actions_from(),
-            ScrollAttr(scroll_attr)                 => scroll_attr.actions_from(),
-            HintAttr(hint_attr)                     => hint_attr.actions_from(),
+            FontAttr(font_attr)                     => font_attr.actions_from(bind_property),
+            StateAttr(state_attr)                   => state_attr.actions_from(bind_property),
+            PopupAttr(popup_attr)                   => popup_attr.actions_from(bind_property),
+            AppearanceAttr(appearance_attr)         => appearance_attr.actions_from(bind_property),
+            ScrollAttr(scroll_attr)                 => scroll_attr.actions_from(bind_property),
+            HintAttr(hint_attr)                     => hint_attr.actions_from(bind_property),
 
             BoundingBox(bounds)                     => vec![ViewAction::SetBounds(bounds.clone())],
             ZIndex(z_index)                         => vec![ViewAction::SetZIndex(*z_index as f64)],
             Padding((left, top), (right, bottom))   => vec![],
-            Text(text_val)                          => vec![],
+            Text(text_val)                          => vec![ViewAction::SetText(bind_property(text_val.clone()))],
             Id(id)                                  => vec![],
             Controller(name)                        => vec![],
             Action(trigger, name)                   => vec![],
@@ -30,7 +30,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
 }
 
 impl ActionsFrom<ViewAction> for Font {
-    fn actions_from(&self) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Font::*;
 
         match self {
@@ -42,7 +42,7 @@ impl ActionsFrom<ViewAction> for Font {
 }
 
 impl ActionsFrom<ViewAction> for State {
-    fn actions_from(&self) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::State::*;
 
         match self {
@@ -57,7 +57,7 @@ impl ActionsFrom<ViewAction> for State {
 }
 
 impl ActionsFrom<ViewAction> for Popup {
-    fn actions_from(&self) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Popup::*;
 
         match self {
@@ -70,7 +70,7 @@ impl ActionsFrom<ViewAction> for Popup {
 }
 
 impl ActionsFrom<ViewAction> for Appearance {
-    fn actions_from(&self) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Appearance::*;
 
         match self {
@@ -82,7 +82,7 @@ impl ActionsFrom<ViewAction> for Appearance {
 }
 
 impl ActionsFrom<ViewAction> for Scroll {
-    fn actions_from(&self) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Scroll::*;
 
         match self {
@@ -95,7 +95,7 @@ impl ActionsFrom<ViewAction> for Scroll {
 }
 
 impl ActionsFrom<ViewAction> for Hint {
-    fn actions_from(&self) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Hint::*;
 
         match self {

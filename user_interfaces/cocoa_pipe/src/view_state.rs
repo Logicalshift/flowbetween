@@ -54,6 +54,13 @@ impl ViewState {
     }
 
     ///
+    /// If the subviews of this view have a different controller, this will return it
+    ///
+    pub fn get_subview_controller(&self) -> Option<Arc<String>> {
+        self.subview_controller.clone()
+    }
+
+    ///
     /// Retrieves the controller path for a given address relative to this view model
     ///
     pub fn get_controller_path_at_address(&self, address: &Vec<u32>) -> Vec<Arc<String>> {
@@ -134,7 +141,7 @@ impl ViewState {
     ///
     /// Sets up this state from a control, and returns the action steps needed to initialise it
     ///
-    pub fn set_up_from_control(&mut self, control: &Control) -> Vec<AppAction> {
+    pub fn set_up_from_control<BindProperty: Fn(Property) -> AppProperty>(&mut self, control: &Control, bind_property: BindProperty) -> Vec<AppAction> {
         // Create the list of set up steps
         let mut set_up_steps = vec![];
 
@@ -148,7 +155,7 @@ impl ViewState {
 
         // Set up the view from its attributes
         let view_set_up = control.attributes()
-            .flat_map(|attribute| attribute.actions_from())
+            .flat_map(|attribute| attribute.actions_from(bind_property))
             .map(|view_action| AppAction::View(self.view_id, view_action));
         set_up_steps.extend(view_set_up);
 
