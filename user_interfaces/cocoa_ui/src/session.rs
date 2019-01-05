@@ -10,6 +10,8 @@ use futures::executor;
 use futures::executor::Spawn;
 
 use cocoa::base::{id, nil};
+use cocoa::appkit::{NSImage};
+use cocoa::foundation::{NSData};
 use objc::rc::*;
 use objc::runtime::*;
 
@@ -255,8 +257,51 @@ impl CocoaSession {
                     SetFontSize(size)           => { msg_send!(**view, viewSetFontSize: size); }
                     SetFontWeight(weight)       => { msg_send!(**view, viewSetFontWeight: weight); }
                     SetTextAlignment(align)     => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
+
+                    SetImage(image)             => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
                 }
             }
+        }
+    }
+
+    ///
+    /// Creates some glib bytes from an image data object
+    /// 
+    fn bytes_from_image_data(image_data: &dyn ImageData) -> id {
+        unsafe {
+            // Read the image data out into a byte buffer
+            let mut data = vec![];
+            image_data.read()
+                .read_to_end(&mut data)
+                .unwrap();
+
+            // Turn into a NSData object
+            let data_obj: id = msg_send!(class!(NSData), alloc);
+            let data_obj: id = msg_send!(data_obj, initWithBytes: data.as_ptr() length: data.len());
+
+            data_obj
+        }
+    }
+
+    ///
+    /// Creates an NSImage from an image resource
+    ///
+    fn create_ns_image(&self, image: Resource<Image>) -> id {
+        use self::Image::*;
+
+        unsafe {
+            // Create the NSData for the image
+            // TODO: NSImage does not support SVGs :-( - need an alternative for these
+            let image_data = match &*image {
+                &Png(ref image_data) => Self::bytes_from_image_data(&**image_data),
+                &Svg(ref image_data) => Self::bytes_from_image_data(&**image_data)
+            };
+
+            // Load into an image
+            let image: id = msg_send!(class!(NSImage), alloc);
+            let image: id = msg_send!(image, initWithData: image_data);
+
+            image
         }
     }
 

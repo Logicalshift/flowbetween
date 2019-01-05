@@ -186,12 +186,28 @@ public class FloView : NSView {
     }
     
     ///
-    /// Sets the text of the view
+    /// Sets the text for the view
     ///
     @objc public func viewSetText(_ text: FloProperty) {
         if case let PropertyValue.String(value) = text.value {
             control.stringValue = value;
         }
+    }
+    
+    var _imageView: NSImageView!;
+    
+    ///
+    /// Sets the image for the view
+    ///
+    @objc public func viewSetImage(_ image: NSImage) {
+        // Add an image view to this view if one does not already exist
+        if _imageView == nil {
+            _imageView = NSImageView.init();
+            self.addSubview(_imageView);
+        }
+        
+        // Change its image
+        _imageView!.image = image;
     }
     
     ///

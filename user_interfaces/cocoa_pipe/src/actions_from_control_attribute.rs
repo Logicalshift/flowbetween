@@ -76,7 +76,7 @@ impl ActionsFrom<ViewAction> for Appearance {
         match self {
             Foreground(color)       => vec![ViewAction::SetForegroundColor(*color)],
             Background(color)       => vec![ViewAction::SetBackgroundColor(*color)],
-            Image(image)            => vec![]
+            Image(image)            => vec![ViewAction::SetImage(image.clone())]
         }
     }
 }

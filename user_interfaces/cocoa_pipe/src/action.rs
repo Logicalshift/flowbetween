@@ -86,6 +86,9 @@ pub enum ViewAction {
     /// Sets the text to display in a control
     SetText(AppProperty),
 
+    /// Sets the image to display in a control
+    SetImage(Resource<Image>),
+
     /// Sets the font size in pixels
     SetFontSize(f64),
 
