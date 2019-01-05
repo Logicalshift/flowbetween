@@ -159,6 +159,10 @@ public class FloView : NSView {
     /// Sets the text of the view
     ///
     @objc public func viewSetText(_ text: FloProperty) {
-        
+        if case let PropertyValue.String(value) = text.value {
+            NSLog("SetText: %@", value);
+        } else {
+            NSLog("SetText (non-string value)");
+        }
     }
 }
