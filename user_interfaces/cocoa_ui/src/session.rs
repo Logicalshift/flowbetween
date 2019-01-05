@@ -214,7 +214,8 @@ impl CocoaSession {
             let view: *mut Object   = msg_send!(view, init);
 
             match view_type {
-                Empty => msg_send!(view, setupAsEmpty)
+                Empty   => { msg_send!(view, setupAsEmpty) }
+                Button  => { msg_send!(view, setupAsButton) }
             };
 
             let view = StrongPtr::new(view);

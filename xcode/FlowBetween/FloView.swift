@@ -98,6 +98,16 @@ public class FloView : NSView {
     }
     
     ///
+    /// Creates an empty view
+    ///
+    @objc public func setupAsButton() {
+        let button = NSButton.init(title: "", target: nil, action: nil);
+        
+        self.addSubview(button);
+        _control = button;
+    }
+
+    ///
     /// Removes this view from its superview
     ///
     @objc public func viewRemoveFromSuperview() {
@@ -162,6 +172,8 @@ public class FloView : NSView {
     ///
     @objc public func viewSetForegroundRed(_ red: Float64, green: Float64, blue: Float64, alpha: Float64) {
         let col = NSColor(calibratedRed: CGFloat(red), green: CGFloat(green), blue: CGFloat(blue), alpha: CGFloat(alpha));
+        
+        // TODO: need to support attributed strings :-/
     }
 
     ///

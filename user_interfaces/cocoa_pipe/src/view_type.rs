@@ -6,7 +6,10 @@ use flo_ui::*;
 #[derive(Clone, PartialEq, Debug)]
 pub enum ViewType {
     /// An empty view
-    Empty
+    Empty,
+
+    /// A view containing a button
+    Button,
 }
 
 impl From<&Control> for ViewType {
@@ -25,7 +28,7 @@ impl From<ControlType> for ViewType {
             CroppingContainer       => ViewType::Empty,
             ScrollingContainer      => ViewType::Empty,
             Popup                   => ViewType::Empty,
-            Button                  => ViewType::Empty,
+            Button                  => ViewType::Button,
             Label                   => ViewType::Empty,
             Canvas                  => ViewType::Empty,
             Slider                  => ViewType::Empty,

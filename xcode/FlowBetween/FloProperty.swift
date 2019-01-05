@@ -52,7 +52,6 @@ public enum PropertyValue {
     
     @objc(initWithString:) init(withString: NSString) {
         _value = PropertyValue.String(withString as String);
-        NSLog("Property init with string: %@", withString);
         
         super.init();
     }
