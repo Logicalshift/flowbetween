@@ -10,8 +10,6 @@ use futures::executor;
 use futures::executor::Spawn;
 
 use cocoa::base::{id, nil};
-use cocoa::appkit::{NSImage};
-use cocoa::foundation::{NSData};
 use objc::rc::*;
 use objc::runtime::*;
 
