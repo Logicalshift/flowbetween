@@ -13,8 +13,8 @@ import Cocoa
 /// Class used to manage a view in FlowBetween
 ///
 public class FloView : NSView {
-    /// The view that this will display
-    fileprivate var _view: NSView!;
+    /// The control contained by this view
+    fileprivate var _control: NSControl!;
     
     /// The layout bounds of this view
     fileprivate var _bounds: Bounds;
@@ -59,6 +59,21 @@ public class FloView : NSView {
         get { return self; }
     }
     
+    public var control: NSControl {
+        get {
+            if let control = _control {
+                // Use the existing control if there is one
+                return control;
+            } else {
+                // Default control is a label
+                let label = NSTextField.init(labelWithString: "");
+                self.addSubview(label);
+                _control = label;
+                return label;
+            }
+        }
+    }
+    
     override public func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize);
         self.performLayout();
@@ -83,7 +98,7 @@ public class FloView : NSView {
     /// Removes this view from its superview
     ///
     @objc public func viewRemoveFromSuperview() {
-        _view?.removeFromSuperview();
+        self.removeFromSuperview();
     }
     
     ///
@@ -160,9 +175,7 @@ public class FloView : NSView {
     ///
     @objc public func viewSetText(_ text: FloProperty) {
         if case let PropertyValue.String(value) = text.value {
-            NSLog("SetText: %@", value);
-        } else {
-            NSLog("SetText (non-string value)");
+            control.stringValue = value;
         }
     }
 }
