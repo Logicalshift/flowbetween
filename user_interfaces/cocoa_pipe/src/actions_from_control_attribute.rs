@@ -4,7 +4,7 @@ use super::actions_from::*;
 use flo_ui::*;
 
 impl ActionsFrom<ViewAction> for ControlAttribute {
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> { 
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, mut bind_property: BindProperty) -> Vec<ViewAction> { 
         use self::ControlAttribute::*;
 
         match self {
@@ -30,7 +30,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
 }
 
 impl ActionsFrom<ViewAction> for Font {
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Font::*;
 
         match self {
@@ -42,7 +42,7 @@ impl ActionsFrom<ViewAction> for Font {
 }
 
 impl ActionsFrom<ViewAction> for State {
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::State::*;
 
         match self {
@@ -57,7 +57,7 @@ impl ActionsFrom<ViewAction> for State {
 }
 
 impl ActionsFrom<ViewAction> for Popup {
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Popup::*;
 
         match self {
@@ -70,7 +70,7 @@ impl ActionsFrom<ViewAction> for Popup {
 }
 
 impl ActionsFrom<ViewAction> for Appearance {
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Appearance::*;
 
         match self {
@@ -82,7 +82,7 @@ impl ActionsFrom<ViewAction> for Appearance {
 }
 
 impl ActionsFrom<ViewAction> for Scroll {
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Scroll::*;
 
         match self {
@@ -95,7 +95,7 @@ impl ActionsFrom<ViewAction> for Scroll {
 }
 
 impl ActionsFrom<ViewAction> for Hint {
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
         use self::Hint::*;
 
         match self {

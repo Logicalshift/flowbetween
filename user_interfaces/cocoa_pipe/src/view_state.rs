@@ -141,7 +141,7 @@ impl ViewState {
     ///
     /// Sets up this state from a control, and returns the action steps needed to initialise it
     ///
-    pub fn set_up_from_control<BindProperty: Fn(Property) -> AppProperty>(&mut self, control: &Control, bind_property: BindProperty) -> Vec<AppAction> {
+    pub fn set_up_from_control<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, mut bind_property: BindProperty) -> Vec<AppAction> {
         // Create the list of set up steps
         let mut set_up_steps = vec![];
 
@@ -155,7 +155,7 @@ impl ViewState {
 
         // Set up the view from its attributes
         let view_set_up = control.attributes()
-            .flat_map(|attribute| attribute.actions_from(bind_property))
+            .flat_map(move |attribute| attribute.actions_from(&mut bind_property))
             .map(|view_action| AppAction::View(self.view_id, view_action));
         set_up_steps.extend(view_set_up);
 

@@ -9,5 +9,5 @@ pub trait ActionsFrom<TAction> {
     ///
     /// Retrieves the actions required to set up an item of this type in the UI
     ///
-    fn actions_from<BindProperty: Fn(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<TAction>;
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<TAction>;
 }
