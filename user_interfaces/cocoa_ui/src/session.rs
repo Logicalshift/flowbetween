@@ -273,8 +273,8 @@ impl CocoaSession {
 
         unsafe {
             match pos {
-                At(pos)                     => { msg_send!(**view, viewSetSide: side at: pos)},
-                Floating(prop, pos)         => { /* TODO */ },
+                At(pos)                     => { msg_send!(**view, viewSetSide: side at: pos) },
+                Floating(_prop, offset)     => { msg_send!(**view, viewSetSide: side offset: offset) }, // Property will be bound elsewhere
                 Offset(offset)              => { msg_send!(**view, viewSetSide: side offset: offset); },
                 Stretch(amount)             => { msg_send!(**view, viewSetSide: side stretch: amount); },
                 Start                       => { msg_send!(**view, viewSetSideAtStart: side); },
