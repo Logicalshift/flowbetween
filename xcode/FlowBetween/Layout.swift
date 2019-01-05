@@ -52,7 +52,7 @@ class Layout {
     /// Lays out the specified view according to the bounds set for its subviews
     ///
     public static func layoutView(view: FloView) {
-        let bounds          = view.bounds;
+        let bounds          = view.layoutBounds;
         let max_x           = Double(bounds.width);
         let max_y           = Double(bounds.height);
         var last_x          = 0.0;
@@ -61,7 +61,7 @@ class Layout {
         var stretch_total_y = 0.0;
         
         // First pass: all stretched views are set to 0 (calibrating the stretch distances)
-        for subview in view.subviews {
+        for subview in view.layoutSubviews {
             // Only FloViews get laid out
             if let subview = subview as? FloView {
                 // Get the bounds for this view

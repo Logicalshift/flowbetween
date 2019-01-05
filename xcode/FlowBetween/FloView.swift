@@ -59,6 +59,24 @@ public class FloView : NSView {
         get { return self; }
     }
     
+    ///
+    /// The subviews that should be laid out within this view
+    ///
+    public var layoutSubviews: [NSView] {
+        get {
+            return self.subviews;
+        }
+    }
+    
+    ///
+    /// The bounds within which the subviews should be laid out
+    ///
+    public var layoutBounds: NSRect {
+        get {
+            return self.bounds;
+        }
+    }
+    
     public var control: NSControl {
         get {
             if let control = _control {
