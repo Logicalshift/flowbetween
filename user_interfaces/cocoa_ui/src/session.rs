@@ -249,9 +249,26 @@ impl CocoaSession {
                     SetZIndex(z_index)          => { msg_send!(**view, viewSetZIndex: z_index); }
                     SetForegroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
                     SetBackgroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+
                     SetText(property)           => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
+                    SetFontSize(size)           => { msg_send!(**view, viewSetFontSize: size); }
+                    SetFontWeight(weight)       => { msg_send!(**view, viewSetFontWeight: weight); }
+                    SetTextAlignment(align)     => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
                 }
             }
+        }
+    }
+
+    ///
+    /// Returns the integer value equivalent to a text alignment
+    ///
+    fn text_alignment_value(align: TextAlign) -> u32 {
+        use self::TextAlign::*;
+
+        match align {
+            Left    => 0,
+            Center  => 1,
+            Right   => 2
         }
     }
 

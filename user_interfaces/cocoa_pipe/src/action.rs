@@ -84,7 +84,16 @@ pub enum ViewAction {
     SetBackgroundColor(Color),
 
     /// Sets the text to display in a control
-    SetText(AppProperty)
+    SetText(AppProperty),
+
+    /// Sets the font size in pixels
+    SetFontSize(f64),
+
+    /// Sets the text alignment
+    SetTextAlignment(TextAlign),
+
+    /// Sets the font weight
+    SetFontWeight(f64)
 }
 
 ///

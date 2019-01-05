@@ -181,4 +181,61 @@ public class FloView : NSView {
             control.stringValue = value;
         }
     }
+    
+    ///
+    /// Sets the font size of the control for this view
+    ///
+    @objc public func viewSetFontSize(_ size: Float64) {
+        let existingFont    = control.font!;
+        let newFont         = NSFontManager.shared.convert(existingFont, toSize: CGFloat(size));
+        
+        control.font        = newFont;
+    }
+    
+    ///
+    /// Converts a weight from a value like 100, 200, 400, etc to a font manager weight (0-15)
+    ///
+    func convertWeight(_ weight: Float64) -> Int {
+        if weight <= 150.0 {
+            return 1;
+        } else if weight <= 450.0 {
+            return 5;
+        } else if weight <= 750.0 {
+            return 7;
+        } else {
+            return 10;
+        }
+    }
+    
+    ///
+    /// Sets the font weight of the control for this view
+    ///
+    @objc public func viewSetFontWeight(_ weight: Float64) {
+        let existingFont        = control.font!;
+        let fontManagerWeight   = convertWeight(weight);
+        let family              = existingFont.familyName!;
+        let size                = existingFont.pointSize;
+        let traits              = NSFontTraitMask();
+        
+        let newFont             = NSFontManager.shared.font(withFamily: family, traits: traits, weight: fontManagerWeight, size: size);
+        
+        control.font        = newFont;
+    }
+
+    ///
+    /// Sets the text alignment of the control for this view
+    ///
+    /// Alignments are:
+    ///     0 - Left
+    ///     1 - Center
+    ///     2 - Right
+    ///
+    @objc public func viewSetTextAlignment(_ alignment: UInt32) {
+        switch alignment {
+        case 0:     control.alignment = NSTextAlignment.left;   break;
+        case 1:     control.alignment = NSTextAlignment.center; break;
+        case 2:     control.alignment = NSTextAlignment.right;  break;
+        default:    break;
+        }
+    }
 }

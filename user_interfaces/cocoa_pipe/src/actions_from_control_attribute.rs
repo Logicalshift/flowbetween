@@ -34,9 +34,9 @@ impl ActionsFrom<ViewAction> for Font {
         use self::Font::*;
 
         match self {
-            Size(size)      => vec![],
-            Align(align)    => vec![],
-            Weight(weight)  => vec![]
+            Size(size)      => vec![ViewAction::SetFontSize(*size as f64)],
+            Align(align)    => vec![ViewAction::SetTextAlignment(*align)],
+            Weight(weight)  => vec![ViewAction::SetFontWeight(*weight as u32 as f64)]
         }
     }
 }
