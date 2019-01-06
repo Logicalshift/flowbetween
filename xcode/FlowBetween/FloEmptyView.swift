@@ -39,6 +39,13 @@ class FloEmptyView : NSView, FloContainerView {
     override public var isOpaque: Bool { get { return false; } }
     
     ///
+    /// Adds a subview to this container
+    ///
+    func addContainerSubview(_ subview: NSView) {
+        self.addSubview(subview);
+    }
+    
+    ///
     /// Containers cause the layout algorithm to run when they are resized
     ///
     override public func setFrameSize(_ newSize: NSSize) {

@@ -33,6 +33,13 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     override public var isOpaque: Bool { get { return false } }
 
     ///
+    /// Adds a subview to this container
+    ///
+    func addContainerSubview(_ subview: NSView) {
+        self.documentView!.addSubview(subview);
+    }
+
+    ///
     /// Containers cause the layout algorithm to run when they are resized
     ///
     override public func setFrameSize(_ newSize: NSSize) {
@@ -42,7 +49,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         self.performLayout?();
         
         // Any subviews that are not themselves FloContainers are sized to fill this view
-        for subview in subviews {
+        for subview in self.documentView!.subviews {
             if (subview as? FloContainerView) == nil {
                 subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize);
             }

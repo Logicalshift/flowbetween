@@ -70,7 +70,7 @@ public class FloView : NSObject {
         self.init();
         
         _control = withControl;
-        _view.asView.addSubview(control);
+        _view.addContainerSubview(control);
     }
     
     ///
@@ -159,7 +159,7 @@ public class FloView : NSObject {
         self._subviews.append(subview);
         
         if let subview = subview.view {
-            _view.asView.addSubview(subview);
+            _view.addContainerSubview(subview);
         }
     }
     
@@ -243,7 +243,7 @@ public class FloView : NSObject {
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
             _imageView = NSImageView.init();
-            _view.asView.addSubview(_imageView);
+            _view.addContainerSubview(_imageView);
         }
         
         // Change its image

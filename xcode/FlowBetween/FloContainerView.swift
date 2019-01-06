@@ -12,6 +12,9 @@ import Cocoa
 /// Protocol implemented by views that can act as container views
 ///
 protocol FloContainerView {
+    /// Adds a subview to this container view
+    func addContainerSubview(_ subview: NSView);
+    
     /// Returns this view as an NSView
     var asView : NSView { get };
     
