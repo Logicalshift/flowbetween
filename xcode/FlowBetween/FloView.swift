@@ -124,7 +124,15 @@ public class FloView : NSView {
         self.addSubview(button);
         _control = button;
     }
-
+    
+    ///
+    /// Sends an event if this view (or its control) is clicked
+    ///
+    @objc public func requestClick(_ events: FloEvents, withName: NSString) {
+        // TODO!
+        NSLog("Requested click event: %@", withName);
+    }
+    
     ///
     /// Removes this view from its superview
     ///

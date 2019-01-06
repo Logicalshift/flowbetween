@@ -13,4 +13,8 @@
 
 extern NSObject* create_flo_session(Class window_class, Class view_class, Class view_model_class);
 
+@class FloEvents;
+@interface FloEvents
+@end
+
 #endif /* flo_cocoa_h */
