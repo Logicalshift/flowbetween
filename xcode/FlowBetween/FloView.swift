@@ -37,7 +37,7 @@ public class FloView : NSObject {
         );
         _subviews = [];
 
-        _view = FloContainer.init();
+        _view = FloEmptyView.init();
 
         super.init();
 
