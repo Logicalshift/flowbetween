@@ -1,3 +1,4 @@
+use super::event::*;
 use super::cocoa_ui::*;
 use super::property::*;
 
@@ -36,6 +37,9 @@ pub struct CocoaSession {
     /// Maps IDs to views
     views: HashMap<usize, StrongPtr>,
 
+    /// Maps view IDs to event objects
+    view_events: HashMap<usize, StrongPtr>,
+
     /// Maps IDs to viewmodels
     viewmodels: HashMap<usize, StrongPtr>,
 
@@ -46,7 +50,7 @@ pub struct CocoaSession {
     actions: Option<Spawn<Subscriber<Vec<AppAction>>>>,
 
     /// The event publisher for this session
-    events: Spawn<Publisher<Vec<AppEvent>>>
+    events: Publisher<Vec<AppEvent>>
 }
 
 ///
@@ -72,10 +76,11 @@ impl CocoaSession {
             target_object:      obj.clone(),
             windows:            HashMap::new(),
             views:              HashMap::new(),
+            view_events:        HashMap::new(),
             viewmodels:         HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
-            events:             executor::spawn(Publisher::new(20))
+            events:             Publisher::new(20)
         }
     }
 
@@ -91,7 +96,7 @@ impl CocoaSession {
 
         // Create the subscriber to receive events sent from the user interface
         let action_publisher    = self.action_publisher.republish();
-        let events              = self.events.get_ref().republish();
+        let events              = self.events.republish();
 
         // Generate a cocoa user interface
         CocoaUserInterface::new(action_publisher, events)
@@ -231,6 +236,25 @@ impl CocoaSession {
     ///
     pub fn delete_view(&mut self, old_view_id: usize) {
         self.views.remove(&old_view_id);
+        self.view_events.remove(&old_view_id);
+    }
+
+    ///
+    /// Retrieves the events object for a particular view
+    ///
+    pub fn events_for_view(&mut self, view_id: usize) -> StrongPtr {
+        if let Some(events) = self.view_events.get(&view_id).cloned() {
+            // Already got an events object for this view
+            events
+        } else {
+            // Create a new events object
+            let events = FloEvents::create_object(self.events.republish(), view_id);
+
+            // Associate it with the view
+            self.view_events.insert(view_id, events.clone());
+
+            events
+        }
     }
 
     ///
