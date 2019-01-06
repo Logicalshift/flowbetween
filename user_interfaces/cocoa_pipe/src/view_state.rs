@@ -93,6 +93,11 @@ impl ViewState {
     pub fn id(&self) -> usize { self.view_id }
 
     ///
+    /// Retrieves an iterator over the child views of this view
+    ///
+    pub fn subviews(&self) -> impl Iterator<Item=&ViewState> { self.child_views.iter() }
+
+    ///
     /// Adds the state of a subview to this state
     ///
     pub fn add_child_state(&mut self, new_state: ViewState) {
@@ -126,16 +131,16 @@ impl ViewState {
     ///
     pub fn destroy_subtree_actions(&self) -> Vec<AppAction> {
         vec![
+            AppAction::View(self.view_id, ViewAction::RemoveFromSuperview),
+            AppAction::DeleteView(self.view_id)
+        ].into_iter()
+        .chain(self.child_views.iter()
+            .flat_map(|child_view| child_view.destroy_subtree_actions())
+            .chain(vec![
                 AppAction::View(self.view_id, ViewAction::RemoveFromSuperview),
                 AppAction::DeleteView(self.view_id)
-            ].into_iter()
-            .chain(self.child_views.iter()
-                .flat_map(|child_view| child_view.destroy_subtree_actions())
-                .chain(vec![
-                    AppAction::View(self.view_id, ViewAction::RemoveFromSuperview),
-                    AppAction::DeleteView(self.view_id)
-                ]))
-            .collect()
+            ]))
+        .collect()
     }
 
     ///
