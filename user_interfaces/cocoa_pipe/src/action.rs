@@ -65,6 +65,9 @@ pub enum WindowAction {
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum ViewAction {
+    /// Requests a particular event type from this view
+    RequestEvent(ViewEvent, String),
+
     /// Removes the view from its superview
     RemoveFromSuperview,
 
@@ -97,6 +100,15 @@ pub enum ViewAction {
 
     /// Sets the font weight
     SetFontWeight(f64)
+}
+
+///
+/// Events that can be requested from a view
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum ViewEvent {
+    /// User has clicked the control contained within this view
+    Click
 }
 
 ///

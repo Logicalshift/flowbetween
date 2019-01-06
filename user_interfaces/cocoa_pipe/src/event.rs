@@ -3,6 +3,6 @@
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum AppEvent {
-
+    /// User has clicked on the view
+    Click
 }
-

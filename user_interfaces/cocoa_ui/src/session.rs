@@ -11,6 +11,7 @@ use futures::executor;
 use futures::executor::Spawn;
 
 use cocoa::base::{id, nil};
+use cocoa::foundation::NSString;
 use objc::rc::*;
 use objc::runtime::*;
 
@@ -268,19 +269,40 @@ impl CocoaSession {
         if let Some(view) = views.get(&view_id) {
             unsafe {
                 match action {
-                    RemoveFromSuperview         => { msg_send!(**view, viewRemoveFromSuperview); }
-                    AddSubView(view_id)         => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
-                    SetBounds(bounds)           => { self.set_bounds(view, bounds); }
-                    SetZIndex(z_index)          => { msg_send!(**view, viewSetZIndex: z_index); }
-                    SetForegroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
-                    SetBackgroundColor(col)     => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    RequestEvent(event_type, name)  => { self.request_view_event(view_id, event_type, name); }
 
-                    SetText(property)           => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
-                    SetFontSize(size)           => { msg_send!(**view, viewSetFontSize: size); }
-                    SetFontWeight(weight)       => { msg_send!(**view, viewSetFontWeight: weight); }
-                    SetTextAlignment(align)     => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
+                    RemoveFromSuperview             => { msg_send!(**view, viewRemoveFromSuperview); }
+                    AddSubView(view_id)             => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
+                    SetBounds(bounds)               => { self.set_bounds(view, bounds); }
+                    SetZIndex(z_index)              => { msg_send!(**view, viewSetZIndex: z_index); }
+                    SetForegroundColor(col)         => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    SetBackgroundColor(col)         => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
 
-                    SetImage(image)             => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
+                    SetText(property)               => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
+                    SetFontSize(size)               => { msg_send!(**view, viewSetFontSize: size); }
+                    SetFontWeight(weight)           => { msg_send!(**view, viewSetFontWeight: weight); }
+                    SetTextAlignment(align)         => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
+
+                    SetImage(image)                 => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
+                }
+            }
+        }
+    }
+
+    ///
+    /// Requests an event for a particular view with the specified name
+    ///
+    fn request_view_event(&mut self, view_id: usize, event_type: ViewEvent, name: String) {
+        unsafe {
+            use self::ViewEvent::*;
+
+            let flo_events  = self.events_for_view(view_id);
+            let views       = &self.views;
+            let name        = NSString::alloc(nil).init_str(&name);
+
+            if let Some(view) = views.get(&view_id) {
+                match event_type {
+                    Click           => { msg_send!(**view, requestClick: flo_events withName: name) }
                 }
             }
         }
