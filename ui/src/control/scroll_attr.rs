@@ -9,7 +9,7 @@ use modifier::*;
 pub enum ScrollBarVisibility {
     Never,
     Always,
-    OnlyIfNeeded    
+    OnlyIfNeeded
 }
 
 ///

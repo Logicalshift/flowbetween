@@ -267,21 +267,25 @@ impl CocoaSession {
         if let Some(view) = views.get(&view_id) {
             unsafe {
                 match action {
-                    RequestEvent(event_type, name)  => { self.request_view_event(view_id, event_type, name); }
+                    RequestEvent(event_type, name)      => { self.request_view_event(view_id, event_type, name); }
 
-                    RemoveFromSuperview             => { msg_send!(**view, viewRemoveFromSuperview); }
-                    AddSubView(view_id)             => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
-                    SetBounds(bounds)               => { self.set_bounds(view, bounds); }
-                    SetZIndex(z_index)              => { msg_send!(**view, viewSetZIndex: z_index); }
-                    SetForegroundColor(col)         => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
-                    SetBackgroundColor(col)         => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    RemoveFromSuperview                 => { msg_send!(**view, viewRemoveFromSuperview); }
+                    AddSubView(view_id)                 => { self.views.get(&view_id).map(|subview| msg_send!((**view), viewAddSubView: **subview)); }
+                    SetBounds(bounds)                   => { self.set_bounds(view, bounds); }
+                    SetZIndex(z_index)                  => { msg_send!(**view, viewSetZIndex: z_index); }
+                    SetForegroundColor(col)             => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    SetBackgroundColor(col)             => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
 
-                    SetText(property)               => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
-                    SetFontSize(size)               => { msg_send!(**view, viewSetFontSize: size); }
-                    SetFontWeight(weight)           => { msg_send!(**view, viewSetFontWeight: weight); }
-                    SetTextAlignment(align)         => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
+                    SetText(property)                   => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
+                    SetFontSize(size)                   => { msg_send!(**view, viewSetFontSize: size); }
+                    SetFontWeight(weight)               => { msg_send!(**view, viewSetFontWeight: weight); }
+                    SetTextAlignment(align)             => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
 
-                    SetImage(image)                 => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
+                    SetImage(image)                     => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
+
+                    SetScrollMinimumSize(width, height) => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
+                    SetHorizontalScrollBar(visibility)  => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
+                    SetVerticalScrollBar(visibility)    => { msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
                 }
             }
         }
@@ -357,6 +361,19 @@ impl CocoaSession {
             Left    => 0,
             Center  => 1,
             Right   => 2
+        }
+    }
+
+    ///
+    /// Returns the integer value equivalent to a scroll bar visibility
+    ///
+    fn scroll_visibility_value(visibility: ScrollBarVisibility) -> u32 {
+        use self::ScrollBarVisibility::*;
+
+        match visibility {
+            Never           => 0,
+            Always          => 1,
+            OnlyIfNeeded    => 2
         }
     }
 

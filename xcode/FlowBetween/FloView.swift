@@ -306,4 +306,36 @@ public class FloView : NSObject {
         default:    break;
         }
     }
+    
+    ///
+    /// Sets the minimum size for the scrollable area of this view
+    ///
+    @objc(viewSetScrollMinimumSizeWithWidth:height:) public func viewSetScrollMinimumSize(withWidth width: Float64, height: Float64) {
+        _view.scrollMinimumSize = (width, height);
+    }
+    
+    func getScrollBarVisibility(_ intVisibility: UInt32) -> ScrollBarVisibility {
+        switch (intVisibility) {
+        case 0:     return ScrollBarVisibility.Never;
+        case 1:     return ScrollBarVisibility.Always;
+        case 2:     return ScrollBarVisibility.OnlyIfNeeded;
+        default:    return ScrollBarVisibility.OnlyIfNeeded;
+        }
+    }
+    
+    ///
+    /// Sets the horizontal scroll bar visibility
+    ///
+    @objc public func viewSetHorizontalScrollVisibility(_ visibility: UInt32) {
+        let (_, vert) = _view.scrollBarVisibility;
+        _view.scrollBarVisibility = (getScrollBarVisibility(visibility), vert);
+    }
+
+    ///
+    /// Sets the horizontal scroll bar visibility
+    ///
+    @objc public func viewSetVerticalScrollVisibility(_ visibility: UInt32) {
+        let (horiz, _) = _view.scrollBarVisibility;
+        _view.scrollBarVisibility = (horiz, getScrollBarVisibility(visibility));
+    }
 }

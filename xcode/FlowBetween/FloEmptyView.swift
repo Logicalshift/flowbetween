@@ -32,7 +32,13 @@ class FloEmptyView : NSView, FloContainerView {
     
     /// Event handler: user performed layout on this view
     public var performLayout: (() -> ())?;
+
+    /// The minimum size of the scroll area for this view
+    public var scrollMinimumSize: (Float64, Float64) = (0, 0);
     
+    /// The visibility of the horizontal and vertical scroll bars
+    public var scrollBarVisibility: (ScrollBarVisibility, ScrollBarVisibility) = (ScrollBarVisibility.Never, ScrollBarVisibility.Never);
+
     ///
     /// Containers are not opaque
     ///

@@ -9,6 +9,15 @@
 import Cocoa
 
 ///
+/// Represents the visibility of the scrollbars
+///
+enum ScrollBarVisibility {
+    case Never;
+    case Always;
+    case OnlyIfNeeded;
+}
+
+///
 /// Protocol implemented by views that can act as container views
 ///
 protocol FloContainerView {
@@ -23,6 +32,12 @@ protocol FloContainerView {
     
     /// Event handler: user performed layout on this view
     var performLayout: (() -> ())? { get set };
+    
+    /// The minimum size of the scroll area for this view
+    var scrollMinimumSize: (Float64, Float64) { get set }
+    
+    /// The visibility of the horizontal and vertical scroll bars
+    var scrollBarVisibility: (ScrollBarVisibility, ScrollBarVisibility) { get set }
     
     /// Triggers the click event for this view
     func triggerClick();

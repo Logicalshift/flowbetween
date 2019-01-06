@@ -99,7 +99,16 @@ pub enum ViewAction {
     SetTextAlignment(TextAlign),
 
     /// Sets the font weight
-    SetFontWeight(f64)
+    SetFontWeight(f64),
+
+    /// Sets the minimum size of the scroll area (if the view is a scrolling type)
+    SetScrollMinimumSize(f64, f64),
+
+    /// Specifies the visibility of the horizontal scroll bar
+    SetHorizontalScrollBar(ScrollBarVisibility),
+
+    /// Specifies the visibility of the vertical scroll bar
+    SetVerticalScrollBar(ScrollBarVisibility),
 }
 
 ///

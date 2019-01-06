@@ -10,9 +10,13 @@ import Cocoa
 
 public class FloScrollingView : NSScrollView, FloContainerView {
     public required init?(coder: NSCoder) {
+        _scrollMinimumSize = (0,0);
+        _scrollBarVisibility = (ScrollBarVisibility.OnlyIfNeeded, ScrollBarVisibility.OnlyIfNeeded);
+        
         super.init(coder: coder)
 
         self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
+        self.documentView?.wantsLayer = false;
 
         self.wantsLayer             = true;
         self.hasHorizontalScroller  = true;
@@ -21,9 +25,13 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     }
     
     required public override init(frame frameRect: NSRect) {
+        _scrollMinimumSize = (0,0);
+        _scrollBarVisibility = (ScrollBarVisibility.OnlyIfNeeded, ScrollBarVisibility.OnlyIfNeeded);
+
         super.init(frame: frameRect);
 
         self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
+        self.documentView?.wantsLayer = false;
 
         self.wantsLayer             = true;
         self.hasHorizontalScroller  = true;
@@ -39,6 +47,32 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     func addContainerSubview(_ subview: NSView) {
         self.documentView!.addSubview(subview);
     }
+    
+    ///
+    /// Sets the sizing for the document view
+    ///
+    func layoutDocumentView() {
+        // Decide on the size of the document view
+        let (minX, minY)    = scrollMinimumSize;
+        let contentSize     = self.frame.size;
+        
+        let sizeX           = CGFloat.maximum(CGFloat(minX), contentSize.width);
+        let sizeY           = CGFloat.maximum(CGFloat(minY), contentSize.height);
+        
+        let newSize         = CGSize(width: sizeX, height: sizeY);
+        
+        documentView?.setFrameSize(newSize);
+        
+        // Perform general layout
+        self.performLayout?();
+
+        // Any subviews that are not themselves FloContainers are sized to fill this view
+        for subview in self.documentView!.subviews {
+            if (subview as? FloContainerView) == nil {
+                subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize);
+            }
+        }
+    }
 
     ///
     /// Containers cause the layout algorithm to run when they are resized
@@ -46,13 +80,48 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     override public func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize);
         
-        // Perform normal layout
-        self.performLayout?();
-        
-        // Any subviews that are not themselves FloContainers are sized to fill this view
-        for subview in self.documentView!.subviews {
-            if (subview as? FloContainerView) == nil {
-                subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize);
+        layoutDocumentView();
+    }
+
+    fileprivate var _scrollMinimumSize: (Float64, Float64);
+
+    /// The minimum size of the scroll area for this view
+    var scrollMinimumSize: (Float64, Float64) {
+        get { return _scrollMinimumSize; }
+        set(value) {
+            _scrollMinimumSize = value;
+        }
+    }
+
+    fileprivate var _scrollBarVisibility: (ScrollBarVisibility, ScrollBarVisibility);
+
+    /// The visibility of the horizontal and vertical scroll bars
+    var scrollBarVisibility: (ScrollBarVisibility, ScrollBarVisibility) {
+        get { return _scrollBarVisibility; }
+        set(value) {
+            _scrollBarVisibility = value;
+            
+            // Set the scrollbar visibility
+            let (horiz, vert) = value;
+            switch (horiz) {
+            case ScrollBarVisibility.Always, ScrollBarVisibility.OnlyIfNeeded:  self.hasHorizontalScroller = true; break;
+            case ScrollBarVisibility.Never:                                     self.hasHorizontalScroller = false; break;
+            }
+
+            switch (vert) {
+            case ScrollBarVisibility.Always, ScrollBarVisibility.OnlyIfNeeded:  self.hasVerticalScroller = true; break;
+            case ScrollBarVisibility.Never:                                     self.hasVerticalScroller = false; break;
+            }
+
+            // Cocoa can't auto-hide individually, so we always auto-hide both scrollbars
+            switch (value) {
+            case (ScrollBarVisibility.OnlyIfNeeded, _), (_, ScrollBarVisibility.OnlyIfNeeded):
+                self.autohidesScrollers = true;
+                break;
+            
+            default:
+                self.autohidesScrollers = false;
+                break;
             }
         }
     }
