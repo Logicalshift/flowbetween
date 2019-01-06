@@ -12,16 +12,42 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     public required init?(coder: NSCoder) {
         super.init(coder: coder)
 
-        //self.contentView.setFrameSize(NSSize(width: 4000, height: 4000));
+        self.documentView = NSView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
+
+        self.wantsLayer = true;
+        self.hasHorizontalScroller = true;
+        self.hasVerticalScroller = true;
     }
     
     required public override init(frame frameRect: NSRect) {
         super.init(frame: frameRect);
-        
-        //self.contentView.setFrameSize(NSSize(width: 4000, height: 4000));
+
+        self.documentView = NSView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
+
+        self.wantsLayer = true;
+        self.hasHorizontalScroller = true;
+        self.hasVerticalScroller = true;
+        self.autohidesScrollers = true;
     }
     
     override public var isOpaque: Bool { get { return false } }
+
+    ///
+    /// Containers cause the layout algorithm to run when they are resized
+    ///
+    override public func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize);
+        
+        // Perform normal layout
+        self.performLayout?();
+        
+        // Any subviews that are not themselves FloContainers are sized to fill this view
+        for subview in subviews {
+            if (subview as? FloContainerView) == nil {
+                subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize);
+            }
+        }
+    }
 
     /// Returns this view as an NSView
     var asView : NSView { get { return self; } };

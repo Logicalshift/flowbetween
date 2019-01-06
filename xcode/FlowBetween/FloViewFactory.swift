@@ -38,7 +38,7 @@ import Cocoa
     @objc public static func createAsScrolling() -> FloView {
         let scrolling = FloScrollingView.init();
         
-        let view = FloView.init(withView: FloEmptyView.init());
+        let view = FloView.init(withView: scrolling);
         
         return view;
     }

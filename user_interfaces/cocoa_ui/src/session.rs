@@ -219,7 +219,7 @@ impl CocoaSession {
             let view: *mut Object = match view_type {
                 Empty       => { msg_send!(*view_class, createAsEmpty) }
                 Button      => { msg_send!(*view_class, createAsButton) }
-                Scrolling   => { msg_send!(*view_class, createAsEmpty) }
+                Scrolling   => { msg_send!(*view_class, createAsScrolling) }
             };
 
             let view = StrongPtr::new(view);
