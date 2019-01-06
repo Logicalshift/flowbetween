@@ -14,10 +14,10 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
         self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
 
-        self.wantsLayer = true;
-        self.hasHorizontalScroller = true;
-        self.hasVerticalScroller = true;
-        self.autohidesScrollers = true;
+        self.wantsLayer             = true;
+        self.hasHorizontalScroller  = true;
+        self.hasVerticalScroller    = true;
+        self.autohidesScrollers     = true;
     }
     
     required public override init(frame frameRect: NSRect) {
@@ -25,10 +25,10 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
         self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
 
-        self.wantsLayer = true;
-        self.hasHorizontalScroller = true;
-        self.hasVerticalScroller = true;
-        self.autohidesScrollers = true;
+        self.wantsLayer             = true;
+        self.hasHorizontalScroller  = true;
+        self.hasVerticalScroller    = true;
+        self.autohidesScrollers     = true;
     }
     
     override public var isOpaque: Bool { get { return false } }
