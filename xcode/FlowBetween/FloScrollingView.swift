@@ -12,17 +12,18 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     public required init?(coder: NSCoder) {
         super.init(coder: coder)
 
-        self.documentView = NSView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
+        self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
 
         self.wantsLayer = true;
         self.hasHorizontalScroller = true;
         self.hasVerticalScroller = true;
+        self.autohidesScrollers = true;
     }
     
     required public override init(frame frameRect: NSRect) {
         super.init(frame: frameRect);
 
-        self.documentView = NSView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
+        self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
 
         self.wantsLayer = true;
         self.hasHorizontalScroller = true;

@@ -39,6 +39,11 @@ class FloEmptyView : NSView, FloContainerView {
     override public var isOpaque: Bool { get { return false; } }
     
     ///
+    /// Containers use a flipped coordinate system
+    ///
+    override var isFlipped: Bool { get { return true; } }
+    
+    ///
     /// Adds a subview to this container
     ///
     func addContainerSubview(_ subview: NSView) {
