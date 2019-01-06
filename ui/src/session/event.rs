@@ -11,7 +11,7 @@ pub enum UiEvent {
     /// Resume a 'suspend' event
     ResumeUpdates,
 
-    /// Performs the specified action
+    /// Performs the specified action: parameters are the controller path, the event name and the action parameter
     Action(Vec<String>, String, ActionParameter),
 
     /// Sends a tick to all the controllers. If updates are suspended, ticks are only sent when they resume,
