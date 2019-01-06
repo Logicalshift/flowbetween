@@ -14,6 +14,7 @@ use futures::executor::Spawn;
 
 use std::mem;
 use std::sync::*;
+use std::ffi::CStr;
 use std::collections::HashMap;
 
 /// The length of time to wait between receiving an event and sending it
@@ -111,6 +112,17 @@ pub fn declare_flo_events_class() -> &'static Class {
         // Add the event ID ivar
         flo_events.add_ivar::<usize>("_eventsId");
 
+        ///
+        /// Converts a NSString name into a rust string
+        ///
+        unsafe fn name_for_name(name: &mut Object) -> String {
+            let utf8 = msg_send!(name, UTF8String);
+            let utf8 = CStr::from_bytes_with_nul(utf8);
+            utf8.map(|utf8| utf8.to_str())
+                .map(|utf8| utf8.map(|utf8| utf8.to_string()).unwrap_or_else(|_| "<INVALID>".to_string()))
+                .unwrap_or_else(|_| "<INVALID>".to_string())
+        }
+
         // Sends an event to the events object
         unsafe fn send_event(this: &mut Object, event: AppEvent) {
             // Fetch the rust events structure
@@ -140,6 +152,25 @@ pub fn declare_flo_events_class() -> &'static Class {
                     flo_events.queued_update = true;
                 }
             });
+        }
+
+        // Retrieves the view ID for an object
+        unsafe fn get_view_id(this: &mut Object) -> Option<usize> {
+            let events_id   = (*this).get_ivar::<usize>("_eventsId");
+            let flo_events  = FLO_EVENTS_STORE.lock().unwrap().get(events_id).cloned();
+            flo_events.map(|flo_events| flo_events.lock().unwrap().view_id)
+        }
+
+        // Sends the 'click' event
+        extern fn send_click(this: &mut Object, _sel: Sel, name: *mut Object) {
+            unsafe {
+                let view_id = get_view_id(this);
+                let name    = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::Click(view_id, name));
+                }
+            }
         }
 
         // Clears the list of pending events
@@ -175,6 +206,8 @@ pub fn declare_flo_events_class() -> &'static Class {
         // Register the events methods
         flo_events.add_method(sel!(dealloc), dealloc_flo_events as extern fn(&mut Object, Sel));
         flo_events.add_method(sel!(finishSendingEvents), finish_sending_events as extern fn(&mut Object, Sel));
+
+        flo_events.add_method(sel!(sendClick:), send_click as extern fn(&mut Object, Sel, *mut Object));
     }
 
     // Finalize the class

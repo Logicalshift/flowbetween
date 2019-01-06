@@ -15,6 +15,9 @@ extern NSObject* create_flo_session(Class window_class, Class view_class, Class 
 
 @class FloEvents;
 @interface FloEvents
+
+- (void) sendClick: (NSString*) name;
+
 @end
 
 #endif /* flo_cocoa_h */

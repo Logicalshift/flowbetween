@@ -40,7 +40,7 @@ public class FloView : NSView {
         
         super.init(frame: frame);
         
-        self.wantsLayer                             = true;
+        self.wantsLayer = true;
     }
     
     override public var isOpaque: Bool { get { return false; } }
@@ -128,9 +128,11 @@ public class FloView : NSView {
     ///
     /// Sends an event if this view (or its control) is clicked
     ///
-    @objc public func requestClick(_ events: FloEvents, withName: NSString) {
+    @objc public func requestClick(_ events: FloEvents, withName: String?) {
         // TODO!
-        NSLog("Requested click event: %@", withName);
+        NSLog("Requested click event: %@", withName!);
+        
+        events.sendClick(withName);
     }
     
     ///
