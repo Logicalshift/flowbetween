@@ -46,6 +46,12 @@ public class FloView : NSView {
         self.wantsLayer = true;
     }
     
+    convenience init(withControl: NSControl) {
+        self.init();
+        _control = withControl;
+        self.addSubview(control);
+    }
+    
     override public var isOpaque: Bool { get { return false; } }
     
     ///
@@ -133,24 +139,7 @@ public class FloView : NSView {
             superview?.onClick();
         }
     }
-    
-    ///
-    /// Creates an empty view
-    ///
-    @objc public func setupAsEmpty() {
-        self.layer!.backgroundColor = NSColor.init(deviceRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor;
-    }
-    
-    ///
-    /// Creates an empty view
-    ///
-    @objc public func setupAsButton() {
-        let button = NSButton.init(title: "", target: self, action: #selector(FloView.onClick));
         
-        self.addSubview(button);
-        _control = button;
-    }
-    
     ///
     /// Sends an event if this view (or its control) is clicked
     ///

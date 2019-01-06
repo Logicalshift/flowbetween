@@ -216,13 +216,10 @@ impl CocoaSession {
             let view_class = (**self.target_object).get_ivar::<*mut Class>("_viewClass");
 
             // Allocate and initialise it
-            let view: *mut Object   = msg_send!(*view_class, alloc);
-            let view: *mut Object   = msg_send!(view, init);
-
-            match view_type {
-                Empty       => { msg_send!(view, setupAsEmpty) }
-                Button      => { msg_send!(view, setupAsButton) }
-                Scrolling   => { msg_send!(view, setupAsEmpty) }
+            let view: *mut Object = match view_type {
+                Empty       => { msg_send!(*view_class, createAsEmpty) }
+                Button      => { msg_send!(*view_class, createAsButton) }
+                Scrolling   => { msg_send!(*view_class, createAsEmpty) }
             };
 
             let view = StrongPtr::new(view);

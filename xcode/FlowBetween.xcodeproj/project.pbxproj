@@ -12,6 +12,7 @@
 		4B1E8C0721DCE1C5006861A8 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */; };
 		4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */; };
 		4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */; };
+		4B52B4D121E2625B00CA6B64 /* FloViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */; };
 		4B57E9DA21DE2CBD00FD0551 /* FloView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9D921DE2CBD00FD0551 /* FloView.swift */; };
 		4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9DC21DE66E600FD0551 /* Position.swift */; };
 		4B57E9DF21DE674000FD0551 /* Bounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9DE21DE674000FD0551 /* Bounds.swift */; };
@@ -62,6 +63,7 @@
 		4B1E8C2421DD1668006861A8 /* flo_cocoa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = flo_cocoa.h; sourceTree = "<group>"; };
 		4B1E8C2521DD16DC006861A8 /* FlowBetween.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FlowBetween.h; sourceTree = "<group>"; };
 		4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloWindow.swift; sourceTree = "<group>"; };
+		4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewFactory.swift; sourceTree = "<group>"; };
 		4B57E9D921DE2CBD00FD0551 /* FloView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloView.swift; sourceTree = "<group>"; };
 		4B57E9DC21DE66E600FD0551 /* Position.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Position.swift; sourceTree = "<group>"; };
 		4B57E9DE21DE674000FD0551 /* Bounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bounds.swift; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 				4B57E9E021DE6A9E00FD0551 /* Layout.swift */,
 				4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */,
 				4B58D90821DFB16F00BDAE7B /* FloProperty.swift */,
+				4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */,
 			);
 			path = FlowBetween;
 			sourceTree = "<group>";
@@ -268,6 +271,7 @@
 				4B58D90921DFB16F00BDAE7B /* FloProperty.swift in Sources */,
 				4B57E9DA21DE2CBD00FD0551 /* FloView.swift in Sources */,
 				4B58D90721DFAB8F00BDAE7B /* FloViewModel.swift in Sources */,
+				4B52B4D121E2625B00CA6B64 /* FloViewFactory.swift in Sources */,
 				4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */,
 				4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */,
 				4B57E9E121DE6A9E00FD0551 /* Layout.swift in Sources */,
