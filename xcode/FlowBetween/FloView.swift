@@ -14,7 +14,7 @@ import Cocoa
 ///
 public class FloView : NSObject {
     /// The view that this represents
-    fileprivate var _view: FloContainer;
+    fileprivate var _view: FloContainerView;
     
     /// The control contained by this view
     fileprivate var _control: NSControl!;
@@ -51,7 +51,7 @@ public class FloView : NSObject {
         self.init();
         
         _control = withControl;
-        _view.addSubview(control);
+        _view.asView.addSubview(control);
     }
     
     ///
@@ -65,7 +65,7 @@ public class FloView : NSObject {
     /// The view that this is managing
     ///
     public var view: NSView! {
-        get { return _view; }
+        get { return _view.asView; }
     }
     
     ///
@@ -82,7 +82,7 @@ public class FloView : NSObject {
     ///
     public var layoutBounds: NSRect {
         get {
-            return _view.bounds;
+            return _view.asView.bounds;
         }
     }
     
@@ -130,7 +130,7 @@ public class FloView : NSObject {
     /// Removes this view from its superview
     ///
     @objc public func viewRemoveFromSuperview() {
-        _view.removeFromSuperview();
+        _view.asView.removeFromSuperview();
     }
     
     ///
@@ -140,7 +140,7 @@ public class FloView : NSObject {
         self._subviews.append(subview);
         
         if let subview = subview.view {
-            _view.addSubview(subview);
+            _view.asView.addSubview(subview);
         }
     }
     
@@ -185,7 +185,7 @@ public class FloView : NSObject {
     /// Sets the z-ordering of this view
     ///
     @objc public func viewSetZIndex(_ zIndex: Float64) {
-        _view.layer?.zPosition = CGFloat(zIndex);
+        _view.asView.layer?.zPosition = CGFloat(zIndex);
     }
     
     ///
@@ -203,7 +203,7 @@ public class FloView : NSObject {
     @objc public func viewSetBackgroundRed(_ red: Float64, green: Float64, blue: Float64, alpha: Float64) {
         let col = NSColor(calibratedRed: CGFloat(red), green: CGFloat(green), blue: CGFloat(blue), alpha: CGFloat(alpha));
         
-        _view.layer?.backgroundColor = col.cgColor;
+        _view.asView.layer?.backgroundColor = col.cgColor;
     }
     
     ///
@@ -224,7 +224,7 @@ public class FloView : NSObject {
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
             _imageView = NSImageView.init();
-            _view.addSubview(_imageView);
+            _view.asView.addSubview(_imageView);
         }
         
         // Change its image
