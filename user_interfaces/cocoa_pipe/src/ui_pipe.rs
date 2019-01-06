@@ -1,6 +1,8 @@
+use super::event::*;
 use super::action::*;
 use super::app_state::*;
 
+use flo_ui::*;
 use flo_ui::session::*;
 
 use futures::*;
@@ -8,11 +10,15 @@ use futures::*;
 ///
 /// Pipes UI updates to a Cocoa UI action sink
 ///
-pub fn pipe_ui_updates<UiStream, CocoaSink>(ui_stream: UiStream, cocoa_sink: CocoaSink) -> impl Future<Item=()>
-where   UiStream:   Stream<Item=Vec<UiUpdate>, Error=()>,
-        CocoaSink:  Sink<SinkItem=Vec<AppAction>, SinkError=()> {
+pub fn pipe_ui_updates<Ui, Cocoa>(ui: &Ui, cocoa: &Cocoa) -> impl Future<Item=()>
+where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
+        Cocoa:  UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> {
     // Create the state struction
     let mut state = AppState::new();
+
+    // Create the stream for updates coming from the UI side
+    let ui_stream   = ui.get_updates();
+    let cocoa_sink  = cocoa.get_input_sink();
 
     // Map the stream
     ui_stream

@@ -4,7 +4,6 @@ mod flo_session;
 mod logo_controller;
 use self::flo_session::*;
 
-use flo_ui::*;
 use flo_ui::session::*;
 use flo_cocoa_ui::*;
 use flo_cocoa_pipe::*;
@@ -40,7 +39,7 @@ pub unsafe extern fn create_flo_session(window_class: *mut Class, view_class: *m
             let flo_session         = UiSession::new(flo);
 
             // Pipe into the UI
-            let update_future       = pipe_ui_updates(flo_session.get_updates(), user_interface.get_input_sink());
+            let update_future       = pipe_ui_updates(&flo_session, &user_interface);
 
             // Wait for the future to complete
             let mut update_future   = executor::spawn(update_future);
