@@ -18,6 +18,11 @@ public class FloWindow : NSObject, NSWindowDelegate {
     ///
     fileprivate var _window: NSWindow;
     
+    ///
+    /// The root view, if the window has one
+    ///
+    fileprivate var _rootView: FloView?;
+    
     override init() {
         // Create the window
         let styleMask: NSWindow.StyleMask = [.resizable, .closable, .titled];
@@ -45,6 +50,7 @@ public class FloWindow : NSObject, NSWindowDelegate {
     /// Sets the root view of this window
     ///
     @objc(windowSetRootView:) public func windowSetRootView(view: FloView!) {
-        _window.contentView = view.view;
+        _rootView               = view;
+        _window.contentView     = view.view;
     }
 }

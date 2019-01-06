@@ -12,47 +12,47 @@ import Cocoa
 ///
 /// Class used to manage a view in FlowBetween
 ///
-public class FloView : NSView {
+public class FloView : NSObject {
+    /// The view that this represents
+    fileprivate var _view: FloContainer;
+    
     /// The control contained by this view
     fileprivate var _control: NSControl!;
     
     /// The layout bounds of this view
     fileprivate var _bounds: Bounds;
     
+    /// The subviews of this view
+    fileprivate var _subviews: [FloView];
+    
     /// Events
     fileprivate var _onClick: (() -> ())?;
     
-    required init?(coder: NSCoder) {
+    override init() {
         _bounds = Bounds(
             x1: Position.Start,
             y1: Position.Start,
             x2: Position.End,
             y2: Position.End
         );
+        _subviews = [];
+
+        _view = FloContainer.init();
+
+        super.init();
+
+        weak var this = self;
         
-        super.init(coder: coder);
-    }
-    
-    override init(frame: NSRect) {
-        _bounds = Bounds(
-            x1: Position.Start,
-            y1: Position.Start,
-            x2: Position.End,
-            y2: Position.End
-        );
-        
-        super.init(frame: frame);
-        
-        self.wantsLayer = true;
+        _view.performLayout = { if let this = this { this.performLayout() } };
+        _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
     }
     
     convenience init(withControl: NSControl) {
         self.init();
+        
         _control = withControl;
-        self.addSubview(control);
+        _view.addSubview(control);
     }
-    
-    override public var isOpaque: Bool { get { return false; } }
     
     ///
     /// The bounds of this view
@@ -65,15 +65,15 @@ public class FloView : NSView {
     /// The view that this is managing
     ///
     public var view: NSView! {
-        get { return self; }
+        get { return _view; }
     }
     
     ///
     /// The subviews that should be laid out within this view
     ///
-    public var layoutSubviews: [NSView] {
+    public var layoutSubviews: [FloView] {
         get {
-            return self.subviews;
+            return _subviews;
         }
     }
     
@@ -82,7 +82,7 @@ public class FloView : NSView {
     ///
     public var layoutBounds: NSRect {
         get {
-            return self.bounds;
+            return _view.bounds;
         }
     }
     
@@ -96,17 +96,12 @@ public class FloView : NSView {
                 let label   = NSTextField.init(labelWithString: "");
                 label.font  = NSFontManager.shared.font(withFamily: "Lato", traits: NSFontTraitMask(), weight: 5, size: 13.0);
                 
-                self.addSubview(label);
+                view.addSubview(label);
                 _control = label;
 
                 return label;
             }
         }
-    }
-    
-    override public func setFrameSize(_ newSize: NSSize) {
-        super.setFrameSize(newSize);
-        self.performLayout();
     }
     
     ///
@@ -118,28 +113,12 @@ public class FloView : NSView {
     }
     
     ///
-    /// User released the mouse (while it was not captured)
-    ///
-    override public func mouseUp(with event: NSEvent) {
-        if event.modifierFlags == NSEvent.ModifierFlags() && event.buttonNumber == 0 {
-            onClick();
-        }
-    }
-    
-    ///
-    /// Performs the click event/action for this view
+    /// Performs the click event/action for this view (callback for controls)
     ///
     @objc func onClick() {
-        if let _onClick = _onClick {
-            // Click here
-            _onClick()
-        } else {
-            // Bubble up
-            let superview = self.superview as? FloView;
-            superview?.onClick();
-        }
+        _view.triggerClick();
     }
-        
+    
     ///
     /// Sends an event if this view (or its control) is clicked
     ///
@@ -151,15 +130,17 @@ public class FloView : NSView {
     /// Removes this view from its superview
     ///
     @objc public func viewRemoveFromSuperview() {
-        self.removeFromSuperview();
+        _view.removeFromSuperview();
     }
     
     ///
     /// Adds a subview to this view
     ///
-    @objc(viewAddSubView:) public func viewAddSubView(subview: FloView!) {
+    @objc(viewAddSubView:) public func viewAddSubView(subview: FloView) {
+        self._subviews.append(subview);
+        
         if let subview = subview.view {
-            self.addSubview(subview);
+            _view.addSubview(subview);
         }
     }
     
@@ -204,7 +185,7 @@ public class FloView : NSView {
     /// Sets the z-ordering of this view
     ///
     @objc public func viewSetZIndex(_ zIndex: Float64) {
-        self.layer?.zPosition = CGFloat(zIndex);
+        _view.layer?.zPosition = CGFloat(zIndex);
     }
     
     ///
@@ -222,7 +203,7 @@ public class FloView : NSView {
     @objc public func viewSetBackgroundRed(_ red: Float64, green: Float64, blue: Float64, alpha: Float64) {
         let col = NSColor(calibratedRed: CGFloat(red), green: CGFloat(green), blue: CGFloat(blue), alpha: CGFloat(alpha));
         
-        self.layer?.backgroundColor = col.cgColor;
+        _view.layer?.backgroundColor = col.cgColor;
     }
     
     ///
@@ -243,7 +224,7 @@ public class FloView : NSView {
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
             _imageView = NSImageView.init();
-            self.addSubview(_imageView);
+            _view.addSubview(_imageView);
         }
         
         // Change its image

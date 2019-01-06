@@ -15,7 +15,7 @@ import Cocoa
     @objc public static func createAsEmpty() -> FloView {
         let view = FloView.init();
 
-        view.layer!.backgroundColor = NSColor.init(deviceRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor;
+        view.view.layer!.backgroundColor = NSColor.init(deviceRed: 1.0, green: 1.0, blue: 1.0, alpha: 0.0).cgColor;
 
         return view;
     }

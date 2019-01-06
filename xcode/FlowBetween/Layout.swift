@@ -62,8 +62,6 @@ class Layout {
         
         // First pass: all stretched views are set to 0 (calibrating the stretch distances)
         for subview in view.layoutSubviews {
-            // Only FloViews get laid out
-            if let subview = subview as? FloView {
                 // Get the bounds for this view
                 let bounds = subview.floBounds;
                 
@@ -80,7 +78,6 @@ class Layout {
                 // Update the last_x and last_y values
                 last_x = x2;
                 last_y = y2;
-            }
         }
         
         // Calculate the stretch distances
@@ -92,29 +89,23 @@ class Layout {
         last_y = 0;
         
         // Actually perform the layout
-        for subview in view.subviews {
-            // Only FloViews get laid out
-            if let subview = subview as? FloView {
-                // Get the bounds for this view
-                let bounds = subview.floBounds;
-                
-                // Compute the x1, y1, x2, y2 positions
-                let x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
-                let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
-                let y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
-                let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
-                
-                // Set the new frame for the view
-                let frame = NSRect(x: x1, y: max_y-y2, width: x2-x1, height: y2-y1);
-                subview.frame = frame;
+        for subview in view.layoutSubviews {
+            // Get the bounds for this view
+            let bounds = subview.floBounds;
+            
+            // Compute the x1, y1, x2, y2 positions
+            let x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
+            let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
+            let y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
+            let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
+            
+            // Set the new frame for the view
+            let frame = NSRect(x: x1, y: max_y-y2, width: x2-x1, height: y2-y1);
+            subview.view.frame = frame;
 
-                // Update the last_x and last_y values
-                last_x = x2;
-                last_y = y2;
-            } else {
-                // Other subviews are set to fill the entire control
-                subview.frame = NSRect(x: 0, y: 0, width: max_x, height: max_y);
-            }
+            // Update the last_x and last_y values
+            last_x = x2;
+            last_y = y2;
         }
     }
 }
