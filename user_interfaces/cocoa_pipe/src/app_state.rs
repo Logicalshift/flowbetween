@@ -50,11 +50,13 @@ impl AppState {
     /// Changes a UI update into one or more AppActions
     ///
     pub fn map_update(&mut self, update: UiUpdate) -> Vec<AppAction> {
+        use self::UiUpdate::*;
+
         match update {
-            UiUpdate::Start                     => { self.start() }
-            UiUpdate::UpdateUi(differences)     => { self.update_ui(differences) }
-            UiUpdate::UpdateCanvas(differences) => { vec![] }
-            UiUpdate::UpdateViewModel(updates)  => { self.update_viewmodel(updates) }
+            Start                       => { self.start() }
+            UpdateUi(differences)       => { self.update_ui(differences) }
+            UpdateCanvas(differences)   => { vec![] }
+            UpdateViewModel(updates)    => { self.update_viewmodel(updates) }
         }
     }
 
@@ -62,7 +64,11 @@ impl AppState {
     /// Changes an AppEvent into a UiEvent
     ///
     pub fn map_event(&mut self, update: AppEvent) -> Vec<UiEvent> {
-        vec![]
+        use self::AppEvent::*;
+
+        match update {
+            Click(view_id, name)    => vec![]
+        }
     }
 
     ///
@@ -85,6 +91,18 @@ impl AppState {
     }
 
     ///
+    /// Removes the settings for a view from this state
+    ///
+    fn remove_view(&mut self, view_state: &ViewState) {
+        // Remove all of the subviews first
+        for subview in view_state.subviews() {
+            self.remove_view(subview);
+        }
+
+        // Remove the settings for this view
+    }
+
+    ///
     /// Returns the actions required to perform a single UI diff
     ///
     fn update_ui_from_diff(&mut self, difference: UiDiff) -> Vec<AppAction> {
@@ -99,6 +117,9 @@ impl AppState {
 
         // Generate the actions to remove the existing view
         actions.extend(view_to_replace.map(|view_to_replace| view_to_replace.destroy_subtree_actions()).unwrap_or(vec![]));
+
+        // Remove the data for the view
+        view_to_replace.map(|view_to_replace| self.remove_view(view_to_replace));
 
         // Replace with the new state
         if difference.address.len() > 0 {
