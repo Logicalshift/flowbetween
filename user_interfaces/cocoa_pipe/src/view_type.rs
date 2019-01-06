@@ -10,6 +10,9 @@ pub enum ViewType {
 
     /// A view containing a button
     Button,
+
+    /// A view that can be scrolled
+    Scrolling
 }
 
 impl From<&Control> for ViewType {
@@ -26,7 +29,7 @@ impl From<ControlType> for ViewType {
             Empty                   => ViewType::Empty,
             Container               => ViewType::Empty,
             CroppingContainer       => ViewType::Empty,
-            ScrollingContainer      => ViewType::Empty,
+            ScrollingContainer      => ViewType::Scrolling,
             Popup                   => ViewType::Empty,
             Button                  => ViewType::Button,
             Label                   => ViewType::Empty,
