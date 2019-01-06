@@ -13,10 +13,10 @@ lazy_static! {
     pub static ref FLO_CONTROL: &'static Class = declare_flo_control_class();
 
     /// The active sessions
-    pub static ref FLO_SESSIONS: Mutex<HashMap<usize, Arc<Mutex<CocoaSession>>>> = Mutex::new(HashMap::new());
+    static ref FLO_SESSIONS: Mutex<HashMap<usize, Arc<Mutex<CocoaSession>>>> = Mutex::new(HashMap::new());
 
     /// The ID to use for the next session
-    pub static ref NEXT_SESSION_ID: Mutex<usize> = Mutex::new(0);
+    static ref NEXT_SESSION_ID: Mutex<usize> = Mutex::new(0);
 }
 
 ///

@@ -6,6 +6,7 @@
 #[macro_use] extern crate lazy_static;
 
 mod app;
+mod event;
 mod session;
 mod cocoa_ui;
 mod property;
