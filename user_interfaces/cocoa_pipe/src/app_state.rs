@@ -24,6 +24,9 @@ pub struct AppState {
     /// The IDs for the properties in view models (every name gets a )
     view_model_properties: HashMap<String, usize>,
 
+    /// Maps view IDs to addresses
+    address_for_view: HashMap<usize, Vec<Arc<String>>>,
+
     /// The next viewmodel ID to assign
     next_viewmodel_id: usize,
 
@@ -40,6 +43,7 @@ impl AppState {
             root_view:              None,
             view_models:            HashMap::new(),
             view_model_properties:  HashMap::new(),
+            address_for_view:       HashMap::new(),
             next_view_id:           0,
             next_viewmodel_id:      0,
             next_property_id:       0
@@ -93,13 +97,14 @@ impl AppState {
     ///
     /// Removes the settings for a view from this state
     ///
-    fn remove_view(&mut self, view_state: &ViewState) {
+    fn remove_view(view_state: &ViewState, address_for_view: &mut HashMap<usize, Vec<Arc<String>>>) {
         // Remove all of the subviews first
         for subview in view_state.subviews() {
-            self.remove_view(subview);
+            Self::remove_view(subview, address_for_view);
         }
 
         // Remove the settings for this view
+        address_for_view.remove(&view_state.id());
     }
 
     ///
@@ -113,13 +118,15 @@ impl AppState {
         let (view_state, mut actions) = self.create_view(&difference.new_ui, &controller_path);
 
         // The difference specifies a view to replace
-        let view_to_replace = self.root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(&difference.address));
+        let root_view           = &mut self.root_view;
+        let address_for_view    = &mut self.address_for_view;
+        let view_to_replace     = root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(&difference.address));
 
         // Generate the actions to remove the existing view
         actions.extend(view_to_replace.map(|view_to_replace| view_to_replace.destroy_subtree_actions()).unwrap_or(vec![]));
 
         // Remove the data for the view
-        view_to_replace.map(|view_to_replace| self.remove_view(view_to_replace));
+        view_to_replace.map(|view_to_replace| Self::remove_view(view_to_replace, address_for_view));
 
         // Replace with the new state
         if difference.address.len() > 0 {
