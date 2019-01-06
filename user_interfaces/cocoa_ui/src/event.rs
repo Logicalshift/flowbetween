@@ -84,15 +84,29 @@ pub fn declare_flo_events_class() -> &'static Class {
     // Create the class declaration
     let mut flo_events = ClassDecl::new("FloEvents", class!(NSObject)).unwrap();
 
-    // Add the event ID ivar
-    flo_events.add_ivar::<usize>("_eventsId");
+    unsafe {
+        // Add the event ID ivar
+        flo_events.add_ivar::<usize>("_eventsId");
 
-    // Sends an event to the events object
-    unsafe fn send_event(flo_events: *mut Object, event: AppEvent) {
-        let events_id   = (*flo_events).get_ivar::<usize>("_eventsId");
-        let flo_events  = FLO_EVENTS_STORE.lock().unwrap().get(events_id).cloned();
+        // Sends an event to the events object
+        unsafe fn send_event(flo_events: *mut Object, event: AppEvent) {
+            let events_id   = (*flo_events).get_ivar::<usize>("_eventsId");
+            let flo_events  = FLO_EVENTS_STORE.lock().unwrap().get(events_id).cloned();
 
-        flo_events.map(|flo_events| flo_events.lock().unwrap().events_publisher.wait_send(vec![event]).ok());
+            flo_events.map(|flo_events| flo_events.lock().unwrap().events_publisher.wait_send(vec![event]).ok());
+        }
+
+        // Deallocates the flo_events object
+        extern fn dealloc_flo_events(flo_events: &mut Object, _sel: Sel) {
+            unsafe {
+                // Remove the Rust type that we're managing
+                let events_id = (*flo_events).get_ivar::<usize>("_eventsId");
+                FLO_EVENTS_STORE.lock().unwrap().remove(&events_id);
+            }
+        }
+
+        // Register the events methods
+        flo_events.add_method(sel!(dealloc), dealloc_flo_events as extern fn(&mut Object, Sel));
     }
 
     // Finalize the class
