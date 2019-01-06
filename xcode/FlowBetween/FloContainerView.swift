@@ -24,3 +24,29 @@ protocol FloContainerView {
     /// Triggers the click event for this view
     func triggerClick();
 }
+
+///
+/// Bubbles an event up from a particular view
+///
+func bubble_up_event(source: NSView, event_handler: (FloContainerView) -> Bool) {
+    // Bubble up to the superview
+    var bubble_to: NSView? = source;
+    
+    while true {
+        if let bubble_to_view = bubble_to {
+            // Try this view
+            if let bubble_to = bubble_to_view as? FloContainerView {
+                if event_handler(bubble_to) {
+                    // Event was handled
+                    return;
+                }
+            }
+            
+            // Try the superview
+            bubble_to = bubble_to_view.superview;
+        } else {
+            // Did not find a target
+            return;
+        }
+    }
+}

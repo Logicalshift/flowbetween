@@ -68,38 +68,12 @@ class FloEmptyView : NSView, FloContainerView {
     /// Triggers the click event
     ///
     public func triggerClick() {
-        bubble_up(handler: { (container) in
+        bubble_up_event(source: self, event_handler: { (container) in
             if let onClick = container.onClick {
                 return onClick();
             } else {
                 return false;
             }
         });
-    }
-    
-    ///
-    /// Bubbles an event up from this view
-    ///
-    public func bubble_up(handler: (FloContainerView) -> Bool) {
-        // Bubble up to the superview
-        var bubble_to: NSView? = self;
-    
-        while true {
-            if let bubble_to_view = bubble_to {
-                // Try this view
-                if let bubble_to = bubble_to_view as? FloContainerView {
-                    if handler(bubble_to) {
-                        // Event was handled
-                        return;
-                    }
-                }
-                
-                // Try the superview
-                bubble_to = bubble_to_view.superview;
-            } else {
-                // Did not find a target
-                return;
-            }
-        }
     }
 }
