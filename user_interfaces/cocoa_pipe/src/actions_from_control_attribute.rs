@@ -21,11 +21,30 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             Text(text_val)                          => vec![ViewAction::SetText(bind_property(text_val.clone()))],
             Id(id)                                  => vec![],
             Controller(name)                        => vec![],
-            Action(trigger, name)                   => vec![],
+            Action(trigger, name)                   => event_actions(trigger, name),
             Canvas(canvas_resource)                 => vec![],
 
             SubComponents(_components)              => vec![]               // Handled separately by ViewState
         }
+    }
+}
+
+///
+/// Creates the actions required to request a specific event trigger
+///
+fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
+    use self::ActionTrigger::*;
+
+    match trigger {
+        Click                           => vec![ViewAction::RequestEvent(ViewEvent::Click, name.clone())],
+        Dismiss                         => vec![],
+        Paint(device)                   => vec![],
+        Drag                            => vec![],
+        Focused                         => vec![],
+        EditValue                       => vec![],
+        SetValue                        => vec![],
+        CancelEdit                      => vec![],
+        VirtualScroll(width, height)    => vec![],
     }
 }
 
