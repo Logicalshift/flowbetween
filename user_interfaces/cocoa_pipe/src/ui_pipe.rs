@@ -17,16 +17,34 @@ where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
     let mut state = AppState::new();
 
     // Create the stream for updates coming from the UI side
-    let ui_stream   = ui.get_updates();
-    let cocoa_sink  = cocoa.get_input_sink();
+    let ui_stream       = ui.get_updates();
+    let cocoa_sink      = cocoa.get_input_sink();
 
-    // Map the stream
-    ui_stream
+    // ... and the stream for sending the events the other way
+    let ui_events       = ui.get_input_sink();
+    let cocoa_events    = cocoa.get_updates();
+
+    // Pipe the updates into the cocoa side
+    let handle_updates = ui_stream
         .map(move |updates| {
             updates.into_iter()
                 .flat_map(|update| state.map_update(update))
                 .collect::<Vec<_>>()
         })
         .forward(cocoa_sink)
+        .map(|_| ());
+
+    // Pipe the events the other way
+    let handle_events = cocoa_events
+        .map(move |events| {
+            events.into_iter()
+                .flat_map(|event| vec![])
+                .collect::<Vec<_>>()
+        })
+        .forward(ui_events)
+        .map(|_| ());
+
+    // Updates stop when any of the streams end
+    handle_updates.select(handle_events)
         .map(|_| ())
 }
