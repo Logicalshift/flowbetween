@@ -117,10 +117,10 @@ pub fn declare_flo_events_class() -> &'static Class {
         ///
         unsafe fn name_for_name(name: &mut Object) -> String {
             let utf8 = msg_send!(name, UTF8String);
-            let utf8 = CStr::from_bytes_with_nul(utf8);
-            utf8.map(|utf8| utf8.to_str())
-                .map(|utf8| utf8.map(|utf8| utf8.to_string()).unwrap_or_else(|err| format!("<to_string: {}>", err)))
-                .unwrap_or_else(|err| format!("<from_bytes_with_nul: {}>", err))
+            let utf8 = CStr::from_ptr(utf8);
+            utf8.to_str()
+                .map(|utf8| utf8.to_string())
+                .unwrap_or_else(|err| format!("<to_str: {}>", err))
         }
 
         // Sends an event to the events object
