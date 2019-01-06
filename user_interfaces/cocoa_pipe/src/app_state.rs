@@ -1,3 +1,4 @@
+use super::event::*;
 use super::action::*;
 use super::view_state::*;
 
@@ -55,6 +56,13 @@ impl AppState {
             UiUpdate::UpdateCanvas(differences) => { vec![] }
             UiUpdate::UpdateViewModel(updates)  => { self.update_viewmodel(updates) }
         }
+    }
+
+    ///
+    /// Changes an AppEvent into a UiEvent
+    ///
+    pub fn map_event(&mut self, update: AppEvent) -> Vec<UiEvent> {
+        vec![]
     }
 
     ///
