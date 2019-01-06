@@ -71,7 +71,7 @@ impl AppState {
         use self::AppEvent::*;
 
         match update {
-            Click(view_id, name)    => vec![]
+            Click(view_id, name)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)]
         }
     }
 
@@ -83,6 +83,15 @@ impl AppState {
             AppAction::CreateWindow(0),
             AppAction::Window(0, WindowAction::Open)
         ]
+    }
+
+    ///
+    /// Retrieves the controller path for a particular view ID
+    ///
+    fn get_controller_path_for_view(&self, view_id: usize) -> Vec<String> {
+        self.address_for_view.get(&view_id)
+            .map(|address| address.iter().map(|component| (**component).clone()).collect())
+            .unwrap_or_else(|| vec![])
     }
 
     ///
@@ -199,6 +208,9 @@ impl AppState {
         let view_id                 = self.next_view_id;
         self.next_view_id           += 1;
         let mut view_state          = ViewState::new(view_id);
+
+        // Store the controller path for this view
+        self.address_for_view.insert(view_id, controller_path.clone());
 
         // Initialise from the control
         let mut property_actions    = vec![];
