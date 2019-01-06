@@ -19,6 +19,9 @@ public class FloView : NSView {
     /// The layout bounds of this view
     fileprivate var _bounds: Bounds;
     
+    /// Events
+    fileprivate var _onClick: (() -> ())?;
+    
     required init?(coder: NSCoder) {
         _bounds = Bounds(
             x1: Position.Start,
@@ -109,6 +112,29 @@ public class FloView : NSView {
     }
     
     ///
+    /// User released the mouse (while it was not captured)
+    ///
+    override public func mouseUp(with event: NSEvent) {
+        if event.modifierFlags == NSEvent.ModifierFlags() && event.buttonNumber == 0 {
+            onClick();
+        }
+    }
+    
+    ///
+    /// Performs the click event/action for this view
+    ///
+    @objc func onClick() {
+        if let _onClick = _onClick {
+            // Click here
+            _onClick()
+        } else {
+            // Bubble up
+            let superview = self.superview as? FloView;
+            superview?.onClick();
+        }
+    }
+    
+    ///
     /// Creates an empty view
     ///
     @objc public func setupAsEmpty() {
@@ -119,7 +145,7 @@ public class FloView : NSView {
     /// Creates an empty view
     ///
     @objc public func setupAsButton() {
-        let button = NSButton.init(title: "", target: nil, action: nil);
+        let button = NSButton.init(title: "", target: self, action: #selector(FloView.onClick));
         
         self.addSubview(button);
         _control = button;
@@ -129,10 +155,7 @@ public class FloView : NSView {
     /// Sends an event if this view (or its control) is clicked
     ///
     @objc public func requestClick(_ events: FloEvents, withName: String?) {
-        // TODO!
-        NSLog("Requested click event: %@", withName!);
-        
-        events.sendClick(withName);
+        _onClick = { events.sendClick(withName); };
     }
     
     ///
