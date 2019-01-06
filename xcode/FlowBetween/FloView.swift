@@ -47,6 +47,25 @@ public class FloView : NSObject {
         _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
     }
     
+    required init(withView view: FloContainerView) {
+        _bounds = Bounds(
+            x1: Position.Start,
+            y1: Position.Start,
+            x2: Position.End,
+            y2: Position.End
+        );
+        _subviews = [];
+        
+        _view = view;
+        
+        super.init();
+        
+        weak var this = self;
+        
+        _view.performLayout = { if let this = this { this.performLayout() } };
+        _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
+    }
+    
     convenience init(withControl: NSControl) {
         self.init();
         

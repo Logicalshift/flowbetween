@@ -15,6 +15,7 @@
 		4B52B4D121E2625B00CA6B64 /* FloViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */; };
 		4B52B4D321E2652600CA6B64 /* FloContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D221E2652600CA6B64 /* FloContainerView.swift */; };
 		4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */; };
+		4B52B4D721E26DBA00CA6B64 /* FloScrollingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */; };
 		4B57E9DA21DE2CBD00FD0551 /* FloView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9D921DE2CBD00FD0551 /* FloView.swift */; };
 		4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9DC21DE66E600FD0551 /* Position.swift */; };
 		4B57E9DF21DE674000FD0551 /* Bounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9DE21DE674000FD0551 /* Bounds.swift */; };
@@ -68,6 +69,7 @@
 		4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewFactory.swift; sourceTree = "<group>"; };
 		4B52B4D221E2652600CA6B64 /* FloContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerView.swift; sourceTree = "<group>"; };
 		4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloEmptyView.swift; sourceTree = "<group>"; };
+		4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloScrollingView.swift; sourceTree = "<group>"; };
 		4B57E9D921DE2CBD00FD0551 /* FloView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloView.swift; sourceTree = "<group>"; };
 		4B57E9DC21DE66E600FD0551 /* Position.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Position.swift; sourceTree = "<group>"; };
 		4B57E9DE21DE674000FD0551 /* Bounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bounds.swift; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 				4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */,
 				4B52B4D221E2652600CA6B64 /* FloContainerView.swift */,
 				4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */,
+				4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */,
 			);
 			path = FlowBetween;
 			sourceTree = "<group>";
@@ -282,6 +285,7 @@
 				4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */,
 				4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */,
 				4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */,
+				4B52B4D721E26DBA00CA6B64 /* FloScrollingView.swift in Sources */,
 				4B57E9E121DE6A9E00FD0551 /* Layout.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

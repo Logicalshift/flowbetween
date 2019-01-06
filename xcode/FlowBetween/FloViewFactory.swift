@@ -21,13 +21,24 @@ import Cocoa
     }
     
     ///
-    /// Creates an empty view
+    /// Creates a view with a button
     ///
     @objc public static func createAsButton() -> FloView {
         let button = NSButton.init(title: "", target: nil, action: #selector(FloView.onClick));
         
         let view = FloView.init(withControl: button);
         button.target = view;
+        
+        return view;
+    }
+    
+    ///
+    /// Creates a view that can be scrolled
+    ///
+    @objc public static func createAsScrolling() -> FloView {
+        let scrolling = FloScrollingView.init();
+        
+        let view = FloView.init(withView: FloEmptyView.init());
         
         return view;
     }
