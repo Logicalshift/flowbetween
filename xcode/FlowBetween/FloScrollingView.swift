@@ -87,6 +87,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         super.setFrameSize(newSize);
         
         layoutDocumentView();
+        triggerOnScroll();
     }
 
     fileprivate var _scrollMinimumSize: (Float64, Float64);
