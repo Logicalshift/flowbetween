@@ -22,6 +22,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         self.hasHorizontalScroller  = true;
         self.hasVerticalScroller    = true;
         self.autohidesScrollers     = true;
+        
+        self.contentView.postsBoundsChangedNotifications = true;
+        NotificationCenter.default.addObserver(self, selector: #selector(triggerOnScroll), name: NSView.boundsDidChangeNotification, object: self.contentView);
     }
     
     required public override init(frame frameRect: NSRect) {
@@ -37,6 +40,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         self.hasHorizontalScroller  = true;
         self.hasVerticalScroller    = true;
         self.autohidesScrollers     = true;
+        
+        self.contentView.postsBoundsChangedNotifications = true;
+        NotificationCenter.default.addObserver(self, selector: #selector(triggerOnScroll), name: NSView.boundsDidChangeNotification, object: self.contentView);
     }
     
     override public var isOpaque: Bool { get { return false } }
@@ -133,7 +139,15 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     var onClick: (() -> Bool)?;
 
     /// Event handler: user scrolled/resized so that a particular region is visible
-    var onScroll: ((NSRect) -> ())?;
+    var _onScroll: ((NSRect) -> ())?;
+    var onScroll: ((NSRect) -> ())? {
+        get { return _onScroll; }
+        set(value) {
+            _onScroll = value;
+            
+            triggerOnScroll();
+        }
+    }
 
     /// Event handler: user performed layout on this view
     var performLayout: (() -> ())?;
@@ -147,5 +161,14 @@ public class FloScrollingView : NSScrollView, FloContainerView {
                 return false;
             }
         });
+    }
+    
+    /// Triggers the scroll event for this view
+    @objc func triggerOnScroll() {
+        // Find the area that's visible on screen
+        let visibleRect = self.convert(bounds, to: documentView);
+        
+        // Send the onScroll event
+        _onScroll?(visibleRect);
     }
 }
