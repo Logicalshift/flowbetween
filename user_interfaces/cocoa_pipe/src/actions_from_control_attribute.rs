@@ -44,7 +44,7 @@ fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
         EditValue                       => vec![],
         SetValue                        => vec![],
         CancelEdit                      => vec![],
-        VirtualScroll(width, height)    => vec![],
+        VirtualScroll(width, height)    => vec![ViewAction::RequestEvent(ViewEvent::VirtualScroll(*width as f64, *height as f64), name.clone())],
     }
 }
 
