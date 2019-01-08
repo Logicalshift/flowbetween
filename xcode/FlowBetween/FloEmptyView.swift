@@ -33,6 +33,9 @@ class FloEmptyView : NSView, FloContainerView {
     /// Event handler: user performed layout on this view
     public var performLayout: (() -> ())?;
 
+    /// Event handler: user scrolled/resized so that a particular region is visible
+    public var onScroll: ((NSRect) -> ())?;
+
     /// The minimum size of the scroll area for this view
     public var scrollMinimumSize: (Float64, Float64) = (0, 0);
     

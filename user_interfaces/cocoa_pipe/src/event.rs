@@ -4,5 +4,8 @@
 #[derive(Clone, PartialEq, Debug)]
 pub enum AppEvent {
     /// User has clicked on a view
-    Click(usize, String)
+    Click(usize, String),
+
+    /// The scrolling region has changed
+    VirtualScroll(usize, String, (u32, u32), (u32, u32))
 }

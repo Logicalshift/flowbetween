@@ -173,6 +173,18 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
+        // Sends the 'virtual scroll' event
+        extern fn send_virtual_scroll(this: &mut Object, _sel: Sel, name: *mut Object, left: u32, top: u32, width: u32, height: u32) {
+            unsafe {
+                let view_id = get_view_id(this);
+                let name    = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::VirtualScroll(view_id, name, (left, top), (width, height)));
+                }
+            }
+        }
+
         // Clears the list of pending events
         extern fn finish_sending_events(this: &mut Object, _sel: Sel) {
             unsafe {
@@ -208,6 +220,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(finishSendingEvents), finish_sending_events as extern fn(&mut Object, Sel));
 
         flo_events.add_method(sel!(sendClick:), send_click as extern fn(&mut Object, Sel, *mut Object));
+        flo_events.add_method(sel!(sendVirtualScroll:left:top:width:height:), send_virtual_scroll as extern fn(&mut Object, Sel, *mut Object, u32, u32, u32, u32));
     }
 
     // Finalize the class

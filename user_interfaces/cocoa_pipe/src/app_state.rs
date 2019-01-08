@@ -71,7 +71,8 @@ impl AppState {
         use self::AppEvent::*;
 
         match update {
-            Click(view_id, name)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)]
+            Click(view_id, name)                            => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
+            VirtualScroll(view_id, name, top_left, size)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::VirtualScroll(top_left, size))]
         }
     }
 

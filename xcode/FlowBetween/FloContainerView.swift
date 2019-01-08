@@ -30,6 +30,9 @@ protocol FloContainerView {
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)? { get set };
     
+    /// Event handler: user scrolled/resized so that a particular region is visible
+    var onScroll: ((NSRect) -> ())? { get set };
+    
     /// Event handler: user performed layout on this view
     var performLayout: (() -> ())? { get set };
     

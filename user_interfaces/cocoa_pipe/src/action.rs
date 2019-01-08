@@ -117,7 +117,10 @@ pub enum ViewAction {
 #[derive(Clone, PartialEq, Debug)]
 pub enum ViewEvent {
     /// User has clicked the control contained within this view
-    Click
+    Click,
+
+    /// Send events when the view is scrolled, indicating which area is visible
+    VirtualScroll(f64, f64)
 }
 
 ///

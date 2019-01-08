@@ -131,7 +131,10 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)?;
-    
+
+    /// Event handler: user scrolled/resized so that a particular region is visible
+    var onScroll: ((NSRect) -> ())?;
+
     /// Event handler: user performed layout on this view
     var performLayout: (() -> ())?;
     

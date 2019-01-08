@@ -304,7 +304,8 @@ impl CocoaSession {
 
             if let Some(view) = views.get(&view_id) {
                 match event_type {
-                    Click           => { msg_send!(**view, requestClick: flo_events withName: name) }
+                    Click                           => { msg_send!(**view, requestClick: flo_events withName: name) }
+                    VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: flo_events withName: name width: width as f64 height: height as f64) }
                 }
             }
         }
