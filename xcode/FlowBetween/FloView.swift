@@ -148,16 +148,16 @@ public class FloView : NSObject {
     ///
     /// Sends an event if this view is scrolled
     ///
-    @objc public func requestScroll(_ events: FloEvents, withName: String?, width scrollWidth: Float64, height scrollHeight: Float64) {
+    @objc public func requestVirtualScroll(_ events: FloEvents, withName: String?, width scrollWidth: Float64, height scrollHeight: Float64) {
         var (x, y)          = (UInt32(0), UInt32(0));
         var (width, height) = (UInt32(0), UInt32(0));
         
         _view.onScroll = { visibleRect in
             let (newXf, newYf)          = (Float64(visibleRect.minX) / scrollWidth, Float64(visibleRect.minY) / scrollHeight);
-            let (newXi, newYi)          = (UInt32(floor(newXf)), UInt32(floor(newYf)));
+            let (newXi, newYi)          = (UInt32(floor(Float64.maximum(newXf, 0))), UInt32(floor(Float64.maximum(newYf, 0))));
             
             let (newWidthf, newHeightf) = (Float64(visibleRect.width) / scrollWidth, Float64(visibleRect.height)/scrollHeight);
-            let (newWidthi, newHeighti) = (UInt32(floor(newWidthf+1.0)), UInt32(newHeightf+1.0));
+            let (newWidthi, newHeighti) = (UInt32(floor(newWidthf)+1.0), UInt32(floor(newHeightf)+1.0));
             
             if newXi != x || newYi != y || newWidthi != width || newHeighti != height {
                 x       = newXi;
