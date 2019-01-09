@@ -68,6 +68,15 @@ struct NotifyRef {
     target_object: WeakPtr
 }
 
+///
+/// Retains an objective-C strong ptr
+///
+#[inline] unsafe fn retain(obj: &StrongPtr) -> *mut Object {
+    let obj = **obj;
+    msg_send!(obj, retain);
+    obj
+}
+
 impl CocoaSession {
     ///
     /// Creates a new CocoaSession
@@ -270,7 +279,7 @@ impl CocoaSession {
                     RequestEvent(event_type, name)      => { self.request_view_event(view_id, event_type, name); }
 
                     RemoveFromSuperview                 => { msg_send!(**view, viewRemoveFromSuperview); }
-                    AddSubView(view_id)                 => { self.views.get(&view_id).map(|subview| { msg_send!(**subview, retain); msg_send!((**view), viewAddSubView: **subview) }); }
+                    AddSubView(view_id)                 => { self.views.get(&view_id).map(|subview| { msg_send!((**view), viewAddSubView: retain(subview)) }); }
                     SetBounds(bounds)                   => { self.set_bounds(view, bounds); }
                     SetZIndex(z_index)                  => { msg_send!(**view, viewSetZIndex: z_index); }
                     SetForegroundColor(col)             => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
@@ -303,12 +312,10 @@ impl CocoaSession {
             let name        = NSString::alloc(nil).init_str(&name);
             let name        = StrongPtr::new(name);
 
-            // TODO: need to retain the events/name here?
-
             if let Some(view) = views.get(&view_id) {
                 match event_type {
-                    Click                           => { msg_send!(**view, requestClick: flo_events withName: name) }
-                    VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: flo_events withName: name width: width as f64 height: height as f64) }
+                    Click                           => { msg_send!(**view, requestClick: retain(&flo_events) withName: retain(&name)) }
+                    VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: retain(&flo_events) withName: retain(&name) width: width as f64 height: height as f64) }
                 }
             }
         }
