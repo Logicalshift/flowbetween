@@ -301,6 +301,7 @@ impl CocoaSession {
             let flo_events  = self.events_for_view(view_id);
             let views       = &self.views;
             let name        = NSString::alloc(nil).init_str(&name);
+            let name        = StrongPtr::new(name);
 
             if let Some(view) = views.get(&view_id) {
                 match event_type {
