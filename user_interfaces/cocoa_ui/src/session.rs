@@ -303,6 +303,8 @@ impl CocoaSession {
             let name        = NSString::alloc(nil).init_str(&name);
             let name        = StrongPtr::new(name);
 
+            // TODO: need to retain the events/name here?
+
             if let Some(view) = views.get(&view_id) {
                 match event_type {
                     Click                           => { msg_send!(**view, requestClick: flo_events withName: name) }
