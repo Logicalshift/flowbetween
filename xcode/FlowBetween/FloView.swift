@@ -16,6 +16,9 @@ public class FloView : NSObject {
     /// The view that this represents
     fileprivate var _view: FloContainerView;
     
+    /// The view that this is a subview of
+    fileprivate weak var _superview: FloView?;
+    
     /// The control contained by this view
     fileprivate var _control: NSControl!;
     
@@ -174,14 +177,23 @@ public class FloView : NSObject {
     /// Removes this view from its superview
     ///
     @objc public func viewRemoveFromSuperview() {
+        // Remove the view from the view hierarchy
         _view.asView.removeFromSuperview();
+        
+        // Remove from its parent FloView
+        if let superview = _superview {
+            superview._subviews.removeAll(where: { view in return view == self });
+        }
     }
     
     ///
     /// Adds a subview to this view
     ///
     @objc(viewAddSubView:) public func viewAddSubView(subview: FloView) {
+        subview.viewRemoveFromSuperview();
+        
         self._subviews.append(subview);
+        subview._superview = self;
         
         if let subview = subview.view {
             _view.addContainerSubview(subview);
