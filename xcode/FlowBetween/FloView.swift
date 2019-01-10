@@ -28,6 +28,9 @@ public class FloView : NSObject {
     /// The subviews of this view
     fileprivate var _subviews: [FloView];
     
+    /// Set to true if we've queued up a relayout operation
+    fileprivate var _willLayout: Bool = false;
+    
     /// Events
     fileprivate var _onClick: (() -> ())?;
     
@@ -135,6 +138,20 @@ public class FloView : NSObject {
     }
     
     ///
+    /// Invalidates the layout of this view
+    ///
+    public func invalidateLayout() {
+        if !_willLayout {
+            _willLayout = true;
+            
+            RunLoop.current.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                self._willLayout = false;
+                self.performLayout();
+            });
+        }
+    }
+    
+    ///
     /// Performs the click event/action for this view (callback for controls)
     ///
     @objc func onClick() {
@@ -198,6 +215,9 @@ public class FloView : NSObject {
         if let subview = subview.view {
             _view.addContainerSubview(subview);
         }
+        
+        // View will need to be laid out again
+        invalidateLayout();
     }
     
     ///
