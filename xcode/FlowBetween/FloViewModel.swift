@@ -24,14 +24,27 @@
 
 import Foundation
 
+class NotifyProperty {
+    weak var property: FloProperty?;
+}
+
+class NotifyList {
+    var properties: [NotifyProperty] = [];
+}
+
 ///
 /// Provides the view model implementation methods
 ///
 public class FloViewModel : NSObject {
+    /// The properties in this viewmodel
     fileprivate var _properties: [UInt64: PropertyValue];
+    
+    /// What to notify when a property changes
+    fileprivate var _toNotify: [UInt64: NotifyList];
     
     override init() {
         _properties = [UInt64: PropertyValue]();
+        _toNotify   = [UInt64: NotifyList]();
     }
     
     @objc public func setNothing(_ propertyId: UInt64) {
@@ -56,5 +69,51 @@ public class FloViewModel : NSObject {
     
     @objc public func setProperty(_ propertyId: UInt64, toValue: FloProperty) {
         _properties[propertyId] = toValue.value;
+    }
+
+    ///
+    /// Notifies anything that's listening that the specified property has changed
+    ///
+    func notifyPropertyChanged(_ propertyId: UInt64) {
+        if let notifyList = _toNotify[propertyId] {
+            // Filter out any properties that have been removed
+            notifyList.properties = notifyList.properties.filter({ maybeProperty in maybeProperty.property != nil });
+            
+            // Notify any property still in the list
+            for maybeProperty in notifyList.properties {
+                if let property = maybeProperty.property {
+                    property.notifyChange();
+                }
+            }
+        }
+    }
+    
+    ///
+    /// Retrieves the value of the specified property
+    ///
+    public func valueForProperty(_ propertyId: UInt64) -> PropertyValue {
+        if let value = _properties[propertyId] {
+            return value;
+        } else {
+            return PropertyValue.Nothing;
+        }
+    }
+    
+    ///
+    /// Notifies the specified FloProperty whenever the property with the specified ID is changed
+    ///
+    public func watchProperty(_ propertyId: UInt64, _ property: FloProperty) {
+        // Create the notifyProperty object to store the property reference
+        let notifyProperty      = NotifyProperty.init();
+        notifyProperty.property = property;
+        
+        // Add to the list to notify for this ID
+        if let toNotify = _toNotify[propertyId] {
+            toNotify.properties.append(notifyProperty);
+        } else {
+            let newNotifyList = NotifyList.init();
+            newNotifyList.properties.append(notifyProperty);
+            _toNotify[propertyId] = newNotifyList;
+        }
     }
 }

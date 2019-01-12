@@ -282,13 +282,18 @@ public class FloView : NSObject {
         _view.asView.layer?.backgroundColor = col.cgColor;
     }
     
+    var _text: FloProperty?;
     ///
     /// Sets the text for the view
     ///
     @objc public func viewSetText(_ text: FloProperty) {
-        if case let PropertyValue.String(value) = text.value {
-            control.stringValue = value;
-        }
+        _text = text;
+        
+        text.trackValue({ value in
+            if case let PropertyValue.String(value) = value {
+                self.control.stringValue = value;
+            }
+        });
     }
     
     var _imageView: NSImageView!;
