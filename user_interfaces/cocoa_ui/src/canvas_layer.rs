@@ -29,7 +29,7 @@ impl CanvasLayer {
         use self::Draw::*;
 
         match draw {
-            NewPath                                             => { /* TODO */ }
+            NewPath                                             => { self.context.begin_path() }
             Move(x, y)                                          => { /* TODO */ }
             Line(x, y)                                          => { /* TODO */ }
             BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { /* TODO */ }
