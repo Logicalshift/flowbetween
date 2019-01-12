@@ -10,5 +10,6 @@ mod event;
 mod session;
 mod cocoa_ui;
 mod property;
+mod canvas_layer;
 
 pub use self::app::*;
