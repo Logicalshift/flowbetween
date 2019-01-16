@@ -11,5 +11,6 @@ mod session;
 mod cocoa_ui;
 mod property;
 mod canvas_layer;
+mod core_graphics_ffi;
 
 pub use self::app::*;

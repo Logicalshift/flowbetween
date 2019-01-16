@@ -1,6 +1,6 @@
 use flo_canvas::*;
 
-use core_graphics::context::*;
+use super::core_graphics_ffi::*;
 
 ///
 /// Processes canvas draw commands onto a core graphics context
@@ -16,7 +16,7 @@ impl CanvasLayer {
     ///
     /// Creates a new canvas layer that will render to the specified context
     ///
-    pub fn init(context: CGContextRef) -> CanvasLayer {
+    pub unsafe fn init(context: CGContextRef) -> CanvasLayer {
         CanvasLayer { 
             context: context
         }
@@ -28,39 +28,41 @@ impl CanvasLayer {
     pub fn draw(&self, draw: &Draw) {
         use self::Draw::*;
 
-        match draw {
-            NewPath                                             => { self.context.begin_path() }
-            Move(x, y)                                          => { /* TODO */ }
-            Line(x, y)                                          => { /* TODO */ }
-            BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { /* TODO */ }
-            ClosePath                                           => { /* TODO */ }
-            Fill                                                => { /* TODO */ }
-            Stroke                                              => { /* TODO */ }
-            LineWidth(width)                                    => { /* TODO */ }
-            LineWidthPixels(width_pixels)                       => { /* TODO */ }
-            LineJoin(join)                                      => { /* TODO */ }
-            LineCap(cap)                                        => { /* TODO */ }
-            NewDashPattern                                      => { /* TODO */ }
-            DashLength(len)                                     => { /* TODO */ }
-            DashOffset(offset)                                  => { /* TODO */ }
-            FillColor(col)                                      => { /* TODO */ }
-            StrokeColor(col)                                    => { /* TODO */ }
-            BlendMode(blend)                                    => { /* TODO */ }
-            IdentityTransform                                   => { /* TODO */ }
-            CanvasHeight(height)                                => { /* TODO */ }
-            CenterRegion((minx, miny), (maxx, maxy))            => { /* TODO */ }
-            MultiplyTransform(transform)                        => { /* TODO */ }
-            Unclip                                              => { /* TODO */ }
-            Clip                                                => { /* TODO */ }
-            Store                                               => { /* TODO */ }
-            Restore                                             => { /* TODO */ }
-            FreeStoredBuffer                                    => { /* TODO */ }
-            PushState                                           => { /* TODO */ }
-            PopState                                            => { /* TODO */ }
-            ClearCanvas                                         => { /* TODO */ }
-            Layer(layer_id)                                     => { /* TODO */ }
-            LayerBlend(layer_id, blend)                         => { /* TODO */ }
-            ClearLayer                                          => { /* TODO */ }
+        unsafe {
+            match draw {
+                NewPath                                             => { CGContextBeginPath(self.context); }
+                Move(x, y)                                          => { /* TODO */ }
+                Line(x, y)                                          => { /* TODO */ }
+                BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { /* TODO */ }
+                ClosePath                                           => { /* TODO */ }
+                Fill                                                => { /* TODO */ }
+                Stroke                                              => { /* TODO */ }
+                LineWidth(width)                                    => { /* TODO */ }
+                LineWidthPixels(width_pixels)                       => { /* TODO */ }
+                LineJoin(join)                                      => { /* TODO */ }
+                LineCap(cap)                                        => { /* TODO */ }
+                NewDashPattern                                      => { /* TODO */ }
+                DashLength(len)                                     => { /* TODO */ }
+                DashOffset(offset)                                  => { /* TODO */ }
+                FillColor(col)                                      => { /* TODO */ }
+                StrokeColor(col)                                    => { /* TODO */ }
+                BlendMode(blend)                                    => { /* TODO */ }
+                IdentityTransform                                   => { /* TODO */ }
+                CanvasHeight(height)                                => { /* TODO */ }
+                CenterRegion((minx, miny), (maxx, maxy))            => { /* TODO */ }
+                MultiplyTransform(transform)                        => { /* TODO */ }
+                Unclip                                              => { /* TODO */ }
+                Clip                                                => { /* TODO */ }
+                Store                                               => { /* TODO */ }
+                Restore                                             => { /* TODO */ }
+                FreeStoredBuffer                                    => { /* TODO */ }
+                PushState                                           => { /* TODO */ }
+                PopState                                            => { /* TODO */ }
+                ClearCanvas                                         => { /* TODO */ }
+                Layer(layer_id)                                     => { /* TODO */ }
+                LayerBlend(layer_id, blend)                         => { /* TODO */ }
+                ClearLayer                                          => { /* TODO */ }
+            }
         }
     }
 }
