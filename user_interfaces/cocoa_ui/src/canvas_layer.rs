@@ -35,9 +35,9 @@ impl CanvasLayer {
                 Line(x, y)                                          => { CGContextAddLineToPoint(self.context, *x as CGFloat, *y as CGFloat); }
                 BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { CGContextAddCurveToPoint(self.context, *c1x as CGFloat, *c1y as CGFloat, *c2x as CGFloat, *c2y as CGFloat, *ex as CGFloat, *ey as CGFloat); }
                 ClosePath                                           => { CGContextClosePath(self.context); }
-                Fill                                                => { /* TODO */ }
-                Stroke                                              => { /* TODO */ }
-                LineWidth(width)                                    => { /* TODO */ }
+                Fill                                                => { CGContextFillPath(self.context); }
+                Stroke                                              => { CGContextStrokePath(self.context); }
+                LineWidth(width)                                    => { CGContextSetLineWidth(self.context, *width as CGFloat); }
                 LineWidthPixels(width_pixels)                       => { /* TODO */ }
                 LineJoin(join)                                      => { /* TODO */ }
                 LineCap(cap)                                        => { /* TODO */ }
