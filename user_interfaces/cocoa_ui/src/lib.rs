@@ -11,6 +11,8 @@ mod session;
 mod cocoa_ui;
 mod property;
 mod canvas_layer;
+
+#[allow(dead_code)]
 mod core_graphics_ffi;
 
 pub use self::app::*;
