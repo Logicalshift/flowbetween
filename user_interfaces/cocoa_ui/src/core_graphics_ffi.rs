@@ -19,9 +19,26 @@ pub type CGColorSpaceRef = *mut CGColorSpace;
 #[repr(C)] pub struct CGColor { _private: [u8; 0] }
 pub type CGColorRef = *mut CGColor;
 
+#[derive(Copy, Clone)]
+#[repr(C)] pub struct CGAffineTransform {
+    a: CGFloat,
+    b: CGFloat,
+    c: CGFloat,
+    d: CGFloat,
+    tx: CGFloat,
+    ty: CGFloat
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)] pub struct CGPoint {
+    x: CGFloat,
+    y: CGFloat
+}
+
 #[link(name = "CoreGraphics", kind = "framework")]
 extern {
     pub static kCGColorSpaceSRGB: CFStringRef;
+    pub static CGAffineTransformIdentity: CGAffineTransform;
 
     pub fn CGColorSpaceRetain(colorspace: CGColorSpaceRef);
     pub fn CGColorSpaceRelease(colorspace: CGColorSpaceRef);
@@ -30,6 +47,12 @@ extern {
     pub fn CGColorRetain(color: CGColorRef);
     pub fn CGColorRelease(color: CGColorRef);
     pub fn CGColorCreate(colorspace: CGColorSpaceRef, components: *const CGFloat) -> CGColorRef;
+
+    pub fn CGAffineTransformTranslate(t: CGAffineTransform, tx: CGFloat, ty: CGFloat) -> CGAffineTransform;
+    pub fn CGAffineTransformScale(t: CGAffineTransform, sx: CGFloat, sy: CGFloat) -> CGAffineTransform;
+    pub fn CGAffineTransformRotate(t: CGAffineTransform, angle: CGFloat) -> CGAffineTransform;
+    pub fn CGAffineTransformInvert(t: CGAffineTransform) -> CGAffineTransform;
+    pub fn CGPointApplyAffineTransform(CGPoint: CGPoint, t: CGAffineTransform) -> CGPoint;
 
     pub fn CGContextRetain(ctxt: CGContextRef);
     pub fn CGContextRelease(ctxt: CGContextRef);
@@ -43,6 +66,8 @@ extern {
     pub fn CGContextSetLineWidth(ctxt: CGContextRef, width: CGFloat);
     pub fn CGContextSetFillColorWithColor(ctxt: CGContextRef, color: CGColorRef);
     pub fn CGContextSetStrokeColorWithColor(ctxt: CGContextRef, color: CGColorRef);
+    pub fn CGContextConcatCTM(ctxt: CGContextRef, transform: CGAffineTransform);
+    pub fn CGContextGetCTM(ctxt: CGContextRef) -> CGAffineTransform;
 }
 
 pub trait CFReleasable { 

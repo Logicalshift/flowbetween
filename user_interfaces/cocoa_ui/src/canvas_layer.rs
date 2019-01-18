@@ -9,6 +9,15 @@ use super::core_graphics_ffi::*;
 /// are ignored.
 ///
 pub struct CanvasLayer {
+    /// The location of the viewport origin for this canvas layer
+    viewport_origin: (f64, f64),
+
+    /// The width and height of the viewport for this layer
+    viewport_size: (f64, f64),
+
+    /// The width and height of the canvas for this layer (canvas is assumed to have an origin at 0,0)
+    canvas_size: (f64, f64),
+
     /// The CGContext that drawing commands for this layer should be sent to
     context: CFRef<CGContextRef>,
 
@@ -20,14 +29,17 @@ impl CanvasLayer {
     ///
     /// Creates a new canvas layer that will render to the specified context
     ///
-    pub unsafe fn new(context: CGContextRef) -> CanvasLayer {
+    pub unsafe fn new(context: CGContextRef, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> CanvasLayer {
         // Colours are in the SRGB colourspace
         let srgb = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
 
         // We take ownership of the context (it should be retained already)
-        CanvasLayer { 
-            context:    CFRef::from(context),
-            srgb:       CFRef::from(srgb)
+        CanvasLayer {
+            viewport_origin:    viewport_origin,
+            viewport_size:      viewport_size,
+            canvas_size:        canvas_size,
+            context:            CFRef::from(context),
+            srgb:               CFRef::from(srgb)
         }
     }
 
