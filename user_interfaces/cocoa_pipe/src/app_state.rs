@@ -64,7 +64,7 @@ impl AppState {
         match update {
             Start                       => { self.start() }
             UpdateUi(differences)       => { self.update_ui(differences) }
-            UpdateCanvas(differences)   => { vec![] }
+            UpdateCanvas(differences)   => { self.update_canvas(differences) }
             UpdateViewModel(updates)    => { self.update_viewmodel(updates) }
         }
     }
@@ -340,6 +340,31 @@ impl AppState {
                     let property_id = self.create_or_retrieve_property_id(name);
                     actions.push(AppAction::ViewModel(viewmodel_id, ViewModelAction::SetPropertyValue(property_id, value.clone())));
                 }
+            }
+        }
+
+        actions
+    }
+
+    ///
+    /// Sends a series of canvas updates to the target
+    ///
+    fn update_canvas(&mut self, updates: Vec<CanvasDiff>) -> Vec<AppAction> {
+        // Start building the actions to perform as a result of these canvas updates
+        let mut actions = vec![];
+
+        // Process the updates
+        for update in updates {
+            // Fetch the canvas model for this canvas, if it exists
+            let controller_path = update.controller
+                .into_iter()
+                .map(|path| Arc::new(path))
+                .collect::<Vec<_>>();
+            let canvas_model    = self.canvas_models.get(&controller_path);
+
+            // Ask the model to dispatch the actions to the views
+            if let Some(canvas_model) = canvas_model {
+                actions.extend(canvas_model.actions_for_update(update.canvas_name, update.updates));
             }
         }
 

@@ -13,3 +13,4 @@ flo_stream  = { git = "https://github.com/Logicalshift/flo_stream", version = "0
 flo_canvas  = { path = "../../canvas", version = "^0.1.0" }
 
 futures     = "0.1"
+itertools   = "0.8"
