@@ -3,6 +3,7 @@ use super::view_type::*;
 use super::actions_from::*;
 
 use flo_ui::*;
+use flo_canvas::*;
 
 use std::sync::*;
 
@@ -17,7 +18,10 @@ pub struct ViewState {
     subview_controller: Option<Arc<String>>,
 
     /// The child views for this view
-    child_views: Vec<ViewState>
+    child_views: Vec<ViewState>,
+
+    /// The canvas for this view, if it has one
+    canvas: Option<Canvas>
 }
 
 impl ViewState {
@@ -28,7 +32,8 @@ impl ViewState {
         ViewState {
             view_id:            view_id,
             subview_controller: None,
-            child_views:        vec![]
+            child_views:        vec![],
+            canvas:             None
         }
     }
 
