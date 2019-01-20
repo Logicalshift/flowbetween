@@ -258,6 +258,17 @@ impl AppState {
             view_state.add_child_state(subcomponent_view);
         }
 
+        // Set up any canvases
+        if let Some(canvas) = control.canvas_resource() {
+            // Fetch the model for the container
+            let canvas_models       = &mut self.canvas_models;
+            let controller_canvases = canvas_models.entry(controller_path.clone())
+                .or_insert_with(|| CanvasModel::new());
+
+            // Associate the canvas with the new view
+            controller_canvases.set_canvas_for_view(view_id, canvas.clone());
+        }
+
         (view_state, setup_actions)
     }
 
