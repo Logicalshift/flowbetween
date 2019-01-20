@@ -69,6 +69,25 @@ impl CanvasLayer {
     }
 
     ///
+    /// Computes a matrix to be appended to the identity transform that will set the height of the canvas
+    ///
+    fn get_height_transform(&self, height: f64) -> CGAffineTransform {
+        unsafe {
+            let mut ratio_x = 2.0/height;
+            let ratio_y     = ratio_x;
+
+            if height < 0.0 {
+                ratio_x = -ratio_x;
+            }
+
+            let result = CGAffineTransformIdentity;
+            let result = CGAffineTransformScale(result, ratio_x as CGFloat, ratio_y as CGFloat);
+
+            result
+        }
+    }
+
+    ///
     /// Draws on this canvas
     ///
     pub fn draw(&mut self, draw: &Draw) {
@@ -94,7 +113,12 @@ impl CanvasLayer {
                 StrokeColor(col)                                    => { self.state.set_stroke_color(col); }
                 BlendMode(blend)                                    => { /* TODO */ }
                 IdentityTransform                                   => { self.state.set_transform(self.get_identity_transform()); }
-                CanvasHeight(height)                                => { /* TODO */ }
+                CanvasHeight(height)                                => {
+                    let identity    = self.get_identity_transform();
+                    let height      = self.get_height_transform(*height as f64);
+                    let transform   = CGAffineTransformConcat(identity, height);
+                    self.state.set_transform(transform);
+                }
                 CenterRegion((minx, miny), (maxx, maxy))            => { /* TODO */ }
                 MultiplyTransform(transform)                        => { /* TODO */ }
                 Unclip                                              => { /* TODO */ }

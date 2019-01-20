@@ -52,6 +52,7 @@ extern {
     pub fn CGAffineTransformScale(t: CGAffineTransform, sx: CGFloat, sy: CGFloat) -> CGAffineTransform;
     pub fn CGAffineTransformRotate(t: CGAffineTransform, angle: CGFloat) -> CGAffineTransform;
     pub fn CGAffineTransformInvert(t: CGAffineTransform) -> CGAffineTransform;
+    pub fn CGAffineTransformConcat(t1: CGAffineTransform, t2: CGAffineTransform) -> CGAffineTransform;
     pub fn CGPointApplyAffineTransform(CGPoint: CGPoint, t: CGAffineTransform) -> CGPoint;
 
     pub fn CGContextRetain(ctxt: CGContextRef);
