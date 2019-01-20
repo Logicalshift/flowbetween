@@ -10,7 +10,7 @@ use super::core_graphics_ffi::*;
 /// are ignored.
 ///
 pub struct CanvasLayer {
-    /// The location of the viewport origin for this canvas layer
+    /// The location of the viewport origin for this canvas layer (the point that we should consider as 0,0)
     viewport_origin: (f64, f64),
 
     /// The width and height of the viewport for this layer
@@ -37,13 +37,34 @@ impl CanvasLayer {
 
         state.activate_context(context.clone());
 
-        // We take ownership of the context (it should be retained already)
-        CanvasLayer {
+        let mut new_layer = CanvasLayer {
             viewport_origin:    viewport_origin,
             viewport_size:      viewport_size,
             canvas_size:        canvas_size,
             context:            context,
             state:              state
+        };
+
+        new_layer.state.set_transform(new_layer.get_identity_transform());
+
+        new_layer
+    }
+
+    ///
+    /// Computes the identity transform for this canvas
+    ///
+    fn get_identity_transform(&self) -> CGAffineTransform {
+        unsafe {
+            let (origin_x, origin_y)    = self.viewport_origin;
+            let (width, height)         = self.canvas_size;
+            let scale                   = (height as CGFloat)/2.0;
+
+            let transform = CGAffineTransformIdentity;
+            let transform = CGAffineTransformTranslate(transform, origin_x as CGFloat, origin_y as CGFloat);
+            let transform = CGAffineTransformTranslate(transform, (width as CGFloat)/2.0, (height as CGFloat)/2.0);
+            let transform = CGAffineTransformScale(transform, scale, -scale);
+
+            transform
         }
     }
 
@@ -72,7 +93,7 @@ impl CanvasLayer {
                 FillColor(col)                                      => { self.state.set_fill_color(col); }
                 StrokeColor(col)                                    => { self.state.set_stroke_color(col); }
                 BlendMode(blend)                                    => { /* TODO */ }
-                IdentityTransform                                   => { /* TODO */ }
+                IdentityTransform                                   => { self.state.set_transform(self.get_identity_transform()); }
                 CanvasHeight(height)                                => { /* TODO */ }
                 CenterRegion((minx, miny), (maxx, maxy))            => { /* TODO */ }
                 MultiplyTransform(transform)                        => { /* TODO */ }
