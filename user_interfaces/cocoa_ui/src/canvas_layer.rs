@@ -1,5 +1,6 @@
 use flo_canvas::*;
 
+use super::canvas_state::*;
 use super::core_graphics_ffi::*;
 
 ///
@@ -18,48 +19,38 @@ pub struct CanvasLayer {
     /// The width and height of the canvas for this layer (canvas is assumed to have an origin at 0,0)
     canvas_size: (f64, f64),
 
-    /// The CGContext that drawing commands for this layer should be sent to
-    context: CFRef<CGContextRef>,
+    /// Tracks the current state of the context
+    state: CanvasState,
 
-    /// The SRGB colour space
-    srgb: CFRef<CGColorSpaceRef>
+    /// The CGContext that drawing commands for this layer should be sent to
+    context: CFRef<CGContextRef>
 }
 
 impl CanvasLayer {
     ///
     /// Creates a new canvas layer that will render to the specified context
     ///
-    pub unsafe fn new(context: CGContextRef, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> CanvasLayer {
+    pub unsafe fn new(context: CFRef<CGContextRef>, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> CanvasLayer {
         // Colours are in the SRGB colourspace
-        let srgb = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+        let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+        let mut state   = CanvasState::new(CFRef::from(srgb));
+
+        state.activate_context(context.clone());
 
         // We take ownership of the context (it should be retained already)
         CanvasLayer {
             viewport_origin:    viewport_origin,
             viewport_size:      viewport_size,
             canvas_size:        canvas_size,
-            context:            CFRef::from(context),
-            srgb:               CFRef::from(srgb)
-        }
-    }
-
-    ///
-    /// Creates a CGColorRef from a canvas colour
-    ///
-    #[inline] fn create_color_ref(&self, color: &Color) -> CFRef<CGColorRef> {
-        unsafe {
-            let (r, g, b, a)    = color.to_rgba_components();
-            let components      = [r as CGFloat, g as CGFloat, b as CGFloat, a as CGFloat];
-            let color           = CGColorCreate(*self.srgb, components.as_ptr());
-
-            CFRef::from(color)
+            context:            context,
+            state:              state
         }
     }
 
     ///
     /// Draws on this canvas
     ///
-    pub fn draw(&self, draw: &Draw) {
+    pub fn draw(&mut self, draw: &Draw) {
         use self::Draw::*;
 
         unsafe {
@@ -78,8 +69,8 @@ impl CanvasLayer {
                 NewDashPattern                                      => { /* TODO */ }
                 DashLength(len)                                     => { /* TODO */ }
                 DashOffset(offset)                                  => { /* TODO */ }
-                FillColor(col)                                      => { CGContextSetFillColorWithColor(*self.context, *self.create_color_ref(col)); }
-                StrokeColor(col)                                    => { CGContextSetStrokeColorWithColor(*self.context, *self.create_color_ref(col)); }
+                FillColor(col)                                      => { self.state.set_fill_color(col); }
+                StrokeColor(col)                                    => { self.state.set_stroke_color(col); }
                 BlendMode(blend)                                    => { /* TODO */ }
                 IdentityTransform                                   => { /* TODO */ }
                 CanvasHeight(height)                                => { /* TODO */ }
@@ -90,8 +81,8 @@ impl CanvasLayer {
                 Store                                               => { /* TODO */ }
                 Restore                                             => { /* TODO */ }
                 FreeStoredBuffer                                    => { /* TODO */ }
-                PushState                                           => { /* TODO */ }
-                PopState                                            => { /* TODO */ }
+                PushState                                           => { self.state.push_state(); }
+                PopState                                            => { self.state.pop_state(); }
                 ClearCanvas                                         => { /* TODO */ }
                 Layer(layer_id)                                     => { /* TODO */ }
                 LayerBlend(layer_id, blend)                         => { /* TODO */ }

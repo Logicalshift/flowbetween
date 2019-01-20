@@ -152,14 +152,14 @@ impl CanvasState {
     ///
     /// Saves the current state on the stack
     ///
-    pub fn save(&mut self) {
+    pub fn push_state(&mut self) {
         self.stack.push(self.values.clone());
     }
 
     ///
     /// Restores the current state from the stack
     ///
-    pub fn restore(&mut self) {
+    pub fn pop_state(&mut self) {
         if let Some(new_values) = self.stack.pop() {
             self.values = new_values;
             self.reapply_state();
