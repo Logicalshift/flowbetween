@@ -295,6 +295,8 @@ impl CocoaSession {
                     SetScrollMinimumSize(width, height) => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
                     SetHorizontalScrollBar(visibility)  => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
                     SetVerticalScrollBar(visibility)    => { msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
+
+                    Draw(_canvas_actions)               => { /* TODO */ }
                 }
             }
         }

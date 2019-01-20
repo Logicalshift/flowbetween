@@ -1,5 +1,5 @@
 use flo_ui::*;
-use flo_canvas::Color;
+use flo_canvas::{Draw, Color};
 
 use super::view_type::*;
 
@@ -109,6 +109,9 @@ pub enum ViewAction {
 
     /// Specifies the visibility of the vertical scroll bar
     SetVerticalScrollBar(ScrollBarVisibility),
+
+    /// Draws on the canvas for this view
+    Draw(Vec<Draw>)
 }
 
 ///
