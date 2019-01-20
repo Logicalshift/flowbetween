@@ -1,6 +1,7 @@
 use super::event::*;
 use super::action::*;
 use super::view_state::*;
+use super::canvas_model::*;
 
 use flo_ui::*;
 use flo_ui::session::*;
@@ -18,10 +19,13 @@ pub struct AppState {
     /// The ID that will be assigned to the next view we create
     next_view_id: usize,
 
-    /// The IDs for the viewmodels that we're managing
+    /// Maps controller names to the IDs of the view model for that controller
     view_models: HashMap<Vec<Arc<String>>, usize>,
 
-    /// The IDs for the properties in view models (every name gets a )
+    /// Maps controller names to a description of the canvases it contains
+    canvas_models: HashMap<Vec<Arc<String>>, CanvasModel>,
+
+    /// The IDs for the properties in view models (every name gets an ID that's unique for the entire session)
     view_model_properties: HashMap<String, usize>,
 
     /// Maps view IDs to addresses
@@ -42,6 +46,7 @@ impl AppState {
         AppState {
             root_view:              None,
             view_models:            HashMap::new(),
+            canvas_models:          HashMap::new(),
             view_model_properties:  HashMap::new(),
             address_for_view:       HashMap::new(),
             next_view_id:           0,
