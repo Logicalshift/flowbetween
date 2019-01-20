@@ -176,7 +176,21 @@ impl CanvasLayer {
                     let transform   = CGAffineTransformConcat(current, center);
                     self.state.set_transform(transform);
                 }
-                MultiplyTransform(transform)                        => { /* TODO */ }
+                MultiplyTransform(transform)                        => {
+                    let current                 = self.state.current_transform();
+                    let Transform2D(a, b, _c)   = transform;
+                    let transform               = CGAffineTransform {
+                        a: a.0 as CGFloat,
+                        b: b.0 as CGFloat,
+                        c: a.1 as CGFloat,
+                        d: b.1 as CGFloat,
+                        tx: a.2 as CGFloat,
+                        ty: a.2 as CGFloat
+                    };
+
+                    let transform               = CGAffineTransformConcat(current, transform);
+                    self.state.set_transform(transform);
+                }
             }
         }
     }
