@@ -11,7 +11,7 @@ mod session;
 mod cocoa_ui;
 mod property;
 mod canvas_state;
-mod canvas_layer;
+mod canvas_context;
 
 #[allow(dead_code)]
 mod core_graphics_ffi;

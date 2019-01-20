@@ -6,10 +6,10 @@ use super::core_graphics_ffi::*;
 ///
 /// Processes canvas draw commands onto a core graphics context
 /// 
-/// This assumes that all the commands are intended for a specific layer: ie, layer switch commands
+/// This assumes that all the commands are intended for a specific layer in the canvas: ie, layer switch commands
 /// are ignored.
 ///
-pub struct CanvasLayer {
+pub struct CanvasContext {
     /// The location of the viewport origin for this canvas layer (the point that we should consider as 0,0)
     viewport_origin: (f64, f64),
 
@@ -26,18 +26,18 @@ pub struct CanvasLayer {
     context: CFRef<CGContextRef>
 }
 
-impl CanvasLayer {
+impl CanvasContext {
     ///
     /// Creates a new canvas layer that will render to the specified context
     ///
-    pub unsafe fn new(context: CFRef<CGContextRef>, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> CanvasLayer {
+    pub unsafe fn new(context: CFRef<CGContextRef>, viewport_origin: (f64, f64), viewport_size: (f64, f64), canvas_size: (f64, f64)) -> CanvasContext {
         // Colours are in the SRGB colourspace
         let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
         let mut state   = CanvasState::new(CFRef::from(srgb));
 
         state.activate_context(context.clone());
 
-        let mut new_layer = CanvasLayer {
+        let mut new_layer = CanvasContext {
             viewport_origin:    viewport_origin,
             viewport_size:      viewport_size,
             canvas_size:        canvas_size,
