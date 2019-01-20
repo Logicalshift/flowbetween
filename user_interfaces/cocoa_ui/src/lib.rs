@@ -10,6 +10,7 @@ mod event;
 mod session;
 mod cocoa_ui;
 mod property;
+mod canvas_state;
 mod canvas_layer;
 
 #[allow(dead_code)]

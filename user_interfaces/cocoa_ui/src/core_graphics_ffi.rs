@@ -56,6 +56,8 @@ extern {
 
     pub fn CGContextRetain(ctxt: CGContextRef);
     pub fn CGContextRelease(ctxt: CGContextRef);
+    pub fn CGContextSaveGState(ctxt: CGContextRef);
+    pub fn CGContextRestoreGState(ctxt: CGContextRef);
     pub fn CGContextBeginPath(ctxt: CGContextRef);
     pub fn CGContextMoveToPoint(ctxt: CGContextRef, x: CGFloat, y: CGFloat);
     pub fn CGContextAddLineToPoint(ctxt: CGContextRef, x: CGFloat, y: CGFloat);
