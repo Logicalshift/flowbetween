@@ -140,7 +140,15 @@ impl CanvasLayer {
                 Fill                                                => { CGContextFillPath(*self.context); }
                 Stroke                                              => { CGContextStrokePath(*self.context); }
                 LineWidth(width)                                    => { CGContextSetLineWidth(*self.context, *width as CGFloat); }
-                LineWidthPixels(width_pixels)                       => { /* TODO */ }
+                LineWidthPixels(width_pixels)                       => {
+                    let width_pixels    = *width_pixels as CGFloat;
+                    let transform       = self.state.current_transform();
+                    let mut scale_y     = (transform.c*transform.c + transform.d*transform.d).sqrt();
+                    if scale_y == 0.0 { scale_y = 1.0 }
+                    let scale_width     = width_pixels / scale_y;
+
+                    CGContextSetLineWidth(*self.context, width_pixels);
+                }
                 LineJoin(join)                                      => { /* TODO */ }
                 LineCap(cap)                                        => { /* TODO */ }
                 NewDashPattern                                      => { /* TODO */ }
@@ -156,9 +164,6 @@ impl CanvasLayer {
                 FreeStoredBuffer                                    => { /* TODO */ }
                 PushState                                           => { self.state.push_state(); }
                 PopState                                            => { self.state.pop_state(); }
-                ClearCanvas                                         => { /* TODO */ }
-                Layer(layer_id)                                     => { /* TODO */ }
-                LayerBlend(layer_id, blend)                         => { /* TODO */ }
                 ClearLayer                                          => { /* TODO */ }
 
                 IdentityTransform                                   => { 
@@ -191,6 +196,10 @@ impl CanvasLayer {
                     let transform               = CGAffineTransformConcat(current, transform);
                     self.state.set_transform(transform);
                 }
+
+                ClearCanvas                                         => { /* Layers need to be implemented elsewhere */ }
+                Layer(_layer_id)                                    => { /* Layers need to be implemented elsewhere */ }
+                LayerBlend(_layer_id, _blend)                       => { /* Layers need to be implemented elsewhere */ }
             }
         }
     }
