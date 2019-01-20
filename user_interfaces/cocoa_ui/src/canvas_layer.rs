@@ -88,6 +88,43 @@ impl CanvasLayer {
     }
 
     ///
+    /// Retrieves the transformation needed to move the center of the canvas to the specified point
+    ///
+    pub fn get_center_transform(&self, minx: f64, miny: f64, maxx: f64, maxy: f64) -> CGAffineTransform {
+        unsafe {
+            let (origin_x, origin_y)        = self.viewport_origin;
+            let (pixel_width, pixel_height) = self.canvas_size;
+            let current_transform           = self.state.current_transform();
+
+            // Get the current scaling of this canvas
+            let mut xscale = (current_transform.a*current_transform.a + current_transform.b*current_transform.b).sqrt();
+            let mut yscale = (current_transform.c*current_transform.c + current_transform.d*current_transform.d).sqrt();
+            if xscale == 0.0 { xscale = 1.0; }
+            if yscale == 0.0 { yscale = 1.0; }
+
+            // Current X, Y coordinates (centered)
+            let cur_x = (current_transform.tx-(pixel_width/2.0))/xscale;
+            let cur_y = (current_transform.ty-(pixel_height/2.0))/yscale;
+            
+            // New center coordinates
+            let center_x = (minx+maxx)/2.0;
+            let center_y = (miny+maxy)/2.0;
+
+            // Compute the offsets and transform the canvas
+            let x_offset = cur_x - center_x;
+            let y_offset = cur_y - center_y;
+
+            let x_offset = x_offset + origin_x/xscale;
+            let y_offset = y_offset + origin_y/xscale;
+
+            // Generate the result matrix
+            let result = CGAffineTransformIdentity;
+            let result = CGAffineTransformTranslate(result, x_offset as CGFloat, y_offset as CGFloat);
+            result
+        }
+    }
+
+    ///
     /// Draws on this canvas
     ///
     pub fn draw(&mut self, draw: &Draw) {
@@ -112,15 +149,6 @@ impl CanvasLayer {
                 FillColor(col)                                      => { self.state.set_fill_color(col); }
                 StrokeColor(col)                                    => { self.state.set_stroke_color(col); }
                 BlendMode(blend)                                    => { /* TODO */ }
-                IdentityTransform                                   => { self.state.set_transform(self.get_identity_transform()); }
-                CanvasHeight(height)                                => {
-                    let identity    = self.get_identity_transform();
-                    let height      = self.get_height_transform(*height as f64);
-                    let transform   = CGAffineTransformConcat(identity, height);
-                    self.state.set_transform(transform);
-                }
-                CenterRegion((minx, miny), (maxx, maxy))            => { /* TODO */ }
-                MultiplyTransform(transform)                        => { /* TODO */ }
                 Unclip                                              => { /* TODO */ }
                 Clip                                                => { /* TODO */ }
                 Store                                               => { /* TODO */ }
@@ -132,6 +160,23 @@ impl CanvasLayer {
                 Layer(layer_id)                                     => { /* TODO */ }
                 LayerBlend(layer_id, blend)                         => { /* TODO */ }
                 ClearLayer                                          => { /* TODO */ }
+
+                IdentityTransform                                   => { 
+                    self.state.set_transform(self.get_identity_transform());
+                }
+                CanvasHeight(height)                                => {
+                    let identity    = self.get_identity_transform();
+                    let height      = self.get_height_transform(*height as f64);
+                    let transform   = CGAffineTransformConcat(identity, height);
+                    self.state.set_transform(transform);
+                }
+                CenterRegion((minx, miny), (maxx, maxy))            => {
+                    let current     = self.state.current_transform();
+                    let center      = self.get_center_transform(*minx as f64, *miny as f64, *maxx as f64, *maxy as f64);
+                    let transform   = CGAffineTransformConcat(current, center);
+                    self.state.set_transform(transform);
+                }
+                MultiplyTransform(transform)                        => { /* TODO */ }
             }
         }
     }

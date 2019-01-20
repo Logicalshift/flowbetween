@@ -21,18 +21,18 @@ pub type CGColorRef = *mut CGColor;
 
 #[derive(Copy, Clone)]
 #[repr(C)] pub struct CGAffineTransform {
-    a: CGFloat,
-    b: CGFloat,
-    c: CGFloat,
-    d: CGFloat,
-    tx: CGFloat,
-    ty: CGFloat
+    pub a: CGFloat,
+    pub b: CGFloat,
+    pub c: CGFloat,
+    pub d: CGFloat,
+    pub tx: CGFloat,
+    pub ty: CGFloat
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)] pub struct CGPoint {
-    x: CGFloat,
-    y: CGFloat
+    pub x: CGFloat,
+    pub y: CGFloat
 }
 
 #[link(name = "CoreGraphics", kind = "framework")]

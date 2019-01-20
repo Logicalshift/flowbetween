@@ -85,6 +85,13 @@ impl CanvasState {
     }
 
     ///
+    /// Returns the current affine transform for this state
+    ///
+    pub fn current_transform(&self) -> CGAffineTransform {
+        self.values.transform
+    }
+
+    ///
     /// Re-applies the state contained within this object to the current graphics context
     ///
     pub fn reapply_state(&self) {
