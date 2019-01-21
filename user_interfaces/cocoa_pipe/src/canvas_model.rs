@@ -33,7 +33,7 @@ impl CanvasModel {
     ///
     /// Retrieves the name of a canvas as a string
     ///
-    fn name_for_canvas(canvas: &Resource<BindingCanvas>) -> String {
+    pub fn name_for_canvas(canvas: &Resource<BindingCanvas>) -> String {
         if let Some(name) = canvas.name() {
             name
         } else {
@@ -75,5 +75,12 @@ impl CanvasModel {
             // No views attached to this canvas
             Either::Right(iter::empty())
         }
+    }
+
+    ///
+    /// Removes a view from the canvas model
+    ///
+    pub fn remove_view(&mut self, view_id: usize) {
+        unimplemented!()
     }
 }

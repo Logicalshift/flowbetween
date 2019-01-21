@@ -110,6 +110,42 @@ impl AppState {
     }
 
     ///
+    /// Removes an existing view and its subviews from the canvas model
+    ///
+    fn remove_view_from_canvas_models(&mut self, address: &Vec<u32>) {
+        // Prepare a stack containing the root view to remove
+        let root_view               = &mut self.root_view;
+        let canvas_models           = &mut self.canvas_models;
+        let controller_path         = root_view.as_ref().map(|root_view| root_view.get_controller_path_at_address(address)).unwrap_or(vec![]);
+        let view                    = root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(address));
+
+        let mut views_to_process    = vec![(Arc::new(controller_path), view)];
+        
+        // Recursively remove canvases from the model
+        while let Some((controller_path, view)) = views_to_process.pop() {
+            if let Some(view) = view {
+                // If the view has a canvas name, then fetch the model for this controller and remove the view
+                if let Some(_canvas_name) = view.canvas_name() {
+                    let controller_model = canvas_models.get_mut(&*controller_path);
+                    controller_model.map(|model| model.remove_view(view.id()));
+                }
+
+                // Get the controller path for the subviews
+                let controller_path = if let Some(subview_controller) = view.get_subview_controller() {
+                    let mut new_path = (*controller_path).clone();
+                    new_path.push(subview_controller.clone());
+                    Arc::new(new_path)
+                } else {
+                    controller_path
+                };
+
+                // Process the subviews recursively
+                views_to_process.extend(view.subviews().map(|subview| (controller_path.clone(), Some(subview))));
+            }
+        }
+    }
+
+    ///
     /// Removes the settings for a view from this state
     ///
     fn remove_view(view_state: &ViewState, address_for_view: &mut HashMap<usize, Vec<Arc<String>>>) {
@@ -131,6 +167,9 @@ impl AppState {
 
         // Create the replacement view states
         let (view_state, mut actions) = self.create_view(&difference.new_ui, &controller_path);
+
+        // Remove the existing view from the canvas model
+        self.remove_view_from_canvas_models(&difference.address);
 
         // The difference specifies a view to replace
         let root_view           = &mut self.root_view;
@@ -267,6 +306,7 @@ impl AppState {
 
             // Associate the canvas with the new view
             controller_canvases.set_canvas_for_view(view_id, canvas.clone());
+            view_state.set_canvas_name(CanvasModel::name_for_canvas(canvas));
         }
 
         (view_state, setup_actions)

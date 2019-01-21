@@ -18,6 +18,9 @@ pub struct ViewState {
 
     /// The child views for this view
     child_views: Vec<ViewState>,
+
+    /// The name of the canvas this view is using, if it has one
+    canvas_name: Option<String>
 }
 
 impl ViewState {
@@ -28,8 +31,23 @@ impl ViewState {
         ViewState {
             view_id:            view_id,
             subview_controller: None,
-            child_views:        vec![]
+            child_views:        vec![],
+            canvas_name:        None
         }
+    }
+
+    ///
+    /// Sets the canvas name for this view
+    ///
+    pub fn set_canvas_name(&mut self, name: String) {
+        self.canvas_name = Some(name);
+    }
+
+    ///
+    /// Retrieves the canvas name for this view
+    ///
+    pub fn canvas_name(&self) -> Option<&String> {
+        self.canvas_name.as_ref()
     }
 
     ///
