@@ -57,8 +57,6 @@ impl CanvasModel {
     /// Retrieves the actions to perform for an update on a canvas that (might be) in this model
     ///
     pub fn actions_for_update(&self, canvas_name: String, actions: Vec<Draw>) -> impl Iterator<Item=AppAction> {
-        let actions = vec![];
-
         if let Some(views) = self.views_with_canvas.get(&canvas_name) {
             // Supply the actions to each view
             Either::Left(
@@ -81,6 +79,13 @@ impl CanvasModel {
     /// Removes a view from the canvas model
     ///
     pub fn remove_view(&mut self, view_id: usize) {
-        unimplemented!()
+        if let Some(canvas_name) = self.canvas_for_view.get(&view_id).map(|canvas| Self::name_for_canvas(canvas)) {
+            // Remove the association with the view ID
+            self.canvas_for_view.remove(&view_id);
+
+            // Remove from the list of views that use this canvas
+            self.views_with_canvas.get_mut(&canvas_name)
+                .map(|views| views.retain(|view_with_canvas| view_with_canvas != &view_id));
+        }
     }
 }
