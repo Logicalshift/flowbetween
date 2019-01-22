@@ -12,6 +12,7 @@ mod cocoa_ui;
 mod property;
 mod canvas_state;
 mod canvas_context;
+mod view_canvas;
 
 #[allow(dead_code)]
 mod core_graphics_ffi;

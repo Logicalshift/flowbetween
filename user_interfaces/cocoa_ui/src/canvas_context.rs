@@ -51,6 +51,23 @@ impl CanvasContext {
     }
 
     ///
+    /// Updates the state of this context
+    ///
+    pub fn set_state(&mut self, new_state: CanvasState) {
+        self.state.deactivate_context();
+        self.state = new_state;
+        self.state.activate_context(self.context.clone());
+    }
+
+    ///
+    /// Destroys this context and returns the current state
+    ///
+    pub fn to_state(mut self) -> CanvasState {
+        self.state.deactivate_context();
+        self.state
+    }
+
+    ///
     /// Computes the identity transform for this canvas
     ///
     fn get_identity_transform(&self) -> CGAffineTransform {

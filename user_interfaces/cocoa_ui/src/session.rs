@@ -4,6 +4,7 @@ use super::property::*;
 
 use flo_ui::*;
 use flo_stream::*;
+use flo_canvas::*;
 use flo_cocoa_pipe::*;
 
 use futures::*;
@@ -296,10 +297,17 @@ impl CocoaSession {
                     SetHorizontalScrollBar(visibility)  => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
                     SetVerticalScrollBar(visibility)    => { msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
 
-                    Draw(_canvas_actions)               => { /* TODO */ }
+                    Draw(canvas_actions)                => { self.draw(view_id, view, canvas_actions); }
                 }
             }
         }
+    }
+
+    ///
+    /// Performs some drawing actions on the specified view
+    ///
+    fn draw(&self, view_id: usize, view: &StrongPtr, actions: Vec<Draw>) {
+
     }
 
     ///
