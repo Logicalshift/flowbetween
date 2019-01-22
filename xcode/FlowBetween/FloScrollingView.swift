@@ -172,4 +172,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         // Send the onScroll event
         _onScroll?(visibleRect);
     }
+
+    /// Sets the layer displayed for the canvas
+    func setCanvasLayer(_ layer: CALayer) {
+        self.documentView!.layer!.addSublayer(layer);
+    }
 }

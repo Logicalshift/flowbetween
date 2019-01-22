@@ -1,6 +1,8 @@
 use super::event::*;
 use super::cocoa_ui::*;
 use super::property::*;
+use super::view_canvas::*;
+use super::core_graphics_ffi::*;
 
 use flo_ui::*;
 use flo_stream::*;
@@ -44,6 +46,9 @@ pub struct CocoaSession {
 
     /// Maps IDs to viewmodels
     viewmodels: HashMap<usize, StrongPtr>,
+
+    /// Maps view IDs to their canvas states
+    canvases: HashMap<usize, ViewCanvas>,
 
     /// Publisher where we send the actions to
     action_publisher: Publisher<Vec<AppAction>>,
@@ -89,6 +94,7 @@ impl CocoaSession {
             views:              HashMap::new(),
             view_events:        HashMap::new(),
             viewmodels:         HashMap::new(),
+            canvases:           HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
             events:             Publisher::new(20)
@@ -297,7 +303,10 @@ impl CocoaSession {
                     SetHorizontalScrollBar(visibility)  => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
                     SetVerticalScrollBar(visibility)    => { msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
 
-                    Draw(canvas_actions)                => { self.draw(view_id, view, canvas_actions); }
+                    Draw(canvas_actions)                => { 
+                        let view = view.clone();
+                        self.draw(view_id, &view, canvas_actions); 
+                    }
                 }
             }
         }
@@ -306,8 +315,21 @@ impl CocoaSession {
     ///
     /// Performs some drawing actions on the specified view
     ///
-    fn draw(&self, view_id: usize, view: &StrongPtr, actions: Vec<Draw>) {
+    fn draw(&mut self, view_id: usize, view: &StrongPtr, actions: Vec<Draw>) {
+        unsafe {
+            // Fetch the canvas for this view
+            let canvas = self.canvases.entry(view_id).or_insert_with(|| ViewCanvas::new());
 
+            // Get the context from the view to start drawing
+            let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing);
+            let graphics_context = CFRef::from(graphics_context);
+
+            // Perform the drawing actions on the canvas
+            canvas.draw(actions, graphics_context);
+
+            // Finished drawing
+            msg_send!(**view, viewFinishedDrawing);
+        }
     }
 
     ///

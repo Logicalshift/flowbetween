@@ -34,6 +34,12 @@ public class FloView : NSObject {
     /// Events
     fileprivate var _onClick: (() -> ())?;
     
+    /// The layer to draw on, if there is one
+    fileprivate var _drawingLayer: CALayer?;
+    
+    /// The bitmap drawing context for our layer
+    fileprivate var _drawingLayerContext: CGContext?;
+    
     override init() {
         _bounds = Bounds(
             x1: Position.Start,
@@ -399,5 +405,48 @@ public class FloView : NSObject {
     @objc public func viewSetVerticalScrollVisibility(_ visibility: UInt32) {
         let (horiz, _) = _view.scrollBarVisibility;
         _view.scrollBarVisibility = (horiz, getScrollBarVisibility(visibility));
+    }
+    
+    ///
+    /// Retrieves the drawing context for this view
+    ///
+    @objc public func viewGetCanvasForDrawing() -> CGContext {
+        // Create the drawing layer if one doesn't exist yet
+        if _drawingLayer == nil {
+            // Create the layer
+            let layer       = CALayer();
+
+            _drawingLayer = layer;
+
+            // Create a bitmap drawing context for the image
+            let colorspace  = CGColorSpaceCreateDeviceRGB();
+            let contextRef  = CGContext.init(data: nil,
+                                             width: 1920,
+                                             height: 1080,
+                                             bitsPerComponent: 8,
+                                             bytesPerRow: 0,
+                                             space: colorspace,
+                                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue);
+            _drawingLayerContext = contextRef!;
+            
+            layer.backgroundColor   = CGColor.white;
+            layer.frame             = CGRect(x: 0, y: 0, width: 1920, height: 1080);
+            
+            contextRef!.beginPath();
+            contextRef!.addEllipse(in: CGRect(x: 0, y:0, width: 1920, height: 1080));
+            contextRef!.setFillColor(CGColor.init(red: 1, green: 0, blue: 0, alpha: 1.0));
+            contextRef!.fillPath();
+
+            _view.setCanvasLayer(layer);
+        }
+
+        return _drawingLayerContext!;
+    }
+    
+    ///
+    /// Drawing on the context has finished
+    ///
+    @objc public func viewFinishedDrawing() {
+        _drawingLayer?.contents = _drawingLayerContext?.makeImage();
     }
 }

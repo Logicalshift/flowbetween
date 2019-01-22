@@ -97,4 +97,10 @@ class FloEmptyView : NSView, FloContainerView {
             }
         });
     }
+
+    /// Sets the layer displayed for the canvas
+    func setCanvasLayer(_ layer: CALayer) {
+        self.layer!.addSublayer(layer);
+    }
+    
 }

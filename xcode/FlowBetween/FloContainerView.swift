@@ -24,6 +24,9 @@ protocol FloContainerView {
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView);
     
+    /// Sets the layer displayed for the canvas
+    func setCanvasLayer(_ layer: CALayer);
+
     /// Returns this view as an NSView
     var asView : NSView { get };
     
