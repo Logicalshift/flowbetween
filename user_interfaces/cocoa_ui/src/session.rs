@@ -324,6 +324,19 @@ impl CocoaSession {
             let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing);
             let graphics_context = CFRef::from(graphics_context);
 
+                let srgb = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+                let blue = CGColorCreate(srgb, [0.0, 0.0, 1.0, 1.0].as_ptr());
+
+                CGContextSetFillColorWithColor(*graphics_context, blue);
+                CGContextBeginPath(*graphics_context);
+                CGContextMoveToPoint(*graphics_context, 0.0, 0.0);
+                CGContextAddLineToPoint(*graphics_context, 1920.0, 0.0);
+                CGContextAddLineToPoint(*graphics_context, 1920.0, 1080.0);
+                CGContextAddLineToPoint(*graphics_context, 0.0, 1080.0);
+                CGContextAddLineToPoint(*graphics_context, 0.0, 0.0);
+                CGContextClosePath(*graphics_context);
+                CGContextFillPath(*graphics_context);
+
             // Perform the drawing actions on the canvas
             canvas.draw(actions, graphics_context);
 
