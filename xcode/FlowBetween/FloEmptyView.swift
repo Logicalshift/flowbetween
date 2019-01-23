@@ -35,6 +35,9 @@ class FloEmptyView : NSView, FloContainerView {
 
     /// Event handler: user scrolled/resized so that a particular region is visible
     public var onScroll: ((NSRect) -> ())?;
+    
+    /// Event handler: The bounds of the container have changed
+    public var boundsChanged: ((ContainerBounds) -> ())?;
 
     /// The minimum size of the scroll area for this view
     public var scrollMinimumSize: (Float64, Float64) = (0, 0);
@@ -98,7 +101,9 @@ class FloEmptyView : NSView, FloContainerView {
         });
     }
 
+    ///
     /// Sets the layer displayed for the canvas
+    ///
     func setCanvasLayer(_ layer: CALayer) {
         self.layer!.addSublayer(layer);
     }

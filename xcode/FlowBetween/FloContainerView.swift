@@ -39,6 +39,9 @@ protocol FloContainerView {
     /// Event handler: user performed layout on this view
     var performLayout: (() -> ())? { get set };
     
+    /// Event handler: The bounds of the container have changed
+    var boundsChanged: ((ContainerBounds) -> ())? { get set };
+    
     /// The minimum size of the scroll area for this view
     var scrollMinimumSize: (Float64, Float64) { get set }
     

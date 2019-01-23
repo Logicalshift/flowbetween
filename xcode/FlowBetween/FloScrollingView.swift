@@ -153,6 +153,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Event handler: user performed layout on this view
     var performLayout: (() -> ())?;
     
+    /// Event handler: The bounds of the container have changed
+    var boundsChanged: ((ContainerBounds) -> ())?;
+
     /// Triggers the click event for this view
     func triggerClick() {
         bubble_up_event(source: self, event_handler: { (container) in
