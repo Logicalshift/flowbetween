@@ -419,42 +419,58 @@ public class FloView : NSObject {
             let layer       = CALayer();
 
             _drawingLayer = layer;
-            
+
+            // Create the colourspace we'll use for the graphics context
+            let colorspace  = CGColorSpaceCreateDeviceRGB();
+
             // Reset the layer size when the bounds change
+            weak var this = self;
             _view.boundsChanged = { newBounds in
-                CATransaction.begin();
-                CATransaction.setAnimationDuration(0.0);
-                
-                // Move the layer so that it fills the visible bounds of the view
-                let parentBounds    = layer.superlayer!.bounds;
-                var visibleRect     = newBounds.visibleRect;
-                
-                visibleRect.origin.x += parentBounds.origin.x;
-                visibleRect.origin.y += parentBounds.origin.y;
-                
-                layer.frame         = visibleRect;
-                
-                CATransaction.commit();
+                if let this = this {
+                    CATransaction.begin();
+                    CATransaction.setAnimationDuration(0.0);
+                    
+                    // Move the layer so that it fills the visible bounds of the view
+                    let parentBounds    = layer.superlayer!.bounds;
+                    var visibleRect     = newBounds.visibleRect;
+                    
+                    visibleRect.origin.x += parentBounds.origin.x;
+                    visibleRect.origin.y += parentBounds.origin.y;
+                    
+                    layer.frame         = visibleRect;
+                    
+                    CATransaction.commit();
+                    
+                    // Regenerate the graphics context so that it's the appropriate size for the layer
+                    this._drawingLayerContext = nil;
+                    let newContext = CGContext.init(data:               nil,
+                                                    width:              Int(visibleRect.width),
+                                                    height:             Int(visibleRect.height),
+                                                    bitsPerComponent:   8,
+                                                    bytesPerRow:        0,
+                                                    space:              colorspace,
+                                                    bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
+                    
+                    this._drawingLayerContext = newContext;
+                }
             }
 
+            var initialSize = _view.layoutSize;
+            if initialSize.width < 1 { initialSize.width = 1 }
+            if initialSize.height < 1 { initialSize.height = 1 }
+            
             // Create a bitmap drawing context for the image
-            let colorspace  = CGColorSpaceCreateDeviceRGB();
             let contextRef  = CGContext.init(data: nil,
-                                             width: 1920,
-                                             height: 1080,
+                                             width: Int(initialSize.width),
+                                             height: Int(initialSize.height),
                                              bitsPerComponent: 8,
                                              bytesPerRow: 0,
                                              space: colorspace,
                                              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue);
             _drawingLayerContext = contextRef!;
             
-            layer.backgroundColor   = CGColor.white;
-            layer.frame             = CGRect(x: 0, y: 0, width: 1920, height: 1080);
-            
-            contextRef!.beginPath();
-            contextRef!.addEllipse(in: CGRect(x: 0, y:0, width: 1920, height: 1080));
-            contextRef!.setFillColor(CGColor.init(red: 1, green: 0, blue: 0, alpha: 1.0));
-            contextRef!.fillPath();
+            layer.backgroundColor   = CGColor.clear;
+            layer.frame             = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
 
             _view.setCanvasLayer(layer);
         }
