@@ -11,6 +11,12 @@ pub struct ViewCanvas {
     /// A copy of the canvas for this view (used when we need to redraw the viewport)
     canvas: Canvas,
 
+    /// The current size of the canvas
+    size: CGSize,
+
+    /// The visible area of the canvas (0,0 in core graphics terms is considered to be at the origin of this point)
+    visible: CGRect,
+
     /// The current state of the view canvas
     state: Option<CanvasState>
 }
@@ -21,8 +27,52 @@ impl ViewCanvas {
     ///
     pub fn new() -> ViewCanvas {
         ViewCanvas {
-            canvas: Canvas::new(),
-            state:  None
+            canvas:     Canvas::new(),
+            size:       CGSize { width: 1.0, height: 1.0 },
+            visible:    CGRect { origin: CGPoint { x: 0.0, y: 0.0 }, size: CGSize { width: 1.0, height: 1.0 } },
+            state:      None
+        }
+    }
+
+    ///
+    /// Updates the size of the canvas
+    ///
+    pub fn set_viewport(&mut self, size: CGSize, visible: CGRect) {
+        self.size       = size;
+        self.visible    = visible;
+    }
+
+    ///
+    /// Redraws the entire canvas
+    ///
+    pub fn redraw(&mut self, context: CFRef<CGContextRef>) {
+        // Fetch the current set of drawing instructions
+        let actions = self.canvas.get_drawing();
+
+        unsafe {
+            // Reset the state
+            let srgb    = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+            let state   = CanvasState::new(CFRef::from(srgb));
+
+            self.state = Some(state);
+
+            // Create the drawing context
+            let viewport_origin = (self.visible.origin.x as f64, self.visible.origin.y as f64);
+            let viewport_size   = (self.visible.size.width as f64, self.visible.size.height as f64);
+            let canvas_size     = (self.size.width as f64, self.size.height as f64);
+
+            let mut context = CanvasContext::new(context, viewport_origin, viewport_size, canvas_size);
+
+            // Update the context state
+            if let Some(state) = self.state.take() {
+                context.set_state(state);
+            }
+
+            // Send the drawing commands
+            actions.into_iter().for_each(|action| context.draw(&action));
+
+            // Finished with the context, store the final state
+            self.state = Some(context.to_state());
         }
     }
 
@@ -36,7 +86,11 @@ impl ViewCanvas {
         // Update the existing canvas context
         unsafe {
             // Create the drawing context
-            let mut context = CanvasContext::new(context, (0.0, 0.0), (1920.0, 1080.0), (1920.0, 1080.0));
+            let viewport_origin = (self.visible.origin.x as f64, self.visible.origin.y as f64);
+            let viewport_size   = (self.visible.size.width as f64, self.visible.size.height as f64);
+            let canvas_size     = (self.size.width as f64, self.size.height as f64);
+
+            let mut context = CanvasContext::new(context, viewport_origin, viewport_size, canvas_size);
 
             // Update the context state
             if let Some(state) = self.state.take() {

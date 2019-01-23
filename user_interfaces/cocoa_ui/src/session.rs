@@ -32,6 +32,9 @@ extern {
 /// Basis class for a Cocoa session
 ///
 pub struct CocoaSession {
+    /// The ID of this session
+    session_id: usize,
+
     /// Reference to the FloControl we'll relay the stream via
     target_object: StrongPtr,
 
@@ -87,8 +90,9 @@ impl CocoaSession {
     ///
     /// Creates a new CocoaSession
     ///
-    pub fn new(obj: &StrongPtr) -> CocoaSession {
+    pub fn new(obj: &StrongPtr, session_id: usize) -> CocoaSession {
         CocoaSession {
+            session_id:         session_id,
             target_object:      obj.clone(),
             windows:            HashMap::new(),
             views:              HashMap::new(),
@@ -263,7 +267,7 @@ impl CocoaSession {
             events
         } else {
             // Create a new events object
-            let events = FloEvents::create_object(self.events.republish(), view_id);
+            let events = FloEvents::create_object(self.events.republish(), self.session_id, view_id);
 
             // Associate it with the view
             self.view_events.insert(view_id, events.clone());
@@ -332,6 +336,33 @@ impl CocoaSession {
 
             // Finished drawing
             msg_send!(**view, viewFinishedDrawing);
+        }
+    }
+
+    ///
+    /// Forces a canvas to be redrawn with a new size
+    ///
+    pub fn redraw_canvas_for_view(&mut self, view_id: usize, size: CGSize, bounds: CGRect) {
+        unsafe {
+            // Fetch the events for redraw callbacks
+            let flo_events = self.events_for_view(view_id);
+
+            // Fetch the canvas for this view
+            let canvas  = self.canvases.entry(view_id).or_insert_with(|| ViewCanvas::new());
+            let view    = self.views.get(&view_id);
+
+            if let Some(view) = view {
+                // Get the context from the view to start drawing
+                let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events));
+                let graphics_context = CFRef::from(graphics_context);
+
+                // Perform the drawing actions on the canvas
+                canvas.set_viewport(size, bounds);
+                canvas.redraw(graphics_context);
+
+                // Finished drawing
+                msg_send!(**view, viewFinishedDrawing);
+            }
         }
     }
 

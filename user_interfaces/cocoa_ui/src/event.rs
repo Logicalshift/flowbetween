@@ -1,3 +1,4 @@
+use super::app::*;
 use super::session::*;
 use super::core_graphics_ffi::*;
 
@@ -39,6 +40,9 @@ lazy_static! {
 /// Event target for sending events from the objective-C side to the rust side
 ///
 pub struct FloEvents {
+    /// The ID of the session that these events are for
+    session_id: usize,
+
     /// The ID of the view that will be sending these events
     view_id: usize,
 
@@ -56,9 +60,10 @@ impl FloEvents {
     ///
     /// Creates a new FloEvents
     ///
-    pub fn init(publisher: Publisher<Vec<AppEvent>>, view_id: usize) -> FloEvents {
+    pub fn init(publisher: Publisher<Vec<AppEvent>>, session_id: usize, view_id: usize) -> FloEvents {
         FloEvents {
             view_id:            view_id,
+            session_id:         session_id,
             events_publisher:   executor::spawn(publisher),
             queued_update:      false,
             pending_events:     vec![]
@@ -96,8 +101,8 @@ impl FloEvents {
     ///
     /// Creates a new FloEvents object for objective-C
     ///
-    pub fn create_object(publisher: Publisher<Vec<AppEvent>>, view_id: usize) -> StrongPtr {
-        let events = FloEvents::init(publisher, view_id);
+    pub fn create_object(publisher: Publisher<Vec<AppEvent>>, session_id: usize, view_id: usize) -> StrongPtr {
+        let events = FloEvents::init(publisher, session_id, view_id);
         Self::object_from_events(Arc::new(Mutex::new(events)))
     }
 }
@@ -162,6 +167,13 @@ pub fn declare_flo_events_class() -> &'static Class {
             flo_events.map(|flo_events| flo_events.lock().unwrap().view_id)
         }
 
+        // Retrieves the view ID for an object
+        unsafe fn get_session_id(this: &mut Object) -> Option<usize> {
+            let events_id   = (*this).get_ivar::<usize>("_eventsId");
+            let flo_events  = FLO_EVENTS_STORE.lock().unwrap().get(events_id).cloned();
+            flo_events.map(|flo_events| flo_events.lock().unwrap().session_id)
+        }
+
         // Sends the 'click' event
         extern fn send_click(this: &mut Object, _sel: Sel, name: *mut Object) {
             unsafe {
@@ -188,7 +200,16 @@ pub fn declare_flo_events_class() -> &'static Class {
 
         // Redraws the canvas for the view
         extern fn redraw_canvas(this: &mut Object, _sel: Sel, size: CGSize, bounds: CGRect) {
-            println!("Redraw canvas: {:?} {:?}", size, bounds);
+            unsafe {
+                let session_id  = get_session_id(this);
+                let view_id     = get_view_id(this);
+
+                if let (Some(session_id), Some(view_id)) = (session_id, view_id) {
+                    if let Some(session) = get_cocoa_session_with_id(session_id) {
+                        session.lock().unwrap().redraw_canvas_for_view(view_id, size, bounds);
+                    }
+                }
+            }
         }
 
         // Clears the list of pending events

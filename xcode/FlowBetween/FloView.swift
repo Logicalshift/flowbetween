@@ -436,6 +436,8 @@ public class FloView : NSObject {
                     
                     visibleRect.origin.x += parentBounds.origin.x;
                     visibleRect.origin.y += parentBounds.origin.y;
+                    if visibleRect.size.width < 1.0 { visibleRect.size.width = 1.0; }
+                    if visibleRect.size.height < 1.0 { visibleRect.size.height = 1.0; }
                     
                     layer.frame         = visibleRect;
                     

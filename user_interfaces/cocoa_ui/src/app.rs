@@ -48,7 +48,7 @@ fn declare_flo_control_class() -> &'static Class {
 
                     // Create the session itself
                     let mut sessions        = FLO_SESSIONS.lock().unwrap();
-                    let new_session         = CocoaSession::new(&this_ptr);
+                    let new_session         = CocoaSession::new(&this_ptr, this_session_id);
                     sessions.insert(this_session_id, Arc::new(Mutex::new(new_session)));
                 }
 
@@ -133,4 +133,13 @@ pub unsafe fn get_session_for_flo_control(flo_control: &Object) -> Arc<Mutex<Coc
         .get(&session_id)
         .cloned()
         .unwrap()
+}
+
+///
+/// Retrieves the session for a FloControl objective-C object
+///
+pub fn get_cocoa_session_with_id(session_id: usize) -> Option<Arc<Mutex<CocoaSession>>> {
+    FLO_SESSIONS.lock().unwrap()
+        .get(&session_id)
+        .cloned()
 }
