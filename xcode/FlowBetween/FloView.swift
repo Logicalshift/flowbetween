@@ -464,6 +464,11 @@ public class FloView : NSObject {
     /// Drawing on the context has finished
     ///
     @objc public func viewFinishedDrawing() {
+        CATransaction.begin();
+        CATransaction.setAnimationDuration(0.0);
+
         _drawingLayer?.contents = _drawingLayerContext?.makeImage();
+        
+        CATransaction.commit();
     }
 }
