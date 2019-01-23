@@ -60,7 +60,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     func layoutDocumentView() {
         // Decide on the size of the document view
         let (minX, minY)    = scrollMinimumSize;
-        let contentSize     = self.frame.size;
+        let contentSize     = contentView.bounds.size;
         
         let sizeX           = CGFloat.maximum(CGFloat(minX), contentSize.width);
         let sizeY           = CGFloat.maximum(CGFloat(minY), contentSize.height);
