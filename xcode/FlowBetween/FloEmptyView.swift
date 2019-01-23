@@ -36,8 +36,16 @@ class FloEmptyView : NSView, FloContainerView {
     /// Event handler: user scrolled/resized so that a particular region is visible
     public var onScroll: ((NSRect) -> ())?;
     
+    var _boundsChanged: ((ContainerBounds) -> ())?;
     /// Event handler: The bounds of the container have changed
-    public var boundsChanged: ((ContainerBounds) -> ())?;
+    public var boundsChanged: ((ContainerBounds) -> ())?
+    {
+        get { return _boundsChanged; }
+        set(value) {
+            _boundsChanged = value;
+            triggerBoundsChanged();
+        }
+    }
 
     /// The minimum size of the scroll area for this view
     public var scrollMinimumSize: (Float64, Float64) = (0, 0);

@@ -417,6 +417,18 @@ public class FloView : NSObject {
             let layer       = CALayer();
 
             _drawingLayer = layer;
+            
+            // Reset the layer size when the bounds change
+            _view.boundsChanged = { newBounds in
+                // Move the layer so that it fills the visible bounds of the view
+                let parentBounds    = layer.superlayer!.bounds;
+                var visibleRect     = newBounds.visibleRect;
+                
+                visibleRect.origin.x += parentBounds.origin.x;
+                visibleRect.origin.y += parentBounds.origin.y;
+                
+                layer.frame         = visibleRect;
+            }
 
             // Create a bitmap drawing context for the image
             let colorspace  = CGColorSpaceCreateDeviceRGB();
