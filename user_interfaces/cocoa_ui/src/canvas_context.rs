@@ -77,7 +77,7 @@ impl CanvasContext {
             let scale                   = (height as CGFloat)/2.0;
 
             let transform = CGAffineTransformIdentity;
-            let transform = CGAffineTransformTranslate(transform, origin_x as CGFloat, origin_y as CGFloat);
+            let transform = CGAffineTransformTranslate(transform, -origin_x as CGFloat, -origin_y as CGFloat);
             let transform = CGAffineTransformTranslate(transform, (width as CGFloat)/2.0, (height as CGFloat)/2.0);
             let transform = CGAffineTransformScale(transform, scale, -scale);
 
@@ -214,7 +214,12 @@ impl CanvasContext {
                     self.state.set_transform(transform);
                 }
 
-                ClearCanvas                                         => { /* Layers need to be implemented elsewhere */ }
+                ClearCanvas                                         => { 
+                    let identity    = self.get_identity_transform();
+                    self.state.set_transform(identity);
+
+                    /* Layers need to be implemented elsewhere */
+                }
                 Layer(_layer_id)                                    => { /* Layers need to be implemented elsewhere */ }
                 LayerBlend(_layer_id, _blend)                       => { /* Layers need to be implemented elsewhere */ }
             }
