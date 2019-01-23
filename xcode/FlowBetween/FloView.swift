@@ -420,6 +420,9 @@ public class FloView : NSObject {
             
             // Reset the layer size when the bounds change
             _view.boundsChanged = { newBounds in
+                CATransaction.begin();
+                CATransaction.setAnimationDuration(0.0);
+                
                 // Move the layer so that it fills the visible bounds of the view
                 let parentBounds    = layer.superlayer!.bounds;
                 var visibleRect     = newBounds.visibleRect;
@@ -428,6 +431,8 @@ public class FloView : NSObject {
                 visibleRect.origin.y += parentBounds.origin.y;
                 
                 layer.frame         = visibleRect;
+                
+                CATransaction.commit();
             }
 
             // Create a bitmap drawing context for the image
