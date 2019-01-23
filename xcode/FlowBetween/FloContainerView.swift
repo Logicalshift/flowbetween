@@ -50,6 +50,9 @@ protocol FloContainerView {
     
     /// Triggers the click event for this view
     func triggerClick();
+    
+    /// Triggers the bounds changed event for this view
+    func triggerBoundsChanged();
 }
 
 ///

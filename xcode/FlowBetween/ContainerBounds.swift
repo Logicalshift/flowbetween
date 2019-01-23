@@ -10,8 +10,8 @@ import Foundation
 
 public struct ContainerBounds {
     /// The visible portion of the container
-    public var VisibleRect: NSRect;
+    public var visibleRect: NSRect;
     
     /// The total size of the container
-    public var TotalSize: NSSize;
+    public var totalSize: NSSize;
 }

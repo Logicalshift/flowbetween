@@ -69,7 +69,8 @@ class FloEmptyView : NSView, FloContainerView {
         super.setFrameSize(newSize);
         
         // Perform normal layout
-        self.performLayout?();
+        triggerBoundsChanged();
+        performLayout?();
         
         // Any subviews that are not themselves FloContainers are sized to fill this view
         for subview in subviews {
@@ -108,4 +109,35 @@ class FloEmptyView : NSView, FloContainerView {
         self.layer!.addSublayer(layer);
     }
     
+    ///
+    /// Computes the container bounds for this view
+    ///
+    func getContainerBounds() -> ContainerBounds {
+        // Get the bounds
+        let viewport        = bounds;
+        var visible         = visibleRect;
+        
+        // For the container bounds, the viewport is considered to be aligned at 0,0
+        visible.origin.x    -= viewport.origin.x;
+        visible.origin.y    -= viewport.origin.y;
+        
+        return ContainerBounds(visibleRect: visible, totalSize: viewport.size);
+    }
+
+    var _willChangeBounds: Bool = false;
+    ///
+    /// Triggers the bounds changed event for this view
+    ///
+    func triggerBoundsChanged() {
+        if !_willChangeBounds {
+            _willChangeBounds = true;
+            
+            RunLoop.current.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                self._willChangeBounds = false;
+                
+                let bounds = self.getContainerBounds();
+                self.boundsChanged?(bounds);
+            });
+        }
+    }
 }

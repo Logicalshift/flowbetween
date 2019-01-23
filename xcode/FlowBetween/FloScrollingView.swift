@@ -169,6 +169,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     
     /// Triggers the scroll event for this view
     @objc func triggerOnScroll() {
+        // This also changes the bounds of the view
+        triggerBoundsChanged();
+        
         // Find the area that's visible on screen
         let visibleRect = self.convert(bounds, to: documentView);
         
@@ -179,5 +182,28 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Sets the layer displayed for the canvas
     func setCanvasLayer(_ layer: CALayer) {
         self.documentView!.layer!.addSublayer(layer);
+    }
+
+
+    ///
+    /// Triggers the bounds changed event for this view
+    ///
+    func triggerBoundsChanged() {
+        // For scrolling views, we actually trigger for all the subviews of the document view
+        var toProcess = [self.documentView!];
+        
+        while let view = toProcess.popLast() {
+            // If the view is a container view, trigger its bounds changed event
+            if let view = view as? FloContainerView {
+                view.triggerBoundsChanged();
+            }
+            
+            // If the view is not a scrolling view, add its subviews (nested scrolling views will already have triggered the event)
+            if !(view is FloScrollingView) {
+                for subview in view.subviews {
+                    toProcess.append(subview);
+                }
+            }
+        }
     }
 }
