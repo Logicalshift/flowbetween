@@ -55,7 +55,7 @@ public class FloView : NSObject {
 
         weak var this = self;
         
-        _view.performLayout = { if let this = this { this.performLayout() } };
+        _view.performLayout = { size in if let this = this { this.performLayout(size) } };
         _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
     }
     
@@ -74,7 +74,7 @@ public class FloView : NSObject {
         
         weak var this = self;
         
-        _view.performLayout = { if let this = this { this.performLayout() } };
+        _view.performLayout = { size in if let this = this { this.performLayout(size) } };
         _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
     }
     
@@ -108,6 +108,7 @@ public class FloView : NSObject {
         }
     }
     
+    /*
     ///
     /// The bounds within which the subviews should be laid out
     ///
@@ -116,6 +117,7 @@ public class FloView : NSObject {
             return _view.asView.bounds;
         }
     }
+    */
     
     public var control: NSControl {
         get {
@@ -138,9 +140,9 @@ public class FloView : NSObject {
     ///
     /// Performs layout of this view immediately
     ///
-    public func performLayout() {
+    public func performLayout(_ size: NSSize) {
         // Just pass the request on to the layout class
-        Layout.layoutView(view: self);
+        Layout.layoutView(view: self, size: size);
     }
     
     ///
@@ -152,7 +154,7 @@ public class FloView : NSObject {
             
             RunLoop.current.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
                 self._willLayout = false;
-                self.performLayout();
+                self.performLayout(self._view.layoutSize);
             });
         }
     }

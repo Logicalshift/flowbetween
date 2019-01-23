@@ -70,7 +70,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         documentView?.setFrameSize(newSize);
         
         // Perform general layout
-        self.performLayout?();
+        self.performLayout?(newSize);
 
         // Any subviews that are not themselves FloContainers are sized to fill this view
         for subview in self.documentView!.subviews {
@@ -79,6 +79,18 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             }
         }
     }
+
+    /// The size of the layout area for this view
+    var layoutSize : NSSize {
+        get {
+            if let documentView = documentView {
+                return documentView.bounds.size;
+            } else {
+                let (width, height) = scrollMinimumSize;
+                return NSSize(width: width, height: height);
+            }
+        }
+    };
 
     ///
     /// Containers cause the layout algorithm to run when they are resized
@@ -151,7 +163,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     }
 
     /// Event handler: user performed layout on this view
-    var performLayout: (() -> ())?;
+    var performLayout: ((NSSize) -> ())?;
     
     /// Event handler: The bounds of the container have changed
     var boundsChanged: ((ContainerBounds) -> ())?;

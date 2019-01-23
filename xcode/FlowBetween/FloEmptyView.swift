@@ -24,6 +24,13 @@ class FloEmptyView : NSView, FloContainerView {
         wantsLayer = true;
     }
     
+    /// The size of the layout area for this view
+    var layoutSize : NSSize {
+        get {
+            return bounds.size;
+        }
+    };
+
     /// Returns this view as an NSView
     public var asView: NSView { get { return self; } }
     
@@ -31,7 +38,7 @@ class FloEmptyView : NSView, FloContainerView {
     public var onClick: (() -> Bool)?;
     
     /// Event handler: user performed layout on this view
-    public var performLayout: (() -> ())?;
+    public var performLayout: ((NSSize) -> ())?;
 
     /// Event handler: user scrolled/resized so that a particular region is visible
     public var onScroll: ((NSRect) -> ())?;
@@ -78,7 +85,7 @@ class FloEmptyView : NSView, FloContainerView {
         
         // Perform normal layout
         triggerBoundsChanged();
-        performLayout?();
+        performLayout?(bounds.size);
         
         // Any subviews that are not themselves FloContainers are sized to fill this view
         for subview in subviews {

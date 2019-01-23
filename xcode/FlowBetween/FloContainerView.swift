@@ -26,6 +26,9 @@ protocol FloContainerView {
     
     /// Sets the layer displayed for the canvas
     func setCanvasLayer(_ layer: CALayer);
+    
+    /// The size of the layout area for this view
+    var layoutSize : NSSize { get };
 
     /// Returns this view as an NSView
     var asView : NSView { get };
@@ -37,7 +40,7 @@ protocol FloContainerView {
     var onScroll: ((NSRect) -> ())? { get set };
     
     /// Event handler: user performed layout on this view
-    var performLayout: (() -> ())? { get set };
+    var performLayout: ((NSSize) -> ())? { get set };
     
     /// Event handler: The bounds of the container have changed
     var boundsChanged: ((ContainerBounds) -> ())? { get set };

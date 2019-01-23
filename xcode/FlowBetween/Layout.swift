@@ -51,8 +51,8 @@ class Layout {
     ///
     /// Lays out the specified view according to the bounds set for its subviews
     ///
-    public static func layoutView(view: FloView) {
-        let bounds          = view.layoutBounds;
+    public static func layoutView(view: FloView, size: NSSize) {
+        let bounds          = NSRect(origin: CGPoint(x: 0, y: 0), size: size);
         let max_x           = Double(bounds.width);
         let max_y           = Double(bounds.height);
         var last_x          = 0.0;
