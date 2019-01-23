@@ -412,7 +412,7 @@ public class FloView : NSObject {
     ///
     /// Retrieves the drawing context for this view
     ///
-    @objc public func viewGetCanvasForDrawing() -> CGContext {
+    @objc public func viewGetCanvasForDrawing(_ events: FloEvents) -> CGContext {
         // Create the drawing layer if one doesn't exist yet
         if _drawingLayer == nil {
             // Create the layer
@@ -452,6 +452,9 @@ public class FloView : NSObject {
                                                     bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
                     
                     this._drawingLayerContext = newContext;
+                    
+                    // Request a redraw
+                    events.redrawCanvas(with: newBounds.totalSize, viewport: newBounds.visibleRect);
                 }
             }
 

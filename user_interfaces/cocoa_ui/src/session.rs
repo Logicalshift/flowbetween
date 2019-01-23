@@ -317,11 +317,14 @@ impl CocoaSession {
     ///
     fn draw(&mut self, view_id: usize, view: &StrongPtr, actions: Vec<Draw>) {
         unsafe {
+            // Fetch the events for redraw callbacks
+            let flo_events = self.events_for_view(view_id);
+
             // Fetch the canvas for this view
             let canvas = self.canvases.entry(view_id).or_insert_with(|| ViewCanvas::new());
 
             // Get the context from the view to start drawing
-            let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing);
+            let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events));
             let graphics_context = CFRef::from(graphics_context);
             graphics_context.retain();
 

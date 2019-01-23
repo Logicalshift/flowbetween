@@ -19,7 +19,7 @@ pub type CGColorSpaceRef = *mut CGColorSpace;
 #[repr(C)] pub struct CGColor { _private: [u8; 0] }
 pub type CGColorRef = *mut CGColor;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 #[repr(C)] pub struct CGAffineTransform {
     pub a: CGFloat,
     pub b: CGFloat,
@@ -29,10 +29,49 @@ pub type CGColorRef = *mut CGColor;
     pub ty: CGFloat
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 #[repr(C)] pub struct CGPoint {
     pub x: CGFloat,
     pub y: CGFloat
+}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C)] pub struct CGSize {
+    pub width: CGFloat,
+    pub height: CGFloat
+}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C)] pub struct CGRect {
+    pub origin: CGPoint,
+    pub size: CGSize
+}
+
+unsafe impl objc::Encode for CGPoint {
+    fn encode() -> objc::Encoding {
+        let encoding = format!("{{CGPoint={}{}}}",
+                               f64::encode().as_str(),
+                               f64::encode().as_str());
+        unsafe { objc::Encoding::from_str(&encoding) }
+    }
+}
+
+unsafe impl objc::Encode for CGSize {
+    fn encode() -> objc::Encoding {
+        let encoding = format!("{{CGSize={}{}}}",
+                               f64::encode().as_str(),
+                               f64::encode().as_str());
+        unsafe { objc::Encoding::from_str(&encoding) }
+    }
+}
+
+unsafe impl objc::Encode for CGRect {
+    fn encode() -> objc::Encoding {
+        let encoding = format!("{{CGRect={}{}}}",
+                               CGPoint::encode().as_str(),
+                               CGSize::encode().as_str());
+        unsafe { objc::Encoding::from_str(&encoding) }
+    }
 }
 
 #[link(name = "CoreGraphics", kind = "framework")]

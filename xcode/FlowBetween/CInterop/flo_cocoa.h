@@ -18,6 +18,7 @@ extern NSObject* create_flo_session(Class window_class, Class view_class, Class 
 
 - (void) sendClick: (NSString*) name;
 - (void) sendVirtualScroll: (NSString*) name left: (uint32_t) left top: (uint32_t) top width: (uint32_t) width height: (uint32_t) height;
+- (void) redrawCanvasWithSize: (NSSize) size viewport: (NSRect) viewport;
 
 @end
 

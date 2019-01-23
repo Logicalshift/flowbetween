@@ -1,4 +1,5 @@
 use super::session::*;
+use super::core_graphics_ffi::*;
 
 use flo_stream::*;
 use flo_cocoa_pipe::*;
@@ -185,6 +186,11 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
+        // Redraws the canvas for the view
+        extern fn redraw_canvas(this: &mut Object, _sel: Sel, size: CGSize, bounds: CGRect) {
+            println!("Redraw canvas: {:?} {:?}", size, bounds);
+        }
+
         // Clears the list of pending events
         extern fn finish_sending_events(this: &mut Object, _sel: Sel) {
             unsafe {
@@ -221,6 +227,7 @@ pub fn declare_flo_events_class() -> &'static Class {
 
         flo_events.add_method(sel!(sendClick:), send_click as extern fn(&mut Object, Sel, *mut Object));
         flo_events.add_method(sel!(sendVirtualScroll:left:top:width:height:), send_virtual_scroll as extern fn(&mut Object, Sel, *mut Object, u32, u32, u32, u32));
+        flo_events.add_method(sel!(redrawCanvasWithSize:viewport:), redraw_canvas as extern fn(&mut Object, Sel, CGSize, CGRect));
     }
 
     // Finalize the class
