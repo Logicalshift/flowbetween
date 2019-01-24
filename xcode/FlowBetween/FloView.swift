@@ -471,6 +471,15 @@ public class FloView : NSObject {
             // Create the layer
             let layer       = CALayer();
 
+            // Layer should not animate its contents
+            layer.actions = [
+                "onOrderIn":    NSNull(),
+                "onOrderOut":   NSNull(),
+                "sublayers":    NSNull(),
+                "contents":     NSNull(),
+                "bounds":       NSNull(),
+            ];
+
             _drawingLayer = layer;
 
             // Reset the layer size when the bounds change
