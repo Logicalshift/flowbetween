@@ -114,7 +114,7 @@ extern {
 
 pub trait CFReleasable { 
     fn retain(&self) -> Self;
-    fn release(self); 
+    fn release(&self); 
 }
 
 impl CFReleasable for CGContextRef {
@@ -123,8 +123,8 @@ impl CFReleasable for CGContextRef {
         *self
     }
 
-    #[inline] fn release(self) {
-        unsafe { CGContextRelease(self); }
+    #[inline] fn release(&self) {
+        unsafe { CGContextRelease(*self); }
     }
 }
 
@@ -134,8 +134,8 @@ impl CFReleasable for CGColorRef {
         *self
     }
 
-    #[inline] fn release(self) {
-        unsafe { CGColorRelease(self); }
+    #[inline] fn release(&self) {
+        unsafe { CGColorRelease(*self); }
     }
 }
 
@@ -145,8 +145,8 @@ impl CFReleasable for CGColorSpaceRef {
         *self
     }
 
-    #[inline] fn release(self) {
-        unsafe { CGColorSpaceRelease(self); }
+    #[inline] fn release(&self) {
+        unsafe { CGColorSpaceRelease(*self); }
     }
 }
 
@@ -162,6 +162,12 @@ impl<T: CFReleasable> Deref for CFRef<T> {
     type Target = T;
 
     #[inline] fn deref(&self) -> &T { &self.0 }
+}
+
+impl<T: CFReleasable> Drop for CFRef<T> {
+    fn drop(&mut self) {
+        self.release();
+    }
 }
 
 impl<T: CFReleasable> From<T> for CFRef<T> {
