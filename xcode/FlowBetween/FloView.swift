@@ -475,13 +475,21 @@ public class FloView : NSObject {
 
             // Reset the layer size when the bounds change
             weak var this = self;
+            var willChangeBounds = false;
             _view.boundsChanged = { newBounds in
-                if let this = this {
-                    // Update the layer bounds
-                    this.drawingLayerBoundsChanged(newBounds);
+                if !willChangeBounds {
+                    willChangeBounds = true;
                     
-                    // Request a full redraw
-                    events.redrawCanvas(with: newBounds.totalSize, viewport: newBounds.visibleRect);
+                    RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                        willChangeBounds = false;
+                        if let this = this {
+                            // Update the layer bounds
+                            this.drawingLayerBoundsChanged(newBounds);
+                            
+                            // Request a full redraw
+                            events.redrawCanvas(with: newBounds.totalSize, viewport: newBounds.visibleRect);
+                        }
+                    });
                 }
             }
 
