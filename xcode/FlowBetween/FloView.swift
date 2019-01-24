@@ -413,53 +413,55 @@ public class FloView : NSObject {
     /// Updates the bounds of the drawing layer (and its context) after the
     ///
     func drawingLayerBoundsChanged(_ newBounds: ContainerBounds) {
-        let layer = _drawingLayer!;
-        
-        // Work out the screen resolution of the current window
-        var resolutionMultiplier = CGFloat(1.0);
-        if let window = _view.asView.window {
-            if let screen = window.screen {
-                resolutionMultiplier = screen.backingScaleFactor;
+        autoreleasepool {
+            let layer = _drawingLayer!;
+            
+            // Work out the screen resolution of the current window
+            var resolutionMultiplier = CGFloat(1.0);
+            if let window = _view.asView.window {
+                if let screen = window.screen {
+                    resolutionMultiplier = screen.backingScaleFactor;
+                }
             }
-        }
-        
-        // Perform the action instantly rather than with the default animation
-        CATransaction.begin();
-        CATransaction.setAnimationDuration(0.0);
+            
+            // Perform the action instantly rather than with the default animation
+            CATransaction.begin();
+            CATransaction.setAnimationDuration(0.0);
 
-        // Create the colourspace we'll use for the graphics context
-        let colorspace  = CGColorSpaceCreateDeviceRGB();
+            // Create the colourspace we'll use for the graphics context
+            let colorspace  = CGColorSpaceCreateDeviceRGB();
 
-        // Move the layer so that it fills the visible bounds of the view
-        let parentBounds    = _view.asView.layer!.bounds;
-        var visibleRect     = newBounds.visibleRect;
-        
-        visibleRect.origin.x += parentBounds.origin.x;
-        visibleRect.origin.y += parentBounds.origin.y;
-        if visibleRect.size.width < 1.0 { visibleRect.size.width = 1.0; }
-        if visibleRect.size.height < 1.0 { visibleRect.size.height = 1.0; }
-        
-        layer.frame         = visibleRect;
-        
-        CATransaction.commit();
-        
-        // Regenerate the graphics context so that it's the appropriate size for the layer
-        _drawingLayerContext = nil;
-        let newContext = CGContext.init(data:               nil,
-                                        width:              Int(visibleRect.width*resolutionMultiplier),
-                                        height:             Int(visibleRect.height*resolutionMultiplier),
-                                        bitsPerComponent:   8,
-                                        bytesPerRow:        0,
-                                        space:              colorspace,
-                                        bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
-        
-        // Set the initial transformation of the context
-        if resolutionMultiplier != 1.0 {
-            let resolutionTransform = CGAffineTransform.init(scaleX: resolutionMultiplier, y: resolutionMultiplier);
-            newContext?.concatenate(resolutionTransform);
+            // Move the layer so that it fills the visible bounds of the view
+            let parentBounds    = _view.asView.layer!.bounds;
+            var visibleRect     = newBounds.visibleRect;
+            
+            visibleRect.origin.x += parentBounds.origin.x;
+            visibleRect.origin.y += parentBounds.origin.y;
+            if visibleRect.size.width < 1.0 { visibleRect.size.width = 1.0; }
+            if visibleRect.size.height < 1.0 { visibleRect.size.height = 1.0; }
+            
+            layer.frame         = visibleRect;
+            
+            CATransaction.commit();
+            
+            // Regenerate the graphics context so that it's the appropriate size for the layer
+            _drawingLayerContext = nil;
+            let newContext = CGContext.init(data:               nil,
+                                            width:              Int(visibleRect.width*resolutionMultiplier),
+                                            height:             Int(visibleRect.height*resolutionMultiplier),
+                                            bitsPerComponent:   8,
+                                            bytesPerRow:        0,
+                                            space:              colorspace,
+                                            bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
+            
+            // Set the initial transformation of the context
+            if resolutionMultiplier != 1.0 {
+                let resolutionTransform = CGAffineTransform.init(scaleX: resolutionMultiplier, y: resolutionMultiplier);
+                newContext?.concatenate(resolutionTransform);
+            }
+            
+            _drawingLayerContext = newContext;
         }
-        
-        _drawingLayerContext = newContext;
     }
     
     ///
@@ -534,15 +536,17 @@ public class FloView : NSObject {
             _willUpdateCanvas = true;
             
             RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
-                self._willUpdateCanvas = false;
-                
-                CATransaction.begin();
-                CATransaction.setAnimationDuration(0.0);
-                
-                self._drawingLayer?.transform = CATransform3DScale(CATransform3DIdentity, 1.0, -1.0, 1.0);
-                self._drawingLayer?.contents = self._drawingLayerContext?.makeImage();
-                
-                CATransaction.commit();
+                autoreleasepool {
+                    self._willUpdateCanvas = false;
+                    
+                    CATransaction.begin();
+                    CATransaction.setAnimationDuration(0.0);
+                    
+                    self._drawingLayer?.transform = CATransform3DScale(CATransform3DIdentity, 1.0, -1.0, 1.0);
+                    self._drawingLayer?.contents = self._drawingLayerContext?.makeImage();
+                    
+                    CATransaction.commit();
+                }
             });
         }
     }
