@@ -1,7 +1,8 @@
-use flo_canvas::*;
-
 use super::canvas_state::*;
+use super::canvas_transform::*;
 use super::core_graphics_ffi::*;
+
+use flo_canvas::*;
 
 ///
 /// Processes canvas draw commands onto a core graphics context
@@ -71,74 +72,21 @@ impl CanvasContext {
     /// Computes the identity transform for this canvas
     ///
     fn get_identity_transform(&self) -> CGAffineTransform {
-        unsafe {
-            let (origin_x, origin_y)    = self.viewport_origin;
-            let (width, height)         = self.canvas_size;
-            let scale                   = (height as CGFloat)/2.0;
-
-            let transform = CGAffineTransformIdentity;
-            let transform = CGAffineTransformTranslate(transform, -origin_x as CGFloat, -origin_y as CGFloat);
-            let transform = CGAffineTransformTranslate(transform, (width as CGFloat)/2.0, (height as CGFloat)/2.0);
-            let transform = CGAffineTransformScale(transform, scale, -scale);
-
-            transform
-        }
+        canvas_identity_transform(self.viewport_origin, self.canvas_size)
     }
 
     ///
     /// Computes a matrix to be appended to the identity transform that will set the height of the canvas
     ///
     fn get_height_transform(&self, height: f64) -> CGAffineTransform {
-        unsafe {
-            let mut ratio_x = 2.0/height;
-            let ratio_y     = ratio_x;
-
-            if height < 0.0 {
-                ratio_x = -ratio_x;
-            }
-
-            let result = CGAffineTransformIdentity;
-            let result = CGAffineTransformScale(result, ratio_x as CGFloat, ratio_y as CGFloat);
-
-            result
-        }
+        canvas_height_transform(height)
     }
 
     ///
     /// Retrieves the transformation needed to move the center of the canvas to the specified point
     ///
     pub fn get_center_transform(&self, minx: f64, miny: f64, maxx: f64, maxy: f64) -> CGAffineTransform {
-        unsafe {
-            let (origin_x, origin_y)        = self.viewport_origin;
-            let (pixel_width, pixel_height) = self.canvas_size;
-            let current_transform           = self.state.current_transform();
-
-            // Get the current scaling of this canvas
-            let mut xscale = (current_transform.a*current_transform.a + current_transform.b*current_transform.b).sqrt();
-            let mut yscale = (current_transform.c*current_transform.c + current_transform.d*current_transform.d).sqrt();
-            if xscale == 0.0 { xscale = 1.0; }
-            if yscale == 0.0 { yscale = 1.0; }
-
-            // Current X, Y coordinates (centered)
-            let cur_x = (current_transform.tx-(pixel_width/2.0))/xscale;
-            let cur_y = (current_transform.ty-(pixel_height/2.0))/yscale;
-            
-            // New center coordinates
-            let center_x = (minx+maxx)/2.0;
-            let center_y = (miny+maxy)/2.0;
-
-            // Compute the offsets and transform the canvas
-            let x_offset = cur_x - center_x;
-            let y_offset = cur_y - center_y;
-
-            let x_offset = x_offset + origin_x/xscale;
-            let y_offset = y_offset + origin_y/xscale;
-
-            // Generate the result matrix
-            let result = CGAffineTransformIdentity;
-            let result = CGAffineTransformTranslate(result, x_offset as CGFloat, y_offset as CGFloat);
-            result
-        }
+        canvas_center_transform(self.viewport_origin, self.canvas_size, self.state.current_transform(), minx, miny, maxx, maxy)
     }
 
     ///
