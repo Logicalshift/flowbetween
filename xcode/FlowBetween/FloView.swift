@@ -410,6 +410,44 @@ public class FloView : NSObject {
     }
     
     ///
+    /// Updates the bounds of the drawing layer (and its context) after the
+    ///
+    func drawingLayerBoundsChanged(_ newBounds: ContainerBounds) {
+        let layer = _drawingLayer!;
+        
+        CATransaction.begin();
+        CATransaction.setAnimationDuration(0.0);
+
+        // Create the colourspace we'll use for the graphics context
+        let colorspace  = CGColorSpaceCreateDeviceRGB();
+
+        // Move the layer so that it fills the visible bounds of the view
+        let parentBounds    = layer.superlayer!.bounds;
+        var visibleRect     = newBounds.visibleRect;
+        
+        visibleRect.origin.x += parentBounds.origin.x;
+        visibleRect.origin.y += parentBounds.origin.y;
+        if visibleRect.size.width < 1.0 { visibleRect.size.width = 1.0; }
+        if visibleRect.size.height < 1.0 { visibleRect.size.height = 1.0; }
+        
+        layer.frame         = visibleRect;
+        
+        CATransaction.commit();
+        
+        // Regenerate the graphics context so that it's the appropriate size for the layer
+        _drawingLayerContext = nil;
+        let newContext = CGContext.init(data:               nil,
+                                        width:              Int(visibleRect.width),
+                                        height:             Int(visibleRect.height),
+                                        bitsPerComponent:   8,
+                                        bytesPerRow:        0,
+                                        space:              colorspace,
+                                        bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
+        
+        _drawingLayerContext = newContext;
+    }
+    
+    ///
     /// Retrieves the drawing context for this view
     ///
     @objc public func viewGetCanvasForDrawing(_ events: FloEvents) -> CGContext {
@@ -420,42 +458,14 @@ public class FloView : NSObject {
 
             _drawingLayer = layer;
 
-            // Create the colourspace we'll use for the graphics context
-            let colorspace  = CGColorSpaceCreateDeviceRGB();
-
             // Reset the layer size when the bounds change
             weak var this = self;
             _view.boundsChanged = { newBounds in
                 if let this = this {
-                    CATransaction.begin();
-                    CATransaction.setAnimationDuration(0.0);
+                    // Update the layer bounds
+                    this.drawingLayerBoundsChanged(newBounds);
                     
-                    // Move the layer so that it fills the visible bounds of the view
-                    let parentBounds    = layer.superlayer!.bounds;
-                    var visibleRect     = newBounds.visibleRect;
-                    
-                    visibleRect.origin.x += parentBounds.origin.x;
-                    visibleRect.origin.y += parentBounds.origin.y;
-                    if visibleRect.size.width < 1.0 { visibleRect.size.width = 1.0; }
-                    if visibleRect.size.height < 1.0 { visibleRect.size.height = 1.0; }
-                    
-                    layer.frame         = visibleRect;
-                    
-                    CATransaction.commit();
-                    
-                    // Regenerate the graphics context so that it's the appropriate size for the layer
-                    this._drawingLayerContext = nil;
-                    let newContext = CGContext.init(data:               nil,
-                                                    width:              Int(visibleRect.width),
-                                                    height:             Int(visibleRect.height),
-                                                    bitsPerComponent:   8,
-                                                    bytesPerRow:        0,
-                                                    space:              colorspace,
-                                                    bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
-                    
-                    this._drawingLayerContext = newContext;
-                    
-                    // Request a redraw
+                    // Request a full redraw
                     events.redrawCanvas(with: newBounds.totalSize, viewport: newBounds.visibleRect);
                 }
             }
@@ -470,7 +480,7 @@ public class FloView : NSObject {
                                              height: Int(initialSize.height),
                                              bitsPerComponent: 8,
                                              bytesPerRow: 0,
-                                             space: colorspace,
+                                             space: CGColorSpaceCreateDeviceRGB(),
                                              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue);
             _drawingLayerContext = contextRef!;
             
@@ -489,7 +499,8 @@ public class FloView : NSObject {
     @objc public func viewFinishedDrawing() {
         CATransaction.begin();
         CATransaction.setAnimationDuration(0.0);
-
+        
+        _drawingLayer?.transform = CATransform3DScale(CATransform3DIdentity, 1.0, -1.0, 1.0);
         _drawingLayer?.contents = _drawingLayerContext?.makeImage();
         
         CATransaction.commit();
