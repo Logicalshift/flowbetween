@@ -152,7 +152,7 @@ public class FloView : NSObject {
         if !_willLayout {
             _willLayout = true;
             
-            RunLoop.current.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
                 self._willLayout = false;
                 self.performLayout(self._view.layoutSize);
             });
@@ -431,7 +431,7 @@ public class FloView : NSObject {
         let colorspace  = CGColorSpaceCreateDeviceRGB();
 
         // Move the layer so that it fills the visible bounds of the view
-        let parentBounds    = layer.superlayer!.bounds;
+        let parentBounds    = _view.asView.layer!.bounds;
         var visibleRect     = newBounds.visibleRect;
         
         visibleRect.origin.x += parentBounds.origin.x;
@@ -502,22 +502,31 @@ public class FloView : NSObject {
             layer.backgroundColor   = CGColor.clear;
             layer.frame             = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
 
-            _view.setCanvasLayer(layer);
+            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
         }
 
         return _drawingLayerContext!;
     }
     
+    var _willUpdateCanvas = false;
     ///
     /// Drawing on the context has finished
     ///
     @objc public func viewFinishedDrawing() {
-        CATransaction.begin();
-        CATransaction.setAnimationDuration(0.0);
-        
-        _drawingLayer?.transform = CATransform3DScale(CATransform3DIdentity, 1.0, -1.0, 1.0);
-        _drawingLayer?.contents = _drawingLayerContext?.makeImage();
-        
-        CATransaction.commit();
+        if !_willUpdateCanvas {
+            _willUpdateCanvas = true;
+            
+            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                self._willUpdateCanvas = false;
+                
+                CATransaction.begin();
+                CATransaction.setAnimationDuration(0.0);
+                
+                self._drawingLayer?.transform = CATransform3DScale(CATransform3DIdentity, 1.0, -1.0, 1.0);
+                self._drawingLayer?.contents = self._drawingLayerContext?.makeImage();
+                
+                CATransaction.commit();
+            });
+        }
     }
 }
