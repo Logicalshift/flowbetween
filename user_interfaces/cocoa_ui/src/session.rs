@@ -329,7 +329,7 @@ impl CocoaSession {
 
             // Get the context from the view to start drawing
             let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events));
-            let graphics_context = CFRef::from(graphics_context);
+            let graphics_context = CFRef::from(graphics_context.retain());
 
             // Perform the drawing actions on the canvas
             canvas.draw(actions, graphics_context);
@@ -354,7 +354,7 @@ impl CocoaSession {
             if let Some(view) = view {
                 // Get the context from the view to start drawing
                 let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events));
-                let graphics_context = CFRef::from(graphics_context);
+                let graphics_context = CFRef::from(graphics_context.retain());
 
                 // Perform the drawing actions on the canvas
                 canvas.set_viewport(size, bounds);
