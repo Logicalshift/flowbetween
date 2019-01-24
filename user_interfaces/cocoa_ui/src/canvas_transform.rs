@@ -73,3 +73,72 @@ pub fn canvas_center_transform(viewport_origin: (f64, f64), canvas_size: (f64, f
         result
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn identity_transform_bottom_left_corner_square() {
+        unsafe {
+            // For the identity transform, y = -1.0 should be at the bottom of the canvas
+            let identity    = canvas_identity_transform((0.0, 0.0), (1080.0, 1080.0));
+            let bottom_left = CGPointApplyAffineTransform(CGPoint { x: -1.0, y: -1.0 }, identity);
+
+            assert!((bottom_left.y-1080.0).abs() < 0.01);
+            assert!((bottom_left.x-0.0).abs() < 0.01);
+        }
+    }
+
+    #[test]
+    fn identity_transform_top_right_corner_square() {
+        unsafe {
+            // For the identity transform, y = 1.0 should be at the top of the canvas
+            let identity    = canvas_identity_transform((0.0, 0.0), (1080.0, 1080.0));
+            let top_right   = CGPointApplyAffineTransform(CGPoint { x: 1.0, y: 1.0 }, identity);
+
+            assert!((top_right.y-0.0).abs() < 0.01);
+            assert!((top_right.x-1080.0).abs() < 0.01);
+        }
+    }
+
+    #[test]
+    fn identity_transform_rectangle() {
+        unsafe {
+            // For the identity transform, y = 1.0 should be at the top of the canvas
+            let identity        = canvas_identity_transform((0.0, 0.0), (1920.0, 1080.0));
+            let middle_bottom   = CGPointApplyAffineTransform(CGPoint { x: 0.0, y: -1.0 }, identity);
+
+            assert!((middle_bottom.y-1080.0).abs() < 0.01);
+            assert!((middle_bottom.x-960.0).abs() < 0.01);
+        }
+    }
+
+    #[test]
+    fn identity_transform_viewport() {
+        unsafe {
+            // For the identity transform, y = 1.0 should be at the top of the canvas
+            let identity        = canvas_identity_transform((256.0, 256.0), (1920.0, 1080.0));
+            let middle_bottom   = CGPointApplyAffineTransform(CGPoint { x: 0.0, y: -1.0 }, identity);
+
+            assert!((middle_bottom.y-824.0).abs() < 0.01);
+            assert!((middle_bottom.x-704.0).abs() < 0.01);
+        }
+    }
+
+    #[test]
+    fn height_transform_square() {
+        unsafe {
+            // For the identity transform, y = -1.0 should be at the bottom of the canvas
+            let identity    = canvas_identity_transform((0.0, 0.0), (1080.0, 1080.0));
+            let height      = canvas_height_transform(100.0);
+            let combined    = CGAffineTransformConcat(height, identity);
+            let bottom_left = CGPointApplyAffineTransform(CGPoint { x: -50.0, y: -50.0 }, combined);
+
+            println!("{:?}", bottom_left);
+
+            assert!((bottom_left.y-1080.0).abs() < 0.01);
+            assert!((bottom_left.x-0.0).abs() < 0.01);
+        }
+    }
+}

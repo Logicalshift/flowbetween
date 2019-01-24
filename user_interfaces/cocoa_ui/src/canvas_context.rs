@@ -137,13 +137,13 @@ impl CanvasContext {
                 CanvasHeight(height)                                => {
                     let identity    = self.get_identity_transform();
                     let height      = self.get_height_transform(*height as f64);
-                    let transform   = CGAffineTransformConcat(identity, height);
+                    let transform   = CGAffineTransformConcat(height, identity);
                     self.state.set_transform(transform);
                 }
                 CenterRegion((minx, miny), (maxx, maxy))            => {
                     let current     = self.state.current_transform();
                     let center      = self.get_center_transform(*minx as f64, *miny as f64, *maxx as f64, *maxy as f64);
-                    let transform   = CGAffineTransformConcat(current, center);
+                    let transform   = CGAffineTransformConcat(center, current);
                     self.state.set_transform(transform);
                 }
                 MultiplyTransform(transform)                        => {
@@ -158,7 +158,7 @@ impl CanvasContext {
                         ty: a.2 as CGFloat
                     };
 
-                    let transform               = CGAffineTransformConcat(current, transform);
+                    let transform               = CGAffineTransformConcat(transform, current);
                     self.state.set_transform(transform);
                 }
 
