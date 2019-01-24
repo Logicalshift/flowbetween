@@ -415,6 +415,15 @@ public class FloView : NSObject {
     func drawingLayerBoundsChanged(_ newBounds: ContainerBounds) {
         let layer = _drawingLayer!;
         
+        // Work out the screen resolution of the current window
+        var resolutionMultiplier = CGFloat(1.0);
+        if let window = _view.asView.window {
+            if let screen = window.screen {
+                resolutionMultiplier = screen.backingScaleFactor;
+            }
+        }
+        
+        // Perform the action instantly rather than with the default animation
         CATransaction.begin();
         CATransaction.setAnimationDuration(0.0);
 
@@ -437,12 +446,18 @@ public class FloView : NSObject {
         // Regenerate the graphics context so that it's the appropriate size for the layer
         _drawingLayerContext = nil;
         let newContext = CGContext.init(data:               nil,
-                                        width:              Int(visibleRect.width),
-                                        height:             Int(visibleRect.height),
+                                        width:              Int(visibleRect.width*resolutionMultiplier),
+                                        height:             Int(visibleRect.height*resolutionMultiplier),
                                         bitsPerComponent:   8,
                                         bytesPerRow:        0,
                                         space:              colorspace,
                                         bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
+        
+        // Set the initial transformation of the context
+        if resolutionMultiplier != 1.0 {
+            let resolutionTransform = CGAffineTransform.init(scaleX: resolutionMultiplier, y: resolutionMultiplier);
+            newContext?.concatenate(resolutionTransform);
+        }
         
         _drawingLayerContext = newContext;
     }
