@@ -77,6 +77,13 @@ impl ViewCanvas {
     }
 
     ///
+    /// Caches some actions to draw when the graphics context becomes valid
+    ///
+    pub fn cache(&mut self, actions: Vec<Draw>) {
+        self.canvas.write(actions);
+    }
+
+    ///
     /// Draws some actions to this view canvas
     ///
     pub fn draw(&mut self, actions: Vec<Draw>, context: CFRef<CGContextRef>) {

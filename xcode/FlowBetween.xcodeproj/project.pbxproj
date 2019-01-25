@@ -31,6 +31,7 @@
 		4B52B4D321E2652600CA6B64 /* FloContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D221E2652600CA6B64 /* FloContainerView.swift */; };
 		4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */; };
 		4B52B4D721E26DBA00CA6B64 /* FloScrollingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */; };
+		4B557B1521FB0BA300FFAC5D /* FloCanvasLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B557B1421FB0BA300FFAC5D /* FloCanvasLayer.swift */; };
 		4B5620E321F087BF0078392F /* SVGKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B56208221F0858D0078392F /* SVGKit.framework */; };
 		4B5620E521F0884B0078392F /* SVGKit.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 4B56208221F0858D0078392F /* SVGKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4B57E9DA21DE2CBD00FD0551 /* FloView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B57E9D921DE2CBD00FD0551 /* FloView.swift */; };
@@ -284,6 +285,7 @@
 		4B52B4D221E2652600CA6B64 /* FloContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerView.swift; sourceTree = "<group>"; };
 		4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloEmptyView.swift; sourceTree = "<group>"; };
 		4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloScrollingView.swift; sourceTree = "<group>"; };
+		4B557B1421FB0BA300FFAC5D /* FloCanvasLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloCanvasLayer.swift; sourceTree = "<group>"; };
 		4B56206621F083210078392F /* fetch-deps.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "fetch-deps.sh"; sourceTree = "<group>"; };
 		4B56206A21F0858D0078392F /* SVGKit-iOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "SVGKit-iOS.xcodeproj"; path = "SVGKit/SVGKit-iOS.xcodeproj"; sourceTree = "<group>"; };
 		4B56208521F085940078392F /* SVGKit-iOS.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "SVGKit-iOS.xcodeproj"; path = "SVGKit/SVGKit-iOS.xcodeproj"; sourceTree = "<group>"; };
@@ -359,6 +361,7 @@
 				4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */,
 				4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */,
 				4B3E9C5021F90B5800261433 /* ContainerBounds.swift */,
+				4B557B1421FB0BA300FFAC5D /* FloCanvasLayer.swift */,
 			);
 			path = FlowBetween;
 			sourceTree = "<group>";
@@ -768,6 +771,7 @@
 				4B52B4D121E2625B00CA6B64 /* FloViewFactory.swift in Sources */,
 				4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */,
 				4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */,
+				4B557B1521FB0BA300FFAC5D /* FloCanvasLayer.swift in Sources */,
 				4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */,
 				4B52B4D721E26DBA00CA6B64 /* FloScrollingView.swift in Sources */,
 				4B3E9C5121F90B5900261433 /* ContainerBounds.swift in Sources */,

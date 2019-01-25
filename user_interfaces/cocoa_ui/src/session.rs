@@ -329,10 +329,15 @@ impl CocoaSession {
 
             // Get the context from the view to start drawing
             let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events));
-            let graphics_context = CFRef::from(graphics_context.retain());
+            if !graphics_context.is_null() {
+                let graphics_context = CFRef::from(graphics_context.retain());
 
-            // Perform the drawing actions on the canvas
-            canvas.draw(actions, graphics_context);
+                // Perform the drawing actions on the canvas
+                canvas.draw(actions, graphics_context);
+            } else {
+                // Graphics context is not yet available: cache the actions
+                canvas.cache(actions);
+            }
 
             // Finished drawing
             msg_send!(**view, viewFinishedDrawing);
@@ -354,14 +359,16 @@ impl CocoaSession {
             if let Some(view) = view {
                 // Get the context from the view to start drawing
                 let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events));
-                let graphics_context = CFRef::from(graphics_context.retain());
+                if !graphics_context.is_null() {
+                    let graphics_context = CFRef::from(graphics_context.retain());
 
-                // Perform the drawing actions on the canvas
-                canvas.set_viewport(size, bounds);
-                canvas.redraw(graphics_context);
+                    // Perform the drawing actions on the canvas
+                    canvas.set_viewport(size, bounds);
+                    canvas.redraw(graphics_context);
 
-                // Finished drawing
-                msg_send!(**view, viewFinishedDrawing);
+                    // Finished drawing
+                    msg_send!(**view, viewFinishedDrawing);
+                }
             }
         }
     }

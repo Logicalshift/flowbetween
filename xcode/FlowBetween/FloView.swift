@@ -35,10 +35,7 @@ public class FloView : NSObject {
     fileprivate var _onClick: (() -> ())?;
     
     /// The layer to draw on, if there is one
-    fileprivate var _drawingLayer: CALayer?;
-    
-    /// The bitmap drawing context for our layer
-    fileprivate var _drawingLayerContext: CGContext?;
+    fileprivate var _drawingLayer: FloCanvasLayer?;
     
     override init() {
         _bounds = Bounds(
@@ -427,9 +424,7 @@ public class FloView : NSObject {
             // Perform the action instantly rather than with the default animation
             CATransaction.begin();
             CATransaction.setAnimationDuration(0.0);
-
-            // Create the colourspace we'll use for the graphics context
-            let colorspace  = CGColorSpaceCreateDeviceRGB();
+            CATransaction.setDisableActions(true);
 
             // Move the layer so that it fills the visible bounds of the view
             let parentBounds    = _view.asView.layer!.bounds;
@@ -445,33 +440,26 @@ public class FloView : NSObject {
             CATransaction.commit();
             
             // Regenerate the graphics context so that it's the appropriate size for the layer
-            _drawingLayerContext = nil;
-            let newContext = CGContext.init(data:               nil,
-                                            width:              Int(visibleRect.width*resolutionMultiplier),
-                                            height:             Int(visibleRect.height*resolutionMultiplier),
-                                            bitsPerComponent:   8,
-                                            bytesPerRow:        0,
-                                            space:              colorspace,
-                                            bitmapInfo:         CGImageAlphaInfo.premultipliedLast.rawValue);
+            _drawingLayer?._backing         = nil;
+            _drawingLayer?._canvasSize      = newBounds.totalSize;
+            _drawingLayer?._viewportOrigin = newBounds.visibleRect.origin;
             
             // Set the initial transformation of the context
-            if resolutionMultiplier != 1.0 {
-                let resolutionTransform = CGAffineTransform.init(scaleX: resolutionMultiplier, y: resolutionMultiplier);
-                newContext?.concatenate(resolutionTransform);
-            }
+            _drawingLayer?._resolution      = resolutionMultiplier;
+            _drawingLayer?.contentsScale    = resolutionMultiplier;
             
-            _drawingLayerContext = newContext;
+            _drawingLayer?.setNeedsDisplay();
         }
     }
     
     ///
     /// Retrieves the drawing context for this view
     ///
-    @objc public func viewGetCanvasForDrawing(_ events: FloEvents) -> CGContext {
+    @objc public func viewGetCanvasForDrawing(_ events: FloEvents) -> CGContext? {
         // Create the drawing layer if one doesn't exist yet
         if _drawingLayer == nil {
             // Create the layer
-            let layer       = CALayer();
+            let layer       = FloCanvasLayer();
 
             // Layer should not animate its contents
             layer.actions = [
@@ -480,6 +468,7 @@ public class FloView : NSObject {
                 "sublayers":    NSNull(),
                 "contents":     NSNull(),
                 "bounds":       NSNull(),
+                "frame":        NSNull()
             ];
 
             _drawingLayer = layer;
@@ -496,9 +485,6 @@ public class FloView : NSObject {
                         if let this = this {
                             // Update the layer bounds
                             this.drawingLayerBoundsChanged(newBounds);
-                            
-                            // Request a full redraw
-                            events.redrawCanvas(with: newBounds.totalSize, viewport: newBounds.visibleRect);
                         }
                     });
                 }
@@ -508,23 +494,16 @@ public class FloView : NSObject {
             if initialSize.width < 1 { initialSize.width = 1 }
             if initialSize.height < 1 { initialSize.height = 1 }
             
-            // Create a bitmap drawing context for the image
-            let contextRef  = CGContext.init(data: nil,
-                                             width: Int(initialSize.width),
-                                             height: Int(initialSize.height),
-                                             bitsPerComponent: 8,
-                                             bytesPerRow: 0,
-                                             space: CGColorSpaceCreateDeviceRGB(),
-                                             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue);
-            _drawingLayerContext = contextRef!;
-            
-            layer.backgroundColor   = CGColor.clear;
-            layer.frame             = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
+            layer._triggerRedraw        = { (canvasSize, viewport) in events.redrawCanvas(with: canvasSize, viewport: viewport); }
+            layer.backgroundColor       = CGColor.clear;
+            layer.frame                 = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
+            layer.drawsAsynchronously  = false;
+            layer.setNeedsDisplay();
 
             RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
         }
 
-        return _drawingLayerContext!;
+        return _drawingLayer?._backing?.context;
     }
     
     var _willUpdateCanvas = false;
@@ -541,9 +520,9 @@ public class FloView : NSObject {
                     
                     CATransaction.begin();
                     CATransaction.setAnimationDuration(0.0);
+                    CATransaction.setDisableActions(true);
                     
-                    self._drawingLayer?.transform = CATransform3DScale(CATransform3DIdentity, 1.0, -1.0, 1.0);
-                    self._drawingLayer?.contents = self._drawingLayerContext?.makeImage();
+                    self._drawingLayer?.display();
                     
                     CATransaction.commit();
                 }
