@@ -47,6 +47,39 @@ pub type CGColorRef = *mut CGColor;
     pub size: CGSize
 }
 
+#[derive(Copy, Clone, Debug)]
+#[repr(C)] pub enum CGBlendMode {
+    Normal,
+    Multiply,
+    Screen,
+    Overlay,
+    Darken,
+    Lighten,
+    ColorDodge,
+    ColorBurn,
+    SoftLight,
+    HardLight,
+    Difference,
+    Exclusion,
+    Hue,
+    Saturation,
+    Color,
+    Luminosity,
+
+    Clear,
+    Copy,
+    SourceIn,
+    SourceOut,
+    SourceAtop,
+    DestinationOver,
+    DestinationIn,
+    DestinationOut,
+    DestinationAtop,
+    XOR,
+    PlusDarker,
+    PlusLighter
+}
+
 unsafe impl objc::Encode for CGPoint {
     fn encode() -> objc::Encoding {
         let encoding = format!("{{CGPoint={}{}}}",
@@ -110,6 +143,7 @@ extern {
     pub fn CGContextSetStrokeColorWithColor(ctxt: CGContextRef, color: CGColorRef);
     pub fn CGContextConcatCTM(ctxt: CGContextRef, transform: CGAffineTransform);
     pub fn CGContextGetCTM(ctxt: CGContextRef) -> CGAffineTransform;
+    pub fn CGContextSetBlendMode(ctxt: CGContextRef, blendMode: CGBlendMode);
 }
 
 pub trait CFReleasable { 

@@ -121,7 +121,7 @@ impl CanvasContext {
                 DashOffset(offset)                                  => { /* TODO */ }
                 FillColor(col)                                      => { self.state.set_fill_color(col); }
                 StrokeColor(col)                                    => { self.state.set_stroke_color(col); }
-                BlendMode(blend)                                    => { /* TODO */ }
+                BlendMode(blend)                                    => { self.state.set_blend_mode(blend); }
                 Unclip                                              => { /* TODO */ }
                 Clip                                                => { /* TODO */ }
                 Store                                               => { /* TODO */ }

@@ -10,7 +10,8 @@ struct CanvasStateValues {
     color_space:    CFRef<CGColorSpaceRef>,
     fill_color:     CFRef<CGColorRef>,
     stroke_color:   CFRef<CGColorRef>,
-    transform:      CGAffineTransform
+    transform:      CGAffineTransform,
+    blend_mode:     CGBlendMode
 }
 
 ///
@@ -39,7 +40,8 @@ impl CanvasState {
                     color_space:    color_space,
                     fill_color:     fill_color,
                     stroke_color:   stroke_color,
-                    transform:      transform
+                    transform:      transform,
+                    blend_mode:     CGBlendMode::Normal
                 },
                 stack:      vec![]
             }
@@ -102,6 +104,7 @@ impl CanvasState {
                 CGContextSaveGState(**context);
 
                 // Set the values from the current state
+                CGContextSetBlendMode(**context, self.values.blend_mode);
                 CGContextSetFillColorWithColor(**context, *self.values.fill_color);
                 CGContextSetStrokeColorWithColor(**context, *self.values.stroke_color);
                 CGContextConcatCTM(**context, self.values.transform);
@@ -148,6 +151,21 @@ impl CanvasState {
     }
 
     ///
+    /// Sets the blend mode
+    ///
+    pub fn set_blend_mode(&mut self, blend_mode: &BlendMode) {
+        unsafe {
+            // Store the blend mode in the state
+            self.values.blend_mode = (*blend_mode).into();
+
+            // Set it in the context
+            if let Some(ref context) = self.context {
+                CGContextSetBlendMode(**context, self.values.blend_mode);
+            }
+        }
+    }
+
+    ///
     /// Sets the transformation matrix for this state
     ///
     pub fn set_transform(&mut self, new_transform: CGAffineTransform) {
@@ -170,6 +188,25 @@ impl CanvasState {
         if let Some(new_values) = self.stack.pop() {
             self.values = new_values;
             self.reapply_state();
+        }
+    }
+}
+
+impl From<BlendMode> for CGBlendMode {
+    fn from(blendmode: BlendMode) -> CGBlendMode {
+        match blendmode {
+            BlendMode::SourceOver       => CGBlendMode::Normal,
+            BlendMode::SourceIn         => CGBlendMode::SourceIn,
+            BlendMode::SourceOut        => CGBlendMode::SourceOut,
+            BlendMode::DestinationOver  => CGBlendMode::DestinationOver,
+            BlendMode::DestinationIn    => CGBlendMode::DestinationIn,
+            BlendMode::DestinationOut   => CGBlendMode::DestinationOut,
+            BlendMode::SourceAtop       => CGBlendMode::SourceAtop,
+            BlendMode::DestinationAtop  => CGBlendMode::DestinationAtop,
+            BlendMode::Multiply         => CGBlendMode::Multiply,
+            BlendMode::Screen           => CGBlendMode::Screen,
+            BlendMode::Darken           => CGBlendMode::Darken,
+            BlendMode::Lighten          => CGBlendMode::Lighten
         }
     }
 }
