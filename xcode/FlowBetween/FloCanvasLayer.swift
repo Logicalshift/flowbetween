@@ -21,36 +21,36 @@ class FloCanvasLayer : CALayer {
     /// The overall size of the canvas
     var _canvasSize: NSSize;
     
-    /// The origin of the viewport in the canvas
-    var _viewportOrigin: NSPoint;
+    /// The coordinates of the visible region in the canvsa
+    var _visibleRect: NSRect;
     
     /// The resolution of this layer
     var _resolution: CGFloat = 1.0;
     
     override init() {
         _canvasSize     = NSSize(width: 1, height: 1);
-        _viewportOrigin = NSPoint(x: 1, y: 1);
+        _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
         
         super.init();
     }
     
     override init(layer: Any) {
         _canvasSize     = NSSize(width: 1, height: 1);
-        _viewportOrigin = NSPoint(x: 1, y: 1);
-        
+        _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
+
         super.init();
         
         if let layer = layer as? FloCanvasLayer {
             _backing            = layer._backing;
             _canvasSize         = layer._canvasSize;
-            _viewportOrigin     = layer._viewportOrigin;
+            _visibleRect        = layer._visibleRect;
             _resolution         = layer._resolution;
         }
     }
     
     required init?(coder aDecoder: NSCoder) {
         _canvasSize     = NSSize(width: 1, height: 1);
-        _viewportOrigin = NSPoint(x: 1, y: 1);
+        _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
 
         super.init(coder: aDecoder);
     }
@@ -58,9 +58,12 @@ class FloCanvasLayer : CALayer {
     override func draw(in ctx: CGContext) {
         // Redraw the backing layer if it has been invalidated
         if _backing == nil {
-            var size    = self.bounds.size;
+            var size    = _visibleRect.size;
             size.width  *= _resolution;
             size.height *= _resolution;
+            
+            if size.width == 0 { size.width = 1; }
+            if size.height == 0 { size.height = 1; }
             
             // Create the backing layer
             _backing = CGLayer(ctx, size: size, auxiliaryInfo: nil);
@@ -71,13 +74,19 @@ class FloCanvasLayer : CALayer {
             }
             
             // Force a redraw via the events
-            let viewport = NSRect(origin: _viewportOrigin, size: self.bounds.size);
-            _triggerRedraw?(_canvasSize, viewport);
+            _triggerRedraw?(_canvasSize, _visibleRect);
         }
         
         // Draw the backing layer on this layer
         if let backing = _backing {
             ctx.draw(backing, in: self.bounds);
         }
+    }
+    
+    ///
+    /// Clears the backing layers for this layer
+    ///
+    func clearBackingLayers() {
+        _backing?.context?.clear(CGRect(origin: CGPoint(x: 0, y: 0), size: self.bounds.size));
     }
 }
