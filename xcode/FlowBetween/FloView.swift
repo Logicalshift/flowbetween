@@ -455,7 +455,7 @@ public class FloView : NSObject {
     ///
     /// Retrieves the drawing context for this view
     ///
-    @objc public func viewGetCanvasForDrawing(_ events: FloEvents) -> CGContext? {
+    @objc public func viewGetCanvasForDrawing(_ events: FloEvents, layer: UInt64) -> CGContext? {
         // Create the drawing layer if one doesn't exist yet
         if _drawingLayer == nil {
             // Create the layer
