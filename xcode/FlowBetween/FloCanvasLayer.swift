@@ -15,6 +15,9 @@ class FloCanvasLayer : CALayer {
     /// The backing for this layer (nil if it's not drawable yet)
     var _backing: [UInt32: CGLayer];
     
+    /// Layers that we stopped using during the last clear command
+    var _unusedLayers: [CGLayer];
+    
     /// Function called to trigger a redraw
     var _triggerRedraw: ((NSSize, NSRect) -> ())?;
     
@@ -31,6 +34,7 @@ class FloCanvasLayer : CALayer {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
         _backing        = [UInt32: CGLayer]();
+        _unusedLayers   = [];
 
         super.init();
     }
@@ -39,6 +43,7 @@ class FloCanvasLayer : CALayer {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
         _backing        = [UInt32: CGLayer]();
+        _unusedLayers   = [];
 
         super.init();
         
@@ -54,6 +59,7 @@ class FloCanvasLayer : CALayer {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
         _backing        = [UInt32: CGLayer]();
+        _unusedLayers   = [];
 
         super.init(coder: aDecoder);
     }
@@ -93,9 +99,10 @@ class FloCanvasLayer : CALayer {
     /// Clears the backing layers for this layer
     ///
     func clearBackingLayers() {
-        // All layers other than layer 0 are removed
+        // All layers other than layer 0 are removed (pushed onto the unused layer list)
         let layers_to_remove = _backing.keys.filter({ layer_id in layer_id != 0 });
         for layer_id in layers_to_remove {
+            _unusedLayers.append(_backing[layer_id]!);
             _backing.removeValue(forKey: layer_id);
         }
         
@@ -109,6 +116,10 @@ class FloCanvasLayer : CALayer {
     func ensureLayerWithId(id: UInt32) {
         if _backing.keys.contains(id) {
             // Layer already exists
+            return;
+        } else if let availableLayer = _unusedLayers.popLast() {
+            // Use a layer we created earlier if we can
+            _backing[id] = availableLayer;
             return;
         } else if let baseLayer = _backing[0] {
             // Get the size for the new layer
@@ -134,5 +145,18 @@ class FloCanvasLayer : CALayer {
             // No base layer, so we can't create new layers
             return;
         }
+    }
+    
+    ///
+    /// Invalidates all of the layers in this object.
+    ///
+    /// This will remove them entirely: normally when the canvas is cleared we keep track of
+    /// any layers we were using before so we don't need to reallocate them in the event of
+    /// a redraw. However, this will produce invalid results when the layer is resized.
+    ///
+    func invalidateAllLayers() {
+        // Both the backing and the unused layers become invalidated so we can't re-use them
+        _backing        = [UInt32: CGLayer]();
+        _unusedLayers   = [];
     }
 }
