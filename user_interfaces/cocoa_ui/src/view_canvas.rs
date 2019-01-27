@@ -45,7 +45,17 @@ impl ViewCanvas {
     ///
     /// Redraws the entire canvas
     ///
-    pub fn redraw(&mut self, context: CFRef<CGContextRef>) {
+    pub fn redraw<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>)>(&mut self, context_for_layer: ContextForLayer) {
+        // Get the initial context
+        let mut context_for_layer   = context_for_layer;
+        let context                 = context_for_layer(0);
+
+        if context.is_none() {
+            // Nothing to do if we can't get the context for layer 0
+            return;
+        }
+        let context = context.unwrap();
+
         // Fetch the current set of drawing instructions
         let actions = self.canvas.get_drawing();
 
@@ -77,18 +87,21 @@ impl ViewCanvas {
     }
 
     ///
-    /// Caches some actions to draw when the graphics context becomes valid
-    ///
-    pub fn cache(&mut self, actions: Vec<Draw>) {
-        self.canvas.write(actions);
-    }
-
-    ///
     /// Draws some actions to this view canvas
     ///
-    pub fn draw(&mut self, actions: Vec<Draw>, context: CFRef<CGContextRef>) {
+    pub fn draw<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>)>(&mut self, actions: Vec<Draw>, context_for_layer: ContextForLayer) {
         // Write the actions to the canvas so we can redraw them later on
         self.canvas.write(actions.clone());
+
+        // Get the initial context
+        let mut context_for_layer   = context_for_layer;
+        let context                 = context_for_layer(0);
+
+        if context.is_none() {
+            // Nothing to do if we can't get the context for layer 0
+            return;
+        }
+        let context = context.unwrap();
 
         // Update the existing canvas context
         unsafe {

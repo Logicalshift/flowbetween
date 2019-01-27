@@ -327,17 +327,15 @@ impl CocoaSession {
             // Fetch the canvas for this view
             let canvas = self.canvases.entry(view_id).or_insert_with(|| ViewCanvas::new());
 
-            // Get the context from the view to start drawing
-            let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: 0 as u32);
-            if !graphics_context.is_null() {
-                let graphics_context = CFRef::from(graphics_context.retain());
+            canvas.draw(actions, move |layer_id| {
+                let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: layer_id);
 
-                // Perform the drawing actions on the canvas
-                canvas.draw(actions, graphics_context);
-            } else {
-                // Graphics context is not yet available: cache the actions
-                canvas.cache(actions);
-            }
+                if graphics_context.is_null() {
+                    None
+                } else {
+                    Some(CFRef::from(graphics_context.retain()))
+                }
+            });
 
             // Finished drawing
             msg_send!(**view, viewFinishedDrawing);
@@ -357,18 +355,20 @@ impl CocoaSession {
             let view    = self.views.get(&view_id);
 
             if let Some(view) = view {
-                // Get the context from the view to start drawing
-                let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: 0 as u32);
-                if !graphics_context.is_null() {
-                    let graphics_context = CFRef::from(graphics_context.retain());
+                // Perform the drawing actions on the canvas
+                canvas.set_viewport(size, bounds);
+                canvas.redraw(move |layer_id| {
+                    let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: layer_id);
 
-                    // Perform the drawing actions on the canvas
-                    canvas.set_viewport(size, bounds);
-                    canvas.redraw(graphics_context);
+                    if graphics_context.is_null() {
+                        None
+                    } else {
+                        Some(CFRef::from(graphics_context.retain()))
+                    }
+                });
 
-                    // Finished drawing
-                    msg_send!(**view, viewFinishedDrawing);
-                }
+                // Finished drawing
+                msg_send!(**view, viewFinishedDrawing);
             }
         }
     }
