@@ -120,6 +120,8 @@ class FloCanvasLayer : CALayer {
         } else if let availableLayer = _unusedLayers.popLast() {
             // Use a layer we created earlier if we can
             _backing[id] = availableLayer;
+            
+            availableLayer.context?.clear(CGRect(origin: CGPoint.zero, size: _visibleRect.size));
             return;
         } else if let baseLayer = _backing[0] {
             // Get the size for the new layer
