@@ -68,7 +68,7 @@ class FloCanvasLayer : CALayer {
             if size.width == 0 { size.width = 1; }
             if size.height == 0 { size.height = 1; }
             
-            // Create the backing layer
+            // Create the backing layer (there's always a layer 0 by default)
             _backing[0] = CGLayer(ctx, size: size, auxiliaryInfo: nil);
             
             if _resolution != 1.0 {
@@ -101,5 +101,30 @@ class FloCanvasLayer : CALayer {
         
         // Clear the bottom layer
         _backing[0]?.context?.clear(CGRect(origin: CGPoint(x: 0, y: 0), size: self.bounds.size));
+    }
+    
+    ///
+    /// Ensures the layer with the specifed ID exists
+    ///
+    func ensureLayerWithId(id: UInt32) {
+        if _backing.keys.contains(id) {
+            // Layer already exists
+            return;
+        } else if let baseLayer = _backing[0] {
+            // We create the new layer from a base layer (as CGLayer needs a context to work from)
+            let newLayer = CGLayer(baseLayer.context!, size: baseLayer.size, auxiliaryInfo: nil);
+            
+            if _resolution != 1.0 {
+                let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution);
+                newLayer!.context!.concatenate(scale);
+            }
+            
+            // Store the new layer as a new backing layer
+            _backing[id] = newLayer!;
+            return;
+        } else {
+            // No base layer, so we can't create new layers
+            return;
+        }
     }
 }

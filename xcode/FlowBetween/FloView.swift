@@ -517,6 +517,9 @@ public class FloView : NSObject {
         if _drawingLayer == nil {
             createCanvasDrawingLayer(events);
         }
+        
+        // Make sure the backing for the layer has been created
+        _drawingLayer?.ensureLayerWithId(id: layer);
 
         // Fetch the layer with this ID
         return _drawingLayer?._backing[layer]?.context;
