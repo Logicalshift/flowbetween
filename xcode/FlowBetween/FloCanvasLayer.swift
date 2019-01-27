@@ -13,7 +13,7 @@ import Cocoa
 ///
 class FloCanvasLayer : CALayer {
     /// The backing for this layer (nil if it's not drawable yet)
-    var _backing: [UInt32: CGContext];
+    var _backing: [UInt32: CGLayer];
     
     /// Function called to trigger a redraw
     var _triggerRedraw: ((NSSize, NSRect) -> ())?;
@@ -30,7 +30,7 @@ class FloCanvasLayer : CALayer {
     override init() {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
-        _backing        = [UInt32: CGContext]();
+        _backing        = [UInt32: CGLayer]();
 
         super.init();
     }
@@ -38,7 +38,7 @@ class FloCanvasLayer : CALayer {
     override init(layer: Any) {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
-        _backing        = [UInt32: CGContext]();
+        _backing        = [UInt32: CGLayer]();
 
         super.init();
         
@@ -53,22 +53,39 @@ class FloCanvasLayer : CALayer {
     required init?(coder aDecoder: NSCoder) {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
-        _backing        = [UInt32: CGContext]();
+        _backing        = [UInt32: CGLayer]();
 
         super.init(coder: aDecoder);
     }
     
     override func draw(in ctx: CGContext) {
-        autoreleasepool {
-            // Draw the backing layer on this layer
-            let layer_ids   = _backing.keys.sorted();
-            let bounds      = self.bounds;
+        // Redraw the backing layer if it has been invalidated
+        if _backing.count == 0 {
+            var size    = _visibleRect.size;
+            size.width  *= _resolution;
+            size.height *= _resolution;
             
-            for layer_id in layer_ids {
-                if let image = _backing[layer_id]!.makeImage() {
-                    ctx.draw(image, in: bounds);
-                }
+            if size.width == 0 { size.width = 1; }
+            if size.height == 0 { size.height = 1; }
+            
+            // Create the backing layer (there's always a layer 0 by default)
+            _backing[0] = CGLayer(ctx, size: size, auxiliaryInfo: nil);
+            
+            if _resolution != 1.0 {
+                let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution);
+                _backing[0]!.context!.concatenate(scale);
             }
+            
+            // Force a redraw via the events
+            _triggerRedraw?(_canvasSize, _visibleRect);
+        }
+        
+        // Draw the backing layer on this layer
+        let layer_ids   = _backing.keys.sorted();
+        let bounds      = self.bounds;
+        
+        for layer_id in layer_ids {
+            ctx.draw(_backing[layer_id]!, in: bounds);
         }
     }
     
@@ -83,14 +100,17 @@ class FloCanvasLayer : CALayer {
         }
         
         // Clear the bottom layer
-        _backing[0]?.clear(CGRect(origin: CGPoint(x: 0, y: 0), size: self.bounds.size));
+        _backing[0]?.context?.clear(CGRect(origin: CGPoint(x: 0, y: 0), size: self.bounds.size));
     }
     
     ///
     /// Ensures the layer with the specifed ID exists
     ///
     func ensureLayerWithId(id: UInt32) {
-        if !_backing.keys.contains(id) {
+        if _backing.keys.contains(id) {
+            // Layer already exists
+            return;
+        } else if let baseLayer = _backing[0] {
             // Get the size for the new layer
             var size    = _visibleRect.size;
             size.width  *= _resolution;
@@ -100,24 +120,19 @@ class FloCanvasLayer : CALayer {
             if size.height == 0 { size.height = 1; }
 
             // We create the new layer from a base layer (as CGLayer needs a context to work from)
-            let newLayer = CGContext.init(data:             nil,
-                                          width:            Int(size.width),
-                                          height:           Int(size.height),
-                                          bitsPerComponent: 8,
-                                          bytesPerRow:      0,
-                                          space:            CGColorSpaceCreateDeviceRGB(),
-                                          bitmapInfo:       CGImageAlphaInfo.premultipliedLast.rawValue);
+            let newLayer = CGLayer(baseLayer.context!, size: size, auxiliaryInfo: nil);
             
             if _resolution != 1.0 {
                 let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution);
-                newLayer!.concatenate(scale);
+                newLayer!.context!.concatenate(scale);
             }
-            
-            newLayer?.setFillColor(red: 1, green: 0, blue: 0, alpha: 1);
-            newLayer?.fill(self.bounds);
             
             // Store the new layer as a new backing layer
             _backing[id] = newLayer!;
+            return;
+        } else {
+            // No base layer, so we can't create new layers
+            return;
         }
     }
 }
