@@ -25,7 +25,8 @@ struct CanvasStateValues {
     blend_mode:     CGBlendMode,
     layer_id:       u32,
     line_width:     CGFloat,
-    path:           Vec<PathAction>
+    path:           Vec<PathAction>,
+    clip:           Option<Vec<PathAction>>
 }
 
 ///
@@ -58,7 +59,8 @@ impl CanvasState {
                     blend_mode:     CGBlendMode::Normal,
                     layer_id:       0,
                     line_width:     1.0,
-                    path:           vec![]
+                    path:           vec![],
+                    clip:           None
                 },
                 stack:      vec![]
             }
