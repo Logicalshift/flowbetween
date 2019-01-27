@@ -527,22 +527,13 @@ public class FloView : NSObject {
     /// Drawing on the context has finished
     ///
     @objc public func viewFinishedDrawing() {
-        if !_willUpdateCanvas {
-            _willUpdateCanvas = true;
-            
-            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
-                autoreleasepool {
-                    self._willUpdateCanvas = false;
-                    
-                    CATransaction.begin();
-                    CATransaction.setAnimationDuration(0.0);
-                    CATransaction.setDisableActions(true);
-                    
-                    self._drawingLayer?.display();
-                    
-                    CATransaction.commit();
-                }
-            });
-        }
+        _drawingLayer?.setNeedsDisplay();
+    }
+    
+    ///
+    /// The drawing canvas should be entirely cleared
+    ///
+    @objc public func viewClearCanvas() {
+        _drawingLayer?.clearBackingLayers();
     }
 }
