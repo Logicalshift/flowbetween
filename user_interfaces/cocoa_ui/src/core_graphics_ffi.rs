@@ -19,6 +19,9 @@ pub type CGColorSpaceRef = *mut CGColorSpace;
 #[repr(C)] pub struct CGColor { _private: [u8; 0] }
 pub type CGColorRef = *mut CGColor;
 
+#[repr(C)] pub struct CGMutablePath { _private: [u8; 0] }
+pub type CGMutablePathRef = *mut CGMutablePath;
+
 #[derive(Copy, Clone, Debug)]
 #[repr(C)] pub struct CGAffineTransform {
     pub a: CGFloat,
@@ -127,6 +130,15 @@ extern {
     pub fn CGAffineTransformConcat(t1: CGAffineTransform, t2: CGAffineTransform) -> CGAffineTransform;
     pub fn CGPointApplyAffineTransform(CGPoint: CGPoint, t: CGAffineTransform) -> CGPoint;
 
+    pub fn CGPathCreateMutable() -> CGMutablePathRef;
+    pub fn CGPathCreateMutableCopy(path: CGMutablePathRef) -> CGMutablePathRef;
+    pub fn CGPathRetain(path: CGMutablePathRef);
+    pub fn CGPathRelease(path: CGMutablePathRef);
+    pub fn CGPathCloseSubpath(path: CGMutablePathRef);
+    pub fn CGPathMoveToPoint(path: CGMutablePathRef, m: *const CGAffineTransform, x: CGFloat, y: CGFloat);
+    pub fn CGPathAddLineToPoint(path: CGMutablePathRef, m: *const CGAffineTransform, x: CGFloat, y: CGFloat);
+    pub fn CGPathAddCurveToPoint(path: CGMutablePathRef, m: *const CGAffineTransform, cp1x: CGFloat, cp1y: CGFloat, cp2x: CGFloat, cp2y: CGFloat, x: CGFloat, y: CGFloat);
+
     pub fn CGContextRetain(ctxt: CGContextRef);
     pub fn CGContextRelease(ctxt: CGContextRef);
     pub fn CGContextSaveGState(ctxt: CGContextRef);
@@ -144,6 +156,7 @@ extern {
     pub fn CGContextConcatCTM(ctxt: CGContextRef, transform: CGAffineTransform);
     pub fn CGContextGetCTM(ctxt: CGContextRef) -> CGAffineTransform;
     pub fn CGContextSetBlendMode(ctxt: CGContextRef, blendMode: CGBlendMode);
+    pub fn CGContextAddPath(c: CGContextRef, path: CGMutablePathRef);
 }
 
 pub trait CFReleasable { 
@@ -181,6 +194,17 @@ impl CFReleasable for CGColorSpaceRef {
 
     #[inline] fn release(&self) {
         unsafe { CGColorSpaceRelease(*self); }
+    }
+}
+
+impl CFReleasable for CGMutablePathRef {
+    #[inline] fn retain(&self) -> Self {
+        unsafe { CGPathRetain(*self); }
+        *self
+    }
+
+    #[inline] fn release(&self) {
+        unsafe { CGPathRelease(*self); }
     }
 }
 
