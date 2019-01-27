@@ -65,11 +65,44 @@ impl ViewCanvas {
 
         // Update the context state
         if let Some(state) = self.state.take() {
+            // Update the context to use the layer specified in the state
+            let layer_context = context_for_layer(state.layer_id());
+            if let Some(layer_context) = layer_context {
+                context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+            }
+
+            // Set the initial state of the context
             context.set_state(state);
         }
 
         // Send the drawing commands
-        actions.into_iter().for_each(|action| context.draw(&action));
+        for action in actions.into_iter() {
+            use self::Draw::*;
+
+            match action {
+                Layer(new_layer_id) => {
+                    // Extract the state from the current context
+                    let mut state = context.to_state();
+
+                    // Update the layer ID
+                    state.set_layer_id(new_layer_id);
+
+                    // Create a new context for the layer
+                    let layer_context = context_for_layer(new_layer_id);
+                    if let Some(layer_context) = layer_context {
+                        // Create the context for the new layer and send the state there
+                        context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
+                        context.set_state(state);
+                    } else {
+                        // Stop drawing if we can't get a context for the layer
+                        return;
+                    }
+                },
+
+                // Other actions are just sent straight to the current context
+                other_action => context.draw(&other_action)
+            }
+        }
 
         // Finished with the context, store the final state
         self.state = Some(context.to_state());
