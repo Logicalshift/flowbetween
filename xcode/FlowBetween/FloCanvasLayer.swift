@@ -111,8 +111,16 @@ class FloCanvasLayer : CALayer {
             // Layer already exists
             return;
         } else if let baseLayer = _backing[0] {
+            // Get the size for the new layer
+            var size    = _visibleRect.size;
+            size.width  *= _resolution;
+            size.height *= _resolution;
+            
+            if size.width == 0 { size.width = 1; }
+            if size.height == 0 { size.height = 1; }
+
             // We create the new layer from a base layer (as CGLayer needs a context to work from)
-            let newLayer = CGLayer(baseLayer.context!, size: baseLayer.size, auxiliaryInfo: nil);
+            let newLayer = CGLayer(baseLayer.context!, size: size, auxiliaryInfo: nil);
             
             if _resolution != 1.0 {
                 let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution);
