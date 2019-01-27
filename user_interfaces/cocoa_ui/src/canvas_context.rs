@@ -104,7 +104,7 @@ impl CanvasContext {
                 ClosePath                                           => { CGContextClosePath(*self.context); }
                 Fill                                                => { CGContextFillPath(*self.context); }
                 Stroke                                              => { CGContextStrokePath(*self.context); }
-                LineWidth(width)                                    => { CGContextSetLineWidth(*self.context, *width as CGFloat); }
+                LineWidth(width)                                    => { self.state.set_line_width(*width as CGFloat); }
                 LineWidthPixels(width_pixels)                       => {
                     let width_pixels    = *width_pixels as CGFloat;
                     let transform       = self.state.current_transform();
@@ -112,7 +112,7 @@ impl CanvasContext {
                     if scale_y == 0.0 { scale_y = 1.0 }
                     let scale_width     = width_pixels / scale_y;
 
-                    CGContextSetLineWidth(*self.context, scale_width);
+                    self.state.set_line_width(scale_width);
                 }
                 LineJoin(join)                                      => { /* TODO */ }
                 LineCap(cap)                                        => { /* TODO */ }

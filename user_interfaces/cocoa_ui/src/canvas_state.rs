@@ -12,7 +12,8 @@ struct CanvasStateValues {
     stroke_color:   CFRef<CGColorRef>,
     transform:      CGAffineTransform,
     blend_mode:     CGBlendMode,
-    layer_id:       u32
+    layer_id:       u32,
+    line_width:     CGFloat
 }
 
 ///
@@ -43,7 +44,8 @@ impl CanvasState {
                     stroke_color:   stroke_color,
                     transform:      transform,
                     blend_mode:     CGBlendMode::Normal,
-                    layer_id:       0
+                    layer_id:       0,
+                    line_width:     1.0
                 },
                 stack:      vec![]
             }
@@ -106,10 +108,11 @@ impl CanvasState {
                 CGContextSaveGState(**context);
 
                 // Set the values from the current state
+                CGContextConcatCTM(**context, self.values.transform);
                 CGContextSetBlendMode(**context, self.values.blend_mode);
                 CGContextSetFillColorWithColor(**context, *self.values.fill_color);
                 CGContextSetStrokeColorWithColor(**context, *self.values.stroke_color);
-                CGContextConcatCTM(**context, self.values.transform);
+                CGContextSetLineWidth(**context, self.values.line_width);
             }
         }
     }
@@ -148,6 +151,19 @@ impl CanvasState {
             // Set in the context
             if let Some(ref context) = self.context {
                 CGContextSetStrokeColorWithColor(**context, *self.values.stroke_color);
+            }
+        }
+    }
+
+    ///
+    /// Sets the line width
+    ///
+    pub fn set_line_width(&mut self, line_width: CGFloat) {
+        unsafe {
+            self.values.line_width = line_width;
+
+            if let Some(ref context) = self.context {
+                CGContextSetLineWidth(**context, line_width);
             }
         }
     }
