@@ -455,7 +455,7 @@ public class FloView : NSObject {
             _drawingLayer?._resolution      = resolutionMultiplier;
             _drawingLayer?.contentsScale    = resolutionMultiplier;
             
-            _drawingLayer?.setNeedsDisplay();
+            redisplayCanvasLayer();
         }
     }
     
@@ -505,7 +505,21 @@ public class FloView : NSObject {
         layer.drawsAsynchronously  = false;
         layer.setNeedsDisplay();
         
-        RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
+        RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.modalPanel, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
+    }
+
+    var _willRedisplayCanvasLayer = false;
+    ///
+    /// Causes the canvas layer to be redisplayed need time through the runloop
+    ///
+    func redisplayCanvasLayer() {
+        if !_willRedisplayCanvasLayer {
+            _willRedisplayCanvasLayer = true;
+            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.modalPanel, RunLoop.Mode.eventTracking], block: {
+                self._willRedisplayCanvasLayer = false;
+                self._drawingLayer?.display();
+            });
+        }
     }
     
     ///
@@ -526,7 +540,7 @@ public class FloView : NSObject {
     /// Drawing on the context has finished
     ///
     @objc public func viewFinishedDrawing() {
-        _drawingLayer?.setNeedsDisplay();
+        redisplayCanvasLayer();
     }
     
     ///
