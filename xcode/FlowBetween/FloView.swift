@@ -461,56 +461,64 @@ public class FloView : NSObject {
     }
     
     ///
+    /// Creates the layer that will be used to draw canvas items for this view
+    ///
+    func createCanvasDrawingLayer(_ events: FloEvents) {
+        // Create the layer
+        let layer       = FloCanvasLayer();
+        
+        // Layer should not animate its contents
+        layer.actions = [
+            "onOrderIn":    NSNull(),
+            "onOrderOut":   NSNull(),
+            "sublayers":    NSNull(),
+            "contents":     NSNull(),
+            "bounds":       NSNull(),
+            "frame":        NSNull()
+        ];
+        
+        _drawingLayer = layer;
+        
+        // Reset the layer size when the bounds change
+        weak var this = self;
+        var willChangeBounds = false;
+        _view.boundsChanged = { newBounds in
+            if !willChangeBounds {
+                willChangeBounds = true;
+                
+                RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                    willChangeBounds = false;
+                    if let this = this {
+                        // Update the layer bounds
+                        this.drawingLayerBoundsChanged(newBounds);
+                    }
+                });
+            }
+        }
+        
+        var initialSize = _view.layoutSize;
+        if initialSize.width < 1 { initialSize.width = 1 }
+        if initialSize.height < 1 { initialSize.height = 1 }
+        
+        layer._triggerRedraw        = { (canvasSize, viewport) in events.redrawCanvas(with: canvasSize, viewport: viewport); }
+        layer.backgroundColor       = CGColor.clear;
+        layer.frame                 = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
+        layer.drawsAsynchronously  = false;
+        layer.setNeedsDisplay();
+        
+        RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
+    }
+    
+    ///
     /// Retrieves the drawing context for this view
     ///
     @objc public func viewGetCanvasForDrawing(_ events: FloEvents, layer: UInt32) -> CGContext? {
         // Create the drawing layer if one doesn't exist yet
         if _drawingLayer == nil {
-            // Create the layer
-            let layer       = FloCanvasLayer();
-
-            // Layer should not animate its contents
-            layer.actions = [
-                "onOrderIn":    NSNull(),
-                "onOrderOut":   NSNull(),
-                "sublayers":    NSNull(),
-                "contents":     NSNull(),
-                "bounds":       NSNull(),
-                "frame":        NSNull()
-            ];
-
-            _drawingLayer = layer;
-
-            // Reset the layer size when the bounds change
-            weak var this = self;
-            var willChangeBounds = false;
-            _view.boundsChanged = { newBounds in
-                if !willChangeBounds {
-                    willChangeBounds = true;
-                    
-                    RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
-                        willChangeBounds = false;
-                        if let this = this {
-                            // Update the layer bounds
-                            this.drawingLayerBoundsChanged(newBounds);
-                        }
-                    });
-                }
-            }
-
-            var initialSize = _view.layoutSize;
-            if initialSize.width < 1 { initialSize.width = 1 }
-            if initialSize.height < 1 { initialSize.height = 1 }
-            
-            layer._triggerRedraw        = { (canvasSize, viewport) in events.redrawCanvas(with: canvasSize, viewport: viewport); }
-            layer.backgroundColor       = CGColor.clear;
-            layer.frame                 = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
-            layer.drawsAsynchronously  = false;
-            layer.setNeedsDisplay();
-
-            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
+            createCanvasDrawingLayer(events);
         }
 
+        // Fetch the layer with this ID
         return _drawingLayer?._backing[layer]?.context;
     }
     
