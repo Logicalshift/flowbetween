@@ -112,7 +112,7 @@ impl CanvasContext {
                     if scale_y == 0.0 { scale_y = 1.0 }
                     let scale_width     = width_pixels / scale_y;
 
-                    CGContextSetLineWidth(*self.context, width_pixels);
+                    CGContextSetLineWidth(*self.context, scale_width);
                 }
                 LineJoin(join)                                      => { /* TODO */ }
                 LineCap(cap)                                        => { /* TODO */ }
