@@ -442,7 +442,7 @@ public class FloView : NSObject {
             // Regenerate the graphics context so that it's the appropriate size for the layer
             if _drawingLayer?._visibleRect.size != newBounds.visibleRect.size {
                 // Backing will have changed size, so invalidate it entirely
-                _drawingLayer?._backing         = [UInt32:CGLayer]();
+                _drawingLayer?._backing         = [UInt32:CGContext]();
             } else {
                 // Just clear the backing layers
                 _drawingLayer?.clearBackingLayers();
@@ -522,7 +522,7 @@ public class FloView : NSObject {
         _drawingLayer?.ensureLayerWithId(id: layer);
 
         // Fetch the layer with this ID
-        return _drawingLayer?._backing[layer]?.context;
+        return _drawingLayer?._backing[layer];
     }
     
     var _willUpdateCanvas = false;
