@@ -68,6 +68,8 @@ impl ViewCanvas {
             // Update the context to use the layer specified in the state
             let layer_context = context_for_layer(state.layer_id());
             if let Some(layer_context) = layer_context {
+                // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
+                context.to_state();
                 context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
             }
 
