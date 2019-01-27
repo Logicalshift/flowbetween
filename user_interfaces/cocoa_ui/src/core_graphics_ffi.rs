@@ -158,6 +158,7 @@ extern {
     pub fn CGContextSetBlendMode(ctxt: CGContextRef, blendMode: CGBlendMode);
     pub fn CGContextAddPath(ctxt: CGContextRef, path: CGMutablePathRef);
     pub fn CGContextClearRect(ctxt: CGContextRef, rect: CGRect);
+    pub fn CGContextClip(ctxt: CGContextRef);
 }
 
 pub trait CFReleasable { 

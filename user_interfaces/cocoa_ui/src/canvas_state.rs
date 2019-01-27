@@ -97,6 +97,11 @@ impl CanvasState {
     pub fn deactivate_context(&mut self) {
         if let Some(ref context) = self.context {
             unsafe {
+                if self.values.clip.is_some() {
+                    // Remove the clipping state
+                    CGContextRestoreGState(**context);
+                }
+
                 // Restore the GState
                 CGContextRestoreGState(**context);
             }
@@ -112,6 +117,9 @@ impl CanvasState {
         if let Some(ref context) = self.context {
             unsafe {
                 // Reset the GState to its default (which will have no transform applied)
+                if self.values.clip.is_some() {
+                    CGContextRestoreGState(**context);
+                }
                 CGContextRestoreGState(**context);
                 CGContextSaveGState(**context);
 
@@ -135,20 +143,71 @@ impl CanvasState {
 
     ///
     /// Re-applies the state contained within this object to the current graphics context
+    /// 
+    /// When reapply_state is called, there must be a single GState pushed which will can be
+    /// used later to deactivate the current state.
     ///
-    pub fn reapply_state(&self) {
+    fn reapply_state(&self) {
         unsafe {
             if let Some(ref context) = self.context {
-                // Reset the GState and re-save it
-                CGContextRestoreGState(**context);
-                CGContextSaveGState(**context);
-
                 // Set the values from the current state
                 CGContextConcatCTM(**context, self.values.transform);
                 CGContextSetBlendMode(**context, self.values.blend_mode);
                 CGContextSetFillColorWithColor(**context, *self.values.fill_color);
                 CGContextSetStrokeColorWithColor(**context, *self.values.stroke_color);
                 CGContextSetLineWidth(**context, self.values.line_width);
+
+                // Store the clipping state if there is one
+                if let Some(ref clip) = self.values.clip {
+                    CGContextSaveGState(**context);
+                    self.load_path_from(clip);
+                    CGContextClip(**context);
+                }
+            }
+        }
+    }
+
+    ///
+    /// Removes the existing clipping area from this canvas
+    ///
+    pub fn unclip(&mut self) {
+        // You can't directly set the clipping area so we restore the GState instead 
+        // Careful: clipping areas have the annoying side-effect of making it easy to leave a GState on the stack by mistake
+        if let Some(ref context) = self.context {
+            unsafe {
+                if self.values.clip.is_some() {
+                    CGContextRestoreGState(**context);
+                }
+            }
+        }
+
+        // Remove from the state values
+        self.values.clip = None;
+    }
+
+    ///
+    /// Sets the clipping area to the current path
+    ///
+    pub fn clip(&mut self) {
+        // Remove any existing clipping area
+        if self.values.clip.is_some() {
+            self.unclip();
+        }
+
+        // Store the current path as the clipping state
+        self.values.clip = Some(self.values.path.clone());
+
+        // Update the clipping path
+        if let Some(ref context) = self.context {
+            unsafe {
+                // Store the GState without any clipping path
+                CGContextSaveGState(**context);
+
+                // Load the clipping path
+                self.load_path_from(self.values.clip.as_ref().unwrap());
+
+                // Activate it
+                CGContextClip(**context);
             }
         }
     }
@@ -192,11 +251,18 @@ impl CanvasState {
     /// Loads the current path into the context
     ///
     pub fn load_path(&self) {
+        self.load_path_from(&self.values.path);
+    }
+
+    ///
+    /// Loads the current path into the context
+    ///
+    fn load_path_from(&self, path: &Vec<PathAction>) {
         unsafe {
             if let Some(ref context) = self.context {
                 CGContextBeginPath(**context);
 
-                for action in self.values.path.iter() {
+                for action in path.iter() {
                     use self::PathAction::*;
 
                     match action {
