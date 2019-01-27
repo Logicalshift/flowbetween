@@ -104,6 +104,27 @@ impl CanvasState {
     }
 
     ///
+    /// Performs a set of actions with the native 'pixel' transform instead of the one set in this state
+    ///
+    pub fn with_native_transform<ActionFn: Fn(CGContextRef) -> ()>(&mut self, action: ActionFn) {
+        if let Some(ref context) = self.context {
+            unsafe {
+                // Reset the GState to its default (which will have no transform applied)
+                CGContextRestoreGState(**context);
+                CGContextSaveGState(**context);
+
+                // Run the actions
+                action(**context);
+
+                // Reset the context 
+                CGContextRestoreGState(**context);
+                CGContextSaveGState(**context);
+                self.reapply_state();
+            }
+        }
+    }
+
+    ///
     /// Returns the current affine transform for this state
     ///
     pub fn current_transform(&self) -> CGAffineTransform {

@@ -129,7 +129,16 @@ impl CanvasContext {
                 FreeStoredBuffer                                    => { /* TODO */ }
                 PushState                                           => { self.state.push_state(); }
                 PopState                                            => { self.state.pop_state(); }
-                ClearLayer                                          => { /* TODO */ }
+
+                ClearLayer                                          => { 
+                    let viewport_size = self.viewport_size;
+                    self.state.with_native_transform(|context| {
+                        CGContextClearRect(context, CGRect {
+                            origin: CGPoint { x: 0.0, y: 0.0 },
+                            size:   CGSize  { width: viewport_size.0 as CGFloat, height: viewport_size.1 as CGFloat }
+                        })
+                    });
+                }
 
                 IdentityTransform                                   => { 
                     self.state.set_transform(self.get_identity_transform());
