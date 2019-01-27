@@ -3,6 +3,17 @@ use super::core_graphics_ffi::*;
 use flo_canvas::*;
 
 ///
+/// Possible actions stored in the path for this state
+///
+#[derive(Copy, Clone)]
+enum PathAction {
+    Close,
+    Move(CGFloat, CGFloat),
+    Line(CGFloat, CGFloat),
+    Curve(CGFloat, CGFloat, CGFloat, CGFloat, CGFloat, CGFloat)
+}
+
+///
 /// The values stores in a canvas state
 ///
 #[derive(Clone)]
@@ -13,7 +24,8 @@ struct CanvasStateValues {
     transform:      CGAffineTransform,
     blend_mode:     CGBlendMode,
     layer_id:       u32,
-    line_width:     CGFloat
+    line_width:     CGFloat,
+    path:           Vec<PathAction>
 }
 
 ///
@@ -45,7 +57,8 @@ impl CanvasState {
                     transform:      transform,
                     blend_mode:     CGBlendMode::Normal,
                     layer_id:       0,
-                    line_width:     1.0
+                    line_width:     1.0,
+                    path:           vec![]
                 },
                 stack:      vec![]
             }
@@ -113,6 +126,63 @@ impl CanvasState {
                 CGContextSetFillColorWithColor(**context, *self.values.fill_color);
                 CGContextSetStrokeColorWithColor(**context, *self.values.stroke_color);
                 CGContextSetLineWidth(**context, self.values.line_width);
+            }
+        }
+    }
+
+    ///
+    /// Starts a new path
+    ///
+    #[inline] pub fn begin_path(&mut self) {
+        self.values.path = vec![];
+    }
+
+    ///
+    /// Adds a move action to the current path
+    ///
+    #[inline] pub fn path_move(&mut self, x: CGFloat, y: CGFloat) {
+        self.values.path.push(PathAction::Move(x, y));
+    }
+
+    ///
+    /// Adds a line action to the current path
+    ///
+    #[inline] pub fn path_line(&mut self, x: CGFloat, y: CGFloat) {
+        self.values.path.push(PathAction::Line(x, y));
+    }
+
+    ///
+    /// Adds a bezier curve action to the current path
+    ///
+    #[inline] pub fn path_bezier_curve(&mut self, cp1: (CGFloat, CGFloat), cp2: (CGFloat, CGFloat), end: (CGFloat, CGFloat)) {
+        self.values.path.push(PathAction::Curve(cp1.0, cp1.1, cp2.0, cp2.1, end.0, end.1));
+    }
+
+    ///
+    /// Adds a bezier path 'close' action to the current path
+    ///
+    #[inline] pub fn path_close(&mut self) {
+        self.values.path.push(PathAction::Close);
+    }
+
+    ///
+    /// Loads the current path into the context
+    ///
+    pub fn load_path(&self) {
+        unsafe {
+            if let Some(ref context) = self.context {
+                CGContextBeginPath(**context);
+
+                for action in self.values.path.iter() {
+                    use self::PathAction::*;
+
+                    match action {
+                        Move(x, y)                          => CGContextMoveToPoint(**context, *x, *y),
+                        Line(x, y)                          => CGContextAddLineToPoint(**context, *x, *y),
+                        Curve(c1x, c1y, c2x, c2y, ex, ey)   => CGContextAddCurveToPoint(**context, *c1x, *c1y, *c2x, *c2y, *ex, *ey),
+                        Close                               => CGContextClosePath(**context)
+                    }
+                }
             }
         }
     }

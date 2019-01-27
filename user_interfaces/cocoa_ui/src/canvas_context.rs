@@ -97,13 +97,13 @@ impl CanvasContext {
 
         unsafe {
             match draw {
-                NewPath                                             => { CGContextBeginPath(*self.context); }
-                Move(x, y)                                          => { CGContextMoveToPoint(*self.context, *x as CGFloat, *y as CGFloat); }
-                Line(x, y)                                          => { CGContextAddLineToPoint(*self.context, *x as CGFloat, *y as CGFloat); }
-                BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { CGContextAddCurveToPoint(*self.context, *c1x as CGFloat, *c1y as CGFloat, *c2x as CGFloat, *c2y as CGFloat, *ex as CGFloat, *ey as CGFloat); }
-                ClosePath                                           => { CGContextClosePath(*self.context); }
-                Fill                                                => { CGContextFillPath(*self.context); }
-                Stroke                                              => { CGContextStrokePath(*self.context); }
+                NewPath                                             => { self.state.begin_path(); }
+                Move(x, y)                                          => { self.state.path_move(*x as CGFloat, *y as CGFloat); }
+                Line(x, y)                                          => { self.state.path_line(*x as CGFloat, *y as CGFloat); }
+                BezierCurve((ex, ey), (c1x, c1y), (c2x, c2y))       => { self.state.path_bezier_curve((*c1x as CGFloat, *c1y as CGFloat), (*c2x as CGFloat, *c2y as CGFloat), (*ex as CGFloat, *ey as CGFloat)); }
+                ClosePath                                           => { self.state.path_close(); }
+                Fill                                                => { self.state.load_path(); CGContextFillPath(*self.context); }
+                Stroke                                              => { self.state.load_path(); CGContextStrokePath(*self.context); }
                 LineWidth(width)                                    => { self.state.set_line_width(*width as CGFloat); }
                 LineWidthPixels(width_pixels)                       => {
                     let width_pixels    = *width_pixels as CGFloat;
