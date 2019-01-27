@@ -317,6 +317,17 @@ impl CocoaSession {
     }
 
     ///
+    /// Creates a view canvas for this session
+    ///
+    fn create_view_canvas(view: &StrongPtr) -> ViewCanvas {
+        let view = view.clone();
+
+        ViewCanvas::new(move || {
+            unsafe { msg_send!(*view, viewClearCanvas); }
+        })
+    }
+
+    ///
     /// Performs some drawing actions on the specified view
     ///
     fn draw(&mut self, view_id: usize, view: &StrongPtr, actions: Vec<Draw>) {
@@ -325,7 +336,7 @@ impl CocoaSession {
             let flo_events = self.events_for_view(view_id);
 
             // Fetch the canvas for this view
-            let canvas = self.canvases.entry(view_id).or_insert_with(|| ViewCanvas::new());
+            let canvas = self.canvases.entry(view_id).or_insert_with(|| Self::create_view_canvas(view));
 
             canvas.draw(actions, move |layer_id| {
                 let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: layer_id);
@@ -351,8 +362,8 @@ impl CocoaSession {
             let flo_events = self.events_for_view(view_id);
 
             // Fetch the canvas for this view
-            let canvas  = self.canvases.entry(view_id).or_insert_with(|| ViewCanvas::new());
             let view    = self.views.get(&view_id);
+            let canvas  = self.canvases.entry(view_id).or_insert_with(|| Self::create_view_canvas(view.unwrap()));
 
             if let Some(view) = view {
                 // Perform the drawing actions on the canvas

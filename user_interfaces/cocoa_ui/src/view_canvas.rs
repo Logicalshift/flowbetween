@@ -18,19 +18,24 @@ pub struct ViewCanvas {
     visible: CGRect,
 
     /// The current state of the view canvas
-    state: Option<CanvasState>
+    state: Option<CanvasState>,
+
+    /// Callback function that clears the canvas
+    clear_canvas: Box<FnMut() -> ()>
 }
 
 impl ViewCanvas {
     ///
     /// Creates a new canvas for a view
     ///
-    pub fn new() -> ViewCanvas {
+    pub fn new<ClearCanvasFn>(clear_canvas: ClearCanvasFn) -> ViewCanvas
+    where ClearCanvasFn: 'static+FnMut() -> () {
         ViewCanvas {
-            canvas:     Canvas::new(),
-            size:       CGSize { width: 1.0, height: 1.0 },
-            visible:    CGRect { origin: CGPoint { x: 0.0, y: 0.0 }, size: CGSize { width: 1.0, height: 1.0 } },
-            state:      None
+            canvas:         Canvas::new(),
+            size:           CGSize { width: 1.0, height: 1.0 },
+            visible:        CGRect { origin: CGPoint { x: 0.0, y: 0.0 }, size: CGSize { width: 1.0, height: 1.0 } },
+            state:          None,
+            clear_canvas:   Box::new(clear_canvas)
         }
     }
 
@@ -82,6 +87,31 @@ impl ViewCanvas {
             use self::Draw::*;
 
             match action {
+                ClearCanvas => {
+                    unsafe {
+                        // Invalidate the context and clear
+                        context.to_state();
+                        (self.clear_canvas)();
+
+                        // Recreate the state
+                        let srgb    = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+                        let state   = CanvasState::new(CFRef::from(srgb));
+
+                        // Reset to layer 0
+                        let layer_context = context_for_layer(0);
+                        if let Some(layer_context) = layer_context {
+                            // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
+                            context = CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size);
+                        } else {
+                            // Stop drawing
+                            return;
+                        }
+
+                        // Reset the state of the context
+                        context.set_state(state);
+                    }
+                }
+
                 Layer(new_layer_id) => {
                     // Extract the state from the current context
                     let mut state = context.to_state();

@@ -444,8 +444,7 @@ public class FloView : NSObject {
                 // Backing will have changed size, so invalidate it entirely
                 _drawingLayer?.invalidateAllLayers();
             } else {
-                // Just clear the backing layers
-                _drawingLayer?.clearBackingLayers();
+                // Just trigger a redraw
                 _drawingLayer?._triggerRedraw?(newBounds.totalSize, newBounds.visibleRect);
             }
             
