@@ -440,9 +440,17 @@ public class FloView : NSObject {
             CATransaction.commit();
             
             // Regenerate the graphics context so that it's the appropriate size for the layer
-            _drawingLayer?._backing         = nil;
+            if _drawingLayer?._visibleRect.size != newBounds.visibleRect.size {
+                // Backing will have changed size, so invalidate it entirely
+                _drawingLayer?._backing         = nil;
+            } else {
+                // Just clear the backing layers
+                _drawingLayer?.clearBackingLayers();
+                _drawingLayer?._triggerRedraw?(newBounds.totalSize, newBounds.visibleRect);
+            }
+            
             _drawingLayer?._canvasSize      = newBounds.totalSize;
-            _drawingLayer?._viewportOrigin = newBounds.visibleRect.origin;
+            _drawingLayer?._visibleRect     = newBounds.visibleRect;
             
             // Set the initial transformation of the context
             _drawingLayer?._resolution      = resolutionMultiplier;
