@@ -442,7 +442,7 @@ public class FloView : NSObject {
             // Regenerate the graphics context so that it's the appropriate size for the layer
             if _drawingLayer?._visibleRect.size != newBounds.visibleRect.size {
                 // Backing will have changed size, so invalidate it entirely
-                _drawingLayer?._backing         = nil;
+                _drawingLayer?._backing         = [UInt32:CGLayer]();
             } else {
                 // Just clear the backing layers
                 _drawingLayer?.clearBackingLayers();
@@ -463,7 +463,7 @@ public class FloView : NSObject {
     ///
     /// Retrieves the drawing context for this view
     ///
-    @objc public func viewGetCanvasForDrawing(_ events: FloEvents, layer: UInt64) -> CGContext? {
+    @objc public func viewGetCanvasForDrawing(_ events: FloEvents, layer: UInt32) -> CGContext? {
         // Create the drawing layer if one doesn't exist yet
         if _drawingLayer == nil {
             // Create the layer
@@ -511,7 +511,7 @@ public class FloView : NSObject {
             RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
         }
 
-        return _drawingLayer?._backing?.context;
+        return _drawingLayer?._backing[layer]?.context;
     }
     
     var _willUpdateCanvas = false;

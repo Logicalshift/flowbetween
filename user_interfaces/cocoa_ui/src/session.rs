@@ -328,7 +328,7 @@ impl CocoaSession {
             let canvas = self.canvases.entry(view_id).or_insert_with(|| ViewCanvas::new());
 
             // Get the context from the view to start drawing
-            let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: 0);
+            let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: 0 as u32);
             if !graphics_context.is_null() {
                 let graphics_context = CFRef::from(graphics_context.retain());
 
@@ -358,7 +358,7 @@ impl CocoaSession {
 
             if let Some(view) = view {
                 // Get the context from the view to start drawing
-                let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: 0);
+                let graphics_context: CGContextRef = msg_send!(**view, viewGetCanvasForDrawing: retain(&flo_events) layer: 0 as u32);
                 if !graphics_context.is_null() {
                     let graphics_context = CFRef::from(graphics_context.retain());
 

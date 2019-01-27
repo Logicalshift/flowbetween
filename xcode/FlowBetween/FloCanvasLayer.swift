@@ -13,7 +13,7 @@ import Cocoa
 ///
 class FloCanvasLayer : CALayer {
     /// The backing for this layer (nil if it's not drawable yet)
-    var _backing: CGLayer?;
+    var _backing: [UInt32: CGLayer];
     
     /// Function called to trigger a redraw
     var _triggerRedraw: ((NSSize, NSRect) -> ())?;
@@ -30,13 +30,15 @@ class FloCanvasLayer : CALayer {
     override init() {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
-        
+        _backing        = [UInt32: CGLayer]();
+
         super.init();
     }
     
     override init(layer: Any) {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
+        _backing        = [UInt32: CGLayer]();
 
         super.init();
         
@@ -51,13 +53,14 @@ class FloCanvasLayer : CALayer {
     required init?(coder aDecoder: NSCoder) {
         _canvasSize     = NSSize(width: 1, height: 1);
         _visibleRect    = NSRect(x: 0, y: 0, width: 1, height: 1);
+        _backing        = [UInt32: CGLayer]();
 
         super.init(coder: aDecoder);
     }
     
     override func draw(in ctx: CGContext) {
         // Redraw the backing layer if it has been invalidated
-        if _backing == nil {
+        if _backing.count == 0 {
             var size    = _visibleRect.size;
             size.width  *= _resolution;
             size.height *= _resolution;
@@ -66,11 +69,11 @@ class FloCanvasLayer : CALayer {
             if size.height == 0 { size.height = 1; }
             
             // Create the backing layer
-            _backing = CGLayer(ctx, size: size, auxiliaryInfo: nil);
+            _backing[0] = CGLayer(ctx, size: size, auxiliaryInfo: nil);
             
             if _resolution != 1.0 {
                 let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution);
-                _backing!.context!.concatenate(scale);
+                _backing[0]!.context!.concatenate(scale);
             }
             
             // Force a redraw via the events
@@ -78,8 +81,11 @@ class FloCanvasLayer : CALayer {
         }
         
         // Draw the backing layer on this layer
-        if let backing = _backing {
-            ctx.draw(backing, in: self.bounds);
+        let layer_ids   = _backing.keys.sorted();
+        let bounds      = self.bounds;
+        
+        for layer_id in layer_ids {
+            ctx.draw(_backing[layer_id]!, in: bounds);
         }
     }
     
@@ -87,6 +93,13 @@ class FloCanvasLayer : CALayer {
     /// Clears the backing layers for this layer
     ///
     func clearBackingLayers() {
-        _backing?.context?.clear(CGRect(origin: CGPoint(x: 0, y: 0), size: self.bounds.size));
+        // All layers other than layer 0 are removed
+        let layers_to_remove = _backing.keys.filter({ layer_id in layer_id != 0 });
+        for layer_id in layers_to_remove {
+            _backing.removeValue(forKey: layer_id);
+        }
+        
+        // Clear the bottom layer
+        _backing[0]?.context?.clear(CGRect(origin: CGPoint(x: 0, y: 0), size: self.bounds.size));
     }
 }
