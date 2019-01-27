@@ -11,7 +11,8 @@ struct CanvasStateValues {
     fill_color:     CFRef<CGColorRef>,
     stroke_color:   CFRef<CGColorRef>,
     transform:      CGAffineTransform,
-    blend_mode:     CGBlendMode
+    blend_mode:     CGBlendMode,
+    layer_id:       u32
 }
 
 ///
@@ -41,7 +42,8 @@ impl CanvasState {
                     fill_color:     fill_color,
                     stroke_color:   stroke_color,
                     transform:      transform,
-                    blend_mode:     CGBlendMode::Normal
+                    blend_mode:     CGBlendMode::Normal,
+                    layer_id:       0
                 },
                 stack:      vec![]
             }
@@ -172,6 +174,20 @@ impl CanvasState {
         // Cocoa doesn't support setting the transformation matrix directly: we restore the original and reset all the properties
         self.values.transform = new_transform;
         self.reapply_state();
+    }
+
+    ///
+    /// Sets the layer that we should draw to for this context
+    ///
+    pub fn set_layer_id(&mut self, layer_id: u32) {
+        self.values.layer_id = layer_id;
+    }
+
+    ///
+    /// Retrieves the active layer ID
+    ///
+    pub fn layer_id(&self) -> u32 {
+        self.values.layer_id
     }
 
     ///
