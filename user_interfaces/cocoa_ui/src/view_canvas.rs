@@ -48,20 +48,20 @@ impl ViewCanvas {
     fn perform_drawing_on_context<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>), ActionIter: IntoIterator<Item=Draw>>(&mut self, actions: ActionIter, context_for_layer: ContextForLayer) {
         // Get the initial context
         let mut context_for_layer   = context_for_layer;
-        let context                 = context_for_layer(0);
+        let layer_context           = context_for_layer(0);
 
-        if context.is_none() {
+        if layer_context.is_none() {
             // Nothing to do if we can't get the context for layer 0
             return;
         }
-        let context = context.unwrap();
+        let layer_context = layer_context.unwrap();
 
         // Create the drawing context
         let viewport_origin = (self.visible.origin.x as f64, self.visible.origin.y as f64);
         let viewport_size   = (self.visible.size.width as f64, self.visible.size.height as f64);
         let canvas_size     = (self.size.width as f64, self.size.height as f64);
 
-        let mut context = unsafe { CanvasContext::new(context, viewport_origin, viewport_size, canvas_size) };
+        let mut context = unsafe { CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size) };
 
         // Update the context state
         if let Some(state) = self.state.take() {
