@@ -519,10 +519,7 @@ public class FloView : NSObject {
         }
         
         // Make sure the backing for the layer has been created
-        _drawingLayer?.ensureLayerWithId(id: layer);
-
-        // Fetch the layer with this ID
-        return _drawingLayer?._backing[layer]?.context;
+        return _drawingLayer?.getContextForLayer(id: layer);
     }
     
     var _willUpdateCanvas = false;

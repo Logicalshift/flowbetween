@@ -113,16 +113,17 @@ class FloCanvasLayer : CALayer {
     ///
     /// Ensures the layer with the specifed ID exists
     ///
-    func ensureLayerWithId(id: UInt32) {
+    func getContextForLayer(id: UInt32) -> CGContext? {
         if _backing.keys.contains(id) {
             // Layer already exists
-            return;
+            return _backing[id]?.context;
         } else if let availableLayer = _unusedLayers.popLast() {
             // Use a layer we created earlier if we can
             _backing[id] = availableLayer;
             
+            // Make sure it has nothing already rendered on it
             availableLayer.context?.clear(CGRect(origin: CGPoint.zero, size: _visibleRect.size));
-            return;
+            return availableLayer.context;
         } else if let baseLayer = _backing[0] {
             // Get the size for the new layer
             var size    = _visibleRect.size;
@@ -142,10 +143,10 @@ class FloCanvasLayer : CALayer {
             
             // Store the new layer as a new backing layer
             _backing[id] = newLayer!;
-            return;
+            return newLayer?.context;
         } else {
             // No base layer, so we can't create new layers
-            return;
+            return nil;
         }
     }
     
