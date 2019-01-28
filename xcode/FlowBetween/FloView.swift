@@ -517,6 +517,7 @@ public class FloView : NSObject {
             _willRedisplayCanvasLayer = true;
             RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.modalPanel, RunLoop.Mode.eventTracking], block: {
                 self._willRedisplayCanvasLayer = false;
+                self._drawingLayer?.setNeedsDisplay();
                 self._drawingLayer?.display();
             });
         }
