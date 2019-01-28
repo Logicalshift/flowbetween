@@ -48,6 +48,17 @@ impl ViewCanvas {
     }
 
     ///
+    /// Retrieves the transform for this view canvsa
+    ///
+    pub fn get_transform(&self) -> CGAffineTransform {
+        if let Some(state) = self.state.as_ref() {
+            state.current_transform()
+        } else {
+            unsafe { CGAffineTransformIdentity }
+        }
+    }
+
+    ///
     /// Performs a series of drawing actions on a graphics context
     ///
     fn perform_drawing_on_context<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>), ActionIter: IntoIterator<Item=Draw>>(&mut self, actions: ActionIter, context_for_layer: ContextForLayer) {

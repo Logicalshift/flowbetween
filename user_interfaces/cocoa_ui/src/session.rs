@@ -350,6 +350,7 @@ impl CocoaSession {
 
             // Finished drawing
             msg_send!(**view, viewFinishedDrawing);
+            msg_send!(**view, viewSetTransform: canvas.get_transform());
         }
     }
 
