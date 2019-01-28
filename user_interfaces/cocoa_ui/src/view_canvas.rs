@@ -1,5 +1,6 @@
 use super::canvas_state::*;
 use super::canvas_context::*;
+use super::canvas_transform::*;
 use super::core_graphics_ffi::*;
 
 use flo_canvas::*;
@@ -105,8 +106,8 @@ impl ViewCanvas {
                         (self.clear_canvas)();
 
                         // Recreate the state
-                        let srgb    = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-                        let state   = CanvasState::new(CFRef::from(srgb));
+                        let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+                        let mut state   = CanvasState::new(CFRef::from(srgb));
 
                         // Reset to layer 0
                         let layer_context = context_for_layer(0);
@@ -117,6 +118,10 @@ impl ViewCanvas {
                             // Stop drawing
                             return;
                         }
+
+                        // Set the default transform for the viewport
+                        let transform = canvas_identity_transform(viewport_origin, canvas_size);
+                        state.set_transform(transform);
 
                         // Reset the state of the context
                         context.set_state(state);
@@ -160,10 +165,17 @@ impl ViewCanvas {
 
         unsafe {
             // Reset the state
-            let srgb    = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-            let state   = CanvasState::new(CFRef::from(srgb));
+            let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+            let mut state   = CanvasState::new(CFRef::from(srgb));
 
-            self.state = Some(state);
+            // Set the default transform for the viewport
+            let viewport_origin = (self.visible.origin.x as f64, self.visible.origin.y as f64);
+            let canvas_size     = (self.size.width as f64, self.size.height as f64);
+
+            let transform       = canvas_identity_transform(viewport_origin, canvas_size);
+            state.set_transform(transform);
+
+            self.state          = Some(state);
 
             self.perform_drawing_on_context(actions, context_for_layer);
         }
