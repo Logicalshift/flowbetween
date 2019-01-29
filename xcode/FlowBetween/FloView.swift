@@ -105,17 +105,6 @@ public class FloView : NSObject {
         }
     }
     
-    /*
-    ///
-    /// The bounds within which the subviews should be laid out
-    ///
-    public var layoutBounds: NSRect {
-        get {
-            return _view.asView.bounds;
-        }
-    }
-    */
-    
     public var control: NSControl {
         get {
             if let control = _control {
