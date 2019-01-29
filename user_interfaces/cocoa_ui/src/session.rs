@@ -400,6 +400,7 @@ impl CocoaSession {
             if let Some(view) = views.get(&view_id) {
                 match event_type {
                     Click                           => { msg_send!(**view, requestClick: retain(&flo_events) withName: retain(&name)) }
+                    Paint(device)                   => { msg_send!(**view, requestPaintWithDeviceId: device as u32) }
                     VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: retain(&flo_events) withName: retain(&name) width: width as f64 height: height as f64) }
                 }
             }

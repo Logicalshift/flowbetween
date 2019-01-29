@@ -114,6 +114,32 @@ pub enum ViewAction {
     Draw(Vec<Draw>)
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum AppPaintDevice {
+    MouseLeft       = 0,
+    MouseMiddle     = 1,
+    MouseRight      = 2,
+    Pen             = 3,
+    Eraser          = 4,
+    Touch           = 5
+}
+
+impl AppPaintDevice {
+    ///
+    /// Converts an AppPaintDevice into a UI paint device
+    ///
+    pub fn into_paint_device(&self) -> PaintDevice {
+        match self {
+            AppPaintDevice::MouseLeft   => PaintDevice::Mouse(MouseButton::Left),
+            AppPaintDevice::MouseMiddle => PaintDevice::Mouse(MouseButton::Middle),
+            AppPaintDevice::MouseRight  => PaintDevice::Mouse(MouseButton::Right),
+            AppPaintDevice::Pen         => PaintDevice::Pen,
+            AppPaintDevice::Eraser      => PaintDevice::Eraser,
+            AppPaintDevice::Touch       => PaintDevice::Touch
+        }
+    }
+}
+
 ///
 /// Events that can be requested from a view
 ///
@@ -123,7 +149,10 @@ pub enum ViewEvent {
     Click,
 
     /// Send events when the view is scrolled, indicating which area is visible
-    VirtualScroll(f64, f64)
+    VirtualScroll(f64, f64),
+
+    /// Send events for painting actions on this view
+    Paint(AppPaintDevice)
 }
 
 ///

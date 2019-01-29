@@ -13,6 +13,17 @@
 
 extern NSObject* create_flo_session(Class window_class, Class view_class, Class view_model_class);
 
+struct AppPainting {
+    int32_t pointer_id;
+    double position_x;
+    double position_y;
+    double pressure;
+    double tilt_x;
+    double tilt_y;
+};
+
+typedef struct AppPainting AppPainting;
+
 @class FloEvents;
 @interface FloEvents : NSObject
 

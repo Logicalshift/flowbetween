@@ -34,11 +34,23 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
 ///
 fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
     use self::ActionTrigger::*;
+    use self::PaintDevice::*;
+    use self::MouseButton::*;
 
     match trigger {
         Click                           => vec![ViewAction::RequestEvent(ViewEvent::Click, name.clone())],
         Dismiss                         => vec![],
-        Paint(device)                   => vec![],
+        
+        Paint(Mouse(Left))              => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseLeft), name.clone())],
+        Paint(Mouse(Middle))            => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseMiddle), name.clone())],
+        Paint(Mouse(Right))             => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseRight), name.clone())],
+        Paint(Pen)                      => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::Pen), name.clone())],
+        Paint(Eraser)                   => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::Eraser), name.clone())],
+
+        Paint(Touch)                    => vec![],
+        Paint(Mouse(MouseButton::Other(_))) => vec![],
+        Paint(PaintDevice::Other)       => vec![],
+
         Drag                            => vec![],
         Focused                         => vec![],
         EditValue                       => vec![],
