@@ -7,24 +7,17 @@ use flo_ui::*;
 ///
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)] pub struct AppPainting {
-    pointer_id: i32,
-    position_x: f64,
-    position_y: f64,
-    pressure:   f64,
-    tilt_x:     f64,
-    tilt_y:     f64
+    pub pointer_id: i32,
+    pub position_x: f64,
+    pub position_y: f64,
+    pub pressure:   f64,
+    pub tilt_x:     f64,
+    pub tilt_y:     f64
 }
 
 unsafe impl objc::Encode for AppPainting {
     fn encode() -> objc::Encoding {
-        let encoding = format!("{{AppPainting={}{}{}{}{}{}}}",
-                               i32::encode().as_str(),
-                               f64::encode().as_str(),
-                               f64::encode().as_str(),
-                               f64::encode().as_str(),
-                               f64::encode().as_str(),
-                               f64::encode().as_str());
-        unsafe { objc::Encoding::from_str(&encoding) }
+        unsafe { objc::Encoding::from_str("{AppPainting=iddddd}") }
     }
 }
 
