@@ -1,5 +1,4 @@
 //! FFI for core graphics functions
-
 #[cfg(target_pointer_width = "32")] use std::os::raw::c_float;
 #[cfg(target_pointer_width = "64")] use std::os::raw::c_double;
 use std::ops::Deref;

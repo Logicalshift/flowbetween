@@ -114,7 +114,7 @@ pub enum ViewAction {
     Draw(Vec<Draw>)
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, FromPrimitive, ToPrimitive)]
 pub enum AppPaintDevice {
     MouseLeft       = 0,
     MouseMiddle     = 1,

@@ -14,3 +14,6 @@ flo_canvas  = { path = "../../canvas", version = "^0.1.0" }
 
 futures     = "0.1"
 itertools   = "0.8"
+objc        = "0.2"
+num-traits  = "0.2"
+num-derive  = "0.2"

@@ -4,6 +4,8 @@
 //! generated in the `flo_ui` library into these events.
 //!
 
+#[macro_use] extern crate num_derive;
+
 mod action;
 mod event;
 mod view_type;
