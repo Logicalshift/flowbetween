@@ -29,6 +29,7 @@ typedef struct AppPainting AppPainting;
 
 - (void) sendClick: (NSString*) name;
 - (void) sendVirtualScroll: (NSString*) name left: (uint32_t) left top: (uint32_t) top width: (uint32_t) width height: (uint32_t) height;
+- (void) sendPaintForDevice: (uint32_t) deviceId name: (NSString*) name action: AppPainting;
 - (void) redrawCanvasWithSize: (NSSize) size viewport: (NSRect) viewport;
 
 @end

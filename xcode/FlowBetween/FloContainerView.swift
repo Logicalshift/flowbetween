@@ -39,6 +39,9 @@ protocol FloContainerView {
     /// Event handler: user scrolled/resized so that a particular region is visible
     var onScroll: ((NSRect) -> ())? { get set };
     
+    /// Events handlers when a particular device is used for painting
+    var onPaint: [FloPaintDevice: (AppPainting) -> ()] { get set };
+    
     /// Event handler: user performed layout on this view
     var performLayout: ((NSSize) -> ())? { get set };
     

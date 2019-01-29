@@ -196,6 +196,24 @@ public class FloView : NSObject {
     }
     
     ///
+    /// Sends an event when the user uses the specified device to paint on this view
+    ///
+    @objc public func requestPaintWithDeviceId(_ deviceId: UInt32, events: FloEvents, withName: String?) {
+        // Convert the device ID into the device enum
+        let device = FloPaintDevice.init(rawValue: deviceId);
+        
+        if let device = device {
+            // Ask the underlying view to relay paint events to us
+            _view.onPaint[device] = { painting in
+                events.sendPaint(forDevice: deviceId, name: withName, action: painting);
+            }
+        } else {
+            // Device not in the enum
+            NSLog("Unknown paint device ID \(deviceId)");
+        }
+    }
+    
+    ///
     /// Removes this view from its superview
     ///
     @objc public func viewRemoveFromSuperview() {

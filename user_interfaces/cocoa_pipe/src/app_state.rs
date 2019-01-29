@@ -78,6 +78,7 @@ impl AppState {
         match update {
             Click(view_id, name)                            => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
             VirtualScroll(view_id, name, top_left, size)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::VirtualScroll(top_left, size))],
+            
             PaintStart(view_id, name, device, painting)     => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Start)]))],
             PaintContinue(view_id, name, device, painting)  => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Continue)]))],
             PaintFinish(view_id, name, device, painting)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Finish)]))],

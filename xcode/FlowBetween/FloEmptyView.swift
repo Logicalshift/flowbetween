@@ -42,7 +42,10 @@ class FloEmptyView : NSView, FloContainerView {
 
     /// Event handler: user scrolled/resized so that a particular region is visible
     public var onScroll: ((NSRect) -> ())?;
-    
+
+    /// Event handlers when particular devices are used for painting actions
+    public var onPaint: [FloPaintDevice: (AppPainting) -> ()] = [FloPaintDevice: (AppPainting) -> ()]();
+
     var _boundsChanged: ((ContainerBounds) -> ())?;
     /// Event handler: The bounds of the container have changed
     public var boundsChanged: ((ContainerBounds) -> ())?
