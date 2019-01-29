@@ -200,7 +200,7 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
-        // Sends the paint event
+        // Sends the paint start event
         extern fn send_paint_start(this: &mut Object, _sel: Sel, device_id: u32, name: *mut Object, painting: AppPainting) {
             unsafe {
                 let view_id = get_view_id(this);
@@ -209,6 +209,45 @@ pub fn declare_flo_events_class() -> &'static Class {
 
                 if let (Some(view_id), Some(device)) = (view_id, device) {
                     send_event(this, AppEvent::PaintStart(view_id, name, device, painting));
+                }
+            }
+        }
+
+        // Sends the paint continue event
+        extern fn send_paint_continue(this: &mut Object, _sel: Sel, device_id: u32, name: *mut Object, painting: AppPainting) {
+            unsafe {
+                let view_id = get_view_id(this);
+                let name    = name_for_name(&mut *name);
+                let device  = AppPaintDevice::from_u32(device_id);
+
+                if let (Some(view_id), Some(device)) = (view_id, device) {
+                    send_event(this, AppEvent::PaintContinue(view_id, name, device, painting));
+                }
+            }
+        }
+
+        // Sends the paint finish event
+        extern fn send_paint_finish(this: &mut Object, _sel: Sel, device_id: u32, name: *mut Object, painting: AppPainting) {
+            unsafe {
+                let view_id = get_view_id(this);
+                let name    = name_for_name(&mut *name);
+                let device  = AppPaintDevice::from_u32(device_id);
+
+                if let (Some(view_id), Some(device)) = (view_id, device) {
+                    send_event(this, AppEvent::PaintFinish(view_id, name, device, painting));
+                }
+            }
+        }
+
+        // Sends the paint cancel event
+        extern fn send_paint_cancel(this: &mut Object, _sel: Sel, device_id: u32, name: *mut Object, painting: AppPainting) {
+            unsafe {
+                let view_id = get_view_id(this);
+                let name    = name_for_name(&mut *name);
+                let device  = AppPaintDevice::from_u32(device_id);
+
+                if let (Some(view_id), Some(device)) = (view_id, device) {
+                    send_event(this, AppEvent::PaintCancel(view_id, name, device, painting));
                 }
             }
         }
@@ -264,6 +303,9 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(sendClick:), send_click as extern fn(&mut Object, Sel, *mut Object));
         flo_events.add_method(sel!(sendVirtualScroll:left:top:width:height:), send_virtual_scroll as extern fn(&mut Object, Sel, *mut Object, u32, u32, u32, u32));
         flo_events.add_method(sel!(sendPaintStartForDevice:name:action:), send_paint_start as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
+        flo_events.add_method(sel!(sendPaintContinueForDevice:name:action:), send_paint_continue as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
+        flo_events.add_method(sel!(sendPaintFinishForDevice:name:action:), send_paint_finish as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
+        flo_events.add_method(sel!(sendPaintCancelForDevice:name:action:), send_paint_cancel as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(redrawCanvasWithSize:viewport:), redraw_canvas as extern fn(&mut Object, Sel, CGSize, CGRect));
     }
 
