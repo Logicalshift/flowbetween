@@ -158,4 +158,136 @@ class FloEmptyView : NSView, FloContainerView {
             });
         }
     }
+    
+    ///
+    /// Returns the paint device that a particular event represents
+    ///
+    func paintDeviceForEvent(_ event: NSEvent) -> FloPaintDevice? {
+        if event.subtype == NSEvent.EventSubtype.tabletPoint
+            || event.subtype == NSEvent.EventSubtype.tabletProximity {
+            // Is a tablet event
+            if event.pointingDeviceType == NSEvent.PointingDeviceType.eraser {
+                // Eraser pointing device
+                return FloPaintDevice.Eraser;
+            } else {
+                // Pen pointing device
+                return FloPaintDevice.Pen;
+            }
+        } else {
+            // Is a general mouse event
+            if event.type == NSEvent.EventType.leftMouseDown {
+                return FloPaintDevice.MouseLeft;
+            } else if event.type == NSEvent.EventType.rightMouseDown {
+                return FloPaintDevice.MouseRight;
+            } else if event.type == NSEvent.EventType.otherMouseDown && event.buttonNumber == 2{
+                return FloPaintDevice.MouseMiddle;
+            } else {
+                return nil;
+            }
+        }
+    }
+    
+    ///
+    /// Generates the AppPainting data from an NSEvent
+    ///
+    func createAppPainting(event: NSEvent) -> AppPainting {
+        // Work out the location of the event
+        let locationInWindow    = event.locationInWindow;
+        let locationInView      = self.convert(locationInWindow, from: nil);
+        
+        return AppPainting(
+            pointer_id: 0,
+            position_x: Double(locationInView.x),
+            position_y: Double(locationInView.y),
+            pressure:   Double(event.pressure),
+            tilt_x:     0.0,
+            tilt_y:     0.0
+        );
+    }
+    
+    ///
+    /// Relays paint events for the specified device. The initial event should be a 'mouse down'
+    /// type event that initiated the paint actions.
+    ///
+    func paint(with device: FloPaintDevice, initialEvent: NSEvent, paintAction: (FloPaintStage, AppPainting) -> ()) {
+        // Send the paint start event
+        paintAction(FloPaintStage.Start, createAppPainting(event: initialEvent));
+        
+        // Event mask depends on the initial event
+        var eventMask = NSEvent.EventTypeMask.leftMouseDragged.union(NSEvent.EventTypeMask.leftMouseUp);
+        switch (initialEvent.type) {
+        case .leftMouseDown:
+            break;
+        case .rightMouseDown:
+            eventMask = NSEvent.EventTypeMask.rightMouseDragged.union(NSEvent.EventTypeMask.rightMouseUp);
+            break;
+        case .otherMouseDown:
+            eventMask = NSEvent.EventTypeMask.otherMouseDragged.union(NSEvent.EventTypeMask.otherMouseUp);
+            break;
+        default:
+            break;
+        }
+        
+        // Track events until the mouse is released
+        var done = false;
+        while (!done) {
+            // Fetch the next event that might mach our device
+            let nextEvent = window?.nextEvent(matching: eventMask, until: Date.distantFuture, inMode: RunLoop.Mode.eventTracking, dequeue: true);
+            
+            if let nextEvent = nextEvent {
+                // Check that the event is for the same device as started the paint action
+                if nextEvent.pointingDeviceID != initialEvent.pointingDeviceID { continue; }
+                
+                // Check if it's a finish event
+                let isFinished = nextEvent.type == NSEvent.EventType.leftMouseUp || nextEvent.type == NSEvent.EventType.rightMouseUp || nextEvent.type == NSEvent.EventType.otherMouseUp;
+                
+                // Send the painting action
+                if !isFinished {
+                    paintAction(FloPaintStage.Continue, createAppPainting(event: nextEvent));
+                } else {
+                    paintAction(FloPaintStage.Finish, createAppPainting(event: nextEvent));
+                    done = true;
+                }
+            }
+        }
+    }
+    
+    ///
+    /// Left mouse is down
+    ///
+    override func mouseDown(with event: NSEvent) {
+        // Start painting if there's a paint action attached to the device this event is for
+        if let device = paintDeviceForEvent(event) {
+            if let paintAction = onPaint[device] {
+                paint(with: device, initialEvent: event, paintAction: paintAction);
+                return;
+            }
+        }
+    }
+    
+    ///
+    /// Right mouse is down
+    ///
+    override func rightMouseDown(with event: NSEvent) {
+        // Start painting if there's a paint action attached to the device this event is for
+        if let device = paintDeviceForEvent(event) {
+            if let paintAction = onPaint[device] {
+                paint(with: device, initialEvent: event, paintAction: paintAction);
+                return;
+            }
+        }
+    }
+
+    ///
+    /// Other mouse is down (generally middle button)
+    ///
+    override func otherMouseDown(with event: NSEvent) {
+        // Start painting if there's a paint action attached to the device this event is for
+        if let device = paintDeviceForEvent(event) {
+            if let paintAction = onPaint[device] {
+                paint(with: device, initialEvent: event, paintAction: paintAction);
+                return;
+            }
+        }
+    }
 }
