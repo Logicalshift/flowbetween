@@ -152,7 +152,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     var onClick: (() -> Bool)?;
 
     /// Event handlers when particular devices are used for painting actions
-    var onPaint: [FloPaintDevice: (AppPainting) -> ()] = [FloPaintDevice: (AppPainting) -> ()]();
+    var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]();
 
     /// Event handler: user scrolled/resized so that a particular region is visible
     var _onScroll: ((NSRect) -> ())?;

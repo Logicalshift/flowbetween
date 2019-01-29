@@ -44,7 +44,7 @@ class FloEmptyView : NSView, FloContainerView {
     public var onScroll: ((NSRect) -> ())?;
 
     /// Event handlers when particular devices are used for painting actions
-    public var onPaint: [FloPaintDevice: (AppPainting) -> ()] = [FloPaintDevice: (AppPainting) -> ()]();
+    public var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]();
 
     var _boundsChanged: ((ContainerBounds) -> ())?;
     /// Event handler: The bounds of the container have changed

@@ -40,7 +40,7 @@ protocol FloContainerView {
     var onScroll: ((NSRect) -> ())? { get set };
     
     /// Events handlers when a particular device is used for painting
-    var onPaint: [FloPaintDevice: (AppPainting) -> ()] { get set };
+    var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] { get set };
     
     /// Event handler: user performed layout on this view
     var performLayout: ((NSSize) -> ())? { get set };

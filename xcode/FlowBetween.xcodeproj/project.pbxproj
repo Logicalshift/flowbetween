@@ -28,6 +28,7 @@
 		4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */; };
 		4B3E9C5121F90B5900261433 /* ContainerBounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E9C5021F90B5800261433 /* ContainerBounds.swift */; };
 		4B4901F92200FB8F00FB6AFC /* FloPaintDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */; };
+		4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4902112201036300FB6AFC /* FloPaintStage.swift */; };
 		4B52B4D121E2625B00CA6B64 /* FloViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */; };
 		4B52B4D321E2652600CA6B64 /* FloContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D221E2652600CA6B64 /* FloContainerView.swift */; };
 		4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */; };
@@ -283,6 +284,7 @@
 		4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloWindow.swift; sourceTree = "<group>"; };
 		4B3E9C5021F90B5800261433 /* ContainerBounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerBounds.swift; sourceTree = "<group>"; };
 		4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintDevice.swift; sourceTree = "<group>"; };
+		4B4902112201036300FB6AFC /* FloPaintStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintStage.swift; sourceTree = "<group>"; };
 		4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewFactory.swift; sourceTree = "<group>"; };
 		4B52B4D221E2652600CA6B64 /* FloContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerView.swift; sourceTree = "<group>"; };
 		4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloEmptyView.swift; sourceTree = "<group>"; };
@@ -365,6 +367,7 @@
 				4B3E9C5021F90B5800261433 /* ContainerBounds.swift */,
 				4B557B1421FB0BA300FFAC5D /* FloCanvasLayer.swift */,
 				4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */,
+				4B4902112201036300FB6AFC /* FloPaintStage.swift */,
 			);
 			path = FlowBetween;
 			sourceTree = "<group>";
@@ -780,6 +783,7 @@
 				4B3E9C5121F90B5900261433 /* ContainerBounds.swift in Sources */,
 				4B4901F92200FB8F00FB6AFC /* FloPaintDevice.swift in Sources */,
 				4B57E9E121DE6A9E00FD0551 /* Layout.swift in Sources */,
+				4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

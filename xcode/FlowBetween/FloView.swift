@@ -204,8 +204,14 @@ public class FloView : NSObject {
         
         if let device = device {
             // Ask the underlying view to relay paint events to us
-            _view.onPaint[device] = { painting in
-                events.sendPaintStart(forDevice: deviceId, name: withName, action: painting);
+            _view.onPaint[device] = { stage, painting in
+                switch (stage) {
+                case FloPaintStage.Start:       events.sendPaintStart(forDevice: deviceId, name: withName, action: painting); break;
+                case FloPaintStage.Continue:    events.sendPaintContinue(forDevice: deviceId, name: withName, action: painting); break;
+                case FloPaintStage.Finish:      events.sendPaintFinish(forDevice: deviceId, name: withName, action: painting); break;
+                case FloPaintStage.Cancel:      events.sendPaintCancel(forDevice: deviceId, name: withName, action: painting); break;
+                }
+                
             }
         } else {
             // Device not in the enum
