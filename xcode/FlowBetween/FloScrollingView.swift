@@ -165,6 +165,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         }
     }
 
+    /// The affine transform for the canvas layer
+    var canvasAffineTransform: CGAffineTransform?;
+
     /// Event handler: user performed layout on this view
     var performLayout: ((NSSize) -> ())?;
     

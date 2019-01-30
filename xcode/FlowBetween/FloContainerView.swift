@@ -41,7 +41,10 @@ protocol FloContainerView {
     
     /// Events handlers when a particular device is used for painting
     var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] { get set };
-    
+
+    /// The affine transform for the canvas layer
+    var canvasAffineTransform: CGAffineTransform? { get set }
+
     /// Event handler: user performed layout on this view
     var performLayout: ((NSSize) -> ())? { get set };
     

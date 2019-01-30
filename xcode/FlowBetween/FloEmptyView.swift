@@ -12,6 +12,8 @@ import Cocoa
 /// View that contains one or more Flo controls
 ///
 class FloEmptyView : NSView, FloContainerView {
+    var _canvasLayer: CALayer?;
+    
     required override init(frame frameRect: NSRect) {
         super.init(frame: frameRect);
         
@@ -45,6 +47,24 @@ class FloEmptyView : NSView, FloContainerView {
 
     /// Event handlers when particular devices are used for painting actions
     public var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]();
+    
+    var _canvasAffineTransform: CGAffineTransform?;
+    var _invertCanvasTransform: CGAffineTransform = CGAffineTransform.identity;
+
+    /// The affine transform for the canvas layer
+    var canvasAffineTransform: CGAffineTransform?
+    {
+        get { return _canvasAffineTransform; }
+        set(value) {
+            _canvasAffineTransform = value;
+            
+            if let value = value {
+                _invertCanvasTransform = value.inverted();
+            } else {
+                _invertCanvasTransform = CGAffineTransform.identity;
+            }
+        }
+    }
 
     var _boundsChanged: ((ContainerBounds) -> ())?;
     /// Event handler: The bounds of the container have changed
@@ -124,6 +144,7 @@ class FloEmptyView : NSView, FloContainerView {
     /// Sets the layer displayed for the canvas
     ///
     func setCanvasLayer(_ layer: CALayer) {
+        _canvasLayer = layer;
         self.layer!.addSublayer(layer);
     }
     
@@ -192,13 +213,25 @@ class FloEmptyView : NSView, FloContainerView {
     ///
     func createAppPainting(event: NSEvent) -> AppPainting {
         // Work out the location of the event
+        let bounds              = self.bounds;
         let locationInWindow    = event.locationInWindow;
         let locationInView      = self.convert(locationInWindow, from: nil);
+        var locationInCanvas    = locationInView;
+        
+        locationInCanvas.y      = bounds.height - locationInCanvas.y;
+        
+        if let canvasLayer = _canvasLayer {
+            let layerFrame = canvasLayer.frame;
+            locationInCanvas.x -= layerFrame.minX;
+            locationInCanvas.y -= layerFrame.minY;
+        }
+        
+        locationInCanvas = locationInCanvas.applying(_invertCanvasTransform);
         
         return AppPainting(
             pointer_id: 0,
-            position_x: Double(locationInView.x),
-            position_y: Double(locationInView.y),
+            position_x: Double(locationInCanvas.x),
+            position_y: Double(locationInCanvas.y),
             pressure:   Double(event.pressure),
             tilt_x:     0.0,
             tilt_y:     0.0
