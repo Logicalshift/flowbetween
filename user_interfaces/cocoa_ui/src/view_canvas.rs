@@ -125,6 +125,9 @@ impl ViewCanvas {
 
                         // Reset the state of the context
                         context.set_state(state);
+
+                        // Pass the context on to the context
+                        context.draw(&Draw::ClearCanvas);
                     }
                 }
 
@@ -145,6 +148,9 @@ impl ViewCanvas {
                         // Stop drawing if we can't get a context for the layer
                         return;
                     }
+
+                    // Pass the request on to the context
+                    context.draw(&Draw::Layer(new_layer_id));
                 },
 
                 // Other actions are just sent straight to the current context
