@@ -346,6 +346,14 @@ impl CanvasState {
     /// Sets the transformation matrix for this state
     ///
     pub fn set_transform(&mut self, new_transform: CGAffineTransform) {
+        // Reset state
+        unsafe {
+            if let Some(ref context) = self.context {
+                CGContextRestoreGState(**context);
+                CGContextSaveGState(**context);
+            }
+        }
+
         // Cocoa doesn't support setting the transformation matrix directly: we restore the original and reset all the properties
         self.values.transform = new_transform;
         self.reapply_state();
@@ -377,6 +385,15 @@ impl CanvasState {
     ///
     pub fn pop_state(&mut self) {
         if let Some(new_values) = self.stack.pop() {
+            // Reset state
+            unsafe {
+                if let Some(ref context) = self.context {
+                    CGContextRestoreGState(**context);
+                    CGContextSaveGState(**context);
+                }
+            }
+
+            // Update to the previous values
             self.values = new_values;
             self.reapply_state();
         }
