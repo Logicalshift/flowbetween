@@ -29,6 +29,12 @@ pub enum AppEvent {
     /// The cocoa UI has finished updates and is about to return control to the user (triggered by a RequestTick action)
     Tick,
 
+    /// Request for the UI to stop sending updates (eg, because we're already refreshing canvases)
+    SuspendUpdates,
+
+    /// Notification that we've finished updating and the UI can send more information
+    ResumeUpdates,
+
     /// User has clicked on a view
     Click(usize, String),
 
