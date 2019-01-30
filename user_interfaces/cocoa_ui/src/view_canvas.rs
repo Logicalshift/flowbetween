@@ -1,6 +1,5 @@
 use super::canvas_state::*;
 use super::canvas_context::*;
-use super::canvas_transform::*;
 use super::core_graphics_ffi::*;
 
 use flo_canvas::*;
@@ -121,7 +120,7 @@ impl ViewCanvas {
                 }
 
                 Layer(new_layer_id) => {
-                    // Extract the state from the current context
+                    // Extract the state from the current context (and also restore the state of the current layer)
                     let mut state = context.to_state();
 
                     // Update the layer ID
@@ -156,24 +155,17 @@ impl ViewCanvas {
     ///
     pub fn redraw<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>)>(&mut self, context_for_layer: ContextForLayer) {
         // Fetch the current set of drawing instructions
-        let actions = self.canvas.get_drawing();
+        let mut actions = self.canvas.get_drawing();
 
-        unsafe {
-            // Reset the state
-            let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-            let mut state   = CanvasState::new(CFRef::from(srgb));
-
-            // Set the default transform for the viewport
-            let viewport_origin = (self.visible.origin.x as f64, self.visible.origin.y as f64);
-            let canvas_size     = (self.size.width as f64, self.size.height as f64);
-
-            let transform       = canvas_identity_transform(viewport_origin, canvas_size);
-            state.set_transform(transform);
-
-            self.state          = Some(state);
-
-            self.perform_drawing_on_context(actions, context_for_layer);
+        if actions[0] != Draw::ClearCanvas {
+            actions.insert(0, Draw::ClearCanvas);
         }
+
+        // Reset the state
+        self.state = None;
+
+        // Draw the entire canvas
+        self.perform_drawing_on_context(actions, context_for_layer);
     }
 
     ///
