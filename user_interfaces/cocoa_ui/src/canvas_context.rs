@@ -52,6 +52,27 @@ impl CanvasContext {
     }
 
     ///
+    /// Resets the state back to the default
+    ///
+    pub fn reset_state(&mut self) {
+        unsafe {
+            // Deactivate the original state (which will also clear any stack associated with it)
+            self.state.deactivate_context();
+
+            // Create a new state
+            let srgb    = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+            let state   = CanvasState::new(CFRef::from(srgb));
+
+            // Activate the new state
+            self.state = state;
+            self.state.activate_context(self.context.clone());
+
+            // Reset the transform to the identity transform
+            self.state.set_transform(self.get_identity_transform());
+        }
+    }
+
+    ///
     /// Updates the state of this context
     ///
     pub fn set_state(&mut self, new_state: CanvasState) {
@@ -171,9 +192,8 @@ impl CanvasContext {
                     self.state.set_transform(transform);
                 }
 
-                ClearCanvas                                         => { 
-                    let identity    = self.get_identity_transform();
-                    self.state.set_transform(identity);
+                ClearCanvas                                         => {
+                    self.reset_state();
 
                     /* Layers need to be implemented elsewhere */
                 }
