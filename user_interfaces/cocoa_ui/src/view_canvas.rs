@@ -105,10 +105,6 @@ impl ViewCanvas {
                         context.to_state();
                         (self.clear_canvas)();
 
-                        // Recreate the state
-                        let srgb        = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-                        let mut state   = CanvasState::new(CFRef::from(srgb));
-
                         // Reset to layer 0
                         let layer_context = context_for_layer(0);
                         if let Some(layer_context) = layer_context {
@@ -118,13 +114,6 @@ impl ViewCanvas {
                             // Stop drawing
                             return;
                         }
-
-                        // Set the default transform for the viewport
-                        let transform = canvas_identity_transform(viewport_origin, canvas_size);
-                        state.set_transform(transform);
-
-                        // Reset the state of the context
-                        context.set_state(state);
 
                         // Pass the context on to the context
                         context.draw(&Draw::ClearCanvas);
