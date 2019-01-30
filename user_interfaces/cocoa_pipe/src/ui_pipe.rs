@@ -15,8 +15,8 @@ use std::sync::*;
 pub fn pipe_ui_updates<Ui, Cocoa>(ui: &Ui, cocoa: &Cocoa) -> impl Future<Item=()>
 where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
         Cocoa:  UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> {
-    // Create the state struction
-    let mut state = Arc::new(Mutex::new(AppState::new()));
+    // The state keeps track of how the events from the UI side map to the Cocoa side
+    let state           = Arc::new(Mutex::new(AppState::new()));
 
     // Create the stream for updates coming from the UI side
     let ui_stream       = ui.get_updates();

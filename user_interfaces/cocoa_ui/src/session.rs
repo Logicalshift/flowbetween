@@ -180,6 +180,8 @@ impl CocoaSession {
         use self::AppAction::*;
 
         match action {
+            RequestTick                         => { /* TODO */}
+
             CreateWindow(window_id)             => { self.create_window(window_id); }
             Window(window_id, window_action)    => { self.windows.get(&window_id).map(|window| self.dispatch_window_action(window, window_action)); }
             

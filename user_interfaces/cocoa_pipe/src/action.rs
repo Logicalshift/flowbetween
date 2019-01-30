@@ -23,6 +23,9 @@ pub enum AppProperty {
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum AppAction {
+    /// Requests a tick next time the user is given control of the application
+    RequestTick,
+
     /// Creates a new window with the specified ID
     CreateWindow(usize),
 

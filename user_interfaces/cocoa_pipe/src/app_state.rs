@@ -10,7 +10,7 @@ use std::sync::*;
 use std::collections::HashMap;
 
 ///
-/// Represents the type
+/// Stores information about the current state of a Cocoa application
 ///
 pub struct AppState {
     /// The root view
