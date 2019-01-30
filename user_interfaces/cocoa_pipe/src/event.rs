@@ -26,6 +26,9 @@ unsafe impl objc::Encode for AppPainting {
 ///
 #[derive(Clone, PartialEq, Debug)]
 pub enum AppEvent {
+    /// The cocoa UI has finished updates and is about to return control to the user (triggered by a RequestTick action)
+    Tick,
+
     /// User has clicked on a view
     Click(usize, String),
 
