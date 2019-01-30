@@ -102,7 +102,7 @@ impl ViewCanvas {
                 ClearCanvas => {
                     unsafe {
                         // Invalidate the context and clear
-                        let mut state = context.to_state();
+                        context.to_state();
                         (self.clear_canvas)();
 
                         // Reset to layer 0
@@ -110,7 +110,6 @@ impl ViewCanvas {
                         if let Some(layer_context) = layer_context {
                             // The canvas context doesn't deactivate itself on drop, so force it to deactivate by going through to_state
                             context = CanvasContext::new(layer_context, viewport_origin, viewport_size, canvas_size);
-                            context.set_state(state);
                         } else {
                             // Stop drawing
                             return;
