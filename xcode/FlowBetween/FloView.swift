@@ -262,15 +262,20 @@ public class FloView : NSObject, FloViewDelegate {
         }
     }
     
-    @objc(viewSetSide:at:) public func viewSetSide(_ side: Int32, at: Float32) {
+    @objc(viewSetSide:at:) public func viewSetSide(_ side: Int32, at: Float64) {
         setSidePosition(side, Position.At(at));
     }
 
-    @objc(viewSetSide:offset:) public func viewSetSide(_ side: Int32, offset: Float32) {
+    @objc(viewSetSide:offset:) public func viewSetSide(_ side: Int32, offset: Float64) {
         setSidePosition(side, Position.Offset(offset));
     }
 
-    @objc(viewSetSide:stretch:) public func viewSetSide(_ side: Int32, stretch: Float32) {
+    @objc public func viewSetSide(_ side: Int32, offset: Float64, floating floatingOffset: FloProperty!) {
+        setSidePosition(side, Position.Offset(offset));
+    }
+    
+
+    @objc(viewSetSide:stretch:) public func viewSetSide(_ side: Int32, stretch: Float64) {
         setSidePosition(side, Position.Stretch(stretch));
     }
 

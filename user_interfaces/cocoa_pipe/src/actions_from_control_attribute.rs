@@ -3,6 +3,30 @@ use super::actions_from::*;
 
 use flo_ui::*;
 
+fn make_app_position<BindProperty: FnMut(Property) -> AppProperty>(ui_pos: &Position, bind_property: &mut BindProperty) -> AppPosition {
+    use self::Position::*;
+
+    match ui_pos {
+        At(pos)                     => AppPosition::At(*pos as f64),
+        Floating(property, pos)     => AppPosition::Floating(bind_property(property.clone()), *pos as f64),
+        Offset(pos)                 => AppPosition::Offset(*pos as f64),
+        Stretch(pos)                => AppPosition::Stretch(*pos as f64),
+        Start                       => AppPosition::Start,
+        End                         => AppPosition::End,
+        After                       => AppPosition::After
+
+    }
+}
+
+fn make_app_bounds<BindProperty: FnMut(Property) -> AppProperty>(ui_bounds: &Bounds, bind_property: &mut BindProperty) -> AppBounds {
+    AppBounds {
+        x1: make_app_position(&ui_bounds.x1, bind_property),
+        y1: make_app_position(&ui_bounds.y1, bind_property),
+        x2: make_app_position(&ui_bounds.x2, bind_property),
+        y2: make_app_position(&ui_bounds.y2, bind_property)
+    }
+}
+
 impl ActionsFrom<ViewAction> for ControlAttribute {
     fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, mut bind_property: BindProperty) -> Vec<ViewAction> { 
         use self::ControlAttribute::*;
@@ -15,7 +39,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             ScrollAttr(scroll_attr)                 => scroll_attr.actions_from(bind_property),
             HintAttr(hint_attr)                     => hint_attr.actions_from(bind_property),
 
-            BoundingBox(bounds)                     => vec![ViewAction::SetBounds(bounds.clone())],
+            BoundingBox(bounds)                     => vec![ViewAction::SetBounds(make_app_bounds(bounds, &mut bind_property))],
             ZIndex(z_index)                         => vec![ViewAction::SetZIndex(*z_index as f64)],
             Padding((left, top), (right, bottom))   => vec![ViewAction::SetPadding(*left as f64, *top as f64, *right as f64, *bottom as f64)],
             Text(text_val)                          => vec![ViewAction::SetText(bind_property(text_val.clone()))],

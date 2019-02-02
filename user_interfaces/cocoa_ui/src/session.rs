@@ -507,7 +507,7 @@ impl CocoaSession {
     ///
     /// Sends a request to a view to set its bounding box
     ///
-    fn set_bounds(&self, view: &StrongPtr, bounds: Bounds) {
+    fn set_bounds(&self, view: &StrongPtr, bounds: AppBounds) {
         self.set_position(view, 0, bounds.x1);
         self.set_position(view, 1, bounds.y1);
         self.set_position(view, 2, bounds.x2);
@@ -526,13 +526,16 @@ impl CocoaSession {
     ///
     /// Sets a request to set the position of a side of a view
     ///
-    fn set_position(&self, view: &StrongPtr, side: i32, pos: Position) {
-        use self::Position::*;
+    fn set_position(&self, view: &StrongPtr, side: i32, pos: AppPosition) {
+        use self::AppPosition::*;
 
         unsafe {
             match pos {
                 At(pos)                     => { msg_send!(**view, viewSetSide: side at: pos) },
-                Floating(_prop, offset)     => { msg_send!(**view, viewSetSide: side offset: offset) }, // Property will be bound elsewhere
+                Floating(prop, offset)      => {
+                    let floating_property = self.flo_property(prop);
+                    msg_send!(**view, viewSetSide: side offset: offset floating: floating_property) 
+                },
                 Offset(offset)              => { msg_send!(**view, viewSetSide: side offset: offset); },
                 Stretch(amount)             => { msg_send!(**view, viewSetSide: side stretch: amount); },
                 Start                       => { msg_send!(**view, viewSetSideAtStart: side); },

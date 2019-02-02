@@ -19,6 +19,31 @@ pub enum AppProperty {
 }
 
 ///
+/// Represents a position coordinate
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum AppPosition {
+    At(f64),
+    Floating(AppProperty, f64),
+    Offset(f64),
+    Stretch(f64),
+    Start,
+    End,
+    After
+}
+
+///
+/// Represents the bounds of a particular control
+///
+#[derive(Clone, PartialEq, Debug)]
+pub struct AppBounds {
+    pub x1: AppPosition,
+    pub y1: AppPosition,
+    pub x2: AppPosition,
+    pub y2: AppPosition
+}
+
+///
 /// Enumeration of possible actions that can be performed by a Cocoa application
 ///
 #[derive(Clone, PartialEq, Debug)]
@@ -78,7 +103,7 @@ pub enum ViewAction {
     AddSubView(usize),
 
     /// Sets the bounds of the view for layout
-    SetBounds(Bounds),
+    SetBounds(AppBounds),
 
     /// Sets the Z-Index of the view
     SetZIndex(f64),

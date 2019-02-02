@@ -67,9 +67,10 @@ typedef struct AppPainting AppPainting;
 
 - (void) viewRemoveFromSuperview;
 - (void) viewAddSubView: (NSObject*) subview;
-- (void) viewSetSide: (int32_t) side at: (float) pos;
-- (void) viewSetSide: (int32_t) side offset: (float) pos;
-- (void) viewSetSide: (int32_t) side stretch: (float) pos;
+- (void) viewSetSide: (int32_t) side at: (double) pos;
+- (void) viewSetSide: (int32_t) side offset: (double) pos;
+- (void) viewSetSide: (int32_t) side offset: (double) pos floating: (FloProperty*) floatingOffset;
+- (void) viewSetSide: (int32_t) side stretch: (double) pos;
 - (void) viewSetSideAtStart: (int32_t) side;
 - (void) viewSetSideAtEnd: (int32_t) side;
 - (void) viewSetSideAfter: (int32_t) side;
