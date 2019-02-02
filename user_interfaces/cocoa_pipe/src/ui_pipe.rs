@@ -119,6 +119,8 @@ where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
                     updates.push(UiEvent::ResumeUpdates);
                 }
                 *event_tick = TickState::NoTick;
+            } else {
+                updates.push(UiEvent::Tick);
             }
 
             updates
