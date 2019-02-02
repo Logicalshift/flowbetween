@@ -11,6 +11,15 @@ pub enum ViewType {
     /// A view containing a button
     Button,
 
+    /// A view containing a slider
+    Slider,
+
+    /// A view consisting of a text box
+    TextBox,
+
+    /// A view that lets you check or uncheck a value
+    CheckBox,
+
     /// A view that can be scrolled
     Scrolling
 }
@@ -34,10 +43,10 @@ impl From<ControlType> for ViewType {
             Button                  => ViewType::Button,
             Label                   => ViewType::Empty,
             Canvas                  => ViewType::Empty,
-            Slider                  => ViewType::Empty,
+            Slider                  => ViewType::Slider,
             Rotor                   => ViewType::Empty,
-            TextBox                 => ViewType::Empty,
-            CheckBox                => ViewType::Empty
+            TextBox                 => ViewType::TextBox,
+            CheckBox                => ViewType::CheckBox
         }
     }
 }

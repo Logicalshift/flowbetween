@@ -243,6 +243,9 @@ impl CocoaSession {
             let view: *mut Object = match view_type {
                 Empty       => { msg_send!(*view_class, createAsEmpty) }
                 Button      => { msg_send!(*view_class, createAsButton) }
+                Slider      => { msg_send!(*view_class, createAsSlider) }
+                TextBox     => { msg_send!(*view_class, createAsTextBox) }
+                CheckBox    => { msg_send!(*view_class, createAsCheckBox) }
                 Scrolling   => { msg_send!(*view_class, createAsScrolling) }
             };
 

@@ -42,4 +42,25 @@ import Cocoa
         
         return view;
     }
+    
+    ///
+    /// Creates a view that can adjust a value
+    ///
+    @objc public static func createAsSlider() -> FloView {
+        return createAsEmpty();
+    }
+    
+    ///
+    /// Creates a view that can be checked on or off
+    ///
+    @objc public static func createAsCheckBox() -> FloView {
+        return createAsEmpty();
+    }
+    
+    ///
+    /// Creates a view that can contain some text to be edited
+    ///
+    @objc public static func createAsTextBox() -> FloView {
+        return createAsEmpty();
+    }
 }
