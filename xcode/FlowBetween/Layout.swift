@@ -62,22 +62,22 @@ class Layout {
         
         // First pass: all stretched views are set to 0 (calibrating the stretch distances)
         for subview in view.layoutSubviews {
-                // Get the bounds for this view
-                let bounds = subview.floBounds;
-                
-                // Only need the x2 and y2 positions for the first pass
-                let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0);
-                let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0);
-                
-                // Update the stretch totals
-                stretch_total_x = updateStretch(pos: bounds.x1, last_stretch: stretch_total_x);
-                stretch_total_x = updateStretch(pos: bounds.x2, last_stretch: stretch_total_x);
-                stretch_total_y = updateStretch(pos: bounds.y1, last_stretch: stretch_total_y);
-                stretch_total_y = updateStretch(pos: bounds.y2, last_stretch: stretch_total_y);
+            // Get the bounds for this view
+            let bounds = subview.floBounds;
+            
+            // Only need the x2 and y2 positions for the first pass
+            let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0);
+            let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0);
+            
+            // Update the stretch totals
+            stretch_total_x = updateStretch(pos: bounds.x1, last_stretch: stretch_total_x);
+            stretch_total_x = updateStretch(pos: bounds.x2, last_stretch: stretch_total_x);
+            stretch_total_y = updateStretch(pos: bounds.y1, last_stretch: stretch_total_y);
+            stretch_total_y = updateStretch(pos: bounds.y2, last_stretch: stretch_total_y);
 
-                // Update the last_x and last_y values
-                last_x = x2;
-                last_y = y2;
+            // Update the last_x and last_y values
+            last_x = x2;
+            last_y = y2;
         }
         
         // Calculate the stretch distances
@@ -94,10 +94,17 @@ class Layout {
             let bounds = subview.floBounds;
             
             // Compute the x1, y1, x2, y2 positions
-            let x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
-            let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
-            let y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
-            let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
+            var x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
+            var x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
+            var y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
+            var y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
+            
+            if let padding = subview.floPadding {
+                x1 += padding.left;
+                x2 -= padding.right;
+                y1 += padding.top;
+                y2 -= padding.bottom;
+            }
             
             // Set the new frame for the view
             let frame = NSRect(x: x1, y: y1, width: x2-x1, height: y2-y1);

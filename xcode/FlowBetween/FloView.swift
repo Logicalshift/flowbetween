@@ -25,6 +25,9 @@ public class FloView : NSObject, FloViewDelegate {
     /// The layout bounds of this view
     fileprivate var _bounds: Bounds;
     
+    /// The padding set for this view
+    fileprivate var _padding: Padding?;
+    
     /// The subviews of this view
     fileprivate var _subviews: [FloView];
     
@@ -83,10 +86,17 @@ public class FloView : NSObject, FloViewDelegate {
     }
     
     ///
-    /// The bounds of this view
+    /// The bounds of this view, as described to the layout system
     ///
     internal var floBounds: Bounds {
         get { return _bounds; }
+    }
+    
+    ///
+    /// The padding for this view (extra space used after layout)
+    ///
+    internal var floPadding: Padding? {
+        get { return _padding; }
     }
 
     ///
@@ -242,7 +252,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Sets the position of a side of the view
     ///
-    func set_side_position(_ side: Int32, _ position: Position) {
+    func setSidePosition(_ side: Int32, _ position: Position) {
         switch (side) {
         case 0: _bounds.x1 = position;
         case 1: _bounds.y1 = position;
@@ -253,29 +263,36 @@ public class FloView : NSObject, FloViewDelegate {
     }
     
     @objc(viewSetSide:at:) public func viewSetSide(_ side: Int32, at: Float32) {
-        set_side_position(side, Position.At(at));
+        setSidePosition(side, Position.At(at));
     }
 
     @objc(viewSetSide:offset:) public func viewSetSide(_ side: Int32, offset: Float32) {
-        set_side_position(side, Position.Offset(offset));
+        setSidePosition(side, Position.Offset(offset));
     }
 
     @objc(viewSetSide:stretch:) public func viewSetSide(_ side: Int32, stretch: Float32) {
-        set_side_position(side, Position.Stretch(stretch));
+        setSidePosition(side, Position.Stretch(stretch));
     }
 
     @objc(viewSetSideAtStart:) public func viewSetSide(atStart side: Int32) {
-        set_side_position(side, Position.Start);
+        setSidePosition(side, Position.Start);
     }
 
     @objc(viewSetSideAtEnd:) public func viewSetSide(atEnd side: Int32) {
-        set_side_position(side, Position.End);
+        setSidePosition(side, Position.End);
     }
 
     @objc(viewSetSideAfter:) public func viewSetSide(after side: Int32) {
-        set_side_position(side, Position.After);
+        setSidePosition(side, Position.After);
     }
     
+    ///
+    /// Sets the padding around this view
+    ///
+    @objc public func viewSetPadding(withLeft left: Double, top: Double, right: Double, bottom: Double) {
+        _padding = Padding(left: left, top: top, right: right, bottom: bottom);
+    }
+
     ///
     /// Sets the z-ordering of this view
     ///

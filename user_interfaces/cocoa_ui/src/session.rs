@@ -251,7 +251,6 @@ impl CocoaSession {
             // Store it away
             self.views.insert(new_view_id, view);
         }
-
     }
 
     ///
@@ -291,27 +290,29 @@ impl CocoaSession {
         if let Some(view) = views.get(&view_id) {
             unsafe {
                 match action {
-                    RequestEvent(event_type, name)      => { self.request_view_event(view_id, event_type, name); }
+                    RequestEvent(event_type, name)          => { self.request_view_event(view_id, event_type, name); }
 
-                    RemoveFromSuperview                 => { msg_send!(**view, viewRemoveFromSuperview); }
-                    AddSubView(view_id)                 => { self.views.get(&view_id).map(|subview| { msg_send!((**view), viewAddSubView: retain(subview)) }); }
-                    SetBounds(bounds)                   => { self.set_bounds(view, bounds); }
-                    SetZIndex(z_index)                  => { msg_send!(**view, viewSetZIndex: z_index); }
-                    SetForegroundColor(col)             => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
-                    SetBackgroundColor(col)             => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    RemoveFromSuperview                     => { msg_send!(**view, viewRemoveFromSuperview); }
+                    AddSubView(view_id)                     => { self.views.get(&view_id).map(|subview| { msg_send!((**view), viewAddSubView: retain(subview)) }); }
+                    SetBounds(bounds)                       => { self.set_bounds(view, bounds); }
+                    SetPadding(left, top, right, bottom)    => { self.set_padding(view, left, top, right, bottom); }
+                    SetZIndex(z_index)                      => { msg_send!(**view, viewSetZIndex: z_index); }
+                    SetForegroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    SetBackgroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
 
-                    SetText(property)                   => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
-                    SetFontSize(size)                   => { msg_send!(**view, viewSetFontSize: size); }
-                    SetFontWeight(weight)               => { msg_send!(**view, viewSetFontWeight: weight); }
-                    SetTextAlignment(align)             => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
+                    SetId(_id)                              => { /* TODO? */ }
+                    SetText(property)                       => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
+                    SetFontSize(size)                       => { msg_send!(**view, viewSetFontSize: size); }
+                    SetFontWeight(weight)                   => { msg_send!(**view, viewSetFontWeight: weight); }
+                    SetTextAlignment(align)                 => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
 
-                    SetImage(image)                     => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
+                    SetImage(image)                         => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
 
-                    SetScrollMinimumSize(width, height) => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
-                    SetHorizontalScrollBar(visibility)  => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
-                    SetVerticalScrollBar(visibility)    => { msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
+                    SetScrollMinimumSize(width, height)     => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
+                    SetHorizontalScrollBar(visibility)      => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
+                    SetVerticalScrollBar(visibility)        => { msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
 
-                    Draw(canvas_actions)                => { 
+                    Draw(canvas_actions)                    => { 
                         let view = view.clone();
                         self.draw(view_id, &view, canvas_actions); 
                     }
@@ -508,6 +509,15 @@ impl CocoaSession {
         self.set_position(view, 1, bounds.y1);
         self.set_position(view, 2, bounds.x2);
         self.set_position(view, 3, bounds.y2);
+    }
+
+    ///
+    /// Sends a request to a view to set its bounding box
+    ///
+    fn set_padding(&self, view: &StrongPtr, left: f64, top: f64, right: f64, bottom: f64) {
+        unsafe {
+            msg_send!(**view, viewSetPaddingWithLeft: left top: top right: right bottom: bottom);
+        }
     }
 
     ///

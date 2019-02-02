@@ -17,9 +17,9 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
 
             BoundingBox(bounds)                     => vec![ViewAction::SetBounds(bounds.clone())],
             ZIndex(z_index)                         => vec![ViewAction::SetZIndex(*z_index as f64)],
-            Padding((left, top), (right, bottom))   => vec![],
+            Padding((left, top), (right, bottom))   => vec![ViewAction::SetPadding(*left as f64, *top as f64, *right as f64, *bottom as f64)],
             Text(text_val)                          => vec![ViewAction::SetText(bind_property(text_val.clone()))],
-            Id(id)                                  => vec![],
+            Id(id)                                  => vec![ViewAction::SetId(id.clone())],
             Controller(name)                        => vec![],
             Action(trigger, name)                   => event_actions(trigger, name),
             Canvas(canvas_resource)                 => vec![],

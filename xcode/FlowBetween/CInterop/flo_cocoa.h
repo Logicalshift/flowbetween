@@ -73,6 +73,7 @@ typedef struct AppPainting AppPainting;
 - (void) viewSetSideAtStart: (int32_t) side;
 - (void) viewSetSideAtEnd: (int32_t) side;
 - (void) viewSetSideAfter: (int32_t) side;
+- (void) viewSetPaddingWithLeft: (double) left top: (double) top right: (double) right bottom: (double) bottom;
 - (void) viewSetZIndex: (double) zIndex;
 - (void) viewSetForegroundRed: (double) red green: (double) green blue: (double) blue alpha: (double) alpha;
 - (void) viewSetBackgroundRed: (double) red green: (double) green blue: (double) blue alpha: (double) alpha;

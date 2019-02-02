@@ -113,6 +113,12 @@ pub enum ViewAction {
     /// Specifies the visibility of the vertical scroll bar
     SetVerticalScrollBar(ScrollBarVisibility),
 
+    /// Specifies the padding around the view
+    SetPadding(f64, f64, f64, f64),
+
+    /// Sets the ID for this view
+    SetId(String),
+
     /// Draws on the canvas for this view
     Draw(Vec<Draw>)
 }
