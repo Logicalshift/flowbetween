@@ -453,20 +453,7 @@ public class FloView : NSObject {
             CATransaction.commit();
             
             // Regenerate the graphics context so that it's the appropriate size for the layer
-            if _drawingLayer?._visibleRect.size != newBounds.visibleRect.size {
-                // Backing will have changed size, so invalidate it entirely
-                _drawingLayer?.invalidateAllLayers();
-            } else {
-                // Just trigger a redraw
-                _drawingLayer?._triggerRedraw?(newBounds.totalSize, newBounds.visibleRect);
-            }
-            
-            _drawingLayer?._canvasSize      = newBounds.totalSize;
-            _drawingLayer?._visibleRect     = newBounds.visibleRect;
-            
-            // Set the initial transformation of the context
-            _drawingLayer?._resolution      = resolutionMultiplier;
-            _drawingLayer?.contentsScale    = resolutionMultiplier;
+            _drawingLayer?.setVisibleArea(bounds: newBounds, resolution: resolutionMultiplier);
             
             redisplayCanvasLayer();
         }
@@ -512,7 +499,7 @@ public class FloView : NSObject {
         if initialSize.width < 1 { initialSize.width = 1 }
         if initialSize.height < 1 { initialSize.height = 1 }
         
-        layer._triggerRedraw        = { (canvasSize, viewport) in events.redrawCanvas(with: canvasSize, viewport: viewport); }
+        layer.onRedraw              { (canvasSize, viewport) in events.redrawCanvas(with: canvasSize, viewport: viewport); }
         layer.backgroundColor       = CGColor.clear;
         layer.frame                 = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
         layer.drawsAsynchronously  = false;

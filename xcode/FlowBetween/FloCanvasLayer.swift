@@ -12,23 +12,26 @@ import Cocoa
 /// Layer that renders a canvas
 ///
 class FloCanvasLayer : CALayer {
+    /// The number of times this layer has been cleared (so we don't return backing layers)
+    fileprivate var _clearCount: UInt32 = 0;
+    
     /// The backing for this layer (nil if it's not drawable yet)
-    var _backing: [UInt32: CGLayer];
+    fileprivate var _backing: [UInt32: CGLayer];
     
     /// Layers that we stopped using during the last clear command
-    var _unusedLayers: [CGLayer];
+    fileprivate var _unusedLayers: [CGLayer];
     
     /// Function called to trigger a redraw
-    var _triggerRedraw: ((NSSize, NSRect) -> ())?;
+    fileprivate var _triggerRedraw: ((NSSize, NSRect) -> ())?;
     
     /// The overall size of the canvas
-    var _canvasSize: NSSize;
+    fileprivate var _canvasSize: NSSize;
     
     /// The coordinates of the visible region in the canvsa
-    var _visibleRect: NSRect;
+    fileprivate var _visibleRect: NSRect;
     
     /// The resolution of this layer
-    var _resolution: CGFloat = 1.0;
+    fileprivate var _resolution: CGFloat = 1.0;
     
     override init() {
         _canvasSize     = NSSize(width: 1, height: 1);
@@ -64,6 +67,9 @@ class FloCanvasLayer : CALayer {
         super.init(coder: aDecoder);
     }
     
+    ///
+    /// Draws this layer in response
+    ///
     override func draw(in ctx: CGContext) {
         // Redraw the backing layer if it has been invalidated
         if _backing.count == 0 {
@@ -102,6 +108,33 @@ class FloCanvasLayer : CALayer {
         }
         
         ctx.restoreGState();
+    }
+    
+    ///
+    /// Updates the area of the canvas that this layer should display
+    ///
+    func setVisibleArea(bounds: ContainerBounds, resolution: CGFloat) {
+        if _visibleRect.size != bounds.visibleRect.size {
+            // Backing will have changed size, so invalidate it entirely
+            invalidateAllLayers();
+        } else {
+            // Just trigger a redraw
+            _triggerRedraw?(bounds.totalSize, bounds.visibleRect);
+        }
+        
+        _canvasSize         = bounds.totalSize;
+        _visibleRect        = bounds.visibleRect;
+        
+        // Set the initial transformation of the context
+        _resolution         = resolution;
+        contentsScale       = resolution;
+    }
+    
+    ///
+    /// Sets the function to call when the layer needs to be redrawn
+    ///
+    func onRedraw(_ redraw: @escaping ((NSSize, NSRect) -> ())) {
+        _triggerRedraw = redraw;
     }
     
     ///
@@ -170,5 +203,56 @@ class FloCanvasLayer : CALayer {
         // Both the backing and the unused layers become invalidated so we can't re-use them
         _backing        = [UInt32: CGLayer]();
         _unusedLayers   = [];
+        _clearCount     += 1;
+    }
+    
+    ///
+    /// A CGLayer created for this layer has become unused and is being returned to the cache list
+    ///
+    func returnUnusedLayer(_ layer: CGLayer, _ clearCount: UInt32) {
+        if _clearCount == clearCount {
+            _unusedLayers.append(layer);
+        }
+    }
+    
+    ///
+    /// Creates a cached copy of the layer with the specified ID
+    ///
+    func cacheLayerWithId(id: UInt32) -> FloCacheLayer? {
+        let cacheLayer: FloCacheLayer;
+        
+        if let availableLayer = _unusedLayers.popLast() {
+            // Use an unused layer if there is one
+            cacheLayer = FloCacheLayer(layer: availableLayer, canvas: self, clearCount: _clearCount);
+        } else if let baseLayer = _backing[0] {
+            // Create a new layer if there is none avialable
+            // Get the size for the new layer
+            var size    = _visibleRect.size;
+            size.width  *= _resolution;
+            size.height *= _resolution;
+            
+            if size.width == 0 { size.width = 1; }
+            if size.height == 0 { size.height = 1; }
+            
+            // We create the new layer from a base layer (as CGLayer needs a context to work from)
+            let newLayer = CGLayer(baseLayer.context!, size: size, auxiliaryInfo: nil);
+            
+            if _resolution != 1.0 {
+                let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution);
+                newLayer!.context!.concatenate(scale);
+            }
+
+            cacheLayer = FloCacheLayer(layer: newLayer!, canvas: self, clearCount: _clearCount);
+        } else {
+            // If there's no backing layer, there's nowhere to create a cache layer
+            return nil;
+        }
+        
+        if let cacheFrom = _backing[id] {
+            cacheLayer.cache(from: cacheFrom);
+        }
+        
+        // The new cache layer is the result
+        return cacheLayer;
     }
 }
