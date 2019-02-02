@@ -11,8 +11,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-extern NSObject* create_flo_session(Class window_class, Class view_class, Class view_model_class);
-
+///
+/// Data returned as part of a painting event
+///
 struct AppPainting {
     int32_t pointer_id;
     double position_x;
@@ -24,6 +25,9 @@ struct AppPainting {
 
 typedef struct AppPainting AppPainting;
 
+///
+/// Interface used to send events for a view object
+///
 @class FloEvents;
 @interface FloEvents : NSObject
 
@@ -36,5 +40,18 @@ typedef struct AppPainting AppPainting;
 - (void) redrawCanvasWithSize: (NSSize) size viewport: (NSRect) viewport;
 
 @end
+
+///
+/// Interface used to manage a Flo session
+///
+@class FloControl;
+@interface FloControl : NSObject
+
+- (void) tick;
+
+@end
+
+/// Creates a new FlowBetween session
+extern FloControl* create_flo_session(Class window_class, Class view_class, Class view_model_class);
 
 #endif /* flo_cocoa_h */

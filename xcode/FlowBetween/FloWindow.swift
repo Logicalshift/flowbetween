@@ -23,7 +23,12 @@ public class FloWindow : NSObject, NSWindowDelegate {
     ///
     fileprivate var _rootView: FloView?;
     
-    override init() {
+    ///
+    /// The session that this window is for
+    ///
+    fileprivate weak var _session : NSObject?;
+    
+    @objc required init(_ session: NSObject) {
         // Create the window
         let styleMask: NSWindow.StyleMask = [.resizable, .closable, .titled];
         
@@ -32,6 +37,7 @@ public class FloWindow : NSObject, NSWindowDelegate {
             styleMask:      styleMask,
             backing:        NSWindow.BackingStoreType.buffered,
             defer:          true);
+        _session = session;
         
         super.init();
         
@@ -69,6 +75,29 @@ public class FloWindow : NSObject, NSWindowDelegate {
             
             // Process the entire view tree
             remainingViews.append(contentsOf: nextView.subviews);
+        }
+    }
+    
+    ///
+    /// Callback when a tick has occurred
+    ///
+    @objc func tick() {
+        if let session = _session {
+            // The Rust obj-c crate doesn't provide a way to generate the linker symbols necessary to call FloControl directly
+            session.perform(#selector(tick));
+        }
+    }
+    
+    ///
+    /// Request for a tick event to be generated
+    ///
+    @objc public func requestTick() {
+        // Cocoa doesn't really have a way to request an animation frame other than by delaying. We'll use a delay indicating 60fps here
+        RunLoop.main.perform {
+            self.perform(#selector(self.tick),
+                         with: nil,
+                         afterDelay: TimeInterval.init(1.0 / 60.0),
+                         inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking, RunLoop.Mode.modalPanel]);
         }
     }
 }

@@ -203,8 +203,11 @@ impl CocoaSession {
 
             // Allocate and initialise it
             let window: *mut Object = msg_send!(*window_class, alloc);
-            let window = msg_send!(window, init);
+            let window = msg_send!(window, init: *self.target_object);
             let window = StrongPtr::new(window);
+
+            // Immediately request a tick from the new window (this is in case one was queued before the window was created)
+            msg_send!((*window), requestTick);
 
             // Store it away
             self.windows.insert(new_window_id, window);
@@ -219,7 +222,7 @@ impl CocoaSession {
 
         unsafe {
             match action {
-                RequestTick             => { }
+                RequestTick             => { msg_send!((**window), requestTick); }
                 Open                    => { msg_send!((**window), windowOpen); }
                 SetRootView(view_id)    => { self.views.get(&view_id).map(|view| msg_send!((**window), windowSetRootView: **view)); }
             }
@@ -384,6 +387,17 @@ impl CocoaSession {
                 msg_send!(**view, viewFinishedDrawing);
             }
         }
+    }
+
+    ///
+    /// Sends a tick event
+    ///
+    pub fn tick(&mut self) {
+        // Create a place to send the tick to
+        let mut events = executor::spawn(self.events.republish());
+
+        // Send a tick event
+        events.wait_send(vec![AppEvent::Tick]);
     }
 
     ///

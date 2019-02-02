@@ -103,6 +103,20 @@ fn declare_flo_control_class() -> &'static Class {
             }
         }
 
+        extern fn tick(this: &mut Object, _cmd: Sel) {
+            unsafe {
+                // Send a tick to the session
+                let session_id  = this.get_ivar("_sessionId");
+                let session     = FLO_SESSIONS.lock().unwrap().get(&session_id).cloned();
+
+                if let Some(session) = session {
+                    let mut session = session.lock().unwrap();
+
+                    session.tick();
+                }
+            }
+        }
+
         // Class contains a session ID we can use to look up the main session
         flo_control.add_ivar::<usize>("_sessionId");
 
@@ -118,6 +132,7 @@ fn declare_flo_control_class() -> &'static Class {
         flo_control.add_method(sel!(setViewClass:), set_view_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(setViewModelClass:), set_view_model_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(actionStreamReady), action_stream_ready as extern fn(&mut Object, Sel));
+        flo_control.add_method(sel!(tick), tick as extern fn(&mut Object, Sel));
     }
 
     // Seal and register it
