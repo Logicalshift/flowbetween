@@ -28,7 +28,7 @@ public class FloWindow : NSObject, NSWindowDelegate {
     ///
     fileprivate weak var _session : NSObject?;
     
-    @objc required init(_ session: NSObject) {
+    @objc required init(_ session: FloControl) {
         // Create the window
         let styleMask: NSWindow.StyleMask = [.resizable, .closable, .titled];
         
