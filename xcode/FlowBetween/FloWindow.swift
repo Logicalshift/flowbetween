@@ -92,11 +92,11 @@ public class FloWindow : NSObject, NSWindowDelegate {
     /// Request for a tick event to be generated
     ///
     @objc public func requestTick() {
-        // Cocoa doesn't really have a way to request an animation frame other than by delaying. We'll use a delay indicating 60fps here
+        // Cocoa doesn't really have a way to request an animation frame other than by delaying. We'll use a delay indicating 120fps here
         RunLoop.main.perform {
             self.perform(#selector(self.tick),
                          with: nil,
-                         afterDelay: TimeInterval.init(1.0 / 60.0),
+                         afterDelay: TimeInterval.init(1.0 / 120.0),
                          inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking, RunLoop.Mode.modalPanel]);
         }
     }
