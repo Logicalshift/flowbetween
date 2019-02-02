@@ -9,6 +9,7 @@ use flo_ui::session::*;
 use futures::*;
 
 use std::sync::*;
+use std::collections::HashMap;
 
 ///
 /// Indicates when a tick event is pending and/or if we've suspended updates
@@ -85,6 +86,32 @@ where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
                 events.into_iter()
                     .flat_map(|event| event_state.lock().unwrap().map_event(event)))
                 .collect::<Vec<_>>();
+
+            // Combine any painting events for a particular view
+            let mut combined_painting   = vec![];
+            let mut painting_for_view   = HashMap::new();
+
+            for update in updates.into_iter() {
+                match update {
+                    UiEvent::Action(controller_path, action_name, ActionParameter::Paint(device, painting)) => {
+                        // Store all the painting actions together
+                        let actions = painting_for_view.entry((controller_path, action_name, device)).or_insert_with(|| vec![]);
+                        actions.extend(painting);
+                    },
+
+                    other_action => {
+                        // Other actions are just pushed straight away
+                        combined_painting.push(other_action)
+                    }
+                }
+            }
+
+            // Add in the combined painting actions
+            for ((controller_path, action_name, device), paint_actions) in painting_for_view.into_iter() {
+                combined_painting.push(UiEvent::Action(controller_path, action_name, ActionParameter::Paint(device, paint_actions)));
+            }
+
+            let mut updates = combined_painting;
 
             // If updates are suspended and a tick has occurred, then resume them after the events have been sent
             if updates.contains(&UiEvent::Tick) {
