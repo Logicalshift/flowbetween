@@ -529,9 +529,15 @@ public class FloView : NSObject {
         if !_willRedisplayCanvasLayer {
             _willRedisplayCanvasLayer = true;
             RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.modalPanel, RunLoop.Mode.eventTracking], block: {
+                CATransaction.begin();
+                CATransaction.setAnimationDuration(0.0);
+                CATransaction.setDisableActions(true);
+
                 self._willRedisplayCanvasLayer = false;
                 self._drawingLayer?.setNeedsDisplay();
                 self._drawingLayer?.display();
+                
+                CATransaction.commit();
             });
         }
     }
