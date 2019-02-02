@@ -324,11 +324,16 @@ impl CocoaSession {
     /// Creates a view canvas for this session
     ///
     fn create_view_canvas(view: &StrongPtr) -> ViewCanvas {
-        let view = view.clone();
+        let view_src        = view.clone();
 
-        ViewCanvas::new(move || {
-            unsafe { msg_send!(*view, viewClearCanvas); }
-        })
+        let view            = view_src.clone();
+        let clear_canvas    = move || { unsafe { msg_send!(*view, viewClearCanvas); } };
+        let view            = view_src.clone();
+        let copy_layer      = move |layer_id| { unsafe { msg_send!(*view, viewCopyLayerWithId: layer_id) } };
+        let view            = view_src.clone();
+        let restore_layer   = move |layer_id, layer_obj: StrongPtr| { unsafe { msg_send!(*view, viewRestoreLayerTo: layer_id fromCopy: *layer_obj) } };
+
+        ViewCanvas::new(clear_canvas, copy_layer, restore_layer)
     }
 
     ///

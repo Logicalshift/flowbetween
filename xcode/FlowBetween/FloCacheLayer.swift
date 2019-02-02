@@ -45,7 +45,7 @@ import Cocoa
             // Disable scaling, antialiasing, interpolation
             context.setShouldAntialias(false);
             context.interpolationQuality = CGInterpolationQuality.none;
-            context.concatenate(context.userSpaceToDeviceSpaceTransform.inverted());
+            context.concatenate(context.ctm.inverted());
             
             // Copy the layer
             context.setBlendMode(CGBlendMode.copy);

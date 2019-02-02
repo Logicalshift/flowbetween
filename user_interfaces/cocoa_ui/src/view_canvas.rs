@@ -4,6 +4,8 @@ use super::core_graphics_ffi::*;
 
 use flo_canvas::*;
 
+use objc::rc::*;
+
 ///
 /// Stores the state associated with a canvas specified for a view
 ///
@@ -21,21 +23,31 @@ pub struct ViewCanvas {
     state: Option<CanvasState>,
 
     /// Callback function that clears the canvas
-    clear_canvas: Box<FnMut() -> ()>
+    clear_canvas: Box<FnMut() -> ()>,
+
+    /// Callback function to create a copy of the layer with the specified ID
+    copy_layer: Box<FnMut(u32) -> StrongPtr>,
+
+    /// Callback function to restore the state of a layer from a copy created previously with copy_layer
+    restore_layer: Box<FnMut(u32, StrongPtr) -> ()>
 }
 
 impl ViewCanvas {
     ///
     /// Creates a new canvas for a view
     ///
-    pub fn new<ClearCanvasFn>(clear_canvas: ClearCanvasFn) -> ViewCanvas
-    where ClearCanvasFn: 'static+FnMut() -> () {
+    pub fn new<ClearCanvasFn, CopyLayerFn, RestoreLayerFn>(clear_canvas: ClearCanvasFn, copy_layer: CopyLayerFn, restore_layer: RestoreLayerFn) -> ViewCanvas
+    where   ClearCanvasFn:  'static+FnMut() -> (),
+            CopyLayerFn:    'static+FnMut(u32) -> StrongPtr,
+            RestoreLayerFn: 'static+FnMut(u32, StrongPtr) -> () {
         ViewCanvas {
             canvas:         Canvas::new(),
             size:           CGSize { width: 1.0, height: 1.0 },
             visible:        CGRect { origin: CGPoint { x: 0.0, y: 0.0 }, size: CGSize { width: 1.0, height: 1.0 } },
             state:          None,
-            clear_canvas:   Box::new(clear_canvas)
+            clear_canvas:   Box::new(clear_canvas),
+            copy_layer:     Box::new(copy_layer),
+            restore_layer:  Box::new(restore_layer)
         }
     }
 
