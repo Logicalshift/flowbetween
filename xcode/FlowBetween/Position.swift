@@ -14,6 +14,7 @@ import Foundation
 enum Position {
     case At(Float64);
     case Offset(Float64);
+    case Floating(Float64, FloProperty);
     case Stretch(Float64);
     case Start;
     case End;

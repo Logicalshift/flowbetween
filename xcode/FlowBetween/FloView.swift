@@ -271,7 +271,7 @@ public class FloView : NSObject, FloViewDelegate {
     }
 
     @objc public func viewSetSide(_ side: Int32, offset: Float64, floating floatingOffset: FloProperty!) {
-        setSidePosition(side, Position.Offset(offset));
+        setSidePosition(side, Position.Floating(offset, floatingOffset));
     }
     
 

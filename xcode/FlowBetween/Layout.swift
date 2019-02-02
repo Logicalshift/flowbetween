@@ -17,11 +17,12 @@ class Layout {
     ///
     static func layoutPosition(pos: Position, previous: Double, end: Double, stretch_distance: Double, stretch_total: Double) -> Double {
         switch pos {
-        case Position.At(let value):        return Double(value);
-        case Position.Offset(let value):    return previous + Double(value);
-        case Position.After:                return previous;
-        case Position.Start:                return 0.0;
-        case Position.End:                  return end;
+        case Position.At(let value):                return Double(value);
+        case Position.Offset(let value):            return previous + Double(value);
+        case Position.Floating(let value, let _):   return previous + Double(value);
+        case Position.After:                        return previous;
+        case Position.Start:                        return 0.0;
+        case Position.End:                          return end;
 
         case Position.Stretch(let stretch):
             if stretch_total > 0.0 {
@@ -40,6 +41,7 @@ class Layout {
         switch pos {
         case Position.At(_):                return last_stretch;
         case Position.Offset(_):            return last_stretch;
+        case Position.Floating(_, _):       return last_stretch;
         case Position.After:                return last_stretch;
         case Position.Start:                return last_stretch;
         case Position.End:                  return last_stretch;
@@ -106,9 +108,39 @@ class Layout {
                 y2 -= padding.bottom;
             }
             
-            // Set the new frame for the view
-            let frame = NSRect(x: x1, y: y1, width: x2-x1, height: y2-y1);
-            subview.view.frame = frame;
+            // Set the new frame for the view (TODO: floating both in x1 and y1)
+            // TODO: stop any old tracking if we're re-doing the layout
+            if case let Position.Floating(_, prop) = bounds.x1 {
+                // Update the position whenever the floating property changes
+                prop.trackValue { floating_offset_property in
+                    var floating_offset = 0.0;
+                    if case let PropertyValue.Float(val) = floating_offset_property {
+                        floating_offset = val;
+                    } else if case let PropertyValue.Int(val) = floating_offset_property {
+                        floating_offset = Double(val);
+                    }
+                    
+                    let frame = NSRect(x: x1 + floating_offset, y: y1, width: x2-x1, height: y2-y1);
+                    subview.view.frame = frame;
+                }
+            } else if case let Position.Floating(_, prop) = bounds.y1 {
+                // Update the position whenever the floating property changes
+                prop.trackValue { floating_offset_property in
+                    var floating_offset = 0.0;
+                    if case let PropertyValue.Float(val) = floating_offset_property {
+                        floating_offset = val;
+                    } else if case let PropertyValue.Int(val) = floating_offset_property {
+                        floating_offset = Double(val);
+                    }
+
+                    let frame = NSRect(x: x1, y: y1 + floating_offset, width: x2-x1, height: y2-y1);
+                    subview.view.frame = frame;
+                }
+            } else {
+                // Fixed position
+                let frame = NSRect(x: x1, y: y1, width: x2-x1, height: y2-y1);
+                subview.view.frame = frame;
+            }
 
             // Update the last_x and last_y values
             last_x = x2;
