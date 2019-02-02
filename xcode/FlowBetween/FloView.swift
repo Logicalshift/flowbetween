@@ -502,7 +502,7 @@ public class FloView : NSObject {
         layer.onRedraw              { (canvasSize, viewport) in events.redrawCanvas(with: canvasSize, viewport: viewport); }
         layer.backgroundColor       = CGColor.clear;
         layer.frame                 = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height);
-        layer.drawsAsynchronously  = false;
+        layer.drawsAsynchronously  = true;
         layer.setNeedsDisplay();
         
         RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.modalPanel, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) });
