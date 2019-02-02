@@ -54,7 +54,7 @@ where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
             let mut request_tick    = vec![];
             let mut update_tick     = update_tick.lock().unwrap();
 
-            if *update_tick == TickState::NoTick {
+            if *update_tick == TickState::NoTick && updates.len() > 0 {
                 request_tick.push(AppAction::Window(0, WindowAction::RequestTick));
                 *update_tick = TickState::RequestedTick;
             }
