@@ -461,7 +461,6 @@ impl CocoaSession {
 
         unsafe {
             // Create the NSData for the image
-            // TODO: NSImage does not support SVGs :-( - need an alternative for these
             let image_data = match &*image {
                 &Png(ref image_data) => Self::bytes_from_image_data(&**image_data),
                 &Svg(ref image_data) => Self::bytes_from_image_data(&**image_data)
