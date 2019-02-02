@@ -222,8 +222,12 @@ class FloEmptyView : NSView, FloContainerView {
         
         if let canvasLayer = _canvasLayer {
             let layerFrame = canvasLayer.frame;
-            locationInCanvas.x -= layerFrame.minX;
-            locationInCanvas.y -= layerFrame.minY;
+            
+            locationInCanvas.x -= layerFrame.origin.x;
+            locationInCanvas.y += layerFrame.origin.y;
+
+            // Need to invert the coordinates
+            locationInCanvas.y  = bounds.size.height - locationInCanvas.y;
         }
         
         locationInCanvas = locationInCanvas.applying(_invertCanvasTransform);
