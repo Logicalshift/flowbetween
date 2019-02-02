@@ -35,7 +35,7 @@ pub struct CocoaSession {
     /// The ID of this session
     session_id: usize,
 
-    /// Reference to the FloControl we'll relay the stream via
+    /// Reference to the FloControl used to interface between the stream and the Objective-C/Swift side of the application
     target_object: StrongPtr,
 
     /// Maps IDs to windows
@@ -180,8 +180,6 @@ impl CocoaSession {
         use self::AppAction::*;
 
         match action {
-            RequestTick                         => { /* TODO */}
-
             CreateWindow(window_id)             => { self.create_window(window_id); }
             Window(window_id, window_action)    => { self.windows.get(&window_id).map(|window| self.dispatch_window_action(window, window_action)); }
             
@@ -221,6 +219,7 @@ impl CocoaSession {
 
         unsafe {
             match action {
+                RequestTick             => { }
                 Open                    => { msg_send!((**window), windowOpen); }
                 SetRootView(view_id)    => { self.views.get(&view_id).map(|view| msg_send!((**window), windowSetRootView: **view)); }
             }

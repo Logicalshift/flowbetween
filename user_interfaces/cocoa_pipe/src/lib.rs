@@ -10,6 +10,7 @@ mod action;
 mod event;
 mod view_type;
 mod ui_pipe;
+mod regulator;
 mod app_state;
 mod view_state;
 mod canvas_model;
