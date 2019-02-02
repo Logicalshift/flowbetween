@@ -12,7 +12,7 @@ import Cocoa
 ///
 /// Class used to manage a view in FlowBetween
 ///
-public class FloView : NSObject {
+public class FloView : NSObject, FloViewDelegate {
     /// The view that this represents
     fileprivate var _view: FloContainerView;
     
@@ -187,7 +187,7 @@ public class FloView : NSObject {
     ///
     /// Sends an event when the user uses the specified device to paint on this view
     ///
-    @objc public func requestPaintWithDeviceId(_ deviceId: UInt32, events: FloEvents, withName: String?) {
+    @objc public func requestPaint(withDeviceId deviceId: UInt32, events: FloEvents, withName: String?) {
         // Convert the device ID into the device enum
         let device = FloPaintDevice.init(rawValue: deviceId);
         
@@ -224,7 +224,8 @@ public class FloView : NSObject {
     ///
     /// Adds a subview to this view
     ///
-    @objc(viewAddSubView:) public func viewAddSubView(subview: FloView) {
+    @objc(viewAddSubView:) public func viewAddSubView(_ subview: NSObject) {
+        let subview = subview as! FloView;
         subview.viewRemoveFromSuperview();
         
         self._subviews.append(subview);
@@ -251,27 +252,27 @@ public class FloView : NSObject {
         }
     }
     
-    @objc(viewSetSide:at:) public func viewSetSide(side: Int32, at: Float32) {
+    @objc(viewSetSide:at:) public func viewSetSide(_ side: Int32, at: Float32) {
         set_side_position(side, Position.At(at));
     }
 
-    @objc(viewSetSide:offset:) public func viewSetSide(side: Int32, offset: Float32) {
+    @objc(viewSetSide:offset:) public func viewSetSide(_ side: Int32, offset: Float32) {
         set_side_position(side, Position.Offset(offset));
     }
 
-    @objc(viewSetSide:stretch:) public func viewSetSide(side: Int32, stretch: Float32) {
+    @objc(viewSetSide:stretch:) public func viewSetSide(_ side: Int32, stretch: Float32) {
         set_side_position(side, Position.Stretch(stretch));
     }
 
-    @objc(viewSetSideAtStart:) public func viewSetSideAtStart(side: Int32) {
+    @objc(viewSetSideAtStart:) public func viewSetSide(atStart side: Int32) {
         set_side_position(side, Position.Start);
     }
 
-    @objc(viewSetSideAtEnd:) public func viewSetSideAtEnd(side: Int32) {
+    @objc(viewSetSideAtEnd:) public func viewSetSide(atEnd side: Int32) {
         set_side_position(side, Position.End);
     }
 
-    @objc(viewSetSideAfter:) public func viewSetSideAfter(side: Int32) {
+    @objc(viewSetSideAfter:) public func viewSetSide(after side: Int32) {
         set_side_position(side, Position.After);
     }
     
@@ -532,27 +533,31 @@ public class FloView : NSObject {
     ///
     /// Retrieves the drawing context for this view
     ///
-    @objc public func viewGetCanvasForDrawing(_ events: FloEvents, layer: UInt32) -> CGContext? {
+    @objc public func viewGetCanvas(forDrawing events: FloEvents, layer: UInt32) -> Unmanaged<CGContext>? {
         // Create the drawing layer if one doesn't exist yet
         if _drawingLayer == nil {
             createCanvasDrawingLayer(events);
         }
         
         // Make sure the backing for the layer has been created
-        return _drawingLayer?.getContextForLayer(id: layer);
+        if let context = _drawingLayer?.getContextForLayer(id: layer) {
+            return Unmanaged.passUnretained(context);
+        } else {
+            return nil;
+        }
     }
     
     ///
     /// Copies the contents of a particular layer in the canvas
     ///
-    @objc public func viewCopyLayerWithId(_ layerId: UInt32) -> FloCacheLayer? {
+    @objc public func viewCopyLayer(withId layerId: UInt32) -> FloCacheLayer? {
         return _drawingLayer?.cacheLayerWithId(id: layerId)
     }
     
     ///
     /// Restores an existing layer from a cached layer
     ///
-    @objc public func viewRestoreLayerTo(_ layerId: UInt32, fromCopy: FloCacheLayer?) {
+    @objc public func viewRestoreLayer(to layerId: UInt32, fromCopy: FloCacheLayer?) {
         if let fromCopy = fromCopy {
             _drawingLayer?.restoreLayerFromCache(id: layerId, cachedCopy: fromCopy);
         }

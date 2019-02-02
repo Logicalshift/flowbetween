@@ -41,6 +41,12 @@ typedef struct AppPainting AppPainting;
 
 @end
 
+/// FloProperty is exported from the Swift side and created by the Rust side
+@class FloProperty;
+
+/// FloCacheLayer is defined on the Swift side and returned to the Rust side
+@class FloCacheLayer;
+
 ///
 /// Interface used to manage a Flo session
 ///
@@ -49,6 +55,42 @@ typedef struct AppPainting AppPainting;
 
 - (void) tick;
 
+@end
+
+///
+/// The protocol that the Rust side uses to send data to the FloView class
+///
+@protocol FloViewDelegate
+- (void) requestClick: (FloEvents*) events withName: (NSString*) name;
+- (void) requestVirtualScroll: (FloEvents*) events withName: (NSString*) name width: (double) width height: (double) height;
+- (void) requestPaintWithDeviceId: (uint32_t) deviceId events: (FloEvents*) events withName: (NSString*) name;
+
+- (void) viewRemoveFromSuperview;
+- (void) viewAddSubView: (NSObject*) subview;
+- (void) viewSetSide: (int32_t) side at: (float) pos;
+- (void) viewSetSide: (int32_t) side offset: (float) pos;
+- (void) viewSetSide: (int32_t) side stretch: (float) pos;
+- (void) viewSetSideAtStart: (int32_t) side;
+- (void) viewSetSideAtEnd: (int32_t) side;
+- (void) viewSetSideAfter: (int32_t) side;
+- (void) viewSetZIndex: (double) zIndex;
+- (void) viewSetForegroundRed: (double) red green: (double) green blue: (double) blue alpha: (double) alpha;
+- (void) viewSetBackgroundRed: (double) red green: (double) green blue: (double) blue alpha: (double) alpha;
+- (void) viewSetText: (FloProperty*) text;
+- (void) viewSetImage: (NSImage*) image;
+- (void) viewSetFontSize: (double) size;
+- (void) viewSetFontWeight: (double) weight;
+- (void) viewSetTextAlignment: (uint32_t) alignment;
+- (void) viewSetScrollMinimumSizeWithWidth: (double) width height: (double) height;
+- (void) viewSetHorizontalScrollVisibility: (uint32_t) visibility;
+- (void) viewSetVerticalScrollVisibility: (uint32_t) visibility;
+
+- (CGContextRef) viewGetCanvasForDrawing: (FloEvents*) events layer: (uint32_t) layer_id;
+- (FloCacheLayer*) viewCopyLayerWithId: (uint32_t) layer_id;
+- (void) viewRestoreLayerTo: (uint32_t) layer_id fromCopy: (FloCacheLayer*) copyLayer;
+- (void) viewFinishedDrawing;
+- (void) viewSetTransform: (CGAffineTransform) transform;
+- (void) viewClearCanvas;
 @end
 
 /// Creates a new FlowBetween session
