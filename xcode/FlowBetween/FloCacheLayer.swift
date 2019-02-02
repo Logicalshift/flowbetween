@@ -11,7 +11,7 @@ import Cocoa
 ///
 /// A cache layer manages the stored state of a layer
 ///
-@objc class FloCacheLayer : NSObject {
+@objc public class FloCacheLayer : NSObject {
     /// The layer managed by this cache
     var _layer: CGLayer;
     

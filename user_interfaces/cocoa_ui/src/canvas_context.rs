@@ -90,6 +90,13 @@ impl CanvasContext {
     }
 
     ///
+    /// Retrieves a reference to the state in this context
+    ///
+    pub fn get_state<'a>(&'a mut self) -> &'a mut CanvasState {
+        &mut self.state
+    }
+
+    ///
     /// Computes the identity transform for this canvas
     ///
     fn get_identity_transform(&self) -> CGAffineTransform {

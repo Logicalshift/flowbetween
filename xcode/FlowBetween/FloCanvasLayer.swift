@@ -255,4 +255,13 @@ class FloCanvasLayer : CALayer {
         // The new cache layer is the result
         return cacheLayer;
     }
+    
+    ///
+    /// Restores a cached layer to another layer
+    ///
+    func restoreLayerFromCache(id: UInt32, cachedCopy: FloCacheLayer) {
+        if let restoreLayer = _backing[id] {
+            cachedCopy.restore(to: restoreLayer);
+        }
+    }
 }

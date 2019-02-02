@@ -2,6 +2,8 @@ use super::core_graphics_ffi::*;
 
 use flo_canvas::*;
 
+use objc::rc::*;
+
 ///
 /// Possible actions stored in the path for this state
 ///
@@ -26,6 +28,7 @@ struct CanvasStateValues {
     layer_id:       u32,
     line_width:     CGFloat,
     path:           Vec<PathAction>,
+    stored_layer:   Option<StrongPtr>,
     clip:           Option<Vec<PathAction>>
 }
 
@@ -60,6 +63,7 @@ impl CanvasState {
                     layer_id:       0,
                     line_width:     1.0,
                     path:           vec![],
+                    stored_layer:   None,
                     clip:           None
                 },
                 stack:      vec![]
@@ -397,6 +401,27 @@ impl CanvasState {
             self.values = new_values;
             self.reapply_state();
         }
+    }
+
+    ///
+    /// Sets the stored layer object
+    ///
+    pub fn store_layer(&mut self, layer: StrongPtr) {
+        self.values.stored_layer = Some(layer);
+    }
+
+    ///
+    /// Frees the stored layer object
+    ///
+    pub fn clear_stored_layer(&mut self) {
+        self.values.stored_layer = None;
+    }
+
+    ///
+    /// Retrieves the stored layer for this object
+    ///
+    pub fn get_stored_layer(&mut self) -> Option<StrongPtr> {
+        self.values.stored_layer.clone()
     }
 }
 

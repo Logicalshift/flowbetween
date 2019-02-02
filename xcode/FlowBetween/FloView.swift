@@ -542,6 +542,22 @@ public class FloView : NSObject {
         return _drawingLayer?.getContextForLayer(id: layer);
     }
     
+    ///
+    /// Copies the contents of a particular layer in the canvas
+    ///
+    @objc public func viewCopyLayerWithId(_ layerId: UInt32) -> FloCacheLayer? {
+        return _drawingLayer?.cacheLayerWithId(id: layerId)
+    }
+    
+    ///
+    /// Restores an existing layer from a cached layer
+    ///
+    @objc public func viewRestoreLayerTo(_ layerId: UInt32, fromCopy: FloCacheLayer?) {
+        if let fromCopy = fromCopy {
+            _drawingLayer?.restoreLayerFromCache(id: layerId, cachedCopy: fromCopy);
+        }
+    }
+    
     var _willUpdateCanvas = false;
     ///
     /// Drawing on the context has finished

@@ -153,6 +153,36 @@ impl ViewCanvas {
                     context.draw(&Draw::Layer(new_layer_id));
                 },
 
+                Store => {
+                    // Store the buffer in the state
+                    let layer_id = context.get_state().layer_id();
+                    context.get_state().store_layer((self.copy_layer)(layer_id));
+
+                    // Pass on to the context (in case it needs to perform any updates relating to this action)
+                    context.draw(&Draw::Store)
+                }
+
+                Restore => {
+                    // Fetch the stored layer from the state
+                    let layer_id        = context.get_state().layer_id();
+                    let stored_buffer   = context.get_state().get_stored_layer();
+
+                    // Restore it, if there is one
+                    stored_buffer.map(|stored_buffer| (self.restore_layer)(layer_id, stored_buffer));
+
+                    // Pass on to the context
+                    context.draw(&Draw::Restore)
+                }
+
+                FreeStoredBuffer => {
+                    // Clear the buffer from the state (should release it back to the layer pool)
+                    context.get_state().clear_stored_layer();
+
+                    // Pass on to the context
+                    context.draw(&Draw::Restore)
+                }
+
+
                 // Other actions are just sent straight to the current context
                 other_action => context.draw(&other_action)
             }
