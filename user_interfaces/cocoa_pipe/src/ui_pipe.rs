@@ -11,6 +11,16 @@ use futures::*;
 use std::sync::*;
 
 ///
+/// Indicates when a tick event is pending and/or if we've suspended updates
+///
+#[derive(Copy, Clone, PartialEq)]
+enum TickState {
+    NoTick,
+    RequestedTick,
+    Suspended
+}
+
+///
 /// Pipes UI updates to a Cocoa UI action sink
 ///
 pub fn pipe_ui_updates<Ui, Cocoa>(ui: &Ui, cocoa: &Cocoa) -> impl Future<Item=()>
@@ -31,24 +41,60 @@ where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
     let ui_stream       = group_stream(ui_stream);
     let cocoa_events    = group_stream(cocoa_events);
 
+    // Tracks if we've requested a tick or not
+    let requested_tick  = Arc::new(Mutex::new(TickState::NoTick));
+
     // Pipe the updates into the cocoa side
-    let update_state = state.clone();
-    let handle_updates = ui_stream
+    let update_tick     = requested_tick.clone();
+    let update_state    = state.clone();
+    let handle_updates  = ui_stream
         .map(move |updates| {
-            updates.into_iter()
-                .flat_map(|update| update_state.lock().unwrap().map_update(update))
+            // If some updates arrive and we're not waiting for a tick, start waiting for a tick
+            let mut request_tick    = vec![];
+            let mut update_tick     = update_tick.lock().unwrap();
+
+            if *update_tick == TickState::NoTick {
+                request_tick.push(AppAction::Window(0, WindowAction::RequestTick));
+                *update_tick = TickState::RequestedTick;
+            }
+
+            // Follow the tick request by the set of updates
+            request_tick.into_iter().chain(
+                updates.into_iter()
+                    .flat_map(|update| update_state.lock().unwrap().map_update(update)))
                 .collect::<Vec<_>>()
         })
         .forward(cocoa_sink)
         .map(|_| ());
 
     // Pipe the events the other way
+    let event_tick      = requested_tick.clone();
     let event_state     = state;
     let handle_events   = cocoa_events
         .map(move |events| {
-            events.into_iter()
-                .flat_map(|event| event_state.lock().unwrap().map_event(event))
-                .collect::<Vec<_>>()
+            // If an event arrives while we're waiting for a tick, suspend updates until at least one tick arrives
+            let mut suspend_updates = vec![];
+            let mut event_tick      = event_tick.lock().unwrap();
+
+            if *event_tick == TickState::RequestedTick {
+                suspend_updates.push(UiEvent::SuspendUpdates);
+                *event_tick = TickState::Suspended;
+            }
+
+            let mut updates = suspend_updates.into_iter().chain(
+                events.into_iter()
+                    .flat_map(|event| event_state.lock().unwrap().map_event(event)))
+                .collect::<Vec<_>>();
+
+            // If updates are suspended and a tick has occurred, then resume them after the events have been sent
+            if updates.contains(&UiEvent::Tick) {
+                if *event_tick == TickState::Suspended {
+                    updates.push(UiEvent::ResumeUpdates);
+                }
+                *event_tick = TickState::NoTick;
+            }
+
+            updates
         })
         .forward(ui_events)
         .map(|_| ());
