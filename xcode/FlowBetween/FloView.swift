@@ -570,6 +570,7 @@ public class FloView : NSObject {
     /// Sets the transform for any mouse clicks, etc for this view
     ///
     @objc public func viewSetTransform(_ transform: CGAffineTransform) {
+        _view.canvasAffineTransform = transform;
     }
     
     ///
