@@ -90,9 +90,18 @@ class FloCanvasLayer : CALayer {
         let layer_ids   = _backing.keys.sorted();
         let bounds      = self.bounds;
         
-        for layer_id in layer_ids {
-            ctx.draw(_backing[layer_id]!, in: bounds);
+        ctx.saveGState();
+        ctx.setShouldAntialias(false);
+        ctx.interpolationQuality = CGInterpolationQuality.none;
+        if _resolution != 1.0 {
+            ctx.concatenate(CGAffineTransform.init(scaleX: 1.0/_resolution, y: 1.0/_resolution));
         }
+        
+        for layer_id in layer_ids {
+            ctx.draw(_backing[layer_id]!, at: bounds.origin);
+        }
+        
+        ctx.restoreGState();
     }
     
     ///
