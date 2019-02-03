@@ -14,9 +14,23 @@ import Cocoa
 class FloControlView: NSView, FloContainerView {
     /// The control that is displayed in this view
     let _control: NSControl;
+    
+    /// The font to display the control in
+    var _font: NSFont;
+    
+    /// The foreground colour to display the control text in
+    var _color: NSColor?;
+    
+    /// The alignment of the text in this control
+    var _alignment: NSTextAlignment = NSTextAlignment.left;
+    
+    /// The text in this control
+    var _label: String = "";
 
     required init(frame frameRect: NSRect, control: NSControl) {
-        _control = control;
+        _control    = control;
+        _font       = NSFontManager.shared.font(withFamily: "Lato", traits: NSFontTraitMask(), weight: 5, size: 13.0)!;
+        _color      = nil;
         
         super.init(frame: frameRect);
         
@@ -32,8 +46,6 @@ class FloControlView: NSView, FloContainerView {
     
     /// Updates the frame size of this view
     override func setFrameSize(_ newSize: NSSize) {
-        NSLog("Control frame set to \(newSize)");
-        
         super.setFrameSize(newSize);
         _control.frame = bounds;
     }
@@ -109,15 +121,37 @@ class FloControlView: NSView, FloContainerView {
     
     /// Sets the text label for this view
     func setTextLabel(label: String) {
-        _control.stringValue = label;
+        _label = label;
+        _control.attributedStringValue = attributedLabel;
     }
     
+    /// The label with attributes applied
+    var attributedLabel: NSAttributedString {
+        get {
+            let paragraphStyle = NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle;
+            paragraphStyle.alignment = _alignment;
+            
+            return NSAttributedString(string: _label,
+                                      attributes: [NSAttributedString.Key.font: _font,
+                                                   NSAttributedString.Key.foregroundColor: _color ?? NSColor.white,
+                                                   NSAttributedString.Key.paragraphStyle: paragraphStyle])
+        }
+    }
+
+    /// Sets the foreground colour of the control
+    func setForegroundColor(color: NSColor) {
+        _color = color;
+        _control.attributedStringValue = attributedLabel;
+    }
+
     /// Sets the font size for this view
     func setFontSize(points: Float64) {
-        let existingFont    = _control.font!;
+        let existingFont    = _font;
         let newFont         = NSFontManager.shared.convert(existingFont, toSize: CGFloat(points));
         
-        _control.font       = newFont;
+        _font               = newFont;
+
+        _control.attributedStringValue = attributedLabel;
     }
 
     ///
@@ -143,13 +177,15 @@ class FloControlView: NSView, FloContainerView {
         let size                = existingFont.pointSize;
         let traits              = NSFontTraitMask();
         
-        let newFont             = NSFontManager.shared.font(withFamily: family, traits: traits, weight: fontManagerWeight, size: size);
+        let newFont             = NSFontManager.shared.font(withFamily: family, traits: traits, weight: fontManagerWeight, size: size) ?? _font;
         
-        _control.font           = newFont;
+        _font                   = newFont;
+
+        _control.attributedStringValue = attributedLabel;
     }
     
     /// Sets the text alignment for this view
     func setTextAlignment(alignment: NSTextAlignment) {
-        _control.alignment = alignment;
+        _alignment = alignment;
     }
 }

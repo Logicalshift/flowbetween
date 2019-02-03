@@ -241,4 +241,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Sets the text alignment for this view
     func setTextAlignment(alignment: NSTextAlignment) {
     }
+
+    /// Sets the foreground colour of the control
+    func setForegroundColor(color: NSColor) {
+        
+    }
 }

@@ -219,6 +219,11 @@ class FloEmptyView : NSView, FloContainerView {
         labelView.setTextAlignment(alignment: alignment);
     }
 
+    /// Sets the foreground colour of the control
+    func setForegroundColor(color: NSColor) {
+        labelView.setForegroundColor(color: color);
+    }
+    
     ///
     /// Returns the paint device that a particular event represents
     ///

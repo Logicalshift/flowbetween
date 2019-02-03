@@ -69,6 +69,9 @@ protocol FloContainerView {
     /// Sets the font size for this view
     func setFontSize(points: Float64);
     
+    /// Sets the foreground colour of the control
+    func setForegroundColor(color: NSColor);
+    
     /// Sets the font weight for this view
     func setFontWeight(weight: Float64);
     

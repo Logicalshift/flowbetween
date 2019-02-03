@@ -283,7 +283,7 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func viewSetForegroundRed(_ red: Float64, green: Float64, blue: Float64, alpha: Float64) {
         let col = NSColor(calibratedRed: CGFloat(red), green: CGFloat(green), blue: CGFloat(blue), alpha: CGFloat(alpha));
         
-        // TODO: need to support attributed strings :-/
+        _view.setForegroundColor(color: col);
     }
 
     ///
