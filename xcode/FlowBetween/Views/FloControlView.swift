@@ -44,10 +44,31 @@ class FloControlView: NSView, FloContainerView {
         fatalError("init(coder:) has not been implemented")
     }
     
+    /// Assuming the control is a text field, centers it vertically
+    func centerVerticallyAsTextField() {
+        let bounds      = self.bounds;
+        let text        = _control.attributedStringValue;
+        let height      = text.size().height;
+        
+        let center      = bounds.origin.y + bounds.size.height/2.0;
+        let top         = center - height/2.0;
+        
+        _control.frame  = NSRect(origin: CGPoint(x: bounds.origin.x, y: top), size: CGSize(width: bounds.size.width, height: height));
+    }
+    
+    /// If the control is a text field, centers it vertically
+    func centerVerticallyIfTextField() {
+        if _control is NSTextField {
+            centerVerticallyAsTextField();
+        }
+    }
+    
     /// Updates the frame size of this view
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize);
         _control.frame = bounds;
+        
+        centerVerticallyIfTextField();
     }
     
     /// Adds a subview to this container view
@@ -121,8 +142,10 @@ class FloControlView: NSView, FloContainerView {
     
     /// Sets the text label for this view
     func setTextLabel(label: String) {
-        _label = label;
-        _control.attributedStringValue = attributedLabel;
+        _label                              = label;
+        _control.attributedStringValue      = attributedLabel;
+        
+        centerVerticallyIfTextField();
     }
     
     /// The label with attributes applied
@@ -152,6 +175,8 @@ class FloControlView: NSView, FloContainerView {
         _font               = newFont;
 
         _control.attributedStringValue = attributedLabel;
+        
+        centerVerticallyIfTextField();
     }
 
     ///
@@ -182,10 +207,14 @@ class FloControlView: NSView, FloContainerView {
         _font                   = newFont;
 
         _control.attributedStringValue = attributedLabel;
+        
+        centerVerticallyIfTextField();
     }
     
     /// Sets the text alignment for this view
     func setTextAlignment(alignment: NSTextAlignment) {
         _alignment = alignment;
+
+        _control.attributedStringValue = attributedLabel;
     }
 }
