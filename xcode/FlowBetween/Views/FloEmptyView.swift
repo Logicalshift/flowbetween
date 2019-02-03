@@ -13,6 +13,7 @@ import Cocoa
 ///
 class FloEmptyView : NSView, FloContainerView {
     var _canvasLayer: CALayer?;
+    var _labelView: FloControlView?;
     
     required override init(frame frameRect: NSRect) {
         super.init(frame: frameRect);
@@ -111,6 +112,7 @@ class FloEmptyView : NSView, FloContainerView {
         performLayout?(bounds.size);
         
         // Any subviews that are not themselves FloContainers are sized to fill this view
+        _labelView?.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize);
         for subview in subviews {
             if (subview as? FloContainerView) == nil {
                 subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize);
@@ -179,7 +181,44 @@ class FloEmptyView : NSView, FloContainerView {
             });
         }
     }
+
+    ///
+    /// The label view for this empty view
+    ///
+    var labelView: FloControlView {
+        get {
+            if _labelView == nil {
+                let label   = NSTextField.init(labelWithString: "");
+                label.font  = NSFontManager.shared.font(withFamily: "Lato", traits: NSFontTraitMask(), weight: 5, size: 13.0);
+                
+                _labelView = FloControlView(frame: bounds, control: label);
+                addSubview(_labelView!);
+            }
+            
+            return _labelView!;
+        }
+    }
     
+    /// Sets the text label for this view
+    func setTextLabel(label: String) {
+        labelView.setTextLabel(label: label);
+    }
+    
+    /// Sets the font size for this view
+    func setFontSize(points: Float64) {
+        labelView.setFontSize(points: points);
+    }
+    
+    /// Sets the font weight for this view
+    func setFontWeight(weight: Float64) {
+        labelView.setFontWeight(weight: weight);
+    }
+    
+    /// Sets the text alignment for this view
+    func setTextAlignment(alignment: NSTextAlignment) {
+        labelView.setTextAlignment(alignment: alignment);
+    }
+
     ///
     /// Returns the paint device that a particular event represents
     ///

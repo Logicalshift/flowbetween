@@ -19,9 +19,6 @@ public class FloView : NSObject, FloViewDelegate {
     /// The view that this is a subview of
     fileprivate weak var _superview: FloView?;
     
-    /// The control contained by this view
-    fileprivate var _control: NSControl!;
-    
     /// The layout bounds of this view
     fileprivate var _bounds: Bounds;
     
@@ -78,13 +75,6 @@ public class FloView : NSObject, FloViewDelegate {
         _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
     }
     
-    convenience init(withControl: NSControl) {
-        self.init();
-        
-        _control = withControl;
-        _view.addContainerSubview(control);
-    }
-    
     ///
     /// The bounds of this view, as described to the layout system
     ///
@@ -112,24 +102,6 @@ public class FloView : NSObject, FloViewDelegate {
     public var layoutSubviews: [FloView] {
         get {
             return _subviews;
-        }
-    }
-    
-    public var control: NSControl {
-        get {
-            if let control = _control {
-                // Use the existing control if there is one
-                return control;
-            } else {
-                // Default control is a label
-                let label   = NSTextField.init(labelWithString: "");
-                label.font  = NSFontManager.shared.font(withFamily: "Lato", traits: NSFontTraitMask(), weight: 5, size: 13.0);
-                
-                view.addSubview(label);
-                _control = label;
-
-                return label;
-            }
         }
     }
     
@@ -332,7 +304,7 @@ public class FloView : NSObject, FloViewDelegate {
         
         text.trackValue({ value in
             if case let PropertyValue.String(value) = value {
-                self.control.stringValue = value;
+                self._view.setTextLabel(label: value);
             }
         });
     }
@@ -357,40 +329,14 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sets the font size of the control for this view
     ///
     @objc public func viewSetFontSize(_ size: Float64) {
-        let existingFont    = control.font!;
-        let newFont         = NSFontManager.shared.convert(existingFont, toSize: CGFloat(size));
-        
-        control.font        = newFont;
-    }
-    
-    ///
-    /// Converts a weight from a value like 100, 200, 400, etc to a font manager weight (0-15)
-    ///
-    func convertWeight(_ weight: Float64) -> Int {
-        if weight <= 150.0 {
-            return 1;
-        } else if weight <= 450.0 {
-            return 5;
-        } else if weight <= 750.0 {
-            return 7;
-        } else {
-            return 10;
-        }
+        _view.setFontSize(points: size);
     }
     
     ///
     /// Sets the font weight of the control for this view
     ///
     @objc public func viewSetFontWeight(_ weight: Float64) {
-        let existingFont        = control.font!;
-        let fontManagerWeight   = convertWeight(weight);
-        let family              = existingFont.familyName!;
-        let size                = existingFont.pointSize;
-        let traits              = NSFontTraitMask();
-        
-        let newFont             = NSFontManager.shared.font(withFamily: family, traits: traits, weight: fontManagerWeight, size: size);
-        
-        control.font        = newFont;
+        _view.setFontWeight(weight: weight);
     }
 
     ///
@@ -403,9 +349,9 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     @objc public func viewSetTextAlignment(_ alignment: UInt32) {
         switch alignment {
-        case 0:     control.alignment = NSTextAlignment.left;   break;
-        case 1:     control.alignment = NSTextAlignment.center; break;
-        case 2:     control.alignment = NSTextAlignment.right;  break;
+        case 0:     _view.setTextAlignment(alignment: NSTextAlignment.left);    break;
+        case 1:     _view.setTextAlignment(alignment: NSTextAlignment.center);  break;
+        case 2:     _view.setTextAlignment(alignment: NSTextAlignment.right);   break;
         default:    break;
         }
     }

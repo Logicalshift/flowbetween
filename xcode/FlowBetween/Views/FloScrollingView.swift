@@ -224,4 +224,21 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             }
         }
     }
+    
+    /// Sets the text label for this view
+    func setTextLabel(label: String) {
+        // Scroll view just acts as a container, can't have a label
+    }
+
+    /// Sets the font size for this view
+    func setFontSize(points: Float64) {
+    }
+    
+    /// Sets the font weight for this view
+    func setFontWeight(weight: Float64) {
+    }
+    
+    /// Sets the text alignment for this view
+    func setTextAlignment(alignment: NSTextAlignment) {
+    }
 }

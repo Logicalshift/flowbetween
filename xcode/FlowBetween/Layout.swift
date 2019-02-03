@@ -19,7 +19,7 @@ class Layout {
         switch pos {
         case Position.At(let value):                return Double(value);
         case Position.Offset(let value):            return previous + Double(value);
-        case Position.Floating(let value, let _):   return previous + Double(value);
+        case Position.Floating(let value, _):       return previous + Double(value);
         case Position.After:                        return previous;
         case Position.Start:                        return 0.0;
         case Position.End:                          return end;
