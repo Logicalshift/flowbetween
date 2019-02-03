@@ -414,7 +414,7 @@ impl CocoaSession {
         let mut events = executor::spawn(self.events.republish());
 
         // Send a tick event
-        events.wait_send(vec![AppEvent::Tick]);
+        events.wait_send(vec![AppEvent::Tick]).ok();
     }
 
     ///
