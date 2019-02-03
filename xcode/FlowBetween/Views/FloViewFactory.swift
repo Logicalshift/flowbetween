@@ -27,8 +27,8 @@ import Cocoa
         let button      = NSButton.init(title: "", target: nil, action: #selector(FloView.onClick));
         let buttonView  = FloButtonView.init(frame: CGRect.init(), control: button);
         
-        let view = FloView.init(withView: buttonView);
-        button.target = view;
+        let view        = FloView.init(withView: buttonView);
+        button.target   = view;
         
         return view;
     }
@@ -55,7 +55,12 @@ import Cocoa
     /// Creates a view that can adjust a value
     ///
     @objc public static func createAsSlider() -> FloView {
-        return createAsEmpty();
+        let slider      = NSSlider.init(value: 0.5, minValue: 0.0, maxValue: 1.0, target: nil, action: nil);
+        let sliderView  = FloControlView.init(frame: CGRect.init(), control: slider);
+        
+        let view        = FloView.init(withView: sliderView);
+        
+        return view;
     }
     
     ///
@@ -69,6 +74,15 @@ import Cocoa
     /// Creates a view that can contain some text to be edited
     ///
     @objc public static func createAsTextBox() -> FloView {
-        return createAsEmpty();
+        let textbox         = NSTextField.init();
+        textbox.isEditable  = true;
+        textbox.isBordered  = true;
+        textbox.isBezeled   = true;
+        textbox.bezelStyle  = NSTextField.BezelStyle.squareBezel;
+        let textboxView     = FloControlView.init(frame: CGRect.init(), control: textbox);
+
+        let view            = FloView.init(withView: textboxView);
+
+        return view;
     }
 }
