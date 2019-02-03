@@ -28,7 +28,7 @@ fn make_app_bounds<BindProperty: FnMut(Property) -> AppProperty>(ui_bounds: &Bou
 }
 
 impl ActionsFrom<ViewAction> for ControlAttribute {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, mut bind_property: BindProperty) -> Vec<ViewAction> { 
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> { 
         use self::ControlAttribute::*;
 
         match self {
@@ -39,7 +39,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             ScrollAttr(scroll_attr)                 => scroll_attr.actions_from(bind_property),
             HintAttr(hint_attr)                     => hint_attr.actions_from(bind_property),
 
-            BoundingBox(bounds)                     => vec![ViewAction::SetBounds(make_app_bounds(bounds, &mut bind_property))],
+            BoundingBox(bounds)                     => vec![ViewAction::SetBounds(make_app_bounds(bounds, bind_property))],
             ZIndex(z_index)                         => vec![ViewAction::SetZIndex(*z_index as f64)],
             Padding((left, top), (right, bottom))   => vec![ViewAction::SetPadding(*left as f64, *top as f64, *right as f64, *bottom as f64)],
             Text(text_val)                          => vec![ViewAction::SetText(bind_property(text_val.clone()))],
@@ -85,7 +85,7 @@ fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
 }
 
 impl ActionsFrom<ViewAction> for Font {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Font::*;
 
         match self {
@@ -97,7 +97,7 @@ impl ActionsFrom<ViewAction> for Font {
 }
 
 impl ActionsFrom<ViewAction> for State {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::State::*;
 
         match self {
@@ -112,7 +112,7 @@ impl ActionsFrom<ViewAction> for State {
 }
 
 impl ActionsFrom<ViewAction> for Popup {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Popup::*;
 
         match self {
@@ -125,7 +125,7 @@ impl ActionsFrom<ViewAction> for Popup {
 }
 
 impl ActionsFrom<ViewAction> for Appearance {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Appearance::*;
 
         match self {
@@ -137,7 +137,7 @@ impl ActionsFrom<ViewAction> for Appearance {
 }
 
 impl ActionsFrom<ViewAction> for Scroll {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Scroll::*;
 
         match self {
@@ -150,7 +150,7 @@ impl ActionsFrom<ViewAction> for Scroll {
 }
 
 impl ActionsFrom<ViewAction> for Hint {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Hint::*;
 
         match self {

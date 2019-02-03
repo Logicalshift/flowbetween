@@ -162,14 +162,99 @@ impl ViewState {
     }
 
     ///
-    /// Sets up this state from a control, and returns the action steps needed to initialise it
+    /// Returns true if the subcomponents of a control are just a label
     ///
-    pub fn set_up_from_control<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, mut bind_property: BindProperty) -> Vec<AppAction> {
+    fn subcomponents_is_just_label(control: &Control) -> bool {
+        if let Some(subcomponents) = control.subcomponents() {
+            if subcomponents.len() == 1 {
+                let control_type = subcomponents[0].control_type();
+
+                if control_type == ControlType::Label {
+                    // One subcomponent, which is a label
+                    true
+                } else if control_type == ControlType::Empty {
+                    if subcomponents[0].subcomponents().map(|components| components.len()).unwrap_or(0) == 0 {
+                        // One subcomponent, which is empty
+                        true
+                    } else {
+                        // One subcomponent, which contains other components
+                        false
+                    }
+                } else {
+                    // One subcomponent, which is of some type other than label
+                    false
+                }
+            } else {
+                // More than one subcomponent
+                false
+            }
+        } else {
+            // No subcomponents
+            true
+        }
+    }
+
+    ///
+    /// Returns the steps required for setting up a button
+    ///
+    /// A button that has no subcomponents or just a label can be set up as a button control.
+    /// Cocoa's standard button cannot have sub-views or be larger than a certain size, so other buttons will
+    /// be set up as a container button.
+    ///
+    fn set_up_from_button<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, bind_property: &mut BindProperty) -> Vec<AppAction> {
+        // Get the properties we use to make a decision
+        let has_class           = control.attributes().any(|attr| match attr { ControlAttribute::HintAttr(Hint::Class(_)) => true, _ => false });
+        let has_subcomponents   = control.subcomponents().is_some();
+        let has_image           = control.image_resource().is_some() || control.canvas_resource().is_some();
+
+        if has_subcomponents && !has_class && !has_image {
+            // Can use a standard button if the only subcomponent is a label
+            if Self::subcomponents_is_just_label(control) {
+                // Generate a new control without subcomponents
+                let mut without_subcomponents = Control::button();
+
+                // Take the attributes from the main control
+                for attr in control.attributes() {
+                    if attr.subcomponents().is_none() {
+                        without_subcomponents = without_subcomponents.with(attr.clone());
+                    }
+                }
+
+                // Combined with the attributes from the subcomponents
+                for attr in control.subcomponents().cloned().unwrap_or(vec![Control::empty()])[0].attributes() {
+                    match attr {
+                        ControlAttribute::BoundingBox(_) => { },
+
+                        _ => { without_subcomponents = without_subcomponents.with(attr.clone()); }
+                    }
+                }
+
+                // Build as normal
+                let setup_actions = self.set_up_from_generic_control(&without_subcomponents, ViewType::Button, bind_property);
+
+                setup_actions
+            } else {
+                // Not just a label: need to use the container button
+                self.set_up_from_generic_control(control, ViewType::ContainerButton, bind_property)
+            }
+        } else if !has_class && !has_image {
+            // Can use a standard button
+            self.set_up_from_generic_control(control, ViewType::Button, bind_property)
+        } else {
+            // Need to use a container button
+            self.set_up_from_generic_control(control, ViewType::ContainerButton, bind_property)
+        }
+    }
+
+    ///
+    /// Perform the 'standard' set of set-up actions
+    ///
+    fn set_up_from_generic_control<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, view_type: ViewType, bind_property: &mut BindProperty) -> Vec<AppAction> {
         // Create the list of set up steps
         let mut set_up_steps = vec![];
 
         // Create the view with the appropriate type
-        set_up_steps.push(AppAction::CreateView(self.view_id, ViewType::from(control)));
+        set_up_steps.push(AppAction::CreateView(self.view_id, view_type));
 
         // Specify the controller name, if there is one
         if let Some(controller_name) = control.controller() {
@@ -178,10 +263,26 @@ impl ViewState {
 
         // Set up the view from its attributes
         let view_set_up = control.attributes()
-            .flat_map(move |attribute| attribute.actions_from(&mut bind_property))
+            .flat_map(move |attribute| attribute.actions_from(bind_property))
             .map(|view_action| AppAction::View(self.view_id, view_action));
         set_up_steps.extend(view_set_up);
 
         set_up_steps
+    }
+
+    ///
+    /// Sets up this state from a control, and returns the action steps needed to initialise it
+    ///
+    pub fn set_up_from_control<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, mut bind_property: BindProperty) -> Vec<AppAction> {
+        let control_type = control.control_type();
+
+        // Some controls need different actions depending on how they're set up
+        match control_type {
+            // Buttons might be simple OS X button controls or 'container buttons' that have other views on them
+            ControlType::Button => self.set_up_from_button(control, &mut bind_property),
+
+            // Other controls get the standard set up
+            _                   => self.set_up_from_generic_control(control, ViewType::from(control), &mut bind_property)
+        }
     }
 }
