@@ -33,6 +33,13 @@ import Cocoa
     }
     
     ///
+    /// Creates a view that acts like a button but can contain other views
+    ///
+    @objc public static func createAsContainerButton() -> FloView {
+        return createAsButton();
+    }
+    
+    ///
     /// Creates a view that can be scrolled
     ///
     @objc public static func createAsScrolling() -> FloView {

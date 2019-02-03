@@ -241,12 +241,13 @@ impl CocoaSession {
 
             // Allocate and initialise it
             let view: *mut Object = match view_type {
-                Empty       => { msg_send!(*view_class, createAsEmpty) }
-                Button      => { msg_send!(*view_class, createAsButton) }
-                Slider      => { msg_send!(*view_class, createAsSlider) }
-                TextBox     => { msg_send!(*view_class, createAsTextBox) }
-                CheckBox    => { msg_send!(*view_class, createAsCheckBox) }
-                Scrolling   => { msg_send!(*view_class, createAsScrolling) }
+                Empty           => { msg_send!(*view_class, createAsEmpty) }
+                Button          => { msg_send!(*view_class, createAsButton) }
+                ContainerButton => { msg_send!(*view_class, createAsContainerButton) }
+                Slider          => { msg_send!(*view_class, createAsSlider) }
+                TextBox         => { msg_send!(*view_class, createAsTextBox) }
+                CheckBox        => { msg_send!(*view_class, createAsCheckBox) }
+                Scrolling       => { msg_send!(*view_class, createAsScrolling) }
             };
 
             let view = StrongPtr::new(view);

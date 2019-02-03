@@ -11,6 +11,9 @@ pub enum ViewType {
     /// A view containing a button
     Button,
 
+    /// A button that can contain other views (Cocoa has no native control to do this, so we draw this ourselves)
+    ContainerButton,
+
     /// A view containing a slider
     Slider,
 
