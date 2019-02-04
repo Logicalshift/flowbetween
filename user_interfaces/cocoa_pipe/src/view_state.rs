@@ -169,7 +169,13 @@ impl ViewState {
             if subcomponents.len() == 1 {
                 let control_type = subcomponents[0].control_type();
 
-                if control_type == ControlType::Label {
+                if subcomponents[0].image_resource().is_some() {
+                    // Image items aren't labels
+                    false
+                } else if subcomponents[0].canvas_resource().is_some() {
+                    // Canvas items aren't labels
+                    false
+                } else if control_type == ControlType::Label {
                     // One subcomponent, which is a label
                     true
                 } else if control_type == ControlType::Empty {
