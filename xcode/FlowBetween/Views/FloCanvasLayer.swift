@@ -116,7 +116,7 @@ class FloCanvasLayer : CALayer {
     /// Updates the area of the canvas that this layer should display
     ///
     func setVisibleArea(bounds: ContainerBounds, resolution: CGFloat) {
-        if _visibleRect.size != bounds.visibleRect.size {
+        if _visibleRect.size != bounds.visibleRect.size || resolution != _resolution {
             // Backing will have changed size, so invalidate it entirely
             invalidateAllLayers();
         } else {
