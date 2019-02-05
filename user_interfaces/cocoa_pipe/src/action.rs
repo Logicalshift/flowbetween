@@ -182,11 +182,29 @@ pub enum ViewEvent {
     /// User has clicked the control contained within this view
     Click,
 
+    /// Send event when the user clicks in a view that's not either this view or a subview
+    Dismiss,
+
     /// Send events when the view is scrolled, indicating which area is visible
     VirtualScroll(f64, f64),
 
     /// Send events for painting actions on this view
-    Paint(AppPaintDevice)
+    Paint(AppPaintDevice),
+
+    /// Send actions for dragging this view
+    Drag,
+
+    /// Send events when this view is focused
+    Focused,
+
+    /// Event sent when the value is being changed
+    EditValue,
+
+    /// Event sent when the value has been edited
+    SetValue,
+
+    /// Event sent when some EditValues were sent but the editing was cancelled
+    CancelEdit
 }
 
 ///

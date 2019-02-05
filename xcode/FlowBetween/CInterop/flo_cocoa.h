@@ -61,9 +61,16 @@ typedef struct AppPainting AppPainting;
 /// The protocol that the Rust side uses to send data to the FloView class
 ///
 @protocol FloViewDelegate
+
 - (void) requestClick: (FloEvents*) events withName: (NSString*) name;
+- (void) requestDismiss: (FloEvents*) events withName: (NSString*) name;
 - (void) requestVirtualScroll: (FloEvents*) events withName: (NSString*) name width: (double) width height: (double) height;
 - (void) requestPaintWithDeviceId: (uint32_t) deviceId events: (FloEvents*) events withName: (NSString*) name;
+- (void) requestDrag: (FloEvents*) events withName: (NSString*) name;
+- (void) requestFocusd: (FloEvents*) events withName: (NSString*) name;
+- (void) requestEditValue: (FloEvents*) events withName: (NSString*) name;
+- (void) requestSetValue: (FloEvents*) events withName: (NSString*) name;
+- (void) requestCancelEdit: (FloEvents*) events withName: (NSString*) name;
 
 - (void) viewRemoveFromSuperview;
 - (void) viewAddSubView: (NSObject*) subview;
@@ -93,6 +100,7 @@ typedef struct AppPainting AppPainting;
 - (void) viewFinishedDrawing;
 - (void) viewSetTransform: (CGAffineTransform) transform;
 - (void) viewClearCanvas;
+
 @end
 
 /// Creates a new FlowBetween session

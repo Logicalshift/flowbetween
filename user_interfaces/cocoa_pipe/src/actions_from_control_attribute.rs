@@ -63,7 +63,7 @@ fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
 
     match trigger {
         Click                           => vec![ViewAction::RequestEvent(ViewEvent::Click, name.clone())],
-        Dismiss                         => vec![],
+        Dismiss                         => vec![ViewAction::RequestEvent(ViewEvent::Dismiss, name.clone())],
         
         Paint(Mouse(Left))              => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseLeft), name.clone())],
         Paint(Mouse(Middle))            => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseMiddle), name.clone())],
@@ -75,11 +75,11 @@ fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
         Paint(Mouse(MouseButton::Other(_))) => vec![],
         Paint(PaintDevice::Other)       => vec![],
 
-        Drag                            => vec![],
-        Focused                         => vec![],
-        EditValue                       => vec![],
-        SetValue                        => vec![],
-        CancelEdit                      => vec![],
+        Drag                            => vec![ViewAction::RequestEvent(ViewEvent::Drag, name.clone())],
+        Focused                         => vec![ViewAction::RequestEvent(ViewEvent::Focused, name.clone())],
+        EditValue                       => vec![ViewAction::RequestEvent(ViewEvent::EditValue, name.clone())],
+        SetValue                        => vec![ViewAction::RequestEvent(ViewEvent::SetValue, name.clone())],
+        CancelEdit                      => vec![ViewAction::RequestEvent(ViewEvent::CancelEdit, name.clone())],
         VirtualScroll(width, height)    => vec![ViewAction::RequestEvent(ViewEvent::VirtualScroll(*width as f64, *height as f64), name.clone())],
     }
 }

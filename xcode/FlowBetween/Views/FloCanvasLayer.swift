@@ -75,6 +75,10 @@ class FloCanvasLayer : CALayer {
     override func draw(in ctx: CGContext) {
         // Redraw the backing layer if it has been invalidated
         if _backing.count == 0 {
+            // TODO: for whatever reason the first layer we generate is 'bad' and renders slowly
+            // Appears that regenerating the layer instead of caching it in the unused set fixes this issue
+            // (Eg: resize the view)
+            
             var size    = _visibleRect.size;
             size.width  *= _resolution;
             size.height *= _resolution;
@@ -116,20 +120,28 @@ class FloCanvasLayer : CALayer {
     /// Updates the area of the canvas that this layer should display
     ///
     func setVisibleArea(bounds: ContainerBounds, resolution: CGFloat) {
-        if _visibleRect.size != bounds.visibleRect.size || resolution != _resolution {
-            // Backing will have changed size, so invalidate it entirely
-            invalidateAllLayers();
-        } else {
-            // Just trigger a redraw
-            _triggerRedraw?(bounds.totalSize, bounds.visibleRect);
+        autoreleasepool {
+            if _visibleRect.size != bounds.visibleRect.size || resolution != _resolution {
+                // Backing will have changed size, so invalidate it entirely
+                invalidateAllLayers();
+                setNeedsDisplay();
+            } else {
+                // Just trigger a redraw
+                _triggerRedraw?(bounds.totalSize, bounds.visibleRect);
+            }
+            
+            _canvasSize         = bounds.totalSize;
+            _visibleRect        = bounds.visibleRect;
+            
+            _resolution         = resolution;
+            contentsScale       = resolution;
+            
+            CATransaction.begin();
+            CATransaction.setAnimationDuration(0.0);
+            CATransaction.disableActions();
+            displayIfNeeded();
+            CATransaction.commit();
         }
-        
-        _canvasSize         = bounds.totalSize;
-        _visibleRect        = bounds.visibleRect;
-        
-        // Set the initial transformation of the context
-        _resolution         = resolution;
-        contentsScale       = resolution;
     }
     
     ///

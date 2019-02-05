@@ -432,8 +432,14 @@ impl CocoaSession {
             if let Some(view) = views.get(&view_id) {
                 match event_type {
                     Click                           => { msg_send!(**view, requestClick: retain(&flo_events) withName: retain(&name)); }
-                    Paint(device)                   => { msg_send!(**view, requestPaintWithDeviceId: device as u32 events: retain(&flo_events) withName: retain(&name)); }
+                    Dismiss                         => { msg_send!(**view, requestDismiss: retain(&flo_events) withName: retain(&name)); }
                     VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: retain(&flo_events) withName: retain(&name) width: width as f64 height: height as f64); }
+                    Paint(device)                   => { msg_send!(**view, requestPaintWithDeviceId: device as u32 events: retain(&flo_events) withName: retain(&name)); }
+                    Drag                            => { msg_send!(**view, requestDrag: retain(&flo_events) withName: retain(&name)); }
+                    Focused                         => { msg_send!(**view, requestFocused: retain(&flo_events) withName: retain(&name)); }
+                    EditValue                       => { msg_send!(**view, requestEditValue: retain(&flo_events) withName: retain(&name)); }
+                    SetValue                        => { msg_send!(**view, requestSetValue: retain(&flo_events) withName: retain(&name)); }
+                    CancelEdit                      => { msg_send!(**view, requestCancelEdit: retain(&flo_events) withName: retain(&name)); }
                 }
             }
         }

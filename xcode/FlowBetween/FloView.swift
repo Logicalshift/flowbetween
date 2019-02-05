@@ -141,6 +141,31 @@ public class FloView : NSObject, FloViewDelegate {
         _onClick = { events.sendClick(withName); };
     }
     
+    public func requestDismiss(_ events: FloEvents!, withName name: String!) {
+        NSLog("RequestDismiss not implemented");
+    }
+    
+    public func requestDrag(_ events: FloEvents!, withName name: String!) {
+        NSLog("RequestDrag not implemented");
+    }
+    
+    public func requestFocusd(_ events: FloEvents!, withName name: String!) {
+        NSLog("RequestFocused not implemented");
+    }
+    
+    public func requestEditValue(_ events: FloEvents!, withName name: String!) {
+        NSLog("RequestEditValue not implemented");
+    }
+    
+    public func requestSetValue(_ events: FloEvents!, withName name: String!) {
+        NSLog("RequestSetValue not implemented");
+    }
+    
+    public func requestCancelEdit(_ events: FloEvents!, withName name: String!) {
+        NSLog("RequestCancelEdit not implemented");
+    }
+    
+
     ///
     /// Sends an event if this view is scrolled
     ///
