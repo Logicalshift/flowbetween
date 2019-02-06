@@ -165,7 +165,30 @@ public class FloView : NSObject, FloViewDelegate {
         NSLog("RequestCancelEdit not implemented");
     }
     
-
+    public func viewSetSelected(_ property: FloProperty!) {
+        NSLog("SetSelected not implemented");
+    }
+    
+    public func viewSetBadged(_ property: FloProperty!) {
+        NSLog("SetBadged not implemented");
+    }
+    
+    public func viewSetEnabled(_ property: FloProperty!) {
+        NSLog("SetEnabled not implemented");
+    }
+    
+    public func viewSetValue(_ property: FloProperty!) {
+        NSLog("SetValue not implemented");
+    }
+    
+    public func viewSetRange(withLower lower: FloProperty!, upper: FloProperty!) {
+        NSLog("SetRange not implemented");
+    }
+    
+    public func viewSetFocusPriority(_ property: FloProperty!) {
+        NSLog("SetFocusPriority not implemented");
+    }
+    
     ///
     /// Sends an event if this view is scrolled
     ///

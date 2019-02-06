@@ -97,16 +97,16 @@ impl ActionsFrom<ViewAction> for Font {
 }
 
 impl ActionsFrom<ViewAction> for State {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::State::*;
 
         match self {
-            Selected(property)          => vec![],
-            Badged(property)            => vec![],
-            Enabled(property)           => vec![],
-            Value(property)             => vec![],
-            Range((lower, upper))       => vec![],
-            FocusPriority(property)     => vec![]
+            Selected(property)          => vec![ViewAction::SetState(ViewStateUpdate::Selected(bind_property(property.clone())))],
+            Badged(property)            => vec![ViewAction::SetState(ViewStateUpdate::Badged(bind_property(property.clone())))],
+            Enabled(property)           => vec![ViewAction::SetState(ViewStateUpdate::Enabled(bind_property(property.clone())))],
+            Value(property)             => vec![ViewAction::SetState(ViewStateUpdate::Value(bind_property(property.clone())))],
+            Range((lower, upper))       => vec![ViewAction::SetState(ViewStateUpdate::Range(bind_property(lower.clone()), bind_property(upper.clone())))],
+            FocusPriority(property)     => vec![ViewAction::SetState(ViewStateUpdate::FocusPriority(bind_property(property.clone())))]
         }
     }
 }

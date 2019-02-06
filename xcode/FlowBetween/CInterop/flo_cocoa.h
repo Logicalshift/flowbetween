@@ -94,6 +94,13 @@ typedef struct AppPainting AppPainting;
 - (void) viewSetHorizontalScrollVisibility: (uint32_t) visibility;
 - (void) viewSetVerticalScrollVisibility: (uint32_t) visibility;
 
+- (void) viewSetSelected: (FloProperty*) property;
+- (void) viewSetBadged: (FloProperty*) property;
+- (void) viewSetEnabled: (FloProperty*) property;
+- (void) viewSetValue: (FloProperty*) property;
+- (void) viewSetRangeWithLower: (FloProperty*) lower upper: (FloProperty*) upper;
+- (void) viewSetFocusPriority: (FloProperty*) property;
+
 - (CGContextRef) viewGetCanvasForDrawing: (FloEvents*) events layer: (uint32_t) layer_id;
 - (FloCacheLayer*) viewCopyLayerWithId: (uint32_t) layer_id;
 - (void) viewRestoreLayerTo: (uint32_t) layer_id fromCopy: (FloCacheLayer*) copyLayer;

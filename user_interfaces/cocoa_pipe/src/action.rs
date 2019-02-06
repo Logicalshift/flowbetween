@@ -145,7 +145,34 @@ pub enum ViewAction {
     SetId(String),
 
     /// Draws on the canvas for this view
-    Draw(Vec<Draw>)
+    Draw(Vec<Draw>),
+
+    /// Sets part of the state of this view
+    SetState(ViewStateUpdate)
+}
+
+///
+/// Actions that update the state of the view (how it is displayed, or what it is displaying)
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum ViewStateUpdate {
+    /// Boolean indicating if this view is selected or not
+    Selected(AppProperty),
+
+    /// Boolean indicating if this view has a badge attached to it
+    Badged(AppProperty),
+
+    /// Boolean indicating if this view is enabled for interaction or greyed out
+    Enabled(AppProperty),
+
+    /// Property indicating the value for this view
+    Value(AppProperty),
+
+    /// Property indicating the range of valid values for this view
+    Range(AppProperty, AppProperty),
+
+    /// If this view is new, the priority with which to steal focus
+    FocusPriority(AppProperty)
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, FromPrimitive, ToPrimitive)]

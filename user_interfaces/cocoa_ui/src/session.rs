@@ -311,6 +311,7 @@ impl CocoaSession {
                     SetTextAlignment(align)                 => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
 
                     SetImage(image)                         => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
+                    SetState(view_state)                    => { self.set_view_state(view, view_state); }
 
                     SetScrollMinimumSize(width, height)     => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
                     SetHorizontalScrollBar(visibility)      => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
@@ -321,6 +322,24 @@ impl CocoaSession {
                         self.draw(view_id, &view, canvas_actions); 
                     }
                 }
+            }
+        }
+    }
+
+    ///
+    /// Updates the state of a view
+    ///
+    fn set_view_state(&self, view: &StrongPtr, view_state: ViewStateUpdate) {
+        use self::ViewStateUpdate::*;
+
+        unsafe {
+            match view_state {
+                Selected(property)          => { msg_send!(**view, viewSetSelected: &*self.flo_property(property)); },
+                Badged(property)            => { msg_send!(**view, viewSetBadged: &*self.flo_property(property)); },
+                Enabled(property)           => { msg_send!(**view, viewSetEnabled: &*self.flo_property(property)); },
+                Value(property)             => { msg_send!(**view, viewSetValue: &*self.flo_property(property)); },
+                Range(lower, upper)         => { msg_send!(**view, viewSetRangeWithLower: &*self.flo_property(lower) upper: &*self.flo_property(upper)); },
+                FocusPriority(property)     => { msg_send!(**view, viewSetFocusPriority: &*self.flo_property(property)); }
             }
         }
     }
