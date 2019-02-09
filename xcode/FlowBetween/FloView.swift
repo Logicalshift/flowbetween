@@ -365,11 +365,12 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sets the text for the view
     ///
     @objc public func viewSetText(_ text: FloProperty) {
-        _text = text;
+        _text           = text;
+        weak var this   = self;
         
         text.trackValue({ value in
             if case let PropertyValue.String(value) = value {
-                self._view.setTextLabel(label: value);
+                this?._view.setTextLabel(label: value);
             }
         });
     }
