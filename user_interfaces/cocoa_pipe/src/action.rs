@@ -102,6 +102,9 @@ pub enum ViewAction {
     /// Adds the view with the specified ID as a subview of this view
     AddSubView(usize),
 
+    /// Inserts a new subview before an existing subview. The first argument is the view ID, the second is the index to add it at
+    InsertSubView(usize, usize),
+
     /// Sets the bounds of the view for layout
     SetBounds(AppBounds),
 

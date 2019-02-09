@@ -201,7 +201,7 @@ impl AppState {
             parent_address.pop();
             let parent_view         = self.root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(&parent_address));
 
-            parent_view.map(|parent_view| actions.push(AppAction::View(parent_view.id(), ViewAction::AddSubView(view_state.id()))));
+            parent_view.map(|parent_view| actions.push(AppAction::View(parent_view.id(), ViewAction::InsertSubView(view_state.id(), *difference.address.last().unwrap() as usize))));
 
             self.root_view.as_mut().map(|root_view| root_view.replace_child_state(&difference.address, view_state));
         } else {

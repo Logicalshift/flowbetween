@@ -298,6 +298,7 @@ impl CocoaSession {
 
                     RemoveFromSuperview                     => { msg_send!(**view, viewRemoveFromSuperview); }
                     AddSubView(view_id)                     => { self.views.get(&view_id).map(|subview| { msg_send!((**view), viewAddSubView: retain(subview)) }); }
+                    InsertSubView(view_id, index)           => { self.views.get(&view_id).map(|subview| { msg_send!((**view), viewInsertSubView: retain(subview) atIndex: index as u32) }); }
                     SetBounds(bounds)                       => { self.set_bounds(view, bounds); }
                     SetPadding(left, top, right, bottom)    => { self.set_padding(view, left, top, right, bottom); }
                     SetZIndex(z_index)                      => { msg_send!(**view, viewSetZIndex: z_index); }

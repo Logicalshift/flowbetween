@@ -287,6 +287,24 @@ public class FloView : NSObject, FloViewDelegate {
     }
     
     ///
+    /// Inserts a subview in a particular place in the list of subviews of this view
+    ///
+    @objc public func viewInsertSubView(_ subview: NSObject!, at index: UInt32) {
+        let subview = subview as! FloView;
+        subview.viewRemoveFromSuperview();
+        
+        self._subviews.insert(subview, at: Int(index));
+        subview._superview = self;
+        
+        if let subview = subview.view {
+            _view.addContainerSubview(subview);
+        }
+        
+        // View will need to be laid out again
+        invalidateLayout();
+    }
+
+    ///
     /// Sets the position of a side of the view
     ///
     func setSidePosition(_ side: Int32, _ position: Position) {
