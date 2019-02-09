@@ -11,7 +11,7 @@ import Cocoa
 ///
 /// Performs layout on a view according to how its size changes
 ///
-class Layout {
+class FloLayout {
     ///
     /// Lays out a single position
     ///

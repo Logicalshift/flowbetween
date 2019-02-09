@@ -110,7 +110,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     public func performLayout(_ size: NSSize) {
         // Just pass the request on to the layout class
-        Layout.layoutView(view: self, size: size);
+        FloLayout.layoutView(view: self, size: size);
     }
     
     ///
