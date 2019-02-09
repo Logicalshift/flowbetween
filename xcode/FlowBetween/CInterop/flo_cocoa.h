@@ -32,6 +32,10 @@ typedef struct AppPainting AppPainting;
 @interface FloEvents : NSObject
 
 - (void) sendClick: (NSString*) name;
+- (void) sendFocus: (NSString*) name;
+- (void) sendChangeValue: (NSString*) name isSet: (BOOL) isSet withBool: (BOOL) value;
+- (void) sendChangeValue: (NSString*) name isSet: (BOOL) isSet withDouble: (double) value;
+- (void) sendChangeValue: (NSString*) name isSet: (BOOL) isSet withString: (NSString*) value;
 - (void) sendVirtualScroll: (NSString*) name left: (uint32_t) left top: (uint32_t) top width: (uint32_t) width height: (uint32_t) height;
 - (void) sendPaintStartForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;
 - (void) sendPaintContinueForDevice: (uint32_t) deviceId name: (NSString*) name action: (AppPainting) action;

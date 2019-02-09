@@ -2,6 +2,7 @@ use super::app::*;
 use super::session::*;
 use super::core_graphics_ffi::*;
 
+use flo_ui::*;
 use flo_stream::*;
 use flo_cocoa_pipe::*;
 
@@ -188,6 +189,60 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
+        // Sends the 'focus' event
+        extern fn send_focus(this: &mut Object, _sel: Sel, name: *mut Object) {
+            unsafe {
+                let view_id = get_view_id(this);
+                let name    = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::Focus(view_id, name));
+                }
+            }
+        }
+
+        // Sends the 'edit/set value' event with a boolean
+        extern fn send_change_value_bool(this: &mut Object, _sel: Sel, name: *mut Object, is_set: bool, value: bool) {
+            unsafe {
+                let view_id     = get_view_id(this);
+                let edit_action = if is_set { EditAction::ValueSet } else { EditAction::LiveEditing };
+                let value       = PropertyValue::Bool(value);
+                let name        = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::EditValue(view_id, name, edit_action, value));
+                }
+            }
+        }
+
+        // Sends the 'edit/set value' event with a double
+        extern fn send_change_value_double(this: &mut Object, _sel: Sel, name: *mut Object, is_set: bool, value: f64) {
+            unsafe {
+                let view_id     = get_view_id(this);
+                let edit_action = if is_set { EditAction::ValueSet } else { EditAction::LiveEditing };
+                let value       = PropertyValue::Float(value);
+                let name        = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::EditValue(view_id, name, edit_action, value));
+                }
+            }
+        }
+
+        // Sends the 'edit/set value' event with a string
+        extern fn send_change_value_string(this: &mut Object, _sel: Sel, name: *mut Object, is_set: bool, string_value: *mut Object) {
+            unsafe {
+                let view_id     = get_view_id(this);
+                let edit_action = if is_set { EditAction::ValueSet } else { EditAction::LiveEditing };
+                let value       = PropertyValue::String(name_for_name(&mut *string_value));
+                let name        = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::EditValue(view_id, name, edit_action, value));
+                }
+            }
+        }
+
         // Sends the 'virtual scroll' event
         extern fn send_virtual_scroll(this: &mut Object, _sel: Sel, name: *mut Object, left: u32, top: u32, width: u32, height: u32) {
             unsafe {
@@ -301,6 +356,10 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(finishSendingEvents), finish_sending_events as extern fn(&mut Object, Sel));
 
         flo_events.add_method(sel!(sendClick:), send_click as extern fn(&mut Object, Sel, *mut Object));
+        flo_events.add_method(sel!(sendFocus:), send_focus as extern fn(&mut Object, Sel, *mut Object));
+        flo_events.add_method(sel!(sendChangeValue:isSet:withDouble:), send_change_value_bool as extern fn(&mut Object, Sel, *mut Object, bool, bool));
+        flo_events.add_method(sel!(sendChangeValue:isSet:withDouble:), send_change_value_double as extern fn(&mut Object, Sel, *mut Object, bool, f64));
+        flo_events.add_method(sel!(sendChangeValue:isSet:withString:), send_change_value_string as extern fn(&mut Object, Sel, *mut Object, bool, *mut Object));
         flo_events.add_method(sel!(sendVirtualScroll:left:top:width:height:), send_virtual_scroll as extern fn(&mut Object, Sel, *mut Object, u32, u32, u32, u32));
         flo_events.add_method(sel!(sendPaintStartForDevice:name:action:), send_paint_start as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(sendPaintContinueForDevice:name:action:), send_paint_continue as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
