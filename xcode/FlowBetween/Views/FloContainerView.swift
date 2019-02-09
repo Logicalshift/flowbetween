@@ -27,6 +27,9 @@ protocol FloContainerView {
     /// Sets the layer displayed for the canvas
     func setCanvasLayer(_ layer: CALayer);
     
+    /// Stores the general state of this view
+    var viewState : ViewState { get };
+    
     /// The size of the layout area for this view
     var layoutSize : NSSize { get };
 
@@ -77,6 +80,9 @@ protocol FloContainerView {
     
     /// Sets the text alignment for this view
     func setTextAlignment(alignment: NSTextAlignment);
+    
+    /// Sets part of the state of this control
+    func setState(selector: ViewStateSelector, toProperty: FloProperty);
 }
 
 ///

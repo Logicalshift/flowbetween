@@ -34,6 +34,9 @@ class FloEmptyView : NSView, FloContainerView {
         }
     };
 
+    /// Stores the general state of this view
+    var viewState : ViewState = ViewState();
+
     /// Returns this view as an NSView
     public var asView: NSView { get { return self; } }
     
@@ -223,7 +226,12 @@ class FloEmptyView : NSView, FloContainerView {
     func setForegroundColor(color: NSColor) {
         labelView.setForegroundColor(color: color);
     }
-    
+
+    /// Sets part of the state of this control
+    func setState(selector: ViewStateSelector, toProperty: FloProperty) {
+        viewState.retainProperty(selector: selector, property: toProperty);
+    }
+
     ///
     /// Returns the paint device that a particular event represents
     ///

@@ -17,6 +17,24 @@ public enum PropertyValue {
     case Int(Int64);
     case Float(Float64);
     case String(String);
+    
+    ///
+    /// Retrieves this property as a bool value
+    ///
+    func toBool(default defaultValue: Bool) -> Bool {
+        switch (self) {
+        case .Nothing, .Int(_), .Float(_), .String(_): return defaultValue;
+        case .Bool(let value): return value;
+        }
+    }
+    
+    func toDouble(default defaultValue: Double) -> Double {
+        switch (self) {
+        case .Nothing, .Bool(_), .String(_): return defaultValue;
+        case .Int(let value): return Double(value);
+        case .Float(let value): return Double(value);
+        }
+    }
 }
 
 

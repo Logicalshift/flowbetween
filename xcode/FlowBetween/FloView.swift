@@ -141,52 +141,53 @@ public class FloView : NSObject, FloViewDelegate {
         _onClick = { events.sendClick(withName); };
     }
     
-    public func requestDismiss(_ events: FloEvents!, withName name: String!) {
+    @objc public func requestDismiss(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestDismiss not implemented");
     }
     
-    public func requestDrag(_ events: FloEvents!, withName name: String!) {
+    @objc public func requestDrag(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestDrag not implemented");
     }
     
-    public func requestFocusd(_ events: FloEvents!, withName name: String!) {
+    @objc public func requestFocusd(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestFocused not implemented");
     }
     
-    public func requestEditValue(_ events: FloEvents!, withName name: String!) {
+    @objc public func requestEditValue(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestEditValue not implemented");
     }
     
-    public func requestSetValue(_ events: FloEvents!, withName name: String!) {
+    @objc public func requestSetValue(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestSetValue not implemented");
     }
     
-    public func requestCancelEdit(_ events: FloEvents!, withName name: String!) {
+    @objc public func requestCancelEdit(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestCancelEdit not implemented");
     }
     
-    public func viewSetSelected(_ property: FloProperty!) {
-        NSLog("SetSelected not implemented");
+    @objc public func viewSetSelected(_ property: FloProperty!) {
+        _view.setState(selector: ViewStateSelector.Selected, toProperty: property);
     }
     
-    public func viewSetBadged(_ property: FloProperty!) {
-        NSLog("SetBadged not implemented");
+    @objc public func viewSetBadged(_ property: FloProperty!) {
+        _view.setState(selector: ViewStateSelector.Badged, toProperty: property);
     }
     
-    public func viewSetEnabled(_ property: FloProperty!) {
-        NSLog("SetEnabled not implemented");
+    @objc public func viewSetEnabled(_ property: FloProperty!) {
+        _view.setState(selector: ViewStateSelector.Enabled, toProperty: property);
     }
     
-    public func viewSetValue(_ property: FloProperty!) {
-        NSLog("SetValue not implemented");
+    @objc public func viewSetValue(_ property: FloProperty!) {
+        _view.setState(selector: ViewStateSelector.Value, toProperty: property);
     }
     
-    public func viewSetRange(withLower lower: FloProperty!, upper: FloProperty!) {
-        NSLog("SetRange not implemented");
+    @objc public func viewSetRange(withLower lower: FloProperty!, upper: FloProperty!) {
+        _view.setState(selector: ViewStateSelector.RangeLower, toProperty: lower);
+        _view.setState(selector: ViewStateSelector.RangeHigher, toProperty: upper);
     }
     
-    public func viewSetFocusPriority(_ property: FloProperty!) {
-        NSLog("SetFocusPriority not implemented");
+    @objc public func viewSetFocusPriority(_ property: FloProperty!) {
+        _view.setState(selector: ViewStateSelector.FocusPriority, toProperty: property);
     }
     
     ///

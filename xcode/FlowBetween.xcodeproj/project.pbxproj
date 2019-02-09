@@ -47,6 +47,7 @@
 		4B58D90721DFAB8F00BDAE7B /* FloViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */; };
 		4B58D90921DFB16F00BDAE7B /* FloProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B58D90821DFB16F00BDAE7B /* FloProperty.swift */; };
 		4B5C498521F131CA00B39B68 /* CocoaLumberjack.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 4B5C498421F131BC00B39B68 /* CocoaLumberjack.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		4B79EAC7220EE6470019D660 /* ViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B79EAC6220EE6470019D660 /* ViewState.swift */; };
 		4BAC990721E0FC7000CEB87B /* OFL.txt in Copy Fonts */ = {isa = PBXBuildFile; fileRef = 4BAC98FC21E0FBD100CEB87B /* OFL.txt */; };
 		4BAC990F21E0FDE900CEB87B /* Lato-Bold.ttf in Copy Fonts */ = {isa = PBXBuildFile; fileRef = 4BAC990921E0FDDB00CEB87B /* Lato-Bold.ttf */; };
 		4BAC991021E0FDE900CEB87B /* Lato-Regular.ttf in Copy Fonts */ = {isa = PBXBuildFile; fileRef = 4BAC990B21E0FDDB00CEB87B /* Lato-Regular.ttf */; };
@@ -309,6 +310,7 @@
 		4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewModel.swift; sourceTree = "<group>"; };
 		4B58D90821DFB16F00BDAE7B /* FloProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloProperty.swift; sourceTree = "<group>"; };
 		4B5C498421F131BC00B39B68 /* CocoaLumberjack.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CocoaLumberjack.framework; path = "SVGKit/3rd-party-frameworks/CocoaLumberjack-2.2.0/Mac/CocoaLumberjack.framework"; sourceTree = "<group>"; };
+		4B79EAC6220EE6470019D660 /* ViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewState.swift; sourceTree = "<group>"; };
 		4BAC98F921E0FBD100CEB87B /* Lato-Thin.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Thin.woff2"; sourceTree = "<group>"; };
 		4BAC98FA21E0FBD100CEB87B /* Lato-Regular.woff2 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lato-Regular.woff2"; sourceTree = "<group>"; };
 		4BAC98FB21E0FBD100CEB87B /* README-WEB.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "README-WEB.txt"; sourceTree = "<group>"; };
@@ -403,6 +405,7 @@
 				4B3E9C5021F90B5800261433 /* ContainerBounds.swift */,
 				4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */,
 				4B4902112201036300FB6AFC /* FloPaintStage.swift */,
+				4B79EAC6220EE6470019D660 /* ViewState.swift */,
 			);
 			path = DataTypes;
 			sourceTree = "<group>";
@@ -414,9 +417,9 @@
 				4B52B4D221E2652600CA6B64 /* FloContainerView.swift */,
 				4B52B4D421E26BFE00CA6B64 /* FloEmptyView.swift */,
 				4B52B4D621E26DBA00CA6B64 /* FloScrollingView.swift */,
-				4B557B1421FB0BA300FFAC5D /* FloCanvasLayer.swift */,
 				4B51F82322078D1C0060578C /* FloControlView.swift */,
 				4B51F825220792290060578C /* FloButtonView.swift */,
+				4B557B1421FB0BA300FFAC5D /* FloCanvasLayer.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -804,6 +807,7 @@
 				4B58D90721DFAB8F00BDAE7B /* FloViewModel.swift in Sources */,
 				4B52B4D121E2625B00CA6B64 /* FloViewFactory.swift in Sources */,
 				4B57E9DD21DE66E600FD0551 /* Position.swift in Sources */,
+				4B79EAC7220EE6470019D660 /* ViewState.swift in Sources */,
 				4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */,
 				4B557B1521FB0BA300FFAC5D /* FloCanvasLayer.swift in Sources */,
 				4B5709B42205E83F004FB91F /* FloCacheLayer.swift in Sources */,

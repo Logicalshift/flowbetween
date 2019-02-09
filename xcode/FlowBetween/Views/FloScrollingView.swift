@@ -145,6 +145,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         }
     }
 
+    /// Stores the general state of this view
+    var viewState : ViewState = ViewState();
+
     /// Returns this view as an NSView
     var asView : NSView { get { return self; } };
     
@@ -245,5 +248,10 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Sets the foreground colour of the control
     func setForegroundColor(color: NSColor) {
         
+    }
+
+    /// Sets part of the state of this control
+    func setState(selector: ViewStateSelector, toProperty: FloProperty) {
+        viewState.retainProperty(selector: selector, property: toProperty);
     }
 }

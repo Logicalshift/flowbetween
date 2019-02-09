@@ -87,7 +87,10 @@ class FloControlView: NSView, FloContainerView {
             return self.bounds.size;
         }
     };
-    
+
+    /// Stores the general state of this view
+    var viewState : ViewState = ViewState();
+
     /// Returns this view as an NSView
     var asView : NSView { get { return self; } };
     
@@ -216,5 +219,56 @@ class FloControlView: NSView, FloContainerView {
         _alignment = alignment;
 
         _control.attributedStringValue = attributedLabel;
+    }
+
+    /// Sets part of the state of this control
+    func setState(selector: ViewStateSelector, toProperty: FloProperty) {
+        weak var this = self;
+        
+        // Store the state in the backing state (so the event stays registered)
+        viewState.retainProperty(selector: selector, property: toProperty);
+        
+        // Track this property
+        switch (selector) {
+        case .Enabled:
+            toProperty.trackValue { enabled in this?._control.isEnabled = enabled.toBool(default: true); }
+            break;
+
+        case .Value:
+            toProperty.trackValue { value in
+                switch (value) {
+                case .Float(let floatVal):      this?._control.doubleValue = Double(floatVal); break;
+                case .Int(let intValue):        this?._control.intValue = Int32(intValue); break;
+                case .String(let stringValue):  this?._control.stringValue = stringValue; break;
+                default:                        break;
+                }
+            }
+            break;
+            
+        case .RangeLower:
+            toProperty.trackValue { value in
+                if let slider = this?._control as? NSSlider {
+                    slider.minValue = value.toDouble(default: 0.0);
+                    this?.viewState.value?.notifyChange();
+                }
+            }
+            break;
+            
+        case .RangeHigher:
+            toProperty.trackValue { value in
+                if let slider = this?._control as? NSSlider {
+                    slider.maxValue = value.toDouble(default: 1.0);
+                    this?.viewState.value?.notifyChange();
+                }
+            }
+            break;
+
+        case .Selected:         break;
+        case .Badged:           break;
+            
+        case .FocusPriority:    break;
+        case .LayoutX:          break;
+        case .LayoutY:          break;
+        }
     }
 }
