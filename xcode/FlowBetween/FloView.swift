@@ -150,15 +150,31 @@ public class FloView : NSObject, FloViewDelegate {
     }
     
     @objc public func requestFocused(_ events: FloEvents!, withName name: String!) {
-        NSLog("RequestFocused not implemented");
+        _view.onFocused = { events.sendFocus(name); };
     }
     
     @objc public func requestEditValue(_ events: FloEvents!, withName name: String!) {
-        NSLog("RequestEditValue not implemented");
+        _view.onEditValue = { propertyValue in
+            switch propertyValue {
+            case .Bool(let boolVal):    events.sendChangeValue(name, isSet: false, with: boolVal); break;
+            case .Float(let floatVal):  events.sendChangeValue(name, isSet: false, with: floatVal); break;
+            case .Int(let intVal):      events.sendChangeValue(name, isSet: false, with: Double(intVal)); break;
+            case .String(let strVal):   events.sendChangeValue(name, isSet: false, with: strVal); break;
+            default:                    break;
+            }
+        }
     }
     
     @objc public func requestSetValue(_ events: FloEvents!, withName name: String!) {
-        NSLog("RequestSetValue not implemented");
+        _view.onSetValue = { propertyValue in
+            switch propertyValue {
+            case .Bool(let boolVal):    events.sendChangeValue(name, isSet: true, with: boolVal); break;
+            case .Float(let floatVal):  events.sendChangeValue(name, isSet: true, with: floatVal); break;
+            case .Int(let intVal):      events.sendChangeValue(name, isSet: true, with: Double(intVal)); break;
+            case .String(let strVal):   events.sendChangeValue(name, isSet: true, with: strVal); break;
+            default:                    break;
+            }
+        }
     }
     
     @objc public func requestCancelEdit(_ events: FloEvents!, withName name: String!) {
