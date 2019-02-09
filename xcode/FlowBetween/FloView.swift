@@ -149,7 +149,7 @@ public class FloView : NSObject, FloViewDelegate {
         NSLog("RequestDrag not implemented");
     }
     
-    @objc public func requestFocusd(_ events: FloEvents!, withName name: String!) {
+    @objc public func requestFocused(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestFocused not implemented");
     }
     

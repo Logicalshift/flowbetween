@@ -67,7 +67,7 @@ typedef struct AppPainting AppPainting;
 - (void) requestVirtualScroll: (FloEvents*) events withName: (NSString*) name width: (double) width height: (double) height;
 - (void) requestPaintWithDeviceId: (uint32_t) deviceId events: (FloEvents*) events withName: (NSString*) name;
 - (void) requestDrag: (FloEvents*) events withName: (NSString*) name;
-- (void) requestFocusd: (FloEvents*) events withName: (NSString*) name;
+- (void) requestFocused: (FloEvents*) events withName: (NSString*) name;
 - (void) requestEditValue: (FloEvents*) events withName: (NSString*) name;
 - (void) requestSetValue: (FloEvents*) events withName: (NSString*) name;
 - (void) requestCancelEdit: (FloEvents*) events withName: (NSString*) name;
