@@ -357,7 +357,7 @@ pub fn declare_flo_events_class() -> &'static Class {
 
         flo_events.add_method(sel!(sendClick:), send_click as extern fn(&mut Object, Sel, *mut Object));
         flo_events.add_method(sel!(sendFocus:), send_focus as extern fn(&mut Object, Sel, *mut Object));
-        flo_events.add_method(sel!(sendChangeValue:isSet:withDouble:), send_change_value_bool as extern fn(&mut Object, Sel, *mut Object, bool, bool));
+        flo_events.add_method(sel!(sendChangeValue:isSet:withBool:), send_change_value_bool as extern fn(&mut Object, Sel, *mut Object, bool, bool));
         flo_events.add_method(sel!(sendChangeValue:isSet:withDouble:), send_change_value_double as extern fn(&mut Object, Sel, *mut Object, bool, f64));
         flo_events.add_method(sel!(sendChangeValue:isSet:withString:), send_change_value_string as extern fn(&mut Object, Sel, *mut Object, bool, *mut Object));
         flo_events.add_method(sel!(sendVirtualScroll:left:top:width:height:), send_virtual_scroll as extern fn(&mut Object, Sel, *mut Object, u32, u32, u32, u32));

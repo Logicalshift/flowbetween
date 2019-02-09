@@ -36,6 +36,8 @@ class FloControlView: NSView, FloContainerView {
         
         wantsLayer = true;
         
+        _control.target = self;
+        _control.action = #selector(FloControlView.controlAction);
         _control.frame = bounds;
         addSubview(_control);
     }
@@ -54,6 +56,32 @@ class FloControlView: NSView, FloContainerView {
         let top         = center - height/2.0;
         
         _control.frame  = NSRect(origin: CGPoint(x: bounds.origin.x, y: top), size: CGSize(width: bounds.size.width, height: height));
+    }
+    
+    /// The control action has been triggered
+    @objc func controlAction() {
+        let newValue: PropertyValue;
+        
+        // Determine the value of the control
+        if let slider = _control as? NSSlider {
+            newValue = PropertyValue.Float(slider.doubleValue);
+        } else if let checkbox = _control as? NSButton {
+            newValue = PropertyValue.Bool(checkbox.state == NSControl.StateValue.on);
+        } else if let text = _control as? NSTextField {
+            newValue = PropertyValue.String(text.stringValue);
+        } else {
+            newValue = PropertyValue.Nothing;
+        }
+        
+        // If the control is being edited then the event to fire is the 'edit' event, otherwise it's the 'set' event
+        let isBeingEdited = false;
+        
+        // Fire the edit or set events as appropriate
+        if isBeingEdited {
+            onEditValue?(newValue);
+        } else {
+            onSetValue?(newValue);
+        }
     }
     
     /// If the control is a text field, centers it vertically
