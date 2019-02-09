@@ -48,6 +48,15 @@ class FloEmptyView : NSView, FloContainerView {
 
     /// Event handler: user scrolled/resized so that a particular region is visible
     public var onScroll: ((NSRect) -> ())?;
+    
+    /// Event handler: value has changed
+    public var onEditValue: ((PropertyValue) -> ())?;
+    
+    /// Event handler: value has been set
+    public var onSetValue: ((PropertyValue) -> ())?;
+    
+    /// Event handler: control has obtained keyboard focus
+    public var onFocused: (() -> ())?;
 
     /// Event handlers when particular devices are used for painting actions
     public var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]();

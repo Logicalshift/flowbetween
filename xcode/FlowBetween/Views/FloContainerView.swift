@@ -42,6 +42,15 @@ protocol FloContainerView {
     /// Event handler: user scrolled/resized so that a particular region is visible
     var onScroll: ((NSRect) -> ())? { get set };
     
+    /// Event handler: value has changed
+    var onEditValue: ((PropertyValue) -> ())? { get set };
+    
+    /// Event handler: value has been set
+    var onSetValue: ((PropertyValue) -> ())? { get set };
+    
+    /// Event handler: control has obtained keyboard focus
+    var onFocused: (() -> ())? { get set };
+    
     /// Events handlers when a particular device is used for painting
     var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] { get set };
 

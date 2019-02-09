@@ -154,6 +154,15 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)?;
 
+    /// Event handler: value has changed
+    var onEditValue: ((PropertyValue) -> ())?;
+    
+    /// Event handler: value has been set
+    var onSetValue: ((PropertyValue) -> ())?;
+    
+    /// Event handler: control has obtained keyboard focus
+    var onFocused: (() -> ())?;
+
     /// Event handlers when particular devices are used for painting actions
     var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]();
 
