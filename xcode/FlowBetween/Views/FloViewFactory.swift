@@ -67,7 +67,16 @@ import Cocoa
     /// Creates a view that can be checked on or off
     ///
     @objc public static func createAsCheckBox() -> FloView {
-        return createAsEmpty();
+        // Create a checkbox
+        let checkbox        = NSButton.init();
+        
+        checkbox.setButtonType(NSButton.ButtonType.switch);
+        
+        // Generate the view
+        let checkboxView    = FloButtonView.init(frame: CGRect.init(), control: checkbox);
+        let view            = FloView.init(withView: checkboxView);
+        
+        return view;
     }
     
     ///

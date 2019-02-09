@@ -19,4 +19,32 @@ class FloButtonView : FloControlView {
             _control.stringValue = label;
         }
     }
+
+    /// Sets part of the state of this control
+    override func setState(selector: ViewStateSelector, toProperty: FloProperty) {
+        switch (selector) {
+        case .Selected:
+            weak var this = self;
+            toProperty.trackValue { value in
+                switch (value) {
+                case .Bool(let isSelected):
+                    let state: NSButton.StateValue;
+                    if isSelected {
+                        state = NSButton.StateValue.on;
+                    } else {
+                        state = NSButton.StateValue.off;
+                    }
+                    
+                    (this?._control as? NSButton)?.state = state;
+                    break;
+
+                    default:                        break;
+                }
+            }
+            break;
+            
+        default:
+            super.setState(selector: selector, toProperty: toProperty);
+        }
+    }
 }
