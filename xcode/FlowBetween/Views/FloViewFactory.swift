@@ -37,7 +37,10 @@ import Cocoa
     /// Creates a view that acts like a button but can contain other views
     ///
     @objc public static func createAsContainerButton() -> FloView {
-        return createAsEmpty();
+        let buttonView  = FloContainerButton(frame: NSRect());
+        let view        = FloView.init(withView: buttonView);
+        
+        return view;
     }
     
     ///
