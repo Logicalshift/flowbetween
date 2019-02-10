@@ -82,7 +82,7 @@ where   Ui:     UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()>,
                 *event_tick = TickState::Suspended;
             }
 
-            let mut updates = suspend_updates.into_iter().chain(
+            let updates = suspend_updates.into_iter().chain(
                 events.into_iter()
                     .flat_map(|event| event_state.lock().unwrap().map_event(event)))
                 .collect::<Vec<_>>();
