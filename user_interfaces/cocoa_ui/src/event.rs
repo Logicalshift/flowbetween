@@ -255,6 +255,25 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
+        // Sends the 'drag' event
+        extern fn send_drag(this: &mut Object, _sel: Sel, name: *mut Object, drag_action: u32, from_x: f64, from_y: f64, to_x: f64, to_y: f64) {
+            unsafe {
+                let view_id     = get_view_id(this);
+                let name        = name_for_name(&mut *name);
+                let drag_action = match drag_action {
+                    0 => DragAction::Start,
+                    1 => DragAction::Drag,
+                    2 => DragAction::Finish,
+                    3 => DragAction::Cancel,
+                    _ => DragAction::Drag,
+                };
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::Drag(view_id, name, drag_action, (from_x, from_y), (to_x, to_y)));
+                }
+            }
+        }
+
         // Sends the paint start event
         extern fn send_paint_start(this: &mut Object, _sel: Sel, device_id: u32, name: *mut Object, painting: AppPainting) {
             unsafe {
@@ -361,6 +380,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(sendChangeValue:isSet:withDouble:), send_change_value_double as extern fn(&mut Object, Sel, *mut Object, bool, f64));
         flo_events.add_method(sel!(sendChangeValue:isSet:withString:), send_change_value_string as extern fn(&mut Object, Sel, *mut Object, bool, *mut Object));
         flo_events.add_method(sel!(sendVirtualScroll:left:top:width:height:), send_virtual_scroll as extern fn(&mut Object, Sel, *mut Object, u32, u32, u32, u32));
+        flo_events.add_method(sel!(sendDrag:dragAction:fromX:fromY:toX:toY:), send_drag as extern fn(&mut Object, Sel, *mut Object, u32, f64, f64, f64, f64));
         flo_events.add_method(sel!(sendPaintStartForDevice:name:action:), send_paint_start as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(sendPaintContinueForDevice:name:action:), send_paint_continue as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));
         flo_events.add_method(sel!(sendPaintFinishForDevice:name:action:), send_paint_finish as extern fn(&mut Object, Sel, u32, *mut Object, AppPainting));

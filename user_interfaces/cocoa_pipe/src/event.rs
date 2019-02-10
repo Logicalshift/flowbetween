@@ -60,7 +60,7 @@ pub enum AppEvent {
     VirtualScroll(usize, String, (u32, u32), (u32, u32)),
 
     /// Indicates that a point has been dragged to another location
-    Drag(usize, String, DragAction, (f32, f32), (f32, f32)),
+    Drag(usize, String, DragAction, (f64, f64), (f64, f64)),
 
     /// A painting action has started with the device in the specified state
     PaintStart(usize, String, AppPaintDevice, AppPainting),

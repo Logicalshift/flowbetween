@@ -86,7 +86,7 @@ impl AppState {
 
             VirtualScroll(view_id, name, top_left, size)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::VirtualScroll(top_left, size))],
             
-            Drag(view_id, name, action, from, to)           => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Drag(action, from, to))],
+            Drag(view_id, name, action, from, to)           => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Drag(action, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))],
             PaintStart(view_id, name, device, painting)     => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Start)]))],
             PaintContinue(view_id, name, device, painting)  => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Continue)]))],
             PaintFinish(view_id, name, device, painting)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Finish)]))],
