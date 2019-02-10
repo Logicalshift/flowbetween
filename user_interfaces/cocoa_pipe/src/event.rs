@@ -59,6 +59,9 @@ pub enum AppEvent {
     /// The scrolling region has changed
     VirtualScroll(usize, String, (u32, u32), (u32, u32)),
 
+    /// Indicates that a point has been dragged to another location
+    Drag(usize, String, DragAction, (f32, f32), (f32, f32)),
+
     /// A painting action has started with the device in the specified state
     PaintStart(usize, String, AppPaintDevice, AppPainting),
 
