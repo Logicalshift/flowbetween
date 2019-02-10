@@ -40,10 +40,10 @@ class FloContainerButtonLayer : CALayer {
         // Colours are based on whether or not we're highlighted or selected
         if highlighted && selected {
             border      = CGColor.init(red: 0.5, green: 0.6, blue: 0.7, alpha: 1.0);
-            background  = CGColor.init(red: 0.0, green: 0.7, blue: 0.9, alpha: 1.0);
+            background  = CGColor.init(red: 0.63, green: 0.59, blue: 0.78, alpha: 0.8);
         } else if selected {
-            border      = CGColor.init(red: 0.5, green: 0.6, blue: 0.7, alpha: 1.0);
-            background  = CGColor.init(red: 0.0, green: 0.2, blue: 0.5, alpha: 0.8);
+            border      = CGColor.init(red: 0.59, green: 0.55, blue: 0.86, alpha: 0.8);
+            background  = CGColor.init(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.8);
         } else if highlighted {
             border      = CGColor.clear;
             background  = CGColor.init(red: 0.7, green: 0.7, blue: 0.8, alpha: 0.5);
