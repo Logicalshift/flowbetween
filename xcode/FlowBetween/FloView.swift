@@ -275,7 +275,7 @@ public class FloView : NSObject, FloViewDelegate {
         let subview = subview as! FloView;
         subview.viewRemoveFromSuperview();
         
-        self._subviews.append(subview);
+        _subviews.append(subview);
         subview._superview = self;
         
         if let subview = subview.view {
@@ -293,7 +293,7 @@ public class FloView : NSObject, FloViewDelegate {
         let subview = subview as! FloView;
         subview.viewRemoveFromSuperview();
         
-        self._subviews.insert(subview, at: Int(index));
+        _subviews.insert(subview, at: Int(index));
         subview._superview = self;
         
         if let subview = subview.view {
@@ -393,22 +393,68 @@ public class FloView : NSObject, FloViewDelegate {
         });
     }
     
-    var _imageView: NSView!;
+    var _image: NSImage?;
+    var _imageView: NSView?;
+    var _imageLayer: CALayer?;
+    var _imageResolution: CGFloat = 1.0;
+    
+    ///
+    /// Sets the position of the image view within the main view
+    ///
+    func repositionImageView(_ bounds: ContainerBounds) {
+        if let imageLayer = _imageLayer {
+            if let screen = _view.asView.window?.screen {
+                // Work out how to scale the image (so that it can be displayed by the view)
+                var viewSize    = bounds.totalSize;
+                
+                if viewSize.width == 0  { viewSize.width = 1.0; }
+                if viewSize.height == 0 { viewSize.height = 1.0; }
+                
+                let imageSize   = _image!.size;
+                let scaleX      = imageSize.width/viewSize.width;
+                let scaleY      = imageSize.height/viewSize.height;
+                let scale       = CGFloat.minimum(scaleX, scaleY);
+                let resolution  = screen.backingScaleFactor;
+                
+                // Position the image layer
+                let layerSize       = CGSize(width: imageSize.width * scale, height: imageSize.height * scale);
+                let layerPos        = CGPoint(x: (viewSize.width-layerSize.width)/2.0, y: (viewSize.height-layerSize.height)/2.0);
+                let layerFrame      = CGRect(origin: layerPos, size: layerSize);
+
+                // Reset the image contents
+                if resolution != _imageResolution || layerFrame != imageLayer.frame {
+                    _imageResolution = resolution;
+                    imageLayer.contentsScale    = resolution;
+                    imageLayer.frame            = layerFrame;
+                    imageLayer.contents         = _image?.layerContents(forContentsScale: resolution);
+                }
+            }
+        }
+    }
     
     ///
     /// Sets the image for the view
     ///
     @objc public func viewSetImage(_ image: NSImage) {
+        _image = image;
+        
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
-            _imageView = NSView.init();
-            _imageView.wantsLayer = true;
-            _imageView.layer!.contentsScale = 2.0;
-            _view.addContainerSubview(_imageView);
+            _imageView              = NSView.init();
+            _imageView!.wantsLayer  = true;
+            
+            _imageLayer             = CALayer();
+            _imageView!.layer!.addSublayer(_imageLayer!);
+            
+            _view.addContainerSubview(_imageView!);
         }
         
-        // Change its image
-        _imageView!.layer!.contents = image.layerContents(forContentsScale: 1.0);
+        // Update the image when the view bounds change
+        weak var this = self;
+        _view.boundsChanged = { newBounds in
+            this?.repositionImageView(newBounds);
+        };
+        _view.triggerBoundsChanged();
     }
     
     ///
@@ -542,10 +588,7 @@ public class FloView : NSObject, FloViewDelegate {
                 
                 RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
                     willChangeBounds = false;
-                    if let this = this {
-                        // Update the layer bounds
-                        this.drawingLayerBoundsChanged(newBounds);
-                    }
+                    this?.drawingLayerBoundsChanged(newBounds);
                 });
             }
         }
