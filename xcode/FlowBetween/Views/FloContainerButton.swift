@@ -163,6 +163,10 @@ class FloContainerButton : NSView, FloContainerView {
                 
                 let bounds = self.getContainerBounds();
                 self.boundsChanged?(bounds);
+                
+                if let screen = self.window?.screen {
+                    self._backingLayer.contentsScale = screen.backingScaleFactor;
+                }
             });
         }
     }
