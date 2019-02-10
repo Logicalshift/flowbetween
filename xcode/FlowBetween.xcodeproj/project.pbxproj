@@ -401,10 +401,10 @@
 		4B51F80A2206F3CD0060578C /* DataTypes */ = {
 			isa = PBXGroup;
 			children = (
-				4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */,
 				4B57E9DC21DE66E600FD0551 /* Position.swift */,
 				4B57E9DE21DE674000FD0551 /* Bounds.swift */,
 				4B5709CF220640DB004FB91F /* Padding.swift */,
+				4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */,
 				4B58D90821DFB16F00BDAE7B /* FloProperty.swift */,
 				4B3E9C5021F90B5800261433 /* ContainerBounds.swift */,
 				4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */,
