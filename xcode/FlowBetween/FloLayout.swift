@@ -53,7 +53,7 @@ class FloLayout {
     ///
     /// Lays out the specified view according to the bounds set for its subviews
     ///
-    public static func layoutView(view: FloView, size: NSSize) {
+    public static func layoutView(view: FloView, size: NSSize, state: ViewState) {
         let bounds          = NSRect(origin: CGPoint(x: 0, y: 0), size: size);
         let max_x           = Double(bounds.width);
         let max_y           = Double(bounds.height);
@@ -112,6 +112,8 @@ class FloLayout {
             // TODO: stop any old tracking if we're re-doing the layout
             if case let Position.Floating(_, prop) = bounds.x1 {
                 // Update the position whenever the floating property changes
+                state.retainProperty(selector: ViewStateSelector.LayoutX, property: prop);
+                
                 prop.trackValue { floating_offset_property in
                     var floating_offset = 0.0;
                     if case let PropertyValue.Float(val) = floating_offset_property {
@@ -125,6 +127,8 @@ class FloLayout {
                 }
             } else if case let Position.Floating(_, prop) = bounds.y1 {
                 // Update the position whenever the floating property changes
+                state.retainProperty(selector: ViewStateSelector.LayoutY, property: prop);
+
                 prop.trackValue { floating_offset_property in
                     var floating_offset = 0.0;
                     if case let PropertyValue.Float(val) = floating_offset_property {
