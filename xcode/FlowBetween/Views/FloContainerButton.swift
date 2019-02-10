@@ -34,12 +34,26 @@ class FloContainerButton : NSView, FloContainerView {
         layer?.setNeedsDisplay();
     }
     
+    var _trackingArea: NSTrackingArea?;
+    
     /// Updates the frame size of this control
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize);
         triggerBoundsChanged();
+    }
+    
+    /// Updates the tracking area for this view
+    override func updateTrackingAreas() {
+        if let trackingArea = _trackingArea {
+            self.removeTrackingArea(trackingArea);
+            _trackingArea = nil;
+        }
         
-        layer?.displayIfNeeded();
+        let trackingArea = NSTrackingArea(rect: bounds,
+                                          options: NSTrackingArea.Options.mouseEnteredAndExited.union(NSTrackingArea.Options.activeAlways),
+                                          owner: self, userInfo: nil);
+        self.addTrackingArea(trackingArea);
+        _trackingArea = trackingArea;
     }
     
     /// User has pressed the mouse down in this view
@@ -50,14 +64,10 @@ class FloContainerButton : NSView, FloContainerView {
     
     override func mouseEntered(with event: NSEvent) {
         _backingLayer.highlighted = true;
-        
-        layer?.displayIfNeeded();
     }
 
     override func mouseExited(with event: NSEvent) {
         _backingLayer.highlighted = false;
-        
-        layer?.displayIfNeeded();
     }
 
     /// Adds a subview to this container view
