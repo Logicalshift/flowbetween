@@ -405,27 +405,13 @@ public class FloView : NSObject, FloViewDelegate {
         if let imageLayer = _imageLayer {
             if let screen = _view.asView.window?.screen {
                 // Work out how to scale the image (so that it can be displayed by the view)
-                var viewSize    = bounds.totalSize;
-                
-                if viewSize.width == 0  { viewSize.width = 1.0; }
-                if viewSize.height == 0 { viewSize.height = 1.0; }
-                
-                let imageSize   = _image!.size;
-                let scaleX      = imageSize.width/viewSize.width;
-                let scaleY      = imageSize.height/viewSize.height;
-                let scale       = CGFloat.minimum(scaleX, scaleY);
                 let resolution  = screen.backingScaleFactor;
-                
-                // Position the image layer
-                let layerSize       = CGSize(width: imageSize.width * scale, height: imageSize.height * scale);
-                let layerPos        = CGPoint(x: (viewSize.width-layerSize.width)/2.0, y: (viewSize.height-layerSize.height)/2.0);
-                let layerFrame      = CGRect(origin: layerPos, size: layerSize);
 
                 // Reset the image contents
-                if resolution != _imageResolution || layerFrame != imageLayer.frame {
+                if resolution != _imageResolution {
                     _imageResolution = resolution;
                     imageLayer.contentsScale    = resolution;
-                    imageLayer.frame            = layerFrame;
+                    imageLayer.contentsGravity  = CALayerContentsGravity.resizeAspect;
                     imageLayer.contents         = _image?.layerContents(forContentsScale: resolution);
                 }
             }
@@ -443,13 +429,14 @@ public class FloView : NSObject, FloViewDelegate {
             _imageView              = NSView.init();
             _imageView!.wantsLayer  = true;
             
-            _imageLayer             = CALayer();
-            _imageView!.layer!.addSublayer(_imageLayer!);
+            _imageLayer             = _imageView!.layer!;
             
             _view.addContainerSubview(_imageView!);
         }
         
         // Update the image when the view bounds change
+        _imageResolution = 0.0;
+        
         weak var this = self;
         _view.boundsChanged = { newBounds in
             this?.repositionImageView(newBounds);
