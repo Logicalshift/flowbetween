@@ -214,7 +214,6 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         self.documentView!.layer!.addSublayer(layer);
     }
 
-
     ///
     /// Triggers the bounds changed event for this view
     ///
