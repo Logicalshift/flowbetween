@@ -393,7 +393,7 @@ public class FloView : NSObject, FloViewDelegate {
         });
     }
     
-    var _imageView: NSImageView!;
+    var _imageView: NSView!;
     
     ///
     /// Sets the image for the view
@@ -401,12 +401,14 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func viewSetImage(_ image: NSImage) {
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
-            _imageView = NSImageView.init();
+            _imageView = NSView.init();
+            _imageView.wantsLayer = true;
+            _imageView.layer!.contentsScale = 2.0;
             _view.addContainerSubview(_imageView);
         }
         
         // Change its image
-        _imageView!.image = image;
+        _imageView!.layer!.contents = image.layerContents(forContentsScale: 1.0);
     }
     
     ///
