@@ -49,26 +49,32 @@ public class FloViewModel : NSObject {
     
     @objc public func setNothing(_ propertyId: UInt64) {
         _properties[propertyId] = PropertyValue.Nothing;
+        notifyPropertyChanged(propertyId);
     }
     
     @objc public func setBool(_ propertyId: UInt64, toValue: Bool) {
         _properties[propertyId] = PropertyValue.Bool(toValue);
+        notifyPropertyChanged(propertyId);
     }
     
     @objc public func setInt(_ propertyId: UInt64, toValue: Int64) {
         _properties[propertyId] = PropertyValue.Int(toValue);
+        notifyPropertyChanged(propertyId);
     }
     
     @objc public func setFloat(_ propertyId: UInt64, toValue: Float64) {
         _properties[propertyId] = PropertyValue.Float(toValue);
+        notifyPropertyChanged(propertyId);
     }
     
     @objc public func setString(_ propertyId: UInt64, toValue: NSString) {
         _properties[propertyId] = PropertyValue.String(toValue as String);
+        notifyPropertyChanged(propertyId);
     }
     
     @objc public func setProperty(_ propertyId: UInt64, toValue: FloProperty) {
         _properties[propertyId] = toValue.value;
+        notifyPropertyChanged(propertyId);
     }
 
     ///
