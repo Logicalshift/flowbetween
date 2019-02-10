@@ -19,7 +19,7 @@ class FloLayout {
         switch pos {
         case Position.At(let value):                return Double(value);
         case Position.Offset(let value):            return previous + Double(value);
-        case Position.Floating(let value, _):       return previous + Double(value);
+        case Position.Floating(let value, _):       return Double(value);
         case Position.After:                        return previous;
         case Position.Start:                        return 0.0;
         case Position.End:                          return end;
@@ -68,8 +68,10 @@ class FloLayout {
             let bounds = subview.floBounds;
             
             // Only need the x2 and y2 positions for the first pass
-            let x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0);
-            let y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0);
+            let x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: 0.0, stretch_total: 0.0);
+            let x2 = layoutPosition(pos: bounds.x2, previous: x1, end: max_x, stretch_distance: 0.0, stretch_total: 0.0);
+            let y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: 0.0, stretch_total: 0.0);
+            let y2 = layoutPosition(pos: bounds.y2, previous: y1, end: max_y, stretch_distance: 0.0, stretch_total: 0.0);
             
             // Update the stretch totals
             stretch_total_x = updateStretch(pos: bounds.x1, last_stretch: stretch_total_x);
@@ -97,9 +99,9 @@ class FloLayout {
             
             // Compute the x1, y1, x2, y2 positions
             var x1 = layoutPosition(pos: bounds.x1, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
-            var x2 = layoutPosition(pos: bounds.x2, previous: last_x, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
+            var x2 = layoutPosition(pos: bounds.x2, previous: x1, end: max_x, stretch_distance: stretch_distance_x, stretch_total: stretch_total_x);
             var y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
-            var y2 = layoutPosition(pos: bounds.y2, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
+            var y2 = layoutPosition(pos: bounds.y2, previous: y1, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
             
             if let padding = subview.floPadding {
                 x1 += padding.left;
@@ -112,7 +114,7 @@ class FloLayout {
             // TODO: stop any old tracking if we're re-doing the layout
             if case let Position.Floating(_, prop) = bounds.x1 {
                 // Update the position whenever the floating property changes
-                state.retainProperty(selector: ViewStateSelector.LayoutX, property: prop);
+                state.retainProperty(selector: ViewStateSelector.LayoutX, property: prop); // TODO: retain all properties here
                 
                 prop.trackValue { floating_offset_property in
                     var floating_offset = 0.0;
@@ -127,7 +129,7 @@ class FloLayout {
                 }
             } else if case let Position.Floating(_, prop) = bounds.y1 {
                 // Update the position whenever the floating property changes
-                state.retainProperty(selector: ViewStateSelector.LayoutY, property: prop);
+                state.retainProperty(selector: ViewStateSelector.LayoutY, property: prop); // TODO: retain all properties here
 
                 prop.trackValue { floating_offset_property in
                     var floating_offset = 0.0;
