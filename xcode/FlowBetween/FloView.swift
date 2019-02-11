@@ -141,18 +141,43 @@ public class FloView : NSObject, FloViewDelegate {
         _onClick = { events.sendClick(withName); };
     }
     
+    ///
+    /// Sends an event if this view is dismissed (any action is performed 'outside' of this view)
+    ///
     @objc public func requestDismiss(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestDismiss not implemented");
     }
     
+    ///
+    /// Sends an event if this view is dragged
+    ///
     @objc public func requestDrag(_ events: FloEvents!, withName name: String!) {
-        NSLog("RequestDrag not implemented");
+        _view.onDrag = { action, from, to in
+            let actionNum: UInt32;
+            
+            switch (action) {
+            case .Start:    actionNum = 0; break;
+            case .Continue: actionNum = 1; break;
+            case .Finish:   actionNum = 2; break;
+            case .Cancel:   actionNum = 3; break;
+            }
+            
+            events.sendDrag(name, dragAction: actionNum,
+                            fromX: Double(from.x), fromY: Double(from.y),
+                            toX: Double(to.y), toY: Double(to.y));
+        };
     }
     
+    ///
+    /// Sends an event when this view receives keyboard focus
+    ///
     @objc public func requestFocused(_ events: FloEvents!, withName name: String!) {
         _view.onFocused = { events.sendFocus(name); };
     }
     
+    ///
+    /// Sends an event when the value being shown by this view is in the process of being edited
+    ///
     @objc public func requestEditValue(_ events: FloEvents!, withName name: String!) {
         _view.onEditValue = { propertyValue in
             switch propertyValue {
@@ -165,6 +190,9 @@ public class FloView : NSObject, FloViewDelegate {
         }
     }
     
+    ///
+    /// Sends an event when the value being shown by this view has finished being edited
+    ///
     @objc public func requestSetValue(_ events: FloEvents!, withName name: String!) {
         _view.onSetValue = { propertyValue in
             switch propertyValue {
@@ -177,6 +205,9 @@ public class FloView : NSObject, FloViewDelegate {
         }
     }
     
+    ///
+    /// Sends an event when an edit was attempted but was reverted
+    ///
     @objc public func requestCancelEdit(_ events: FloEvents!, withName name: String!) {
         NSLog("RequestCancelEdit not implemented");
     }

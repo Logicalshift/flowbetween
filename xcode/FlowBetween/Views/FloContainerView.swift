@@ -51,6 +51,9 @@ protocol FloContainerView {
     /// Event handler: control has obtained keyboard focus
     var onFocused: (() -> ())? { get set };
     
+    /// Event handler: user has dragged this control
+    var onDrag: ((DragAction, CGPoint, CGPoint) -> ())? { get set };
+    
     /// Events handlers when a particular device is used for painting
     var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] { get set };
 

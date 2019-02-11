@@ -136,7 +136,10 @@ class FloControlView: NSView, FloContainerView {
     
     /// Event handler: control has obtained keyboard focus
     var onFocused: (() -> ())?;
-    
+
+    /// Event handler: user has dragged this control
+    var onDrag: ((DragAction, CGPoint, CGPoint) -> ())?;
+
     /// Events handlers when a particular device is used for painting
     var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]();
     
