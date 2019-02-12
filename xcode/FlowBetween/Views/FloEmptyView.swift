@@ -307,16 +307,11 @@ class FloEmptyView : NSView, FloContainerView {
     }
     
     ///
-    /// Relays paint events for the specified device. The initial event should be a 'mouse down'
-    /// type event that initiated the paint actions.
+    /// Returns the event mask to use for tracking events following a particular mouse action
     ///
-    func paint(with device: FloPaintDevice, initialEvent: NSEvent, paintAction: (FloPaintStage, AppPainting) -> ()) {
-        // Send the paint start event
-        paintAction(FloPaintStage.Start, createAppPainting(event: initialEvent));
-        
-        // Event mask depends on the initial event
+    func eventMaskForInitialMouseEvent(event: NSEvent) -> NSEvent.EventTypeMask {
         var eventMask = NSEvent.EventTypeMask.leftMouseDragged.union(NSEvent.EventTypeMask.leftMouseUp);
-        switch (initialEvent.type) {
+        switch (event.type) {
         case .leftMouseDown:
             break;
         case .rightMouseDown:
@@ -328,6 +323,20 @@ class FloEmptyView : NSView, FloContainerView {
         default:
             break;
         }
+        
+        return eventMask;
+    }
+    
+    ///
+    /// Relays paint events for the specified device. The initial event should be a 'mouse down'
+    /// type event that initiated the paint actions.
+    ///
+    func paint(with device: FloPaintDevice, initialEvent: NSEvent, paintAction: (FloPaintStage, AppPainting) -> ()) {
+        // Send the paint start event
+        paintAction(FloPaintStage.Start, createAppPainting(event: initialEvent));
+        
+        // Event mask depends on the initial event
+        let eventMask = eventMaskForInitialMouseEvent(event: initialEvent);
         
         // Track events until the mouse is released
         var done = false;
@@ -343,11 +352,89 @@ class FloEmptyView : NSView, FloContainerView {
                 let isFinished = nextEvent.type == NSEvent.EventType.leftMouseUp || nextEvent.type == NSEvent.EventType.rightMouseUp || nextEvent.type == NSEvent.EventType.otherMouseUp;
                 
                 // Send the painting action
-                if !isFinished {
-                    paintAction(FloPaintStage.Continue, createAppPainting(event: nextEvent));
+                autoreleasepool {
+                    if !isFinished {
+                        paintAction(FloPaintStage.Continue, createAppPainting(event: nextEvent));
+                    } else {
+                        paintAction(FloPaintStage.Finish, createAppPainting(event: nextEvent));
+                        done = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    ///
+    /// Trying to drag a view that can be dragged (and optionally producing a click event instead)
+    ///
+    func tryDrag(onDrag: (DragAction, CGPoint, CGPoint) -> (), initialEvent: NSEvent) {
+        // The initial pos is used for the 'from' coordinates for the drag
+        // We use an origin point so if the view moves (or is removed) during the drag we continue to generate points consistent with the original drag origin
+        let origin              = self.convert(CGPoint(x: 0, y: 0), to: nil);
+        let initialPosInWindow  = initialEvent.locationInWindow;
+        let initialPos          = CGPoint(x: initialPosInWindow.x - origin.x, y: initialPosInWindow.y - origin.y);
+        
+        // If there's an onClick handler, the user needs to drag a certain minimum distance away before we start the 'real' drag instead of a click
+        var dragging    = false;
+        let minDistance = CGFloat(8.0);
+        
+        // Mouse events immediately produce a drag if there's no onClick handler
+        if self.onClick == nil {
+            dragging = true;
+            onDrag(DragAction.Start, initialPos, initialPos);
+        }
+        
+        // Track the mouse until the user releases the mouse button
+        let eventMask   = eventMaskForInitialMouseEvent(event: initialEvent);
+        var done        = false;
+        while (!done) {
+            autoreleasepool {
+                // Fetch the next mouse event
+                let nextEvent = window?.nextEvent(matching: eventMask, until: Date.distantFuture, inMode: RunLoop.Mode.eventTracking, dequeue: true);
+                
+                if let nextEvent = nextEvent {
+                    // Position relative to this view
+                    let nextPosInWindow = nextEvent.locationInWindow;
+                    let nextPos         = CGPoint(x: nextPosInWindow.x-origin.x, y: nextPosInWindow.y-origin.y);
+
+                    // Lifting whichever button we're tracking counts as a finish event
+                    let isFinished  = nextEvent.type == NSEvent.EventType.leftMouseUp || nextEvent.type == NSEvent.EventType.rightMouseUp || nextEvent.type == NSEvent.EventType.otherMouseUp;
+                    
+                    // Start dragging if necessary
+                    if !dragging {
+                        let offset      = CGPoint(x: initialPos.x-nextPos.x, y: initialPos.y-nextPos.y);
+                        let distance    = (offset.x*offset.x + offset.y*offset.y).squareRoot();
+                        
+                        if distance > minDistance {
+                            dragging = true;
+                            onDrag(DragAction.Start, initialPos, initialPos);
+                        }
+                    }
+                    
+                    // Send the next drag event
+                    if dragging {
+                        onDrag(DragAction.Continue, initialPos, nextPos);
+                    }
+                    
+                    // Finish dragging if necessary
+                    if isFinished {
+                        done = true;
+                        
+                        if dragging {
+                            // Finish the drag
+                            onDrag(DragAction.Finish, initialPos, nextPos);
+                        } else {
+                            // Drag never started
+                            triggerClick();
+                        }
+                    }
                 } else {
-                    paintAction(FloPaintStage.Finish, createAppPainting(event: nextEvent));
+                    // No event?
                     done = true;
+                    
+                    if dragging {
+                        onDrag(DragAction.Cancel, initialPos, initialPos);
+                    }
                 }
             }
         }
@@ -363,6 +450,11 @@ class FloEmptyView : NSView, FloContainerView {
                 paint(with: device, initialEvent: event, paintAction: paintAction);
                 return;
             }
+        }
+        
+        // Start tracking a drag if there's a drag action attached to this view
+        if let onDrag = onDrag {
+            tryDrag(onDrag: onDrag, initialEvent: event);
         }
     }
     
