@@ -385,6 +385,7 @@ class FloEmptyView : NSView, FloContainerView {
         }
         
         // Track the mouse until the user releases the mouse button
+        let window      = self.window;
         let eventMask   = eventMaskForInitialMouseEvent(event: initialEvent);
         var done        = false;
         while (!done) {
