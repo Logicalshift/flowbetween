@@ -20,8 +20,16 @@ class ViewState {
     var range_higher:   FloProperty?;
     var focus_priority: FloProperty?;
     
-    var layout_x:       FloProperty?;
-    var layout_y:       FloProperty?;
+    var layout_x:       [FloProperty] = [];
+    var layout_y:       [FloProperty] = [];
+    
+    ///
+    /// Removes all layout properties that are being tracked in this view
+    ///
+    func clearLayoutProperties() {
+        layout_x = [];
+        layout_y = [];
+    }
     
     ///
     /// Stores the property associated with a selector in this view state
@@ -35,8 +43,8 @@ class ViewState {
         case .RangeLower:       range_lower = property;
         case .RangeHigher:      range_higher = property;
         case .FocusPriority:    focus_priority = property;
-        case .LayoutX:          layout_x = property;
-        case .LayoutY:          layout_y = property;
+        case .LayoutX:          layout_x.append(property);
+        case .LayoutY:          layout_y.append(property);
         }
     }
 }

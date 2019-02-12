@@ -62,6 +62,9 @@ class FloLayout {
         var stretch_total_x = 0.0;
         var stretch_total_y = 0.0;
         
+        // Remove any existing floating properties from the view state
+        state.clearLayoutProperties();
+        
         // First pass: all stretched views are set to 0 (calibrating the stretch distances)
         for subview in view.layoutSubviews {
             // Get the bounds for this view
