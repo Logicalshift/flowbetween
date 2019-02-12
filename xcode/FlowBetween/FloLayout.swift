@@ -115,6 +115,13 @@ class FloLayout {
             
             // Set the new frame for the view (TODO: floating both in x1 and y1)
             // TODO: stop any old tracking if we're re-doing the layout
+            let frame = NSRect(x: x1, y: y1, width: x2-x1, height: y2-y1);
+            subview.view.frame = frame;
+            
+            // Float in the x and the y directions
+            var float_x = 0.0;
+            var float_y = 0.0;
+
             if case let Position.Floating(_, prop) = bounds.x1 {
                 // Update the position whenever the floating property changes
                 state.retainProperty(selector: ViewStateSelector.LayoutX, property: prop); // TODO: retain all properties here
@@ -127,10 +134,14 @@ class FloLayout {
                         floating_offset = Double(val);
                     }
                     
-                    let frame = NSRect(x: x1 + floating_offset, y: y1, width: x2-x1, height: y2-y1);
+                    float_x = floating_offset;
+                    
+                    let frame = NSRect(x: x1 + float_x, y: y1 + float_y, width: x2-x1, height: y2-y1);
                     subview.view.frame = frame;
                 }
-            } else if case let Position.Floating(_, prop) = bounds.y1 {
+            }
+            
+            if case let Position.Floating(_, prop) = bounds.y1 {
                 // Update the position whenever the floating property changes
                 state.retainProperty(selector: ViewStateSelector.LayoutY, property: prop); // TODO: retain all properties here
 
@@ -141,14 +152,12 @@ class FloLayout {
                     } else if case let PropertyValue.Int(val) = floating_offset_property {
                         floating_offset = Double(val);
                     }
+                    
+                    float_y = floating_offset;
 
-                    let frame = NSRect(x: x1, y: y1 + floating_offset, width: x2-x1, height: y2-y1);
+                    let frame = NSRect(x: x1 + float_x, y: y1 + float_y, width: x2-x1, height: y2-y1);
                     subview.view.frame = frame;
                 }
-            } else {
-                // Fixed position
-                let frame = NSRect(x: x1, y: y1, width: x2-x1, height: y2-y1);
-                subview.view.frame = frame;
             }
 
             // Update the last_x and last_y values
