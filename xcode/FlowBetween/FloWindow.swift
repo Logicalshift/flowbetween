@@ -60,10 +60,7 @@ public class FloWindow : NSObject, NSWindowDelegate {
         _window.contentView     = view.view;
     }
     
-    ///
-    /// The backing properties (colour scheme, resolution) of the window was changed
-    ///
-    @objc public func windowDidChangeBackingProperties(_ notification: Notification) {
+    func triggerAllBoundsChanged() {
         // Notify all the FloViews that the bounds have changed
         var remainingViews = [_window.contentView!];
         
@@ -76,6 +73,13 @@ public class FloWindow : NSObject, NSWindowDelegate {
             // Process the entire view tree
             remainingViews.append(contentsOf: nextView.subviews);
         }
+    }
+    
+    ///
+    /// The backing properties (colour scheme, resolution) of the window was changed
+    ///
+    @objc public func windowDidChangeBackingProperties(_ notification: Notification) {
+        triggerAllBoundsChanged();
     }
     
     ///
