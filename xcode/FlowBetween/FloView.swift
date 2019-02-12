@@ -164,7 +164,7 @@ public class FloView : NSObject, FloViewDelegate {
             
             events.sendDrag(name, dragAction: actionNum,
                             fromX: Double(from.x), fromY: Double(from.y),
-                            toX: Double(to.y), toY: Double(to.y));
+                            toX: Double(to.x), toY: Double(to.y));
         };
     }
     
