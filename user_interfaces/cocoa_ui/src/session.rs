@@ -347,7 +347,7 @@ impl CocoaSession {
     }
 
     ///
-    /// Converts a popup 
+    /// Converts a popup direction to an integer value
     ///
     fn pop_up_direction(&self, direction: PopupDirection) -> u32 {
         use self::PopupDirection::*;

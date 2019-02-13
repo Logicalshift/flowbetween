@@ -17,4 +17,14 @@ class FloPopupWindowBackingView : NSView {
             subview.frame = self.bounds;
         };
     }
+    
+    /// The popup direction for this view
+    var direction: PopupDirection = .Above;
+    
+    ///
+    /// Calulates the required size for this view given a content size and a direction
+    ///
+    func sizeForContentSize(_ contentSize: NSSize, _ direction: PopupDirection) -> NSSize {
+        return contentSize;
+    }
 }
