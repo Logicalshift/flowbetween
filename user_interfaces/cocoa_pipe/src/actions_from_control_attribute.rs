@@ -44,9 +44,9 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             Padding((left, top), (right, bottom))   => vec![ViewAction::SetPadding(*left as f64, *top as f64, *right as f64, *bottom as f64)],
             Text(text_val)                          => vec![ViewAction::SetText(bind_property(text_val.clone()))],
             Id(id)                                  => vec![ViewAction::SetId(id.clone())],
-            Controller(name)                        => vec![],
+            Controller(_name)                       => vec![],
             Action(trigger, name)                   => event_actions(trigger, name),
-            Canvas(canvas_resource)                 => vec![],
+            Canvas(_canvas_resource)                => vec![],
 
             SubComponents(_components)              => vec![]               // Handled separately by ViewState
         }
