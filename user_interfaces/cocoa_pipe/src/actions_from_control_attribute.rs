@@ -14,7 +14,6 @@ fn make_app_position<BindProperty: FnMut(Property) -> AppProperty>(ui_pos: &Posi
         Start                       => AppPosition::Start,
         End                         => AppPosition::End,
         After                       => AppPosition::After
-
     }
 }
 

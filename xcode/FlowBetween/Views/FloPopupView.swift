@@ -11,7 +11,10 @@ import Cocoa
 ///
 /// Flo view that tracks a popup window
 ///
-class FloPopupView : NSView, FloContainerView {
+class FloPopupView : NSView, FloContainerView, FloContainerPopup {
+    /// The window that displays the popup
+    fileprivate var _window: FloPopupWindow = FloPopupWindow();
+    
     override var isOpaque: Bool {
         get {
             return false;
@@ -136,5 +139,28 @@ class FloPopupView : NSView, FloContainerView {
     /// Sets part of the state of this control
     func setState(selector: ViewStateSelector, toProperty: FloProperty) {
         
+    }
+
+    /// Sets whether or not the popup view is open
+    func setPopupOpen(_ isOpen: Bool) {
+        if isOpen {
+            _window.parent = self.window;
+            _window.orderFront(self);
+        } else {
+            _window.orderOut(self);
+        }
+    }
+    
+    /// Sets the direction that the popup window appears in relative to the parent window
+    func setPopupDirection(_ direction: PopupDirection) {
+    }
+    
+    /// Sets the sisze of the popup
+    func setPopupSize(width: CGFloat, height: CGFloat) {
+        _window.setPopupContentSize(NSSize(width: width, height: height));
+    }
+    
+    /// Sets the offset of the popup in the popup direction
+    func setPopupOffset(_ offset: CGFloat) {
     }
 }

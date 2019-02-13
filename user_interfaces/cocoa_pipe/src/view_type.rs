@@ -45,7 +45,7 @@ impl From<ControlType> for ViewType {
             Container               => ViewType::Empty,
             CroppingContainer       => ViewType::Empty,
             ScrollingContainer      => ViewType::Scrolling,
-            Popup                   => ViewType::Empty,
+            Popup                   => ViewType::Popup,
             Button                  => ViewType::Button,
             Label                   => ViewType::Empty,
             Canvas                  => ViewType::Empty,
