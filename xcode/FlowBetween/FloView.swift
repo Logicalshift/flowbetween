@@ -700,27 +700,50 @@ public class FloView : NSObject, FloViewDelegate {
         _drawingLayer?.clearBackingLayers();
     }
 
+    fileprivate var _popupOpen: FloProperty?;
+    
     ///
     /// Sets the property that describes whether or not the popup for this view is open
     ///
     @objc public func viewSetPopupOpen(_ isOpen: FloProperty!) {
+        // Store the property away
+        weak var this   = self;
+        _popupOpen      = isOpen;
+        
+        // Track when the popup opens or closes
+        isOpen.trackValue { isOpen in
+            if let popup = this?._view as? FloContainerPopup {
+                popup.setPopupOpen(isOpen.toBool(default: false));
+            }
+        }
     }
     
     ///
     /// Sets the layout direction for the popup window
     ///
     @objc public func viewSetPopupDirection(_ direction: UInt32) {
+        if let actualDirection = PopupDirection.init(rawValue: direction) {
+            if let popup = _view as? FloContainerPopup  {
+                popup.setPopupDirection(actualDirection);
+            }
+        }
     }
     
     ///
     /// Sets the size of the popup window
     ///
     @objc public func viewSetPopupSize(withWidth width: Double, height: Double) {
+        if let popup = _view as? FloContainerPopup {
+            popup.setPopupSize(width: CGFloat(width), height: CGFloat(height));
+        }
     }
     
     ///
     /// Sets the offset of the popup window from the center
     ///
     @objc public func viewSetPopupOffset(_ offset: Double) {
+        if let popup = _view as? FloContainerPopup {
+            popup.setPopupOffset(CGFloat(offset));
+        }
     }
 }
