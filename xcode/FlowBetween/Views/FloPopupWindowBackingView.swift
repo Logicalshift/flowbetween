@@ -27,10 +27,10 @@ class FloPopupWindowBackingView : NSView {
         }
         
         switch (direction) {
-        case .Above: subviewBounds.size.height -= _beakHeight; break;
-        case .Below: subviewBounds.origin.y += _beakHeight; subviewBounds.size.height -= _beakHeight; break;
-        case .Left: subviewBounds.origin.x += _beakHeight; subviewBounds.size.width -= _beakHeight; break;
-        case .Right: subviewBounds.size.width -= _beakHeight; break;
+        case .Above:    subviewBounds.origin.y += _beakHeight; subviewBounds.size.height -= _beakHeight; break;
+        case .Below:    subviewBounds.size.height -= _beakHeight; break;
+        case .Left:     subviewBounds.origin.x += _beakHeight; subviewBounds.size.width -= _beakHeight; break;
+        case .Right:    subviewBounds.size.width -= _beakHeight; break;
             
         case .OnTop, .WindowCentered, .WindowTop: break;
         }
