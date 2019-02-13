@@ -17,8 +17,27 @@ class FloPopupWindowBackingView : NSView {
     fileprivate let _beakHeight = CGFloat(8.0);
     
     override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize);
+        
+        // Subview bounds depend on the direction
+        var subviewBounds = CGRect(origin: CGPoint(), size: newSize).insetBy(dx: _borderWidth, dy: _borderWidth);
+        
+        if newSize.width < _borderWidth*2 || newSize.height < _borderWidth*2 {
+            subviewBounds = CGRect();
+        }
+        
+        switch (direction) {
+        case .Above: subviewBounds.size.height -= _beakHeight; break;
+        case .Below: subviewBounds.origin.y += _beakHeight; subviewBounds.size.height -= _beakHeight; break;
+        case .Left: subviewBounds.origin.x += _beakHeight; subviewBounds.size.width -= _beakHeight; break;
+        case .Right: subviewBounds.size.width -= _beakHeight; break;
+            
+        case .OnTop, .WindowCentered, .WindowTop: break;
+        }
+        
+        // Update the bounds of all the subviews
         subviews.forEach { subview in
-            subview.frame = self.bounds;
+            subview.frame = subviewBounds;
         };
     }
     
