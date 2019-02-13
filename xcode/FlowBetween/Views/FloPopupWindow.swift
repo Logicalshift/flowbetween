@@ -11,14 +11,15 @@ import Cocoa
 ///
 /// Window used to display a popup
 ///
-class FloPopupWindow : NSPanel {
+class FloPopupWindow : NSWindow {
     required init() {
         super.init(contentRect: NSRect.init(),
                    styleMask: NSWindow.StyleMask.borderless.union(NSWindow.StyleMask.hudWindow),
                    backing: NSWindow.BackingStoreType.buffered,
                    defer: true);
         
-        isOpaque = true;
+        isOpaque    = true;
+        level       = .floating;
     }
     
     ///

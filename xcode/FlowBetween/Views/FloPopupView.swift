@@ -13,7 +13,16 @@ import Cocoa
 ///
 class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     /// The window that displays the popup
-    fileprivate var _window: FloPopupWindow = FloPopupWindow();
+    fileprivate var _popupWindow: FloPopupWindow = FloPopupWindow();
+    
+    /// The window that currently has the popup window set as a child window
+    fileprivate weak var _owningWindow: NSWindow?;
+    
+    deinit {
+        _popupWindow.orderOut(self);
+        _owningWindow?.removeChildWindow(_popupWindow);
+        _owningWindow = nil;
+    }
     
     override var isOpaque: Bool {
         get {
@@ -21,6 +30,16 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
         }
     }
     
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        _owningWindow?.removeChildWindow(_popupWindow);
+        _owningWindow = nil;
+        
+        if _popupWindow.isVisible {
+            newWindow?.addChildWindow(_popupWindow, ordered: .above);
+            _owningWindow = newWindow;
+        }
+    }
+
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView) {
         // TODO!
@@ -144,10 +163,14 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     /// Sets whether or not the popup view is open
     func setPopupOpen(_ isOpen: Bool) {
         if isOpen {
-            _window.parent = self.window;
-            _window.orderFront(self);
+            if _owningWindow == nil {
+                _owningWindow = window;
+                window?.addChildWindow(_popupWindow, ordered: .above);
+            }
+            
+            _popupWindow.orderFront(self);
         } else {
-            _window.orderOut(self);
+            _popupWindow.orderOut(self);
         }
     }
     
@@ -157,7 +180,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     
     /// Sets the sisze of the popup
     func setPopupSize(width: CGFloat, height: CGFloat) {
-        _window.setPopupContentSize(NSSize(width: width, height: height));
+        _popupWindow.setPopupContentSize(NSSize(width: width, height: height));
     }
     
     /// Sets the offset of the popup in the popup direction
