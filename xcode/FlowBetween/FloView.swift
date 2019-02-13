@@ -699,4 +699,28 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func viewClearCanvas() {
         _drawingLayer?.clearBackingLayers();
     }
+
+    ///
+    /// Sets the property that describes whether or not the popup for this view is open
+    ///
+    @objc public func viewSetPopupOpen(_ isOpen: FloProperty!) {
+    }
+    
+    ///
+    /// Sets the layout direction for the popup window
+    ///
+    @objc public func viewSetPopupDirection(_ direction: UInt32) {
+    }
+    
+    ///
+    /// Sets the size of the popup window
+    ///
+    @objc public func viewSetPopupSize(withWidth width: Double, height: Double) {
+    }
+    
+    ///
+    /// Sets the offset of the popup window from the center
+    ///
+    @objc public func viewSetPopupOffset(_ offset: Double) {
+    }
 }

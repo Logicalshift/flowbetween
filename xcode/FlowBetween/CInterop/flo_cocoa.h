@@ -107,6 +107,11 @@ typedef struct AppPainting AppPainting;
 - (void) viewSetRangeWithLower: (FloProperty*) lower upper: (FloProperty*) upper;
 - (void) viewSetFocusPriority: (FloProperty*) property;
 
+- (void) viewSetPopupOpen: (FloProperty*) isOpen;
+- (void) viewSetPopupDirection: (uint32_t) direction;
+- (void) viewSetPopupSizeWithWidth: (double) width height: (double) height;
+- (void) viewSetPopupOffset: (double) offset;
+
 - (CGContextRef) viewGetCanvasForDrawing: (FloEvents*) events layer: (uint32_t) layer_id;
 - (FloCacheLayer*) viewCopyLayerWithId: (uint32_t) layer_id;
 - (void) viewRestoreLayerTo: (uint32_t) layer_id fromCopy: (FloCacheLayer*) copyLayer;

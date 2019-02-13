@@ -12,6 +12,12 @@ import Cocoa
 /// Flo view that tracks a popup window
 ///
 class FloPopupView : NSView, FloContainerView {
+    override var isOpaque: Bool {
+        get {
+            return false;
+        }
+    }
+    
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView) {
         // TODO!

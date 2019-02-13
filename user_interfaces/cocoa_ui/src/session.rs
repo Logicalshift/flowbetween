@@ -315,7 +315,7 @@ impl CocoaSession {
                     SetImage(image)                         => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
                     SetState(view_state)                    => { self.set_view_state(view, view_state); },
 
-                    Popup(action)                           => { /* TODO */ }
+                    Popup(action)                           => { self.pop_up_action(view, action); }
 
                     SetScrollMinimumSize(width, height)     => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
                     SetHorizontalScrollBar(visibility)      => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
@@ -327,6 +327,39 @@ impl CocoaSession {
                     }
                 }
             }
+        }
+    }
+
+    ///
+    /// Sends a popup action to a view
+    ///
+    fn pop_up_action(&self, view: &StrongPtr, action: ViewPopupAction) {
+        use self::ViewPopupAction::*;
+
+        unsafe {
+            match action {
+                Open(property)          => { msg_send!(**view, viewSetPopupOpen: &*self.flo_property(property)); },
+                SetDirection(direction) => { msg_send!(**view, viewSetPopupDirection: self.pop_up_direction(direction)); },
+                SetSize(width, height)  => { msg_send!(**view, viewSetPopupSizeWithWidth: width height: height); },
+                SetOffset(offset)       => { msg_send!(**view, viewSetPopupOffset: offset); }
+            }
+        }
+    }
+
+    ///
+    /// Converts a popup 
+    ///
+    fn pop_up_direction(&self, direction: PopupDirection) -> u32 {
+        use self::PopupDirection::*;
+
+        match direction {
+            OnTop           => 0,
+            Left            => 1,
+            Right           => 2,
+            Above           => 3,
+            Below           => 4,
+            WindowCentered  => 5,
+            WindowTop       => 6,
         }
     }
 
