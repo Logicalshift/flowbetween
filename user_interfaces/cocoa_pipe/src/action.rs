@@ -151,7 +151,10 @@ pub enum ViewAction {
     Draw(Vec<Draw>),
 
     /// Sets part of the state of this view
-    SetState(ViewStateUpdate)
+    SetState(ViewStateUpdate),
+
+    /// Performs an action that relates to a pop-up view
+    Popup(ViewPopupAction)
 }
 
 ///
@@ -176,6 +179,24 @@ pub enum ViewStateUpdate {
 
     /// If this view is new, the priority with which to steal focus
     FocusPriority(AppProperty)
+}
+
+///
+/// Actions relating to a pop-up view
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum ViewPopupAction {
+    /// Updates the property that specifies whether or not this popup is on screen or not
+    Open(AppProperty),
+
+    /// Sets the direction the popup is offset from the original view
+    SetDirection(PopupDirection),
+
+    /// Sets the size of the popup window in pixels
+    SetSize(f64, f64),
+
+    /// Sets the number of pixels betweem the popup and the center of the target view
+    SetOffset(f64)
 }
 
 #[derive(Clone, Copy, PartialEq, Debug, FromPrimitive, ToPrimitive)]

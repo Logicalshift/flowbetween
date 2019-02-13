@@ -116,16 +116,16 @@ impl ActionsFrom<ViewAction> for Popup {
         use self::Popup::*;
 
         match self {
-            IsOpen(property)        => vec![],
-            Direction(direction)    => vec![],
-            Size(width, height)     => vec![],
-            Offset(offset)          => vec![]
+            IsOpen(property)        => vec![ViewAction::Popup(ViewPopupAction::Open(bind_property(property.clone())))],
+            Direction(direction)    => vec![ViewAction::Popup(ViewPopupAction::SetDirection(*direction))],
+            Size(width, height)     => vec![ViewAction::Popup(ViewPopupAction::SetSize(*width as f64, *height as f64))],
+            Offset(offset)          => vec![ViewAction::Popup(ViewPopupAction::SetOffset(*offset as f64))]
         }
     }
 }
 
 impl ActionsFrom<ViewAction> for Appearance {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Appearance::*;
 
         match self {
@@ -137,7 +137,7 @@ impl ActionsFrom<ViewAction> for Appearance {
 }
 
 impl ActionsFrom<ViewAction> for Scroll {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Scroll::*;
 
         match self {
@@ -150,7 +150,7 @@ impl ActionsFrom<ViewAction> for Scroll {
 }
 
 impl ActionsFrom<ViewAction> for Hint {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, _bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::Hint::*;
 
         match self {

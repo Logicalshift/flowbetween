@@ -313,7 +313,9 @@ impl CocoaSession {
                     SetTextAlignment(align)                 => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
 
                     SetImage(image)                         => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
-                    SetState(view_state)                    => { self.set_view_state(view, view_state); }
+                    SetState(view_state)                    => { self.set_view_state(view, view_state); },
+
+                    Popup(action)                           => { /* TODO */ }
 
                     SetScrollMinimumSize(width, height)     => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
                     SetHorizontalScrollBar(visibility)      => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
