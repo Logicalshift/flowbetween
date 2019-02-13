@@ -97,4 +97,11 @@ import Cocoa
 
         return view;
     }
+    
+    ///
+    /// Creates a view that shows a pop-up window
+    ///
+    @objc public static func createAsPopup() -> FloView {
+        return createAsEmpty();
+    }
 }

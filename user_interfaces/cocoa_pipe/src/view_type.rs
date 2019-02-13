@@ -24,7 +24,10 @@ pub enum ViewType {
     CheckBox,
 
     /// A view that can be scrolled
-    Scrolling
+    Scrolling,
+
+    /// A view that displays a popup window
+    Popup
 }
 
 impl From<&Control> for ViewType {

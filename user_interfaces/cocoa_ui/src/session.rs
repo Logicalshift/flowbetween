@@ -248,6 +248,7 @@ impl CocoaSession {
                 TextBox         => { msg_send!(*view_class, createAsTextBox) }
                 CheckBox        => { msg_send!(*view_class, createAsCheckBox) }
                 Scrolling       => { msg_send!(*view_class, createAsScrolling) }
+                Popup           => { msg_send!(*view_class, createAsPopup) }
             };
 
             let view = StrongPtr::new(view);
