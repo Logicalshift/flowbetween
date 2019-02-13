@@ -18,6 +18,18 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     /// The window that currently has the popup window set as a child window
     fileprivate weak var _owningWindow: NSWindow?;
     
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect);
+        
+        _popupWindow.setParentView(view: self);
+    }
+    
+    required init?(coder decoder: NSCoder) {
+        super.init(coder: decoder);
+        
+        _popupWindow.setParentView(view: self);
+    }
+    
     deinit {
         _popupWindow.orderOut(self);
         _owningWindow?.removeChildWindow(_popupWindow);
@@ -39,15 +51,25 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
             _owningWindow = newWindow;
         }
     }
+    
+    override func viewDidMoveToWindow() {
+        _popupWindow.updatePosition();
+    }
+    
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize);
+        _popupWindow.updatePosition();
+    }
 
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView) {
-        // TODO!
+        _popupWindow.popupContentView.addSubview(subview);
     }
     
     /// Sets the layer displayed for the canvas
     func setCanvasLayer(_ layer: CALayer) {
-        
+        _popupWindow.popupContentView.wantsLayer = true;
+        _popupWindow.popupContentView.layer = layer;
     }
     
     /// Stores the general state of this view
@@ -120,8 +142,8 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     ///
     func getContainerBounds() -> ContainerBounds {
         // Get the bounds
-        let viewport        = bounds;
-        var visible         = visibleRect;
+        let viewport        = CGRect(origin: CGPoint(), size: _popupWindow.popupContentSize);
+        var visible         = viewport;
         
         // For the container bounds, the viewport is considered to be aligned at 0,0
         visible.origin.x    -= viewport.origin.x;
@@ -133,6 +155,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     /// Triggers the bounds changed event for this view
     func triggerBoundsChanged() {
         boundsChanged?(getContainerBounds());
+        _popupWindow.updatePosition();
     }
     
     /// Sets the text label for this view
@@ -168,6 +191,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
                 window?.addChildWindow(_popupWindow, ordered: .above);
             }
             
+            _popupWindow.updatePosition();
             _popupWindow.orderFront(self);
         } else {
             _popupWindow.orderOut(self);
@@ -176,14 +200,19 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     
     /// Sets the direction that the popup window appears in relative to the parent window
     func setPopupDirection(_ direction: PopupDirection) {
+        _popupWindow.direction = direction;
+        _popupWindow.updatePosition();
     }
     
     /// Sets the sisze of the popup
     func setPopupSize(width: CGFloat, height: CGFloat) {
-        _popupWindow.setPopupContentSize(NSSize(width: width, height: height));
+        _popupWindow.popupContentSize = NSSize(width: width, height: height);
+        triggerBoundsChanged();
     }
     
     /// Sets the offset of the popup in the popup direction
     func setPopupOffset(_ offset: CGFloat) {
+        _popupWindow.offset = offset;
+        _popupWindow.updatePosition();
     }
 }

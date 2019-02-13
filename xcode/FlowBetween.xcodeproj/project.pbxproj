@@ -58,6 +58,7 @@
 		4BB979A52214BB2900DCB458 /* FloPopupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB979A42214BB2900DCB458 /* FloPopupView.swift */; };
 		4BB979BE2214C34E00DCB458 /* FloContainerPopup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB979BD2214C34E00DCB458 /* FloContainerPopup.swift */; };
 		4BB979C02214C65F00DCB458 /* FloPopupWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB979BF2214C65F00DCB458 /* FloPopupWindow.swift */; };
+		4BB979C22214D03300DCB458 /* FloPopupWindowBackingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB979C12214D03300DCB458 /* FloPopupWindowBackingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -331,6 +332,7 @@
 		4BB979A42214BB2900DCB458 /* FloPopupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPopupView.swift; sourceTree = "<group>"; };
 		4BB979BD2214C34E00DCB458 /* FloContainerPopup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerPopup.swift; sourceTree = "<group>"; };
 		4BB979BF2214C65F00DCB458 /* FloPopupWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPopupWindow.swift; sourceTree = "<group>"; };
+		4BB979C12214D03300DCB458 /* FloPopupWindowBackingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPopupWindowBackingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -438,6 +440,7 @@
 				4B79EADF220F92C50019D660 /* FloContainerButton.swift */,
 				4B79EAE1220F92D70019D660 /* FloContainerButtonLayer.swift */,
 				4BB979BF2214C65F00DCB458 /* FloPopupWindow.swift */,
+				4BB979C12214D03300DCB458 /* FloPopupWindowBackingView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -830,6 +833,7 @@
 				4B79EAE2220F92D70019D660 /* FloContainerButtonLayer.swift in Sources */,
 				4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */,
 				4B557B1521FB0BA300FFAC5D /* FloCanvasLayer.swift in Sources */,
+				4BB979C22214D03300DCB458 /* FloPopupWindowBackingView.swift in Sources */,
 				4BB979A52214BB2900DCB458 /* FloPopupView.swift in Sources */,
 				4B5709B42205E83F004FB91F /* FloCacheLayer.swift in Sources */,
 				4B5709D0220640DB004FB91F /* Padding.swift in Sources */,
