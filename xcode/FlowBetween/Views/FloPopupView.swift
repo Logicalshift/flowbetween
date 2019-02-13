@@ -79,7 +79,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     var layoutSize : NSSize {
         get {
             // TODO: size of the view in the popup window
-            return NSSize(width: 0.0, height: 0.0);
+            return _popupWindow.popupContentSize;
         }
     }
     
