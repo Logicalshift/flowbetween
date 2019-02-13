@@ -24,9 +24,9 @@ class FloPopupWindow : NSWindow {
         isOpaque    = true;
         level       = .floating;
         
+        _backingView.wantsLayer = true;
+        _backingView.addSubview(popupContentView);
         contentView = _backingView;
-        contentView!.wantsLayer = true;
-        contentView!.addSubview(popupContentView);
     }
     
     /// Sets the view that this window is drawn relative to
@@ -53,6 +53,9 @@ class FloPopupWindow : NSWindow {
     /// Updates the position of this popup view
     ///
     func updatePosition() {
+        // Update the content view
+        _backingView.direction = direction;
+        
         // Work out where to place the window
         let screenOrigin        = _parentView?.window?.frame.origin ?? CGPoint();
         let parentBounds        = _parentView?.bounds ?? NSRect();
