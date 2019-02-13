@@ -66,5 +66,23 @@ class FloPopupWindowBackingView : NSView {
         }
     }
     
-    
+    override func draw(_ dirtyRect: NSRect) {
+        let ctxt = NSGraphicsContext.current!.cgContext;
+        
+        let path = CGPath.init(roundedRect: self.bounds.insetBy(dx: 2.0, dy: 2.0), cornerWidth: 8.0, cornerHeight: 8.0, transform: nil);
+        
+        ctxt.setFillColor(CGColor.init(red: 0.25, green: 0.2, blue: 0.2, alpha: 0.9));
+        ctxt.addPath(path);
+        ctxt.fillPath();
+
+        ctxt.setStrokeColor(CGColor.init(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.8));
+        ctxt.setLineWidth(4.0);
+        ctxt.addPath(path);
+        ctxt.strokePath();
+
+        ctxt.setStrokeColor(CGColor.init(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.8));
+        ctxt.setLineWidth(3.25);
+        ctxt.addPath(path);
+        ctxt.strokePath();
+    }
 }

@@ -21,8 +21,9 @@ class FloPopupWindow : NSWindow {
                    backing: NSWindow.BackingStoreType.buffered,
                    defer: true);
         
-        isOpaque    = true;
-        level       = .floating;
+        isOpaque        = false;
+        level           = .floating;
+        backgroundColor = NSColor.clear;
         
         _backingView.wantsLayer = true;
         _backingView.addSubview(popupContentView);
