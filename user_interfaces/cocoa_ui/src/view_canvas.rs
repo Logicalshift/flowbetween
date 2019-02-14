@@ -156,6 +156,7 @@ impl ViewCanvas {
                 Store => {
                     // Store the buffer in the state
                     let layer_id = context.get_state().layer_id();
+                    context.get_state().clear_stored_layer();
                     context.get_state().store_layer((self.copy_layer)(layer_id));
 
                     // Pass on to the context (in case it needs to perform any updates relating to this action)
