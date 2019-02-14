@@ -95,7 +95,7 @@ class FloCanvasLayer : CALayer {
             }
             
             // Force a redraw via the events
-            _triggerRedraw?(_canvasSize, _visibleRect);
+            autoreleasepool { _triggerRedraw?(_canvasSize, _visibleRect); }
         }
         
         // Draw the backing layer on this layer
