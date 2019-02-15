@@ -92,6 +92,11 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     /// Monitors an event sent to the application
     ///
     func monitorEvent(_ event: NSEvent) {
+        if _dismiss.count == 0 {
+            // Short-circuit the check if there are no dismissable views
+            return;
+        }
+        
         switch event.type {
         case .leftMouseDown, .otherMouseDown, .rightMouseDown:
             // Mouse down in the window
