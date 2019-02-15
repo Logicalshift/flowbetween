@@ -148,6 +148,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Stores the general state of this view
     var viewState : ViewState = ViewState();
 
+    /// The FloView that owns this container view (should be a weak reference)
+    weak var floView: FloView?;
+
     /// Returns this view as an NSView
     var asView : NSView { get { return self; } };
     

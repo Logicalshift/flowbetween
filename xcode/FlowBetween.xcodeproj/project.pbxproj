@@ -29,6 +29,7 @@
 		4B3E9C5121F90B5900261433 /* ContainerBounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E9C5021F90B5800261433 /* ContainerBounds.swift */; };
 		4B4901F92200FB8F00FB6AFC /* FloPaintDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */; };
 		4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4902112201036300FB6AFC /* FloPaintStage.swift */; };
+		4B4EC5412216BAAC00686CD2 /* FloViewWeakRef.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4EC5402216BAAC00686CD2 /* FloViewWeakRef.swift */; };
 		4B51F82422078D1C0060578C /* FloControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B51F82322078D1C0060578C /* FloControlView.swift */; };
 		4B51F826220792290060578C /* FloButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B51F825220792290060578C /* FloButtonView.swift */; };
 		4B52B4D121E2625B00CA6B64 /* FloViewFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */; };
@@ -297,6 +298,7 @@
 		4B3E9C5021F90B5800261433 /* ContainerBounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerBounds.swift; sourceTree = "<group>"; };
 		4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintDevice.swift; sourceTree = "<group>"; };
 		4B4902112201036300FB6AFC /* FloPaintStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintStage.swift; sourceTree = "<group>"; };
+		4B4EC5402216BAAC00686CD2 /* FloViewWeakRef.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewWeakRef.swift; sourceTree = "<group>"; };
 		4B51F82322078D1C0060578C /* FloControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloControlView.swift; sourceTree = "<group>"; };
 		4B51F825220792290060578C /* FloButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloButtonView.swift; sourceTree = "<group>"; };
 		4B52B4D021E2625B00CA6B64 /* FloViewFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewFactory.swift; sourceTree = "<group>"; };
@@ -382,6 +384,7 @@
 				4B1E8C2621DD5B7E006861A8 /* FloWindowDelegate.swift */,
 				4B57E9D921DE2CBD00FD0551 /* FloView.swift */,
 				4B57E9E021DE6A9E00FD0551 /* FloLayout.swift */,
+				4B4EC5402216BAAC00686CD2 /* FloViewWeakRef.swift */,
 			);
 			path = FlowBetween;
 			sourceTree = "<group>";
@@ -833,6 +836,7 @@
 				4B79EAE2220F92D70019D660 /* FloContainerButtonLayer.swift in Sources */,
 				4B52B4D521E26BFE00CA6B64 /* FloEmptyView.swift in Sources */,
 				4B557B1521FB0BA300FFAC5D /* FloCanvasLayer.swift in Sources */,
+				4B4EC5412216BAAC00686CD2 /* FloViewWeakRef.swift in Sources */,
 				4BB979C22214D03300DCB458 /* FloPopupWindowBackingView.swift in Sources */,
 				4BB979A52214BB2900DCB458 /* FloPopupView.swift in Sources */,
 				4B5709B42205E83F004FB91F /* FloCacheLayer.swift in Sources */,

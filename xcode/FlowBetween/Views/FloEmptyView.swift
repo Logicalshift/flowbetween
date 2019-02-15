@@ -37,6 +37,9 @@ class FloEmptyView : NSView, FloContainerView {
     /// Stores the general state of this view
     var viewState : ViewState = ViewState();
 
+    /// The FloView that owns this container view (should be a weak reference)
+    public weak var floView: FloView?;
+
     /// Returns this view as an NSView
     public var asView: NSView { get { return self; } }
     

@@ -33,6 +33,7 @@ public class FloView : NSObject, FloViewDelegate {
     
     /// Events
     fileprivate var _onClick: (() -> ())?;
+    fileprivate var _onDismiss: (() -> ())?;
     
     /// The layer to draw on, if there is one
     fileprivate var _drawingLayer: FloCanvasLayer?;
@@ -50,6 +51,7 @@ public class FloView : NSObject, FloViewDelegate {
 
         super.init();
 
+        _view.floView = self;
         weak var this = self;
         
         _view.performLayout = { size in if let this = this { this.performLayout(size) } };
@@ -69,6 +71,7 @@ public class FloView : NSObject, FloViewDelegate {
         
         super.init();
         
+        _view.floView = self;
         weak var this = self;
         
         _view.performLayout = { size in if let this = this { this.performLayout(size) } };
@@ -144,8 +147,24 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Sends an event if this view is dismissed (any action is performed 'outside' of this view)
     ///
-    @objc public func requestDismiss(_ events: FloEvents!, withName name: String!) {
-        NSLog("RequestDismiss not implemented");
+    @objc public func requestDismiss(_ events: FloEvents!, withName: String!) {
+        // Register the dismiss event
+        _onDismiss = { events.sendDismiss(withName); }
+        
+        // Request a dismiss action from the app delegate
+        if let appDelegate = NSApp.delegate as? FloAppDelegate {
+            appDelegate.requestDismiss(forView: self);
+        }
+    }
+    
+    ///
+    /// Sends the dismiss event to this view
+    ///
+    /// This is called by the AppDelegate for any view not in the hierarchy when a dismiss event
+    /// occurs.
+    ///
+    func sendDismiss() {
+        _onDismiss?();
     }
     
     ///

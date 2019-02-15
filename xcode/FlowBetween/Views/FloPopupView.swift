@@ -82,7 +82,10 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
             return _popupWindow.popupContentSize;
         }
     }
-    
+
+    /// The FloView that owns this container view (should be a weak reference)
+    weak var floView: FloView?;
+
     /// Returns this view as an NSView
     var asView : NSView {
         get {

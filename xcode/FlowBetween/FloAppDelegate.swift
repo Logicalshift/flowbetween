@@ -28,6 +28,9 @@ import Cocoa
 class FloAppDelegate: NSObject, NSApplicationDelegate {
     /// The FloSession object
     var _floSession: NSObject! = nil;
+    
+    /// Views requesting 'dismiss' events
+    var _dismiss: [FloViewWeakRef] = [];
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
@@ -36,6 +39,24 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
+    }
+    
+    ///
+    /// Requests that dismiss events are sent to the specified view
+    ///
+    func requestDismiss(forView: FloView) {
+        // Clear up any views that are no longer in the list
+        _dismiss.removeAll(where: { view in view.floView == nil });
+        
+        // Add the view to the list that should have dismiss requests sent
+        _dismiss.append(FloViewWeakRef(floView: forView));
+    }
+    
+    ///
+    /// Sends a dismiss event to any view outside of the specified view's hierarchy
+    ///
+    func sendDismiss(forView: NSView) {
+        
     }
 }
 

@@ -32,6 +32,7 @@ typedef struct AppPainting AppPainting;
 @interface FloEvents : NSObject
 
 - (void) sendClick: (NSString*) name;
+- (void) sendDismiss: (NSString*) name;
 - (void) sendFocus: (NSString*) name;
 - (void) sendChangeValue: (NSString*) name isSet: (BOOL) isSet withBool: (BOOL) value;
 - (void) sendChangeValue: (NSString*) name isSet: (BOOL) isSet withDouble: (double) value;

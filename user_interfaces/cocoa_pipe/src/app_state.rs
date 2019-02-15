@@ -81,6 +81,7 @@ impl AppState {
             ResumeUpdates                                   => vec![UiEvent::ResumeUpdates],
 
             Click(view_id, name)                            => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
+            Dismiss(view_id, name)                          => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
             Focus(view_id, name)                            => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
             EditValue(view_id, name, _action, property)     => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Value(property))],
 

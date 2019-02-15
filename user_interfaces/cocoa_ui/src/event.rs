@@ -189,6 +189,18 @@ pub fn declare_flo_events_class() -> &'static Class {
             }
         }
 
+        // Sends the 'dismiss' event
+        extern fn send_dismiss(this: &mut Object, _sel: Sel, name: *mut Object) {
+            unsafe {
+                let view_id = get_view_id(this);
+                let name    = name_for_name(&mut *name);
+
+                if let Some(view_id) = view_id {
+                    send_event(this, AppEvent::Dismiss(view_id, name));
+                }
+            }
+        }
+
         // Sends the 'focus' event
         extern fn send_focus(this: &mut Object, _sel: Sel, name: *mut Object) {
             unsafe {
@@ -375,6 +387,7 @@ pub fn declare_flo_events_class() -> &'static Class {
         flo_events.add_method(sel!(finishSendingEvents), finish_sending_events as extern fn(&mut Object, Sel));
 
         flo_events.add_method(sel!(sendClick:), send_click as extern fn(&mut Object, Sel, *mut Object));
+        flo_events.add_method(sel!(sendDismiss:), send_dismiss as extern fn(&mut Object, Sel, *mut Object));
         flo_events.add_method(sel!(sendFocus:), send_focus as extern fn(&mut Object, Sel, *mut Object));
         flo_events.add_method(sel!(sendChangeValue:isSet:withBool:), send_change_value_bool as extern fn(&mut Object, Sel, *mut Object, bool, bool));
         flo_events.add_method(sel!(sendChangeValue:isSet:withDouble:), send_change_value_double as extern fn(&mut Object, Sel, *mut Object, bool, f64));

@@ -50,6 +50,9 @@ pub enum AppEvent {
     /// User has clicked on a view
     Click(usize, String),
 
+    /// User has dismissed a view
+    Dismiss(usize, String),
+
     /// User has focused a view
     Focus(usize, String),
 

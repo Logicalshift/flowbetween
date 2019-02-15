@@ -21,6 +21,9 @@ enum ScrollBarVisibility {
 /// Protocol implemented by views that can act as container views
 ///
 protocol FloContainerView {
+    /// The FloView that owns this container view (should be a weak reference)
+    var floView: FloView? { get set }
+    
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView);
     

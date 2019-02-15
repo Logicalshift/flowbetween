@@ -89,7 +89,10 @@ class FloContainerButton : NSView, FloContainerView {
             return self.bounds.size;
         }
     }
-    
+
+    /// The FloView that owns this container view (should be a weak reference)
+    weak var floView: FloView?;
+
     /// Returns this view as an NSView
     var asView : NSView {
         get { return self }
