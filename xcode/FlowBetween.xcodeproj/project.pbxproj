@@ -25,7 +25,7 @@
 		4B1E8C0421DCE1C5006861A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */; };
 		4B1E8C0721DCE1C5006861A8 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */; };
 		4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */; };
-		4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */; };
+		4B1E8C2721DD5B7E006861A8 /* FloWindowDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C2621DD5B7E006861A8 /* FloWindowDelegate.swift */; };
 		4B3E9C5121F90B5900261433 /* ContainerBounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E9C5021F90B5800261433 /* ContainerBounds.swift */; };
 		4B4901F92200FB8F00FB6AFC /* FloPaintDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */; };
 		4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4902112201036300FB6AFC /* FloPaintStage.swift */; };
@@ -293,7 +293,7 @@
 		4B1E8C1A21DD1228006861A8 /* libflo_cocoa.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libflo_cocoa.dylib; path = ../target/debug/libflo_cocoa.dylib; sourceTree = "<group>"; };
 		4B1E8C2421DD1668006861A8 /* flo_cocoa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = flo_cocoa.h; sourceTree = "<group>"; };
 		4B1E8C2521DD16DC006861A8 /* FlowBetween.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FlowBetween.h; sourceTree = "<group>"; };
-		4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloWindow.swift; sourceTree = "<group>"; };
+		4B1E8C2621DD5B7E006861A8 /* FloWindowDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloWindowDelegate.swift; sourceTree = "<group>"; };
 		4B3E9C5021F90B5800261433 /* ContainerBounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerBounds.swift; sourceTree = "<group>"; };
 		4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintDevice.swift; sourceTree = "<group>"; };
 		4B4902112201036300FB6AFC /* FloPaintStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintStage.swift; sourceTree = "<group>"; };
@@ -379,7 +379,7 @@
 				4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */,
 				4B1E8C0821DCE1C5006861A8 /* Info.plist */,
 				4B1E8C0921DCE1C5006861A8 /* FlowBetween.entitlements */,
-				4B1E8C2621DD5B7E006861A8 /* FloWindow.swift */,
+				4B1E8C2621DD5B7E006861A8 /* FloWindowDelegate.swift */,
 				4B57E9D921DE2CBD00FD0551 /* FloView.swift */,
 				4B57E9E021DE6A9E00FD0551 /* FloLayout.swift */,
 			);
@@ -837,7 +837,7 @@
 				4BB979A52214BB2900DCB458 /* FloPopupView.swift in Sources */,
 				4B5709B42205E83F004FB91F /* FloCacheLayer.swift in Sources */,
 				4B5709D0220640DB004FB91F /* Padding.swift in Sources */,
-				4B1E8C2721DD5B7E006861A8 /* FloWindow.swift in Sources */,
+				4B1E8C2721DD5B7E006861A8 /* FloWindowDelegate.swift in Sources */,
 				4B51F82422078D1C0060578C /* FloControlView.swift in Sources */,
 				4BB979C02214C65F00DCB458 /* FloPopupWindow.swift in Sources */,
 				4B51F826220792290060578C /* FloButtonView.swift in Sources */,

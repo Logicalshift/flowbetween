@@ -32,7 +32,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
-        session = create_flo_session(FloWindow.self, FloViewFactory.self, FloViewModel.self);
+        session = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

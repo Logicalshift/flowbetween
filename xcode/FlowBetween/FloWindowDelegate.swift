@@ -12,7 +12,7 @@ import Cocoa
 ///
 /// Represents a window created by FlowBetween
 ///
-public class FloWindow : NSObject, NSWindowDelegate {
+public class FloWindowDelegate : NSObject, NSWindowDelegate {
     ///
     /// The window itself
     ///
