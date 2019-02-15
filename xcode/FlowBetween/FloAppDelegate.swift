@@ -25,20 +25,17 @@
 import Cocoa
 
 @NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate {
-
-    var session: NSObject! = nil;
-
+class FloAppDelegate: NSObject, NSApplicationDelegate {
+    /// The FloSession object
+    var _floSession: NSObject! = nil;
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
-        session = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
+        _floSession = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
     }
-
-
 }
 

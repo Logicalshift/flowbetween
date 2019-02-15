@@ -21,7 +21,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		4B1E8C0221DCE1C3006861A8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0121DCE1C3006861A8 /* AppDelegate.swift */; };
+		4B1E8C0221DCE1C3006861A8 /* FloAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0121DCE1C3006861A8 /* FloAppDelegate.swift */; };
 		4B1E8C0421DCE1C5006861A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */; };
 		4B1E8C0721DCE1C5006861A8 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */; };
 		4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */; };
@@ -284,7 +284,7 @@
 
 /* Begin PBXFileReference section */
 		4B1E8BFE21DCE1C3006861A8 /* FlowBetween.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlowBetween.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		4B1E8C0121DCE1C3006861A8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		4B1E8C0121DCE1C3006861A8 /* FloAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloAppDelegate.swift; sourceTree = "<group>"; };
 		4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4B1E8C0621DCE1C5006861A8 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		4B1E8C0821DCE1C5006861A8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -374,7 +374,7 @@
 				4B51F80A2206F3CD0060578C /* DataTypes */,
 				4BAC98F721E0FBAF00CEB87B /* Fonts */,
 				4B1E8C2321DD164E006861A8 /* CInterop */,
-				4B1E8C0121DCE1C3006861A8 /* AppDelegate.swift */,
+				4B1E8C0121DCE1C3006861A8 /* FloAppDelegate.swift */,
 				4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */,
 				4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */,
 				4B1E8C0821DCE1C5006861A8 /* Info.plist */,
@@ -820,7 +820,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4B1E8C0221DCE1C3006861A8 /* AppDelegate.swift in Sources */,
+				4B1E8C0221DCE1C3006861A8 /* FloAppDelegate.swift in Sources */,
 				4B52B4D321E2652600CA6B64 /* FloContainerView.swift in Sources */,
 				4BB979BE2214C34E00DCB458 /* FloContainerPopup.swift in Sources */,
 				4B57E9DF21DE674000FD0551 /* Bounds.swift in Sources */,
