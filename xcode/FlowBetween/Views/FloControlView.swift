@@ -74,7 +74,13 @@ class FloControlView: NSView, FloContainerView {
         }
         
         // If the control is being edited then the event to fire is the 'edit' event, otherwise it's the 'set' event
-        let isBeingEdited = false;
+        var isBeingEdited = false;
+        
+        if self.window?.currentEvent?.type == .leftMouseDragged {
+            isBeingEdited = true;
+        } else if self.window?.currentEvent?.type == .leftMouseUp {
+            isBeingEdited = false;
+        }
         
         // Fire the edit or set events as appropriate
         if isBeingEdited {
