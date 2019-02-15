@@ -73,7 +73,8 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
         }
         
         // Iterate through the view hierarchy, and remove view
-        var superview = forView;
+        var window      = forView?.window;
+        var superview   = forView;
         while let view = superview {
             // If the click is inside a 'dismissable' view, then don't dismiss that view
             if let containerView = view as? FloContainerView {
@@ -82,6 +83,13 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
             
             // Move up the hierarchy
             superview = view.superview;
+            
+            if superview == nil {
+                if let popupWindow = window as? FloPopupWindow {
+                    superview   = popupWindow.parentView;
+                    window      = superview?.window;
+                }
+            }
         }
         
         // Request all remaining dismissable views dismiss themselves
