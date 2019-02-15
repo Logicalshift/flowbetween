@@ -33,12 +33,19 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     var _dismiss: [FloViewWeakRef] = [];
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Insert code here to initialize your application
+        weak var this = self;
+        
+        // Monitor events to generate the 'dismiss' action
+        NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.leftMouseDown
+            .union(NSEvent.EventTypeMask.otherMouseDown)
+            .union(NSEvent.EventTypeMask.rightMouseDown),
+                                         handler: { event in this?.monitorEvent(event); return event; })
+        
+        // Create the Flo session
         _floSession = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
     }
     
     ///
@@ -55,7 +62,56 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     ///
     /// Sends a dismiss event to any view outside of the specified view's hierarchy
     ///
-    func sendDismiss(forView: NSView) {
+    func sendDismiss(forView: NSView?) {
+        // List of FloViews to dismiss
+        _dismiss.removeAll(where: { view in view.floView == nil });
+        var toDismiss = _dismiss;
+        
+        // Nothing to do if there are no dismissable views
+        if toDismiss.count <= 0 {
+            return;
+        }
+        
+        // Iterate through the view hierarchy, and remove view
+        var superview = forView;
+        while let view = superview {
+            // If the click is inside a 'dismissable' view, then don't dismiss that view
+            if let containerView = view as? FloContainerView {
+                toDismiss.removeAll(where: { view in view.floView == containerView.floView });
+            }
+            
+            // Move up the hierarchy
+            superview = view.superview;
+        }
+        
+        // Request all remaining dismissable views dismiss themselves
+        toDismiss.forEach({ view in view.floView?.sendDismiss() });
+    }
+    
+    ///
+    /// Monitors an event sent to the application
+    ///
+    func monitorEvent(_ event: NSEvent) {
+        switch event.type {
+        case .leftMouseDown, .otherMouseDown, .rightMouseDown:
+            // Mouse down in the window
+            if let window = event.window {
+                // Find out the view that the user clicked on
+                let locationInWindow    = event.locationInWindow;
+                let hitView             = window.contentView?.hitTest(locationInWindow);
+                
+                // Send the dismiss event
+                sendDismiss(forView: hitView);
+            } else {
+                // Mouse down in no view
+                sendDismiss(forView: nil);
+            }
+            break;
+        
+        default:
+            // Do nothing
+            break;
+        }
         
     }
 }
