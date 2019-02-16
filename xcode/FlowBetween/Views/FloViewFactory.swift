@@ -101,9 +101,11 @@ import Cocoa
         textbox.isEditable  = true;
         textbox.isBordered  = false;
         textbox.isBezeled   = false;
-        let textboxView     = FloControlView.init(frame: CGRect.init(), control: textbox);
 
+        let textboxView     = FloControlView.init(frame: CGRect.init(), control: textbox);
         let view            = FloView.init(withView: textboxView);
+        
+        textbox.delegate    = textboxView;
 
         return view;
     }

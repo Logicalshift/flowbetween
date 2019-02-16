@@ -11,7 +11,7 @@ import Cocoa
 ///
 /// Container view containing a Cocoa control
 ///
-class FloControlView: NSView, FloContainerView {
+class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
     /// The control that is displayed in this view
     let _control: NSControl;
     
@@ -26,6 +26,9 @@ class FloControlView: NSView, FloContainerView {
     
     /// The text in this control
     var _label: String = "";
+    
+    /// True if the control is being edited
+    var _editing: Bool = false;
 
     required init(frame frameRect: NSRect, control: NSControl) {
         _control    = control;
@@ -77,9 +80,13 @@ class FloControlView: NSView, FloContainerView {
         var isBeingEdited = false;
         
         if self.window?.currentEvent?.type == .leftMouseDragged {
-            isBeingEdited = true;
+            _editing        = true;
+            isBeingEdited   = true;
         } else if self.window?.currentEvent?.type == .leftMouseUp {
-            isBeingEdited = false;
+            _editing        = false;
+            isBeingEdited   = false;
+        } else if _editing {
+            isBeingEdited   = true;
         }
         
         // Fire the edit or set events as appropriate
@@ -318,6 +325,26 @@ class FloControlView: NSView, FloContainerView {
         case .FocusPriority:    break;
         case .LayoutX:          break;
         case .LayoutY:          break;
+        }
+    }
+    
+    /// Delegate method: control began editing text
+    func controlTextDidBeginEditing(_ obj: Notification) {
+        _editing = true;
+    }
+    
+    /// Delegate method: control finished editing text
+    func controlTextDidEndEditing(_ obj: Notification) {
+        _editing = false;
+        onSetValue?(PropertyValue.String(_control.stringValue));
+    }
+    
+    /// Delegate method: text changed
+    func controlTextDidChange(_ obj: Notification) {
+        if _editing {
+            onEditValue?(PropertyValue.String(_control.stringValue));
+        } else {
+            onSetValue?(PropertyValue.String(_control.stringValue));
         }
     }
 }
