@@ -245,6 +245,7 @@ impl CocoaSession {
                 Button          => { msg_send!(*view_class, createAsButton) }
                 ContainerButton => { msg_send!(*view_class, createAsContainerButton) }
                 Slider          => { msg_send!(*view_class, createAsSlider) }
+                Rotor           => { msg_send!(*view_class, createAsRotor) }
                 TextBox         => { msg_send!(*view_class, createAsTextBox) }
                 CheckBox        => { msg_send!(*view_class, createAsCheckBox) }
                 Scrolling       => { msg_send!(*view_class, createAsScrolling) }

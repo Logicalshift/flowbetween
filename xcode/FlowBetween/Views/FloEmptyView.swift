@@ -455,11 +455,18 @@ class FloEmptyView : NSView, FloContainerView {
                 return;
             }
         }
-        
+
         // Start tracking a drag if there's a drag action attached to this view
         if let onDrag = onDrag {
             tryDrag(onDrag: onDrag, initialEvent: event);
         }
+
+        // Send the event up the view stack if this view can't handle it
+        if onDrag == nil && onClick == nil {
+            superview?.mouseDown(with: event);
+            return;
+        }
+        
     }
     
     ///

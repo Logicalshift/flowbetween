@@ -67,6 +67,16 @@ import Cocoa
     }
     
     ///
+    /// Creates a view that works like a slider but rotates its contents
+    ///
+    @objc public static func createAsRotor() -> FloView {
+        let rotor   = FloRotorView.init(frame: CGRect.init());
+        let view    = FloView.init(withView: rotor);
+        
+        return view;
+    }
+
+    ///
     /// Creates a view that can be checked on or off
     ///
     @objc public static func createAsCheckBox() -> FloView {

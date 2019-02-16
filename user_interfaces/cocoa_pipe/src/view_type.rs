@@ -17,6 +17,9 @@ pub enum ViewType {
     /// A view containing a slider
     Slider,
 
+    /// A view that acts like a slider but operates by rotating its content
+    Rotor,
+
     /// A view consisting of a text box
     TextBox,
 
@@ -50,7 +53,7 @@ impl From<ControlType> for ViewType {
             Label                   => ViewType::Empty,
             Canvas                  => ViewType::Empty,
             Slider                  => ViewType::Slider,
-            Rotor                   => ViewType::Empty,
+            Rotor                   => ViewType::Rotor,
             TextBox                 => ViewType::TextBox,
             CheckBox                => ViewType::CheckBox
         }

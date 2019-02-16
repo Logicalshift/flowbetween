@@ -55,7 +55,6 @@ public class FloView : NSObject, FloViewDelegate {
         weak var this = self;
         
         _view.performLayout = { size in if let this = this { this.performLayout(size) } };
-        _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
     }
     
     required init(withView view: FloContainerView) {
@@ -141,6 +140,8 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sends an event if this view (or its control) is clicked
     ///
     @objc public func requestClick(_ events: FloEvents, withName: String?) {
+        weak var this = self;
+        _view.onClick = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
         _onClick = { events.sendClick(withName); };
     }
     
