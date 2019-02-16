@@ -48,5 +48,6 @@ pub unsafe extern fn create_flo_session(window_class: *mut Class, view_class: *m
         })
         .unwrap();
 
+    unsafe { msg_send!(session, autorelease); }
     session
 }
