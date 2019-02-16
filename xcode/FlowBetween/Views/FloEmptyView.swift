@@ -176,6 +176,12 @@ class FloEmptyView : NSView, FloContainerView {
         let viewport        = bounds;
         var visible         = visibleRect;
         
+        // For small enough containers, always display the whole area
+        let area = visible.width * visible.height;
+        if area < 800*600 {
+            visible = viewport;
+        }
+        
         // For the container bounds, the viewport is considered to be aligned at 0,0
         visible.origin.x    -= viewport.origin.x;
         visible.origin.y    -= viewport.origin.y;
