@@ -87,10 +87,10 @@ import Cocoa
     ///
     @objc public static func createAsTextBox() -> FloView {
         let textbox         = NSTextField.init();
+        textbox.font        = NSFontManager.shared.font(withFamily: "Lato", traits: NSFontTraitMask(), weight: 5, size: 13.0);
         textbox.isEditable  = true;
-        textbox.isBordered  = true;
-        textbox.isBezeled   = true;
-        textbox.bezelStyle  = NSTextField.BezelStyle.squareBezel;
+        textbox.isBordered  = false;
+        textbox.isBezeled   = false;
         let textboxView     = FloControlView.init(frame: CGRect.init(), control: textbox);
 
         let view            = FloView.init(withView: textboxView);
