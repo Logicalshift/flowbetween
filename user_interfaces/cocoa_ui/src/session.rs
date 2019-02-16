@@ -271,7 +271,7 @@ impl CocoaSession {
                     Popup           => { msg_send!(*view_class, createAsPopup) }
                 };
 
-                let view = StrongPtr::new(view);
+                let view = StrongPtr::retain(view);
 
                 // Store it away
                 self.views.insert(new_view_id, view);
