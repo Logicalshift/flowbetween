@@ -99,6 +99,13 @@ public class FloView : NSObject, FloViewDelegate {
     }
     
     ///
+    /// The view state for this view
+    ///
+    var viewState : ViewState {
+        get { return _view.viewState; }
+    }
+    
+    ///
     /// The subviews that should be laid out within this view
     ///
     public var layoutSubviews: [FloView] {
@@ -765,5 +772,26 @@ public class FloView : NSObject, FloViewDelegate {
         if let popup = _view as? FloContainerPopup {
             popup.setPopupOffset(CGFloat(offset));
         }
+    }
+    
+    ///
+    /// Finds the FloView 'neares't to the specified view
+    ///
+    static func nearestTo(_ view: NSView) -> FloView? {
+        var testView: NSView? = view;
+        
+        while testView != nil {
+            // If this view is a container view, then return its FloView
+            if let containerView = testView as? FloContainerView {
+                if containerView.floView != nil {
+                    return containerView.floView;
+                }
+            }
+            
+            // Check the superview
+            testView = testView?.superview;
+        }
+        
+        return nil;
     }
 }

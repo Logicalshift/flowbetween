@@ -276,6 +276,45 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
 
         _control.attributedStringValue = attributedLabel;
     }
+    
+    /// If this control's focus priority is higher than the currently focused view, move focus here
+    func focusIfNeeded() {
+        if let priorityProperty = viewState.focus_priority {
+            // Need to decide if we should steal focus from whatever has focus already
+            var stealFocus              = false;
+            let priority                = priorityProperty.value.toDouble(default: 0.0);
+            let currentlyFocusedView    = NSView.focusView;
+            
+            if let currentlyFocusedView = currentlyFocusedView {
+                // If the currently focused view has higher priority than us or isn't a FloView then don't steal focus
+                if let focusedFloView = FloView.nearestTo(currentlyFocusedView) {
+                    let currentPriority = focusedFloView.viewState.focus_priority?.value.toDouble(default: 0.0) ?? 0.0;
+                    
+                    if currentPriority < priority {
+                        // We're higher priority than the current view
+                        stealFocus = true;
+                    }
+                } else {
+                    // There's a focused view in a different part of the UI
+                    stealFocus = false;
+                }
+            } else {
+                // Should steal focus if there is no focused view
+                stealFocus = true;
+            }
+            
+            // Focus the control if we should steal focus
+            if stealFocus {
+                window?.makeFirstResponder(_control);
+            }
+        }
+    }
+    
+    /// When the control moves between windows, it might need to get focus
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow();
+        focusIfNeeded();
+    }
 
     /// Sets part of the state of this control
     func setState(selector: ViewStateSelector, toProperty: FloProperty) {
@@ -319,10 +358,13 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
             }
             break;
 
+        case .FocusPriority:
+            toProperty.trackValue { value in this?.focusIfNeeded() }
+            break;
+
         case .Selected:         break;
         case .Badged:           break;
             
-        case .FocusPriority:    break;
         case .LayoutX:          break;
         case .LayoutY:          break;
         }
