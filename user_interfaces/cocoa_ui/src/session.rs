@@ -36,7 +36,7 @@ pub struct CocoaSession {
     session_id: usize,
 
     /// Reference to the FloControl used to interface between the stream and the Objective-C/Swift side of the application
-    target_object: StrongPtr,
+    target_object: WeakPtr,
 
     /// Maps IDs to windows
     windows: HashMap<usize, StrongPtr>,
@@ -93,7 +93,7 @@ impl CocoaSession {
     pub fn new(obj: &StrongPtr, session_id: usize) -> CocoaSession {
         CocoaSession {
             session_id:         session_id,
-            target_object:      obj.clone(),
+            target_object:      obj.weak(),
             windows:            HashMap::new(),
             views:              HashMap::new(),
             view_events:        HashMap::new(),
@@ -130,8 +130,22 @@ impl CocoaSession {
         unsafe {
             autoreleasepool(|| {
                 // Wake up the object on the main thread
-                msg_send!(*self.target_object, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO);
+                self.get_target_object().map(|target| {
+                    msg_send!(*target, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO);
+                });
             });
+        }
+    }
+
+    ///
+    /// Retrieves the target object, if it's available
+    ///
+    fn get_target_object(&self) -> Option<StrongPtr> {
+        let target = self.target_object.load();
+        if target.is_null() {
+            None
+        } else {
+            Some(target)
         }
     }
 
@@ -139,38 +153,40 @@ impl CocoaSession {
     /// Drains any pending messages from the actions stream
     ///
     pub fn drain_action_stream(&mut self) {
-        autoreleasepool(move || {
-            // Create the object to notify when there's an update
-            let notify = Arc::new(CocoaSessionNotify::new(&self.target_object));
+        if let Some(target) = self.get_target_object() {
+            autoreleasepool(move || {
+                // Create the object to notify when there's an update
+                let notify = Arc::new(CocoaSessionNotify::new(&target));
 
-            // Drain the stream until it's empty or it blocks
-            loop {
-                let next = self.actions
-                    .as_mut()
-                    .map(|actions| actions.poll_stream_notify(&notify, 0))
-                    .unwrap_or_else(|| Ok(Async::NotReady));
+                // Drain the stream until it's empty or it blocks
+                loop {
+                    let next = self.actions
+                        .as_mut()
+                        .map(|actions| actions.poll_stream_notify(&notify, 0))
+                        .unwrap_or_else(|| Ok(Async::NotReady));
 
-                match next {
-                    Ok(Async::NotReady)     => { break; }
-                    Ok(Async::Ready(None))  => {
-                        // Session has finished
-                        break;
-                    }
+                    match next {
+                        Ok(Async::NotReady)     => { break; }
+                        Ok(Async::Ready(None))  => {
+                            // Session has finished
+                            break;
+                        }
 
-                    Ok(Async::Ready(Some(actions))) => {
-                        for action in actions {
-                            // Perform the action
-                            self.dispatch_app_action(action);
+                        Ok(Async::Ready(Some(actions))) => {
+                            for action in actions {
+                                // Perform the action
+                                self.dispatch_app_action(action);
+                            }
+                        }
+
+                        Err(_) => {
+                            // Action stream should never produce any errors
+                            unimplemented!("Action stream should never produce any errors")
                         }
                     }
-
-                    Err(_) => {
-                        // Action stream should never produce any errors
-                        unimplemented!("Action stream should never produce any errors")
-                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     ///
@@ -198,19 +214,21 @@ impl CocoaSession {
     ///
     fn create_window(&mut self, new_window_id: usize) {
         unsafe {
-            // Fetch the window class to create
-            let window_class    = (**self.target_object).get_ivar::<*mut Class>("_windowClass");
+            if let Some(target) = self.get_target_object() {
+                // Fetch the window class to create
+                let window_class    = (**target).get_ivar::<*mut Class>("_windowClass");
 
-            // Allocate and initialise it
-            let window: *mut Object = msg_send!(*window_class, alloc);
-            let window = msg_send!(window, init: *self.target_object);
-            let window = StrongPtr::new(window);
+                // Allocate and initialise it
+                let window: *mut Object = msg_send!(*window_class, alloc);
+                let window = msg_send!(window, init: *target);
+                let window = StrongPtr::new(window);
 
-            // Immediately request a tick from the new window (this is in case one was queued before the window was created)
-            msg_send!((*window), requestTick);
+                // Immediately request a tick from the new window (this is in case one was queued before the window was created)
+                msg_send!((*window), requestTick);
 
-            // Store it away
-            self.windows.insert(new_window_id, window);
+                // Store it away
+                self.windows.insert(new_window_id, window);
+            }
         }
     }
 
@@ -235,27 +253,29 @@ impl CocoaSession {
     fn create_view(&mut self, new_view_id: usize, view_type: ViewType) {
         use self::ViewType::*;
 
-        unsafe {
-            // Fetch the view class to create
-            let view_class = (**self.target_object).get_ivar::<*mut Class>("_viewClass");
+        if let Some(target) = self.get_target_object() {
+            unsafe {
+                // Fetch the view class to create
+                let view_class = (**target).get_ivar::<*mut Class>("_viewClass");
 
-            // Allocate and initialise it
-            let view: *mut Object = match view_type {
-                Empty           => { msg_send!(*view_class, createAsEmpty) }
-                Button          => { msg_send!(*view_class, createAsButton) }
-                ContainerButton => { msg_send!(*view_class, createAsContainerButton) }
-                Slider          => { msg_send!(*view_class, createAsSlider) }
-                Rotor           => { msg_send!(*view_class, createAsRotor) }
-                TextBox         => { msg_send!(*view_class, createAsTextBox) }
-                CheckBox        => { msg_send!(*view_class, createAsCheckBox) }
-                Scrolling       => { msg_send!(*view_class, createAsScrolling) }
-                Popup           => { msg_send!(*view_class, createAsPopup) }
-            };
+                // Allocate and initialise it
+                let view: *mut Object = match view_type {
+                    Empty           => { msg_send!(*view_class, createAsEmpty) }
+                    Button          => { msg_send!(*view_class, createAsButton) }
+                    ContainerButton => { msg_send!(*view_class, createAsContainerButton) }
+                    Slider          => { msg_send!(*view_class, createAsSlider) }
+                    Rotor           => { msg_send!(*view_class, createAsRotor) }
+                    TextBox         => { msg_send!(*view_class, createAsTextBox) }
+                    CheckBox        => { msg_send!(*view_class, createAsCheckBox) }
+                    Scrolling       => { msg_send!(*view_class, createAsScrolling) }
+                    Popup           => { msg_send!(*view_class, createAsPopup) }
+                };
 
-            let view = StrongPtr::new(view);
+                let view = StrongPtr::new(view);
 
-            // Store it away
-            self.views.insert(new_view_id, view);
+                // Store it away
+                self.views.insert(new_view_id, view);
+            }
         }
     }
 
@@ -613,15 +633,17 @@ impl CocoaSession {
     /// Creates a new viewmodel with the specified ID
     ///
     fn create_viewmodel(&mut self, viewmodel_id: usize) {
-        unsafe {
-            // Create the viewmodel
-            let view_model_class            = (**self.target_object).get_ivar::<*mut Class>("_viewModelClass");
-            let new_view_model: *mut Object = msg_send!(*view_model_class, alloc);
-            let new_view_model: *mut Object = msg_send!(new_view_model, init);
-            let new_view_model              = StrongPtr::new(new_view_model);
+        if let Some(target) = self.get_target_object() {
+            unsafe {
+                // Create the viewmodel
+                let view_model_class            = (**target).get_ivar::<*mut Class>("_viewModelClass");
+                let new_view_model: *mut Object = msg_send!(*view_model_class, alloc);
+                let new_view_model: *mut Object = msg_send!(new_view_model, init);
+                let new_view_model              = StrongPtr::new(new_view_model);
 
-            // Store in the list of viewmodels
-            self.viewmodels.insert(viewmodel_id, new_view_model);
+                // Store in the list of viewmodels
+                self.viewmodels.insert(viewmodel_id, new_view_model);
+            }
         }
     }
 
