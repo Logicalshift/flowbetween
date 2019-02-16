@@ -103,6 +103,16 @@ fn declare_flo_control_class() -> &'static Class {
             }
         }
 
+        /// Retrieves the session ID for this object
+        extern fn get_session_id(this: &mut Object, _cmd: Sel) -> u64 {
+            unsafe {
+                // Remove the session from the session hash
+                let session_id = this.get_ivar::<usize>("_sessionId");
+                *session_id as u64
+            }
+        }
+
+        /// Sends a tick to the session
         extern fn tick(this: &mut Object, _cmd: Sel) {
             unsafe {
                 // Send a tick to the session
@@ -133,6 +143,7 @@ fn declare_flo_control_class() -> &'static Class {
         flo_control.add_method(sel!(setViewModelClass:), set_view_model_class as extern fn(&mut Object, Sel, *mut Class));
         flo_control.add_method(sel!(actionStreamReady), action_stream_ready as extern fn(&mut Object, Sel));
         flo_control.add_method(sel!(tick), tick as extern fn(&mut Object, Sel));
+        flo_control.add_method(sel!(sessionId), get_session_id as extern fn(&mut Object, Sel) -> u64);
     }
 
     // Seal and register it

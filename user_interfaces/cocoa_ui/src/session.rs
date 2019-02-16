@@ -199,7 +199,7 @@ impl CocoaSession {
     fn create_window(&mut self, new_window_id: usize) {
         unsafe {
             // Fetch the window class to create
-            let window_class = (**self.target_object).get_ivar::<*mut Class>("_windowClass");
+            let window_class    = (**self.target_object).get_ivar::<*mut Class>("_windowClass");
 
             // Allocate and initialise it
             let window: *mut Object = msg_send!(*window_class, alloc);

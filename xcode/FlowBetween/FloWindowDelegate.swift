@@ -28,6 +28,11 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
     ///
     fileprivate weak var _session : NSObject?;
     
+    ///
+    /// The session ID for this window
+    ///
+    fileprivate var _sessionId: UInt64;
+    
     @objc required init(_ session: FloControl) {
         // Create the window
         let styleMask: NSWindow.StyleMask = [.resizable, .closable, .titled];
@@ -37,12 +42,23 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
             styleMask:      styleMask,
             backing:        NSWindow.BackingStoreType.buffered,
             defer:          true);
-        _session = session;
+        _session    = session;
+        _sessionId  = session.sessionId();
         
         super.init();
         
         _window.title = "FlowBetween session";
         _window.delegate = self;
+    }
+    
+    ///
+    /// The window will close
+    ///
+    @objc public func windowWillClose(_ notification: Notification) {
+        // Remove the session from the main app delegate
+        if let delegate = NSApp.delegate as? FloAppDelegate {
+            delegate.finishSessionWithId(_sessionId);
+        }
     }
     
     ///
@@ -55,7 +71,7 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
     ///
     /// Sets the root view of this window
     ///
-    @objc(windowSetRootView:) public func windowSetRootView(view: FloView!) {
+    @objc public func windowSetRootView(_ view: FloView!) {
         _rootView               = view;
         _window.contentView     = view.view;
     }

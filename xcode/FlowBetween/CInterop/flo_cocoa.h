@@ -60,6 +60,7 @@ typedef struct AppPainting AppPainting;
 @interface FloControl : NSObject
 
 - (void) tick;
+- (uint64_t) sessionId;
 
 @end
 

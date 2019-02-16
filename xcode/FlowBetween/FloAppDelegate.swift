@@ -27,7 +27,7 @@ import Cocoa
 @NSApplicationMain
 class FloAppDelegate: NSObject, NSApplicationDelegate {
     /// The FloSession object
-    var _floSession: NSObject! = nil;
+    var _sessions: [UInt64: NSObject] = [UInt64: NSObject]();
     
     /// Views requesting 'dismiss' events
     var _dismiss: [FloViewWeakRef] = [];
@@ -42,7 +42,10 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
                                          handler: { event in this?.monitorEvent(event); return event; })
         
         // Create the Flo session
-        _floSession = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
+        let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
+
+        let sessionId           = session!.sessionId();
+        _sessions[sessionId]    = session;
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -125,7 +128,24 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
             // Do nothing
             break;
         }
-        
+    }
+    
+    ///
+    /// User requested a new session
+    ///
+    @IBAction public func newDocument(_ sender: Any?) {
+        // Create the Flo session
+        let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
+
+        let sessionId           = session!.sessionId();
+        _sessions[sessionId]    = session;
+    }
+    
+    ///
+    /// A particular session has finished
+    ///
+    func finishSessionWithId(_ sessionId: UInt64) {
+        _sessions.removeValue(forKey: sessionId);
     }
 }
 
