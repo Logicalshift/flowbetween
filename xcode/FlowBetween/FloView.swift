@@ -558,7 +558,7 @@ public class FloView : NSObject, FloViewDelegate {
     }
     
     ///
-    /// Updates the bounds of the drawing layer (and its context) after the
+    /// Updates the bounds of the drawing layer (and its context) after the view bounds change
     ///
     func drawingLayerBoundsChanged(_ newBounds: ContainerBounds) {
         autoreleasepool {
