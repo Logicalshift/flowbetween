@@ -103,7 +103,7 @@ protocol FloContainerView {
 ///
 /// Bubbles an event up from a particular view
 ///
-func bubble_up_event(source: NSView, event_handler: (FloContainerView) -> Bool) {
+func bubbleUpEvent(source: NSView, event_handler: (FloContainerView) -> Bool) {
     // Bubble up to the superview
     var bubble_to: NSView? = source;
     

@@ -279,7 +279,7 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
     
     /// If this control's focus priority is higher than the currently focused view, move focus here
     func focusIfNeeded() {
-        if let priorityProperty = viewState.focus_priority {
+        if let priorityProperty = viewState.focusPriority {
             // Need to decide if we should steal focus from whatever has focus already
             var stealFocus              = false;
             let priority                = priorityProperty.value.toDouble(default: 0.0);
@@ -288,7 +288,7 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
             if let currentlyFocusedView = currentlyFocusedView {
                 // If the currently focused view has higher priority than us or isn't a FloView then don't steal focus
                 if let focusedFloView = FloView.nearestTo(currentlyFocusedView) {
-                    let currentPriority = focusedFloView.viewState.focus_priority?.value.toDouble(default: 0.0) ?? 0.0;
+                    let currentPriority = focusedFloView.viewState.focusPriority?.value.toDouble(default: 0.0) ?? 0.0;
                     
                     if currentPriority < priority {
                         // We're higher priority than the current view

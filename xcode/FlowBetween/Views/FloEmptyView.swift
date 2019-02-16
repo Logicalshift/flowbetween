@@ -151,7 +151,7 @@ class FloEmptyView : NSView, FloContainerView {
     /// Triggers the click event
     ///
     public func triggerClick() {
-        bubble_up_event(source: self, event_handler: { (container) in
+        bubbleUpEvent(source: self, event_handler: { (container) in
             if let onClick = container.onClick {
                 return onClick();
             } else {

@@ -194,7 +194,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
     /// Triggers the click event for this view
     func triggerClick() {
-        bubble_up_event(source: self, event_handler: { (container) in
+        bubbleUpEvent(source: self, event_handler: { (container) in
             if let onClick = container.onClick {
                 return onClick();
             } else {

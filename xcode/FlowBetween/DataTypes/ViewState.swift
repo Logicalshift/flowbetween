@@ -16,9 +16,9 @@ class ViewState {
     var badged:         FloProperty?;
     var enabled:        FloProperty?;
     var value:          FloProperty?;
-    var range_lower:    FloProperty?;
-    var range_higher:   FloProperty?;
-    var focus_priority: FloProperty?;
+    var rangeLower:     FloProperty?;
+    var rangeHigher:    FloProperty?;
+    var focusPriority:  FloProperty?;
     
     var layout_x:       [FloProperty] = [];
     var layout_y:       [FloProperty] = [];
@@ -40,9 +40,9 @@ class ViewState {
         case .Badged:           badged = property;
         case .Enabled:          enabled = property;
         case .Value:            value = property;
-        case .RangeLower:       range_lower = property;
-        case .RangeHigher:      range_higher = property;
-        case .FocusPriority:    focus_priority = property;
+        case .RangeLower:       rangeLower = property;
+        case .RangeHigher:      rangeHigher = property;
+        case .FocusPriority:    focusPriority = property;
         case .LayoutX:          layout_x.append(property);
         case .LayoutY:          layout_y.append(property);
         }
