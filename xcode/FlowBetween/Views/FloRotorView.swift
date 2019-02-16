@@ -40,8 +40,7 @@ class FloRotorView : FloEmptyView {
         transform                       = CATransform3DRotate(transform, angle, 0.0, 0.0, 1.0);
         transform                       = CATransform3DTranslate(transform, -center.x, -center.y, 0.0);
         
-        //self.asView.layer?.transform = CATransform3DMakeRotation(angle, 0, 0, 1.0);
-        layer?.sublayerTransform    = transform;
+        layer?.transform                = transform;
     }
     
     ///
