@@ -97,6 +97,8 @@ fn declare_flo_control_class() -> &'static Class {
         /// Tidies up the flo_control session once it has finished
         extern fn dealloc_flo_control(this: &mut Object, _cmd: Sel) {
             unsafe {
+                println!("Deallocating FloControl (trying to end session...)");
+
                 // Remove the session from the session hash
                 let session_id = this.get_ivar("_sessionId");
                 FLO_SESSIONS.lock().unwrap().remove(&session_id);

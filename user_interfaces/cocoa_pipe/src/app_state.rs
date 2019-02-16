@@ -38,6 +38,12 @@ pub struct AppState {
     next_property_id: usize
 }
 
+impl Drop for AppState {
+    fn drop(&mut self) {
+        println!("Drop app state");
+    }
+}
+
 impl AppState {
     ///
     /// Creates a new AppState

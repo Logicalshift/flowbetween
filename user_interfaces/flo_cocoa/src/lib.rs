@@ -45,6 +45,7 @@ pub unsafe extern fn create_flo_session(window_class: *mut Class, view_class: *m
             let mut update_future   = executor::spawn(update_future);
 
             update_future.wait_future().ok();
+            println!("Session finished");
         })
         .unwrap();
 
