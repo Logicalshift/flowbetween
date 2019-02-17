@@ -9,6 +9,17 @@
 #ifndef flo_cocoa_h
 #define flo_cocoa_h
 
+//
+// TODO: we're getting very odd behaviour when things are released or passed between Swift and Rust
+// This currently means that sessions never end :-/
+//
+// I suspect the root cause is that Rust's Objective-C library does not support ARC, and Swift assumes
+// that everything in its interop header (here) does. Haven't been able to find a way to declare the
+// header file as non-ARC. (An additional problem is that it sometimes expects symbols defining the
+// classes - in particular when Unmanaged<Foo> is used - and I don't know how to declare them
+// in Rust)
+//
+
 #import <Cocoa/Cocoa.h>
 
 ///
