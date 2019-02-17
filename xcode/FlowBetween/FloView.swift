@@ -675,7 +675,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Retrieves the drawing context for this view
     ///
-    @objc public func viewGetCanvas(forDrawing events: FloEvents, layer: UInt32) -> Unmanaged<CGContext>? {
+    @objc public func viewGetCanvas(forDrawing events: FloEvents!, layer: UInt32) -> Unmanaged<CGContext>? {
         // Create the drawing layer if one doesn't exist yet
         if _drawingLayer == nil {
             createCanvasDrawingLayer(events);
@@ -696,6 +696,13 @@ public class FloView : NSObject, FloViewDelegate {
         return _drawingLayer?.cacheLayerWithId(id: layerId)
     }
     
+    ///
+    /// Updates the contents of a particular layer in the canvas
+    ///
+    @objc public func viewUpdateCache(_ layer: FloCacheLayer!, fromLayerWithId layer_id: UInt32) {
+        _drawingLayer?.updateCachedLayer(layer, id: layer_id);
+    }
+
     ///
     /// Restores an existing layer from a cached layer
     ///

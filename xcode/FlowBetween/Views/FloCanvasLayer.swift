@@ -269,7 +269,16 @@ class FloCanvasLayer : CALayer {
         // The new cache layer is the result
         return cacheLayer;
     }
-    
+
+    ///
+    /// Updates an already cached layer
+    ///
+    func updateCachedLayer(_ layer: FloCacheLayer, id: UInt32) {
+        if let cacheFrom = _backing[id] {
+            layer.cache(from: cacheFrom);
+        }
+    }
+
     ///
     /// Restores a cached layer to another layer
     ///

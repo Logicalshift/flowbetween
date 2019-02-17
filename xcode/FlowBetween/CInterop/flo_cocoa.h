@@ -127,6 +127,7 @@ typedef struct AppPainting AppPainting;
 
 - (CGContextRef) viewGetCanvasForDrawing: (FloEvents*) events layer: (uint32_t) layer_id;
 - (FloCacheLayer*) viewCopyLayerWithId: (uint32_t) layer_id;
+- (void) viewUpdateCache: (FloCacheLayer*) layer fromLayerWithId: (uint32_t) layer_id;
 - (void) viewRestoreLayerTo: (uint32_t) layer_id fromCopy: (FloCacheLayer*) copyLayer;
 - (void) viewFinishedDrawing;
 - (void) viewSetTransform: (CGAffineTransform) transform;
