@@ -245,7 +245,7 @@ impl CocoaSession {
             match action {
                 RequestTick             => { msg_send!((**window), requestTick); }
                 Open                    => { msg_send!((**window), windowOpen); }
-                SetRootView(view_id)    => { self.views.get(&view_id).map(|view| msg_send!((**window), windowSetRootView: **view)); }
+                SetRootView(view_id)    => { self.views.get(&view_id).map(|view| msg_send!((**window), windowSetRootView: retain(view))); }
             }
         }
     }
