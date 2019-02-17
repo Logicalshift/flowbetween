@@ -9,6 +9,8 @@
 import Foundation
 import Cocoa
 
+class FloWindow : NSWindow { }
+
 ///
 /// Represents a window created by FlowBetween
 ///
@@ -16,7 +18,7 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
     ///
     /// The window itself
     ///
-    fileprivate var _window: NSWindow;
+    fileprivate var _window: FloWindow;
     
     ///
     /// The root view, if the window has one
@@ -37,7 +39,7 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         // Create the window
         let styleMask: NSWindow.StyleMask = [.resizable, .closable, .titled];
         
-        _window = NSWindow.init(
+        _window = FloWindow(
             contentRect:    NSRect(x: 100, y: 100, width: 1600, height: 960),
             styleMask:      styleMask,
             backing:        NSWindow.BackingStoreType.buffered,
