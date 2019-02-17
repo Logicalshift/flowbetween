@@ -28,6 +28,9 @@ pub struct ViewCanvas {
     /// Callback function to create a copy of the layer with the specified ID
     copy_layer: Box<FnMut(u32) -> StrongPtr>,
 
+    /// Callback function to update the contents of a cached layer 
+    update_layer: Box<FnMut(u32, StrongPtr) -> ()>,
+
     /// Callback function to restore the state of a layer from a copy created previously with copy_layer
     restore_layer: Box<FnMut(u32, StrongPtr) -> ()>
 }
@@ -36,9 +39,10 @@ impl ViewCanvas {
     ///
     /// Creates a new canvas for a view
     ///
-    pub fn new<ClearCanvasFn, CopyLayerFn, RestoreLayerFn>(clear_canvas: ClearCanvasFn, copy_layer: CopyLayerFn, restore_layer: RestoreLayerFn) -> ViewCanvas
+    pub fn new<ClearCanvasFn, CopyLayerFn, UpdateLayerFn, RestoreLayerFn>(clear_canvas: ClearCanvasFn, copy_layer: CopyLayerFn, update_layer: UpdateLayerFn, restore_layer: RestoreLayerFn) -> ViewCanvas
     where   ClearCanvasFn:  'static+FnMut() -> (),
             CopyLayerFn:    'static+FnMut(u32) -> StrongPtr,
+            UpdateLayerFn:  'static+FnMut(u32, StrongPtr) -> (),
             RestoreLayerFn: 'static+FnMut(u32, StrongPtr) -> () {
         ViewCanvas {
             canvas:         Canvas::new(),
@@ -47,6 +51,7 @@ impl ViewCanvas {
             state:          None,
             clear_canvas:   Box::new(clear_canvas),
             copy_layer:     Box::new(copy_layer),
+            update_layer:   Box::new(update_layer),
             restore_layer:  Box::new(restore_layer)
         }
     }
@@ -156,8 +161,13 @@ impl ViewCanvas {
                 Store => {
                     // Store the buffer in the state
                     let layer_id = context.get_state().layer_id();
-                    context.get_state().clear_stored_layer();
-                    context.get_state().store_layer((self.copy_layer)(layer_id));
+
+                    if let Some(existing_layer) = context.get_state().get_stored_layer() {
+                        (self.update_layer)(layer_id, existing_layer);
+                    } else {
+                        context.get_state().clear_stored_layer();
+                        context.get_state().store_layer((self.copy_layer)(layer_id));
+                    }
 
                     // Pass on to the context (in case it needs to perform any updates relating to this action)
                     context.draw(&Draw::Store)

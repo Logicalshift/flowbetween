@@ -425,9 +425,11 @@ impl CocoaSession {
             } 
         };
         let view            = view_src.clone();
-        let restore_layer   = move |layer_id, layer_obj: StrongPtr| { unsafe { msg_send!(*view, viewRestoreLayerTo: layer_id fromCopy: *layer_obj) } };
+        let update_layer    = move |layer_id, layer_obj: StrongPtr| { unsafe { msg_send!(*view, viewUpdateCache: *layer_obj fromLayerWithId: layer_id); } };
+        let view            = view_src.clone();
+        let restore_layer   = move |layer_id, layer_obj: StrongPtr| { unsafe { msg_send!(*view, viewRestoreLayerTo: layer_id fromCopy: *layer_obj); } };
 
-        ViewCanvas::new(clear_canvas, copy_layer, restore_layer)
+        ViewCanvas::new(clear_canvas, copy_layer, update_layer, restore_layer)
     }
 
     ///
