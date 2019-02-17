@@ -192,7 +192,7 @@ impl CanvasContext {
                         c: a.1 as CGFloat,
                         d: b.1 as CGFloat,
                         tx: a.2 as CGFloat,
-                        ty: a.2 as CGFloat
+                        ty: b.2 as CGFloat
                     };
 
                     let transform               = CGAffineTransformConcat(transform, current);
