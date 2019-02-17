@@ -146,7 +146,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Sends an event if this view (or its control) is clicked
     ///
-    @objc public func requestClick(_ events: FloEvents, withName: String?) {
+    @objc public func requestClick(_ events: FloEvents!, withName: String?) {
         weak var this = self;
         _view.onClick = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
         _onClick = { events.sendClick(withName); };
@@ -267,7 +267,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Sends an event if this view is scrolled
     ///
-    @objc public func requestVirtualScroll(_ events: FloEvents, withName: String?, width scrollWidth: Float64, height scrollHeight: Float64) {
+    @objc public func requestVirtualScroll(_ events: FloEvents!, withName: String?, width scrollWidth: Float64, height scrollHeight: Float64) {
         var (x, y)          = (UInt32(0), UInt32(0));
         var (width, height) = (UInt32(0), UInt32(0));
         
@@ -292,7 +292,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Sends an event when the user uses the specified device to paint on this view
     ///
-    @objc public func requestPaint(withDeviceId deviceId: UInt32, events: FloEvents, withName: String?) {
+    @objc public func requestPaint(withDeviceId deviceId: UInt32, events: FloEvents!, withName: String?) {
         // Convert the device ID into the device enum
         let device = FloPaintDevice.init(rawValue: deviceId);
         
@@ -329,7 +329,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Adds a subview to this view
     ///
-    @objc(viewAddSubView:) public func viewAddSubView(_ subview: NSObject) {
+    @objc(viewAddSubView:) public func viewAddSubView(_ subview: NSObject!) {
         let subview = subview as! FloView;
         subview.viewRemoveFromSuperview();
         
@@ -440,7 +440,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Sets the text for the view
     ///
-    @objc public func viewSetText(_ text: FloProperty) {
+    @objc public func viewSetText(_ text: FloProperty!) {
         _text           = text;
         weak var this   = self;
         
@@ -479,7 +479,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// Sets the image for the view
     ///
-    @objc public func viewSetImage(_ image: NSImage) {
+    @objc public func viewSetImage(_ image: NSImage!) {
         _image = image;
         
         // Add an image view to this view if one does not already exist
