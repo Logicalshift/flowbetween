@@ -239,6 +239,9 @@ impl CocoaSession {
         use self::WindowAction::*;
 
         unsafe {
+            msg_send!((**window), retain);
+            msg_send!((**window), autorelease);
+
             match action {
                 RequestTick             => { msg_send!((**window), requestTick); }
                 Open                    => { msg_send!((**window), windowOpen); }
@@ -271,7 +274,7 @@ impl CocoaSession {
                     Popup           => { msg_send!(*view_class, createAsPopup) }
                 };
 
-                let view = StrongPtr::retain(view);
+                let view = StrongPtr::new(view);
 
                 // Store it away
                 self.views.insert(new_view_id, view);
@@ -315,6 +318,9 @@ impl CocoaSession {
 
         if let Some(view) = views.get(&view_id) {
             unsafe {
+                msg_send!(**view, retain);
+                msg_send!(**view, autorelease);
+
                 match action {
                     RequestEvent(event_type, name)          => { self.request_view_event(view_id, event_type, name); }
 
@@ -653,6 +659,9 @@ impl CocoaSession {
     fn dispatch_viewmodel_action(&self, viewmodel: &StrongPtr, action: ViewModelAction) {
         unsafe {
             use self::ViewModelAction::*;
+
+            msg_send!(**viewmodel, retain);
+            msg_send!(**viewmodel, autorelease);
 
             match action {
                 CreateProperty(property_id)             => { msg_send!(**viewmodel, setNothing: property_id as u64); }
