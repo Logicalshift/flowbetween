@@ -269,9 +269,17 @@ impl ViewState {
 
         // Set up the view from its attributes
         let view_set_up = control.attributes()
-            .flat_map(move |attribute| attribute.actions_from(bind_property))
+            .filter(|attribute| if let ControlAttribute::Canvas(_) = attribute { false } else { true })
+            .flat_map(|attribute| attribute.actions_from(bind_property))
             .map(|view_action| AppAction::View(self.view_id, view_action));
         set_up_steps.extend(view_set_up);
+
+        // Perform drawing/etc actions after the size has been set up
+        let canvas_set_up = control.attributes()
+            .filter(|attribute| if let ControlAttribute::Canvas(_) = attribute { true } else { false })
+            .flat_map(|attribute| attribute.actions_from(bind_property))
+            .map(|view_action| AppAction::View(self.view_id, view_action));
+        set_up_steps.extend(canvas_set_up);
 
         set_up_steps
     }
