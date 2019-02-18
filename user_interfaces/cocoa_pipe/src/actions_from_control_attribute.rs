@@ -45,7 +45,7 @@ impl ActionsFrom<ViewAction> for ControlAttribute {
             Id(id)                                  => vec![ViewAction::SetId(id.clone())],
             Controller(_name)                       => vec![],
             Action(trigger, name)                   => event_actions(trigger, name),
-            Canvas(_canvas_resource)                => vec![],
+            Canvas(canvas_resource)                 => vec![ViewAction::Draw(canvas_resource.get_drawing())],
 
             SubComponents(_components)              => vec![]               // Handled separately by ViewState
         }
