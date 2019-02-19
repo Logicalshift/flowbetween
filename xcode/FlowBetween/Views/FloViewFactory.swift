@@ -29,6 +29,7 @@ import Cocoa
         
         let view        = FloView.init(withView: buttonView);
         button.target   = view;
+        button.action   = #selector(FloView.onClick);
         
         return view;
     }
