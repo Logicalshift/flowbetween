@@ -44,6 +44,17 @@ class FloRotorView : FloEmptyView {
     }
     
     ///
+    /// Superview changed
+    ///
+    override func viewDidMoveToSuperview() {
+        if let valueProperty = viewState.value {
+            _value = CGFloat(valueProperty.value.toDouble(default: 0.0));
+        }
+        
+        updateValue();
+    }
+    
+    ///
     /// Need to change the value transform when the view bounds change
     ///
     override func setFrameSize(_ newSize: NSSize) {
