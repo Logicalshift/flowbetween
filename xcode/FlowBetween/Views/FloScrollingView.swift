@@ -51,7 +51,48 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Adds a subview to this container
     ///
     func addContainerSubview(_ subview: NSView) {
+        // Add to the document view
         self.documentView!.addSubview(subview);
+    }
+    
+    /// The views that are fixed relative to this view (and where they are fixed, and their original bounds)
+    fileprivate var _fixedViews: [(NSView, FixedAxis, NSRect)] = [];
+    
+    ///
+    /// Moves the fixed views so they're visible relative to this scroll view
+    ///
+    func repositionFixedViews() {
+        // Nothing to do if there are fixed views
+        if _fixedViews.count == 0 {
+            return;
+        }
+        
+        // We update the frame to be relative to the visible rect
+        // (NSScrollView also has a 'floating subview' mechanism, which we're not using because we can't quite get the behaviour we want)
+        let visible = self.documentView!.visibleRect;
+        
+        // Disable any positioning animation
+        CATransaction.begin();
+        CATransaction.setAnimationDuration(0.0);
+        CATransaction.disableActions();
+        
+        // Iterate through the views
+        for (view, axis, originalFrame) in _fixedViews {
+            // Work out the new frame for this view relative to the visible area
+            var newFrame = originalFrame;
+            
+            switch (axis) {
+            case .None:         break;
+            case .Horizontal:   newFrame.origin.x += visible.origin.x;
+            case .Vertical:     newFrame.origin.y += visible.origin.y;
+            case .Both:         newFrame.origin.x += visible.origin.x; newFrame.origin.y += visible.origin.y; break;
+            }
+            
+            // Reposition the view
+            view.setFrameOrigin(newFrame.origin);
+        }
+        
+        CATransaction.commit();
     }
     
     ///
@@ -71,9 +112,23 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         
         // Perform general layout
         self.performLayout?(newSize);
+        
+        // Check for any fixed views
+        _fixedViews = [];
+        for subview in documentView!.subviews {
+            if let containerView = subview as? FloContainerView {
+                if containerView.viewState.fixedAxis != FixedAxis.None {
+                    // The frame indicates where the view is fixed relative to this one
+                    _fixedViews.append((subview, containerView.viewState.fixedAxis, subview.frame));
+                }
+            }
+        }
+        
+        // Set the initial position of the fixed views
+        repositionFixedViews();
 
         // Any subviews that are not themselves FloContainers are sized to fill this view
-        for subview in self.documentView!.subviews {
+        for subview in documentView!.subviews {
             if (subview as? FloContainerView) == nil {
                 subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize);
             }
@@ -205,6 +260,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     
     /// Triggers the scroll event for this view
     @objc func triggerOnScroll() {
+        // Make sure the fixed views are visible
+        repositionFixedViews();
+        
         // This also changes the bounds of the view
         triggerBoundsChanged();
         

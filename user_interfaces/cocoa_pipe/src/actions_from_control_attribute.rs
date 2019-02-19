@@ -143,7 +143,7 @@ impl ActionsFrom<ViewAction> for Scroll {
             MinimumContentSize(width, height)   => vec![ViewAction::SetScrollMinimumSize(*width as f64, *height as f64)],
             HorizontalScrollBar(visibility)     => vec![ViewAction::SetHorizontalScrollBar(*visibility)],
             VerticalScrollBar(visibility)       => vec![ViewAction::SetVerticalScrollBar(*visibility)],
-            Fix(axis)                           => vec![]
+            Fix(axis)                           => vec![ViewAction::SetState(ViewStateUpdate::FixScrollAxis(*axis))]
         }
     }
 }

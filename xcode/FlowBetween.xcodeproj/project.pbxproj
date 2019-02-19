@@ -29,6 +29,7 @@
 		4B3E9C5121F90B5900261433 /* ContainerBounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E9C5021F90B5800261433 /* ContainerBounds.swift */; };
 		4B4901F92200FB8F00FB6AFC /* FloPaintDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */; };
 		4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4902112201036300FB6AFC /* FloPaintStage.swift */; };
+		4B4BEC01221BFFB10008147E /* FixedAxis.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4BEC00221BFFB10008147E /* FixedAxis.swift */; };
 		4B4EC5412216BAAC00686CD2 /* FloViewWeakRef.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4EC5402216BAAC00686CD2 /* FloViewWeakRef.swift */; };
 		4B51F82422078D1C0060578C /* FloControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B51F82322078D1C0060578C /* FloControlView.swift */; };
 		4B51F826220792290060578C /* FloButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B51F825220792290060578C /* FloButtonView.swift */; };
@@ -299,6 +300,7 @@
 		4B3E9C5021F90B5800261433 /* ContainerBounds.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerBounds.swift; sourceTree = "<group>"; };
 		4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintDevice.swift; sourceTree = "<group>"; };
 		4B4902112201036300FB6AFC /* FloPaintStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloPaintStage.swift; sourceTree = "<group>"; };
+		4B4BEC00221BFFB10008147E /* FixedAxis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixedAxis.swift; sourceTree = "<group>"; };
 		4B4EC5402216BAAC00686CD2 /* FloViewWeakRef.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewWeakRef.swift; sourceTree = "<group>"; };
 		4B51F82322078D1C0060578C /* FloControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloControlView.swift; sourceTree = "<group>"; };
 		4B51F825220792290060578C /* FloButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloButtonView.swift; sourceTree = "<group>"; };
@@ -425,6 +427,7 @@
 				4B4902112201036300FB6AFC /* FloPaintStage.swift */,
 				4B79EAC6220EE6470019D660 /* ViewState.swift */,
 				4B53915022123B5E00854B3C /* DragAction.swift */,
+				4B4BEC00221BFFB10008147E /* FixedAxis.swift */,
 			);
 			path = DataTypes;
 			sourceTree = "<group>";
@@ -856,6 +859,7 @@
 				4B57E9E121DE6A9E00FD0551 /* FloLayout.swift in Sources */,
 				4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */,
 				4B53915122123B5E00854B3C /* DragAction.swift in Sources */,
+				4B4BEC01221BFFB10008147E /* FixedAxis.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -178,7 +178,10 @@ pub enum ViewStateUpdate {
     Range(AppProperty, AppProperty),
 
     /// If this view is new, the priority with which to steal focus
-    FocusPriority(AppProperty)
+    FocusPriority(AppProperty),
+
+    /// Prevents this view from moving within a scroll view
+    FixScrollAxis(FixedAxis)
 }
 
 ///

@@ -404,7 +404,21 @@ impl CocoaSession {
                 Value(property)             => { msg_send!(**view, viewSetValue: &*self.flo_property(property)); },
                 Range(lower, upper)         => { msg_send!(**view, viewSetRangeWithLower: &*self.flo_property(lower) upper: &*self.flo_property(upper)); },
                 FocusPriority(property)     => { msg_send!(**view, viewSetFocusPriority: &*self.flo_property(property)); }
+                FixScrollAxis(axis)         => { msg_send!(**view, viewFixScrollAxis: self.id_for_scroll_axis(axis)); }
             }
+        }
+    }
+
+    ///
+    /// Converts a scroll axis to an ID to pass to the Swift side
+    ///
+    fn id_for_scroll_axis(&self, axis: FixedAxis) -> u32 {
+        use self::FixedAxis::*;
+
+        match axis {
+            Horizontal  => 0,
+            Vertical    => 1,
+            Both        => 2
         }
     }
 

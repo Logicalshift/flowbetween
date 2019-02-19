@@ -263,6 +263,12 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func viewSetFocusPriority(_ property: FloProperty!) {
         _view.setState(selector: ViewStateSelector.FocusPriority, toProperty: property);
     }
+
+    @objc public func viewFixScrollAxis(_ axis: UInt32) {
+        if let axis = FixedAxis.init(rawValue: axis) {
+            _view.viewState.fixedAxis = axis;
+        }
+    }
     
     ///
     /// Sends an event if this view is scrolled

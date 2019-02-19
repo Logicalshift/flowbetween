@@ -20,15 +20,17 @@ class ViewState {
     var rangeHigher:    FloProperty?;
     var focusPriority:  FloProperty?;
     
-    var layout_x:       [FloProperty] = [];
-    var layout_y:       [FloProperty] = [];
+    var layoutX:        [FloProperty] = [];
+    var layoutY:        [FloProperty] = [];
+    
+    var fixedAxis:      FixedAxis = FixedAxis.None;
     
     ///
     /// Removes all layout properties that are being tracked in this view
     ///
     func clearLayoutProperties() {
-        layout_x = [];
-        layout_y = [];
+        layoutX = [];
+        layoutY = [];
     }
     
     ///
@@ -43,8 +45,8 @@ class ViewState {
         case .RangeLower:       rangeLower = property;
         case .RangeHigher:      rangeHigher = property;
         case .FocusPriority:    focusPriority = property;
-        case .LayoutX:          layout_x.append(property);
-        case .LayoutY:          layout_y.append(property);
+        case .LayoutX:          layoutX.append(property);
+        case .LayoutY:          layoutY.append(property);
         }
     }
 }
