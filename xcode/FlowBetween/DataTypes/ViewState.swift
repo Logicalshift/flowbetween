@@ -13,6 +13,7 @@ import Foundation
 ///
 class ViewState {
     var text:           FloProperty?;
+    var popupOpen:      FloProperty?;
     
     var selected:       FloProperty?;
     var badged:         FloProperty?;

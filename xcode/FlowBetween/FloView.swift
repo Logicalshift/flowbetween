@@ -446,8 +446,8 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sets the text for the view
     ///
     @objc public func viewSetText(_ text: FloProperty!) {
-        _view.viewState.text = text;
-        weak var this   = self;
+        _view.viewState.text    = text;
+        weak var this           = self;
         
         text.trackValue({ value in
             if case let PropertyValue.String(value) = value {
@@ -738,16 +738,14 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func viewClearCanvas() {
         _drawingLayer?.clearBackingLayers();
     }
-
-    fileprivate var _popupOpen: FloProperty?;
     
     ///
     /// Sets the property that describes whether or not the popup for this view is open
     ///
     @objc public func viewSetPopupOpen(_ isOpen: FloProperty!) {
         // Store the property away
-        weak var this   = self;
-        _popupOpen      = isOpen;
+        weak var this               = self;
+        _view.viewState.popupOpen = isOpen;
         
         // Track when the popup opens or closes
         isOpen.trackValue { isOpen in
