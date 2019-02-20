@@ -216,27 +216,8 @@ impl ViewState {
         if has_subcomponents && !has_class && !has_image {
             // Can use a standard button if the only subcomponent is a label
             if Self::subcomponents_is_just_label(control) {
-                // Generate a new control without subcomponents
-                let mut without_subcomponents = Control::button();
-
-                // Take the attributes from the main control
-                for attr in control.attributes() {
-                    if attr.subcomponents().is_none() {
-                        without_subcomponents = without_subcomponents.with(attr.clone());
-                    }
-                }
-
-                // Combined with the attributes from the subcomponents
-                for attr in control.subcomponents().cloned().unwrap_or(vec![Control::empty()])[0].attributes() {
-                    match attr {
-                        ControlAttribute::BoundingBox(_) => { },
-
-                        _ => { without_subcomponents = without_subcomponents.with(attr.clone()); }
-                    }
-                }
-
-                // Build as normal
-                let setup_actions = self.set_up_from_generic_control(&without_subcomponents, ViewType::Button, bind_property);
+                // Use a standard button as these can display labels
+                let setup_actions = self.set_up_from_generic_control(control, ViewType::Button, bind_property);
 
                 setup_actions
             } else {
