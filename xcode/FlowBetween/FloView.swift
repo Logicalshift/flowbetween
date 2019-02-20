@@ -442,12 +442,11 @@ public class FloView : NSObject, FloViewDelegate {
         _view.asView.layer?.backgroundColor = col.cgColor;
     }
     
-    var _text: FloProperty?;
     ///
     /// Sets the text for the view
     ///
     @objc public func viewSetText(_ text: FloProperty!) {
-        _text           = text;
+        _view.viewState.text = text;
         weak var this   = self;
         
         text.trackValue({ value in

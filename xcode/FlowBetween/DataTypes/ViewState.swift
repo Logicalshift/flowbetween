@@ -12,6 +12,8 @@ import Foundation
 /// Storage for the state of a FloContainerView
 ///
 class ViewState {
+    var text:           FloProperty?;
+    
     var selected:       FloProperty?;
     var badged:         FloProperty?;
     var enabled:        FloProperty?;
