@@ -115,6 +115,19 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
     /// Adds a subview to this container view
     func addContainerSubview(_ subview: NSView) {
         // Control views cannot have subviews (not supported in Cocoa's model)
+        
+        if let containerView = subview as? FloContainerView {
+            if let text = containerView.viewState.text {
+                // However, we should mirror any labels assigned to the subview
+                weak var this = self;
+                
+                text.trackValue { labelValue in
+                    if case .String(let stringValue) = labelValue {
+                        this?.setTextLabel(label: stringValue);
+                    }
+                };
+            }
+        }
     }
     
     /// Sets the layer displayed for the canvas
