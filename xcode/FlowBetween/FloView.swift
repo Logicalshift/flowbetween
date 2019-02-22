@@ -269,6 +269,10 @@ public class FloView : NSObject, FloViewDelegate {
             _view.viewState.fixedAxis = axis;
         }
     }
+
+    @objc public func viewAddClassName(_ className: String!) {
+        _view.viewState.classes.append(className);
+    }
     
     ///
     /// Sends an event if this view is scrolled

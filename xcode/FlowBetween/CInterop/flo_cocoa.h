@@ -120,6 +120,7 @@ typedef struct AppPainting AppPainting;
 - (void) viewSetRangeWithLower: (FloProperty*) lower upper: (FloProperty*) upper;
 - (void) viewSetFocusPriority: (FloProperty*) property;
 - (void) viewFixScrollAxis: (uint32_t) axis;
+- (void) viewAddClassName: (NSString*) className;
 
 - (void) viewSetPopupOpen: (FloProperty*) isOpen;
 - (void) viewSetPopupDirection: (uint32_t) direction;

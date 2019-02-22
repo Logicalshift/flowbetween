@@ -23,10 +23,11 @@ class ViewState {
     var rangeHigher:    FloProperty?;
     var focusPriority:  FloProperty?;
     
-    var layoutX:        [FloProperty] = [];
-    var layoutY:        [FloProperty] = [];
+    var layoutX:        [FloProperty]   = [];
+    var layoutY:        [FloProperty]   = [];
     
-    var fixedAxis:      FixedAxis = FixedAxis.None;
+    var fixedAxis:      FixedAxis       = FixedAxis.None;
+    var classes:        [String]        = [];
     
     ///
     /// Removes all layout properties that are being tracked in this view

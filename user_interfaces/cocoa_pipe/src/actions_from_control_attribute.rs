@@ -154,7 +154,7 @@ impl ActionsFrom<ViewAction> for Hint {
 
         match self {
             FastDrawing     => vec![],
-            Class(name)     => vec![]
+            Class(name)     => vec![ViewAction::SetState(ViewStateUpdate::AddClass(name.clone()))]
         }
     }
 }

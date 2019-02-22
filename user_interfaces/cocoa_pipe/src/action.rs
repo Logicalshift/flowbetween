@@ -181,7 +181,10 @@ pub enum ViewStateUpdate {
     FocusPriority(AppProperty),
 
     /// Prevents this view from moving within a scroll view
-    FixScrollAxis(FixedAxis)
+    FixScrollAxis(FixedAxis),
+
+    /// Adds a class name to this view (used as a hint to change rendering styles)
+    AddClass(String)
 }
 
 ///

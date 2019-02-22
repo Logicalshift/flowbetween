@@ -405,6 +405,7 @@ impl CocoaSession {
                 Range(lower, upper)         => { msg_send!(**view, viewSetRangeWithLower: &*self.flo_property(lower) upper: &*self.flo_property(upper)); },
                 FocusPriority(property)     => { msg_send!(**view, viewSetFocusPriority: &*self.flo_property(property)); }
                 FixScrollAxis(axis)         => { msg_send!(**view, viewFixScrollAxis: self.id_for_scroll_axis(axis)); }
+                AddClass(class_name)        => { msg_send!(**view, viewAddClassName: NSString::alloc(nil).init_str(&class_name)); }
             }
         }
     }
