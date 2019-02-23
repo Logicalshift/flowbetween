@@ -55,8 +55,9 @@ class FloLayout {
     ///
     public static func layoutView(view: FloView, size: NSSize, state: ViewState) {
         let bounds          = NSRect(origin: CGPoint(x: 0, y: 0), size: size);
-        let max_x           = Double(bounds.width);
-        let max_y           = Double(bounds.height);
+        let padding         = view.floPadding ?? Padding(left: 0, top: 0, right: 0, bottom: 0);
+        let max_x           = Double(bounds.width) - padding.left - padding.right;
+        let max_y           = Double(bounds.height) - padding.top - padding.bottom;
         var last_x          = 0.0;
         var last_y          = 0.0;
         var stretch_total_x = 0.0;
@@ -106,16 +107,9 @@ class FloLayout {
             var y1 = layoutPosition(pos: bounds.y1, previous: last_y, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
             var y2 = layoutPosition(pos: bounds.y2, previous: y1, end: max_y, stretch_distance: stretch_distance_y, stretch_total: stretch_total_y);
             
-            if let padding = subview.floPadding {
-                x1 += padding.left;
-                x2 -= padding.right;
-                y1 += padding.top;
-                y2 -= padding.bottom;
-            }
-            
             // Set the new frame for the view (TODO: floating both in x1 and y1)
             // TODO: stop any old tracking if we're re-doing the layout
-            let frame = NSRect(x: x1, y: y1, width: x2-x1, height: y2-y1);
+            let frame = NSRect(x: x1 + padding.left, y: y1 + padding.top, width: x2-x1, height: y2-y1);
             subview.view.frame = frame;
             
             // Float in the x and the y directions
@@ -136,7 +130,7 @@ class FloLayout {
                     
                     float_x = floating_offset;
                     
-                    let frame = NSRect(x: x1 + float_x, y: y1 + float_y, width: x2-x1, height: y2-y1);
+                    let frame = NSRect(x: x1 + float_x + padding.left, y: y1 + float_y + padding.top, width: x2-x1, height: y2-y1);
                     subview.view.frame = frame;
                 }
             }
@@ -155,7 +149,7 @@ class FloLayout {
                     
                     float_y = floating_offset;
 
-                    let frame = NSRect(x: x1 + float_x, y: y1 + float_y, width: x2-x1, height: y2-y1);
+                    let frame = NSRect(x: x1 + float_x + padding.left, y: y1 + float_y + padding.top, width: x2-x1, height: y2-y1);
                     subview.view.frame = frame;
                 }
             }
