@@ -101,6 +101,24 @@ protocol FloContainerView {
 }
 
 ///
+/// Returns the names of the classes applied to a particular view
+///
+func classNamesForView(_ source: FloContainerView) -> [String] {
+    var floView = source.floView;
+    var results = [String]();
+    
+    while let view = floView {
+        // Add the classes from this view
+        results.append(contentsOf: view.viewState.classes);
+        
+        // Move up the hierarchy
+        floView = floView?.superview;
+    }
+    
+    return results;
+}
+
+///
 /// Bubbles an event up from a particular view
 ///
 func bubbleUpEvent(source: NSView, event_handler: (FloContainerView) -> Bool) {

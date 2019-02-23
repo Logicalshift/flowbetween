@@ -78,6 +78,11 @@ public class FloView : NSObject, FloViewDelegate {
     }
     
     ///
+    /// The view containing this view
+    ///
+    var superview: FloView? { get { return _superview; } };
+    
+    ///
     /// The bounds of this view, as described to the layout system
     ///
     internal var floBounds: Bounds {

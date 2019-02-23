@@ -56,6 +56,18 @@ class FloContainerButton : NSView, FloContainerView {
         _trackingArea = trackingArea;
     }
     
+    override func viewDidMoveToSuperview() {
+        super.viewDidMoveToSuperview();
+        
+        _backingLayer.classes = classNamesForView(self);
+    }
+    
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow();
+        
+        _backingLayer.classes = classNamesForView(self);
+    }
+    
     /// User has pressed the mouse down in this view
     override func mouseDown(with event: NSEvent) {
         // TODO: track the mouse and make sure it stays within the bounds of the control
