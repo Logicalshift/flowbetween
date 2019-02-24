@@ -186,8 +186,8 @@ class FloCanvasLayer : CALayer {
             size.width  *= _resolution;
             size.height *= _resolution;
             
-            if size.width == 0 { size.width = 1; }
-            if size.height == 0 { size.height = 1; }
+            if size.width <= 0 { size.width = 1; }
+            if size.height <= 0 { size.height = 1; }
 
             // We create the new layer from a base layer (as CGLayer needs a context to work from)
             let newLayer = CGLayer(baseLayer.context!, size: size, auxiliaryInfo: nil);
