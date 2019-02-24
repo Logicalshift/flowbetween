@@ -31,6 +31,9 @@ public class FloView : NSObject, FloViewDelegate {
     /// Set to true if we've queued up a relayout operation
     fileprivate var _willLayout: Bool = false;
     
+    /// Set to true when we're planning to sort the subviews
+    fileprivate var _willSortSubviews: Bool = false;
+    
     /// Events
     fileprivate var _onClick: (() -> ())?;
     fileprivate var _onDismiss: (() -> ())?;
@@ -127,6 +130,20 @@ public class FloView : NSObject, FloViewDelegate {
         FloLayout.layoutView(view: self, size: size, state: _view.viewState);
     }
     
+    ///
+    /// Invalidates the layout of this view
+    ///
+    public func invalidateSubviewOrder() {
+        if !_willSortSubviews {
+            _willSortSubviews = true;
+            
+            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                self._willSortSubviews = false;
+                sortSubviewsByZIndex(self._view.asView);
+            });
+        }
+    }
+
     ///
     /// Invalidates the layout of this view
     ///
@@ -357,6 +374,7 @@ public class FloView : NSObject, FloViewDelegate {
         
         // View will need to be laid out again
         invalidateLayout();
+        invalidateSubviewOrder();
     }
     
     ///
@@ -430,7 +448,8 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sets the z-ordering of this view
     ///
     @objc public func viewSetZIndex(_ zIndex: Float64) {
-        _view.asView.layer?.zPosition = CGFloat(zIndex);
+        _view.viewState.zIndex          = CGFloat(zIndex);
+        _view.asView.layer?.zPosition   = CGFloat(zIndex);
     }
     
     ///

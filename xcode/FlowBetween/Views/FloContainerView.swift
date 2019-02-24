@@ -119,6 +119,38 @@ func classNamesForView(_ source: FloContainerView) -> [String] {
 }
 
 ///
+/// Returns the Z-Index of a particular view
+///
+fileprivate func zIndexForView(_ view: NSView) -> CGFloat {
+    if let view = view as? FloContainerView {
+        return view.viewState.zIndex ?? 0.0;
+    } else {
+        return -1.0;
+    }
+}
+
+///
+/// Orders views by their z-index
+///
+/// This ensures that mouse actions reach higher views first
+///
+func sortSubviewsByZIndex(_ parentView: NSView) {
+    // Fetch the subviews
+    var subviews = parentView.subviews;
+    
+    // Sort them by z-index (so that clicks will reach higher views first)
+    subviews.sort(by: { a, b in
+        let aZIndex = zIndexForView(a);
+        let bZIndex = zIndexForView(b);
+        
+        return aZIndex < bZIndex;
+    });
+    
+    // Store the sorted views
+    parentView.subviews = subviews;
+}
+
+///
 /// Bubbles an event up from a particular view
 ///
 func bubbleUpEvent(source: NSView, event_handler: (FloContainerView) -> Bool) {

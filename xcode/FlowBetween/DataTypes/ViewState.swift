@@ -27,6 +27,7 @@ class ViewState {
     var layoutY:        [FloProperty]   = [];
     
     var fixedAxis:      FixedAxis       = FixedAxis.None;
+    var zIndex:         CGFloat?;
     var classes:        [String]        = [];
     
     ///
