@@ -9,6 +9,9 @@
 import Cocoa
 
 public class FloScrollingView : NSScrollView, FloContainerView {
+    /// Set to true if the subview sort operation is pending
+    fileprivate var _willSortSubviews = false;
+    
     public required init?(coder: NSCoder) {
         _scrollMinimumSize = (0,0);
         _scrollBarVisibility = (ScrollBarVisibility.OnlyIfNeeded, ScrollBarVisibility.OnlyIfNeeded);
@@ -53,7 +56,22 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     func addContainerSubview(_ subview: NSView) {
         // Add to the document view
         documentView!.addSubview(subview);
-        sortSubviewsByZIndex(documentView!);
+        
+        invalidateSubviewOrder();
+    }
+    
+    ///
+    /// Indicates that the subview ordering has become invalid and the views need to be reordered
+    ///
+    func invalidateSubviewOrder() {
+        if !_willSortSubviews {
+            _willSortSubviews = true;
+            
+            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                self._willSortSubviews = false;
+                sortSubviewsByZIndex(self.documentView!);
+            });
+        }
     }
     
     /// The views that are fixed relative to this view (and where they are fixed, and their original bounds)
