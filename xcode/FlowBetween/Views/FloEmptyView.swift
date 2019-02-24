@@ -142,8 +142,10 @@ class FloEmptyView : NSView, FloContainerView {
     /// User released the mouse (while it was not captured)
     ///
     override public func mouseUp(with event: NSEvent) {
-        if event.modifierFlags == NSEvent.ModifierFlags() && event.buttonNumber == 0 {
-            triggerClick();
+        if onClick != nil || onDrag != nil {
+            if event.modifierFlags == NSEvent.ModifierFlags() && event.buttonNumber == 0 {
+                triggerClick();
+            }
         }
     }
     
