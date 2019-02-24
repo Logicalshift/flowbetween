@@ -52,7 +52,8 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     ///
     func addContainerSubview(_ subview: NSView) {
         // Add to the document view
-        self.documentView!.addSubview(subview);
+        documentView!.addSubview(subview);
+        sortSubviewsByZIndex(documentView!);
     }
     
     /// The views that are fixed relative to this view (and where they are fixed, and their original bounds)
