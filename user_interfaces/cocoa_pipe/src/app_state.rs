@@ -279,7 +279,7 @@ impl AppState {
 
         // Initialise from the control
         let mut property_actions    = vec![];
-        let setup_actions           = view_state.set_up_from_control(control, |property| {
+        let setup_actions           = view_state.set_up_from_control(control, true, |property| {
             let (actions, property) = self.app_property(controller_path, property);
 
             property_actions.extend(actions);

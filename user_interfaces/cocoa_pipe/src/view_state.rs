@@ -207,9 +207,9 @@ impl ViewState {
     /// Cocoa's standard button cannot have sub-views or be larger than a certain size, so other buttons will
     /// be set up as a container button.
     ///
-    fn set_up_from_button<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, bind_property: &mut BindProperty) -> Vec<AppAction> {
+    fn set_up_from_button<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, container_has_class: bool, bind_property: &mut BindProperty) -> Vec<AppAction> {
         // Get the properties we use to make a decision
-        let has_class           = control.attributes().any(|attr| match attr { ControlAttribute::HintAttr(Hint::Class(_)) => true, _ => false });
+        let has_class           = container_has_class || control.attributes().any(|attr| match attr { ControlAttribute::HintAttr(Hint::Class(_)) => true, _ => false });
         let has_subcomponents   = control.subcomponents().is_some();
         let has_image           = control.image_resource().is_some() || control.canvas_resource().is_some();
 
@@ -267,14 +267,18 @@ impl ViewState {
 
     ///
     /// Sets up this state from a control, and returns the action steps needed to initialise it
+    /// 
+    /// The 'container_has_class' flag is used to signal whether or not the container for this particular control
+    /// has been assigned a class (this generally indicates that we shouldn't use the built-in OS X controls as
+    /// they don't support many styles)
     ///
-    pub fn set_up_from_control<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, mut bind_property: BindProperty) -> Vec<AppAction> {
+    pub fn set_up_from_control<BindProperty: FnMut(Property) -> AppProperty>(&mut self, control: &Control, container_has_class: bool, mut bind_property: BindProperty) -> Vec<AppAction> {
         let control_type = control.control_type();
 
         // Some controls need different actions depending on how they're set up
         match control_type {
             // Buttons might be simple OS X button controls or 'container buttons' that have other views on them
-            ControlType::Button => self.set_up_from_button(control, &mut bind_property),
+            ControlType::Button => self.set_up_from_button(control, container_has_class, &mut bind_property),
 
             // Other controls get the standard set up
             _                   => self.set_up_from_generic_control(control, ViewType::from(control), &mut bind_property)
