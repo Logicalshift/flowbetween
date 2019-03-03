@@ -138,6 +138,38 @@ public class FloView : NSObject, FloViewDelegate {
             _willSortSubviews = true;
             
             RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                // Update subview ordering information
+                var index       = Int64(0);
+                let numViews    = self._subviews.count;
+                for view in self._subviews {
+                    index += 1;
+                    
+                    if index == 1 {
+                        if !view.viewState.isFirst.value.toBool(default: false) {
+                            view.viewState.isFirst.value = PropertyValue.Bool(true);
+                        }
+                    } else {
+                        if view.viewState.isFirst.value.toBool(default: false) {
+                            view.viewState.isFirst.value = PropertyValue.Bool(false);
+                        }
+                    }
+                    
+                    if index == numViews {
+                        if !view.viewState.isLast.value.toBool(default: false)  {
+                            view.viewState.isLast.value = PropertyValue.Bool(true);
+                        }
+                    } else {
+                        if view.viewState.isLast.value.toBool(default: false) {
+                            view.viewState.isLast.value = PropertyValue.Bool(false);
+                        }
+                    }
+                    
+                    if view.viewState.subviewIndex.value.toInt(default: 0) != index {
+                        view.viewState.isLast.value = PropertyValue.Int(index);
+                    }
+                }
+                
+                // Order the subviews by their z-index
                 self._willSortSubviews = false;
                 sortSubviewsByZIndex(self._view.asView);
             });

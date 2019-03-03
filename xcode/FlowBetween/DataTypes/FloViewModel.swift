@@ -76,6 +76,11 @@ public class FloViewModel : NSObject {
         _properties[propertyId] = toValue.value;
         notifyPropertyChanged(propertyId);
     }
+    
+    public func setPropertyValue(_ propertyId: UInt64, value: PropertyValue) {
+        _properties[propertyId] = value;
+        notifyPropertyChanged(propertyId);
+    }
 
     ///
     /// Notifies anything that's listening that the specified property has changed

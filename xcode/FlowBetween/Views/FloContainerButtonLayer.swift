@@ -15,6 +15,8 @@ class FloContainerButtonLayer : CALayer {
     fileprivate var _highlighted        = false;
     fileprivate var _selected           = false;
     fileprivate var _classes: [String]  = [];
+    fileprivate var _isFirst: Bool      = false;
+    fileprivate var _isLast: Bool       = false;
     
     /// Set to true if this button is highlighted
     var highlighted: Bool {
@@ -26,6 +28,18 @@ class FloContainerButtonLayer : CALayer {
     var selected: Bool {
         get { return _selected; }
         set(value) { _selected = value; setNeedsDisplay(); }
+    }
+    
+    /// True if this button is first in the list
+    var isFirst: Bool {
+        get { return _isFirst; }
+        set(value) { _isFirst = value; setNeedsDisplay(); }
+    }
+    
+    /// True if this button is last in the list
+    var isLast: Bool {
+        get { return _isLast; }
+        set(value) { _isLast = value; setNeedsDisplay(); }
     }
     
     /// The classes that should be applied to this button
@@ -87,6 +101,9 @@ class FloContainerButtonLayer : CALayer {
     
     /// Draws the content of this layer (when it's part of a button group)
     func drawInButtonGroup(in ctxt: CGContext) {
+        let bounds              = self.bounds;
+        let isFirst             = self.isFirst;
+        let isLast              = self.isLast;
         let background: CGColor;
         let border:     CGColor;
         
@@ -105,8 +122,48 @@ class FloContainerButtonLayer : CALayer {
             background  = CGColor.init(red: 0.4, green: 0.4, blue: 0.4, alpha: 0.2);
         }
         
+        // Generate the button path
+        let rounded     = CGMutablePath.init();
+        let cornerWidth = CGFloat.minimum(bounds.size.width/2.0, bounds.size.height/2.0);
+        
+        // Bottom
+        if isLast {
+            rounded.move(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.minY));
+        } else {
+            rounded.move(to: CGPoint(x: bounds.maxX, y: bounds.minY));
+        }
+        
+        if isFirst {
+            rounded.addLine(to: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.minY));
+        } else {
+            rounded.addLine(to: CGPoint(x: bounds.minX, y: bounds.minY));
+        }
+
+        // LHS
+        if isFirst {
+            rounded.addArc(center: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.minY+cornerWidth),
+                           radius: cornerWidth, startAngle: 3*CGFloat.pi/2, endAngle: 2*CGFloat.pi/2, clockwise: true);
+            rounded.addLine(to: CGPoint(x: bounds.minX+1, y: bounds.maxY - cornerWidth));
+            rounded.addArc(center: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.maxY-cornerWidth),
+                           radius: cornerWidth, startAngle: 2*CGFloat.pi/2, endAngle: 1*CGFloat.pi/2, clockwise: true);
+        } else {
+            rounded.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY));
+        }
+        
+        // Top
+        if isLast {
+            rounded.addLine(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.maxY));
+
+            rounded.addArc(center: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.maxY-cornerWidth),
+                           radius: cornerWidth, startAngle: 1*CGFloat.pi/2, endAngle: 0*CGFloat.pi/2, clockwise: true);
+            rounded.addLine(to: CGPoint(x: bounds.maxX-1, y: bounds.minY + cornerWidth));
+            rounded.addArc(center: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.minY+cornerWidth),
+                           radius: cornerWidth, startAngle: 0*CGFloat.pi/2, endAngle: -1*CGFloat.pi/2, clockwise: true);
+        } else {
+            rounded.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY));
+        }
+
         // Draw the button background
-        let rounded = CGPath.init(rect: bounds, transform: nil);
         ctxt.beginPath();
         ctxt.addPath(rounded);
         ctxt.setFillColor(background);

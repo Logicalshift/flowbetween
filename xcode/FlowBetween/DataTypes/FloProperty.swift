@@ -28,6 +28,20 @@ public enum PropertyValue {
         }
     }
     
+    ///
+    /// Retrieves this property as an integer value
+    ///
+    func toInt(default defaultValue: Int64) -> Int64 {
+        switch (self) {
+        case .Nothing, .Bool(_), .String(_): return defaultValue;
+        case .Int(let value): return Int64(value);
+        case .Float(let value): return Int64(value);
+        }
+    }
+
+    ///
+    /// Retrieves this property as a floating point value
+    ///
     func toDouble(default defaultValue: Double) -> Double {
         switch (self) {
         case .Nothing, .Bool(_), .String(_): return defaultValue;
@@ -103,6 +117,15 @@ public enum PropertyValue {
                 return viewModel.valueForProperty(_bindingId!);
             } else {
                 return _value;
+            }
+        }
+
+        set(value) {
+            if let viewModel = _viewModel {
+                viewModel.setPropertyValue(_bindingId!, value: value);
+            } else {
+                _value = value;
+                _onChange?();
             }
         }
     }

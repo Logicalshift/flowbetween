@@ -27,6 +27,9 @@ class ViewState {
     var layoutY:        [FloProperty]   = [];
     
     var fixedAxis:      FixedAxis       = FixedAxis.None;
+    let subviewIndex:   FloProperty     = FloProperty.init(withInt: 0);
+    let isFirst:        FloProperty     = FloProperty.init(withBool: false);
+    let isLast:         FloProperty     = FloProperty.init(withBool: false);
     var zIndex:         CGFloat?;
     var classes:        [String]        = [];
     
