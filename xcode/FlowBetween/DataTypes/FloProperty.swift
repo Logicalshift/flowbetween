@@ -146,9 +146,7 @@ public enum PropertyValue {
                 newValue(value);
                 
                 // Allow multiple things to track this property
-                if let lastOnChange = lastOnChange {
-                    lastOnChange();
-                }
+                lastOnChange?();
             };
             
             // Call back immediately with the first update
@@ -156,6 +154,18 @@ public enum PropertyValue {
         } else {
             // Not bound to a viewmodel, so just call back immediately with the current value
             newValue(_value);
+            
+            // The value may be updated manually later on, so register an event handler to deal with that case
+            let lastOnChange = _onChange;
+            weak var this   = self;
+            _onChange = {
+                if let this = this {
+                    let value = this._value;
+                    newValue(value);
+                    
+                    lastOnChange?();
+                }
+            }
         }
     }
     
@@ -172,9 +182,7 @@ public enum PropertyValue {
             _value = newValue;
             
             // Call the callback if it has been set
-            if let onChange = _onChange {
-                onChange();
-            }
+            _onChange?();
         }
     }
 }
