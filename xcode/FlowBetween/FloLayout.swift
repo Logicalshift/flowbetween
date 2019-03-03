@@ -130,7 +130,7 @@ class FloLayout {
                     
                     float_x = floating_offset;
                     
-                    let frame = NSRect(x: x1 + float_x + padding.left, y: y1 - float_y + padding.top, width: x2-x1, height: y2-y1);
+                    let frame = NSRect(x: x1 + float_x + padding.left, y: y1 + float_y + padding.top, width: x2-x1, height: y2-y1);
                     subview.view.frame = frame;
                 }
             }
@@ -149,7 +149,7 @@ class FloLayout {
                     
                     float_y = floating_offset;
 
-                    let frame = NSRect(x: x1 + float_x + padding.left, y: y1 - float_y + padding.top, width: x2-x1, height: y2-y1);
+                    let frame = NSRect(x: x1 + float_x + padding.left, y: y1 + float_y + padding.top, width: x2-x1, height: y2-y1);
                     subview.view.frame = frame;
                 }
             }

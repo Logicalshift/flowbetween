@@ -382,8 +382,9 @@ class FloEmptyView : NSView, FloContainerView {
         // The initial pos is used for the 'from' coordinates for the drag
         // We use an origin point so if the view moves (or is removed) during the drag we continue to generate points consistent with the original drag origin
         let origin              = self.convert(CGPoint(x: 0, y: 0), to: nil);
+        let size                = self.bounds.size;
         let initialPosInWindow  = initialEvent.locationInWindow;
-        let initialPos          = CGPoint(x: initialPosInWindow.x - origin.x, y: initialPosInWindow.y - origin.y);
+        let initialPos          = CGPoint(x: initialPosInWindow.x - origin.x, y: size.height - (initialPosInWindow.y - origin.y));
         
         // If there's an onClick handler, the user needs to drag a certain minimum distance away before we start the 'real' drag instead of a click
         var dragging    = false;
@@ -407,7 +408,7 @@ class FloEmptyView : NSView, FloContainerView {
                 if let nextEvent = nextEvent {
                     // Position relative to this view
                     let nextPosInWindow = nextEvent.locationInWindow;
-                    let nextPos         = CGPoint(x: nextPosInWindow.x-origin.x, y: nextPosInWindow.y-origin.y);
+                    let nextPos         = CGPoint(x: nextPosInWindow.x-origin.x, y: size.height - (nextPosInWindow.y-origin.y));
 
                     // Lifting whichever button we're tracking counts as a finish event
                     let isFinished  = nextEvent.type == NSEvent.EventType.leftMouseUp || nextEvent.type == NSEvent.EventType.rightMouseUp || nextEvent.type == NSEvent.EventType.otherMouseUp;
