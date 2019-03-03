@@ -31,6 +31,13 @@ pub struct AppState {
     /// Maps view IDs to addresses
     address_for_view: HashMap<usize, Vec<Arc<String>>>,
 
+    /// Maps view IDs to addresses for 'active' views
+    /// 
+    /// Active views are ones that have an ongoing operation (such as dragging): in the event they are removed
+    /// while the operation is going on, we still track the controller path so we can send all of the events
+    /// to the controller.
+    address_for_active_views: HashMap<usize, Vec<Arc<String>>>,
+
     /// The next viewmodel ID to assign
     next_viewmodel_id: usize,
 
@@ -50,14 +57,15 @@ impl AppState {
     ///
     pub fn new() -> AppState {
         AppState {
-            root_view:              None,
-            view_models:            HashMap::new(),
-            canvas_models:          HashMap::new(),
-            view_model_properties:  HashMap::new(),
-            address_for_view:       HashMap::new(),
-            next_view_id:           0,
-            next_viewmodel_id:      0,
-            next_property_id:       0
+            root_view:                  None,
+            view_models:                HashMap::new(),
+            canvas_models:              HashMap::new(),
+            view_model_properties:      HashMap::new(),
+            address_for_view:           HashMap::new(),
+            address_for_active_views:   HashMap::new(),
+            next_view_id:               0,
+            next_viewmodel_id:          0,
+            next_property_id:           0
         }
     }
 
@@ -82,22 +90,33 @@ impl AppState {
         use self::AppEvent::*;
 
         match update {
-            Tick                                            => vec![UiEvent::Tick],
-            SuspendUpdates                                  => vec![UiEvent::SuspendUpdates],
-            ResumeUpdates                                   => vec![UiEvent::ResumeUpdates],
+            Tick                                                => vec![UiEvent::Tick],
+            SuspendUpdates                                      => vec![UiEvent::SuspendUpdates],
+            ResumeUpdates                                       => vec![UiEvent::ResumeUpdates],
 
-            Click(view_id, name)                            => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
-            Dismiss(view_id, name)                          => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
-            Focus(view_id, name)                            => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
-            EditValue(view_id, name, _action, property)     => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Value(property))],
+            Click(view_id, name)                                => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
+            Dismiss(view_id, name)                              => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
+            Focus(view_id, name)                                => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::None)],
+            EditValue(view_id, name, _action, property)         => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Value(property))],
 
-            VirtualScroll(view_id, name, top_left, size)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::VirtualScroll(top_left, size))],
-            
-            Drag(view_id, name, action, from, to)           => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Drag(action, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))],
-            PaintStart(view_id, name, device, painting)     => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Start)]))],
-            PaintContinue(view_id, name, device, painting)  => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Continue)]))],
-            PaintFinish(view_id, name, device, painting)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Finish)]))],
-            PaintCancel(view_id, name, device, painting)    => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Cancel)]))]
+            VirtualScroll(view_id, name, top_left, size)        => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::VirtualScroll(top_left, size))],
+
+            Drag(view_id, name, DragAction::Start, from, to)    => {
+                self.activate_view(view_id);
+                let controller_path = self.get_controller_path_for_view(view_id);
+                vec![UiEvent::Action(controller_path, name, ActionParameter::Drag(DragAction::Start, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))]
+            },
+            Drag(view_id, name, DragAction::Finish, from, to)    => {
+                let controller_path = self.get_controller_path_for_view(view_id);
+                self.deactivate_view(view_id);
+                vec![UiEvent::Action(controller_path, name, ActionParameter::Drag(DragAction::Start, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))]
+            },
+            Drag(view_id, name, action, from, to)               => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Drag(action, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))],
+
+            PaintStart(view_id, name, device, painting)         => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Start)]))],
+            PaintContinue(view_id, name, device, painting)      => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Continue)]))],
+            PaintFinish(view_id, name, device, painting)        => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Finish)]))],
+            PaintCancel(view_id, name, device, painting)        => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Paint(device.into_paint_device(), vec![painting.into_painting(PaintAction::Cancel)]))]
         }
     }
 
@@ -112,10 +131,27 @@ impl AppState {
     }
 
     ///
+    /// Marks a particular view ID as being active
+    ///
+    fn activate_view(&mut self, view_id: usize) {
+        self.address_for_view.get(&view_id)
+            .cloned()
+            .map(|address| self.address_for_active_views.insert(view_id, address));
+    }
+
+    ///
+    /// Marks a view as being deactivated
+    ///
+    fn deactivate_view(&mut self, view_id: usize) {
+        self.address_for_active_views.remove(&view_id);
+    }
+
+    ///
     /// Retrieves the controller path for a particular view ID
     ///
     fn get_controller_path_for_view(&self, view_id: usize) -> Vec<String> {
-        self.address_for_view.get(&view_id)
+        self.address_for_active_views.get(&view_id)
+            .or_else(|| self.address_for_view.get(&view_id))
             .map(|address| address.iter().map(|component| (**component).clone()).collect())
             .unwrap_or_else(|| vec![])
     }
