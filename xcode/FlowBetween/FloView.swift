@@ -165,7 +165,7 @@ public class FloView : NSObject, FloViewDelegate {
                     }
                     
                     if view.viewState.subviewIndex.value.toInt(default: 0) != index {
-                        view.viewState.isLast.value = PropertyValue.Int(index);
+                        view.viewState.subviewIndex.value = PropertyValue.Int(index);
                     }
                 }
                 

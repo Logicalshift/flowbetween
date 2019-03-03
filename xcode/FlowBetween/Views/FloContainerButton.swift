@@ -24,7 +24,7 @@ class FloContainerButton : NSView, FloContainerView {
         layer?.isOpaque         = false;
         layer?.setNeedsDisplay();
         
-        viewState.isFirst.trackValue({ isFirst in  this?._backingLayer.isFirst = isFirst.toBool(default: false); });
+        viewState.isFirst.trackValue({ isFirst in this?._backingLayer.isFirst = isFirst.toBool(default: false); });
         viewState.isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false); });
     }
     
@@ -108,7 +108,7 @@ class FloContainerButton : NSView, FloContainerView {
             _viewState = value;
 
             weak var this = self;
-            value.isFirst.trackValue({ isFirst in  this?._backingLayer.isFirst = isFirst.toBool(default: false); });
+            value.isFirst.trackValue({ isFirst in this?._backingLayer.isFirst = isFirst.toBool(default: false); });
             value.isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false); });
         }
     }
