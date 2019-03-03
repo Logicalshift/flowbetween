@@ -128,39 +128,39 @@ class FloContainerButtonLayer : CALayer {
         
         // Bottom
         if isLast {
-            rounded.move(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.minY));
+            rounded.move(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.minY+1));
         } else {
-            rounded.move(to: CGPoint(x: bounds.maxX, y: bounds.minY));
+            rounded.move(to: CGPoint(x: bounds.maxX, y: bounds.minY+1));
         }
         
         if isFirst {
-            rounded.addLine(to: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.minY));
+            rounded.addLine(to: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.minY+1));
         } else {
-            rounded.addLine(to: CGPoint(x: bounds.minX, y: bounds.minY));
+            rounded.addLine(to: CGPoint(x: bounds.minX, y: bounds.minY+1));
         }
 
         // LHS
         if isFirst {
-            rounded.addArc(center: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.minY+cornerWidth),
+            rounded.addArc(center: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.minY+cornerWidth+1),
                            radius: cornerWidth, startAngle: 3*CGFloat.pi/2, endAngle: 2*CGFloat.pi/2, clockwise: true);
-            rounded.addLine(to: CGPoint(x: bounds.minX+1, y: bounds.maxY - cornerWidth));
-            rounded.addArc(center: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.maxY-cornerWidth),
+            rounded.addLine(to: CGPoint(x: bounds.minX+1, y: bounds.maxY - cornerWidth-1));
+            rounded.addArc(center: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.maxY-cornerWidth-1),
                            radius: cornerWidth, startAngle: 2*CGFloat.pi/2, endAngle: 1*CGFloat.pi/2, clockwise: true);
         } else {
-            rounded.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY));
+            rounded.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY-1));
         }
         
         // Top
         if isLast {
-            rounded.addLine(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.maxY));
+            rounded.addLine(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.maxY-1));
 
-            rounded.addArc(center: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.maxY-cornerWidth),
+            rounded.addArc(center: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.maxY-cornerWidth-1),
                            radius: cornerWidth, startAngle: 1*CGFloat.pi/2, endAngle: 0*CGFloat.pi/2, clockwise: true);
             rounded.addLine(to: CGPoint(x: bounds.maxX-1, y: bounds.minY + cornerWidth));
-            rounded.addArc(center: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.minY+cornerWidth),
+            rounded.addArc(center: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.minY+cornerWidth+1),
                            radius: cornerWidth, startAngle: 0*CGFloat.pi/2, endAngle: -1*CGFloat.pi/2, clockwise: true);
         } else {
-            rounded.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY));
+            rounded.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY-1));
         }
 
         // Draw the button background
