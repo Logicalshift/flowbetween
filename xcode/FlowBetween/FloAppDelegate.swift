@@ -102,24 +102,40 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     }
     
     ///
+    /// The last tablet device to generate a tablet proximity event
+    ///
+    /// These aren't relayed to views so we capture them at the application level instead.
+    /// The tablet mouse event subtypes *are* generated but they don't contain a pointing
+    /// device type most of the time, so this can be used to work out which tool the user
+    /// is using instead of 'unknown' (basically required to make the eraser work, at least
+    /// with Wacom's drivers)
+    ///
+    var currentTabletPointingDeviceType: NSEvent.PointingDeviceType {
+        get {
+            return _currentTabletPointingDeviceType;
+        }
+    }
+    fileprivate var _currentTabletPointingDeviceType: NSEvent.PointingDeviceType = .unknown;
+    
+    ///
+    /// The serial number for the current pointing device, for telling the different between
+    /// different tablet tools.
+    ///
+    fileprivate var _currentTabletPointingDeviceSerial: Int = 0;
+    
+    ///
     /// Monitors an event sent to the application
     ///
     func monitorEvent(_ event: NSEvent) {
+        // Track which tablet tool is currently in proximity (Wacom's drivers in particular don't supply this information with every event: see getCurrentTabletPointingDevice for where this is used)
         switch event.type {
-        case .tabletPoint:
-            NSLog("tabletPoint: \(event.pointingDeviceType.rawValue)");
-            NSLog("tabletPoint: \(event.pointingDeviceID)");
-            break;
-            
         case .tabletProximity:
-            NSLog("tabletProx: \(event.pointingDeviceType.rawValue)");
-            NSLog("tabletProx: \(event.pointingDeviceID)");
-            break;
-            
-        case .leftMouseDown, .otherMouseDown, .rightMouseDown:
-            if event.subtype == .tabletPoint || event.subtype == .tabletProximity {
-                NSLog("tabletMouse: \(event.pointingDeviceType.rawValue)");
-                NSLog("tabletMouse: \(event.pointingDeviceID)");
+            if event.isEnteringProximity {
+                _currentTabletPointingDeviceType    = event.pointingDeviceType;
+                _currentTabletPointingDeviceSerial  = event.pointingDeviceSerialNumber;
+            } else {
+                _currentTabletPointingDeviceType    = .unknown;
+                _currentTabletPointingDeviceSerial  = 0;
             }
             break;
             
@@ -131,6 +147,7 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
             return;
         }
         
+        // Any mouse event outside of something waiting for dismissal should generate a 'dismiss' event
         switch event.type {
         case .leftMouseDown, .otherMouseDown, .rightMouseDown:
             // Mouse down in the window
@@ -172,3 +189,52 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+///
+/// Given a pointing device type, either uses that type or if it's not valid, tries to retrieve
+/// one from the app delegate.
+///
+/// Wacom's drivers don't reliably supply this data with tablet actions so we need to track
+/// tablet proximity events instead. Cocoa doesn't route this event to views so we capture it
+/// in the app delegate instead (see monitorEvent, which also deals with generating the dismiss
+/// event)
+///
+fileprivate func getActivePointingDevice(eventDevice: NSEvent.PointingDeviceType) -> NSEvent.PointingDeviceType {
+    if eventDevice == .unknown {
+        // Use the last device recorded by the app delegate
+        let appDelegate = NSApp.delegate as? FloAppDelegate;
+        return appDelegate?.currentTabletPointingDeviceType ?? eventDevice;
+    } else {
+        // This device is valid
+        return eventDevice;
+    }
+}
+
+///
+/// Returns the pointing device being used for a particular NSEvent
+///
+/// (Wacom's drivers in particular often don't set this field for tablet events, so we track
+/// based on proximity instead).
+///
+func getCurrentTabletPointingDevice(fromEvent: NSEvent) -> NSEvent.PointingDeviceType {
+    switch fromEvent.type {
+    case .tabletProximity:
+        // We generally assume .tabletProximity events have an accurate type
+        return fromEvent.pointingDeviceType;
+        
+    case .tabletPoint:
+        // Tablet point events don't always have a valid type (Wacom's drivers again)
+        return getActivePointingDevice(eventDevice: fromEvent.pointingDeviceType);
+        
+    default:
+        switch fromEvent.subtype {
+        case .tabletProximity, .tabletPoint:
+            // The subtypes may or may not have a valid pointing device type depending on the driver
+            // Wacom's drivers only return a valid pointing device type for tabletProximity events.
+            return getActivePointingDevice(eventDevice: fromEvent.pointingDeviceType);
+
+        default:
+            // Not a tablet event (we claim to be the curver pointing device type here as it's the mouse or something)
+            return .cursor;
+        }
+    }
+}

@@ -262,7 +262,7 @@ class FloEmptyView : NSView, FloContainerView {
         if event.subtype == NSEvent.EventSubtype.tabletPoint
             || event.subtype == NSEvent.EventSubtype.tabletProximity {
             // Is a tablet event
-            if event.pointingDeviceType == NSEvent.PointingDeviceType.eraser {
+            if getCurrentTabletPointingDevice(fromEvent: event) == .eraser {
                 // Eraser pointing device
                 return FloPaintDevice.Eraser;
             } else {
