@@ -188,7 +188,7 @@ impl CocoaSession {
 
         match action {
             CreateWindow(window_id)             => { self.create_window(window_id); }
-            Window(window_id, window_action)    => { self.windows.get(&window_id).map(|window| self.dispatch_window_action(window, window_action)); }
+            Window(window_id, window_action)    => { self.windows.get(&window_id).cloned().map(|window| self.dispatch_window_action(window, window_action)); }
             
             CreateView(view_id, view_type)      => { self.create_view(view_id, view_type); },
             DeleteView(view_id)                 => { self.delete_view(view_id); }
@@ -226,17 +226,14 @@ impl CocoaSession {
     ///
     /// Dispatches an action to the specified window
     ///
-    fn dispatch_window_action(&self, window: &StrongPtr, action: WindowAction) {
+    fn dispatch_window_action(&self, window: StrongPtr, action: WindowAction) {
         use self::WindowAction::*;
 
         unsafe {
-            msg_send!((**window), retain);
-            msg_send!((**window), autorelease);
-
             match action {
-                RequestTick             => { msg_send!((**window), requestTick); }
-                Open                    => { msg_send!((**window), windowOpen); }
-                SetRootView(view_id)    => { self.views.get(&view_id).cloned().map(|view| msg_send!((**window), windowSetRootView: *view)); }
+                RequestTick             => { msg_send!(*window, requestTick); }
+                Open                    => { msg_send!(*window, windowOpen); }
+                SetRootView(view_id)    => { self.views.get(&view_id).cloned().map(|view| msg_send!(*window, windowSetRootView: *view)); }
             }
         }
     }
