@@ -36,6 +36,9 @@ class NotifyList {
 /// Provides the view model implementation methods
 ///
 public class FloViewModel : NSObject {
+    /// Queue where view model updates occur
+    fileprivate var _queue = DispatchQueue(label: "FloViewModel");
+    
     /// The properties in this viewmodel
     fileprivate var _properties: [UInt64: PropertyValue];
     
@@ -48,37 +51,37 @@ public class FloViewModel : NSObject {
     }
     
     @objc public func setNothing(_ propertyId: UInt64) {
-        _properties[propertyId] = PropertyValue.Nothing;
+        _queue.sync { _properties[propertyId] = PropertyValue.Nothing; }
         notifyPropertyChanged(propertyId);
     }
     
     @objc public func setBool(_ propertyId: UInt64, toValue: Bool) {
-        _properties[propertyId] = PropertyValue.Bool(toValue);
+        _queue.sync { _properties[propertyId] = PropertyValue.Bool(toValue); }
         notifyPropertyChanged(propertyId);
     }
     
     @objc public func setInt(_ propertyId: UInt64, toValue: Int64) {
-        _properties[propertyId] = PropertyValue.Int(toValue);
+        _queue.sync { _properties[propertyId] = PropertyValue.Int(toValue); }
         notifyPropertyChanged(propertyId);
     }
     
     @objc public func setFloat(_ propertyId: UInt64, toValue: Float64) {
-        _properties[propertyId] = PropertyValue.Float(toValue);
+        _queue.sync { _properties[propertyId] = PropertyValue.Float(toValue); }
         notifyPropertyChanged(propertyId);
     }
     
     @objc public func setString(_ propertyId: UInt64, toValue: NSString) {
-        _properties[propertyId] = PropertyValue.String(toValue as String);
+        _queue.sync { _properties[propertyId] = PropertyValue.String(toValue as String); }
         notifyPropertyChanged(propertyId);
     }
     
     @objc public func setProperty(_ propertyId: UInt64, toValue: FloProperty) {
-        _properties[propertyId] = toValue.value;
+        _queue.sync { _properties[propertyId] = toValue.value; }
         notifyPropertyChanged(propertyId);
     }
     
     public func setPropertyValue(_ propertyId: UInt64, value: PropertyValue) {
-        _properties[propertyId] = value;
+        _queue.sync { _properties[propertyId] = value; }
         notifyPropertyChanged(propertyId);
     }
 
@@ -86,14 +89,16 @@ public class FloViewModel : NSObject {
     /// Notifies anything that's listening that the specified property has changed
     ///
     func notifyPropertyChanged(_ propertyId: UInt64) {
-        if let notifyList = _toNotify[propertyId] {
-            // Filter out any properties that have been removed
-            notifyList.properties = notifyList.properties.filter({ maybeProperty in maybeProperty.property != nil });
-            
-            // Notify any property still in the list
-            for maybeProperty in notifyList.properties {
-                if let property = maybeProperty.property {
-                    property.notifyChange();
+        _queue.sync {
+            if let notifyList = _toNotify[propertyId] {
+                // Filter out any properties that have been removed
+                notifyList.properties = notifyList.properties.filter({ maybeProperty in maybeProperty.property != nil });
+                
+                // Notify any property still in the list
+                for maybeProperty in notifyList.properties {
+                    if let property = maybeProperty.property {
+                        property.notifyChange();
+                    }
                 }
             }
         }
@@ -103,10 +108,12 @@ public class FloViewModel : NSObject {
     /// Retrieves the value of the specified property
     ///
     public func valueForProperty(_ propertyId: UInt64) -> PropertyValue {
-        if let value = _properties[propertyId] {
-            return value;
-        } else {
-            return PropertyValue.Nothing;
+        return _queue.sync {
+            if let value = _properties[propertyId] {
+                return value;
+            } else {
+                return PropertyValue.Nothing;
+            }
         }
     }
     
@@ -114,17 +121,19 @@ public class FloViewModel : NSObject {
     /// Notifies the specified FloProperty whenever the property with the specified ID is changed
     ///
     public func watchProperty(_ propertyId: UInt64, _ property: FloProperty) {
-        // Create the notifyProperty object to store the property reference
-        let notifyProperty      = NotifyProperty.init();
-        notifyProperty.property = property;
-        
-        // Add to the list to notify for this ID
-        if let toNotify = _toNotify[propertyId] {
-            toNotify.properties.append(notifyProperty);
-        } else {
-            let newNotifyList = NotifyList.init();
-            newNotifyList.properties.append(notifyProperty);
-            _toNotify[propertyId] = newNotifyList;
+        _queue.sync {
+            // Create the notifyProperty object to store the property reference
+            let notifyProperty      = NotifyProperty.init();
+            notifyProperty.property = property;
+            
+            // Add to the list to notify for this ID
+            if let toNotify = _toNotify[propertyId] {
+                toNotify.properties.append(notifyProperty);
+            } else {
+                let newNotifyList = NotifyList.init();
+                newNotifyList.properties.append(notifyProperty);
+                _toNotify[propertyId] = newNotifyList;
+            }
         }
     }
 }
