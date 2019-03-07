@@ -43,8 +43,8 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         _window = FloWindow(
             contentRect:    NSRect(x: 100, y: 100, width: 1600, height: 960),
             styleMask:      styleMask,
-            backing:        NSWindow.BackingStoreType.buffered,
-            defer:          false);
+            backing:        .buffered,
+            defer:          true);
         _session    = session;
         _sessionId  = session.sessionId();
         
