@@ -89,15 +89,15 @@ public class FloViewModel : NSObject {
     /// Notifies anything that's listening that the specified property has changed
     ///
     func notifyPropertyChanged(_ propertyId: UInt64) {
-        _queue.sync {
-            if let notifyList = _toNotify[propertyId] {
-                // Filter out any properties that have been removed
-                notifyList.properties = notifyList.properties.filter({ maybeProperty in maybeProperty.property != nil });
-                
-                // Notify any property still in the list
-                for maybeProperty in notifyList.properties {
-                    maybeProperty.property?.notifyChange();
-                }
+        let notifyList = _queue.sync { return self._toNotify[propertyId]; };
+        
+        if let notifyList = notifyList {
+            // Filter out any properties that have been removed
+            notifyList.properties = notifyList.properties.filter({ maybeProperty in maybeProperty.property != nil });
+            
+            // Notify any property still in the list
+            for maybeProperty in notifyList.properties {
+                maybeProperty.property?.notifyChange();
             }
         }
     }
