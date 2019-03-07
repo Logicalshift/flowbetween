@@ -682,7 +682,7 @@ impl CocoaSession {
 
             match action {
                 CreateProperty(property_id)             => { msg_send!(**viewmodel, setNothing: property_id as u64); }
-                SetPropertyValue(property_id, value)    => { msg_send!(**viewmodel, setProperty: property_id as u64 toValue: &*FloProperty::from(value)); }
+                SetPropertyValue(property_id, value)    => { msg_send!(**viewmodel, setProperty: property_id as u64 toValue: (*FloProperty::from(value)).clone()); }
             }
         }
     }
