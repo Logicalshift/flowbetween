@@ -37,8 +37,10 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
         
         // Monitor events to generate the 'dismiss' action
         NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.leftMouseDown
-            .union(NSEvent.EventTypeMask.otherMouseDown)
-            .union(NSEvent.EventTypeMask.rightMouseDown),
+            .union(.otherMouseDown)
+            .union(.rightMouseDown)
+            .union(.tabletProximity)
+            .union(.tabletPoint),
                                          handler: { event in this?.monitorEvent(event); return event; })
         
         // Create the Flo session
@@ -103,6 +105,27 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     /// Monitors an event sent to the application
     ///
     func monitorEvent(_ event: NSEvent) {
+        switch event.type {
+        case .tabletPoint:
+            NSLog("tabletPoint: \(event.pointingDeviceType.rawValue)");
+            NSLog("tabletPoint: \(event.pointingDeviceID)");
+            break;
+            
+        case .tabletProximity:
+            NSLog("tabletProx: \(event.pointingDeviceType.rawValue)");
+            NSLog("tabletProx: \(event.pointingDeviceID)");
+            break;
+            
+        case .leftMouseDown, .otherMouseDown, .rightMouseDown:
+            if event.subtype == .tabletPoint || event.subtype == .tabletProximity {
+                NSLog("tabletMouse: \(event.pointingDeviceType.rawValue)");
+                NSLog("tabletMouse: \(event.pointingDeviceID)");
+            }
+            break;
+            
+        default: break;
+        }
+        
         if _dismiss.count == 0 {
             // Short-circuit the check if there are no dismissable views
             return;
