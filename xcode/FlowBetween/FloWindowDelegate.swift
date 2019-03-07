@@ -62,6 +62,8 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         // issue does not happen for the popup window. Rust side does manual reference counting but it
         // never finds out about the window directly and doesn't double-free anything else so there's
         // nowhere to add an extra retain on that side.
+        //
+        // ... reproduced this with a really simple test case, this is a real bug in AppKit
         let buggyRetain = Unmanaged.passUnretained(_window).retain();
         let _ = buggyRetain;
         
