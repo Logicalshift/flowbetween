@@ -9,7 +9,11 @@
 import Foundation
 import Cocoa
 
-class FloWindow : NSWindow { }
+class FloWindow : NSWindow {
+    deinit {
+        NSLog("FloWindow deinit");
+    }
+}
 
 ///
 /// Represents a window created by FlowBetween
@@ -51,6 +55,10 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         
         _window.title = "FlowBetween session";
         _window.delegate = self;
+    }
+    
+    deinit {
+        NSLog("FloWindowDelegate deinit");
     }
     
     ///
