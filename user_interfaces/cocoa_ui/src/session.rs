@@ -531,15 +531,15 @@ impl CocoaSession {
 
             if let Some(view) = views.get(&view_id) {
                 match event_type {
-                    Click                           => { msg_send!(**view, requestClick: *flo_events withName: retain(&name)); }
-                    Dismiss                         => { msg_send!(**view, requestDismiss: *flo_events withName: retain(&name)); }
-                    VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: *flo_events withName: retain(&name) width: width as f64 height: height as f64); }
-                    Paint(device)                   => { msg_send!(**view, requestPaintWithDeviceId: device as u32 events: *flo_events withName: retain(&name)); }
-                    Drag                            => { msg_send!(**view, requestDrag: *flo_events withName: retain(&name)); }
-                    Focused                         => { msg_send!(**view, requestFocused: *flo_events withName: retain(&name)); }
-                    EditValue                       => { msg_send!(**view, requestEditValue: *flo_events withName: retain(&name)); }
-                    SetValue                        => { msg_send!(**view, requestSetValue: *flo_events withName: retain(&name)); }
-                    CancelEdit                      => { msg_send!(**view, requestCancelEdit: *flo_events withName: retain(&name)); }
+                    Click                           => { msg_send!(**view, requestClick: *flo_events withName: *name); }
+                    Dismiss                         => { msg_send!(**view, requestDismiss: *flo_events withName: *name); }
+                    VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: *flo_events withName: *name width: width as f64 height: height as f64); }
+                    Paint(device)                   => { msg_send!(**view, requestPaintWithDeviceId: device as u32 events: *flo_events withName: *name); }
+                    Drag                            => { msg_send!(**view, requestDrag: *flo_events withName: *name); }
+                    Focused                         => { msg_send!(**view, requestFocused: *flo_events withName: *name); }
+                    EditValue                       => { msg_send!(**view, requestEditValue: *flo_events withName: *name); }
+                    SetValue                        => { msg_send!(**view, requestSetValue: *flo_events withName: *name); }
+                    CancelEdit                      => { msg_send!(**view, requestCancelEdit: *flo_events withName: *name); }
                 }
             }
         }
