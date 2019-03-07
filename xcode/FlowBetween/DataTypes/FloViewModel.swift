@@ -96,9 +96,7 @@ public class FloViewModel : NSObject {
                 
                 // Notify any property still in the list
                 for maybeProperty in notifyList.properties {
-                    if let property = maybeProperty.property {
-                        property.notifyChange();
-                    }
+                    maybeProperty.property?.notifyChange();
                 }
             }
         }
@@ -123,14 +121,14 @@ public class FloViewModel : NSObject {
     public func watchProperty(_ propertyId: UInt64, _ property: FloProperty) {
         _queue.sync {
             // Create the notifyProperty object to store the property reference
-            let notifyProperty      = NotifyProperty.init();
+            let notifyProperty      = NotifyProperty();
             notifyProperty.property = property;
             
             // Add to the list to notify for this ID
             if let toNotify = _toNotify[propertyId] {
                 toNotify.properties.append(notifyProperty);
             } else {
-                let newNotifyList = NotifyList.init();
+                let newNotifyList = NotifyList();
                 newNotifyList.properties.append(notifyProperty);
                 _toNotify[propertyId] = newNotifyList;
             }
