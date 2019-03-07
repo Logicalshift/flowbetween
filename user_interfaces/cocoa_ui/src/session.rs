@@ -77,15 +77,6 @@ struct NotifyRef {
     target_object: WeakPtr
 }
 
-///
-/// Retains an objective-C strong ptr
-///
-#[inline] unsafe fn retain(obj: &StrongPtr) -> *mut Object {
-    let obj = **obj;
-    msg_send!(obj, retain);
-    obj
-}
-
 impl CocoaSession {
     ///
     /// Creates a new CocoaSession
