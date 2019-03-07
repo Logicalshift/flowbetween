@@ -51,6 +51,7 @@
 		4B58D90921DFB16F00BDAE7B /* FloProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B58D90821DFB16F00BDAE7B /* FloProperty.swift */; };
 		4B5C498521F131CA00B39B68 /* CocoaLumberjack.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 4B5C498421F131BC00B39B68 /* CocoaLumberjack.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4B6832A222182F73000ABC18 /* FloRotorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B6832A122182F73000ABC18 /* FloRotorView.swift */; };
+		4B795F2F223176D3006D9CD5 /* FloBadgeLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B795F2E223176D3006D9CD5 /* FloBadgeLayer.swift */; };
 		4B79EAC7220EE6470019D660 /* ViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B79EAC6220EE6470019D660 /* ViewState.swift */; };
 		4B79EAE0220F92C50019D660 /* FloContainerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B79EADF220F92C50019D660 /* FloContainerButton.swift */; };
 		4B79EAE2220F92D70019D660 /* FloContainerButtonLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B79EAE1220F92D70019D660 /* FloContainerButtonLayer.swift */; };
@@ -324,6 +325,7 @@
 		4B58D90821DFB16F00BDAE7B /* FloProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloProperty.swift; sourceTree = "<group>"; };
 		4B5C498421F131BC00B39B68 /* CocoaLumberjack.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CocoaLumberjack.framework; path = "SVGKit/3rd-party-frameworks/CocoaLumberjack-2.2.0/Mac/CocoaLumberjack.framework"; sourceTree = "<group>"; };
 		4B6832A122182F73000ABC18 /* FloRotorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloRotorView.swift; sourceTree = "<group>"; };
+		4B795F2E223176D3006D9CD5 /* FloBadgeLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloBadgeLayer.swift; sourceTree = "<group>"; };
 		4B79EAC6220EE6470019D660 /* ViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewState.swift; sourceTree = "<group>"; };
 		4B79EADF220F92C50019D660 /* FloContainerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerButton.swift; sourceTree = "<group>"; };
 		4B79EAE1220F92D70019D660 /* FloContainerButtonLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloContainerButtonLayer.swift; sourceTree = "<group>"; };
@@ -450,6 +452,7 @@
 				4B79EAE1220F92D70019D660 /* FloContainerButtonLayer.swift */,
 				4BB979BF2214C65F00DCB458 /* FloPopupWindow.swift */,
 				4BB979C12214D03300DCB458 /* FloPopupWindowBackingView.swift */,
+				4B795F2E223176D3006D9CD5 /* FloBadgeLayer.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -860,6 +863,7 @@
 				4B4902122201036300FB6AFC /* FloPaintStage.swift in Sources */,
 				4B53915122123B5E00854B3C /* DragAction.swift in Sources */,
 				4B4BEC01221BFFB10008147E /* FixedAxis.swift in Sources */,
+				4B795F2F223176D3006D9CD5 /* FloBadgeLayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

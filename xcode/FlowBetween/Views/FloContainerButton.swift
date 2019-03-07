@@ -12,7 +12,11 @@ import Cocoa
 /// Container view that acts like a button
 ///
 class FloContainerButton : NSView, FloContainerView {
+    /// The layer that the button is drawn on
     fileprivate let _backingLayer = FloContainerButtonLayer();
+    
+    /// Layer that displays the badge for this button
+    fileprivate var _badgeLayer: CALayer?;
     
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect);
@@ -243,6 +247,28 @@ class FloContainerButton : NSView, FloContainerView {
         case .Selected:
             toProperty.trackValue({ newValue in
                 this?._backingLayer.selected = newValue.toBool(default: false);
+            });
+            
+        case .Badged:
+            toProperty.trackValue({ newValue in
+                // Decide whether or not to show the badge
+                let showBadge = newValue.toBool(default: false);
+                
+                if let this = this {
+                    // Create the badge layer if it doesn't exist
+                    if this._badgeLayer == nil {
+                        this._badgeLayer = FloBadgeLayer();
+                    }
+                    
+                    // Starts out removed
+                    this._badgeLayer!.removeFromSuperlayer();
+                    
+                    // Show/hide the badge
+                    if showBadge {
+                        this.layer?.addSublayer(this._badgeLayer!);
+                        this._badgeLayer?.setNeedsDisplay();
+                    }
+                }
             });
             
         default:
