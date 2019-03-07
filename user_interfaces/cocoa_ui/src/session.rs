@@ -334,7 +334,7 @@ impl CocoaSession {
                     SetBackgroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
 
                     SetId(_id)                              => { /* TODO? */ }
-                    SetText(property)                       => { msg_send!(**view, viewSetText: &*self.flo_property(property)); }
+                    SetText(property)                       => { msg_send!(**view, viewSetText: *self.flo_property(property)); }
                     SetFontSize(size)                       => { msg_send!(**view, viewSetFontSize: size); }
                     SetFontWeight(weight)                   => { msg_send!(**view, viewSetFontWeight: weight); }
                     SetTextAlignment(align)                 => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
@@ -365,7 +365,7 @@ impl CocoaSession {
 
         unsafe {
             match action {
-                Open(property)          => { msg_send!(**view, viewSetPopupOpen: &*self.flo_property(property)); },
+                Open(property)          => { msg_send!(**view, viewSetPopupOpen: *self.flo_property(property)); },
                 SetDirection(direction) => { msg_send!(**view, viewSetPopupDirection: self.pop_up_direction(direction)); },
                 SetSize(width, height)  => { msg_send!(**view, viewSetPopupSizeWithWidth: width height: height); },
                 SetOffset(offset)       => { msg_send!(**view, viewSetPopupOffset: offset); }
@@ -398,12 +398,12 @@ impl CocoaSession {
 
         unsafe {
             match view_state {
-                Selected(property)          => { msg_send!(**view, viewSetSelected: &*self.flo_property(property)); },
-                Badged(property)            => { msg_send!(**view, viewSetBadged: &*self.flo_property(property)); },
-                Enabled(property)           => { msg_send!(**view, viewSetEnabled: &*self.flo_property(property)); },
-                Value(property)             => { msg_send!(**view, viewSetValue: &*self.flo_property(property)); },
-                Range(lower, upper)         => { msg_send!(**view, viewSetRangeWithLower: &*self.flo_property(lower) upper: &*self.flo_property(upper)); },
-                FocusPriority(property)     => { msg_send!(**view, viewSetFocusPriority: &*self.flo_property(property)); }
+                Selected(property)          => { msg_send!(**view, viewSetSelected: *self.flo_property(property)); },
+                Badged(property)            => { msg_send!(**view, viewSetBadged: *self.flo_property(property)); },
+                Enabled(property)           => { msg_send!(**view, viewSetEnabled: *self.flo_property(property)); },
+                Value(property)             => { msg_send!(**view, viewSetValue: *self.flo_property(property)); },
+                Range(lower, upper)         => { msg_send!(**view, viewSetRangeWithLower: *self.flo_property(lower) upper: *self.flo_property(upper)); },
+                FocusPriority(property)     => { msg_send!(**view, viewSetFocusPriority: *self.flo_property(property)); }
                 FixScrollAxis(axis)         => { msg_send!(**view, viewFixScrollAxis: self.id_for_scroll_axis(axis)); }
                 AddClass(class_name)        => { msg_send!(**view, viewAddClassName: NSString::alloc(nil).init_str(&class_name)); }
             }
@@ -682,7 +682,7 @@ impl CocoaSession {
 
             match action {
                 CreateProperty(property_id)             => { msg_send!(**viewmodel, setNothing: property_id as u64); }
-                SetPropertyValue(property_id, value)    => { msg_send!(**viewmodel, setProperty: property_id as u64 toValue: (*FloProperty::from(value)).clone()); }
+                SetPropertyValue(property_id, value)    => { msg_send!(**viewmodel, setProperty: property_id as u64 toValue: *FloProperty::from(value)); }
             }
         }
     }

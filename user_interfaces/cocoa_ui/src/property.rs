@@ -68,9 +68,9 @@ impl From<&PropertyValue> for FloProperty {
 }
 
 impl Deref for FloProperty {
-    type Target = StrongPtr;
+    type Target = *mut Object;
 
-    fn deref(&self) -> &StrongPtr {
-        unsafe { &self.object }
+    fn deref(&self) -> &*mut Object {
+        &*self.object
     }
 }
