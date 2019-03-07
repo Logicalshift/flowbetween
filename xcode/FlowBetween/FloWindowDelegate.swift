@@ -10,9 +10,6 @@ import Foundation
 import Cocoa
 
 class FloWindow : NSWindow {
-    deinit {
-        NSLog("FloWindow deinit");
-    }
 }
 
 ///
@@ -47,18 +44,31 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
             contentRect:    NSRect(x: 100, y: 100, width: 1600, height: 960),
             styleMask:      styleMask,
             backing:        NSWindow.BackingStoreType.buffered,
-            defer:          true);
+            defer:          false);
         _session    = session;
         _sessionId  = session.sessionId();
+        
+        // ??????? Cocoa bug ???????
+        //
+        // Can't tie this to FlowBetween's code at all. Whenever windowWillClose is called, the window
+        // is released, regardless of the strong reference stored by this class. It's then released
+        // again when this class is freed due to that strong reference, causing a crash.
+        //
+        // If this class doesn't stop the session after windowWillClose (which means nothing other than
+        // the Swift side is freeing windows) then the window is still freed up on close. This appears
+        // to be down to Cocoa.
+        //
+        // This adds an extra retain to the window so that it's only freed once. Not sure why a similar
+        // issue does not happen for the popup window. Rust side does manual reference counting but it
+        // never finds out about the window directly and doesn't double-free anything else so there's
+        // nowhere to add an extra retain on that side.
+        let buggyRetain = Unmanaged.passUnretained(_window).retain();
+        let _ = buggyRetain;
         
         super.init();
         
         _window.title = "FlowBetween session";
         _window.delegate = self;
-    }
-    
-    deinit {
-        NSLog("FloWindowDelegate deinit");
     }
     
     ///
@@ -69,6 +79,9 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         if let delegate = NSApp.delegate as? FloAppDelegate {
             delegate.finishSessionWithId(_sessionId);
         }
+        
+        // Tidy up the window views (in case buggyRetain fails to work)
+        _window.contentView = nil;
     }
     
     ///
