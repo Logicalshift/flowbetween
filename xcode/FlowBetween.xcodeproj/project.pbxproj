@@ -450,9 +450,9 @@
 				4BB979A42214BB2900DCB458 /* FloPopupView.swift */,
 				4B79EADF220F92C50019D660 /* FloContainerButton.swift */,
 				4B79EAE1220F92D70019D660 /* FloContainerButtonLayer.swift */,
+				4B795F2E223176D3006D9CD5 /* FloBadgeLayer.swift */,
 				4BB979BF2214C65F00DCB458 /* FloPopupWindow.swift */,
 				4BB979C12214D03300DCB458 /* FloPopupWindowBackingView.swift */,
-				4B795F2E223176D3006D9CD5 /* FloBadgeLayer.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";

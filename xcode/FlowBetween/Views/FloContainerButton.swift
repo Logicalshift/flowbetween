@@ -252,8 +252,10 @@ class FloContainerButton : NSView, FloContainerView {
         case .Badged:
             toProperty.trackValue({ newValue in
                 // Decide whether or not to show the badge
-                let showBadge = newValue.toBool(default: false);
-                
+                let showBadge               = newValue.toBool(default: false);
+                this?._backingLayer.badged  = showBadge;
+
+                // Display the badge layer if needed
                 if let this = this {
                     // Create the badge layer if it doesn't exist
                     if this._badgeLayer == nil {
