@@ -76,7 +76,7 @@ public class FloView : NSObject, FloViewDelegate {
         _view.floView = self;
         weak var this = self;
         
-        _view.performLayout = { size in if let this = this { this.performLayout(size) } };
+        _view.performLayout = { size in this?.performLayout(size) };
         _view.onClick       = { if let onClick = this?._onClick { onClick(); return true; } else { return false; } }
     }
     
