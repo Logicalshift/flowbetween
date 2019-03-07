@@ -22,6 +22,8 @@ class FloButtonView : FloControlView {
 
     /// Sets part of the state of this control
     override func setState(selector: ViewStateSelector, toProperty: FloProperty) {
+        viewState.retainProperty(selector: selector, property: toProperty);
+        
         switch (selector) {
         case .Value:
             weak var this = self;
