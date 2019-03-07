@@ -386,7 +386,7 @@ public class FloView : NSObject, FloViewDelegate {
         
         // Remove from its parent FloView
         if let superview = _superview {
-            superview._subviews.removeAll(where: { view in return view == self });
+            superview._subviews.removeAll(where: { view in return view === self });
         }
     }
     
