@@ -277,6 +277,10 @@ impl CocoaSession {
     /// Removes a view from this object
     ///
     pub fn delete_view(&mut self, old_view_id: usize) {
+        if let Some(view) = self.views.get(&old_view_id) {
+            unsafe { msg_send!(**view, viewRemoveFromSuperview); }
+        }
+
         self.views.remove(&old_view_id);
         self.view_events.remove(&old_view_id);
     }
