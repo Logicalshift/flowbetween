@@ -3,7 +3,9 @@ use super::bounds::*;
 use super::modifier::*;
 use super::attributes::*;
 
+use super::super::image;
 use super::super::diff::*;
+use super::super::property::*;
 use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
@@ -157,11 +159,31 @@ impl Control {
     }
 
     ///
+    /// Finds the text for this control if it exists
+    /// 
+    pub fn text<'a>(&'a self) -> Option<&'a Property> {
+        self.attributes.iter()
+            .map(|attr| attr.text())
+            .find(|attr| attr.is_some())
+            .map(|attr| attr.unwrap())
+    }
+
+    ///
     /// If this control has a canvas attribute, finds it
     ///
     pub fn canvas_resource<'a>(&'a self) -> Option<&Resource<BindingCanvas>> {
         self.attributes.iter()
             .map(|attr| attr.canvas())
+            .find(|attr| attr.is_some())
+            .map(|attr| attr.unwrap())
+    }
+
+    ///
+    /// If this control has a canvas attribute, finds it
+    ///
+    pub fn image_resource<'a>(&'a self) -> Option<&Resource<image::Image>> {
+        self.attributes.iter()
+            .map(|attr| attr.image())
             .find(|attr| attr.is_some())
             .map(|attr| attr.unwrap())
     }

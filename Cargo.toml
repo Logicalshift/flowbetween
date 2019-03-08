@@ -10,20 +10,24 @@ include     = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 [features]
 gtk         = [ "flo_gtk_ui" ]
 http        = [ "flo_http_ui", "flo_http_ui_actix", "actix-web" ]
+cocoa       = [ "flo_cocoa_pipe", "flo_cocoa_ui", "flo_cocoa" ]
 
 [dependencies]
-flo_animation       = { path = "animation",     version="^0.1.0" }
-flo_anim_sqlite     = { path = "anim_sqlite",   version="^0.1.0" }
-flo_binding         = { path = "binding",       version="^0.1.0" }
-flo_ui_files        = { path = "ui_files",      version="^0.1.0" }
-flo_ui              = { path = "ui",            version="^0.1.0" }
-flo_canvas          = { path = "canvas",        version="^0.1.0" }
-flo_logging         = { path = "logging",       version="^0.1.0" }
-flo                 = { path = "flo",           version="^0.1.0" }
+flo_animation       = { path = "animation",     version="0.1" }
+flo_anim_sqlite     = { path = "anim_sqlite",   version="0.1" }
+flo_binding         = { path = "binding",       version="0.1" }
+flo_ui_files        = { path = "ui_files",      version="0.1" }
+flo_ui              = { path = "ui",            version="0.1" }
+flo_canvas          = { path = "canvas",        version="0.1" }
+flo_logging         = { path = "logging",       version="0.1" }
+flo                 = { path = "flo",           version="0.1" }
 
-flo_gtk_ui          = { path = "gtk_ui",        version="^0.1.0", optional = true }
-flo_http_ui         = { path = "http_ui",       version="^0.1.0", optional = true }
-flo_http_ui_actix   = { path = "http_ui_actix", version="^0.1.0", optional = true }
+flo_gtk_ui          = { path = "user_interfaces/gtk_ui",        version="0.1", optional = true }
+flo_http_ui         = { path = "user_interfaces/http_ui",       version="0.1", optional = true }
+flo_http_ui_actix   = { path = "user_interfaces/http_ui_actix", version="0.1", optional = true }
+flo_cocoa_ui        = { path = "user_interfaces/cocoa_ui",      version="0.1", optional = true }
+flo_cocoa_pipe      = { path = "user_interfaces/cocoa_pipe",    version="0.1", optional = true }
+flo_cocoa           = { path = "user_interfaces/flo_cocoa",     version="0.1", optional = true }
 
 serde               = "^1.0.0"
 serde_derive        = "^1.0.0"

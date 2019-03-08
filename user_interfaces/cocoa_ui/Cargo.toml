@@ -1,0 +1,21 @@
+[package]
+name            = "flo_cocoa_ui"
+version         = "0.1.0"
+edition         = "2018"
+authors         = ["Andrew Hunter"]
+license         = "Apache-2.0"
+repository      = "https://github.com/Logicalshift/flowbetween"
+description     = "User interface implementation for FlowBetween using the Cocoa API"
+
+[dependencies]
+flo_cocoa_pipe  = { path = "../cocoa_pipe", version = "0.1" }
+flo_canvas      = { path = "../../canvas", version = "0.1" }
+flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "0.3" }
+flo_ui          = { path = "../../ui", version = "0.1" }
+
+lazy_static     = "1.2"
+futures         = "0.1"
+cocoa           = "0.18"
+core-foundation = "0.6"
+objc            = "0.2"
+num-traits      = "0.2"

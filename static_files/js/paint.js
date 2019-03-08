@@ -1,1 +1,1 @@
-../../http_ui/js/paint.js
+../../user_interfaces/http_ui/js/paint.js

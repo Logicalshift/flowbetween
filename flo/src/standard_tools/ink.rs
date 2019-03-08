@@ -58,7 +58,7 @@ impl InkModel {
     pub fn new() -> InkModel {
         let size                = bind(5.0);
         let opacity             = bind(1.0);
-        let color               = bind(Color::Rgba(0.0, 0.0, 0.0, 1.0));
+        let color               = bind(Color::Hsluv(0.0, 100.0, 0.0, 1.0));
 
         let brush_properties    = Self::brush_properties(size.clone(), opacity.clone(), color.clone());
 

@@ -8,6 +8,7 @@ use super::popup_attr::*;
 use super::scroll_attr::*;
 use super::appearance_attr::*;
 
+use super::super::image;
 use super::super::property::*;
 use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
@@ -180,12 +181,22 @@ impl ControlAttribute {
     }
 
     ///
-    /// The canvas resource for this control, if there is one
+    /// The canvas resource represented by this attribute, if there is one
     ///
     pub fn canvas<'a>(&'a self) -> Option<&'a Resource<BindingCanvas>> {
         match self {
             &Canvas(ref canvas) => Some(canvas),
             _                   => None
+        }
+    }
+
+    ///
+    /// The image resource represented by this attribute, if there is one
+    ///
+    pub fn image<'a>(&'a self) -> Option<&'a Resource<image::Image>> {
+        match self {
+            &AppearanceAttr(Appearance::Image(ref img)) => Some(img),
+            _                                           => None
         }
     }
     

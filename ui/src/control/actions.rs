@@ -42,10 +42,10 @@ pub enum ActionTrigger {
 /// 
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum DragAction {
-    Start,
-    Drag,
-    Finish,
-    Cancel
+    Start   = 0,
+    Drag    = 1,
+    Finish  = 2,
+    Cancel  = 3
 }
 
 ///

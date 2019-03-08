@@ -43,7 +43,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             },
 
             Hsluv   => {
-                let (h, s, l) = entry.hsluv.unwrap_or((0.0, 0.0, 0.0));
+                let (h, s, l) = entry.hsluv.unwrap_or((0.0, 100.0, 0.0));
                 Ok(Color::Hsluv(h as f32, s as f32, l as f32, 1.0))
             }
         }
