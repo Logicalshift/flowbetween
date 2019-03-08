@@ -179,7 +179,7 @@ impl FloDrawingWidget {
         if !core.draw_pending {
             core.draw_pending = true;
 
-            drawing_area.add_tick_callback(|widget: &gtk::Widget, _clock| { widget.queue_draw(); Continue(false) });
+            drawing_area.add_tick_callback(|widget: &gtk::Widget, _clock| { widget.queue_draw(); false });
         }
     }
 

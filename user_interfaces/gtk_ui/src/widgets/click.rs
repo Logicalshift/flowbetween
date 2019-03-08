@@ -38,8 +38,8 @@ impl ClickActions {
         let state       = Rc::new(RefCell::new(state));
         
         // For basic widgets with no explicit click action, we just detect the button press event
-        widget.get_underlying().add_events((gdk::EventMask::BUTTON_PRESS_MASK).bits() as i32);
-        widget.get_underlying().add_events((gdk::EventMask::BUTTON_RELEASE_MASK).bits() as i32);
+        widget.get_underlying().add_events(gdk::EventMask::BUTTON_PRESS_MASK);
+        widget.get_underlying().add_events(gdk::EventMask::BUTTON_RELEASE_MASK);
 
         {
             let state = Rc::clone(&state);

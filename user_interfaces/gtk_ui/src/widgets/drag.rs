@@ -87,7 +87,7 @@ impl DragActions {
     /// 
     fn connect_events(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         // Request the events
-        widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
+        widget.add_events(gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK);
 
         // Connect the signals
         Self::connect_press(widget, widget_id, Rc::clone(&drag_actions));

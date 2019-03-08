@@ -107,7 +107,7 @@ impl PaintActions {
     /// 
     fn connect_events(widget_data: Rc<WidgetData>, widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
         // Make sure we're generating the appropriate events on this widget
-        widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
+        widget.add_events(gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK);
 
         // Connect to the signals
         Self::connect_button_pressed(Rc::clone(&widget_data), widget, Rc::clone(&paint));

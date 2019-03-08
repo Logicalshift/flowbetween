@@ -86,8 +86,8 @@ impl CustomStyle {
         let style_context   = widget.get_style_context();
 
         // We use a custom style provider and class name when we map our widget
-        style_context.as_ref().map(|style_context| style_context.add_provider(&self.style_provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION));
-        style_context.map(|style_context| style_context.add_class(&class_name));
+        style_context.add_provider(&self.style_provider, gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
+        style_context.add_class(&class_name);
     }
 
     ///

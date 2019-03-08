@@ -112,7 +112,7 @@ impl FloRotorWidget {
     /// 
     fn connect_drag(widget_id: WidgetId, widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
         // Want the events for the various buttons and drags etc 
-        widget.add_events((gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK).bits() as i32);
+        widget.add_events(gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK);
 
         // Start dragging when the user presses the left mouse button
         {

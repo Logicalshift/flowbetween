@@ -25,21 +25,31 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
 
     match widget_type {
         Generic             => Box::new(FloFixedWidget::new(id, gtk::Fixed::new(), widget_data)),
-        Layout              => Box::new(FloFixedWidget::new(id, gtk::Layout::new(None, None), widget_data)),
+        Layout              => {
+            let no_adjustment: Option<gtk::Adjustment> = None;
+            Box::new(FloFixedWidget::new(id, gtk::Layout::new(no_adjustment.as_ref(), no_adjustment.as_ref()), widget_data))
+        },
         Fixed               => Box::new(FloFixedWidget::new(id, gtk::Fixed::new(), widget_data)),
         Button              => Box::new(FloBinWidget::new(id, gtk::Button::new(), widget_data)),
         ToggleButton        => Box::new(FloBinWidget::new(id, gtk::ToggleButton::new(), widget_data)),
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         Popover             => Box::new(FloPopoverWidget::new(id, gtk::Fixed::new(), widget_data)),
 
-        ScrollArea          => Box::new(FloScrollWidget::new(id, gtk::ScrolledWindow::new(None, None), widget_data)),
+        ScrollArea          => {
+            let no_adjustment: Option<gtk::Adjustment> = None;
+            Box::new(FloScrollWidget::new(id, gtk::ScrolledWindow::new(no_adjustment.as_ref(), no_adjustment.as_ref()), widget_data))
+        },
         Rotor               => Box::new(FloRotorWidget::new(id, gtk::DrawingArea::new())),
         CanvasDrawingArea   => Box::new(FloDrawingWidget::new(id, gtk::DrawingArea::new(), widget_data)),
-        CanvasLayout        => Box::new(FloCanvasLayoutWidget::new(id, gtk::Layout::new(None, None), widget_data)),
+        CanvasLayout        => {
+            let no_adjustment: Option<gtk::Adjustment> = None;
+            Box::new(FloCanvasLayoutWidget::new(id, gtk::Layout::new(no_adjustment.as_ref(), no_adjustment.as_ref()), widget_data))
+        },
         CanvasNanovg        => Box::new(FloNanoVgWidget::new(id, gtk::GLArea::new())),
 
         Scale               => {
-            let scale = gtk::Scale::new(gtk::Orientation::Horizontal, None);
+            let no_adjustment: Option<gtk::Adjustment> = None;
+            let scale = gtk::Scale::new(gtk::Orientation::Horizontal, no_adjustment.as_ref());
             scale.set_draw_value(false);
             Box::new(FloScaleWidget::new(id, scale))
         },

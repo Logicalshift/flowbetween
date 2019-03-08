@@ -61,7 +61,8 @@ impl FloScrollWidget {
     ///
     pub fn new(id: WidgetId, scroll_window: gtk::ScrolledWindow, widget_data: Rc<WidgetData>) -> FloScrollWidget {
         // Create the widgets
-        let layout          = gtk::Layout::new(None, None);
+        let no_adjustment: Option<gtk::Adjustment> = None;
+        let layout          = gtk::Layout::new(no_adjustment.as_ref(), no_adjustment.as_ref());
 
         // Ugly hack...
         // Scroll windows try to shrink when you take controls out of them (for some reason, even with a layout with a set size).

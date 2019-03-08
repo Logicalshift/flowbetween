@@ -1,9 +1,7 @@
 use flo_ui::*;
 
-use glib::object::Downcast;
 use glib::translate::*;
 use gdk;
-use gdk::prelude::*;
 use gdk_sys;
 use cairo;
 use cairo::prelude::*;
@@ -80,7 +78,7 @@ impl GtkPainting {
     /// 
     unsafe fn update_from_axes(&mut self, axes: *const f64, device: *mut gdk_sys::GdkDevice) {
         // Turn device into a rust object
-        let device: gdk::Device = gdk::Device::from_glib_borrow(device).downcast_unchecked();
+        let device: gdk::Device = gdk::Device::from_glib_borrow(device);
 
         // Fetch the number of axes in the device
         let num_axes = device.get_n_axes() as usize;

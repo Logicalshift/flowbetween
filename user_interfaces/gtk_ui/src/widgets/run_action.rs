@@ -53,7 +53,6 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
 
                 // Add our style context
                 new_window.get_style_context()
-                    .unwrap()
                     .add_provider(flo_gtk.style_provider(), gtk::STYLE_PROVIDER_PRIORITY_APPLICATION);
 
                 // New windows with no content get a generic message initially

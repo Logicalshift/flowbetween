@@ -8,14 +8,12 @@ use super::custom_style::*;
 use super::super::gtk_event::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
-use super::super::gtk_event_parameter::*;
 use super::super::gtk_widget_event_type::*;
 
 use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
-use gdk;
 use futures::*;
 
 use std::rc::*;
@@ -175,13 +173,13 @@ pub fn process_basic_widget_content<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mu
         &AddClass(ref class_name)       => {
             let widget          = widget.get_underlying();
             let style_context   = widget.get_style_context();
-            style_context.map(|context| context.add_class(&*class_name));
+            style_context.add_class(&*class_name);
         },
 
         &RemoveClass(ref class_name)    => {
             let widget          = widget.get_underlying();
             let style_context   = widget.get_style_context();
-            style_context.map(|context| context.remove_class(&*class_name));
+            style_context.remove_class(&*class_name);
         }
     }
 }
@@ -215,17 +213,17 @@ pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, state: &WidgetStat
 
     match state {
         &SetSelected(selected)      => {
-            widget.get_underlying()
-                .get_style_context()
-                .map(|context| if selected { context.add_class("selected") } else { context.remove_class("selected") });
+            let context = widget.get_underlying()
+                .get_style_context();
+            if selected { context.add_class("selected") } else { context.remove_class("selected") }
 
             // TODO: toggle buttons probably should get their own class thing
             widget.get_underlying().clone().dynamic_cast::<gtk::ToggleButton>().ok().map(|toggle| { toggle.set_active(selected); });
         },
         &SetBadged(badged)          => {
-            widget.get_underlying()
-                .get_style_context()
-                .map(|context| if badged { context.add_class("badged") } else { context.remove_class("badged") });
+            let context = widget.get_underlying()
+                .get_style_context();
+            if badged { context.add_class("badged") } else { context.remove_class("badged") }
         },
         &SetEnabled(enabled)        => {
             widget.get_underlying()
