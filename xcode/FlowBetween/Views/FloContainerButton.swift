@@ -83,7 +83,10 @@ class FloContainerButton : NSView, FloContainerView {
     /// User has pressed the mouse down in this view
     override func mouseDown(with event: NSEvent) {
         // TODO: track the mouse and make sure it stays within the bounds of the control
-        triggerClick();
+        if _backingLayer.enabled {
+            // Trigger the click only if the button is actually enabled
+            triggerClick();
+        }
     }
     
     override func mouseEntered(with event: NSEvent) {
@@ -273,6 +276,18 @@ class FloContainerButton : NSView, FloContainerView {
                 }
             });
             
+        case .Enabled:
+            toProperty.trackValue({ newValue in
+                this?._backingLayer.enabled = newValue.toBool(default: true);
+
+                if this?._backingLayer.enabled ?? true {
+                    self.layer!.filters = [];
+                } else {
+                    let greyFilter = CIFilter(name: "CIPhotoEffectNoir")
+                    self.layer!.filters = [greyFilter];
+                }
+            });
+
         default:
             // Not supported by this view
             break;

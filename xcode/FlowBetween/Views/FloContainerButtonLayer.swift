@@ -12,12 +12,19 @@ import Cocoa
 /// A layer representing the background of a conainer button
 ///
 class FloContainerButtonLayer : CALayer {
+    fileprivate var _enabled            = true;
     fileprivate var _highlighted        = false;
     fileprivate var _selected           = false;
     fileprivate var _badged             = false;
     fileprivate var _classes: [String]  = [];
     fileprivate var _isFirst: Bool      = false;
     fileprivate var _isLast: Bool       = false;
+    
+    /// Set to true if this button is enabled
+    var enabled: Bool {
+        get { return _enabled; }
+        set(value) { _enabled = value; setNeedsDisplay(); }
+    }
     
     /// Set to true if this button is highlighted
     var highlighted: Bool {
@@ -77,7 +84,10 @@ class FloContainerButtonLayer : CALayer {
         let border:     CGColor;
         
         // Colours are based on whether or not we're highlighted or selected
-        if highlighted && selected {
+        if !enabled {
+            border      = CGColor(red: 0.63, green: 0.69, blue: 0.69, alpha: 0.4);
+            background  = CGColor(red: 0.47, green: 0.47, blue: 0.47, alpha: 0.8);
+        } else if highlighted && selected {
             border      = CGColor(red: 0.5, green: 0.6, blue: 0.7, alpha: 1.0);
             background  = CGColor(red: 0.63, green: 0.59, blue: 0.78, alpha: 0.8);
         } else if selected {
@@ -118,7 +128,10 @@ class FloContainerButtonLayer : CALayer {
         let border:     CGColor;
         
         // Colours are based on whether or not we're highlighted or selected
-        if highlighted && selected {
+        if !enabled {
+            border      = CGColor(red: 0.63, green: 0.69, blue: 0.69, alpha: 0.4);
+            background  = CGColor(red: 0.47, green: 0.47, blue: 0.47, alpha: 0.8);
+        } else if highlighted && selected {
             border      = CGColor.init(red: 0.5, green: 0.6, blue: 0.7, alpha: 1.0);
             background  = CGColor.init(red: 0.63, green: 0.59, blue: 0.78, alpha: 0.8);
         } else if selected {
@@ -127,6 +140,9 @@ class FloContainerButtonLayer : CALayer {
         } else if highlighted {
             border      = CGColor.clear;
             background  = CGColor.init(red: 0.7, green: 0.7, blue: 0.8, alpha: 0.5);
+        } else if badged {
+            border      = CGColor(red: 0.4, green: 0.5, blue: 1.0, alpha: 0.5);
+            background  = CGColor(red: 0.0, green: 0.4, blue: 0.8, alpha: 0.5);
         } else {
             border      = CGColor.init(red: 0.63, green: 0.69, blue: 0.69, alpha: 1.0);
             background  = CGColor.init(red: 0.4, green: 0.4, blue: 0.4, alpha: 0.2);
