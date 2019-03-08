@@ -116,6 +116,10 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> Stream for ConsolidateAc
                 // Reduce the consolidated events
                 self.reduce(&mut next_event);
 
+                // Suspend updates while the consolidated events are processed
+                next_event.insert(0, UiEvent::SuspendUpdates);
+                next_event.push(UiEvent::ResumeUpdates);
+
                 Ok(Ready(Some(next_event)))
             } else {
                 // Result is just the next event

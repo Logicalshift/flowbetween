@@ -62,7 +62,6 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
         self.sessions.lock().unwrap().get(session_id).cloned()
     }
 
-
     ///
     /// Retrieves the log for this session
     ///
