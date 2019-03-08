@@ -14,7 +14,6 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
-use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -274,9 +273,7 @@ pub fn process_basic_widget_scroll<W: WidgetExt>(_widget: &W, _flo_gtk: &mut Flo
 /// 
 pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, event_type: GtkWidgetEventType, action_name: &String) {
     use self::GtkWidgetEventType::*;
-    use self::GtkEvent::Event;
         
-    let widget_id   = widget.id();
     let action_name = action_name.clone();
     let event_sink  = RefCell::new(flo_gtk.get_event_sink());
 

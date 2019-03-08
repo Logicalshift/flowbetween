@@ -3,7 +3,6 @@ use flo_ui::*;
 use gio;
 use glib;
 use gdk_pixbuf;
-use gdk_pixbuf::prelude::*;
 use gtk;
 use gtk::prelude::*;
 

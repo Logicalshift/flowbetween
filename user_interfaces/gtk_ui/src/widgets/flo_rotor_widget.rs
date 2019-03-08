@@ -15,7 +15,6 @@ use gtk::prelude::*;
 use gdk;
 use gdk::prelude::*;
 use gdk_pixbuf;
-use gdk_pixbuf::prelude::*;
 use futures::*;
 
 use std::ops::Range;
