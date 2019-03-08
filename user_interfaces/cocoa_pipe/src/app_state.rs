@@ -109,7 +109,7 @@ impl AppState {
             Drag(view_id, name, DragAction::Finish, from, to)    => {
                 let controller_path = self.get_controller_path_for_view(view_id);
                 self.deactivate_view(view_id);
-                vec![UiEvent::Action(controller_path, name, ActionParameter::Drag(DragAction::Start, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))]
+                vec![UiEvent::Action(controller_path, name, ActionParameter::Drag(DragAction::Finish, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))]
             },
             Drag(view_id, name, action, from, to)               => vec![UiEvent::Action(self.get_controller_path_for_view(view_id), name, ActionParameter::Drag(action, (from.0 as f32, from.1 as f32), (to.0 as f32, to.1 as f32)))],
 

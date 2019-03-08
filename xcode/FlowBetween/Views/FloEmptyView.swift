@@ -393,7 +393,7 @@ class FloEmptyView : NSView, FloContainerView {
         // Mouse events immediately produce a drag if there's no onClick handler
         if self.onClick == nil {
             dragging = true;
-            onDrag(DragAction.Start, initialPos, initialPos);
+            onDrag(.Start, initialPos, initialPos);
         }
         
         // Track the mouse until the user releases the mouse button
@@ -420,13 +420,13 @@ class FloEmptyView : NSView, FloContainerView {
                         
                         if distance > minDistance {
                             dragging = true;
-                            onDrag(DragAction.Start, initialPos, initialPos);
+                            onDrag(.Start, initialPos, initialPos);
                         }
                     }
                     
                     // Send the next drag event
                     if dragging {
-                        onDrag(DragAction.Continue, initialPos, nextPos);
+                        onDrag(.Continue, initialPos, nextPos);
                     }
                     
                     // Finish dragging if necessary
@@ -435,7 +435,7 @@ class FloEmptyView : NSView, FloContainerView {
                         
                         if dragging {
                             // Finish the drag
-                            onDrag(DragAction.Finish, initialPos, nextPos);
+                            onDrag(.Finish, initialPos, nextPos);
                         } else {
                             // Drag never started
                             triggerClick();
@@ -446,7 +446,7 @@ class FloEmptyView : NSView, FloContainerView {
                     done = true;
                     
                     if dragging {
-                        onDrag(DragAction.Cancel, initialPos, initialPos);
+                        onDrag(.Cancel, initialPos, initialPos);
                     }
                 }
             }
