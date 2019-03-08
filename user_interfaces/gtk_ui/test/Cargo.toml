@@ -7,4 +7,4 @@ authors = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
 flo_ui      = { path = "../../ui" }
 flo_gtk_ui  = { path = ".." }
 
-gtk         = "0.5.0"
+gtk         = "0.6.0"
