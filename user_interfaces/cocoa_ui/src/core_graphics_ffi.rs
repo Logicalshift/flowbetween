@@ -82,6 +82,20 @@ pub type CGMutablePathRef = *mut CGMutablePath;
     PlusLighter
 }
 
+#[derive(Copy, Clone, Debug)]
+#[repr(C)] pub enum CGLineJoin {
+    Miter,
+    Round,
+    Bevel
+}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C)] pub enum CGLineCap {
+    Butt,
+    Round,
+    Square
+}
+
 unsafe impl objc::Encode for CGPoint {
     fn encode() -> objc::Encoding {
         let encoding = format!("{{CGPoint={}{}}}",
@@ -150,6 +164,8 @@ extern {
     pub fn CGContextFillPath(ctxt: CGContextRef);
     pub fn CGContextStrokePath(ctxt: CGContextRef);
     pub fn CGContextSetLineWidth(ctxt: CGContextRef, width: CGFloat);
+    pub fn CGContextSetLineJoin(ctxt: CGContextRef, join: CGLineJoin);
+    pub fn CGContextSetLineCap(ctxt: CGContextRef, cap: CGLineCap);
     pub fn CGContextSetFillColorWithColor(ctxt: CGContextRef, color: CGColorRef);
     pub fn CGContextSetStrokeColorWithColor(ctxt: CGContextRef, color: CGColorRef);
     pub fn CGContextConcatCTM(ctxt: CGContextRef, transform: CGAffineTransform);
