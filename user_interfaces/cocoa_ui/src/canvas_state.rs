@@ -25,6 +25,8 @@ struct CanvasStateValues {
     stroke_color:   CFRef<CGColorRef>,
     transform:      CGAffineTransform,
     blend_mode:     CGBlendMode,
+    line_join:      CGLineJoin,
+    line_cap:       CGLineCap,
     layer_id:       u32,
     line_width:     CGFloat,
     path:           Vec<PathAction>,
@@ -60,6 +62,8 @@ impl CanvasState {
                     stroke_color:   stroke_color,
                     transform:      transform,
                     blend_mode:     CGBlendMode::Normal,
+                    line_join:      CGLineJoin::Round,
+                    line_cap:       CGLineCap::Butt,
                     layer_id:       0,
                     line_width:     1.0,
                     path:           vec![],
@@ -157,6 +161,8 @@ impl CanvasState {
                 // Set the values from the current state
                 CGContextConcatCTM(**context, self.values.transform);
                 CGContextSetBlendMode(**context, self.values.blend_mode);
+                CGContextSetLineJoin(**context, self.values.line_join);
+                CGContextSetLineCap(**context, self.values.line_cap);
                 CGContextSetFillColorWithColor(**context, *self.values.fill_color);
                 CGContextSetStrokeColorWithColor(**context, *self.values.stroke_color);
                 CGContextSetLineWidth(**context, self.values.line_width);
@@ -342,6 +348,40 @@ impl CanvasState {
             // Set it in the context
             if let Some(ref context) = self.context {
                 CGContextSetBlendMode(**context, self.values.blend_mode);
+            }
+        }
+    }
+
+    ///
+    /// Sets the line join
+    ///
+    pub fn set_line_join(&mut self, join_style: &LineJoin) {
+        self.values.line_join = match join_style {
+            LineJoin::Miter => CGLineJoin::Miter,
+            LineJoin::Round => CGLineJoin::Round,
+            LineJoin::Bevel => CGLineJoin::Bevel
+        };
+
+        unsafe {
+            if let Some(ref context) = self.context {
+                CGContextSetLineJoin(**context, self.values.line_join);
+            }
+        }
+    }
+
+    ///
+    /// Sets the line cap
+    ///
+    pub fn set_line_cap(&mut self, cap_style: &LineCap) {
+        self.values.line_cap = match cap_style {
+            LineCap::Butt       => CGLineCap::Butt,
+            LineCap::Round      => CGLineCap::Round,
+            LineCap::Square     => CGLineCap::Square
+        };
+
+        unsafe {
+            if let Some(ref context) = self.context {
+                CGContextSetLineCap(**context, self.values.line_cap);
             }
         }
     }

@@ -142,8 +142,8 @@ impl CanvasContext {
 
                     self.state.set_line_width(scale_width);
                 }
-                LineJoin(join)                                      => { /* TODO */ }
-                LineCap(cap)                                        => { /* TODO */ }
+                LineJoin(join)                                      => { self.state.set_line_join(join); }
+                LineCap(cap)                                        => { self.state.set_line_cap(cap); }
                 NewDashPattern                                      => { /* TODO */ }
                 DashLength(len)                                     => { /* TODO */ }
                 DashOffset(offset)                                  => { /* TODO */ }
