@@ -2,6 +2,7 @@ use super::widget::*;
 use super::basic_widget::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
+use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
@@ -60,6 +61,7 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
 
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
         use self::GtkWidgetAction::*;
+        use self::GtkWidgetEventType::*;
         use flo_ui::Appearance::*;
 
         // Some actions should always be processed against the proxy widget
@@ -75,6 +77,19 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
             &Show                   => {
                 process_basic_widget_action(self, flo_gtk, action);
                 self.underlying_widget.borrow_mut().process(flo_gtk, action);
+            },
+
+            // Events should be processed by the proxy widget if they pass through the main widget
+            RequestEvent(Click, _)  |
+            RequestEvent(Drag, _)   |
+            RequestEvent(Paint(_), _)  => {
+                // Some widgets (eg, fixed boxes) can't process mouse events directly, so we track them in the proxy widget instead
+                process_basic_widget_action(self, flo_gtk, action);
+                self.underlying_widget.borrow_mut().process(flo_gtk, action);
+            },
+
+            RequestEvent(Dismiss, _) => {
+                process_basic_widget_action(self, flo_gtk, action);
             },
 
             // Deletions remove the proxy widget and not the underlying one
