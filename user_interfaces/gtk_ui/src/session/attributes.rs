@@ -75,6 +75,10 @@ fn needs_event_box(control: &Control) -> bool {
             // Controls with painting need to turn off event compression
             &Action(ActionTrigger::Paint(_), _) => true,
 
+            // Controls that can be clicked or dragged need an event box for their target
+            &Action(ActionTrigger::Click, _) => true,
+            &Action(ActionTrigger::Drag, _) => true,
+
             // Other controls do not need an event box
             _ => false
         }
