@@ -88,10 +88,6 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
                 self.underlying_widget.borrow_mut().process(flo_gtk, action);
             },
 
-            RequestEvent(Dismiss, _) => {
-                process_basic_widget_action(self, flo_gtk, action);
-            },
-
             // Deletions remove the proxy widget and not the underlying one
             &Delete                 => { process_basic_widget_action(self, flo_gtk, action); },
 
