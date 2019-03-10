@@ -37,6 +37,7 @@ impl FloTextBoxWidget {
         entry.set_has_frame(false);
         entry.set_max_length(1024);
         entry.set_editable(true);
+        entry.set_can_focus(true);
 
         FloTextBoxWidget {
             id:             id,
@@ -70,6 +71,18 @@ impl GtkUiWidget for FloTextBoxWidget {
             Content(WidgetContent::SetText(val)) => {
                 self.widget.set_text(val);
             },
+
+            // Generate entry editing events
+            RequestEvent(GtkWidgetEventType::EditValue, _event_name) => { 
+                self.widget.connect_property_text_notify(|widget| {
+                    println!("Edited text: {:?}", widget.get_text());
+                });
+            }
+
+            // Toggling the button causes a set value event
+            RequestEvent(GtkWidgetEventType::SetValue, _event_name) => {
+
+            }
 
             // Standard behaviour for all other actions
             other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            
