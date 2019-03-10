@@ -175,9 +175,8 @@ impl GtkUiWidget for FloBinWidget {
 
             // Everything else is either passed to the fixed widget or processed via the normal steps
             _                       => {
-                if self.fixed.is_some() {
-                    // Awkward unwrapping as 'self' would be borrowed in the else side with a more natural construction
-                    self.fixed.as_mut().unwrap().process(flo_gtk, action);
+                if let Some(ref mut fixed) = self.fixed {
+                    fixed.process(flo_gtk, action);
                 } else {
                     process_basic_widget_action(self, flo_gtk, action);
                 }
