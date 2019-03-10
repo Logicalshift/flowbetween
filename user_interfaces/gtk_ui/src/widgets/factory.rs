@@ -8,6 +8,7 @@ use super::flo_rotor_widget::*;
 use super::flo_scroll_widget::*;
 use super::flo_canvas_widget::*;
 use super::flo_nanovg_widget::*;
+use super::flo_checkbox_widget::*;
 use super::flo_canvas_layout_widget::*;
 use super::widget_data::*;
 use super::super::gtk_action::*;
@@ -32,7 +33,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Fixed               => Box::new(FloFixedWidget::new(id, gtk::Fixed::new(), widget_data)),
         Button              => Box::new(FloBinWidget::new(id, gtk::Button::new(), widget_data)),
         ToggleButton        => Box::new(FloBinWidget::new(id, gtk::ToggleButton::new(), widget_data)),
-        CheckBox            => Box::new(FloBinWidget::new(id, gtk::CheckButton::new(), widget_data)),
+        CheckBox            => Box::new(FloCheckBoxWidget::new(id, gtk::CheckButton::new(), widget_data)),
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         Popover             => Box::new(FloPopoverWidget::new(id, gtk::Fixed::new(), widget_data)),
 

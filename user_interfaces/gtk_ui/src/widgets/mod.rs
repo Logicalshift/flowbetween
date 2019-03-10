@@ -11,6 +11,7 @@ pub mod flo_rotor_widget;
 pub mod flo_scroll_widget;
 pub mod flo_canvas_widget;
 pub mod flo_nanovg_widget;
+pub mod flo_checkbox_widget;
 pub mod flo_canvas_layout_widget;
 pub mod proxy_widget;
 pub mod flo_layout;
