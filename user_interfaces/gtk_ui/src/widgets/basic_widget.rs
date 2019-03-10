@@ -229,9 +229,11 @@ pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, state: &WidgetStat
         },
 
         SetValueBool(_value)        => (),
-        &SetValueFloat(_value)      => (),
-        &SetRangeMin(_from)         => (),
-        &SetRangeMax(_to)           => ()
+        SetValueInt(_value)         => (),
+        SetValueText(_value)        => (),
+        SetValueFloat(_value)       => (),
+        SetRangeMin(_from)          => (),
+        SetRangeMax(_to)            => ()
     }
 }
 

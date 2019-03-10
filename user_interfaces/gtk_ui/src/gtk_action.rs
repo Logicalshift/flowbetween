@@ -172,6 +172,12 @@ pub enum WidgetState {
     /// Sets the value of this widget
     SetValueFloat(f64),
 
+    /// Sets the value of this widget as an integer
+    SetValueInt(i64),
+
+    /// Sets the value of this widget as a text string
+    SetValueText(String),
+
     /// Sets the minimum value for this widget
     SetRangeMin(f64),
 

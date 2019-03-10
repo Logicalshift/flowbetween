@@ -32,9 +32,15 @@ impl FloTextBoxWidget {
     /// Creates a new textbox widget
     ///
     pub fn new<W: Clone+Cast+IsA<gtk::Entry>+IsA<gtk::Widget>>(id: WidgetId, entry: W) -> FloTextBoxWidget {
+        let entry = entry.upcast::<gtk::Entry>();
+
+        entry.set_has_frame(false);
+        entry.set_max_length(1024);
+        entry.set_editable(true);
+
         FloTextBoxWidget {
             id:             id,
-            widget:         entry.clone().upcast::<gtk::Entry>(),
+            widget:         entry.clone(),
             as_widget:      entry.clone().upcast::<gtk::Widget>()
         }
     }
@@ -55,6 +61,16 @@ impl GtkUiWidget for FloTextBoxWidget {
         use self::GtkWidgetAction::*;
 
         match action {
+            // Entry text can either be set as the value
+            State(WidgetState::SetValueText(val)) => {
+                self.widget.set_text(val);
+            },
+
+            // ... or using the normal text content setting
+            Content(WidgetContent::SetText(val)) => {
+                self.widget.set_text(val);
+            },
+
             // Standard behaviour for all other actions
             other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            
         }

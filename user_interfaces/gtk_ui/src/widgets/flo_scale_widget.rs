@@ -91,6 +91,7 @@ impl GtkUiWidget for FloScaleWidget {
 
         match action {
             &State(SetValueFloat(value))                => self.scale.set_value(value as f64),
+            &State(SetValueInt(value))                  => self.scale.set_value(value as f64),
             &State(SetRangeMin(min_value))              => {
                 self.min = min_value as f64;
                 self.scale.set_range(self.min.min(self.max), self.max.max(self.min));

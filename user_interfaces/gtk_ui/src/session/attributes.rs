@@ -257,7 +257,8 @@ impl ToGtkActions for State {
                 match value {
                     PropertyValue::Bool(val)    => vec![WidgetState::SetValueBool(val).into()],
                     PropertyValue::Float(val)   => vec![WidgetState::SetValueFloat(val).into()],
-                    PropertyValue::Int(val)     => vec![WidgetState::SetValueFloat(val as f64).into()],
+                    PropertyValue::Int(val)     => vec![WidgetState::SetValueInt(val as i64).into()],
+                    PropertyValue::String(val)  => vec![WidgetState::SetValueText(val).into()],
                     _ => vec![WidgetState::SetValueFloat(0.0).into()]
                 }
             }) ],
