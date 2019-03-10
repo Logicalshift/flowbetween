@@ -69,7 +69,7 @@ impl GtkUiWidget for FloCheckBoxWidget {
 
             // EditValue events are ignored (there isn't a sensible way to define an 'ongoing' edit of a checkbox)
             RequestEvent(GtkWidgetEventType::EditValue, _) => { 
-            }
+            },
 
             // Toggling the button causes a set value event
             RequestEvent(GtkWidgetEventType::SetValue, event_name) => {
@@ -81,7 +81,12 @@ impl GtkUiWidget for FloCheckBoxWidget {
                     let is_selected = widget.get_active();
                     sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::SelectedValue(is_selected))).unwrap();
                 });
-            }
+            },
+
+            // Click events are ignored (they are handled directly by the control)
+            RequestEvent(GtkWidgetEventType::Click, _event_name) => {
+
+            },
 
             // Standard behaviour for all other actions
             other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            

@@ -84,6 +84,11 @@ impl GtkUiWidget for FloTextBoxWidget {
 
             }
 
+            // Click events are ignored (they focus the control)
+            RequestEvent(GtkWidgetEventType::Click, _event_name) => {
+
+            },
+
             // Standard behaviour for all other actions
             other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            
         }
