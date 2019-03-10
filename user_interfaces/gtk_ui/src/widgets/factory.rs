@@ -34,6 +34,7 @@ pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<W
         Button              => Box::new(FloBinWidget::new(id, gtk::Button::new(), widget_data)),
         ToggleButton        => Box::new(FloBinWidget::new(id, gtk::ToggleButton::new(), widget_data)),
         CheckBox            => Box::new(FloCheckBoxWidget::new(id, gtk::CheckButton::new(), widget_data)),
+        TextBox             => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         Label               => Box::new(FloLabelWidget::new(id, gtk::Label::new(None))),
         Popover             => Box::new(FloPopoverWidget::new(id, gtk::Fixed::new(), widget_data)),
 

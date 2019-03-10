@@ -44,6 +44,7 @@ pub enum GtkWidgetType {
     Button,
     ToggleButton,
     CheckBox,
+    TextBox,
     Label,
     Scale,
     ScrollArea,
