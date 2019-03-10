@@ -284,7 +284,7 @@ class FloContainerButton : NSView, FloContainerView {
                     self.layer!.filters = [];
                 } else {
                     let greyFilter = CIFilter(name: "CIPhotoEffectNoir")
-                    self.layer!.filters = [greyFilter];
+                    self.layer!.filters = [greyFilter as Any];
                 }
             });
 
