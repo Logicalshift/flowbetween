@@ -22,6 +22,9 @@ pub enum GtkEventParameter {
     /// Event indicating that whether or not the control is selected has changed
     SelectedValue(bool),
 
+    /// New text for a control
+    NewText(String),
+
     /// Painting started
     PaintStart(GtkPainting),
 
@@ -64,6 +67,7 @@ impl From<GtkEventParameter> for ActionParameter {
             GtkEventParameter::None                                         => ActionParameter::None,
             GtkEventParameter::ScaleValue(value)                            => ActionParameter::Value(PropertyValue::Float(value)),
             GtkEventParameter::SelectedValue(value)                         => ActionParameter::Value(PropertyValue::Bool(value)),
+            GtkEventParameter::NewText(value)                               => ActionParameter::Value(PropertyValue::String(value)),
             GtkEventParameter::PaintStart(paint)                            => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Start) ]),
             GtkEventParameter::PaintContinue(paint)                         => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Continue) ]),
             GtkEventParameter::PaintFinish(paint)                           => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Finish) ]),

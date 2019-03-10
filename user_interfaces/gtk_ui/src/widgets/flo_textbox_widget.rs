@@ -73,15 +73,49 @@ impl GtkUiWidget for FloTextBoxWidget {
             },
 
             // Generate entry editing events
-            RequestEvent(GtkWidgetEventType::EditValue, _event_name) => { 
-                self.widget.connect_property_text_notify(|widget| {
-                    println!("Edited text: {:?}", widget.get_text());
+            RequestEvent(GtkWidgetEventType::EditValue, event_name) => { 
+                // Every text change generates an 'edit' event
+                let id          = self.id;
+                let sink        = RefCell::new(flo_gtk.get_event_sink());
+                let event_name  = event_name.clone();
+
+                self.widget.connect_property_text_notify(move |widget| {
+                    if let Some(new_text) = widget.get_text() {
+                        let new_text = String::from(new_text);
+                        sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text))).unwrap();
+                    }
                 });
             }
 
             // Toggling the button causes a set value event
-            RequestEvent(GtkWidgetEventType::SetValue, _event_name) => {
+            RequestEvent(GtkWidgetEventType::SetValue, name) => {
+                // Editing ends if the user hits enter or focus is lost from the control
 
+                // Focus lost
+                let id          = self.id;
+                let sink        = RefCell::new(flo_gtk.get_event_sink());
+                let event_name  = name.clone();
+
+                self.widget.connect_focus_out_event(move |widget, _focus| {
+                    if let Some(new_text) = widget.get_text() {
+                        let new_text = String::from(new_text);
+                        sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text))).unwrap();
+                    }
+
+                    Inhibit(false)
+                });
+
+                // Hitting the enter key (which Gtk+ considers as activation)
+                let id          = self.id;
+                let sink        = RefCell::new(flo_gtk.get_event_sink());
+                let event_name  = name.clone();
+
+                self.widget.connect_activate(move |widget| {
+                    if let Some(new_text) = widget.get_text() {
+                        let new_text = String::from(new_text);
+                        sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text))).unwrap();
+                    }
+                });
             }
 
             // Click events are ignored (they focus the control)
