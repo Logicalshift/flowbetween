@@ -165,6 +165,9 @@ pub enum WidgetState {
     /// Sets whether or not this widget is enabled
     SetEnabled(bool),
 
+    /// Sets the value of this widget as a bool
+    SetValueBool(bool),
+
     /// Sets the value of this widget
     SetValueFloat(f64),
 

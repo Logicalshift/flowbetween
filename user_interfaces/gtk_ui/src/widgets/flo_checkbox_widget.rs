@@ -54,7 +54,18 @@ impl GtkUiWidget for FloCheckBoxWidget {
     /// Processes an action for this widget
     ///
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
-        process_basic_widget_action(self, flo_gtk, action)
+        use self::GtkWidgetAction::*;
+
+        match action {
+            // Can be checked/unchecked either by setting the 'selected' state or the 'value'
+            State(WidgetState::SetSelected(is_selected)) |
+            State(WidgetState::SetValueBool(is_selected)) => {
+                self.widget.set_active(*is_selected);
+            },
+
+            // Standard behaviour for all other actions
+            other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            
+        }
     }
 
     ///
