@@ -5,7 +5,6 @@ use super::layout::*;
 use super::widget::*;
 use super::flo_layout::*;
 use super::custom_style::*;
-use super::super::gtk_event::*;
 use super::super::gtk_action::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_widget_event_type::*;

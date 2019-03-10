@@ -106,7 +106,7 @@ impl ToGtkActions for Control {
             Slider              => New(GtkWidgetType::Scale),
             Rotor               => New(GtkWidgetType::Rotor),
             TextBox             => New(GtkWidgetType::Label),
-            CheckBox            => New(GtkWidgetType::Label)
+            CheckBox            => New(GtkWidgetType::CheckBox)
         };
         
         // The widget class allows the style sheet to specifically target Flo widgets
