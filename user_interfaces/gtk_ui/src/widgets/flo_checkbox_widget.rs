@@ -25,7 +25,7 @@ pub struct FloCheckBoxWidget {
     /// The checkbutton widget
     widget: gtk::CheckButton,
 
-    /// The checbutton again, but cast to a widget
+    /// The checkbutton again, but cast to a widget
     as_widget: gtk::Widget,
 
     /// The widget data
