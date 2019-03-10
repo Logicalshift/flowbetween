@@ -26,22 +26,18 @@ pub struct FloCheckBoxWidget {
     widget: gtk::CheckButton,
 
     /// The checkbutton again, but cast to a widget
-    as_widget: gtk::Widget,
-
-    /// The widget data
-    widget_data: Rc<WidgetData>,
+    as_widget: gtk::Widget
 }
 
 impl FloCheckBoxWidget {
     ///
     /// Creates a new checkbox widget
     ///
-    pub fn new<W: Clone+Cast+IsA<gtk::CheckButton>+IsA<gtk::Widget>>(id: WidgetId, check_button: W, data: Rc<WidgetData>) -> FloCheckBoxWidget {
+    pub fn new<W: Clone+Cast+IsA<gtk::CheckButton>+IsA<gtk::Widget>>(id: WidgetId, check_button: W) -> FloCheckBoxWidget {
         FloCheckBoxWidget {
             id:             id,
             widget:         check_button.clone().upcast::<gtk::CheckButton>(),
-            as_widget:      check_button.clone().upcast::<gtk::Widget>(),
-            widget_data:    data
+            as_widget:      check_button.clone().upcast::<gtk::Widget>()
         }
     }
 }
