@@ -19,6 +19,9 @@ pub enum GtkEventParameter {
     /// Event indicates the value set for a scale
     ScaleValue(f64),
 
+    /// Event indicating that whether or not the control is selected has changed
+    SelectedValue(bool),
+
     /// Painting started
     PaintStart(GtkPainting),
 
@@ -60,6 +63,7 @@ impl From<GtkEventParameter> for ActionParameter {
         match event {
             GtkEventParameter::None                                         => ActionParameter::None,
             GtkEventParameter::ScaleValue(value)                            => ActionParameter::Value(PropertyValue::Float(value)),
+            GtkEventParameter::SelectedValue(value)                         => ActionParameter::Value(PropertyValue::Bool(value)),
             GtkEventParameter::PaintStart(paint)                            => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Start) ]),
             GtkEventParameter::PaintContinue(paint)                         => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Continue) ]),
             GtkEventParameter::PaintFinish(paint)                           => ActionParameter::Paint(paint.get_device(), vec![ paint.to_painting(PaintAction::Finish) ]),

@@ -1,10 +1,14 @@
 use super::basic_widget::*;
 use super::super::widgets::*;
+use super::super::gtk_event::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
+use super::super::gtk_event_parameter::*;
+use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
+use futures::Sink;
 
 use std::rc::*;
 use std::cell::*;
@@ -62,6 +66,22 @@ impl GtkUiWidget for FloCheckBoxWidget {
             State(WidgetState::SetValueBool(is_selected)) => {
                 self.widget.set_active(*is_selected);
             },
+
+            // EditValue events are ignored (there isn't a sensible way to define an 'ongoing' edit of a checkbox)
+            RequestEvent(GtkWidgetEventType::EditValue, _) => { 
+            }
+
+            // Toggling the button causes a set value event
+            RequestEvent(GtkWidgetEventType::SetValue, event_name) => {
+                let id              = self.id;
+                let sink            = RefCell::new(flo_gtk.get_event_sink());
+                let event_name      = event_name.clone();
+
+                self.widget.connect_toggled(move |widget| {
+                    let is_selected = widget.get_active();
+                    sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::SelectedValue(is_selected))).unwrap();
+                });
+            }
 
             // Standard behaviour for all other actions
             other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            
