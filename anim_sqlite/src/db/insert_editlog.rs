@@ -53,7 +53,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         use self::AnimationEdit::*;
 
         match edit {
-            &Layer(layer_id, ref layer_edit)            => { 
+            &Layer(layer_id, ref layer_edit)                => { 
                 self.db.update(vec![PushEditLogLayer(layer_id)])?;
                 self.insert_layer_edit(layer_edit)?;
             },
@@ -75,7 +75,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.insert_element_edit(element_edit)?;
             },
 
-            &Motion(motion_id, ref motion_edit)                 => {
+            &Motion(motion_id, ref motion_edit)             => {
                 Self::insert_element_id(&mut self.db, &motion_id)?;
                 self.insert_motion_edit(motion_edit)?;
             }
@@ -198,7 +198,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             },
 
             SetOrdering(at_index)           => {
-                unimplemented!("Layer SetOrdering not implemented")
+                self.db.update(vec![PushEditLogInt(0, *at_index as i64), Pop])?;
             }
         }
 

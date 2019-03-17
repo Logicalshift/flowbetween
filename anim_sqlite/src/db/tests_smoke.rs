@@ -81,6 +81,16 @@ fn smoke_push_element_order_before() {
 }
 
 #[test]
+fn smoke_push_layer_order() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::LayerSetOrdering), 
+        DatabaseUpdate::PushEditLogLayer(1), 
+        DatabaseUpdate::PushEditLogInt(0, 2),
+        DatabaseUpdate::Pop
+    ]);
+}
+
+#[test]
 fn smoke_push_element_delete() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::ElementDelete), 
