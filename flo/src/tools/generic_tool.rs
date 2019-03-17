@@ -183,13 +183,15 @@ impl<Anim: 'static+Animation, ToolData: 'static+Send+Sync, T: 'static+Tool<Anim,
 
 #[cfg(test)]
 mod test {
+    extern crate flo_anim_sqlite;
+
     use super::*;
     use super::super::brush_preview_action::*;
-    use flo_animation::inmemory::*;
+    use self::flo_anim_sqlite::*;
 
     struct TestTool;
 
-    impl Tool<InMemoryAnimation> for TestTool {
+    impl Tool<SqliteAnimation> for TestTool {
         type ToolData   = i32;
         type Model      = i32;
 
@@ -197,9 +199,9 @@ mod test {
 
         fn image_name(&self) -> String { "test".to_string() }
 
-        fn create_model(&self, _flo_model: Arc<FloModel<InMemoryAnimation>>) -> i32 { 94 }
+        fn create_model(&self, _flo_model: Arc<FloModel<SqliteAnimation>>) -> i32 { 94 }
 
-        fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<InMemoryAnimation>>, _data: Option<Arc<i32>>, input: Box<dyn 'a+Iterator<Item=ToolInput<i32>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<i32>>> {
+        fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<SqliteAnimation>>, _data: Option<Arc<i32>>, input: Box<dyn 'a+Iterator<Item=ToolInput<i32>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<_> = input.collect();
             
             if input.len() == 1 {
@@ -229,7 +231,7 @@ mod test {
     fn generates_generic_data_for_standard_data() {
         let generic_tool    = TestTool.to_flo_tool();
 
-        let animation       = Arc::new(FloModel::new(InMemoryAnimation::new()));
+        let animation       = Arc::new(FloModel::new(SqliteAnimation::new_in_memory()));
         let actions         = generic_tool.actions_for_input(animation, None, Box::new(vec![].into_iter()));
         let actions: Vec<_> = actions.collect();
 
@@ -244,7 +246,7 @@ mod test {
     fn data_survives_round_trip() {
         let generic_tool        = TestTool.to_flo_tool();
 
-        let animation           = Arc::new(FloModel::new(InMemoryAnimation::new()));
+        let animation           = Arc::new(FloModel::new(SqliteAnimation::new_in_memory()));
         let actions             = generic_tool.actions_for_input(animation.clone(), None, Box::new(vec![].into_iter()));
         let mut actions: Vec<_> = actions.collect();
 
@@ -267,7 +269,7 @@ mod test {
 
     #[test]
     fn model_survives_round_trip() {
-        let flo_model       = Arc::new(FloModel::new(InMemoryAnimation::new()));
+        let flo_model       = Arc::new(FloModel::new(SqliteAnimation::new_in_memory()));
         let generic_tool    = TestTool.to_flo_tool();
         let model           = generic_tool.create_model(Arc::clone(&flo_model));;
 

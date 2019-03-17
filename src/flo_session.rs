@@ -60,27 +60,6 @@ impl FlowBetweenSession {
     }
 
     /*
-    fn create_inmemory_animation() -> InMemoryAnimation {
-        // Create a new animation
-        let animation = InMemoryAnimation::new();
-
-        let frame_length = Duration::from_millis(1000/60);
-
-        // Add a single layer and an initial keyframe
-        animation.perform_edits(vec![
-            AnimationEdit::SetSize(1980.0, 1080.0),
-            AnimationEdit::AddNewLayer(0),
-            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
-            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(frame_length*1)),
-            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(frame_length*2)),
-            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(frame_length*3)),
-            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(frame_length*4)),
-            AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(frame_length*5))
-        ]);
-        
-        animation
-    }
-
     fn create_inmemory_animation() -> SqliteAnimation {
         // Create a new animation
         let animation = SqliteAnimation::new_in_memory();

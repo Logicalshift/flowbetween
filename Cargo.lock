@@ -660,6 +660,7 @@ name = "flo"
 version = "0.1.1"
 dependencies = [
  "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "flo_anim_sqlite 0.1.1",
  "flo_animation 0.1.1",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
