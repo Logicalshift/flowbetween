@@ -15,7 +15,6 @@ extern crate futures;
 extern crate itertools;
 
 mod traits;
-pub mod inmemory;
 pub mod brushes;
 pub mod raycast;
 
