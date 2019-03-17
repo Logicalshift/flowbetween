@@ -66,6 +66,20 @@ impl FloSqlite {
                 insert_edit_string.insert::<&[&dyn ToSql]>(&[&edit_log_id, string])?;
             },
 
+            PushEditLogInt(index, value)                                    => {
+                let edit_log_id             = self.stack.last().unwrap();
+                let mut insert_edit_int     = Self::prepare(&self.sqlite, FloStatement::InsertELInt)?;
+                let index                   = *index as i64;
+                insert_edit_int.insert::<&[&dyn ToSql]>(&[&edit_log_id, &index, value])?;
+            },
+
+            PushEditLogFloat(index, value)                                  => {
+                let edit_log_id             = self.stack.last().unwrap();
+                let mut insert_edit_int     = Self::prepare(&self.sqlite, FloStatement::InsertELFloat)?;
+                let index                   = *index as i64;
+                insert_edit_int.insert::<&[&dyn ToSql]>(&[&edit_log_id, &index, value])?;
+            },
+
             PopEditLogBrushProperties                                       => {
                 let brush_props_id      = self.stack.pop().unwrap();
                 let edit_log_id         = self.stack.pop().unwrap();

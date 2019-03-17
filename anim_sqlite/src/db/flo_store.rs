@@ -46,6 +46,12 @@ pub enum DatabaseUpdate {
     /// Pops an edit ID and associates a string value with it
     PopEditLogString(String),
 
+    /// Uses the edit ID on top of the stack and sets an integer value (the parameters to this are the value index and the value itself). Edit log items can have arbitrary numbers of such parameters, the index generally counts from 0.
+    PushEditLogInt(u32, i64),
+
+    /// Uses the edit ID on top of the stack and sets a floating-point value (the parameters to this are the value index and the value itself)
+    PushEditLogFloat(u32, f64),
+
     /// Pops two things from the stack: a brush properties ID and an edit ID and inserts a brush properties edit
     PopEditLogBrushProperties,
 

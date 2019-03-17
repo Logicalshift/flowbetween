@@ -87,7 +87,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts the parameters for an element edit into the edit log
     /// 
-    /// The stack contains the element ID on top, with the edit log ID underneath when this is called
+    /// The stack contains the edit log ID when this is called
     /// 
     fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
         use self::ElementEdit::*;
@@ -101,7 +101,12 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 ])?;
             },
 
-            Order(ElementOrdering::Before(element_id))  => { unimplemented!("ElementOrdering with specific element ID not implemented") }
+            Order(ElementOrdering::Before(element_id))  => { 
+                match element_id {
+                    ElementId::Assigned(element_id)     => { self.db.update(vec![PushEditLogInt(0, *element_id as i64), Pop])?; }
+                    ElementId::Unassigned               => { self.db.update(vec![Pop])?; }
+                }
+            }
             Order(_ordering)                            => { self.db.update(vec![Pop])?; }
             Delete                                      => { self.db.update(vec![Pop])?; }
         }

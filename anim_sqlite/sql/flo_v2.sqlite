@@ -169,22 +169,22 @@ CREATE TABLE Flo_EL_String (
  * The integer parameters attached to an edit log entry
  */
 CREATE TABLE Flo_EL_IntParameters (
-    EditId  INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
-    Index   INTEGER NOT NULL,
-    Value   INTEGER NOT NULL,
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    IntIndex    INTEGER NOT NULL,
+    Value       INTEGER NOT NULL,
 
-    PRIMARY KEY (EditId ASC, Index ASC)
+    PRIMARY KEY (EditId ASC, IntIndex ASC)
 ) WITHOUT ROWID;
 
 /*
  * The floating point parameters attached to an edit log entry
  */
 CREATE TABLE Flo_EL_FloatParameters (
-    EditId  INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
-    Index   INTEGER NOT NULL,
-    Value   REAL NOT NULL,
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    FloatIndex  INTEGER NOT NULL,
+    Value       REAL NOT NULL,
 
-    PRIMARY KEY (EditId ASC, Index ASC)
+    PRIMARY KEY (EditId ASC, FloatIndex ASC)
 ) WITHOUT ROWID;
 
 /*
