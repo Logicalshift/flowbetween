@@ -334,6 +334,10 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
                             .iter()
                             .for_each(|layer| if &layer.id == layer_id { layer.name.set(new_name.clone())} );
                         advance_edit_counter = true;
+                    },
+
+                    Layer(layer_id, SetOrdering(at_index)) => {
+                        unimplemented!("Cannot update model with layer ordering")
                     }
                 }
             }
