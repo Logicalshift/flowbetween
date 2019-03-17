@@ -166,6 +166,28 @@ CREATE TABLE Flo_EL_String (
 ) WITHOUT ROWID;
 
 /*
+ * The integer parameters attached to an edit log entry
+ */
+CREATE TABLE Flo_EL_IntParameters (
+    EditId  INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    Index   INTEGER NOT NULL,
+    Value   INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId ASC, Index ASC)
+) WITHOUT ROWID;
+
+/*
+ * The floating point parameters attached to an edit log entry
+ */
+CREATE TABLE Flo_EL_FloatParameters (
+    EditId  INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    Index   INTEGER NOT NULL,
+    Value   REAL NOT NULL,
+
+    PRIMARY KEY (EditId ASC, Index ASC)
+) WITHOUT ROWID;
+
+/*
  *  ===== Colours, brushes and similar resources
  */
 

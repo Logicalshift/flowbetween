@@ -87,7 +87,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts the parameters for an element edit into the edit log
     /// 
-    /// The stack contains the element ID when this is called
+    /// The stack contains the element ID on top, with the edit log ID underneath when this is called
     /// 
     fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
         use self::ElementEdit::*;
