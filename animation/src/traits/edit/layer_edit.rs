@@ -35,7 +35,12 @@ pub enum LayerEdit {
     RemoveKeyFrame(Duration),
 
     /// Changes the name of this layer
-    SetName(String)
+    SetName(String),
+
+    /// Sets this layer so that it is at a particular index in the ordering (moving the existing layers out of the way)
+    /// 
+    /// If the ordering is greater than the number of layers, 
+    SetOrdering(u32)
 }
 
 impl LayerEdit {

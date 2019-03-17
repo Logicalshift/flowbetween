@@ -472,6 +472,10 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     DatabaseUpdate::PushLayerId(layer_id),
                     DatabaseUpdate::PopLayerName(new_name.clone())
                 ])?;
+            },
+
+            SetOrdering(at_index) => {
+                unimplemented!("Layer ordering not implemented yet")
             }
         }
 

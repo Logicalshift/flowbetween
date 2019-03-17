@@ -198,6 +198,7 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             LayerAddKeyFrame            => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::AddKeyFrame(entry.when.unwrap_or(Duration::from_millis(0)))),
             LayerRemoveKeyFrame         => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::RemoveKeyFrame(entry.when.unwrap_or(Duration::from_millis(0)))),
             LayerSetName                => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), LayerEdit::SetName(core.db.query_edit_log_string(entry.edit_id).unwrap())),
+            LayerSetOrdering            => unimplemented!(),
 
             LayerPaintSelectBrush       => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::select_brush_for_entry(core, entry)),
             LayerPaintBrushProperties   => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::brush_properties_for_entry(core, entry)),
@@ -215,7 +216,13 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             MotionAttach                => unimplemented!(),
             MotionDetach                => unimplemented!(),
 
-            ElementSetControlPoints     => unimplemented!()
+            ElementSetControlPoints     => unimplemented!(),
+            ElementOrderInFront         => unimplemented!(),
+            ElementOrderBehind          => unimplemented!(),
+            ElementOrderToTop           => unimplemented!(),
+            ElementOrderToBottom        => unimplemented!(),
+            ElementOrderBefore          => unimplemented!(),
+            ElementDelete               => unimplemented!()
         }
     }
 

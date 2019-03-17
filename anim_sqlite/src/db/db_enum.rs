@@ -25,6 +25,7 @@ pub enum EditLogType {
     LayerPathCreatePath,
     LayerPathSelectBrush,
     LayerPathBrushProperties,
+    LayerSetOrdering,
 
     MotionCreate,
     MotionDelete,
@@ -34,7 +35,13 @@ pub enum EditLogType {
     MotionAttach,
     MotionDetach,
 
-    ElementSetControlPoints
+    ElementSetControlPoints,
+    ElementOrderInFront,
+    ElementOrderBehind,
+    ElementOrderToTop,
+    ElementOrderToBottom,
+    ElementOrderBefore,
+    ElementDelete
 }
 
 ///
@@ -199,6 +206,7 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::EditLog(LayerAddKeyFrame),
                     DbEnum::EditLog(LayerRemoveKeyFrame),
                     DbEnum::EditLog(LayerSetName),
+                    DbEnum::EditLog(LayerSetOrdering),
 
                     DbEnum::EditLog(LayerPaintSelectBrush),
                     DbEnum::EditLog(LayerPaintBrushProperties),
@@ -216,7 +224,13 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::EditLog(MotionAttach),
                     DbEnum::EditLog(MotionDetach),
 
-                    DbEnum::EditLog(ElementSetControlPoints)
+                    DbEnum::EditLog(ElementSetControlPoints),
+                    DbEnum::EditLog(ElementOrderInFront),
+                    DbEnum::EditLog(ElementOrderBehind),
+                    DbEnum::EditLog(ElementOrderToTop),
+                    DbEnum::EditLog(ElementOrderToBottom),
+                    DbEnum::EditLog(ElementOrderBefore),
+                    DbEnum::EditLog(ElementDelete)
                 ]
             },
 
@@ -292,6 +306,7 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
         use self::MotionEdit::*;
         use self::LayerEdit::*;
         use self::PaintEdit::*;
+        use self::ElementOrdering::*;
         use self::PathEdit::CreatePath;
 
         match t {
@@ -305,20 +320,27 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             Layer(_, Paint(_, SelectBrush(_, _, _)))            => EditLogType::LayerPaintSelectBrush,
             Layer(_, Paint(_, BrushProperties(_, _)))           => EditLogType::LayerPaintBrushProperties,
             Layer(_, Paint(_, BrushStroke(_,_)))                => EditLogType::LayerPaintBrushStroke,
+            Layer(_, SetOrdering(_))                            => EditLogType::LayerSetOrdering,
 
             Layer(_, Path(_, CreatePath(_, _)))                 => EditLogType::LayerPathCreatePath,
             Layer(_, Path(_, PathEdit::SelectBrush(_, _, _)))   => EditLogType::LayerPathSelectBrush,
             Layer(_, Path(_, PathEdit::BrushProperties(_, _)))  => EditLogType::LayerPathBrushProperties,
 
             Motion(_, Create)                                   => EditLogType::MotionCreate,
-            Motion(_, Delete)                                   => EditLogType::MotionDelete,
+            Motion(_, MotionEdit::Delete)                       => EditLogType::MotionDelete,
             Motion(_, SetType(_))                               => EditLogType::MotionSetType,
             Motion(_, SetOrigin(_, _))                          => EditLogType::MotionSetOrigin,
             Motion(_, SetPath(_))                               => EditLogType::MotionSetPath,
             Motion(_, Attach(_))                                => EditLogType::MotionAttach,
             Motion(_, Detach(_))                                => EditLogType::MotionDetach,
 
-            Element(_, SetControlPoints(_))                     => EditLogType::ElementSetControlPoints
+            Element(_, SetControlPoints(_))                     => EditLogType::ElementSetControlPoints,
+            Element(_, Order(InFront))                          => EditLogType::ElementOrderInFront,
+            Element(_, Order(Behind))                           => EditLogType::ElementOrderBehind,
+            Element(_, Order(ToTop))                            => EditLogType::ElementOrderToTop,
+            Element(_, Order(ToBottom))                         => EditLogType::ElementOrderToBottom,
+            Element(_, Order(Before(_)))                        => EditLogType::ElementOrderBefore,
+            Element(_, ElementEdit::Delete)                     => EditLogType::ElementDelete
         }
     }
 }
@@ -379,6 +401,7 @@ impl From<EditLogType> for DbEnumName {
             LayerAddKeyFrame            => DbEnumName("Edit", "Layer::AddKeyFrame"),
             LayerRemoveKeyFrame         => DbEnumName("Edit", "Layer::RemoveKeyFrame"),
             LayerSetName                => DbEnumName("Edit", "Layer::SetName"),
+            LayerSetOrdering            => DbEnumName("Edit", "Layer::SetOrdering"),
 
             LayerPaintSelectBrush       => DbEnumName("Edit", "Layer::Paint::SelectBrush"),
             LayerPaintBrushProperties   => DbEnumName("Edit", "Layer::Paint::BrushProperties"),
@@ -396,7 +419,13 @@ impl From<EditLogType> for DbEnumName {
             MotionAttach                => DbEnumName("Edit", "Motion::Attach"),
             MotionDetach                => DbEnumName("Edit", "Motion::Detach"),
 
-            ElementSetControlPoints     => DbEnumName("Edit", "Element::SetControlPoints")
+            ElementSetControlPoints     => DbEnumName("Edit", "Element::SetControlPoints"),
+            ElementOrderInFront         => DbEnumName("Edit", "Element::OrderInFront"),
+            ElementOrderBehind          => DbEnumName("Edit", "Element::OrderBehind"),
+            ElementOrderToTop           => DbEnumName("Edit", "Element::OrderToTop"),
+            ElementOrderToBottom        => DbEnumName("Edit", "Element::OrderToBottom"),
+            ElementOrderBefore          => DbEnumName("Edit", "Element::OrderBefore"),
+            ElementDelete               => DbEnumName("Edit", "Element::Delete")
         }
     }
 }

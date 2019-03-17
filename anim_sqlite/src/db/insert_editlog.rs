@@ -97,7 +97,10 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     PushEditLogPath,
                     Pop
                 ])?;
-            }
+            },
+
+            Order(ordering) => unimplemented!("Element ordering not implemented"),
+            Delete          => unimplemented!("Element deleting not implemented")
         }
 
         Ok(())
@@ -184,6 +187,10 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
             SetName(new_name)              => {
                 self.db.update(vec![PopEditLogString(new_name.clone())])?;
+            },
+
+            SetOrdering(at_index)           => {
+                unimplemented!("Layer SetOrdering not implemented")
             }
         }
 
