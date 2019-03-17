@@ -62,6 +62,24 @@ fn smoke_push_motion_element() {
 }
 
 #[test]
+fn smoke_push_element_order_in_front() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::ElementOrderInFront), 
+        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::Pop
+    ]);
+}
+
+#[test]
+fn smoke_push_element_delete() {
+    test_updates(vec![
+        DatabaseUpdate::PushEditType(EditLogType::ElementDelete), 
+        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::Pop
+    ]);
+}
+
+#[test]
 fn smoke_push_motion_path() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
