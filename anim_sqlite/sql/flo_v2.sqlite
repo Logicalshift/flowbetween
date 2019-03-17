@@ -401,19 +401,6 @@ CREATE TABLE Flo_Animation (
 );
 
 /*
- * Database is created with a single 2 minute long 30fps animation
- */
-INSERT INTO Flo_Animation (
-    SizeX, SizeY,
-    Duration,
-    Frame_Length_ns
-) VALUES (
-    1980.0, 1080.0,
-    1000000 * 60 * 2,
-    1000000000 / 30
-);
-
-/*
  * Represents a vector layer
  */
 CREATE TABLE Flo_LayerType (
@@ -607,3 +594,16 @@ CREATE TABLE Flo_EnumerationDescriptions (
 
 INSERT INTO FlowBetween(DataVersion, FloVersion, Stable)
      VALUES (2, "Unknown", 0);
+
+/*
+ * Database is created with a single 2 minute long 30fps animation
+ */
+INSERT INTO Flo_Animation (
+    SizeX, SizeY,
+    Duration,
+    Frame_Length_ns
+) VALUES (
+    1980.0, 1080.0,
+    1000000 * 60 * 2,
+    1000000000 / 30
+);
