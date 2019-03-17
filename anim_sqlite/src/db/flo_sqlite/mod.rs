@@ -18,6 +18,7 @@ pub use self::store::*;
 
 const V1_DEFINITION: &[u8]      = include_bytes!["../../../sql/flo_v1.sqlite"];
 const V1_V2_UPGRADE: &[u8]      = include_bytes!["../../../sql/flo_v1_to_v2.sqlite"];
+const V2_WARMUP: &[u8]          = include_bytes!["../../../sql/flo_v2_warmup.sqlite"];
 const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
 const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
 
@@ -152,6 +153,7 @@ impl FloSqlite {
     pub fn new(sqlite: Connection) -> FloSqlite {
         let mut sqlite = sqlite;
         Self::upgrade(&mut sqlite).unwrap();
+        Self::warmup_v2(&mut sqlite).unwrap();
 
         let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", NO_PARAMS, |row| row.get(0)).unwrap();
 
@@ -185,6 +187,16 @@ impl FloSqlite {
     fn upgrade_v1_to_v2(sqlite: &mut Connection) -> Result<()> {
         let v2_upgrade  = String::from_utf8_lossy(V1_V2_UPGRADE);
         sqlite.execute_batch(&v2_upgrade)?;
+
+        Ok(())
+    }
+    
+    ///
+    /// 'Warms up' a v2 database and prepares it for use
+    ///
+    fn warmup_v2(sqlite: &mut Connection) -> Result<()> {
+        let v2_warmup = String::from_utf8_lossy(V2_WARMUP);
+        sqlite.execute_batch(&v2_warmup)?;
 
         Ok(())
     }

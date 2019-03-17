@@ -4,6 +4,8 @@
  **
  **     - Add path elements
  **     - Split Flo_VectorElement into a type table and a keyframe/time table
+ **     - Add strings for edit log entries
+ **     - Add float and integer parameters for edit log entries
  **
  ***/
 

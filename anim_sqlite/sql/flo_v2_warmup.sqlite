@@ -1,0 +1,32 @@
+/***
+ **
+ ** FlowBetween File format version 2 warmup script
+ **
+ ** These actions include adding tables that were not in the original v2 specification (these changes are
+ ** minor enough that a full upgrade script is not necessary)
+ **
+ ** - Create int and float parameter tables if they don't exist
+ **
+ ***/
+
+/*
+ * The integer parameters attached to an edit log entry
+ */
+CREATE TABLE IF NOT EXISTS Flo_EL_IntParameters (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    IntIndex    INTEGER NOT NULL,
+    Value       INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId ASC, IntIndex ASC)
+) WITHOUT ROWID;
+
+/*
+ * The floating point parameters attached to an edit log entry
+ */
+CREATE TABLE IF NOT EXISTS Flo_EL_FloatParameters (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    FloatIndex  INTEGER NOT NULL,
+    Value       REAL NOT NULL,
+
+    PRIMARY KEY (EditId ASC, FloatIndex ASC)
+) WITHOUT ROWID;
