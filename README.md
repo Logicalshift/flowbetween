@@ -8,6 +8,10 @@ paths.
 
 ## Running FlowBetween
 
+[Building FlowBetween](https://flowbetween.app/building.html)
+
+If you're using OS X you can download a pre-built binary from the [website](https://flowbetween.app).
+
 FlowBetween has a unique architecture which makes its user interface extremely portable. In this early release,
 the in-browser version is easiest to play with as it will work on all operating systems. Note that to use
 a tablet with FlowBetween, you'll ideally need a browser that fully supports either the pointer events or the
