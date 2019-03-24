@@ -89,12 +89,16 @@ enum FloStatement {
     SelectMotion,
     SelectMotionTimePoints,
     SelectElementIdForAssignedId,
+    SelectZIndexForElement,
+    SelectMaxZIndexForKeyFrame,
     SelectPathElement,
     SelectPathPointsWithTypes,
 
     UpdateAnimationSize,
     UpdateMotionType,
     UpdateBrushPoint,
+    UpdateMoveZIndexUpwards,
+    UpdateMoveZIndexDownwards,
 
     InsertEnumValue,
     InsertEditType,
@@ -129,6 +133,7 @@ enum FloStatement {
     InsertKeyFrame,
     InsertVectorElementType,
     InsertOrReplaceVectorElementTime,
+    InsertOrReplaceZIndex,
     InsertElementAssignedId,
     InsertBrushDefinitionElement,
     InsertBrushPropertiesElement,
@@ -141,6 +146,7 @@ enum FloStatement {
 
     DeleteKeyFrame,
     DeleteLayer,
+    DeleteElementZIndex,
     DeleteMotion,
     DeleteMotionPoints,
     DeleteMotionAttachedElement
@@ -337,6 +343,8 @@ impl FloSqlite {
                                                         WHERE Path.MotionId = ? AND Path.PathType = ? \
                                                         ORDER BY Path.PointIndex ASC",
             SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
+            SelectZIndexForElement              => "SELECT ZIndex FROM Flo_VectorElementOrdering WHERE ElementId = ?",
+            SelectMaxZIndexForKeyFrame          => "SELECT IFNULL(MAX(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ?",
             SelectPathElement                   => "SELECT Elem.PathId, Elem.BrushId, Elem.BrushPropertiesId \
                                                         FROM Flo_PathElement    AS Elem \
                                                         WHERE Elem.ElementId = ?",
@@ -348,6 +356,8 @@ impl FloSqlite {
             UpdateAnimationSize                 => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
             UpdateMotionType                    => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
             UpdateBrushPoint                    => "UPDATE Flo_BrushPoint SET X1 = ?, Y1 = ?, X2 = ?, Y2 = ?, X3 = ?, Y3 = ? WHERE ElementId = ? AND PointId = ?",
+            UpdateMoveZIndexUpwards             => "UPDATE Flo_VectorElementOrdering SET ZIndex = ZIndex + 1 WHERE KeyFrameId = ? AND ZIndex >= ?",
+            UpdateMoveZIndexDownwards           => "UPDATE Flo_VectorElementOrdering SET ZIndex = ZIndex - 1 WHERE KeyFrameId = ? AND ZIndex >= ?",
 
             InsertEnumValue                     => "INSERT INTO Flo_EnumerationDescriptions (FieldName, Value, ApiName, Comment) SELECT ?, (SELECT IFNULL(Max(Value)+1, 0) FROM Flo_EnumerationDescriptions WHERE FieldName = ?), ?, ?",
             InsertEditType                      => "INSERT INTO Flo_EditLog (Edit) VALUES (?)",
@@ -382,6 +392,7 @@ impl FloSqlite {
             InsertKeyFrame                      => "INSERT INTO Flo_LayerKeyFrame (LayerId, AtTime) VALUES (?, ?)",
             InsertVectorElementType             => "INSERT INTO Flo_VectorElement (VectorElementType) VALUES (?)",
             InsertOrReplaceVectorElementTime    => "INSERT OR REPLACE INTO Flo_VectorElementTime (ElementId, KeyFrameId, AtTime) VALUES (?, ?, ?)",
+            InsertOrReplaceZIndex               => "INSERT OR REPLACE INTO Flo_VectorElementOrdering (ElementId, KeyFrameId, ZIndex) VALUES (?, ?, ?)",
             InsertBrushDefinitionElement        => "INSERT INTO Flo_BrushElement (ElementId, Brush, DrawingStyle) VALUES (?, ?, ?)",
             InsertBrushPropertiesElement        => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
             InsertBrushPoint                    => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -394,9 +405,10 @@ impl FloSqlite {
 
             DeleteKeyFrame                      => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                         => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
+            DeleteElementZIndex                 => "DELETE FROM Flo_VectorElementOrdering WHERE ElementId = ?",
             DeleteMotion                        => "DELETE FROM Flo_Motion WHERE MotionId = ?",
             DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
-            DeleteMotionAttachedElement         => "DELETE FROM Flo_MotionAttached WHERE MotionId = ? AND ElementId = ?"
+            DeleteMotionAttachedElement         => "DELETE FROM Flo_MotionAttached WHERE MotionId = ? AND ElementId = ?",
         }
     }
 
