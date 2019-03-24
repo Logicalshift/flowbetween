@@ -794,3 +794,58 @@ fn read_path_element() {
         assert!(false);
     }
 }
+
+
+#[test]
+fn create_path_and_re_order() {
+    use self::LayerEdit::*;
+
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(24),
+        AnimationEdit::Layer(24, AddKeyFrame(Duration::from_millis(100))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::SelectBrush(ElementId::Unassigned, BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::BrushProperties(ElementId::Unassigned, flo_animation::BrushProperties::new()))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::CreatePath(ElementId::Assigned(100), Arc::new(vec![
+                PathComponent::Move(PathPoint::new(10.0, 20.0)),
+                PathComponent::Line(PathPoint::new(20.0, 30.0)),
+                PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+                PathComponent::Close
+            ])))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::CreatePath(ElementId::Assigned(101), Arc::new(vec![
+                PathComponent::Move(PathPoint::new(10.0, 20.0)),
+                PathComponent::Line(PathPoint::new(20.0, 30.0)),
+                PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+                PathComponent::Close
+            ]))))
+    ]);
+
+    {
+        let layer               = anim.get_layer_with_id(24).unwrap();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(300));
+        let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 2);
+        assert!(elements[0].id() == ElementId::Assigned(100));
+        assert!(elements[1].id() == ElementId::Assigned(101));
+    }
+
+    anim.perform_edits(vec![
+        AnimationEdit::Element(ElementId::Assigned(101), ElementEdit::Order(ElementOrdering::Behind))
+    ]);
+
+    {
+        let layer               = anim.get_layer_with_id(24).unwrap();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(300));
+        let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() == 2);
+        assert!(elements[0].id() == ElementId::Assigned(101));
+        assert!(elements[1].id() == ElementId::Assigned(100));
+    }
+}
