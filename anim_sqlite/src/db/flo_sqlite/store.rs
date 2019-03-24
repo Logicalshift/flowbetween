@@ -341,6 +341,7 @@ impl FloSqlite {
             },
 
             PushVectorElementType(element_type)                             => {
+                // Create the element
                 let element_type                    = self.enum_value(DbEnum::VectorElement(*element_type));
                 let mut insert_vector_element_type  = Self::prepare(&self.sqlite, FloStatement::InsertVectorElementType)?;
                 let element_id                      = insert_vector_element_type.insert::<&[&dyn ToSql]>(&[&&element_type])?;
@@ -348,6 +349,7 @@ impl FloSqlite {
             },
 
             PushVectorElementTime(when)                                     => {
+                // Set when the element is
                 let element_id                      = self.stack.pop().unwrap();
                 let keyframe_id                     = self.stack.pop().unwrap();
                 let start_micros                    = self.stack.pop().unwrap();
@@ -357,6 +359,14 @@ impl FloSqlite {
                 self.stack.push(start_micros);
                 self.stack.push(keyframe_id);
                 self.stack.push(element_id);
+
+                // Set it to the highest z-index
+                let mut select_max_z_index          = Self::prepare(&self.sqlite, FloStatement::SelectMaxZIndexForKeyFrame)?;
+                let max_z_index                     = select_max_z_index.query_row(&[&keyframe_id], |row| row.get::<_, i64>(0))?;
+
+                let new_z_index                     = max_z_index + 1;
+                let mut insert_z_index              = Self::prepare(&self.sqlite, FloStatement::InsertOrReplaceZIndex)?;
+                insert_z_index.insert(&[&element_id, &keyframe_id, &new_z_index])?;
             },
 
             PushElementAssignId(assigned_id)                                => {
