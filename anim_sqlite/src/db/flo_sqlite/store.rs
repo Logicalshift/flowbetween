@@ -433,6 +433,41 @@ impl FloSqlite {
                 }
             },
 
+            PopVectorElementMove(move_direction)                            => {
+                // The stack contains the element ID and the keyframe ID
+                let element_id          = self.stack.pop().unwrap();
+                let keyframe_id         = self.stack.pop().unwrap();
+
+                // Need to work out the target z-index
+                let target_z_index      = match move_direction {
+                    DbElementMove::ToTop        => { 
+                        let mut select_max_z_index = Self::prepare(&self.sqlite, FloStatement::SelectMaxZIndexForKeyFrame)?;
+                        select_max_z_index.query_row(&[&keyframe_id], |row| row.get(0))?
+                    },
+                    DbElementMove::ToBottom     => { 0 },
+                    DbElementMove::Up           => { unimplemented!() },
+                    DbElementMove::Down         => { unimplemented!() }
+                };
+
+                // Fetch the current position
+                let mut select_current_zindex   = Self::prepare(&self.sqlite, FloStatement::SelectZIndexForElement)?;
+                let current_zindex              = select_current_zindex.query_row(&[&element_id], |row| row.get::<_, i64>(0))?;
+
+                // Remove from the current position in the frame
+                let mut delete_element_zindex   = Self::prepare(&self.sqlite, FloStatement::DeleteElementZIndex)?;
+                let mut move_z_index_down       = Self::prepare(&self.sqlite, FloStatement::UpdateMoveZIndexDownwards)?;
+                delete_element_zindex.execute(&[&element_id])?;
+                move_z_index_down.execute(&[&keyframe_id, &current_zindex])?;
+
+                // Create space around the target z-index
+                let mut move_z_index_up         = Self::prepare(&self.sqlite, FloStatement::UpdateMoveZIndexUpwards)?;
+                move_z_index_up.execute(&[&keyframe_id, &target_z_index])?;
+
+                // Update the z-index of the element
+                let mut insert_replace_zindex   = Self::prepare(&self.sqlite, FloStatement::InsertOrReplaceZIndex)?;
+                insert_replace_zindex.insert(&[&element_id, &keyframe_id, &target_z_index])?;
+            },
+
             CreateMotion(motion_id)                                         => {
                 let motion_type         = self.enum_value(DbEnum::MotionType(MotionType::None));
                 let mut insert_motion   = Self::prepare(&self.sqlite, FloStatement::InsertMotion)?;

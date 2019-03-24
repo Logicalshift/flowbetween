@@ -10,6 +10,17 @@ use std::sync::*;
 use std::time::Duration;
 
 ///
+/// When moving an element relative to itself, determines the direction in which the element should move
+///
+#[derive(Clone, PartialEq, Debug)]
+pub enum DbElementMove {
+    ToTop,
+    Up,
+    ToBottom,
+    Down
+}
+
+///
 /// Possible updates made to the database. We use a simple stack machine for
 /// database updates (so we can re-use IDs).
 /// 
@@ -155,6 +166,9 @@ pub enum DatabaseUpdate {
 
     /// Pops a path ID, a brush properties ID, a brush ID and a vector element ID and creates a path element from them
     PopVectorPathElement,
+
+    /// Pops an element ID and a keyframe ID from the stack. Moves the element within that keyframe.
+    PopVectorElementMove(DbElementMove),
 
     /// Creates a new motion with the specified ID
     CreateMotion(i64),
