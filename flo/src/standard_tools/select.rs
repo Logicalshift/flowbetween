@@ -568,8 +568,8 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     ///
     /// Creates the menu bar controller for the select tool
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Option<Arc<dyn Controller>> {
-        Some(Arc::new(SelectMenuController::new()))
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &SelectToolModel) -> Option<Arc<dyn Controller>> {
+        Some(Arc::new(SelectMenuController::new(tool_model)))
     }
 
     ///

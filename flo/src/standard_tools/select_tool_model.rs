@@ -5,6 +5,7 @@ use flo_binding::*;
 ///
 /// Model representing the state of the selection tools
 ///
+#[derive(Clone)]
 pub struct SelectToolModel {
     /// Tracks the number of items that are currently selected by the tool
     pub num_elements_selected: BindRef<u64>,
