@@ -3,7 +3,7 @@ use super::element_id::*;
 ///
 /// Possible element ordering operations
 ///
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Copy)]
 pub enum ElementOrdering {
     InFront,
     Behind,

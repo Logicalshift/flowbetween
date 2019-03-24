@@ -1,14 +1,30 @@
 use super::controls;
+use super::super::model::*;
 use super::super::standard_tools::*;
 
 use flo_ui::*;
-use flo_canvas::*;
 use flo_binding::*;
+use flo_animation::*;
+
+use desync::*;
+use futures::*;
+use futures::executor;
+use futures::executor::Spawn;
+
+use std::sync::*;
+use std::collections::HashSet;
 
 ///
 /// The menu controller for the selection tool
 /// 
 pub struct SelectMenuController {
+    /// Currently selected elements
+    selected: BindRef<Arc<HashSet<ElementId>>>,
+
+    /// The animation editing stream where this will send updates
+    edit: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
+
+    // The UI for this control
     ui: BindRef<Control>
 }
 
@@ -16,12 +32,19 @@ impl SelectMenuController {
     ///
     /// Creates a new select menu controller
     /// 
-    pub fn new(tool_model: &SelectToolModel) -> SelectMenuController {
-        let ui = Self::ui(tool_model);
+    pub fn new<Anim: 'static+Animation>(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController {
+        /*
+        let ui          = Self::ui(tool_model);
+        let edit        = Desync::new(executor::spawn(flo_model.edit()));
+        let selected    = flo_model.selection().selected_element.clone();
 
         SelectMenuController {
-            ui: ui
+            ui:         ui,
+            edit:       edit,
+            selected:   selected
         }
+        */
+       unimplemented!()
     }
 
     ///
@@ -62,18 +85,22 @@ impl SelectMenuController {
                                 Control::button()
                                     .with(vec![Control::label().with("^^").with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "MoveToFront"))
                                     .with(Bounds::next_horiz(20.0)),
                                 Control::button()
                                     .with(vec![Control::label().with("^").with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "MoveForwards"))
                                     .with(Bounds::next_horiz(20.0)),
                                 Control::button()
                                     .with(vec![Control::label().with("v").with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "MoveBackwards"))
                                     .with(Bounds::next_horiz(20.0)),
                                 Control::button()
                                     .with(vec![Control::label().with("vv").with(TextAlign::Center).with(Bounds::fill_all())])
                                     .with(Font::Size(10.0))
+                                    .with((ActionTrigger::Click, "MoveToBack"))
                                     .with(Bounds::next_horiz(20.0))
                             ])
                     ]
@@ -114,5 +141,28 @@ impl SelectMenuController {
 impl Controller for SelectMenuController {
     fn ui(&self) -> BindRef<Control> {
         self.ui.clone()
+    }
+
+    fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
+        match action_id {
+            "MoveToFront" | "MoveForwards" | "MoveBackwards" | "MoveToBack" => {
+                let selection = self.selected.get();
+                let ordering  = match action_id {
+                    "MoveToFront"   => ElementOrdering::ToTop,
+                    "MoveForwards"  => ElementOrdering::InFront,
+                    "MoveBackwards" => ElementOrdering::Behind,
+                    "MoveToBack"    => ElementOrdering::ToBottom,
+                    _               => ElementOrdering::ToTop
+                };
+
+                self.edit.desync(move |animation| { 
+                    animation.wait_send(selection.iter()
+                        .map(|selected_element| AnimationEdit::Element(*selected_element, ElementEdit::Order(ordering)))
+                        .collect()).ok();
+                    });
+            },
+
+            _ => { }
+        }
     }
 }
