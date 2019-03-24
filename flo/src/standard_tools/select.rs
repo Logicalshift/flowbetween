@@ -1,3 +1,4 @@
+use super::select_tool_model::*;
 use super::super::menu::*;
 use super::super::tools::*;
 use super::super::model::*;
@@ -7,7 +8,6 @@ use flo_ui::*;
 use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
-use flo_curves::bezier::path::{path_add, path_sub, path_remove_interior_points};
 
 use futures::*;
 use std::sync::*;
@@ -552,7 +552,7 @@ impl Select {
 
 impl<Anim: 'static+Animation> Tool<Anim> for Select {
     type ToolData   = SelectData;
-    type Model      = ();
+    type Model      = SelectToolModel;
 
     fn tool_name(&self) -> String { "Select".to_string() }
 
@@ -561,22 +561,23 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
     ///
     /// Creates the model for the Select tool
     /// 
-    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> () { }
+    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> SelectToolModel { 
+        SelectToolModel::new(flo_model.selection())
+    }
 
     ///
     /// Creates the menu bar controller for the select tool
     /// 
-    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Option<Arc<dyn Controller>> {
+    fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(SelectMenuController::new()))
     }
 
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     /// 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
         // The set of currently selected elements
         let selected_elements = flo_model.selection().selected_element.clone();
-        let selected_elements = computed(move || -> HashSet<_> { selected_elements.get().into_iter().collect() });
 
         // Create a binding that works out the frame for the currently selected layer
         let current_frame = flo_model.frame().frame.clone();
@@ -658,7 +659,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Select {
                 ToolAction::Data(SelectData {
                     frame:                  current_frame,
                     bounding_boxes:         combined_bounding_boxes,
-                    selected_elements:      Arc::new(selected_elements.into_iter().collect()),
+                    selected_elements:      selected_elements.clone(),
                     selected_elements_draw: Arc::new(vec![]),
                     action:                 SelectAction::NoAction,
                     initial_position:       RawPoint::from((0.0, 0.0)),

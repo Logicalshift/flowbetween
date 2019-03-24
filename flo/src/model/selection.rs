@@ -1,16 +1,19 @@
 use flo_binding::*;
 use flo_animation::*;
 
+use std::sync::*;
+use std::collections::HashSet;
+
 ///
 /// Model representing the item that the user has selected
 /// 
 #[derive(Clone)]
 pub struct SelectionModel {
-    /// The currently selected element
-    pub selected_element: BindRef<Vec<ElementId>>,
+    /// The list of selected elements
+    pub selected_element: BindRef<Arc<HashSet<ElementId>>>,
 
-    /// The binding for the selected element
-    selected_element_binding: Binding<Vec<ElementId>>
+    /// The binding for the selected element (used when updating)
+    selected_element_binding: Binding<Arc<HashSet<ElementId>>>
 }
 
 impl SelectionModel {
@@ -19,7 +22,7 @@ impl SelectionModel {
     /// 
     pub fn new() -> SelectionModel {
         // Create the binding for the selected element
-        let selected_element_binding = bind(vec![]);
+        let selected_element_binding = bind(Arc::new(HashSet::new()));
 
         SelectionModel {
             selected_element:           BindRef::new(&selected_element_binding),
@@ -31,17 +34,18 @@ impl SelectionModel {
     /// Adds a particular element to the selection
     /// 
     pub fn select(&self, element: ElementId) {
+        // Not *ideal* because there's a race condition here
         let existing_selection = self.selected_element_binding.get();
 
-        let mut new_selection = existing_selection;
-        new_selection.push(element);
-        self.selected_element_binding.set(new_selection);
+        let mut new_selection = (*existing_selection).clone();
+        new_selection.insert(element);
+        self.selected_element_binding.set(Arc::new(new_selection));
     }
 
     ///
     /// Clears the current selection
-    /// 
+    ///
     pub fn clear_selection(&self) {
-        self.selected_element_binding.set(vec![]);
+        self.selected_element_binding.set(Arc::new(HashSet::new()));
     }
 }

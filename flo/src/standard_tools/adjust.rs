@@ -212,8 +212,8 @@ impl Adjust {
             let selected        = selected_elements.get();
             let current_frame   = frame.get();
 
-            let control_points  = selected.into_iter()
-                .map(move |element_id|              (element_id, current_frame.as_ref().and_then(|frame| frame.element_with_id(element_id))))
+            let control_points  = selected.iter()
+                .map(move |element_id|              (*element_id, current_frame.as_ref().and_then(|frame| frame.element_with_id(*element_id))))
                 .map(|(element_id, maybe_element)|  (element_id, maybe_element.map(|element| element.control_points()).unwrap_or_else(|| vec![])))
                 .flat_map(|(element_id, control_points)| {
                     control_points.into_iter()
@@ -233,7 +233,7 @@ impl Adjust {
     fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
         // Collect the selected elements into a HashSet
         let selected_elements   = flo_model.selection().selected_element.clone();
-        let selected_elements   = computed(move || Arc::new(selected_elements.get().into_iter().collect::<HashSet<_>>()));
+        let selected_elements   = computed(move || selected_elements.get());
 
         // Get the properties for the selected elements
         let selected_elements   = Self::selected_element_properties(selected_elements, &*flo_model);
@@ -573,7 +573,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
                     frame:              frame,
                     frame_time:         frame_time,
                     state:              adjust_state.clone(),
-                    selected_elements:  Arc::new(selected_elements.into_iter().collect()),
+                    selected_elements:  selected_elements.clone(),
                     control_points:     control_points
                 })
             });
