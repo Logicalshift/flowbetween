@@ -19,7 +19,7 @@ pub struct ToolboxController<Anim: Animation> {
     anim_model:         FloModel<Anim>
 }
 
-impl<Anim: 'static+Animation> ToolboxController<Anim> {
+impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     ///
     /// Creates a new toolbox controller
     /// 
@@ -170,7 +170,7 @@ impl<Anim: 'static+Animation> ToolboxController<Anim> {
     }
 }
 
-impl<Anim: 'static+Animation> Controller for ToolboxController<Anim> {
+impl<Anim: 'static+EditableAnimation+Animation> Controller for ToolboxController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         self.ui.clone()
     }

@@ -89,7 +89,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
     }
 }
 
-impl<Anim: Animation+'static> Controller for MenuController<Anim>  {
+impl<Anim: EditableAnimation+Animation+'static> Controller for MenuController<Anim>  {
     fn ui(&self) -> BindRef<Control> {
         BindRef::clone(&self.ui)
     }

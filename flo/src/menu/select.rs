@@ -32,8 +32,7 @@ impl SelectMenuController {
     ///
     /// Creates a new select menu controller
     /// 
-    pub fn new<Anim: 'static+Animation>(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController {
-        /*
+    pub fn new<Anim: 'static+EditableAnimation+Animation>(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController {
         let ui          = Self::ui(tool_model);
         let edit        = Desync::new(executor::spawn(flo_model.edit()));
         let selected    = flo_model.selection().selected_element.clone();
@@ -43,8 +42,6 @@ impl SelectMenuController {
             edit:       edit,
             selected:   selected
         }
-        */
-       unimplemented!()
     }
 
     ///

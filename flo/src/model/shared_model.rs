@@ -16,7 +16,7 @@ pub struct FloSharedModel<Anim> {
     anim: PhantomData<Anim>
 }
 
-impl<Anim: FileAnimation+'static> FileModel for FloSharedModel<Anim> {
+impl<Anim: EditableAnimation+FileAnimation+'static> FileModel for FloSharedModel<Anim> {
     // TODO: we should probably actually share the file between instances :-)
     type InstanceModel = FloModel<Anim>;
 

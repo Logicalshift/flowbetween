@@ -550,7 +550,7 @@ impl Select {
     }
 }
 
-impl<Anim: 'static+Animation> Tool<Anim> for Select {
+impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
     type ToolData   = SelectData;
     type Model      = SelectToolModel;
 

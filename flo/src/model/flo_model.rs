@@ -47,7 +47,7 @@ pub struct FloModel<Anim: Animation> {
     edit_publisher: Arc<Desync<Spawn<Publisher<Arc<Vec<AnimationEdit>>>>>>
 }
 
-impl<Anim: Animation+'static> FloModel<Anim> {
+impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
     ///
     /// Creates a new model
     /// 
@@ -77,7 +77,9 @@ impl<Anim: Animation+'static> FloModel<Anim> {
             edit_publisher:     edit_publisher
         }
     }
+}
 
+impl<Anim: Animation+'static> FloModel<Anim> {
     ///
     /// Retrieves the model for the drawing tools for this animation
     /// 

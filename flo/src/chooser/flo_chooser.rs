@@ -12,7 +12,7 @@ use std::sync::*;
 ///
 /// The default file chooser for FlowBetween
 /// 
-pub struct FloChooser<Anim: 'static+FileAnimation> {
+pub struct FloChooser<Anim: 'static+EditableAnimation+FileAnimation> {
     /// The file manager managed by this chooser
     file_manager: Arc<SqliteFileManager>,
 
@@ -20,7 +20,7 @@ pub struct FloChooser<Anim: 'static+FileAnimation> {
     file_store: Arc<OpenFileStore<FloSharedModel<Anim>>>
 }
 
-impl<Anim: 'static+FileAnimation> FloChooser<Anim> {
+impl<Anim: 'static+EditableAnimation+FileAnimation> FloChooser<Anim> {
     ///
     /// Creates a new chooser
     /// 

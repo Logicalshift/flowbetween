@@ -29,7 +29,7 @@ pub struct ToolModel<Anim: Animation> {
     tool_models: Arc<Mutex<HashMap<String, Arc<GenericToolModel>>>>
 }
 
-impl<Anim: Animation+'static> ToolModel<Anim> {
+impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
     ///
     /// Creates a new view model
     /// 

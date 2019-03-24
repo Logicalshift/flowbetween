@@ -23,7 +23,7 @@ pub struct PaintTools<Anim: 'static+Animation> {
     flood_fill: Arc<FloTool<Anim>>
 }
 
-impl<Anim: Animation> SelectionTools<Anim> {
+impl<Anim: EditableAnimation+Animation> SelectionTools<Anim> {
     pub fn new() -> SelectionTools<Anim> {
         SelectionTools {
             select: Select::new().to_flo_tool(),
