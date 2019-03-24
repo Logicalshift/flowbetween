@@ -148,6 +148,26 @@ CREATE TABLE Flo_VectorElementTime (
     AtTime              INTEGER NOT NULL
 ) WITHOUT ROWID;
 
+/* 
+ * Associates each element with a Z-Index
+ *
+ * Every element must have a unique Z-Index (if it has one)
+ */
+CREATE TABLE Flo_VectorElementOrdering (
+    /* The ID of this element */
+    ElementId   INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+
+    /* The ID of the keyframe this element belongs to  */
+    KeyFrameId  INTEGER NOT NULL REFERENCES Flo_LayerKeyFrame(KeyFrameId),
+
+    /* The Z-Index of this element */
+    ZIndex      INTEGER NOT NULL,
+
+    PRIMARY KEY (KeyFrameId, ElementId)
+) WITHOUT ROWID;
+
+CREATE UNIQUE INDEX FloIdx_KeyframeOrdering ON Flo_VectorElementOrdering (KeyFrameId, ZIndex, ElementId);
+
 DROP INDEX IF EXISTS FloIdx_ElementTime;
 CREATE INDEX FloIdx_ElementTime ON Flo_VectorElementTime (KeyFrameId, AtTime, ElementId);
 
@@ -244,6 +264,12 @@ CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
 CREATE TRIGGER Flo_DeleteVectorElementTime BEFORE DELETE ON Flo_VectorElement
     BEGIN
         DELETE FROM Flo_VectorElementTime WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting an element deletes it from the ordering table */
+CREATE TRIGGER Flo_Delete_ElementOrdering BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_VectorElementOrdering WHERE ElementId = Old.ElementId;
     END;
 
 /* Deleting an element deletes it from the path table */

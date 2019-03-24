@@ -494,7 +494,7 @@ CREATE TABLE Flo_VectorElement (
  * Attaches a vector element to a keyframe and a time
  */
 CREATE TABLE Flo_VectorElementTime (
-    /* ID of this elemnent */
+    /* ID of this element */
     ElementId   INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
 
     /* The ID of the keyframe that this element belongs to */
@@ -506,10 +506,30 @@ CREATE TABLE Flo_VectorElementTime (
 
 CREATE INDEX FloIdx_ElementTime ON Flo_VectorElementTime (KeyFrameId, AtTime, ElementId);
 
-/* Deleting a key frame also deletes any vector elements it contains */
-CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
+/* 
+ * Associates each element with a Z-Index
+ *
+ * Every element must have a unique Z-Index (if it has one)
+ */
+CREATE TABLE Flo_VectorElementOrdering (
+    /* The ID of this element */
+    ElementId   INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+
+    /* The ID of the keyframe this element belongs to  */
+    KeyFrameId  INTEGER NOT NULL REFERENCES Flo_LayerKeyFrame(KeyFrameId),
+
+    /* The Z-Index of this element */
+    ZIndex      INTEGER NOT NULL,
+
+    PRIMARY KEY (KeyFrameId, ElementId)
+) WITHOUT ROWID;
+
+CREATE UNIQUE INDEX FloIdx_KeyframeOrdering ON Flo_VectorElementOrdering (KeyFrameId, ZIndex, ElementId);
+
+/* Deleting an element deletes it from the ordering table */
+CREATE TRIGGER Flo_Delete_ElementOrdering BEFORE DELETE ON Flo_VectorElement
     BEGIN
-        DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
+        DELETE FROM Flo_VectorElementOrdering WHERE ElementId = Old.ElementId;
     END;
 
 /*

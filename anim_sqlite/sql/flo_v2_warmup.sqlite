@@ -30,3 +30,23 @@ CREATE TABLE IF NOT EXISTS Flo_EL_FloatParameters (
 
     PRIMARY KEY (EditId ASC, FloatIndex ASC)
 ) WITHOUT ROWID;
+
+/* 
+ * Associates each element with a Z-Index
+ *
+ * Every element must have a unique Z-Index (if it has one)
+ */
+CREATE TABLE IF NOT EXISTS Flo_VectorElementOrdering (
+    /* The ID of this element */
+    ElementId   INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+
+    /* The ID of the keyframe this element belongs to  */
+    KeyFrameId  INTEGER NOT NULL REFERENCES Flo_LayerKeyFrame(KeyFrameId),
+
+    /* The Z-Index of this element */
+    ZIndex      INTEGER NOT NULL,
+
+    PRIMARY KEY (KeyFrameId, ElementId)
+) WITHOUT ROWID;
+
+CREATE UNIQUE INDEX IF NOT EXISTS FloIdx_KeyframeOrdering ON Flo_VectorElementOrdering (KeyFrameId, ZIndex, ElementId);
