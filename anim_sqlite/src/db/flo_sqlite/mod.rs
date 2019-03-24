@@ -90,6 +90,8 @@ enum FloStatement {
     SelectMotionTimePoints,
     SelectElementIdForAssignedId,
     SelectZIndexForElement,
+    SelectZIndexBeforeZIndexForKeyFrame,
+    SelectZIndexAfterZIndexForKeyFrame,
     SelectMaxZIndexForKeyFrame,
     SelectPathElement,
     SelectPathPointsWithTypes,
@@ -344,6 +346,8 @@ impl FloSqlite {
                                                         ORDER BY Path.PointIndex ASC",
             SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
             SelectZIndexForElement              => "SELECT ZIndex FROM Flo_VectorElementOrdering WHERE ElementId = ?",
+            SelectZIndexBeforeZIndexForKeyFrame => "SELECT IFNULL(MAX(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ? AND ZIndex < ?",
+            SelectZIndexAfterZIndexForKeyFrame  => "SELECT IFNULL(MIN(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ? AND ZIndex > ?",
             SelectMaxZIndexForKeyFrame          => "SELECT IFNULL(MAX(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ?",
             SelectPathElement                   => "SELECT Elem.PathId, Elem.BrushId, Elem.BrushPropertiesId \
                                                         FROM Flo_PathElement    AS Elem \

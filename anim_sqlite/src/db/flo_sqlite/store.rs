@@ -438,26 +438,38 @@ impl FloSqlite {
                 let element_id          = self.stack.pop().unwrap();
                 let keyframe_id         = self.stack.pop().unwrap();
 
-                // Need to work out the target z-index
-                let target_z_index      = match move_direction {
-                    DbElementMove::ToTop        => { 
-                        let mut select_max_z_index = Self::prepare(&self.sqlite, FloStatement::SelectMaxZIndexForKeyFrame)?;
-                        select_max_z_index.query_row(&[&keyframe_id], |row| row.get(0))?
-                    },
-                    DbElementMove::ToBottom     => { 0 },
-                    DbElementMove::Up           => { unimplemented!() },
-                    DbElementMove::Down         => { unimplemented!() }
-                };
-
                 // Fetch the current position
                 let mut select_current_zindex   = Self::prepare(&self.sqlite, FloStatement::SelectZIndexForElement)?;
                 let current_zindex              = select_current_zindex.query_row(&[&element_id], |row| row.get::<_, i64>(0))?;
+
+                // Need to work out the target z-index
+                let target_z_index      = match move_direction {
+                    DbElementMove::ToBottom     => { 0 },
+                    DbElementMove::ToTop        => { 
+                        let mut select_max_z_index = Self::prepare(&self.sqlite, FloStatement::SelectMaxZIndexForKeyFrame)?;
+                        select_max_z_index.query_row(&[&keyframe_id], |row| row.get::<_, i64>(0))? + 1
+                    },
+                    DbElementMove::Up           => {
+                        let mut select_next_z_index = Self::prepare(&self.sqlite, FloStatement::SelectZIndexAfterZIndexForKeyFrame)?;
+                        select_next_z_index.query_row(&[&keyframe_id, &current_zindex], |row| row.get::<_, i64>(0))? + 1
+                    },
+                    DbElementMove::Down         => {
+                        let mut select_previous_z_index = Self::prepare(&self.sqlite, FloStatement::SelectZIndexBeforeZIndexForKeyFrame)?;
+                        select_previous_z_index.query_row(&[&keyframe_id, &current_zindex], |row| row.get(0))?
+                    }
+                };
 
                 // Remove from the current position in the frame
                 let mut delete_element_zindex   = Self::prepare(&self.sqlite, FloStatement::DeleteElementZIndex)?;
                 let mut move_z_index_down       = Self::prepare(&self.sqlite, FloStatement::UpdateMoveZIndexDownwards)?;
                 delete_element_zindex.execute(&[&element_id])?;
                 move_z_index_down.execute(&[&keyframe_id, &current_zindex])?;
+
+                let target_z_index = if target_z_index >= current_zindex {
+                    target_z_index - 1
+                } else {
+                    target_z_index
+                };
 
                 // Create space around the target z-index
                 let mut move_z_index_up         = Self::prepare(&self.sqlite, FloStatement::UpdateMoveZIndexUpwards)?;
