@@ -309,12 +309,6 @@ CREATE TABLE Flo_PathElement (
     BrushPropertiesId   INTEGER NOT NULL REFERENCES Flo_BrushPropertiesElement(ElementId)
 ) WITHOUT ROWID;
 
-/* Deleting an element deletes it from the path table */
-CREATE TRIGGER Flo_Delete_PathElements BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_PathElement WHERE ElementId = Old.ElementId;
-    END;
-
 /*
  *  ===== Motions
  */
@@ -370,14 +364,6 @@ CREATE TABLE Flo_MotionAttached (
 
 CREATE INDEX FloIdx_AttachedMotion ON Flo_MotionAttached (ElementId, MotionId);
 
-/* Deleting a motion also deletes its attached properties */
-CREATE TRIGGER Flo_Delete_Motion_Elements BEFORE DELETE ON Flo_Motion
-    BEGIN
-        DELETE FROM Flo_MotionOrigin WHERE MotionId = Old.MotionId;
-        DELETE FROM Flo_MotionPath WHERE MotionId = Old.MotionId;
-        DELETE FROM Flo_MotionAttached WHERE MotionId = Old.MotionId;
-    END;
-
 /*
  *  ===== Animation
  */
@@ -410,14 +396,6 @@ CREATE TABLE Flo_LayerType (
     /* The type of this layer */
     LayerType       INTEGER NOT NULL
 );
-
-/* Deleting a layer type deletes the corresponding animation layers and key frames */
-CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
-    BEGIN
-        DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
-        DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
-        DELETE FROM Flo_LayerName WHERE LayerId = Old.LayerId;
-    END;
 
 /*
  * Associates an animation with the layers it contains
@@ -473,12 +451,6 @@ CREATE TABLE Flo_AssignedElementId (
 
 CREATE UNIQUE INDEX FloIdx_ElementIds ON Flo_AssignedElementId (AssignedId);
 
-/* Deleting from the assigned element ID table also removes anything that references that table */
-CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
-    BEGIN
-        DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
-    END;
-
 /*
  * Represents an element in a vector layer
  */
@@ -487,7 +459,7 @@ CREATE TABLE Flo_VectorElement (
     ElementId           INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
 
     /* Type of this element */
-    VectorElementType   INTEGER NOT NULL,
+    VectorElementType   INTEGER NOT NULL
 );
 
 /*
@@ -526,12 +498,6 @@ CREATE TABLE Flo_VectorElementOrdering (
 
 CREATE UNIQUE INDEX FloIdx_KeyframeOrdering ON Flo_VectorElementOrdering (KeyFrameId, ZIndex, ElementId);
 
-/* Deleting an element deletes it from the ordering table */
-CREATE TRIGGER Flo_Delete_ElementOrdering BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_VectorElementOrdering WHERE ElementId = Old.ElementId;
-    END;
-
 /*
  * Vector brush element
  */
@@ -541,12 +507,6 @@ CREATE TABLE Flo_BrushElement (
     DrawingStyle    INTEGER NOT NULL
 ) WITHOUT ROWID;
 
-/* Deleting a vector element deletes the attached brush elements */
-CREATE TRIGGER Flo_Delete_BrushElements BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_BrushElement WHERE ElementId = Old.ElementId;
-    END;
-
 /*
  * Vector brush properties element
  */
@@ -554,12 +514,6 @@ CREATE TABLE Flo_BrushPropertiesElement (
     ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
     BrushProperties     INTEGER NOT NULL REFERENCES Flo_BrushProperties(BrushProperties)
 ) WITHOUT ROWID;
-
-/* Deleting a vector element deletes the attached brush properties elements */
-CREATE TRIGGER Flo_Delete_BrushPropertiesElements BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_BrushPropertiesElement WHERE ElementId = Old.ElementId;
-    END;
 
 /*
  * Brush point associated with an element
@@ -578,12 +532,6 @@ CREATE TABLE Flo_BrushPoint (
 
     PRIMARY KEY (ElementId, PointId)
 ) WITHOUT ROWID;
-
-/* Deleting a vector element deletes the points elements */
-CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_BrushPoint WHERE ElementId = Old.ElementId;
-    END;
 
 /*
  *  ===== Enumeration descriptions
@@ -607,6 +555,75 @@ CREATE TABLE Flo_EnumerationDescriptions (
 
     PRIMARY KEY (FieldName, ApiName)
 );
+
+/*
+ *  ===== TRIGGERS
+ */
+
+/* Deleting an element deletes it from the path table */
+CREATE TRIGGER Flo_Delete_PathElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_PathElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a motion also deletes its attached properties */
+CREATE TRIGGER Flo_Delete_Motion_Elements BEFORE DELETE ON Flo_Motion
+    BEGIN
+        DELETE FROM Flo_MotionOrigin WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_MotionPath WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_MotionAttached WHERE MotionId = Old.MotionId;
+    END;
+
+/* Deleting a layer type deletes the corresponding animation layers and key frames */
+CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
+    BEGIN
+        DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
+        DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
+        DELETE FROM Flo_LayerName WHERE LayerId = Old.LayerId;
+    END;
+
+/* Deleting from the assigned element ID table also removes anything that references that table */
+CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
+    BEGIN
+        DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
+    END;
+
+/* Deleting an element deletes it from the ordering table */
+CREATE TRIGGER Flo_Delete_ElementOrdering BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_VectorElementOrdering WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the attached brush elements */
+CREATE TRIGGER Flo_Delete_BrushElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the attached brush properties elements */
+CREATE TRIGGER Flo_Delete_BrushPropertiesElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPropertiesElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the points elements */
+CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPoint WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a key frame also deletes any vector elements it contains */
+CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
+    BEGIN
+        DELETE FROM Flo_VectorElement WHERE ElementId IN (SELECT ElementId FROM Flo_VectorElementTime WHERE KeyFrameId = Old.KeyFrameId);
+        DELETE FROM Flo_VectorElementTime WHERE KeyFrameId = Old.KeyFrameId;
+    END;
+
+/* Deleting an element deletes it from the time table */
+CREATE TRIGGER Flo_DeleteVectorElementTime BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_VectorElementTime WHERE ElementId = Old.ElementId;
+    END;
 
 /*
  *  ===== DEFAULT DATA
