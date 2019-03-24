@@ -315,9 +315,6 @@ impl FloQuery for FloSqlite {
     /// Queries the vector elements that appear before a certain time in the specified keyframe
     /// 
     fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>> {
-        // Can't call value_for_enum from query_map due to lifetimes, and need to deal
-        // with the fact that individual rows can have errors as well as the whole thing,
-        // so this ends up messy
         self.query_map(FloStatement::SelectVectorElementsBefore, &[&keyframe_id, &Self::get_micros(&before)], |row| (row.get(0), row.get(1), row.get(2), row.get(3), row.get(4), row.get(5), row.get(6)))
             .map(|rows_with_errors|
                 rows_with_errors.map(|row_with_error| row_with_error.unwrap())
