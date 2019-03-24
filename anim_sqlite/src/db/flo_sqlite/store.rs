@@ -381,6 +381,15 @@ impl FloSqlite {
                 self.stack.push(element_id);
             },
 
+            PushKeyFrameIdForElementId                                      => {
+                let element_id                      = self.stack.pop().unwrap();
+                let mut key_frame_for_element_id    = Self::prepare(&self.sqlite, FloStatement::SelectElementKeyFrame)?;
+
+                let key_frame_id                    = key_frame_for_element_id.query_row(&[&element_id], |row| row.get(0))?;
+                self.stack.push(key_frame_id);
+                self.stack.push(element_id);
+            },
+
             PopVectorBrushElement(drawing_style)                            => {
                 let brush_id                            = self.stack.pop().unwrap();
                 let element_id                          = self.stack.pop().unwrap();

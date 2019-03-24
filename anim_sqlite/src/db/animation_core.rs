@@ -425,6 +425,23 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         ])?;
                     },
 
+                    (_any_type, ElementEdit::Order(ordering)) => {
+                        let update_order = match ordering {
+                            ElementOrdering::InFront    => vec![DatabaseUpdate::PopVectorElementMove(DbElementMove::Up)],
+                            ElementOrdering::Behind     => vec![DatabaseUpdate::PopVectorElementMove(DbElementMove::Down)],
+                            ElementOrdering::ToTop      => vec![DatabaseUpdate::PopVectorElementMove(DbElementMove::ToTop)],
+                            ElementOrdering::ToBottom   => vec![DatabaseUpdate::PopVectorElementMove(DbElementMove::ToBottom)],
+                            ElementOrdering::Before(_)  => unimplemented!()
+                        }.into_iter();
+
+                        // Need to push the element ID and the keyframe ID
+                        self.db.update(vec![
+                            DatabaseUpdate::PushElementIdForAssignedId(element_id),
+                            DatabaseUpdate::PushKeyFrameIdForElementId
+                        ].into_iter()
+                        .chain(update_order))?;
+                    },
+
                     // Other types have no action
                     _ => ()
                 }

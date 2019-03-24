@@ -152,6 +152,9 @@ pub enum DatabaseUpdate {
     /// Takes the assigned ID from the top of the stack and pushes the corresponding element ID
     PushElementIdForAssignedId(i64),
 
+    /// Pops the element ID from the top of the stack and pushes the key frame ID and then the element ID
+    PushKeyFrameIdForElementId,
+
     /// Pops a brush ID and a vector element ID and creates a vector brush element from them
     PopVectorBrushElement(DrawingStyleType),
 
