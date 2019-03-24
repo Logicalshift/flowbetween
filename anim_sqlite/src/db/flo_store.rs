@@ -143,7 +143,7 @@ pub enum DatabaseUpdate {
 
     /// Pops an element ID, a keyframe ID and a keyframe time and sets the time for the element ID.
     /// This also sets the element Z-order so that it is on top at this time.
-    /// Pushes the element ID, key frame ID and time back onto the stack afterwards
+    /// Pushes the element ID, key frame ID and time back onto the stack afterwards (element ID on top of the stack)
     PushVectorElementTime(Duration),
 
     /// Uses the element ID on top of the stack and sets its assigned ID, leaving it on top of the stack

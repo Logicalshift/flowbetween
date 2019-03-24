@@ -543,6 +543,66 @@ fn smoke_push_vector_element_type() {
 }
 
 #[test]
+fn smoke_push_vector_element_move_up() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke),
+        DatabaseUpdate::PushVectorElementTime(Duration::from_millis(2500)),
+        DatabaseUpdate::PopVectorElementMove(DbElementMove::Up),
+        DatabaseUpdate::Pop
+    ])
+}
+
+#[test]
+fn smoke_push_vector_element_move_to_top() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke),
+        DatabaseUpdate::PushVectorElementTime(Duration::from_millis(2500)),
+        DatabaseUpdate::PopVectorElementMove(DbElementMove::ToTop),
+        DatabaseUpdate::Pop
+    ])
+}
+
+#[test]
+fn smoke_push_vector_element_move_down() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke),
+        DatabaseUpdate::PushVectorElementTime(Duration::from_millis(2500)),
+        DatabaseUpdate::PopVectorElementMove(DbElementMove::Down),
+        DatabaseUpdate::Pop
+    ])
+}
+
+#[test]
+fn smoke_push_vector_element_move_to_bottom() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke),
+        DatabaseUpdate::PushVectorElementTime(Duration::from_millis(2500)),
+        DatabaseUpdate::PopVectorElementMove(DbElementMove::ToBottom),
+        DatabaseUpdate::Pop
+    ])
+}
+
+#[test]
 fn smoke_push_vector_element_assign_id() {
     test_updates(vec![
         DatabaseUpdate::PushLayerType(LayerType::Vector),
