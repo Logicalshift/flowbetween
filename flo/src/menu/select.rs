@@ -124,6 +124,9 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                             .with(Font::Size(14.0))
                             .with(Bounds::next_horiz(48.0)),
 
+                        Control::empty()
+                            .with(Bounds::next_horiz(4.0)),
+
                         Control::label()
                             .with(num_selected)
                             .with(FontWeight::Light)
