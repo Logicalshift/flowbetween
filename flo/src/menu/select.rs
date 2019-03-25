@@ -17,30 +17,35 @@ use std::collections::HashSet;
 ///
 /// The menu controller for the selection tool
 /// 
-pub struct SelectMenuController {
+pub struct SelectMenuController<Anim: Animation> {
     /// Currently selected elements
     selected: BindRef<Arc<HashSet<ElementId>>>,
 
     /// The animation editing stream where this will send updates
     edit: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
 
+    /// The timeline model for the animation
+    timeline: TimelineModel<Anim>,
+
     // The UI for this control
     ui: BindRef<Control>
 }
 
-impl SelectMenuController {
+impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     ///
     /// Creates a new select menu controller
     /// 
-    pub fn new<Anim: 'static+EditableAnimation+Animation>(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController {
+    pub fn new(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController<Anim> {
         let ui          = Self::ui(tool_model);
         let edit        = Desync::new(executor::spawn(flo_model.edit()));
         let selected    = flo_model.selection().selected_element.clone();
+        let timeline    = flo_model.timeline().clone();
 
         SelectMenuController {
             ui:         ui,
             edit:       edit,
-            selected:   selected
+            selected:   selected,
+            timeline:   timeline
         }
     }
 
@@ -135,7 +140,7 @@ impl SelectMenuController {
     }
 }
 
-impl Controller for SelectMenuController {
+impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuController<Anim> {
     fn ui(&self) -> BindRef<Control> {
         self.ui.clone()
     }
@@ -143,8 +148,8 @@ impl Controller for SelectMenuController {
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
             "MoveToFront" | "MoveForwards" | "MoveBackwards" | "MoveToBack" => {
-                let selection = self.selected.get();
-                let ordering  = match action_id {
+                let selection   = self.selected.get();
+                let ordering    = match action_id {
                     "MoveToFront"   => ElementOrdering::ToTop,
                     "MoveForwards"  => ElementOrdering::InFront,
                     "MoveBackwards" => ElementOrdering::Behind,
@@ -152,11 +157,12 @@ impl Controller for SelectMenuController {
                     _               => ElementOrdering::ToTop
                 };
 
-                self.edit.desync(move |animation| { 
+                self.edit.sync(move |animation| { 
                     animation.wait_send(selection.iter()
                         .map(|selected_element| AnimationEdit::Element(*selected_element, ElementEdit::Order(ordering)))
                         .collect()).ok();
                     });
+                self.timeline.invalidate_canvas();
             },
 
             _ => { }
