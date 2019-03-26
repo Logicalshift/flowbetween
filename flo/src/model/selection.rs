@@ -1,3 +1,6 @@
+use super::frame::*;
+use super::timeline::*;
+
 use flo_binding::*;
 use flo_animation::*;
 
@@ -12,6 +15,9 @@ pub struct SelectionModel {
     /// The list of selected elements
     pub selected_element: BindRef<Arc<HashSet<ElementId>>>,
 
+    /// The selected elements as they are ordered in the image
+    pub selection_in_order: BindRef<Arc<Vec<ElementId>>>,
+
     /// The binding for the selected element (used when updating)
     selected_element_binding: Binding<Arc<HashSet<ElementId>>>
 }
@@ -20,14 +26,51 @@ impl SelectionModel {
     ///
     /// Creates a new selection model
     /// 
-    pub fn new() -> SelectionModel {
+    pub fn new<Anim: Animation>(frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> SelectionModel {
         // Create the binding for the selected element
-        let selected_element_binding = bind(Arc::new(HashSet::new()));
+        let selected_element_binding    = bind(Arc::new(HashSet::new()));
+        let selected_element            = BindRef::new(&selected_element_binding);
+        let selection_in_order          = Self::selection_in_order(selected_element.clone(), frame_model, timeline_model);
 
         SelectionModel {
-            selected_element:           BindRef::new(&selected_element_binding),
-            selected_element_binding:   selected_element_binding
+            selected_element:           selected_element,
+            selected_element_binding:   selected_element_binding,
+            selection_in_order:         selection_in_order
         }
+    }
+
+    ///
+    /// Creates a binding of the selection in back-to-front order
+    ///
+    fn selection_in_order<Anim: Animation>(selection: BindRef<Arc<HashSet<ElementId>>>, frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> BindRef<Arc<Vec<ElementId>>> {
+        let frame               = frame_model.frame.clone();
+        let invalidation_count  = timeline_model.canvas_invalidation_count.clone();
+
+        let in_order = computed(move || {
+            // Order needs to be recalculated if the frame is ever invalidated
+            invalidation_count.get();
+
+            // Vec where we store the in-order items
+            let mut in_order = vec![];
+
+            if let Some(frame) = frame.get() {
+                // Fetch the un-ordered selection
+                let selection = selection.get();
+
+                // Fetch the elements in the frame
+                if let Some(frame_elements) = frame.vector_elements() {
+                    for element in frame_elements {
+                        if selection.contains(&element.id()) {
+                            in_order.push(element.id());
+                        }
+                    }
+                }
+            }
+
+            Arc::new(in_order)
+        });
+
+        BindRef::new(&in_order)
     }
 
     ///
