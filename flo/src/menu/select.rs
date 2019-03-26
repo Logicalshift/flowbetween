@@ -21,6 +21,9 @@ pub struct SelectMenuController<Anim: Animation> {
     /// Currently selected elements
     selected: BindRef<Arc<HashSet<ElementId>>>,
 
+    /// Currently selected elements, in order
+    selection_in_order: BindRef<Arc<Vec<ElementId>>>,
+
     /// The animation editing stream where this will send updates
     edit: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
 
@@ -36,16 +39,18 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     /// Creates a new select menu controller
     /// 
     pub fn new(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController<Anim> {
-        let ui          = Self::ui(tool_model);
-        let edit        = Desync::new(executor::spawn(flo_model.edit()));
-        let selected    = flo_model.selection().selected_element.clone();
-        let timeline    = flo_model.timeline().clone();
+        let ui                  = Self::ui(tool_model);
+        let edit                = Desync::new(executor::spawn(flo_model.edit()));
+        let selected            = flo_model.selection().selected_element.clone();
+        let selection_in_order  = flo_model.selection().selection_in_order.clone();
+        let timeline            = flo_model.timeline().clone();
 
         SelectMenuController {
-            ui:         ui,
-            edit:       edit,
-            selected:   selected,
-            timeline:   timeline
+            ui:                 ui,
+            edit:               edit,
+            selected:           selected,
+            selection_in_order: selection_in_order,
+            timeline:           timeline
         }
     }
 
@@ -151,20 +156,28 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
     fn action(&self, action_id: &str, _action_parameter: &ActionParameter) {
         match action_id {
             "MoveToFront" | "MoveForwards" | "MoveBackwards" | "MoveToBack" => {
-                let selection   = self.selected.get();
-                let ordering    = match action_id {
-                    "MoveToFront"   => ElementOrdering::ToTop,
-                    "MoveForwards"  => ElementOrdering::InFront,
-                    "MoveBackwards" => ElementOrdering::Behind,
-                    "MoveToBack"    => ElementOrdering::ToBottom,
-                    _               => ElementOrdering::ToTop
+                let selection                       = self.selection_in_order.get();
+                let (ordering, apply_in_reverse)    = match action_id {
+                    "MoveToFront"   => (ElementOrdering::ToTop, true),
+                    "MoveForwards"  => (ElementOrdering::InFront, true),
+                    "MoveBackwards" => (ElementOrdering::Behind, false),
+                    "MoveToBack"    => (ElementOrdering::ToBottom, false),
+                    _               => (ElementOrdering::ToTop, true)
                 };
 
-                self.edit.sync(move |animation| { 
-                    animation.wait_send(selection.iter()
-                        .map(|selected_element| AnimationEdit::Element(*selected_element, ElementEdit::Order(ordering)))
-                        .collect()).ok();
-                    });
+                if apply_in_reverse {
+                    self.edit.sync(move |animation| { 
+                        animation.wait_send(selection.iter().rev()
+                            .map(|selected_element| AnimationEdit::Element(*selected_element, ElementEdit::Order(ordering)))
+                            .collect()).ok();
+                        });
+                } else {
+                    self.edit.sync(move |animation| { 
+                        animation.wait_send(selection.iter()
+                            .map(|selected_element| AnimationEdit::Element(*selected_element, ElementEdit::Order(ordering)))
+                            .collect()).ok();
+                        });
+                }
                 self.timeline.invalidate_canvas();
             },
 

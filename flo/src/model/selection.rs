@@ -15,7 +15,7 @@ pub struct SelectionModel {
     /// The list of selected elements
     pub selected_element: BindRef<Arc<HashSet<ElementId>>>,
 
-    /// The selected elements as they are ordered in the image
+    /// The selected elements as they are ordered in the current frame (selected elements not in the current frame are excluded)
     pub selection_in_order: BindRef<Arc<Vec<ElementId>>>,
 
     /// The binding for the selected element (used when updating)
