@@ -66,7 +66,7 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
                     _ => format!("{} items", num_selected)
                 };
 
-                // Extra controls
+                // Extra controls to display when there's a selection to edit
                 let selection_controls = if anything_selected.get() {
                     vec![
                         controls::divider(),
