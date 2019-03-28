@@ -503,7 +503,7 @@ impl Adjust {
                 let edit_element        = if let Some(vector) = vector {
                     let new_control_points  = Self::adjusted_control_points_before_motion(model, data, &vector, &final_action);
                     vec![
-                        ToolAction::Edit(AnimationEdit::Element(element_id, ElementEdit::SetControlPoints(new_control_points))),
+                        ToolAction::Edit(AnimationEdit::Element(vec![element_id], ElementEdit::SetControlPoints(new_control_points))),
                         ToolAction::InvalidateFrame
                     ]
                 } else {

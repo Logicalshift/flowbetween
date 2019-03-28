@@ -167,15 +167,15 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
 
                 if apply_in_reverse {
                     self.edit.sync(move |animation| { 
-                        animation.wait_send(selection.iter().rev()
-                            .map(|selected_element| AnimationEdit::Element(*selected_element, ElementEdit::Order(ordering)))
-                            .collect()).ok();
+                        animation.wait_send(vec![
+                                AnimationEdit::Element(selection.iter().rev().cloned().collect(), ElementEdit::Order(ordering))
+                            ]).ok();
                         });
                 } else {
                     self.edit.sync(move |animation| { 
-                        animation.wait_send(selection.iter()
-                            .map(|selected_element| AnimationEdit::Element(*selected_element, ElementEdit::Order(ordering)))
-                            .collect()).ok();
+                        animation.wait_send(vec![
+                                AnimationEdit::Element(selection.iter().cloned().collect(), ElementEdit::Order(ordering))
+                            ]).ok();
                         });
                 }
                 self.timeline.invalidate_canvas();
