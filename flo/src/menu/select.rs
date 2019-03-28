@@ -165,6 +165,8 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                     _               => (ElementOrdering::ToTop, true)
                 };
 
+                // TODO: brush elements have styles implied by the order that the elements are in the keyframe, so we need a way of editing the brush styles of the elements after re-ordering them here
+
                 if apply_in_reverse {
                     self.edit.sync(move |animation| { 
                         animation.wait_send(vec![

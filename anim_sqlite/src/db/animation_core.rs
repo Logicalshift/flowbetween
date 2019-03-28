@@ -457,6 +457,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Sends an editing operation to many elements at once
     ///
     fn edit_many_elements<ElementIter: IntoIterator<Item=ElementId>>(&mut self, element_ids: ElementIter, element_edit: ElementEdit) -> Result<()> {
+        // TODO: some operations (ordering, for instance) can be performed more efficiently by performing the edits on all of the elements as a single operation
         for element_id in element_ids {
             self.edit_element(element_id, element_edit.clone())?;
         }
