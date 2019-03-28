@@ -454,6 +454,17 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     }
 
     ///
+    /// Sends an editing operation to many elements at once
+    ///
+    fn edit_many_elements<ElementIter: IntoIterator<Item=ElementId>>(&mut self, element_ids: ElementIter, element_edit: ElementEdit) -> Result<()> {
+        for element_id in element_ids {
+            self.edit_element(element_id, element_edit.clone())?;
+        }
+
+        Ok(())
+    }
+
+    ///
     /// Performs a layer edit to a vector layer
     /// 
     pub fn edit_vector_layer(&mut self, layer_id: i64, edit: LayerEdit) -> Result<()> {
@@ -545,8 +556,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     self.edit_vector_layer(layer_id, layer_edit)?;
                 },
 
-                Element(element_id, element_edit) => {
-                    self.edit_element(element_id, element_edit)?;
+                Element(element_ids, element_edit) => {
+                    self.edit_many_elements(element_ids, element_edit)?;
                 },
 
                 Motion(motion_id, motion_edit) => {

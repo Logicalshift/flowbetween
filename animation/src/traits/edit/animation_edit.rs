@@ -12,7 +12,7 @@ pub enum AnimationEdit {
     Layer(u64, LayerEdit),
 
     /// Edit to an existing element
-    Element(ElementId, ElementEdit),
+    Element(Vec<ElementId>, ElementEdit),
 
     /// Edit to a motion (which is a description of how an element moves over time)
     /// Motions have element IDs so can be treated as elements but are not attached to a layer

@@ -35,7 +35,7 @@ fn smoke_push_edit_type() {
 fn smoke_push_motion_origin() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogElementId(0, 1), 
         DatabaseUpdate::PushEditLogMotionOrigin(42.0, 24.0),
         DatabaseUpdate::Pop
     ]);
@@ -45,7 +45,7 @@ fn smoke_push_motion_origin() {
 fn smoke_push_motion_type_translate() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogElementId(0, 1), 
         DatabaseUpdate::PushEditLogMotionType(MotionType::Translate),
         DatabaseUpdate::Pop
     ]);
@@ -55,7 +55,7 @@ fn smoke_push_motion_type_translate() {
 fn smoke_push_motion_element() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogElementId(0, 1), 
         DatabaseUpdate::PushEditLogMotionElement(2),
         DatabaseUpdate::Pop
     ]);
@@ -65,7 +65,7 @@ fn smoke_push_motion_element() {
 fn smoke_push_element_order_in_front() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::ElementOrderInFront), 
-        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogElementId(0, 1), 
         DatabaseUpdate::Pop
     ]);
 }
@@ -74,7 +74,7 @@ fn smoke_push_element_order_in_front() {
 fn smoke_push_element_order_before() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::ElementOrderBefore), 
-        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogElementId(0, 1), 
         DatabaseUpdate::PushEditLogInt(0, 1),
         DatabaseUpdate::Pop
     ]);
@@ -94,7 +94,7 @@ fn smoke_push_layer_order() {
 fn smoke_push_element_delete() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::ElementDelete), 
-        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogElementId(0, 1), 
         DatabaseUpdate::Pop
     ]);
 }
@@ -103,7 +103,7 @@ fn smoke_push_element_delete() {
 fn smoke_push_motion_path() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(1), 
+        DatabaseUpdate::PushEditLogElementId(0, 1), 
         DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
         DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
         DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
@@ -374,7 +374,7 @@ fn smoke_editlog_brush_properties() {
 fn smoke_editlog_element_id() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::LayerPaintSelectBrush),
-        DatabaseUpdate::PushEditLogElementId(3),
+        DatabaseUpdate::PushEditLogElementId(0, 3),
         DatabaseUpdate::PushBrushType(BrushDefinitionType::Ink),
         DatabaseUpdate::PushInkBrush(1.0, 2.0, 3.0),
         DatabaseUpdate::PopEditLogBrush(DrawingStyleType::Erase)
@@ -395,13 +395,13 @@ fn smoke_editlog_brush() {
 fn smoke_editlog_path() {
     test_updates(vec![
         DatabaseUpdate::PushEditType(EditLogType::ElementSetControlPoints),
-        DatabaseUpdate::PushEditLogElementId(3),
+        DatabaseUpdate::PushEditLogElementId(0, 3),
         DatabaseUpdate::PushPath(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0), (7.0, 8.0), (9.0, 10.0), (11.0, 12.0)]),
         DatabaseUpdate::PushEditLogPath,
         DatabaseUpdate::Pop,
 
         DatabaseUpdate::PushEditType(EditLogType::ElementSetControlPoints),
-        DatabaseUpdate::PushEditLogElementId(4),
+        DatabaseUpdate::PushEditLogElementId(0, 4),
         DatabaseUpdate::PushPath(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0), (7.0, 8.0), (9.0, 10.0), (11.0, 12.0)]),
         DatabaseUpdate::PushEditLogPath,
         DatabaseUpdate::Pop

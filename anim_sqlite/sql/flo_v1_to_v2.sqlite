@@ -210,6 +210,20 @@ CREATE TABLE Flo_EL_String (
 ) WITHOUT ROWID;
 
 /*
+ * If an element specifies element IDs, the EL_ElementId table supplies what the IDs are (the meaning of the
+ * indexes depends on the type of edit. If only a single element ID is specified, then this is usually specified
+ * as index 0)
+ */
+CREATE TABLE Flo_EL_ElementIds (
+    EditId          INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    ElementIndex    INTEGER NOT NULL,
+
+    ElementId       INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId, ElementIndex)
+) WITHOUT ROWID;
+
+/*
  * The integer parameters attached to an edit log entry
  */
 CREATE TABLE Flo_EL_IntParameters (
@@ -230,6 +244,8 @@ CREATE TABLE Flo_EL_FloatParameters (
 
     PRIMARY KEY (EditId ASC, FloatIndex ASC)
 ) WITHOUT ROWID;
+
+INSERT INTO Flo_EL_ElementIds (EditId, ElementIndex, ElementId) SELECT EditId, 0, ElementId FROM Flo_EL_ElementId;
 
 /*
  *  ===== Triggers
@@ -283,6 +299,7 @@ DROP TABLE Flo_OldBrushPoint;
 DROP TABLE Flo_OldBrushElement;
 DROP TABLE Flo_OldBrushPropertiesElement;
 DROP TABLE Flo_OldVectorElement;
+DROP TABLE Flo_EL_ElementId;
 
 UPDATE FlowBetween SET DataVersion=2;
 

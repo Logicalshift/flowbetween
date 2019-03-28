@@ -45,8 +45,8 @@ pub enum DatabaseUpdate {
     /// Sets the layer for the current edit log item, leaving the log ID on the stack
     PushEditLogLayer(u64),
 
-    /// Sets the element ID for the current edit log item, leaving the log ID on the stack
-    PushEditLogElementId(i64),
+    /// Sets the element ID for the current edit log item at the specified index, leaving the log ID on the stack
+    PushEditLogElementId(usize, i64),
 
     /// Sets the time of the current edit item, leaving the log ID on the stack
     PushEditLogWhen(Duration),

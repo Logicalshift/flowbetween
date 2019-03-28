@@ -292,7 +292,8 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_EL_When            AS Time          ON EL.Id = Time.EditId \
                                                         LEFT OUTER JOIN Flo_EL_Brush           AS Brush         ON EL.Id = Brush.EditId \
                                                         LEFT OUTER JOIN Flo_EL_BrushProperties AS BrushProps    ON EL.Id = BrushProps.EditId \
-                                                        LEFT OUTER JOIN Flo_EL_ElementId       AS ElementId     ON EL.Id = ElementId.EditId \
+                                                        LEFT OUTER JOIN Flo_EL_ElementIds      AS ElementId     ON EL.Id = ElementId.EditId \
+                                                        WHERE ElementId.ElementIndex = 0 OR ElementId.ElementIndex IS NULL \
                                                         LIMIT ? OFFSET ?",
             SelectEditLogSize                   => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
             SelectEditLogRawPoints              => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
@@ -372,7 +373,7 @@ impl FloSqlite {
             InsertELWhen                        => "INSERT INTO Flo_EL_When (EditId, AtTime) VALUES (?, ?)",
             InsertELBrush                       => "INSERT INTO Flo_EL_Brush (EditId, DrawingStyle, Brush) VALUES (?, ?, ?)",
             InsertELBrushProperties             => "INSERT INTO Flo_EL_BrushProperties (EditId, BrushProperties) VALUES (?, ?)",
-            InsertELElementId                   => "INSERT INTO Flo_EL_ElementId (EditId, ElementId) VALUES (?, ?)",
+            InsertELElementId                   => "INSERT INTO Flo_EL_ElementIds (EditId, ElementIndex, ElementId) VALUES (?, ?, ?)",
             InsertELRawPoints                   => "INSERT INTO Flo_EL_RawPoints (EditId, Points) VALUES (?, ?)",
             InsertELMotionOrigin                => "INSERT INTO Flo_EL_MotionOrigin (EditId, X, Y) VALUES (?, ?, ?)",
             InsertELMotionType                  => "INSERT INTO Flo_EL_MotionType (EditId, MotionType) VALUES (?, ?)",

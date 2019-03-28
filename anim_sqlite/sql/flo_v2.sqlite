@@ -49,12 +49,17 @@ CREATE TABLE Flo_EL_Size (
 ) WITHOUT ROWID;
 
 /*
- * If an element specifies an element ID, the EL_ElementId table supplies what that ID is
+ * If an element specifies element IDs, the EL_ElementIds table supplies what the IDs are (the meaning of the
+ * indexes depends on the type of edit. If only a single element ID is specified, then this is usually specified
+ * as index 0)
  */
-CREATE TABLE Flo_EL_ElementId (
-    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+CREATE TABLE Flo_EL_ElementIds (
+    EditId          INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    ElementIndex    INTEGER NOT NULL,
 
-    ElementId   INTEGER NOT NULL
+    ElementId       INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId, ElementIndex)
 ) WITHOUT ROWID;
 
 /*

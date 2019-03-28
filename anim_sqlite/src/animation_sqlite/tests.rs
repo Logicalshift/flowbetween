@@ -458,7 +458,7 @@ fn edit_brush_strokes() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
         
-        AnimationEdit::Element(ElementId::Assigned(100), ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
     ]);
     anim.panic_on_error();
 }
@@ -836,7 +836,7 @@ fn create_path_and_re_order() {
     }
 
     anim.perform_edits(vec![
-        AnimationEdit::Element(ElementId::Assigned(101), ElementEdit::Order(ElementOrdering::Behind))
+        AnimationEdit::Element(vec![ElementId::Assigned(101)], ElementEdit::Order(ElementOrdering::Behind))
     ]);
 
     {

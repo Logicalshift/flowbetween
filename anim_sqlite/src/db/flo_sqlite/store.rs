@@ -87,11 +87,12 @@ impl FloSqlite {
                 set_brush_props.insert::<&[&dyn ToSql]>(&[&edit_log_id, &brush_props_id])?;
             },
 
-            PushEditLogElementId(element_id)                                => {
+            PushEditLogElementId(index, element_id)                          => {
                 let edit_log_id         = self.stack.last().unwrap();
                 let mut add_element_id  = Self::prepare(&self.sqlite, FloStatement::InsertELElementId)?;
+                let index               = *index as i64;
                 
-                add_element_id.insert::<&[&dyn ToSql]>(&[edit_log_id, &element_id])?;
+                add_element_id.insert::<&[&dyn ToSql]>(&[edit_log_id, &index, element_id])?;
             },
 
             PushRawPoints(points)                                           => {

@@ -27,8 +27,27 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
         match element_id {
             &Unassigned     => { },
-            &Assigned(id)   => { db.update(vec![PushEditLogElementId(id)])?; },
+            &Assigned(id)   => { db.update(vec![PushEditLogElementId(0, id)])?; },
         }
+
+        Ok(())
+    }
+
+    ///
+    /// Inserts an element ID into the edit log
+    /// 
+    fn insert_element_id_list(db: &mut TFile, element_ids: &Vec<ElementId>) -> Result<()> {
+        use self::ElementId::*;
+
+        db.update(element_ids.iter()
+            .enumerate()
+            .map(|(index, element_id)| {
+                match element_id {
+                    &Unassigned     => { vec![] },
+                    &Assigned(id)   => { vec![PushEditLogElementId(index, id)] },
+                }
+            })
+            .flatten())?;
 
         Ok(())
     }
@@ -70,8 +89,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.db.update(vec![PushEditLogLayer(layer_id), Pop])?;
             },
 
-            &Element(element_id, ref element_edit)          => {
-                Self::insert_element_id(&mut self.db, &element_id)?;
+            &Element(ref element_ids, ref element_edit)     => {
+                Self::insert_element_id_list(&mut self.db, element_ids)?;
                 self.insert_element_edit(element_edit)?;
             },
 

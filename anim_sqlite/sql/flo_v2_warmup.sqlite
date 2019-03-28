@@ -21,6 +21,20 @@ CREATE TABLE IF NOT EXISTS Flo_EL_IntParameters (
 ) WITHOUT ROWID;
 
 /*
+ * If an element specifies element IDs, the EL_ElementId table supplies what the IDs are (the meaning of the
+ * indexes depends on the type of edit. If only a single element ID is specified, then this is usually specified
+ * as index 0)
+ */
+CREATE TABLE IF NOT EXISTS Flo_EL_ElementIds (
+    EditId          INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    ElementIndex    INTEGER NOT NULL,
+
+    ElementId       INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId, ElementIndex)
+) WITHOUT ROWID;
+
+/*
  * The floating point parameters attached to an edit log entry
  */
 CREATE TABLE IF NOT EXISTS Flo_EL_FloatParameters (
