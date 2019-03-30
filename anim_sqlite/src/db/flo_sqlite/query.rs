@@ -224,8 +224,9 @@ impl FloQuery for FloSqlite {
     ///
     /// Retrieves the string associated with a specific edit ID
     ///
-    fn query_edit_log_string(&mut self, edit_id: i64) -> Result<String> {
-        self.query_row(FloStatement::SelectEditLogString, &[&edit_id], |row| {
+    fn query_edit_log_string(&mut self, edit_id: i64, string_index: u32) -> Result<String> {
+        let string_index = string_index as i64;
+        self.query_row(FloStatement::SelectEditLogString, &[&edit_id, &string_index], |row| {
             row.get(0)
         })
     }

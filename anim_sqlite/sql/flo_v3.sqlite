@@ -178,9 +178,12 @@ CREATE TABLE Flo_EL_MotionPath (
 /*
  * The string attached to an edit log entry
  */
-CREATE TABLE Flo_EL_String (
-    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
-    String      Text NOT NULL
+CREATE TABLE Flo_EL_StringParameters (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    StringIndex INTEGER NOT NULL,
+    String      Text NOT NULL,
+
+    PRIMARY KEY (EditId ASC, StringIndex ASC)
 ) WITHOUT ROWID;
 
 /*

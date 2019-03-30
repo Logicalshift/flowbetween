@@ -213,7 +213,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             }
 
             SetName(new_name)              => {
-                self.db.update(vec![PopEditLogString(new_name.clone())])?;
+                self.db.update(vec![PopEditLogString(0, new_name.clone())])?;
             },
 
             SetOrdering(at_index)           => {

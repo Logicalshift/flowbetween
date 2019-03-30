@@ -159,7 +159,7 @@ pub trait FloQuery {
     ///
     /// Retrieves the string associated with a specific edit ID
     ///
-    fn query_edit_log_string(&mut self, edit_id: i64) -> Result<String>;
+    fn query_edit_log_string(&mut self, edit_id: i64, string_index: u32) -> Result<String>;
 
     ///
     /// Retrieves a colour with the specified ID

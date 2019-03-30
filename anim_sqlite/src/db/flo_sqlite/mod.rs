@@ -284,7 +284,7 @@ impl FloSqlite {
             SelectEditLogSize                   => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
             SelectEditLogRawPoints              => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
             SelectEditLogPathId                 => "SELECT PathId FROM Flo_EL_Path WHERE EditId = ?",
-            SelectEditLogString                 => "SELECT String FROM Flo_EL_String WHERE EditId = ?",
+            SelectEditLogString                 => "SELECT String FROM Flo_EL_StringParameters WHERE EditId = ? AND StringIndex = ?",
             SelectColor                         => "SELECT Col.ColorType, Rgb.R, Rgb.G, Rgb.B, Hsluv.H, Hsluv.S, Hsluv.L FROM Flo_Color_Type AS Col \
                                                         LEFT OUTER JOIN Flo_Color_Rgb   AS Rgb      ON Col.Color = Rgb.Color \
                                                         LEFT OUTER JOIN Flo_Color_Hsluv AS Hsluv    ON Col.Color = Hsluv.Color \
@@ -366,7 +366,7 @@ impl FloSqlite {
             InsertELMotionElement               => "INSERT INTO Flo_EL_MotionAttach (EditId, AttachedElement) VALUES (?, ?)",
             InsertELMotionTimePoint             => "INSERT INTO Flo_EL_MotionPath (EditId, PointIndex, TimePointId) VALUES (?, ?, ?)",
             InsertELPath                        => "INSERT INTO Flo_EL_Path (EditId, PathId) VALUES (?, ?)",
-            InsertELString                      => "INSERT INTO Flo_EL_String (EditId, String) VALUES (?, ?)",
+            InsertELString                      => "INSERT INTO Flo_EL_StringParameters (EditId, StringIndex, String) VALUES (?, ?, ?)",
             InsertELInt                         => "INSERT INTO Flo_EL_IntParameters (EditId, IntIndex, Value) VALUES (?, ?, ?)",
             InsertELFloat                       => "INSERT INTO Flo_EL_FloatParameters (EditId, FloatIndex, Value) VALUES (?, ?, ?)",
             InsertPath                          => "INSERT INTO Flo_Path (PathId) VALUES (NULL)",
