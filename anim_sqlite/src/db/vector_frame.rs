@@ -206,13 +206,22 @@ impl Frame for VectorFrame {
     }
 
     ///
-    /// Searches for an element with the specified ID and returns it if found
+    /// Searches for an element with the specified ID and returns it if found within this frame
     /// 
-    fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector> {
+    fn element_with_id(&self, id: ElementId) -> Option<Vector> {
         let mut elements_with_id = self.elements.iter()
             .filter(|element| element.id() == id);
         
         elements_with_id.nth(0).cloned()
+    }
+
+    ///
+    /// Retrieves the IDs and types of the elements attached to the element with a particular ID
+    /// 
+    /// (Element data can be retrieved via element_with_id)
+    ///
+    fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {
+        unimplemented!()
     }
 
     ///

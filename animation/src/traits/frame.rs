@@ -31,7 +31,14 @@ pub trait Frame : Send+Sync {
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
     /// 
-    fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector>;
+    fn element_with_id(&self, id: ElementId) -> Option<Vector>;
+
+    ///
+    /// Retrieves the IDs and types of the elements attached to the element with a particular ID
+    /// 
+    /// (Element data can be retrieved via element_with_id)
+    ///
+    fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)>;
 
     ///
     /// The brush that is active after all the elements are drawn in this frame
@@ -70,7 +77,14 @@ impl Frame for Arc<dyn Frame> {
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
     /// 
-    #[inline] fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector> { (**self).element_with_id(id) }
+    #[inline] fn element_with_id(&self, id: ElementId) -> Option<Vector> { (**self).element_with_id(id) }
+
+    ///
+    /// Retrieves the IDs and types of the elements attached to the element with a particular ID
+    /// 
+    /// (Element data can be retrieved via element_with_id)
+    ///
+    fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> { (**self).attached_elements(id) }
 
     ///
     /// The brush that is active after all the elements are drawn in this frame
