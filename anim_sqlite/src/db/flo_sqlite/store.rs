@@ -408,12 +408,15 @@ impl FloSqlite {
             },
 
             PopVectorPathElement                                            => {
-                let path_id                 = self.stack.pop().unwrap();
-                let brush_properties_id     = self.stack.pop().unwrap();
-                let brush_id                = self.stack.pop().unwrap();
-                let element_id              = self.stack.pop().unwrap();
-                let mut insert_path_element = Self::prepare(&self.sqlite, FloStatement::InsertPathElement)?;
-                insert_path_element.insert::<&[&dyn ToSql]>(&[&element_id, &path_id, &brush_id, &brush_properties_id])?;
+                let path_id                     = self.stack.pop().unwrap();
+                let brush_properties_id         = self.stack.pop().unwrap();
+                let brush_id                    = self.stack.pop().unwrap();
+                let element_id                  = self.stack.pop().unwrap();
+                let mut insert_path_element     = Self::prepare(&self.sqlite, FloStatement::InsertPathElement)?;
+                let mut insert_attach_element   = Self::prepare(&self.sqlite, FloStatement::InsertAttachElement)?;
+                insert_path_element.insert::<&[&dyn ToSql]>(&[&element_id, &path_id])?;
+                insert_attach_element.insert::<&[&dyn ToSql]>(&[&element_id, &brush_id])?;
+                insert_attach_element.insert::<&[&dyn ToSql]>(&[&element_id, &brush_properties_id])?;
             },
 
             PopBrushPoints(points)                                          => {
