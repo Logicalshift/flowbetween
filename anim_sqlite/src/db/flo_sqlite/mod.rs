@@ -87,6 +87,7 @@ enum FloStatement {
     SelectColor,
     SelectBrushDefinition,
     SelectBrushProperties,
+    SelectAttachmentsForElementId,
     SelectVectorElementWithId,
     SelectVectorElementType,
     SelectVectorElementsBefore,
@@ -145,6 +146,7 @@ enum FloStatement {
     InsertOrReplaceVectorElementTime,
     InsertOrReplaceZIndex,
     InsertElementAssignedId,
+    InsertAttachElement,
     InsertBrushDefinitionElement,
     InsertBrushPropertiesElement,
     InsertBrushPoint,
@@ -351,6 +353,9 @@ impl FloSqlite {
             SelectBrushDefinition               => "SELECT Brush.BrushType, Ink.MinWidth, Ink.MaxWidth, Ink.ScaleUpDistance FROM Flo_Brush_Type AS Brush \
                                                         LEFT OUTER JOIN Flo_Brush_Ink AS Ink ON Brush.Brush = Ink.Brush \
                                                         WHERE Brush.Brush = ?",
+            SelectAttachmentsForElementId       => "SELECT Attch.AttachedAssignedId FROM Flo_ElementAttachments AS Attch \
+                                                        INNER JOIN Flo_AssignedElementId AS Assgn ON Attch.AssignedId = Assgn.AssignedId \
+                                                        WHERE Assgn.ElementId = ?;",
             SelectBrushProperties               => "SELECT Size, Opacity, Color FROM Flo_BrushProperties WHERE BrushProperties = ?",
             SelectVectorElementWithId           => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
                                                         FROM Flo_VectorElement                      AS Elem \
@@ -449,6 +454,7 @@ impl FloSqlite {
             InsertBrushPropertiesElement        => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
             InsertBrushPoint                    => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             InsertElementAssignedId             => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
+            InsertAttachElement                 => "INSERT OR IGNORE INTO Flo_ElementAttachments (AssignedId, AttachAssignedId) VALUES (?, ?)",
             InsertPathElement                   => "INSERT INTO Flo_PathElement (ElementId, PathId, BrushId, BrushPropertiesId) VALUES (?, ?, ?, ?)",
             InsertMotion                        => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
             InsertOrReplaceMotionOrigin         => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
