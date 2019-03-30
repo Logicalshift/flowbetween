@@ -17,6 +17,9 @@ pub enum ElementOrdering {
 /// 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ElementEdit {
+    /// Attaches this element to another element (or multiple elements to another element)
+    AttachTo(ElementId),
+
     /// Updates the control points for this element
     SetControlPoints(Vec<(f32, f32)>),
 

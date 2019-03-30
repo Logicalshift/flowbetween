@@ -35,6 +35,7 @@ pub enum EditLogType {
     MotionAttach,
     MotionDetach,
 
+    ElementAttachTo,
     ElementSetControlPoints,
     ElementOrderInFront,
     ElementOrderBehind,
@@ -224,6 +225,7 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::EditLog(MotionAttach),
                     DbEnum::EditLog(MotionDetach),
 
+                    DbEnum::EditLog(ElementAttachTo),
                     DbEnum::EditLog(ElementSetControlPoints),
                     DbEnum::EditLog(ElementOrderInFront),
                     DbEnum::EditLog(ElementOrderBehind),
@@ -334,6 +336,7 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             Motion(_, Attach(_))                                => EditLogType::MotionAttach,
             Motion(_, Detach(_))                                => EditLogType::MotionDetach,
 
+            Element(_, AttachTo(_))                             => EditLogType::ElementAttachTo,
             Element(_, SetControlPoints(_))                     => EditLogType::ElementSetControlPoints,
             Element(_, Order(InFront))                          => EditLogType::ElementOrderInFront,
             Element(_, Order(Behind))                           => EditLogType::ElementOrderBehind,
@@ -419,6 +422,7 @@ impl From<EditLogType> for DbEnumName {
             MotionAttach                => DbEnumName("Edit", "Motion::Attach"),
             MotionDetach                => DbEnumName("Edit", "Motion::Detach"),
 
+            ElementAttachTo             => DbEnumName("Edit", "Element::AttachTo"),
             ElementSetControlPoints     => DbEnumName("Edit", "Element::SetControlPoints"),
             ElementOrderInFront         => DbEnumName("Edit", "Element::OrderInFront"),
             ElementOrderBehind          => DbEnumName("Edit", "Element::OrderBehind"),
