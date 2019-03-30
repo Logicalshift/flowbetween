@@ -402,7 +402,7 @@ impl FloSqlite {
             SelectZIndexBeforeZIndexForKeyFrame => "SELECT IFNULL(MAX(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ? AND ZIndex < ?",
             SelectZIndexAfterZIndexForKeyFrame  => "SELECT IFNULL(MIN(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ? AND ZIndex > ?",
             SelectMaxZIndexForKeyFrame          => "SELECT IFNULL(MAX(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ?",
-            SelectPathElement                   => "SELECT Elem.PathId, Elem.BrushId, Elem.BrushPropertiesId \
+            SelectPathElement                   => "SELECT Elem.PathId \
                                                         FROM Flo_PathElement    AS Elem \
                                                         WHERE Elem.ElementId = ?",
             SelectPathPointsWithTypes           => "SELECT Path.X, Path.Y, Types.Type FROM Flo_PathPointType AS Types \
@@ -455,7 +455,7 @@ impl FloSqlite {
             InsertBrushPoint                    => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             InsertElementAssignedId             => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
             InsertAttachElement                 => "INSERT OR IGNORE INTO Flo_ElementAttachments (AssignedId, AttachAssignedId) VALUES (?, ?)",
-            InsertPathElement                   => "INSERT INTO Flo_PathElement (ElementId, PathId, BrushId, BrushPropertiesId) VALUES (?, ?, ?, ?)",
+            InsertPathElement                   => "INSERT INTO Flo_PathElement (ElementId, PathId) VALUES (?, ?)",
             InsertMotion                        => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
             InsertOrReplaceMotionOrigin         => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
             InsertMotionAttachedElement         => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
