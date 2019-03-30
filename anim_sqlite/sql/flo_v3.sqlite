@@ -24,6 +24,19 @@ CREATE TABLE FlowBetween (
 );
 
 /*
+ * Patches applied to this database since it was created
+ *
+ * Patches can be used to add features to an existing file without requiring a full format upgrade.
+ */
+CREATE TABLE Flo_AppliedPatches (
+    /* Name of the patch that was applied */
+    PatchName TEXT NOT NULL PRIMARY KEY,
+
+    /* Description of the version of FlowBetween that applied this patch */
+    AppliedByVersion TEXT NOT NULL PRIMARY KEY,
+) WITHOUT ROWID;
+
+/*
  *  ===== The edit log
  */
 
