@@ -10,16 +10,16 @@
 
 CREATE TABLE Flo_ElementAttachments (
     /* The element ID with the attachments */
-    AssignedId              INTEGER NOT NULL REFERENCES Flo_AssignedElementId(AssignedId),
+    ElementId               INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
 
     /* The assigned ID of the attached element */
-    AttachedAssignedId       INTEGER NOT NULL REFERENCES Flo_AssignedElementId(AssignedId),
+    AttachedElementId       INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
 
-    PRIMARY KEY (AssignedId ASC, AttachedAssignedId ASC)
+    PRIMARY KEY (ElementId ASC, AttachedElementId ASC)
 ) WITHOUT ROWID;
 
-CREATE TRIGGER Flo_DeleteAttachedElements BEFORE DELETE ON Flo_AssignedElementId
+CREATE TRIGGER Flo_DeleteAttachedElements BEFORE DELETE ON Flo_VectorElement
     BEGIN
-        DELETE FROM Flo_ElementAttachments WHERE AssignedId         = Old.AssignedId;
-        DELETE FROM Flo_ElementAttachments WHERE AttachedAssignedId = Old.AssignedId;
+        DELETE FROM Flo_ElementAttachments WHERE ElementId          = Old.ElementId;
+        DELETE FROM Flo_ElementAttachments WHERE AttachedElementId  = Old.ElementId;
     END;
