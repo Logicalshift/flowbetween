@@ -324,13 +324,7 @@ CREATE TABLE Flo_PathElement (
     ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
 
     /* The ID of the path definition */
-    PathId              INTEGER NOT NULL REFERENCES Flo_Path,
-
-    /* The ID of the brush element used to draw this path */
-    BrushId             INTEGER NOT NULL REFERENCES Flo_BrushElement(ElementId),
-
-    /* The ID of the brush properties used to draw this path */
-    BrushPropertiesId   INTEGER NOT NULL REFERENCES Flo_BrushPropertiesElement(ElementId)
+    PathId              INTEGER NOT NULL REFERENCES Flo_Path
 ) WITHOUT ROWID;
 
 /*
