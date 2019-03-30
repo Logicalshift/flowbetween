@@ -12,6 +12,8 @@ extern crate desync;
 extern crate lazy_static;
 
 mod db;
+mod error;
 mod animation_sqlite;
 
 pub use self::animation_sqlite::*;
+pub use self::error::*;
