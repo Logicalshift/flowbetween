@@ -8,7 +8,6 @@ use flo_logging::*;
 use flo_animation::*;
 use flo_animation::brushes::*;
 
-use rusqlite::*;
 use itertools::*;
 use std::sync::*;
 use std::time::Duration;

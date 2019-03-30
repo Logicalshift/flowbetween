@@ -1,7 +1,6 @@
 use super::*;
 use super::flo_store::*;
 use super::vector_frame::*;
-use super::super::error::*;
 use super::super::result::Result;
 
 use std::ops::{Range, Deref};
