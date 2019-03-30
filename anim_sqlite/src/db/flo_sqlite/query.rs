@@ -412,18 +412,51 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Queries IDs of the attached elements for a particular item
+    ///
+    fn query_attached_elements(&mut self, element_id: i64) -> Result<Vec<i64>, SqliteAnimationError> {
+        Ok(self.query_map(FloStatement::SelectAttachmentsForElementId, &[&element_id], |row| row.get(0))?
+            .filter_map(|row| row.ok())
+            .collect())
+    }
+
+    ///
     /// Queries a path element
     ///
     fn query_path_element(&mut self, element_id: i64) -> Result<Option<PathElementEntry>, SqliteAnimationError> {
-        let (path_id, brush_id, brush_properties_id) = self.query_row(FloStatement::SelectPathElement, &[&element_id], 
-            |element| (element.get(0), element.get(1), element.get(2)))?;
+        // The path ID is retrieved via the path element
+        let path_id = self.query_row(FloStatement::SelectPathElement, &[&element_id], 
+            |element| element.get(0))?;
 
-        Ok(Some(PathElementEntry {
-            element_id:             element_id,
-            path_id:                path_id,
-            brush_id:               brush_id,
-            brush_properties_id:    brush_properties_id
-        }))
+        // Look for the brush ID and brush properties ID in the attached elements
+        // (This slightly weird way of handling attachments is because back in the v2 format these were part of the path element as arbitrary attached elements were not supported)
+        let attached                = self.query_attached_elements(element_id)?;
+        let mut brush_id            = None;
+        let mut brush_properties_id = None;
+
+        for attach_id in attached {
+            // Fetch the type of the attachment
+            let attachment_type = self.query_vector_element_type(attach_id)?;
+
+            if attachment_type == Some(VectorElementType::BrushProperties) {
+                brush_properties_id = Some(attach_id);
+            } else if attachment_type == Some(VectorElementType::BrushDefinition) {
+                brush_id = Some(attach_id);
+            }
+        }
+
+        // Generate a path element entry if all the attachments are intact
+        if let (Some(brush_id), Some(brush_properties_id)) = (brush_id, brush_properties_id) {
+            Ok(Some(PathElementEntry {
+                element_id:             element_id,
+                path_id:                path_id,
+                brush_id:               brush_id,
+                brush_properties_id:    brush_properties_id
+            }))
+        } else {
+            // Path missing properties
+            Ok(None)
+        }
     }
 
     ///
