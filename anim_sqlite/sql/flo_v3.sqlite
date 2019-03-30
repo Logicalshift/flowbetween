@@ -1,7 +1,6 @@
 /***
  **
- ** FlowBetween File format version 1
- ** (Used during development)
+ ** FlowBetween File format version 3
  **
  ***/
 
@@ -50,12 +49,17 @@ CREATE TABLE Flo_EL_Size (
 ) WITHOUT ROWID;
 
 /*
- * If an element specifies an element ID, the EL_ElementId table supplies what that ID is
+ * If an element specifies element IDs, the EL_ElementIds table supplies what the IDs are (the meaning of the
+ * indexes depends on the type of edit. If only a single element ID is specified, then this is usually specified
+ * as index 0)
  */
-CREATE TABLE Flo_EL_ElementId (
-    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+CREATE TABLE Flo_EL_ElementIds (
+    EditId          INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    ElementIndex    INTEGER NOT NULL,
 
-    ElementId   INTEGER NOT NULL
+    ElementId       INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId, ElementIndex)
 ) WITHOUT ROWID;
 
 /*
@@ -159,6 +163,36 @@ CREATE TABLE Flo_EL_MotionPath (
 ) WITHOUT ROWID;
 
 /*
+ * The string attached to an edit log entry
+ */
+CREATE TABLE Flo_EL_String (
+    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
+    String      Text NOT NULL
+) WITHOUT ROWID;
+
+/*
+ * The integer parameters attached to an edit log entry
+ */
+CREATE TABLE Flo_EL_IntParameters (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    IntIndex    INTEGER NOT NULL,
+    Value       INTEGER NOT NULL,
+
+    PRIMARY KEY (EditId ASC, IntIndex ASC)
+) WITHOUT ROWID;
+
+/*
+ * The floating point parameters attached to an edit log entry
+ */
+CREATE TABLE Flo_EL_FloatParameters (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    FloatIndex  INTEGER NOT NULL,
+    Value       REAL NOT NULL,
+
+    PRIMARY KEY (EditId ASC, FloatIndex ASC)
+) WITHOUT ROWID;
+
+/*
  *  ===== Colours, brushes and similar resources
  */
 
@@ -246,6 +280,41 @@ CREATE TABLE Flo_PathPoints (
 ) WITHOUT ROWID;
 
 /*
+ * Adds type information to path points
+ *
+ * This table is used when describing full paths, which we don't always need to do: it attaches
+ * a type per path point stored in the Flo_PathPoints table (for the 'Close' path action, there
+ * may not be an associated point)
+ *
+ * This is always used for example when defining a path element but is not needed when defining
+ * a path edit that doesn't change the point meanings.
+ */
+CREATE TABLE Flo_PathPointType (
+    PathId      INTEGER NOT NULL REFERENCES Flo_Path(PathId),
+    PointIndex  INTEGER NOT NULL,
+    Type        INTEGER NOT NULL,
+
+    PRIMARY KEY (PathId, PointIndex)
+) WITHOUT ROWID;
+
+/*
+ * Vector path element
+ */
+CREATE TABLE Flo_PathElement (
+    /* The ID of this element */
+    ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+
+    /* The ID of the path definition */
+    PathId              INTEGER NOT NULL REFERENCES Flo_Path,
+
+    /* The ID of the brush element used to draw this path */
+    BrushId             INTEGER NOT NULL REFERENCES Flo_BrushElement(ElementId),
+
+    /* The ID of the brush properties used to draw this path */
+    BrushPropertiesId   INTEGER NOT NULL REFERENCES Flo_BrushPropertiesElement(ElementId)
+) WITHOUT ROWID;
+
+/*
  *  ===== Motions
  */
 
@@ -300,14 +369,6 @@ CREATE TABLE Flo_MotionAttached (
 
 CREATE INDEX FloIdx_AttachedMotion ON Flo_MotionAttached (ElementId, MotionId);
 
-/* Deleting a motion also deletes its attached properties */
-CREATE TRIGGER Flo_Delete_Motion_Elements BEFORE DELETE ON Flo_Motion
-    BEGIN
-        DELETE FROM Flo_MotionOrigin WHERE MotionId = Old.MotionId;
-        DELETE FROM Flo_MotionPath WHERE MotionId = Old.MotionId;
-        DELETE FROM Flo_MotionAttached WHERE MotionId = Old.MotionId;
-    END;
-
 /*
  *  ===== Animation
  */
@@ -331,19 +392,6 @@ CREATE TABLE Flo_Animation (
 );
 
 /*
- * Database is created with a single 2 minute long 30fps animation
- */
-INSERT INTO Flo_Animation (
-    SizeX, SizeY,
-    Duration,
-    Frame_Length_ns
-) VALUES (
-    1980.0, 1080.0,
-    1000000 * 60 * 2,
-    1000000000 / 30
-);
-
-/*
  * Represents a vector layer
  */
 CREATE TABLE Flo_LayerType (
@@ -353,13 +401,6 @@ CREATE TABLE Flo_LayerType (
     /* The type of this layer */
     LayerType       INTEGER NOT NULL
 );
-
-/* Deleting a layer type deletes the corresponding animation layers and key frames */
-CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
-    BEGIN
-        DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
-        DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
-    END;
 
 /*
  * Associates an animation with the layers it contains
@@ -392,6 +433,17 @@ CREATE TABLE Flo_LayerKeyFrame (
 CREATE INDEX FloIdx_FrameTime ON Flo_LayerKeyFrame (LayerId, AtTime);
 
 /*
+ * Associates names with layers
+ */
+CREATE TABLE Flo_LayerName (
+    /* Layer ID */
+    LayerId INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_LayerType(LayerId),
+
+    /* Layer name */
+    Name    Text NOT NULL
+) WITHOUT ROWID;
+
+/*
  * Specifies the assigned element ID for an element in a layer
  */
 CREATE TABLE Flo_AssignedElementId (
@@ -404,12 +456,6 @@ CREATE TABLE Flo_AssignedElementId (
 
 CREATE UNIQUE INDEX FloIdx_ElementIds ON Flo_AssignedElementId (AssignedId);
 
-/* Deleting from the assigned element ID table also removes anything that references that table */
-CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
-    BEGIN
-        DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
-    END;
-
 /*
  * Represents an element in a vector layer
  */
@@ -417,23 +463,45 @@ CREATE TABLE Flo_VectorElement (
     /* Identifier for this element */
     ElementId           INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
 
+    /* Type of this element */
+    VectorElementType   INTEGER NOT NULL
+);
+
+/*
+ * Attaches a vector element to a keyframe and a time
+ */
+CREATE TABLE Flo_VectorElementTime (
+    /* ID of this element */
+    ElementId   INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
+
     /* The ID of the keyframe that this element belongs to */
     KeyFrameId          INTEGER NOT NULL REFERENCES Flo_LayerKeyFrame(KeyFrameId),
 
-    /* Type of this element */
-    VectorElementType   INTEGER NOT NULL,
-
     /* When this element is added to the animation relative to when the keyframe started */
     AtTime              INTEGER NOT NULL
-);
+) WITHOUT ROWID;
 
-CREATE INDEX FloIdx_ElementTime ON Flo_VectorElement (KeyFrameId, AtTime, ElementId);
+CREATE INDEX FloIdx_ElementTime ON Flo_VectorElementTime (KeyFrameId, AtTime, ElementId);
 
-/* Deleting a key frame also deletes any vector elements it contains */
-CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
-    BEGIN
-        DELETE FROM Flo_VectorElement WHERE KeyFrameId = Old.KeyFrameId;
-    END;
+/* 
+ * Associates each element with a Z-Index
+ *
+ * Every element must have a unique Z-Index (if it has one)
+ */
+CREATE TABLE Flo_VectorElementOrdering (
+    /* The ID of this element */
+    ElementId   INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+
+    /* The ID of the keyframe this element belongs to  */
+    KeyFrameId  INTEGER NOT NULL REFERENCES Flo_LayerKeyFrame(KeyFrameId),
+
+    /* The Z-Index of this element */
+    ZIndex      INTEGER NOT NULL,
+
+    PRIMARY KEY (KeyFrameId, ElementId)
+) WITHOUT ROWID;
+
+CREATE UNIQUE INDEX FloIdx_KeyframeOrdering ON Flo_VectorElementOrdering (KeyFrameId, ZIndex, ElementId);
 
 /*
  * Vector brush element
@@ -444,12 +512,6 @@ CREATE TABLE Flo_BrushElement (
     DrawingStyle    INTEGER NOT NULL
 ) WITHOUT ROWID;
 
-/* Deleting a vector element deletes the attached brush elements */
-CREATE TRIGGER Flo_Delete_BrushElements BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_BrushElement WHERE ElementId = Old.ElementId;
-    END;
-
 /*
  * Vector brush properties element
  */
@@ -457,12 +519,6 @@ CREATE TABLE Flo_BrushPropertiesElement (
     ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
     BrushProperties     INTEGER NOT NULL REFERENCES Flo_BrushProperties(BrushProperties)
 ) WITHOUT ROWID;
-
-/* Deleting a vector element deletes the attached brush properties elements */
-CREATE TRIGGER Flo_Delete_BrushPropertiesElements BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_BrushPropertiesElement WHERE ElementId = Old.ElementId;
-    END;
 
 /*
  * Brush point associated with an element
@@ -481,12 +537,6 @@ CREATE TABLE Flo_BrushPoint (
 
     PRIMARY KEY (ElementId, PointId)
 ) WITHOUT ROWID;
-
-/* Deleting a vector element deletes the points elements */
-CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
-    BEGIN
-        DELETE FROM Flo_BrushPoint WHERE ElementId = Old.ElementId;
-    END;
 
 /*
  *  ===== Enumeration descriptions
@@ -512,8 +562,90 @@ CREATE TABLE Flo_EnumerationDescriptions (
 );
 
 /*
+ *  ===== TRIGGERS
+ */
+
+/* Deleting an element deletes it from the path table */
+CREATE TRIGGER Flo_Delete_PathElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_PathElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a motion also deletes its attached properties */
+CREATE TRIGGER Flo_Delete_Motion_Elements BEFORE DELETE ON Flo_Motion
+    BEGIN
+        DELETE FROM Flo_MotionOrigin WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_MotionPath WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_MotionAttached WHERE MotionId = Old.MotionId;
+    END;
+
+/* Deleting a layer type deletes the corresponding animation layers and key frames */
+CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
+    BEGIN
+        DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
+        DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
+        DELETE FROM Flo_LayerName WHERE LayerId = Old.LayerId;
+    END;
+
+/* Deleting from the assigned element ID table also removes anything that references that table */
+CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
+    BEGIN
+        DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
+    END;
+
+/* Deleting an element deletes it from the ordering table */
+CREATE TRIGGER Flo_Delete_ElementOrdering BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_VectorElementOrdering WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the attached brush elements */
+CREATE TRIGGER Flo_Delete_BrushElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the attached brush properties elements */
+CREATE TRIGGER Flo_Delete_BrushPropertiesElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPropertiesElement WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a vector element deletes the points elements */
+CREATE TRIGGER Flo_Delete_BrushPoints BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_BrushPoint WHERE ElementId = Old.ElementId;
+    END;
+
+/* Deleting a key frame also deletes any vector elements it contains */
+CREATE TRIGGER Flo_Delete_KeyFrame_Elements BEFORE DELETE ON Flo_LayerKeyFrame
+    BEGIN
+        DELETE FROM Flo_VectorElement WHERE ElementId IN (SELECT ElementId FROM Flo_VectorElementTime WHERE KeyFrameId = Old.KeyFrameId);
+        DELETE FROM Flo_VectorElementTime WHERE KeyFrameId = Old.KeyFrameId;
+    END;
+
+/* Deleting an element deletes it from the time table */
+CREATE TRIGGER Flo_DeleteVectorElementTime BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_VectorElementTime WHERE ElementId = Old.ElementId;
+    END;
+
+/*
  *  ===== DEFAULT DATA
  */
 
 INSERT INTO FlowBetween(DataVersion, FloVersion, Stable)
-     VALUES (1, "Unknown", 0);
+     VALUES (3, "Unknown", 0);
+
+/*
+ * Database is created with a single 2 minute long 30fps animation
+ */
+INSERT INTO Flo_Animation (
+    SizeX, SizeY,
+    Duration,
+    Frame_Length_ns
+) VALUES (
+    1980.0, 1080.0,
+    1000000 * 60 * 2,
+    1000000000 / 30
+);
