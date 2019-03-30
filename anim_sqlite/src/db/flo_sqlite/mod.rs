@@ -19,6 +19,7 @@ pub use self::store::*;
 const V1_DEFINITION: &[u8]      = include_bytes!["../../../sql/flo_v1.sqlite"];
 const V1_V2_UPGRADE: &[u8]      = include_bytes!["../../../sql/flo_v1_to_v2.sqlite"];
 const V2_WARMUP: &[u8]          = include_bytes!["../../../sql/flo_v2_warmup.sqlite"];
+const V3_DEFINITION: &[u8]      = include_bytes!["../../../sql/flo_v3.sqlite"];
 const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
 const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
 
@@ -223,12 +224,10 @@ impl FloSqlite {
     /// 
     pub fn setup(sqlite: &Connection) -> Result<()> {
         // Create the definition string
-        let v1_definition   = String::from_utf8_lossy(V1_DEFINITION);
-        let v2_upgrade      = String::from_utf8_lossy(V1_V2_UPGRADE);
+        let definition      = String::from_utf8_lossy(V3_DEFINITION);
 
         // Execute against the database
-        sqlite.execute_batch(&v1_definition)?;
-        sqlite.execute_batch(&v2_upgrade)?;
+        sqlite.execute_batch(&definition)?;
 
         // Set the database version string
         let version_string      = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);

@@ -33,7 +33,7 @@ CREATE TABLE Flo_AppliedPatches (
     PatchName TEXT NOT NULL PRIMARY KEY,
 
     /* Description of the version of FlowBetween that applied this patch */
-    AppliedByVersion TEXT NOT NULL PRIMARY KEY,
+    AppliedByVersion TEXT NOT NULL
 ) WITHOUT ROWID;
 
 /*
