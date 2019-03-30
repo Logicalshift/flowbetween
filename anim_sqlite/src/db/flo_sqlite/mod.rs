@@ -1,6 +1,7 @@
 use super::db_enum::*;
 use super::flo_store::*;
 use super::flo_query::*;
+use super::super::error::*;
 
 use flo_logging::*;
 
@@ -10,6 +11,7 @@ use std::collections::*;
 use std::time::Duration;
 use std::sync::*;
 use std::mem;
+use std::result::Result;
 
 mod query;
 mod store;
@@ -184,7 +186,7 @@ impl FloSqlite {
     ///
     /// Upgrades a connection so that it conforms to the latest version
     ///
-    fn upgrade(sqlite: &mut Connection) -> Result<()> {
+    fn upgrade(sqlite: &mut Connection) -> Result<(), SqliteAnimationError> {
         let animation_version: i64 = sqlite.query_row("SELECT DataVersion FROM FlowBetween", NO_PARAMS, |row| row.get(0))?;
 
         if animation_version == 1 {
@@ -203,7 +205,7 @@ impl FloSqlite {
     ///
     /// Upgrades a version 1 to a version 2 database
     ///
-    fn upgrade_v1_to_v2(sqlite: &mut Connection) -> Result<()> {
+    fn upgrade_v1_to_v2(sqlite: &mut Connection) -> Result<(), SqliteAnimationError> {
         let v2_upgrade  = String::from_utf8_lossy(V1_V2_UPGRADE);
         sqlite.execute_batch(&v2_upgrade)?;
 
@@ -213,7 +215,7 @@ impl FloSqlite {
     ///
     /// Applies patches to ensure that a v3 file format database is up to date
     ///
-    fn apply_v3_patches(sqlite: &mut Connection) -> Result<()> {
+    fn apply_v3_patches(sqlite: &mut Connection) -> Result<(), SqliteAnimationError> {
         let patch_transaction = sqlite.transaction()?;
 
         // Apply the patches that we know about
@@ -264,9 +266,9 @@ impl FloSqlite {
     }
 
     ///
-    /// Initialises the database
+    /// Initialises the database as new
     /// 
-    pub fn setup(sqlite: &Connection) -> Result<()> {
+    pub fn setup(sqlite: &Connection) -> Result<(), SqliteAnimationError> {
         // Create the definition string
         let definition      = String::from_utf8_lossy(V3_DEFINITION);
 
@@ -466,8 +468,8 @@ impl FloSqlite {
     /// Prepares a statement from the database
     /// 
     #[inline]
-    fn prepare<'conn>(sqlite: &'conn Connection, statement: FloStatement) -> Result<CachedStatement<'conn>> {
-        sqlite.prepare_cached(Self::query_for_statement(statement))
+    fn prepare<'conn>(sqlite: &'conn Connection, statement: FloStatement) -> Result<CachedStatement<'conn>, SqliteAnimationError> {
+        Ok(sqlite.prepare_cached(Self::query_for_statement(statement))?)
     }
 
     ///

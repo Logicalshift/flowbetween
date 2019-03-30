@@ -13,6 +13,7 @@ extern crate lazy_static;
 
 mod db;
 mod error;
+pub mod result;
 mod animation_sqlite;
 
 pub use self::animation_sqlite::*;

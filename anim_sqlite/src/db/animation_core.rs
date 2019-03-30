@@ -1,6 +1,8 @@
 use super::db_enum::*;
 use super::flo_store::*;
 use super::motion_path_type::*;
+use super::super::error::*;
+use super::super::result::Result;
 
 use flo_logging::*;
 use flo_animation::*;
@@ -36,7 +38,7 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
 
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
-    pub failure: Option<Error>,
+    pub failure: Option<SqliteAnimationError>,
 
     /// Maps a layer ID to the properties that should be associated with the next path created
     pub path_properties_for_layer: HashMap<i64, PathPropertiesIds>,

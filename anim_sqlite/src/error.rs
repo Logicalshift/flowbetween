@@ -1,10 +1,14 @@
 use rusqlite;
+use rusqlite::Error;
 
 ///
 /// Errors that can result from an operation on a SQLite animation
 ///
 #[derive(Debug)]
-pub enum SqliteAnimError {
+pub enum SqliteAnimationError {
+    /// No results were retrieved for a query (used instead of the SqlError version of this for convenience)
+    QueryReturnedNoRows,
+
     /// The version of this data is not supported by this version of FlowBetween
     UnsupportedVersionNumber(i64),
 
@@ -18,8 +22,11 @@ pub enum SqliteAnimError {
     SqlError(rusqlite::Error)
 }
 
-impl From<rusqlite::Error> for SqliteAnimError {
-    fn from(err: rusqlite::Error) -> SqliteAnimError {
-        SqliteAnimError::SqlError(err)
+impl From<rusqlite::Error> for SqliteAnimationError {
+    fn from(err: rusqlite::Error) -> SqliteAnimationError {
+        match err {
+            Error::QueryReturnedNoRows  => SqliteAnimationError::QueryReturnedNoRows,
+            err                         => SqliteAnimationError::SqlError(err)
+        }
     }
 }

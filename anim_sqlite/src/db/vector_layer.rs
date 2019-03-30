@@ -1,6 +1,8 @@
 use super::*;
 use super::flo_store::*;
 use super::vector_frame::*;
+use super::super::error::*;
+use super::super::result::Result;
 
 use std::ops::{Range, Deref};
 use std::time::Duration;
@@ -81,7 +83,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
         let keyframes   = self.core.sync(|core| core.db.query_key_frame_times_for_layer_id(self.layer_id, from, until));
 
         // Turn into an iterator
-        let keyframes   = keyframes.unwrap_or_else(|_: Error| vec![]);
+        let keyframes   = keyframes.unwrap_or_else(|_: SqliteAnimationError| vec![]);
         let keyframes   = Box::new(keyframes.into_iter());
 
         keyframes

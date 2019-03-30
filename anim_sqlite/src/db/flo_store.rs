@@ -1,13 +1,12 @@
 use super::db_enum::*;
 use super::flo_query::*;
 use super::motion_path_type::*;
-
-// TODO: make error type more generic
-use rusqlite::*;
+use super::super::error::*;
 
 use flo_animation::*;
 use std::sync::*;
 use std::time::Duration;
+use std::result::Result;
 
 ///
 /// When moving an element relative to itself, determines the direction in which the element should move
@@ -202,7 +201,7 @@ pub trait FloStore {
     ///
     /// Performs a set of updates on the store
     /// 
-    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()>;
+    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError>;
 
     ///
     /// Starts queuing up store updates for later execution as a batch
@@ -212,12 +211,12 @@ pub trait FloStore {
     ///
     /// Executes the queued events (and stops queueing future events)
     /// 
-    fn execute_queue(&mut self) -> Result<()>;
+    fn execute_queue(&mut self) -> Result<(), SqliteAnimationError>;
 
     ///
     /// Ensures any pending updates are committed to the database (but continues to queue future events)
     /// 
-    fn flush_pending(&mut self) -> Result<()>;
+    fn flush_pending(&mut self) -> Result<(), SqliteAnimationError>;
 }
 
 ///

@@ -6,7 +6,7 @@ impl FloSqlite {
     ///
     /// Executes a particular database update
     /// 
-    fn execute_update(&mut self, update: &DatabaseUpdate) -> Result<()> {
+    fn execute_update(&mut self, update: &DatabaseUpdate) -> Result<(), SqliteAnimationError> {
         use self::DatabaseUpdate::*;
 
         match update {
@@ -555,7 +555,7 @@ impl FloSqlite {
     ///
     /// Performs a set of updates on the database immediately
     /// 
-    fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
+    fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError> {
         for update in updates {
             let result = self.execute_update(&update);
 
@@ -572,7 +572,7 @@ impl FloStore for FloSqlite {
     ///
     /// Performs a set of updates on the database
     /// 
-    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
+    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError> {
         if let Some(ref mut pending) = self.pending {
             // Queue the updates into the pending queue if we're not performing them immediately
             pending.extend(updates.into_iter());
@@ -596,7 +596,7 @@ impl FloStore for FloSqlite {
     ///
     /// Executes the update queue
     /// 
-    fn execute_queue(&mut self) -> Result<()> {
+    fn execute_queue(&mut self) -> Result<(), SqliteAnimationError> {
         // Fetch the pending updates
         let mut pending = None;
         mem::swap(&mut pending, &mut self.pending);
@@ -612,7 +612,7 @@ impl FloStore for FloSqlite {
     ///
     /// Ensures any pending updates are committed to the database
     /// 
-    fn flush_pending(&mut self) -> Result<()> {
+    fn flush_pending(&mut self) -> Result<(), SqliteAnimationError> {
         if self.pending.is_some() {
             // Fetch the pending updates
             let mut pending = Some(vec![]);
