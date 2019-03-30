@@ -192,11 +192,11 @@ impl FloSqlite {
         if animation_version == 1 {
             Self::upgrade_v1_to_v2(sqlite)?;
         } else if animation_version == 2 {
-            unimplemented!("Upgrade from v2 file format not supported");
+            return Err(SqliteAnimationError::CannotUpgradeVersionTooOld(animation_version));
         } else if animation_version == 3 {
             Self::apply_v3_patches(sqlite)?;
         } else {
-            unimplemented!("Unsupported version number: {:?}", animation_version);
+            return Err(SqliteAnimationError::UnsupportedVersionNumber(animation_version));
         }
 
         Ok(())
@@ -244,8 +244,8 @@ impl FloSqlite {
 
             for (patch_name, _patch_sql) in V3_PATCHES.iter() {
                 if !all_patches.contains(*patch_name) {
-                    // TODO: log/report more sensible error
-                    unimplemented!("The patch {:?} is not supported by this version of FlowBetween (a newer version is likely required to support this feature)", *patch_name);
+                    // All patches must be supported by this version of the tool
+                    return Err(SqliteAnimationError::UnsupportedFormatPatch(String::from(*patch_name)));
                 }
             }
         }
