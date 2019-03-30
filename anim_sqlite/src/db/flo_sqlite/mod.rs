@@ -89,7 +89,8 @@ enum FloStatement {
     SelectBrushProperties,
     SelectAttachmentsForElementId,
     SelectVectorElementWithId,
-    SelectVectorElementType,
+    SelectVectorElementTypeAssigned,
+    SelectVectorElementTypeElementId,
     SelectVectorElementsBefore,
     SelectMostRecentElementOfTypeBefore,
     SelectBrushPoints,
@@ -362,9 +363,11 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                         LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
                                                         WHERE Elem.ElementId = ?",
-            SelectVectorElementType             => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
+            SelectVectorElementTypeAssigned     => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
                                                         INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
                                                         WHERE Assgn.AssignedId = ?",
+            SelectVectorElementTypeElementId    => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
+                                                        WHERE Elem.ElementId = ?",
             SelectVectorElementsBefore          => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
                                                         FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \

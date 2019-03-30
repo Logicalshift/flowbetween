@@ -376,10 +376,22 @@ impl FloQuery for FloSqlite {
     }
 
     ///
-    /// Queries the type of a single vector element
+    /// Queries the type of a single vector element given its assigned ID
     /// 
-    fn query_vector_element_type(&mut self, element_id: i64) -> Result<Option<VectorElementType>, SqliteAnimationError> {
-        self.query_row(FloStatement::SelectVectorElementType, &[&element_id], |row| row.get(0))
+    fn query_vector_element_type_from_assigned_id(&mut self, assigned_id: i64) -> Result<Option<VectorElementType>, SqliteAnimationError> {
+        self.query_row(FloStatement::SelectVectorElementTypeAssigned, &[&assigned_id], |row| row.get(0))
+            .map(|element_type| {
+                let element_type    = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
+
+                Some(element_type)
+            })
+    }
+
+    ///
+    /// Queries the type of a single vector element given its element id
+    /// 
+    fn query_vector_element_type_from_element_id(&mut self, element_id: i64) -> Result<Option<VectorElementType>, SqliteAnimationError> {
+        self.query_row(FloStatement::SelectVectorElementTypeElementId, &[&element_id], |row| row.get(0))
             .map(|element_type| {
                 let element_type    = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
 
@@ -436,7 +448,7 @@ impl FloQuery for FloSqlite {
 
         for attach_id in attached {
             // Fetch the type of the attachment
-            let attachment_type = self.query_vector_element_type(attach_id)?;
+            let attachment_type = self.query_vector_element_type_from_element_id(attach_id)?;
 
             if attachment_type == Some(VectorElementType::BrushProperties) {
                 brush_properties_id = Some(attach_id);

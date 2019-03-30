@@ -403,9 +403,9 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Edits the element with the specified ID
     /// 
     fn edit_element(&mut self, element_id: ElementId, element_edit: ElementEdit) -> Result<()> {
-        if let ElementId::Assigned(element_id) = element_id {
+        if let ElementId::Assigned(assigned_id) = element_id {
             // Get the type of the element so we can use the appropriate editing method
-            let element_type = self.db.query_vector_element_type(element_id)?;
+            let element_type = self.db.query_vector_element_type_from_assigned_id(assigned_id)?;
 
             if let Some(element_type) = element_type {
                 // Action depends on the element type
@@ -421,7 +421,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         
                         // Perform the update
                         self.db.update(vec![
-                            DatabaseUpdate::PushElementIdForAssignedId(element_id),
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
                             DatabaseUpdate::UpdateBrushPointCoords(Arc::new(points))
                         ])?;
                     },
@@ -437,7 +437,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
                         // Need to push the element ID and the keyframe ID
                         self.db.update(vec![
-                            DatabaseUpdate::PushElementIdForAssignedId(element_id),
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
                             DatabaseUpdate::PushKeyFrameIdForElementId
                         ].into_iter()
                         .chain(update_order))?;
