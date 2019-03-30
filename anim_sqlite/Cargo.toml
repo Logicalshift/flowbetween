@@ -17,3 +17,4 @@ itertools           = "0.8"
 rusqlite            = { version = "0.16", features = ["bundled"] }
 futures             = "^0.1.17"
 desync              = "0.3"
+lazy_static         = "1.0"

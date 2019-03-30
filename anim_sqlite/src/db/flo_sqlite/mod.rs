@@ -16,10 +16,16 @@ mod store;
 pub use self::query::*;
 pub use self::store::*;
 
-const V1_V2_UPGRADE: &[u8]      = include_bytes!["../../../sql/historical/flo_v1_to_v2.sqlite"];
-const V3_DEFINITION: &[u8]      = include_bytes!["../../../sql/flo_v3.sqlite"];
-const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
-const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
+const V1_V2_UPGRADE: &[u8]          = include_bytes!["../../../sql/historical/flo_v1_to_v2.sqlite"];
+const V3_DEFINITION: &[u8]          = include_bytes!["../../../sql/flo_v3.sqlite"];
+const PACKAGE_NAME: &str            = env!("CARGO_PKG_NAME");
+const PACKAGE_VERSION: &str         = env!("CARGO_PKG_VERSION");
+
+lazy_static! {
+    static ref V3_PATCHES: Vec<(&'static str, &'static [u8])> = vec![
+        ("attached_elements", include_bytes!["../../../sql/v3_patches/attached_elements.sqlite"])
+    ];
+}
 
 ///
 /// Provides an interface for updating and accessing the animation SQLite database
@@ -183,6 +189,12 @@ impl FloSqlite {
 
         if animation_version == 1 {
             Self::upgrade_v1_to_v2(sqlite)?;
+        } else if animation_version == 2 {
+            unimplemented!("Upgrade from v2 file format not supported");
+        } else if animation_version == 3 {
+            Self::apply_v3_patches(sqlite)?;
+        } else {
+            unimplemented!("Unsupported version number: {:?}", animation_version);
         }
 
         Ok(())
@@ -195,6 +207,51 @@ impl FloSqlite {
         let v2_upgrade  = String::from_utf8_lossy(V1_V2_UPGRADE);
         sqlite.execute_batch(&v2_upgrade)?;
 
+        Ok(())
+    }
+
+    ///
+    /// Applies patches to ensure that a v3 file format database is up to date
+    ///
+    fn apply_v3_patches(sqlite: &mut Connection) -> Result<()> {
+        let patch_transaction = sqlite.transaction()?;
+
+        // Apply the patches that we know about
+        for (patch_name, patch_sql) in V3_PATCHES.iter() {
+            // See if this patch has already been applied
+            let num_patches = patch_transaction.query_row("SELECT COUNT(*) FROM Flo_AppliedPatches WHERE PatchName = ?;", &[*patch_name], |row| row.get::<_, i64>(0))?;
+
+            if num_patches == 0 {
+                // Apply the patch if it does not already exist
+                let patch_sql       = String::from_utf8_lossy(patch_sql);
+                patch_transaction.execute_batch(&patch_sql)?;
+
+                // Add to the 'applied patches' table so this patch is not re-applied
+                let version_string  = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
+                patch_transaction.execute::<&[&dyn ToSql]>("INSERT INTO Flo_AppliedPatches (PatchName, PatchSql, AppliedByVersion) VALUES (?, ?, ?);", &[patch_name, &patch_sql, &version_string])?;
+            }
+        }
+
+        // Check for patches that we can't understand (indicate that this database might be from a newer version of FlowBetween)
+        {
+            let mut all_patches     = patch_transaction.prepare("SELECT PatchName FROM Flo_AppliedPatches")?;
+            let all_patches         = all_patches
+                .query_map(NO_PARAMS, |row| row.get::<_, String>(0))?
+                .map(|row| row.unwrap_or_else(|err| format!("<< error: {:?} >>", err)))
+                .collect::<HashSet<_>>();
+
+            for (patch_name, _patch_sql) in V3_PATCHES.iter() {
+                if !all_patches.contains(*patch_name) {
+                    // TODO: log/report more sensible error
+                    unimplemented!("The patch {:?} is not supported by this version of FlowBetween (a newer version is likely required to support this feature)", *patch_name);
+                }
+            }
+        }
+
+        // Finished patching
+        patch_transaction.commit()?;
+
+        // Updated OK
         Ok(())
     }
 
