@@ -380,15 +380,15 @@ impl FloSqlite {
                                                         ORDER BY Ordr.ZIndex ASC, Elem.ElementId ASC",
             SelectAttachedElementsBefore        => "WITH RECURSIVE \
                                                         AttachedElement AS ( \
-                                                            SELECT NULL AS ParentElementId, Elem.ElementId AS ElementId, Elem.VectorElementType AS ElementType \
+                                                            SELECT Elem.ElementId AS ElementId, NULL AS ParentElementId, Elem.VectorElementType AS ElementType \
                                                                 FROM Flo_VectorElement              AS Elem \
                                                                 INNER JOIN Flo_VectorElementTime    AS Time  ON Elem.ElementId = Time.ElementId \
                                                                 WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
                                                             UNION
-                                                            SELECT AttachedElement.ElementId AS ParentElementId, Elem.ElementId AS ElementId, Elem.VectorElementType AS ElementType \
-                                                                FROM Flo_ElementAttachments         AS Attch \
-                                                                INNER JOIN Flo_VectorElement        AS Elem ON Elem.ElementId = Attch.AttachedElementId \
-                                                                WHERE Attch.ElementId = AttachedElement.ElementId
+                                                            SELECT Elem.ElementId AS ElementId, AttachedElement.ElementId AS ParentElementId, Elem.VectorElementType AS ElementType \
+                                                                FROM AttachedElement
+                                                                INNER JOIN Flo_ElementAttachments   AS Attch ON Attch.ElementId = AttachedElement.ElementId \
+                                                                INNER JOIN Flo_VectorElement        AS Elem ON Elem.ElementId = Attch.AttachedElementId
                                                         ) \
                                                     SELECT Elem.ParentElementId, Elem.ElementId, Elem.ElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
                                                         FROM AttachedElement                        AS Elem
