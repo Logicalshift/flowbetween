@@ -148,8 +148,12 @@ pub enum DatabaseUpdate {
     /// Uses the element ID on top of the stack and sets its assigned ID, leaving it on top of the stack
     PushElementAssignId(i64),
 
-    /// Takes the assigned ID from the top of the stack and pushes the corresponding element ID
+    /// Takes an assigned ID and pushes the corresponding element ID
     PushElementIdForAssignedId(i64),
+
+    /// Pops a number of elements from the pop of the stack, and one more element ID. Attaches the first set of elements to
+    /// the element ID popped afterwards, then pushes that element ID back onto the stack.
+    PushAttachElements(usize),
 
     /// Pops the element ID from the top of the stack and pushes the key frame ID and then the element ID
     PushKeyFrameIdForElementId,

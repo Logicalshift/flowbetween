@@ -383,6 +383,20 @@ impl FloSqlite {
                 self.stack.push(element_id);
             },
 
+            PushAttachElements(num_to_attach)                               => {
+                let mut attach_element_ids      = vec![];
+                for _ in 0..*num_to_attach {
+                    attach_element_ids.push(self.stack.pop().unwrap());
+                }
+
+                let attach_to_element_id        = self.stack.last().unwrap();
+                let mut insert_attach_element   = Self::prepare(&self.sqlite, FloStatement::InsertAttachElement)?;
+
+                for attach_element_id in attach_element_ids {
+                    insert_attach_element.insert::<&[&dyn ToSql]>(&[&attach_to_element_id, &attach_element_id])?;
+                }
+            },
+
             PushKeyFrameIdForElementId                                      => {
                 let element_id                      = self.stack.pop().unwrap();
                 let mut key_frame_for_element_id    = Self::prepare(&self.sqlite, FloStatement::SelectElementKeyFrame)?;
