@@ -131,30 +131,38 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         let keyframe = self.db.query_nearest_key_frame(layer_id, when).unwrap();
 
         if let Some((keyframe_id, _)) = keyframe {
-            // Need to query the last brush definition element and the last brush properties elements
-            let brush_definition = self.db.query_most_recent_element_of_type(keyframe_id, when, VectorElementType::BrushDefinition).unwrap();
+            // Need to query the last brush stroke
+            let brush_stroke = self.db.query_most_recent_element_of_type(keyframe_id, when, VectorElementType::BrushStroke).unwrap();
 
-            if let Some(brush_definition) = brush_definition {
-                // Turn these properties into a brush
-                let (brush_id, drawing_style)   = brush_definition.brush.unwrap();
-                let brush_defn                  = Self::get_brush_definition(&mut self.db, brush_id).unwrap();
-                let brush                       = create_brush_from_definition(&brush_defn, drawing_style.into());
+            if let Some(brush_stroke) = brush_stroke {
+                let attached_elements           = self.db.query_attached_elements(brush_stroke.element_id).unwrap();
+                let mut brush_definition_id     = attached_elements.into_iter()
+                    .filter(|attached_id| self.db.query_vector_element_type_from_element_id(*attached_id).unwrap() == Some(VectorElementType::BrushDefinition))
+                    .nth(0);
 
-                // Cache the brush for faster retrieval next time
-                self.active_brush_for_layer.insert(layer_id, (when, Arc::clone(&brush)));
+                if let Some(brush_definition_id) = brush_definition_id {
+                    // Turn these properties into a brush
+                    let brush_definition            = self.db.query_vector_element(brush_definition_id).unwrap();
+                    let (brush_id, drawing_style)   = brush_definition.brush.unwrap();
+                    let brush_defn                  = Self::get_brush_definition(&mut self.db, brush_id).unwrap();
+                    let brush                       = create_brush_from_definition(&brush_defn, drawing_style.into());
 
-                // This is our result
-                brush
+                    // Cache the brush for faster retrieval next time
+                    self.active_brush_for_layer.insert(layer_id, (when, Arc::clone(&brush)));
+
+                    // This is our result
+                    brush
+                } else {
+                    unimplemented!("TODO: there is a final brush stroke but it has no properties")
+                }
             } else {
                 // There's a keyframe but no brush definition has been defined at the specified time
-                unimplemented!("TODO: there is a keyframe but no most recent brush properties or brush definition")
+                unimplemented!("TODO: there is a keyframe but no most recent brush stroke")
             }
         } else {
             // If there's no keyframe at this time, then there's no brush to set
             unimplemented!("TODO: there is no brush if there's no keyframe")
         }
-
-        // create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw)
     }
 
     ///
