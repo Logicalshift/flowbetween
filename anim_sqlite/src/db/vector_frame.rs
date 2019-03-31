@@ -268,6 +268,28 @@ impl Frame for VectorFrame {
     }
 
     ///
+    /// Applies all of the properties for the specified element (including those added by attached elements)
+    ///
+    fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
+        let mut properties = properties;
+
+        // Get the attachments for this element
+        let element_attachments = self.attached_elements(element.id()).into_iter().map(|(id, _type)| id).collect::<Vec<_>>();
+
+        // Apply them to the properties
+        for element_id in element_attachments.iter() {
+            if let Some(attach_element) = self.element_with_id(element_id.clone()) {
+                properties = attach_element.update_properties(properties);
+            }
+        }
+
+        // Apply the properties added by the main element
+        properties = element.update_properties(properties);
+
+        properties
+    }
+
+    ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     /// 
     fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>> {

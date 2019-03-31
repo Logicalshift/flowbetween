@@ -24,6 +24,11 @@ pub trait Frame : Send+Sync {
     fn render_to(&self, gc: &mut dyn GraphicsPrimitives);
 
     ///
+    /// Applies all of the properties for the specified element (including those added by attached elements)
+    ///
+    fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties>;
+
+    ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     /// 
     fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>>;
@@ -68,6 +73,11 @@ impl Frame for Arc<dyn Frame> {
     /// Renders this frame to a particular graphics context
     ///
     #[inline] fn render_to(&self, gc: &mut dyn GraphicsPrimitives) { (**self).render_to(gc) }
+
+    ///
+    /// Applies all of the properties for the specified element (including those added by attached elements)
+    ///
+    #[inline] fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { (**self).apply_properties_for_element(element, properties) }
 
     ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
