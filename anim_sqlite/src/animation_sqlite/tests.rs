@@ -795,7 +795,6 @@ fn read_path_element() {
     }
 }
 
-
 #[test]
 fn create_path_and_re_order() {
     use self::LayerEdit::*;
