@@ -390,8 +390,9 @@ impl FloSqlite {
                                                                 INNER JOIN Flo_VectorElement        AS Elem ON Elem.ElementId = Attch.AttachedElementId \
                                                                 WHERE Attch.ElementId = AttachedElement.ElementId
                                                         ) \
-                                                    SELECT Elem.ParentElementId, Elem.ElementId, Elem.ElementType, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
+                                                    SELECT Elem.ParentElementId, Elem.ElementId, Elem.ElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
                                                         FROM AttachedElement                        AS Elem
+                                                        LEFT OUTER JOIN Flo_VectorElementTime       AS Time  ON Elem.ElementId = Time.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                         LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
