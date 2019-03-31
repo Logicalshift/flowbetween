@@ -132,6 +132,13 @@ impl VectorFrame {
 
                 // Attachment elements might be returned multiple times from the file, so we don't bother re-creating them if they do
                 if all_elements.contains_key(&raw_element_id) {
+                    // Just add as an attached element if we've already generated the entry in all_elements
+                    if let (ElementId::Assigned(_), ElementId::Assigned(element_id)) = (entry.attached_to_assigned_id, entry.vector.assigned_id) {
+                        // Is an attached element
+                        attachments.entry(entry.attached_to_assigned_id)
+                            .or_insert_with(|| vec![])
+                            .push((ElementId::Assigned(element_id), entry.vector.element_type.into()));
+                    }
                     continue;
                 }
 

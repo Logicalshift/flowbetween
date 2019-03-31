@@ -91,6 +91,17 @@ pub enum VectorElementType {
     Path
 }
 
+impl Into<VectorType> for VectorElementType {
+    fn into(self) -> VectorType {
+        match self {
+            VectorElementType::BrushDefinition  => VectorType::BrushDefinition,
+            VectorElementType::BrushProperties  => VectorType::BrushProperties,
+            VectorElementType::BrushStroke      => VectorType::BrushStroke,
+            VectorElementType::Path             => VectorType::Path
+        }
+    }
+}
+
 ///
 /// Types of path point
 ///
