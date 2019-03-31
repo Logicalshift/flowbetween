@@ -3,7 +3,7 @@ use super::vector::*;
 ///
 /// The type of a vector element
 ///
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug, Hash)]
 pub enum VectorType {
     /// Vector element representing the definition of a brush
     BrushDefinition,
