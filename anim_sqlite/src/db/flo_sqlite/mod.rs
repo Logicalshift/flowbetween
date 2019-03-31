@@ -390,12 +390,13 @@ impl FloSqlite {
                                                                 INNER JOIN Flo_ElementAttachments   AS Attch ON Attch.ElementId = AttachedElement.ElementId \
                                                                 INNER JOIN Flo_VectorElement        AS Elem ON Elem.ElementId = Attch.AttachedElementId
                                                         ) \
-                                                    SELECT Elem.ParentElementId, Elem.ElementId, Elem.ElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
+                                                    SELECT Elem.ParentElementId, Elem.ElementId, Elem.ElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId, Ordr.ZIndex \
                                                         FROM AttachedElement                        AS Elem
                                                         LEFT OUTER JOIN Flo_VectorElementTime       AS Time  ON Elem.ElementId = Time.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                         LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
+                                                        LEFT OUTER JOIN Flo_VectorElementOrdering   AS Ordr  ON Elem.ElementId = Ordr.ElementId AND Time.KeyFrameId = Ordr.KeyFrameId \
                                                         ORDER BY Elem.ParentElementId",
             SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
                                                         FROM Flo_VectorElement                      AS Elem \

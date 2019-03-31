@@ -345,10 +345,10 @@ impl FloQuery for FloSqlite {
     /// Queries the vector elements and all attachments that appear before a certain time in the specified keyframe
     ///
     fn query_vector_keyframe_elements_and_attachments_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementAttachmentEntry>, SqliteAnimationError> {
-        self.query_map(FloStatement::SelectAttachedElementsBefore, &[&keyframe_id, &Self::get_micros(&before)], |row| (row.get(0), row.get(1), row.get(2), row.get::<_, Option<i64>>(3), row.get(4), row.get(5), row.get(6), row.get(7)))
+        self.query_map(FloStatement::SelectAttachedElementsBefore, &[&keyframe_id, &Self::get_micros(&before)], |row| (row.get(0), row.get(1), row.get(2), row.get::<_, Option<i64>>(3), row.get(4), row.get(5), row.get(6), row.get(7), row.get::<_, Option<i64>>(8)))
             .map(|rows_with_errors|
                 rows_with_errors.map(|row_with_error| row_with_error.unwrap())
-                    .map(|(parent_element_id, element_id, element_type, when, brush_id, drawing_style, brush_properties_id, assigned_id)| {
+                    .map(|(parent_element_id, element_id, element_type, when, brush_id, drawing_style, brush_properties_id, assigned_id, z_index)| {
                         let parent_element_id: Option<i64>  = parent_element_id;
                         let assigned_id: Option<i64>        = assigned_id;
                         let when                            = when.map(|when| Self::from_micros(when));
@@ -370,7 +370,8 @@ impl FloQuery for FloSqlite {
 
                         VectorElementAttachmentEntry {
                             attached_to_element:    parent_element_id,
-                            vector:                 vector_element
+                            vector:                 vector_element,
+                            z_index:                z_index
                         }
                     })
                     .collect())
