@@ -209,6 +209,11 @@ pub trait FloQuery {
     fn query_vector_element_brush_points(&mut self, element_id: i64) -> Result<Vec<BrushPoint>, SqliteAnimationError>;
 
     ///
+    /// Retrieves the element ID from an assigned ID
+    ///
+    fn query_vector_element_id(&mut self, assigned_id: &ElementId) -> Result<Option<i64>, SqliteAnimationError>;
+
+    ///
     /// Queries the type of a single vector element, given its assigned ID
     /// 
     fn query_vector_element_type_from_assigned_id(&mut self, assigned_id: i64) -> Result<Option<VectorElementType>, SqliteAnimationError>;

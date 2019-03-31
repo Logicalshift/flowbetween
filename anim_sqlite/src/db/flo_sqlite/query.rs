@@ -414,6 +414,18 @@ impl FloQuery for FloSqlite {
                     .nth(0))
     }
 
+
+    ///
+    /// Retrieves the element ID from an assigned ID
+    ///
+    fn query_vector_element_id(&mut self, assigned_id: &ElementId) -> Result<Option<i64>, SqliteAnimationError> {
+        if let Some(assigned_id) = assigned_id.id() {
+            Ok(Some(self.query_row(FloStatement::SelectElementIdForAssignedId, &[&assigned_id], |row| row.get(0))?))
+        } else {
+            Ok(None)
+        }
+    }
+
     ///
     /// Queries the type of a single vector element given its assigned ID
     /// 
