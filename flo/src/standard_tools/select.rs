@@ -594,9 +594,10 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                     let mut properties  = Arc::new(VectorProperties::default());
                     let mut bounds      = Rect::empty();
 
+                    // TODO: we can avoid iterating through all of the elements and just draw the selected elements by applying their properties
                     for element in elements {
                         // Update the properties according to this element
-                        properties = element.update_properties(properties);
+                        properties = current_frame.apply_properties_for_element(&element, properties);
 
                         // If the element is selected, draw a highlight around it
                         let element_id = element.id();
