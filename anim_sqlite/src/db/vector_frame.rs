@@ -23,8 +23,11 @@ pub struct VectorFrame {
     /// The top-level elements in this frame, in order
     elements: Vec<Vector>,
 
+    /// Maps element IDs to their assigned IDs
+    element_id_for_assigned_id: HashMap<ElementId, i64>,
+
     /// Hashmap of element IDs to vector frame element for all elements in this frame
-    all_elements: HashMap<ElementId, Vector>,
+    all_elements: HashMap<i64, Vector>,
 
     /// List of the attachments for each element in the frame
     attachments: HashMap<ElementId, Vec<(ElementId, VectorType)>>
@@ -120,10 +123,18 @@ impl VectorFrame {
 
             // Process the elements
             let mut root_elements   = vec![];
-            let mut all_elements    = vec![];
+            let mut element_ids     = HashMap::new();
+            let mut all_elements    = HashMap::new();
             let mut attachments     = HashMap::new();
 
             for entry in vector_entries {
+                let raw_element_id = entry.vector.element_id;
+
+                // Attachment elements might be returned multiple times from the file, so we don't bother re-creating them if they do
+                if all_elements.contains_key(&raw_element_id) {
+                    continue;
+                }
+
                 // Fetch the vector element from the key frame
                 let mut vector          = Self::vector_for_entry(db, entry.vector)?;
 
@@ -182,25 +193,29 @@ impl VectorFrame {
                     root_elements.push(vector.clone());
                 }
 
-                all_elements.push((element_id, vector));
+                // Add this as one of the 'all elements' hash table
+                element_ids.insert(element_id, raw_element_id);
+                all_elements.insert(raw_element_id, vector);
             }
 
             // Can create the frame now
             Ok(VectorFrame {
-                keyframe_time:      keyframe_time,
-                keyframe_offset:    keyframe_offset,
-                elements:           root_elements,
-                all_elements:       all_elements.into_iter().collect(),
-                attachments:        attachments
+                keyframe_time:              keyframe_time,
+                keyframe_offset:            keyframe_offset,
+                elements:                   root_elements,
+                all_elements:               all_elements,
+                attachments:                attachments,
+                element_id_for_assigned_id: element_ids
             })
         } else {
             // No keyframe
             Ok(VectorFrame {
-                keyframe_time:      Duration::from_micros(0),
-                keyframe_offset:    when,
-                elements:           vec![],
-                all_elements:       HashMap::new(),
-                attachments:        HashMap::new()
+                keyframe_time:              Duration::from_micros(0),
+                keyframe_offset:            when,
+                elements:                   vec![],
+                all_elements:               HashMap::new(),
+                attachments:                HashMap::new(),
+                element_id_for_assigned_id: HashMap::new()
             })
         }
     }
@@ -238,7 +253,8 @@ impl Frame for VectorFrame {
     /// Searches for an element with the specified ID and returns it if found within this frame
     /// 
     fn element_with_id(&self, id: ElementId) -> Option<Vector> {
-        self.all_elements.get(&id)
+        self.element_id_for_assigned_id.get(&id)
+            .and_then(|id| self.all_elements.get(id))
             .cloned()
     }
 
