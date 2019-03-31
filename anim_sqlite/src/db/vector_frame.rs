@@ -121,7 +121,16 @@ impl VectorFrame {
             let keyframe_offset = when - keyframe_time;
 
             // Read the elements for this layer
-            let vector_entries  = db.query_vector_keyframe_elements_before(keyframe_id, keyframe_offset)?;
+            let vector_entries  = db.query_vector_keyframe_elements_and_attachments_before(keyframe_id, keyframe_offset)?;
+            let vector_entries  = vector_entries.into_iter().filter_map(|entry| {
+                if entry.attached_to_element.is_none() {
+                    // Root element
+                    Some(entry.vector)
+                } else {
+                    // Attached element
+                    None
+                }
+            });
 
             // If there are any motions for the elements, we cache them here
             let mut motions     = HashMap::new();
