@@ -11,17 +11,6 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
 ///
-/// The data that is stored about a particular element ID retrieved for this frame
-///
-struct VectorFrameElement {
-    /// The definition for this element
-    vector: Vector,
-
-    /// The elements that are attached to this element
-    attached_elements: Vec<(ElementId, VectorType)>
-}
-
-///
 /// Represents a frame calculated from a vector layer
 /// 
 pub struct VectorFrame {
@@ -35,7 +24,10 @@ pub struct VectorFrame {
     elements: Vec<Vector>,
 
     /// Hashmap of element IDs to vector frame element for all elements in this frame
-    all_elements: HashMap<ElementId, VectorFrameElement>
+    all_elements: HashMap<ElementId, Vector>,
+
+    /// List of the attachments for each element in the frame
+    attachments: HashMap<ElementId, Vec<(ElementId, VectorType)>>
 }
 
 impl VectorFrame {
@@ -122,24 +114,18 @@ impl VectorFrame {
 
             // Read the elements for this layer
             let vector_entries  = db.query_vector_keyframe_elements_and_attachments_before(keyframe_id, keyframe_offset)?;
-            let vector_entries  = vector_entries.into_iter().filter_map(|entry| {
-                if entry.attached_to_element.is_none() {
-                    // Root element
-                    Some(entry.vector)
-                } else {
-                    // Attached element
-                    None
-                }
-            });
 
             // If there are any motions for the elements, we cache them here
             let mut motions     = HashMap::new();
 
             // Process the elements
+            let mut root_elements   = vec![];
             let mut all_elements    = vec![];
+            let mut attachments     = HashMap::new();
+
             for entry in vector_entries {
                 // Fetch the vector element from the key frame
-                let mut vector          = Self::vector_for_entry(db, entry)?;
+                let mut vector          = Self::vector_for_entry(db, entry.vector)?;
 
                 // Fetch the motions that are attached to this element and apply them
                 let mut element_motions = vec![];
@@ -182,21 +168,30 @@ impl VectorFrame {
 
                 // Generate the element entry for this element
                 let element_id          = vector.id();
-                let vector_element      = VectorFrameElement {
-                    vector:             vector,
-                    attached_elements:  vec![]
-                };
 
-                // This is the final vector for this frame
-                all_elements.push((element_id, vector_element));
+                // Finished generating the vector for this element
+                if entry.attached_to_element.is_some() {
+                    // Is an attached element
+                    if entry.attached_to_assigned_id.is_assigned() {
+                        attachments.entry(entry.attached_to_assigned_id)
+                            .or_insert_with(|| vec![])
+                            .push((element_id, VectorType::from(&vector)));
+                    }
+                } else {
+                    // Is a root element
+                    root_elements.push(vector.clone());
+                }
+
+                all_elements.push((element_id, vector));
             }
 
             // Can create the frame now
             Ok(VectorFrame {
                 keyframe_time:      keyframe_time,
                 keyframe_offset:    keyframe_offset,
-                elements:           all_elements.iter().map(|(_, elem)| &elem.vector).cloned().collect(),
-                all_elements:       all_elements.into_iter().collect()
+                elements:           root_elements,
+                all_elements:       all_elements.into_iter().collect(),
+                attachments:        attachments
             })
         } else {
             // No keyframe
@@ -204,7 +199,8 @@ impl VectorFrame {
                 keyframe_time:      Duration::from_micros(0),
                 keyframe_offset:    when,
                 elements:           vec![],
-                all_elements:       HashMap::new()
+                all_elements:       HashMap::new(),
+                attachments:        HashMap::new()
             })
         }
     }
@@ -243,7 +239,6 @@ impl Frame for VectorFrame {
     /// 
     fn element_with_id(&self, id: ElementId) -> Option<Vector> {
         self.all_elements.get(&id)
-            .map(|elem| &elem.vector)
             .cloned()
     }
 
@@ -253,8 +248,8 @@ impl Frame for VectorFrame {
     /// (Element data can be retrieved via element_with_id)
     ///
     fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {
-        self.all_elements.get(&id)
-            .map(|elem| elem.attached_elements.clone())
+        self.attachments.get(&id)
+            .cloned()
             .unwrap_or_else(|| vec![])
     }
 
