@@ -233,9 +233,26 @@ impl Frame for VectorFrame {
     /// Renders this frame to a particular graphics context
     ///
     fn render_to(&self, gc: &mut dyn GraphicsPrimitives) {
-        let mut properties = Arc::new(VectorProperties::default());
+        let mut properties          = Arc::new(VectorProperties::default());
+        let mut active_attachments  = vec![];
 
         self.elements.iter().for_each(move |element| {
+            // Fetch the attachment IDs
+            let element_attachments = self.attached_elements(element.id()).into_iter().map(|(id, _type)| id).collect::<Vec<_>>();
+
+            // Update the properties based on the attachments, if the attachments are different
+            if active_attachments != element_attachments {
+                // These attachments are active now
+                active_attachments = element_attachments;
+
+                // Apply them to the current set of properties
+                for element_id in active_attachments.iter() {
+                    if let Some(attach_element) = self.element_with_id(element_id.clone()) {
+                        properties = attach_element.update_properties(Arc::clone(&properties));
+                    }
+                }
+            }
+
             // Properties always update regardless of the time they're at (so the display is consistent)
             properties = element.update_properties(Arc::clone(&properties));
             element.render(gc, &properties);
