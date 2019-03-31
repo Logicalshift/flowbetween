@@ -59,9 +59,10 @@ pub struct VectorElementEntry {
 }
 
 pub struct VectorElementAttachmentEntry {
-    pub vector:                 VectorElementEntry,
-    pub attached_to_element:    Option<i64>,
-    pub z_index:                Option<i64>
+    pub vector:                     VectorElementEntry,
+    pub attached_to_assigned_id:    ElementId,
+    pub attached_to_element:        Option<i64>,
+    pub z_index:                    Option<i64>
 }
 
 ///
