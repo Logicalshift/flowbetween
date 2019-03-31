@@ -660,6 +660,19 @@ fn read_frame_after_edits() {
             &Vector::BrushStroke(ref brush_stroke) => Some(brush_stroke.id()),
             _ => None
         } == Some(ElementId::Assigned(127)));
+
+        // All our elements should have the brush properties attached to them
+        let attachments = frame.attached_elements(ElementId::Assigned(126));
+        assert!(attachments.len() != 0);
+        assert!(attachments.len() == 2);
+
+        let attachments = frame.attached_elements(ElementId::Assigned(127));
+        assert!(attachments.len() != 0);
+        assert!(attachments.len() == 2);
+
+        let attachments = frame.attached_elements(ElementId::Assigned(128));
+        assert!(attachments.len() != 0);
+        assert!(attachments.len() == 2);
     }
 
     {
