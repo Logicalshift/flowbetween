@@ -15,7 +15,7 @@ use std::time::Duration;
 ///
 /// Represents a vector element that has been transformed from one type of element to another
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TransformedVector {
     /// The vector element before transformations were applied
     original:       Arc<Vector>,

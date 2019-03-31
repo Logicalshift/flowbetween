@@ -17,7 +17,7 @@ use std::time::Duration;
 ///
 /// Element representing a brush stroke
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BrushElement {
     /// The ID of this element
     id: ElementId,

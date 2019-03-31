@@ -11,7 +11,7 @@ use std::ops::Deref;
 ///
 /// Possible types of vector element
 /// 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Vector {
     /// Vector that has been transformed from a source vector (eg, by applying a motion)
     Transformed(TransformedVector),

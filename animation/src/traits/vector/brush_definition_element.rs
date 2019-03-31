@@ -17,7 +17,7 @@ use std::time::Duration;
 ///
 /// Element representing selecting a new brush definition
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BrushDefinitionElement {
     /// The ID of this element
     id: ElementId,
