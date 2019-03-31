@@ -1,3 +1,5 @@
+use super::vector::*;
+
 ///
 /// The type of a vector element
 ///
@@ -14,4 +16,18 @@ pub enum VectorType {
 
     /// Vector element representing a path
     Path
+}
+
+impl From<&Vector> for VectorType {
+    fn from(vector: &Vector) -> VectorType {
+        use self::Vector::*;
+
+        match vector {
+            Transformed(transformed_from)   => VectorType::from(&*transformed_from.without_transformations()),
+            BrushDefinition(_)              => VectorType::BrushDefinition,
+            BrushProperties(_)              => VectorType::BrushProperties,
+            BrushStroke(_)                  => VectorType::BrushStroke,
+            Path(_)                         => VectorType::Path
+        }
+    }
 }
