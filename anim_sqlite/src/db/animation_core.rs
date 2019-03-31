@@ -42,6 +42,9 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     /// Maps a layer ID to the properties that should be associated with the next path created
     pub path_properties_for_layer: HashMap<i64, PathPropertiesIds>,
 
+    /// Maps a layer ID to the properties that should be associated with the next brush stroke created
+    pub brush_properties_for_layer: HashMap<i64, PathPropertiesIds>,
+
     /// Maps layers to the brush that's active
     pub active_brush_for_layer: HashMap<i64, (Duration, Arc<dyn Brush>)>,
 

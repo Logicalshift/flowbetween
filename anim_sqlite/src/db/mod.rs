@@ -140,6 +140,7 @@ impl AnimationDbCore<FloSqlite> {
             active_brush_for_layer:     HashMap::new(),
             layer_id_for_assigned_id:   HashMap::new(),
             path_properties_for_layer:  HashMap::new(),
+            brush_properties_for_layer: HashMap::new(),
             next_element_id:            initial_element_id
         };
 
