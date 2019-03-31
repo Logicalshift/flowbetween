@@ -58,6 +58,11 @@ pub struct VectorElementEntry {
     pub assigned_id:            ElementId
 }
 
+pub struct VectorElementAttachmentEntry {
+    pub vector:                 VectorElementEntry,
+    pub attached_to_element:    Option<i64>
+}
+
 ///
 /// Entry read from the path element table
 ///
@@ -185,6 +190,11 @@ pub trait FloQuery {
     /// Queries the vector elements that appear before a certain time in the specified keyframe
     /// 
     fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>, SqliteAnimationError>;
+
+    ///
+    /// Queries the vector elements and all attachments that appear before a certain time in the specified keyframe
+    ///
+    fn query_vector_keyframe_elements_and_attachments_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementAttachmentEntry>, SqliteAnimationError>;
 
     ///
     /// Queries the single most recent element of the specified type in the specified keyframe
