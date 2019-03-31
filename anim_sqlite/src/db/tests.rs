@@ -99,6 +99,34 @@ fn brush_stroke() {
 }
 
 #[test]
+fn attach_element() {
+    core().insert_edits(&[AnimationEdit::Layer(24,
+        Paint(Duration::from_millis(300),
+            BrushStroke(ElementId::Assigned(128), Arc::new(vec![
+                RawPoint::from((0.0, 0.0)),
+                RawPoint::from((10.0, 0.0)),
+                RawPoint::from((10.0, 10.0)),
+                RawPoint::from((0.0, 10.0)),
+                RawPoint::from((0.0, 0.0))
+            ]))
+        )),
+
+        AnimationEdit::Layer(24,
+        Paint(Duration::from_millis(300),
+            BrushStroke(ElementId::Assigned(129), Arc::new(vec![
+                RawPoint::from((0.0, 0.0)),
+                RawPoint::from((10.0, 0.0)),
+                RawPoint::from((10.0, 10.0)),
+                RawPoint::from((0.0, 10.0)),
+                RawPoint::from((0.0, 0.0))
+            ]))
+        )),
+
+        AnimationEdit::Element(vec![ElementId::Assigned(129)], ElementEdit::AttachTo(ElementId::Assigned(128)))
+    ]).unwrap();
+}
+
+#[test]
 fn create_path() {
     core().insert_edits(&[
         AnimationEdit::Layer(24, Path(Duration::from_millis(300),

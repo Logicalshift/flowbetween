@@ -484,6 +484,17 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         .chain(update_order))?;
                     },
 
+                    (_any_type, ElementEdit::AttachTo(attach_element_id)) => {
+                        if let ElementId::Assigned(attach_element_id) = attach_element_id {
+                            self.db.update(vec![
+                                DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                                DatabaseUpdate::PushElementIdForAssignedId(attach_element_id),
+                                DatabaseUpdate::PushAttachElements(1),
+                                DatabaseUpdate::Pop
+                            ])?;
+                        }
+                    },
+
                     // Other types have no action
                     _ => ()
                 }
