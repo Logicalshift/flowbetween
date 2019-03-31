@@ -26,6 +26,15 @@ pub struct PathPropertiesIds {
 }
 
 ///
+/// A list of element IDs to attach automatically to a new element
+///
+#[derive(Clone, Debug)]
+pub struct AttachProperties {
+    /// The properties to attach of each type
+    pub property_of_type: HashMap<VectorType, ElementId>
+}
+
+///
 /// Core data structure used by the animation database
 /// 
 pub struct AnimationDbCore<TFile: FloFile+Send> {
@@ -43,7 +52,7 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     pub path_properties_for_layer: HashMap<i64, PathPropertiesIds>,
 
     /// Maps a layer ID to the properties that should be associated with the next brush stroke created
-    pub brush_properties_for_layer: HashMap<i64, PathPropertiesIds>,
+    pub brush_properties_for_layer: HashMap<i64, AttachProperties>,
 
     /// Maps layers to the brush that's active
     pub active_brush_for_layer: HashMap<i64, (Duration, Arc<dyn Brush>)>,
@@ -255,21 +264,54 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             _ => ()
         }
 
-        // Create a new element
-        Self::create_new_element(&mut self.db, layer_id, when, new_element.id(), VectorElementType::from(&new_element))?;
-
         // Record the details of the element itself
         match new_element {
-            SelectBrush(_id, brush_definition, drawing_style)   => Self::create_brush_definition(&mut self.db, brush_definition, drawing_style)?,
-            BrushProperties(_id, brush_properties)              => Self::create_brush_properties(&mut self.db, brush_properties)?,
-            BrushStroke(_id, brush_stroke)                      => self.create_brush_stroke(layer_id, when, brush_stroke)?,
-        }
+            BrushStroke(id, brush_stroke)                       => {
+                // New brush stroke element
+                Self::create_new_element(&mut self.db, layer_id, when, id, VectorElementType::BrushStroke)?;
 
-        // create_new_element pushes an element ID, a key frame ID and a time. The various element actions pop the element ID so we need to pop the frame ID and time
-        self.db.update(vec![
-            DatabaseUpdate::Pop,
-            DatabaseUpdate::Pop
-        ])?;
+                // Attach the properties for this brush stroke
+                let property_elements   = self.brush_properties_for_layer.get(&layer_id)
+                    .map(|properties| properties.property_of_type.values().filter_map(|elem| elem.id()))
+                    .map(|assigned_ids| assigned_ids.map(|assigned_id| DatabaseUpdate::PushElementIdForAssignedId(assigned_id)))
+                    .map(|push_ids| push_ids.collect::<Vec<_>>())
+                    .unwrap_or_else(|| vec![]);
+                let num_properties      = property_elements.len();
+
+                if num_properties > 0 {
+                    // Push all of the assigned IDs for the properties, followed by attaching them to the brush element we're building
+                    self.db.update(property_elements.into_iter()
+                        .chain(vec![DatabaseUpdate::PushAttachElements(num_properties)]))?;
+                }
+
+                // Create the brush stroke (popping the element ID)
+                self.create_brush_stroke(layer_id, when, brush_stroke)?;
+
+                // Pop the frame ID and time (create_brush_stroke will have popped the element ID)
+                self.db.update(vec![DatabaseUpdate::Pop, DatabaseUpdate::Pop])?;
+            },
+
+            SelectBrush(id, brush_definition, drawing_style)    => {
+                // Create a new brush definition to use with the future brush strokes
+                Self::create_unattached_element(&mut self.db, VectorElementType::BrushDefinition, id)?;
+                Self::create_brush_definition(&mut self.db, brush_definition, drawing_style)?;
+
+                // Attach to future brush strokes
+                self.brush_properties_for_layer.entry(layer_id)
+                    .or_insert_with(|| AttachProperties { property_of_type: HashMap::new() })
+                    .property_of_type.insert(VectorType::BrushDefinition, id);
+            },
+            BrushProperties(id, brush_properties)               => {
+                // Create a new brush properties to use with the future brush strokes
+                Self::create_unattached_element(&mut self.db, VectorElementType::BrushProperties, id)?;
+                Self::create_brush_properties(&mut self.db, brush_properties)?;
+
+                // Attach to future brush strokes
+                self.brush_properties_for_layer.entry(layer_id)
+                    .or_insert_with(|| AttachProperties { property_of_type: HashMap::new() })
+                    .property_of_type.insert(VectorType::BrushProperties, id);
+            },
+        }
 
         Ok(())
     }
