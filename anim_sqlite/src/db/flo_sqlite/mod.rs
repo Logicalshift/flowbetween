@@ -92,6 +92,7 @@ enum FloStatement {
     SelectVectorElementTypeAssigned,
     SelectVectorElementTypeElementId,
     SelectVectorElementsBefore,
+    SelectAttachedElementsBefore,
     SelectMostRecentElementOfTypeBefore,
     SelectBrushPoints,
     SelectMotionsForElement,
@@ -377,6 +378,24 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_VectorElementOrdering   AS Ordr  ON Elem.ElementId = Ordr.ElementId AND Time.KeyFrameId = Ordr.KeyFrameId \
                                                         WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
                                                         ORDER BY Ordr.ZIndex ASC, Elem.ElementId ASC",
+            SelectAttachedElementsBefore        => "WITH RECURSIVE \
+                                                        AttachedElement AS ( \
+                                                            SELECT NULL AS ParentElementId, Elem.ElementId AS ElementId, Elem.VectorElementType AS ElementType \
+                                                                FROM Flo_VectorElement              AS Elem \
+                                                                INNER JOIN Flo_VectorElementTime    AS Time  ON Elem.ElementId = Time.ElementId \
+                                                                WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
+                                                            UNION
+                                                            SELECT AttachedElement.ElementId AS ParentElemenId, Elem.ElementId, Elem.VectorElementType AS ElementType \
+                                                                FROM Flo_ElementAttachments         AS Attch \
+                                                                INNER JOIN Flo_VectorElement        AS Elem ON Elem.ElementId = Attch.AttachedElementId \
+                                                                WHERE Attch.ElementId = AttachedElement.ElementId
+                                                        ) \
+                                                    SELECT Elem.ParentElementId, Elem.ElementId, Elem.ElementType, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
+                                                        FROM AttachedElement                        AS Elem
+                                                        LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
+                                                        LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
+                                                        ORDER BY Elem.ParentElementId",
             SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
                                                         FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
