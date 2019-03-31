@@ -8,7 +8,7 @@ use std::sync::*;
 /// 
 pub trait VectorLayer : Send {
     ///
-    /// The brush that will be active for the next element that's added to this layer
+    /// The brush that will be active for the next element that's added to this layer (if one is set)
     /// 
-    fn active_brush(&self, when: Duration) -> Arc<dyn Brush>;
+    fn active_brush(&self, when: Duration) -> Option<Arc<dyn Brush>>;
 }

@@ -116,7 +116,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
 }
 
 impl<TFile: FloFile+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {
-    fn active_brush(&self, when: Duration) -> Arc<dyn Brush> {
+    fn active_brush(&self, when: Duration) -> Option<Arc<dyn Brush>> {
         let layer_id = self.layer_id;
         self.core.sync(|core| core.get_active_brush_for_layer(layer_id, when))
     }

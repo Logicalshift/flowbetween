@@ -117,11 +117,11 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Retrieves the brush that is active on the specified layer at the specified time
     ///
-    pub fn get_active_brush_for_layer(&mut self, layer_id: i64, when: Duration) -> Arc<dyn Brush> {
+    pub fn get_active_brush_for_layer(&mut self, layer_id: i64, when: Duration) -> Option<Arc<dyn Brush>> {
         // If the cached active brush is at the right time, then just use that
         if let Some((time, ref brush)) = self.active_brush_for_layer.get(&layer_id) {
             if time == &when {
-                return Arc::clone(&brush);
+                return Some(Arc::clone(&brush));
             }
         }
 
@@ -151,17 +151,17 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     self.active_brush_for_layer.insert(layer_id, (when, Arc::clone(&brush)));
 
                     // This is our result
-                    brush
+                    Some(brush)
                 } else {
-                    unimplemented!("TODO: there is a final brush stroke but it has no properties")
+                    None
                 }
             } else {
                 // There's a keyframe but no brush definition has been defined at the specified time
-                unimplemented!("TODO: there is a keyframe but no most recent brush stroke")
+                None
             }
         } else {
             // If there's no keyframe at this time, then there's no brush to set
-            unimplemented!("TODO: there is no brush if there's no keyframe")
+            None
         }
     }
 
@@ -246,12 +246,14 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     fn create_brush_stroke(&mut self, layer_id: i64, when: Duration, brush_stroke: Arc<Vec<RawPoint>>) -> Result<()> {
         // Convert the brush stroke to the brush points
         let active_brush = self.get_active_brush_for_layer(layer_id, when);
-        let brush_stroke = active_brush.brush_points_for_raw_points(&*brush_stroke);
+        if let Some(active_brush) = active_brush {
+            let brush_stroke = active_brush.brush_points_for_raw_points(&*brush_stroke);
 
-        // Store in the database
-        self.db.update(vec![
-            DatabaseUpdate::PopBrushPoints(Arc::new(brush_stroke))
-        ])?;
+            // Store in the database
+            self.db.update(vec![
+                DatabaseUpdate::PopBrushPoints(Arc::new(brush_stroke))
+            ])?;
+        }
 
         Ok(())
     }
