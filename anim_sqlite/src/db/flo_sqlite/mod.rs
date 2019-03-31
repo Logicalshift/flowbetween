@@ -397,7 +397,7 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                         LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
                                                         LEFT OUTER JOIN Flo_VectorElementOrdering   AS Ordr  ON Elem.ElementId = Ordr.ElementId AND Time.KeyFrameId = Ordr.KeyFrameId \
-                                                        ORDER BY Elem.ParentElementId",
+                                                        ORDER BY Ordr.ZIndex ASC",
             SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
                                                         FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
