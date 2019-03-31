@@ -385,7 +385,7 @@ impl FloSqlite {
                                                                 INNER JOIN Flo_VectorElementTime    AS Time  ON Elem.ElementId = Time.ElementId \
                                                                 WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
                                                             UNION
-                                                            SELECT AttachedElement.ElementId AS ParentElemenId, Elem.ElementId, Elem.VectorElementType AS ElementType \
+                                                            SELECT AttachedElement.ElementId AS ParentElementId, Elem.ElementId AS ElementId, Elem.VectorElementType AS ElementType \
                                                                 FROM Flo_ElementAttachments         AS Attch \
                                                                 INNER JOIN Flo_VectorElement        AS Elem ON Elem.ElementId = Attch.AttachedElementId \
                                                                 WHERE Attch.ElementId = AttachedElement.ElementId
