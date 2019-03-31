@@ -122,7 +122,7 @@ fn attach_element() {
             ]))
         )),
 
-        AnimationEdit::Element(vec![ElementId::Assigned(129)], ElementEdit::AttachTo(ElementId::Assigned(128)))
+        AnimationEdit::Element(vec![ElementId::Assigned(129)], ElementEdit::AddAttachment(ElementId::Assigned(128)))
     ]).unwrap();
 }
 

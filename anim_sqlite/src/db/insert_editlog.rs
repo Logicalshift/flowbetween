@@ -91,7 +91,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.db.update(vec![PushEditLogLayer(layer_id), Pop])?;
             },
 
-            &Element(ref element_ids, ElementEdit::AttachTo(element_id))    => {
+            &Element(ref element_ids, ElementEdit::AddAttachment(element_id))    => {
                 // The 'attached' element ID appears at the start of the list as we store it in the database, which isn't possible in insert_element_edit
                 Self::insert_element_id_list(&mut self.db, &(iter::once(element_id).chain(element_ids.iter().cloned()).collect()))?;
                 self.db.update(vec![Pop])?;
@@ -120,7 +120,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         use self::ElementEdit::*;
 
         match edit {
-            AttachTo(_element_id) => {
+            AddAttachment(_element_id) => {
                 // Generally shouldn't be generated (see insert_animation_edit above for where this is actually implemented)
                 self.db.update(vec![Pop])?;
             },
