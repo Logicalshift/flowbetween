@@ -586,23 +586,20 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
         let draw_selection_overlay = follow(computed(move || (current_frame.get(), selected_elements.get())))
             .map(|(current_frame, selected_elements)| {
                 if let Some(current_frame) = current_frame {
-                    // Get the elements in the current frame
-                    let elements        = current_frame.vector_elements().unwrap_or_else(|| Box::new(vec![].into_iter()));
-                    
                     // Build up a vector of bounds
                     let mut selection   = vec![];
                     let mut properties  = Arc::new(VectorProperties::default());
                     let mut bounds      = Rect::empty();
 
-                    // TODO: we can avoid iterating through all of the elements and just draw the selected elements by applying their properties
-                    for element in elements {
-                        // Update the properties according to this element
-                        properties = current_frame.apply_properties_for_element(&element, properties);
+                    // Draw highlights around the selection (and discover the bounds)
+                    for selected_id in selected_elements.iter() {
+                        let element = current_frame.element_with_id(*selected_id);
 
-                        // If the element is selected, draw a highlight around it
-                        let element_id = element.id();
-                        if element_id.is_assigned() && selected_elements.contains(&element_id) {
-                            // Draw the settings for this element
+                        if let Some(element) = element {
+                            // Update the properties according to this element
+                            properties  = current_frame.apply_properties_for_element(&element, properties);
+
+                            // Draw a highlight around it
                             let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);
                             selection.extend(drawing);
                             bounds = bounds.union(bounding_box);
