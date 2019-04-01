@@ -41,7 +41,7 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     pub fn new(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController<Anim> {
         let ui                  = Self::ui(tool_model);
         let edit                = Desync::new(executor::spawn(flo_model.edit()));
-        let selected            = flo_model.selection().selected_element.clone();
+        let selected            = flo_model.selection().selected_elements.clone();
         let selection_in_order  = flo_model.selection().selection_in_order.clone();
         let timeline            = flo_model.timeline().clone();
 

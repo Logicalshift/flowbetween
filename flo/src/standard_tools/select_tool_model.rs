@@ -20,11 +20,11 @@ impl SelectToolModel {
     ///
     pub fn new(selection_model: &SelectionModel) -> SelectToolModel {
         // Binding tracking the number of selected elements
-        let selection               = selection_model.selected_element.clone();
+        let selection               = selection_model.selected_elements.clone();
         let num_elements_selected   = computed(move || selection.get().len() as u64);
 
         // Binding tracking if anything at all is selected
-        let selection               = selection_model.selected_element.clone();
+        let selection               = selection_model.selected_elements.clone();
         let anything_selected       = computed(move || selection.get().len() > 0);
 
         // Create the model

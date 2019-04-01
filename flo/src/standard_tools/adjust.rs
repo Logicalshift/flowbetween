@@ -203,7 +203,7 @@ impl Adjust {
     /// 
     fn control_points<Anim: 'static+Animation>(flo_model: &FloModel<Anim>) -> BindRef<Arc<Vec<(ElementId, usize, (f32, f32))>>> {
         // Get references to the bits of the model we need
-        let selected_elements   = flo_model.selection().selected_element.clone();
+        let selected_elements   = flo_model.selection().selected_elements.clone();
         let frame               = flo_model.frame().frame.clone();
 
         // Create a computed binding
@@ -232,7 +232,7 @@ impl Adjust {
     /// 
     fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
         // Collect the selected elements into a HashSet
-        let selected_elements   = flo_model.selection().selected_element.clone();
+        let selected_elements   = flo_model.selection().selected_elements.clone();
         let selected_elements   = computed(move || selected_elements.get());
 
         // Get the properties for the selected elements
@@ -554,7 +554,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
         let adjust_state = bind(AdjustAction::NoAction);
 
         // Also track the selected elements
-        let selected_elements   = flo_model.selection().selected_element.clone();
+        let selected_elements   = flo_model.selection().selected_elements.clone();
         let control_points      = Self::control_points(&*flo_model);
 
         // Draw control points when the frame changes

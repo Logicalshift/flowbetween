@@ -577,7 +577,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
     /// 
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
         // The set of currently selected elements
-        let selected_elements = flo_model.selection().selected_element.clone();
+        let selected_elements = flo_model.selection().selected_elements.clone();
 
         // Create a binding that works out the frame for the currently selected layer
         let current_frame = flo_model.frame().frame.clone();
@@ -654,7 +654,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
         // Whenever the frame or the set of bounding boxes changes, we create a new SelectData object
         // (this also resets any in-progress action)
         let current_frame       = flo_model.frame().frame.clone();
-        let selected_elements   = flo_model.selection().selected_element.clone();
+        let selected_elements   = flo_model.selection().selected_elements.clone();
         let data_for_model  = follow(computed(move || (current_frame.get(), selected_elements.get(), combined_bounding_boxes.get())))
             .map(|(current_frame, selected_elements, combined_bounding_boxes)| {
                 ToolAction::Data(SelectData {
