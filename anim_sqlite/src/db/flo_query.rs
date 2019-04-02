@@ -247,14 +247,4 @@ pub trait FloQuery {
     /// Queries the time points attached to a motion
     /// 
     fn query_motion_timepoints(&mut self, motion_id: i64, path_type: MotionPathType) -> Result<Vec<TimePointEntry>, SqliteAnimationError>;
-
-    ///
-    /// Retrieves the motions attached to a particular element ID
-    /// 
-    fn query_motion_ids_for_element(&mut self, assigned_element_id: i64) -> Result<Vec<i64>, SqliteAnimationError>;
-
-    ///
-    /// Retrieves the elements attached to a particular motion ID
-    /// 
-    fn query_element_ids_for_motion(&mut self, assigned_motion_id: i64) -> Result<Vec<i64>, SqliteAnimationError>;
 }

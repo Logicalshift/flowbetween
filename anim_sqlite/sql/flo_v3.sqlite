@@ -371,18 +371,6 @@ CREATE TABLE Flo_MotionPath (
 ) WITHOUT ROWID;
 
 /*
- * The elements attached to a motion
- */
-CREATE TABLE Flo_MotionAttached (
-    MotionId    INTEGER NOT NULL REFERENCES Flo_Motion(MotionId),
-    ElementId   INTEGER NOT NULL REFERENCES Flo_AssignedElementId(AssignedId),
-
-    PRIMARY KEY (MotionId, ElementId)
-) WITHOUT ROWID;
-
-CREATE INDEX FloIdx_AttachedMotion ON Flo_MotionAttached (ElementId, MotionId);
-
-/*
  *  ===== Animation
  */
 

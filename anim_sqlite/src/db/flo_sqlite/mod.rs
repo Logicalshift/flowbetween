@@ -95,8 +95,6 @@ enum FloStatement {
     SelectAttachedElementsBefore,
     SelectMostRecentElementOfTypeBefore,
     SelectBrushPoints,
-    SelectMotionsForElement,
-    SelectElementsForMotion,
     SelectMotion,
     SelectMotionTimePoints,
     SelectElementIdForAssignedId,
@@ -155,7 +153,6 @@ enum FloStatement {
     InsertPathElement,
     InsertMotion,
     InsertOrReplaceMotionOrigin,
-    InsertMotionAttachedElement,
     InsertMotionPathPoint,
 
     DeleteKeyFrame,
@@ -163,7 +160,6 @@ enum FloStatement {
     DeleteElementZIndex,
     DeleteMotion,
     DeleteMotionPoints,
-    DeleteMotionAttachedElement
 }
 
 impl FloSqlite {
@@ -409,8 +405,6 @@ impl FloSqlite {
                                                         ORDER BY Time.AtTime DESC \
                                                         LIMIT 1",
             SelectBrushPoints                   => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
-            SelectMotionsForElement             => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
-            SelectElementsForMotion             => "SELECT ElementId FROM Flo_MotionAttached WHERE MotionId = ?",
             SelectMotion                        => "SELECT Mot.MotionType, Origin.X, Origin.Y \
                                                         FROM Flo_Motion                     AS Mot
                                                         LEFT OUTER JOIN Flo_MotionOrigin    AS Origin ON Mot.MotionId = Origin.MotionId
@@ -481,7 +475,6 @@ impl FloSqlite {
             InsertPathElement                   => "INSERT INTO Flo_PathElement (ElementId, PathId) VALUES (?, ?)",
             InsertMotion                        => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
             InsertOrReplaceMotionOrigin         => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
-            InsertMotionAttachedElement         => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
             InsertMotionPathPoint               => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
 
             DeleteKeyFrame                      => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
@@ -489,7 +482,6 @@ impl FloSqlite {
             DeleteElementZIndex                 => "DELETE FROM Flo_VectorElementOrdering WHERE ElementId = ?",
             DeleteMotion                        => "DELETE FROM Flo_Motion WHERE MotionId = ?",
             DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
-            DeleteMotionAttachedElement         => "DELETE FROM Flo_MotionAttached WHERE MotionId = ? AND ElementId = ?",
         }
     }
 

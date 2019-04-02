@@ -606,28 +606,4 @@ impl FloQuery for FloSqlite {
         
         Ok(result)
     }
-
-    ///
-    /// Retrieves the motions
-    /// 
-    fn query_motion_ids_for_element(&mut self, assigned_element_id: i64) -> Result<Vec<i64>, SqliteAnimationError> {
-        let result = self.query_map(FloStatement::SelectMotionsForElement, &[&assigned_element_id],
-            |row| row.get(0))?
-            .map(|row_with_error| row_with_error.unwrap())
-            .collect();
-
-        Ok(result)
-    }
-
-    ///
-    /// Retrieves the elements attached to a particular motion ID
-    /// 
-    fn query_element_ids_for_motion(&mut self, assigned_motion_id: i64) -> Result<Vec<i64>, SqliteAnimationError> {
-        let result = self.query_map(FloStatement::SelectElementsForMotion, &[&assigned_motion_id],
-            |row| row.get(0))?
-            .map(|row_with_error| row_with_error.unwrap())
-            .collect();
-
-        Ok(result)
-    }
 }
