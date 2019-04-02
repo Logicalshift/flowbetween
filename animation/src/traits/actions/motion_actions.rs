@@ -61,13 +61,12 @@ fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<Elemen
         ];
 
         // Attach the static elements
-        let attach_elements     = elements.iter()
-            .map(|element_id| MotionEdit::Attach(*element_id));
+        let create_motion       = create_motion.into_iter().map(|motion_edit| AnimationEdit::Motion(static_motion_id, motion_edit));
+        let attach_elements     = vec![AnimationEdit::Element(elements.iter().cloned().collect(), ElementEdit::AddAttachment(static_motion_id))];
 
         // Turn into a series of animation edits
         create_motion.into_iter()
             .chain(attach_elements)
-            .map(|motion_edit| AnimationEdit::Motion(static_motion_id, motion_edit))
             .collect()
     } else {
         // No static elements = no static element translation
@@ -233,14 +232,12 @@ mod test {
         assert!(static_move[3] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetPath(TimeCurve::new(target_point, target_point))));
 
         // Attaching can be in either order
-        if static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))) {
-            assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2))));
-        } else {
-            assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))));
-            assert!(static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2))));
+        if let AnimationEdit::Element(attach_to, ElementEdit::AddAttachment(attached_element)) = static_move[4] {
+            assert!(attached_element == ElementId::Assigned(42));
+            assert!(attach_to.iter().cloned().collect::<HashSet<_>>() == vec![ElementId::Assigned(1), ElementId::Assigned(2)].into_iter().collect());
         }
 
-        assert!(static_move.len() == 6);
+        assert!(static_move.len() == 5);
     }
 
     #[test]
