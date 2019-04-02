@@ -418,22 +418,6 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     // Turn into a motion path
                     self.db.update(vec![DatabaseUpdate::SetMotionPath(motion_id, MotionPathType::Position, time_path.points.len()*3)])?;
                 },
-
-                Attach(element_id) => {
-                    if let ElementId::Assigned(element_id) = element_id {
-                        self.db.update(vec![
-                            DatabaseUpdate::AddMotionAttachedElement(motion_id, element_id)
-                        ])?;
-                    }
-                },
-
-                Detach(element_id) => {
-                    if let ElementId::Assigned(element_id) = element_id {
-                        self.db.update(vec![
-                            DatabaseUpdate::DeleteMotionAttachedElement(motion_id, element_id)
-                        ])?;
-                    }
-                }
             }
         }
 
@@ -490,6 +474,17 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                                 DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
                                 DatabaseUpdate::PushElementIdForAssignedId(attach_element_id),
                                 DatabaseUpdate::PushAttachElements(1),
+                                DatabaseUpdate::Pop
+                            ])?;
+                        }
+                    },
+
+                    (_any_type, ElementEdit::RemoveAttachment(detach_element_id)) => {
+                        if let ElementId::Assigned(detach_element_id) = detach_element_id {
+                            self.db.update(vec![
+                                DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                                DatabaseUpdate::PushElementIdForAssignedId(detach_element_id),
+                                DatabaseUpdate::PushDetachElements(1),
                                 DatabaseUpdate::Pop
                             ])?;
                         }
