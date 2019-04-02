@@ -1,4 +1,5 @@
 use super::*;
+use super::db_enum::*;
 use super::time_path::*;
 use super::motion_path_type::*;
 
@@ -71,9 +72,26 @@ impl AnimationDb {
     /// Retrieves all of the motion IDs attached to the specified element
     /// 
     pub fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
-        if let ElementId::Assigned(element_id) = element_id {
+        if let ElementId::Assigned(assigned_id) = element_id {
             // Assigned element IDs have attached motions
-            let motion_ids = self.core.sync(move |core| core.db.query_motion_ids_for_element(element_id)).unwrap();
+            let motion_ids = self.core.sync(move |core| {
+                // Map to the element ID
+                let element_id          = core.db.query_vector_element_id(&ElementId::Assigned(assigned_id))?.unwrap();
+
+                // Get the motion attachments
+                let motion_attachments  = core.db.query_attached_elements(element_id)?
+                    .into_iter()
+                    .filter(|(_, element_type)| *element_type == VectorElementType::Motion)
+                    .map(|(element_id, _)| element_id);
+
+                // The motion ID is currently the assigned ID
+                let motion_ids          = motion_attachments
+                    .filter_map(|element_id| core.db.query_vector_element(element_id).ok()
+                        .and_then(|entry| entry.assigned_id.id()));
+
+                Ok(motion_ids.collect::<Vec<_>>())
+            });
+            let motion_ids = motion_ids.unwrap();
 
             motion_ids.into_iter()
                 .map(|raw_id| ElementId::Assigned(raw_id))
