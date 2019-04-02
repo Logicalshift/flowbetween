@@ -18,6 +18,8 @@ CREATE TABLE Flo_ElementAttachments (
     PRIMARY KEY (ElementId ASC, AttachedElementId ASC)
 ) WITHOUT ROWID;
 
+CREATE INDEX Flo_Idx_AttachmentElements ON Flo_ElementAttachments (AttachedElementId, ElementId);
+
 CREATE TRIGGER Flo_DeleteAttachedElements BEFORE DELETE ON Flo_VectorElement
     BEGIN
         DELETE FROM Flo_ElementAttachments WHERE ElementId          = Old.ElementId;
