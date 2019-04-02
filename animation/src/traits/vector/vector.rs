@@ -1,6 +1,7 @@
 use super::element::*;
 use super::path_element::*;
 use super::brush_element::*;
+use super::motion_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
 use super::brush_definition_element::*;
@@ -26,7 +27,10 @@ pub enum Vector {
     BrushStroke(BrushElement),
 
     /// Path vector
-    Path(PathElement)
+    Path(PathElement),
+
+    /// Element describing a motion
+    Motion(MotionElement)
 }
 
 impl Vector {
@@ -73,7 +77,8 @@ impl Deref for Vector {
             BrushProperties(ref props)      => props,
             BrushStroke(ref elem)           => elem,
 
-            Path(elem)                      => elem
+            Path(elem)                      => elem,
+            Motion(ref elem)                => elem
         }
     }
 }
