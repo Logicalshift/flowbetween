@@ -107,7 +107,22 @@ impl AnimationDb {
     pub fn get_elements_for_motion(&self, motion_id: ElementId) -> Vec<ElementId> {
         if let ElementId::Assigned(motion_id) = motion_id {
             // Assigned motion IDs have attached elements
-            let element_ids = self.core.sync(move |core| core.db.query_element_ids_for_motion(motion_id)).unwrap();
+            let element_ids = self.core.sync(move |core| -> Result<_> {
+                // Map to the element ID
+                let motion_element_id   = core.db.query_vector_element_id(&ElementId::Assigned(motion_id))?.unwrap();
+
+                // Get the motion attachments
+                let attached_elements   = core.db.query_elements_with_attachments(motion_element_id)?
+                    .into_iter()
+                    .map(|(_, element_id, _)| element_id);
+
+                // The motion ID is currently the assigned ID
+                let element_ids          = attached_elements
+                    .filter_map(|element_id| element_id.id());
+
+                Ok(element_ids.collect::<Vec<_>>())
+            });
+            let element_ids = element_ids.unwrap();
 
             element_ids.into_iter()
                 .map(|raw_id| ElementId::Assigned(raw_id))
