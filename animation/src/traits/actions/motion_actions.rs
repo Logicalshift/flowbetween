@@ -4,6 +4,7 @@ use super::super::motion::*;
 use super::super::animation::*;
 use super::super::time_path::*;
 
+use std::iter;
 use std::time::Duration;
 use std::collections::{HashSet, HashMap};
 
@@ -62,7 +63,7 @@ fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<Elemen
 
         // Attach the static elements
         let create_motion       = create_motion.into_iter().map(|motion_edit| AnimationEdit::Motion(static_motion_id, motion_edit));
-        let attach_elements     = vec![AnimationEdit::Element(elements.iter().cloned().collect(), ElementEdit::AddAttachment(static_motion_id))];
+        let attach_elements     = iter::once(AnimationEdit::Element(elements.iter().cloned().collect(), ElementEdit::AddAttachment(static_motion_id)));
 
         // Turn into a series of animation edits
         create_motion.into_iter()
@@ -93,15 +94,15 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
         let updated_curve       = existing_curve.set_point_at_time(*when, (moved_point.0, moved_point.1));
 
         // Check if there are any elements that are attached to this motion but are not being moved
-        let attached_to             = animation.motion().get_elements_for_motion(motion_id);
-        let elements: HashSet<_>    = elements.into_iter().collect();
-        let motion_in_use_elsewhere = attached_to.into_iter().any(|element_id| !elements.contains(&&element_id));
+        let attached_to                 = animation.motion().get_elements_for_motion(motion_id);
+        let element_hash: HashSet<_>    = elements.into_iter().collect();
+        let motion_in_use_elsewhere     = attached_to.into_iter().any(|element_id| !element_hash.contains(&&element_id));
 
         if motion_in_use_elsewhere {
             // Create a new translation motion and attach/detach our elements (so elements outside of our set are not moved)
             let new_motion_id       = animation.motion().assign_motion_id();
-            let detach_elements     = elements.iter().map(|element_id| AnimationEdit::Motion(motion_id, MotionEdit::Detach(**element_id)));
-            let attach_elements     = elements.iter().map(|element_id| AnimationEdit::Motion(new_motion_id, MotionEdit::Attach(**element_id)));
+            let detach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::RemoveAttachment(motion_id)));
+            let attach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::AddAttachment(new_motion_id)));
 
             let create_new_motion   = vec![
                 MotionEdit::Create,
