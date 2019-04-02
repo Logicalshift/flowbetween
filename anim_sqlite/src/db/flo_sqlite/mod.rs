@@ -158,6 +158,7 @@ enum FloStatement {
     DeleteKeyFrame,
     DeleteLayer,
     DeleteElementZIndex,
+    DeleteElementAttachment,
     DeleteMotion,
     DeleteMotionPoints,
 }
@@ -480,6 +481,7 @@ impl FloSqlite {
             DeleteKeyFrame                      => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                         => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
             DeleteElementZIndex                 => "DELETE FROM Flo_VectorElementOrdering WHERE ElementId = ?",
+            DeleteElementAttachment             => "DELETE FROM Flo_ElementAttachments WHERE ElementId = ? AND AttachedElementId = ?",
             DeleteMotion                        => "DELETE FROM Flo_Motion WHERE MotionId = ?",
             DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
         }

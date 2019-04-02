@@ -397,6 +397,20 @@ impl FloSqlite {
                 }
             },
 
+            PushDetachElements(num_to_detach)                               => {
+                let mut detach_element_ids      = vec![];
+                for _ in 0..*num_to_detach {
+                    detach_element_ids.push(self.stack.pop().unwrap());
+                }
+
+                let detach_from_element_id          = self.stack.last().unwrap();
+                let mut delete_element_attachment   = Self::prepare(&self.sqlite, FloStatement::DeleteElementAttachment)?;
+
+                for detach_element_id in detach_element_ids {
+                    delete_element_attachment.execute::<&[&dyn ToSql]>(&[&detach_from_element_id, &detach_element_id])?;
+                }
+            },
+
             PushKeyFrameIdForElementId                                      => {
                 let element_id                      = self.stack.pop().unwrap();
                 let mut key_frame_for_element_id    = Self::prepare(&self.sqlite, FloStatement::SelectElementKeyFrame)?;
@@ -550,20 +564,10 @@ impl FloSqlite {
                 }
             },
 
-            AddMotionAttachedElement(motion_id, element_id)                 => {
-                let mut insert_attached_element = Self::prepare(&self.sqlite, FloStatement::InsertMotionAttachedElement)?;
-                insert_attached_element.insert::<&[&dyn ToSql]>(&[&motion_id, &element_id])?;
-            },
-
             DeleteMotion(motion_id)                                         => {
                 let mut delete_motion = Self::prepare(&self.sqlite, FloStatement::DeleteMotion)?;
                 delete_motion.execute::<&[&dyn ToSql]>(&[&motion_id])?;
             },
-
-            DeleteMotionAttachedElement(motion_id, element_id)              => {
-                let mut delete_attachment = Self::prepare(&self.sqlite, FloStatement::DeleteMotionAttachedElement)?;
-                delete_attachment.execute::<&[&dyn ToSql]>(&[&motion_id, &element_id])?;
-            }
         }
 
         Ok(())

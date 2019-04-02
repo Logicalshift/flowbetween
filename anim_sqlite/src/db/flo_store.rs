@@ -151,9 +151,13 @@ pub enum DatabaseUpdate {
     /// Takes an assigned ID and pushes the corresponding element ID
     PushElementIdForAssignedId(i64),
 
-    /// Pops a number of elements from the pop of the stack, and one more element ID. Attaches the first set of elements to
-    /// the element ID popped afterwards, then pushes that element ID back onto the stack.
+    /// Pops a number of elements from the top of the stack, and one more element ID. Adds the final element as an attachment
+    /// to each of the elements popped. Leaves the final element on the stack.
     PushAttachElements(usize),
+
+    /// Pops a number of elements from the top of the stack, and one more element ID. Removes the final element as an attachment
+    /// from each of the elements popped. Leaves the final element on the stack.
+    PushDetachElements(usize),
 
     /// Pops the element ID from the top of the stack and pushes the key frame ID and then the element ID
     PushKeyFrameIdForElementId,
@@ -188,14 +192,8 @@ pub enum DatabaseUpdate {
     /// Pops the specified number of time point IDs from the stack and sets the path of the specified motion to match
     SetMotionPath(i64, MotionPathType, usize),
 
-    /// Attaches an element ID to a motion
-    AddMotionAttachedElement(i64, i64),
-
     /// Removes the motion with the specified ID
     DeleteMotion(i64),
-
-    /// Removes a particular attached element
-    DeleteMotionAttachedElement(i64, i64)
 }
 
 ///
