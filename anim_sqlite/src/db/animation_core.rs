@@ -386,7 +386,10 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             match edit {
                 Create => {
                     self.db.update(vec![
-                        DatabaseUpdate::CreateMotion(motion_id)
+                        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+                        DatabaseUpdate::PushElementAssignId(motion_id),
+                        DatabaseUpdate::Pop,
+                        DatabaseUpdate::CreateMotion(motion_id),
                     ])?;
                 },
 
