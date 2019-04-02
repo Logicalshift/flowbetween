@@ -32,8 +32,6 @@ pub enum EditLogType {
     MotionSetType,
     MotionSetOrigin,
     MotionSetPath,
-    MotionAttach,
-    MotionDetach,
 
     ElementAddAttachment,
     ElementSetControlPoints,
@@ -233,8 +231,6 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::EditLog(MotionSetType),
                     DbEnum::EditLog(MotionSetOrigin),
                     DbEnum::EditLog(MotionSetPath),
-                    DbEnum::EditLog(MotionAttach),
-                    DbEnum::EditLog(MotionDetach),
 
                     DbEnum::EditLog(ElementAddAttachment),
                     DbEnum::EditLog(ElementSetControlPoints),
@@ -344,8 +340,6 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             Motion(_, SetType(_))                               => EditLogType::MotionSetType,
             Motion(_, SetOrigin(_, _))                          => EditLogType::MotionSetOrigin,
             Motion(_, SetPath(_))                               => EditLogType::MotionSetPath,
-            Motion(_, Attach(_))                                => EditLogType::MotionAttach,
-            Motion(_, Detach(_))                                => EditLogType::MotionDetach,
 
             Element(_, AddAttachment(_))                        => EditLogType::ElementAddAttachment,
             Element(_, SetControlPoints(_))                     => EditLogType::ElementSetControlPoints,
@@ -430,8 +424,6 @@ impl From<EditLogType> for DbEnumName {
             MotionSetType               => DbEnumName("Edit", "Motion::SetType"),
             MotionSetOrigin             => DbEnumName("Edit", "Motion::SetOrigin"),
             MotionSetPath               => DbEnumName("Edit", "Motion::SetPath"),
-            MotionAttach                => DbEnumName("Edit", "Motion::Attach"),
-            MotionDetach                => DbEnumName("Edit", "Motion::Detach"),
 
             ElementAddAttachment        => DbEnumName("Edit", "Element::AddAttachment"),
             ElementSetControlPoints     => DbEnumName("Edit", "Element::SetControlPoints"),

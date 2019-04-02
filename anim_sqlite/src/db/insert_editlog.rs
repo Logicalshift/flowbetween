@@ -179,22 +179,6 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 // Turn into an edit log path
                 self.db.update(vec![PushEditLogMotionPath(curve.points.len()*3), Pop])?;
             },
-
-            Attach(element_id)      => {
-                if let ElementId::Assigned(element_id) = element_id {
-                    self.db.update(vec![PushEditLogMotionElement(*element_id), Pop])?;
-                } else {
-                    self.db.update(vec![Pop])?;
-                }
-            },
-
-            Detach(element_id)      => {
-                if let ElementId::Assigned(element_id) = element_id {
-                    self.db.update(vec![PushEditLogMotionElement(*element_id), Pop])?;
-                } else {
-                    self.db.update(vec![Pop])?;
-                }
-            }
         }
 
         Ok(())
