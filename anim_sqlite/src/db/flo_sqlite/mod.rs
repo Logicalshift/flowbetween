@@ -88,6 +88,7 @@ enum FloStatement {
     SelectBrushDefinition,
     SelectBrushProperties,
     SelectAttachmentsForElementId,
+    SelectElementsForAttachmentId,
     SelectVectorElementWithId,
     SelectVectorElementTypeAssigned,
     SelectVectorElementTypeElementId,
@@ -352,9 +353,14 @@ impl FloSqlite {
             SelectBrushDefinition               => "SELECT Brush.BrushType, Ink.MinWidth, Ink.MaxWidth, Ink.ScaleUpDistance FROM Flo_Brush_Type AS Brush \
                                                         LEFT OUTER JOIN Flo_Brush_Ink AS Ink ON Brush.Brush = Ink.Brush \
                                                         WHERE Brush.Brush = ?",
-            SelectAttachmentsForElementId       => "SELECT Attch.AttachedElementId, Elem.VectorElementType FROM Flo_ElementAttachments AS Attch \
-                                                        INNER JOIN Flo_VectorElement AS Elem ON Elem.ElementId = Attch.AttachedElementId \
+            SelectAttachmentsForElementId       => "SELECT Attch.AttachedElementId, Elem.VectorElementType, Assgn.AssignedId FROM Flo_ElementAttachments AS Attch \
+                                                        INNER JOIN Flo_VectorElement            AS Elem     ON Elem.ElementId = Attch.AttachedElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId   AS Assgn    ON Elem.ElementId = Assgn.ElementId \
                                                         WHERE Attch.ElementId = ?;",
+            SelectElementsForAttachmentId       => "SELECT Attch.ElementId, Elem.VectorElementType, Assgn.AssignedId FROM Flo_ElementAttachments AS Attch \
+                                                        INNER JOIN Flo_VectorElement            AS Elem     ON Elem.ElementId = Attch.ElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId   AS Assgn    ON Elem.ElementId = Assgn.ElementId \
+                                                        WHERE Attch.AttachedElementId = ?;",
             SelectBrushProperties               => "SELECT Size, Opacity, Color FROM Flo_BrushProperties WHERE BrushProperties = ?",
             SelectVectorElementWithId           => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
                                                         FROM Flo_VectorElement                      AS Elem \
