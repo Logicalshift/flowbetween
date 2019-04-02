@@ -224,9 +224,9 @@ pub trait FloQuery {
     fn query_vector_element_type_from_element_id(&mut self, element_id: i64) -> Result<Option<VectorElementType>, SqliteAnimationError>;
 
     ///
-    /// Queries the IDs of the attachments for this element
+    /// Queries the IDs of the attachments for this element, and their element types
     ///
-    fn query_attached_elements(&mut self, element_id: i64) -> Result<Vec<i64>, SqliteAnimationError>;
+    fn query_attached_elements(&mut self, element_id: i64) -> Result<Vec<(i64, VectorElementType)>, SqliteAnimationError>;
 
     ///
     /// Queries a path element

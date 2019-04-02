@@ -477,9 +477,14 @@ impl FloQuery for FloSqlite {
     ///
     /// Queries IDs of the attached elements for a particular item
     ///
-    fn query_attached_elements(&mut self, element_id: i64) -> Result<Vec<i64>, SqliteAnimationError> {
-        Ok(self.query_map(FloStatement::SelectAttachmentsForElementId, &[&element_id], |row| row.get(0))?
+    fn query_attached_elements(&mut self, element_id: i64) -> Result<Vec<(i64, VectorElementType)>, SqliteAnimationError> {
+        Ok(self.query_map(FloStatement::SelectAttachmentsForElementId, &[&element_id], |row| (row.get(0), row.get(1)))?
             .filter_map(|row| row.ok())
+            .map(|(element_id, element_type)| {
+                let element_type    = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
+
+                (element_id, element_type)
+            })
             .collect())
     }
 
