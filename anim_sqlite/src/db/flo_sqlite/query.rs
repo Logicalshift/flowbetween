@@ -477,13 +477,29 @@ impl FloQuery for FloSqlite {
     ///
     /// Queries IDs of the attached elements for a particular item
     ///
-    fn query_attached_elements(&mut self, element_id: i64) -> Result<Vec<(i64, VectorElementType)>, SqliteAnimationError> {
-        Ok(self.query_map(FloStatement::SelectAttachmentsForElementId, &[&element_id], |row| (row.get(0), row.get(1)))?
+    fn query_attached_elements(&mut self, element_id: i64) -> Result<Vec<(i64, ElementId, VectorElementType)>, SqliteAnimationError> {
+        Ok(self.query_map(FloStatement::SelectAttachmentsForElementId, &[&element_id], |row| (row.get(0), row.get(1), row.get(2)))?
             .filter_map(|row| row.ok())
-            .map(|(element_id, element_type)| {
+            .map(|(element_id, element_type, assigned_id)| {
                 let element_type    = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
+                let assigned_id     = if let Some(id) = assigned_id { ElementId::Assigned(id) } else { ElementId::Unassigned };
 
-                (element_id, element_type)
+                (element_id, assigned_id, element_type)
+            })
+            .collect())
+    }
+
+    ///
+    /// Queries the IDs of the attachments for this element, and their element types
+    ///
+    fn query_elements_with_attachments(&mut self, attached_element_id: i64) -> Result<Vec<(i64, ElementId, VectorElementType)>, SqliteAnimationError> {
+        Ok(self.query_map(FloStatement::SelectElementsForAttachmentId, &[&attached_element_id], |row| (row.get(0), row.get(1), row.get(2)))?
+            .filter_map(|row| row.ok())
+            .map(|(element_id, element_type, assigned_id)| {
+                let element_type    = self.value_for_enum(DbEnumType::VectorElement, Some(element_type)).unwrap().vector_element().unwrap();
+                let assigned_id     = if let Some(id) = assigned_id { ElementId::Assigned(id) } else { ElementId::Unassigned };
+
+                (element_id, assigned_id, element_type)
             })
             .collect())
     }
@@ -502,7 +518,7 @@ impl FloQuery for FloSqlite {
         let mut brush_id            = None;
         let mut brush_properties_id = None;
 
-        for attach_id in attached {
+        for (attach_id, _element_id, _type) in attached {
             // Fetch the type of the attachment
             let attachment_type = self.query_vector_element_type_from_element_id(attach_id)?;
 
