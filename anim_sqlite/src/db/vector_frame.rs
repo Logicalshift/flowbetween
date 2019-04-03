@@ -165,7 +165,7 @@ impl VectorFrame {
 
                 // Fetch the motions that are attached to this element and apply them
                 let mut element_motions = vec![];
-                if let ElementId::Assigned(id) = vector.id() {
+                if let Some(id) = db.query_vector_element_id(&vector.id())? {
                     // Get the motions attached to this element
                     // TODO: process motions during rendering
                     let motion_ids = db.query_attached_elements(id)?
