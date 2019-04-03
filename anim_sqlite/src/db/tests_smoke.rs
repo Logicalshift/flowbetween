@@ -807,5 +807,6 @@ fn smoke_delete_motion_attachment() {
         DatabaseUpdate::PushElementIdForAssignedId(1),
         DatabaseUpdate::PushElementIdForAssignedId(42),
         DatabaseUpdate::PushDetachElements(1),
+        DatabaseUpdate::Pop,
     ])
 }
