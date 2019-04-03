@@ -583,7 +583,7 @@ CREATE TRIGGER Flo_Delete_Motion_Elements BEFORE DELETE ON Flo_Motion
     BEGIN
         DELETE FROM Flo_MotionOrigin WHERE MotionId = Old.MotionId;
         DELETE FROM Flo_MotionPath WHERE MotionId = Old.MotionId;
-        DELETE FROM Flo_MotionAttached WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_VectorElement WHERE ElementId IN (SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = Old.MotionId);
     END;
 
 /* Deleting a layer type deletes the corresponding animation layers and key frames */
@@ -592,12 +592,6 @@ CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
         DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
         DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
         DELETE FROM Flo_LayerName WHERE LayerId = Old.LayerId;
-    END;
-
-/* Deleting from the assigned element ID table also removes anything that references that table */
-CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
-    BEGIN
-        DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
     END;
 
 /* Deleting an element deletes it from the ordering table */
