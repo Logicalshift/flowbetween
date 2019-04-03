@@ -97,6 +97,12 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.db.update(vec![Pop])?;
             },
 
+            &Element(ref element_ids, ElementEdit::RemoveAttachment(element_id))    => {
+                // The 'attached' element ID appears at the start of the list as we store it in the database, which isn't possible in insert_element_edit
+                Self::insert_element_id_list(&mut self.db, &(iter::once(element_id).chain(element_ids.iter().cloned()).collect()))?;
+                self.db.update(vec![Pop])?;
+            },
+
             &Element(ref element_ids, ref element_edit)     => {
                 Self::insert_element_id_list(&mut self.db, element_ids)?;
                 self.insert_element_edit(element_edit)?;
@@ -120,7 +126,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         use self::ElementEdit::*;
 
         match edit {
-            AddAttachment(_element_id) => {
+            AddAttachment(_element_id) | RemoveAttachment(_element_id) => {
                 // Generally shouldn't be generated (see insert_animation_edit above for where this is actually implemented)
                 self.db.update(vec![Pop])?;
             },
