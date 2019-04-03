@@ -165,44 +165,43 @@ impl VectorFrame {
 
                 // Fetch the motions that are attached to this element and apply them
                 let mut element_motions = vec![];
-                if let Some(id) = db.query_vector_element_id(&vector.id())? {
-                    // Get the motions attached to this element
-                    // TODO: process motions during rendering
-                    let motion_ids = db.query_attached_elements(id)?
-                        .into_iter()
-                        .filter_map(|(_element_id, assigned_id, element_type)| {
-                            if element_type == VectorElementType::Motion {
-                                assigned_id.id()
-                            } else {
-                                None
-                            }
-                        });
 
-                    // Collect them into a list
-                    for motion_id in motion_ids {
-                        // Fetch the motion (from the cache or the database)
-                        let motion = match motions.entry(motion_id) {
-                            Entry::Occupied(cached_motion)  => Rc::clone(cached_motion.get()),
+                // Get the motions attached to this element
+                // TODO: process motions during rendering
+                let motion_ids = db.query_attached_elements(raw_element_id)?
+                    .into_iter()
+                    .filter_map(|(_element_id, assigned_id, element_type)| {
+                        if element_type == VectorElementType::Motion {
+                            assigned_id.id()
+                        } else {
+                            None
+                        }
+                    });
 
-                            Entry::Vacant(vacant_motion)    => {
-                                // Motion is not cached: fetch from the database
-                                let motion_entry = db.query_motion(motion_id)?;
+                // Collect them into a list
+                for motion_id in motion_ids {
+                    // Fetch the motion (from the cache or the database)
+                    let motion = match motions.entry(motion_id) {
+                        Entry::Occupied(cached_motion)  => Rc::clone(cached_motion.get()),
 
-                                // Convert to an actual motion
-                                let motion = motion_entry
-                                    .map(|motion_entry| AnimationDb::motion_for_entry(db, motion_id, motion_entry))
-                                    .unwrap_or(Ok(Motion::None))?;
-                                let motion = Rc::new(motion);
-                                
-                                // Store in the entry
-                                vacant_motion.insert(Rc::clone(&motion));
-                                motion
-                            }
-                        };
-                        
-                        // Store this as a motion applying to this element
-                        element_motions.push(motion);
-                    }
+                        Entry::Vacant(vacant_motion)    => {
+                            // Motion is not cached: fetch from the database
+                            let motion_entry = db.query_motion(motion_id)?;
+
+                            // Convert to an actual motion
+                            let motion = motion_entry
+                                .map(|motion_entry| AnimationDb::motion_for_entry(db, motion_id, motion_entry))
+                                .unwrap_or(Ok(Motion::None))?;
+                            let motion = Rc::new(motion);
+                            
+                            // Store in the entry
+                            vacant_motion.insert(Rc::clone(&motion));
+                            motion
+                        }
+                    };
+                    
+                    // Store this as a motion applying to this element
+                    element_motions.push(motion);
                 }
 
                 // Apply each motion in turn to this element
