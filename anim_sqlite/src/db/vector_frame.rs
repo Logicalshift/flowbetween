@@ -2,6 +2,7 @@ use super::*;
 use super::db_enum::*;
 use super::flo_store::*;
 use super::flo_query::*;
+use super::motion::*;
 
 use flo_canvas::*;
 
@@ -96,6 +97,22 @@ impl VectorFrame {
     }
 
     ///
+    /// Returns the motion element associated with a particular entry
+    ///
+    fn motion_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<MotionElement> {
+        // The motion ID is the assigned ID for the entry
+        // (This is a quirk due to the original design; a better approach would be to use the main element ID with the current database structure)
+        let motion_id       = entry.assigned_id.id().unwrap();
+
+        // Load the data fr the motion
+        let motion_entry    = db.query_motion(motion_id)?.unwrap();
+        let motion          = AnimationDb::motion_for_entry(db, motion_id, motion_entry)?;
+
+        // Generate the motion element
+        Ok(MotionElement::new(entry.assigned_id, motion))
+    }
+
+    ///
     /// Tries to turn a vector element entry into a Vector object
     /// 
     fn vector_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
@@ -104,6 +121,7 @@ impl VectorFrame {
             VectorElementType::BrushProperties      => Ok(Vector::BrushProperties(Self::properties_for_entry(db, entry)?)),
             VectorElementType::BrushStroke          => Ok(Vector::BrushStroke(Self::brush_stroke_for_entry(db, entry)?)),
             VectorElementType::Path                 => Ok(Vector::Path(Self::path_for_entry(db, entry)?)),
+            VectorElementType::Motion               => Ok(Vector::Motion(Self::motion_for_entry(db, entry)?))
         }
     }
 

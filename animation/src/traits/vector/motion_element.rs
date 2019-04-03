@@ -20,6 +20,18 @@ pub struct MotionElement {
     motion: Motion
 }
 
+impl MotionElement {
+    ///
+    /// Creates a new motion element
+    ///
+    pub fn new(id: ElementId, motion: Motion) -> MotionElement {
+        MotionElement {
+            id:         id,
+            motion:     motion
+        }
+    }
+}
+
 impl VectorElement for MotionElement {
     ///
     /// The ID of this element
