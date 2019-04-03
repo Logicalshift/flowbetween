@@ -741,6 +741,9 @@ fn smoke_attach_elements_to_motion() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
 
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(1),
+        DatabaseUpdate::Pop,
         DatabaseUpdate::CreateMotion(1),
         DatabaseUpdate::PushElementIdForAssignedId(1),
         DatabaseUpdate::PushElementIdForAssignedId(42),
@@ -764,6 +767,9 @@ fn smoke_delete_motion() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
 
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(1),
+        DatabaseUpdate::Pop,
         DatabaseUpdate::CreateMotion(1),
         DatabaseUpdate::PushElementIdForAssignedId(1),
         DatabaseUpdate::PushElementIdForAssignedId(42),
@@ -789,6 +795,9 @@ fn smoke_delete_motion_attachment() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
 
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(1),
+        DatabaseUpdate::Pop,
         DatabaseUpdate::CreateMotion(1),
         DatabaseUpdate::PushElementIdForAssignedId(1),
         DatabaseUpdate::PushElementIdForAssignedId(42),
