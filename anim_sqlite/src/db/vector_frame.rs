@@ -149,7 +149,16 @@ impl VectorFrame {
                 let mut element_motions = vec![];
                 if let ElementId::Assigned(id) = vector.id() {
                     // Get the motions attached to this element
-                    let motion_ids = db.query_motion_ids_for_element(id)?;
+                    // TODO: process motions during rendering
+                    let motion_ids = db.query_attached_elements(id)?
+                        .into_iter()
+                        .filter_map(|(_element_id, assigned_id, element_type)| {
+                            if element_type == VectorElementType::Motion {
+                                assigned_id.id()
+                            } else {
+                                None
+                            }
+                        });
 
                     // Collect them into a list
                     for motion_id in motion_ids {
