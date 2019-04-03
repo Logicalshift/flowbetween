@@ -74,7 +74,7 @@ pub enum DatabaseUpdate {
     /// Uses the edit ID on top of the stack and associates a motion type with it
     PushEditLogMotionType(MotionType),
 
-    /// Uses the edit ID on top of the stack sets the attached element ID
+    /// Uses the edit ID on top of the stack and sets the attached element ID
     PushEditLogMotionElement(i64),
 
     /// Pops the specified number of time point IDs from the stack and creates a motion path from them using the edit ID pushed before them (ie, stack shopuld look like `[edit id, point id, point id, ...]`)
