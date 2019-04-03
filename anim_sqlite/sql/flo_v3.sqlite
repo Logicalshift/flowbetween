@@ -566,6 +566,12 @@ CREATE TABLE Flo_EnumerationDescriptions (
  *  ===== TRIGGERS
  */
 
+/* Deleting an element deletes it from the assigned table */
+CREATE TRIGGER Flo_Delete_AssignedId BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_AssignedElementId WHERE ElementId = Old.ElementId;
+    END;
+
 /* Deleting an element deletes it from the path table */
 CREATE TRIGGER Flo_Delete_PathElements BEFORE DELETE ON Flo_VectorElement
     BEGIN
