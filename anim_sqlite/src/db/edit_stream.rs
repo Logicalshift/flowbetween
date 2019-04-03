@@ -213,10 +213,9 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             MotionSetType               => unimplemented!(),
             MotionSetOrigin             => unimplemented!(),
             MotionSetPath               => unimplemented!(),
-            MotionAttach                => unimplemented!(),
-            MotionDetach                => unimplemented!(),
 
             ElementAddAttachment        => unimplemented!(),
+            ElementRemoveAttachment     => unimplemented!(),
             ElementSetControlPoints     => unimplemented!(),
             ElementOrderInFront         => unimplemented!(),
             ElementOrderBehind          => unimplemented!(),
