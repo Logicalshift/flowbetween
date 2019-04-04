@@ -288,9 +288,9 @@ impl Frame for VectorFrame {
                 }
             }
 
-            // Properties always update regardless of the time they're at (so the display is consistent)
-            properties = element.update_properties(Arc::clone(&properties));
-            element.render(gc, &properties);
+            // Render the element via the properties
+            // TODO: avoid the clone here somehow
+            properties.render(gc, element.clone());
         })
     }
 
