@@ -588,7 +588,6 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                 if let Some(current_frame) = current_frame {
                     // Build up a vector of bounds
                     let mut selection   = vec![];
-                    let mut properties  = Arc::new(VectorProperties::default());
                     let mut bounds      = Rect::empty();
 
                     // Draw highlights around the selection (and discover the bounds)
@@ -597,7 +596,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
 
                         if let Some(element) = element {
                             // Update the properties according to this element
-                            properties  = current_frame.apply_properties_for_element(&element, properties);
+                            let properties  = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
 
                             // Draw a highlight around it
                             let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);

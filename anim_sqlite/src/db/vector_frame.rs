@@ -278,7 +278,8 @@ impl Frame for VectorFrame {
                 // These attachments are active now
                 active_attachments = element_attachments;
 
-                // Apply them to the current set of properties
+                // Apply them to generate the properties for the following elements
+                properties = Arc::new(VectorProperties::default());
                 for element_id in active_attachments.iter() {
                     if let Some(attach_element) = self.element_with_id(element_id.clone()) {
                         properties = attach_element.update_properties(Arc::clone(&properties));
