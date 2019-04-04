@@ -8,6 +8,7 @@ use super::super::super::brushes::*;
 use canvas::*;
 
 use std::sync::*;
+use std::time::Duration;
 
 ///
 /// Represents the active properties for a vector layer
@@ -25,7 +26,7 @@ pub struct VectorProperties {
     pub brush_properties: BrushProperties,
 
     /// Transformation to apply before rendering an element with these properties
-    pub transform: Arc<dyn (Fn(Vector) -> Vector) + Sync+Send>
+    pub transform: Arc<dyn (Fn(Vector, Duration) -> Vector) + Sync+Send>
 }
 
 impl VectorProperties {
@@ -36,7 +37,7 @@ impl VectorProperties {
         VectorProperties {
             brush:              Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
             brush_properties:   BrushProperties::new(),
-            transform:          Arc::new(|vector| vector)
+            transform:          Arc::new(|vector, _when| vector)
         }
     }
 
@@ -50,9 +51,9 @@ impl VectorProperties {
     ///
     /// Renders the specified element with these properties
     ///
-    pub fn render(&self, gc: &mut dyn GraphicsPrimitives, element: Vector) {
+    pub fn render(&self, gc: &mut dyn GraphicsPrimitives, element: Vector, when: Duration) {
         // Apply the transformation, if there is one
-        let element = (self.transform)(element);
+        let element = (self.transform)(element, when);
 
         // Render this element
         element.render(gc, self);

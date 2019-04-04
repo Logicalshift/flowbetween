@@ -577,10 +577,10 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
     /// 
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
         // The set of currently selected elements
-        let selected_elements = flo_model.selection().selected_elements.clone();
+        let selected_elements   = flo_model.selection().selected_elements.clone();
 
         // Create a binding that works out the frame for the currently selected layer
-        let current_frame = flo_model.frame().frame.clone();
+        let current_frame       = flo_model.frame().frame.clone();
 
         // Follow it, and draw an overlay showing the bounding boxes of everything that's selected
         let draw_selection_overlay = follow(computed(move || (current_frame.get(), selected_elements.get())))
@@ -589,6 +589,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                     // Build up a vector of bounds
                     let mut selection   = vec![];
                     let mut bounds      = Rect::empty();
+                    let frame_time      = current_frame.time_index();
 
                     // Draw highlights around the selection (and discover the bounds)
                     for selected_id in selected_elements.iter() {
@@ -599,7 +600,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                             let properties  = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
 
                             // Apply any transformation needed for the element
-                            let element     = (properties.transform)(element);
+                            let element     = (properties.transform)(element, frame_time);
 
                             // Draw a highlight around it
                             let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);

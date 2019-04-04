@@ -17,7 +17,7 @@ use std::time::Duration;
 #[derive(Clone, Debug)]
 pub struct MotionElement {
     id:     ElementId,
-    motion: Motion
+    motion: Arc<Motion>
 }
 
 impl MotionElement {
@@ -27,7 +27,7 @@ impl MotionElement {
     pub fn new(id: ElementId, motion: Motion) -> MotionElement {
         MotionElement {
             id:         id,
-            motion:     motion
+            motion:     Arc::new(motion)
         }
     }
 }
@@ -59,8 +59,20 @@ impl VectorElement for MotionElement {
     /// Returns the properties to use for future elements
     /// 
     fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { 
-        // TODO: motions could be part of the vector properties
-        properties 
+        // Clone the properties
+        let mut properties  = (*properties).clone();
+        let motion          = Arc::clone(&self.motion);
+
+        // Add a transformation for this motion
+        let old_transform = properties.transform;
+        properties.transform = Arc::new(move |vector, when| {
+            let vector  = old_transform(vector, when);
+            let vector  = vector.motion_transform(&*motion, when);
+
+            vector
+        });
+
+        Arc::new(properties)
     }
 
     ///
