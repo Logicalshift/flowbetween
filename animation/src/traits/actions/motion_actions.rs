@@ -201,8 +201,6 @@ mod test {
         }
 
         impl AnimationMotion for TestAnimation {
-            fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
-
             fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(42)
             }
@@ -258,8 +256,6 @@ mod test {
         }
 
         impl AnimationMotion for TestAnimation {
-            fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
-
             fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(43)
             }

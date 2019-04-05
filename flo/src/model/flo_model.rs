@@ -209,13 +209,6 @@ impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     fn assign_element_id(&self) -> ElementId {
         self.animation.motion().assign_element_id()
     }
-    
-    ///
-    /// Retrieves a stream containing all of the motions in a particular time range
-    /// 
-    fn get_motion_ids(&self, when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> {
-        self.animation.motion().get_motion_ids(when)
-    }
 
     ///
     /// Retrieves the IDs of the motions attached to a particular element
