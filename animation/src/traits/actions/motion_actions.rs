@@ -50,7 +50,7 @@ impl EditAction for MotionEditAction {
 fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     if elements.len() > 0 {
         // Create a new motion, then attach it to the static elements
-        let static_motion_id    = animation.motion().assign_motion_id();
+        let static_motion_id    = animation.motion().assign_element_id();
         let target_point        = TimePoint::new(to.0, to.1, when.clone());
         
         // Creates a motion that instantaneously moves from the 'from' point to the 'to' point 
@@ -100,7 +100,7 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
 
         if motion_in_use_elsewhere {
             // Create a new translation motion and attach/detach our elements (so elements outside of our set are not moved)
-            let new_motion_id       = animation.motion().assign_motion_id();
+            let new_motion_id       = animation.motion().assign_element_id();
             let detach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::RemoveAttachment(motion_id)));
             let attach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::AddAttachment(new_motion_id)));
 
@@ -203,7 +203,7 @@ mod test {
         impl AnimationMotion for TestAnimation {
             fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
 
-            fn assign_motion_id(&self) -> ElementId {
+            fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(42)
             }
 
@@ -260,7 +260,7 @@ mod test {
         impl AnimationMotion for TestAnimation {
             fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
 
-            fn assign_motion_id(&self) -> ElementId {
+            fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(43)
             }
 
