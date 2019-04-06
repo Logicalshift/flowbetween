@@ -231,8 +231,8 @@ mod test {
         assert!(static_move[3] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetPath(TimeCurve::new(target_point, target_point))));
 
         // Attaching can be in either order
-        if let AnimationEdit::Element(attach_to, ElementEdit::AddAttachment(attached_element)) = static_move[4] {
-            assert!(attached_element == ElementId::Assigned(42));
+        if let AnimationEdit::Element(ref attach_to, ElementEdit::AddAttachment(ref attached_element)) = static_move[4] {
+            assert!(attached_element == &ElementId::Assigned(42));
             assert!(attach_to.iter().cloned().collect::<HashSet<_>>() == vec![ElementId::Assigned(1), ElementId::Assigned(2)].into_iter().collect());
         }
 

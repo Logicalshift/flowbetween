@@ -1,8 +1,5 @@
 use super::edit::*;
 use super::vector::*;
-use super::brush_definition::*;
-use super::brush_properties::*;
-use super::brush_drawing_style::*;
 
 use canvas::*;
 
