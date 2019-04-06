@@ -26,7 +26,10 @@ pub struct VectorProperties {
     pub brush_properties: BrushProperties,
 
     /// Transformation to apply before rendering an element with these properties
-    pub transform: Arc<dyn (Fn(Vector, Duration) -> Vector) + Sync+Send>
+    pub transform: Arc<dyn (Fn(Vector, Duration) -> Vector) + Sync+Send>,
+
+    /// Provides an override for how a vector element is rendered
+    pub render_vector: Arc<dyn (Fn(&mut dyn GraphicsPrimitives, Vector, Duration, &VectorProperties)) + Sync+Send>
 }
 
 impl VectorProperties {
@@ -37,7 +40,8 @@ impl VectorProperties {
         VectorProperties {
             brush:              Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
             brush_properties:   BrushProperties::new(),
-            transform:          Arc::new(|vector, _when| vector)
+            transform:          Arc::new(|vector, _when| vector),
+            render_vector:      Arc::new(|gc, vector, _when, properties| vector.render(gc, properties))
         }
     }
 
@@ -56,6 +60,6 @@ impl VectorProperties {
         let element = (self.transform)(element, when);
 
         // Render this element
-        element.render(gc, self);
+        (self.render_vector)(gc, element, when, self);
     }
 }
