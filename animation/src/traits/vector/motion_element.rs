@@ -60,13 +60,13 @@ impl VectorElement for MotionElement {
     /// 
     fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { 
         // Clone the properties
-        let mut properties  = (*properties).clone();
-        let motion          = Arc::clone(&self.motion);
+        let mut properties          = (*properties).clone();
+        let motion                  = Arc::clone(&self.motion);
 
         // Add a transformation for this motion
-        let old_transform = properties.transform;
-        properties.transform = Arc::new(move |vector, when| {
-            let vector  = old_transform(vector, when);
+        let old_transform_vector    = properties.transform_vector;
+        properties.transform_vector = Arc::new(move |vector, when| {
+            let vector  = old_transform_vector(vector, when);
             let vector  = vector.motion_transform(&*motion, when);
 
             vector
