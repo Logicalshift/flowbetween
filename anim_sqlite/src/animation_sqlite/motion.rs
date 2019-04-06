@@ -3,17 +3,9 @@ use super::*;
 
 use flo_animation::*;
 
-use futures::*;
-use std::ops::Range;
-use std::time::Duration;
-
 impl AnimationMotion for SqliteAnimation {
-    fn assign_motion_id(&self) -> ElementId {
+    fn assign_element_id(&self) -> ElementId {
         self.db.assign_element_id()
-    }
-
-    fn get_motion_ids(&self, when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> {
-        unimplemented!()
     }
 
     fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {

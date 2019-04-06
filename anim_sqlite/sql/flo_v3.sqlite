@@ -1,6 +1,6 @@
 /***
  **
- ** FlowBetween File format version 1
+ ** FlowBetween File format version 3
  **
  ***/
 
@@ -22,6 +22,22 @@ CREATE TABLE FlowBetween (
     /* 1 if this was generated using a stable schema, 0 if generated using an unstable one */
     Stable          INTEGER NOT NULL
 );
+
+/*
+ * Patches applied to this database since it was created
+ *
+ * Patches can be used to add features to an existing file without requiring a full format upgrade.
+ */
+CREATE TABLE Flo_AppliedPatches (
+    /* Name of the patch that was applied */
+    PatchName TEXT NOT NULL PRIMARY KEY,
+
+    /* The SQL that was executed to apply this patch */
+    PatchSql TEXT NOT NULL,
+
+    /* Description of the version of FlowBetween that applied this patch */
+    AppliedByVersion TEXT NOT NULL
+) WITHOUT ROWID;
 
 /*
  *  ===== The edit log
@@ -165,9 +181,12 @@ CREATE TABLE Flo_EL_MotionPath (
 /*
  * The string attached to an edit log entry
  */
-CREATE TABLE Flo_EL_String (
-    EditId      INTEGER NOT NULL PRIMARY KEY ASC REFERENCES Flo_EditLog(Id),
-    String      Text NOT NULL
+CREATE TABLE Flo_EL_StringParameters (
+    EditId      INTEGER NOT NULL REFERENCES Flo_EditLog(Id),
+    StringIndex INTEGER NOT NULL,
+    String      Text NOT NULL,
+
+    PRIMARY KEY (EditId ASC, StringIndex ASC)
 ) WITHOUT ROWID;
 
 /*
@@ -305,13 +324,7 @@ CREATE TABLE Flo_PathElement (
     ElementId           INTEGER NOT NULL PRIMARY KEY REFERENCES Flo_VectorElement(ElementId),
 
     /* The ID of the path definition */
-    PathId              INTEGER NOT NULL REFERENCES Flo_Path,
-
-    /* The ID of the brush element used to draw this path */
-    BrushId             INTEGER NOT NULL REFERENCES Flo_BrushElement(ElementId),
-
-    /* The ID of the brush properties used to draw this path */
-    BrushPropertiesId   INTEGER NOT NULL REFERENCES Flo_BrushPropertiesElement(ElementId)
+    PathId              INTEGER NOT NULL REFERENCES Flo_Path
 ) WITHOUT ROWID;
 
 /*
@@ -356,18 +369,6 @@ CREATE TABLE Flo_MotionPath (
 
     PRIMARY KEY (MotionId, PathType, PointIndex)
 ) WITHOUT ROWID;
-
-/*
- * The elements attached to a motion
- */
-CREATE TABLE Flo_MotionAttached (
-    MotionId    INTEGER NOT NULL REFERENCES Flo_Motion(MotionId),
-    ElementId   INTEGER NOT NULL REFERENCES Flo_AssignedElementId(AssignedId),
-
-    PRIMARY KEY (MotionId, ElementId)
-) WITHOUT ROWID;
-
-CREATE INDEX FloIdx_AttachedMotion ON Flo_MotionAttached (ElementId, MotionId);
 
 /*
  *  ===== Animation
@@ -565,6 +566,12 @@ CREATE TABLE Flo_EnumerationDescriptions (
  *  ===== TRIGGERS
  */
 
+/* Deleting an element deletes it from the assigned table */
+CREATE TRIGGER Flo_Delete_AssignedId BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_AssignedElementId WHERE ElementId = Old.ElementId;
+    END;
+
 /* Deleting an element deletes it from the path table */
 CREATE TRIGGER Flo_Delete_PathElements BEFORE DELETE ON Flo_VectorElement
     BEGIN
@@ -576,7 +583,7 @@ CREATE TRIGGER Flo_Delete_Motion_Elements BEFORE DELETE ON Flo_Motion
     BEGIN
         DELETE FROM Flo_MotionOrigin WHERE MotionId = Old.MotionId;
         DELETE FROM Flo_MotionPath WHERE MotionId = Old.MotionId;
-        DELETE FROM Flo_MotionAttached WHERE MotionId = Old.MotionId;
+        DELETE FROM Flo_VectorElement WHERE ElementId IN (SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = Old.MotionId);
     END;
 
 /* Deleting a layer type deletes the corresponding animation layers and key frames */
@@ -585,12 +592,6 @@ CREATE TRIGGER Flo_Delete_Layer BEFORE DELETE ON Flo_LayerType
         DELETE FROM Flo_AnimationLayers WHERE LayerId = Old.LayerId;
         DELETE FROM Flo_LayerKeyFrame WHERE LayerId = Old.LayerId;
         DELETE FROM Flo_LayerName WHERE LayerId = Old.LayerId;
-    END;
-
-/* Deleting from the assigned element ID table also removes anything that references that table */
-CREATE TRIGGER Flo_Delete_AssignedElementId BEFORE DELETE ON Flo_AssignedElementId
-    BEGIN
-        DELETE FROM Flo_MotionAttached WHERE ElementId = Old.AssignedId;
     END;
 
 /* Deleting an element deletes it from the ordering table */
@@ -635,7 +636,7 @@ CREATE TRIGGER Flo_DeleteVectorElementTime BEFORE DELETE ON Flo_VectorElement
  */
 
 INSERT INTO FlowBetween(DataVersion, FloVersion, Stable)
-     VALUES (2, "Unknown", 0);
+     VALUES (3, "Unknown", 0);
 
 /*
  * Database is created with a single 2 minute long 30fps animation

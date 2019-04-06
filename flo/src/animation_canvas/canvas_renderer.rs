@@ -191,15 +191,13 @@ impl CanvasRenderer {
 
             // Get the frame for this time
             let layer_frame             = frame;
-            let active_brush            = layer_frame.active_brush();
-            let active_brush_properties = layer_frame.active_brush_properties();
 
             // Store this layer in the hashmap with its layer ID
             self.frame_layers.insert(animation_layer_id, FrameLayer {
                 layer_id:           canvas_layer_id,
                 layer_frame:        layer_frame,
-                active_brush:       active_brush,
-                active_properties:  active_brush_properties
+                active_brush:       None,
+                active_properties:  None
             });
         }
     }

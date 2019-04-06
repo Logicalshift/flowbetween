@@ -32,9 +32,9 @@ pub enum EditLogType {
     MotionSetType,
     MotionSetOrigin,
     MotionSetPath,
-    MotionAttach,
-    MotionDetach,
 
+    ElementAddAttachment,
+    ElementRemoveAttachment,
     ElementSetControlPoints,
     ElementOrderInFront,
     ElementOrderBehind,
@@ -87,7 +87,20 @@ pub enum VectorElementType {
     BrushDefinition,
     BrushProperties,
     BrushStroke,
-    Path
+    Path,
+    Motion
+}
+
+impl Into<VectorType> for VectorElementType {
+    fn into(self) -> VectorType {
+        match self {
+            VectorElementType::BrushDefinition  => VectorType::BrushDefinition,
+            VectorElementType::BrushProperties  => VectorType::BrushProperties,
+            VectorElementType::BrushStroke      => VectorType::BrushStroke,
+            VectorElementType::Path             => VectorType::Path,
+            VectorElementType::Motion           => VectorType::Motion
+        }
+    }
 }
 
 ///
@@ -221,9 +234,9 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::EditLog(MotionSetType),
                     DbEnum::EditLog(MotionSetOrigin),
                     DbEnum::EditLog(MotionSetPath),
-                    DbEnum::EditLog(MotionAttach),
-                    DbEnum::EditLog(MotionDetach),
 
+                    DbEnum::EditLog(ElementAddAttachment),
+                    DbEnum::EditLog(ElementRemoveAttachment),
                     DbEnum::EditLog(ElementSetControlPoints),
                     DbEnum::EditLog(ElementOrderInFront),
                     DbEnum::EditLog(ElementOrderBehind),
@@ -271,7 +284,8 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::VectorElement(BrushDefinition),
                     DbEnum::VectorElement(BrushProperties),
                     DbEnum::VectorElement(BrushStroke),
-                    DbEnum::VectorElement(Path)
+                    DbEnum::VectorElement(Path),
+                    DbEnum::VectorElement(Motion)
                 ]
             },
 
@@ -331,9 +345,9 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             Motion(_, SetType(_))                               => EditLogType::MotionSetType,
             Motion(_, SetOrigin(_, _))                          => EditLogType::MotionSetOrigin,
             Motion(_, SetPath(_))                               => EditLogType::MotionSetPath,
-            Motion(_, Attach(_))                                => EditLogType::MotionAttach,
-            Motion(_, Detach(_))                                => EditLogType::MotionDetach,
 
+            Element(_, AddAttachment(_))                        => EditLogType::ElementAddAttachment,
+            Element(_, RemoveAttachment(_))                     => EditLogType::ElementRemoveAttachment,
             Element(_, SetControlPoints(_))                     => EditLogType::ElementSetControlPoints,
             Element(_, Order(InFront))                          => EditLogType::ElementOrderInFront,
             Element(_, Order(Behind))                           => EditLogType::ElementOrderBehind,
@@ -416,9 +430,9 @@ impl From<EditLogType> for DbEnumName {
             MotionSetType               => DbEnumName("Edit", "Motion::SetType"),
             MotionSetOrigin             => DbEnumName("Edit", "Motion::SetOrigin"),
             MotionSetPath               => DbEnumName("Edit", "Motion::SetPath"),
-            MotionAttach                => DbEnumName("Edit", "Motion::Attach"),
-            MotionDetach                => DbEnumName("Edit", "Motion::Detach"),
 
+            ElementAddAttachment        => DbEnumName("Edit", "Element::AddAttachment"),
+            ElementRemoveAttachment     => DbEnumName("Edit", "Element::RemoveAttachment"),
             ElementSetControlPoints     => DbEnumName("Edit", "Element::SetControlPoints"),
             ElementOrderInFront         => DbEnumName("Edit", "Element::OrderInFront"),
             ElementOrderBehind          => DbEnumName("Edit", "Element::OrderBehind"),
@@ -482,6 +496,7 @@ impl From<VectorElementType> for DbEnumName {
             BrushProperties     => DbEnumName("VectorElementType", "BrushProperties"),
             BrushStroke         => DbEnumName("VectorElementType", "BrushStroke"),
             Path                => DbEnumName("VectorElementType", "Path"),
+            Motion              => DbEnumName("VectorElementType", "Motion")
         }
     }
 }

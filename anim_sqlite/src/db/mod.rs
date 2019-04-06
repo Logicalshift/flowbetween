@@ -1,3 +1,6 @@
+use super::error::*;
+use super::result::Result;
+
 use flo_logging::*;
 use flo_animation::*;
 
@@ -87,7 +90,7 @@ impl AnimationDb {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
     /// 
-    pub fn retrieve_and_clear_error(&self) -> Option<Error> {
+    pub fn retrieve_and_clear_error(&self) -> Option<SqliteAnimationError> {
         // We have to clear the error as rusqlite::Error does not implement clone or copy
         self.core.sync(|core| {
             core.retrieve_and_clear_error()
@@ -137,6 +140,7 @@ impl AnimationDbCore<FloSqlite> {
             active_brush_for_layer:     HashMap::new(),
             layer_id_for_assigned_id:   HashMap::new(),
             path_properties_for_layer:  HashMap::new(),
+            brush_properties_for_layer: HashMap::new(),
             next_element_id:            initial_element_id
         };
 
@@ -148,7 +152,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
     /// 
-    fn retrieve_and_clear_error(&mut self) -> Option<Error> {
+    fn retrieve_and_clear_error(&mut self) -> Option<SqliteAnimationError> {
         // We have to clear the error as rusqlite::Error does not implement clone or copy
         let mut failure = None;
         mem::swap(&mut self.failure, &mut failure);

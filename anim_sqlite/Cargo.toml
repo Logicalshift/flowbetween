@@ -1,6 +1,6 @@
 [package]
 name        = "flo_anim_sqlite"
-version     = "0.1.1"
+version     = "0.2.0"
 authors     = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
@@ -17,3 +17,4 @@ itertools           = "0.8"
 rusqlite            = { version = "0.16", features = ["bundled"] }
 futures             = "^0.1.17"
 desync              = "0.3"
+lazy_static         = "1.0"

@@ -13,13 +13,13 @@ use std::collections::HashSet;
 #[derive(Clone)]
 pub struct SelectionModel {
     /// The list of selected elements
-    pub selected_element: BindRef<Arc<HashSet<ElementId>>>,
+    pub selected_elements: BindRef<Arc<HashSet<ElementId>>>,
 
     /// The selected elements as they are ordered in the current frame (selected elements not in the current frame are excluded)
     pub selection_in_order: BindRef<Arc<Vec<ElementId>>>,
 
     /// The binding for the selected element (used when updating)
-    selected_element_binding: Binding<Arc<HashSet<ElementId>>>
+    selected_elements_binding: Binding<Arc<HashSet<ElementId>>>
 }
 
 impl SelectionModel {
@@ -28,13 +28,13 @@ impl SelectionModel {
     /// 
     pub fn new<Anim: Animation>(frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> SelectionModel {
         // Create the binding for the selected element
-        let selected_element_binding    = bind(Arc::new(HashSet::new()));
-        let selected_element            = BindRef::new(&selected_element_binding);
-        let selection_in_order          = Self::selection_in_order(selected_element.clone(), frame_model, timeline_model);
+        let selected_elements_binding   = bind(Arc::new(HashSet::new()));
+        let selected_elements           = BindRef::new(&selected_elements_binding);
+        let selection_in_order          = Self::selection_in_order(selected_elements.clone(), frame_model, timeline_model);
 
         SelectionModel {
-            selected_element:           selected_element,
-            selected_element_binding:   selected_element_binding,
+            selected_elements:          selected_elements,
+            selected_elements_binding:  selected_elements_binding,
             selection_in_order:         selection_in_order
         }
     }
@@ -78,17 +78,17 @@ impl SelectionModel {
     /// 
     pub fn select(&self, element: ElementId) {
         // Not *ideal* because there's a race condition here
-        let existing_selection = self.selected_element_binding.get();
+        let existing_selection = self.selected_elements_binding.get();
 
         let mut new_selection = (*existing_selection).clone();
         new_selection.insert(element);
-        self.selected_element_binding.set(Arc::new(new_selection));
+        self.selected_elements_binding.set(Arc::new(new_selection));
     }
 
     ///
     /// Clears the current selection
     ///
     pub fn clear_selection(&self) {
-        self.selected_element_binding.set(Arc::new(HashSet::new()));
+        self.selected_elements_binding.set(Arc::new(HashSet::new()));
     }
 }

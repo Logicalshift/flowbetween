@@ -4,6 +4,7 @@ use super::super::motion::*;
 use super::super::animation::*;
 use super::super::time_path::*;
 
+use std::iter;
 use std::time::Duration;
 use std::collections::{HashSet, HashMap};
 
@@ -49,7 +50,7 @@ impl EditAction for MotionEditAction {
 fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     if elements.len() > 0 {
         // Create a new motion, then attach it to the static elements
-        let static_motion_id    = animation.motion().assign_motion_id();
+        let static_motion_id    = animation.motion().assign_element_id();
         let target_point        = TimePoint::new(to.0, to.1, when.clone());
         
         // Creates a motion that instantaneously moves from the 'from' point to the 'to' point 
@@ -61,13 +62,12 @@ fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<Elemen
         ];
 
         // Attach the static elements
-        let attach_elements     = elements.iter()
-            .map(|element_id| MotionEdit::Attach(*element_id));
+        let create_motion       = create_motion.into_iter().map(|motion_edit| AnimationEdit::Motion(static_motion_id, motion_edit));
+        let attach_elements     = iter::once(AnimationEdit::Element(elements.iter().cloned().collect(), ElementEdit::AddAttachment(static_motion_id)));
 
         // Turn into a series of animation edits
         create_motion.into_iter()
             .chain(attach_elements)
-            .map(|motion_edit| AnimationEdit::Motion(static_motion_id, motion_edit))
             .collect()
     } else {
         // No static elements = no static element translation
@@ -94,15 +94,15 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
         let updated_curve       = existing_curve.set_point_at_time(*when, (moved_point.0, moved_point.1));
 
         // Check if there are any elements that are attached to this motion but are not being moved
-        let attached_to             = animation.motion().get_elements_for_motion(motion_id);
-        let elements: HashSet<_>    = elements.into_iter().collect();
-        let motion_in_use_elsewhere = attached_to.into_iter().any(|element_id| !elements.contains(&&element_id));
+        let attached_to                 = animation.motion().get_elements_for_motion(motion_id);
+        let element_hash: HashSet<_>    = elements.into_iter().collect();
+        let motion_in_use_elsewhere     = attached_to.into_iter().any(|element_id| !element_hash.contains(&&element_id));
 
         if motion_in_use_elsewhere {
             // Create a new translation motion and attach/detach our elements (so elements outside of our set are not moved)
-            let new_motion_id       = animation.motion().assign_motion_id();
-            let detach_elements     = elements.iter().map(|element_id| AnimationEdit::Motion(motion_id, MotionEdit::Detach(**element_id)));
-            let attach_elements     = elements.iter().map(|element_id| AnimationEdit::Motion(new_motion_id, MotionEdit::Attach(**element_id)));
+            let new_motion_id       = animation.motion().assign_element_id();
+            let detach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::RemoveAttachment(motion_id)));
+            let attach_elements     = iter::once(AnimationEdit::Element(elements.clone(), ElementEdit::AddAttachment(new_motion_id)));
 
             let create_new_motion   = vec![
                 MotionEdit::Create,
@@ -201,9 +201,7 @@ mod test {
         }
 
         impl AnimationMotion for TestAnimation {
-            fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
-
-            fn assign_motion_id(&self) -> ElementId {
+            fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(42)
             }
 
@@ -233,14 +231,12 @@ mod test {
         assert!(static_move[3] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::SetPath(TimeCurve::new(target_point, target_point))));
 
         // Attaching can be in either order
-        if static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))) {
-            assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2))));
-        } else {
-            assert!(static_move[5] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(1))));
-            assert!(static_move[4] == AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Attach(ElementId::Assigned(2))));
+        if let AnimationEdit::Element(attach_to, ElementEdit::AddAttachment(attached_element)) = static_move[4] {
+            assert!(attached_element == ElementId::Assigned(42));
+            assert!(attach_to.iter().cloned().collect::<HashSet<_>>() == vec![ElementId::Assigned(1), ElementId::Assigned(2)].into_iter().collect());
         }
 
-        assert!(static_move.len() == 6);
+        assert!(static_move.len() == 5);
     }
 
     #[test]
@@ -260,9 +256,7 @@ mod test {
         }
 
         impl AnimationMotion for TestAnimation {
-            fn get_motion_ids(&self, _when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> { unimplemented!() }
-
-            fn assign_motion_id(&self) -> ElementId {
+            fn assign_element_id(&self) -> ElementId {
                 ElementId::Assigned(43)
             }
 

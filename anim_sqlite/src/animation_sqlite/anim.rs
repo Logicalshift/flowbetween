@@ -1,9 +1,9 @@
 use super::*;
+use super::super::error::*;
 
 use flo_animation::*;
 
 use futures::*;
-use rusqlite::*;
 use std::time::Duration;
 use std::ops::{Deref, Range};
 use std::path::Path;
@@ -12,7 +12,7 @@ impl SqliteAnimation {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
     /// 
-    pub fn retrieve_and_clear_error(&self) -> Option<Error> {
+    pub fn retrieve_and_clear_error(&self) -> Option<SqliteAnimationError> {
         self.db.retrieve_and_clear_error()
     }
 

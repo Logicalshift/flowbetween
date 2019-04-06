@@ -217,28 +217,52 @@ fn can_query_motion_assigned_elements() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
         
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(1),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(2),
+        DatabaseUpdate::Pop,
         DatabaseUpdate::CreateMotion(1),
         DatabaseUpdate::CreateMotion(2),
-        DatabaseUpdate::AddMotionAttachedElement(1, 42),
-        DatabaseUpdate::AddMotionAttachedElement(2, 42),
-        DatabaseUpdate::AddMotionAttachedElement(1, 43),
+
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PushElementIdForAssignedId(1),
+        DatabaseUpdate::PushAttachElements(1),
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PushElementIdForAssignedId(2),
+        DatabaseUpdate::PushAttachElements(1),
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::PushElementIdForAssignedId(43),
+        DatabaseUpdate::PushElementIdForAssignedId(1),
+        DatabaseUpdate::PushAttachElements(1),
+        DatabaseUpdate::Pop,
     ]).unwrap();
 
-    let motion_elements = db.query_motion_ids_for_element(42);
-    let motion_elements = motion_elements.unwrap();
+    let element_42      = db.query_vector_element_id(&ElementId::Assigned(42)).unwrap().unwrap();
+    let motion_elements = db.query_attached_elements(element_42).unwrap().into_iter()
+        .filter_map(|(_, id, element_type)| if element_type == VectorElementType::Motion { id.id() } else { None })
+        .collect::<Vec<_>>();
 
     assert!(motion_elements.iter().any(|item| item == &1));
     assert!(motion_elements.iter().any(|item| item == &2));
     assert!(motion_elements.len() == 2);
 
-    let motion_elements = db.query_motion_ids_for_element(43);
-    let motion_elements = motion_elements.unwrap();
+    let element_43      = db.query_vector_element_id(&ElementId::Assigned(43)).unwrap().unwrap();
+    let motion_elements = db.query_attached_elements(element_43).unwrap().into_iter()
+        .filter_map(|(_, id, element_type)| if element_type == VectorElementType::Motion { id.id() } else { None })
+        .collect::<Vec<_>>();
 
     assert!(motion_elements.iter().any(|item| item == &1));
     assert!(motion_elements.len() == 1);
 
-    let motions_for_element = db.query_element_ids_for_motion(1);
-    let motions_for_element = motions_for_element.unwrap();
+    let element_1           = db.query_vector_element_id(&ElementId::Assigned(1)).unwrap().unwrap();
+    let motions_for_element = db.query_elements_with_attachments(element_1).unwrap().into_iter()
+        .filter_map(|(_, id, _)| id.id())
+        .collect::<Vec<_>>();;
 
     assert!(motions_for_element.len() == 2);
     assert!(motions_for_element.iter().any(|item| item == &42));
@@ -741,8 +765,14 @@ fn smoke_attach_elements_to_motion() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
 
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(1),
+        DatabaseUpdate::Pop,
         DatabaseUpdate::CreateMotion(1),
-        DatabaseUpdate::AddMotionAttachedElement(1, 42)
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PushElementIdForAssignedId(1),
+        DatabaseUpdate::PushAttachElements(1),
+        DatabaseUpdate::Pop
     ])
 }
 
@@ -761,8 +791,14 @@ fn smoke_delete_motion() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
 
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(1),
+        DatabaseUpdate::Pop,
         DatabaseUpdate::CreateMotion(1),
-        DatabaseUpdate::AddMotionAttachedElement(1, 42),
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PushElementIdForAssignedId(1),
+        DatabaseUpdate::PushAttachElements(1),
+        DatabaseUpdate::Pop,
 
         DatabaseUpdate::DeleteMotion(1)
     ])
@@ -783,9 +819,18 @@ fn smoke_delete_motion_attachment() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
 
+        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+        DatabaseUpdate::PushElementAssignId(1),
+        DatabaseUpdate::Pop,
         DatabaseUpdate::CreateMotion(1),
-        DatabaseUpdate::AddMotionAttachedElement(1, 42),
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PushElementIdForAssignedId(1),
+        DatabaseUpdate::PushAttachElements(1),
+        DatabaseUpdate::Pop,
 
-        DatabaseUpdate::DeleteMotionAttachedElement(1, 42)
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PushElementIdForAssignedId(1),
+        DatabaseUpdate::PushDetachElements(1),
+        DatabaseUpdate::Pop,
     ])
 }

@@ -1,0 +1,27 @@
+/***
+ ** 
+ ** Attached elements
+ **
+ ** These allow elements to be attached to other elements. They're used for specifying things like
+ ** the properties for brush strokes and paths, and can also be used for specifying other attachments
+ ** like motions, or groups. 
+ **
+ ***/
+
+CREATE TABLE Flo_ElementAttachments (
+    /* The element ID with the attachments */
+    ElementId               INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+
+    /* The assigned ID of the attached element */
+    AttachedElementId       INTEGER NOT NULL REFERENCES Flo_VectorElement(ElementId),
+
+    PRIMARY KEY (ElementId ASC, AttachedElementId ASC)
+) WITHOUT ROWID;
+
+CREATE INDEX Flo_Idx_AttachmentElements ON Flo_ElementAttachments (AttachedElementId, ElementId);
+
+CREATE TRIGGER Flo_DeleteAttachedElements BEFORE DELETE ON Flo_VectorElement
+    BEGIN
+        DELETE FROM Flo_ElementAttachments WHERE ElementId          = Old.ElementId;
+        DELETE FROM Flo_ElementAttachments WHERE AttachedElementId  = Old.ElementId;
+    END;

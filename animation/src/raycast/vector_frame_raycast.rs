@@ -57,10 +57,8 @@ pub fn vector_frame_raycast<'a, FrameType: Frame>(frame: &'a FrameType) -> impl 
 
     // Convert the elements into edges
     let mut edges       = vec![];
-    let mut properties  = Arc::new(VectorProperties::default());
-
     for element in all_elements {
-        properties = element.update_properties(properties);
+        let properties = frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
         edges.extend(RaycastEdge::from_vector(&element, Arc::clone(&properties)));
     }
 

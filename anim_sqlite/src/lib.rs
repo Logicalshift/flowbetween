@@ -8,8 +8,13 @@ extern crate itertools;
 extern crate rusqlite;
 extern crate futures;
 extern crate desync;
+#[macro_use] 
+extern crate lazy_static;
 
 mod db;
+mod error;
+pub mod result;
 mod animation_sqlite;
 
 pub use self::animation_sqlite::*;
+pub use self::error::*;

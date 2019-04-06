@@ -1,6 +1,7 @@
 use super::db_enum::*;
 use super::flo_store::*;
 use super::flo_query::*;
+use super::super::error::*;
 
 use flo_logging::*;
 
@@ -10,17 +11,23 @@ use std::collections::*;
 use std::time::Duration;
 use std::sync::*;
 use std::mem;
+use std::result::Result;
 
 mod query;
 mod store;
 pub use self::query::*;
 pub use self::store::*;
 
-const V1_DEFINITION: &[u8]      = include_bytes!["../../../sql/flo_v1.sqlite"];
-const V1_V2_UPGRADE: &[u8]      = include_bytes!["../../../sql/flo_v1_to_v2.sqlite"];
-const V2_WARMUP: &[u8]          = include_bytes!["../../../sql/flo_v2_warmup.sqlite"];
-const PACKAGE_NAME: &str        = env!("CARGO_PKG_NAME");
-const PACKAGE_VERSION: &str     = env!("CARGO_PKG_VERSION");
+const V1_V2_UPGRADE: &[u8]          = include_bytes!["../../../sql/historical/flo_v1_to_v2.sqlite"];
+const V3_DEFINITION: &[u8]          = include_bytes!["../../../sql/flo_v3.sqlite"];
+const PACKAGE_NAME: &str            = env!("CARGO_PKG_NAME");
+const PACKAGE_VERSION: &str         = env!("CARGO_PKG_VERSION");
+
+lazy_static! {
+    static ref V3_PATCHES: Vec<(&'static str, &'static [u8])> = vec![
+        ("attached_elements", include_bytes!["../../../sql/v3_patches/attached_elements.sqlite"])
+    ];
+}
 
 ///
 /// Provides an interface for updating and accessing the animation SQLite database
@@ -80,13 +87,15 @@ enum FloStatement {
     SelectColor,
     SelectBrushDefinition,
     SelectBrushProperties,
+    SelectAttachmentsForElementId,
+    SelectElementsForAttachmentId,
     SelectVectorElementWithId,
-    SelectVectorElementType,
+    SelectVectorElementTypeAssigned,
+    SelectVectorElementTypeElementId,
     SelectVectorElementsBefore,
+    SelectAttachedElementsBefore,
     SelectMostRecentElementOfTypeBefore,
     SelectBrushPoints,
-    SelectMotionsForElement,
-    SelectElementsForMotion,
     SelectMotion,
     SelectMotionTimePoints,
     SelectElementIdForAssignedId,
@@ -138,21 +147,21 @@ enum FloStatement {
     InsertOrReplaceVectorElementTime,
     InsertOrReplaceZIndex,
     InsertElementAssignedId,
+    InsertAttachElement,
     InsertBrushDefinitionElement,
     InsertBrushPropertiesElement,
     InsertBrushPoint,
     InsertPathElement,
     InsertMotion,
     InsertOrReplaceMotionOrigin,
-    InsertMotionAttachedElement,
     InsertMotionPathPoint,
 
     DeleteKeyFrame,
     DeleteLayer,
     DeleteElementZIndex,
+    DeleteElementAttachment,
     DeleteMotion,
     DeleteMotionPoints,
-    DeleteMotionAttachedElement
 }
 
 impl FloSqlite {
@@ -162,7 +171,6 @@ impl FloSqlite {
     pub fn new(sqlite: Connection) -> FloSqlite {
         let mut sqlite = sqlite;
         Self::upgrade(&mut sqlite).unwrap();
-        Self::warmup_v2(&mut sqlite).unwrap();
 
         let animation_id = sqlite.query_row("SELECT MIN(AnimationId) FROM Flo_Animation", NO_PARAMS, |row| row.get(0)).unwrap();
 
@@ -180,11 +188,17 @@ impl FloSqlite {
     ///
     /// Upgrades a connection so that it conforms to the latest version
     ///
-    fn upgrade(sqlite: &mut Connection) -> Result<()> {
+    fn upgrade(sqlite: &mut Connection) -> Result<(), SqliteAnimationError> {
         let animation_version: i64 = sqlite.query_row("SELECT DataVersion FROM FlowBetween", NO_PARAMS, |row| row.get(0))?;
 
         if animation_version == 1 {
             Self::upgrade_v1_to_v2(sqlite)?;
+        } else if animation_version == 2 {
+            return Err(SqliteAnimationError::CannotUpgradeVersionTooOld(animation_version));
+        } else if animation_version == 3 {
+            Self::apply_v3_patches(sqlite)?;
+        } else {
+            return Err(SqliteAnimationError::UnsupportedVersionNumber(animation_version));
         }
 
         Ok(())
@@ -193,20 +207,55 @@ impl FloSqlite {
     ///
     /// Upgrades a version 1 to a version 2 database
     ///
-    fn upgrade_v1_to_v2(sqlite: &mut Connection) -> Result<()> {
+    fn upgrade_v1_to_v2(sqlite: &mut Connection) -> Result<(), SqliteAnimationError> {
         let v2_upgrade  = String::from_utf8_lossy(V1_V2_UPGRADE);
         sqlite.execute_batch(&v2_upgrade)?;
 
         Ok(())
     }
-    
-    ///
-    /// 'Warms up' a v2 database and prepares it for use
-    ///
-    fn warmup_v2(sqlite: &mut Connection) -> Result<()> {
-        let v2_warmup = String::from_utf8_lossy(V2_WARMUP);
-        sqlite.execute_batch(&v2_warmup)?;
 
+    ///
+    /// Applies patches to ensure that a v3 file format database is up to date
+    ///
+    fn apply_v3_patches(sqlite: &mut Connection) -> Result<(), SqliteAnimationError> {
+        let patch_transaction = sqlite.transaction()?;
+
+        // Apply the patches that we know about
+        for (patch_name, patch_sql) in V3_PATCHES.iter() {
+            // See if this patch has already been applied
+            let num_patches = patch_transaction.query_row("SELECT COUNT(*) FROM Flo_AppliedPatches WHERE PatchName = ?;", &[*patch_name], |row| row.get::<_, i64>(0))?;
+
+            if num_patches == 0 {
+                // Apply the patch if it does not already exist
+                let patch_sql       = String::from_utf8_lossy(patch_sql);
+                patch_transaction.execute_batch(&patch_sql)?;
+
+                // Add to the 'applied patches' table so this patch is not re-applied
+                let version_string  = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
+                patch_transaction.execute::<&[&dyn ToSql]>("INSERT INTO Flo_AppliedPatches (PatchName, PatchSql, AppliedByVersion) VALUES (?, ?, ?);", &[patch_name, &patch_sql, &version_string])?;
+            }
+        }
+
+        // Check for patches that we can't understand (indicate that this database might be from a newer version of FlowBetween)
+        {
+            let mut all_patches     = patch_transaction.prepare("SELECT PatchName FROM Flo_AppliedPatches")?;
+            let all_patches         = all_patches
+                .query_map(NO_PARAMS, |row| row.get::<_, String>(0))?
+                .map(|row| row.unwrap_or_else(|err| format!("<< error: {:?} >>", err)))
+                .collect::<HashSet<_>>();
+
+            for (patch_name, _patch_sql) in V3_PATCHES.iter() {
+                if !all_patches.contains(*patch_name) {
+                    // All patches must be supported by this version of the tool
+                    return Err(SqliteAnimationError::UnsupportedFormatPatch(String::from(*patch_name)));
+                }
+            }
+        }
+
+        // Finished patching
+        patch_transaction.commit()?;
+
+        // Updated OK
         Ok(())
     }
 
@@ -219,16 +268,14 @@ impl FloSqlite {
     }
 
     ///
-    /// Initialises the database
+    /// Initialises the database as new
     /// 
-    pub fn setup(sqlite: &Connection) -> Result<()> {
+    pub fn setup(sqlite: &Connection) -> Result<(), SqliteAnimationError> {
         // Create the definition string
-        let v1_definition   = String::from_utf8_lossy(V1_DEFINITION);
-        let v2_upgrade      = String::from_utf8_lossy(V1_V2_UPGRADE);
+        let definition      = String::from_utf8_lossy(V3_DEFINITION);
 
         // Execute against the database
-        sqlite.execute_batch(&v1_definition)?;
-        sqlite.execute_batch(&v2_upgrade)?;
+        sqlite.execute_batch(&definition)?;
 
         // Set the database version string
         let version_string      = format!("{} {}", PACKAGE_NAME, PACKAGE_VERSION);
@@ -298,7 +345,7 @@ impl FloSqlite {
             SelectEditLogSize                   => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
             SelectEditLogRawPoints              => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
             SelectEditLogPathId                 => "SELECT PathId FROM Flo_EL_Path WHERE EditId = ?",
-            SelectEditLogString                 => "SELECT String FROM Flo_EL_String WHERE EditId = ?",
+            SelectEditLogString                 => "SELECT String FROM Flo_EL_StringParameters WHERE EditId = ? AND StringIndex = ?",
             SelectColor                         => "SELECT Col.ColorType, Rgb.R, Rgb.G, Rgb.B, Hsluv.H, Hsluv.S, Hsluv.L FROM Flo_Color_Type AS Col \
                                                         LEFT OUTER JOIN Flo_Color_Rgb   AS Rgb      ON Col.Color = Rgb.Color \
                                                         LEFT OUTER JOIN Flo_Color_Hsluv AS Hsluv    ON Col.Color = Hsluv.Color \
@@ -306,6 +353,14 @@ impl FloSqlite {
             SelectBrushDefinition               => "SELECT Brush.BrushType, Ink.MinWidth, Ink.MaxWidth, Ink.ScaleUpDistance FROM Flo_Brush_Type AS Brush \
                                                         LEFT OUTER JOIN Flo_Brush_Ink AS Ink ON Brush.Brush = Ink.Brush \
                                                         WHERE Brush.Brush = ?",
+            SelectAttachmentsForElementId       => "SELECT Attch.AttachedElementId, Elem.VectorElementType, Assgn.AssignedId FROM Flo_ElementAttachments AS Attch \
+                                                        INNER JOIN Flo_VectorElement            AS Elem     ON Elem.ElementId = Attch.AttachedElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId   AS Assgn    ON Elem.ElementId = Assgn.ElementId \
+                                                        WHERE Attch.ElementId = ?;",
+            SelectElementsForAttachmentId       => "SELECT Attch.ElementId, Elem.VectorElementType, Assgn.AssignedId FROM Flo_ElementAttachments AS Attch \
+                                                        INNER JOIN Flo_VectorElement            AS Elem     ON Elem.ElementId = Attch.ElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId   AS Assgn    ON Elem.ElementId = Assgn.ElementId \
+                                                        WHERE Attch.AttachedElementId = ?;",
             SelectBrushProperties               => "SELECT Size, Opacity, Color FROM Flo_BrushProperties WHERE BrushProperties = ?",
             SelectVectorElementWithId           => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
                                                         FROM Flo_VectorElement                      AS Elem \
@@ -314,9 +369,11 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props ON Elem.ElementId = Props.ElementId \
                                                         LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn ON Elem.ElementId = Assgn.ElementId \
                                                         WHERE Elem.ElementId = ?",
-            SelectVectorElementType             => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
+            SelectVectorElementTypeAssigned     => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
                                                         INNER JOIN Flo_AssignedElementId                    AS Assgn    ON Assgn.ElementId = Elem.ElementId \
                                                         WHERE Assgn.AssignedId = ?",
+            SelectVectorElementTypeElementId    => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
+                                                        WHERE Elem.ElementId = ?",
             SelectVectorElementsBefore          => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
                                                         FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
@@ -326,6 +383,27 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_VectorElementOrdering   AS Ordr  ON Elem.ElementId = Ordr.ElementId AND Time.KeyFrameId = Ordr.KeyFrameId \
                                                         WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
                                                         ORDER BY Ordr.ZIndex ASC, Elem.ElementId ASC",
+            SelectAttachedElementsBefore        => "WITH RECURSIVE \
+                                                        AttachedElement AS ( \
+                                                            SELECT Elem.ElementId AS ElementId, NULL AS ParentElementId, Elem.VectorElementType AS ElementType \
+                                                                FROM Flo_VectorElement              AS Elem \
+                                                                INNER JOIN Flo_VectorElementTime    AS Time  ON Elem.ElementId = Time.ElementId \
+                                                                WHERE Time.KeyFrameId = ? AND Time.AtTime <= ? \
+                                                            UNION
+                                                            SELECT Elem.ElementId AS ElementId, AttachedElement.ElementId AS ParentElementId, Elem.VectorElementType AS ElementType \
+                                                                FROM AttachedElement
+                                                                INNER JOIN Flo_ElementAttachments   AS Attch ON Attch.ElementId = AttachedElement.ElementId \
+                                                                INNER JOIN Flo_VectorElement        AS Elem ON Elem.ElementId = Attch.AttachedElementId
+                                                        ) \
+                                                    SELECT Elem.ParentElementId, Elem.ElementId, Elem.ElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId, Ordr.ZIndex, ParentAssgn.AssignedId \
+                                                        FROM AttachedElement                        AS Elem
+                                                        LEFT OUTER JOIN Flo_VectorElementTime       AS Time         ON Elem.ElementId = Time.ElementId \
+                                                        LEFT OUTER JOIN Flo_BrushElement            AS Brush        ON Elem.ElementId = Brush.ElementId \
+                                                        LEFT OUTER JOIN Flo_BrushPropertiesElement  AS Props        ON Elem.ElementId = Props.ElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId       AS Assgn        ON Elem.ElementId = Assgn.ElementId \
+                                                        LEFT OUTER JOIN Flo_AssignedElementId       AS ParentAssgn  ON Elem.ParentElementId = ParentAssgn.ElementId \
+                                                        LEFT OUTER JOIN Flo_VectorElementOrdering   AS Ordr         ON Elem.ElementId = Ordr.ElementId AND Time.KeyFrameId = Ordr.KeyFrameId \
+                                                        ORDER BY Ordr.ZIndex ASC",
             SelectMostRecentElementOfTypeBefore => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId \
                                                         FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
@@ -336,8 +414,6 @@ impl FloSqlite {
                                                         ORDER BY Time.AtTime DESC \
                                                         LIMIT 1",
             SelectBrushPoints                   => "SELECT X1, Y1, X2, Y2, X3, Y3, Width FROM Flo_BrushPoint WHERE ElementId = ? ORDER BY PointId ASC",
-            SelectMotionsForElement             => "SELECT MotionId FROM Flo_MotionAttached WHERE ElementId = ?",
-            SelectElementsForMotion             => "SELECT ElementId FROM Flo_MotionAttached WHERE MotionId = ?",
             SelectMotion                        => "SELECT Mot.MotionType, Origin.X, Origin.Y \
                                                         FROM Flo_Motion                     AS Mot
                                                         LEFT OUTER JOIN Flo_MotionOrigin    AS Origin ON Mot.MotionId = Origin.MotionId
@@ -352,7 +428,7 @@ impl FloSqlite {
             SelectZIndexBeforeZIndexForKeyFrame => "SELECT IFNULL(MAX(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ? AND ZIndex < ?",
             SelectZIndexAfterZIndexForKeyFrame  => "SELECT IFNULL(MIN(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ? AND ZIndex > ?",
             SelectMaxZIndexForKeyFrame          => "SELECT IFNULL(MAX(ZIndex), 0) FROM Flo_VectorElementOrdering WHERE KeyFrameId = ?",
-            SelectPathElement                   => "SELECT Elem.PathId, Elem.BrushId, Elem.BrushPropertiesId \
+            SelectPathElement                   => "SELECT Elem.PathId \
                                                         FROM Flo_PathElement    AS Elem \
                                                         WHERE Elem.ElementId = ?",
             SelectPathPointsWithTypes           => "SELECT Path.X, Path.Y, Types.Type FROM Flo_PathPointType AS Types \
@@ -380,7 +456,7 @@ impl FloSqlite {
             InsertELMotionElement               => "INSERT INTO Flo_EL_MotionAttach (EditId, AttachedElement) VALUES (?, ?)",
             InsertELMotionTimePoint             => "INSERT INTO Flo_EL_MotionPath (EditId, PointIndex, TimePointId) VALUES (?, ?, ?)",
             InsertELPath                        => "INSERT INTO Flo_EL_Path (EditId, PathId) VALUES (?, ?)",
-            InsertELString                      => "INSERT INTO Flo_EL_String (EditId, String) VALUES (?, ?)",
+            InsertELString                      => "INSERT INTO Flo_EL_StringParameters (EditId, StringIndex, String) VALUES (?, ?, ?)",
             InsertELInt                         => "INSERT INTO Flo_EL_IntParameters (EditId, IntIndex, Value) VALUES (?, ?, ?)",
             InsertELFloat                       => "INSERT INTO Flo_EL_FloatParameters (EditId, FloatIndex, Value) VALUES (?, ?, ?)",
             InsertPath                          => "INSERT INTO Flo_Path (PathId) VALUES (NULL)",
@@ -404,18 +480,18 @@ impl FloSqlite {
             InsertBrushPropertiesElement        => "INSERT INTO Flo_BrushPropertiesElement (ElementId, BrushProperties) VALUES (?, ?)",
             InsertBrushPoint                    => "INSERT INTO Flo_BrushPoint (ElementId, PointId, X1, Y1, X2, Y2, X3, Y3, Width) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             InsertElementAssignedId             => "INSERT INTO Flo_AssignedElementId (ElementId, AssignedId) VALUES (?, ?)",
-            InsertPathElement                   => "INSERT INTO Flo_PathElement (ElementId, PathId, BrushId, BrushPropertiesId) VALUES (?, ?, ?, ?)",
+            InsertAttachElement                 => "INSERT OR IGNORE INTO Flo_ElementAttachments (ElementId, AttachedElementId) VALUES (?, ?)",
+            InsertPathElement                   => "INSERT INTO Flo_PathElement (ElementId, PathId) VALUES (?, ?)",
             InsertMotion                        => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
             InsertOrReplaceMotionOrigin         => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
-            InsertMotionAttachedElement         => "INSERT INTO Flo_MotionAttached (MotionId, ElementId) VALUES (?, ?)",
             InsertMotionPathPoint               => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
 
             DeleteKeyFrame                      => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                         => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
             DeleteElementZIndex                 => "DELETE FROM Flo_VectorElementOrdering WHERE ElementId = ?",
+            DeleteElementAttachment             => "DELETE FROM Flo_ElementAttachments WHERE ElementId = ? AND AttachedElementId = ?",
             DeleteMotion                        => "DELETE FROM Flo_Motion WHERE MotionId = ?",
             DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
-            DeleteMotionAttachedElement         => "DELETE FROM Flo_MotionAttached WHERE MotionId = ? AND ElementId = ?",
         }
     }
 
@@ -423,8 +499,8 @@ impl FloSqlite {
     /// Prepares a statement from the database
     /// 
     #[inline]
-    fn prepare<'conn>(sqlite: &'conn Connection, statement: FloStatement) -> Result<CachedStatement<'conn>> {
-        sqlite.prepare_cached(Self::query_for_statement(statement))
+    fn prepare<'conn>(sqlite: &'conn Connection, statement: FloStatement) -> Result<CachedStatement<'conn>, SqliteAnimationError> {
+        Ok(sqlite.prepare_cached(Self::query_for_statement(statement))?)
     }
 
     ///

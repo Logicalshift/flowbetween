@@ -1,4 +1,3 @@
-use super::element_id::*;
 use super::super::motion::*;
 use super::super::time_path::*;
 
@@ -7,7 +6,7 @@ use super::super::time_path::*;
 /// 
 #[derive(Clone, PartialEq, Debug)]
 pub enum MotionEdit {
-    /// Creates a new motion with this ID
+    /// Creates a new motion with this element ID
     /// 
     /// A new motion is created with a type of `None`, an origin at 0,0 and an empty time curve
     Create,
@@ -23,10 +22,4 @@ pub enum MotionEdit {
 
     /// Sets the time curve for this motion
     SetPath(TimeCurve),
-
-    /// Attaches this motion to the specified element ID
-    Attach(ElementId),
-
-    /// Detaches this motion from the specified element ID
-    Detach(ElementId)
 }

@@ -204,17 +204,10 @@ impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     ///
     /// Assigns a new unique ID for creating a new motion
     /// 
-    /// (This ID will not have been used so far and will not be used again)
+    /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
     /// 
-    fn assign_motion_id(&self) -> ElementId {
-        self.animation.motion().assign_motion_id()
-    }
-    
-    ///
-    /// Retrieves a stream containing all of the motions in a particular time range
-    /// 
-    fn get_motion_ids(&self, when: Range<Duration>) -> Box<dyn Stream<Item=ElementId, Error=()>> {
-        self.animation.motion().get_motion_ids(when)
+    fn assign_element_id(&self) -> ElementId {
+        self.animation.motion().assign_element_id()
     }
 
     ///

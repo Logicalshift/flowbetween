@@ -2,6 +2,8 @@ use super::*;
 use super::db_enum::*;
 use super::flo_store::*;
 
+use std::iter;
+
 use self::DatabaseUpdate::*;
 
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
@@ -89,6 +91,18 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.db.update(vec![PushEditLogLayer(layer_id), Pop])?;
             },
 
+            &Element(ref element_ids, ElementEdit::AddAttachment(element_id))    => {
+                // The 'attached' element ID appears at the start of the list as we store it in the database, which isn't possible in insert_element_edit
+                Self::insert_element_id_list(&mut self.db, &(iter::once(element_id).chain(element_ids.iter().cloned()).collect()))?;
+                self.db.update(vec![Pop])?;
+            },
+
+            &Element(ref element_ids, ElementEdit::RemoveAttachment(element_id))    => {
+                // The 'attached' element ID appears at the start of the list as we store it in the database, which isn't possible in insert_element_edit
+                Self::insert_element_id_list(&mut self.db, &(iter::once(element_id).chain(element_ids.iter().cloned()).collect()))?;
+                self.db.update(vec![Pop])?;
+            },
+
             &Element(ref element_ids, ref element_edit)     => {
                 Self::insert_element_id_list(&mut self.db, element_ids)?;
                 self.insert_element_edit(element_edit)?;
@@ -112,6 +126,11 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
         use self::ElementEdit::*;
 
         match edit {
+            AddAttachment(_element_id) | RemoveAttachment(_element_id) => {
+                // Generally shouldn't be generated (see insert_animation_edit above for where this is actually implemented)
+                self.db.update(vec![Pop])?;
+            },
+
             SetControlPoints(points) => {
                 self.db.update(vec![
                     PushPath(points.clone()),
@@ -166,22 +185,6 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 // Turn into an edit log path
                 self.db.update(vec![PushEditLogMotionPath(curve.points.len()*3), Pop])?;
             },
-
-            Attach(element_id)      => {
-                if let ElementId::Assigned(element_id) = element_id {
-                    self.db.update(vec![PushEditLogMotionElement(*element_id), Pop])?;
-                } else {
-                    self.db.update(vec![Pop])?;
-                }
-            },
-
-            Detach(element_id)      => {
-                if let ElementId::Assigned(element_id) = element_id {
-                    self.db.update(vec![PushEditLogMotionElement(*element_id), Pop])?;
-                } else {
-                    self.db.update(vec![Pop])?;
-                }
-            }
         }
 
         Ok(())
@@ -213,7 +216,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             }
 
             SetName(new_name)              => {
-                self.db.update(vec![PopEditLogString(new_name.clone())])?;
+                self.db.update(vec![PopEditLogString(0, new_name.clone())])?;
             },
 
             SetOrdering(at_index)           => {

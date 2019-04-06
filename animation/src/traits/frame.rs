@@ -24,6 +24,11 @@ pub trait Frame : Send+Sync {
     fn render_to(&self, gc: &mut dyn GraphicsPrimitives);
 
     ///
+    /// Applies all of the properties for the specified element (including those added by attached elements)
+    ///
+    fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties>;
+
+    ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     /// 
     fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>>;
@@ -31,24 +36,14 @@ pub trait Frame : Send+Sync {
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
     /// 
-    fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector>;
+    fn element_with_id(&self, id: ElementId) -> Option<Vector>;
 
     ///
-    /// The brush that is active after all the elements are drawn in this frame
+    /// Retrieves the IDs and types of the elements attached to the element with a particular ID
     /// 
-    /// (If new elements are added to the layer at the time index of this frame,
-    /// this is the brush that will be used)
-    /// 
-    fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)>;
-
+    /// (Element data can be retrieved via element_with_id)
     ///
-    /// The brush properties that are active after all the elements are drawn
-    /// in this frame.
-    /// 
-    /// (If new elements are added to the layer at the time index of this frame,
-    /// these are the properties that will be used)
-    /// 
-    fn active_brush_properties(&self) -> Option<BrushProperties>;
+    fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)>;
 }
 
 impl Frame for Arc<dyn Frame> {
@@ -63,6 +58,11 @@ impl Frame for Arc<dyn Frame> {
     #[inline] fn render_to(&self, gc: &mut dyn GraphicsPrimitives) { (**self).render_to(gc) }
 
     ///
+    /// Applies all of the properties for the specified element (including those added by attached elements)
+    ///
+    #[inline] fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { (**self).apply_properties_for_element(element, properties) }
+
+    ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     /// 
     #[inline] fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>> { (**self).vector_elements() }
@@ -70,22 +70,12 @@ impl Frame for Arc<dyn Frame> {
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
     /// 
-    #[inline] fn element_with_id<'a>(&'a self, id: ElementId) -> Option<Vector> { (**self).element_with_id(id) }
+    #[inline] fn element_with_id(&self, id: ElementId) -> Option<Vector> { (**self).element_with_id(id) }
 
     ///
-    /// The brush that is active after all the elements are drawn in this frame
+    /// Retrieves the IDs and types of the elements attached to the element with a particular ID
     /// 
-    /// (If new elements are added to the layer at the time index of this frame,
-    /// this is the brush that will be used)
-    /// 
-    #[inline] fn active_brush(&self) -> Option<(BrushDefinition, BrushDrawingStyle)> { (**self).active_brush() }
-
+    /// (Element data can be retrieved via element_with_id)
     ///
-    /// The brush properties that are active after all the elements are drawn
-    /// in this frame.
-    /// 
-    /// (If new elements are added to the layer at the time index of this frame,
-    /// these are the properties that will be used)
-    /// 
-    #[inline] fn active_brush_properties(&self) -> Option<BrushProperties> { (**self).active_brush_properties() }
+    fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> { (**self).attached_elements(id) }
 }

@@ -1,13 +1,12 @@
 use super::db_enum::*;
 use super::flo_query::*;
 use super::motion_path_type::*;
-
-// TODO: make error type more generic
-use rusqlite::*;
+use super::super::error::*;
 
 use flo_animation::*;
 use std::sync::*;
 use std::time::Duration;
+use std::result::Result;
 
 ///
 /// When moving an element relative to itself, determines the direction in which the element should move
@@ -55,7 +54,7 @@ pub enum DatabaseUpdate {
     PopEditLogBrush(DrawingStyleType),
 
     /// Pops an edit ID and associates a string value with it
-    PopEditLogString(String),
+    PopEditLogString(u32, String),
 
     /// Uses the edit ID on top of the stack and sets an integer value (the parameters to this are the value index and the value itself). Edit log items can have arbitrary numbers of such parameters, the index generally counts from 0.
     PushEditLogInt(u32, i64),
@@ -75,7 +74,7 @@ pub enum DatabaseUpdate {
     /// Uses the edit ID on top of the stack and associates a motion type with it
     PushEditLogMotionType(MotionType),
 
-    /// Uses the edit ID on top of the stack sets the attached element ID
+    /// Uses the edit ID on top of the stack and sets the attached element ID
     PushEditLogMotionElement(i64),
 
     /// Pops the specified number of time point IDs from the stack and creates a motion path from them using the edit ID pushed before them (ie, stack shopuld look like `[edit id, point id, point id, ...]`)
@@ -149,8 +148,16 @@ pub enum DatabaseUpdate {
     /// Uses the element ID on top of the stack and sets its assigned ID, leaving it on top of the stack
     PushElementAssignId(i64),
 
-    /// Takes the assigned ID from the top of the stack and pushes the corresponding element ID
+    /// Takes an assigned ID and pushes the corresponding element ID
     PushElementIdForAssignedId(i64),
+
+    /// Pops a number of elements from the top of the stack, and one more element ID. Adds the final element as an attachment
+    /// to each of the elements popped. Leaves the final element on the stack.
+    PushAttachElements(usize),
+
+    /// Pops a number of elements from the top of the stack, and one more element ID. Removes the final element as an attachment
+    /// from each of the elements popped. Leaves the final element on the stack.
+    PushDetachElements(usize),
 
     /// Pops the element ID from the top of the stack and pushes the key frame ID and then the element ID
     PushKeyFrameIdForElementId,
@@ -185,14 +192,8 @@ pub enum DatabaseUpdate {
     /// Pops the specified number of time point IDs from the stack and sets the path of the specified motion to match
     SetMotionPath(i64, MotionPathType, usize),
 
-    /// Attaches an element ID to a motion
-    AddMotionAttachedElement(i64, i64),
-
     /// Removes the motion with the specified ID
     DeleteMotion(i64),
-
-    /// Removes a particular attached element
-    DeleteMotionAttachedElement(i64, i64)
 }
 
 ///
@@ -202,7 +203,7 @@ pub trait FloStore {
     ///
     /// Performs a set of updates on the store
     /// 
-    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()>;
+    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError>;
 
     ///
     /// Starts queuing up store updates for later execution as a batch
@@ -212,12 +213,12 @@ pub trait FloStore {
     ///
     /// Executes the queued events (and stops queueing future events)
     /// 
-    fn execute_queue(&mut self) -> Result<()>;
+    fn execute_queue(&mut self) -> Result<(), SqliteAnimationError>;
 
     ///
     /// Ensures any pending updates are committed to the database (but continues to queue future events)
     /// 
-    fn flush_pending(&mut self) -> Result<()>;
+    fn flush_pending(&mut self) -> Result<(), SqliteAnimationError>;
 }
 
 ///

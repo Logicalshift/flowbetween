@@ -17,6 +17,12 @@ pub enum ElementOrdering {
 /// 
 #[derive(Clone, PartialEq, Debug)]
 pub enum ElementEdit {
+    /// Adds an attachment to this element
+    AddAttachment(ElementId),
+
+    /// Removes an attachment from this element
+    RemoveAttachment(ElementId),
+
     /// Updates the control points for this element
     SetControlPoints(Vec<(f32, f32)>),
 

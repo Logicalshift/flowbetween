@@ -6,7 +6,7 @@ impl FloSqlite {
     ///
     /// Executes a particular database update
     /// 
-    fn execute_update(&mut self, update: &DatabaseUpdate) -> Result<()> {
+    fn execute_update(&mut self, update: &DatabaseUpdate) -> Result<(), SqliteAnimationError> {
         use self::DatabaseUpdate::*;
 
         match update {
@@ -60,10 +60,11 @@ impl FloSqlite {
                 set_brush.insert::<&[&dyn ToSql]>(&[&edit_log_id, &drawing_style, &brush_id])?;
             },
 
-            PopEditLogString(string)                                        => {
+            PopEditLogString(index, string)                                 => {
                 let edit_log_id             = self.stack.pop().unwrap();
                 let mut insert_edit_string  = Self::prepare(&self.sqlite, FloStatement::InsertELString)?;
-                insert_edit_string.insert::<&[&dyn ToSql]>(&[&edit_log_id, string])?;
+                let index                   = *index as i64;
+                insert_edit_string.insert::<&[&dyn ToSql]>(&[&edit_log_id, &index, string])?;
             },
 
             PushEditLogInt(index, value)                                    => {
@@ -382,6 +383,34 @@ impl FloSqlite {
                 self.stack.push(element_id);
             },
 
+            PushAttachElements(num_to_attach)                               => {
+                let mut attach_element_ids      = vec![];
+                for _ in 0..*num_to_attach {
+                    attach_element_ids.push(self.stack.pop().unwrap());
+                }
+
+                let attach_to_element_id        = self.stack.last().unwrap();
+                let mut insert_attach_element   = Self::prepare(&self.sqlite, FloStatement::InsertAttachElement)?;
+
+                for attach_element_id in attach_element_ids {
+                    insert_attach_element.insert::<&[&dyn ToSql]>(&[&attach_to_element_id, &attach_element_id])?;
+                }
+            },
+
+            PushDetachElements(num_to_detach)                               => {
+                let mut detach_element_ids      = vec![];
+                for _ in 0..*num_to_detach {
+                    detach_element_ids.push(self.stack.pop().unwrap());
+                }
+
+                let detach_from_element_id          = self.stack.last().unwrap();
+                let mut delete_element_attachment   = Self::prepare(&self.sqlite, FloStatement::DeleteElementAttachment)?;
+
+                for detach_element_id in detach_element_ids {
+                    delete_element_attachment.execute::<&[&dyn ToSql]>(&[&detach_from_element_id, &detach_element_id])?;
+                }
+            },
+
             PushKeyFrameIdForElementId                                      => {
                 let element_id                      = self.stack.pop().unwrap();
                 let mut key_frame_for_element_id    = Self::prepare(&self.sqlite, FloStatement::SelectElementKeyFrame)?;
@@ -407,12 +436,15 @@ impl FloSqlite {
             },
 
             PopVectorPathElement                                            => {
-                let path_id                 = self.stack.pop().unwrap();
-                let brush_properties_id     = self.stack.pop().unwrap();
-                let brush_id                = self.stack.pop().unwrap();
-                let element_id              = self.stack.pop().unwrap();
-                let mut insert_path_element = Self::prepare(&self.sqlite, FloStatement::InsertPathElement)?;
-                insert_path_element.insert::<&[&dyn ToSql]>(&[&element_id, &path_id, &brush_id, &brush_properties_id])?;
+                let path_id                     = self.stack.pop().unwrap();
+                let brush_properties_id         = self.stack.pop().unwrap();
+                let brush_id                    = self.stack.pop().unwrap();
+                let element_id                  = self.stack.pop().unwrap();
+                let mut insert_path_element     = Self::prepare(&self.sqlite, FloStatement::InsertPathElement)?;
+                let mut insert_attach_element   = Self::prepare(&self.sqlite, FloStatement::InsertAttachElement)?;
+                insert_path_element.insert::<&[&dyn ToSql]>(&[&element_id, &path_id])?;
+                insert_attach_element.insert::<&[&dyn ToSql]>(&[&element_id, &brush_id])?;
+                insert_attach_element.insert::<&[&dyn ToSql]>(&[&element_id, &brush_properties_id])?;
             },
 
             PopBrushPoints(points)                                          => {
@@ -532,20 +564,10 @@ impl FloSqlite {
                 }
             },
 
-            AddMotionAttachedElement(motion_id, element_id)                 => {
-                let mut insert_attached_element = Self::prepare(&self.sqlite, FloStatement::InsertMotionAttachedElement)?;
-                insert_attached_element.insert::<&[&dyn ToSql]>(&[&motion_id, &element_id])?;
-            },
-
             DeleteMotion(motion_id)                                         => {
                 let mut delete_motion = Self::prepare(&self.sqlite, FloStatement::DeleteMotion)?;
                 delete_motion.execute::<&[&dyn ToSql]>(&[&motion_id])?;
             },
-
-            DeleteMotionAttachedElement(motion_id, element_id)              => {
-                let mut delete_attachment = Self::prepare(&self.sqlite, FloStatement::DeleteMotionAttachedElement)?;
-                delete_attachment.execute::<&[&dyn ToSql]>(&[&motion_id, &element_id])?;
-            }
         }
 
         Ok(())
@@ -554,7 +576,7 @@ impl FloSqlite {
     ///
     /// Performs a set of updates on the database immediately
     /// 
-    fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
+    fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError> {
         for update in updates {
             let result = self.execute_update(&update);
 
@@ -571,7 +593,7 @@ impl FloStore for FloSqlite {
     ///
     /// Performs a set of updates on the database
     /// 
-    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<()> {
+    fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError> {
         if let Some(ref mut pending) = self.pending {
             // Queue the updates into the pending queue if we're not performing them immediately
             pending.extend(updates.into_iter());
@@ -595,7 +617,7 @@ impl FloStore for FloSqlite {
     ///
     /// Executes the update queue
     /// 
-    fn execute_queue(&mut self) -> Result<()> {
+    fn execute_queue(&mut self) -> Result<(), SqliteAnimationError> {
         // Fetch the pending updates
         let mut pending = None;
         mem::swap(&mut pending, &mut self.pending);
@@ -611,7 +633,7 @@ impl FloStore for FloSqlite {
     ///
     /// Ensures any pending updates are committed to the database
     /// 
-    fn flush_pending(&mut self) -> Result<()> {
+    fn flush_pending(&mut self) -> Result<(), SqliteAnimationError> {
         if self.pending.is_some() {
             // Fetch the pending updates
             let mut pending = Some(vec![]);

@@ -649,27 +649,30 @@ fn read_frame_after_edits() {
         let elements: Vec<_>    = frame.vector_elements().unwrap().collect();
 
         assert!(frame.time_index() == Duration::from_millis(442));
-        assert!(elements.len() == 5);
-
-        assert!(match &elements[0] {
-            &Vector::BrushDefinition(ref defn) => Some(defn.definition()),
-            _ => None
-        } == Some(&BrushDefinition::Ink(InkDefinition::default())));
+        assert!(elements.len() == 3);
 
         assert!(match &elements[1] {
-            &Vector::BrushProperties(ref props) => Some(props.brush_properties()),
-            _ => None
-        } == Some(&BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }));
-
-        assert!(match &elements[3] {
             &Vector::BrushStroke(ref brush_stroke) => Some(brush_stroke.points()),
             _ => None
         }.is_some());
 
-        assert!(match &elements[3] {
+        assert!(match &elements[1] {
             &Vector::BrushStroke(ref brush_stroke) => Some(brush_stroke.id()),
             _ => None
         } == Some(ElementId::Assigned(127)));
+
+        // All our elements should have the brush properties attached to them
+        let attachments = frame.attached_elements(ElementId::Assigned(126));
+        assert!(attachments.len() != 0);
+        assert!(attachments.len() == 2);
+
+        let attachments = frame.attached_elements(ElementId::Assigned(127));
+        assert!(attachments.len() != 0);
+        assert!(attachments.len() == 2);
+
+        let attachments = frame.attached_elements(ElementId::Assigned(128));
+        assert!(attachments.len() != 0);
+        assert!(attachments.len() == 2);
     }
 
     {
@@ -738,7 +741,7 @@ fn move_existing_element() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetType(MotionType::Translate)),
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(50.0, 60.0)),
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
-        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Attach(ElementId::Assigned(50)))
+        AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
     ]);
     anim.panic_on_error();
 
@@ -794,7 +797,6 @@ fn read_path_element() {
         assert!(false);
     }
 }
-
 
 #[test]
 fn create_path_and_re_order() {

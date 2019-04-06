@@ -304,12 +304,11 @@ impl FrameModel {
                 let elements                = current_frame.vector_elements();
 
                 // current_properties will track the properties attached to each element
-                let mut current_properties  = Arc::new(VectorProperties::default());
-
+                // (TODO: in general we can generate properties individually for elements now)
                 if let Some(elements) = elements {
                     for element in elements {
                         // Process how the properties change for this element
-                        current_properties = element.update_properties(current_properties);
+                        let current_properties = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
 
                         // Add to the result
                         result.push((element, Arc::clone(&current_properties)));

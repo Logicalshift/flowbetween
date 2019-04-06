@@ -1,12 +1,13 @@
 use super::db_enum::*;
 use super::flo_store::*;
 use super::motion_path_type::*;
+use super::super::error::*;
+use super::super::result::Result;
 
 use flo_logging::*;
 use flo_animation::*;
 use flo_animation::brushes::*;
 
-use rusqlite::*;
 use itertools::*;
 use std::sync::*;
 use std::time::Duration;
@@ -25,6 +26,15 @@ pub struct PathPropertiesIds {
 }
 
 ///
+/// A list of element IDs to attach automatically to a new element
+///
+#[derive(Clone, Debug)]
+pub struct AttachProperties {
+    /// The properties to attach of each type
+    pub property_of_type: HashMap<VectorType, ElementId>
+}
+
+///
 /// Core data structure used by the animation database
 /// 
 pub struct AnimationDbCore<TFile: FloFile+Send> {
@@ -36,10 +46,13 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
 
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
-    pub failure: Option<Error>,
+    pub failure: Option<SqliteAnimationError>,
 
     /// Maps a layer ID to the properties that should be associated with the next path created
     pub path_properties_for_layer: HashMap<i64, PathPropertiesIds>,
+
+    /// Maps a layer ID to the properties that should be associated with the next brush stroke created
+    pub brush_properties_for_layer: HashMap<i64, AttachProperties>,
 
     /// Maps layers to the brush that's active
     pub active_brush_for_layer: HashMap<i64, (Duration, Arc<dyn Brush>)>,
@@ -104,25 +117,21 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Retrieves the brush that is active on the specified layer at the specified time
     ///
-    pub fn get_active_brush_for_layer(&mut self, layer_id: i64, when: Duration) -> Arc<dyn Brush> {
+    pub fn get_active_brush_for_layer(&mut self, layer_id: i64, when: Duration) -> Option<Arc<dyn Brush>> {
         // If the cached active brush is at the right time, then just use that
         if let Some((time, ref brush)) = self.active_brush_for_layer.get(&layer_id) {
             if time == &when {
-                return Arc::clone(&brush);
+                return Some(Arc::clone(&brush));
             }
         }
 
-        // If the time doesn't match, or nothing is cached then we need to fetch from the database
-
-        // Fetch the keyframe that this brush is for
-        let keyframe = self.db.query_nearest_key_frame(layer_id, when).unwrap();
-
-        if let Some((keyframe_id, _)) = keyframe {
-            // Need to query the last brush definition element and the last brush properties elements
-            let brush_definition = self.db.query_most_recent_element_of_type(keyframe_id, when, VectorElementType::BrushDefinition).unwrap();
-
-            if let Some(brush_definition) = brush_definition {
+        // Get the brush properties for the layer
+        if let Some(properties) = self.brush_properties_for_layer.get(&layer_id) {
+            // Try to retrieve the brush definition ID from the properties
+            if let Some(brush_definition_id) = properties.property_of_type.get(&VectorType::BrushDefinition) {
                 // Turn these properties into a brush
+                let brush_definition_id         = self.db.query_vector_element_id(brush_definition_id).unwrap().unwrap();
+                let brush_definition            = self.db.query_vector_element(brush_definition_id).unwrap();
                 let (brush_id, drawing_style)   = brush_definition.brush.unwrap();
                 let brush_defn                  = Self::get_brush_definition(&mut self.db, brush_id).unwrap();
                 let brush                       = create_brush_from_definition(&brush_defn, drawing_style.into());
@@ -131,17 +140,15 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 self.active_brush_for_layer.insert(layer_id, (when, Arc::clone(&brush)));
 
                 // This is our result
-                brush
+                Some(brush)
             } else {
-                // There's a keyframe but no brush definition has been defined at the specified time
-                unimplemented!("TODO: there is a keyframe but no most recent brush properties or brush definition")
+                // Brush properties have been set but not the brush definition
+                None
             }
         } else {
-            // If there's no keyframe at this time, then there's no brush to set
-            unimplemented!("TODO: there is no brush if there's no keyframe")
+            // No brush properties have been set yet for this layer
+            None
         }
-
-        // create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw)
     }
 
     ///
@@ -225,12 +232,14 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     fn create_brush_stroke(&mut self, layer_id: i64, when: Duration, brush_stroke: Arc<Vec<RawPoint>>) -> Result<()> {
         // Convert the brush stroke to the brush points
         let active_brush = self.get_active_brush_for_layer(layer_id, when);
-        let brush_stroke = active_brush.brush_points_for_raw_points(&*brush_stroke);
+        if let Some(active_brush) = active_brush {
+            let brush_stroke = active_brush.brush_points_for_raw_points(&*brush_stroke);
 
-        // Store in the database
-        self.db.update(vec![
-            DatabaseUpdate::PopBrushPoints(Arc::new(brush_stroke))
-        ])?;
+            // Store in the database
+            self.db.update(vec![
+                DatabaseUpdate::PopBrushPoints(Arc::new(brush_stroke))
+            ])?;
+        }
 
         Ok(())
     }
@@ -251,21 +260,54 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             _ => ()
         }
 
-        // Create a new element
-        Self::create_new_element(&mut self.db, layer_id, when, new_element.id(), VectorElementType::from(&new_element))?;
-
         // Record the details of the element itself
         match new_element {
-            SelectBrush(_id, brush_definition, drawing_style)   => Self::create_brush_definition(&mut self.db, brush_definition, drawing_style)?,
-            BrushProperties(_id, brush_properties)              => Self::create_brush_properties(&mut self.db, brush_properties)?,
-            BrushStroke(_id, brush_stroke)                      => self.create_brush_stroke(layer_id, when, brush_stroke)?,
-        }
+            BrushStroke(id, brush_stroke)                       => {
+                // New brush stroke element
+                Self::create_new_element(&mut self.db, layer_id, when, id, VectorElementType::BrushStroke)?;
 
-        // create_new_element pushes an element ID, a key frame ID and a time. The various element actions pop the element ID so we need to pop the frame ID and time
-        self.db.update(vec![
-            DatabaseUpdate::Pop,
-            DatabaseUpdate::Pop
-        ])?;
+                // Attach the properties for this brush stroke
+                let property_elements   = self.brush_properties_for_layer.get(&layer_id)
+                    .map(|properties| properties.property_of_type.values().filter_map(|elem| elem.id()))
+                    .map(|assigned_ids| assigned_ids.map(|assigned_id| DatabaseUpdate::PushElementIdForAssignedId(assigned_id)))
+                    .map(|push_ids| push_ids.collect::<Vec<_>>())
+                    .unwrap_or_else(|| vec![]);
+                let num_properties      = property_elements.len();
+
+                if num_properties > 0 {
+                    // Push all of the assigned IDs for the properties, followed by attaching them to the brush element we're building
+                    self.db.update(property_elements.into_iter()
+                        .chain(vec![DatabaseUpdate::PushAttachElements(num_properties)]))?;
+                }
+
+                // Create the brush stroke (popping the element ID)
+                self.create_brush_stroke(layer_id, when, brush_stroke)?;
+
+                // Pop the frame ID and time (create_brush_stroke will have popped the element ID)
+                self.db.update(vec![DatabaseUpdate::Pop, DatabaseUpdate::Pop])?;
+            },
+
+            SelectBrush(id, brush_definition, drawing_style)    => {
+                // Create a new brush definition to use with the future brush strokes
+                Self::create_unattached_element(&mut self.db, VectorElementType::BrushDefinition, id)?;
+                Self::create_brush_definition(&mut self.db, brush_definition, drawing_style)?;
+
+                // Attach to future brush strokes
+                self.brush_properties_for_layer.entry(layer_id)
+                    .or_insert_with(|| AttachProperties { property_of_type: HashMap::new() })
+                    .property_of_type.insert(VectorType::BrushDefinition, id);
+            },
+            BrushProperties(id, brush_properties)               => {
+                // Create a new brush properties to use with the future brush strokes
+                Self::create_unattached_element(&mut self.db, VectorElementType::BrushProperties, id)?;
+                Self::create_brush_properties(&mut self.db, brush_properties)?;
+
+                // Attach to future brush strokes
+                self.brush_properties_for_layer.entry(layer_id)
+                    .or_insert_with(|| AttachProperties { property_of_type: HashMap::new() })
+                    .property_of_type.insert(VectorType::BrushProperties, id);
+            },
+        }
 
         Ok(())
     }
@@ -344,7 +386,10 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             match edit {
                 Create => {
                     self.db.update(vec![
-                        DatabaseUpdate::CreateMotion(motion_id)
+                        DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
+                        DatabaseUpdate::PushElementAssignId(motion_id),
+                        DatabaseUpdate::Pop,
+                        DatabaseUpdate::CreateMotion(motion_id),
                     ])?;
                 },
 
@@ -376,22 +421,6 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     // Turn into a motion path
                     self.db.update(vec![DatabaseUpdate::SetMotionPath(motion_id, MotionPathType::Position, time_path.points.len()*3)])?;
                 },
-
-                Attach(element_id) => {
-                    if let ElementId::Assigned(element_id) = element_id {
-                        self.db.update(vec![
-                            DatabaseUpdate::AddMotionAttachedElement(motion_id, element_id)
-                        ])?;
-                    }
-                },
-
-                Detach(element_id) => {
-                    if let ElementId::Assigned(element_id) = element_id {
-                        self.db.update(vec![
-                            DatabaseUpdate::DeleteMotionAttachedElement(motion_id, element_id)
-                        ])?;
-                    }
-                }
             }
         }
 
@@ -402,9 +431,9 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     /// Edits the element with the specified ID
     /// 
     fn edit_element(&mut self, element_id: ElementId, element_edit: ElementEdit) -> Result<()> {
-        if let ElementId::Assigned(element_id) = element_id {
+        if let ElementId::Assigned(assigned_id) = element_id {
             // Get the type of the element so we can use the appropriate editing method
-            let element_type = self.db.query_vector_element_type(element_id)?;
+            let element_type = self.db.query_vector_element_type_from_assigned_id(assigned_id)?;
 
             if let Some(element_type) = element_type {
                 // Action depends on the element type
@@ -420,7 +449,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         
                         // Perform the update
                         self.db.update(vec![
-                            DatabaseUpdate::PushElementIdForAssignedId(element_id),
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
                             DatabaseUpdate::UpdateBrushPointCoords(Arc::new(points))
                         ])?;
                     },
@@ -436,10 +465,32 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
                         // Need to push the element ID and the keyframe ID
                         self.db.update(vec![
-                            DatabaseUpdate::PushElementIdForAssignedId(element_id),
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
                             DatabaseUpdate::PushKeyFrameIdForElementId
                         ].into_iter()
                         .chain(update_order))?;
+                    },
+
+                    (_any_type, ElementEdit::AddAttachment(attach_element_id)) => {
+                        if let ElementId::Assigned(attach_element_id) = attach_element_id {
+                            self.db.update(vec![
+                                DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                                DatabaseUpdate::PushElementIdForAssignedId(attach_element_id),
+                                DatabaseUpdate::PushAttachElements(1),
+                                DatabaseUpdate::Pop
+                            ])?;
+                        }
+                    },
+
+                    (_any_type, ElementEdit::RemoveAttachment(detach_element_id)) => {
+                        if let ElementId::Assigned(detach_element_id) = detach_element_id {
+                            self.db.update(vec![
+                                DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                                DatabaseUpdate::PushElementIdForAssignedId(detach_element_id),
+                                DatabaseUpdate::PushDetachElements(1),
+                                DatabaseUpdate::Pop
+                            ])?;
+                        }
                     },
 
                     // Other types have no action
