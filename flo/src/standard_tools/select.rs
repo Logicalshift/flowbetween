@@ -600,7 +600,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                             let properties  = current_frame.apply_properties_for_element(&element, Arc::new(VectorProperties::default()));
 
                             // Apply any transformation needed for the element
-                            let element     = (properties.transform)(element, frame_time);
+                            let element     = (properties.transform_vector)(element, frame_time);
 
                             // Draw a highlight around it
                             let (drawing, bounding_box) = Self::highlight_for_selection(&element, &properties);
