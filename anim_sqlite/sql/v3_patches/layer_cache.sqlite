@@ -1,0 +1,23 @@
+/***
+ **
+ ** Layer cache
+ **
+ ** The layer cache associates cached versions of hows to draw layers at particular times.
+ **
+ **/
+
+CREATE TABLE Flo_LayerCache (
+    /* The type of item that is cached here */
+    CacheType INTEGER NOT NULL,
+
+    /* The ID of the layer that this cache is for */
+    LayerId INTEGER NOT NULL REFERENCES Flo_LayerType(LayerId),
+
+    /* When this cache was made */
+    CacheTime INTEGER NOT NULL,
+
+    /* The ID of the cached drawing */
+    CacheId INTEGER NOT NULL REFERENCES Flo_CachedDrawings(CacheId),
+
+    PRIMARY KEY (CacheType, LayerId, CacheTime)
+) WITHOUT ROWID;

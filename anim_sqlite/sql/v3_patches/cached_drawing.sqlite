@@ -1,0 +1,19 @@
+/***
+ **
+ ** Cached drawings
+ **
+ ** For some transformations as well as for things like onion skins, it's too costly to calculate the drawing every
+ ** time it needs to be made (rather than every time it changes). The drawing cache provides a serialised set of
+ ** canvas draw instructions that can be used to render these items more quickly.
+ **
+ ** Cached items should never contain critical data, so it's always safe to delete from this table.
+ **
+ **/
+
+CREATE TABLE Flo_CachedDrawings (
+    /* The ID of this cached drawing */
+    CacheId INTEGER NOT NULL PRIMARY KEY ASC AUTOINCREMENT,
+
+    /* The drawing that was cached (as a serialized set of canvas instructions) */
+    Drawing TEXT NOT NULL
+);

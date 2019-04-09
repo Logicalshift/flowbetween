@@ -25,7 +25,9 @@ const PACKAGE_VERSION: &str         = env!("CARGO_PKG_VERSION");
 
 lazy_static! {
     static ref V3_PATCHES: Vec<(&'static str, &'static [u8])> = vec![
-        ("attached_elements", include_bytes!["../../../sql/v3_patches/attached_elements.sqlite"])
+        ("attached_elements", include_bytes!["../../../sql/v3_patches/attached_elements.sqlite"]),
+        ("cached_drawing", include_bytes!["../../../sql/v3_patches/cached_drawing.sqlite"]),
+        ("layer_cache", include_bytes!["../../../sql/v3_patches/layer_cache.sqlite"])
     ];
 }
 
