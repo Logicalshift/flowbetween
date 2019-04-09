@@ -6,6 +6,8 @@ use canvas::*;
 use std::sync::*;
 use std::time::Duration;
 
+// TODO: add cache
+
 ///
 /// Represents a single frame in a layer of an animation
 ///

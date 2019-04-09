@@ -14,6 +14,7 @@ mod vector;
 mod path;
 mod time_path;
 mod motion;
+mod cache;
 
 pub use self::edit::*;
 pub use self::actions::*;
@@ -31,3 +32,4 @@ pub use self::vector::*;
 pub use self::path::*;
 pub use self::time_path::*;
 pub use self::motion::*;
+pub use self::cache::*;
