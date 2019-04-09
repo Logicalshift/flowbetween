@@ -5,6 +5,7 @@ authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Describes a FlowBetween animation"
+edition     = "2018"
 
 [dependencies]
 flo_canvas          = { path = "../canvas", version = "^0.1.0" }
