@@ -2,11 +2,11 @@ use super::point::*;
 use super::curve::*;
 use super::component::*;
 
-use canvas::*;
-use curves::geo::*;
-use curves::line::*;
-use curves::bezier::*;
-use curves::bezier::path::*;
+use flo_canvas::*;
+use flo_curves::geo::*;
+use flo_curves::line::*;
+use flo_curves::bezier::*;
+use flo_curves::bezier::path::*;
 
 use itertools::*;
 

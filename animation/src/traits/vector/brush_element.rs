@@ -8,7 +8,7 @@ use super::super::edit::*;
 use super::super::brush::*;
 use super::super::motion::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use itertools::*;
 use std::sync::*;

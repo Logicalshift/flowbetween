@@ -1,7 +1,7 @@
 use super::edge::*;
 use super::super::traits::*;
 
-use curves::bezier::*;
+use flo_curves::bezier::*;
 
 use std::sync::*;
 use std::cmp::Ordering;

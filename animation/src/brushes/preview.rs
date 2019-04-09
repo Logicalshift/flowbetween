@@ -1,7 +1,7 @@
 use super::*;
 use super::super::traits::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use futures::executor;
 use std::mem;

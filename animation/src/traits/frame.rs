@@ -1,7 +1,7 @@
 use super::edit::*;
 use super::vector::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use std::sync::*;
 use std::time::Duration;

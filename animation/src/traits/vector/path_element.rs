@@ -8,7 +8,7 @@ use super::super::path::*;
 use super::super::edit::*;
 use super::super::motion::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use std::sync::*;
 use std::time::Duration;

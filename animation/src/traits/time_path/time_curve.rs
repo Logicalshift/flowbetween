@@ -1,7 +1,7 @@
 use super::time_point::*;
 use super::time_control_point::*;
 
-use curves::*;
+use flo_curves::*;
 
 use std::ops::{Mul,Add,Sub};
 

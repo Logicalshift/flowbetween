@@ -3,9 +3,9 @@
 //!
 #![warn(bare_trait_objects)]
 
-extern crate flo_curves as curves;
-extern crate flo_canvas as canvas;
-extern crate flo_float_encoder as float_encoder;
+extern crate flo_curves;
+extern crate flo_canvas;
+extern crate flo_float_encoder;
 
 #[macro_use]
 extern crate serde_derive;

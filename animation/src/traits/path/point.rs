@@ -1,4 +1,4 @@
-use curves::*;
+use flo_curves::*;
 
 use std::f32;
 use std::ops::{Mul, Add, Sub};

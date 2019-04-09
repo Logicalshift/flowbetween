@@ -1,6 +1,6 @@
 use super::super::traits::*;
 
-use curves::*;
+use flo_curves::*;
 use itertools::*;
 
 use std::iter;

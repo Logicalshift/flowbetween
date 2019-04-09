@@ -7,7 +7,7 @@ use super::super::edit::*;
 use super::super::motion::*;
 use super::super::brush_properties::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use std::sync::*;
 use std::time::Duration;

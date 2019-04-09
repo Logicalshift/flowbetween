@@ -1,4 +1,4 @@
-use float_encoder::*;
+use flo_float_encoder::*;
 use std::io::{Read, Write, Error, ErrorKind};
 
 ///

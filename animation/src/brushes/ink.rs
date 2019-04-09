@@ -3,9 +3,9 @@ use super::super::traits::*;
 use std::iter;
 use std::ops::*;
 
-use curves::*;
-use curves::bezier;
-use canvas::*;
+use flo_curves::*;
+use flo_curves::bezier;
+use flo_canvas::*;
 
 // Minimum distance between points to use to fit to a curve
 const MIN_DISTANCE: f64 = 2.0;

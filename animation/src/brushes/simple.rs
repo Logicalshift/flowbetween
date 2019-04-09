@@ -1,8 +1,8 @@
 use super::super::traits::*;
 
-use curves::*;
-use curves::bezier;
-use canvas::*;
+use flo_curves::*;
+use flo_curves::bezier;
+use flo_canvas::*;
 
 use std::iter;
 

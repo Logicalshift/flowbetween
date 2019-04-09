@@ -1,7 +1,7 @@
 use super::point::*;
 use super::component::*;
 
-use curves::bezier::*;
+use flo_curves::bezier::*;
 
 /// A start point and a following element describes a bezier curve
 #[derive(Copy, Clone)]

@@ -1,7 +1,7 @@
 use super::*;
 
-use canvas::*;
-use curves::geo::*;
+use flo_canvas::*;
+use flo_curves::geo::*;
 
 use std::f32;
 

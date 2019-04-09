@@ -5,7 +5,7 @@ use super::super::brush_definition::*;
 use super::super::brush_drawing_style::*;
 use super::super::super::brushes::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use std::sync::*;
 use std::time::Duration;

@@ -1,6 +1,6 @@
 use super::cache_type::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 ///
 /// Trait provided by things that can cache and retrieve canvas drawing instructions

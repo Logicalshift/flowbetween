@@ -1,4 +1,4 @@
-use canvas::*;
+use flo_canvas::*;
 
 ///
 /// Standard properties for a brush stroke

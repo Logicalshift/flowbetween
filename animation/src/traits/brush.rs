@@ -4,7 +4,7 @@ use super::brush_properties::*;
 use super::brush_definition::*;
 use super::brush_drawing_style::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 use std::iter;
 

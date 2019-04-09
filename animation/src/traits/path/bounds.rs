@@ -4,7 +4,7 @@ use super::point::*;
 use super::curve::*;
 use super::component::*;
 
-use curves::*;
+use flo_curves::*;
 
 ///
 /// Trait implemented by graphical elements with a bounding box
