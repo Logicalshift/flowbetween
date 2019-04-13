@@ -1,6 +1,7 @@
 use super::vector::*;
 use super::super::edit::*;
 use super::super::frame::*;
+use super::super::cache::*;
 
 use std::u32;
 use std::sync::*;
@@ -53,4 +54,9 @@ pub trait Layer :
     /// Retrieves the definition of this layer as a vector layer
     /// 
     fn as_vector_layer<'a>(&'a self) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+VectorLayer>>>;
+
+    ///
+    /// Retrieves the canvas cache at the specified time
+    ///
+    fn get_canvas_cache_at_time(&self, time_index: Duration) -> Arc<dyn CanvasCache>;
 }

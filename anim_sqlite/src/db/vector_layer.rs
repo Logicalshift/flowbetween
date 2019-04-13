@@ -3,6 +3,7 @@ use super::flo_store::*;
 use super::vector_frame::*;
 use super::super::result::Result;
 
+use std::sync::*;
 use std::ops::{Range, Deref};
 use std::time::Duration;
 
@@ -112,6 +113,10 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
 
         // Just want the durations and not the frame IDs here
         (previous.map(|(_, when)| when), next.map(|(_, when)| when))
+    }
+
+    fn get_canvas_cache_at_time(&self, time_index: Duration) -> Arc<dyn CanvasCache> {
+        unimplemented!()
     }
 }
 
