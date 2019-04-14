@@ -48,7 +48,7 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
         self.core.desync(move |core| {
             // Remove the cached item
             let result = core.db.update(vec![
-                DatabaseUpdate::PushLayerForAssignedId(layer_id as u64),
+                DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PopDeleteLayerCache(when, cache_type)
             ]);
 
@@ -75,7 +75,7 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
         self.core.desync(move |core| {
             // Remove the cached item
             let result = core.db.update(vec![
-                DatabaseUpdate::PushLayerForAssignedId(layer_id as u64),
+                DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PopStoreLayerCache(when, cache_type, draw_string)
             ]);
 
