@@ -334,6 +334,14 @@ impl FloSqlite {
                 delete_key_frame.execute::<&[&dyn ToSql]>(&[&layer_id, &Self::get_micros(&when)])?;
             },
 
+            PopStoreLayerCache(when, cache_type, canvas_data)               => {
+                unimplemented!()
+            },
+
+            PopDeleteLayerCache(when, cache_type)                        => {
+                unimplemented!()
+            },
+
             PushNearestKeyFrame(when)                                       => {
                 let layer_id                        = self.stack.pop().unwrap();
                 let mut select_nearest_keyframe     = Self::prepare(&self.sqlite, FloStatement::SelectNearestKeyFrame)?;

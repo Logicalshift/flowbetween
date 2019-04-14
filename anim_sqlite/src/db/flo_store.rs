@@ -134,6 +134,12 @@ pub enum DatabaseUpdate {
     /// Removes a keyframe from the layer with the ID on top of the stack
     PopRemoveKeyFrame(Duration),
 
+    /// Pops a layer ID, and creates (or replaces) the cache data for that layer at the specified time
+    PopStoreLayerCache(Duration, CacheType, String),
+
+    /// Pops a layer ID and removes the cache of the specified type from the specified time
+    PopDeleteLayerCache(Duration, CacheType),
+
     /// Pops a layer ID and pushes the time and ID of the key
     PushNearestKeyFrame(Duration),
 

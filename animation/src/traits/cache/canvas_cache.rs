@@ -19,7 +19,7 @@ pub trait CanvasCache {
     ///
     /// Stores a particular drawing in the cache
     ///
-    fn store(&self, cache_type: CacheType, items: &mut dyn Iterator<Item=Draw>);
+    fn store(&self, cache_type: CacheType, items: Box<dyn Iterator<Item=Draw>>);
 
     ///
     /// Retrieves the cached item at the specified time, if it exists
