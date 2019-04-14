@@ -21,3 +21,8 @@ CREATE TABLE Flo_LayerCache (
 
     PRIMARY KEY (CacheType, LayerId, CacheTime)
 ) WITHOUT ROWID;
+
+CREATE TRIGGER Flo_DeleteLayerCacheDrawings BEFORE DELETE ON Flo_LayerCache
+    BEGIN
+        DELETE FROM Flo_CachedDrawings WHERE CacheId = Old.CacheId;
+    END;
