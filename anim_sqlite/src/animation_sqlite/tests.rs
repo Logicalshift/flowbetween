@@ -851,3 +851,56 @@ fn create_path_and_re_order() {
         assert!(elements[1].id() == ElementId::Assigned(100));
     }
 }
+
+#[test]
+fn set_and_retrieve_cached_onionskin() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![AnimationEdit::AddNewLayer(24)]);
+
+    let layer           = anim.get_layer_with_id(24).unwrap();
+    let cache           = layer.get_canvas_cache_at_time(Duration::from_millis(2000));
+
+    cache.store(CacheType::OnionSkinLayer, Box::new(vec![Draw::NewPath, Draw::Fill].into_iter()));
+
+    let cache           = layer.get_canvas_cache_at_time(Duration::from_millis(2000));
+    let cached_drawing  = cache.retrieve(CacheType::OnionSkinLayer);
+
+    assert!(cached_drawing == Some(vec![Draw::NewPath, Draw::Fill]));
+}
+
+#[test]
+fn invalidate_cached_onionskin() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![AnimationEdit::AddNewLayer(24)]);
+
+    let layer           = anim.get_layer_with_id(24).unwrap();
+    let cache           = layer.get_canvas_cache_at_time(Duration::from_millis(2000));
+
+    cache.store(CacheType::OnionSkinLayer, Box::new(vec![Draw::NewPath, Draw::Fill].into_iter()));
+    cache.invalidate(CacheType::OnionSkinLayer);
+
+    let cache           = layer.get_canvas_cache_at_time(Duration::from_millis(2000));
+    let cached_drawing  = cache.retrieve(CacheType::OnionSkinLayer);
+
+    assert!(cached_drawing == Some(vec![Draw::NewPath, Draw::Fill]));
+}
+
+#[test]
+fn retrieve_cached_onionskin_from_different_time() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![AnimationEdit::AddNewLayer(24)]);
+
+    let layer           = anim.get_layer_with_id(24).unwrap();
+    let cache           = layer.get_canvas_cache_at_time(Duration::from_millis(2000));
+
+    cache.store(CacheType::OnionSkinLayer, Box::new(vec![Draw::NewPath, Draw::Fill].into_iter()));
+    cache.invalidate(CacheType::OnionSkinLayer);
+
+    let cache           = layer.get_canvas_cache_at_time(Duration::from_millis(1500));
+    let cached_drawing  = cache.retrieve(CacheType::OnionSkinLayer);
+
+    assert!(cached_drawing == None);
+}
