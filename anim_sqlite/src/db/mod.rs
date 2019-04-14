@@ -31,6 +31,7 @@ mod motion;
 mod time_path;
 mod vector_layer;
 mod motion_path_type;
+mod layer_cache;
 pub mod vector_frame;
 
 pub use self::animation::*;
