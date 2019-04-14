@@ -1,11 +1,12 @@
 use super::*;
 use super::flo_store::*;
+use super::layer_cache::*;
 use super::vector_frame::*;
 use super::super::result::Result;
 
-use std::sync::*;
 use std::ops::{Range, Deref};
 use std::time::Duration;
+use std::collections::HashMap;
 
 ///
 /// Represents a vector layer in a SQLite database
@@ -24,6 +25,9 @@ pub struct SqliteVectorLayer<TFile: FloFile+Send> {
     /// The currently active brush for this layer (or none if we need to fetch this from the database)
     /// The active brush is the brush most recently added to the keyframe at the specified point in time
     active_brush: Option<(Duration, Arc<dyn Brush>)>,
+
+    /// Known layer caches for this layer
+    frame_caches: Arc<Desync<HashMap<Duration, Weak<LayerCanvasCache<TFile>>>>>,
 
     /// Database core
     core: Arc<Desync<AnimationDbCore<TFile>>>
@@ -57,7 +61,8 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
                     name:           name,
                     layer_id:       layer_id,
                     active_brush:   None,
-                    core:           Arc::clone(core)
+                    core:           Arc::clone(core),
+                    frame_caches:   Arc::new(Desync::new(HashMap::new()))
                 }
             })
     }
@@ -116,7 +121,20 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
     }
 
     fn get_canvas_cache_at_time(&self, time_index: Duration) -> Arc<dyn CanvasCache> {
-        unimplemented!()
+        if let Some(layer_cache) = self.frame_caches.sync(|caches| caches.get(&time_index).and_then(|weak| weak.upgrade())) {
+            // Use the existing layer cache if there is one
+            layer_cache
+        } else {
+            // Create a new layer cache
+            let layer_cache = LayerCanvasCache::cache_with_time(Arc::clone(&self.core), self.layer_id, time_index);
+            let layer_cache = Arc::new(layer_cache);
+
+            // Store so we can re-use the cache object later on
+            let weak_cache = Arc::downgrade(&layer_cache);
+            self.frame_caches.desync(move |caches| { caches.insert(time_index, weak_cache); });
+
+            layer_cache
+        }
     }
 }
 
