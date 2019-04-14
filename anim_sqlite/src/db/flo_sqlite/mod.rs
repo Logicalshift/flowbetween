@@ -157,6 +157,8 @@ enum FloStatement {
     InsertMotion,
     InsertOrReplaceMotionOrigin,
     InsertMotionPathPoint,
+    InsertNewCachedDrawing,
+    InsertOrReplaceLayerCache,
 
     DeleteKeyFrame,
     DeleteLayer,
@@ -164,6 +166,7 @@ enum FloStatement {
     DeleteElementAttachment,
     DeleteMotion,
     DeleteMotionPoints,
+    DeleteLayerCache
 }
 
 impl FloSqlite {
@@ -487,6 +490,8 @@ impl FloSqlite {
             InsertMotion                        => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
             InsertOrReplaceMotionOrigin         => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
             InsertMotionPathPoint               => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
+            InsertNewCachedDrawing              => "INSERT INTO Flo_CachedDrawing (Drawing) VALUES (?)",
+            InsertOrReplaceLayerCache           => "INSERT OR REPLACE INTO Flo_LayerCache (CacheType, LayerId, CacheTime, CacheId) VALUES (?, ?, ?, ?)",
 
             DeleteKeyFrame                      => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
             DeleteLayer                         => "DELETE FROM Flo_LayerType WHERE LayerId = ?",
@@ -494,6 +499,7 @@ impl FloSqlite {
             DeleteElementAttachment             => "DELETE FROM Flo_ElementAttachments WHERE ElementId = ? AND AttachedElementId = ?",
             DeleteMotion                        => "DELETE FROM Flo_Motion WHERE MotionId = ?",
             DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
+            DeleteLayerCache                    => "DELETE FROM Flo_LayerCache WHERE CacheType = ? AND LayerId = ? AND CacheTime = ?",
         }
     }
 

@@ -335,11 +335,27 @@ impl FloSqlite {
             },
 
             PopStoreLayerCache(when, cache_type, canvas_data)               => {
-                unimplemented!()
+                let layer_id                    = self.stack.pop().unwrap();
+                let when                        = Self::get_micros(&when);
+                let cache_type                  = self.enum_value(DbEnum::CacheType(*cache_type));
+
+                let mut delete_layer_cache      = Self::prepare(&self.sqlite, FloStatement::DeleteLayerCache)?;
+                let mut insert_layer_drawing    = Self::prepare(&self.sqlite, FloStatement::InsertNewCachedDrawing)?;
+                let mut insert_layer_cache      = Self::prepare(&self.sqlite, FloStatement::InsertOrReplaceLayerCache)?;
+
+                delete_layer_cache.execute::<&[&dyn ToSql]>(&[&cache_type, &layer_id, &when])?;
+                let cache_id = insert_layer_drawing.insert(&[&canvas_data])?;
+                insert_layer_cache.execute::<&[&dyn ToSql]>(&[&cache_type, &layer_id, &when, &cache_id])?;
             },
 
             PopDeleteLayerCache(when, cache_type)                        => {
-                unimplemented!()
+                let layer_id                    = self.stack.pop().unwrap();
+                let when                        = Self::get_micros(&when);
+                let cache_type                  = self.enum_value(DbEnum::CacheType(*cache_type));
+
+                let mut delete_layer_cache      = Self::prepare(&self.sqlite, FloStatement::DeleteLayerCache)?;
+
+                delete_layer_cache.execute::<&[&dyn ToSql]>(&[&cache_type, &layer_id, &when])?;
             },
 
             PushNearestKeyFrame(when)                                       => {

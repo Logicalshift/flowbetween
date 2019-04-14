@@ -41,7 +41,7 @@ pub enum EditLogType {
     ElementOrderToTop,
     ElementOrderToBottom,
     ElementOrderBefore,
-    ElementDelete
+    ElementDelete,
 }
 
 ///
@@ -128,7 +128,8 @@ pub enum DbEnum {
     MotionType(MotionType),
     MotionPathType(MotionPathType),
     VectorElement(VectorElementType),
-    PathPoint(PathPointType)
+    PathPoint(PathPointType),
+    CacheType(CacheType)
 }
 
 impl DbEnum {
@@ -187,6 +188,13 @@ impl DbEnum {
             _                       => None
         }
     }
+
+    pub fn cache_type(self) -> Option<CacheType> {
+        match self {
+            DbEnum::CacheType(res)  => Some(res),
+            _                       => None
+        }
+    }
 }
 
 ///
@@ -201,7 +209,8 @@ pub enum DbEnumType {
     Layer,
     VectorElement,
     MotionType,
-    PathPoint
+    PathPoint,
+    CacheType
 }
 
 impl From<DbEnumType> for Vec<DbEnum> {
@@ -307,6 +316,14 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::PathPoint(ControlPoint),
                     DbEnum::PathPoint(BezierTo),
                     DbEnum::PathPoint(Close)
+                ]
+            },
+
+            CacheType => {
+                use self::CacheType::*;
+
+                vec![
+                    DbEnum::CacheType(OnionSkinLayer)
                 ]
             }
         }
@@ -537,6 +554,16 @@ impl From<PathPointType> for DbEnumName {
     }
 }
 
+impl From<CacheType> for DbEnumName {
+    fn from(t: CacheType) -> DbEnumName {
+        use self::CacheType::*;
+
+        match t {
+            OnionSkinLayer => DbEnumName("CacheType", "OnionSkinLayer")
+        }
+    }
+}
+
 impl From<DbEnum> for DbEnumName {
     fn from(t: DbEnum) -> DbEnumName {
         use self::DbEnum::*;
@@ -550,7 +577,8 @@ impl From<DbEnum> for DbEnumName {
             VectorElement(vet)      => DbEnumName::from(vet),
             MotionType(mot)         => DbEnumName::from(mot),
             MotionPathType(mpt)     => DbEnumName::from(mpt),
-            PathPoint(ppt)          => DbEnumName::from(ppt)
+            PathPoint(ppt)          => DbEnumName::from(ppt),
+            CacheType(ct)           => DbEnumName::from(ct)
         }
     }
 }
