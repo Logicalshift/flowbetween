@@ -884,7 +884,7 @@ fn invalidate_cached_onionskin() {
     let cache           = layer.get_canvas_cache_at_time(Duration::from_millis(2000));
     let cached_drawing  = cache.retrieve(CacheType::OnionSkinLayer);
 
-    assert!(cached_drawing == Some(vec![Draw::NewPath, Draw::Fill]));
+    assert!(cached_drawing == None);
 }
 
 #[test]
