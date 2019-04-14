@@ -107,6 +107,7 @@ enum FloStatement {
     SelectMaxZIndexForKeyFrame,
     SelectPathElement,
     SelectPathPointsWithTypes,
+    SelectLayerCacheDrawing,
 
     UpdateAnimationSize,
     UpdateMotionType,
@@ -440,6 +441,9 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_PathPoints AS Path ON (Path.PathId = Types.PathId AND Types.PointIndex = Path.PointIndex) \
                                                         WHERE Types.PathId = ? \
                                                         ORDER BY Types.PointIndex ASC",
+            SelectLayerCacheDrawing             => "SELECT Draw.Drawing FROM Flo_LayerCache AS Cache \
+                                                        INNER JOIN Flo_CachedDrawings AS Draw ON Cache.CacheId = Draw.CacheId \
+                                                        WHERE Cache.CacheType = ? AND Cache.LayerId = ? AND Cache.CacheTime = ?;",
 
             UpdateAnimationSize                 => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
             UpdateMotionType                    => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
