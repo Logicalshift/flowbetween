@@ -834,3 +834,30 @@ fn smoke_delete_motion_attachment() {
         DatabaseUpdate::Pop,
     ])
 }
+
+#[test]
+fn smoke_save_cached_onion_skin() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PopStoreLayerCache(Duration::from_millis(2000), CacheType::OnionSkinLayer, String::from("Test (would be a serialized canvas in a real update)"))
+    ])
+}
+
+#[test]
+fn smoke_delete_cached_onion_skin() {
+    test_updates(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::Pop,
+
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PopStoreLayerCache(Duration::from_millis(2000), CacheType::OnionSkinLayer, String::from("Test (would be a serialized canvas in a real update)")),
+
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PopDeleteLayerCache(Duration::from_millis(2000), CacheType::OnionSkinLayer)
+    ])
+}
