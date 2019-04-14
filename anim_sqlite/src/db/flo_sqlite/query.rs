@@ -1,6 +1,7 @@
 use super::*;
 use super::super::motion_path_type::*;
 
+use flo_canvas::*;
 use flo_animation::*;
 
 impl FloSqlite {
@@ -626,5 +627,29 @@ impl FloQuery for FloSqlite {
             .collect();
         
         Ok(result)
+    }
+
+    ///
+    /// Queries the cached drawing of the specified type in a particular layer
+    ///
+    fn query_layer_cached_drawing(&mut self, layer_id: i64, cache_type: CacheType, when: Duration) -> Result<Option<Vec<Draw>>, SqliteAnimationError> {
+        // Convert the cache type and time to database values
+        let cache_type  = self.enum_value(DbEnum::CacheType(cache_type));
+        let when        = Self::get_micros(&when);
+
+        // Try to query the cache for this type/layer/time (should be 0 or 1 entries)
+        let result: Option<Result<String, _>> = self.query_map(FloStatement::SelectLayerCacheDrawing, &[&cache_type, &layer_id, &when],
+            |row| row.get(0))?
+            .nth(0);
+
+        // Return the result by decoding the drawing we found
+        match result {
+            Some(Ok(drawing))   => {
+                Ok(Some(decode_drawing(drawing.chars()).map(|item| item.unwrap()).collect()))
+            },
+
+            Some(Err(err))      => { Err(err)? },
+            None                => { Ok(None) }
+        }
     }
 }

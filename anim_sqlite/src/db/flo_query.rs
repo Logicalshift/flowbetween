@@ -1,9 +1,10 @@
 use super::db_enum::*;
 use super::motion_path_type::*;
-
 use super::super::error::*;
 
+use flo_canvas::*;
 use flo_animation::*;
+
 use std::time::Duration;
 use std::result::Result;
 
@@ -252,4 +253,9 @@ pub trait FloQuery {
     /// Queries the time points attached to a motion
     /// 
     fn query_motion_timepoints(&mut self, motion_id: i64, path_type: MotionPathType) -> Result<Vec<TimePointEntry>, SqliteAnimationError>;
+
+    ///
+    /// Queries the cached drawing of the specified type in a particular layer
+    ///
+    fn query_layer_cached_drawing(&mut self, layer_id: i64, cache_type: CacheType, when: Duration) -> Result<Option<Vec<Draw>>, SqliteAnimationError>;
 }
