@@ -90,6 +90,7 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
     /// Retrieves the cached item at the specified time, if it exists
     ///
     fn retrieve(&self, cache_type: CacheType) -> Option<Vec<Draw>> {
-        unimplemented!()
+        self.core.sync(|core| core.db.query_layer_cached_drawing(self.layer_id, cache_type, self.when))
+            .unwrap()
     }
 }
