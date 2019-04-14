@@ -494,7 +494,7 @@ impl FloSqlite {
             InsertMotion                        => "INSERT INTO Flo_Motion (MotionId, MotionType) VALUES (?, ?)",
             InsertOrReplaceMotionOrigin         => "INSERT OR REPLACE INTO Flo_MotionOrigin (MotionId, X, Y) VALUES (?, ?, ?)",
             InsertMotionPathPoint               => "INSERT INTO Flo_MotionPath (MotionId, PathType, PointIndex, PointId) VALUES (?, ?, ?, ?)",
-            InsertNewCachedDrawing              => "INSERT INTO Flo_CachedDrawing (Drawing) VALUES (?)",
+            InsertNewCachedDrawing              => "INSERT INTO Flo_CachedDrawings (Drawing) VALUES (?)",
             InsertOrReplaceLayerCache           => "INSERT OR REPLACE INTO Flo_LayerCache (CacheType, LayerId, CacheTime, CacheId) VALUES (?, ?, ?, ?)",
 
             DeleteKeyFrame                      => "DELETE FROM Flo_LayerKeyFrame WHERE LayerId = ? AND AtTime = ?",
