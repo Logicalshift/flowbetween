@@ -10,8 +10,7 @@ use std::ops::{Range, Deref};
 ///
 /// Represents an animation
 ///
-pub trait Animation : 
-    Send+Sync {
+pub trait Animation : Send+Sync {
     ///
     /// Retrieves the frame size of this animation
     /// 
