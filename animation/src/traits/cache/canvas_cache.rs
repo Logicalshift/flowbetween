@@ -1,4 +1,7 @@
 use super::cache_type::*;
+use super::cache_process::*;
+
+use futures::*;
 
 use flo_canvas::*;
 
@@ -25,4 +28,9 @@ pub trait CanvasCache {
     /// Retrieves the cached item at the specified time, if it exists
     ///
     fn retrieve(&self, cache_type: CacheType) -> Option<Vec<Draw>>;
+
+    ///
+    /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
+    ///
+    fn retrieve_or_generate(&self, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=()>>>;
 }

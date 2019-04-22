@@ -5,6 +5,8 @@ use desync::*;
 use flo_canvas::*;
 use flo_animation::*;
 
+use futures::*;
+
 use std::sync::*;
 use std::time::Duration;
 
@@ -92,5 +94,12 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
     fn retrieve(&self, cache_type: CacheType) -> Option<Vec<Draw>> {
         self.core.sync(|core| core.db.query_layer_cached_drawing(self.layer_id, cache_type, self.when))
             .unwrap()
+    }
+
+    ///
+    /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
+    ///
+    fn retrieve_or_generate(&self, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=()>>> {
+        unimplemented!()
     }
 }
