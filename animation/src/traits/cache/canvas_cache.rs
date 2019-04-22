@@ -32,5 +32,5 @@ pub trait CanvasCache {
     ///
     /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
     ///
-    fn retrieve_or_generate(&self, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=()>>>;
+    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=Canceled>>>;
 }

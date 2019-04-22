@@ -138,6 +138,7 @@ impl AnimationDbCore<FloSqlite> {
             log:                        Arc::new(LogPublisher::new(module_path!())),
             db:                         db,
             failure:                    None,
+            cache_work:                 Arc::new(Desync::new(())),
             active_brush_for_layer:     HashMap::new(),
             layer_id_for_assigned_id:   HashMap::new(),
             path_properties_for_layer:  HashMap::new(),

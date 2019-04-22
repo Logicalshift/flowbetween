@@ -75,7 +75,7 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
 
         // Perform the update in the background
         self.core.desync(move |core| {
-            // Remove the cached item
+            // Store the cached item
             let result = core.db.update(vec![
                 DatabaseUpdate::PushLayerId(layer_id),
                 DatabaseUpdate::PopStoreLayerCache(when, cache_type, draw_string)
@@ -99,7 +99,53 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
     ///
     /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
     ///
-    fn retrieve_or_generate(&self, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=()>>> {
-        unimplemented!()
+    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=Canceled>>> {
+        if let Some(result) = self.retrieve(cache_type) {
+            // Cached data is already available
+            CacheProcess::Cached(result)
+        } else {
+            // Process in the background using the cache work queue
+            let core            = Arc::clone(&self.core);
+            let work            = self.core.sync(|core| Arc::clone(&core.cache_work));
+            let layer_id        = self.layer_id;
+            let when            = self.when;
+
+            // Note that as all caching work is done sequentially, it's not possible to accidentally call the generation function twice
+            let future_result   = work.future(move |_| {
+                // Attempt to retrieve an existing entry for this cached item
+                let existing = core.sync(|core| core.db.query_layer_cached_drawing(layer_id, cache_type, when))
+                    .unwrap();
+
+                if let Some(existing) = existing {
+                    // Re-use the existing cached element if one has been generated in the meantime
+                    existing
+                } else {
+                    // Call the generation function to create a new cache
+                    let new_drawing = generate();
+
+                    // Encode for storing in the database
+                    let mut draw_string = String::new();
+                    new_drawing.iter().for_each(|item| { item.encode_canvas(&mut draw_string); });
+
+                    core.desync(move |core| {
+                        // Store the cached item
+                        let result = core.db.update(vec![
+                            DatabaseUpdate::PushLayerId(layer_id),
+                            DatabaseUpdate::PopStoreLayerCache(when, cache_type, draw_string)
+                        ]);
+
+                        // Note any failures
+                        if let Err(result) = result {
+                            core.failure = Some(result.into())
+                        }
+                    });
+
+                    // The generated drawing is the cache result
+                    new_drawing
+                }
+            });
+
+            CacheProcess::Process(Box::new(future_result))
+        }
     }
 }

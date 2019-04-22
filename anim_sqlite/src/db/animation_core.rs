@@ -4,6 +4,7 @@ use super::motion_path_type::*;
 use super::super::error::*;
 use super::super::result::Result;
 
+use desync::*;
 use flo_logging::*;
 use flo_animation::*;
 use flo_animation::brushes::*;
@@ -43,6 +44,9 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
 
     /// The database connection
     pub db: TFile,
+
+    /// Pending work for generating cached data
+    pub cache_work: Arc<Desync<()>>,
 
     /// If there has been a failure with the database, this is it. No future operations 
     /// will work while there's an error that hasn't been cleared
