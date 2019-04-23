@@ -77,7 +77,6 @@ impl<Value: 'static+Clone+Send+PartialEq> From<Binding<Value>> for BindRef<Value
     }
 }
 
-/*
 impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for BindRef<Value> {
     #[inline]
     fn from(val: &'a Binding<Value>) -> Self {
@@ -86,7 +85,6 @@ impl<'a, Value: 'static+Clone+PartialEq+Send> From<&'a Binding<Value>> for BindR
         }
     }
 }
-*/
 
 impl<Value: 'static+Clone+PartialEq+Send, TFn> From<ComputedBinding<Value, TFn>> for BindRef<Value> 
 where TFn: 'static+Send+Sync+Fn() -> Value {
