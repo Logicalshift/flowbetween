@@ -5,8 +5,12 @@ use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
 
-use std::marker::PhantomData;
+use futures::*;
+
+use std::sync::*;
 use std::time::Duration;
+use std::marker::PhantomData;
+use std::collections::HashMap;
 
 ///
 /// Onion skin time, indicating whether or not it's before or after the current frame 
@@ -18,6 +22,15 @@ pub enum OnionSkinTime {
 
     /// An onion skin displayed after the current frame
     AfterFrame(Duration)
+}
+
+impl Into<Duration> for OnionSkinTime {
+    fn into(self) -> Duration {
+        match self {
+            OnionSkinTime::BeforeFrame(when)    => when,
+            OnionSkinTime::AfterFrame(when)     => when
+        }
+    }
 }
 
 ///
@@ -52,7 +65,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
     ///
     /// Creates a new onion skin model
     ///
-    pub fn new(timeline: &TimelineModel<Anim>) -> OnionSkinModel<Anim> {
+    pub fn new(animation: Arc<Anim>, timeline: &TimelineModel<Anim>) -> OnionSkinModel<Anim> {
         // Create the basic bindings
         let future_color        = Binding::new(ONIONSKIN_FUTURE);
         let past_color          = Binding::new(ONIONSKIN_PAST);
@@ -62,7 +75,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
 
         // Create the derived bindings
         let onion_skin_times    = Self::onion_skin_times(timeline, BindRef::from(&show_onion_skins), BindRef::from(&frames_before), BindRef::from(&frames_after));
-        let onion_skins         = Self::onion_skins();
+        let onion_skins         = Self::onion_skins(Arc::clone(&animation), BindRef::from(&timeline.selected_layer), BindRef::clone(&onion_skin_times));
 
         OnionSkinModel {
             future_color:       future_color,
@@ -130,7 +143,34 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
     ///
     /// Returns a binding for the set of drawing actions to draw the current set of onion skins
     ///
-    fn onion_skins() -> BindRef<Vec<(OnionSkinTime, Vec<Draw>)>> {
+    fn onion_skins(animation: Arc<Anim>, selected_layer: BindRef<Option<u64>>, onion_skin_times: BindRef<Vec<OnionSkinTime>>) -> BindRef<Vec<(OnionSkinTime, Vec<Draw>)>> {
+        // Stream of onion skin updates, combined with the currently selected layer
+        let onion_skin_times    = computed(move || (selected_layer.get(), onion_skin_times.get()));
+        let onion_skin_stream   = follow(onion_skin_times);
+
+        // Binding created from following the onion skin stream and attempting to fetch the cached onion skins
+        let fetching_onion_skins = onion_skin_stream.map(move |(selected_layer, onion_skin_times)| {
+            let animation = Arc::clone(&animation);
+            selected_layer.map(move |selected_layer| {
+                // Fetch the layer
+                let layer       = animation.get_layer_with_id(selected_layer);
+
+                // Generate the list of cached values for the onion skins
+                let mut fetch   = vec![];
+
+                for time in onion_skin_times.into_iter() {
+                    let when: Duration  = time.into();
+                    let cache           = layer.map(|layer| layer.get_canvas_cache_at_time(when));
+                    let onion_skin      = cache.map(|cache| cache.retrieve_or_generate(CacheType::OnionSkinLayer, Box::new(|| vec![])));
+                    let onion_skin      = onion_skin.unwrap_or(CacheProcess::Cached(vec![]));
+
+                    fetch.push((time, onion_skin));
+                }
+
+                fetch
+            }).unwrap_or(vec![])
+        });
+
         BindRef::from(Binding::new(vec![]))
     }
 }

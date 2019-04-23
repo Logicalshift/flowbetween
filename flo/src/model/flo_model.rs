@@ -63,7 +63,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
         let frame_edit_counter  = bind(0);
         let frame               = FrameModel::new(Arc::clone(&animation), edit_publisher.subscribe(), BindRef::new(&timeline.current_time), BindRef::new(&frame_edit_counter), BindRef::new(&timeline.selected_layer));
         let selection           = SelectionModel::new(&frame, &timeline);
-        let onion_skin          = OnionSkinModel::new(&timeline);
+        let onion_skin          = OnionSkinModel::new(Arc::clone(&animation), &timeline);
 
         let size_binding        = bind(animation.size());
         let edit_publisher      = Arc::new(Desync::new(edit_publisher));
