@@ -2,6 +2,7 @@ use super::tools::*;
 use super::frame::*;
 use super::timeline::*;
 use super::selection::*;
+use super::onion_skin::*;
 
 use flo_stream::*;
 use flo_binding::*;
@@ -34,6 +35,9 @@ pub struct FloModel<Anim: Animation> {
     /// The selection model
     selection: SelectionModel,
 
+    /// The onion skin model
+    onion_skin: OnionSkinModel,
+
     /// The size of the animation
     pub size: BindRef<(f64, f64)>,
 
@@ -59,6 +63,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
         let frame_edit_counter  = bind(0);
         let frame               = FrameModel::new(Arc::clone(&animation), edit_publisher.subscribe(), BindRef::new(&timeline.current_time), BindRef::new(&frame_edit_counter), BindRef::new(&timeline.selected_layer));
         let selection           = SelectionModel::new(&frame, &timeline);
+        let onion_skin          = OnionSkinModel::new();
 
         let size_binding        = bind(animation.size());
         let edit_publisher      = Arc::new(Desync::new(edit_publisher));
@@ -70,6 +75,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
             frame_edit_counter: frame_edit_counter,
             frame:              frame,
             selection:          selection,
+            onion_skin:         onion_skin,
 
             size:               BindRef::from(size_binding.clone()),
             size_binding:       size_binding,
@@ -109,6 +115,13 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     }
 
     ///
+    /// Retrieves the onion skin model for this animation
+    ///
+    pub fn onion_skin(&self) -> &OnionSkinModel {
+        &self.onion_skin
+    }
+
+    ///
     /// Retrieves the frame update binding for this animation
     /// 
     pub fn frame_update_count(&self) -> BindRef<u64> {
@@ -133,6 +146,7 @@ impl<Anim: Animation> Clone for FloModel<Anim> {
             frame_edit_counter: self.frame_edit_counter.clone(),
             frame:              self.frame.clone(),
             selection:          self.selection.clone(),
+            onion_skin:         self.onion_skin.clone(),
 
             size:               self.size.clone(),
             size_binding:       self.size_binding.clone(),

@@ -18,6 +18,7 @@ pub enum OnionSkinTime {
 ///
 /// The model used to describe which onion skins are being displayed
 ///
+#[derive(Clone)]
 pub struct OnionSkinModel {
     /// Whether or not the onion skins should be displayed
     pub show_onion_skins: Binding<bool>,
