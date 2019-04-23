@@ -4,8 +4,9 @@ use super::super::error::*;
 use flo_animation::*;
 
 use futures::*;
+use std::sync::*;
 use std::time::Duration;
-use std::ops::{Deref, Range};
+use std::ops::Range;
 use std::path::Path;
 
 impl SqliteAnimation {
@@ -43,20 +44,17 @@ impl Animation for SqliteAnimation {
         self.db.frame_length()
     }
 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> {
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Arc<dyn Layer>> {
         // Try to retrieve the layer from the editor
         let layer = self.db.get_layer_with_id(layer_id);
 
         // Turn into a reader if it exists
         let layer = layer.map(|layer| {
-            let boxed: Box<dyn Layer> = Box::new(layer);
-            boxed
+            let layer_ref: Arc<dyn Layer> = Arc::new(layer);
+            layer_ref
         });
 
-        layer.map(|layer| {
-            let boxed: Box<dyn 'a+Deref<Target=dyn 'a+Layer>> = Box::new(layer);
-            boxed
-        })
+        layer
     }
 
     fn get_num_edits(&self) -> usize {

@@ -182,7 +182,8 @@ mod test {
     use super::super::super::*;
 
     use futures::*;
-    use std::ops::{Range, Deref};
+    use std::sync::*;
+    use std::ops::Range;
 
     #[test]
     fn move_static_element() {
@@ -194,7 +195,7 @@ mod test {
             fn duration(&self) -> Duration { unimplemented!() }
             fn frame_length(&self) -> Duration { unimplemented!() }
             fn get_layer_ids(&self) -> Vec<u64> { unimplemented!() }
-            fn get_layer_with_id<'a>(&'a self, _layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> { unimplemented!() }
+            fn get_layer_with_id<'a>(&'a self, _layer_id: u64) -> Option<Arc<dyn Layer>> { unimplemented!() }
             fn get_num_edits(&self) -> usize { unimplemented!() }
             fn read_edit_log<'a>(&'a self, _range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> { unimplemented!() }
             fn motion<'a>(&'a self) -> &'a dyn AnimationMotion { self }
@@ -249,7 +250,7 @@ mod test {
             fn duration(&self) -> Duration { unimplemented!() }
             fn frame_length(&self) -> Duration { unimplemented!() }
             fn get_layer_ids(&self) -> Vec<u64> { unimplemented!() }
-            fn get_layer_with_id<'a>(&'a self, _layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> { unimplemented!() }
+            fn get_layer_with_id<'a>(&'a self, _layer_id: u64) -> Option<Arc<dyn Layer>> { unimplemented!() }
             fn get_num_edits(&self) -> usize { unimplemented!() }
             fn read_edit_log<'a>(&'a self, _range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> { unimplemented!() }
             fn motion<'a>(&'a self) -> &'a dyn AnimationMotion { self }

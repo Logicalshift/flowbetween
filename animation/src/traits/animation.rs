@@ -5,7 +5,8 @@ use super::animation_motion::*;
 use futures::*;
 
 use std::time::Duration;
-use std::ops::{Range, Deref};
+use std::sync::*;
+use std::ops::Range;
 
 ///
 /// Represents an animation
@@ -34,7 +35,7 @@ pub trait Animation : Send+Sync {
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>>;
+    fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<dyn Layer>>;
 
     ///
     /// Retrieves the total number of items that have been performed on this animation
