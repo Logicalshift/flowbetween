@@ -188,7 +188,7 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     ///
     /// Retrieves the layer with the specified ID from this animation
     /// 
-    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+Layer>>> {
+    fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Arc<dyn Layer>> {
         self.animation.get_layer_with_id(layer_id)
     }
 
