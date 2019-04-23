@@ -148,6 +148,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
         let onion_skin_times    = computed(move || (selected_layer.get(), onion_skin_times.get()));
         let onion_skin_stream   = follow(onion_skin_times);
 
+        /*
         // Binding created from following the onion skin stream and attempting to fetch the cached onion skins
         let fetching_onion_skins = onion_skin_stream.map(move |(selected_layer, onion_skin_times)| {
             let animation = Arc::clone(&animation);
@@ -170,6 +171,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
                 fetch
             }).unwrap_or(vec![])
         });
+        */
 
         BindRef::from(Binding::new(vec![]))
     }
