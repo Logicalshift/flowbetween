@@ -1,4 +1,5 @@
 use super::timeline::*;
+use super::super::style::*;
 
 use flo_canvas::*;
 use flo_binding::*;
@@ -23,6 +24,12 @@ pub enum OnionSkinTime {
 /// The model used to describe which onion skins are being displayed
 ///
 pub struct OnionSkinModel<Anim: Animation> {
+    /// The colour of the future onion skins
+    pub future_color: Binding<Color>,
+
+    /// The colour of the past onion skins
+    pub past_color: Binding<Color>,
+
     /// Whether or not the onion skins should be displayed
     pub show_onion_skins: Binding<bool>,
 
@@ -47,6 +54,8 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
     ///
     pub fn new(timeline: &TimelineModel<Anim>) -> OnionSkinModel<Anim> {
         // Create the basic bindings
+        let future_color        = Binding::new(ONIONSKIN_FUTURE);
+        let past_color          = Binding::new(ONIONSKIN_PAST);
         let show_onion_skins    = Binding::new(false);
         let frames_before       = Binding::new(3);
         let frames_after        = Binding::new(3);
@@ -56,6 +65,8 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
         let onion_skins         = Self::onion_skins();
 
         OnionSkinModel {
+            future_color:       future_color,
+            past_color:         past_color,
             show_onion_skins:   show_onion_skins,
             frames_before:      frames_before,
             frames_after:       frames_after,
@@ -83,6 +94,8 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
 impl<Anim: Animation> Clone for OnionSkinModel<Anim> {
     fn clone(&self) -> OnionSkinModel<Anim> {
         OnionSkinModel {
+            future_color:       self.future_color.clone(),
+            past_color:         self.past_color.clone(),
             show_onion_skins:   self.show_onion_skins.clone(),
             frames_before:      self.frames_before.clone(),
             frames_after:       self.frames_after.clone(),
