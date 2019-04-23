@@ -7,6 +7,7 @@ mod keyframe;
 mod frame;
 mod selection;
 mod shared_model;
+mod onion_skin;
 
 pub use self::flo_model::*;
 pub use self::timeline::*;
