@@ -33,17 +33,17 @@ pub struct OnionSkinModel<Anim: Animation> {
     /// Whether or not the onion skins should be displayed
     pub show_onion_skins: Binding<bool>,
 
-    /// The drawing actions for the onion skins to display
+    /// The drawing actions for the onion skins to display (ordered as for onion_skin_times)
     pub onion_skins: BindRef<Vec<(OnionSkinTime, Vec<Draw>)>>,
+
+    /// The times of the onion skins to display (ordered from most recent onion skin to least recent)
+    pub onion_skin_times: BindRef<Vec<OnionSkinTime>>,
 
     /// The number of frames to show before the current frame
     pub frames_before: Binding<usize>,
 
     /// The number of frames to show after the current frame
     pub frames_after: Binding<usize>,
-
-    /// The times of the onion skins to display
-    pub onion_skin_times: BindRef<OnionSkinTime>,
 
     anim: PhantomData<Anim>
 }
@@ -79,8 +79,52 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
     ///
     /// Returns the current set of times to display onion skins for
     ///
-    fn onion_skin_times(timeline: &TimelineModel<Anim>, show_onion_skins: BindRef<bool>, frames_before: BindRef<usize>, frames_after: BindRef<usize>) -> BindRef<OnionSkinTime> {
-        unimplemented!()
+    fn onion_skin_times(timeline: &TimelineModel<Anim>, show_onion_skins: BindRef<bool>, frames_before: BindRef<usize>, frames_after: BindRef<usize>) -> BindRef<Vec<OnionSkinTime>> {
+        // Fetch the timeline properties
+        let current_time        = timeline.current_time.clone();
+        let frame_duration      = timeline.frame_duration.clone();
+        let timeline_duration   = timeline.duration.clone();
+
+        // Create the onion skin times computed binding
+        let times = computed(move || {
+            let show_onion_skins = show_onion_skins.get();
+
+            if show_onion_skins {
+                // Displaying the onion skins, so calculate the times we need to fetch
+                let current_time        = current_time.get();
+                let frame_duration      = frame_duration.get();
+                let timeline_duration   = timeline_duration.get();
+                let frames_before       = frames_before.get();
+                let frames_after        = frames_after.get();
+
+                // The maximum number of frames we want to calculate
+                let max_frames          = frames_before.max(frames_after);
+
+                // Compute frames starting from the current time in both directions (so frames are ordered in terms of distance from the current time, with most recent frames first)
+                let mut onion_skin_times = vec![];
+                for frame_num in 1..=max_frames {
+                    // Time offset for this frame
+                    let offset = frame_duration * (frame_num as u32);
+
+                    // Past frame
+                    if frame_num <= frames_before && offset <= current_time {
+                        onion_skin_times.push(OnionSkinTime::BeforeFrame(current_time - offset));
+                    }
+
+                    // Future frame
+                    if frame_num <= frames_after && current_time + offset <= timeline_duration {
+                        onion_skin_times.push(OnionSkinTime::AfterFrame(current_time + offset));
+                    }
+                }
+
+                onion_skin_times
+            } else {
+                // Not showing any onion skins, so there are no times to display
+                vec![]
+            }
+        });
+
+        BindRef::from(times)
     }
 
     ///
