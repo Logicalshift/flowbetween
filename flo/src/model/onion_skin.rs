@@ -131,7 +131,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
     /// Returns a binding for the set of drawing actions to draw the current set of onion skins
     ///
     fn onion_skins() -> BindRef<Vec<(OnionSkinTime, Vec<Draw>)>> {
-        unimplemented!()
+        BindRef::from(Binding::new(vec![]))
     }
 }
 
