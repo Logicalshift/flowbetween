@@ -162,8 +162,8 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
                 for time in onion_skin_times.into_iter() {
                     let when: Duration  = time.into();
                     let cache           = layer.as_ref().map(|layer| layer.get_canvas_cache_at_time(when));
-                    let onion_skin      = cache.map(|cache| cache.retrieve_or_generate(CacheType::OnionSkinLayer, Box::new(|| vec![])));
-                    let onion_skin      = onion_skin.unwrap_or(CacheProcess::Cached(vec![]));
+                    let onion_skin      = cache.map(|cache| cache.retrieve_or_generate(CacheType::OnionSkinLayer, Box::new(|| Arc::new(vec![]))));
+                    let onion_skin      = onion_skin.unwrap_or(CacheProcess::Cached(Arc::new(vec![])));
 
                     fetch.push((time, onion_skin));
                 }

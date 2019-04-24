@@ -5,6 +5,8 @@ use futures::*;
 
 use flo_canvas::*;
 
+use std::sync::*;
+
 ///
 /// Trait provided by things that can cache and retrieve canvas drawing instructions
 /// 
@@ -22,15 +24,15 @@ pub trait CanvasCache {
     ///
     /// Stores a particular drawing in the cache
     ///
-    fn store(&self, cache_type: CacheType, items: Box<dyn Iterator<Item=Draw>>);
+    fn store(&self, cache_type: CacheType, items: Arc<Vec<Draw>>);
 
     ///
     /// Retrieves the cached item at the specified time, if it exists
     ///
-    fn retrieve(&self, cache_type: CacheType) -> Option<Vec<Draw>>;
+    fn retrieve(&self, cache_type: CacheType) -> Option<Arc<Vec<Draw>>>;
 
     ///
     /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
     ///
-    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=Canceled>>>;
+    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Arc<Vec<Draw>> + Send>) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>>>;
 }

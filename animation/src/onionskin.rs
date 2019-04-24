@@ -12,7 +12,7 @@ use std::time::Duration;
 ///
 /// Computes or retrieves the onion skin for a particular layer at a specified time
 ///
-pub fn onion_skin_for_layer<LayerType: 'static+Layer>(layer: LayerType, when: Duration) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=Canceled>>> {
+pub fn onion_skin_for_layer<LayerType: 'static+Layer>(layer: LayerType, when: Duration) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>>> {
     layer.get_canvas_cache_at_time(when)
         .retrieve_or_generate(CacheType::OnionSkinLayer, Box::new(move || {
             // Fetch the elements for the frame
@@ -53,7 +53,7 @@ pub fn onion_skin_for_layer<LayerType: 'static+Layer>(layer: LayerType, when: Du
             }
 
             // Convert to a series of drawing instructions
-            onion_skin.into_iter()
+            Arc::new(onion_skin.into_iter()
                 .flat_map(|path| {
                     let start_point = path.start_point();
 
@@ -61,6 +61,6 @@ pub fn onion_skin_for_layer<LayerType: 'static+Layer>(layer: LayerType, when: Du
                         .chain(path.points().map(|(cp1, cp2, end)| Draw::BezierCurve((end.x(), end.y()), (cp1.x(), cp1.y()), (cp2.x(), cp2.y()))))
                         .chain(iter::once(Draw::ClosePath))
                 })
-                .collect()
+                .collect())
         }))
 }

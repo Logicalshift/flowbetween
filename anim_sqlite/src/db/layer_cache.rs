@@ -64,10 +64,10 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
     ///
     /// Stores a particular drawing in the cache
     ///
-    fn store(&self, cache_type: CacheType, items: Box<dyn Iterator<Item=Draw>>) {
+    fn store(&self, cache_type: CacheType, items: Arc<Vec<Draw>>) {
         // Serialize the drawing instructions
         let mut draw_string = String::new();
-        items.for_each(|item| { item.encode_canvas(&mut draw_string); });
+        items.iter().for_each(|item| { item.encode_canvas(&mut draw_string); });
 
         // Copy the properties from this structure
         let layer_id    = self.layer_id;
@@ -91,15 +91,16 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
     ///
     /// Retrieves the cached item at the specified time, if it exists
     ///
-    fn retrieve(&self, cache_type: CacheType) -> Option<Vec<Draw>> {
+    fn retrieve(&self, cache_type: CacheType) -> Option<Arc<Vec<Draw>>> {
         self.core.sync(|core| core.db.query_layer_cached_drawing(self.layer_id, cache_type, self.when))
             .unwrap()
+            .map(|drawing| Arc::new(drawing))
     }
 
     ///
     /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
     ///
-    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Vec<Draw> + Send>) -> CacheProcess<Vec<Draw>, Box<dyn Future<Item=Vec<Draw>, Error=Canceled>>> {
+    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Arc<Vec<Draw>> + Send>) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>>> {
         if let Some(result) = self.retrieve(cache_type) {
             // Cached data is already available
             CacheProcess::Cached(result)
@@ -114,7 +115,8 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
             let future_result   = work.future(move |_| {
                 // Attempt to retrieve an existing entry for this cached item
                 let existing = core.sync(|core| core.db.query_layer_cached_drawing(layer_id, cache_type, when))
-                    .unwrap();
+                    .unwrap()
+                    .map(|drawing| Arc::new(drawing));
 
                 if let Some(existing) = existing {
                     // Re-use the existing cached element if one has been generated in the meantime
