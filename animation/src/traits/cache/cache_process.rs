@@ -18,7 +18,19 @@ impl<Result: Clone, Process: Future<Item=Result>+Send> Future for CacheProcess<R
     fn poll(&mut self) -> Poll<Result, Process::Error> {
         match self {
             CacheProcess::Cached(result)    => Ok(Async::Ready(result.clone())),
-            CacheProcess::Process(process)  => process.poll(),
+            CacheProcess::Process(process)  => {
+                // Cache value will become available in the future: poll for it
+                let poll_result = process.poll();
+
+                if let Ok(Async::Ready(poll_result)) = poll_result {
+                    // Cache value is now available. Update the state to be just 'Cached' so we don't need to poll again
+                    *self = CacheProcess::Cached(poll_result.clone());
+                    Ok(Async::Ready(poll_result))
+                } else {
+                    // Pass on the poll result in all other circumstances
+                    poll_result
+                }
+            },
         }
     }
 }
