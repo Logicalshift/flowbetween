@@ -1,3 +1,4 @@
+use super::overlay_layers::*;
 use super::canvas_renderer::*;
 use super::super::tools::*;
 use super::super::model::*;
@@ -123,7 +124,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                 self.tool_runner.set_tool(&effective_tool, &*tool_model);
 
                 // Clear the tool overlay
-                renderer.overlay(canvas, 0, vec![Draw::ClearCanvas]);
+                renderer.overlay(canvas, OVERLAY_TOOL, vec![Draw::ClearCanvas]);
 
                 // Process the 'select' action for the new tool
                 self.select_active_tool(canvas, renderer);
@@ -252,8 +253,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         // Overlay 0 is used for tool overlays
 
         match overlay {
-            OverlayAction::Clear            => renderer.overlay(canvas, 0, vec![ Draw::ClearCanvas ]),
-            OverlayAction::Draw(drawing)    => renderer.overlay(canvas, 0, drawing)
+            OverlayAction::Clear            => renderer.overlay(canvas, OVERLAY_TOOL, vec![ Draw::ClearCanvas ]),
+            OverlayAction::Draw(drawing)    => renderer.overlay(canvas, OVERLAY_TOOL, drawing)
         }
     }
 
