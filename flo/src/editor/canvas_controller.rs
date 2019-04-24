@@ -58,7 +58,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         let renderer            = CanvasRenderer::new();
         let canvas_tools        = CanvasTools::from_model(view_model);
         let main_canvas         = Self::create_main_canvas(&canvases);
-        let ui                  = Self::ui(main_canvas, view_model.size.clone());
+        let ui                  = Self::ui(main_canvas.clone(), view_model.size.clone());
         let tool_changed        = Arc::new(Mutex::new(true));
         let onion_skin_model    = Self::onion_skin_binding(view_model);
 
@@ -78,6 +78,9 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
                 current_invalidation_count: 0
             });
         let core                = Arc::new(core);
+
+        // Connect events to the core
+        Self::pipe_onion_skin_renders(main_canvas.clone(), onion_skin_model.clone(), core.clone());
 
         // Create the controller
         let controller = CanvasController {
