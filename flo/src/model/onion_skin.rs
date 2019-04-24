@@ -163,7 +163,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
                     let when: Duration  = time.into();
                     let onion_skin      = layer.as_ref().map(|layer| onion_skin_for_layer(Arc::clone(layer), when));
 
-                    fetch.push((time, onion_skin));
+                    onion_skin.map(|onion_skin| fetch.push((time, onion_skin)));
                 }
 
                 fetch
@@ -174,6 +174,8 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
         // We abandon fetching onion skins as soon as a new set of times arrive
         let mut polling_onion_skins = vec![];
         let onion_skin_stream       = stream::poll_fn(move || {
+            let mut found_new_futures;
+
             // Test for a new set of onion skins
             match fetching_onion_skins.poll() {
                 Ok(Async::Ready(None))              => { return Ok(Async::Ready(None)); }
@@ -181,14 +183,39 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
 
                 Ok(Async::NotReady)                 => { 
                     // Check existing futures for updates
+                    found_new_futures = false;
                 },
+
                 Ok(Async::Ready(Some(new_futures))) => { 
                     // Throw away the existing futures and poll the new ones instead
                     polling_onion_skins = new_futures;
+                    found_new_futures   = true;
                 }
             }
 
-            Ok(Async::NotReady)
+            // Poll the futures for results
+            let mut result = vec![];
+            for (time, cache_process) in polling_onion_skins.iter_mut() {
+                match cache_process {
+                    // If already cached, add to the result, but do not generate a 'ready' event
+                    CacheProcess::Cached(drawing)   => result.push((*time, Arc::clone(drawing))),
+
+                    // If a processed element finishes, it will move to the 'Cached' state. At this point we should generate a 'ready' event as the value has updated
+                    CacheProcess::Process(_)        => {
+                        if let Ok(Async::Ready(new_drawing)) = cache_process.poll() {
+                            result.push((*time, new_drawing));
+                            found_new_futures = true;
+                        }
+                    }
+                }
+            }
+
+            if found_new_futures {
+                // Some new values were discovered to return
+                Ok(Async::Ready(Some(result)))
+            } else {
+                Ok(Async::NotReady)
+            }
         });
 
         // This generates the stream of drawing instructions
