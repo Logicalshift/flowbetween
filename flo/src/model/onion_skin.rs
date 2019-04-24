@@ -144,11 +144,11 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
     /// Returns a binding for the set of drawing actions to draw the current set of onion skins
     ///
     fn onion_skins(animation: Arc<Anim>, selected_layer: BindRef<Option<u64>>, onion_skin_times: BindRef<Vec<OnionSkinTime>>) -> BindRef<Vec<(OnionSkinTime, Arc<Vec<Draw>>)>> {
-        // Stream of onion skin updates, combined with the currently selected layer
+        // Take a stream of updates from the onion skin times
         let onion_skin_times        = computed(move || (selected_layer.get(), onion_skin_times.get()));
         let onion_skin_time_stream  = follow(onion_skin_times);
 
-        // Binding created from following the onion skin stream and attempting to fetch the cached onion skins
+        // Then, every time the set of times change, request the cached drawings from the animation
         let mut fetching_onion_skins = onion_skin_time_stream.map(move |(selected_layer, onion_skin_times)| {
             let animation = Arc::clone(&animation);
             selected_layer.map(move |selected_layer| {
@@ -170,11 +170,13 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
             }).unwrap_or(vec![])
         });
 
-        // Need a specialised version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins.
-        // We abandon fetching onion skins as soon as a new set of times arrive
+        // Create a stream that returns the values available in the cache every time the list of 'fetching' onion skins changes
+        // (from the stream we created above) or whenever one of the 'fetching' processes completes. This requires a specialised 
+        // version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins. We abandon 
+        // fetching onion skins as soon as a new set of times arrive.
         let mut polling_onion_skins = vec![];
         let onion_skin_stream       = stream::poll_fn(move || {
-            let mut found_new_futures;
+            let mut found_new_values;
 
             // Test for a new set of onion skins
             match fetching_onion_skins.poll() {
@@ -183,13 +185,15 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
 
                 Ok(Async::NotReady)                 => { 
                     // Check existing futures for updates
-                    found_new_futures = false;
+                    found_new_values = false;
                 },
 
                 Ok(Async::Ready(Some(new_futures))) => { 
                     // Throw away the existing futures and poll the new ones instead
+                    // We've always found new values in this case (they might all already be available from the cache, in which case
+                    // this won't get set via the polling routine)
                     polling_onion_skins = new_futures;
-                    found_new_futures   = true;
+                    found_new_values    = true;
                 }
             }
 
@@ -202,15 +206,20 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
 
                     // If a processed element finishes, it will move to the 'Cached' state. At this point we should generate a 'ready' event as the value has updated
                     CacheProcess::Process(_)        => {
+                        // TODO: only poll one 'process' item at a time, and change 'onion_skin_for_layer' so that it doesn't actually try to generate the cache until it has been polled at least once
                         if let Ok(Async::Ready(new_drawing)) = cache_process.poll() {
+                            // Next time through, this will be CacheProcess::Cached so we won't re-poll it or generate an extra stream entry
                             result.push((*time, new_drawing));
-                            found_new_futures = true;
+                            found_new_values = true;
+                        } else {
+                            // No drawing for this onion skin is available yet
+                            result.push((*time, Arc::new(vec![])))
                         }
                     }
                 }
             }
 
-            if found_new_futures {
+            if found_new_values {
                 // Some new values were discovered to return
                 Ok(Async::Ready(Some(result)))
             } else {

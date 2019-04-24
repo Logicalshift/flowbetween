@@ -10,7 +10,10 @@ use std::sync::*;
 use std::time::Duration;
 
 ///
-/// Computes or retrieves the onion skin for a particular layer at a specified time
+/// Computes or retrieves the onion skin for a particular layer at a specified time.specified
+/// 
+/// This is the set of Move/Line/Bezier curve elements forming the path for this onion skin. The `NewPath` and any actual
+/// drawing instructions are left out of the list generated here, so the onion skin can be rendered any way that is needed.
 ///
 pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>+Send>> {
     layer.get_canvas_cache_at_time(when)
