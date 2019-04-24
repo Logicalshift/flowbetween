@@ -6,11 +6,11 @@ use flo_binding::*;
 use flo_animation::*;
 
 use futures::*;
+use futures::stream;
 
 use std::sync::*;
 use std::time::Duration;
 use std::marker::PhantomData;
-use std::collections::HashMap;
 
 ///
 /// Onion skin time, indicating whether or not it's before or after the current frame 
@@ -47,7 +47,7 @@ pub struct OnionSkinModel<Anim: Animation> {
     pub show_onion_skins: Binding<bool>,
 
     /// The drawing actions for the onion skins to display (ordered as for onion_skin_times)
-    pub onion_skins: BindRef<Vec<(OnionSkinTime, Vec<Draw>)>>,
+    pub onion_skins: BindRef<Vec<(OnionSkinTime, Arc<Vec<Draw>>)>>,
 
     /// The times of the onion skins to display (ordered from most recent onion skin to least recent)
     pub onion_skin_times: BindRef<Vec<OnionSkinTime>>,
@@ -143,13 +143,13 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
     ///
     /// Returns a binding for the set of drawing actions to draw the current set of onion skins
     ///
-    fn onion_skins(animation: Arc<Anim>, selected_layer: BindRef<Option<u64>>, onion_skin_times: BindRef<Vec<OnionSkinTime>>) -> BindRef<Vec<(OnionSkinTime, Vec<Draw>)>> {
+    fn onion_skins(animation: Arc<Anim>, selected_layer: BindRef<Option<u64>>, onion_skin_times: BindRef<Vec<OnionSkinTime>>) -> BindRef<Vec<(OnionSkinTime, Arc<Vec<Draw>>)>> {
         // Stream of onion skin updates, combined with the currently selected layer
-        let onion_skin_times    = computed(move || (selected_layer.get(), onion_skin_times.get()));
-        let onion_skin_stream   = follow(onion_skin_times);
+        let onion_skin_times        = computed(move || (selected_layer.get(), onion_skin_times.get()));
+        let onion_skin_time_stream  = follow(onion_skin_times);
 
         // Binding created from following the onion skin stream and attempting to fetch the cached onion skins
-        let fetching_onion_skins = onion_skin_stream.map(move |(selected_layer, onion_skin_times)| {
+        let mut fetching_onion_skins = onion_skin_time_stream.map(move |(selected_layer, onion_skin_times)| {
             let animation = Arc::clone(&animation);
             selected_layer.map(move |selected_layer| {
                 // Fetch the layer
@@ -172,7 +172,26 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
             }).unwrap_or(vec![])
         });
 
-        BindRef::from(Binding::new(vec![]))
+        // Need a specialised version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins.
+        // We abandon fetching onion skins as soon as a new set of times arrive
+        //let mut polling_onion_skins = vec![];
+        let mut onion_skin_stream   = stream::poll_fn(move || {
+            // Test for a new set of onion skins
+            match fetching_onion_skins.poll() {
+                Ok(Async::Ready(None))              => { return Ok(Async::Ready(None)); }
+                Err(err)                            => { return Err(err); }
+
+                Ok(Async::NotReady)                 => { /* Check existing futures for updates */ },
+                Ok(Async::Ready(Some(new_futures))) => { /* Start polling new set of futures */ }
+            }
+
+            Ok(Async::NotReady)
+        });
+
+        // This generates the stream of drawing instructions
+        let onion_skin_drawings = bind_stream(onion_skin_stream, vec![], |_, new_values| new_values);
+
+        BindRef::from(onion_skin_drawings)
     }
 }
 
