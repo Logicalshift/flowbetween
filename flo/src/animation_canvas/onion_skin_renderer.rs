@@ -33,8 +33,8 @@ impl OnionSkinRenderer {
             renderer.overlay(canvas, OVERLAY_ONIONSKINS, vec![Draw::ClearCanvas]);
         } else {
             // Onion skins further away in time are less opaque
-            let min_opacity     = 0.4;
-            let max_opacity     = 0.8;
+            let min_opacity     = 0.1;
+            let max_opacity     = 0.5;
             let opacity_step    = (max_opacity - min_opacity)/(onion_skins.len() as f64);
 
             // Generate drawing instructions for each set of onion skins, in reverse order (from least opaque to most opaque)
@@ -58,10 +58,10 @@ impl OnionSkinRenderer {
                                 Draw::FillColor(color),
                                 Draw::Fill,
                                 Draw::LineWidthPixels(2.0),
-                                Draw::StrokeColor(color.with_alpha(1.0)),
+                                Draw::StrokeColor(Color::Rgba(1.0, 1.0, 1.0, opacity as f32)),
                                 Draw::Stroke,
-                                Draw::LineWidthPixels(1.0),
-                                Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, opacity as f32)),
+                                Draw::LineWidthPixels(0.5),
+                                Draw::StrokeColor(color.with_alpha((opacity+0.1) as f32)),
                                 Draw::Stroke
                             ])
                             .collect::<Vec<_>>()
