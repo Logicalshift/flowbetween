@@ -42,7 +42,7 @@ pub struct CanvasController<Anim: Animation+EditableAnimation> {
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_model:         FloModel<Anim>,
     tool_changed:       Arc<Mutex<bool>>,
-    onion_skin_model:   BindRef<(Color, Color, Vec<(OnionSkinTime, Arc<Vec<Draw>>)>)>,
+    _onion_skin_model:  BindRef<(Color, Color, Vec<(OnionSkinTime, Arc<Vec<Draw>>)>)>,
 
     core:               Arc<Desync<CanvasCore<Anim>>>
 }
@@ -85,7 +85,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
             canvases:           Arc::new(canvases),
             anim_model:         view_model.clone(),
             tool_changed:       tool_changed,
-            onion_skin_model:   onion_skin_model,
+            _onion_skin_model:  onion_skin_model,
 
             core:               core
         };
@@ -109,6 +109,23 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         BindRef::from(computed(move || {
             (past_color.get(), future_color.get(), onion_skins.get())
         }))
+    }
+
+    ///
+    /// Updates the rendering in the core whenever the onion skins change
+    ///
+    fn pipe_onion_skin_renders(canvas: Resource<BindingCanvas>, binding: BindRef<(Color, Color, Vec<(OnionSkinTime, Arc<Vec<Draw>>)>)>, core: Arc<Desync<CanvasCore<Anim>>>) {
+        let onion_skin_stream   = follow(binding);
+        let renderer            = OnionSkinRenderer::new();
+
+        pipe_in(core, onion_skin_stream, move |core, next_item| {
+            match next_item {
+                Ok((past_color, future_color, onion_skins)) => {
+                    renderer.render(&*canvas, &mut core.renderer, onion_skins, past_color, future_color);
+                }
+                _ => { }
+            }
+        })
     }
 
     ///
