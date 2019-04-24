@@ -12,7 +12,7 @@ use futures::executor;
 use futures::executor::Spawn;
 use desync::*;
 
-use std::ops::{Deref, Range};
+use std::ops::Range;
 use std::time::Duration;
 use std::sync::*;
 

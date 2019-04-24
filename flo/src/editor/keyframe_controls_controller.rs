@@ -29,6 +29,9 @@ pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation>
     /// The frame model
     frame: FrameModel,
 
+    /// The onion skin model
+    onion_skin: OnionSkinModel<Anim>,
+
     /// The timeline model
     timeline: TimelineModel<Anim>,
 
@@ -50,11 +53,12 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
         // Create the viewmodel
         let frame       = model.frame();
         let timeline    = model.timeline();
+        let onion_skin  = model.onion_skin();
         let view_model  = Arc::new(DynamicViewModel::new());
 
         let selected_layer          = timeline.selected_layer.clone();
         let create_keyframe_on_draw = frame.create_keyframe_on_draw.clone();
-        let show_onion_skins        = frame.show_onion_skins.clone();
+        let show_onion_skins        = onion_skin.show_onion_skins.clone();
         let keyframe_selected       = frame.keyframe_selected.clone();
         let prev_next_1             = frame.previous_and_next_keyframe.clone();
         let prev_next_2             = frame.previous_and_next_keyframe.clone();
@@ -77,6 +81,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
             images:         images,
             view_model:     view_model,
             frame:          frame.clone(),
+            onion_skin:     onion_skin.clone(),
             timeline:       timeline.clone(),
             current_time:   timeline.current_time.clone(),
             selected_layer: timeline.selected_layer.clone(),
@@ -211,8 +216,8 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
             },
 
             "ToggleShowOnionSkins" => {
-                let current_value = self.frame.show_onion_skins.get();
-                self.frame.show_onion_skins.set(!current_value);
+                let current_value = self.onion_skin.show_onion_skins.get();
+                self.onion_skin.show_onion_skins.set(!current_value);
             },
 
             "MoveToPreviousKeyFrame" => { 

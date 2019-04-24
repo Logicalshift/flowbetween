@@ -51,9 +51,6 @@ pub struct FrameModel {
     /// Set to true if we should create a new keyframe when drawing (and there is no current keyframe)
     pub create_keyframe_on_draw: Binding<bool>,
 
-    /// Set to true if we should display onion skins
-    pub show_onion_skins: Binding<bool>,
-
     /// True if the current layer/selected time is on a keyframe
     pub keyframe_selected: BindRef<bool>,
 
@@ -158,12 +155,10 @@ impl FrameModel {
         let bounding_boxes          = Self::bounding_boxes(elements.clone());
 
         let create_keyframe_on_draw     = bind(true);
-        let show_onion_skins            = bind(false);
 
         // Result is a new FrameModel containing these layers
         FrameModel {
             create_keyframe_on_draw:    create_keyframe_on_draw,
-            show_onion_skins:           show_onion_skins,
             keyframe_selected:          keyframe_selected,
             previous_and_next_keyframe: previous_and_next_keyframe,
             layers:                     BindRef::new(&layers),

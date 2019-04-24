@@ -17,3 +17,4 @@ pub use self::keyframe::*;
 pub use self::frame::*;
 pub use self::selection::*;
 pub use self::shared_model::*;
+pub use self::onion_skin::*;
