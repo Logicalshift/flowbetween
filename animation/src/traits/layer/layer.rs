@@ -11,7 +11,7 @@ use std::ops::{Range, Deref};
 ///
 /// A layer represents a renderable plane in an animation
 ///
-pub trait Layer : Send {
+pub trait Layer : Send+Sync {
     ///
     /// The ID associated with this layer
     /// 
