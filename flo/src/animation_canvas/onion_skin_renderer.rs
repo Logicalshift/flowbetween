@@ -5,6 +5,7 @@ use super::super::model::*;
 use flo_ui::*;
 use flo_canvas::*;
 
+use std::iter;
 use std::sync::*;
 
 ///
@@ -29,7 +30,7 @@ impl OnionSkinRenderer {
     ///
     pub fn render(&self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, onion_skins: Vec<(OnionSkinTime, Arc<Vec<Draw>>)>, past_color: Color, future_color: Color) {
         if onion_skins.len() == 0 {
-            renderer.overlay(canvas, OVERLAY_ONIONSKINS, vec![]);
+            renderer.overlay(canvas, OVERLAY_ONIONSKINS, vec![Draw::ClearCanvas]);
         } else {
             // Onion skins further away in time are less opaque
             let min_opacity     = 0.4;
@@ -49,8 +50,9 @@ impl OnionSkinRenderer {
                     };
                     let color   = color.with_alpha(opacity as f32);
 
-                    drawing.iter()
-                        .map(|draw| *draw)
+                    iter::once(Draw::ClearCanvas)
+                        .chain(drawing.iter()
+                            .map(|draw| *draw))
                         .chain(vec![
                             Draw::FillColor(color),
                             Draw::Fill,
