@@ -55,10 +55,10 @@ impl OnionSkinRenderer {
                             Draw::FillColor(color),
                             Draw::Fill,
                             Draw::LineWidthPixels(2.0),
-                            Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, opacity as f32)),
+                            Draw::StrokeColor(color.with_alpha(1.0)),
                             Draw::Stroke,
                             Draw::LineWidthPixels(1.0),
-                            Draw::StrokeColor(color.with_alpha(1.0)),
+                            Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, opacity as f32)),
                             Draw::Stroke
                         ])
                         .collect::<Vec<_>>()
