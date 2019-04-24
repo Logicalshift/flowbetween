@@ -12,7 +12,7 @@ use std::time::Duration;
 ///
 /// Computes or retrieves the onion skin for a particular layer at a specified time
 ///
-pub fn onion_skin_for_layer<LayerType: 'static+Layer>(layer: LayerType, when: Duration) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>>> {
+pub fn onion_skin_for_layer<LayerType: 'static+Layer>(layer: LayerType, when: Duration) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>+Send>> {
     layer.get_canvas_cache_at_time(when)
         .retrieve_or_generate(CacheType::OnionSkinLayer, Box::new(move || {
             // Fetch the elements for the frame

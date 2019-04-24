@@ -5,7 +5,7 @@ use std::mem;
 ///
 /// Represents an item that is in the cache, or is in the process of being generated
 ///
-pub enum CacheProcess<Result, Process: Future<Item=Result>> {
+pub enum CacheProcess<Result, Process: Future<Item=Result>+Send> {
     /// The item was already cached and is retrieved
     Cached(Result),
 
@@ -16,7 +16,7 @@ pub enum CacheProcess<Result, Process: Future<Item=Result>> {
     Consumed
 }
 
-impl<Result, Process: Future<Item=Result>> Future for CacheProcess<Result, Process> {
+impl<Result, Process: Future<Item=Result>+Send> Future for CacheProcess<Result, Process> {
     type Item   = Result;
     type Error  = Process::Error;
 
