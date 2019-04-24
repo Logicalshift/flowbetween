@@ -38,33 +38,36 @@ impl OnionSkinRenderer {
             let opacity_step    = (max_opacity - min_opacity)/(onion_skins.len() as f64);
 
             // Generate drawing instructions for each set of onion skins, in reverse order (from least opaque to most opaque)
-            renderer.overlay(canvas, OVERLAY_ONIONSKINS, onion_skins.into_iter()
-                .rev()
-                .enumerate()
-                .flat_map(|(index, (time, drawing))| {
-                    // Work out the colour and opacity of this item
-                    let opacity = (index as f64)*opacity_step + min_opacity;
-                    let color   = match time {
-                        OnionSkinTime::BeforeFrame(_)   => past_color,
-                        OnionSkinTime::AfterFrame(_)    => future_color
-                    };
-                    let color   = color.with_alpha(opacity as f32);
+            let draw_onion_skins = iter::once(Draw::ClearCanvas)
+                .chain(onion_skins.into_iter()
+                    .rev()
+                    .enumerate()
+                    .flat_map(|(index, (time, drawing))| {
+                        // Work out the colour and opacity of this item
+                        let opacity = (index as f64)*opacity_step + min_opacity;
+                        let color   = match time {
+                            OnionSkinTime::BeforeFrame(_)   => past_color,
+                            OnionSkinTime::AfterFrame(_)    => future_color
+                        };
+                        let color   = color.with_alpha(opacity as f32);
 
-                    iter::once(Draw::ClearCanvas)
-                        .chain(drawing.iter()
-                            .map(|draw| *draw))
-                        .chain(vec![
-                            Draw::FillColor(color),
-                            Draw::Fill,
-                            Draw::LineWidthPixels(2.0),
-                            Draw::StrokeColor(color.with_alpha(1.0)),
-                            Draw::Stroke,
-                            Draw::LineWidthPixels(1.0),
-                            Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, opacity as f32)),
-                            Draw::Stroke
-                        ])
-                        .collect::<Vec<_>>()
-                }).collect())
+                        iter::once(Draw::NewPath)
+                            .chain(drawing.iter()
+                                .map(|draw| *draw))
+                            .chain(vec![
+                                Draw::FillColor(color),
+                                Draw::Fill,
+                                Draw::LineWidthPixels(2.0),
+                                Draw::StrokeColor(color.with_alpha(1.0)),
+                                Draw::Stroke,
+                                Draw::LineWidthPixels(1.0),
+                                Draw::StrokeColor(Color::Rgba(0.0, 0.0, 0.0, opacity as f32)),
+                                Draw::Stroke
+                            ])
+                            .collect::<Vec<_>>()
+                    }))
+                .collect();
+            renderer.overlay(canvas, OVERLAY_ONIONSKINS, draw_onion_skins);
         }
     }
 }
