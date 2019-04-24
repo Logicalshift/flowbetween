@@ -161,9 +161,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
                 // TODO: ideally we'd only request one cache item at a time (so we can abandon requests that hadn't started yet when the onion skins change rapidly)
                 for time in onion_skin_times.into_iter() {
                     let when: Duration  = time.into();
-                    let cache           = layer.as_ref().map(|layer| layer.get_canvas_cache_at_time(when));
-                    let onion_skin      = cache.map(|cache| cache.retrieve_or_generate(CacheType::OnionSkinLayer, Box::new(|| Arc::new(vec![]))));
-                    let onion_skin      = onion_skin.unwrap_or(CacheProcess::Cached(Arc::new(vec![])));
+                    let onion_skin      = layer.as_ref().map(|layer| onion_skin_for_layer(Arc::clone(layer), when));
 
                     fetch.push((time, onion_skin));
                 }
@@ -175,7 +173,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
         // Need a specialised version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins.
         // We abandon fetching onion skins as soon as a new set of times arrive
         let mut polling_onion_skins = vec![];
-        let mut onion_skin_stream   = stream::poll_fn(move || {
+        let onion_skin_stream       = stream::poll_fn(move || {
             // Test for a new set of onion skins
             match fetching_onion_skins.poll() {
                 Ok(Async::Ready(None))              => { return Ok(Async::Ready(None)); }
