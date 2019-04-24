@@ -47,13 +47,17 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
 
                 // Add this element to the onion skin path
                 if let Some(element_path) = element.to_path(&properties) {
-                    let element_path = path_remove_interior_points::<_, _, Path>(&element_path, 0.1);
-
-                    match (*properties).brush.drawing_style() {
-                        BrushDrawingStyle::Draw     => { onion_skin = path_add(&onion_skin, &element_path, 0.1); }
-                        BrushDrawingStyle::Erase    => { onion_skin = path_sub(&onion_skin, &element_path, 0.1); }
+                    if element_path.len() > 0 {
+                        let element_path = path_remove_interior_points::<_, _, Path>(&element_path, 0.1);
+                        if element_path.len() == 0 {
+                            println!("Remove interior points removed all points?");
+                        } else {
+                            match (*properties).brush.drawing_style() {
+                                BrushDrawingStyle::Draw     => { onion_skin = path_add(&onion_skin, &element_path, 0.1); }
+                                BrushDrawingStyle::Erase    => { onion_skin = path_sub(&onion_skin, &element_path, 0.1); }
+                            }
+                        }
                     }
-                    
                 }
             }
 

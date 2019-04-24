@@ -39,6 +39,13 @@ impl Path {
     }
 
     ///
+    /// The number of elements in this path
+    ///
+    pub fn len(&self) -> usize {
+        self.elements.len()
+    }
+
+    ///
     /// Returns the elements that make up this path as an iterator
     ///
     pub fn elements<'a>(&'a self) -> impl 'a+Iterator<Item=PathComponent> {
