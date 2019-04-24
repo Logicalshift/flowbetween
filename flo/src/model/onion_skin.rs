@@ -174,15 +174,20 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
 
         // Need a specialised version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins.
         // We abandon fetching onion skins as soon as a new set of times arrive
-        //let mut polling_onion_skins = vec![];
+        let mut polling_onion_skins = vec![];
         let mut onion_skin_stream   = stream::poll_fn(move || {
             // Test for a new set of onion skins
             match fetching_onion_skins.poll() {
                 Ok(Async::Ready(None))              => { return Ok(Async::Ready(None)); }
                 Err(err)                            => { return Err(err); }
 
-                Ok(Async::NotReady)                 => { /* Check existing futures for updates */ },
-                Ok(Async::Ready(Some(new_futures))) => { /* Start polling new set of futures */ }
+                Ok(Async::NotReady)                 => { 
+                    // Check existing futures for updates
+                },
+                Ok(Async::Ready(Some(new_futures))) => { 
+                    // Throw away the existing futures and poll the new ones instead
+                    polling_onion_skins = new_futures;
+                }
             }
 
             Ok(Async::NotReady)
