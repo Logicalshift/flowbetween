@@ -3,6 +3,7 @@ use super::super::tools::*;
 use super::super::animation_canvas::*;
 
 use flo_ui::*;
+use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
 use desync::*;
@@ -41,8 +42,9 @@ pub struct CanvasController<Anim: Animation+EditableAnimation> {
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     anim_model:         FloModel<Anim>,
     tool_changed:       Arc<Mutex<bool>>,
+    onion_skin_model:   BindRef<(Color, Color, Vec<(OnionSkinTime, Arc<Vec<Draw>>)>)>,
 
-    core:               Desync<CanvasCore<Anim>>
+    core:               Arc<Desync<CanvasCore<Anim>>>
 }
 
 impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
@@ -51,13 +53,14 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     /// 
     pub fn new(view_model: &FloModel<Anim>) -> CanvasController<Anim> {
         // Create the resources
-        let canvases        = ResourceManager::new();
+        let canvases            = ResourceManager::new();
 
-        let renderer        = CanvasRenderer::new();
-        let canvas_tools    = CanvasTools::from_model(view_model);
-        let main_canvas     = Self::create_main_canvas(&canvases);
-        let ui              = Self::ui(main_canvas, view_model.size.clone());
-        let tool_changed    = Arc::new(Mutex::new(true));
+        let renderer            = CanvasRenderer::new();
+        let canvas_tools        = CanvasTools::from_model(view_model);
+        let main_canvas         = Self::create_main_canvas(&canvases);
+        let ui                  = Self::ui(main_canvas, view_model.size.clone());
+        let tool_changed        = Arc::new(Mutex::new(true));
+        let onion_skin_model    = Self::onion_skin_binding(view_model);
 
         // Set the tool changed flag whenever the effective tool changes
         // Note: the keep_alive() here will leak if the controller lives for less time than the model
@@ -66,20 +69,25 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
             .when_changed(notify(move || { *also_tool_changed.lock().unwrap() = true; }))
             .keep_alive();
 
-        // Create the controller
-        let controller = CanvasController {
-            ui:             ui,
-            canvases:       Arc::new(canvases),
-            anim_model:     view_model.clone(),
-            tool_changed:   tool_changed,
-
-            core:           Desync::new(CanvasCore {
+        // Create the core to perform the actual rendering
+        let core                = Desync::new(CanvasCore {
                 renderer:                   renderer,
                 canvas_tools:               canvas_tools,
                 last_paint_device:          None,
                 current_time:               Duration::new(0, 0),
                 current_invalidation_count: 0
-            })
+            });
+        let core                = Arc::new(core);
+
+        // Create the controller
+        let controller = CanvasController {
+            ui:                 ui,
+            canvases:           Arc::new(canvases),
+            anim_model:         view_model.clone(),
+            tool_changed:       tool_changed,
+            onion_skin_model:   onion_skin_model,
+
+            core:               core
         };
 
         // Load the initial set of frame layers
@@ -87,6 +95,20 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         controller.draw_frame_layers();
 
         controller
+    }
+
+    ///
+    /// Creates a binding from a model to the parameters of the onion skin renderer function
+    ///
+    fn onion_skin_binding(view_model: &FloModel<Anim>) -> BindRef<(Color, Color, Vec<(OnionSkinTime, Arc<Vec<Draw>>)>)> {
+        let onion_skin_model    = view_model.onion_skin();
+        let past_color          = onion_skin_model.past_color.clone();
+        let future_color        = onion_skin_model.future_color.clone();
+        let onion_skins         = onion_skin_model.onion_skins.clone();
+
+        BindRef::from(computed(move || {
+            (past_color.get(), future_color.get(), onion_skins.get())
+        }))
     }
 
     ///
