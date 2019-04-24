@@ -15,9 +15,9 @@ extern crate futures;
 extern crate itertools;
 
 mod traits;
-mod onionskin;
+mod onion_skin;
 pub mod brushes;
 pub mod raycast;
 
 pub use self::traits::*;
-pub use self::onionskin::*;
+pub use self::onion_skin::*;
