@@ -183,11 +183,15 @@ impl BezierPath for Path {
     fn start_point(&self) -> Self::Point {
         use self::PathComponent::*;
 
-        match self.elements[0] {
-            Move(p)         => p,
-            Line(p)         => p,
-            Bezier(p, _, _) => p,
-            Close           => PathPoint::new(0.0, 0.0)
+        if self.elements.len() > 0 {
+            match self.elements[0] {
+                Move(p)         => p,
+                Line(p)         => p,
+                Bezier(p, _, _) => p,
+                Close           => PathPoint::new(0.0, 0.0)
+            }
+        } else {
+            PathPoint::new(0.0, 0.0)
         }
     }
 
