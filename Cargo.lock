@@ -495,7 +495,7 @@ dependencies = [
 
 [[package]]
 name = "desync"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "futures 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -659,7 +659,7 @@ dependencies = [
 name = "flo"
 version = "0.1.1"
 dependencies = [
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_anim_sqlite 0.2.0",
  "flo_animation 0.1.1",
  "flo_binding 0.1.2",
@@ -680,7 +680,7 @@ dependencies = [
 name = "flo_anim_sqlite"
 version = "0.2.0"
 dependencies = [
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_animation 0.1.1",
  "flo_canvas 0.1.1",
  "flo_logging 0.1.1",
@@ -709,7 +709,7 @@ dependencies = [
 name = "flo_binding"
 version = "0.1.2"
 dependencies = [
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -717,7 +717,7 @@ dependencies = [
 name = "flo_canvas"
 version = "0.1.1"
 dependencies = [
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_curves 0.2.2 (git+https://github.com/Logicalshift/flo_curves)",
  "futures 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-hsluv 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -821,7 +821,7 @@ name = "flo_http_ui"
 version = "0.1.1"
 dependencies = [
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "flo_logging 0.1.1",
@@ -859,7 +859,7 @@ dependencies = [
 name = "flo_logging"
 version = "0.1.1"
 dependencies = [
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_stream 0.3.1 (git+https://github.com/Logicalshift/flo_stream)",
  "futures 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -895,7 +895,7 @@ name = "flo_ui"
 version = "0.1.1"
 dependencies = [
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
  "flo_stream 0.3.1 (git+https://github.com/Logicalshift/flo_stream)",
@@ -913,7 +913,7 @@ dependencies = [
 name = "flo_ui_files"
 version = "0.1.1"
 dependencies = [
- "desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo_binding 0.1.2",
  "flo_canvas 0.1.1",
@@ -2695,7 +2695,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum crossbeam-queue 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7c979cd6cfe72335896575c6b5688da489e420d36a27a0b9eb0c73db574b4a4b"
 "checksum crossbeam-utils 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)" = "f8306fcef4a7b563b76b7dd949ca48f52bc1141aa067d2ea09565f3e2652aa5c"
 "checksum deflate 0.7.19 (registry+https://github.com/rust-lang/crates.io-index)" = "8a6abb26e16e8d419b5c78662aa9f82857c2386a073da266840e474d5055ec86"
-"checksum desync 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7ac30cd21f88dd97f973651658af66a83468a7fe64b9e4e3e82de8902ea95410"
+"checksum desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1dcb6ffb45fe43e70802bf82415f1c27b705862bc7f0b2a042a1aeb93ae199f9"
 "checksum digest 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "05f47366984d3ad862010e22c7ce81a7dbcaebbdfb37241a620f8b6596ee135c"
 "checksum dirs 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "3fd78930633bd1c6e35c4b42b1df7b0cbc6bc191146e512bb3bedf243fcc3901"
 "checksum dtoa 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "6d301140eb411af13d3115f9a562c85cc6b541ade9dfa314132244aaee7489dd"
