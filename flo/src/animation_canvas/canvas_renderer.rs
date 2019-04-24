@@ -283,7 +283,9 @@ impl CanvasRenderer {
             // Draw each overlay in turn via the relay function
             for layer_id in overlay_layer_ids {
                 let drawing = self.overlay_layers[&layer_id].drawing.get_drawing();
-                self.relay_drawing_for_overlay(layer_id, gc, drawing.into_iter());
+                if drawing.len() > 0 {
+                    self.relay_drawing_for_overlay(layer_id, gc, drawing.into_iter());
+                }
             }
         })
     }
@@ -305,9 +307,11 @@ impl CanvasRenderer {
         }
 
         // Relay the drawing to the binding canvas
-        canvas.draw(|gc| {
-            self.relay_drawing_for_overlay(overlay, gc, drawing.into_iter())
-        });
+        if drawing.len() > 0 {
+            canvas.draw(|gc| {
+                self.relay_drawing_for_overlay(overlay, gc, drawing.into_iter())
+            });
+        }
     }
 
     ///
