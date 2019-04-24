@@ -111,6 +111,9 @@ impl CanvasRenderer {
     ///
     /// Given a set of drawing actions for an overlay, relays them to the specified canvas
     /// 
+    /// Overlays can call 'Layer' themselves: one important action this performs is mapping layer IDs generated as part of the overlay
+    /// into unique layer IDs on the canvas itself.
+    /// 
     fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: u32, gc: &mut dyn GraphicsPrimitives, drawing: DrawIter) {
         // Find the first free layer in this object
         let mut free_layer = self.free_layer();
