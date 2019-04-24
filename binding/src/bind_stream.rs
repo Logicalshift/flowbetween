@@ -17,8 +17,9 @@ where   S:          'static+Send+Stream,
         S::Item:    Send,
         S::Error:   Send {
     // Create the content of the binding
+    let value       = Arc::new(Mutex::new(initial_value));
     let core        = StreamBindingCore {
-        value:          initial_value,
+        value:          Arc::clone(&value),
         notifications:  vec![]
     };
 
@@ -29,14 +30,25 @@ where   S:          'static+Send+Stream,
     pipe_in(Arc::clone(&core), stream, 
         move |core, next_item| {
             if let Ok(next_item) = next_item {
-                // Update the value
-                let new_value = update(core.value.clone(), next_item);
+                // Only lock the value while updating it
+                let need_to_notify = {
+                    // Update the value
+                    let mut value = core.value.lock().unwrap();
+                    let new_value = update((*value).clone(), next_item);
 
-                if new_value != core.value {
-                    // Update the value in the core
-                    core.value = new_value;
+                    if new_value != *value {
+                        // Update the value in the core
+                        *value = new_value;
 
-                    // Notify anything that's listening
+                        // Notify anything that's listening
+                        true
+                    } else {
+                        false
+                    }
+                };
+
+                // If the update changed the value, then call the notifications (with the lock released, in case any try to read the value)
+                if need_to_notify {
                     core.notifications.retain(|notify| notify.is_in_use());
                     core.notifications.iter().for_each(|notify| { notify.mark_as_changed(); });
                 }
@@ -46,7 +58,8 @@ where   S:          'static+Send+Stream,
         });
     
     StreamBinding {
-        core: core
+        core:   core,
+        value:  value
     }
 }
 
@@ -55,8 +68,11 @@ where   S:          'static+Send+Stream,
 /// 
 #[derive(Clone)]
 pub struct StreamBinding<Value: Send> {
-    /// The current value of this binding
-    core: Arc<Desync<StreamBindingCore<Value>>>
+    /// The core of the binding (where updates are streamed and notifications sent)
+    core: Arc<Desync<StreamBindingCore<Value>>>,
+
+    /// The current value of the binding
+    value: Arc<Mutex<Value>>
 }
 
 ///
@@ -64,7 +80,7 @@ pub struct StreamBinding<Value: Send> {
 /// 
 struct StreamBindingCore<Value: Send> {
     /// The current value of this binidng
-    value: Value,
+    value: Arc<Mutex<Value>>,
 
     /// The items that should be notified when this binding changes
     notifications: Vec<ReleasableNotifiable>
@@ -77,7 +93,8 @@ impl<Value: 'static+Send+Clone> Bound<Value> for StreamBinding<Value> {
     fn get(&self) -> Value {
         BindingContext::add_dependency(self.clone());
 
-        self.core.sync(|core| core.value.clone())
+        let value = self.value.lock().unwrap();
+        (*value).clone()
     }
 }
 
