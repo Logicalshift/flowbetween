@@ -158,6 +158,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
                 // Generate the list of cached values for the onion skins
                 let mut fetch   = vec![];
 
+                // TODO: ideally we'd only request one cache item at a time (so we can abandon requests that hadn't started yet when the onion skins change rapidly)
                 for time in onion_skin_times.into_iter() {
                     let when: Duration  = time.into();
                     let cache           = layer.as_ref().map(|layer| layer.get_canvas_cache_at_time(when));
