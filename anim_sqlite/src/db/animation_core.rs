@@ -534,6 +534,11 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     DatabaseUpdate::PushLayerId(layer_id),
                     DatabaseUpdate::PopAddKeyFrame(when)
                 ])?;
+                
+                self.db.update(vec![
+                    DatabaseUpdate::PushLayerId(layer_id),
+                    DatabaseUpdate::PopDeleteLayerCache(when, CacheType::OnionSkinLayer)
+                ])?;
             },
 
             RemoveKeyFrame(when) => {
@@ -541,14 +546,27 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     DatabaseUpdate::PushLayerId(layer_id),
                     DatabaseUpdate::PopRemoveKeyFrame(when)
                 ])?;
+
+                self.db.update(vec![
+                    DatabaseUpdate::PushLayerId(layer_id),
+                    DatabaseUpdate::PopDeleteLayerCache(when, CacheType::OnionSkinLayer)
+                ])?;
             },
 
             Paint(when, edit) => {
                 self.paint_vector_layer(layer_id, when, edit)?;
+                self.db.update(vec![
+                    DatabaseUpdate::PushLayerId(layer_id),
+                    DatabaseUpdate::PopDeleteLayerCache(when, CacheType::OnionSkinLayer)
+                ])?;
             },
 
             Path(when, edit) => {
                 self.path_vector_layer(layer_id, when, edit)?;
+                self.db.update(vec![
+                    DatabaseUpdate::PushLayerId(layer_id),
+                    DatabaseUpdate::PopDeleteLayerCache(when, CacheType::OnionSkinLayer)
+                ])?;
             }
 
             SetName(new_name) => {
