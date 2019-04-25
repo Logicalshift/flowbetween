@@ -21,6 +21,12 @@ enum Onion {
 /// Action when the user drags the timeline 'time' indicator
 const DRAG_TIMELINE_POSITION: &str = "DragTime";
 
+/// Action when the user drags the timeline 'future onion skins' indicator
+const DRAG_ONION_FRAMES_BEFORE: &str = "DragOnionBefore";
+
+/// Action when the user drags the timeline 'past onion skins' indicator
+const DRAG_ONION_FRAMES_AFTER: &str = "DragOnionAfter";
+
 /// Action when the user clicks/drags on the scale away from the 'time' indicator
 const CLICK_AND_DRAG_TIMELINE_POSITION: &str = "ClickTime";
 
@@ -66,6 +72,9 @@ pub struct TimelineController<Anim: Animation> {
 
     /// The current_time at the most recent drag start position
     drag_start_time:            Binding<Duration>,
+
+    /// The setting of frames_before/frames_after when the drag on the onion skin start/end indicators started
+    drag_start_frames:          Binding<usize>,
 
     /// A virtual control that draws the timeline scale
     virtual_scale:              VirtualCanvas,
@@ -183,6 +192,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
             virtual_scale:              virtual_scale,
             virtual_keyframes:          virtual_keyframes,
             drag_start_time:            bind(Duration::from_millis(0)),
+            drag_start_frames:          bind(0),
             canvases:                   canvases,
             layer_list_controller:      Arc::new(layer_list_controller),
             layer_controls_controller:  Arc::new(layer_controls_controller),
@@ -248,6 +258,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
+                        .with((ActionTrigger::Drag, DRAG_ONION_FRAMES_BEFORE))
                         .with(ControlAttribute::ZIndex(3)),
                     Control::canvas()
                         .with(right_onion_indicator.clone())
@@ -258,6 +269,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
+                        .with((ActionTrigger::Drag, DRAG_ONION_FRAMES_AFTER))
                         .with(ControlAttribute::ZIndex(3)),
                 ]
             } else {
@@ -705,6 +717,37 @@ impl<Anim: EditableAnimation+Animation+'static> Controller for TimelineControlle
 
                 // Update the viewmodel time
                 timeline.current_time.set(new_time);
+            },
+
+            (DRAG_ONION_FRAMES_AFTER, &Drag(DragAction::Start, _, _)) => {
+                self.drag_start_frames.set(self.anim_model.onion_skin().frames_after.get());
+            },
+
+            (DRAG_ONION_FRAMES_BEFORE, &Drag(DragAction::Start, _, _)) => {
+                self.drag_start_frames.set(self.anim_model.onion_skin().frames_before.get());
+            },
+
+            (DRAG_ONION_FRAMES_AFTER, &Drag(_drag_type, (start_x, _start_y), (x, _y)))
+            | (DRAG_ONION_FRAMES_BEFORE, &Drag(_drag_type, (start_x, _start_y), (x, _y))) => {
+                // Work out the difference in frames
+                let is_before       = action_id == DRAG_ONION_FRAMES_BEFORE;
+                let initial_frames  = self.drag_start_frames.get();
+                let mut frame_diff  = ((x - start_x)/TICK_LENGTH).floor() as i32;
+
+                // The 'before' frames moves in the opposite direction to the 'after' frames
+                if is_before { frame_diff = -frame_diff; }
+
+                // Work out the new number of frames (with limits)
+                let new_frames      = (initial_frames as i32) + frame_diff;
+                let new_frames      = if new_frames <= 0 { 1 } else { new_frames };
+                let new_frames      = if new_frames > 10 { 10 } else { new_frames };
+
+                // Update the model
+                if is_before {
+                    self.anim_model.onion_skin().frames_before.set(new_frames as usize);
+                } else {
+                    self.anim_model.onion_skin().frames_after.set(new_frames as usize);
+                }
             },
 
             _ => ()
