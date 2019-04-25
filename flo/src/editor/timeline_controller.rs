@@ -235,16 +235,16 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -frames_before * TICK_LENGTH),
                             x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), frames_after * TICK_LENGTH),
-                            y1: Position::Start,
-                            y2: Position::At(3.0)
+                            y1: Position::At(3.0),
+                            y2: Position::At(4.0)
                         })
-                    .with(ControlAttribute::ZIndex(2)),
+                    .with(ControlAttribute::ZIndex(3)),
                     Control::canvas()
                         .with(left_onion_indicator.clone())
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorLeft".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorLeft".to_string()), 16.0),
-                            y1: Position::Start,
+                            y1: Position::At(0.0),
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
@@ -254,7 +254,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorRight".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorRight".to_string()), 16.0),
-                            y1: Position::Start,
+                            y1: Position::At(0.0),
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
@@ -341,6 +341,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
+                        .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.0, 0.0)))
                         .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
                         .with(ControlAttribute::ZIndex(4)),
                     Control::canvas()           // Selected frame indicator (lower part, under the timeline)
