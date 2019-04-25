@@ -191,6 +191,11 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
         let timescale_indicator         = BindingCanvas::with_drawing(Self::draw_frame_indicator);
         let timescale_indicator         = canvases.register(timescale_indicator);
 
+        let left_onion_indicator        = BindingCanvas::with_drawing(Self::draw_frame_indicator);
+        let left_onion_indicator        = canvases.register(left_onion_indicator);
+        let right_onion_indicator       = BindingCanvas::with_drawing(Self::draw_frame_indicator);
+        let right_onion_indicator       = canvases.register(right_onion_indicator);
+
         let timescale_indicator_line    = BindingCanvas::with_drawing(Self::draw_frame_indicator_line);
         let timescale_indicator_line    = canvases.register(timescale_indicator_line);
 
@@ -229,7 +234,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                         })
                     .with(ControlAttribute::ZIndex(2)),
                     Control::canvas()
-                        .with(timescale_indicator.clone())
+                        .with(left_onion_indicator.clone())
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorLeft".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorLeft".to_string()), 16.0),
@@ -237,10 +242,9 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
-                        .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
                         .with(ControlAttribute::ZIndex(3)),
                     Control::canvas()
-                        .with(timescale_indicator.clone())
+                        .with(right_onion_indicator.clone())
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorRight".to_string()), -16.0),
                             x2: Position::Floating(Property::Bind("IndicatorRight".to_string()), 16.0),
@@ -248,7 +252,6 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
                         .with(Scroll::Fix(FixedAxis::Vertical))
-                        .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
                         .with(ControlAttribute::ZIndex(3)),
                 ]
             } else {
