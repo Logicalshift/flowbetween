@@ -136,34 +136,22 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
         });
 
         let xpos                = indicator_x_pos.clone();
-        let show_onion_skins    = anim_model.onion_skin().show_onion_skins.clone();
         let indicator_left_pos  = computed(move || {
-            if show_onion_skins.get() {
-                let xpos            = xpos.get();
-                let tick_length     = TICK_LENGTH as f64;
-                let frames_before   = frames_before.get() as f64;
-                let left_distance   = frames_before * tick_length;
-                let left_distance   = f64::max(16.0, left_distance);
+            let xpos            = xpos.get();
+            let tick_length     = TICK_LENGTH as f64;
+            let frames_before   = frames_before.get() as f64;
+            let left_distance   = frames_before * tick_length;
 
-                xpos - left_distance
-            } else {
-                xpos.get() - 16.0
-            }
+            xpos - left_distance
         });
         let xpos                = indicator_x_pos.clone();
-        let show_onion_skins    = anim_model.onion_skin().show_onion_skins.clone();
         let indicator_right_pos  = computed(move || {
-            if show_onion_skins.get() {
-                let xpos            = xpos.get();
-                let tick_length     = TICK_LENGTH as f64;
-                let frames_after    = frames_after.get() as f64;
-                let right_distance  = frames_after * tick_length;
-                let right_distance  = f64::max(16.0, right_distance);
+            let xpos            = xpos.get();
+            let tick_length     = TICK_LENGTH as f64;
+            let frames_after    = frames_after.get() as f64;
+            let right_distance  = frames_after * tick_length;
 
-                xpos + right_distance
-            } else {
-                xpos.get() + 16.0
-            }
+            xpos + right_distance
         });
 
 
