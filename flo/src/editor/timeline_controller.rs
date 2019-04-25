@@ -168,7 +168,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
         let virtual_scale_control       = virtual_scale.control();
         let virtual_keyframes_control   = virtual_keyframes.control();
 
-        let ui = Self::ui(layers, duration, frame_duration, virtual_scale_control, virtual_keyframes_control, Arc::clone(&canvases));
+        let ui = Self::ui(layers, duration, frame_duration, virtual_scale_control, virtual_keyframes_control, Arc::clone(&canvases), anim_model.onion_skin());
 
         // Piece it together
         TimelineController {
@@ -187,27 +187,73 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Creates the user interface for the timeline
     /// 
-    fn ui(layers: BindRef<Vec<LayerModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>, canvases: Arc<ResourceManager<BindingCanvas>>) -> BindRef<Control> {
+    fn ui(layers: BindRef<Vec<LayerModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>, canvases: Arc<ResourceManager<BindingCanvas>>, onion_skin: &OnionSkinModel<Anim>) -> BindRef<Control> {
         let timescale_indicator         = BindingCanvas::with_drawing(Self::draw_frame_indicator);
         let timescale_indicator         = canvases.register(timescale_indicator);
 
         let timescale_indicator_line    = BindingCanvas::with_drawing(Self::draw_frame_indicator_line);
         let timescale_indicator_line    = canvases.register(timescale_indicator_line);
 
+        let show_onion_skins            = onion_skin.show_onion_skins.clone();
+        let frames_before               = onion_skin.frames_before.clone();
+        let frames_after                = onion_skin.frames_after.clone();
+
         BindRef::new(&computed(move || {
             let timescale_indicator         = timescale_indicator.clone();
             let timescale_indicator_line    = timescale_indicator_line.clone();
-            
+
             // Work out the number of frames in this animation
-            let duration            = duration.get();
-            let frame_duration      = frame_duration.get();
-            let layers              = layers.get();
+            let duration                = duration.get();
+            let frame_duration          = frame_duration.get();
+            let layers                  = layers.get();
 
-            let duration_ns         = duration.as_secs()*1_000_000_000 + (duration.subsec_nanos() as u64);
-            let frame_duration_ns   = frame_duration.as_secs()*1_000_000_000 + (frame_duration.subsec_nanos() as u64);
+            let duration_ns             = duration.as_secs()*1_000_000_000 + (duration.subsec_nanos() as u64);
+            let frame_duration_ns       = frame_duration.as_secs()*1_000_000_000 + (frame_duration.subsec_nanos() as u64);
 
-            let width               = TICK_LENGTH * ((duration_ns / frame_duration_ns) as f32);
-            let height              = (layers.len() as f32) * TIMELINE_LAYER_HEIGHT;
+            let width                   = TICK_LENGTH * ((duration_ns / frame_duration_ns) as f32);
+            let height                  = (layers.len() as f32) * TIMELINE_LAYER_HEIGHT;
+
+            // If the user has enabled the onion skin display, then indicate the region that they are covering
+            let onion_skin_indicators   = if show_onion_skins.get() {
+                let frames_before   = frames_before.get() as f32;
+                let frames_after    = frames_after.get() as f32;
+
+                vec![
+                    Control::empty()
+                        .with(Appearance::Background(TIMESCALE_INDICATOR_GRIP))
+                        .with(Bounds {
+                            x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -frames_before * TICK_LENGTH),
+                            x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), frames_after * TICK_LENGTH),
+                            y1: Position::Start,
+                            y2: Position::At(2.0)
+                        })
+                    .with(ControlAttribute::ZIndex(2)),
+                    Control::canvas()
+                        .with(timescale_indicator.clone())
+                        .with(Bounds {
+                            x1: Position::Floating(Property::Bind("IndicatorLeft".to_string()), -16.0),
+                            x2: Position::Floating(Property::Bind("IndicatorLeft".to_string()), 16.0),
+                            y1: Position::Start,
+                            y2: Position::At(TIMELINE_SCALE_HEIGHT)
+                        })
+                        .with(Scroll::Fix(FixedAxis::Vertical))
+                        .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
+                        .with(ControlAttribute::ZIndex(3)),
+                    Control::canvas()
+                        .with(timescale_indicator.clone())
+                        .with(Bounds {
+                            x1: Position::Floating(Property::Bind("IndicatorRight".to_string()), -16.0),
+                            x2: Position::Floating(Property::Bind("IndicatorRight".to_string()), 16.0),
+                            y1: Position::Start,
+                            y2: Position::At(TIMELINE_SCALE_HEIGHT)
+                        })
+                        .with(Scroll::Fix(FixedAxis::Vertical))
+                        .with((ActionTrigger::Drag, DRAG_TIMELINE_POSITION))
+                        .with(ControlAttribute::ZIndex(3)),
+                ]
+            } else {
+                vec![]
+            };
 
             // Build the final control
             Control::scrolling_container()
@@ -280,8 +326,8 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                     Control::canvas()           // Selected frame indicator (upper part, arrow indicator)
                         .with(timescale_indicator)
                         .with(Bounds {
-                            x1: Position::Floating(Property::Bind("IndicatorLeft".to_string()), 0.0),
-                            x2: Position::Floating(Property::Bind("IndicatorRight".to_string()), 0.0),
+                            x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
+                            x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
                             y1: Position::Start,
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
@@ -297,7 +343,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                             y2: Position::End
                         })
                         .with(ControlAttribute::ZIndex(1))
-                ])
+                ].into_iter().chain(onion_skin_indicators).collect::<Vec<_>>())
                 .with((ActionTrigger::VirtualScroll(VIRTUAL_WIDTH, VIRTUAL_HEIGHT), SCROLL_TIMELINE))
         }))
     }
