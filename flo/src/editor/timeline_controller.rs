@@ -335,8 +335,8 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                     Control::canvas()           // Selected frame indicator (upper part, arrow indicator)
                         .with(timescale_indicator)
                         .with(Bounds {
-                            x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
-                            x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
+                            x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -6.0),
+                            x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 6.0),
                             y1: Position::Start,
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
