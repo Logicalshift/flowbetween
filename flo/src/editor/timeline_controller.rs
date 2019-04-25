@@ -12,6 +12,12 @@ use std::sync::*;
 use std::time::Duration;
 use std::collections::HashMap;
 
+/// Side of the onion skin indicator
+enum Onion {
+    Left,
+    Right
+}
+
 /// Action when the user drags the timeline 'time' indicator
 const DRAG_TIMELINE_POSITION: &str = "DragTime";
 
@@ -191,9 +197,9 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
         let timescale_indicator         = BindingCanvas::with_drawing(Self::draw_frame_indicator);
         let timescale_indicator         = canvases.register(timescale_indicator);
 
-        let left_onion_indicator        = BindingCanvas::with_drawing(Self::draw_frame_indicator);
+        let left_onion_indicator        = BindingCanvas::with_drawing(|gc| Self::draw_onion_indicator(gc, Onion::Left));
         let left_onion_indicator        = canvases.register(left_onion_indicator);
-        let right_onion_indicator       = BindingCanvas::with_drawing(Self::draw_frame_indicator);
+        let right_onion_indicator       = BindingCanvas::with_drawing(|gc| Self::draw_onion_indicator(gc, Onion::Right));
         let right_onion_indicator       = canvases.register(right_onion_indicator);
 
         let timescale_indicator_line    = BindingCanvas::with_drawing(Self::draw_frame_indicator_line);
@@ -225,12 +231,12 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
                 vec![
                     Control::empty()
-                        .with(Appearance::Background(TIMESCALE_INDICATOR_GRIP))
+                        .with(Appearance::Background(TIMESCALE_ONION_INDICATOR))
                         .with(Bounds {
                             x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -frames_before * TICK_LENGTH),
                             x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), frames_after * TICK_LENGTH),
                             y1: Position::Start,
-                            y2: Position::At(2.0)
+                            y2: Position::At(3.0)
                         })
                     .with(ControlAttribute::ZIndex(2)),
                     Control::canvas()
@@ -545,6 +551,49 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
         gc.line_to(0.15, 0.45);
         gc.move_to(0.0, -0.1);
         gc.line_to(0.0, 0.6);
+        gc.stroke();
+    }
+
+    ///
+    /// Draws the frame indicator
+    /// 
+    fn draw_onion_indicator(gc: &mut dyn GraphicsPrimitives, side: Onion) -> () {
+        gc.canvas_height(2.05);
+
+        gc.new_path();
+        match side {
+            Onion::Right => {
+                gc.move_to(0.0, 0.1);
+                gc.line_to(0.0, 0.8);
+                gc.line_to(0.6, 0.8);
+                gc.line_to(0.6, 0.1);
+
+                gc.line_to(0.0, -1.0);
+                gc.line_to(0.0, 0.1);
+                gc.close_path();
+            },
+
+            Onion::Left => {
+                gc.move_to(-0.6, 0.1);
+                gc.line_to(-0.6, 0.8);
+                gc.line_to(0.0, 0.8);
+                gc.line_to(0.0, 0.1);
+
+                gc.line_to(0.0, -1.0);
+                gc.line_to(-0.6, 0.1);
+                gc.close_path();
+            },
+        }
+
+        gc.stroke_color(TIMESCALE_ONION_INDICATOR_OUTER);
+        gc.line_width_pixels(1.0);
+        gc.stroke();
+
+        gc.fill_color(TIMESCALE_ONION_INDICATOR);
+        gc.fill();
+
+        gc.stroke_color(TIMESCALE_ONION_INDICATOR_INNER);
+        gc.line_width_pixels(0.5);
         gc.stroke();
     }
 
