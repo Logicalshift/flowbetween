@@ -470,13 +470,14 @@ impl CocoaSession {
     pub fn redraw_canvas_for_view(&mut self, view_id: usize, size: CGSize, bounds: CGRect) {
         unsafe {
             // Fetch the events for redraw callbacks
-            let flo_events = self.events_for_view(view_id);
+            let flo_events  = self.events_for_view(view_id);
 
             // Fetch the canvas for this view
-            let view    = self.views.get(&view_id);
-            let canvas  = self.canvases.entry(view_id).or_insert_with(|| Self::create_view_canvas(view.unwrap()));
+            let view        = self.views.get(&view_id);
 
             if let Some(view) = view {
+                let canvas  = self.canvases.entry(view_id).or_insert_with(|| Self::create_view_canvas(view));
+
                 // Perform the drawing actions on the canvas
                 canvas.set_viewport(size, bounds);
                 canvas.redraw(move |layer_id| {
