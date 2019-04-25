@@ -98,9 +98,12 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
         let view_model = DynamicViewModel::new();
 
         // Indicator xpos is computed from the current frame
-        let current_time    = anim_model.timeline().current_time.clone();
-        let frame_duration  = anim_model.timeline().frame_duration.clone();
-        view_model.set_computed("IndicatorXPos", move || {
+        let current_time        = anim_model.timeline().current_time.clone();
+        let frame_duration      = anim_model.timeline().frame_duration.clone();
+        let frames_before       = anim_model.onion_skin().frames_before.clone();
+        let frames_after        = anim_model.onion_skin().frames_after.clone();
+
+        let indicator_x_pos = computed(move || {
             let current_time        = current_time.get();
             let frame_duration      = frame_duration.get();
 
@@ -114,8 +117,45 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
             let tick_x              = tick_x + (tick_length/2.0);
             let tick_x              = tick_x + (LAYER_PANEL_WIDTH as f64);
 
-            PropertyValue::Float(tick_x)
+            tick_x
         });
+
+        let xpos                = indicator_x_pos.clone();
+        let show_onion_skins    = anim_model.onion_skin().show_onion_skins.clone();
+        let indicator_left_pos  = computed(move || {
+            if show_onion_skins.get() {
+                let xpos            = xpos.get();
+                let tick_length     = TICK_LENGTH as f64;
+                let frames_before   = frames_before.get() as f64;
+                let left_distance   = frames_before * tick_length;
+                let left_distance   = f64::max(16.0, left_distance);
+
+                xpos - left_distance
+            } else {
+                xpos.get() - 16.0
+            }
+        });
+        let xpos                = indicator_x_pos.clone();
+        let show_onion_skins    = anim_model.onion_skin().show_onion_skins.clone();
+        let indicator_right_pos  = computed(move || {
+            if show_onion_skins.get() {
+                let xpos            = xpos.get();
+                let tick_length     = TICK_LENGTH as f64;
+                let frames_after    = frames_after.get() as f64;
+                let right_distance  = frames_after * tick_length;
+                let right_distance  = f64::max(16.0, right_distance);
+
+                xpos + right_distance
+            } else {
+                xpos.get() + 16.0
+            }
+        });
+
+
+        // Indicator view model
+        view_model.set_computed("IndicatorXPos", move || PropertyValue::Float(indicator_x_pos.get()));
+        view_model.set_computed("IndicatorLeft", move || PropertyValue::Float(indicator_left_pos.get()));
+        view_model.set_computed("IndicatorRight", move || PropertyValue::Float(indicator_right_pos.get()));
 
         // UI
         let layer_list_controller       = TimelineLayerListController::new(&anim_model);
@@ -240,8 +280,8 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
                     Control::canvas()           // Selected frame indicator (upper part, arrow indicator)
                         .with(timescale_indicator)
                         .with(Bounds {
-                            x1: Position::Floating(Property::Bind("IndicatorXPos".to_string()), -16.0),
-                            x2: Position::Floating(Property::Bind("IndicatorXPos".to_string()), 16.0),
+                            x1: Position::Floating(Property::Bind("IndicatorLeft".to_string()), 0.0),
+                            x2: Position::Floating(Property::Bind("IndicatorRight".to_string()), 0.0),
                             y1: Position::Start,
                             y2: Position::At(TIMELINE_SCALE_HEIGHT)
                         })
