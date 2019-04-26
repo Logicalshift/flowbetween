@@ -1,13 +1,27 @@
 use super::traits::*;
 
+use flo_curves::*;
 use flo_curves::bezier::path::*;
 use flo_canvas::*;
 
 use futures::*;
 
 use std::iter;
+use std::fmt::*;
 use std::sync::*;
 use std::time::Duration;
+
+fn svg_path_string<Path: BezierPath>(path: &Path) -> String 
+where Path::Point: Coordinate2D {
+    let mut svg = String::new();
+
+    write!(&mut svg, "M {} {}", path.start_point().x(), path.start_point().y());
+    for (cp1, cp2, end) in path.points() {
+        write!(&mut svg, " C {} {}, {} {}, {} {}", cp1.x(), cp1.y(), cp2.x(), cp2.y(), end.x(), end.y());
+    }
+
+    svg
+}
 
 ///
 /// Computes or retrieves the onion skin for a particular layer at a specified time.specified
@@ -50,7 +64,10 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
                     if element_path.len() > 0 && (element_path.len() != 1 || element_path[0].len() > 0) {
                         let element_path_without_interior = path_remove_interior_points::<_, _, Path>(&element_path, 0.01);
                         if element_path_without_interior.len() == 0 {
-                            println!("Remove interior points removed all points? {:?}", element_path);
+                            println!("Remove interior points removed all points? {:?} {:?}", element_path.len(), element_path);
+                            for p in element_path {
+                                println!("  {:?}", svg_path_string(&p));
+                            }
                         } else {
                             match (*properties).brush.drawing_style() {
                                 BrushDrawingStyle::Draw     => { onion_skin = path_add(&onion_skin, &element_path_without_interior, 0.01); }
