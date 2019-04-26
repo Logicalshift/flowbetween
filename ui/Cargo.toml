@@ -7,7 +7,7 @@ repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Implementation-free user interface description library"
 
 [dependencies]
-flo_binding     = { path = "../binding", version = "^0.1.0" }
+flo_binding     = { git = "https://github.com/Logicalshift/flo_binding", version = "1.0" }
 flo_canvas      = { path = "../canvas", version = "^0.1.0" }
 flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "0.3" }
 desync          = "0.4"
