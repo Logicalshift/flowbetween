@@ -43,6 +43,8 @@ pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation>
 
     /// The edit sink for the animation
     edit_sink: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
+
+    debug_model: FloModel<Anim>
 }
 
 impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim> {
@@ -85,7 +87,8 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
             timeline:       timeline.clone(),
             current_time:   timeline.current_time.clone(),
             selected_layer: timeline.selected_layer.clone(),
-            edit_sink:      Desync::new(edit_sink)
+            edit_sink:      Desync::new(edit_sink),
+            debug_model:    model.clone()
         }
     }
 
@@ -218,6 +221,17 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
             "ToggleShowOnionSkins" => {
                 let current_value = self.onion_skin.show_onion_skins.get();
                 self.onion_skin.show_onion_skins.set(!current_value);
+
+                let current_time        = self.current_time.get();
+                let selected_layer      = self.selected_layer.get();
+
+                // Debugging: remove the cache for the current frame if there is one
+                if let Some(selected_layer) = selected_layer {
+                    self.debug_model.get_layer_with_id(selected_layer)
+                        .map(|layer| layer
+                            .get_canvas_cache_at_time(current_time)
+                            .invalidate(CacheType::OnionSkinLayer));
+                }
             },
 
             "MoveToPreviousKeyFrame" => { 
