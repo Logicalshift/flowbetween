@@ -664,7 +664,7 @@ dependencies = [
  "flo_animation 0.1.1",
  "flo_binding 1.0.1 (git+https://github.com/Logicalshift/flo_binding)",
  "flo_canvas 0.1.1",
- "flo_curves 0.2.2 (git+https://github.com/Logicalshift/flo_curves)",
+ "flo_curves 0.3.0 (git+https://github.com/Logicalshift/flo_curves)",
  "flo_stream 0.3.1 (git+https://github.com/Logicalshift/flo_stream)",
  "flo_ui 0.1.1",
  "flo_ui_files 0.1.1",
@@ -695,7 +695,7 @@ name = "flo_animation"
 version = "0.1.1"
 dependencies = [
  "flo_canvas 0.1.1",
- "flo_curves 0.2.2 (git+https://github.com/Logicalshift/flo_curves)",
+ "flo_curves 0.3.0 (git+https://github.com/Logicalshift/flo_curves)",
  "flo_float_encoder 0.1.1",
  "futures 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -719,7 +719,7 @@ name = "flo_canvas"
 version = "0.1.1"
 dependencies = [
  "desync 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "flo_curves 0.2.2 (git+https://github.com/Logicalshift/flo_curves)",
+ "flo_curves 0.3.0 (git+https://github.com/Logicalshift/flo_curves)",
  "futures 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-hsluv 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.90 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -782,11 +782,12 @@ dependencies = [
 
 [[package]]
 name = "flo_curves"
-version = "0.2.2"
-source = "git+https://github.com/Logicalshift/flo_curves#8e06d2af64b0da277cd0b72ef011784796cd14de"
+version = "0.3.0"
+source = "git+https://github.com/Logicalshift/flo_curves#c159fa48d0714c08f9a6447f2223196857eb6988"
 dependencies = [
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "roots 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "smallvec 0.6.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2731,7 +2732,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum fake-simd 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 "checksum flate2 1.0.7 (registry+https://github.com/rust-lang/crates.io-index)" = "f87e68aa82b2de08a6e037f1385455759df6e445a8df5e005b4297191dbf18aa"
 "checksum flo_binding 1.0.1 (git+https://github.com/Logicalshift/flo_binding)" = "<none>"
-"checksum flo_curves 0.2.2 (git+https://github.com/Logicalshift/flo_curves)" = "<none>"
+"checksum flo_curves 0.3.0 (git+https://github.com/Logicalshift/flo_curves)" = "<none>"
 "checksum flo_stream 0.3.1 (git+https://github.com/Logicalshift/flo_stream)" = "<none>"
 "checksum fnv 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "2fad85553e09a6f881f739c29f0b00b0f01357c743266d478b68951ce23285f3"
 "checksum foreign-types 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f6f339eb8adc052cd2ca78910fda869aefa38d22d5cb648e6485e4d3fc06f3b1"

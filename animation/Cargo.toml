@@ -8,9 +8,9 @@ description = "Describes a FlowBetween animation"
 edition     = "2018"
 
 [dependencies]
-flo_canvas          = { path = "../canvas", version = "^0.1.0" }
-flo_curves          = { git = "https://github.com/Logicalshift/flo_curves", version = "^0.2.2" }
-flo_float_encoder   = { path = "../float_encoder", version = "^0.1.0" }
+flo_canvas          = { path = "../canvas", version = "0.1" }
+flo_curves          = { git = "https://github.com/Logicalshift/flo_curves", version = "0.3" }
+flo_float_encoder   = { path = "../float_encoder", version = "0.1" }
 
 futures             = "^0.1.17"
 itertools           = "0.8"
