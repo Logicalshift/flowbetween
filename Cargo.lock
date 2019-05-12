@@ -783,7 +783,7 @@ dependencies = [
 [[package]]
 name = "flo_curves"
 version = "0.3.0"
-source = "git+https://github.com/Logicalshift/flo_curves#288146a2402138a351a96390dcb303f266870e87"
+source = "git+https://github.com/Logicalshift/flo_curves#c8150fae0762771436fa0267a2af4d189d5b51c5"
 dependencies = [
  "itertools 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "roots 0.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
