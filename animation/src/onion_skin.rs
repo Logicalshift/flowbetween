@@ -1,9 +1,8 @@
 use super::traits::*;
 
-use flo_curves::*;
+use flo_canvas::*;
 use flo_curves::debug::*;
 use flo_curves::bezier::path::*;
-use flo_canvas::*;
 
 use futures::*;
 
@@ -27,6 +26,7 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
             let mut active_attachments      = vec![];
             let mut properties              = Arc::new(VectorProperties::default());
             let mut onion_skin: Vec<Path>   = vec![];
+            let mut waiting_to_add          = vec![];
 
             // Generate the onion skin path for this frame
             for element in elements {
@@ -58,12 +58,26 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
                             }
                         } else {
                             match (*properties).brush.drawing_style() {
-                                BrushDrawingStyle::Draw     => { onion_skin = path_add(&onion_skin, &element_path_without_interior, 0.01); }
-                                BrushDrawingStyle::Erase    => { onion_skin = path_sub(&onion_skin, &element_path_without_interior, 0.01); }
+                                BrushDrawingStyle::Draw     => { waiting_to_add.push(element_path_without_interior); }
+                                BrushDrawingStyle::Erase    => {
+                                    if waiting_to_add.len() > 0 {
+                                        waiting_to_add.insert(0, onion_skin);
+                                        onion_skin = path_add_chain(&waiting_to_add, 0.01);
+                                        waiting_to_add.clear();
+                                    }
+                                    onion_skin = path_sub(&onion_skin, &element_path_without_interior, 0.01);
+                                }
                             }
                         }
                     }
                 }
+            }
+
+            // Finish adding any paths that are still waiting
+            if waiting_to_add.len() > 0 {
+                waiting_to_add.insert(0, onion_skin);
+                onion_skin = path_add_chain(&waiting_to_add, 0.01);
+                waiting_to_add.clear();
             }
 
             // Convert to a series of drawing instructions
