@@ -50,7 +50,7 @@ pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProce
                 // Add this element to the onion skin path
                 if let Some(element_path) = element.to_path(&properties) {
                     if element_path.len() > 0 && (element_path.len() != 1 || element_path[0].len() > 0) {
-                        let element_path_without_interior = path_remove_interior_points::<_, _, Path>(&element_path, 0.01);
+                        let element_path_without_interior = path_remove_interior_points::<_, Path>(&element_path, 0.01);
                         if element_path_without_interior.len() == 0 {
                             println!("Remove interior points removed all points? {:?}", element_path);
                             for p in element_path {
