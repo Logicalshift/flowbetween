@@ -24,7 +24,6 @@
 		4B1E8C0221DCE1C3006861A8 /* FloAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0121DCE1C3006861A8 /* FloAppDelegate.swift */; };
 		4B1E8C0421DCE1C5006861A8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0321DCE1C5006861A8 /* Assets.xcassets */; };
 		4B1E8C0721DCE1C5006861A8 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4B1E8C0521DCE1C5006861A8 /* MainMenu.xib */; };
-		4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B1E8C1821DD116A006861A8 /* libflo_cocoa.a */; };
 		4B1E8C2721DD5B7E006861A8 /* FloWindowDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1E8C2621DD5B7E006861A8 /* FloWindowDelegate.swift */; };
 		4B3E9C5121F90B5900261433 /* ContainerBounds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3E9C5021F90B5800261433 /* ContainerBounds.swift */; };
 		4B4901F92200FB8F00FB6AFC /* FloPaintDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4901F82200FB8F00FB6AFC /* FloPaintDevice.swift */; };
@@ -349,7 +348,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4B5620E321F087BF0078392F /* SVGKit.framework in Frameworks */,
-				4B1E8C2221DD1604006861A8 /* libflo_cocoa.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1029,6 +1027,7 @@
 					"@executable_path/../Frameworks",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/debug;
+				OTHER_LDFLAGS = "-lflo_cocoa";
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = FlowBetween/CInterop/FlowBetween.h;
@@ -1051,6 +1050,7 @@
 					"@executable_path/../Frameworks",
 				);
 				"LIBRARY_SEARCH_PATHS[arch=*]" = ../target/release;
+				OTHER_LDFLAGS = "-lflo_cocoa";
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = FlowBetween/CInterop/FlowBetween.h;
