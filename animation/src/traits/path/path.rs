@@ -218,7 +218,7 @@ impl BezierPath for Path {
         let mut last_point  = start_point;
 
         // Convert each element to a point in the path
-        for element in self.elements.iter() {
+        for element in self.elements.iter().skip(1) {
             match element {
                 PathComponent::Bezier(target, cp1, cp2) => {
                     points.push((*cp1, *cp2, *target));
