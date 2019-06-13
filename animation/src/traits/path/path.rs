@@ -105,7 +105,7 @@ impl Path {
                 match path {
                     &PathComponent::Move(point)       => Move(point.x(), point.y()),
                     &PathComponent::Line(point)       => Line(point.x(), point.y()),
-                    &PathComponent::Bezier(p, c1, c2) => BezierCurve(p.position, c1.position, c2.position),
+                    &PathComponent::Bezier(p, c1, c2) => BezierCurve(p.into(), c1.into(), c2.into()),
                     &PathComponent::Close             => ClosePath
                 }
             })

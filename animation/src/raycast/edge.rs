@@ -108,7 +108,7 @@ impl RaycastEdge {
     /// Converts a position from a `BrushPoint` to a `PathPoint`
     ///
     #[inline] fn brush_to_path_point(brush_point: (f32, f32)) -> PathPoint {
-        PathPoint { position: brush_point }
+        PathPoint { position: (brush_point.0 as f64, brush_point.1 as f64) }
     }
 
     ///

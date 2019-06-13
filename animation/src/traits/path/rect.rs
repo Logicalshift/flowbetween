@@ -22,10 +22,10 @@ impl Rect {
     /// 
     pub fn new(top_left: PathPoint, bottom_right: PathPoint) -> Rect {
         Rect {
-            x1: top_left.position.0,
-            y1: top_left.position.1,
-            x2: bottom_right.position.0,
-            y2: bottom_right.position.1
+            x1: top_left.position.0 as f32,
+            y1: top_left.position.1 as f32,
+            x2: bottom_right.position.0 as f32,
+            y2: bottom_right.position.1 as f32
         }
     }
 
