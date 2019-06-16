@@ -129,39 +129,17 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
 }
 
 ///
-/// Creates the handler for an actix UI session
+/// Post request handler for the session URL
 /// 
-pub fn session_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
-    match req.method() {
-        &Method::POST => {
-            // Request must contain a JSON body
-            let result = Json::<UiHandlerRequest>::extract(&req)
-                .then(move |ui_request| -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
-                    match ui_request {
-                        Ok(ui_request) => {
-                            // Process this UI request
-                            Box::new(handle_ui_request::<Session>(req, &*ui_request))
-                        },
+pub fn session_post_handler<Session: 'static+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+    // Process this UI request
+    Box::new(handle_ui_request::<Session>(req, &*ui_request))
+}
 
-                        Err(_err) => {
-                            // Failed to parse the JSON request for some reason
-                            Box::new(future::ok(HttpResponse::BadRequest().body("FlowBetween session request is not in the expected format")))
-                        }
-                    }
-                });
-            
-            // Request will be ready in the future
-            Box::new(result)
-        },
-
-        &Method::GET => {
-            // Get requests are handled by the session resource handler
-            session_resource_handler::<Session>(req)
-        },
-
-        _ => {
-            // Other requests are not supported
-            Box::new(future::ok(HttpResponse::MethodNotAllowed().body("Method not allowed")))
-        }
-    }
+///
+/// Get request handler for the session URL
+/// 
+pub fn session_get_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+    // Get requests are handled by the session resource handler
+    session_resource_handler::<Session>(req)
 }
