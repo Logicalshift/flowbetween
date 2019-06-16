@@ -4,11 +4,9 @@ use super::session_resource_handler::*;
 use flo_http_ui::*;
 
 use actix_web::*;
-use actix_web::http::*;
 use actix_web::web::Json;
 use actix_web::Error;
 use futures::*;
-use futures::future;
 use futures::stream;
 
 use std::sync::*;
@@ -21,7 +19,7 @@ fn base_url(req: &HttpRequest) -> String {
     let tail        = req.match_info().get("tail").unwrap_or("");
     let base_len    = full_url.len() - tail.len();
 
-    if tail == "/" {
+    if tail == "/" || tail == full_url {
         full_url.to_string()
     } else {
         full_url[0..base_len].to_string()
