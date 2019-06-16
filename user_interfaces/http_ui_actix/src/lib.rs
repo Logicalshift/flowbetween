@@ -6,7 +6,6 @@ extern crate flo_http_ui;
 extern crate flo_logging;
 extern crate flo_static_files;
 
-extern crate actix;
 extern crate actix_web;
 extern crate futures;
 extern crate bytes;
