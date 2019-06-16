@@ -117,19 +117,19 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpReques
         if let Some(session) = session {
             // Start a new websocket for this session
             let req     = req.clone();
-            let session = FloWsSession::new(session);
+            let session = FloWsSession::<Session>::new(session);
 
             // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
-            let response = ws::handshake(&req);
-            let response = response.map(move |mut response| {
+            let response = ws::handshake(&req).map_err(|e| Error::from(e));
+            let response = response.and_then(move |mut response| {
                 // Create the stream
-                let stream = web::Payload::extract(&req);
+                let stream = web::Payload::extract(&req)?;
 
                 // Apply to the context
-                let ctx = ws::WebsocketContext::create(req, session, stream);
+                let ctx = ws::WebsocketContext::create(session, stream);
 
                 // Generate the response
-                response.body(ctx)
+                Ok(response.streaming(ctx))
             });
 
             // Generate the websocket response
