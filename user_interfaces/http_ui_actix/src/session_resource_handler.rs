@@ -9,7 +9,6 @@ use flo_logging::*;
 use actix_web::*;
 use actix_web::Error;
 use actix_web::http::*;
-use actix_web::dev::{AsyncResult,Handler};
 use futures::*;
 use futures::future;
 use futures::stream;
@@ -226,44 +225,43 @@ fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>,
 ///
 /// Handler for get requests for a session
 /// 
-pub fn session_resource_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
-    |req: &HttpRequest<Arc<Session>>| {
-        // The path is the tail of the request
-        let path    = req.match_info().get("tail");
-        let state   = Arc::clone(req.state());
+pub fn session_resource_handler<Session: 'static+ActixSession>(req: &HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+    // The path is the tail of the request
+    let path    = req.match_info().get("tail");
+    let state   = req.app_data::<Arc<Session>>();
+    let state   = state.expect("Valid flowbetween session");
 
-        if let Some(path) = path {
-            // Path is valid
-            let resource = decode_url(path);
+    if let Some(path) = path {
+        // Path is valid
+        let resource = decode_url(path);
 
-            if let Some(resource) = resource {
-                // Got a valid resource
-                let session = state.get_session(&resource.session_id);
+        if let Some(resource) = resource {
+            // Got a valid resource
+            let session = state.get_session(&resource.session_id);
 
-                if let Some(session) = session {
-                    // URL is in a valid format and the session could be found
-                    match resource.resource_type {
-                        ResourceType::Image     => AsyncResult::future(Box::new(handle_image_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))),
-                        ResourceType::Canvas    => AsyncResult::future(Box::new(handle_canvas_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)))
-                    }
-                } else {
-                    // URL is in a valid format but the session could not be found
-                    RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Session `{}` not found", resource.session_id)));
-
-                    AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+            if let Some(session) = session {
+                // URL is in a valid format and the session could be found
+                match resource.resource_type {
+                    ResourceType::Image     => Box::new(handle_image_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)),
+                    ResourceType::Canvas    => Box::new(handle_canvas_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))
                 }
             } else {
-                // Resource URL was not in the expected format
-                RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Path `{}` was not in the expected format", path)));
+                // URL is in a valid format but the session could not be found
+                RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Session `{}` not found", resource.session_id)));
 
-                AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+                Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found")))
             }
         } else {
-            // No tail path was supplied (likely this handler is being called from the wrong place)
-            RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Missing tail path")));
+            // Resource URL was not in the expected format
+            RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Path `{}` was not in the expected format", path)));
 
-            AsyncResult::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+            Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found")))
         }
+    } else {
+        // No tail path was supplied (likely this handler is being called from the wrong place)
+        RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Missing tail path")));
+
+        Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found")))
     }
 }
 
