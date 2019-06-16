@@ -97,37 +97,35 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
 /// Handles a JSON UI request
 /// 
 fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request: &UiHandlerRequest) -> impl Future<Item=HttpResponse, Error=Error> {
-    let session_state = req.app_data::<Arc<Session>>();
+    let session_state = req.app_data::<Arc<Session>>().expect("Flowbetween session state");
 
-    if let Some(session_state) = session_state {
-        let session_state = Arc::clone(&session_state);
+    let session_state = Arc::clone(&session_state);
 
-        // Fetch the session ID from the request
-        let session_id  = ui_request.session_id.clone();
+    // Fetch the session ID from the request
+    let session_id  = ui_request.session_id.clone();
 
-        // Generate the response
-        let response: Box<dyn Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
-            None                => Box::new(handle_no_session(session_state, base_url(&req), ui_request)),
-            Some(session_id)    => {
-                // Try to fetch the session corresponding to this ID
-                let session = session_state.get_session(&session_id);
+    // Generate the response
+    let response: Box<dyn Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
+        None                => Box::new(handle_no_session(session_state, base_url(&req), ui_request)),
+        Some(session_id)    => {
+            // Try to fetch the session corresponding to this ID
+            let session = session_state.get_session(&session_id);
 
-                // Send the events to the appropriate session if we find one
-                match session {
-                    Some(session)   => Box::new(handle_with_session::<Session>(&mut *session.lock().unwrap(), ui_request)),
-                    None            => Box::new(handle_no_session(session_state, base_url(&req), ui_request))
-                }
+            // Send the events to the appropriate session if we find one
+            match session {
+                Some(session)   => Box::new(handle_with_session::<Session>(&mut *session.lock().unwrap(), ui_request)),
+                None            => Box::new(handle_no_session(session_state, base_url(&req), ui_request))
             }
-        };
-        
-        // Turn the UI response into a JSON response
-        response
-            .map(move |response| {
-                req.build_response(StatusCode::OK)
-                    .header(http::header::CONTENT_TYPE, "application/json; charset=utf-8")
-                    .json(response)
-            })
-    }
+        }
+    };
+    
+    // Turn the UI response into a JSON response
+    response
+        .map(move |response| {
+            HttpResponse::Ok()
+                .header(http::header::CONTENT_TYPE, "application/json; charset=utf-8")
+                .json(response)
+        })
 }
 
 ///
