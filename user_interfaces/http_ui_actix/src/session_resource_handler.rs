@@ -122,7 +122,7 @@ where CoreUi: 'static+CoreUserInterface+Send+Sync {
 ///
 /// Produces a HTTP response for an image request
 /// 
-fn handle_image_request<Session: ActixSession>(req: &HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+fn handle_image_request<Session: ActixSession>(_req: &HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
 
@@ -171,7 +171,7 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest, session: &Http
 ///
 /// Produces a HTTP response for a canvas request
 /// 
-fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+fn handle_canvas_request<Session: ActixSession>(_req: &HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
 
@@ -241,8 +241,8 @@ pub fn session_resource_handler<Session: 'static+ActixSession>(req: &HttpRequest
             if let Some(session) = session {
                 // URL is in a valid format and the session could be found
                 match resource.resource_type {
-                    ResourceType::Image     => Box::new(handle_image_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)),
-                    ResourceType::Canvas    => Box::new(handle_canvas_request(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))
+                    ResourceType::Image     => Box::new(handle_image_request::<Session>(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)),
+                    ResourceType::Canvas    => Box::new(handle_canvas_request::<Session>(&req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))
                 }
             } else {
                 // URL is in a valid format but the session could not be found
