@@ -110,7 +110,8 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpReques
         };
 
         // Look up the session
-        let session = req.state().get_session(&session_id).clone();
+        let session_state   = req.app_data::<Arc<Session>>().expect("Flowbetween session state");
+        let session         = session_state.get_session(&session_id).clone();
 
         if let Some(session) = session {
             // Start a new websocket for this session
@@ -121,7 +122,7 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpReques
             let response = ws::handshake(&req);
             let response = response.map(move |mut response| {
                 // Create the stream
-                let stream = ws::handshake(req);
+                let stream = ws::handshake(&req);
 
                 // Apply to the context
                 let ctx = ws::WebsocketContext::create(req, session, stream);
@@ -135,10 +136,10 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpReques
                 .unwrap_or_else(|err| future::err(err)))
         } else {
             // Session not found
-            Box::new(future::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found")))
+            Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
         }
     } else {
         // Handler not properly installed, probably
-        Box::new(future::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found")))
+        Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
     }
 }
