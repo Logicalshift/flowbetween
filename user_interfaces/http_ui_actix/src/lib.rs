@@ -8,6 +8,7 @@ extern crate flo_static_files;
 
 extern crate actix;
 extern crate actix_web;
+extern crate actix_web_actors;
 extern crate futures;
 extern crate bytes;
 #[macro_use] extern crate lazy_static;

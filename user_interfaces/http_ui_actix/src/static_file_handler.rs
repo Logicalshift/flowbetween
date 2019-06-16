@@ -1,22 +1,22 @@
 use flo_static_files::*;
 
 use actix_web::*;
-use actix_web::http::*;
-use actix_web::dev::{Handler, AsyncResult};
+use actix_web::http::Method;
 use futures::future;
+use futures::*;
 
 ///
 /// Creates the standard static file handler
 /// 
-pub fn flowbetween_static_file_handler<TState>() -> impl Handler<TState> {
+pub fn flowbetween_static_file_handler() -> impl Fn(HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>>+Send+Sync {
     static_file_handler(flowbetween_static_files())
 }
 
 ///
 /// Creates a handler for serving static files from a service
 ///
-pub fn static_file_handler<TState>(static_files: StaticService) -> impl Handler<TState> {
-    move |req: &HttpRequest<TState>| {
+pub fn static_file_handler(static_files: StaticService) -> impl Fn(HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>>+Send+Sync {
+    move |req: HttpRequest| {
         // The tail specifies the file
         let tail = req.match_info().get("tail");
 
@@ -31,33 +31,33 @@ pub fn static_file_handler<TState>(static_files: StaticService) -> impl Handler<
             // Found a file
             if req.method() == &Method::GET {
                 // Append the body and return
-                let found           = req.build_response(StatusCode::OK)
+                let found           = HttpResponse::Ok()
                     .header(http::header::ETAG, etag)
                     .header(http::header::CONTENT_TYPE, content_type)
                     .header(http::header::CONTENT_LENGTH, format!("{}", file.content().len()))
                     .header(http::header::CACHE_CONTROL, "public, max-age=60")
                     .body(Vec::from(file.content()));
 
-                AsyncResult::future(Box::new(future::ok(found)))
+                Box::new(future::ok(found))
             } else if req.method() == &Method::HEAD {
                 // Just the headers
-                let found           = req.build_response(StatusCode::OK)
+                let found           = HttpResponse::Ok()
                     .header(http::header::ETAG, etag)
                     .header(http::header::CONTENT_TYPE, content_type)
                     .header(http::header::CONTENT_LENGTH, format!("{}", file.content().len()))
                     .header(http::header::CACHE_CONTROL, "public, max-age=60")
                     .finish();
 
-                AsyncResult::future(Box::new(future::ok(found)))
+                Box::new(future::ok(found))
             } else {
                 // Unsupported method
-                let not_supported = future::ok(req.build_response(StatusCode::METHOD_NOT_ALLOWED).body("Method not allowed"));
-                AsyncResult::future(Box::new(not_supported))
+                let not_supported = future::ok(HttpResponse::MethodNotAllowed().body("Method not allowed"));
+                Box::new(not_supported)
             }
         } else {
             // File does not exist
-            let not_found = future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"));
-            AsyncResult::future(Box::new(not_found))
+            let not_found = future::ok(HttpResponse::NotFound().body("Not found"));
+            Box::new(not_found)
         }
     }
 }

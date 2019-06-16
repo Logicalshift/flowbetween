@@ -27,6 +27,7 @@ mod flo_session;
 #[cfg(feature="http")]  mod http_session;
 
 #[cfg(feature="http")]  use actix_web as aw;
+#[cfg(feature="http")]  use actix_web::web as web;
 
 use std::sync::*;
 use std::thread;
@@ -57,16 +58,28 @@ fn main_actix() -> Option<JoinHandle<()>> {
         // Log that we're getting ready
         log.log(format!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT)));
 
-        // Run the actix server
-        aw::server::new(move || {
-                aw::App::with_state(sessions.clone())
-                    .handler("/flowbetween/session", flo_actix::session_handler())
-                    .handler("/ws", flo_actix::session_websocket_handler())
-                    .handler("/", flo_actix::flowbetween_static_file_handler())
+        // Start the actix server
+        aw::HttpServer::new(move || {
+                // Something in Actix's type system involving the private Factory type is unhappy with using the static file handler function directlyh
+                // (Error is unhelpful but I think it's to do with if the function can be cloned or not)
+                let static_file_handler = Arc::new(flo_actix::flowbetween_static_file_handler());
+
+                aw::App::new()
+                    .data(sessions.clone())
+                    .service(web::resource("/flowbetween/session")
+                        .route(web::get().to(flo_actix::session_get_handler::<WebSessions<FlowBetweenSession>>))
+                        .route(web::post().to(flo_actix::session_post_handler::<WebSessions<FlowBetweenSession>>)))
+                    .service(web::resource("/flowbetween/session/{tail:.*}")
+                        .route(web::get().to(flo_actix::session_get_handler::<WebSessions<FlowBetweenSession>>))
+                        .route(web::post().to(flo_actix::session_post_handler::<WebSessions<FlowBetweenSession>>)))
+                    .service(web::resource("/ws").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
+                    .service(web::resource("/ws/{tail:.*}").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
+                    .service(web::resource("/{tail:.*}").route(web::to(move |r| static_file_handler(r))))
             })
             .bind(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT))
-            .unwrap()
-            .run();
+            .expect("Failed to bind HTTP server to port")
+            .run()
+            .expect("Http server failed while running");
     }))
 }
 
