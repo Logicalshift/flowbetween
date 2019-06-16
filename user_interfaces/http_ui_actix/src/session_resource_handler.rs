@@ -143,14 +143,14 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest, session: &Http
             match &*image {
                 Image::Png(data) => {
                     // PNG data
-                    future::ok(req.build_response(StatusCode::OK)
+                    future::ok(HttpResponse::Ok()
                         .header(http::header::CONTENT_TYPE, "image/png")
                         .streaming(data.read_future().map_err(|_| io::Error::new(ErrorKind::Other, "Unknown error"))))
                 },
 
                 Image::Svg(data) => {
                     // SVG data
-                    future::ok(req.build_response(StatusCode::OK)
+                    future::ok(HttpResponse::Ok()
                         .header(http::header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")
                         .streaming(data.read_future().map_err(|_| io::Error::new(ErrorKind::Other, "Unknown error"))))
                 },
@@ -159,13 +159,13 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest, session: &Http
             // Image not found
             session.log().log((Level::Warn, format!("Image `{}` not found", image_name)));
 
-            future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+            future::ok(HttpResponse::NotFound().body("Not found"))
         }
     } else {
         // Controller not found
         session.log().log((Level::Warn, format!("Controller `{:?}` not found while looking for an image", controller_path)));
 
-        future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+        future::ok(HttpResponse::NotFound().body("Not found"))
     }
 }
 
@@ -205,20 +205,20 @@ fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest, session: &Htt
                 .map_err(|_: ()| io::Error::new(ErrorKind::Other, "Unknown error"));
 
             // Turn into a response
-            future::ok(req.build_response(StatusCode::OK)
+            future::ok(HttpResponse::Ok()
                 .header(http::header::CONTENT_TYPE, "application/flocanvas; charset=utf-8")
                 .streaming(encoded_drawing))
         } else {
             // Canvas not found
             session.log().log((Level::Warn, format!("Canvas `{}` not found", canvas_name)));
 
-            future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+            future::ok(HttpResponse::NotFound().body("Not found"))
         }
     } else {
         // Controller not found
         session.log().log((Level::Warn, format!("While searching for a canvas: controller `{:?}` not found", controller_path)));
 
-        future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found"))
+        future::ok(HttpResponse::NotFound().body("Not found"))
     }
 }
 
