@@ -5,6 +5,7 @@ use flo_ui::*;
 
 use actix::*;
 use actix_web::*;
+use actix_web::web;
 use actix_web_actors::ws;
 use futures::*;
 use futures::future;
@@ -122,7 +123,7 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpReques
             let response = ws::handshake(&req);
             let response = response.map(move |mut response| {
                 // Create the stream
-                let stream = ws::handshake(&req);
+                let stream = web::Payload::extract(&req);
 
                 // Apply to the context
                 let ctx = ws::WebsocketContext::create(req, session, stream);
