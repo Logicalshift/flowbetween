@@ -123,7 +123,7 @@ where CoreUi: 'static+CoreUserInterface+Send+Sync {
 ///
 /// Produces a HTTP response for an image request
 /// 
-fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+fn handle_image_request<Session: ActixSession>(req: &HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
 
@@ -172,7 +172,7 @@ fn handle_image_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, 
 ///
 /// Produces a HTTP response for a canvas request
 /// 
-fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest<Arc<Session>>, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+fn handle_canvas_request<Session: ActixSession>(req: &HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
 
