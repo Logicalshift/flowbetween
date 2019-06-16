@@ -60,11 +60,15 @@ fn main_actix() -> Option<JoinHandle<()>> {
 
         // Start the actix server
         aw::HttpServer::new(move || {
+                // Something in Actix's type system involving the private Factory type is unhappy with using the static file handler function directlyh
+                // (Error is unhelpful but I think it's to do with if the function can be cloned or not)
+                let static_file_handler = Arc::new(flo_actix::flowbetween_static_file_handler());
+
                 aw::App::new()
                     .data(sessions.clone())
                     .service(web::resource("/flowbetween/session").route(web::to(flo_actix::session_handler::<WebSessions<FlowBetweenSession>>)))
                     .service(web::resource("/ws").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
-                    /*.service(web::resource("/").route(web::to(flo_actix::flowbetween_static_file_handler())))*/
+                    .service(web::resource("/").route(web::to(move |r| static_file_handler(r))))
             })
             .bind(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT))
             .unwrap()
