@@ -134,9 +134,6 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
 pub fn session_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     match req.method() {
         &Method::POST => {
-            // POST requests are used to send instructions to sessions
-            let req = req.clone();
-
             // Request must contain a JSON body
             let result = Json::<UiHandlerRequest>::extract(&req)
                 .then(move |ui_request| -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
@@ -159,7 +156,7 @@ pub fn session_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<d
 
         &Method::GET => {
             // Get requests are handled by the session resource handler
-            session_resource_handler::<Session>(&req)
+            session_resource_handler::<Session>(req)
         },
 
         _ => {

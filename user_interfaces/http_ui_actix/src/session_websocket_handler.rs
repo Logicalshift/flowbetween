@@ -98,9 +98,9 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
 ///
 /// Creates a handler for requests that should spawn a websocket for a session
 /// 
-pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     // The tail indicates the session ID
-    let tail = req.match_info().get("tail");
+    let tail = req.match_info().get("tail").map(|s| String::from(s));
 
     if let Some(tail) = tail {
         // Strip any preceeding '/'
@@ -111,12 +111,11 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpReques
         };
 
         // Look up the session
-        let session_state   = req.app_data::<Arc<Session>>().expect("Flowbetween session state");
+        let session_state   = req.app_data::<Arc<Session>>().cloned().expect("Flowbetween session state");
         let session         = session_state.get_session(&session_id).clone();
 
         if let Some(session) = session {
             // Start a new websocket for this session
-            let req     = req.clone();
             let session = FloWsSession::<Session>::new(session);
 
             // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)

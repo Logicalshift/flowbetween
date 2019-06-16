@@ -63,7 +63,7 @@ fn main_actix() -> Option<JoinHandle<()>> {
                 aw::App::new()
                     .data(sessions.clone())
                     .service(web::resource("/flowbetween/session").route(web::to(flo_actix::session_handler::<WebSessions<FlowBetweenSession>>)))
-                    /*.route(web::resource("/ws").to(flo_actix::session_websocket_handler))*/
+                    .service(web::resource("/ws").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
                     /*.service(web::resource("/").route(web::to(flo_actix::flowbetween_static_file_handler())))*/
             })
             .bind(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT))

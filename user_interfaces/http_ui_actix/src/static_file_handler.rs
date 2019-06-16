@@ -8,15 +8,15 @@ use futures::*;
 ///
 /// Creates the standard static file handler
 /// 
-pub fn flowbetween_static_file_handler() -> impl Fn(&HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn flowbetween_static_file_handler() -> impl Fn(HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>>+Send+Sync {
     static_file_handler(flowbetween_static_files())
 }
 
 ///
 /// Creates a handler for serving static files from a service
 ///
-pub fn static_file_handler(static_files: StaticService) -> impl Fn(&HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
-    move |req: &HttpRequest| {
+pub fn static_file_handler(static_files: StaticService) -> impl Fn(HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>>+Send+Sync {
+    move |req: HttpRequest| {
         // The tail specifies the file
         let tail = req.match_info().get("tail");
 
