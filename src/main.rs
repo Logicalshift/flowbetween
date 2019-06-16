@@ -71,10 +71,9 @@ fn main_actix() -> Option<JoinHandle<()>> {
                     .service(web::resource("/").route(web::to(move |r| static_file_handler(r))))
             })
             .bind(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT))
-            .unwrap()
-            .start();
-
-        // TODO: runtime, run the server
+            .expect("Failed to bind HTTP server to port")
+            .run()
+            .expect("Http server failed while running");
     }))
 }
 
