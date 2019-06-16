@@ -98,7 +98,7 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
 ///
 /// Creates a handler for requests that should spawn a websocket for a session
 /// 
-pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest, payload: web::Payload) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     // The tail indicates the session ID
     let tail = req.match_info().get("tail").map(|s| String::from(s));
 
@@ -122,7 +122,7 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest
             let response = ws::handshake(&req).map_err(|e| Error::from(e));
             let response = response.and_then(move |mut response| {
                 // Create the stream
-                let stream = web::Payload::extract(&req)?;
+                let stream = payload;
 
                 // Apply to the context
                 let ctx = ws::WebsocketContext::create(session, stream);
