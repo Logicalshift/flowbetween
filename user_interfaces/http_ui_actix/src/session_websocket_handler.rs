@@ -4,9 +4,8 @@ use flo_http_ui::*;
 use flo_ui::*;
 
 use actix::*;
-use actix::fut;
 use actix_web::*;
-use actix_web::dev::{Handler, AsyncResult};
+use actix_web_actors::ws;
 use futures::*;
 use futures::future;
 use futures::sync::oneshot;
@@ -42,7 +41,7 @@ impl<Session: ActixSession+'static> FloWsSession<Session> {
     ///
     /// Starts sending updates to this actor (once a context is available)
     /// 
-    pub fn start_sending_updates(&mut self, ctx: &mut ws::WebsocketContext<Self, Arc<Session>>) {
+    pub fn start_sending_updates(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
         // Retrieve the stream of updates we need to send to the websocket
         let update_stream = self.session.lock().unwrap().http_ui().get_updates();
         let update_stream = fut::wrap_stream::<_, Self>(update_stream);
@@ -58,7 +57,7 @@ impl<Session: ActixSession+'static> FloWsSession<Session> {
 }
 
 impl<Session: ActixSession+'static> Actor for FloWsSession<Session> {
-    type Context = ws::WebsocketContext<Self, Arc<Session>>;
+    type Context = ws::WebsocketContext<Self>;
 }
 
 impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError> for FloWsSession<Session> {
@@ -98,50 +97,48 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
 ///
 /// Creates a handler for requests that should spawn a websocket for a session
 /// 
-pub fn session_websocket_handler<Session: 'static+ActixSession>() -> impl Handler<Arc<Session>> {
-    |req: &HttpRequest<Arc<Session>>| {
-        // The tail indicates the session ID
-        let tail = req.match_info().get("tail");
+pub fn session_websocket_handler<Session: 'static+ActixSession>(req: &HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+    // The tail indicates the session ID
+    let tail = req.match_info().get("tail");
 
-        if let Some(tail) = tail {
-            // Strip any preceeding '/'
-            let session_id = if tail.chars().nth(0) == Some('/') {
-                tail[1..].to_string()
-            } else {
-                tail.to_string()
-            };
-
-            // Look up the session
-            let session = req.state().get_session(&session_id).clone();
-
-            if let Some(session) = session {
-                // Start a new websocket for this session
-                let req     = req.clone();
-                let session = FloWsSession::new(session);
-
-                // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
-                let response = ws::handshake(&req);
-                let response = response.map(move |mut response| {
-                    // Create the stream
-                    let stream = ws::WsStream::new(req.payload());
-
-                    // Apply to the context
-                    let ctx = ws::WebsocketContext::create(req, session, stream);
-
-                    // Generate the response
-                    response.body(ctx)
-                });
-
-                // Generate the websocket response
-                response.map(|response| AsyncResult::ok(response))
-                    .unwrap_or_else(|err| AsyncResult::err(err))
-            } else {
-                // Session not found
-                AsyncResult::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found"))
-            }
+    if let Some(tail) = tail {
+        // Strip any preceeding '/'
+        let session_id = if tail.chars().nth(0) == Some('/') {
+            tail[1..].to_string()
         } else {
-            // Handler not properly installed, probably
-            AsyncResult::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found"))
+            tail.to_string()
+        };
+
+        // Look up the session
+        let session = req.state().get_session(&session_id).clone();
+
+        if let Some(session) = session {
+            // Start a new websocket for this session
+            let req     = req.clone();
+            let session = FloWsSession::new(session);
+
+            // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
+            let response = ws::handshake(&req);
+            let response = response.map(move |mut response| {
+                // Create the stream
+                let stream = ws::handshake(req);
+
+                // Apply to the context
+                let ctx = ws::WebsocketContext::create(req, session, stream);
+
+                // Generate the response
+                response.body(ctx)
+            });
+
+            // Generate the websocket response
+            Box::new(response.map(|response| future::ok(response))
+                .unwrap_or_else(|err| future::err(err)))
+        } else {
+            // Session not found
+            Box::new(future::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found")))
         }
+    } else {
+        // Handler not properly installed, probably
+        Box::new(future::ok(req.build_response(http::StatusCode::NOT_FOUND).body("Not found")))
     }
 }

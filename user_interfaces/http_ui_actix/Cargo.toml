@@ -17,6 +17,8 @@ flo_static_files    = { path = "../../static_files", version= "0.1" }
 flo_logging         = { path = "../../logging", version = "0.1" }
 
 actix-web           = "1.0"
+actix-web-actors    = "1.0"
+actix               = "0.8"
 bytes               = "0.4"
 futures             = "0.1"
 serde_json          = "1.0"
