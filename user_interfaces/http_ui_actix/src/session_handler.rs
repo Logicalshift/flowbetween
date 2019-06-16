@@ -143,12 +143,12 @@ pub fn session_handler<Session: 'static+ActixSession>(req: &HttpRequest) -> Box<
                     match ui_request {
                         Ok(ui_request) => {
                             // Process this UI request
-                            Box::new(handle_ui_request(req, &*ui_request))
+                            Box::new(handle_ui_request::<Session>(req, &*ui_request))
                         },
 
                         Err(_err) => {
                             // Failed to parse the JSON request for some reason
-                            Box::new(future::ok(req.build_response(StatusCode::BAD_REQUEST).body("FlowBetween session request is not in the expected format")))
+                            Box::new(future::ok(HttpResponse::BadRequest().body("FlowBetween session request is not in the expected format")))
                         }
                     }
                 });
@@ -159,12 +159,12 @@ pub fn session_handler<Session: 'static+ActixSession>(req: &HttpRequest) -> Box<
 
         &Method::GET => {
             // Get requests are handled by the session resource handler
-            session_resource_handler(req)
+            session_resource_handler::<Session>(req)
         },
 
         _ => {
             // Other requests are not supported
-            Box::new(future::ok(req.build_response(StatusCode::METHOD_NOT_ALLOWED).body("Method not allowed")))
+            Box::new(future::ok(HttpResponse::MethodNotAllowed().body("Method not allowed")))
         }
     }
 }
