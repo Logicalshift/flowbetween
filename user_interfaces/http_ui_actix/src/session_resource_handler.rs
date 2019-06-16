@@ -8,7 +8,6 @@ use flo_logging::*;
 
 use actix_web::*;
 use actix_web::Error;
-use actix_web::http::*;
 use futures::*;
 use futures::future;
 use futures::stream;
