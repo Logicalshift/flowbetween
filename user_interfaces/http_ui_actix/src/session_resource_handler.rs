@@ -249,19 +249,19 @@ pub fn session_resource_handler<Session: 'static+ActixSession>(req: &HttpRequest
                 // URL is in a valid format but the session could not be found
                 RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Session `{}` not found", resource.session_id)));
 
-                Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found")))
+                Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
             }
         } else {
             // Resource URL was not in the expected format
             RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Path `{}` was not in the expected format", path)));
 
-            Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found")))
+            Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
         }
     } else {
         // No tail path was supplied (likely this handler is being called from the wrong place)
         RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Missing tail path")));
 
-        Box::new(future::ok(req.build_response(StatusCode::NOT_FOUND).body("Not found")))
+        Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
     }
 }
 
