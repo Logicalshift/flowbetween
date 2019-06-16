@@ -27,6 +27,7 @@ mod flo_session;
 #[cfg(feature="http")]  mod http_session;
 
 #[cfg(feature="http")]  use actix_web as aw;
+#[cfg(feature="http")]  use actix_web::web as web;
 
 use std::sync::*;
 use std::thread;
@@ -57,16 +58,19 @@ fn main_actix() -> Option<JoinHandle<()>> {
         // Log that we're getting ready
         log.log(format!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT)));
 
-        // Run the actix server
-        aw::server::new(move || {
-                aw::App::with_state(sessions.clone())
-                    .handler("/flowbetween/session", flo_actix::session_handler())
-                    .handler("/ws", flo_actix::session_websocket_handler())
-                    .handler("/", flo_actix::flowbetween_static_file_handler())
+        // Start the actix server
+        aw::HttpServer::new(move || {
+                aw::App::new()
+                    .data(sessions.clone())
+                    .service(web::resource("/flowbetween/session").route(web::to(flo_actix::session_handler::<WebSessions<FlowBetweenSession>>)))
+                    /*.route(web::resource("/ws").to(flo_actix::session_websocket_handler))*/
+                    /*.service(web::resource("/").route(web::to(flo_actix::flowbetween_static_file_handler())))*/
             })
             .bind(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT))
             .unwrap()
-            .run();
+            .start();
+
+        // TODO: runtime, run the server
     }))
 }
 

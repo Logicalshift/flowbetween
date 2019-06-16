@@ -131,7 +131,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
 ///
 /// Creates the handler for an actix UI session
 /// 
-pub fn session_handler<Session: 'static+ActixSession>(req: &HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     match req.method() {
         &Method::POST => {
             // POST requests are used to send instructions to sessions
@@ -159,7 +159,7 @@ pub fn session_handler<Session: 'static+ActixSession>(req: &HttpRequest) -> Box<
 
         &Method::GET => {
             // Get requests are handled by the session resource handler
-            session_resource_handler::<Session>(req)
+            session_resource_handler::<Session>(&req)
         },
 
         _ => {
