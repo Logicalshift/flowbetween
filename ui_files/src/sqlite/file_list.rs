@@ -3,7 +3,6 @@ use super::file_error::*;
 use flo_logging::*;
 
 use rusqlite::*;
-use rusqlite::types::*;
 
 use std::result;
 use std::path::{Path, PathBuf};
@@ -233,11 +232,11 @@ impl FileList {
         ")?;
         let paths               = select_paths
             .query_map(&[&ROOT_ENTITY], |row| {
-                let path_string = row.get::<_, String>(0);
+                let path_string = row.get::<_, String>(0)?;
                 let mut path    = PathBuf::new();
                 path.push(path_string);
 
-                path
+                Ok(path)
             })?
             .filter_map(|row| row.ok())
             .collect();

@@ -361,7 +361,7 @@ impl FloSqlite {
             PushNearestKeyFrame(when)                                       => {
                 let layer_id                        = self.stack.pop().unwrap();
                 let mut select_nearest_keyframe     = Self::prepare(&self.sqlite, FloStatement::SelectNearestKeyFrame)?;
-                let (keyframe_id, start_micros)     = select_nearest_keyframe.query_row(&[&layer_id, &(Self::get_micros(&when))], |row| (row.get(0), row.get(1)))?;
+                let (keyframe_id, start_micros)     = select_nearest_keyframe.query_row(&[&layer_id, &(Self::get_micros(&when))], |row| Ok((row.get(0)?, row.get(1)?)))?;
                 self.stack.push(start_micros);
                 self.stack.push(keyframe_id);
             },
