@@ -189,7 +189,7 @@ impl FloSqlite {
                 let path_id             = insert_path.insert::<&[&dyn ToSql]>(&[])?;
                 let path_id             = path_id as i64;
 
-                // Insert the compoennts
+                // Insert the components
                 let mut point_index = 0;
                 for component in components.iter() {
                     use self::PathComponent::*;
@@ -259,7 +259,84 @@ impl FloSqlite {
             },
 
             PopInsertPathComponents(initial_point_index, components)        => {
-                unimplemented!()
+                let path_id             = self.stack.pop().unwrap();
+
+                let point_move_to       = self.enum_value(DbEnum::PathPoint(PathPointType::MoveTo));
+                let point_line_to       = self.enum_value(DbEnum::PathPoint(PathPointType::LineTo));
+                let point_control_point = self.enum_value(DbEnum::PathPoint(PathPointType::ControlPoint));
+                let point_bezier_to     = self.enum_value(DbEnum::PathPoint(PathPointType::BezierTo));
+                let point_close         = self.enum_value(DbEnum::PathPoint(PathPointType::Close));
+
+                let mut update_points   = Self::prepare(&self.sqlite, FloStatement::UpdatePathPointIndicesAfter)?;
+                let mut update_types    = Self::prepare(&self.sqlite, FloStatement::UpdatePathPointTypeIndicesAfter)?;
+                let mut insert_point    = Self::prepare(&self.sqlite, FloStatement::InsertPathPoint)?;
+                let mut insert_type     = Self::prepare(&self.sqlite, FloStatement::InsertPathPointType)?;
+
+                let initial_point_index = *initial_point_index as i64;
+
+                // Count the points in the path
+                let mut total_num_points = 0;
+                for component in components.iter() {
+                    use self::PathComponent::*;
+
+                    match component {
+                        Move(_) | Line(_) | Close   => { total_num_points += 1; }
+                        Bezier(_, _, _)             => { total_num_points += 3; }
+                    }
+                }
+
+                // Update the point indexes in this range
+                update_points.execute(&[&total_num_points, &path_id, &initial_point_index])?;
+                update_types.execute(&[&total_num_points, &path_id, &initial_point_index])?;
+
+                // Insert the new points
+                // TODO: dedupe with PushPathComponents
+                let mut point_index = initial_point_index;
+                for component in components.iter() {
+                    use self::PathComponent::*;
+
+                    match component {
+                        Move(point) => { 
+                            let (x, y) = point.position;
+                            let (x, y) = (x as f64, y as f64);
+                            insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &x, &y])?;
+                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &point_move_to])?;
+                        },
+
+                        Line(point) => {
+                            let (x, y) = point.position;
+                            let (x, y) = (x as f64, y as f64);
+                            insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &x, &y])?;
+                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &point_line_to])?;
+                        },
+                        
+                        Bezier(target, cp1, cp2) => {
+                            let (tx, ty)        = target.position;
+                            let (cp1x, cp1y)    = cp1.position;
+                            let (cp2x, cp2y)    = cp2.position;
+
+                            let (tx, ty)        = (tx as f64, ty as f64);    
+                            let (cp1x, cp1y)    = (cp1x as f64, cp1y as f64);
+                            let (cp2x, cp2y)    = (cp2x as f64, cp2y as f64);
+
+                            insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &cp1x, &cp1y])?;
+                            insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &(point_index+1), &cp2x, &cp2y])?;
+                            insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &(point_index+2), &tx, &ty])?;
+
+                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &point_control_point])?;
+                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &(point_index+1), &point_control_point])?;
+                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &(point_index+2), &point_bezier_to])?;
+
+                            point_index += 2;
+                        },
+
+                        Close => {
+                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &(point_index), &point_close])?;
+                        }
+                    }
+
+                    point_index += 1;
+                }
             },
 
             PushTimePoint(x, y, millis) => {

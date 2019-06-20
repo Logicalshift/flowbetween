@@ -459,6 +459,24 @@ fn smoke_remove_path_points() {
 }
 
 #[test]
+fn smoke_insert_path_components() {
+    test_updates(vec![
+        DatabaseUpdate::PushPathComponents(Arc::new(vec![
+            PathComponent::Move(PathPoint::new(10.0, 20.0)),
+            PathComponent::Line(PathPoint::new(20.0, 30.0)),
+            PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+            PathComponent::Close
+        ])),
+        DatabaseUpdate::PopInsertPathComponents(1, Arc::new(vec![
+            PathComponent::Move(PathPoint::new(10.0, 20.0)),
+            PathComponent::Line(PathPoint::new(20.0, 30.0)),
+            PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+            PathComponent::Close
+        ]))
+    ])
+}
+
+#[test]
 fn smoke_query_path_components() {
     let core    = core();
     let mut db  = core.db;
