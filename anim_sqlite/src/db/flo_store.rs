@@ -168,6 +168,9 @@ pub enum DatabaseUpdate {
     /// Pops the element ID from the top of the stack and pushes the key frame ID and then the element ID
     PushKeyFrameIdForElementId,
 
+    /// Peeks at the element ID from the top of the stack and pushes the path ID associated with it (leaving the stack with the path ID on top, followed by the element ID)
+    PushPathIdForElementId,
+
     /// Pops a brush ID and a vector element ID and creates a vector brush element from them
     PopVectorBrushElement(DrawingStyleType),
 
@@ -177,7 +180,7 @@ pub enum DatabaseUpdate {
     /// Pops a vector element ID from the stack and creates a set of brush points for it
     PopBrushPoints(Arc<Vec<BrushPoint>>),
 
-    /// Pops an element ID and updates, the brush point coordinates for it
+    /// Pops an element ID and updates the brush point coordinates for it
     UpdateBrushPointCoords(Arc<Vec<((f32, f32), (f32, f32), (f32, f32))>>),
 
     /// Pops a path ID, a brush properties ID, a brush ID and a vector element ID and creates a path element from them

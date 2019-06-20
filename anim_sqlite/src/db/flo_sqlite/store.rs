@@ -444,6 +444,15 @@ impl FloSqlite {
                 self.stack.push(element_id);
             },
 
+            PushPathIdForElementId                                          => {
+                let element_id                      = self.stack.pop().unwrap();
+                let mut path_for_element_id         = Self::prepare(&self.sqlite, FloStatement::SelectPathElement)?;
+
+                let path_id                         = path_for_element_id.query_row(&[&element_id], |row| Ok(row.get(0)?))?;
+                self.stack.push(element_id);
+                self.stack.push(path_id);
+            }
+
             PopVectorBrushElement(drawing_style)                            => {
                 let brush_id                            = self.stack.pop().unwrap();
                 let element_id                          = self.stack.pop().unwrap();

@@ -2,7 +2,7 @@
  **
  ** Layer cache
  **
- ** The layer cache associates cached versions of hows to draw layers at particular times.
+ ** The layer cache associates cached versions of layer rendering instructions with a layer and a time.
  **
  **/
 
