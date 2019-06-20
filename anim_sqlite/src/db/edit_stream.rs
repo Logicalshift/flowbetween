@@ -217,6 +217,7 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             ElementAddAttachment        => unimplemented!(),
             ElementRemoveAttachment     => unimplemented!(),
             ElementSetControlPoints     => unimplemented!(),
+            ElementSetPath              => unimplemented!(),
             ElementOrderInFront         => unimplemented!(),
             ElementOrderBehind          => unimplemented!(),
             ElementOrderToTop           => unimplemented!(),

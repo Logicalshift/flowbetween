@@ -1,4 +1,7 @@
 use super::element_id::*;
+use super::super::path::*;
+
+use std::sync::*;
 
 ///
 /// Possible element ordering operations
@@ -25,6 +28,9 @@ pub enum ElementEdit {
 
     /// Updates the control points for this element
     SetControlPoints(Vec<(f32, f32)>),
+
+    /// Updates the path for this element
+    SetPath(Arc<Vec<PathComponent>>),
 
     /// Updates how this element is ordered relative to other elements in the same keyframe
     /// Note that new elements are always created 'in front' of the current set of elements in the frame.

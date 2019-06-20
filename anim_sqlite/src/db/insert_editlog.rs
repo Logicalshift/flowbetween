@@ -139,6 +139,14 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                 ])?;
             },
 
+            SetPath(components) => {
+                self.db.update(vec![
+                    PushPathComponents(Arc::clone(components)), 
+                    PushEditLogPath, 
+                    Pop
+                ])?;
+            },
+
             Order(ElementOrdering::Before(element_id))  => { 
                 match element_id {
                     ElementId::Assigned(element_id)     => { self.db.update(vec![PushEditLogInt(0, *element_id as i64), Pop])?; }
