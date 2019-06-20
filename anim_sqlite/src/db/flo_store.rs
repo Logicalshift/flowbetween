@@ -33,6 +33,9 @@ pub enum DatabaseUpdate {
     /// Removes the ID from the top of the stack
     Pop,
 
+    /// Duplicates the ID on the top of the stack
+    Duplicate,
+
     /// Updates the canvas size of the animation
     UpdateCanvasSize(f64, f64),
 

@@ -468,6 +468,26 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         ])?;
                     },
 
+                    (VectorElementType::Path, ElementEdit::SetPath(components)) => {
+                        // Count the number of points in this path before the update
+                        let element_id          = self.db.query_vector_element_id(&ElementId::Assigned(assigned_id))?
+                            .ok_or(SqliteAnimationError::MissingElementId(ElementId::Assigned(assigned_id)))?;
+                        let path_entry          = self.db.query_path_element(element_id)?
+                            .ok_or(SqliteAnimationError::UnexpectedElementType(ElementId::Assigned(assigned_id)))?;
+                        let existing_components = self.db.query_path_components(path_entry.path_id)?;
+                        let number_of_points    = existing_components.into_iter().map(|component| component.num_points()).sum::<usize>();
+
+                        // Remove and replace all of the points
+                        self.db.update(vec![
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                            DatabaseUpdate::PushPathIdForElementId,
+                            DatabaseUpdate::Duplicate,
+                            DatabaseUpdate::PopRemovePathPoints(0..number_of_points),
+                            DatabaseUpdate::PopInsertPathComponents(0, components),
+                            DatabaseUpdate::Pop
+                        ])?;
+                    },
+
                     (_any_type, ElementEdit::Order(ordering)) => {
                         let update_order = match ordering {
                             ElementOrdering::InFront    => vec![DatabaseUpdate::PopVectorElementMove(DbElementMove::Up)],

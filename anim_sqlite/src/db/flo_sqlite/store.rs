@@ -21,6 +21,11 @@ impl FloSqlite {
                 self.stack.pop(); 
             },
 
+            Duplicate                                                       => {
+                let on_top = *(self.stack.last().unwrap());
+                self.stack.push(on_top);
+            },
+
             UpdateCanvasSize(width, height)                                 => {
                 let mut update_size = Self::prepare(&self.sqlite, FloStatement::UpdateAnimationSize)?;
                 update_size.execute::<&[&dyn ToSql]>(&[&width, &height, &self.animation_id])?;
@@ -275,15 +280,7 @@ impl FloSqlite {
                 let initial_point_index = *initial_point_index as i64;
 
                 // Count the points in the path
-                let mut total_num_points = 0;
-                for component in components.iter() {
-                    use self::PathComponent::*;
-
-                    match component {
-                        Move(_) | Line(_) | Close   => { total_num_points += 1; }
-                        Bezier(_, _, _)             => { total_num_points += 3; }
-                    }
-                }
+                let total_num_points = components.iter().map(|component| component.num_points()).sum::<usize>() as i64;
 
                 // Update the point indexes in this range
                 update_points.execute(&[&total_num_points, &path_id, &initial_point_index])?;

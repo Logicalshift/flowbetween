@@ -17,3 +17,18 @@ pub enum PathComponent {
     /// Close path
     Close
 }
+
+impl PathComponent {
+    ///
+    /// Returns the number of points a particular path component will use in the database
+    ///
+    pub fn num_points(&self) -> usize {
+        use self::PathComponent::*;
+
+        match self {
+            Move(_) | Line(_)   => 1,
+            Bezier(_, _, _)     => 3,
+            Close               => 1            // No point is stored but a point type is
+        }
+    }
+}

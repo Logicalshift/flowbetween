@@ -1,3 +1,5 @@
+use flo_animation::*;
+
 use rusqlite;
 use rusqlite::Error;
 
@@ -19,7 +21,13 @@ pub enum SqliteAnimationError {
     UnsupportedFormatPatch(String),
 
     /// SQLite error of some kind
-    SqlError(rusqlite::Error)
+    SqlError(rusqlite::Error),
+
+    /// An expected element was missing
+    MissingElementId(ElementId),
+
+    /// An element with the specified ID was not of the correct type
+    UnexpectedElementType(ElementId),
 }
 
 impl From<rusqlite::Error> for SqliteAnimationError {
