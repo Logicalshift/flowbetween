@@ -5,6 +5,7 @@ use super::super::error::*;
 
 use flo_animation::*;
 use std::sync::*;
+use std::ops::Range;
 use std::time::Duration;
 use std::result::Result;
 
@@ -88,6 +89,17 @@ pub enum DatabaseUpdate {
 
     /// Creates a path from the points in the list of path components and pushes the ID
     PushPathComponents(Arc<Vec<PathComponent>>),
+
+    /// Pops a path ID and removes the path points with the specified indexes (moving the other components downwards)
+    /// Note: when removing bezier components, they have 3 points: if all three are not removed, then the path will
+    /// be invalid.
+    PopRemovePathPoints(Range<usize>),
+
+    /// Pops a path ID and inserts a new set of components at the point with the specified index.
+    /// Note that bezier components have three points: this must not insert new components between the first
+    /// and second control point of a curve or between the second control point and the end point, or the path
+    /// will be invalid.
+    PopInsertPathComponents(usize, Arc<Vec<PathComponent>>),
 
     /// Creates a new time point at the specified x, y, time coordinates and pushes its ID to the stack
     PushTimePoint(f32, f32, f32),

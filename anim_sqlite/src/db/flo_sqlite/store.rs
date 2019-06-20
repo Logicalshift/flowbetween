@@ -181,8 +181,8 @@ impl FloSqlite {
                 let point_bezier_to     = self.enum_value(DbEnum::PathPoint(PathPointType::BezierTo));
                 let point_close         = self.enum_value(DbEnum::PathPoint(PathPointType::Close));
 
-                let mut insert_point    = Self::prepare(&self.sqlite, FloStatement::InsertPathPoint)?;
                 let mut insert_path     = Self::prepare(&self.sqlite, FloStatement::InsertPath)?;
+                let mut insert_point    = Self::prepare(&self.sqlite, FloStatement::InsertPathPoint)?;
                 let mut insert_type     = Self::prepare(&self.sqlite, FloStatement::InsertPathPointType)?;
 
                 // Create the path
@@ -230,7 +230,7 @@ impl FloSqlite {
                         },
 
                         Close => {
-                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &(point_index+2), &point_close])?;
+                            insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &(point_index), &point_close])?;
                         }
                     }
 
@@ -239,6 +239,27 @@ impl FloSqlite {
 
                 // Final stack is just the path ID
                 self.stack.push(path_id);
+            },
+
+            PopRemovePathPoints(point_range)                                => {
+                let path_id             = self.stack.pop().unwrap();
+
+                let mut delete_points   = Self::prepare(&self.sqlite, FloStatement::DeletePathPointRange)?;
+                let mut delete_types    = Self::prepare(&self.sqlite, FloStatement::DeletePathPointTypeRange)?;
+                let mut update_points   = Self::prepare(&self.sqlite, FloStatement::UpdatePathPointIndicesAfter)?;
+                let mut update_types    = Self::prepare(&self.sqlite, FloStatement::UpdatePathPointTypeIndicesAfter)?;
+
+                let lower_point         = point_range.start as i64;
+                let upper_point         = point_range.end as i64;
+
+                delete_points.execute(&[&path_id, &lower_point, &upper_point])?;
+                delete_types.execute(&[&path_id, &lower_point, &upper_point])?;
+                update_points.execute(&[&(lower_point-upper_point), &path_id, &lower_point])?;
+                update_types.execute(&[&(lower_point-upper_point), &path_id, &lower_point])?;
+            },
+
+            PopInsertPathComponents(initial_point_index, components)        => {
+                unimplemented!()
             },
 
             PushTimePoint(x, y, millis) => {

@@ -115,6 +115,8 @@ enum FloStatement {
     UpdatePathPoint,
     UpdateMoveZIndexUpwards,
     UpdateMoveZIndexDownwards,
+    UpdatePathPointIndicesAfter,
+    UpdatePathPointTypeIndicesAfter,
 
     InsertEnumValue,
     InsertEditType,
@@ -168,7 +170,9 @@ enum FloStatement {
     DeleteElementAttachment,
     DeleteMotion,
     DeleteMotionPoints,
-    DeleteLayerCache
+    DeleteLayerCache,
+    DeletePathPointRange,
+    DeletePathPointTypeRange
 }
 
 impl FloSqlite {
@@ -452,6 +456,8 @@ impl FloSqlite {
             UpdatePathPoint                     => "UPDATE Flo_PathPoints SET X = ?, Y = ? WHERE PathId = ? AND PointIndex = ?",
             UpdateMoveZIndexUpwards             => "UPDATE Flo_VectorElementOrdering SET ZIndex = ZIndex + 1 WHERE KeyFrameId = ? AND ZIndex >= ?",
             UpdateMoveZIndexDownwards           => "UPDATE Flo_VectorElementOrdering SET ZIndex = ZIndex - 1 WHERE KeyFrameId = ? AND ZIndex >= ?",
+            UpdatePathPointIndicesAfter         => "UPDATE Flo_PathPoints SET PointIndex = PointIndex + ? WHERE PathId = ? AND PointIndex >= ?",
+            UpdatePathPointTypeIndicesAfter     => "UPDATE Flo_PathPointType SET PointIndex = PointIndex + ? WHERE PathId = ? AND PointIndex >= ?",
 
             InsertEnumValue                     => "INSERT INTO Flo_EnumerationDescriptions (FieldName, Value, ApiName, Comment) SELECT ?, (SELECT IFNULL(Max(Value)+1, 0) FROM Flo_EnumerationDescriptions WHERE FieldName = ?), ?, ?",
             InsertEditType                      => "INSERT INTO Flo_EditLog (Edit) VALUES (?)",
@@ -506,6 +512,8 @@ impl FloSqlite {
             DeleteMotion                        => "DELETE FROM Flo_Motion WHERE MotionId = ?",
             DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
             DeleteLayerCache                    => "DELETE FROM Flo_LayerCache WHERE CacheType = ? AND LayerId = ? AND CacheTime = ?",
+            DeletePathPointRange                => "DELETE FROM Flo_PathPoints WHERE PathId = ? AND PointIndex >= ? AND PointIndex < ?",
+            DeletePathPointTypeRange            => "DELETE FROM Flo_PathPointType WHERE PathId = ? AND PointIndex >= ? AND PointIndex < ?"
         }
     }
 
