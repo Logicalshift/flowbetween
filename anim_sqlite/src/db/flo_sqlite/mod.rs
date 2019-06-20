@@ -112,6 +112,7 @@ enum FloStatement {
     UpdateAnimationSize,
     UpdateMotionType,
     UpdateBrushPoint,
+    UpdatePathPoint,
     UpdateMoveZIndexUpwards,
     UpdateMoveZIndexDownwards,
 
@@ -448,6 +449,7 @@ impl FloSqlite {
             UpdateAnimationSize                 => "UPDATE Flo_Animation SET SizeX = ?, SizeY = ? WHERE AnimationId = ?",
             UpdateMotionType                    => "UPDATE Flo_Motion SET MotionType = ? WHERE MotionId = ?",
             UpdateBrushPoint                    => "UPDATE Flo_BrushPoint SET X1 = ?, Y1 = ?, X2 = ?, Y2 = ?, X3 = ?, Y3 = ? WHERE ElementId = ? AND PointId = ?",
+            UpdatePathPoint                     => "UPDATE Flo_PathPoints SET X = ?, Y = ? WHERE PathId = ? AND PointIndex = ?",
             UpdateMoveZIndexUpwards             => "UPDATE Flo_VectorElementOrdering SET ZIndex = ZIndex + 1 WHERE KeyFrameId = ? AND ZIndex >= ?",
             UpdateMoveZIndexDownwards           => "UPDATE Flo_VectorElementOrdering SET ZIndex = ZIndex - 1 WHERE KeyFrameId = ? AND ZIndex >= ?",
 

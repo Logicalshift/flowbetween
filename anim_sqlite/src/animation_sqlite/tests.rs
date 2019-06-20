@@ -799,6 +799,39 @@ fn read_path_element() {
 }
 
 #[test]
+fn update_path_elements() {
+    use self::LayerEdit::*;
+
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(24),
+        AnimationEdit::Layer(24, LayerEdit::AddKeyFrame(Duration::from_millis(300))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::SelectBrush(ElementId::Unassigned, BrushDefinition::Ink(InkDefinition::default()), BrushDrawingStyle::Draw))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::BrushProperties(ElementId::Unassigned, flo_animation::BrushProperties::new()))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::CreatePath(ElementId::Assigned(100), Arc::new(vec![
+                PathComponent::Move(PathPoint::new(10.0, 20.0)),
+                PathComponent::Line(PathPoint::new(20.0, 30.0)),
+                PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+                PathComponent::Close
+            ]))))
+    ]);
+
+    anim.perform_edits(vec![
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![
+            (60.0, 60.0),
+            (70.0, 70.0),
+            (80.0, 90.0), (100.0, 110.0), (120.0, 130.0)
+        ]))
+    ]);
+
+    anim.panic_on_error();
+}
+
+#[test]
 fn create_path_and_re_order() {
     use self::LayerEdit::*;
 

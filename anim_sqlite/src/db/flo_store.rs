@@ -183,10 +183,13 @@ pub enum DatabaseUpdate {
     /// Pops an element ID and updates the brush point coordinates for it
     UpdateBrushPointCoords(Arc<Vec<((f32, f32), (f32, f32), (f32, f32))>>),
 
+    /// Pops a path ID and updates the coordinates associated with it
+    UpdatePathPointCoords(Arc<Vec<(f32, f32)>>),
+
     /// Pops a path ID, a brush properties ID, a brush ID and a vector element ID and creates a path element from them
     PopVectorPathElement,
 
-    /// Pops an element ID and a keyframe ID from the stack. Moves the element within that keyframe.
+    /// Pops an element ID and a keyframe ID from the stack. Changes the ordering of that element within that keyframe.
     PopVectorElementMove(DbElementMove),
 
     /// Creates a new motion with the specified ID

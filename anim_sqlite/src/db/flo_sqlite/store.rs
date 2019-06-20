@@ -500,11 +500,21 @@ impl FloSqlite {
                 let element_id              = self.stack.pop().unwrap();
                 let mut update_brush_point  = Self::prepare(&self.sqlite, FloStatement::UpdateBrushPoint)?;
 
-                let num_points = points.len();
-                for (((x1, y1), (x2, y2), (x3, y3)), index) in points.iter().zip((0..num_points).into_iter()) {
+                for (index, ((x1, y1), (x2, y2), (x3, y3))) in points.iter().enumerate() {
                     let (x1, y1, x2, y2, x3, y3) = (*x1 as f64, *y1 as f64, *x2 as f64, *y2 as f64, *x3 as f64, *y3 as f64);
 
                     update_brush_point.execute::<&[&dyn ToSql]>(&[&x1, &y1, &x2, &y2, &x3, &y3, &element_id, &(index as i64)])?;
+                }
+            },
+
+            UpdatePathPointCoords(points)                                   => {
+                let path_id                 = self.stack.pop().unwrap();
+                let mut update_path_point   = Self::prepare(&self.sqlite, FloStatement::UpdatePathPoint)?;
+
+                for (index, (x, y)) in points.iter().enumerate() {
+                    let (x, y)  = (*x as f64, *y as f64);
+                    let index   = index as i64;
+                    update_path_point.execute::<&[&dyn ToSql]>(&[&x, &y, &path_id, &index])?;
                 }
             },
 

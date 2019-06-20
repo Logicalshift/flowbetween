@@ -458,6 +458,16 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         ])?;
                     },
 
+                    (VectorElementType::Path, ElementEdit::SetControlPoints(points)) => {
+                        // Paths don't format their points so we can just update them immediately
+                        self.db.update(vec![
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                            DatabaseUpdate::PushPathIdForElementId,
+                            DatabaseUpdate::UpdatePathPointCoords(Arc::new(points)),
+                            DatabaseUpdate::Pop
+                        ])?;
+                    },
+
                     (_any_type, ElementEdit::Order(ordering)) => {
                         let update_order = match ordering {
                             ElementOrdering::InFront    => vec![DatabaseUpdate::PopVectorElementMove(DbElementMove::Up)],
