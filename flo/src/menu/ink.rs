@@ -36,10 +36,14 @@ impl InkMenuController {
         let brush_settings_panel    = images.register(svg_static(include_bytes!("../../svg/menu_controls/brush_settings_x2.svg")));
         let additive_mode           = images.register(svg_static(include_bytes!("../../svg/brush_modes/additive.svg")));
         let individual_mode         = images.register(svg_static(include_bytes!("../../svg/brush_modes/individual.svg")));
+        let path_editing            = images.register(svg_static(include_bytes!("../../svg/brush_modes/path_editing.svg")));
+        let brush_stroke            = images.register(svg_static(include_bytes!("../../svg/brush_modes/brush_stroke.svg")));
 
         images.assign_name(&brush_settings_panel,   "brush_settings");
         images.assign_name(&additive_mode,          "additive_mode");
         images.assign_name(&individual_mode,        "individual_mode");
+        images.assign_name(&path_editing,           "path_editing");
+        images.assign_name(&brush_stroke,           "brush_stroke");
 
         images
     }
@@ -75,6 +79,8 @@ impl InkMenuController {
         let brush_settings_background   = images.get_named_resource("brush_settings");
         let additive_mode               = images.get_named_resource("additive_mode");
         let individual_mode             = images.get_named_resource("individual_mode");
+        let path_editing_mode           = images.get_named_resource("path_editing");
+        let brush_stroke_mode           = images.get_named_resource("brush_stroke");
 
         // Create the canvases
         let canvases                = Arc::new(ResourceManager::new());
@@ -210,12 +216,12 @@ impl InkMenuController {
                         .with(vec![
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
-                                .with(additive_mode),
+                                .with(individual_mode),
                             Control::empty()
                                 .with(Bounds::next_horiz(4.0)),
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
-                                .with(individual_mode)
+                                .with(brush_stroke_mode)
                         ]),
 
                 ])));
