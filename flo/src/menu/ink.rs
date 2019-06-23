@@ -33,9 +33,13 @@ impl InkMenuController {
     fn images() -> ResourceManager<Image> {
         let images = ResourceManager::new();
 
-        let brush_settings_panel = images.register(svg_static(include_bytes!("../../svg/menu_controls/brush_settings_x2.svg")));
+        let brush_settings_panel    = images.register(svg_static(include_bytes!("../../svg/menu_controls/brush_settings_x2.svg")));
+        let additive_mode           = images.register(svg_static(include_bytes!("../../svg/brush_modes/additive.svg")));
+        let individual_mode         = images.register(svg_static(include_bytes!("../../svg/brush_modes/individual.svg")));
 
-        images.assign_name(&brush_settings_panel, "brush_settings");
+        images.assign_name(&brush_settings_panel,   "brush_settings");
+        images.assign_name(&additive_mode,          "additive_mode");
+        images.assign_name(&individual_mode,        "individual_mode");
 
         images
     }
@@ -69,6 +73,8 @@ impl InkMenuController {
         // Images
         let images                      = Arc::new(Self::images());
         let brush_settings_background   = images.get_named_resource("brush_settings");
+        let additive_mode               = images.get_named_resource("additive_mode");
+        let individual_mode             = images.get_named_resource("individual_mode");
 
         // Create the canvases
         let canvases                = Arc::new(ResourceManager::new());
@@ -197,9 +203,20 @@ impl InkMenuController {
 
                     Control::empty()
                         .with(Bounds::next_horiz(4.0)),
-                    Control::empty()
+                    Control::container()
                         .with(brush_settings_background)
-                        .with(Bounds::next_horiz(92.0)),
+                        .with(Bounds::next_horiz(92.0))
+                        .with(ControlAttribute::Padding((38, 3), (10, 3)))
+                        .with(vec![
+                            Control::empty()
+                                .with(Bounds::next_horiz(20.0))
+                                .with(additive_mode),
+                            Control::empty()
+                                .with(Bounds::next_horiz(4.0)),
+                            Control::empty()
+                                .with(Bounds::next_horiz(20.0))
+                                .with(individual_mode)
+                        ]),
 
                 ])));
 
