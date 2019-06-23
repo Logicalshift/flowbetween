@@ -34,7 +34,13 @@ pub struct InkModel {
     pub color: Binding<Color>,
 
     /// The brush properties for the current brush view model
-    pub brush_properties: BindRef<BrushProperties>
+    pub brush_properties: BindRef<BrushProperties>,
+
+    /// How brush strokes modify the frame
+    pub modification_mode: Binding<BrushModificationMode>,
+
+    /// The way new brush strokes are represented
+    pub representation: Binding<BrushRepresentation>
 }
 
 ///
@@ -59,6 +65,8 @@ impl InkModel {
         let size                = bind(5.0);
         let opacity             = bind(1.0);
         let color               = bind(Color::Hsluv(0.0, 100.0, 0.0, 1.0));
+        let modification_mode   = bind(BrushModificationMode::Individual);
+        let representation      = bind(BrushRepresentation::BrushStroke);
 
         let brush_properties    = Self::brush_properties(size.clone(), opacity.clone(), color.clone());
 
@@ -66,7 +74,9 @@ impl InkModel {
             size:               size,
             opacity:            opacity,
             color:              color,
-            brush_properties:   brush_properties
+            brush_properties:   brush_properties,
+            modification_mode:  modification_mode,
+            representation:     representation
         }
     }
 

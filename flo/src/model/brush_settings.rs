@@ -18,6 +18,6 @@ pub enum BrushRepresentation {
     /// Brush strokes are stored as brush strokes (paths are procedurally generated)
     BrushStroke,
 
-    /// Brush strokes are stored directly as paths
+    /// Brush strokes are stored directly as paths (in additive mode, things the brush stroke is added to will also be turned to paths)
     Path
 }
