@@ -18,6 +18,7 @@ pub struct InkMenuController {
     opacity:            Binding<f32>,
 
     canvases:           Arc<ResourceManager<BindingCanvas>>,
+    images:             Arc<ResourceManager<Image>>,
     ui:                 BindRef<Control>,
     view_model:         Arc<DynamicViewModel>,
 
@@ -26,6 +27,19 @@ pub struct InkMenuController {
 }
 
 impl InkMenuController {
+    ///
+    /// The image resources for the ink menu controller
+    ///
+    fn images() -> ResourceManager<Image> {
+        let images = ResourceManager::new();
+
+        let brush_settings_panel = images.register(svg_static(include_bytes!("../../svg/menu_controls/brush_settings_x2.svg")));
+
+        images.assign_name(&brush_settings_panel, "brush_settings");
+
+        images
+    }
+
     ///
     /// Creates a new ink menu controller
     /// 
@@ -52,8 +66,12 @@ impl InkMenuController {
         let vm_color_picker_open = color_picker_open.clone();
         view_model.set_computed("ColorPickerOpen", move || PropertyValue::Bool(vm_color_picker_open.get()));
 
+        // Images
+        let images                      = Arc::new(Self::images());
+        let brush_settings_background   = images.get_named_resource("brush_settings");
+
         // Create the canvases
-        let canvases = Arc::new(ResourceManager::new());
+        let canvases                = Arc::new(ResourceManager::new());
 
         let brush_preview           = Self::brush_preview(size, opacity, colour);
         let brush_preview           = canvases.register(brush_preview);
@@ -177,7 +195,18 @@ impl InkMenuController {
 
                     Control::empty()
                         .with(Bounds::next_horiz(16.0)),
-                    controls::divider()
+                    controls::divider(),
+
+                    Control::empty()
+                        .with(Bounds::next_horiz(4.0)),
+                    Control::empty()
+                        .with(brush_settings_background)
+                        .with(Bounds::next_horiz(92.0)),
+
+                    Control::empty()
+                        .with(Bounds::next_horiz(4.0)),
+                    controls::divider(),
+
                 ])));
 
         // Finalize the control
@@ -185,7 +214,8 @@ impl InkMenuController {
             size:               size.clone(),
             opacity:            opacity.clone(),
 
-            canvases:           canvases, 
+            canvases:           canvases,
+            images:             images,
             ui:                 ui,
             view_model:         view_model,
 
@@ -326,7 +356,11 @@ impl Controller for InkMenuController {
     }
 
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
-        Some(self.canvases.clone())
+        Some(Arc::clone(&self.canvases))
+    }
+
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
+        Some(Arc::clone(&self.images))
     }
 
     fn action(&self, action_id: &str, action_parameter: &ActionParameter) {
