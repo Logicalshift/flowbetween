@@ -193,8 +193,6 @@ impl InkMenuController {
                                 ])
                         ]),
 
-                    Control::empty()
-                        .with(Bounds::next_horiz(16.0)),
                     controls::divider(),
 
                     Control::empty()
@@ -202,10 +200,6 @@ impl InkMenuController {
                     Control::empty()
                         .with(brush_settings_background)
                         .with(Bounds::next_horiz(92.0)),
-
-                    Control::empty()
-                        .with(Bounds::next_horiz(4.0)),
-                    controls::divider(),
 
                 ])));
 
