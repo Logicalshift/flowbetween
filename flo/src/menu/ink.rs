@@ -67,6 +67,7 @@ impl InkMenuController {
 
         view_model.set_property("EditSize", PropertyValue::Bool(false));
         view_model.set_property("EditOpacity", PropertyValue::Bool(false));
+        view_model.set_property("EditBrushProperties", PropertyValue::Bool(false));
 
         // Create the colour picker popup
         let color_picker_open   = Binding::new(false);
@@ -267,8 +268,23 @@ impl InkMenuController {
                     Control::container()
                         .with(brush_settings_background.clone())
                         .with(Bounds::next_horiz(92.0))
-                        .with(ControlAttribute::Padding((38, 3), (10, 3)))
+                        .with(ControlAttribute::Padding((3, 3), (10, 3)))
                         .with(vec![
+                            Control::empty()
+                                .with(Bounds::next_horiz(35.0))
+                                .with((ActionTrigger::Click, "ShowBrushPropertiesPopup"))
+                                .with(vec![
+                                    Control::popup()
+                                        .with(Popup::Direction(PopupDirection::Below))
+                                        .with(Popup::Size(300, 100))
+                                        .with(Popup::Offset(14))
+                                        .with(ControlAttribute::ZIndex(1000))
+                                        .with(Popup::IsOpen(Property::Bind("EditBrushProperties".to_string())))
+                                        .with((ActionTrigger::Dismiss, "HideBrushPropertiesPopup"))
+                                        .with(vec![
+                                            Control::empty()
+                                        ]),
+                                ]),
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
                                 .with(modification_icon)
@@ -457,6 +473,16 @@ impl Controller for InkMenuController {
             ("ShowColorPopup", _) => {
                 // User has clicked the colour icon
                 self.color_picker_open.set(true)
+            },
+
+            ("ShowBrushPropertiesPopup", _) => {
+                // User has clicked the brush properties icon
+                self.view_model.set_property("EditBrushProperties", PropertyValue::Bool(true));
+            },
+
+            ("HideBrushPropertiesPopup", _) => {
+                // User has dismissed the brush properties dialog
+                self.view_model.set_property("EditBrushProperties", PropertyValue::Bool(false));
             },
 
             ("NextModificationMode", _) => {
