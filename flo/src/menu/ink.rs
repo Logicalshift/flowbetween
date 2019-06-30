@@ -1,5 +1,6 @@
 use super::controls;
 use super::super::color::*;
+use super::super::model::*;
 
 use flo_ui::*;
 use flo_canvas::*;
@@ -16,6 +17,9 @@ use std::sync::*;
 pub struct InkMenuController {
     size:               Binding<f32>,
     opacity:            Binding<f32>,
+    modification_mode:  Binding<BrushModificationMode>,
+    representation:     Binding<BrushRepresentation>,
+
 
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     images:             Arc<ResourceManager<Image>>,
@@ -51,7 +55,7 @@ impl InkMenuController {
     ///
     /// Creates a new ink menu controller
     /// 
-    pub fn new(size: &Binding<f32>, opacity: &Binding<f32>, colour: &Binding<Color>) -> InkMenuController {
+    pub fn new(size: &Binding<f32>, opacity: &Binding<f32>, colour: &Binding<Color>, modification_mode: &Binding<BrushModificationMode>, representation: &Binding<BrushRepresentation>) -> InkMenuController {
         // Set up the view model
         let view_model = Arc::new(DynamicViewModel::new());
 
@@ -105,12 +109,14 @@ impl InkMenuController {
         canvases.assign_name(&colour_preview, "ColourPreview");
 
         // Generate the UI
-        let ui = Self::ui(&canvases, &images);
+        let ui = Self::ui(&canvases, &images, modification_mode, representation);
 
         // Finalize the control
         InkMenuController {
             size:               size.clone(),
             opacity:            opacity.clone(),
+            modification_mode:  modification_mode.clone(),
+            representation:     representation.clone(),
 
             canvases:           canvases,
             images:             images,
@@ -125,7 +131,11 @@ impl InkMenuController {
     ///
     /// Creates the UI for the ink menu bar
     ///
-    fn ui(canvases: &ResourceManager<BindingCanvas>, images: &ResourceManager<Image>) -> BindRef<Control> {
+    fn ui(canvases: &ResourceManager<BindingCanvas>, images: &ResourceManager<Image>, modification_mode: &Binding<BrushModificationMode>, representation: &Binding<BrushRepresentation>) -> BindRef<Control> {
+        // Model
+        let modification_mode           = modification_mode.clone();
+        let representation              = representation.clone();
+
         // Fetch the image resources
         let brush_settings_background   = images.get_named_resource("brush_settings");
         let additive_mode               = images.get_named_resource("additive_mode");
@@ -143,6 +153,18 @@ impl InkMenuController {
 
         // Generate the UI control
         let ui = computed(move || { 
+            let modification_mode   = modification_mode.get();
+            let representation      = representation.get();
+
+            let modification_icon   = match modification_mode {
+                BrushModificationMode::Additive     => additive_mode.clone(),
+                BrushModificationMode::Individual   => individual_mode.clone()
+            };
+            let representation_icon = match representation {
+                BrushRepresentation::BrushStroke    => brush_stroke_mode.clone(),
+                BrushRepresentation::Path           => path_editing_mode.clone()
+            };
+
             Control::container()
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((0, 3), (0, 3)))
@@ -249,12 +271,14 @@ impl InkMenuController {
                         .with(vec![
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
-                                .with(individual_mode.clone()),
+                                .with(modification_icon)
+                                .with((ActionTrigger::Click, "NextModificationMode")),
                             Control::empty()
                                 .with(Bounds::next_horiz(4.0)),
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
-                                .with(brush_stroke_mode.clone())
+                                .with(representation_icon)
+                                .with((ActionTrigger::Click, "NextBrushRepresentation"))
                         ]),
 
                 ])
@@ -433,7 +457,21 @@ impl Controller for InkMenuController {
             ("ShowColorPopup", _) => {
                 // User has clicked the colour icon
                 self.color_picker_open.set(true)
-            }
+            },
+
+            ("NextModificationMode", _) => {
+                self.modification_mode.set(match self.modification_mode.get() {
+                    BrushModificationMode::Additive     => BrushModificationMode::Individual,
+                    BrushModificationMode::Individual   => BrushModificationMode::Additive
+                });
+            },
+
+            ("NextBrushRepresentation", _) => {
+                self.representation.set(match self.representation.get() {
+                    BrushRepresentation::Path           => BrushRepresentation::BrushStroke,
+                    BrushRepresentation::BrushStroke    => BrushRepresentation::Path
+                });
+            },
 
             _ => ()
         }

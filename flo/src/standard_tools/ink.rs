@@ -121,7 +121,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
     /// 
     fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<dyn Controller>> {
-        Some(Arc::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color)))
+        Some(Arc::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color, &tool_model.modification_mode, &tool_model.representation)))
     }
 
     ///
