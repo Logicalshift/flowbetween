@@ -76,11 +76,6 @@ impl InkMenuController {
 
         // Images
         let images                      = Arc::new(Self::images());
-        let brush_settings_background   = images.get_named_resource("brush_settings");
-        let additive_mode               = images.get_named_resource("additive_mode");
-        let individual_mode             = images.get_named_resource("individual_mode");
-        let path_editing_mode           = images.get_named_resource("path_editing");
-        let brush_stroke_mode           = images.get_named_resource("brush_stroke");
 
         // Create the canvases
         let canvases                = Arc::new(ResourceManager::new());
@@ -110,7 +105,44 @@ impl InkMenuController {
         canvases.assign_name(&colour_preview, "ColourPreview");
 
         // Generate the UI
-        let ui = BindRef::from(bind(Control::container()
+        let ui = Self::ui(&canvases, &images);
+
+        // Finalize the control
+        InkMenuController {
+            size:               size.clone(),
+            opacity:            opacity.clone(),
+
+            canvases:           canvases,
+            images:             images,
+            ui:                 ui,
+            view_model:         view_model,
+
+            color_picker_open:  color_picker_open,
+            color_picker:       Arc::new(color_picker)
+        }
+    }
+
+    ///
+    /// Creates the UI for the ink menu bar
+    ///
+    fn ui(canvases: &ResourceManager<BindingCanvas>, images: &ResourceManager<Image>) -> BindRef<Control> {
+        // Fetch the image resources
+        let brush_settings_background   = images.get_named_resource("brush_settings");
+        let additive_mode               = images.get_named_resource("additive_mode");
+        let individual_mode             = images.get_named_resource("individual_mode");
+        let path_editing_mode           = images.get_named_resource("path_editing");
+        let brush_stroke_mode           = images.get_named_resource("brush_stroke");
+
+        // ... and the canvas resources
+        let brush_preview               = canvases.get_named_resource("BrushPreview");
+        let size_preview                = canvases.get_named_resource("SizePreview");
+        let size_preview_large          = canvases.get_named_resource("SizePreview2");
+        let opacity_preview             = canvases.get_named_resource("OpacityPreview");
+        let opacity_preview_large       = canvases.get_named_resource("OpacityPreview2");
+        let colour_preview              = canvases.get_named_resource("ColourPreview");
+
+
+        let ui = bind(Control::container()
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((0, 3), (0, 3)))
                 .with(vec![
@@ -224,21 +256,9 @@ impl InkMenuController {
                                 .with(brush_stroke_mode)
                         ]),
 
-                ])));
+                ]));
 
-        // Finalize the control
-        InkMenuController {
-            size:               size.clone(),
-            opacity:            opacity.clone(),
-
-            canvases:           canvases,
-            images:             images,
-            ui:                 ui,
-            view_model:         view_model,
-
-            color_picker_open:  color_picker_open,
-            color_picker:       Arc::new(color_picker)
-        }
+        BindRef::from(ui)
     }
 
     ///
