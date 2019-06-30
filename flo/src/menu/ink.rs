@@ -141,8 +141,9 @@ impl InkMenuController {
         let opacity_preview_large       = canvases.get_named_resource("OpacityPreview2");
         let colour_preview              = canvases.get_named_resource("ColourPreview");
 
-
-        let ui = bind(Control::container()
+        // Generate the UI control
+        let ui = computed(move || { 
+            Control::container()
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((0, 3), (0, 3)))
                 .with(vec![
@@ -157,7 +158,7 @@ impl InkMenuController {
                     Control::empty()
                         .with(Bounds::next_horiz(8.0)),
                     Control::canvas()
-                        .with(brush_preview)
+                        .with(brush_preview.clone())
                         .with(Bounds::next_horiz(64.0)),
 
                     controls::divider(),
@@ -168,7 +169,7 @@ impl InkMenuController {
                         .with(Bounds::next_horiz(40.0)),
                     Control::empty().with(Bounds::next_horiz(4.0)),
                     Control::canvas()
-                        .with(colour_preview)
+                        .with(colour_preview.clone())
                         .with(Bounds::next_horiz(32.0))
                         .with(State::Badged(Property::Bind("ColorPickerOpen".to_string())))
                         .with((ActionTrigger::Click, "ShowColorPopup"))
@@ -189,7 +190,7 @@ impl InkMenuController {
                         .with((ActionTrigger::SetValue, "ChangeSizeSet".to_string())),
                     Control::empty().with(Bounds::next_horiz(4.0)),
                     Control::canvas()
-                        .with(size_preview)
+                        .with(size_preview.clone())
                         .with(Bounds::next_horiz(32.0))
                         .with(vec![
                             Control::popup()
@@ -201,7 +202,7 @@ impl InkMenuController {
                                 .with(vec![
                                     Control::canvas()
                                         .with(Bounds::fill_all())
-                                        .with(size_preview_large)
+                                        .with(size_preview_large.clone())
                                 ])
                         ]),
 
@@ -220,7 +221,7 @@ impl InkMenuController {
                         .with((ActionTrigger::SetValue, "ChangeOpacitySet".to_string())),
                     Control::empty().with(Bounds::next_horiz(4.0)),
                     Control::canvas()
-                        .with(opacity_preview)
+                        .with(opacity_preview.clone())
                         .with(Bounds::next_horiz(32.0))
                         .with(vec![
                             Control::popup()
@@ -233,7 +234,7 @@ impl InkMenuController {
                                 .with(vec![
                                     Control::canvas()
                                         .with(Bounds::fill_all())
-                                        .with(opacity_preview_large)
+                                        .with(opacity_preview_large.clone())
                                 ])
                         ]),
 
@@ -242,21 +243,22 @@ impl InkMenuController {
                     Control::empty()
                         .with(Bounds::next_horiz(4.0)),
                     Control::container()
-                        .with(brush_settings_background)
+                        .with(brush_settings_background.clone())
                         .with(Bounds::next_horiz(92.0))
                         .with(ControlAttribute::Padding((38, 3), (10, 3)))
                         .with(vec![
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
-                                .with(individual_mode),
+                                .with(individual_mode.clone()),
                             Control::empty()
                                 .with(Bounds::next_horiz(4.0)),
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
-                                .with(brush_stroke_mode)
+                                .with(brush_stroke_mode.clone())
                         ]),
 
-                ]));
+                ])
+        });
 
         BindRef::from(ui)
     }
