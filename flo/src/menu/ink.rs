@@ -19,7 +19,7 @@ pub struct InkMenuController {
     opacity:            Binding<f32>,
     modification_mode:  Binding<BrushModificationMode>,
     representation:     Binding<BrushRepresentation>,
-
+    brush_panel_open:   Binding<bool>,
 
     canvases:           Arc<ResourceManager<BindingCanvas>>,
     images:             Arc<ResourceManager<Image>>,
@@ -38,12 +38,14 @@ impl InkMenuController {
         let images = ResourceManager::new();
 
         let brush_settings_panel    = images.register(svg_static(include_bytes!("../../svg/menu_controls/brush_settings_x2.svg")));
+        let active_settings_panel   = images.register(svg_static(include_bytes!("../../svg/menu_controls/active_brush_settings_x2.svg")));
         let additive_mode           = images.register(svg_static(include_bytes!("../../svg/brush_modes/additive.svg")));
         let individual_mode         = images.register(svg_static(include_bytes!("../../svg/brush_modes/individual.svg")));
         let path_editing            = images.register(svg_static(include_bytes!("../../svg/brush_modes/path_editing.svg")));
         let brush_stroke            = images.register(svg_static(include_bytes!("../../svg/brush_modes/brush_stroke.svg")));
 
         images.assign_name(&brush_settings_panel,   "brush_settings");
+        images.assign_name(&active_settings_panel,  "active_settings");
         images.assign_name(&additive_mode,          "additive_mode");
         images.assign_name(&individual_mode,        "individual_mode");
         images.assign_name(&path_editing,           "path_editing");
@@ -59,15 +61,17 @@ impl InkMenuController {
         // Set up the view model
         let view_model = Arc::new(DynamicViewModel::new());
 
-        let vm_size     = size.clone();
-        let vm_opacity  = opacity.clone();
+        let vm_size                 = size.clone();
+        let vm_opacity              = opacity.clone();
+        let brush_panel_open        = bind(false);
 
         view_model.set_computed("Size", move || PropertyValue::Float(vm_size.get() as f64));
         view_model.set_computed("Opacity", move || PropertyValue::Float(vm_opacity.get() as f64));
 
         view_model.set_property("EditSize", PropertyValue::Bool(false));
         view_model.set_property("EditOpacity", PropertyValue::Bool(false));
-        view_model.set_property("EditBrushProperties", PropertyValue::Bool(false));
+        let edit_brush_properties   = brush_panel_open.clone();
+        view_model.set_computed("EditBrushProperties", move || PropertyValue::Bool(edit_brush_properties.get()));
 
         // Create the colour picker popup
         let color_picker_open   = Binding::new(false);
@@ -110,7 +114,7 @@ impl InkMenuController {
         canvases.assign_name(&colour_preview, "ColourPreview");
 
         // Generate the UI
-        let ui = Self::ui(&canvases, &images, modification_mode, representation);
+        let ui = Self::ui(&canvases, &images, &brush_panel_open, modification_mode, representation);
 
         // Finalize the control
         InkMenuController {
@@ -118,6 +122,7 @@ impl InkMenuController {
             opacity:            opacity.clone(),
             modification_mode:  modification_mode.clone(),
             representation:     representation.clone(),
+            brush_panel_open:   brush_panel_open,
 
             canvases:           canvases,
             images:             images,
@@ -132,13 +137,15 @@ impl InkMenuController {
     ///
     /// Creates the UI for the ink menu bar
     ///
-    fn ui(canvases: &ResourceManager<BindingCanvas>, images: &ResourceManager<Image>, modification_mode: &Binding<BrushModificationMode>, representation: &Binding<BrushRepresentation>) -> BindRef<Control> {
+    fn ui(canvases: &ResourceManager<BindingCanvas>, images: &ResourceManager<Image>, brush_panel_open: &Binding<bool>, modification_mode: &Binding<BrushModificationMode>, representation: &Binding<BrushRepresentation>) -> BindRef<Control> {
         // Model
         let modification_mode           = modification_mode.clone();
         let representation              = representation.clone();
+        let brush_panel_open            = brush_panel_open.clone();
 
         // Fetch the image resources
         let brush_settings_background   = images.get_named_resource("brush_settings");
+        let active_settings_background  = images.get_named_resource("active_settings");
         let additive_mode               = images.get_named_resource("additive_mode");
         let individual_mode             = images.get_named_resource("individual_mode");
         let path_editing_mode           = images.get_named_resource("path_editing");
@@ -156,6 +163,7 @@ impl InkMenuController {
         let ui = computed(move || { 
             let modification_mode   = modification_mode.get();
             let representation      = representation.get();
+            let brush_panel_open    = brush_panel_open.get();
 
             let modification_icon   = match modification_mode {
                 BrushModificationMode::Additive     => additive_mode.clone(),
@@ -164,6 +172,11 @@ impl InkMenuController {
             let representation_icon = match representation {
                 BrushRepresentation::BrushStroke    => brush_stroke_mode.clone(),
                 BrushRepresentation::Path           => path_editing_mode.clone()
+            };
+            let brush_settings_background = if brush_panel_open {
+                &active_settings_background
+            } else {
+                &brush_settings_background
             };
 
             Control::container()
@@ -272,7 +285,7 @@ impl InkMenuController {
                         .with(vec![
                             Control::empty()
                                 .with(Bounds::next_horiz(35.0))
-                                .with((ActionTrigger::Click, "ShowBrushPropertiesPopup"))
+                                .with(if !brush_panel_open { (ActionTrigger::Click, "ShowBrushPropertiesPopup") } else { (ActionTrigger::Click, "HideBrushPropertiesPopup") })
                                 .with(vec![
                                     Control::popup()
                                         .with(Popup::Direction(PopupDirection::Below))
@@ -477,12 +490,12 @@ impl Controller for InkMenuController {
 
             ("ShowBrushPropertiesPopup", _) => {
                 // User has clicked the brush properties icon
-                self.view_model.set_property("EditBrushProperties", PropertyValue::Bool(true));
+                self.brush_panel_open.set(true);
             },
 
             ("HideBrushPropertiesPopup", _) => {
                 // User has dismissed the brush properties dialog
-                self.view_model.set_property("EditBrushProperties", PropertyValue::Bool(false));
+                self.brush_panel_open.set(false);
             },
 
             ("NextModificationMode", _) => {
