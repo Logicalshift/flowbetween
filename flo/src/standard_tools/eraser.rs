@@ -68,7 +68,9 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
             InkData {
                 brush:              BrushDefinition::Ink(InkDefinition::default()),
                 brush_properties:   brush_properties.get(),
-                selected_layer:     selected_layer.get().unwrap_or(0)
+                selected_layer:     selected_layer.get().unwrap_or(0),
+                modification_mode:  BrushModificationMode::Individual,
+                representation:     BrushRepresentation::BrushStroke
             }
         });
 

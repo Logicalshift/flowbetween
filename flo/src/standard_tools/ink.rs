@@ -17,7 +17,9 @@ use std::sync::*;
 pub struct InkData {
     pub brush:              BrushDefinition,
     pub brush_properties:   BrushProperties,
-    pub selected_layer:     u64
+    pub selected_layer:     u64,
+    pub representation:     BrushRepresentation,
+    pub modification_mode:  BrushModificationMode
 }
 
 ///
@@ -131,13 +133,17 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
         // Fetch the brush properties
         let brush_properties    = tool_model.brush_properties.clone();
         let selected_layer      = flo_model.timeline().selected_layer.clone();
+        let representation      = tool_model.representation.clone();
+        let modification_mode   = tool_model.modification_mode.clone();
 
         // Create a computed binding that generates the data for the brush
         let ink_data            = computed(move || {
             InkData {
                 brush:              BrushDefinition::Ink(InkDefinition::default()),
                 brush_properties:   brush_properties.get(),
-                selected_layer:     selected_layer.get().unwrap_or(0)
+                selected_layer:     selected_layer.get().unwrap_or(0),
+                representation:     representation.get(),
+                modification_mode:  modification_mode.get()
             }
         });
 
@@ -148,12 +154,12 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
     /// 
-    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, _data: Option<Arc<InkData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<InkData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<InkData>>> {
+    fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, data: Option<Arc<InkData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<InkData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<InkData>>> {
         use self::BrushPreviewAction::*;
         use self::ToolAction::*;
         use self::ToolInput::*;
 
-        let actions = input.flat_map(|input| {
+        let actions = input.flat_map(move |input| {
             match input {
                 ToolInput::Select | ToolInput::Deselect => vec![],
 
@@ -184,13 +190,27 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
                             BrushPreview(AddPoint(raw_point_from_painting(&painting)))
                         ],
                         
-                        PaintAction::Finish     => vec![
-                            // Brush stroke is finished: we commit it (committing also clears the preview)
-                            BrushPreview(Commit),
+                        PaintAction::Finish     => {
+                            let representation = data.as_ref().map(|data| data.representation).unwrap_or(BrushRepresentation::BrushStroke);
 
-                            // Painting new brush strokes clears the current selection
-                            ClearSelection
-                        ],
+                            match representation {
+                                BrushRepresentation::BrushStroke => vec![
+                                    // Brush stroke is finished: we commit it (committing also clears the preview)
+                                    BrushPreview(Commit),
+
+                                    // Painting new brush strokes clears the current selection
+                                    ClearSelection
+                                ],
+
+                                BrushRepresentation::Path => vec![
+                                    // Brush stroke is finished: we commit it (committing also clears the preview)
+                                    BrushPreview(CommitAsPath),
+
+                                    // Painting new brush strokes clears the current selection
+                                    ClearSelection
+                                ],
+                            }
+                        },
 
                         PaintAction::Cancel     => vec![
                             // Brush stroke canceled
