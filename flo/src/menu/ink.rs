@@ -189,7 +189,7 @@ impl InkMenuController {
                 BrushModificationMode::Individual   => "Create separate paths"
             };
             let representation_text = match representation {
-                BrushRepresentation::BrushStroke    => "Keep as brush strokes",
+                BrushRepresentation::BrushStroke    => "Keep brush strokes",
                 BrushRepresentation::Path           => "Convert to paths"
             };
 
