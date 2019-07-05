@@ -1043,15 +1043,17 @@ function flowbetween(root_node) {
     ///
     let wire_click = (action_name, node, controller_path) => {
         add_action_event(node, 'click', event => {
-            event.preventDefault();
-            event.stopPropagation();
-            note('Click ' + action_name + ' --> ' + controller_path);
+            if (event.eventPhase !== Event.CAPTURING_PHASE) { 
+                event.preventDefault();
+                event.stopPropagation();
+                note('Click ' + action_name + ' --> ' + controller_path);
 
-            perform_action(controller_path, action_name, null);
+                perform_action(controller_path, action_name, null);
+            }
         }, true);
 
         add_action_event(node, 'touchstart', event => {
-            if (event.touches.length === 1) {
+            if (event.touches.length === 1 && event.eventPhase !== Event.CAPTURING_PHASE) {
                 event.preventDefault();
                 event.stopPropagation();
                 note('Click (touch) ' + action_name + ' --> ' + controller_path);
