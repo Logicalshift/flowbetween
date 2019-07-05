@@ -154,4 +154,35 @@ impl BrushPreview {
 
         edit_sink.wait_send(actions.collect()).ok();
     }
+
+    ///
+    /// Commits a brush preview to the animation as a path element
+    ///
+    pub fn commit_to_animation_as_path(&mut self, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
+        use PathEdit::*;
+
+        let mut actions = vec![];
+
+        if self.points.len() < 2 {
+            // Do nothing if there are no points in this brush preview
+            return;
+        }
+
+        // Path properties
+        let (defn, drawing_style) = self.current_brush.to_definition();
+        actions.push(LayerEdit::Path(when, SelectBrush(ElementId::Unassigned, defn, drawing_style)));
+        actions.push(LayerEdit::Path(when, BrushProperties(ElementId::Unassigned, self.brush_properties.clone())));
+
+        // Path itself
+        let brush_points    = self.current_brush.brush_points_for_raw_points(&self.points);
+        let path            = vec![Path::from_drawing(self.current_brush.render_brush(&self.brush_properties, &brush_points))];
+        let path            = path.into_iter().map(|path| path.elements().collect::<Vec<_>>()).flatten();
+        actions.push(LayerEdit::Path(when, CreatePath(ElementId::Unassigned, Arc::new(path.collect()))));
+
+        // Perform the edit
+        let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
+        let mut edit_sink   = executor::spawn(animation.edit());
+
+        edit_sink.wait_send(actions.collect()).ok();
+    }
 }

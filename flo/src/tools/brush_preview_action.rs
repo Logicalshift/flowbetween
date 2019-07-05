@@ -24,5 +24,8 @@ pub enum BrushPreviewAction {
     AddPoint(RawPoint),
 
     /// Commits the brush preview to the current layer
-    Commit
+    Commit,
+
+    /// Commits the brush preview as a path to the current layer
+    CommitAsPath
 }

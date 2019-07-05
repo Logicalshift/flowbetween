@@ -1,10 +1,10 @@
 mod simple;
 mod ink;
-mod preview;
+mod brush_preview;
 
 pub use self::simple::*;
 pub use self::ink::*;
-pub use self::preview::*;
+pub use self::brush_preview::*;
 
 use super::traits::*;
 use std::sync::*;

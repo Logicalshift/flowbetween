@@ -242,7 +242,8 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             BrushPreviewAction::BrushDefinition(defn, style)    => { self.brush_definition = (defn.clone(), style); self.preview.as_mut().map(move |preview| preview.select_brush(&defn, style)); },
             BrushPreviewAction::BrushProperties(props)          => { self.brush_properties = props; self.preview.as_mut().map(move |preview| preview.set_brush_properties(&props)); },
             BrushPreviewAction::AddPoint(point)                 => { self.preview.as_mut().map(move |preview| preview.continue_brush_stroke(point)); },
-            BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer) }
+            BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer) },
+            BrushPreviewAction::CommitAsPath                    => { self.commit_brush_preview_as_path(canvas, renderer) }
         }
     }
 
@@ -281,47 +282,90 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     }
 
     ///
+    /// Creates a new keyframe if there is no current keyframe and the 'create keyframe on draw' option is set.is
+    /// 
+    /// Returns true if the keyframe was created
+    ///
+    fn create_new_keyframe_if_required(&mut self) -> bool {
+        if let Some(preview_layer) = self.preview_layer {
+            if self.create_keyframe.get() {
+                if self.need_new_keyframe() {
+                    let current_time    = self.current_time.get();
+
+                    // Create a keyframe at this time
+                    self.edit_sink.wait_send(vec![
+                        AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))
+                    ]).unwrap();
+
+                    // Canvas should be invalidated
+                    self.animation.timeline().invalidate_canvas();
+                    self.animation.timeline().update_keyframe_bindings();
+
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+    }
+
+    ///
     /// Commits the current brush preview to the animation
     /// 
     fn commit_brush_preview(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // We take the preview here (so there's no preview after this)
-        if let Some(mut preview) = self.preview.take() {
-            // The preview layer is left behind: the next brush stroke will be on the same layer if a new one is not specified
-            if let Some(preview_layer) = self.preview_layer {
-                let mut need_brush  = self.need_brush_definition(preview_layer, renderer);
-                let mut need_props  = self.need_brush_properties(preview_layer, renderer);
+        if let (Some(mut preview), Some(preview_layer)) = (self.preview.take(), self.preview_layer) {
+            let mut need_brush  = self.need_brush_definition(preview_layer, renderer);
+            let mut need_props  = self.need_brush_properties(preview_layer, renderer);
 
-                let current_time    = self.current_time.get();
+            let current_time    = self.current_time.get();
 
-                // Create a new keyframe for this brush stroke if necessary
-                if self.create_keyframe.get() {
-                    if self.need_new_keyframe() {
-                        // Create a keyframe at this time
-                        self.edit_sink.wait_send(vec![
-                            AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))
-                        ]).unwrap();
-
-                        // Will need to define the brush & properties
-                        need_brush = true;
-                        need_props = true;
-
-                        // Canvas should be invalidated
-                        self.animation.timeline().invalidate_canvas();
-                        self.animation.timeline().update_keyframe_bindings();
-                    }
-                }
-
-                // Commit the brush stroke to the renderer
-                renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
-
-                // Commit the preview to the animation
-                preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
-
-                // Update the properties in the renderer if they've changed
-                if need_brush || need_props {
-                    renderer.set_layer_brush(preview_layer, Some(self.brush_definition.clone()), Some(self.brush_properties.clone()));
-                }
+            // Create a new keyframe for this brush stroke if necessary
+            if self.create_new_keyframe_if_required() {
+                // Will need to define the brush & properties
+                need_brush = true;
+                need_props = true;
             }
+
+            // Commit the brush stroke to the renderer
+            renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
+
+            // Commit the preview to the animation
+            preview.commit_to_animation(need_brush, need_props, current_time, preview_layer, &*self.animation);
+
+            // Update the properties in the renderer if they've changed
+            if need_brush || need_props {
+                renderer.set_layer_brush(preview_layer, Some(self.brush_definition.clone()), Some(self.brush_properties.clone()));
+            }
+        }
+    }
+
+    ///
+    /// Turns the brush preview into a path and commmits it to the animation
+    ///
+    fn commit_brush_preview_as_path(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
+        // Take the
+        if let (Some(mut preview), Some(preview_layer)) = (self.preview.take(), self.preview_layer) {
+            let mut need_brush  = self.need_brush_definition(preview_layer, renderer);
+            let mut need_props  = self.need_brush_properties(preview_layer, renderer);
+            let current_time    = self.current_time.get();
+
+            // Create a new keyframe for this brush stroke if necessary
+            if self.create_new_keyframe_if_required() {
+                // Will need to define the brush & properties
+                need_brush = true;
+                need_props = true;
+            }
+
+            // Commit the brush stroke to the renderer
+            renderer.commit_to_layer(canvas, preview_layer, |gc| preview.draw_current_brush_stroke(gc, need_brush, need_props));
+
+            // Commit the preview to the animation
+            preview.commit_to_animation_as_path(current_time, preview_layer, &*self.animation);
         }
     }
 }
