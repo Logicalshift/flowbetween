@@ -44,12 +44,16 @@ impl InkMenuController {
         let path_editing            = images.register(svg_static(include_bytes!("../../svg/brush_modes/path_editing.svg")));
         let brush_stroke            = images.register(svg_static(include_bytes!("../../svg/brush_modes/brush_stroke.svg")));
 
+        let combo_picker            = images.register(svg_static(include_bytes!("../../svg/control_decals/combo_picker.svg")));
+
         images.assign_name(&brush_settings_panel,   "brush_settings");
         images.assign_name(&active_settings_panel,  "active_settings");
         images.assign_name(&additive_mode,          "additive_mode");
         images.assign_name(&individual_mode,        "individual_mode");
         images.assign_name(&path_editing,           "path_editing");
         images.assign_name(&brush_stroke,           "brush_stroke");
+
+        images.assign_name(&combo_picker,           "combo_picker");
 
         images
     }
@@ -150,6 +154,7 @@ impl InkMenuController {
         let individual_mode             = images.get_named_resource("individual_mode");
         let path_editing_mode           = images.get_named_resource("path_editing");
         let brush_stroke_mode           = images.get_named_resource("brush_stroke");
+        let combo_picker                = images.get_named_resource("combo_picker");
 
         // ... and the canvas resources
         let brush_preview               = canvases.get_named_resource("BrushPreview");
@@ -177,6 +182,15 @@ impl InkMenuController {
                 &active_settings_background
             } else {
                 &brush_settings_background
+            };
+
+            let modification_text   = match modification_mode {
+                BrushModificationMode::Additive     => "Combine paths into one",
+                BrushModificationMode::Individual   => "Create separate paths"
+            };
+            let representation_text = match representation {
+                BrushRepresentation::BrushStroke    => "Keep as brush strokes",
+                BrushRepresentation::Path           => "Convert to paths"
             };
 
             Control::container()
@@ -286,18 +300,59 @@ impl InkMenuController {
                             Control::empty()
                                 .with(Bounds::next_horiz(35.0))
                                 .with(if !brush_panel_open { (ActionTrigger::Click, "ShowBrushPropertiesPopup") } else { (ActionTrigger::Click, "HideBrushPropertiesPopup") })
-                                .with(vec![
+                                .with(if brush_panel_open { vec![
                                     Control::popup()
                                         .with(Popup::Direction(PopupDirection::Below))
-                                        .with(Popup::Size(300, 100))
+                                        .with(Popup::Size(220, 64))
                                         .with(Popup::Offset(14))
                                         .with(ControlAttribute::ZIndex(1000))
                                         .with(Popup::IsOpen(Property::Bind("EditBrushProperties".to_string())))
                                         .with((ActionTrigger::Dismiss, "HideBrushPropertiesPopup"))
                                         .with(vec![
-                                            Control::empty()
+                                            Control::container()
+                                                .with(Bounds::fill_all())
+                                                .with(ControlAttribute::Padding((10, 0), (10, 0)))
+                                                .with(Font::Size(11.0))
+                                                .with(vec![
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(3.0)),
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(26.0))
+                                                        .with(combo_picker.clone())
+                                                        .with((ActionTrigger::Click, "NextModificationMode"))
+                                                        .with(ControlAttribute::Padding((24, 4), (24, 4)))
+                                                        .with(vec![
+                                                            Control::empty()
+                                                                .with(Bounds::next_horiz(20.0))
+                                                                .with(modification_icon.clone()),
+                                                            Control::empty()
+                                                                .with(Bounds::next_horiz(4.0)),
+                                                            Control::label()
+                                                                .with(Bounds::fill_horiz())
+                                                                .with(modification_text)
+                                                        ]),
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(3.0)),
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(26.0))
+                                                        .with(combo_picker.clone())
+                                                        .with((ActionTrigger::Click, "NextBrushRepresentation"))
+                                                        .with(ControlAttribute::Padding((24, 4), (24, 4)))
+                                                        .with(vec![
+                                                            Control::empty()
+                                                                .with(Bounds::next_horiz(20.0))
+                                                                .with(representation_icon.clone()),
+                                                            Control::empty()
+                                                                .with(Bounds::next_horiz(4.0)),
+                                                            Control::label()
+                                                                .with(Bounds::fill_horiz())
+                                                                .with(representation_text)
+                                                        ]),
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(3.0)),
+                                                ])
                                         ]),
-                                ]),
+                                ] } else { vec![] }),
                             Control::empty()
                                 .with(Bounds::next_horiz(20.0))
                                 .with(modification_icon)
