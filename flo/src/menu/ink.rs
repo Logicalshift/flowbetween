@@ -1,6 +1,7 @@
 use super::controls;
 use super::super::color::*;
 use super::super::model::*;
+use super::super::style::*;
 
 use flo_ui::*;
 use flo_canvas::*;
@@ -45,6 +46,7 @@ impl InkMenuController {
         let brush_stroke            = images.register(svg_static(include_bytes!("../../svg/brush_modes/brush_stroke.svg")));
 
         let combo_picker            = images.register(svg_static(include_bytes!("../../svg/control_decals/combo_picker.svg")));
+        let settings_cog            = images.register(svg_static(include_bytes!("../../svg/control_decals/settings_cog.svg")));
 
         images.assign_name(&brush_settings_panel,   "brush_settings");
         images.assign_name(&active_settings_panel,  "active_settings");
@@ -54,6 +56,7 @@ impl InkMenuController {
         images.assign_name(&brush_stroke,           "brush_stroke");
 
         images.assign_name(&combo_picker,           "combo_picker");
+        images.assign_name(&settings_cog,           "settings_cog");
 
         images
     }
@@ -154,7 +157,9 @@ impl InkMenuController {
         let individual_mode             = images.get_named_resource("individual_mode");
         let path_editing_mode           = images.get_named_resource("path_editing");
         let brush_stroke_mode           = images.get_named_resource("brush_stroke");
+
         let combo_picker                = images.get_named_resource("combo_picker");
+        let settings_cog                = images.get_named_resource("settings_cog");
 
         // ... and the canvas resources
         let brush_preview               = canvases.get_named_resource("BrushPreview");
@@ -303,7 +308,7 @@ impl InkMenuController {
                                 .with(if brush_panel_open { vec![
                                     Control::popup()
                                         .with(Popup::Direction(PopupDirection::Below))
-                                        .with(Popup::Size(220, 66))
+                                        .with(Popup::Size(220, 131))
                                         .with(Popup::Offset(14))
                                         .with(ControlAttribute::ZIndex(1000))
                                         .with(Popup::IsOpen(Property::Bind("EditBrushProperties".to_string())))
@@ -313,6 +318,24 @@ impl InkMenuController {
                                                 .with(Bounds::fill_all())
                                                 .with(ControlAttribute::Padding((10, 0), (10, 0)))
                                                 .with(vec![
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(3.0)),
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(30.0))
+                                                        .with(settings_cog.clone()),
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(3.0)),
+                                                    Control::label()
+                                                        .with(Bounds::next_vert(26.0))
+                                                        .with("Settings")
+                                                        .with(Font::Size(15.0))
+                                                        .with(Font::Align(TextAlign::Center))
+                                                        .with(Font::Weight(FontWeight::Light)),
+                                                    Control::empty()
+                                                        .with(Bounds::next_vert(1.0)),
+                                                    Control::empty()
+                                                        .with(Appearance::Background(MENU_BACKGROUND_ALT))
+                                                        .with(Bounds::next_vert(2.0)),
                                                     Control::empty()
                                                         .with(Bounds::next_vert(3.0)),
                                                     Control::empty()
