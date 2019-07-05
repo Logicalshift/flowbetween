@@ -1043,8 +1043,30 @@ function flowbetween(root_node) {
     ///
     let wire_click = (action_name, node, controller_path) => {
         add_action_event(node, 'click', event => {
-            if (event.eventPhase !== Event.CAPTURING_PHASE) { 
-                event.preventDefault();
+            var handle_event    = false;
+            var prevent_default = false;
+
+            if (event.eventPhase !== Event.CAPTURING_PHASE) {
+                // Always handle events at source
+                handle_event    = true;
+                prevent_default = true;
+            } else {
+                // Capture when there's not an existing click handler closer to the start
+                var path = event.composedPath();
+                for (var path_index = 0; path_index < path.length; ++path_index) {
+                    var node_in_path = path[path_index];
+
+                    if (node_in_path['flo_event_click']) {
+                        if (node_in_path === node) {
+                            handle_event = true;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (handle_event) { 
+                if (prevent_default) { event.preventDefault(); }
                 event.stopPropagation();
                 note('Click ' + action_name + ' --> ' + controller_path);
 
@@ -1053,8 +1075,30 @@ function flowbetween(root_node) {
         }, true);
 
         add_action_event(node, 'touchstart', event => {
-            if (event.touches.length === 1 && event.eventPhase !== Event.CAPTURING_PHASE) {
-                event.preventDefault();
+            var handle_event    = false;
+            var prevent_default = false;
+
+            if (event.eventPhase !== Event.CAPTURING_PHASE) {
+                // Always handle events at source
+                handle_event    = true;
+                prevent_default = true;
+            } else {
+                // Capture when there's not an existing click handler closer to the start
+                var path = event.composedPath();
+                for (var path_index = 0; path_index < path.length; ++path_index) {
+                    var node_in_path = path[path_index];
+
+                    if (node_in_path['flo_event_touchstart']) {
+                        if (node_in_path === node) {
+                            handle_event = true;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (event.touches.length === 1 && handle_event) {
+                if (prevent_default) { event.preventDefault(); }
                 event.stopPropagation();
                 note('Click (touch) ' + action_name + ' --> ' + controller_path);
 
