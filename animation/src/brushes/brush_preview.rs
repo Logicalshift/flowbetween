@@ -2,6 +2,7 @@ use super::*;
 use super::super::traits::*;
 
 use flo_canvas::*;
+use flo_curves::bezier::path::*;
 
 use futures::executor;
 use std::mem;
@@ -176,7 +177,9 @@ impl BrushPreview {
         // Path itself
         let brush_points    = self.current_brush.brush_points_for_raw_points(&self.points);
         let path            = vec![Path::from_drawing(self.current_brush.render_brush(&self.brush_properties, &brush_points))];
-        let path            = path.into_iter().map(|path| path.elements().collect::<Vec<_>>()).flatten();
+        let path            = path.into_iter();
+        let path            = path.map(|path| path_remove_interior_points::<_, Path>(&vec![path], 0.01)).flatten();
+        let path            = path.map(|path| path.elements().collect::<Vec<_>>()).flatten();
         actions.push(LayerEdit::Path(when, CreatePath(ElementId::Unassigned, Arc::new(path.collect()))));
 
         // Perform the edit
