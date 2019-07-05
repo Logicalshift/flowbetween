@@ -312,7 +312,6 @@ impl InkMenuController {
                                             Control::container()
                                                 .with(Bounds::fill_all())
                                                 .with(ControlAttribute::Padding((10, 0), (10, 0)))
-                                                .with(Font::Size(11.0))
                                                 .with(vec![
                                                     Control::empty()
                                                         .with(Bounds::next_vert(3.0)),
