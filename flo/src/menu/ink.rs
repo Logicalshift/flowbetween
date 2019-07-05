@@ -329,6 +329,7 @@ impl InkMenuController {
                                                                 .with(Bounds::next_horiz(4.0)),
                                                             Control::label()
                                                                 .with(Bounds::fill_horiz())
+                                                                .with(Font::Size(11.0))
                                                                 .with(modification_text)
                                                         ]),
                                                     Control::empty()
@@ -346,6 +347,7 @@ impl InkMenuController {
                                                                 .with(Bounds::next_horiz(4.0)),
                                                             Control::label()
                                                                 .with(Bounds::fill_horiz())
+                                                                .with(Font::Size(11.0))
                                                                 .with(representation_text)
                                                         ]),
                                                     Control::empty()
