@@ -169,7 +169,7 @@ impl BrushPreview {
             return;
         }
 
-        // Path properties
+        // Path properties (TODO: don't add path properties if they're already set correctly, maybe?)
         let (defn, drawing_style) = self.current_brush.to_definition();
         actions.push(LayerEdit::Path(when, SelectBrush(ElementId::Unassigned, defn, drawing_style)));
         actions.push(LayerEdit::Path(when, BrushProperties(ElementId::Unassigned, self.brush_properties.clone())));
