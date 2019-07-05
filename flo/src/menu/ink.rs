@@ -299,7 +299,7 @@ impl InkMenuController {
                         .with(vec![
                             Control::empty()
                                 .with(Bounds::next_horiz(35.0))
-                                .with(if !brush_panel_open { (ActionTrigger::Click, "ShowBrushPropertiesPopup") } else { (ActionTrigger::Click, "HideBrushPropertiesPopup") })
+                                .with(if !brush_panel_open { (ActionTrigger::Click, "ShowBrushPropertiesPopup") } else { (ActionTrigger::Click, "HideBrushPropertiesPopup2") })
                                 .with(if brush_panel_open { vec![
                                     Control::popup()
                                         .with(Popup::Direction(PopupDirection::Below))
