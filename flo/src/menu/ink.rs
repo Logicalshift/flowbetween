@@ -303,7 +303,7 @@ impl InkMenuController {
                                 .with(if brush_panel_open { vec![
                                     Control::popup()
                                         .with(Popup::Direction(PopupDirection::Below))
-                                        .with(Popup::Size(220, 64))
+                                        .with(Popup::Size(220, 66))
                                         .with(Popup::Offset(14))
                                         .with(ControlAttribute::ZIndex(1000))
                                         .with(Popup::IsOpen(Property::Bind("EditBrushProperties".to_string())))
