@@ -124,7 +124,7 @@ mod test {
     fn non_overlapping_circles_inside_each_others_bounds_do_not_combine() {
         // Two circles that overlap in bounding boxes but not as paths
         let circle1 = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
-        let circle2 = Circle::new(Coord2(3.9, 3.9), 2.0).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(5.6, 5.6), 2.0).to_path::<SimpleBezierPath>();
 
         // These two should combine
         let combined = combine_paths(&vec![circle1], &vec![circle2], 0.01);
