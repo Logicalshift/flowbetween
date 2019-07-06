@@ -178,9 +178,16 @@ impl BrushPreview {
         let brush_points    = self.current_brush.brush_points_for_raw_points(&self.points);
         let path            = vec![Path::from_drawing(self.current_brush.render_brush(&self.brush_properties, &brush_points))];
         let path            = path.into_iter();
+        let path            = path.filter(|path| path.elements().count() > 2);
         let path            = path.map(|path| path_remove_interior_points::<_, Path>(&vec![path], 0.01)).flatten();
         let path            = path.map(|path| path.elements().collect::<Vec<_>>()).flatten();
-        actions.push(LayerEdit::Path(when, CreatePath(ElementId::Unassigned, Arc::new(path.collect()))));
+        let path            = path.collect::<Vec<_>>();
+
+        if path.len() <= 0 {
+            return;
+        }
+
+        actions.push(LayerEdit::Path(when, CreatePath(ElementId::Unassigned, Arc::new(path))));
 
         // Perform the edit
         let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
