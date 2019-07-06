@@ -9,6 +9,7 @@ pub enum GroupType {
     /// Elements are added together (the path properties of the first element are used for all elements)
     Added,
 
+    /*
     /// Elements after the first element are subtracted from the first element
     Subtracted,
 
@@ -17,4 +18,5 @@ pub enum GroupType {
 
     /// The first element is subtracted from future elements
     InvertedMask
+    */
 }
