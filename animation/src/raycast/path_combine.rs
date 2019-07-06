@@ -82,7 +82,7 @@ where P::Point: Coordinate2D {
                 crossings[path_number as usize] += side;
 
                 // If we're inside both paths here then the paths overlap
-                if crossings[0] != 0 && crossings[1] != 0 {
+                if crossings[0]&1 != 0 && crossings[1]&1 != 0 {
                     return true;
                 }
             }
