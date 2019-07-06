@@ -1,5 +1,7 @@
 use super::path::*;
+use super::vector::*;
 use super::raw_point::*;
+use super::combine_result::*;
 use super::brush_properties::*;
 use super::brush_definition::*;
 use super::brush_drawing_style::*;
@@ -65,5 +67,12 @@ pub trait Brush : Send+Sync {
     ///
     fn drawing_style(&self) -> BrushDrawingStyle {
         self.to_definition().1
+    }
+
+    ///
+    /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
+    ///
+    fn combine_with(&self, _element: &Vector, _brush_properties: &BrushProperties, _element_properties: &BrushProperties) -> CombineResult { 
+        CombineResult::UnableToCombineFurther
     }
 }

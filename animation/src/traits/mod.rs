@@ -15,6 +15,7 @@ mod path;
 mod time_path;
 mod motion;
 mod cache;
+mod combine_result;
 
 pub use self::edit::*;
 pub use self::actions::*;
@@ -33,3 +34,4 @@ pub use self::path::*;
 pub use self::time_path::*;
 pub use self::motion::*;
 pub use self::cache::*;
+pub use self::combine_result::*;
