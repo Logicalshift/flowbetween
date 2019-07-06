@@ -42,6 +42,7 @@ impl RaycastEdge {
             Vector::Transformed(transform)      => { Self::from_transformed(transform, properties) }
             Vector::BrushStroke(brush_stroke)   => { Self::from_brush_stroke(brush_stroke, properties) }
             Vector::Path(path)                  => { Self::from_path_element(path) }
+            Vector::Group(group_element)        => { Box::new(Self::from_group(group_element)) }
         }
     }
 
@@ -57,6 +58,15 @@ impl RaycastEdge {
         let edge_collection     = edges.collect::<Vec<_>>();
 
         Box::new(edge_collection.into_iter())
+    }
+
+    ///
+    /// Retrieves the edges corresponding to a group element
+    ///
+    pub fn from_group<'a>(group: &'a GroupElement) -> impl 'a+Iterator<Item=RaycastEdge> {
+        unimplemented!();
+
+        vec![].into_iter()
     }
 
     ///

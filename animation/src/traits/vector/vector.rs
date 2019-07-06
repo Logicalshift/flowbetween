@@ -1,6 +1,7 @@
 use super::element::*;
 use super::path_element::*;
 use super::brush_element::*;
+use super::group_element::*;
 use super::motion_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
@@ -30,7 +31,10 @@ pub enum Vector {
     Path(PathElement),
 
     /// Element describing a motion
-    Motion(MotionElement)
+    Motion(MotionElement),
+
+    /// Element describing a group (with optional cache and path combining operation)
+    Group(GroupElement)
 }
 
 impl Vector {
@@ -71,14 +75,15 @@ impl Deref for Vector {
         use Vector::*;
 
         match self {
-            Transformed(ref transform)      => transform,
+            Transformed(transform)          => transform,
 
-            BrushDefinition(ref defn)       => defn,
-            BrushProperties(ref props)      => props,
-            BrushStroke(ref elem)           => elem,
+            BrushDefinition(defn)           => defn,
+            BrushProperties(props)          => props,
+            BrushStroke(elem)               => elem,
 
             Path(elem)                      => elem,
-            Motion(ref elem)                => elem
+            Motion(elem)                    => elem,
+            Group(elem)                     => elem
         }
     }
 }

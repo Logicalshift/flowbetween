@@ -17,8 +17,11 @@ pub enum VectorType {
     /// Vector element representing a path
     Path,
 
-    // Vector element representing the way something moves through space
-    Motion
+    /// Vector element representing the way something moves through space
+    Motion,
+
+    /// Group of other vector elements
+    Group
 }
 
 impl From<&Vector> for VectorType {
@@ -31,7 +34,8 @@ impl From<&Vector> for VectorType {
             BrushProperties(_)              => VectorType::BrushProperties,
             BrushStroke(_)                  => VectorType::BrushStroke,
             Path(_)                         => VectorType::Path,
-            Motion(_)                       => VectorType::Motion
+            Motion(_)                       => VectorType::Motion,
+            Group(_)                        => VectorType::Group
         }
     }
 }
