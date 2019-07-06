@@ -92,3 +92,88 @@ where P::Point: Coordinate2D {
     // Paths do not overlap
     false
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use flo_curves::arc::*;
+
+    #[test]
+    fn colliding_paths_combine() {
+        // Two circles that overlap
+        let circle1 = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(3.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+
+        // These two should combine
+        let combined = combine_paths(&vec![circle1], &vec![circle2], 0.01);
+        assert!(combined.is_some());
+    }
+
+    #[test]
+    fn non_overlapping_circles_outside_bounds_do_not_combine() {
+        // Two circles that are far apart
+        let circle1 = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(20.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+
+        // These two should combine
+        let combined = combine_paths(&vec![circle1], &vec![circle2], 0.01);
+        assert!(combined.is_none());
+    }
+
+    #[test]
+    fn non_overlapping_circles_inside_each_others_bounds_do_not_combine() {
+        // Two circles that overlap in bounding boxes but not as paths
+        let circle1 = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(3.9, 3.9), 2.0).to_path::<SimpleBezierPath>();
+
+        // These two should combine
+        let combined = combine_paths(&vec![circle1], &vec![circle2], 0.01);
+        assert!(combined.is_none());
+    }
+
+    #[test]
+    fn circle_in_circle_does_combine() {
+        // One circle inside another (these will not generate any collisions but as they overlap, we should get an overlapping circle)
+        let circle1 = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(2.0, 2.0), 1.0).to_path::<SimpleBezierPath>();
+
+        // These two should combine
+        let combined = combine_paths(&vec![circle1], &vec![circle2], 0.01);
+        assert!(combined.is_some());
+    }
+
+    #[test]
+    fn circle_in_circle_does_combine_reverse() {
+        // One circle inside another (these will not generate any collisions but as they overlap, we should get an overlapping circle)
+        let circle1 = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(2.0, 2.0), 1.0).to_path::<SimpleBezierPath>();
+
+        // These two should combine
+        let combined = combine_paths(&vec![circle2], &vec![circle1], 0.01);
+        assert!(combined.is_some());
+    }
+
+    #[test]
+    fn circle_in_ring_does_not_combine() {
+        // A ring has a hole in it so a circle in that hole does not actually overlap it
+        let ring1   = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let ring2   = Circle::new(Coord2(2.0, 2.0), 1.5).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(2.0, 2.0), 1.0).to_path::<SimpleBezierPath>();
+
+        // These two should combine
+        let combined = combine_paths(&vec![ring1, ring2], &vec![circle2], 0.01);
+        assert!(combined.is_none());
+    }
+
+    #[test]
+    fn circle_in_ring_does_not_combine_reverse() {
+        // A ring has a hole in it so a circle in that hole does not actually overlap it
+        let ring1   = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let ring2   = Circle::new(Coord2(2.0, 2.0), 1.5).to_path::<SimpleBezierPath>();
+        let circle2 = Circle::new(Coord2(2.0, 2.0), 1.0).to_path::<SimpleBezierPath>();
+
+        // These two should combine
+        let combined = combine_paths(&vec![circle2], &vec![ring1, ring2], 0.01);
+        assert!(combined.is_none());
+    }
+}
