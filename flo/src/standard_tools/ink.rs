@@ -67,8 +67,8 @@ impl InkModel {
         let size                = bind(5.0);
         let opacity             = bind(1.0);
         let color               = bind(Color::Hsluv(0.0, 100.0, 0.0, 1.0));
-        let modification_mode   = bind(BrushModificationMode::Individual);
-        let representation      = bind(BrushRepresentation::BrushStroke);
+        let modification_mode   = bind(BrushModificationMode::Additive);
+        let representation      = bind(BrushRepresentation::Path);
 
         let brush_properties    = Self::brush_properties(size.clone(), opacity.clone(), color.clone());
 
