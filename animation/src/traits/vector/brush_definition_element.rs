@@ -67,7 +67,7 @@ impl VectorElement for BrushDefinitionElement {
     ///
     /// Renders this vector element
     /// 
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
+    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {
         gc.draw_list(properties.brush.prepare_to_render(&properties.brush_properties));
     }
 

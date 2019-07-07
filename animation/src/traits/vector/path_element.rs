@@ -87,7 +87,7 @@ impl VectorElement for PathElement {
     ///
     /// Renders this vector element
     /// 
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) { 
+    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) { 
         gc.draw_list(properties.brush.prepare_to_render(&properties.brush_properties));
         gc.draw_list(properties.brush.render_path(&properties.brush_properties, &self.path));
     }

@@ -43,13 +43,13 @@ impl GroupElement {
     ///
     /// Renders the contents of this group in 'normal' mode
     ///
-    fn render_normal(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
+    fn render_normal(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration) {
         // Properties update internally to the group
         let mut properties = Arc::new(properties.clone());
 
         for elem in self.grouped_elements.iter() {
             properties = elem.update_properties(properties);
-            properties.render(gc, elem.clone(), Duration::from_millis(0) /* TODO: need to pass time into elem, also consider making the properties.render take a vector reference rather than a vector directly */);
+            properties.render(gc, elem.clone(), when);
         }
     }
 
@@ -60,7 +60,7 @@ impl GroupElement {
         // Get the paths for this rendering
         let paths = self.grouped_elements.iter()
             .flat_map(|elem| elem.to_path(properties))
-            .map(|path| path_remove_interior_points(&path, 0.01))
+            .map(|path| path_remove_interior_points::<_, Path>(&path, 0.01))
             .collect::<Vec<_>>();
 
         // Render if there are more than one path
@@ -106,9 +106,9 @@ impl VectorElement for GroupElement {
     ///
     /// Renders this vector element
     /// 
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
+    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration) {
         match self.group_type {
-            GroupType::Normal   => self.render_normal(gc, properties),
+            GroupType::Normal   => self.render_normal(gc, properties, when),
             GroupType::Added    => self.render_added(gc, properties)
         }
     }

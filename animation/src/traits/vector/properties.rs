@@ -41,7 +41,7 @@ impl VectorProperties {
             brush:              Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
             brush_properties:   BrushProperties::new(),
             transform_vector:   Arc::new(|vector, _when| vector),
-            render_vector:      Arc::new(|gc, vector, _when, properties| vector.render(gc, properties))
+            render_vector:      Arc::new(|gc, vector, when, properties| vector.render(gc, properties, when))
         }
     }
 

@@ -70,8 +70,8 @@ impl VectorElement for TransformedVector {
     ///
     /// Renders this vector element
     /// 
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties) {
-        self.transformed.render(gc, properties)
+    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration) {
+        self.transformed.render(gc, properties, when)
     }
 
     ///
