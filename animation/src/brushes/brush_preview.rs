@@ -15,6 +15,7 @@ pub struct BrushPreview {
     current_brush:          Arc<dyn Brush>,
     brush_properties:       BrushProperties,
     points:                 Vec<RawPoint>,
+    combined_element:       Option<Vector>
 }
 
 impl BrushPreview {
@@ -22,7 +23,8 @@ impl BrushPreview {
         BrushPreview {
             current_brush:      create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw),
             brush_properties:   BrushProperties::new(),
-            points:             vec![]
+            points:             vec![],
+            combined_element:   None
         }
     }
 
@@ -55,7 +57,8 @@ impl BrushPreview {
     /// Clears the preview
     /// 
     pub fn cancel_brush_stroke(&mut self) {
-        self.points = vec![];
+        self.points             = vec![];
+        self.combined_element   = None;
     }
 
     ///
@@ -145,7 +148,8 @@ impl BrushPreview {
         }
 
         // Perform the brush stroke (and clear out the points)
-        let mut points = vec![];
+        let mut points  = vec![];
+        let _combined   = self.combined_element.take();
         mem::swap(&mut self.points, &mut points);
         actions.push(Paint(when, BrushStroke(ElementId::Unassigned, Arc::new(points))));
 
@@ -166,6 +170,8 @@ impl BrushPreview {
 
         if self.points.len() < 2 {
             // Do nothing if there are no points in this brush preview
+            self.points = vec![];
+            self.combined_element.take();
             return;
         }
 
@@ -200,5 +206,8 @@ impl BrushPreview {
         let mut edit_sink   = executor::spawn(animation.edit());
 
         edit_sink.wait_send(actions.collect()).ok();
+
+        self.points             = vec![];
+        self.combined_element   = None;
     }
 }
