@@ -41,8 +41,8 @@ impl RaycastEdge {
 
             Vector::Transformed(transform)      => { Self::from_transformed(transform, properties) }
             Vector::BrushStroke(brush_stroke)   => { Self::from_brush_stroke(brush_stroke, properties) }
-            Vector::Path(path)                  => { Self::from_path_element(path) }
-            Vector::Group(group_element)        => { Box::new(Self::from_group(group_element)) }
+            Vector::Path(path)                  => { Box::new(Self::from_path_element(path)) }
+            Vector::Group(group_element)        => { Box::new(Self::from_group(group_element, properties)) }
         }
     }
 
@@ -63,16 +63,15 @@ impl RaycastEdge {
     ///
     /// Retrieves the edges corresponding to a group element
     ///
-    pub fn from_group<'a>(group: &'a GroupElement) -> impl 'a+Iterator<Item=RaycastEdge> {
-        unimplemented!();
-
-        vec![].into_iter()
+    pub fn from_group<'a>(group: &'a GroupElement, properties: Arc<VectorProperties>) -> impl 'a+Iterator<Item=RaycastEdge> {
+        group.elements()
+            .flat_map(move |element| RaycastEdge::from_vector(element, properties.clone()))
     }
 
     ///
     /// Retrieves the edges corresponding to a path element
     ///
-    pub fn from_path_element<'a>(vector: &'a PathElement) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
+    pub fn from_path_element<'a>(vector: &'a PathElement) -> impl 'a+Iterator<Item=RaycastEdge> {
         match vector.brush().drawing_style() {
             BrushDrawingStyle::Erase    => { Self::from_path(vector.path(), RaycastEdgeKind::EraseContents) }
             BrushDrawingStyle::Draw     => { Self::from_path(vector.path(), RaycastEdgeKind::Solid) }
@@ -82,14 +81,14 @@ impl RaycastEdge {
     ///
     /// Returns a particular path as ray cast edges
     ///
-    pub fn from_path<'a>(path: &'a Path, edge_kind: RaycastEdgeKind) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
-        Box::new(path.to_curves()
+    pub fn from_path<'a>(path: &'a Path, edge_kind: RaycastEdgeKind) -> impl 'a+Iterator<Item=RaycastEdge> {
+        path.to_curves()
             .map(move |curve| {
                 RaycastEdge {
                     curve: curve,
                     kind: edge_kind
                 }
-            }))
+            })
     }
 
     ///

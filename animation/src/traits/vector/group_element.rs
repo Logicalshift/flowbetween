@@ -83,6 +83,13 @@ impl GroupElement {
         paths.into_iter()
             .for_each(|path| gc.draw_list(properties.brush.render_path(&properties.brush_properties, &path)));
     }
+
+    ///
+    /// Retrieves the elements in this group
+    ///
+    pub fn elements(&self) -> impl Iterator<Item=&Vector> {
+        self.grouped_elements.iter()
+    }
 }
 
 impl VectorElement for GroupElement {
