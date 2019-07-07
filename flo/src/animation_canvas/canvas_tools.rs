@@ -244,6 +244,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             BrushPreviewAction::AddPoint(point)                 => { self.preview.as_mut().map(move |preview| preview.continue_brush_stroke(point)); },
             BrushPreviewAction::Commit                          => { self.commit_brush_preview(canvas, renderer) },
             BrushPreviewAction::CommitAsPath                    => { self.commit_brush_preview_as_path(canvas, renderer) }
+            BrushPreviewAction::CombineCollidingElements        => { self.combine_colliding_elements() }
         }
     }
 
@@ -348,7 +349,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     /// Turns the brush preview into a path and commmits it to the animation
     ///
     fn commit_brush_preview_as_path(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
-        // Take the
+        // Take the brush preview and commit
         if let (Some(mut preview), Some(preview_layer)) = (self.preview.take(), self.preview_layer) {
             let mut need_brush  = self.need_brush_definition(preview_layer, renderer);
             let mut need_props  = self.need_brush_properties(preview_layer, renderer);
@@ -367,5 +368,12 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
             // Commit the preview to the animation
             preview.commit_to_animation_as_path(current_time, preview_layer, &*self.animation);
         }
+    }
+
+    ///
+    /// Causes the brush preview to combine any elements that are overlapping (so we combine them into one path)
+    ///
+    fn combine_colliding_elements(&mut self) {
+        // TODO: implement me
     }
 }

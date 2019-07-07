@@ -191,9 +191,17 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
                         ],
                         
                         PaintAction::Finish     => {
-                            let representation = data.as_ref().map(|data| data.representation).unwrap_or(BrushRepresentation::BrushStroke);
+                            let representation      = data.as_ref().map(|data| data.representation).unwrap_or(BrushRepresentation::BrushStroke);
+                            let modification_mode   = data.as_ref().map(|data| data.modification_mode).unwrap_or(BrushModificationMode::Individual);
 
-                            match representation {
+                            // Update the preview according to the modification mode
+                            let update = match modification_mode {
+                                BrushModificationMode::Additive     => vec![BrushPreview(CombineCollidingElements)],
+                                BrushModificationMode::Individual   => vec![]
+                            };
+
+                            // After the update, commit according to the final representation
+                            update.into_iter().chain(match representation {
                                 BrushRepresentation::BrushStroke => vec![
                                     // Brush stroke is finished: we commit it (committing also clears the preview)
                                     BrushPreview(Commit),
@@ -209,7 +217,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
                                     // Painting new brush strokes clears the current selection
                                     ClearSelection
                                 ],
-                            }
+                            }).collect()
                         },
 
                         PaintAction::Cancel     => vec![

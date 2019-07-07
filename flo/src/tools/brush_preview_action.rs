@@ -23,6 +23,9 @@ pub enum BrushPreviewAction {
     /// Adds a raw point to the brush preview
     AddPoint(RawPoint),
 
+    /// If any elements overlap the brush preview, combine them into a single element
+    CombineCollidingElements,
+
     /// Commits the brush preview to the current layer
     Commit,
 
