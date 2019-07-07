@@ -122,6 +122,13 @@ impl BrushPreview {
     }
 
     ///
+    /// Attempts to combine the preview brush stroke with existing elements in the frame
+    ///
+    pub fn collide_with_existing_elements(&self, frame: Arc<dyn Frame>) {
+
+    }
+
+    ///
     /// Commits this preview to an animation
     /// 
     pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {

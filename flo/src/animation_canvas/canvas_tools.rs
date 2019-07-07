@@ -374,6 +374,12 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     /// Causes the brush preview to combine any elements that are overlapping (so we combine them into one path)
     ///
     fn combine_colliding_elements(&mut self) {
-        // TODO: implement me
+        // Fetch the current frame
+        let current_frame = self.animation.frame().frame.get();
+
+        // Perform collisions using the brush preview
+        if let (Some(preview), Some(current_frame)) = (self.preview.as_ref(), current_frame) {
+            preview.collide_with_existing_elements(current_frame);
+        }
     }
 }
