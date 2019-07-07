@@ -231,7 +231,7 @@ impl Frame for VectorFrame {
                 for element_id in active_attachments.iter() {
                     if let Some(attach_element) = self.element_with_id(element_id.clone()) {
                         properties = attach_element.update_properties(Arc::clone(&properties));
-                        attach_element.render(gc, &properties, when);
+                        properties.render(gc, attach_element, when);
                     }
                 }
             }
