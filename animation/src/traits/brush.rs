@@ -9,6 +9,7 @@ use super::brush_drawing_style::*;
 use flo_canvas::*;
 
 use std::iter;
+use std::sync::*;
 
 ///
 /// Represents a segment of a brush stroke
@@ -72,7 +73,7 @@ pub trait Brush : Send+Sync {
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
-    fn combine_with(&self, _element: &Vector, _brush_properties: &BrushProperties, _element_properties: &BrushProperties) -> CombineResult { 
+    fn combine_with(&self, _element: &Vector, _points: Arc<Vec<BrushPoint>>, _brush_properties: &VectorProperties, _element_properties: &VectorProperties) -> CombineResult { 
         CombineResult::UnableToCombineFurther
     }
 }

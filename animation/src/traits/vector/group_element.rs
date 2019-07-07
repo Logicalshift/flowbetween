@@ -26,6 +26,9 @@ pub struct GroupElement {
 
     /// The elements that make up this group
     grouped_elements: Arc<Vec<Vector>>,
+
+    /// The hint path if one is set
+    hint_path: Option<Vec<Path>>
 }
 
 impl GroupElement {
@@ -36,8 +39,19 @@ impl GroupElement {
         GroupElement {
             id:                 id,
             group_type:         group_type,
-            grouped_elements:   grouped_elements
+            grouped_elements:   grouped_elements,
+            hint_path:          None
         }
+    }
+
+    ///
+    /// Sets a hint path for this element
+    /// 
+    /// For certain group types that generate an output path with a single property (eg, GroupType::Added), this path will be
+    /// used instead of recomputing the path arithmetic operation represented by this group
+    ///
+    pub fn set_hint_path(&mut self, hint_path: Vec<Path>) {
+        self.hint_path = Some(hint_path);
     }
 
     ///
@@ -57,19 +71,24 @@ impl GroupElement {
     /// Returns the added path for this element
     ///
     fn added_path(&self, properties: &VectorProperties) -> Vec<Path> {
-        // Get the paths for this rendering
-        let paths = self.grouped_elements.iter()
-            .flat_map(|elem| elem.to_path(properties))
-            .map(|path| path_remove_interior_points::<_, Path>(&path, 0.01))
-            .collect::<Vec<_>>();
-
-        // Render if there are more than one path
-        if paths.len() > 0 {
-            // Add the paths into a single path
-            let paths = path_add_chain(&paths, 0.01);
-            paths
+        if let Some(hint_path) = self.hint_path.as_ref() {
+            // If a hint path has been set we can use this as the short-circuit for this path
+            hint_path.clone()
         } else {
-            vec![]
+            // Get the paths for this rendering
+            let paths = self.grouped_elements.iter()
+                .flat_map(|elem| elem.to_path(properties))
+                .map(|path| path_remove_interior_points::<_, Path>(&path, 0.01))
+                .collect::<Vec<_>>();
+
+            // Render if there are more than one path
+            if paths.len() > 0 {
+                // Add the paths into a single path
+                let paths = path_add_chain(&paths, 0.01);
+                paths
+            } else {
+                vec![]
+            }
         }
     }
 

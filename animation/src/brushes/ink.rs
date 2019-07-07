@@ -1,7 +1,9 @@
 use super::super::traits::*;
+use super::super::raycast::*;
 
 use std::iter;
 use std::ops::*;
+use std::sync::*;
 
 use flo_curves::*;
 use flo_curves::bezier;
@@ -461,5 +463,57 @@ impl Brush for InkBrush {
         };
 
         (definition, drawing_style)
+    }
+
+
+    ///
+    /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
+    ///
+    fn combine_with(&self, element: &Vector, points: Arc<Vec<BrushPoint>>, brush_properties: &VectorProperties, element_properties: &VectorProperties) -> CombineResult { 
+        if brush_properties.brush_properties == element_properties.brush_properties {
+            match element {
+                Vector::BrushStroke(_) | Vector::Path(_) => {
+                    // TODO: if Vector::Path, we don't really care about the element_properties as paths track their properties independently
+
+                    // Add to brush strokes or paths if possible
+                    let src_path = element.to_path(&element_properties);
+                    let tgt_path = vec![Path::from_drawing(self.render_brush(&brush_properties.brush_properties, &*points))];
+
+                    // Try to combine with the path
+                    if let Some(src_path) = src_path {
+                        let combined = combine_paths(&src_path, &tgt_path, 0.01);
+                        if let Some(mut combined) = combined {
+                            // Managed to combine the two brush strokes/paths into one
+                            let grouped_elements    = vec![element.clone(), Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))];
+                            let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
+
+                            // In checking for an overlap we will have calculated most of the combined path: finish the job and set it as the hint
+                            combined.set_exterior_by_adding();
+                            combined.heal_exterior_gaps();
+                            grouped.set_hint_path(combined.exterior_paths());
+
+                            CombineResult::NewElement(Vector::Group(grouped))
+                        } else {
+                            // Elements do not overlap
+                            CombineResult::NoOverlap
+                        }
+                    } else {
+                        // No source path
+                        CombineResult::NoOverlap
+                    }
+                },
+
+                // TODO: extend groups if they are of GroupType::Added and we overlap them
+                Vector::Transformed(_) | Vector::Group(_) => {
+                    CombineResult::UnableToCombineFurther
+                },
+
+                // Ignore 
+                _ => { CombineResult::NoOverlap }
+            }
+        } else {
+            // When the properties change, we can't combine any further
+            CombineResult::UnableToCombineFurther
+        }
     }
 }
