@@ -73,7 +73,7 @@ pub trait Brush : Send+Sync {
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
-    fn combine_with(&self, _element: &Vector, _points: Arc<Vec<BrushPoint>>, _brush_properties: &VectorProperties, _element_properties: &VectorProperties) -> CombineResult { 
+    fn combine_with(&self, _element: &Vector, _points: Arc<Vec<BrushPoint>>, _brush_properties: &VectorProperties, _element_properties: &VectorProperties, _combined_element: Option<Vector>) -> CombineResult { 
         CombineResult::UnableToCombineFurther
     }
 }

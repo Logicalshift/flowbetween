@@ -469,7 +469,13 @@ impl Brush for InkBrush {
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
-    fn combine_with(&self, element: &Vector, points: Arc<Vec<BrushPoint>>, brush_properties: &VectorProperties, element_properties: &VectorProperties) -> CombineResult { 
+    fn combine_with(&self, element: &Vector, points: Arc<Vec<BrushPoint>>, brush_properties: &VectorProperties, element_properties: &VectorProperties, combined_element: Option<Vector>) -> CombineResult { 
+        // The ink brush always combines into a group: retrieve that as the combined element here
+        let combined_element = match combined_element {
+            Some(Vector::Group(group_element))  => Some(group_element),
+            _                                   => None
+        };
+
         if brush_properties.brush_properties == element_properties.brush_properties {
             match element {
                 Vector::BrushStroke(_) | Vector::Path(_) => {
@@ -484,8 +490,9 @@ impl Brush for InkBrush {
                         let combined = combine_paths(&src_path, &tgt_path, 0.01);
                         if let Some(mut combined) = combined {
                             // Managed to combine the two brush strokes/paths into one
-                            let grouped_elements    = vec![element.clone(), Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))];
-                            let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
+                            let previous_elements   = combined_element.iter().flat_map(|combined| combined.elements()).cloned();
+                            let grouped_elements    = previous_elements.chain(vec![element.clone(), Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))]);
+                            let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements.collect()));
 
                             // In checking for an overlap we will have calculated most of the combined path: finish the job and set it as the hint
                             combined.set_exterior_by_adding();
