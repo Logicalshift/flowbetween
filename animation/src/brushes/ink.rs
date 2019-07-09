@@ -490,9 +490,14 @@ impl Brush for InkBrush {
                         let combined = combine_paths(&src_path, &tgt_path, 0.01);
                         if let Some(mut combined) = combined {
                             // Managed to combine the two brush strokes/paths into one
-                            let previous_elements   = combined_element.iter().flat_map(|combined| combined.elements()).cloned();
-                            let grouped_elements    = previous_elements.chain(vec![element.clone(), Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))]);
-                            let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements.collect()));
+                            let grouped_elements = if let Some(combined_element) = combined_element {
+                                let previous_elements = combined_element.elements().cloned();
+                                iter::once(element.clone()).chain(previous_elements).collect()
+                            } else {
+                                vec![element.clone(), Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))]
+                            };
+
+                            let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
 
                             // In checking for an overlap we will have calculated most of the combined path: finish the job and set it as the hint
                             combined.set_exterior_by_adding();
