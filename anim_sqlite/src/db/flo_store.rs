@@ -221,6 +221,12 @@ pub enum DatabaseUpdate {
 
     /// Removes the motion with the specified ID
     DeleteMotion(i64),
+
+    /// Entirely deletes a vector element
+    PopDeleteVectorElement,
+
+    /// Removes the attachment between a vector element and its frame
+    PopDetachVectorElementFromFrame
 }
 
 ///

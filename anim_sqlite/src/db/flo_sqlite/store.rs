@@ -706,6 +706,18 @@ impl FloSqlite {
                 let mut delete_motion = Self::prepare(&self.sqlite, FloStatement::DeleteMotion)?;
                 delete_motion.execute::<&[&dyn ToSql]>(&[&motion_id])?;
             },
+
+            PopDeleteVectorElement                                          => {
+                let element_id          = self.stack.pop().unwrap();
+                let mut delete_element  = Self::prepare(&self.sqlite, FloStatement::DeleteVectorElement)?;
+                delete_element.execute(&[&element_id])?;
+            },
+
+            PopDetachVectorElementFromFrame                                 => {
+                let element_id                      = self.stack.pop().unwrap();
+                let mut delete_element_from_frame   = Self::prepare(&self.sqlite, FloStatement::DeleteVectorElementTime)?;
+                delete_element_from_frame.execute(&[&element_id])?;
+            }
         }
 
         Ok(())

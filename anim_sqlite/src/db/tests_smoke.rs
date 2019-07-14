@@ -892,3 +892,61 @@ fn smoke_delete_cached_onion_skin() {
         DatabaseUpdate::PopDeleteLayerCache(Duration::from_millis(2000), CacheType::OnionSkinLayer)
     ])
 }
+
+#[test]
+fn smoke_delete_vector_element() {
+    let core    = core();
+    let mut db  = core.db;
+
+    db.update(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke),
+        DatabaseUpdate::PushVectorElementTime(Duration::from_millis(2500)),
+        DatabaseUpdate::PushElementAssignId(42),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+    ]).unwrap();
+
+    assert!(db.stack_is_empty());
+
+    db.update(vec![
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PopDeleteVectorElement
+    ]).unwrap();
+
+    assert!(db.stack_is_empty());
+}
+
+#[test]
+fn smoke_detach_vector_element() {
+    let core    = core();
+    let mut db  = core.db;
+
+    db.update(vec![
+        DatabaseUpdate::PushLayerType(LayerType::Vector),
+        DatabaseUpdate::PushAssignLayer(24),
+        DatabaseUpdate::PopAddKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushLayerForAssignedId(24),
+        DatabaseUpdate::PushNearestKeyFrame(Duration::from_millis(2000)),
+        DatabaseUpdate::PushVectorElementType(VectorElementType::BrushStroke),
+        DatabaseUpdate::PushVectorElementTime(Duration::from_millis(2500)),
+        DatabaseUpdate::PushElementAssignId(42),
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+        DatabaseUpdate::Pop,
+    ]).unwrap();
+
+    assert!(db.stack_is_empty());
+
+    db.update(vec![
+        DatabaseUpdate::PushElementIdForAssignedId(42),
+        DatabaseUpdate::PopDetachVectorElementFromFrame
+    ]).unwrap();
+
+    assert!(db.stack_is_empty());
+}

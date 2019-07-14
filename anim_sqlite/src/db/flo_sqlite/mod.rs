@@ -172,7 +172,9 @@ enum FloStatement {
     DeleteMotionPoints,
     DeleteLayerCache,
     DeletePathPointRange,
-    DeletePathPointTypeRange
+    DeletePathPointTypeRange,
+    DeleteVectorElement,
+    DeleteVectorElementTime
 }
 
 impl FloSqlite {
@@ -513,7 +515,9 @@ impl FloSqlite {
             DeleteMotionPoints                  => "DELETE FROM Flo_MotionPath WHERE MotionId = ? AND PathType = ?",
             DeleteLayerCache                    => "DELETE FROM Flo_LayerCache WHERE CacheType = ? AND LayerId = ? AND CacheTime = ?",
             DeletePathPointRange                => "DELETE FROM Flo_PathPoints WHERE PathId = ? AND PointIndex >= ? AND PointIndex < ?",
-            DeletePathPointTypeRange            => "DELETE FROM Flo_PathPointType WHERE PathId = ? AND PointIndex >= ? AND PointIndex < ?"
+            DeletePathPointTypeRange            => "DELETE FROM Flo_PathPointType WHERE PathId = ? AND PointIndex >= ? AND PointIndex < ?",
+            DeleteVectorElement                 => "DELETE FROM Flo_VectorElement WHERE ElementId = ?",
+            DeleteVectorElementTime             => "DELETE FROM Flo_VectorElementTime WHERE ElementId = ?"
         }
     }
 
