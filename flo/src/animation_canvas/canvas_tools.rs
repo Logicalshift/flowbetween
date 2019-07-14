@@ -378,7 +378,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         let current_frame = self.animation.frame().frame.get();
 
         // Perform collisions using the brush preview
-        if let (Some(preview), Some(current_frame)) = (self.preview.as_ref(), current_frame) {
+        if let (Some(preview), Some(current_frame)) = (self.preview.as_mut(), current_frame) {
             preview.collide_with_existing_elements(current_frame);
         }
     }
