@@ -122,10 +122,54 @@ impl BrushPreview {
     }
 
     ///
+    /// Discovers all of the elements in the frame along with their properties
+    ///
+    fn frame_elements_with_properties(&self, frame: Arc<dyn Frame>) -> Vec<(Vector, Arc<VectorProperties>)> {
+        // Start with the default properties
+        let mut current_properties  = Arc::new(VectorProperties::default());
+        let mut result              = vec![];
+
+        // If this is a vector frame, apply the properties from each element
+        if let Some(vector_elements) = frame.vector_elements() {
+            for elem in vector_elements {
+                // Update the properties for this element
+                current_properties = frame.apply_properties_for_element(&elem, current_properties);
+
+                // Add to the result
+                result.push((elem, Arc::clone(&current_properties)));
+            }
+        }
+
+        result
+    }
+
+    ///
     /// Attempts to combine the preview brush stroke with existing elements in the frame
     ///
-    pub fn collide_with_existing_elements(&self, frame: Arc<dyn Frame>) {
+    pub fn collide_with_existing_elements(&mut self, frame: Arc<dyn Frame>) {
+        // We need to know the properties of all of the elements in the current frame (we need to work backwards to generate the grouped element)
+        let elements_with_properties        = self.frame_elements_with_properties(frame);
+        let brush_points                    = Arc::new(self.current_brush.brush_points_for_raw_points(&self.points));
 
+        // Nothing to do if there are no properties
+        if elements_with_properties.len() == 0 {
+            return;
+        }
+
+        // The vector properties of the brush will be the last element properties with the brush properties added in
+        let mut new_properties              = (*elements_with_properties.last().unwrap().1).clone();
+        new_properties.brush                = Arc::clone(&self.current_brush);
+        new_properties.brush_properties     = self.brush_properties.clone();
+
+        // Attempt to combine the current brush stroke with them
+        let mut combined_element            = None;
+        for (element, properties) in elements_with_properties.iter().rev() {
+            match self.current_brush.combine_with(&element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
+                _ => unimplemented!()
+            }
+        }
+
+        self.combined_element = combined_element;
     }
 
     ///

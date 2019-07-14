@@ -465,7 +465,6 @@ impl Brush for InkBrush {
         (definition, drawing_style)
     }
 
-
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
