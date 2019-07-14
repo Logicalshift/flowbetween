@@ -217,6 +217,27 @@ impl BrushPreview {
     }
 
     ///
+    /// Generates a list of edits to perform before committing a combined path
+    ///
+    fn edits_before_commiting_combined_path<'a>(&'a self, delete_elements_instead_of_detatching: bool) -> impl 'a+Iterator<Item=AnimationEdit> {
+        // If we're grouping a set of elements, then the existing elements need to either be deleted or detached
+        let elements_to_remove = self.combined_element
+            .iter()
+            .flat_map(|element| {
+                match element {
+                    Vector::Group(group) => Some(group.elements().filter(|element| element.id() != ElementId::Unassigned).map(|element| element.id()).collect()),
+
+                    _ => None
+                }
+            });
+
+        // TODO: detach instead of delete (needs a 'detach' element edit for the case where the group ends up part of the main animation)
+        elements_to_remove
+            .into_iter()
+            .map(|element_ids| AnimationEdit::Element(element_ids, ElementEdit::Delete))
+    }
+
+    ///
     /// Commits a brush preview to the animation as a path element
     ///
     pub fn commit_to_animation_as_path(&mut self, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
@@ -233,8 +254,8 @@ impl BrushPreview {
 
         // Path properties (TODO: don't add path properties if they're already set correctly, maybe?)
         let (defn, drawing_style) = self.current_brush.to_definition();
-        actions.push(LayerEdit::Path(when, SelectBrush(ElementId::Unassigned, defn, drawing_style)));
-        actions.push(LayerEdit::Path(when, BrushProperties(ElementId::Unassigned, self.brush_properties.clone())));
+        actions.push(AnimationEdit::Layer(layer_id, LayerEdit::Path(when, SelectBrush(ElementId::Unassigned, defn, drawing_style))));
+        actions.push(AnimationEdit::Layer(layer_id, LayerEdit::Path(when, BrushProperties(ElementId::Unassigned, self.brush_properties.clone()))));
 
         // Path itself
         let mut vector_properties           = VectorProperties::default();
@@ -263,13 +284,13 @@ impl BrushPreview {
             return;
         }
 
-        actions.push(LayerEdit::Path(when, CreatePath(ElementId::Unassigned, Arc::new(path))));
+        actions.extend(self.edits_before_commiting_combined_path(true));
+        actions.push(AnimationEdit::Layer(layer_id, LayerEdit::Path(when, CreatePath(ElementId::Unassigned, Arc::new(path)))));
 
         // Perform the edit
-        let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
         let mut edit_sink   = executor::spawn(animation.edit());
 
-        edit_sink.wait_send(actions.collect()).ok();
+        edit_sink.wait_send(actions).ok();
 
         self.points             = vec![];
         self.combined_element   = None;
