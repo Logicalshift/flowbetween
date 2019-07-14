@@ -164,8 +164,13 @@ impl BrushPreview {
         // Attempt to combine the current brush stroke with them
         let mut combined_element            = None;
         for (element, properties) in elements_with_properties.iter().rev() {
-            match self.current_brush.combine_with(&element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
-                _ => unimplemented!()
+            use self::CombineResult::*;
+
+            combined_element = match self.current_brush.combine_with(&element, Arc::clone(&brush_points), &new_properties, &*properties, combined_element.clone()) {
+                NewElement(new_combined)    => { Some(new_combined) },
+                NoOverlap                   => { continue; },               // Might be able to combine with an element further down
+                CannotCombineAndOverlaps    => { break; },                  // Not quite right: we can combine with any element that's not obscured by an existing element (we can skip over overlapping elements we can't combine with)
+                UnableToCombineFurther      => { break; }                   // Always stop here
             }
         }
 
