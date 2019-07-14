@@ -231,10 +231,11 @@ impl BrushPreview {
                 }
             });
 
-        // TODO: detach instead of delete (needs a 'detach' element edit for the case where the group ends up part of the main animation)
+        let edit = if delete_elements_instead_of_detatching { ElementEdit::Delete } else { ElementEdit::DetachFromFrame };
+
         elements_to_remove
             .into_iter()
-            .map(|element_ids| AnimationEdit::Element(element_ids, ElementEdit::Delete))
+            .map(move |element_ids| AnimationEdit::Element(element_ids, edit.clone()))
     }
 
     ///
