@@ -527,6 +527,20 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         }
                     },
 
+                    (_any_type, ElementEdit::Delete) => {
+                        self.db.update(vec![
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                            DatabaseUpdate::PopDeleteVectorElement
+                        ])?;
+                    },
+
+                    (_any_type, ElementEdit::DetachFromFrame) => {
+                        self.db.update(vec![
+                            DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
+                            DatabaseUpdate::PopDetachVectorElementFromFrame
+                        ])?;
+                    },
+
                     // Other types have no action
                     _ => ()
                 }

@@ -685,6 +685,50 @@ fn read_frame_after_edits() {
 }
 
 #[test]
+fn delete_element() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(50))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDrawingStyle::Draw
+            )
+        )),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(ElementId::Unassigned, BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(126), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(127), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(128), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Element(vec![ElementId::Assigned(127)], ElementEdit::Delete)
+    ]);
+    anim.panic_on_error();
+
+    let layer = anim.get_layer_with_id(2).unwrap();
+
+    {
+        let frame               = layer.get_frame_at_time(Duration::from_millis(442));
+        let element127          = frame.element_with_id(ElementId::Assigned(127));
+
+        assert!(match element127 {
+            Some(Vector::BrushStroke(ref brush_stroke)) => Some(brush_stroke.id()),
+            _ => None
+        } == None);
+    }
+}
+
+#[test]
 fn delete_layer_after_drawing_brush_stroke() {
     let anim = SqliteAnimation::new_in_memory();
 
