@@ -155,6 +155,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             }
             Order(_ordering)                            => { self.db.update(vec![Pop])?; }
             Delete                                      => { self.db.update(vec![Pop])?; }
+            DetachFromFrame                             => { self.db.update(vec![Pop])?; }
         }
 
         Ok(())

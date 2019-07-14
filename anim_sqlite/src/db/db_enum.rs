@@ -43,6 +43,7 @@ pub enum EditLogType {
     ElementOrderToBottom,
     ElementOrderBefore,
     ElementDelete,
+    ElementDetachFromFrame
 }
 
 ///
@@ -254,7 +255,8 @@ impl From<DbEnumType> for Vec<DbEnum> {
                     DbEnum::EditLog(ElementOrderToTop),
                     DbEnum::EditLog(ElementOrderToBottom),
                     DbEnum::EditLog(ElementOrderBefore),
-                    DbEnum::EditLog(ElementDelete)
+                    DbEnum::EditLog(ElementDelete),
+                    DbEnum::EditLog(ElementDetachFromFrame)
                 ]
             },
 
@@ -374,7 +376,8 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             Element(_, Order(ToTop))                            => EditLogType::ElementOrderToTop,
             Element(_, Order(ToBottom))                         => EditLogType::ElementOrderToBottom,
             Element(_, Order(Before(_)))                        => EditLogType::ElementOrderBefore,
-            Element(_, ElementEdit::Delete)                     => EditLogType::ElementDelete
+            Element(_, ElementEdit::Delete)                     => EditLogType::ElementDelete,
+            Element(_, DetachFromFrame)                         => EditLogType::ElementDetachFromFrame
         }
     }
 }
@@ -460,7 +463,8 @@ impl From<EditLogType> for DbEnumName {
             ElementOrderToTop           => DbEnumName("Edit", "Element::OrderToTop"),
             ElementOrderToBottom        => DbEnumName("Edit", "Element::OrderToBottom"),
             ElementOrderBefore          => DbEnumName("Edit", "Element::OrderBefore"),
-            ElementDelete               => DbEnumName("Edit", "Element::Delete")
+            ElementDelete               => DbEnumName("Edit", "Element::Delete"),
+            ElementDetachFromFrame      => DbEnumName("Edit", "Element::DetachFromFrame")
         }
     }
 }

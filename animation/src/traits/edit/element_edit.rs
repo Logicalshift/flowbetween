@@ -36,6 +36,9 @@ pub enum ElementEdit {
     /// Note that new elements are always created 'in front' of the current set of elements in the frame.
     Order(ElementOrdering),
 
-    /// Removes this element entirely from the frame
-    Delete
+    /// Removes elements entirely from the frame
+    Delete,
+
+    /// Detaches elements from the frame
+    DetachFromFrame
 }

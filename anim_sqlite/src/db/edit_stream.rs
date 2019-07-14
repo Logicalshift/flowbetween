@@ -223,7 +223,8 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
             ElementOrderToTop           => unimplemented!(),
             ElementOrderToBottom        => unimplemented!(),
             ElementOrderBefore          => unimplemented!(),
-            ElementDelete               => unimplemented!()
+            ElementDelete               => unimplemented!(),
+            ElementDetachFromFrame      => unimplemented!()
         }
     }
 
