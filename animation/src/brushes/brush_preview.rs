@@ -244,12 +244,20 @@ impl BrushPreview {
         let brush_points                    = self.current_brush.brush_points_for_raw_points(&self.points);
         let brush_element                   = BrushElement::new(ElementId::Unassigned, Arc::new(brush_points));
 
-        let path                            = brush_element.to_path(&vector_properties);
-        let path                            = path.into_iter().flatten();
-        let path                            = path.filter(|path| path.elements().count() > 2);
-        let path                            = path.map(|path| path_remove_interior_points::<_, Path>(&vec![path], 0.01)).flatten();
-        let path                            = path.map(|path| path.elements().collect::<Vec<_>>()).flatten();
-        let path                            = path.collect::<Vec<_>>();
+        let path = if let Some(combined) = self.combined_element.as_ref() {
+            let path                        = combined.to_path(&vector_properties);
+            let path                        = path.unwrap_or(vec![]).into_iter();
+            let path                        = path.filter(|path| path.elements().count() > 2);
+            let path                        = path.map(|path| path.elements().collect::<Vec<_>>()).flatten();
+            path.collect::<Vec<_>>()
+        } else {
+            let path                        = brush_element.to_path(&vector_properties);
+            let path                        = path.into_iter().flatten();
+            let path                        = path.filter(|path| path.elements().count() > 2);
+            let path                        = path.map(|path| path_remove_interior_points::<_, Path>(&vec![path], 0.01)).flatten();
+            let path                        = path.map(|path| path.elements().collect::<Vec<_>>()).flatten();
+            path.collect::<Vec<_>>()
+        };
 
         if path.len() <= 0 {
             return;

@@ -346,7 +346,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     }
 
     ///
-    /// Turns the brush preview into a path and commmits it to the animation
+    /// Turns the brush preview into a path and commits it to the animation
     ///
     fn commit_brush_preview_as_path(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // Take the brush preview and commit
