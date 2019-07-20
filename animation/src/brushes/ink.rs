@@ -479,13 +479,14 @@ impl Brush for InkBrush {
             match element {
                 Vector::BrushStroke(_) | Vector::Path(_) => {
                     // TODO: if Vector::Path, we don't really care about the element_properties as paths track their properties independently
+                    let brush_stroke = Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()));
 
                     // Add to brush strokes or paths if possible
                     let src_path = element.to_path(&element_properties);
-                    let tgt_path = vec![Path::from_drawing(self.render_brush(&brush_properties.brush_properties, &*points))];
+                    let tgt_path = brush_stroke.to_path(&brush_properties);
 
                     // Try to combine with the path
-                    if let Some(src_path) = src_path {
+                    if let (Some(src_path), Some(tgt_path)) = (src_path, tgt_path) {
                         let combined = combine_paths(&src_path, &tgt_path, 0.01);
                         if let Some(mut combined) = combined {
                             // Managed to combine the two brush strokes/paths into one
@@ -493,7 +494,7 @@ impl Brush for InkBrush {
                                 let previous_elements = combined_element.elements().cloned();
                                 iter::once(element.clone()).chain(previous_elements).collect()
                             } else {
-                                vec![element.clone(), Vector::BrushStroke(BrushElement::new(ElementId::Unassigned, points.clone()))]
+                                vec![element.clone(), brush_stroke]
                             };
 
                             let mut grouped         = GroupElement::new(ElementId::Unassigned, GroupType::Added, Arc::new(grouped_elements));
