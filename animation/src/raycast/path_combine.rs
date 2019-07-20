@@ -100,6 +100,7 @@ where P::Point: Coordinate2D {
 #[cfg(test)]
 mod test {
     use super::*;
+    use super::super::super::traits::*;
     use flo_curves::arc::*;
 
     #[test]
@@ -158,13 +159,27 @@ mod test {
     }
 
     #[test]
+    fn remove_interior_for_ring_removes_nothing() {
+        let ring1   = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
+        let ring2   = Circle::new(Coord2(2.0, 2.0), 1.5).to_path::<SimpleBezierPath>();
+
+        let removed = path_remove_interior_points::<_, SimpleBezierPath>(&vec![ring1.clone(), ring2.clone()], 0.01);
+
+        assert!(removed.len() == 2);
+
+        // (This isn't quite definitive: the rings can be in a different order, and the points can be in a different order)
+        assert!(removed[0] == ring1);
+        assert!(removed[1] == ring2);
+    }
+
+    #[test]
     fn circle_in_ring_does_not_combine() {
         // A ring has a hole in it so a circle in that hole does not actually overlap it
         let ring1   = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
         let ring2   = Circle::new(Coord2(2.0, 2.0), 1.5).to_path::<SimpleBezierPath>();
         let circle2 = Circle::new(Coord2(2.0, 2.0), 1.0).to_path::<SimpleBezierPath>();
 
-        // These two should combine
+        // These two should not combine
         let combined = combine_paths(&vec![ring1, ring2], &vec![circle2], 0.01);
         assert!(combined.is_none());
     }
@@ -176,7 +191,7 @@ mod test {
         let ring2   = Circle::new(Coord2(2.0, 2.0), 1.5).to_path::<SimpleBezierPath>();
         let circle2 = Circle::new(Coord2(2.0, 2.0), 1.0).to_path::<SimpleBezierPath>();
 
-        // These two should combine
+        // These two should not combine
         let combined = combine_paths(&vec![circle2], &vec![ring1, ring2], 0.01);
         assert!(combined.is_none());
     }
