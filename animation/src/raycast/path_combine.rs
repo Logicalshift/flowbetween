@@ -31,8 +31,10 @@ where P::Point: Coordinate2D {
         None
     } else {
         // Remove interior points
-        let path1 = path_remove_overlapped_points::<_, P>(path1, 0.01);
-        let path2 = path_remove_overlapped_points::<_, P>(path2, 0.01);
+        //let path1 = path_remove_overlapped_points::<_, P>(path1, 0.01); - assume the first path already has all of its interior points removed
+        let path2 = path2.iter()
+            .flat_map(|path| path_remove_interior_points::<_, P>(&vec![path.clone()], 0.01))
+            .collect::<Vec<_>>();
 
         // Convert both to graph paths
         let graph_path1 = GraphPath::from_merged_paths(path1.iter().map(|path| (path, PathLabel(0, PathDirection::from(path)))));
