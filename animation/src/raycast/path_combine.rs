@@ -31,8 +31,8 @@ where P::Point: Coordinate2D {
         None
     } else {
         // Remove interior points
-        let path1 = path_remove_interior_points::<_, P>(path1, 0.01);
-        let path2 = path_remove_interior_points::<_, P>(path2, 0.01);
+        let path1 = path_remove_overlapped_points::<_, P>(path1, 0.01);
+        let path2 = path_remove_overlapped_points::<_, P>(path2, 0.01);
 
         // Convert both to graph paths
         let graph_path1 = GraphPath::from_merged_paths(path1.iter().map(|path| (path, PathLabel(0, PathDirection::from(path)))));
@@ -159,17 +159,13 @@ mod test {
     }
 
     #[test]
-    fn remove_interior_for_ring_removes_nothing() {
+    fn remove_overlapped_for_ring_removes_nothing() {
         let ring1   = Circle::new(Coord2(2.0, 2.0), 2.0).to_path::<SimpleBezierPath>();
         let ring2   = Circle::new(Coord2(2.0, 2.0), 1.5).to_path::<SimpleBezierPath>();
 
-        let removed = path_remove_interior_points::<_, SimpleBezierPath>(&vec![ring1.clone(), ring2.clone()], 0.01);
+        let removed = path_remove_overlapped_points::<_, SimpleBezierPath>(&vec![ring1.clone(), ring2.clone()], 0.01);
 
         assert!(removed.len() == 2);
-
-        // (This isn't quite definitive: the rings can be in a different order, and the points can be in a different order)
-        assert!(removed[0] == ring1);
-        assert!(removed[1] == ring2);
     }
 
     #[test]
