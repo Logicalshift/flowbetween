@@ -578,6 +578,7 @@
 				TargetAttributes = {
 					4B1E8BFD21DCE1C3006861A8 = {
 						CreatedOnToolsVersion = 10.1;
+						LastSwiftMigration = 1030;
 					};
 					4B1E8C0F21DCE40B006861A8 = {
 						CreatedOnToolsVersion = 10.1;
@@ -1031,7 +1032,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = FlowBetween/CInterop/FlowBetween.h;
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -1054,7 +1055,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = io.logicalshift.FlowBetween;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = FlowBetween/CInterop/FlowBetween.h;
-				SWIFT_VERSION = 4.2;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};
