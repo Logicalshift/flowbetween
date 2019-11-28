@@ -6,7 +6,7 @@ use flo_ui::*;
 use flo_stream::*;
 use flo_cocoa_pipe::*;
 
-use cocoa::base::nil;
+use cocoa::base::{nil, id};
 use objc::*;
 use objc::rc::*;
 use objc::declare::*;
@@ -151,12 +151,12 @@ pub fn declare_flo_events_class() -> &'static Class {
                     let modes               = msg_send!(modes, init);
                     let modes               = StrongPtr::new(modes);
 
-                    msg_send!(*modes, addObject: NSDefaultRunLoopMode);
-                    msg_send!(*modes, addObject: NSModalPanelRunLoopMode);
-                    msg_send!(*modes, addObject: NSEventTrackingRunLoopMode);
+                    let _: () = msg_send!(*modes, addObject: NSDefaultRunLoopMode);
+                    let _: () = msg_send!(*modes, addObject: NSModalPanelRunLoopMode);
+                    let _: () = msg_send!(*modes, addObject: NSEventTrackingRunLoopMode);
 
                     // Call this object back after a delay
-                    msg_send!(this, performSelector: sel!(finishSendingEvents) withObject: nil afterDelay: EVENT_DELAY_SECS inModes: modes);
+                    let _: id = msg_send!(this, performSelector: sel!(finishSendingEvents) withObject: nil afterDelay: EVENT_DELAY_SECS inModes: modes);
 
                     flo_events.queued_update = true;
                 }

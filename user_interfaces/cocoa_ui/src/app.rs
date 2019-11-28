@@ -59,7 +59,7 @@ fn declare_flo_control_class() -> &'static Class {
         /// Sets the window class for a FloControl object
         extern fn set_window_class(this: &mut Object, _cmd: Sel, new_window_class: *mut Class) {
             unsafe {
-                msg_send!(new_window_class, retain);
+                let _: id = msg_send!(new_window_class, retain);
                 this.set_ivar("_windowClass", new_window_class);
             }
         }
@@ -67,7 +67,7 @@ fn declare_flo_control_class() -> &'static Class {
         /// Sets the view class for a FloControl object
         extern fn set_view_class(this: &mut Object, _cmd: Sel, new_view_class: *mut Class) {
             unsafe {
-                msg_send!(new_view_class, retain);
+                let _: id = msg_send!(new_view_class, retain);
                 this.set_ivar("_viewClass", new_view_class);
             }
         }
@@ -75,7 +75,7 @@ fn declare_flo_control_class() -> &'static Class {
         /// Sets the viewmodel class for a FloControl object
         extern fn set_view_model_class(this: &mut Object, _cmd: Sel, new_view_model_class: *mut Class) {
             unsafe {
-                msg_send!(new_view_model_class, retain);
+                let _: id = msg_send!(new_view_model_class, retain);
                 this.set_ivar("_viewModelClass", new_view_model_class);
             }
         }

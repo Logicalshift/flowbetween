@@ -122,7 +122,7 @@ impl CocoaSession {
             autoreleasepool(|| {
                 // Wake up the object on the main thread
                 self.get_target_object().map(|target| {
-                    msg_send!(*target, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO);
+                    let _: id = msg_send!(*target, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO);
                 });
             });
         }
@@ -215,7 +215,7 @@ impl CocoaSession {
                 let window = StrongPtr::new(window);
 
                 // Immediately request a tick from the new window (this is in case one was queued before the window was created)
-                msg_send!((*window), requestTick);
+                let _: () = msg_send!((*window), requestTick);
 
                 // Store it away
                 self.windows.insert(new_window_id, window);
@@ -231,9 +231,9 @@ impl CocoaSession {
 
         unsafe {
             match action {
-                RequestTick             => { msg_send!(*window, requestTick); }
-                Open                    => { msg_send!(*window, windowOpen); }
-                SetRootView(view_id)    => { self.views.get(&view_id).cloned().map(|view| msg_send!(*window, windowSetRootView: *view)); }
+                RequestTick             => { let _: () = msg_send!(*window, requestTick); }
+                Open                    => { let _: () = msg_send!(*window, windowOpen); }
+                SetRootView(view_id)    => { self.views.get(&view_id).cloned().map(|view| { let _: () = msg_send!(*window, windowSetRootView: *view); }); }
             }
         }
     }
@@ -275,7 +275,7 @@ impl CocoaSession {
     ///
     pub fn delete_view(&mut self, old_view_id: usize) {
         if let Some(view) = self.views.get(&old_view_id) {
-            unsafe { msg_send!(**view, viewRemoveFromSuperview); }
+            unsafe { let _: () = msg_send!(**view, viewRemoveFromSuperview); }
         }
 
         self.views.remove(&old_view_id);
@@ -314,29 +314,29 @@ impl CocoaSession {
                 match action {
                     RequestEvent(event_type, name)          => { self.request_view_event(view_id, event_type, name); }
 
-                    RemoveFromSuperview                     => { msg_send!(**view, viewRemoveFromSuperview); }
-                    AddSubView(view_id)                     => { self.views.get(&view_id).cloned().map(|subview| { msg_send!((**view), viewAddSubView: *subview) }); }
-                    InsertSubView(view_id, index)           => { self.views.get(&view_id).cloned().map(|subview| { msg_send!((**view), viewInsertSubView: *subview atIndex: index as u32) }); }
+                    RemoveFromSuperview                     => { let _: () = msg_send!(**view, viewRemoveFromSuperview); }
+                    AddSubView(view_id)                     => { self.views.get(&view_id).cloned().map(|subview| { let _: () = msg_send!((**view), viewAddSubView: *subview); }); }
+                    InsertSubView(view_id, index)           => { self.views.get(&view_id).cloned().map(|subview| { let _: () = msg_send!((**view), viewInsertSubView: *subview atIndex: index as u32); }); }
                     SetBounds(bounds)                       => { self.set_bounds(view, bounds); }
                     SetPadding(left, top, right, bottom)    => { self.set_padding(view, left, top, right, bottom); }
-                    SetZIndex(z_index)                      => { msg_send!(**view, viewSetZIndex: z_index); }
-                    SetForegroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
-                    SetBackgroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    SetZIndex(z_index)                      => { let _: () = msg_send!(**view, viewSetZIndex: z_index); }
+                    SetForegroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); let _: () = msg_send!(**view, viewSetForegroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
+                    SetBackgroundColor(col)                 => { let (r, g, b, a) = col.to_rgba_components(); let _: () = msg_send!(**view, viewSetBackgroundRed: r as f64 green: g as f64 blue: b as f64 alpha: a as f64); }
 
                     SetId(_id)                              => { /* TODO? */ }
-                    SetText(property)                       => { msg_send!(**view, viewSetText: *self.flo_property(property)); }
-                    SetFontSize(size)                       => { msg_send!(**view, viewSetFontSize: size); }
-                    SetFontWeight(weight)                   => { msg_send!(**view, viewSetFontWeight: weight); }
-                    SetTextAlignment(align)                 => { msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
+                    SetText(property)                       => { let _: () = msg_send!(**view, viewSetText: *self.flo_property(property)); }
+                    SetFontSize(size)                       => { let _: () = msg_send!(**view, viewSetFontSize: size); }
+                    SetFontWeight(weight)                   => { let _: () = msg_send!(**view, viewSetFontWeight: weight); }
+                    SetTextAlignment(align)                 => { let _: () = msg_send!(**view, viewSetTextAlignment: Self::text_alignment_value(align)); }
 
-                    SetImage(image)                         => { msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
+                    SetImage(image)                         => { let _: () = msg_send!(**view, viewSetImage: self.create_ns_image(image)); }
                     SetState(view_state)                    => { self.set_view_state(view, view_state); },
 
                     Popup(action)                           => { self.pop_up_action(view, action); }
 
-                    SetScrollMinimumSize(width, height)     => { msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
-                    SetHorizontalScrollBar(visibility)      => { msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
-                    SetVerticalScrollBar(visibility)        => { msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
+                    SetScrollMinimumSize(width, height)     => { let _: () = msg_send!(**view, viewSetScrollMinimumSizeWithWidth: width height: height); }
+                    SetHorizontalScrollBar(visibility)      => { let _: () = msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
+                    SetVerticalScrollBar(visibility)        => { let _: () = msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
 
                     Draw(canvas_actions)                    => { 
                         let view = view.clone();
@@ -355,10 +355,10 @@ impl CocoaSession {
 
         unsafe {
             match action {
-                Open(property)          => { msg_send!(**view, viewSetPopupOpen: *self.flo_property(property)); },
-                SetDirection(direction) => { msg_send!(**view, viewSetPopupDirection: self.pop_up_direction(direction)); },
-                SetSize(width, height)  => { msg_send!(**view, viewSetPopupSizeWithWidth: width height: height); },
-                SetOffset(offset)       => { msg_send!(**view, viewSetPopupOffset: offset); }
+                Open(property)          => { let _: () = msg_send!(**view, viewSetPopupOpen: *self.flo_property(property)); },
+                SetDirection(direction) => { let _: () = msg_send!(**view, viewSetPopupDirection: self.pop_up_direction(direction)); },
+                SetSize(width, height)  => { let _: () = msg_send!(**view, viewSetPopupSizeWithWidth: width height: height); },
+                SetOffset(offset)       => { let _: () = msg_send!(**view, viewSetPopupOffset: offset); }
             }
         }
     }
@@ -388,14 +388,14 @@ impl CocoaSession {
 
         unsafe {
             match view_state {
-                Selected(property)          => { msg_send!(**view, viewSetSelected: *self.flo_property(property)); },
-                Badged(property)            => { msg_send!(**view, viewSetBadged: *self.flo_property(property)); },
-                Enabled(property)           => { msg_send!(**view, viewSetEnabled: *self.flo_property(property)); },
-                Value(property)             => { msg_send!(**view, viewSetValue: *self.flo_property(property)); },
-                Range(lower, upper)         => { msg_send!(**view, viewSetRangeWithLower: *self.flo_property(lower) upper: *self.flo_property(upper)); },
-                FocusPriority(property)     => { msg_send!(**view, viewSetFocusPriority: *self.flo_property(property)); }
-                FixScrollAxis(axis)         => { msg_send!(**view, viewFixScrollAxis: self.id_for_scroll_axis(axis)); }
-                AddClass(class_name)        => { msg_send!(**view, viewAddClassName: NSString::alloc(nil).init_str(&class_name)); }
+                Selected(property)          => { let _: () = msg_send!(**view, viewSetSelected: *self.flo_property(property)); },
+                Badged(property)            => { let _: () = msg_send!(**view, viewSetBadged: *self.flo_property(property)); },
+                Enabled(property)           => { let _: () = msg_send!(**view, viewSetEnabled: *self.flo_property(property)); },
+                Value(property)             => { let _: () = msg_send!(**view, viewSetValue: *self.flo_property(property)); },
+                Range(lower, upper)         => { let _: () = msg_send!(**view, viewSetRangeWithLower: *self.flo_property(lower) upper: *self.flo_property(upper)); },
+                FocusPriority(property)     => { let _: () = msg_send!(**view, viewSetFocusPriority: *self.flo_property(property)); }
+                FixScrollAxis(axis)         => { let _: () = msg_send!(**view, viewFixScrollAxis: self.id_for_scroll_axis(axis)); }
+                AddClass(class_name)        => { let _: () = msg_send!(**view, viewAddClassName: NSString::alloc(nil).init_str(&class_name)); }
             }
         }
     }
@@ -420,7 +420,7 @@ impl CocoaSession {
         let view_src        = view.clone();
 
         let view            = view_src.clone();
-        let clear_canvas    = move || { unsafe { msg_send!(*view, viewClearCanvas); } };
+        let clear_canvas    = move || { unsafe { let _: () = msg_send!(*view, viewClearCanvas); } };
         let view            = view_src.clone();
         let copy_layer      = move |layer_id| { 
             unsafe { 
@@ -430,9 +430,9 @@ impl CocoaSession {
             } 
         };
         let view            = view_src.clone();
-        let update_layer    = move |layer_id, layer_obj: StrongPtr| { unsafe { msg_send!(*view, viewUpdateCache: *layer_obj fromLayerWithId: layer_id); } };
+        let update_layer    = move |layer_id, layer_obj: StrongPtr| { unsafe { let _: () = msg_send!(*view, viewUpdateCache: *layer_obj fromLayerWithId: layer_id); } };
         let view            = view_src.clone();
-        let restore_layer   = move |layer_id, layer_obj: StrongPtr| { unsafe { msg_send!(*view, viewRestoreLayerTo: layer_id fromCopy: *layer_obj); } };
+        let restore_layer   = move |layer_id, layer_obj: StrongPtr| { unsafe { let _: () = msg_send!(*view, viewRestoreLayerTo: layer_id fromCopy: *layer_obj); } };
 
         ViewCanvas::new(clear_canvas, copy_layer, update_layer, restore_layer)
     }
@@ -459,8 +459,8 @@ impl CocoaSession {
             });
 
             // Finished drawing
-            msg_send!(**view, viewFinishedDrawing);
-            msg_send!(**view, viewSetTransform: canvas.get_transform());
+            let _: () = msg_send!(**view, viewFinishedDrawing);
+            let _: () = msg_send!(**view, viewSetTransform: canvas.get_transform());
         }
     }
 
@@ -491,8 +491,8 @@ impl CocoaSession {
                 });
 
                 // Finished drawing
-                msg_send!(**view, viewFinishedDrawing);
-                msg_send!(**view, viewSetTransform: canvas.get_transform());
+                let _: () = msg_send!(**view, viewFinishedDrawing);
+                let _: () = msg_send!(**view, viewSetTransform: canvas.get_transform());
             }
         }
     }
@@ -522,15 +522,15 @@ impl CocoaSession {
 
             if let Some(view) = views.get(&view_id) {
                 match event_type {
-                    Click                           => { msg_send!(**view, requestClick: *flo_events withName: *name); }
-                    Dismiss                         => { msg_send!(**view, requestDismiss: *flo_events withName: *name); }
-                    VirtualScroll(width, height)    => { msg_send!(**view, requestVirtualScroll: *flo_events withName: *name width: width as f64 height: height as f64); }
-                    Paint(device)                   => { msg_send!(**view, requestPaintWithDeviceId: device as u32 events: *flo_events withName: *name); }
-                    Drag                            => { msg_send!(**view, requestDrag: *flo_events withName: *name); }
-                    Focused                         => { msg_send!(**view, requestFocused: *flo_events withName: *name); }
-                    EditValue                       => { msg_send!(**view, requestEditValue: *flo_events withName: *name); }
-                    SetValue                        => { msg_send!(**view, requestSetValue: *flo_events withName: *name); }
-                    CancelEdit                      => { msg_send!(**view, requestCancelEdit: *flo_events withName: *name); }
+                    Click                           => { let _: () = msg_send!(**view, requestClick: *flo_events withName: *name); }
+                    Dismiss                         => { let _: () = msg_send!(**view, requestDismiss: *flo_events withName: *name); }
+                    VirtualScroll(width, height)    => { let _: () = msg_send!(**view, requestVirtualScroll: *flo_events withName: *name width: width as f64 height: height as f64); }
+                    Paint(device)                   => { let _: () = msg_send!(**view, requestPaintWithDeviceId: device as u32 events: *flo_events withName: *name); }
+                    Drag                            => { let _: () = msg_send!(**view, requestDrag: *flo_events withName: *name); }
+                    Focused                         => { let _: () = msg_send!(**view, requestFocused: *flo_events withName: *name); }
+                    EditValue                       => { let _: () = msg_send!(**view, requestEditValue: *flo_events withName: *name); }
+                    SetValue                        => { let _: () = msg_send!(**view, requestSetValue: *flo_events withName: *name); }
+                    CancelEdit                      => { let _: () = msg_send!(**view, requestCancelEdit: *flo_events withName: *name); }
                 }
             }
         }
@@ -617,7 +617,7 @@ impl CocoaSession {
     ///
     fn set_padding(&self, view: &StrongPtr, left: f64, top: f64, right: f64, bottom: f64) {
         unsafe {
-            msg_send!(**view, viewSetPaddingWithLeft: left top: top right: right bottom: bottom);
+            let _: () = msg_send!(**view, viewSetPaddingWithLeft: left top: top right: right bottom: bottom);
         }
     }
 
@@ -629,16 +629,16 @@ impl CocoaSession {
 
         unsafe {
             match pos {
-                At(pos)                     => { msg_send!(**view, viewSetSide: side at: pos) },
+                At(pos)                     => { let _: () = msg_send!(**view, viewSetSide: side at: pos); },
                 Floating(prop, offset)      => {
                     let floating_property = self.flo_property(prop);
                     msg_send!(**view, viewSetSide: side offset: offset floating: floating_property) 
                 },
-                Offset(offset)              => { msg_send!(**view, viewSetSide: side offset: offset); },
-                Stretch(amount)             => { msg_send!(**view, viewSetSide: side stretch: amount); },
-                Start                       => { msg_send!(**view, viewSetSideAtStart: side); },
-                End                         => { msg_send!(**view, viewSetSideAtEnd: side); },
-                After                       => { msg_send!(**view, viewSetSideAfter: side); }
+                Offset(offset)              => { let _: () = msg_send!(**view, viewSetSide: side offset: offset); },
+                Stretch(amount)             => { let _: () = msg_send!(**view, viewSetSide: side stretch: amount); },
+                Start                       => { let _: () = msg_send!(**view, viewSetSideAtStart: side); },
+                End                         => { let _: () = msg_send!(**view, viewSetSideAtEnd: side); },
+                After                       => { let _: () = msg_send!(**view, viewSetSideAfter: side); }
             }
         }
     }
@@ -669,8 +669,8 @@ impl CocoaSession {
             use self::ViewModelAction::*;
 
             match action {
-                CreateProperty(property_id)             => { msg_send!(**viewmodel, setNothing: property_id as u64); }
-                SetPropertyValue(property_id, value)    => { msg_send!(**viewmodel, setProperty: property_id as u64 toValue: *FloProperty::from(value)); }
+                CreateProperty(property_id)             => { let _: () = msg_send!(**viewmodel, setNothing: property_id as u64); }
+                SetPropertyValue(property_id, value)    => { let _: () = msg_send!(**viewmodel, setProperty: property_id as u64 toValue: *FloProperty::from(value)); }
             }
         }
     }
@@ -735,11 +735,11 @@ impl executor::Notify for CocoaSessionNotify {
                     let modes               = msg_send!(modes, init);
                     let modes               = StrongPtr::new(modes);
 
-                    msg_send!(*modes, addObject: NSDefaultRunLoopMode);
-                    msg_send!(*modes, addObject: NSModalPanelRunLoopMode);
-                    msg_send!(*modes, addObject: NSEventTrackingRunLoopMode);
+                    let _: () = msg_send!(*modes, addObject: NSDefaultRunLoopMode);
+                    let _: () = msg_send!(*modes, addObject: NSModalPanelRunLoopMode);
+                    let _: () = msg_send!(*modes, addObject: NSEventTrackingRunLoopMode);
 
-                    msg_send![*target_object, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO modes: modes];
+                    let _: id = msg_send![*target_object, performSelectorOnMainThread: sel!(actionStreamReady) withObject: nil waitUntilDone: NO modes: modes];
                 }
             });
         }

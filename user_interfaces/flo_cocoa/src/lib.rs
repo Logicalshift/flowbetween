@@ -21,9 +21,9 @@ pub unsafe extern fn create_flo_session(window_class: *mut Class, view_class: *m
     let session: *mut Object    = msg_send!(session, init);
 
     // Set the properties
-    msg_send!(session, setWindowClass: window_class);
-    msg_send!(session, setViewClass: view_class);
-    msg_send!(session, setViewModelClass: view_model_class);
+    let _: () = msg_send!(session, setWindowClass: window_class);
+    let _: () = msg_send!(session, setViewClass: view_class);
+    let _: () = msg_send!(session, setViewModelClass: view_model_class);
 
     // Retrieve the user interface
     let user_interface = get_session_for_flo_control(&*session)
@@ -49,6 +49,6 @@ pub unsafe extern fn create_flo_session(window_class: *mut Class, view_class: *m
         })
         .unwrap();
 
-    msg_send!(session, autorelease);
+    let _: *mut Object = msg_send!(session, autorelease);
     session
 }
