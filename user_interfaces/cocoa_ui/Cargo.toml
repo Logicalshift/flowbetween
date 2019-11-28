@@ -15,7 +15,7 @@ flo_ui          = { path = "../../ui", version = "0.1" }
 
 lazy_static     = "1.2"
 futures         = "0.1"
-cocoa           = "0.18"
+cocoa           = "0.19"
 core-foundation = "0.6"
 objc            = "0.2"
 num-traits      = "0.2"
