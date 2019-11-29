@@ -23,16 +23,16 @@ pub struct ViewCanvas {
     state: Option<CanvasState>,
 
     /// Callback function that clears the canvas
-    clear_canvas: Box<FnMut() -> ()>,
+    clear_canvas: Box<dyn FnMut() -> ()>,
 
     /// Callback function to create a copy of the layer with the specified ID
-    copy_layer: Box<FnMut(u32) -> StrongPtr>,
+    copy_layer: Box<dyn FnMut(u32) -> StrongPtr>,
 
     /// Callback function to update the contents of a cached layer 
-    update_layer: Box<FnMut(u32, StrongPtr) -> ()>,
+    update_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
 
     /// Callback function to restore the state of a layer from a copy created previously with copy_layer
-    restore_layer: Box<FnMut(u32, StrongPtr) -> ()>
+    restore_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>
 }
 
 impl ViewCanvas {
