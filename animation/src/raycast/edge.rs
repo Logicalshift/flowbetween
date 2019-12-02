@@ -33,7 +33,7 @@ impl RaycastEdge {
     ///
     /// Retrieves the edges corresponding to a particular vector object (when drawn with the specified vector properties)
     ///
-    pub fn from_vector<'a>(vector: &'a Vector, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
+    pub fn from_vector<'a>(vector: &'a Vector, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=Self>> {
         match vector {
             Vector::BrushDefinition(_defn)      => { Box::new(iter::empty()) }
             Vector::BrushProperties(_props)     => { Box::new(iter::empty()) }
@@ -49,7 +49,7 @@ impl RaycastEdge {
     ///
     /// Retrieves the edges corresponding to a transformed element
     ///
-    pub fn from_transformed<'a>(vector: &'a TransformedVector, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
+    pub fn from_transformed<'a>(vector: &'a TransformedVector, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=Self>> {
         // The transformed vector here is an Arc, so we can borrow it for long enough
         // But this requires both the reference and its borrow to live in the same place, and Rust does not support that
         // So transformed vectors will run slowly as we have to store them in a temporary Vec to get around this
@@ -63,15 +63,15 @@ impl RaycastEdge {
     ///
     /// Retrieves the edges corresponding to a group element
     ///
-    pub fn from_group<'a>(group: &'a GroupElement, properties: Arc<VectorProperties>) -> impl 'a+Iterator<Item=RaycastEdge> {
+    pub fn from_group<'a>(group: &'a GroupElement, properties: Arc<VectorProperties>) -> impl 'a+Iterator<Item=Self> {
         group.elements()
-            .flat_map(move |element| RaycastEdge::from_vector(element, properties.clone()))
+            .flat_map(move |element| Self::from_vector(element, properties.clone()))
     }
 
     ///
     /// Retrieves the edges corresponding to a path element
     ///
-    pub fn from_path_element<'a>(vector: &'a PathElement) -> impl 'a+Iterator<Item=RaycastEdge> {
+    pub fn from_path_element<'a>(vector: &'a PathElement) -> impl 'a+Iterator<Item=Self> {
         match vector.brush().drawing_style() {
             BrushDrawingStyle::Erase    => { Self::from_path(vector.path(), RaycastEdgeKind::EraseContents) }
             BrushDrawingStyle::Draw     => { Self::from_path(vector.path(), RaycastEdgeKind::Solid) }
@@ -81,10 +81,10 @@ impl RaycastEdge {
     ///
     /// Returns a particular path as ray cast edges
     ///
-    pub fn from_path<'a>(path: &'a Path, edge_kind: RaycastEdgeKind) -> impl 'a+Iterator<Item=RaycastEdge> {
+    pub fn from_path<'a>(path: &'a Path, edge_kind: RaycastEdgeKind) -> impl 'a+Iterator<Item=Self> {
         path.to_curves()
             .map(move |curve| {
-                RaycastEdge {
+                Self {
                     curve: curve,
                     kind: edge_kind
                 }
@@ -94,7 +94,7 @@ impl RaycastEdge {
     ///
     /// Returns the edges from a brush stroke element
     ///
-    pub fn from_brush_stroke<'a>(brush_stroke: &'a BrushElement, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
+    pub fn from_brush_stroke<'a>(brush_stroke: &'a BrushElement, properties: Arc<VectorProperties>) -> Box<dyn 'a+Iterator<Item=Self>> {
         match properties.brush.drawing_style() {
             BrushDrawingStyle::Erase    => {
                 // Ignore any elements underneath the entire path for an erasing brush stroke
@@ -134,7 +134,7 @@ impl RaycastEdge {
 
                 PathCurve::from_points(start_point, (cp1, cp2), end_point)
             })
-            .map(move |curve| RaycastEdge {
+            .map(move |curve| Self {
                 curve:  curve,
                 kind:   edge_kind
             }))
