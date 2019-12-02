@@ -90,7 +90,7 @@ class FloCanvasLayer : CALayer {
             _backing[0] = CGLayer(ctx, size: size, auxiliaryInfo: nil)
 
             if _resolution != 1.0 {
-                let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution)
+                let scale = CGAffineTransform(scaleX: _resolution, y: _resolution)
                 _backing[0]!.context!.concatenate(scale)
             }
 
@@ -104,9 +104,9 @@ class FloCanvasLayer : CALayer {
 
         ctx.saveGState()
         ctx.setShouldAntialias(false)
-        ctx.interpolationQuality = CGInterpolationQuality.none
+        ctx.interpolationQuality = .none
         if _resolution != 1.0 {
-            ctx.concatenate(CGAffineTransform.init(scaleX: 1.0/_resolution, y: 1.0/_resolution))
+            ctx.concatenate(CGAffineTransform(scaleX: 1.0/_resolution, y: 1.0/_resolution))
         }
 
         for layer_id in layer_ids {
@@ -178,7 +178,7 @@ class FloCanvasLayer : CALayer {
             _backing[id] = availableLayer
 
             // Make sure it has nothing already rendered on it
-            availableLayer.context?.clear(CGRect(origin: CGPoint.zero, size: _visibleRect.size))
+            availableLayer.context?.clear(CGRect(origin: .zero, size: _visibleRect.size))
             return availableLayer.context
         } else if let baseLayer = _backing[0] {
             // Get the size for the new layer
@@ -193,7 +193,7 @@ class FloCanvasLayer : CALayer {
             let newLayer = CGLayer(baseLayer.context!, size: size, auxiliaryInfo: nil)
 
             if _resolution != 1.0 {
-                let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution)
+                let scale = CGAffineTransform(scaleX: _resolution, y: _resolution)
                 newLayer!.context!.concatenate(scale)
             }
 
@@ -252,7 +252,7 @@ class FloCanvasLayer : CALayer {
             let newLayer = CGLayer(baseLayer.context!, size: size, auxiliaryInfo: nil)
 
             if _resolution != 1.0 {
-                let scale = CGAffineTransform.init(scaleX: _resolution, y: _resolution)
+                let scale = CGAffineTransform(scaleX: _resolution, y: _resolution)
                 newLayer!.context!.concatenate(scale)
             }
 

@@ -140,43 +140,38 @@ class FloPopupWindowBackingView : NSView {
         let bounds      = self.bounds
         var beakBounds  = bounds.insetBy(dx: 2.0, dy: 2.0)
 
-        let path        = CGMutablePath.init()
+        let path        = CGMutablePath()
 
         switch direction {
         case .Below:
             beakBounds.size.height -= _beakHeight
             drawRoundedRectangleWithBeak(path: path, bounds: beakBounds, beakSide: 0)
-            break
         case .Right:
             beakBounds.size.width -= _beakHeight
             drawRoundedRectangleWithBeak(path: path, bounds: beakBounds, beakSide: 1)
-            break
         case .Above:
             beakBounds.size.height -= _beakHeight
             beakBounds.origin.y += _beakHeight
             drawRoundedRectangleWithBeak(path: path, bounds: beakBounds, beakSide: 2)
-            break
         case .Left:
             beakBounds.size.width -= _beakHeight
             beakBounds.origin.x += _beakHeight
             drawRoundedRectangleWithBeak(path: path, bounds: beakBounds, beakSide: 3)
-            break
 
         default:
             path.addRoundedRect(in: bounds.insetBy(dx: 2.0, dy: 2.0), cornerWidth: _borderWidth, cornerHeight: _borderWidth)
-            break
         }
 
-        ctxt.setFillColor(CGColor.init(red: 0.25, green: 0.2, blue: 0.2, alpha: 0.9))
+        ctxt.setFillColor(CGColor(red: 0.25, green: 0.2, blue: 0.2, alpha: 0.9))
         ctxt.addPath(path)
         ctxt.fillPath()
 
-        ctxt.setStrokeColor(CGColor.init(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.8))
+        ctxt.setStrokeColor(CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.8))
         ctxt.setLineWidth(3.0)
         ctxt.addPath(path)
         ctxt.strokePath()
 
-        ctxt.setStrokeColor(CGColor.init(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.8))
+        ctxt.setStrokeColor(CGColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 0.8))
         ctxt.setLineWidth(2.25)
         ctxt.addPath(path)
         ctxt.strokePath()

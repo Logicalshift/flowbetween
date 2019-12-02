@@ -18,7 +18,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
         super.init(coder: coder)
 
-        self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000))
+        self.documentView = FloEmptyView(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000))
         self.documentView?.wantsLayer = false
 
         self.wantsLayer             = true
@@ -36,7 +36,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
         super.init(frame: frameRect)
 
-        self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000))
+        self.documentView = FloEmptyView(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000))
         self.documentView?.wantsLayer = false
 
         self.wantsLayer             = true
@@ -67,7 +67,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         if !_willSortSubviews {
             _willSortSubviews = true
 
-            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+            RunLoop.main.perform(inModes: [.default, .eventTracking], block: {
                 self._willSortSubviews = false
                 sortSubviewsByZIndex(self.documentView!)
             })
@@ -104,7 +104,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             case .None:         break
             case .Horizontal:   newFrame.origin.x += visible.origin.x
             case .Vertical:     newFrame.origin.y += visible.origin.y
-            case .Both:         newFrame.origin.x += visible.origin.x newFrame.origin.y += visible.origin.y break
+            case .Both:         newFrame.origin.x += visible.origin.x newFrame.origin.y += visible.origin.y
             }
 
             // Reposition the view
@@ -149,20 +149,18 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         // Any subviews that are not themselves FloContainers are sized to fill this view
         for subview in documentView!.subviews {
             if (subview as? FloContainerView) == nil {
-                subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize)
+                subview.frame = NSRect(origin: .zero, size: newSize)
             }
         }
     }
 
     /// The size of the layout area for this view
     var layoutSize : NSSize {
-        get {
-            if let documentView = documentView {
-                return documentView.bounds.size
-            } else {
-                let (width, height) = scrollMinimumSize
-                return NSSize(width: width, height: height)
-            }
+        if let documentView = documentView {
+            return documentView.bounds.size
+        } else {
+            let (width, height) = scrollMinimumSize
+            return NSSize(width: width, height: height)
         }
     }
 

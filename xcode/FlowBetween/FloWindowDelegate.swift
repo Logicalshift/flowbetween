@@ -141,8 +141,8 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         RunLoop.main.perform {
             self.perform(#selector(self.tick),
                          with: nil,
-                         afterDelay: TimeInterval.init(1.0 / 120.0),
-                         inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking, RunLoop.Mode.modalPanel])
+                         afterDelay: TimeInterval(1.0 / 120.0),
+                         inModes: [.default, .eventTracking, .modalPanel])
         }
     }
 }

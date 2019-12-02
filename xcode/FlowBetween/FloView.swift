@@ -50,7 +50,7 @@ public class FloView : NSObject, FloViewDelegate {
         )
         _subviews = []
 
-        _view = FloEmptyView.init()
+        _view = FloEmptyView()
 
         super.init()
 
@@ -319,7 +319,7 @@ public class FloView : NSObject, FloViewDelegate {
     }
 
     @objc public func viewFixScrollAxis(_ axis: UInt32) {
-        if let axis = FixedAxis.init(rawValue: axis) {
+        if let axis = FixedAxis(rawValue: axis) {
             _view.viewState.fixedAxis = axis
         }
     }
@@ -358,16 +358,16 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     @objc public func requestPaint(withDeviceId deviceId: UInt32, events: FloEvents!, withName: String?) {
         // Convert the device ID into the device enum
-        let device = FloPaintDevice.init(rawValue: deviceId)
+        let device = FloPaintDevicenit(rawValue: deviceId)
 
         if let device = device {
             // Ask the underlying view to relay paint events to us
             _view.onPaint[device] = { stage, painting in
                 switch (stage) {
-                case FloPaintStage.Start:       events.sendPaintStart(forDevice: deviceId, name: withName, action: painting) break
-                case FloPaintStage.Continue:    events.sendPaintContinue(forDevice: deviceId, name: withName, action: painting) break
-                case FloPaintStage.Finish:      events.sendPaintFinish(forDevice: deviceId, name: withName, action: painting) break
-                case FloPaintStage.Cancel:      events.sendPaintCancel(forDevice: deviceId, name: withName, action: painting) break
+                case FloPaintStage.Start:       events.sendPaintStart(forDevice: deviceId, name: withName, action: painting)
+                case FloPaintStage.Continue:    events.sendPaintContinue(forDevice: deviceId, name: withName, action: painting)
+                case FloPaintStage.Finish:      events.sendPaintFinish(forDevice: deviceId, name: withName, action: painting)
+                case FloPaintStage.Cancel:      events.sendPaintCancel(forDevice: deviceId, name: withName, action: painting)
                 }
 
             }
@@ -549,7 +549,7 @@ public class FloView : NSObject, FloViewDelegate {
 
         // Add an image view to this view if one does not already exist
         if _imageView == nil {
-            _imageView              = NSView.init()
+            _imageView              = NSView()
             _imageView!.wantsLayer  = true
 
             _imageLayer             = _imageView!.layer!
@@ -591,9 +591,9 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     @objc public func viewSetTextAlignment(_ alignment: UInt32) {
         switch alignment {
-        case 0:     _view.setTextAlignment(alignment: NSTextAlignment.left)    break
-        case 1:     _view.setTextAlignment(alignment: NSTextAlignment.center)  break
-        case 2:     _view.setTextAlignment(alignment: NSTextAlignment.right)   break
+        case 0:     _view.setTextAlignment(alignment: .left)
+        case 1:     _view.setTextAlignment(alignment: .center)
+        case 2:     _view.setTextAlignment(alignment: .right)
         default:    break
         }
     }
@@ -696,7 +696,7 @@ public class FloView : NSObject, FloViewDelegate {
             if !willChangeBounds {
                 willChangeBounds = true
 
-                RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+                RunLoop.main.perform(inModes: [.default, .eventTracking], block: {
                     willChangeBounds = false
                     this?.drawingLayerBoundsChanged(newBounds)
                 })
@@ -819,7 +819,7 @@ public class FloView : NSObject, FloViewDelegate {
     /// Sets the layout direction for the popup window
     ///
     @objc public func viewSetPopupDirection(_ direction: UInt32) {
-        if let actualDirection = PopupDirection.init(rawValue: direction) {
+        if let actualDirection = PopupDirection(rawValue: direction) {
             if let popup = _view as? FloContainerPopup  {
                 popup.setPopupDirection(actualDirection)
             }
