@@ -25,7 +25,7 @@ import Cocoa
     ///
     @objc public static func createAsButton() -> FloView {
         let button      = NSButton(title: "", target: nil, action: #selector(FloView.onClick))
-        let buttonView  = FloButtonView(frame: CGRect(), control: button)
+        let buttonView  = FloButtonView(frame: .zero, control: button)
 
         let view        = FloView(withView: buttonView)
         button.target   = view
@@ -38,7 +38,7 @@ import Cocoa
     /// Creates a view that acts like a button but can contain other views
     ///
     @objc public static func createAsContainerButton() -> FloView {
-        let buttonView  = FloContainerButton(frame: NSRect())
+        let buttonView  = FloContainerButton(frame: .zero)
         let view        = FloView(withView: buttonView)
 
         return view
@@ -60,7 +60,7 @@ import Cocoa
     ///
     @objc public static func createAsSlider() -> FloView {
         let slider      = NSSlider(value: 0.5, minValue: 0.0, maxValue: 1.0, target: nil, action: nil)
-        let sliderView  = FloControlView(frame: CGRect(), control: slider)
+        let sliderView  = FloControlView(frame: .zero, control: slider)
 
         let view        = FloView(withView: sliderView)
 
@@ -71,7 +71,7 @@ import Cocoa
     /// Creates a view that works like a slider but rotates its contents
     ///
     @objc public static func createAsRotor() -> FloView {
-        let rotor   = FloRotorView(frame: CGRect())
+        let rotor   = FloRotorView(frame: .zero)
         let view    = FloView(withView: rotor)
 
         return view
@@ -87,7 +87,7 @@ import Cocoa
         checkbox.setButtonType(NSButton.ButtonType.switch)
 
         // Generate the view
-        let checkboxView    = FloButtonView(frame: CGRect(), control: checkbox)
+        let checkboxView    = FloButtonView(frame: .zero, control: checkbox)
         let view            = FloView(withView: checkboxView)
 
         return view
@@ -103,7 +103,7 @@ import Cocoa
         textbox.isBordered  = false
         textbox.isBezeled   = false
 
-        let textboxView     = FloControlView(frame: CGRect(), control: textbox)
+        let textboxView     = FloControlView(frame: .zero, control: textbox)
         let view            = FloView(withView: textboxView)
 
         textbox.delegate    = textboxView
@@ -115,7 +115,7 @@ import Cocoa
     /// Creates a view that shows a pop-up window
     ///
     @objc public static func createAsPopup() -> FloView {
-        let popup   = FloPopupView(frame: CGRect())
+        let popup   = FloPopupView(frame: .zero)
         let view    = FloView(withView: popup)
 
         return view

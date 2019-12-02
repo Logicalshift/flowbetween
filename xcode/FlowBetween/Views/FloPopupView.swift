@@ -37,9 +37,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     }
 
     override var isOpaque: Bool {
-        get {
-            return false
-        }
+        return false
     }
 
     override func viewWillMove(toWindow newWindow: NSWindow?) {
@@ -77,10 +75,8 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
 
     /// The size of the layout area for this view
     var layoutSize : NSSize {
-        get {
-            // TODO: size of the view in the popup window
-            return _popupWindow.popupContentSize
-        }
+        // TODO: size of the view in the popup window
+        return _popupWindow.popupContentSize
     }
 
     /// The FloView that owns this container view (should be a weak reference)
@@ -88,9 +84,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
 
     /// Returns this view as an NSView
     var asView : NSView {
-        get {
-            return self
-        }
+        return self
     }
 
     /// Event handler: user clicked in the view
@@ -131,13 +125,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
 
     /// Triggers the click event for this view
     func triggerClick() {
-        bubbleUpEvent(source: self, event_handler: { (container) in
-            if let onClick = container.onClick {
-                return onClick()
-            } else {
-                return false
-            }
-        })
+        bubbleUpEvent(source: self) { $0.onClick?() ?? false }
     }
 
     ///
@@ -145,7 +133,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     ///
     func getContainerBounds() -> ContainerBounds {
         // Get the bounds
-        let viewport        = CGRect(origin: CGPoint(), size: _popupWindow.popupContentSize)
+        let viewport        = CGRect(origin: .zero, size: _popupWindow.popupContentSize)
         var visible         = viewport
 
         // For the container bounds, the viewport is considered to be aligned at 0,0
