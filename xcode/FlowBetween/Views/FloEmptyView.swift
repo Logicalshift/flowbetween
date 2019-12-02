@@ -193,12 +193,12 @@ class FloEmptyView : NSView, FloContainerView {
         if !_willChangeBounds {
             _willChangeBounds = true
 
-            RunLoop.current.perform(inModes: [.default, .eventTracking], block: {
+            RunLoop.current.perform(inModes: [.default, .eventTracking]) {
                 self._willChangeBounds = false
 
                 let bounds = self.getContainerBounds()
                 self.boundsChanged?(bounds)
-            })
+            }
         }
     }
 
@@ -206,17 +206,15 @@ class FloEmptyView : NSView, FloContainerView {
     /// The label view for this empty view
     ///
     var labelView: FloControlView {
-        get {
-            if _labelView == nil {
-                let label   = NSTextField(labelWithString: "")
-                label.font  = NSFontManager.shared.font(withFamily: "Lato", traits: NSFontTraitMask(), weight: 5, size: 13.0)
+        if _labelView == nil {
+            let label   = NSTextField(labelWithString: "")
+            label.font  = NSFontManager.shared.font(withFamily: "Lato", traits: [], weight: 5, size: 13.0)
 
-                _labelView = FloControlView(frame: bounds, control: label)
-                addSubview(_labelView!)
-            }
-
-            return _labelView!
+            _labelView = FloControlView(frame: bounds, control: label)
+            addSubview(_labelView!)
         }
+
+        return _labelView!
     }
 
     /// Sets the text label for this view

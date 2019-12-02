@@ -13,7 +13,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     fileprivate var _willSortSubviews = false
 
     public required init?(coder: NSCoder) {
-        _scrollMinimumSize = (0,0)
+        scrollMinimumSize = (0,0)
         _scrollBarVisibility = (ScrollBarVisibility.OnlyIfNeeded, ScrollBarVisibility.OnlyIfNeeded)
 
         super.init(coder: coder)
@@ -31,7 +31,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     }
 
     required public override init(frame frameRect: NSRect) {
-        _scrollMinimumSize = (0,0)
+        scrollMinimumSize = (0,0)
         _scrollBarVisibility = (ScrollBarVisibility.OnlyIfNeeded, ScrollBarVisibility.OnlyIfNeeded)
 
         super.init(frame: frameRect)
@@ -48,7 +48,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         NotificationCenter.default.addObserver(self, selector: #selector(triggerOnScroll), name: NSView.boundsDidChangeNotification, object: self.contentView)
     }
 
-    override public var isOpaque: Bool { get { return false } }
+    override public var isOpaque: Bool { return false }
 
     ///
     /// Adds a subview to this container
@@ -67,10 +67,10 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         if !_willSortSubviews {
             _willSortSubviews = true
 
-            RunLoop.main.perform(inModes: [.default, .eventTracking], block: {
+            RunLoop.main.perform(inModes: [.default, .eventTracking]) {
                 self._willSortSubviews = false
                 sortSubviewsByZIndex(self.documentView!)
-            })
+            }
         }
     }
 
@@ -174,15 +174,9 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         triggerOnScroll()
     }
 
-    fileprivate var _scrollMinimumSize: (Float64, Float64)
 
     /// The minimum size of the scroll area for this view
-    var scrollMinimumSize: (Float64, Float64) {
-        get { return _scrollMinimumSize }
-        set(value) {
-            _scrollMinimumSize = value
-        }
-    }
+    var scrollMinimumSize: (Float64, Float64)
 
     fileprivate var _scrollBarVisibility: (ScrollBarVisibility, ScrollBarVisibility)
 

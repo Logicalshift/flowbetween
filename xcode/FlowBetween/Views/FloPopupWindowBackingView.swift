@@ -36,7 +36,7 @@ class FloPopupWindowBackingView : NSView {
         case .Right:
             subviewBounds.size.width -= _beakHeight
 
-        case .OnTop, .WindowCentered, .WindowTop: 
+        case .OnTop, .WindowCentered, .WindowTop:
             break
         }
 

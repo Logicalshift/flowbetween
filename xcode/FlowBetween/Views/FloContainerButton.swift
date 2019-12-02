@@ -108,23 +108,17 @@ class FloContainerButton : NSView, FloContainerView {
     }
 
     /// Stores the general state of this view
-    var _viewState = ViewState()
     var viewState : ViewState {
-        get { return _viewState }
-        set(value) {
-            _viewState = value
-
+        didSet {
             weak var this = self
-            value.isFirst.trackValue({ isFirst in this?._backingLayer.isFirst = isFirst.toBool(default: false) })
-            value.isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false) })
+            viewState.isFirst.trackValue({ isFirst in this?._backingLayer.isFirst = isFirst.toBool(default: false) })
+            viewState..isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false) })
         }
     }
 
     /// The size of the layout area for this view
     var layoutSize : NSSize {
-        get {
-            return self.bounds.size
-        }
+        return self.bounds.size
     }
 
     /// The FloView that owns this container view (should be a weak reference)

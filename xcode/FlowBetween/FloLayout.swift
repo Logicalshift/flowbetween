@@ -51,7 +51,7 @@ class FloLayout {
             return last_stretch
         case .End:
             return last_stretch
-        case .Stretch(let stretch): 
+        case .Stretch(let stretch):
             return last_stretch+Double(stretch)
         }
     }
