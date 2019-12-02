@@ -37,7 +37,7 @@ impl InkBrush {
     ///
     /// Creates a new ink brush with the default settings
     ///
-    pub fn new(definition: &InkDefinition, drawing_style: BrushDrawingStyle) -> InkBrush {
+    pub fn new(definition: &InkDefinition, drawing_style: BrushDrawingStyle) -> Self {
         use BrushDrawingStyle::*;
 
         let blend_mode = match drawing_style {
@@ -45,8 +45,8 @@ impl InkBrush {
             Erase   => BlendMode::DestinationOut
         };
 
-        InkBrush {
-            blend_mode:         blend_mode,
+        Self {
+            blend_mode,
             min_width:          definition.min_width,
             max_width:          definition.max_width,
             scale_up_distance:  definition.scale_up_distance
@@ -76,8 +76,8 @@ impl InkCoord {
 }
 
 impl<'a> From<&'a RawPoint> for InkCoord {
-    fn from(src: &'a RawPoint) -> InkCoord {
-        InkCoord {
+    fn from(src: &'a RawPoint) -> Self {
+        Self {
             x: src.position.0 as f64,
             y: src.position.1 as f64,
             pressure: (src.pressure as f64)*INK_PRESSURE_SCALE
@@ -86,8 +86,8 @@ impl<'a> From<&'a RawPoint> for InkCoord {
 }
 
 impl<'a> From<&'a BrushPoint> for InkCoord {
-    fn from(src: &'a BrushPoint) -> InkCoord {
-        InkCoord {
+    fn from(src: &'a BrushPoint) -> Self {
+        Self {
             x: src.position.0 as f64,
             y: src.position.1 as f64,
             pressure: (src.width as f64)*INK_PRESSURE_SCALE
@@ -96,11 +96,11 @@ impl<'a> From<&'a BrushPoint> for InkCoord {
 }
 
 impl Add<InkCoord> for InkCoord {
-    type Output=InkCoord;
+    type Output = Self;
 
     #[inline]
-    fn add(self, rhs: InkCoord) -> InkCoord {
-        InkCoord {
+    fn add(self, rhs: Self) -> Self {
+        Self {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
             pressure: self.pressure + rhs.pressure
@@ -109,11 +109,11 @@ impl Add<InkCoord> for InkCoord {
 }
 
 impl Sub<InkCoord> for InkCoord {
-    type Output=InkCoord;
+    type Output = Self;
 
     #[inline]
-    fn sub(self, rhs: InkCoord) -> InkCoord {
-        InkCoord {
+    fn sub(self, rhs: Self) -> Self {
+        Self {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
             pressure: self.pressure - rhs.pressure
@@ -122,11 +122,11 @@ impl Sub<InkCoord> for InkCoord {
 }
 
 impl Mul<f64> for InkCoord {
-    type Output=InkCoord;
+    type Output = Self;
 
     #[inline]
-    fn mul(self, rhs: f64) -> InkCoord {
-        InkCoord {
+    fn mul(self, rhs: f64) -> Self {
+        Self {
             x: self.x * rhs,
             y: self.y * rhs,
             pressure: self.pressure * rhs
@@ -136,13 +136,13 @@ impl Mul<f64> for InkCoord {
 
 impl Coordinate for InkCoord {
     #[inline]
-    fn from_components(components: &[f64]) -> InkCoord {
-        InkCoord { x: components[0], y: components[1], pressure: components[2] }
+    fn from_components(components: &[f64]) -> Self {
+        Self { x: components[0], y: components[1], pressure: components[2] }
     }
 
     #[inline]
-    fn origin() -> InkCoord {
-        InkCoord { x: 0.0, y: 0.0, pressure: 0.0 }
+    fn origin() -> Self {
+        Self { x: 0.0, y: 0.0, pressure: 0.0 }
     }
 
     #[inline]
@@ -158,16 +158,16 @@ impl Coordinate for InkCoord {
         }
     }
 
-    fn from_biggest_components(p1: InkCoord, p2: InkCoord) -> InkCoord {
-        InkCoord {
+    fn from_biggest_components(p1: Self, p2: Self) -> Self {
+        Self {
             x: f64::from_biggest_components(p1.x, p2.x),
             y: f64::from_biggest_components(p1.y, p2.y),
             pressure: f64::from_biggest_components(p1.pressure, p2.pressure)
         }
     }
 
-    fn from_smallest_components(p1: InkCoord, p2: InkCoord) -> InkCoord {
-        InkCoord {
+    fn from_smallest_components(p1: Self, p2: Self) -> Self {
+        Self {
             x: f64::from_smallest_components(p1.x, p2.x),
             y: f64::from_smallest_components(p1.y, p2.y),
             pressure: f64::from_smallest_components(p1.pressure, p2.pressure)
@@ -175,7 +175,7 @@ impl Coordinate for InkCoord {
     }
 
     #[inline]
-    fn distance_to(&self, target: &InkCoord) -> f64 {
+    fn distance_to(&self, target: &Self) -> f64 {
         let dist_x = target.x-self.x;
         let dist_y = target.y-self.y;
         let dist_p = target.pressure-self.pressure;
@@ -203,8 +203,8 @@ impl InkCurve {
     ///
     /// Creates an ink curve from brush points
     ///
-    pub fn from_brush_points(last_point: &BrushPoint, next_point: &BrushPoint) -> InkCurve {
-        InkCurve {
+    pub fn from_brush_points(last_point: &BrushPoint, next_point: &BrushPoint) -> Self {
+        Self {
             start_point:    InkCoord { x: last_point.position.0 as f64, y: last_point.position.1 as f64, pressure: last_point.width as f64 },
             end_point:      InkCoord { x: next_point.position.0 as f64, y: next_point.position.1 as f64, pressure: next_point.width as f64 },
             control_points: (
@@ -241,8 +241,8 @@ impl Geo for InkCurve {
 }
 
 impl BezierCurveFactory for InkCurve {
-    fn from_points(start: InkCoord, control_points: (InkCoord, InkCoord), end: InkCoord) -> InkCurve {
-        InkCurve {
+    fn from_points(start: InkCoord, control_points: (InkCoord, InkCoord), end: InkCoord) -> Self {
+        Self {
             start_point:    start,
             end_point:      end,
             control_points: control_points

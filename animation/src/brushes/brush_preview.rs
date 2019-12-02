@@ -19,8 +19,8 @@ pub struct BrushPreview {
 }
 
 impl BrushPreview {
-    pub fn new() -> BrushPreview {
-        BrushPreview {
+    pub fn new() -> Self {
+        Self {
             current_brush:      create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw),
             brush_properties:   BrushProperties::new(),
             points:             vec![],
