@@ -12,19 +12,19 @@ import Foundation
 /// Value of a ViewModel property
 ///
 public enum PropertyValue {
-    case Nothing;
-    case Bool(Bool);
-    case Int(Int64);
-    case Float(Float64);
-    case String(String);
+    case Nothing
+    case Bool(Bool)
+    case Int(Int64)
+    case Float(Float64)
+    case String(String)
 
     ///
     /// Retrieves this property as a bool value
     ///
     func toBool(default defaultValue: Bool) -> Bool {
         switch (self) {
-        case .Nothing, .Int(_), .Float(_), .String(_): return defaultValue;
-        case .Bool(let value): return value;
+        case .Nothing, .Int(_), .Float(_), .String(_): return defaultValue
+        case .Bool(let value): return value
         }
     }
 
@@ -33,9 +33,9 @@ public enum PropertyValue {
     ///
     func toInt(default defaultValue: Int64) -> Int64 {
         switch (self) {
-        case .Nothing, .Bool(_), .String(_): return defaultValue;
-        case .Int(let value): return Int64(value);
-        case .Float(let value): return Int64(value);
+        case .Nothing, .Bool(_), .String(_): return defaultValue
+        case .Int(let value): return Int64(value)
+        case .Float(let value): return Int64(value)
         }
     }
 
@@ -44,9 +44,9 @@ public enum PropertyValue {
     ///
     func toDouble(default defaultValue: Double) -> Double {
         switch (self) {
-        case .Nothing, .Bool(_), .String(_): return defaultValue;
-        case .Int(let value): return Double(value);
-        case .Float(let value): return Double(value);
+        case .Nothing, .Bool(_), .String(_): return defaultValue
+        case .Int(let value): return Double(value)
+        case .Float(let value): return Double(value)
         }
     }
 }
@@ -57,55 +57,55 @@ public enum PropertyValue {
 ///
 @objc(FloProperty) public class FloProperty : NSObject {
     /// The current value of this property
-    var _value: PropertyValue;
+    var _value: PropertyValue
 
     /// The viewmodel if this property is attached to one
-    var _viewModel: FloViewModel?;
+    var _viewModel: FloViewModel?
 
     /// Action to take when this property is changed
-    var _onChange: (() -> ())?;
+    var _onChange: (() -> ())?
 
     /// The ID of the binding for this property
-    var _bindingId: UInt64?;
+    var _bindingId: UInt64?
 
     override init() {
-        _value = PropertyValue.Nothing;
+        _value = PropertyValue.Nothing
 
-        super.init();
+        super.init()
     }
 
     @objc(initWithBool:) init(withBool: Bool) {
-        _value = PropertyValue.Bool(withBool);
+        _value = PropertyValue.Bool(withBool)
 
-        super.init();
+        super.init()
     }
 
     @objc(initWithInt:) init(withInt: Int64) {
-        _value = PropertyValue.Int(withInt);
+        _value = PropertyValue.Int(withInt)
 
-        super.init();
+        super.init()
     }
 
     @objc(initWithFloat:) init(withFloat: Float64) {
-        _value = PropertyValue.Float(withFloat);
+        _value = PropertyValue.Float(withFloat)
 
-        super.init();
+        super.init()
     }
 
     @objc(initWithString:) init(withString: NSString) {
-        _value = PropertyValue.String(withString as String);
+        _value = PropertyValue.String(withString as String)
 
-        super.init();
+        super.init()
     }
 
     @objc(initWithBinding:viewModel:) init(withBinding: UInt64, viewModel: FloViewModel) {
-        _viewModel  = viewModel;
-        _value      = viewModel.valueForProperty(withBinding);
-        _bindingId  = withBinding;
+        _viewModel  = viewModel
+        _value      = viewModel.valueForProperty(withBinding)
+        _bindingId  = withBinding
 
-        super.init();
+        super.init()
 
-        viewModel.watchProperty(withBinding, self);
+        viewModel.watchProperty(withBinding, self)
     }
 
     ///
@@ -114,18 +114,18 @@ public enum PropertyValue {
     public var value: PropertyValue {
         get {
             if let viewModel = _viewModel {
-                return viewModel.valueForProperty(_bindingId!);
+                return viewModel.valueForProperty(_bindingId!)
             } else {
-                return _value;
+                return _value
             }
         }
 
         set(value) {
             if let viewModel = _viewModel {
-                viewModel.setPropertyValue(_bindingId!, value: value);
+                viewModel.setPropertyValue(_bindingId!, value: value)
             } else {
-                _value = value;
-                _onChange?();
+                _value = value
+                _onChange?()
             }
         }
     }
@@ -137,33 +137,33 @@ public enum PropertyValue {
     ///
     public func trackValue(_ newValue: @escaping (PropertyValue) -> ()) {
         if let viewModel = _viewModel {
-            let lastOnChange    = _onChange;
-            let bindingId       = _bindingId!;
+            let lastOnChange    = _onChange
+            let bindingId       = _bindingId!
 
             _onChange = {
                 // Run the callback
-                let value = viewModel.valueForProperty(bindingId);
-                newValue(value);
+                let value = viewModel.valueForProperty(bindingId)
+                newValue(value)
 
                 // Allow multiple things to track this property
-                lastOnChange?();
-            };
+                lastOnChange?()
+            }
 
             // Call back immediately with the first update
-            newValue(value);
+            newValue(value)
         } else {
             // Not bound to a viewmodel, so just call back immediately with the current value
-            newValue(_value);
+            newValue(_value)
 
             // The value may be updated manually later on, so register an event handler to deal with that case
-            let lastOnChange = _onChange;
-            weak var this   = self;
+            let lastOnChange = _onChange
+            weak var this   = self
             _onChange = {
                 if let this = this {
-                    let value = this._value;
-                    newValue(value);
+                    let value = this._value
+                    newValue(value)
 
-                    lastOnChange?();
+                    lastOnChange?()
                 }
             }
         }
@@ -175,14 +175,14 @@ public enum PropertyValue {
     public func notifyChange() {
         if let viewModel = _viewModel {
             // Fetch the value from the viewmodel
-            let bindingId   = _bindingId!;
-            let newValue    = viewModel.valueForProperty(bindingId);
+            let bindingId   = _bindingId!
+            let newValue    = viewModel.valueForProperty(bindingId)
 
             // Update the value stored in this object
-            _value = newValue;
+            _value = newValue
 
             // Call the callback if it has been set
-            _onChange?();
+            _onChange?()
         }
     }
 }

@@ -12,13 +12,13 @@ import Foundation
 /// The direction a popup window is displayed in relative to its parent view
 ///
 enum PopupDirection : UInt32 {
-    case OnTop           = 0;
-    case Left            = 1;
-    case Right           = 2;
-    case Above           = 3;
-    case Below           = 4;
-    case WindowCentered  = 5;
-    case WindowTop       = 6;
+    case OnTop           = 0
+    case Left            = 1
+    case Right           = 2
+    case Above           = 3
+    case Below           = 4
+    case WindowCentered  = 5
+    case WindowTop       = 6
 }
 
 ///

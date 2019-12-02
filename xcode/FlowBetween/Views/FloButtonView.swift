@@ -14,62 +14,53 @@ class FloButtonView : FloControlView {
         if let button = _control as? NSButton {
             // NSButtons have the stringValue property but also have a title property where the text
             // is actually set
-            button.title = label;
+            button.title = label
         } else {
-            _control.stringValue = label;
+            _control.stringValue = label
         }
     }
 
     /// Sets part of the state of this control
     override func setState(selector: ViewStateSelector, toProperty: FloProperty) {
-        viewState.retainProperty(selector: selector, property: toProperty);
+        viewState.retainProperty(selector: selector, property: toProperty)
 
         switch (selector) {
         case .Value:
-            weak var this = self;
+            weak var this = self
             toProperty.trackValue { value in
                 switch (value) {
                 case .Bool(let isSelected):
-                    let state: NSButton.StateValue;
-                    if isSelected {
-                        state = NSButton.StateValue.on;
-                    } else {
-                        state = NSButton.StateValue.off;
-                    }
+                    let state = isSelected ? .on : .off
 
-                    (this?._control as? NSButton)?.state = state;
-                    break;
+                    (this?._control as? NSButton)?.state = state
+                    break
 
-                case .Float(let floatVal):      this?._control.doubleValue = Double(floatVal); break;
-                case .Int(let intValue):        this?._control.intValue = Int32(intValue); break;
-                case .String(let stringValue):  this?._control.stringValue = stringValue; break;
-                default:                        break;
+                case .Float(let floatVal):      this?._control.doubleValue = Double(floatVal)
+                case .Int(let intValue):        this?._control.intValue = Int32(intValue)
+                case .String(let stringValue):  this?._control.stringValue = stringValue
+                default:                        break
                 }
             }
-            break;
+            break
 
         case .Selected:
-            weak var this = self;
+            weak var this = self
             toProperty.trackValue { value in
                 switch (value) {
                 case .Bool(let isSelected):
-                    let state: NSButton.StateValue;
-                    if isSelected {
-                        state = NSButton.StateValue.on;
-                    } else {
-                        state = NSButton.StateValue.off;
-                    }
 
-                    (this?._control as? NSButton)?.state = state;
-                    break;
+                    let state =  isSelected ? .on : .off
 
-                    default:                        break;
+                    (this?._control as? NSButton)?.state = state
+
+                    default:
+                        break
                 }
             }
-            break;
+            break
 
         default:
-            super.setState(selector: selector, toProperty: toProperty);
+            super.setState(selector: selector, toProperty: toProperty)
         }
     }
 }
