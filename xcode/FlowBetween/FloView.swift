@@ -707,11 +707,11 @@ public class FloView : NSObject, FloViewDelegate {
 
         layer.onRedraw              { (canvasSize, viewport) in events.redrawCanvas(with: canvasSize, viewport: viewport) }
         layer.backgroundColor       = CGColor.clear
-        layer.frame                 = CGRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height)
+        layer.frame                 = CGRect(size: initialSize)
         layer.drawsAsynchronously  = true
         layer.setNeedsDisplay()
 
-        RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.modalPanel, RunLoop.Mode.eventTracking], block: { self._view.setCanvasLayer(layer) })
+        RunLoop.main.perform(inModes: [.default, .modalPanel, .eventTracking], block: { self._view.setCanvasLayer(layer) })
     }
 
     var _willRedisplayCanvasLayer = false
@@ -721,7 +721,7 @@ public class FloView : NSObject, FloViewDelegate {
     func redisplayCanvasLayer() {
         if !_willRedisplayCanvasLayer {
             _willRedisplayCanvasLayer = true
-            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.modalPanel, RunLoop.Mode.eventTracking], block: {
+            RunLoop.main.perform(inModes: [.default, .modalPanel, .eventTracking], block: {
                 CATransaction.begin()
                 CATransaction.setAnimationDuration(0.0)
                 CATransaction.setDisableActions(true)

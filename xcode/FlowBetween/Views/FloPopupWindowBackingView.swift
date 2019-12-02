@@ -20,7 +20,7 @@ class FloPopupWindowBackingView : NSView {
         super.setFrameSize(newSize)
 
         // Subview bounds depend on the direction
-        var subviewBounds = CGRect(origin: .zero, size: newSize).insetBy(dx: _borderWidth, dy: _borderWidth)
+        var subviewBounds = CGRect(size: newSize).insetBy(dx: _borderWidth, dy: _borderWidth)
 
         if newSize.width < _borderWidth*2 || newSize.height < _borderWidth*2 {
             subviewBounds = .zero

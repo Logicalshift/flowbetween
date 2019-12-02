@@ -347,14 +347,14 @@ class FloEmptyView : NSView, FloContainerView {
         var done = false
         while (!done) {
             // Fetch the next event that might mach our device
-            let nextEvent = window?.nextEvent(matching: eventMask, until: Date.distantFuture, inMode: RunLoop.Mode.eventTracking, dequeue: true)
+            let nextEvent = window?.nextEvent(matching: eventMask, until: Date.distantFuture, inMode: .eventTracking, dequeue: true)
 
             if let nextEvent = nextEvent {
                 // Check that the event is for the same device as started the paint action
                 if nextEvent.pointingDeviceID != initialEvent.pointingDeviceID { continue }
 
                 // Check if it's a finish event
-                let isFinished = nextEvent.type == NSEvent.EventType.leftMouseUp || nextEvent.type == NSEvent.EventType.rightMouseUp || nextEvent.type == NSEvent.EventType.otherMouseUp
+                let isFinished = nextEvent.type == .leftMouseUp || nextEvent.type == .rightMouseUp || nextEvent.type == .otherMouseUp
 
                 // Send the painting action
                 autoreleasepool {
@@ -375,7 +375,7 @@ class FloEmptyView : NSView, FloContainerView {
     func tryDrag(onDrag: (DragAction, CGPoint, CGPoint) -> (), initialEvent: NSEvent) {
         // The initial pos is used for the 'from' coordinates for the drag
         // We use an origin point so if the view moves (or is removed) during the drag we continue to generate points consistent with the original drag origin
-        var origin              = self.convert(CGPoint(x: 0, y: 0), to: nil)
+        var origin              = self.convert(.zero, to: nil)
         let size                = self.bounds.size
         origin.y                -= size.height
         let initialPosInWindow  = initialEvent.locationInWindow
@@ -398,7 +398,7 @@ class FloEmptyView : NSView, FloContainerView {
         while (!done) {
             autoreleasepool {
                 // Fetch the next mouse event
-                let nextEvent = window?.nextEvent(matching: eventMask, until: Date.distantFuture, inMode: RunLoop.Mode.eventTracking, dequeue: true)
+                let nextEvent = window?.nextEvent(matching: eventMask, until: Date.distantFuture, inMode: .eventTracking, dequeue: true)
 
                 if let nextEvent = nextEvent {
                     // Position relative to this view
@@ -406,7 +406,7 @@ class FloEmptyView : NSView, FloContainerView {
                     let nextPos         = CGPoint(x: nextPosInWindow.x-origin.x, y: size.height - (nextPosInWindow.y-origin.y))
 
                     // Lifting whichever button we're tracking counts as a finish event
-                    let isFinished  = nextEvent.type == NSEvent.EventType.leftMouseUp || nextEvent.type == NSEvent.EventType.rightMouseUp || nextEvent.type == NSEvent.EventType.otherMouseUp
+                    let isFinished  = nextEvent.type == .leftMouseUp || nextEvent.type == .rightMouseUp || nextEvent.type == .otherMouseUp
 
                     // Start dragging if necessary
                     if !dragging {

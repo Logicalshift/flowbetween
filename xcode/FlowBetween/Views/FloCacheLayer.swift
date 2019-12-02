@@ -29,52 +29,48 @@ import Cocoa
 
     deinit {
         // Return this layer to the backing pool of the canvas
-        if let canvas = _canvas {
-            canvas.returnUnusedLayer(_layer, _clearCount)
-        }
+        canvas?.returnUnusedLayer(_layer, _clearCount)
     }
 
     ///
     /// Caches the contents of a layer in this layer
     ///
     func cache(from: CGLayer) {
-        if let context = _layer.context {
-            // Save the state of the layer
-            context.saveGState()
+        guard let context = _layer.context else { return }
+        // Save the state of the layer
+        context.saveGState()
 
-            // Disable scaling, antialiasing, interpolation
-            context.setShouldAntialias(false)
-            context.interpolationQuality = .none
-            context.concatenate(context.ctm.inverted())
+        // Disable scaling, antialiasing, interpolation
+        context.setShouldAntialias(false)
+        context.interpolationQuality = .none
+        context.concatenate(context.ctm.inverted())
 
-            // Copy the layer
-            context.setBlendMode(CGBlendMode.copy)
-            context.draw(from, at: CGPoint(x: 0, y: 0))
+        // Copy the layer
+        context.setBlendMode(.copy)
+        context.draw(from, at: .zero)
 
-            // Restore to the previous state
-            context.restoreGState()
-        }
+        // Restore to the previous state
+        context.restoreGState()
     }
 
     ///
     /// Restores the contents of this layer to another layer
     ///
     func restore(to: CGLayer) {
-        if let context = to.context {
-            // Save the state of the layer
-            context.saveGState()
+        guard let context = to.context else { return }
+        // Save the state of the layer
+        context.saveGState()
 
-            // Disable scaling, antialiasing, interpolation
-            context.setShouldAntialias(false)
-            context.interpolationQuality = CGInterpolationQuality.none
-            context.concatenate(context.ctm.inverted())
+        // Disable scaling, antialiasing, interpolation
+        context.setShouldAntialias(false)
+        context.interpolationQuality = .none
+        context.concatenate(context.ctm.inverted())
 
-            // Copy the layer
-            context.setBlendMode(CGBlendMode.copy)
-            context.draw(_layer, at: CGPoint(x: 0, y: 0))
+        // Copy the layer
+        context.setBlendMode(.copy)
+        context.draw(_layer, at: .zero)
 
-            // Restore to the previous state
-            context.restoreGState()
-        }
+        // Restore to the previous state
+        context.restoreGState()
     }
 }

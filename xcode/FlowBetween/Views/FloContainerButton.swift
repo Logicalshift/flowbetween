@@ -201,7 +201,7 @@ class FloContainerButton : NSView, FloContainerView {
         if !_willChangeBounds {
             _willChangeBounds = true
 
-            RunLoop.current.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+            RunLoop.current.perform(inModes: [.default, .eventTracking], block: {
                 self._willChangeBounds = false
 
                 let bounds = self.getContainerBounds()

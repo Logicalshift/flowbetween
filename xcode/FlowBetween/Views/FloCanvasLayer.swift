@@ -163,7 +163,7 @@ class FloCanvasLayer : CALayer {
         }
 
         // Clear the bottom layer
-        _backing[0]?.context?.clear(CGRect(origin: CGPoint(x: 0, y: 0), size: self.bounds.size))
+        _backing[0]?.context?.clear(CGRect(size: self.bounds.size))
     }
 
     ///
@@ -178,7 +178,7 @@ class FloCanvasLayer : CALayer {
             _backing[id] = availableLayer
 
             // Make sure it has nothing already rendered on it
-            availableLayer.context?.clear(CGRect(origin: .zero, size: _visibleRect.size))
+            availableLayer.context?.clear(CGRect(size: _visibleRect.size))
             return availableLayer.context
         } else if let baseLayer = _backing[0] {
             // Get the size for the new layer

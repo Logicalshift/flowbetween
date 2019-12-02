@@ -133,7 +133,7 @@ class FloPopupView : NSView, FloContainerView, FloContainerPopup {
     ///
     func getContainerBounds() -> ContainerBounds {
         // Get the bounds
-        let viewport        = CGRect(origin: .zero, size: _popupWindow.popupContentSize)
+        let viewport        = CGRect(size: _popupWindow.popupContentSize)
         var visible         = viewport
 
         // For the container bounds, the viewport is considered to be aligned at 0,0
