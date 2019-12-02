@@ -195,24 +195,26 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             // Set the scrollbar visibility
             let (horiz, vert) = value
             switch (horiz) {
-            case ScrollBarVisibility.Always, ScrollBarVisibility.OnlyIfNeeded:  self.hasHorizontalScroller = true break
-            case ScrollBarVisibility.Never:                                     self.hasHorizontalScroller = false break
+            case ScrollBarVisibility.Always, ScrollBarVisibility.OnlyIfNeeded:
+                self.hasHorizontalScroller = true
+            case ScrollBarVisibility.Never:
+                self.hasHorizontalScroller = false
             }
 
             switch (vert) {
-            case ScrollBarVisibility.Always, ScrollBarVisibility.OnlyIfNeeded:  self.hasVerticalScroller = true break
-            case ScrollBarVisibility.Never:                                     self.hasVerticalScroller = false break
+            case ScrollBarVisibility.Always, ScrollBarVisibility.OnlyIfNeeded:
+                self.hasVerticalScroller = true
+            case ScrollBarVisibility.Never:
+                self.hasVerticalScroller = false
             }
 
             // Cocoa can't auto-hide individually, so we always auto-hide both scrollbars
             switch (value) {
             case (ScrollBarVisibility.OnlyIfNeeded, _), (_, ScrollBarVisibility.OnlyIfNeeded):
                 self.autohidesScrollers = true
-                break
 
             default:
                 self.autohidesScrollers = false
-                break
             }
         }
     }
@@ -224,7 +226,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     weak var floView: FloView?
 
     /// Returns this view as an NSView
-    var asView : NSView { get { return self } }
+    var asView : NSView { return self }
 
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)?
@@ -245,12 +247,8 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]()
 
     /// Event handler: user scrolled/resized so that a particular region is visible
-    var _onScroll: ((NSRect) -> ())?
     var onScroll: ((NSRect) -> ())? {
-        get { return _onScroll }
-        set(value) {
-            _onScroll = value
-
+        didSet {
             triggerOnScroll()
         }
     }
@@ -266,13 +264,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
     /// Triggers the click event for this view
     func triggerClick() {
-        bubbleUpEvent(source: self, event_handler: { (container) in
-            if let onClick = container.onClick {
-                return onClick()
-            } else {
-                return false
-            }
-        })
+        bubbleUpEvent(source: self) { $0.onClick?() ?? false }
     }
 
     /// Triggers the scroll event for this view
@@ -287,7 +279,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         let visibleRect = self.convert(bounds, to: documentView)
 
         // Send the onScroll event
-        _onScroll?(visibleRect)
+        onScroll?(visibleRect)
     }
 
     /// Sets the layer displayed for the canvas

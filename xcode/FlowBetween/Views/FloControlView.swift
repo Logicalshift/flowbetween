@@ -149,7 +149,7 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
     weak var floView: FloView?
 
     /// Returns this view as an NSView
-    var asView : NSView { get { return self } }
+    var asView : NSView { return self }
 
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)?

@@ -33,7 +33,7 @@ class FloCanvasLayer : CALayer {
     /// The resolution of this layer
     fileprivate var _resolution: CGFloat = 1.0
 
-    var canvasSize: CGSize { get { return _canvasSize } }
+    var canvasSize: CGSize { return _canvasSize }
 
     override init() {
         _canvasSize     = NSSize(width: 1, height: 1)

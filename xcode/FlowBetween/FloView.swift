@@ -83,43 +83,41 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     /// The view containing this view
     ///
-    var superview: FloView? { get { return _superview } }
+    var superview: FloView? { return _superview }
 
     ///
     /// The bounds of this view, as described to the layout system
     ///
     internal var floBounds: Bounds {
-        get { return _bounds }
+        return _bounds
     }
 
     ///
     /// The padding for this view (extra space used after layout)
     ///
     internal var floPadding: Padding? {
-        get { return _padding }
+        return _padding
     }
 
     ///
     /// The view that this is managing
     ///
     public var view: NSView! {
-        get { return _view.asView }
+        return _view.asView
     }
 
     ///
     /// The view state for this view
     ///
     var viewState : ViewState {
-        get { return _view.viewState }
+        return _view.viewState
     }
 
     ///
     /// The subviews that should be laid out within this view
     ///
     public var layoutSubviews: [FloView] {
-        get {
-            return _subviews
-        }
+        return _subviews
     }
 
     ///
@@ -183,7 +181,7 @@ public class FloView : NSObject, FloViewDelegate {
         if !_willLayout {
             _willLayout = true
 
-            RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
+            RunLoop.main.perform(inModes: [.default, .eventTracking], block: {
                 self._willLayout = false
                 self.performLayout(self._view.layoutSize)
             })
@@ -236,11 +234,11 @@ public class FloView : NSObject, FloViewDelegate {
         _view.onDrag = { action, from, to in
             let actionNum: UInt32
 
-            switch (action) {
-            case .Start:    actionNum = 0 break
-            case .Continue: actionNum = 1 break
-            case .Finish:   actionNum = 2 break
-            case .Cancel:   actionNum = 3 break
+            switch action {
+            case .Start:    actionNum = 0
+            case .Continue: actionNum = 1
+            case .Finish:   actionNum = 2
+            case .Cancel:   actionNum = 3
             }
 
             events.sendDrag(name, dragAction: actionNum,
@@ -262,10 +260,10 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func requestEditValue(_ events: FloEvents!, withName name: String!) {
         _view.onEditValue = { propertyValue in
             switch propertyValue {
-            case .Bool(let boolVal):    events.sendChangeValue(name, isSet: false, with: boolVal) break
-            case .Float(let floatVal):  events.sendChangeValue(name, isSet: false, with: floatVal) break
-            case .Int(let intVal):      events.sendChangeValue(name, isSet: false, with: Double(intVal)) break
-            case .String(let strVal):   events.sendChangeValue(name, isSet: false, with: strVal) break
+            case .Bool(let boolVal):    events.sendChangeValue(name, isSet: false, with: boolVal)
+            case .Float(let floatVal):  events.sendChangeValue(name, isSet: false, with: floatVal)
+            case .Int(let intVal):      events.sendChangeValue(name, isSet: false, with: Double(intVal))
+            case .String(let strVal):   events.sendChangeValue(name, isSet: false, with: strVal)
             default:                    break
             }
         }
@@ -277,10 +275,10 @@ public class FloView : NSObject, FloViewDelegate {
     @objc public func requestSetValue(_ events: FloEvents!, withName name: String!) {
         _view.onSetValue = { propertyValue in
             switch propertyValue {
-            case .Bool(let boolVal):    events.sendChangeValue(name, isSet: true, with: boolVal) break
-            case .Float(let floatVal):  events.sendChangeValue(name, isSet: true, with: floatVal) break
-            case .Int(let intVal):      events.sendChangeValue(name, isSet: true, with: Double(intVal)) break
-            case .String(let strVal):   events.sendChangeValue(name, isSet: true, with: strVal) break
+            case .Bool(let boolVal):    events.sendChangeValue(name, isSet: true, with: boolVal)
+            case .Float(let floatVal):  events.sendChangeValue(name, isSet: true, with: floatVal)
+            case .Int(let intVal):      events.sendChangeValue(name, isSet: true, with: Double(intVal))
+            case .String(let strVal):   events.sendChangeValue(name, isSet: true, with: strVal)
             default:                    break
             }
         }

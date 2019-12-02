@@ -29,9 +29,7 @@ class FloEmptyView : NSView, FloContainerView {
 
     /// The size of the layout area for this view
     var layoutSize : NSSize {
-        get {
-            return bounds.size
-        }
+        return bounds.size
     }
 
     /// Stores the general state of this view
@@ -41,7 +39,7 @@ class FloEmptyView : NSView, FloContainerView {
     public weak var floView: FloView?
 
     /// Returns this view as an NSView
-    public var asView: NSView { get { return self } }
+    public var asView: NSView { return self }
 
     /// Event handler: user clicked in the view
     public var onClick: (() -> Bool)?
@@ -68,7 +66,7 @@ class FloEmptyView : NSView, FloContainerView {
     public var onPaint: [FloPaintDevice: (FloPaintStage, AppPainting) -> ()] = [FloPaintDevice: (FloPaintStage, AppPainting) -> ()]()
 
     var _canvasAffineTransform: CGAffineTransform?
-    var _invertCanvasTransform: CGAffineTransform = CGAffineTransform.identity
+    var _invertCanvasTransform: CGAffineTransform = .identity
 
     /// The affine transform for the canvas layer
     var canvasAffineTransform: CGAffineTransform?
@@ -80,7 +78,7 @@ class FloEmptyView : NSView, FloContainerView {
             if let value = value {
                 _invertCanvasTransform = value.inverted()
             } else {
-                _invertCanvasTransform = CGAffineTransform.identity
+                _invertCanvasTransform = .identity
             }
         }
     }
@@ -105,12 +103,12 @@ class FloEmptyView : NSView, FloContainerView {
     ///
     /// Containers are not opaque
     ///
-    override public var isOpaque: Bool { get { return false } }
+    override public var isOpaque: Bool { return false }
 
     ///
     /// Containers use a flipped coordinate system
     ///
-    override var isFlipped: Bool { get { return true } }
+    override var isFlipped: Bool { return true }
 
     ///
     /// Adds a subview to this container

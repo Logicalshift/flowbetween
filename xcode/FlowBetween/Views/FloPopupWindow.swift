@@ -43,7 +43,7 @@ class FloPopupWindow : NSWindow {
 
     /// The view that owns this popup window
     fileprivate weak var _parentView: NSView?
-    var parentView: NSView? { get { return _parentView } }
+    var parentView: NSView? { return _parentView }
 
     /// The view that contains the main content for this window
     let popupContentView: NSView = NSView()

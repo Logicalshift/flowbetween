@@ -106,12 +106,7 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     /// is using instead of 'unknown' (basically required to make the eraser work, at least
     /// with Wacom's drivers)
     ///
-    var currentTabletPointingDeviceType: NSEvent.PointingDeviceType {
-        get {
-            return _currentTabletPointingDeviceType
-        }
-    }
-    fileprivate var _currentTabletPointingDeviceType: NSEvent.PointingDeviceType = .unknown
+    var currentTabletPointingDeviceType: NSEvent.PointingDeviceType = .unknown
 
     ///
     /// The serial number for the current pointing device, for telling the different between
@@ -127,10 +122,10 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
         switch event.type {
         case .tabletProximity:
             if event.isEnteringProximity {
-                _currentTabletPointingDeviceType    = event.pointingDeviceType
+                currentTabletPointingDeviceType    = event.pointingDeviceType
                 _currentTabletPointingDeviceSerial  = event.pointingDeviceSerialNumber
             } else {
-                _currentTabletPointingDeviceType    = .unknown
+                currentTabletPointingDeviceType    = .unknown
                 _currentTabletPointingDeviceSerial  = 0
             }
             break
