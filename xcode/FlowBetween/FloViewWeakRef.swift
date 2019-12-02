@@ -13,11 +13,11 @@ import Foundation
 /// case to FloViews
 ///
 class FloViewWeakRef {
-    fileprivate weak var _floView: FloView?;
+    fileprivate weak var _floView: FloView?
 
     required init(floView: FloView) {
-        _floView = floView;
+        _floView = floView
     }
 
-    var floView: FloView? { get { return _floView; } }
+    var floView: FloView? { get { return _floView } }
 }

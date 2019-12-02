@@ -9,8 +9,8 @@
 import Foundation
 
 struct Padding {
-    let left: Double;
-    let top: Double;
-    let right: Double;
-    let bottom: Double;
+    let left: Double
+    let top: Double
+    let right: Double
+    let bottom: Double
 }

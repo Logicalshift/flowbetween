@@ -9,7 +9,7 @@
 //
 //    Copyright 2018-2019 Andrew Hunter
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
+// Licensed under the Apache License, Version 2.0 (the "License")
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
@@ -27,27 +27,23 @@ import Cocoa
 @NSApplicationMain
 class FloAppDelegate: NSObject, NSApplicationDelegate {
     /// The FloSession object
-    var _sessions: [UInt64: NSObject] = [UInt64: NSObject]();
+    var _sessions: [UInt64: NSObject] = [UInt64: NSObject]()
 
     /// Views requesting 'dismiss' events
-    var _dismiss: [FloViewWeakRef] = [];
+    var _dismiss: [FloViewWeakRef] = []
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        weak var this = self;
+        weak var this = self
 
         // Monitor events to generate the 'dismiss' action
-        NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.leftMouseDown
-            .union(.otherMouseDown)
-            .union(.rightMouseDown)
-            .union(.tabletProximity)
-            .union(.tabletPoint),
-                                         handler: { event in this?.monitorEvent(event); return event; })
+        NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .otherMouseDown, .rightMouseDown, .tabletProximity, .tabletPoint],
+                                         handler: { event in this?.monitorEvent(event) return event })
 
         // Create the Flo session
-        let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
+        let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self)
 
-        let sessionId           = session!.sessionId();
-        _sessions[sessionId]    = session;
+        let sessionId           = session!.sessionId()
+        _sessions[sessionId]    = session
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
@@ -58,10 +54,10 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     ///
     func requestDismiss(forView: FloView) {
         // Clear up any views that are no longer in the list
-        _dismiss.removeAll(where: { view in view.floView == nil });
+        _dismiss.removeAll(where: { view in view.floView == nil })
 
         // Add the view to the list that should have dismiss requests sent
-        _dismiss.append(FloViewWeakRef(floView: forView));
+        _dismiss.append(FloViewWeakRef(floView: forView))
     }
 
     ///
@@ -69,36 +65,36 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     ///
     func sendDismiss(forView: NSView?) {
         // List of FloViews to dismiss
-        _dismiss.removeAll(where: { view in view.floView == nil });
-        var toDismiss = _dismiss;
+        _dismiss.removeAll(where: { view in view.floView == nil })
+        var toDismiss = _dismiss
 
         // Nothing to do if there are no dismissable views
         if toDismiss.count <= 0 {
-            return;
+            return
         }
 
         // Iterate through the view hierarchy, and remove view
-        var window      = forView?.window;
-        var superview   = forView;
+        var window      = forView?.window
+        var superview   = forView
         while let view = superview {
             // If the click is inside a 'dismissable' view, then don't dismiss that view
             if let containerView = view as? FloContainerView {
-                toDismiss.removeAll(where: { view in view.floView == containerView.floView });
+                toDismiss.removeAll(where: { view in view.floView == containerView.floView })
             }
 
             // Move up the hierarchy
-            superview = view.superview;
+            superview = view.superview
 
             if superview == nil {
                 if let popupWindow = window as? FloPopupWindow {
-                    superview   = popupWindow.parentView;
-                    window      = superview?.window;
+                    superview   = popupWindow.parentView
+                    window      = superview?.window
                 }
             }
         }
 
         // Request all remaining dismissable views dismiss themselves
-        toDismiss.forEach({ view in view.floView?.sendDismiss() });
+        toDismiss.forEach({ view in view.floView?.sendDismiss() })
     }
 
     ///
@@ -112,16 +108,16 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     ///
     var currentTabletPointingDeviceType: NSEvent.PointingDeviceType {
         get {
-            return _currentTabletPointingDeviceType;
+            return _currentTabletPointingDeviceType
         }
     }
-    fileprivate var _currentTabletPointingDeviceType: NSEvent.PointingDeviceType = .unknown;
+    fileprivate var _currentTabletPointingDeviceType: NSEvent.PointingDeviceType = .unknown
 
     ///
     /// The serial number for the current pointing device, for telling the different between
     /// different tablet tools.
     ///
-    fileprivate var _currentTabletPointingDeviceSerial: Int = 0;
+    fileprivate var _currentTabletPointingDeviceSerial: Int = 0
 
     ///
     /// Monitors an event sent to the application
@@ -131,20 +127,20 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
         switch event.type {
         case .tabletProximity:
             if event.isEnteringProximity {
-                _currentTabletPointingDeviceType    = event.pointingDeviceType;
-                _currentTabletPointingDeviceSerial  = event.pointingDeviceSerialNumber;
+                _currentTabletPointingDeviceType    = event.pointingDeviceType
+                _currentTabletPointingDeviceSerial  = event.pointingDeviceSerialNumber
             } else {
-                _currentTabletPointingDeviceType    = .unknown;
-                _currentTabletPointingDeviceSerial  = 0;
+                _currentTabletPointingDeviceType    = .unknown
+                _currentTabletPointingDeviceSerial  = 0
             }
-            break;
+            break
 
-        default: break;
+        default: break
         }
 
         if _dismiss.count == 0 {
             // Short-circuit the check if there are no dismissable views
-            return;
+            return
         }
 
         // Any mouse event outside of something waiting for dismissal should generate a 'dismiss' event
@@ -153,20 +149,20 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
             // Mouse down in the window
             if let window = event.window {
                 // Find out the view that the user clicked on
-                let locationInWindow    = event.locationInWindow;
-                let hitView             = window.contentView?.hitTest(locationInWindow);
+                let locationInWindow    = event.locationInWindow
+                let hitView             = window.contentView?.hitTest(locationInWindow)
 
                 // Send the dismiss event
-                sendDismiss(forView: hitView);
+                sendDismiss(forView: hitView)
             } else {
                 // Mouse down in no view
-                sendDismiss(forView: nil);
+                sendDismiss(forView: nil)
             }
-            break;
+            break
 
         default:
             // Do nothing
-            break;
+            break
         }
     }
 
@@ -175,17 +171,17 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
     ///
     @IBAction public func newDocument(_ sender: Any?) {
         // Create the Flo session
-        let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
+        let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self)
 
-        let sessionId           = session!.sessionId();
-        _sessions[sessionId]    = session;
+        let sessionId           = session!.sessionId()
+        _sessions[sessionId]    = session
     }
 
     ///
     /// A particular session has finished
     ///
     func finishSessionWithId(_ sessionId: UInt64) {
-        _sessions.removeValue(forKey: sessionId);
+        _sessions.removeValue(forKey: sessionId)
     }
 }
 
@@ -201,11 +197,11 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
 fileprivate func getActivePointingDevice(eventDevice: NSEvent.PointingDeviceType) -> NSEvent.PointingDeviceType {
     if eventDevice == .unknown {
         // Use the last device recorded by the app delegate
-        let appDelegate = NSApp.delegate as? FloAppDelegate;
-        return appDelegate?.currentTabletPointingDeviceType ?? eventDevice;
+        let appDelegate = NSApp.delegate as? FloAppDelegate
+        return appDelegate?.currentTabletPointingDeviceType ?? eventDevice
     } else {
         // This device is valid
-        return eventDevice;
+        return eventDevice
     }
 }
 
@@ -219,22 +215,22 @@ func getCurrentTabletPointingDevice(fromEvent: NSEvent) -> NSEvent.PointingDevic
     switch fromEvent.type {
     case .tabletProximity:
         // We generally assume .tabletProximity events have an accurate type
-        return fromEvent.pointingDeviceType;
+        return fromEvent.pointingDeviceType
 
     case .tabletPoint:
         // Tablet point events don't always have a valid type (Wacom's drivers again)
-        return getActivePointingDevice(eventDevice: fromEvent.pointingDeviceType);
+        return getActivePointingDevice(eventDevice: fromEvent.pointingDeviceType)
 
     default:
         switch fromEvent.subtype {
         case .tabletProximity, .tabletPoint:
             // The subtypes may or may not have a valid pointing device type depending on the driver
             // Wacom's drivers only return a valid pointing device type for tabletProximity events.
-            return getActivePointingDevice(eventDevice: fromEvent.pointingDeviceType);
+            return getActivePointingDevice(eventDevice: fromEvent.pointingDeviceType)
 
         default:
             // Not a tablet event (we claim to be the curver pointing device type here as it's the mouse or something)
-            return .cursor;
+            return .cursor
         }
     }
 }

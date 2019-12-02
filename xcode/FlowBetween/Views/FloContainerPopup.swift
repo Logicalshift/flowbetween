@@ -26,14 +26,14 @@ enum PopupDirection : UInt32 {
 ///
 protocol FloContainerPopup : FloContainerView {
     /// Sets whether or not the popup view is open
-    func setPopupOpen(_ isOpen: Bool);
+    func setPopupOpen(_ isOpen: Bool)
 
     /// Sets the direction that the popup window appears in relative to the parent window
-    func setPopupDirection(_ direction: PopupDirection);
+    func setPopupDirection(_ direction: PopupDirection)
 
     /// Sets the sisze of the popup
-    func setPopupSize(width: CGFloat, height: CGFloat);
+    func setPopupSize(width: CGFloat, height: CGFloat)
 
     /// Sets the offset of the popup in the popup direction
-    func setPopupOffset(_ offset: CGFloat);
+    func setPopupOffset(_ offset: CGFloat)
 }

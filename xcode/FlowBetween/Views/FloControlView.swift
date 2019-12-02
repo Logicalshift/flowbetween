@@ -13,13 +13,13 @@ import Cocoa
 ///
 class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
     /// The control that is displayed in this view
-    let _control: NSControl;
+    let _control: NSControl
 
     /// The font to display the control in
-    var _font: NSFont;
+    var _font: NSFont
 
     /// The foreground colour to display the control text in
-    var _color: NSColor?;
+    var _color: NSColor?
 
     /// The alignment of the text in this control
     var _alignment: NSTextAlignment = NSTextAlignment.left
@@ -394,9 +394,9 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
     /// Delegate method: text changed
     func controlTextDidChange(_ obj: Notification) {
         if _editing {
-            onEditValue?(PropertyValue.String(_control.stringValue));
+            onEditValue?(PropertyValue.String(_control.stringValue))
         } else {
-            onSetValue?(PropertyValue.String(_control.stringValue));
+            onSetValue?(PropertyValue.String(_control.stringValue))
         }
     }
 }
