@@ -153,7 +153,6 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
                 // Mouse down in no view
                 sendDismiss(forView: nil)
             }
-            break
 
         default:
             // Do nothing

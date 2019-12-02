@@ -137,9 +137,7 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
 
     /// The size of the layout area for this view
     var layoutSize : NSSize {
-        get {
-            return self.bounds.size
-        }
+        return self.bounds.size
     }
 
     /// Stores the general state of this view
@@ -222,15 +220,13 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
 
     /// The label with attributes applied
     var attributedLabel: NSAttributedString {
-        get {
-            let paragraphStyle = NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
-            paragraphStyle.alignment = _alignment
+        let paragraphStyle = NSParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
+        paragraphStyle.alignment = _alignment
 
-            return NSAttributedString(string: _label,
-                                      attributes: [NSAttributedString.Key.font: _font,
-                                                   NSAttributedString.Key.foregroundColor: _color ?? NSColor.white,
-                                                   NSAttributedString.Key.paragraphStyle: paragraphStyle])
-        }
+        return NSAttributedString(string: _label,
+                                    attributes: [NSAttributedString.Key.font: _font,
+                                                NSAttributedString.Key.foregroundColor: _color ?? NSColor.white,
+                                                NSAttributedString.Key.paragraphStyle: paragraphStyle])
     }
 
     /// Sets the foreground colour of the control
@@ -345,13 +341,16 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
         case .Value:
             toProperty.trackValue { value in
                 switch (value) {
-                case .Float(let floatVal):      this?._control.doubleValue = Double(floatVal)
-                case .Int(let intValue):        this?._control.intValue = Int32(intValue)
-                case .String(let stringValue):  this?._control.stringValue = stringValue
-                default:                        break
+                case .Float(let floatVal):
+                    this?._control.doubleValue = Double(floatVal)
+                case .Int(let intValue):
+                    this?._control.intValue = Int32(intValue)
+                case .String(let stringValue):
+                    this?._control.stringValue = stringValue
+                default:
+                    break
                 }
             }
-            break
 
         case .RangeLower:
             toProperty.trackValue { value in
@@ -360,7 +359,6 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
                     this?.viewState.value?.notifyChange()
                 }
             }
-            break
 
         case .RangeHigher:
             toProperty.trackValue { value in
@@ -369,11 +367,9 @@ class FloControlView: NSView, FloContainerView, NSTextFieldDelegate {
                     this?.viewState.value?.notifyChange()
                 }
             }
-            break
 
         case .FocusPriority:
             toProperty.trackValue { value in this?.focusIfNeeded() }
-            break
 
         case .Selected, .Badged, .LayoutX, .LayoutY:
             break

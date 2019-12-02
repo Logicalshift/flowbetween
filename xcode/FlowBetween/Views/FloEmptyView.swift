@@ -8,6 +8,12 @@
 
 import Cocoa
 
+extension NSRect {
+    init(size: CGSize) {
+        self.init(origin: .zero, size: size)
+    }
+}
+
 ///
 /// View that contains one or more Flo controls
 ///
@@ -83,13 +89,9 @@ class FloEmptyView : NSView, FloContainerView {
         }
     }
 
-    var _boundsChanged: ((ContainerBounds) -> ())?
     /// Event handler: The bounds of the container have changed
-    public var boundsChanged: ((ContainerBounds) -> ())?
-    {
-        get { return _boundsChanged }
-        set(value) {
-            _boundsChanged = value
+    public var boundsChanged: ((ContainerBounds) -> ())? {
+        didSet {
             triggerBoundsChanged()
         }
     }
@@ -128,10 +130,10 @@ class FloEmptyView : NSView, FloContainerView {
         performLayout?(bounds.size)
 
         // Any subviews that are not themselves FloContainers are sized to fill this view
-        _labelView?.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize)
+        _labelView?.frame = NSRect(size: newSize)
         for subview in subviews {
             if (subview as? FloContainerView) == nil {
-                subview.frame = NSRect(origin: CGPoint(x: 0, y: 0), size: newSize)
+                subview.frame = NSRect(size: newSize)
             }
         }
     }
@@ -141,7 +143,7 @@ class FloEmptyView : NSView, FloContainerView {
     ///
     override public func mouseUp(with event: NSEvent) {
         if onClick != nil || onDrag != nil {
-            if event.modifierFlags == NSEvent.ModifierFlags() && event.buttonNumber == 0 {
+            if event.modifierFlags == [] && event.buttonNumber == 0 {
                 triggerClick()
             }
         }
@@ -151,13 +153,7 @@ class FloEmptyView : NSView, FloContainerView {
     /// Triggers the click event
     ///
     public func triggerClick() {
-        bubbleUpEvent(source: self, event_handler: { (container) in
-            if let onClick = container.onClick {
-                return onClick()
-            } else {
-                return false
-            }
-        })
+        bubbleUpEvent(source: self) { $0.onClick?() ?? false }
     }
 
     ///

@@ -60,7 +60,7 @@ class FloLayout {
     /// Lays out the specified view according to the bounds set for its subviews
     ///
     public static func layoutView(view: FloView, size: NSSize, state: ViewState) {
-        let bounds          = NSRect(origin: CGPoint(x: 0, y: 0), size: size)
+        let bounds          = NSRect(size: size)
         let padding         = view.floPadding ?? Padding(left: 0, top: 0, right: 0, bottom: 0)
         let max_x           = Double(bounds.width) - padding.left - padding.right
         let max_y           = Double(bounds.height) - padding.top - padding.bottom

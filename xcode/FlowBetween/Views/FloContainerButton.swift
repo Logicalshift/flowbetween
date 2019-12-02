@@ -132,7 +132,7 @@ class FloContainerButton : NSView, FloContainerView {
 
     /// Returns this view as an NSView
     var asView : NSView {
-        get { return self }
+        return self
     }
 
     /// Event handler: user clicked in the view

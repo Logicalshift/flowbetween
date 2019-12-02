@@ -19,5 +19,5 @@ class FloViewWeakRef {
         _floView = floView
     }
 
-    var floView: FloView? { get { return _floView } }
+    var floView: FloView? { return _floView }
 }

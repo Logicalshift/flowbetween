@@ -149,7 +149,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         // Any subviews that are not themselves FloContainers are sized to fill this view
         for subview in documentView!.subviews {
             if (subview as? FloContainerView) == nil {
-                subview.frame = NSRect(origin: .zero, size: newSize)
+                subview.frame = NSRect(size: newSize)
             }
         }
     }
