@@ -6,7 +6,7 @@ use std::time::Duration;
 impl AnimationDb {
     ///
     /// Queries the size of the animation that this will edit
-    /// 
+    ///
     pub fn size(&self) -> (f64, f64) {
         self.core.sync(|core| {
             core.db.query_size()
@@ -15,7 +15,7 @@ impl AnimationDb {
 
     ///
     /// Queries the duration of this animation
-    /// 
+    ///
     pub fn duration(&self) -> Duration {
         self.core.sync(|core| {
             core.db.query_duration()
@@ -24,16 +24,16 @@ impl AnimationDb {
 
     ///
     /// Queries the frame length of this animation
-    /// 
+    ///
     pub fn frame_length(&self) -> Duration {
         self.core.sync(|core| {
             core.db.query_frame_length()
         }).unwrap()
-    } 
+    }
 
     ///
     /// Queries the active layer IDs for the animation
-    /// 
+    ///
     pub fn get_layer_ids(&self) -> Vec<u64> {
         self.core.sync(|core| {
             core.db.query_assigned_layer_ids()
@@ -42,7 +42,7 @@ impl AnimationDb {
 
     ///
     /// Assigns an unique element ID
-    /// 
+    ///
     pub fn assign_element_id(&self) -> ElementId {
         ElementId::Assigned(self.core.sync(|core| {
             core.next_element_id()

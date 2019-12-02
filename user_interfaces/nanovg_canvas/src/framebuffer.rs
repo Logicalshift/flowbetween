@@ -2,7 +2,7 @@ use gl;
 
 ///
 /// Represents an OpenGL framebuffer
-/// 
+///
 pub struct FrameBuffer {
     /// The ID of the render buffer used for this frame buffer
     renderbuffer_id: u32,
@@ -20,7 +20,7 @@ pub struct FrameBuffer {
 impl FrameBuffer {
     ///
     /// Retrieves the currently set framebuffer (for unbinding purposes)
-    /// 
+    ///
     pub fn get_current() -> u32 {
         unsafe {
             let mut draw_framebuffer = 0;
@@ -31,7 +31,7 @@ impl FrameBuffer {
 
     ///
     /// Creates a new framebuffer in the current context
-    /// 
+    ///
     pub fn new(width: i32, height: i32) -> FrameBuffer {
         unsafe {
             let active_framebuffer = Self::get_current();
@@ -42,7 +42,7 @@ impl FrameBuffer {
 
             let mut new_framebuffer_id = 0;
             gl::GenFramebuffers(1, &mut new_framebuffer_id);
-            
+
             gl::BindFramebuffer(gl::FRAMEBUFFER, new_framebuffer_id);
             gl::BindRenderbuffer(gl::RENDERBUFFER, new_renderbuffer_id);
 
@@ -73,7 +73,7 @@ impl FrameBuffer {
 
     ///
     /// Bind to this framebuffer for drawing
-    /// 
+    ///
     pub fn bind(&self) {
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer_id);
@@ -82,7 +82,7 @@ impl FrameBuffer {
 
     ///
     /// Blits the framebuffer to a new position
-    /// 
+    ///
     pub fn blit(&self, x: i32, y: i32) {
         unsafe {
             gl::BindFramebuffer(gl::READ_FRAMEBUFFER, self.framebuffer_id);
@@ -93,7 +93,7 @@ impl FrameBuffer {
 
 ///
 /// Dropping the framebuffer will attempt to deallocate its resources, but may fail if the GL context has changed since it was created
-/// 
+///
 impl Drop for FrameBuffer {
     fn drop(&mut self) {
         unsafe {

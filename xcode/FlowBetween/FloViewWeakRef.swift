@@ -14,10 +14,10 @@ import Foundation
 ///
 class FloViewWeakRef {
     fileprivate weak var _floView: FloView?;
-    
+
     required init(floView: FloView) {
         _floView = floView;
     }
-    
+
     var floView: FloView? { get { return _floView; } }
 }

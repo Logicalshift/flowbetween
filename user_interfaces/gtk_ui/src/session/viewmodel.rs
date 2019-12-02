@@ -7,7 +7,7 @@ use std::collections::hash_map::Entry;
 
 ///
 /// Tracks and generates events for viewmodel changes in GTK
-/// 
+///
 pub struct GtkSessionViewModel {
     /// Values set in the viewmodel (controller path to properties)
     values: HashMap<Vec<String>, HashMap<String, PropertyValue>>,
@@ -19,7 +19,7 @@ pub struct GtkSessionViewModel {
 impl GtkSessionViewModel {
     ///
     /// Creates a new GTK sesion viewmodel, which will send events to the specified sink
-    /// 
+    ///
     pub fn new() -> GtkSessionViewModel {
         GtkSessionViewModel {
             values:         HashMap::new(),
@@ -29,7 +29,7 @@ impl GtkSessionViewModel {
 
     ///
     /// Deletes the binding data for a particular widget ID
-    /// 
+    ///
     pub fn delete_widget(&mut self, widget_id: WidgetId) {
         // This is a naive algorithm that iterates through the entire set of bindings looking for our widget
         // If there are a large number of bindings, this may be very inefficient
@@ -42,7 +42,7 @@ impl GtkSessionViewModel {
 
     ///
     /// Binds a property to an action to be performed every time it's changed
-    /// 
+    ///
     pub fn bind(&mut self, widget_id: WidgetId, controller_path: &Vec<String>, property: &Property, action_fn: Box<dyn Fn(PropertyValue) -> Vec<GtkWidgetAction>>) -> Vec<GtkWidgetAction> {
         match property {
             // Bindings need to be stored for future updates
@@ -78,7 +78,7 @@ impl GtkSessionViewModel {
 
     ///
     /// Update the viewmodel with values from some updates
-    /// 
+    ///
     pub fn update(&mut self, updates: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
         let mut actions = vec![];
 
@@ -131,7 +131,7 @@ impl GtkSessionViewModel {
                                     })
                                     .filter(|&(_, ref actions)| actions.len() > 0)
                                     .map(|(widget_id, actions)| GtkAction::Widget(widget_id, actions));
-                            
+
                                 // Put into the list of actions to perform
                                 actions.extend(update_actions)
                             }

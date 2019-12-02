@@ -52,12 +52,12 @@ pub enum Update {
 
     ///
     /// The server supports Flo websockets on the specified port
-    /// 
+    ///
     WebsocketPort(u32),
 
     ///
     /// The server supports Flo websockets on the same port as other requests
-    /// 
+    ///
     WebsocketSamePort,
 
     ///

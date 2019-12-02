@@ -41,7 +41,7 @@ pub enum PaintEdit {
 impl PaintEdit {
     ///
     /// The element ID for this edit
-    /// 
+    ///
     pub fn id(&self) -> ElementId {
         use self::PaintEdit::*;
 
@@ -55,7 +55,7 @@ impl PaintEdit {
     ///
     /// If this edit contains an unassigned element ID, calls the specified function to supply a new
     /// element ID. If the edit already has an ID, leaves it unchanged.
-    /// 
+    ///
     pub fn assign_element_id<AssignFn: FnOnce() -> i64>(self, assign_element_id: AssignFn) -> PaintEdit {
         use self::PaintEdit::*;
         use self::ElementId::*;
@@ -64,7 +64,7 @@ impl PaintEdit {
             SelectBrush(Unassigned, brush_def, brush_style) => SelectBrush(Assigned(assign_element_id()), brush_def, brush_style),
             BrushProperties(Unassigned, brush_props)        => BrushProperties(Assigned(assign_element_id()), brush_props),
             BrushStroke(Unassigned, points)                 => BrushStroke(Assigned(assign_element_id()), points),
-            
+
             assigned => assigned
         }
     }

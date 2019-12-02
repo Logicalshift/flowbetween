@@ -37,7 +37,7 @@ pub struct VirtualCanvas {
 impl VirtualCanvas {
     ///
     /// Creates a new virtual canvas
-    /// 
+    ///
     pub fn new<DrawRegion: Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync+'static>(canvas_resources: Arc<ResourceManager<BindingCanvas>>, draw_region: DrawRegion) -> VirtualCanvas {
         let tiles       = bind(vec![]);
         let top_left    = bind((0, 0));
@@ -58,26 +58,26 @@ impl VirtualCanvas {
 
     ///
     /// Retrieves the control that renders this virtual canvas
-    /// 
+    ///
     pub fn control(&self) -> BindRef<Control> {
         BindRef::clone(&self.control)
     }
 
     ///
     /// Handles a virtual scroll event
-    /// 
+    ///
     /// Callers can use the raw values from the virtual scroll event (the canvases will
     /// always fill the available area), but if they want to hide the canvases loading
     /// in from the user they may want to increase the grid size and move the top-left
     /// corner to allow for a buffer.
-    /// 
+    ///
     pub fn virtual_scroll(&self, tile_size: (f32, f32), top_left: (u32, u32), grid_size: (u32, u32)) {
         if self.tile_size.get() != tile_size {
             // Tile size mainly affects how the regions are drawn. We need to remove the existing tiles whenever this changes
             self.tiles.set(vec![]);
             self.tile_size.set(tile_size);
         }
-   
+
         if self.top_left.get() != top_left {
             // Top-left coordinate affects what is drawn in the various canvases
             // We need to re-order the canvases to avoid having to redraw all of the tiles
@@ -96,7 +96,7 @@ impl VirtualCanvas {
 
     ///
     /// Makes a canvas at a particular grid position
-    /// 
+    ///
     fn make_tile(&self, pos: (u32, u32), tile_size: (f32, f32)) -> Resource<BindingCanvas> {
         // Work out the location of this tile
         let (xpos, ypos)    = pos;
@@ -119,7 +119,7 @@ impl VirtualCanvas {
 
     ///
     /// Updates the canvases grid to match a new grid size
-    /// 
+    ///
     fn resize_tiles(&self, new_grid_size: (u32, u32)) {
         let (left, top)     = self.top_left.get();
         let (width, height) = new_grid_size;
@@ -163,7 +163,7 @@ impl VirtualCanvas {
 
     ///
     /// Takes the canvas array and regenerates it with a new top-left coordinate
-    /// 
+    ///
     fn reorder_tiles(&self, old_top_left: (u32, u32), new_top_left: (u32, u32)) {
         // Fetch the old array and the size of the grid
         let (old_left, old_top) = old_top_left;
@@ -217,7 +217,7 @@ impl VirtualCanvas {
 
     ///
     /// Creates the control binding for this virtual canvas
-    /// 
+    ///
     fn make_control(tiles: &Binding<Vec<Vec<Resource<BindingCanvas>>>>, top_left: &Binding<(u32, u32)>, tile_size: &Binding<(f32, f32)>) -> BindRef<Control> {
         // Clone the bindings
         let tiles       = Binding::clone(tiles);

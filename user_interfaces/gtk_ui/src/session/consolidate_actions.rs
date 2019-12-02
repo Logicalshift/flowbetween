@@ -6,7 +6,7 @@ use futures::*;
 ///
 /// Stream that takes a stream of UiEvents destined for the core UI and consolidates any buffered actions that can be considered as a single
 /// action
-/// 
+///
 pub struct ConsolidateActionsStream<ActionStream> {
     /// The stream that this will read from
     source_stream: ActionStream,
@@ -18,7 +18,7 @@ pub struct ConsolidateActionsStream<ActionStream> {
 impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream<ActionStream> {
     ///
     /// Creates a new consolidating stream
-    /// 
+    ///
     pub fn new(source_stream: ActionStream) -> ConsolidateActionsStream<ActionStream> {
         ConsolidateActionsStream {
             source_stream: source_stream,
@@ -28,7 +28,7 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream
 
     ///
     /// Attempts to consolidate an event with a future event
-    /// 
+    ///
     fn consolidate(&mut self, next_event: Vec<UiEvent>, future_event: Poll<Option<Vec<UiEvent>>, ()>) -> (Vec<UiEvent>, Poll<Option<Vec<UiEvent>>, ()>) {
         use self::Async::*;
 
@@ -44,7 +44,7 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream
 
     ///
     /// Attempts to combine consecutive events that can be considered a single event (paint events, basically)
-    /// 
+    ///
     fn reduce(&mut self, events: &mut Vec<UiEvent>) {
         let mut index = 0;
 

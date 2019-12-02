@@ -53,7 +53,7 @@ impl Control {
     /// Creates a new button control
     pub fn button() -> Control {
         Self::new(Button)
-    } 
+    }
 
     /// Creates a new label control
     pub fn label() -> Control {
@@ -147,10 +147,10 @@ impl Control {
             .find(|attr| attr.is_some())
             .map(|attr| attr.unwrap())
     }
-    
+
     ///
     /// Finds the bounding box for this control if it exists
-    /// 
+    ///
     pub fn bounding_box<'a>(&'a self) -> Option<&'a Bounds> {
         self.attributes.iter()
             .map(|attr| attr.bounding_box())
@@ -160,7 +160,7 @@ impl Control {
 
     ///
     /// Finds the text for this control if it exists
-    /// 
+    ///
     pub fn text<'a>(&'a self) -> Option<&'a Property> {
         self.attributes.iter()
             .map(|attr| attr.text())
@@ -227,11 +227,11 @@ impl Control {
         // Map any subcomponents that might exist
         let num_attributes = new_control.attributes.len();
         for index in 0..num_attributes {
-            // TODO: we really only want to update the attribute if 
-            // it's a subcomponents attribute but we end up with an 
-            // awkward code structure as there's no elegant way to 
-            // release the borrow caused by the subcomponents ref in 
-            // the if statement here before updating the value. This 
+            // TODO: we really only want to update the attribute if
+            // it's a subcomponents attribute but we end up with an
+            // awkward code structure as there's no elegant way to
+            // release the borrow caused by the subcomponents ref in
+            // the if statement here before updating the value. This
             // construction looks better but clones all the attributes
             // to leave them unupdated
             new_control.attributes[index] =

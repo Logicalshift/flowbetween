@@ -11,11 +11,11 @@ import Cocoa
 public class FloScrollingView : NSScrollView, FloContainerView {
     /// Set to true if the subview sort operation is pending
     fileprivate var _willSortSubviews = false;
-    
+
     public required init?(coder: NSCoder) {
         _scrollMinimumSize = (0,0);
         _scrollBarVisibility = (ScrollBarVisibility.OnlyIfNeeded, ScrollBarVisibility.OnlyIfNeeded);
-        
+
         super.init(coder: coder)
 
         self.documentView = FloEmptyView.init(frame: NSRect(x: 0, y: 0, width: 4000, height: 4000));
@@ -25,11 +25,11 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         self.hasHorizontalScroller  = true;
         self.hasVerticalScroller    = true;
         self.autohidesScrollers     = true;
-        
+
         self.contentView.postsBoundsChangedNotifications = true;
         NotificationCenter.default.addObserver(self, selector: #selector(triggerOnScroll), name: NSView.boundsDidChangeNotification, object: self.contentView);
     }
-    
+
     required public override init(frame frameRect: NSRect) {
         _scrollMinimumSize = (0,0);
         _scrollBarVisibility = (ScrollBarVisibility.OnlyIfNeeded, ScrollBarVisibility.OnlyIfNeeded);
@@ -43,11 +43,11 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         self.hasHorizontalScroller  = true;
         self.hasVerticalScroller    = true;
         self.autohidesScrollers     = true;
-        
+
         self.contentView.postsBoundsChangedNotifications = true;
         NotificationCenter.default.addObserver(self, selector: #selector(triggerOnScroll), name: NSView.boundsDidChangeNotification, object: self.contentView);
     }
-    
+
     override public var isOpaque: Bool { get { return false } }
 
     ///
@@ -56,27 +56,27 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     func addContainerSubview(_ subview: NSView) {
         // Add to the document view
         documentView!.addSubview(subview);
-        
+
         invalidateSubviewOrder();
     }
-    
+
     ///
     /// Indicates that the subview ordering has become invalid and the views need to be reordered
     ///
     func invalidateSubviewOrder() {
         if !_willSortSubviews {
             _willSortSubviews = true;
-            
+
             RunLoop.main.perform(inModes: [RunLoop.Mode.default, RunLoop.Mode.eventTracking], block: {
                 self._willSortSubviews = false;
                 sortSubviewsByZIndex(self.documentView!);
             });
         }
     }
-    
+
     /// The views that are fixed relative to this view (and where they are fixed, and their original bounds)
     fileprivate var _fixedViews: [(NSView, FixedAxis, NSRect)] = [];
-    
+
     ///
     /// Moves the fixed views so they're visible relative to this scroll view
     ///
@@ -85,35 +85,35 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         if _fixedViews.count == 0 {
             return;
         }
-        
+
         // We update the frame to be relative to the visible rect
         // (NSScrollView also has a 'floating subview' mechanism, which we're not using because we can't quite get the behaviour we want)
         let visible = self.documentView!.visibleRect;
-        
+
         // Disable any positioning animation
         CATransaction.begin();
         CATransaction.setAnimationDuration(0.0);
         CATransaction.disableActions();
-        
+
         // Iterate through the views
         for (view, axis, originalFrame) in _fixedViews {
             // Work out the new frame for this view relative to the visible area
             var newFrame = originalFrame;
-            
+
             switch (axis) {
             case .None:         break;
             case .Horizontal:   newFrame.origin.x += visible.origin.x;
             case .Vertical:     newFrame.origin.y += visible.origin.y;
             case .Both:         newFrame.origin.x += visible.origin.x; newFrame.origin.y += visible.origin.y; break;
             }
-            
+
             // Reposition the view
             view.setFrameOrigin(newFrame.origin);
         }
-        
+
         CATransaction.commit();
     }
-    
+
     ///
     /// Sets the sizing for the document view
     ///
@@ -121,17 +121,17 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         // Decide on the size of the document view
         let (minX, minY)    = scrollMinimumSize;
         let contentSize     = contentView.bounds.size;
-        
+
         let sizeX           = CGFloat.maximum(CGFloat(minX), contentSize.width);
         let sizeY           = CGFloat.maximum(CGFloat(minY), contentSize.height);
-        
+
         let newSize         = CGSize(width: sizeX, height: sizeY);
-        
+
         documentView?.setFrameSize(newSize);
-        
+
         // Perform general layout
         self.performLayout?(newSize);
-        
+
         // Check for any fixed views
         _fixedViews = [];
         for subview in documentView!.subviews {
@@ -142,7 +142,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
                 }
             }
         }
-        
+
         // Set the initial position of the fixed views
         repositionFixedViews();
 
@@ -171,7 +171,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     ///
     override public func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize);
-        
+
         layoutDocumentView();
         triggerOnScroll();
     }
@@ -193,7 +193,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         get { return _scrollBarVisibility; }
         set(value) {
             _scrollBarVisibility = value;
-            
+
             // Set the scrollbar visibility
             let (horiz, vert) = value;
             switch (horiz) {
@@ -211,7 +211,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             case (ScrollBarVisibility.OnlyIfNeeded, _), (_, ScrollBarVisibility.OnlyIfNeeded):
                 self.autohidesScrollers = true;
                 break;
-            
+
             default:
                 self.autohidesScrollers = false;
                 break;
@@ -227,16 +227,16 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
     /// Returns this view as an NSView
     var asView : NSView { get { return self; } };
-    
+
     /// Event handler: user clicked in the view
     var onClick: (() -> Bool)?;
 
     /// Event handler: value has changed
     var onEditValue: ((PropertyValue) -> ())?;
-    
+
     /// Event handler: value has been set
     var onSetValue: ((PropertyValue) -> ())?;
-    
+
     /// Event handler: control has obtained keyboard focus
     var onFocused: (() -> ())?;
 
@@ -252,7 +252,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
         get { return _onScroll; }
         set(value) {
             _onScroll = value;
-            
+
             triggerOnScroll();
         }
     }
@@ -262,7 +262,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
 
     /// Event handler: user performed layout on this view
     var performLayout: ((NSSize) -> ())?;
-    
+
     /// Event handler: The bounds of the container have changed
     var boundsChanged: ((ContainerBounds) -> ())?;
 
@@ -276,18 +276,18 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             }
         });
     }
-    
+
     /// Triggers the scroll event for this view
     @objc func triggerOnScroll() {
         // Make sure the fixed views are visible
         repositionFixedViews();
-        
+
         // This also changes the bounds of the view
         triggerBoundsChanged();
-        
+
         // Find the area that's visible on screen
         let visibleRect = self.convert(bounds, to: documentView);
-        
+
         // Send the onScroll event
         _onScroll?(visibleRect);
     }
@@ -303,13 +303,13 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     func triggerBoundsChanged() {
         // For scrolling views, we actually trigger for all the subviews of the document view
         var toProcess = [self.documentView!];
-        
+
         while let view = toProcess.popLast() {
             // If the view is a container view, trigger its bounds changed event
             if let view = view as? FloContainerView {
                 view.triggerBoundsChanged();
             }
-            
+
             // If the view is not a scrolling view, add its subviews (nested scrolling views will already have triggered the event)
             if !(view is FloScrollingView) {
                 for subview in view.subviews {
@@ -318,7 +318,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             }
         }
     }
-    
+
     /// Sets the text label for this view
     func setTextLabel(label: String) {
         // Scroll view just acts as a container, can't have a label
@@ -327,18 +327,18 @@ public class FloScrollingView : NSScrollView, FloContainerView {
     /// Sets the font size for this view
     func setFontSize(points: Float64) {
     }
-    
+
     /// Sets the font weight for this view
     func setFontWeight(weight: Float64) {
     }
-    
+
     /// Sets the text alignment for this view
     func setTextAlignment(alignment: NSTextAlignment) {
     }
 
     /// Sets the foreground colour of the control
     func setForegroundColor(color: NSColor) {
-        
+
     }
 
     /// Sets part of the state of this control

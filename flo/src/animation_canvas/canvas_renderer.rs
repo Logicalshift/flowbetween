@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 ///
 /// Represents a layer in the current frame
-/// 
+///
 struct FrameLayer {
     /// The ID of the layer to draw on the canvas
     layer_id:           u32,
@@ -27,7 +27,7 @@ struct FrameLayer {
 
 ///
 /// Represents a layer containing an overlay
-/// 
+///
 struct OverlayLayer {
     /// How layers in the overlay map to layers in the canvas
     layers:         HashMap<u32, u32>,
@@ -41,7 +41,7 @@ struct OverlayLayer {
 
 ///
 /// Performs rendering of a canvas
-/// 
+///
 pub struct CanvasRenderer {
     /// The layers in the current frame
     frame_layers: HashMap<u64, FrameLayer>,
@@ -56,7 +56,7 @@ pub struct CanvasRenderer {
 impl OverlayLayer {
     ///
     /// Creates a new, empty, overlay layer
-    /// 
+    ///
     pub fn new() -> OverlayLayer {
         OverlayLayer {
             layers:         HashMap::new(),
@@ -69,7 +69,7 @@ impl OverlayLayer {
 impl CanvasRenderer {
     ///
     /// Creates a new canvas renderer
-    /// 
+    ///
     pub fn new() -> CanvasRenderer {
         CanvasRenderer {
             frame_layers:       HashMap::new(),
@@ -80,19 +80,19 @@ impl CanvasRenderer {
 
     ///
     /// Clears all layers from this renderer
-    /// 
+    ///
     pub fn clear(&mut self) {
         self.frame_layers = HashMap::new();
     }
 
     ///
     /// Returns the ID of the first free layer
-    /// 
+    ///
     fn free_layer(&self) -> u32 {
         // Create an iterator of all the used layer IDs
         let used_layers = self.frame_layers.values().map(|layer| layer.layer_id)
             .chain(self.overlay_layers.values().flat_map(|overlay| overlay.layers.values().map(|layer_id| *layer_id)));
-        
+
         // Find the highest
         let max_layer = used_layers.max();
 
@@ -102,7 +102,7 @@ impl CanvasRenderer {
 
     ///
     /// Invalidates the layers assigned to overlay canvases
-    /// 
+    ///
     fn invalidate_overlay_layers(&mut self) {
         self.overlay_layers.values_mut()
             .for_each(|value| value.layers = HashMap::new());
@@ -110,10 +110,10 @@ impl CanvasRenderer {
 
     ///
     /// Given a set of drawing actions for an overlay, relays them to the specified canvas
-    /// 
+    ///
     /// Overlays can call 'Layer' themselves: one important action this performs is mapping layer IDs generated as part of the overlay
     /// into unique layer IDs on the canvas itself.
-    /// 
+    ///
     fn relay_drawing_for_overlay<DrawIter: Iterator<Item=Draw>>(&mut self, overlay: u32, gc: &mut dyn GraphicsPrimitives, drawing: DrawIter) {
         // Find the first free layer in this object
         let mut free_layer = self.free_layer();
@@ -179,7 +179,7 @@ impl CanvasRenderer {
 
     ///
     /// Loads a particular frame from a layer into this renderer
-    /// 
+    ///
     pub fn load_frame(&mut self, model: FrameLayerModel) {
         // Load the frame data (we don't necessarily form a binding here)
         let frame = model.frame.get();
@@ -207,7 +207,7 @@ impl CanvasRenderer {
 
     ///
     /// Clears a canvas and sets it up for rendering
-    /// 
+    ///
     fn clear_canvas(&mut self, canvas: &BindingCanvas, (width, height): (f64, f64)) {
         // Clearing the canvas also removes any 'annotations' that might have been performed
         self.annotated_layer = None;
@@ -221,11 +221,11 @@ impl CanvasRenderer {
 
     ///
     /// Draws the canvas background to a context
-    /// 
+    ///
     fn draw_background(&mut self, gc: &mut dyn GraphicsPrimitives, (width, height): (f64, f64)) {
         // Work out the width, height to draw the animation to draw
         let (width, height) = (width as f32, height as f32);
-        
+
         // Background always goes on layer 0
         gc.layer(0);
 
@@ -250,7 +250,7 @@ impl CanvasRenderer {
 
     ///
     /// Draws the current set of frame layers to the specified canvas
-    /// 
+    ///
     pub fn draw_frame_layers(&mut self, canvas: &BindingCanvas, size: (f64, f64)) {
         // Clear the canvas and redraw the background
         self.clear_canvas(canvas, size);
@@ -268,9 +268,9 @@ impl CanvasRenderer {
 
     ///
     /// Redraws all of the overlay layers on a canvas
-    /// 
+    ///
     /// Overlay operations will clear any annotation that might have been added.
-    /// 
+    ///
     pub fn draw_overlays(&mut self, canvas: &BindingCanvas) {
         // Overlays screw with the annotation: make sure it's cleared
         self.clear_annotation(canvas);
@@ -292,9 +292,9 @@ impl CanvasRenderer {
 
     ///
     /// Sends some drawing commands to an overlay
-    /// 
+    ///
     /// Overlay operations will clear any annotation that might have been added.
-    /// 
+    ///
     pub fn overlay(&mut self, canvas: &BindingCanvas, overlay: u32, drawing: Vec<Draw>) {
         // Overlays screw with the annotation: make sure it's cleared
         self.clear_annotation(canvas);
@@ -316,9 +316,9 @@ impl CanvasRenderer {
 
     ///
     /// Clears the overlays from a canvas
-    /// 
+    ///
     /// Overlay operations will clear any annotation that might have been added.
-    /// 
+    ///
     pub fn clear_overlays(&mut self, canvas: &BindingCanvas) {
         // Overlays screw with the annotation: make sure it's cleared
         self.clear_annotation(canvas);
@@ -340,7 +340,7 @@ impl CanvasRenderer {
 
     ///
     /// Ensures that any annotations that have been performed are cleared
-    /// 
+    ///
     pub fn clear_annotation(&mut self, canvas: &BindingCanvas) {
         // Fetch & clear the currently annotated layer
         let annotated_layer = self.annotated_layer.take();
@@ -353,11 +353,11 @@ impl CanvasRenderer {
 
     ///
     /// Given a layer ID, draws an annotation on top (replacing any existing annotation)
-    /// 
+    ///
     /// The annotation is just a drawing that is on top of the 'real' layer drawing
     /// and can be replaced at any time. This allows for drawing things like preview
     /// brush strokes without needing to redraw the entire canvas.
-    /// 
+    ///
     pub fn annotate_layer<DrawFn: FnOnce(&mut dyn GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, draw_annotations: DrawFn) {
         let previous_layer = self.annotated_layer;
 
@@ -398,10 +398,10 @@ impl CanvasRenderer {
 
     ///
     /// Removes any annotation and then commits some drawing actions to a particular layer
-    /// 
+    ///
     /// In general this is useful at the end of a brush stroke, where we want to finalize
     /// the results of a drawing without having to redraw the entire layer.
-    /// 
+    ///
     pub fn commit_to_layer<DrawFn: FnOnce(&mut dyn GraphicsPrimitives) -> ()+Send>(&mut self, canvas: &BindingCanvas, layer_id: u64, commit_drawing: DrawFn) {
         // The currently annotated layer will be selected, so we can elide the layer select command if it's the same layer the user wants to commit drawing to
         let previous_layer = self.annotated_layer;
@@ -429,8 +429,8 @@ impl CanvasRenderer {
     }
 
     ///
-    /// Retrieves the brush settings for the specified layer 
-    /// 
+    /// Retrieves the brush settings for the specified layer
+    ///
     pub fn get_layer_brush(&self, layer_id: u64) -> (Option<(BrushDefinition, BrushDrawingStyle)>, Option<BrushProperties>) {
         if let Some(layer) = self.frame_layers.get(&layer_id) {
             (layer.active_brush.clone(), layer.active_properties.clone())
@@ -441,7 +441,7 @@ impl CanvasRenderer {
 
     ///
     /// Sets the layer brush for the specified layer (eg after committing a brush preview)
-    /// 
+    ///
     pub fn set_layer_brush(&mut self, layer_id: u64, brush: Option<(BrushDefinition, BrushDrawingStyle)>, properties: Option<BrushProperties>) {
         if let Some(layer) = self.frame_layers.get_mut(&layer_id) {
             layer.active_brush      = brush;

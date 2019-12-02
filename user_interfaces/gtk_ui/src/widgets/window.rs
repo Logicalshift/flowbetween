@@ -6,16 +6,16 @@ use gtk::prelude::*;
 
 ///
 /// Trait implemented by objects that can act as windows
-/// 
+///
 pub trait GtkUiWindow {
     ///
     /// Processes an action for this window
-    /// 
+    ///
     fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWindowAction);
 
     ///
     /// Sets a widhget as the root of this window
-    /// 
+    ///
     fn set_root(&mut self, flo_gtk: &mut FloGtk, widget: &gtk::Widget);
 }
 

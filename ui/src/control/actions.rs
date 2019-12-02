@@ -39,7 +39,7 @@ pub enum ActionTrigger {
 
 ///
 /// Indicates what type of drag action is occurring
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub enum DragAction {
     Start   = 0,
@@ -65,9 +65,9 @@ pub enum ActionParameter {
     /// The new value for an item
     Value(PropertyValue),
 
-    /// Indicates the top-left corner of a scrollable region (as a grid coordinate) 
+    /// Indicates the top-left corner of a scrollable region (as a grid coordinate)
     /// and the size of the region (in grid entries)
-    /// 
+    ///
     /// Ie, if you set a grid size of 512, 512, you might get '2,1' as the first pair
     /// to indicate that  the top-left corner is the grid square 1024, 512. A value
     /// of 3, 2 in the second would indicate that the client area of the scroll

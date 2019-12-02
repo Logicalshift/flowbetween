@@ -2,7 +2,7 @@ use nanovg::Path;
 
 ///
 /// NanoVg path instruction
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum NanoVgPath {
     MoveTo(f32, f32),

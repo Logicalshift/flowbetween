@@ -14,7 +14,7 @@ use std::collections::HashMap;
 
 ///
 /// Core UI session structures
-/// 
+///
 pub struct UiSessionCore {
     /// The sequential ID of the last wake for update event
     last_update_id: u64,
@@ -41,7 +41,7 @@ pub struct UiSessionCore {
 impl UiSessionCore {
     ///
     /// Creates a new UI core
-    /// 
+    ///
     pub fn new(controller: Arc<dyn Controller>) -> UiSessionCore {
         // Assemble the UI for the controller
         let ui_tree = assemble_ui(controller);
@@ -59,17 +59,17 @@ impl UiSessionCore {
 
     ///
     /// Retrieves the ID of the last update that was dispatched for this core
-    /// 
+    ///
     pub fn last_update_id(&self) -> u64 { self.last_update_id }
 
     ///
     /// Retrieves a reference to the UI tree for the whole application
-    /// 
+    ///
     pub fn ui_tree(&self) -> BindRef<Control> { BindRef::clone(&self.ui_tree) }
 
     ///
     /// Finds any events in an event list that can be combined into a single event and combines them
-    /// 
+    ///
     pub fn reduce_events(&mut self, events: Vec<UiEvent>) -> Vec<UiEvent> {
         // Paint events destined for the same target can all be combined
         let mut paint_events: HashMap<_, _> = events.iter()
@@ -83,7 +83,7 @@ impl UiSessionCore {
                     _ => unimplemented!()
                 }
             })
-            .map(|paint_ref| paint_ref.clone()) 
+            .map(|paint_ref| paint_ref.clone())
             .group_by(|(controller, event_name, device, _actions)| (*controller, *event_name, *device)).into_iter()
             .map(|(key, group)| (key, group.into_iter().flat_map(|(_, _, _, actions)| actions).collect::<Vec<_>>()))
             .collect();
@@ -113,7 +113,7 @@ impl UiSessionCore {
 
     ///
     /// Dispatches an event to the specified controller
-    ///  
+    ///
     pub fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &dyn Controller) {
         for event in events {
             // Send the event to the controllers
@@ -172,7 +172,7 @@ impl UiSessionCore {
 
     ///
     /// Registers a function to be called next time the core is updated
-    /// 
+    ///
     pub fn on_next_update<Callback: 'static+FnOnce(&mut UiSessionCore) -> ()+Send>(&mut self, callback: Callback) {
         // FnBox is in nightly, so here's our 'boxed FnOnce' workaround
         let mut callback    = Some(callback);
@@ -192,7 +192,7 @@ impl UiSessionCore {
 
     ///
     /// Wakes things up that might be waiting for updates
-    /// 
+    ///
     pub fn wake_for_updates(&mut self) {
         // Update the last update ID
         self.last_update_id += 1;
@@ -222,14 +222,14 @@ impl UiSessionCore {
 
     ///
     /// Dispatches an action to a controller
-    /// 
+    ///
     fn dispatch_action(&mut self, controller: &dyn Controller, event_name: String, action_parameter: ActionParameter) {
         controller.action(&event_name, &action_parameter);
     }
 
     ///
     /// Sends ticks to the specified controller and all its subcontrollers
-    /// 
+    ///
     fn dispatch_tick(&mut self, controller: &dyn Controller) {
         // Send ticks to the subcontrollers first
         let ui              = controller.ui().get();

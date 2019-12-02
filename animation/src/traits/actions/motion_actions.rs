@@ -10,21 +10,21 @@ use std::collections::{HashSet, HashMap};
 
 ///
 /// Edit actions that cause objects to move
-/// 
+///
 pub enum MotionEditAction {
     /// Moves a set of elements via a drag from a particular spot to another spot
-    /// 
+    ///
     /// This is essentially the action performed when a user drags an item from one place
     /// to another (the two coordinates are the start and end position of the drag).
-    /// 
+    ///
     /// For each element, the action depends on what motions the element is already performing.
-    /// 
+    ///
     /// If there's an existing translate motion, it's updated so that at the specified time,
     /// what was at the 'from' point is now at the 'to' point.
-    /// 
+    ///
     /// If there's no existing translate motion, one is created with the 'from' point as the
     /// origin and a 0s movement.
-    /// 
+    ///
     /// If a translation that is being updated is attached to an element outside of the set
     /// that is being changed, the attached translation is changed to a new ID.
     MoveElements(Vec<ElementId>, Duration, (f32, f32), (f32, f32))
@@ -33,7 +33,7 @@ pub enum MotionEditAction {
 impl EditAction for MotionEditAction {
     ///
     /// Converts this edit action into a set of animation edits for a particular animation
-    /// 
+    ///
     fn to_animation_edits<Anim: Animation>(&self, animation: &Anim) -> Vec<AnimationEdit> {
         use self::MotionEditAction::*;
 
@@ -46,14 +46,14 @@ impl EditAction for MotionEditAction {
 ///
 /// Generates an edit for a set of elements that currently have no translate motion attached to them
 /// that attaches a suitable motion that just translates them instantly at a point in time
-/// 
+///
 fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     if elements.len() > 0 {
         // Create a new motion, then attach it to the static elements
         let static_motion_id    = animation.motion().assign_element_id();
         let target_point        = TimePoint::new(to.0, to.1, when.clone());
-        
-        // Creates a motion that instantaneously moves from the 'from' point to the 'to' point 
+
+        // Creates a motion that instantaneously moves from the 'from' point to the 'to' point
         let create_motion       = vec![
             MotionEdit::Create,
             MotionEdit::SetType(MotionType::Translate),
@@ -77,7 +77,7 @@ fn static_move_edit<Anim: Animation>(animation: &Anim, elements: &HashSet<Elemen
 
 ///
 /// Generates updates for elements attached to an existing motion
-/// 
+///
 fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     if let Some(Motion::Translate(translate)) = animation.motion().get_motion(motion_id) {
         // Set an existing point in this translate motion
@@ -131,12 +131,12 @@ fn dynamic_move_edit<Anim: Animation>(animation: &Anim, motion_id: ElementId, el
 
 ///
 /// Generates a move elements edit for a particular animation
-/// 
+///
 fn move_elements_edit<Anim: Animation>(animation: &Anim, elements: &Vec<ElementId>, when: &Duration, from: &(f32, f32), to: &(f32, f32)) -> Vec<AnimationEdit> {
     // An element can either have an existing translation or have no translation attached to it yet
     let mut existing_translations   = HashMap::new();
     let mut static_elements         = HashSet::new();
-    
+
     // Find the elements with existing translations and those without any
     for element_id in elements.iter() {
         // Get the motions for this element
@@ -144,7 +144,7 @@ fn move_elements_edit<Anim: Animation>(animation: &Anim, elements: &Vec<ElementI
         let element_motions         = animation.motion().get_motions_for_element(*element_id)
             .into_iter()
             .filter_map(|motion_id| animation.motion().get_motion(motion_id).map(|motion| (motion_id, motion)));
-        
+
         // Filter to the translation motions
         let translation_motions     = element_motions
             .filter(|&(ref _id, ref motion)| motion.motion_type() == MotionType::Translate);

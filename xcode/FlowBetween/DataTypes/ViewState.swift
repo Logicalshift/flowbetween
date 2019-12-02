@@ -14,7 +14,7 @@ import Foundation
 class ViewState {
     var text:           FloProperty?;
     var popupOpen:      FloProperty?;
-    
+
     var selected:       FloProperty?;
     var badged:         FloProperty?;
     var enabled:        FloProperty?;
@@ -22,17 +22,17 @@ class ViewState {
     var rangeLower:     FloProperty?;
     var rangeHigher:    FloProperty?;
     var focusPriority:  FloProperty?;
-    
+
     var layoutX:        [FloProperty]   = [];
     var layoutY:        [FloProperty]   = [];
-    
+
     var fixedAxis:      FixedAxis       = FixedAxis.None;
     let subviewIndex:   FloProperty     = FloProperty.init(withInt: 0);
     let isFirst:        FloProperty     = FloProperty.init(withBool: false);
     let isLast:         FloProperty     = FloProperty.init(withBool: false);
     var zIndex:         CGFloat?;
     var classes:        [String]        = [];
-    
+
     ///
     /// Removes all layout properties that are being tracked in this view
     ///
@@ -40,7 +40,7 @@ class ViewState {
         layoutX = [];
         layoutY = [];
     }
-    
+
     ///
     /// Stores the property associated with a selector in this view state
     ///

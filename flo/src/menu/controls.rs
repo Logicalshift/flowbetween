@@ -4,7 +4,7 @@ use flo_ui::*;
 
 ///
 /// A divider for the menu controls
-/// 
+///
 pub fn divider() -> Control {
     Control::container()
         .with(vec![

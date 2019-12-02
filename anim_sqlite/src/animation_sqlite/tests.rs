@@ -338,7 +338,7 @@ fn remove_layer_with_keyframe() {
 
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
-    
+
     anim.perform_edits(vec![
         AnimationEdit::RemoveLayer(2)
     ]);
@@ -361,7 +361,7 @@ fn draw_brush_strokes() {
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -401,7 +401,7 @@ fn draw_brush_strokes_in_future() {
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(440), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -441,7 +441,7 @@ fn edit_brush_strokes() {
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -457,7 +457,7 @@ fn edit_brush_strokes() {
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
-        
+
         AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
     ]);
     anim.panic_on_error();
@@ -472,7 +472,7 @@ fn read_brush_strokes_from_edit_log() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -504,7 +504,7 @@ fn read_brush_strokes_from_edit_log() {
     assert!(match edits[2] {
         AnimationEdit::Layer(2, LayerEdit::Paint(_when, PaintEdit::SelectBrush(
                 ElementId::Assigned(_element_id),
-                BrushDefinition::Ink(ref ink_defn), 
+                BrushDefinition::Ink(ref ink_defn),
                 BrushDrawingStyle::Draw
             )
         ))  => ink_defn == &InkDefinition::default(),
@@ -522,7 +522,7 @@ fn read_brush_strokes_from_edit_log() {
                             RawPoint::from((10.0, 10.0)),
                             RawPoint::from((20.0, 5.0))
                         ]) && when == &Duration::from_millis(442),
-                _       => false 
+                _       => false
     });
 }
 
@@ -536,7 +536,7 @@ fn will_assign_element_ids() {
         AnimationEdit::Layer(0, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
         AnimationEdit::Layer(0, LayerEdit::Paint(Duration::from_millis(0), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -570,7 +570,7 @@ fn fetch_element_by_id() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(50))),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -621,7 +621,7 @@ fn read_frame_after_edits() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(50))),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -693,7 +693,7 @@ fn delete_element() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(50))),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -737,7 +737,7 @@ fn delete_layer_after_drawing_brush_stroke() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -770,7 +770,7 @@ fn move_existing_element() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )),
@@ -780,7 +780,7 @@ fn move_existing_element() {
                     RawPoint::from((10.0, 10.0)),
                     RawPoint::from((20.0, 5.0))
                 ])))),
-        
+
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Create),
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetType(MotionType::Translate)),
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(50.0, 60.0)),

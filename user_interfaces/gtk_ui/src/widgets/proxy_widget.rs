@@ -23,14 +23,14 @@ pub struct ProxyWidget<Widget> {
     /// The widget that we're proxying
     proxy_widget: Widget,
 
-    /// The proxy widget represented as a GTK widget 
+    /// The proxy widget represented as a GTK widget
     as_widget: gtk::Widget
 }
 
 impl<Widget: Clone+Cast+IsA<gtk::Widget>> ProxyWidget<Widget> {
     ///
     /// Creates a new proxy widget
-    /// 
+    ///
     pub fn new(underlying_widget: Rc<RefCell<dyn GtkUiWidget>>, proxy_widget: Widget) -> ProxyWidget<Widget> {
         ProxyWidget {
             underlying_widget:  underlying_widget,
@@ -104,7 +104,7 @@ impl<Widget> GtkUiWidget for ProxyWidget<Widget> {
         &self.as_widget
     }
 
-    fn draw_manual(&self, context: &cairo::Context) { 
+    fn draw_manual(&self, context: &cairo::Context) {
         self.underlying_widget.borrow().draw_manual(context);
     }
 }

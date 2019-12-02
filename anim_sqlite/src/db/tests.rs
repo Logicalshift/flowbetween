@@ -63,11 +63,11 @@ fn set_layer_name() {
 
 #[test]
 fn select_brush() {
-    core().insert_edits(&[AnimationEdit::Layer(24, 
-        Paint(Duration::from_millis(300), 
+    core().insert_edits(&[AnimationEdit::Layer(24,
+        Paint(Duration::from_millis(300),
             SelectBrush(
                 ElementId::Unassigned,
-                BrushDefinition::Ink(InkDefinition::default()), 
+                BrushDefinition::Ink(InkDefinition::default()),
                 BrushDrawingStyle::Draw
             )
         )

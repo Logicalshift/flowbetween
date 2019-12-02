@@ -19,25 +19,25 @@ class FloContainerButtonLayer : CALayer {
     fileprivate var _classes: [String]  = [];
     fileprivate var _isFirst: Bool      = false;
     fileprivate var _isLast: Bool       = false;
-    
+
     /// Set to true if this button is enabled
     var enabled: Bool {
         get { return _enabled; }
         set(value) { _enabled = value; setNeedsDisplay(); }
     }
-    
+
     /// Set to true if this button is highlighted
     var highlighted: Bool {
         get { return _highlighted; }
         set(value) { _highlighted = value; setNeedsDisplay(); }
     }
-    
+
     /// Set to true if this button is selected
     var selected: Bool {
         get { return _selected; }
         set(value) { _selected = value; setNeedsDisplay(); }
     }
-    
+
     /// Set to true if this button has a badge attached to it
     var badged: Bool {
         get { return _badged; }
@@ -49,40 +49,40 @@ class FloContainerButtonLayer : CALayer {
         get { return _isFirst; }
         set(value) { _isFirst = value; setNeedsDisplay(); }
     }
-    
+
     /// True if this button is last in the list
     var isLast: Bool {
         get { return _isLast; }
         set(value) { _isLast = value; setNeedsDisplay(); }
     }
-    
+
     /// The classes that should be applied to this button
     var classes: [String] {
         get { return _classes; }
         set(value) { _classes = value; setNeedsDisplay(); }
     }
-    
+
     override func resize(withOldSuperlayerSize size: CGSize) {
         setNeedsDisplay();
         super.resize(withOldSuperlayerSize: size);
     }
-    
+
     /// Draws the content of this layer
     override func draw(in ctxt: CGContext) {
         let isInGroup = classes.contains("button-group");
-        
+
         if isInGroup {
             drawInButtonGroup(in: ctxt);
         } else {
             drawWithDefaultClass(in: ctxt);
         }
     }
-    
+
     /// Draws the content of this layer in the default style
     func drawWithDefaultClass(in ctxt: CGContext) {
         let background: CGColor;
         let border:     CGColor;
-        
+
         // Colours are based on whether or not we're highlighted or selected
         if !enabled {
             border      = CGColor(red: 0.63, green: 0.69, blue: 0.69, alpha: 0.4);
@@ -103,7 +103,7 @@ class FloContainerButtonLayer : CALayer {
             border      = CGColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 0.2);
             background  = CGColor(red: 0.4, green: 0.4, blue: 0.4, alpha: 0.2);
         }
-        
+
         // Draw the button background
         let rounded = CGPath.init(roundedRect: bounds.insetBy(dx: 2.0, dy: 2.0), cornerWidth: 6.0, cornerHeight: 6.0, transform: nil);
         ctxt.beginPath();
@@ -118,7 +118,7 @@ class FloContainerButtonLayer : CALayer {
         ctxt.setLineWidth(1.5);
         ctxt.strokePath();
     }
-    
+
     /// Draws the content of this layer (when it's part of a button group)
     func drawInButtonGroup(in ctxt: CGContext) {
         let bounds              = self.bounds;
@@ -126,7 +126,7 @@ class FloContainerButtonLayer : CALayer {
         let isLast              = self.isLast;
         let background: CGColor;
         let border:     CGColor;
-        
+
         // Colours are based on whether or not we're highlighted or selected
         if !enabled {
             border      = CGColor(red: 0.63, green: 0.69, blue: 0.69, alpha: 0.4);
@@ -147,18 +147,18 @@ class FloContainerButtonLayer : CALayer {
             border      = CGColor.init(red: 0.63, green: 0.69, blue: 0.69, alpha: 1.0);
             background  = CGColor.init(red: 0.4, green: 0.4, blue: 0.4, alpha: 0.2);
         }
-        
+
         // Generate the button path
         let rounded     = CGMutablePath.init();
         let cornerWidth = CGFloat.minimum(bounds.size.width/2.0, bounds.size.height/2.0);
-        
+
         // Bottom
         if isLast {
             rounded.move(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.minY+1));
         } else {
             rounded.move(to: CGPoint(x: bounds.maxX, y: bounds.minY+1));
         }
-        
+
         if isFirst {
             rounded.addLine(to: CGPoint(x: bounds.minX+cornerWidth+1, y: bounds.minY+1));
         } else {
@@ -175,7 +175,7 @@ class FloContainerButtonLayer : CALayer {
         } else {
             rounded.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY-1));
         }
-        
+
         // Top
         if isLast {
             rounded.addLine(to: CGPoint(x: bounds.maxX-cornerWidth-1, y: bounds.maxY-1));
@@ -194,7 +194,7 @@ class FloContainerButtonLayer : CALayer {
         ctxt.addPath(rounded);
         ctxt.setFillColor(background);
         ctxt.fillPath();
-        
+
         // And the border
         ctxt.beginPath();
         ctxt.addPath(rounded);

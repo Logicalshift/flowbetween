@@ -62,21 +62,21 @@ impl PathElement {
 impl VectorElement for PathElement {
     ///
     /// The ID of this element
-    /// 
-    fn id(&self) -> ElementId { 
+    ///
+    fn id(&self) -> ElementId {
         self.id
     }
 
     ///
     /// Retrieves the paths for this element, if there are any
-    /// 
-    fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> { 
+    ///
+    fn to_path(&self, _properties: &VectorProperties) -> Option<Vec<Path>> {
         Some(vec![self.path.clone()])
     }
 
     ///
     /// Updates the vector properties for future elements
-    /// 
+    ///
     fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
         let properties = self.brush.update_properties(properties);
         let properties = self.brush_properties.update_properties(properties);
@@ -86,8 +86,8 @@ impl VectorElement for PathElement {
 
     ///
     /// Renders this vector element
-    /// 
-    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) { 
+    ///
+    fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {
         gc.draw_list(properties.brush.prepare_to_render(&properties.brush_properties));
         gc.draw_list(properties.brush.render_path(&properties.brush_properties, &self.path));
     }
@@ -95,7 +95,7 @@ impl VectorElement for PathElement {
     ///
     /// Returns a new element that is this element transformed along a motion at a particular moment
     /// in time.
-    /// 
+    ///
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
         // Gather all the points in this path in one place
         let all_points          = self.path.elements_ref()
@@ -141,7 +141,7 @@ impl VectorElement for PathElement {
 
     ///
     /// Fetches the control points for this element
-    /// 
+    ///
     fn control_points(&self) -> Vec<ControlPoint> {
         self.path.elements_ref()
             .flat_map(|component| {
@@ -149,8 +149,8 @@ impl VectorElement for PathElement {
                     PathComponent::Move(pos)                => vec![ControlPoint::BezierPoint(pos.x(), pos.y())],
                     PathComponent::Line(pos)                => vec![ControlPoint::BezierPoint(pos.x(), pos.y())],
                     PathComponent::Bezier(pos, cp1, cp2)    => vec![
-                        ControlPoint::BezierControlPoint(cp1.x(), cp1.y()), 
-                        ControlPoint::BezierControlPoint(cp2.x(), cp2.y()), 
+                        ControlPoint::BezierControlPoint(cp1.x(), cp1.y()),
+                        ControlPoint::BezierControlPoint(cp2.x(), cp2.y()),
                         ControlPoint::BezierPoint(pos.x(), pos.y())
                     ],
                     PathComponent::Close                    => vec![]
@@ -161,10 +161,10 @@ impl VectorElement for PathElement {
 
     ///
     /// Creates a new vector element from this one with the control points updated to the specified set of new values
-    /// 
+    ///
     /// The vector here specifies the updated position for each control point in control_points
-    /// 
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector { 
+    ///
+    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
         // Iterator for fetching points from
         let mut next_position = new_positions.into_iter()
             .map(|(x, y)| PathPoint::new(x, y));

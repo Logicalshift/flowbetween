@@ -7,7 +7,7 @@ use std::sync::*;
 
 ///
 /// Trait implemented by objects that can work as an actix session
-/// 
+///
 pub trait ActixSession {
     /// The controller type for this session
     type Controller: HttpController+Controller+'static;
@@ -17,12 +17,12 @@ pub trait ActixSession {
 
     ///
     /// Creates a new session and returns its ID
-    /// 
+    ///
     fn new_session(&self, controller: Self::Controller, base_path: &str) -> String;
 
     ///
     /// Retrieves the session with the specified ID, if present
-    /// 
+    ///
     fn get_session(&self, session_id: &str) -> Option<Arc<Mutex<HttpSession<Self::CoreUi>>>>;
 
     ///
@@ -37,7 +37,7 @@ impl<CoreController: HttpController+Controller+'static> ActixSession for WebSess
 
     ///
     /// Creates a new session and returns its ID
-    /// 
+    ///
     #[inline]
     fn new_session(&self, controller: Self::Controller, base_path: &str) -> String {
         WebSessions::<CoreController>::new_session(self, controller, base_path)
@@ -45,7 +45,7 @@ impl<CoreController: HttpController+Controller+'static> ActixSession for WebSess
 
     ///
     /// Retrieves the session with the specified ID, if present
-    /// 
+    ///
     #[inline]
     fn get_session(&self, session_id: &str) -> Option<Arc<Mutex<HttpSession<Self::CoreUi>>>> {
         WebSessions::<CoreController>::get_session(self, session_id)

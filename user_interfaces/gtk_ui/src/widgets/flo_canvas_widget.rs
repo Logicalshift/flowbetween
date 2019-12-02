@@ -37,7 +37,7 @@ struct DrawingCore {
 
 ///
 /// A Flo widget used to draw canvas actions
-/// 
+///
 pub struct FloDrawingWidget {
     /// The ID of this widget
     widget_id: WidgetId,
@@ -52,7 +52,7 @@ pub struct FloDrawingWidget {
 impl FloDrawingWidget {
     ///
     /// Creates a new drawing widget
-    /// 
+    ///
     pub fn new<W: Clone+Cast+IsA<gtk::Widget>>(widget_id: WidgetId, drawing_area: W, data: Rc<WidgetData>) -> FloDrawingWidget {
         // Create the data structures
         let canvas      = Canvas::new();
@@ -83,7 +83,7 @@ impl FloDrawingWidget {
 
     ///
     /// Deals with resizing the drawing area
-    /// 
+    ///
     fn connect_size_allocate(drawing_area: &gtk::Widget, core: Rc<RefCell<DrawingCore>>) {
         drawing_area.connect_size_allocate(move |widget, new_allocation| {
             // Unlock the core
@@ -102,7 +102,7 @@ impl FloDrawingWidget {
 
     ///
     /// Redraws the core from the canvas
-    /// 
+    ///
     fn redraw(core: &mut DrawingCore) {
         for draw in core.canvas.get_drawing() {
             core.pixbufs.draw(draw);
@@ -111,7 +111,7 @@ impl FloDrawingWidget {
 
     ///
     /// Renders the content of this canvas to a cairo context
-    /// 
+    ///
     fn perform_draw(widget: &gtk::Widget, context: &cairo::Context, core: &Rc<RefCell<DrawingCore>>) {
         // Fetch the core
         let mut core = core.borrow_mut();
@@ -163,7 +163,7 @@ impl FloDrawingWidget {
 
     ///
     /// Deals with drawing the main drawing area
-    /// 
+    ///
     fn connect_draw(drawing_area: &gtk::Widget, core: Rc<RefCell<DrawingCore>>) {
         drawing_area.connect_draw(move |widget, context| {
             Self::perform_draw(widget, context, &core);
@@ -174,7 +174,7 @@ impl FloDrawingWidget {
 
     ///
     /// Indicates a drawing request is required
-    /// 
+    ///
     fn queue_draw(core: &mut DrawingCore, drawing_area: &gtk::Widget) {
         if !core.draw_pending {
             core.draw_pending = true;
@@ -185,9 +185,9 @@ impl FloDrawingWidget {
 
     ///
     /// Updates the matrix used to convert from screen coordinates to canvas coordinates
-    /// 
+    ///
     /// (Paint actions in particular should specify canvas coordinates)
-    /// 
+    ///
     fn update_translation_matrix(&self, core: &DrawingCore) {
         // Get the transformation matrix: we store this as the translation matrix to use for paint events
         let canvas_to_widget = core.pixbufs.get_matrix();
@@ -217,7 +217,7 @@ impl FloDrawingWidget {
 
     ///
     /// Performs some drawing actions on this canvas
-    /// 
+    ///
     fn draw<DrawIter: Send+IntoIterator<Item=Draw>>(&mut self, actions: DrawIter) {
         // Get the core to do drawing on
         let mut core = self.core.borrow_mut();
@@ -286,7 +286,7 @@ impl FloDrawingWidget {
 
     ///
     /// Retrieves the viewport for a canvas
-    /// 
+    ///
     fn get_viewport(drawing_area: &gtk::Widget, allocation: &gtk::Allocation) -> CanvasViewport {
         // The scale factor is used to ensure we get a 1:1 pixel ratio for our drawing area
         let scale_factor = drawing_area.get_scale_factor();
@@ -337,7 +337,7 @@ impl GtkUiWidget for FloDrawingWidget {
         &self.as_widget
     }
 
-    fn draw_manual(&self, context: &cairo::Context) { 
+    fn draw_manual(&self, context: &cairo::Context) {
         Self::perform_draw(&self.as_widget, context, &self.core);
     }
 }

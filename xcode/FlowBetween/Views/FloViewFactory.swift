@@ -19,61 +19,61 @@ import Cocoa
 
         return view;
     }
-    
+
     ///
     /// Creates a view with a button
     ///
     @objc public static func createAsButton() -> FloView {
         let button      = NSButton.init(title: "", target: nil, action: #selector(FloView.onClick));
         let buttonView  = FloButtonView.init(frame: CGRect.init(), control: button);
-        
+
         let view        = FloView.init(withView: buttonView);
         button.target   = view;
         button.action   = #selector(FloView.onClick);
-        
+
         return view;
     }
-    
+
     ///
     /// Creates a view that acts like a button but can contain other views
     ///
     @objc public static func createAsContainerButton() -> FloView {
         let buttonView  = FloContainerButton(frame: NSRect());
         let view        = FloView.init(withView: buttonView);
-        
+
         return view;
     }
-    
+
     ///
     /// Creates a view that can be scrolled
     ///
     @objc public static func createAsScrolling() -> FloView {
         let scrolling = FloScrollingView.init();
-        
+
         let view = FloView.init(withView: scrolling);
-        
+
         return view;
     }
-    
+
     ///
     /// Creates a view that can adjust a value
     ///
     @objc public static func createAsSlider() -> FloView {
         let slider      = NSSlider.init(value: 0.5, minValue: 0.0, maxValue: 1.0, target: nil, action: nil);
         let sliderView  = FloControlView.init(frame: CGRect.init(), control: slider);
-        
+
         let view        = FloView.init(withView: sliderView);
-        
+
         return view;
     }
-    
+
     ///
     /// Creates a view that works like a slider but rotates its contents
     ///
     @objc public static func createAsRotor() -> FloView {
         let rotor   = FloRotorView.init(frame: CGRect.init());
         let view    = FloView.init(withView: rotor);
-        
+
         return view;
     }
 
@@ -83,16 +83,16 @@ import Cocoa
     @objc public static func createAsCheckBox() -> FloView {
         // Create a checkbox
         let checkbox        = NSButton.init();
-        
+
         checkbox.setButtonType(NSButton.ButtonType.switch);
-        
+
         // Generate the view
         let checkboxView    = FloButtonView.init(frame: CGRect.init(), control: checkbox);
         let view            = FloView.init(withView: checkboxView);
-        
+
         return view;
     }
-    
+
     ///
     /// Creates a view that can contain some text to be edited
     ///
@@ -105,19 +105,19 @@ import Cocoa
 
         let textboxView     = FloControlView.init(frame: CGRect.init(), control: textbox);
         let view            = FloView.init(withView: textboxView);
-        
+
         textbox.delegate    = textboxView;
 
         return view;
     }
-    
+
     ///
     /// Creates a view that shows a pop-up window
     ///
     @objc public static func createAsPopup() -> FloView {
         let popup   = FloPopupView.init(frame: CGRect.init());
         let view    = FloView.init(withView: popup);
-        
+
         return view;
     }
 }

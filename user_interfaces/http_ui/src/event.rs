@@ -22,16 +22,16 @@ pub enum Event {
 
     ///
     /// Wait for the next resume before sending any further updates. This is used when we don't want intermediate states to be displayed to the UI during event processing
-    /// 
+    ///
     SuspendUpdates,
 
     ///
     /// Resume a 'suspend' event
-    /// 
+    ///
     ResumeUpdates,
 
     ///
     /// Sends a tick event to the controllers
-    /// 
+    ///
     Tick
 }

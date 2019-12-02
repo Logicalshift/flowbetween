@@ -14,7 +14,7 @@ use std::cell::*;
 const MAX_DISTANCE: f64 = 5.0;
 
 ///
-/// Provides actions for the 'click' action for Flo widgets 
+/// Provides actions for the 'click' action for Flo widgets
 ///
 pub struct ClickActions {
     /// True if the button is pressed
@@ -36,7 +36,7 @@ impl ClickActions {
             button_press_location:  (0.0, 0.0)
         };
         let state       = Rc::new(RefCell::new(state));
-        
+
         // For basic widgets with no explicit click action, we just detect the button press event
         widget.get_underlying().add_events(gdk::EventMask::BUTTON_PRESS_MASK);
         widget.get_underlying().add_events(gdk::EventMask::BUTTON_RELEASE_MASK);
@@ -46,7 +46,7 @@ impl ClickActions {
 
             // On press: update the state to note that the button has been pressed
             widget.get_underlying()
-                .connect_button_press_event(move |_, button| { 
+                .connect_button_press_event(move |_, button| {
                     if button.get_state().is_empty() && button.get_button() == 1 {
                         // Left mouse button down with no modifiers = click
                         state.borrow_mut().button_pressed           = true;
@@ -55,10 +55,10 @@ impl ClickActions {
                     } else if button.get_button() == 1 {
                         // Not a click but we stil want to inhibit other actions here
                         Inhibit(true)
-                    } else { 
+                    } else {
                         // Other button down = continue with other event handlers
-                        Inhibit(false) 
-                    } 
+                        Inhibit(false)
+                    }
                 });
         }
 
@@ -84,10 +84,10 @@ impl ClickActions {
                             event_sink.borrow_mut().start_send(Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
                         }
                         Inhibit(true)
-                    } else { 
+                    } else {
                         // Other button down = continue with other event handlers
-                        Inhibit(false) 
-                    } 
+                        Inhibit(false)
+                    }
                 });
         }
     }

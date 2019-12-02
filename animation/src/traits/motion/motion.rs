@@ -13,7 +13,7 @@ use std::time::Duration;
 /// Describes ways in which a vector element can be moved and transformed over time.
 /// Every element can have more than one motion attached to it, but for any given
 /// element, each motion must appear only once.
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum Motion {
     /// Motion with no effect
@@ -29,7 +29,7 @@ pub enum Motion {
 impl Motion {
     ///
     /// Retrieves the type of this motion
-    /// 
+    ///
     pub fn motion_type(&self) -> MotionType {
         use self::Motion::*;
 
@@ -42,7 +42,7 @@ impl Motion {
 
     ///
     /// Sets this motion to be a particular type
-    /// 
+    ///
     pub fn set_type(&mut self, motion_type: MotionType) {
         use self::MotionType::*;
 
@@ -55,7 +55,7 @@ impl Motion {
 
     ///
     /// Sets the origin of this motion
-    /// 
+    ///
     pub fn set_origin(&mut self, new_origin: (f32, f32)) {
         use self::Motion::*;
 
@@ -68,7 +68,7 @@ impl Motion {
 
     ///
     /// Sets the path of this motion
-    /// 
+    ///
     pub fn set_path(&mut self, new_path: TimeCurve) {
         use self::Motion::*;
 
@@ -81,7 +81,7 @@ impl Motion {
 
     ///
     /// Changes this to the reverse motion of itself
-    /// 
+    ///
     pub fn reverse(self) -> Motion {
         match self {
             Motion::Reverse(reversed)   => (&*reversed).clone(),

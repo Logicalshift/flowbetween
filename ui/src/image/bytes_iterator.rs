@@ -58,7 +58,7 @@ impl Read for ImageStreamIterator {
 
         // Copy to the buffer
         buf[..num_to_read].copy_from_slice(&self.bytes[self.pos..(self.pos+num_to_read)]);
-        
+
         // Update the position
         self.pos += num_to_read;
 

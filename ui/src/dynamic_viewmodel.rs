@@ -18,7 +18,7 @@ use std::collections::{HashMap, VecDeque};
 ///
 /// The dynamic viewmodel lets us define arbitrary properties as bound or
 /// computed values. A particular key can only be bound or computed: if it
-/// is set as both, the computed version 'wins'. 
+/// is set as both, the computed version 'wins'.
 ///
 pub struct DynamicViewModel {
     /// Stream of new properties being created for this viewmodel
@@ -61,7 +61,7 @@ struct DynamicStreamProperty {
 
 ///
 /// Stream implementation that polls the forwarded changes futures when it's polled
-/// 
+///
 /// We could also pipe changes into desync, but this has the advantage that it will actually
 /// 'pull' changes in on the current thread rather than generate them asynchronously on a
 /// different thread, which is useful when trying to drain all updates from the publisher.
@@ -188,11 +188,11 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Str
 impl DynamicViewModel {
     ///
     /// Creates a new dynamic viewmodel
-    /// 
+    ///
     pub fn new() -> DynamicViewModel {
-        DynamicViewModel { 
+        DynamicViewModel {
             new_properties:     Desync::new(executor::spawn(Publisher::new(100))),
-            bindings:           Mutex::new(HashMap::new()), 
+            bindings:           Mutex::new(HashMap::new()),
             computed:           Mutex::new(HashMap::new()),
             nothing:            BindRef::from(bind(PropertyValue::Nothing)) }
     }
@@ -208,7 +208,7 @@ impl DynamicViewModel {
 
     ///
     /// Attempts to retrieve the computed binding with a paritcular name
-    /// 
+    ///
     fn get_computed(&self, property_name: &str) -> Option<BindRef<PropertyValue>> {
         let computed = self.computed.lock().unwrap();
 
@@ -216,7 +216,7 @@ impl DynamicViewModel {
     }
 
     ///
-    /// Sets a binding to a computed value 
+    /// Sets a binding to a computed value
     ///
     pub fn set_computed<TFn>(&self, property_name: &str, calculate_value: TFn)
     where TFn: 'static+Send+Sync+Fn() -> PropertyValue {
@@ -271,7 +271,7 @@ impl ViewModel for DynamicViewModel {
         }
     }
 
-    fn set_property(&self, property_name: &str, new_value: PropertyValue) { 
+    fn set_property(&self, property_name: &str, new_value: PropertyValue) {
         let mut bindings = self.bindings.lock().unwrap();
 
         if let Some(value) = bindings.get(&String::from(property_name)) {

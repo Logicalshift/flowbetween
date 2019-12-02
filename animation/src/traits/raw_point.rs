@@ -3,7 +3,7 @@ use std::io::{Read, Write, Error, ErrorKind};
 
 ///
 /// A raw point represents a point from an input device
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Serialize, Deserialize, Debug)]
 pub struct RawPoint {
     /// Where the pointer was on the canvas
@@ -28,7 +28,7 @@ impl From<(f32, f32)> for RawPoint {
 
 ///
 /// Writes a set of raw points to a stream
-/// 
+///
 pub fn write_raw_points<Target: Write>(tgt: &mut Target, points: &[RawPoint]) -> Result<(), Error> {
     let mut last_position   = (0.0, 0.0);
     let mut last_pressure   = 0.0;
@@ -53,7 +53,7 @@ pub fn write_raw_points<Target: Write>(tgt: &mut Target, points: &[RawPoint]) ->
 
 ///
 /// Reads a set of raw points froma stream
-/// 
+///
 pub fn read_raw_points<Source: Read>(src: &mut Source) -> Result<Vec<RawPoint>, Error> {
     let mut last_position   = (0.0, 0.0);
     let mut last_pressure   = 0.0;

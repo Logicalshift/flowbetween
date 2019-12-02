@@ -24,7 +24,7 @@ use std::collections::HashMap;
 
 /// The length of time to wait between receiving an event and sending it
 /// (Ideally we want to send all of the events at the start of an animation frame: however, Cocoa does not
-/// provide a particularly convenient way to do this, or even a good way to get the current frame rate so we 
+/// provide a particularly convenient way to do this, or even a good way to get the current frame rate so we
 /// just use a hard-coded value here instead. A disadvantage of this approach will be choppy updates)
 const EVENT_DELAY_SECS: f64 = 1.0 / 60.0;
 

@@ -14,16 +14,16 @@ import Cocoa
 class FloRotorView : FloEmptyView {
     /// The value representing 0 degrees for this rotor view
     fileprivate var _lowerRange: CGFloat = 0.0;
-    
+
     /// The value representing 360 degrees for this rotor view
     fileprivate var _upperRange: CGFloat = 1.0;
-    
+
     /// The current value for this rotor view
     fileprivate var _value: CGFloat = 0.0;
-    
+
     /// True if the rotor is being dragged at the moment
     fileprivate var _dragging = false;
-    
+
     ///
     /// Updates the value of this view
     ///
@@ -31,7 +31,7 @@ class FloRotorView : FloEmptyView {
         // Set the angle of the view
         let ratio                       = (_value-_lowerRange)/(_upperRange-_lowerRange);
         let angle                       = CGFloat.pi*2.0 * ratio;
-        
+
         let bounds                      = self.bounds;
         let center                      = CGPoint(x: bounds.width/2.0, y: bounds.height/2.0);
 
@@ -39,10 +39,10 @@ class FloRotorView : FloEmptyView {
         transform                       = CATransform3DTranslate(transform, center.x, center.y, 0.0);
         transform                       = CATransform3DRotate(transform, angle, 0.0, 0.0, 1.0);
         transform                       = CATransform3DTranslate(transform, -center.x, -center.y, 0.0);
-        
+
         layer?.transform                = transform;
     }
-    
+
     ///
     /// Superview changed
     ///
@@ -50,10 +50,10 @@ class FloRotorView : FloEmptyView {
         if let valueProperty = viewState.value {
             _value = CGFloat(valueProperty.value.toDouble(default: 0.0));
         }
-        
+
         updateValue();
     }
-    
+
     ///
     /// Need to change the value transform when the view bounds change
     ///
@@ -61,13 +61,13 @@ class FloRotorView : FloEmptyView {
         super.setFrameSize(newSize);
         updateValue();
     }
-    
+
     ///
     /// Sets the state for this view
     ///
     override func setState(selector: ViewStateSelector, toProperty: FloProperty) {
         weak var this = self;
-        
+
         switch (selector) {
         case .RangeLower:
             viewState.retainProperty(selector: selector, property: toProperty);
@@ -76,7 +76,7 @@ class FloRotorView : FloEmptyView {
                 this?.updateValue();
             }
             break;
-            
+
         case .RangeHigher:
             viewState.retainProperty(selector: selector, property: toProperty);
             toProperty.trackValue { newValue in
@@ -84,7 +84,7 @@ class FloRotorView : FloEmptyView {
                 this?.updateValue();
             }
             break;
-            
+
         case .Value:
             viewState.retainProperty(selector: selector, property: toProperty);
             toProperty.trackValue { newValue in
@@ -94,23 +94,23 @@ class FloRotorView : FloEmptyView {
                 }
             }
             break;
-            
+
         default:
             super.setState(selector: selector, toProperty: toProperty);
         }
     }
-    
+
     ///
     /// Computes the angle in radians for a position relative to this view
     ///
     func angleForPoint(_ point: CGPoint) -> CGFloat {
         // Assume that the node is a circle around its center
         let radius = bounds.width/2.0;
-        
+
         // Recompute the point relative to the center of the rotor
         let x = point.x-bounds.width/2.0;
         let y = -point.y-bounds.height/2.0;
-        
+
         if ((x*x + y*y) < (radius*radius)) {
             // If the point is within the main radius, then the angle is just the angle relative to the center
             return atan2(y, x);
@@ -128,11 +128,11 @@ class FloRotorView : FloEmptyView {
             } else {
                 extra_distance = 0;
             }
-            
+
             return angle + ((extra_distance/circumference) * CGFloat.pi*2);
         }
     }
-    
+
     ///
     /// Dragging the rotor changes its value
     ///
@@ -155,27 +155,27 @@ class FloRotorView : FloEmptyView {
             autoreleasepool {
                 // Fetch the next mouse event
                 let nextEvent = window?.nextEvent(matching: eventMask, until: Date.distantFuture, inMode: RunLoop.Mode.eventTracking, dequeue: true);
-                
+
                 if let nextEvent = nextEvent {
                     // Position relative to this view
                     let nextPosInWindow = nextEvent.locationInWindow;
                     let nextPos         = CGPoint(x: nextPosInWindow.x-origin.x, y: nextPosInWindow.y-origin.y);
                     let nextAngle       = angleForPoint(nextPos);
-                    
+
                     // Lifting whichever button we're tracking counts as a finish event
                     let isFinished  = nextEvent.type == NSEvent.EventType.leftMouseUp || nextEvent.type == NSEvent.EventType.rightMouseUp || nextEvent.type == NSEvent.EventType.otherMouseUp;
-                    
+
                     // Compute the difference in value
                     let angleDiff       = nextAngle-initialAngle;
                     let angleRatio      = angleDiff / (2*CGFloat.pi);
                     let valueDiff       = (_upperRange-_lowerRange)*angleRatio;
                     let nextValue       = initialValue + valueDiff;
                     let nextValueMod    = (nextValue-_lowerRange).truncatingRemainder(dividingBy: _upperRange-_lowerRange) + _lowerRange;
-                    
+
                     // Update the value
                     _value = nextValueMod;
                     updateValue();
-                    
+
                     // Send a value update
                     if !isFinished {
                         self.onEditValue?(PropertyValue.Float(Double(_value)));
@@ -190,7 +190,7 @@ class FloRotorView : FloEmptyView {
                 }
             }
         }
-        
+
         // Done dragging
         _dragging = false;
     }

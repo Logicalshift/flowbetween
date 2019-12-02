@@ -46,7 +46,7 @@ impl GroupElement {
 
     ///
     /// Sets a hint path for this element
-    /// 
+    ///
     /// For certain group types that generate an output path with a single property (eg, GroupType::Added), this path will be
     /// used instead of recomputing the path arithmetic operation represented by this group
     ///
@@ -114,14 +114,14 @@ impl GroupElement {
 impl VectorElement for GroupElement {
     ///
     /// The ID of this element
-    /// 
+    ///
     fn id(&self) -> ElementId {
         self.id
     }
 
     ///
     /// Retrieves the paths for this element, if there are any
-    /// 
+    ///
     fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
         match self.group_type {
             GroupType::Normal   => Some(self.grouped_elements.iter().flat_map(|elem| elem.to_path(properties)).flatten().collect()),
@@ -131,7 +131,7 @@ impl VectorElement for GroupElement {
 
     ///
     /// Renders this vector element
-    /// 
+    ///
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, when: Duration) {
         match self.group_type {
             GroupType::Normal   => self.render_normal(gc, properties, when),
@@ -141,8 +141,8 @@ impl VectorElement for GroupElement {
 
     ///
     /// Returns the properties to use for future elements
-    /// 
-    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> { 
+    ///
+    fn update_properties(&self, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
         // Groups do not update properties
         properties
     }
@@ -150,7 +150,7 @@ impl VectorElement for GroupElement {
     ///
     /// Returns a new element that is this element transformed along a motion at a particular moment
     /// in time.
-    /// 
+    ///
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
         let new_elements = self.grouped_elements.iter()
             .map(|old_elem| old_elem.motion_transform(motion, when))
@@ -161,16 +161,16 @@ impl VectorElement for GroupElement {
 
     ///
     /// Fetches the control points for this element
-    /// 
+    ///
     fn control_points(&self) -> Vec<ControlPoint> {
         vec![]
     }
 
     ///
     /// Creates a new vector element from this one with the control points updated to the specified set of new values
-    /// 
+    ///
     /// The vector here specifies the updated position for each control point in control_points
-    /// 
+    ///
     fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
         Vector::Group(self.clone())
     }

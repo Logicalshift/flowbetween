@@ -24,7 +24,7 @@ pub struct MenuController<Anim: Animation> {
 impl<Anim: 'static+Animation> MenuController<Anim> {
     ///
     /// Creates a new menu controller
-    /// 
+    ///
     pub fn new(anim_model: &FloModel<Anim>) -> MenuController<Anim> {
         // Create the UI
         let effective_tool  = anim_model.tools().effective_tool.clone();
@@ -44,7 +44,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
 
     ///
     /// Creates the UI binding for this controller
-    /// 
+    ///
     fn create_ui(tool_controller: &BindRef<String>) -> BindRef<Control> {
         let tool_controller = tool_controller.clone();
 
@@ -66,7 +66,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
                         .with(FontWeight::Light)
                         .with(Font::Size(17.0))
                         .with(Bounds::next_horiz(160.0)),
-                    
+
                     Control::empty()
                         .with(Bounds::stretch_horiz(1.0))
                         .with(Font::Size(12.0))
@@ -78,7 +78,7 @@ impl<Anim: 'static+Animation> MenuController<Anim> {
 
     ///
     /// Given a controller name (something like Tool_Foo), finds the tool that manages it
-    /// 
+    ///
     fn tool_for_controller_name(&self, controller_name: &str) -> Option<Arc<FloTool<Anim>>> {
         // Go through the tool sets and find the first that matches the name
         let tool_sets = self.anim_model.tools().tool_sets.get();

@@ -5,7 +5,7 @@ use png::HasParameters;
 
 ///
 /// Creates a PNG image in memory for an RGBA buffer
-/// 
+///
 pub fn png_data_for_rgba(rgba: &[u8], width: u32, height: u32) -> InMemoryImageData {
     // Create the buffer to write the PNG data to
     let mut png_data: Vec<u8> = vec![];
@@ -16,10 +16,10 @@ pub fn png_data_for_rgba(rgba: &[u8], width: u32, height: u32) -> InMemoryImageD
         png_encoder
             .set(png::ColorType::RGBA)
             .set(png::BitDepth::Eight);
-        
+
         // Write the header
         let mut png_writer = png_encoder.write_header().unwrap();
-        
+
         // Write the image data
         png_writer.write_image_data(rgba).unwrap();
     }

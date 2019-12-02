@@ -28,13 +28,13 @@ import Cocoa
 class FloAppDelegate: NSObject, NSApplicationDelegate {
     /// The FloSession object
     var _sessions: [UInt64: NSObject] = [UInt64: NSObject]();
-    
+
     /// Views requesting 'dismiss' events
     var _dismiss: [FloViewWeakRef] = [];
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         weak var this = self;
-        
+
         // Monitor events to generate the 'dismiss' action
         NSEvent.addLocalMonitorForEvents(matching: NSEvent.EventTypeMask.leftMouseDown
             .union(.otherMouseDown)
@@ -42,7 +42,7 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
             .union(.tabletProximity)
             .union(.tabletPoint),
                                          handler: { event in this?.monitorEvent(event); return event; })
-        
+
         // Create the Flo session
         let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self);
 
@@ -52,18 +52,18 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ aNotification: Notification) {
     }
-    
+
     ///
     /// Requests that dismiss events are sent to the specified view
     ///
     func requestDismiss(forView: FloView) {
         // Clear up any views that are no longer in the list
         _dismiss.removeAll(where: { view in view.floView == nil });
-        
+
         // Add the view to the list that should have dismiss requests sent
         _dismiss.append(FloViewWeakRef(floView: forView));
     }
-    
+
     ///
     /// Sends a dismiss event to any view outside of the specified view's hierarchy
     ///
@@ -71,12 +71,12 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
         // List of FloViews to dismiss
         _dismiss.removeAll(where: { view in view.floView == nil });
         var toDismiss = _dismiss;
-        
+
         // Nothing to do if there are no dismissable views
         if toDismiss.count <= 0 {
             return;
         }
-        
+
         // Iterate through the view hierarchy, and remove view
         var window      = forView?.window;
         var superview   = forView;
@@ -85,10 +85,10 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
             if let containerView = view as? FloContainerView {
                 toDismiss.removeAll(where: { view in view.floView == containerView.floView });
             }
-            
+
             // Move up the hierarchy
             superview = view.superview;
-            
+
             if superview == nil {
                 if let popupWindow = window as? FloPopupWindow {
                     superview   = popupWindow.parentView;
@@ -96,11 +96,11 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
-        
+
         // Request all remaining dismissable views dismiss themselves
         toDismiss.forEach({ view in view.floView?.sendDismiss() });
     }
-    
+
     ///
     /// The last tablet device to generate a tablet proximity event
     ///
@@ -116,13 +116,13 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     fileprivate var _currentTabletPointingDeviceType: NSEvent.PointingDeviceType = .unknown;
-    
+
     ///
     /// The serial number for the current pointing device, for telling the different between
     /// different tablet tools.
     ///
     fileprivate var _currentTabletPointingDeviceSerial: Int = 0;
-    
+
     ///
     /// Monitors an event sent to the application
     ///
@@ -138,15 +138,15 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
                 _currentTabletPointingDeviceSerial  = 0;
             }
             break;
-            
+
         default: break;
         }
-        
+
         if _dismiss.count == 0 {
             // Short-circuit the check if there are no dismissable views
             return;
         }
-        
+
         // Any mouse event outside of something waiting for dismissal should generate a 'dismiss' event
         switch event.type {
         case .leftMouseDown, .otherMouseDown, .rightMouseDown:
@@ -155,7 +155,7 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
                 // Find out the view that the user clicked on
                 let locationInWindow    = event.locationInWindow;
                 let hitView             = window.contentView?.hitTest(locationInWindow);
-                
+
                 // Send the dismiss event
                 sendDismiss(forView: hitView);
             } else {
@@ -163,13 +163,13 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
                 sendDismiss(forView: nil);
             }
             break;
-        
+
         default:
             // Do nothing
             break;
         }
     }
-    
+
     ///
     /// User requested a new session
     ///
@@ -180,7 +180,7 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
         let sessionId           = session!.sessionId();
         _sessions[sessionId]    = session;
     }
-    
+
     ///
     /// A particular session has finished
     ///
@@ -220,11 +220,11 @@ func getCurrentTabletPointingDevice(fromEvent: NSEvent) -> NSEvent.PointingDevic
     case .tabletProximity:
         // We generally assume .tabletProximity events have an accurate type
         return fromEvent.pointingDeviceType;
-        
+
     case .tabletPoint:
         // Tablet point events don't always have a valid type (Wacom's drivers again)
         return getActivePointingDevice(eventDevice: fromEvent.pointingDeviceType);
-        
+
     default:
         switch fromEvent.subtype {
         case .tabletProximity, .tabletPoint:

@@ -29,7 +29,7 @@ pub trait ImageData : Send+Sync {
 impl Image {
     ///
     /// Creates a new image from an RGBA buffer
-    /// 
+    ///
     pub fn png_from_rgba_data(rgba: &[u8], width: u32, height: u32) -> Image {
         Image::Png(Arc::new(png::png_data_for_rgba(rgba, width, height)))
     }

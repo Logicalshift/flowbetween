@@ -13,7 +13,7 @@ use std::time::Duration;
 use std::marker::PhantomData;
 
 ///
-/// Onion skin time, indicating whether or not it's before or after the current frame 
+/// Onion skin time, indicating whether or not it's before or after the current frame
 ///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum OnionSkinTime {
@@ -171,8 +171,8 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
         });
 
         // Create a stream that returns the values available in the cache every time the list of 'fetching' onion skins changes
-        // (from the stream we created above) or whenever one of the 'fetching' processes completes. This requires a specialised 
-        // version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins. We abandon 
+        // (from the stream we created above) or whenever one of the 'fetching' processes completes. This requires a specialised
+        // version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins. We abandon
         // fetching onion skins as soon as a new set of times arrive.
         let mut polling_onion_skins = vec![];
         let onion_skin_stream       = stream::poll_fn(move || {
@@ -183,12 +183,12 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
                 Ok(Async::Ready(None))              => { return Ok(Async::Ready(None)); }
                 Err(err)                            => { return Err(err); }
 
-                Ok(Async::NotReady)                 => { 
+                Ok(Async::NotReady)                 => {
                     // Check existing futures for updates
                     found_new_values = false;
                 },
 
-                Ok(Async::Ready(Some(new_futures))) => { 
+                Ok(Async::Ready(Some(new_futures))) => {
                     // Throw away the existing futures and poll the new ones instead
                     // We've always found new values in this case (they might all already be available from the cache, in which case
                     // this won't get set via the polling routine)

@@ -87,7 +87,7 @@ impl CanvasState {
             // (We don't use the GState for anything else. We need to be able to set the transformation to new
             // values but Cocoa only has the ability to multiply in new transformations. Finding the
             // transformation that updates the current one is possible but prone to accumulating errors.
-            // This makes updating the transformation fairly slow due to the need to restore the state and 
+            // This makes updating the transformation fairly slow due to the need to restore the state and
             // also makes the state very awkward to use for any other purpose)
             CGContextSaveGState(*new_context);
 
@@ -134,7 +134,7 @@ impl CanvasState {
                 // Run the actions
                 action(**context);
 
-                // Reset the context 
+                // Reset the context
                 CGContextRestoreGState(**context);
                 CGContextSaveGState(**context);
                 self.reapply_state();
@@ -151,7 +151,7 @@ impl CanvasState {
 
     ///
     /// Re-applies the state contained within this object to the current graphics context
-    /// 
+    ///
     /// When reapply_state is called, there must be a single GState pushed which will can be
     /// used later to deactivate the current state.
     ///
@@ -181,7 +181,7 @@ impl CanvasState {
     /// Removes the existing clipping area from this canvas
     ///
     pub fn unclip(&mut self) {
-        // You can't directly set the clipping area so we restore the GState instead 
+        // You can't directly set the clipping area so we restore the GState instead
         // Careful: clipping areas have the annoying side-effect of making it easy to leave a GState on the stack by mistake
         if let Some(ref context) = self.context {
             unsafe {

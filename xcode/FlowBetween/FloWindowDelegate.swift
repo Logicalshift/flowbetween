@@ -20,26 +20,26 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
     /// The window itself
     ///
     fileprivate var _window: FloWindow;
-    
+
     ///
     /// The root view, if the window has one
     ///
     fileprivate var _rootView: FloView?;
-    
+
     ///
     /// The session that this window is for
     ///
     fileprivate weak var _session : NSObject?;
-    
+
     ///
     /// The session ID for this window
     ///
     fileprivate var _sessionId: UInt64;
-    
+
     @objc required init(_ session: FloControl!) {
         // Create the window
         let styleMask: NSWindow.StyleMask = [.resizable, .closable, .titled];
-        
+
         _window = FloWindow(
             contentRect:    NSRect(x: 100, y: 100, width: 1600, height: 960),
             styleMask:      styleMask,
@@ -47,7 +47,7 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
             defer:          true);
         _session    = session;
         _sessionId  = session.sessionId();
-        
+
         // ??????? Cocoa bug ???????
         //
         // Can't tie this to FlowBetween's code at all. Whenever windowWillClose is called, the window
@@ -66,13 +66,13 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         // ... reproduced this with a really simple test case, this is a real bug in AppKit
         let buggyRetain = Unmanaged.passUnretained(_window).retain();
         let _ = buggyRetain;
-        
+
         super.init();
-        
+
         _window.title = "FlowBetween session";
         _window.delegate = self;
     }
-    
+
     ///
     /// The window will close
     ///
@@ -81,18 +81,18 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         if let delegate = NSApp.delegate as? FloAppDelegate {
             delegate.finishSessionWithId(_sessionId);
         }
-        
+
         // Tidy up the window views (in case buggyRetain fails to work)
         _window.contentView = nil;
     }
-    
+
     ///
     /// Opens the window
     ///
     @objc public func windowOpen() {
         _window.makeKeyAndOrderFront(self);
     }
-    
+
     ///
     /// Sets the root view of this window
     ///
@@ -100,29 +100,29 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
         _rootView               = view;
         _window.contentView     = view.view;
     }
-    
+
     func triggerAllBoundsChanged() {
         // Notify all the FloViews that the bounds have changed
         var remainingViews = [_window.contentView!];
-        
+
         while let nextView = remainingViews.popLast() {
             // Trigger the bounds changed event on any container views
             if let containerView = nextView as? FloContainerView {
                 containerView.triggerBoundsChanged();
             }
-            
+
             // Process the entire view tree
             remainingViews.append(contentsOf: nextView.subviews);
         }
     }
-    
+
     ///
     /// The backing properties (colour scheme, resolution) of the window was changed
     ///
     @objc public func windowDidChangeBackingProperties(_ notification: Notification) {
         triggerAllBoundsChanged();
     }
-    
+
     ///
     /// Callback when a tick has occurred
     ///
@@ -132,7 +132,7 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
             session.perform(#selector(tick));
         }
     }
-    
+
     ///
     /// Request for a tick event to be generated
     ///

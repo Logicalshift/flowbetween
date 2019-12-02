@@ -7,13 +7,13 @@ use std::sync::*;
 
 ///
 /// The Pan tool (Pans control points of existing objects)
-/// 
+///
 pub struct Pan { }
 
 impl Pan {
     ///
     /// Creates a new instance of the Pan tool
-    /// 
+    ///
     pub fn new() -> Pan {
         Pan {}
     }

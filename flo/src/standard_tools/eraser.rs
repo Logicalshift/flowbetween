@@ -15,22 +15,22 @@ use std::sync::*;
 /// than drawing over the top (this means when moving things around, any erasings
 /// stick around: also when something is entire erased it should be removed from
 /// the drawing).
-/// 
+///
 /// We need to add path arithmetic at least before this is possible to do,
 /// however.
-/// 
+///
 
 ///
 /// The Eraser tool (Erasers control points of existing objects)
-/// 
-pub struct Eraser { 
+///
+pub struct Eraser {
     ink: Ink
 }
 
 impl Eraser {
     ///
     /// Creates a new instance of the Eraser tool
-    /// 
+    ///
     pub fn new() -> Eraser {
         Eraser {
             ink: Ink::new()
@@ -89,7 +89,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Eraser {
             .map(|action| {
                 match action {
                     BrushPreview(BrushDefinition(brush, BrushDrawingStyle::Draw)) => BrushPreview(BrushDefinition(brush, BrushDrawingStyle::Erase)),
-                    
+
                     other => other
                 }
             });

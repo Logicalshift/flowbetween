@@ -102,8 +102,8 @@ impl RaycastEdge {
                     .into_iter()
                     .flat_map(|path| Self::from_path(&path, RaycastEdgeKind::EraseContents).collect::<Vec<_>>()))
             }
-            
-            BrushDrawingStyle::Draw     => { 
+
+            BrushDrawingStyle::Draw     => {
                 // A draw brush stroke just adds a single edge
                 let points  = brush_stroke.points();
                 let paths   = Self::from_brush_points(&*points, RaycastEdgeKind::Solid);
@@ -121,7 +121,7 @@ impl RaycastEdge {
     }
 
     ///
-    /// Converts a set of brush points into a set of 
+    /// Converts a set of brush points into a set of
     ///
     pub fn from_brush_points<'a, PointIter: 'a+IntoIterator<Item=&'a BrushPoint>>(points: PointIter, edge_kind: RaycastEdgeKind) -> Box<dyn 'a+Iterator<Item=RaycastEdge>> {
         Box::new(points.into_iter()

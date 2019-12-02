@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 ///
 /// Model for a file chooser file
-/// 
+///
 #[derive(Clone)]
 pub struct FileUiModel {
     /// The path to this file
@@ -32,7 +32,7 @@ impl PartialEq for FileUiModel {
 
 ///
 /// Model for the file chooser controller
-/// 
+///
 pub struct FileChooserModel<Chooser: FileChooser> {
     /// The controller displaying the open file
     pub active_controller: Binding<Option<Arc<Chooser::Controller>>>,
@@ -74,7 +74,7 @@ pub struct FileChooserModel<Chooser: FileChooser> {
 impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
     ///
     /// Creates a new file chooser model
-    /// 
+    ///
     pub fn new(chooser: &Chooser) -> FileChooserModel<Chooser> {
         // Initially there is no open file
         let open_file           = bind(None);
@@ -105,7 +105,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
 
     ///
     /// Creates the file model for a particular path
-    /// 
+    ///
     fn model_for_path(file_manager: &Arc<Chooser::FileManager>, path: &Path) -> FileUiModel {
         let name = file_manager.display_name_for_path(path).unwrap_or("Untitled".to_string());
 
@@ -118,17 +118,17 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
 
     ///
     /// Creates the file list binding from a file manager
-    /// 
+    ///
     fn file_list(file_manager: Arc<Chooser::FileManager>) -> BindRef<Arc<Vec<FileUiModel>>> {
         // Get all of the files from the file manager
         let files = file_manager.get_all_files();
-        
+
         // Create the file models from the paths
         let files: Vec<_> = files.into_iter()
             .map(|path| Self::model_for_path(&file_manager, path.as_path()))
             .collect();
         let files = Arc::new(files);
-        
+
         // Bind to updates from the file manager
         let updates = file_manager.update_stream();
         let files   = bind_stream(updates, files, move |files, update| {
@@ -178,7 +178,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
                     }
                 }
             }
-            
+
             Arc::new(files)
         });
 

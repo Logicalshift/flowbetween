@@ -22,7 +22,7 @@ const VIRTUAL_HEIGHT: f32   = 512.0;
 ///
 /// The file chooser controller can be used as a front-end for tablet or web-style applications
 /// where there is no file system file chooser.
-/// 
+///
 pub struct FileChooserController<Chooser: FileChooser> {
     /// The model for the controller
     model: FileChooserModel<Chooser>,
@@ -49,7 +49,7 @@ pub struct FileChooserController<Chooser: FileChooser> {
 impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
     ///
     /// Creates a new file chooser controller
-    /// 
+    ///
     pub fn new<LogoController: Controller+'static>(chooser: Chooser, logo_controller: LogoController) -> FileChooserController<Chooser> {
         let logo_controller     = Arc::new(logo_controller);
 
@@ -123,7 +123,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
     ///
     /// Creates a control representing a file
-    /// 
+    ///
     fn file_ui(file: &FileUiModel, index: u32, editing_filename_index: BindRef<Option<usize>>, viewmodel: Arc<DynamicViewModel>) -> Control {
         // If the user is editing the filename, then use a textbox instead of the label
         let label = if editing_filename_index.get() == Some(index as usize) {
@@ -184,7 +184,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
 
     ///
     /// Creates the UI binding from the model
-    /// 
+    ///
     fn ui(model: &FileChooserModel<Chooser>, background: BindRef<Color>, viewmodel: Arc<DynamicViewModel>) -> BindRef<Control> {
         // Create references to the parts of the model we need
         let controller              = model.active_controller.clone();
@@ -208,7 +208,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                     .with(ControlAttribute::Controller("OpenFile".to_string()))
 
             } else {
-                
+
                 // The file controls that are currently on-screen (virtualised)
                 let file_range          = file_range.get();
                 let file_list           = file_list.get();
@@ -230,19 +230,19 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                             vec![
                                 Control::empty()
                                     .with(Bounds {
-                                        x1: Position::At(x+4.0), 
-                                        y1: Position::At(y+2.0), 
-                                        x2: Position::At(x+FILE_WIDTH-4.0), 
+                                        x1: Position::At(x+4.0),
+                                        y1: Position::At(y+2.0),
+                                        x2: Position::At(x+FILE_WIDTH-4.0),
                                         y2: Position::At(y+FILE_HEIGHT-26.0)
                                     })
                                     .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.4, 0.1))),
 
                                 Self::file_ui(file_model, file_index, editing_filename_index, Arc::clone(&viewmodel))
-                                    .with(Bounds { 
-                                        x1: Position::Floating(Property::bound("DragX"), x), 
-                                        y1: Position::Floating(Property::bound("DragY"), y), 
-                                        x2: Position::Floating(Property::bound("DragX"), x+FILE_WIDTH), 
-                                        y2: Position::Floating(Property::bound("DragY"), y+FILE_HEIGHT) 
+                                    .with(Bounds {
+                                        x1: Position::Floating(Property::bound("DragX"), x),
+                                        y1: Position::Floating(Property::bound("DragY"), y),
+                                        x2: Position::Floating(Property::bound("DragX"), x+FILE_WIDTH),
+                                        y2: Position::Floating(Property::bound("DragY"), y+FILE_HEIGHT)
                                     })
                                     .with(ControlAttribute::ZIndex(10))
                                     .with(Appearance::Background(Color::Rgba(0.0, 0.0, 0.0, 0.15)))
@@ -251,10 +251,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                             // Going to insert before this file
                             vec![
                                 Self::file_ui(file_model, file_index, editing_filename_index, Arc::clone(&viewmodel))
-                                    .with(Bounds { 
-                                        x1: Position::At(x), 
-                                        y1: Position::At(y), 
-                                        x2: Position::At(x+FILE_WIDTH), 
+                                    .with(Bounds {
+                                        x1: Position::At(x),
+                                        y1: Position::At(y),
+                                        x2: Position::At(x+FILE_WIDTH),
                                         y2: Position::At(y+FILE_HEIGHT) })
                                     .with(ControlAttribute::ZIndex(0)),
 
@@ -272,10 +272,10 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                             // File that is static and not being dragged
                             vec![
                                 Self::file_ui(file_model, file_index, editing_filename_index, Arc::clone(&viewmodel))
-                                    .with(Bounds { 
-                                        x1: Position::At(x), 
-                                        y1: Position::At(y), 
-                                        x2: Position::At(x+FILE_WIDTH), 
+                                    .with(Bounds {
+                                        x1: Position::At(x),
+                                        y1: Position::At(y),
+                                        x2: Position::At(x+FILE_WIDTH),
                                         y2: Position::At(y+FILE_HEIGHT) })
                                     .with(ControlAttribute::ZIndex(0))
                             ]
@@ -359,7 +359,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                     // The UI has no file selection controls
                     vec![]
                 };
-                
+
                 // Work out the height of the container
                 let num_rows    = ((file_list.len() as i32)-1) / (NUM_COLUMNS as i32) + 1;
                 let height      = LOGO_HEIGHT + 8.0 + 24.0 + FILE_HEIGHT * (num_rows as f32);
@@ -402,7 +402,7 @@ impl<Chooser: FileChooser+'static> FileChooserController<Chooser> {
                                     .with(Bounds::stretch_horiz(1.0))
                             ])
                             .with(Bounds::next_vert(32.0)),
-                        
+
                         Control::empty()
                             .with(Bounds::next_vert(4.0)),
 
@@ -460,12 +460,12 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
     }
 
     /// Retrieves the viewmodel for this controller
-    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> { 
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
         Some(self.viewmodel.clone())
     }
 
     /// Attempts to retrieve a sub-controller of this controller
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> { 
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         match id {
             // The open file controller is whatever the active model points to
             "OpenFile" => {
@@ -485,7 +485,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
     }
 
     /// Callback for when a control associated with this controller generates an action
-    fn action(&self, action_id: &str, action_data: &ActionParameter) { 
+    fn action(&self, action_id: &str, action_data: &ActionParameter) {
         match (action_id, action_data) {
             ("ScrollFiles", ActionParameter::VirtualScroll((_x, y), (_width, height))) => {
                 // Get the position of the files
@@ -583,7 +583,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
                 self.model.edited_filename.set(new_filename.clone());
             },
 
-            (action, action_parameter) => { 
+            (action, action_parameter) => {
                 if action.starts_with("Open-") {
 
                     // Finish up any filename editing that might be occurring
@@ -714,7 +714,7 @@ impl<Chooser: FileChooser+'static> Controller for FileChooserController<Chooser>
     }
 
     /// Retrieves a resource manager containing the images used in the UI for this controller
-    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { 
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
         None
     }
 }

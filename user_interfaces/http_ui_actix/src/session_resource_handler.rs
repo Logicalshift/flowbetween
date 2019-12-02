@@ -26,7 +26,7 @@ lazy_static! {
 
 ///
 /// Types of resource that can be retrieved statically
-/// 
+///
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum ResourceType {
     Image,
@@ -36,7 +36,7 @@ enum ResourceType {
 impl ResourceType {
     ///
     /// Creates a resource type from the resource type element of the path
-    /// 
+    ///
     fn from_path_element(item: &str) -> Option<ResourceType> {
         match item {
             "i" => Some(ResourceType::Image),
@@ -49,7 +49,7 @@ impl ResourceType {
 
 ///
 /// Struct representing the decoded meaning of a resource URL
-/// 
+///
 #[derive(Debug, PartialEq, Clone)]
 struct ResourceUrl {
     session_id:         String,
@@ -60,7 +60,7 @@ struct ResourceUrl {
 
 ///
 /// Decodes a URL into a resource URL
-/// 
+///
 fn decode_url(path: &str) -> Option<ResourceUrl> {
     // Remove any '/' at the start of the path
     let path = if path.chars().nth(0) == Some('/') {
@@ -102,7 +102,7 @@ fn decode_url(path: &str) -> Option<ResourceUrl> {
 
 ///
 /// Finds the controller ont he specified path in the given session
-/// 
+///
 fn get_controller<CoreUi>(session: &HttpSession<CoreUi>, controller_path: Vec<String>) -> Option<Arc<dyn Controller>>
 where CoreUi: 'static+CoreUserInterface+Send+Sync {
     // Get the root controller
@@ -121,7 +121,7 @@ where CoreUi: 'static+CoreUserInterface+Send+Sync {
 
 ///
 /// Produces a HTTP response for an image request
-/// 
+///
 fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
@@ -170,7 +170,7 @@ fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &Http
 
 ///
 /// Produces a HTTP response for a canvas request
-/// 
+///
 fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
@@ -199,7 +199,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
                     encoded
                 })
                 .map(|encoded| Bytes::from(encoded.as_bytes()));
-            
+
             let encoded_drawing = stream::iter_ok(encoded_drawing)
                 .map_err(|_: ()| io::Error::new(ErrorKind::Other, "Unknown error"));
 
@@ -223,7 +223,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
 
 ///
 /// Handler for get requests for a session
-/// 
+///
 pub fn session_resource_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     // The path is the tail of the request
     let path    = req.match_info().get("tail").map(|s| String::from(s));

@@ -63,7 +63,7 @@ impl FloodFillMenuController {
 
     ///
     /// Creates the opacity preview canvas
-    /// 
+    ///
     pub fn opacity_preview(opacity: BindRef<f32>, control_height: f32) -> BindingCanvas {
         BindingCanvas::with_drawing(move |gc| {
             let size = control_height - 8.0;
@@ -82,7 +82,7 @@ impl FloodFillMenuController {
 
     ///
     /// Creates the colour preview canvas
-    /// 
+    ///
     pub fn color_preview(colour: BindRef<Color>) -> BindingCanvas {
         let control_height  = 32.0 - 6.0;
 
@@ -115,7 +115,7 @@ impl FloodFillMenuController {
         let opacity_preview_large   = canvases.register(opacity_preview_large);
 
         // Generate the UI
-        let ui = computed(move || 
+        let ui = computed(move ||
             Control::container()
                 .with(Bounds::fill_all())
                 .with(ControlAttribute::Padding((0, 3), (0, 3)))
@@ -197,7 +197,7 @@ impl Controller for FloodFillMenuController {
         }
     }
 
-    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(self.canvases.clone())
     }
 

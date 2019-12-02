@@ -4,7 +4,7 @@ use super::bytes_iterator::*;
 use std::io::Read;
 
 ///
-/// Represents an image whose data is stored in memory 
+/// Represents an image whose data is stored in memory
 ///
 pub struct StaticImageData {
     /// The bytes making up this stream

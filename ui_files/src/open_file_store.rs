@@ -22,7 +22,7 @@ pub struct OpenFileStore<Model: FileModel> {
 impl<Model: 'static+FileModel> OpenFileStore<Model> {
     ///
     /// Creates a new open file store
-    /// 
+    ///
     pub fn new() -> OpenFileStore<Model> {
         let core = OpenFileStoreCore {
             open_files: HashMap::new()
@@ -35,7 +35,7 @@ impl<Model: 'static+FileModel> OpenFileStore<Model> {
 
     ///
     /// Opens the shared data for a particular path
-    /// 
+    ///
     pub fn open_shared(&self, path: &Path) -> Arc<Model> {
         // Fetch the shared data for this path if it's already loaded, or create a new set by opening the file if not
         let shared = self.core.sync(|core| {
@@ -50,7 +50,7 @@ impl<Model: 'static+FileModel> OpenFileStore<Model> {
 
     ///
     /// Removes the shared data for a file if there are no remaining references
-    /// 
+    ///
     pub fn close_shared(&self, path: &Path) {
         let path = PathBuf::from(path);
 

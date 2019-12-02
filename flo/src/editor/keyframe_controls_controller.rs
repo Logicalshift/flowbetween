@@ -15,7 +15,7 @@ use std::time::Duration;
 
 ///
 /// Provides the buttons for controlling the keyframes
-/// 
+///
 pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation> {
     /// The UI for this controller
     ui: BindRef<Control>,
@@ -50,7 +50,7 @@ pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation>
 impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim> {
     ///
     /// Creates a new keyframes controls controller
-    /// 
+    ///
     pub fn new(model: &FloModel<Anim>) -> KeyFrameControlsController<Anim> {
         // Create the viewmodel
         let frame       = model.frame();
@@ -94,7 +94,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
 
     ///
     /// Creates the UI for this controller
-    /// 
+    ///
     fn ui(images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
         // Fetch the icon images
         let new_key_frame       = images.get_named_resource("new_key_frame").unwrap();
@@ -178,7 +178,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
 
     ///
     /// Creates the image resource manager for this controller
-    /// 
+    ///
     fn images() -> ResourceManager<Image> {
         let images              = ResourceManager::new();
 
@@ -234,21 +234,21 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
                 }
             },
 
-            "MoveToPreviousKeyFrame" => { 
+            "MoveToPreviousKeyFrame" => {
                 let previous_frame = self.frame.previous_and_next_keyframe.get().0;
                 if let Some(previous_frame) = previous_frame {
                     self.current_time.set(previous_frame);
                 }
             },
 
-            "MoveToNextKeyFrame" => { 
+            "MoveToNextKeyFrame" => {
                 let next_frame = self.frame.previous_and_next_keyframe.get().1;
                 if let Some(next_frame) = next_frame {
                     self.current_time.set(next_frame);
                 }
             },
 
-            "CreateKeyFrame" => { 
+            "CreateKeyFrame" => {
                 let current_time        = self.current_time.get();
                 let selected_layer      = self.selected_layer.get();
                 let keyframe_selected   = self.frame.keyframe_selected.get();

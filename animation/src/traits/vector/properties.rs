@@ -12,11 +12,11 @@ use std::time::Duration;
 
 ///
 /// Represents the active properties for a vector layer
-/// 
+///
 /// Elements can update the properties, which persist to the next element.
 /// This saves some space in that properties don't need to be encoded with
 /// each element.
-/// 
+///
 #[derive(Clone)]
 pub struct VectorProperties {
     /// The active brush
@@ -35,7 +35,7 @@ pub struct VectorProperties {
 impl VectorProperties {
     ///
     /// Creates the default brush properties
-    /// 
+    ///
     pub fn default() -> VectorProperties {
         VectorProperties {
             brush:              Arc::new(InkBrush::new(&InkDefinition::default(), BrushDrawingStyle::Draw)),
@@ -47,7 +47,7 @@ impl VectorProperties {
 
     ///
     /// Prepares the context to render with these properties
-    /// 
+    ///
     pub fn prepare_to_render(&self, gc: &mut dyn GraphicsPrimitives) {
         gc.draw_list(self.brush.prepare_to_render(&self.brush_properties));
     }

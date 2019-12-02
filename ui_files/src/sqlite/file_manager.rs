@@ -41,8 +41,8 @@ struct SqliteFileManagerCore {
 }
 
 ///
-/// A file manager that uses Sqlite 
-/// 
+/// A file manager that uses Sqlite
+///
 pub struct SqliteFileManager {
     /// Where we store our files
     root_path: PathBuf,
@@ -54,7 +54,7 @@ pub struct SqliteFileManager {
 impl SqliteFileManagerCore {
     ///
     /// Sends an update to everything that's listening for them
-    /// 
+    ///
     pub fn send_update(&mut self, update: FileUpdate) {
         // Send to the update publisher
         self.updates.wait_send(update).unwrap();
@@ -103,16 +103,16 @@ impl SqliteFileManager {
             file_list:  file_list,
             root_path:  root_path,
             updates:    update_publisher,
-            log:        log    
+            log:        log
         }))
     }
 
     ///
     /// Creates a new Sqlite file manager (in a sub-path of the main files directory)
-    /// 
+    ///
     /// Separate sub-paths can be used to allow for multi-user scenarios: in single-user
     /// scenarios we usually set this to `"default"`.
-    /// 
+    ///
     pub fn new(application_path: &str, sub_path: &str) -> SqliteFileManager {
         // Create the core, or use an existing one if there is one
         let core = FILE_CORES.sync(|file_cores|
@@ -139,7 +139,7 @@ impl SqliteFileManager {
 
     ///
     /// Finds the path to request from the file list for a particular file path
-    /// 
+    ///
     fn file_list_path(&self, path: &Path) -> Option<PathBuf> {
         // Construct a path representing where we store our data
         let mut data_path = self.root_path.clone();
@@ -177,7 +177,7 @@ impl SqliteFileManager {
 impl FileManager for SqliteFileManager {
     ///
     /// Returns a list of all the files that can be opened by this manager
-    /// 
+    ///
     fn get_all_files(&self) -> Vec<PathBuf> {
         // Retrieve from the file list and append the folder we're using
         self.core.sync(|core| core.file_list.list_paths().unwrap())
@@ -193,7 +193,7 @@ impl FileManager for SqliteFileManager {
 
     ///
     /// Returns the display name for a particular path
-    /// 
+    ///
     fn display_name_for_path(&self, path: &Path) -> Option<String> {
         let path = self.file_list_path(path);
 
@@ -207,7 +207,7 @@ impl FileManager for SqliteFileManager {
     ///
     /// Reserves a path for a new file (this path is valid and won't be re-used by future calls but
     /// no files will exist here yet)
-    /// 
+    ///
     fn create_new_path(&self) -> PathBuf {
         // Generate a filename
         let filename        = Uuid::new_v4().to_simple().to_string();
@@ -219,7 +219,7 @@ impl FileManager for SqliteFileManager {
         let update          = FileUpdate::NewFile(full_path.clone());
 
         // Add to the database
-        let log_path         = full_path.clone(); 
+        let log_path         = full_path.clone();
         let mut filename_buf = PathBuf::new();
         filename_buf.push(filename);
         self.core.desync(move |core| {
@@ -279,7 +279,7 @@ impl FileManager for SqliteFileManager {
 
     ///
     /// Returns a stream of updates indicating changes made to the file manager
-    /// 
+    ///
     fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>+Send> {
         // Get a subscription from the core
         let subscription = self.core.sync(|core| core.updates.subscribe());
@@ -317,7 +317,7 @@ impl FileManager for SqliteFileManager {
                 } else {
                     core.log.log((Level::Warn, format!("Not deleting `{}` (doesn't exist or path is in wrong format)", full_path.to_str().unwrap_or("<Missing path>"))));
                 }
-                
+
                 // Notify that the file is gone
                 core.send_update(update);
             });
@@ -353,7 +353,7 @@ mod test {
     #[test]
     fn retrieve_new_path_from_all_files() {
         let test_files  = SqliteFileManager::new("app.flowbetween.test", "retrieve_new_path_from_all_files");
-        
+
         let all_files_before    = test_files.get_all_files();
         let _new_path           = test_files.create_new_path();
         let all_files_after     = test_files.get_all_files();

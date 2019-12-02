@@ -15,8 +15,8 @@ use std::mem;
 use std::sync::*;
 
 ///
-/// Represents a session running on a HTTP connection 
-/// 
+/// Represents a session running on a HTTP connection
+///
 pub struct HttpSession<CoreUi> {
     /// The publisher for this session
     log: LogPublisher,
@@ -34,7 +34,7 @@ pub struct HttpSession<CoreUi> {
 impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     ///
     /// Creates a new session from a HTTP user interface
-    /// 
+    ///
     pub fn new(http_ui: Arc<HttpUserInterface<CoreUi>>) -> HttpSession<CoreUi> {
         let input   = Box::new(future::ok(http_ui.get_input_sink()));
         let updates = Box::new(future::ok(http_ui.get_updates()));
@@ -57,21 +57,21 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
 
     ///
     /// Retrieves the HTTP user interface that this session is for
-    /// 
+    ///
     pub fn http_ui(&self) -> Arc<HttpUserInterface<CoreUi>> {
         Arc::clone(&self.http_ui)
     }
 
     ///
     /// Retrieves the core UI that this session is for
-    /// 
+    ///
     pub fn ui(&self) -> Arc<CoreUi> {
         self.http_ui.core()
     }
 
     ///
     /// Sleeps this session (stops any monitoring for events)
-    /// 
+    ///
     pub fn fall_asleep(&mut self) {
         // Suspend the updates
         let http_ui = self.http_ui.clone();
@@ -101,7 +101,7 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     ///
     /// Restarts the update stream (will regenerate the 'new UI' event, which is
     /// returned in the future return value).
-    /// 
+    ///
     pub fn restart_updates(&mut self) -> Box<dyn Future<Item=Vec<Update>, Error=()>> {
         // Replace the update stream with a new one (the 'new session' even will start here)
         self.updates = Box::new(future::ok(self.http_ui.get_updates()));
@@ -140,7 +140,7 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
 
     ///
     /// Sends some updates to this object and returns the resulting update
-    /// 
+    ///
     pub fn send_events(&mut self, events: Vec<Event>) -> Box<dyn Future<Item=Vec<Update>, Error=()>> {
         // TODO: if the update stream is newly generated, we should wait for the initial 'new UI' event before polling for other events
 
@@ -223,7 +223,7 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
                 }
             }).map(move |(updates, result)| (input, updates, result))
         });
-        
+
         // Once the update is ready, return the input and updates so we can send the next set of events and produce the result
         let finish_update = wait_for_update.map(move |(input, updates, result)| {
             // Return ownership of the input

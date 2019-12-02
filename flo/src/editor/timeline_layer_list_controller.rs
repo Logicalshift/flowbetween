@@ -13,7 +13,7 @@ use futures::executor::Spawn;
 
 ///
 /// Controller class that displays and edits the layer names
-/// 
+///
 pub struct TimelineLayerListController {
     /// The user interface binding for this controller
     ui: BindRef<Control>,
@@ -31,7 +31,7 @@ pub struct TimelineLayerListController {
 impl TimelineLayerListController {
     ///
     /// Creates a new timeline layer controller
-    /// 
+    ///
     pub fn new<Anim: 'static+Animation+EditableAnimation>(model: &FloModel<Anim>) -> TimelineLayerListController {
         // Create the UI from the model
         let selected_layer_id   = model.timeline().selected_layer.clone();
@@ -50,7 +50,7 @@ impl TimelineLayerListController {
 
     ///
     /// Creates a control from a layer model
-    /// 
+    ///
     fn layer_label(model: &LayerModel, selected_layer_id: Option<u64>, editing_layer_id: Option<u64>) -> Control {
         let name        = model.name.get();
         let layer_id    = model.id;
@@ -81,7 +81,7 @@ impl TimelineLayerListController {
                         .with(name)
                         .with(Bounds::stretch_horiz(1.0))
                         .with((
-                            ActionTrigger::Click, 
+                            ActionTrigger::Click,
                             if is_selected { format!("EditLayer-{}", layer_id) } else { format!("SelectLayer-{}", layer_id) }
                         ))
                 }
@@ -90,7 +90,7 @@ impl TimelineLayerListController {
 
     ///
     /// Creates the UI binding from the model
-    /// 
+    ///
     fn ui<Anim: 'static+Animation>(model: &FloModel<Anim>, editing_layer_id: BindRef<Option<u64>>) -> BindRef<Control> {
         // Extract the bindings we're going to use from the model
         let layers          = model.timeline().layers.clone();
@@ -108,12 +108,12 @@ impl TimelineLayerListController {
                 .flat_map(|layer_model| {
                     // The layer is a simple label
                     let label = Self::layer_label(&layer_model, selected_layer, editing_layer);
-                        
+
                     // Each layer is followed by a divider
                     let divider = Control::empty()
                         .with(Appearance::Background(TIMESCALE_BORDER))
                         .with(Bounds::next_vert(1.0));
-                    
+
                    vec![label, divider]
                 })
                 .collect::<Vec<_>>();

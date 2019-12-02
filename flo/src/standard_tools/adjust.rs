@@ -19,7 +19,7 @@ use std::collections::HashSet;
 
 ///
 /// The current action being performed by the adjust tool
-/// 
+///
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum AdjustAction {
     /// The tool is idle
@@ -34,7 +34,7 @@ enum AdjustAction {
 
 ///
 /// Data for the Adjust tool
-/// 
+///
 #[derive(Clone)]
 pub struct AdjustData {
     /// The current frame
@@ -56,7 +56,7 @@ pub struct AdjustData {
 impl AdjustData {
     ///
     /// Finds the nearest control point to a particular location
-    /// 
+    ///
     fn nearest_control_point_index(&self, location: (f32, f32)) -> Option<(usize, f32)> {
         let mut min_dist = f32::MAX;
         let mut cp_index = None;
@@ -82,20 +82,20 @@ impl AdjustData {
 
 ///
 /// The Adjust tool (adjusts control points of existing objects)
-/// 
+///
 pub struct Adjust { }
 
 impl Adjust {
     ///
     /// Creates a new instance of the Adjust tool
-    /// 
+    ///
     pub fn new() -> Adjust {
         Adjust {}
     }
 
     ///
     /// Draws an element control point
-    /// 
+    ///
     pub fn draw_control_point(cp: &ControlPoint) -> Vec<Draw> {
         let mut draw = vec![];
 
@@ -122,7 +122,7 @@ impl Adjust {
 
     ///
     /// Returns the drawing instructions for the control points for an element
-    /// 
+    ///
     pub fn control_points_for_element(element: &dyn VectorElement, properties: &VectorProperties) -> Vec<Draw> {
         // Create the vector where the control points will be drawn
         let mut draw = vec![];
@@ -179,7 +179,7 @@ impl Adjust {
 
     ///
     /// Creates a binding that contains the vector/vector properties for the currently selected elements in a frame
-    /// 
+    ///
     fn selected_element_properties<SelectedElements, Anim>(selected_elements: SelectedElements, flo_model: &FloModel<Anim>) -> impl Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>
     where SelectedElements: 'static+Bound<Arc<HashSet<ElementId>>>, Anim: 'static+Animation {
         // The elements binding contains the vector elements and their properties for the current frame
@@ -200,7 +200,7 @@ impl Adjust {
 
     ///
     /// Returns a binding that returns a list of all the control points in the current selection (ie, everything that can be dragged)
-    /// 
+    ///
     fn control_points<Anim: 'static+Animation>(flo_model: &FloModel<Anim>) -> BindRef<Arc<Vec<(ElementId, usize, (f32, f32))>>> {
         // Get references to the bits of the model we need
         let selected_elements   = flo_model.selection().selected_elements.clone();
@@ -229,7 +229,7 @@ impl Adjust {
 
     ///
     /// Creates an action stream that draws control points for the selection in the specified models
-    /// 
+    ///
     fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
         // Collect the selected elements into a HashSet
         let selected_elements   = flo_model.selection().selected_elements.clone();
@@ -251,7 +251,7 @@ impl Adjust {
         follow(computed(move || (selected_elements.get(), hidden_element.get())))
             .map(|(selected_elements, hidden_element)| {
                 let mut draw_control_points = vec![];
-                
+
                 // Clear the layer we're going to draw the control points on
                 draw_control_points.layer(0);
                 draw_control_points.clear_layer();
@@ -272,7 +272,7 @@ impl Adjust {
 
     ///
     /// Returns the control points as adjusted by an edit actions
-    /// 
+    ///
     fn adjusted_control_points(to_edit: &Vector, action: &AdjustAction) -> Vec<(f32, f32)> {
         // Fetch the control points for this element
         let control_points          = to_edit.control_points();
@@ -289,7 +289,7 @@ impl Adjust {
                 for (this_index, cp) in control_points.into_iter().enumerate() {
                     let pos = cp.position();
 
-                    if this_index == *index 
+                    if this_index == *index
                     || (((*index > 0 && this_index == *index-1) || this_index == *index+1) && should_move_neighbours) {
                         // Move this control point
                         new_control_points.push((pos.0+diff_x, pos.1+diff_y));
@@ -313,7 +313,7 @@ impl Adjust {
 
     ///
     /// Performs an editing action on a vector
-    /// 
+    ///
     fn edit_vector(to_edit: &Vector, action: &AdjustAction) -> Vector {
         // Fetch the new control points
         let new_control_points = Self::adjusted_control_points(to_edit, action);
@@ -324,11 +324,11 @@ impl Adjust {
 
     ///
     /// Finds the adjust control points for a vector as they would be after the motions applied to an element are reversed
-    /// 
+    ///
     /// These are the control points we need to store as the edited control points for an element.
     /// The element as we have it for editing (in `to_edit`) is how it is represented after the motions
     /// are applied.
-    /// 
+    ///
     fn adjusted_control_points_before_motion<Anim: Animation>(flo_model: &FloModel<Anim>, data: &AdjustData, to_edit: &Vector, action: &AdjustAction) -> Vec<(f32, f32)> {
         // Apply the edit to the vector
         let mut adjusted = Self::edit_vector(to_edit, action);
@@ -354,7 +354,7 @@ impl Adjust {
 
     ///
     /// Returns the actions required to draw the editing overlay
-    /// 
+    ///
     fn draw_edit_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
         // Get the set of elements from the frame
         let elements    = flo_model.frame().elements.clone();
@@ -367,7 +367,7 @@ impl Adjust {
                 AdjustAction::DragControlPoint(_, _, _, _) =>  {
                     // Only fetch the elements while actually dragging an element
                     Some((state, elements.get()))
-                },  
+                },
 
                 // No edit state
                 _ => None
@@ -406,7 +406,7 @@ impl Adjust {
                     _ => {
                         // No edits to draw
                         let mut clear_layer = vec![];
-                        
+
                         // Clear the edit layer
                         clear_layer.layer(1);
                         clear_layer.clear_layer();
@@ -419,10 +419,10 @@ impl Adjust {
             .map(|actions| stream::iter_ok(actions.into_iter()))
             .flatten()
     }
-    
+
     ///
     /// Generates the tool actions for a painting action
-    /// 
+    ///
     fn paint<Anim: 'static+Animation>(&self, painting: Painting, data: &AdjustData, model: &FloModel<Anim>) -> Vec<ToolAction<AdjustData>> {
         let state           = data.state.get();
         let paint_action    = painting.action;
@@ -438,7 +438,7 @@ impl Adjust {
                     if distance < 8.0 {
                         // Start dragging this control point
                         let &(element_id, index, _pos) = &data.control_points[cp_index];
-                        
+
                         data.state.set(AdjustAction::DragControlPoint(element_id, index, painting.location, painting.location));
                         started_drag = true;
                     }
@@ -545,7 +545,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
 
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
-    /// 
+    ///
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<dyn Stream<Item=ToolAction<AdjustData>, Error=()>+Send> {
         // Create a binding that works out the frame for the currently selected layer
         let current_frame   = flo_model.frame().frame.clone();
@@ -577,7 +577,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
                     control_points:     control_points
                 })
             });
-        
+
         // Actions are to update the data or draw the control points
         Box::new(update_adjust_data.select(draw_control_points).select(draw_drag_result))
     }

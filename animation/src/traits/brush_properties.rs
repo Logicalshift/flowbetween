@@ -2,7 +2,7 @@ use flo_canvas::*;
 
 ///
 /// Standard properties for a brush stroke
-/// 
+///
 /// These are the properties that are independent of the brush type.
 /// Properties that define a brush can be found in brush_definition.
 ///
@@ -21,7 +21,7 @@ pub struct BrushProperties {
 impl BrushProperties {
     ///
     /// Creates a new brush properties object with the settings at their defaults
-    /// 
+    ///
     pub fn new() -> BrushProperties {
         BrushProperties {
             size:       5.0,

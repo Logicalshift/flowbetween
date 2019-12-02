@@ -5,7 +5,7 @@ use modifier::*;
 
 ///
 /// Hints that can be applied to a control
-/// 
+///
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Hint {
     // Prefer fast drawing over correctness

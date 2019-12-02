@@ -21,7 +21,7 @@ struct Layer {
 
 ///
 /// The pixbuf canvas performs drawing operations using GDK pixel buffers for layers using Cairo
-/// 
+///
 pub struct PixBufCanvas {
     /// The layers in this canvas
     layers: HashMap<u32, Layer>,
@@ -42,7 +42,7 @@ pub struct PixBufCanvas {
 impl PixBufCanvas {
     ///
     /// Creates a new pixbuf canvas
-    /// 
+    ///
     pub fn new(viewport: CanvasViewport, pixel_scale: f64) -> PixBufCanvas {
         PixBufCanvas {
             layers:         HashMap::new(),
@@ -55,14 +55,14 @@ impl PixBufCanvas {
 
     ///
     /// Sets the pixel scaling factor to be used for future layers
-    /// 
+    ///
     pub fn set_pixel_scale(&mut self, new_scale: f64) {
         self.pixel_scale = new_scale;
     }
 
     ///
     /// Generates a stored version of the specified layer
-    /// 
+    ///
     fn save_layer(&mut self, layer_id: u32) {
         let width           = self.viewport.viewport_width;
         let height          = self.viewport.viewport_height;
@@ -94,7 +94,7 @@ impl PixBufCanvas {
 
     ///
     /// Restores the specified layer from its stored version
-    ///  
+    ///
     fn restore_layer(&mut self, layer_id: u32) {
         if let Some(layer) = self.layers.get_mut(&layer_id) {
             // Get the layer surface
@@ -118,7 +118,7 @@ impl PixBufCanvas {
 
     ///
     /// Clears the storage associated with a layer
-    /// 
+    ///
     fn clear_storage(&mut self, layer_id: u32) {
         if let Some(layer) = self.layers.get_mut(&layer_id) {
             layer.stored = None;
@@ -127,7 +127,7 @@ impl PixBufCanvas {
 
     ///
     /// Performs a drawing action on this canvas
-    /// 
+    ///
     pub fn draw(&mut self, action: Draw) {
         match action {
             Draw::ClearCanvas => {
@@ -189,10 +189,10 @@ impl PixBufCanvas {
 
     ///
     /// Retrieves the transformation matrix for this canvas
-    /// 
+    ///
     pub fn get_matrix(&self) -> cairo::Matrix {
         let current_layer = self.current_layer;
-        
+
         self.saved_state
             .as_ref()
             .map(|state| Some(state.get_matrix()))
@@ -202,7 +202,7 @@ impl PixBufCanvas {
 
     ///
     /// Renders the canvas to a particular drawable
-    /// 
+    ///
     pub fn render_to_context(&self, drawable: &cairo::Context) {
         drawable.save();
 
@@ -227,7 +227,7 @@ impl PixBufCanvas {
 
     ///
     /// Changes the viewport of this pixbuf (which also erases any existing drawing)
-    /// 
+    ///
     pub fn set_viewport(&mut self, new_viewport: CanvasViewport) {
         self.layers.clear();
         self.viewport = new_viewport;
@@ -235,14 +235,14 @@ impl PixBufCanvas {
 
     ///
     /// Retrieves the viewport for this pixbuf
-    /// 
+    ///
     pub fn get_viewport(&self) -> CanvasViewport {
         self.viewport
     }
 
     ///
     /// Creates a new layer
-    /// 
+    ///
     fn create_layer(viewport: &CanvasViewport, pixel_scale: f64) -> Layer {
         let width   = viewport.viewport_width;
         let height  = viewport.viewport_height;

@@ -12,7 +12,7 @@ use std::ops::Deref;
 
 ///
 /// Possible types of vector element
-/// 
+///
 #[derive(Clone, Debug)]
 pub enum Vector {
     /// Vector that has been transformed from a source vector (eg, by applying a motion)
@@ -40,7 +40,7 @@ pub enum Vector {
 impl Vector {
     ///
     /// Creates a new vector from an element
-    /// 
+    ///
     #[inline]
     pub fn new<IntoVec: Into<Vector>>(from: IntoVec) -> Vector {
         from.into()
@@ -48,7 +48,7 @@ impl Vector {
 
     ///
     /// The ID for this vector
-    /// 
+    ///
     #[inline]
     pub fn id(&self) -> ElementId {
         self.deref().id()
@@ -56,7 +56,7 @@ impl Vector {
 
     ///
     /// If this element was transformed from an original element, returns that original element
-    /// 
+    ///
     pub fn original_without_transformations(&self) -> Vector {
         use self::Vector::*;
 

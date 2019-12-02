@@ -29,7 +29,7 @@ pub struct BrushElement {
 impl BrushElement {
     ///
     /// Begins a new brush stroke at a particular position
-    /// 
+    ///
     pub fn new(id: ElementId, points: Arc<Vec<BrushPoint>>) -> BrushElement {
         BrushElement {
             id:                 id,
@@ -39,7 +39,7 @@ impl BrushElement {
 
     ///
     /// Retrieves the points in this brush element
-    /// 
+    ///
     pub fn points(&self) -> Arc<Vec<BrushPoint>> {
         Arc::clone(&self.points)
     }
@@ -47,7 +47,7 @@ impl BrushElement {
     ///
     /// Moves this brush stroke so that it fits within a particular bounding box
     /// (when rendered with a particular set of properties)
-    /// 
+    ///
     pub fn move_to(&mut self, new_bounds: Rect, properties: &VectorProperties) {
         // Scale using the existing bounds
         let existing_bounds = self.to_path(properties)
@@ -86,21 +86,21 @@ impl BrushElement {
 impl VectorElement for BrushElement {
     ///
     /// The ID of this vector element
-    /// 
+    ///
     fn id(&self) -> ElementId {
         self.id
     }
 
     ///
     /// Renders this vector element
-    /// 
+    ///
     fn render(&self, gc: &mut dyn GraphicsPrimitives, properties: &VectorProperties, _when: Duration) {
         gc.draw_list(properties.brush.render_brush(&properties.brush_properties, &self.points))
     }
 
     ///
     /// Retrieves the paths for this element, if there are any
-    /// 
+    ///
     fn to_path(&self, properties: &VectorProperties) -> Option<Vec<Path>> {
         Some(vec![Path::from_drawing(properties.brush.render_brush(&properties.brush_properties, &self.points))])
     }
@@ -108,7 +108,7 @@ impl VectorElement for BrushElement {
     ///
     /// Returns a new element that is this element transformed along a motion at a particular moment
     /// in time.
-    /// 
+    ///
     fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
         let transformed_points = motion.transform_brush_points(when, self.points.iter()).collect();
 
@@ -122,7 +122,7 @@ impl VectorElement for BrushElement {
 
     ///
     /// Fetches the control points for this element
-    /// 
+    ///
     fn control_points(&self) -> Vec<ControlPoint> {
         self.points.iter()
             .flat_map(|brush_point| {
@@ -196,7 +196,7 @@ mod test {
                 cp2: (11.0, 12.0),
                 width: 0.6
             },
-            
+
             BrushPoint {
                 position: (13.0, 14.0),
                 cp1: (15.0, 16.0),
@@ -234,7 +234,7 @@ mod test {
                 cp2: (11.0, 12.0),
                 width: 0.6
             },
-            
+
             BrushPoint {
                 position: (13.0, 14.0),
                 cp1: (15.0, 16.0),

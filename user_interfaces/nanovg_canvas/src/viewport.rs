@@ -2,7 +2,7 @@ use nanovg::*;
 
 ///
 /// Indicates the viewport that a canvas is intended to represent
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct NanoVgViewport {
     /// The total width of the canvas

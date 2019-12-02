@@ -6,7 +6,7 @@ use flo_canvas::*;
 
 ///
 /// Processes canvas draw commands onto a core graphics context
-/// 
+///
 /// This assumes that all the commands are intended for a specific layer in the canvas: ie, layer switch commands
 /// are ignored.
 ///
@@ -158,7 +158,7 @@ impl CanvasContext {
                 PushState                                           => { self.state.push_state(); }
                 PopState                                            => { self.state.pop_state(); }
 
-                ClearLayer                                          => { 
+                ClearLayer                                          => {
                     let viewport_size = self.viewport_size;
                     self.state.with_native_transform(|context| {
                         CGContextClearRect(context, CGRect {
@@ -168,7 +168,7 @@ impl CanvasContext {
                     });
                 }
 
-                IdentityTransform                                   => { 
+                IdentityTransform                                   => {
                     self.state.set_transform(self.get_identity_transform());
                 }
                 CanvasHeight(height)                                => {

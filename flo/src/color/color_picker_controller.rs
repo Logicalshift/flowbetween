@@ -8,7 +8,7 @@ use std::sync::*;
 
 ///
 /// Controller that makes it possible to pick a colour
-/// 
+///
 pub struct ColorPickerController {
     ui:     BindRef<Control>,
 
@@ -18,7 +18,7 @@ pub struct ColorPickerController {
 impl ColorPickerController {
     ///
     /// Creates a new color picker controller
-    /// 
+    ///
     pub fn new(color: &Binding<Color>) -> ColorPickerController {
         let ui      = Self::create_ui();
         let hsluv   = HsluvPickerController::new(color);
@@ -31,7 +31,7 @@ impl ColorPickerController {
 
     ///
     /// Creates the UI for this controller
-    /// 
+    ///
     fn create_ui() -> BindRef<Control> {
         BindRef::from(computed(move || {
             Control::container()

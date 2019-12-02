@@ -7,7 +7,7 @@ use std::f32;
 
 ///
 /// Represents a rectangle
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Rect {
     pub x1: f32,
@@ -19,7 +19,7 @@ pub struct Rect {
 impl Rect {
     ///
     /// Creates a new rectangle
-    /// 
+    ///
     pub fn new(top_left: PathPoint, bottom_right: PathPoint) -> Rect {
         Rect {
             x1: top_left.position.0 as f32,
@@ -31,7 +31,7 @@ impl Rect {
 
     ///
     /// Creates a new rectangle with specific points
-    /// 
+    ///
     pub fn with_points(x1: f32, y1: f32, x2: f32, y2: f32) -> Rect {
         Rect {
             x1, y1, x2, y2
@@ -40,7 +40,7 @@ impl Rect {
 
     ///
     /// Creates an empty rectangle
-    /// 
+    ///
     pub fn empty() -> Rect {
         Rect {
             x1: 0.0,
@@ -52,7 +52,7 @@ impl Rect {
 
     ///
     /// Creates a new rectangle that's inset from this one by a certain amount
-    /// 
+    ///
     pub fn inset(&self, x_distance: f32, y_distance: f32) -> Rect {
         let half_x = x_distance/2.0;
         let half_y = y_distance/2.0;
@@ -67,7 +67,7 @@ impl Rect {
 
     ///
     /// Converts a rectangle into one where x2 and y2 are greater than x1 and y1
-    /// 
+    ///
     #[inline]
     pub fn normalize(self) -> Rect {
         Rect {
@@ -80,9 +80,9 @@ impl Rect {
 
     ///
     /// Returns true if the specified point is inside this rectangle
-    /// 
+    ///
     pub fn contains(&self, x: f32, y: f32) -> bool {
-        (f32::min(self.x1, self.x2) <= x)   && 
+        (f32::min(self.x1, self.x2) <= x)   &&
         (x <= f32::max(self.x1, self.x2))   &&
         (f32::min(self.y1, self.y2) <= y)   &&
         (y <= f32::max(self.y1, self.y2))
@@ -90,7 +90,7 @@ impl Rect {
 
     ///
     /// Returns true if the specified rectangle overlaps this one
-    /// 
+    ///
     pub fn overlaps(&self, other: &Rect) -> bool {
         f32::min(self.x1, self.x2) < f32::max(other.x1, other.x2)
         && f32::max(self.x1, self.x2) > f32::min(other.x1, other.x2)
@@ -100,7 +100,7 @@ impl Rect {
 
     ///
     /// True if this rectangle has no size
-    /// 
+    ///
     #[inline]
     pub fn is_zero_size(&self) -> bool {
         self.x1 == self.x2 && self.y1 == self.y2
@@ -108,7 +108,7 @@ impl Rect {
 
     ///
     /// Creates the union of two rectangles
-    /// 
+    ///
     #[inline]
     pub fn union(self, rhs: Rect) -> Rect {
         if self.is_zero_size() {
@@ -127,7 +127,7 @@ impl Rect {
 
     ///
     /// Draws this rectangle on a graphics context
-    /// 
+    ///
     pub fn draw(&self, gc: &mut dyn GraphicsContext) {
         gc.move_to(self.x1, self.y1);
         gc.line_to(self.x2, self.y1);

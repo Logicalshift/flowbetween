@@ -6,7 +6,7 @@ use std::sync::*;
 
 ///
 /// The file chooser trait is implemented by structs that describe a file chooser
-/// 
+///
 pub trait FileChooser {
     /// The controller that edits/displays open files
     type Controller: FileController;
@@ -16,11 +16,11 @@ pub trait FileChooser {
 
     ///
     /// Retrieves the file manager for this file chooser
-    /// 
+    ///
     fn get_file_manager(&self) -> Arc<Self::FileManager>;
 
     ///
     /// Retrieves the shared file store for this chooser
-    /// 
+    ///
     fn get_file_store(&self) -> Arc<OpenFileStore<<Self::Controller as FileController>::Model>>;
 }

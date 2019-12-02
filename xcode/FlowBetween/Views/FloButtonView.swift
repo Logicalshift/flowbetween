@@ -23,7 +23,7 @@ class FloButtonView : FloControlView {
     /// Sets part of the state of this control
     override func setState(selector: ViewStateSelector, toProperty: FloProperty) {
         viewState.retainProperty(selector: selector, property: toProperty);
-        
+
         switch (selector) {
         case .Value:
             weak var this = self;
@@ -36,10 +36,10 @@ class FloButtonView : FloControlView {
                     } else {
                         state = NSButton.StateValue.off;
                     }
-                    
+
                     (this?._control as? NSButton)?.state = state;
                     break;
-                    
+
                 case .Float(let floatVal):      this?._control.doubleValue = Double(floatVal); break;
                 case .Int(let intValue):        this?._control.intValue = Int32(intValue); break;
                 case .String(let stringValue):  this?._control.stringValue = stringValue; break;
@@ -59,7 +59,7 @@ class FloButtonView : FloControlView {
                     } else {
                         state = NSButton.StateValue.off;
                     }
-                    
+
                     (this?._control as? NSButton)?.state = state;
                     break;
 
@@ -67,7 +67,7 @@ class FloButtonView : FloControlView {
                 }
             }
             break;
-            
+
         default:
             super.setState(selector: selector, toProperty: toProperty);
         }

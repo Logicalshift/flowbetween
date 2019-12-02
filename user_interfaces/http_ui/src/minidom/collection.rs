@@ -5,7 +5,7 @@ pub struct DomCollection(Vec<DomNode>);
 impl DomCollection {
     ///
     /// Creates a new collection node
-    /// 
+    ///
     pub fn new(items: Vec<DomNode>) -> DomNode {
         DomNode::new(DomCollection(items))
     }
@@ -30,7 +30,7 @@ impl DomNodeData for DomCollection {
         self.0.insert(before, new_node)
     }
 
-    fn remove_child_node(&mut self, index: usize) { 
+    fn remove_child_node(&mut self, index: usize) {
         self.0.remove(index);
     }
 }

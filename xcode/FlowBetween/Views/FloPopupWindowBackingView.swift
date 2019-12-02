@@ -15,35 +15,35 @@ class FloPopupWindowBackingView : NSView {
     fileprivate let _borderWidth = CGFloat(8.0);
     fileprivate let _beakWidth = CGFloat(24.0);
     fileprivate let _beakHeight = CGFloat(12.0);
-    
+
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize);
-        
+
         // Subview bounds depend on the direction
         var subviewBounds = CGRect(origin: CGPoint(), size: newSize).insetBy(dx: _borderWidth, dy: _borderWidth);
-        
+
         if newSize.width < _borderWidth*2 || newSize.height < _borderWidth*2 {
             subviewBounds = CGRect();
         }
-        
+
         switch (direction) {
         case .Above:    subviewBounds.origin.y += _beakHeight; subviewBounds.size.height -= _beakHeight; break;
         case .Below:    subviewBounds.size.height -= _beakHeight; break;
         case .Left:     subviewBounds.origin.x += _beakHeight; subviewBounds.size.width -= _beakHeight; break;
         case .Right:    subviewBounds.size.width -= _beakHeight; break;
-            
+
         case .OnTop, .WindowCentered, .WindowTop: break;
         }
-        
+
         // Update the bounds of all the subviews
         subviews.forEach { subview in
             subview.frame = subviewBounds;
         };
     }
-    
+
     /// The popup direction for this view
     var direction: PopupDirection = .Above;
-    
+
     ///
     /// Calulates the required size for this view given a content size and a direction
     ///
@@ -58,14 +58,14 @@ class FloPopupWindowBackingView : NSView {
         case .WindowTop:        return NSSize(width: contentSize.width + _borderWidth*2, height: contentSize.height + _borderWidth*2);
         }
     }
-    
+
     /// This view is not opaque
     override var isOpaque: Bool {
         get {
             return false;
         }
     }
-    
+
     ///
     /// Draws a line with a 'beak' in it at a certain distance along. Assumes the path's last point
     /// ended at 'from'.
@@ -76,25 +76,25 @@ class FloPopupWindowBackingView : NSView {
         let length  = (offset.x*offset.x + offset.y*offset.y).squareRoot();
         let unit    = CGPoint(x: offset.x/length, y: offset.y/length);
         let normal  = CGPoint(x: unit.y, y: unit.x);
-        
+
         // First part starts from 'from' and moves to the beak position (minus half the beak width)
         let initialLength = (length * beakPosition) - _beakWidth/2.0;
         path.addLine(to: CGPoint(x: from.x + unit.x*initialLength, y: from.y + unit.y*initialLength));
-        
+
         // Beak sticks out from the line
         let beakCenterPoint = length * beakPosition;
         let beakNormal      = CGPoint(x: normal.x*_beakHeight, y: normal.y*_beakHeight);
         let beakCenter      = CGPoint(x: from.x + unit.x*beakCenterPoint + beakNormal.x, y: from.y + unit.y*beakCenterPoint + beakNormal.y);
         path.addLine(to: beakCenter);
-        
+
         // Return back to a point on the line
         let finalLength = (length * beakPosition) + _beakWidth/2.0;
         path.addLine(to: CGPoint(x: from.x + unit.x*finalLength, y: from.y + unit.y*finalLength));
-        
+
         // Draw to the end
         path.addLine(to: to);
     }
-    
+
     ///
     /// Draws a rounded rectangle covering the given bounds with the specified line with a beak
     ///
@@ -128,17 +128,17 @@ class FloPopupWindowBackingView : NSView {
         } else {
             path.addLine(to: CGPoint(x: bounds.minX, y: bounds.maxY-_borderWidth));
         }
-        
+
         path.closeSubpath();
     }
-    
+
     override func draw(_ dirtyRect: NSRect) {
         let ctxt        = NSGraphicsContext.current!.cgContext;
         let bounds      = self.bounds;
         var beakBounds  = bounds.insetBy(dx: 2.0, dy: 2.0);
 
         let path        = CGMutablePath.init();
-        
+
         switch direction {
         case .Below:
             beakBounds.size.height -= _beakHeight;
@@ -163,7 +163,7 @@ class FloPopupWindowBackingView : NSView {
             path.addRoundedRect(in: bounds.insetBy(dx: 2.0, dy: 2.0), cornerWidth: _borderWidth, cornerHeight: _borderWidth);
             break;
         }
-        
+
         ctxt.setFillColor(CGColor.init(red: 0.25, green: 0.2, blue: 0.2, alpha: 0.9));
         ctxt.addPath(path);
         ctxt.fillPath();

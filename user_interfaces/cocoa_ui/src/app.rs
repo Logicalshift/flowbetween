@@ -21,7 +21,7 @@ lazy_static! {
 
 ///
 /// Declares the FloControl class to objective-C
-/// 
+///
 /// The FloControl class is used to dispatch messages from the action stream to objective C. It wraps a Cocoa
 /// session.
 ///

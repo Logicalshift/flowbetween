@@ -9,8 +9,8 @@ use std::ops::{Mul,Add,Sub};
 const DELTA: f32 = 0.1;
 
 ///
-/// Represents a curve through time 
-/// 
+/// Represents a curve through time
+///
 #[derive(Clone, PartialEq, Debug)]
 pub struct TimeCurve {
     /// The points on this curves
@@ -19,7 +19,7 @@ pub struct TimeCurve {
 
 ///
 /// A section of a time curve
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct TimeCurveSection {
     pub start: TimePoint,
@@ -31,19 +31,19 @@ pub struct TimeCurveSection {
 impl TimeCurve {
     ///
     /// Creates a new time curve from a line
-    /// 
+    ///
     pub fn new(start: TimePoint, end: TimePoint) -> TimeCurve {
         let start_point = TimeControlPoint::new(start, start, start + (end-start)*0.33333);
         let end_point   = TimeControlPoint::new(end - (end-start)*0.33333, end, end);
 
-        TimeCurve { 
+        TimeCurve {
             points: vec![start_point, end_point]
         }
     }
 
     ///
     /// Returns the sections of this curve
-    /// 
+    ///
     pub fn as_sections(&self) -> Vec<TimeCurveSection> {
         let mut result = vec![];
 
@@ -61,7 +61,7 @@ impl TimeCurve {
 
     ///
     /// Finds the point within this curve at the specified time
-    /// 
+    ///
     pub fn point_at_time(&self, milliseconds: f32) -> Option<TimePoint> {
         self.as_sections()
             .into_iter()
@@ -81,7 +81,7 @@ impl TimeCurve {
 impl TimeCurveSection {
     ///
     /// Solves for the point on this curve at the specified time (if it exists)
-    /// 
+    ///
     pub fn point_at_time(&self, milliseconds: f32) -> Option<TimePoint> {
         let t_points = self.search_with_bounds(DELTA as f64, |min, max| min.milliseconds() <= milliseconds && max.milliseconds() >= milliseconds);
 
@@ -122,7 +122,7 @@ impl Sub<TimePoint> for TimePoint {
 impl Coordinate for TimePoint {
     ///
     /// Creates a new coordinate from the specified set of components
-    /// 
+    ///
     #[inline]
     fn from_components(components: &[f64]) -> TimePoint {
         TimePoint(components[0] as f32, components[1] as f32, components[2] as f32)
@@ -130,7 +130,7 @@ impl Coordinate for TimePoint {
 
     ///
     /// Returns the origin coordinate
-    /// 
+    ///
     #[inline]
     fn origin() -> TimePoint {
         TimePoint(0.0, 0.0, 0.0)
@@ -138,13 +138,13 @@ impl Coordinate for TimePoint {
 
     ///
     /// The number of components in this coordinate
-    /// 
+    ///
     #[inline]
     fn len() -> usize { 3 }
 
     ///
     /// Retrieves the component at the specified index
-    /// 
+    ///
     #[inline]
     fn get(&self, index: usize) -> f64 {
         match index {
@@ -157,7 +157,7 @@ impl Coordinate for TimePoint {
 
     ///
     /// Returns a point made up of the biggest components of the two points
-    /// 
+    ///
     #[inline]
     fn from_biggest_components(p1: TimePoint, p2: TimePoint) -> TimePoint {
         TimePoint(p1.0.max(p2.0), p1.1.max(p2.1), p1.2.max(p2.2))
@@ -165,7 +165,7 @@ impl Coordinate for TimePoint {
 
     ///
     /// Returns a point made up of the smallest components of the two points
-    /// 
+    ///
     #[inline]
     fn from_smallest_components(p1: TimePoint, p2: TimePoint) -> TimePoint {
         TimePoint(p1.0.min(p2.0), p1.1.min(p2.1), p1.2.min(p2.2))
@@ -179,7 +179,7 @@ impl Geo for TimeCurveSection {
 impl BezierCurveFactory for TimeCurveSection {
     ///
     /// Creates a new bezier curve of the same type from some points
-    /// 
+    ///
     #[inline]
     fn from_points(start: Self::Point, (control_point1, control_point2): (Self::Point, Self::Point), end: Self::Point) -> Self {
         TimeCurveSection {
@@ -191,7 +191,7 @@ impl BezierCurveFactory for TimeCurveSection {
 impl BezierCurve for TimeCurveSection {
     ///
     /// The start point of this curve
-    /// 
+    ///
     #[inline]
     fn start_point(&self) -> Self::Point {
         self.start
@@ -199,7 +199,7 @@ impl BezierCurve for TimeCurveSection {
 
     ///
     /// The end point of this curve
-    /// 
+    ///
     #[inline]
     fn end_point(&self) -> Self::Point {
         self.end
@@ -207,7 +207,7 @@ impl BezierCurve for TimeCurveSection {
 
     ///
     /// The control points in this curve
-    /// 
+    ///
     #[inline]
     fn control_points(&self) -> (Self::Point, Self::Point) {
         (self.control_point1, self.control_point2)

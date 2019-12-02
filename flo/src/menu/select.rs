@@ -16,7 +16,7 @@ use std::collections::HashSet;
 
 ///
 /// The menu controller for the selection tool
-/// 
+///
 pub struct SelectMenuController<Anim: Animation> {
     /// Currently selected elements
     selected: BindRef<Arc<HashSet<ElementId>>>,
@@ -37,7 +37,7 @@ pub struct SelectMenuController<Anim: Animation> {
 impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     ///
     /// Creates a new select menu controller
-    /// 
+    ///
     pub fn new(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController<Anim> {
         let ui                  = Self::ui(tool_model);
         let edit                = Desync::new(executor::spawn(flo_model.edit()));
@@ -56,12 +56,12 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
 
     ///
     /// Creates the UI for the select menu controller
-    /// 
+    ///
     fn ui(tool_model: &SelectToolModel) -> BindRef<Control> {
         let anything_selected   = tool_model.anything_selected.clone();
         let num_selected        = tool_model.num_elements_selected.clone();
 
-        let ui              = 
+        let ui              =
             computed(move || {
                 // Number of things selected
                 let num_selected = num_selected.get();
@@ -168,13 +168,13 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                 // TODO: brush elements have styles implied by the order that the elements are in the keyframe, so we need a way of editing the brush styles of the elements after re-ordering them here
 
                 if apply_in_reverse {
-                    self.edit.sync(move |animation| { 
+                    self.edit.sync(move |animation| {
                         animation.wait_send(vec![
                                 AnimationEdit::Element(selection.iter().rev().cloned().collect(), ElementEdit::Order(ordering))
                             ]).ok();
                         });
                 } else {
-                    self.edit.sync(move |animation| { 
+                    self.edit.sync(move |animation| {
                         animation.wait_send(vec![
                                 AnimationEdit::Element(selection.iter().cloned().collect(), ElementEdit::Order(ordering))
                             ]).ok();

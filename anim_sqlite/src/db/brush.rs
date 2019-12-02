@@ -5,7 +5,7 @@ use super::flo_store::*;
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts a brush definition, leaving the ID on the database stack
-    /// 
+    ///
     pub fn insert_brush(db: &mut TFile, brush_definition: &BrushDefinition) -> Result<()> {
         use self::DatabaseUpdate::*;
 
@@ -42,7 +42,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Retrieves the brush definition with the specified ID
-    /// 
+    ///
     pub fn get_brush_definition(db: &mut TFile, brush_id: i64) -> Result<BrushDefinition> {
         use self::BrushDefinitionType::*;
 
@@ -65,7 +65,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Retrieves the brush properties with the specified ID
-    /// 
+    ///
     pub fn get_brush_properties(db: &mut TFile, brush_properties_id: i64) -> Result<BrushProperties> {
         let brush_properties_entry  = db.query_brush_properties(brush_properties_id)?;
         let color                   = Self::get_color(db, brush_properties_entry.color_id)?;

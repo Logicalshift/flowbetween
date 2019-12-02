@@ -51,7 +51,7 @@ impl ViewModel for NullViewModel {
         self.nothing.clone()
     }
 
-    fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
+    fn set_property(&self, _property_name: &str, _new_value: PropertyValue) {
     }
 
     fn get_property_names(&self) -> Vec<String> {
