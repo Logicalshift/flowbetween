@@ -8,7 +8,7 @@ use std::mem;
 
 ///
 /// Returns a paint device corresponding to a GDK input source
-/// 
+///
 pub fn paint_device_for_source(source: gdk::InputSource) -> PaintDevice {
     use gdk::InputSource::*;
 
@@ -28,7 +28,7 @@ pub fn paint_device_for_source(source: gdk::InputSource) -> PaintDevice {
 
 ///
 /// Returns the GDK device that generated a particular event
-/// 
+///
 pub fn device_for_event(event: &gdk::Event) -> gdk::Device {
     let device: gdk::Device = unsafe {
         let sys_device: *const gdk_sys::GdkEvent = mem::transmute(event.as_ref());

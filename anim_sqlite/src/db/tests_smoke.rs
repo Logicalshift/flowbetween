@@ -26,7 +26,7 @@ fn smoke_update_canvas_size() {
 #[test]
 fn smoke_push_edit_type() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame),
         DatabaseUpdate::Pop
     ]);
 }
@@ -34,8 +34,8 @@ fn smoke_push_edit_type() {
 #[test]
 fn smoke_push_motion_origin() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(0, 1), 
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin),
+        DatabaseUpdate::PushEditLogElementId(0, 1),
         DatabaseUpdate::PushEditLogMotionOrigin(42.0, 24.0),
         DatabaseUpdate::Pop
     ]);
@@ -44,8 +44,8 @@ fn smoke_push_motion_origin() {
 #[test]
 fn smoke_push_motion_type_translate() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(0, 1), 
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin),
+        DatabaseUpdate::PushEditLogElementId(0, 1),
         DatabaseUpdate::PushEditLogMotionType(MotionType::Translate),
         DatabaseUpdate::Pop
     ]);
@@ -54,8 +54,8 @@ fn smoke_push_motion_type_translate() {
 #[test]
 fn smoke_push_motion_element() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(0, 1), 
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin),
+        DatabaseUpdate::PushEditLogElementId(0, 1),
         DatabaseUpdate::PushEditLogMotionElement(2),
         DatabaseUpdate::Pop
     ]);
@@ -64,8 +64,8 @@ fn smoke_push_motion_element() {
 #[test]
 fn smoke_push_element_order_in_front() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::ElementOrderInFront), 
-        DatabaseUpdate::PushEditLogElementId(0, 1), 
+        DatabaseUpdate::PushEditType(EditLogType::ElementOrderInFront),
+        DatabaseUpdate::PushEditLogElementId(0, 1),
         DatabaseUpdate::Pop
     ]);
 }
@@ -73,8 +73,8 @@ fn smoke_push_element_order_in_front() {
 #[test]
 fn smoke_push_element_order_before() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::ElementOrderBefore), 
-        DatabaseUpdate::PushEditLogElementId(0, 1), 
+        DatabaseUpdate::PushEditType(EditLogType::ElementOrderBefore),
+        DatabaseUpdate::PushEditLogElementId(0, 1),
         DatabaseUpdate::PushEditLogInt(0, 1),
         DatabaseUpdate::Pop
     ]);
@@ -83,8 +83,8 @@ fn smoke_push_element_order_before() {
 #[test]
 fn smoke_push_layer_order() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerSetOrdering), 
-        DatabaseUpdate::PushEditLogLayer(1), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerSetOrdering),
+        DatabaseUpdate::PushEditLogLayer(1),
         DatabaseUpdate::PushEditLogInt(0, 2),
         DatabaseUpdate::Pop
     ]);
@@ -93,8 +93,8 @@ fn smoke_push_layer_order() {
 #[test]
 fn smoke_push_element_delete() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::ElementDelete), 
-        DatabaseUpdate::PushEditLogElementId(0, 1), 
+        DatabaseUpdate::PushEditType(EditLogType::ElementDelete),
+        DatabaseUpdate::PushEditLogElementId(0, 1),
         DatabaseUpdate::Pop
     ]);
 }
@@ -102,8 +102,8 @@ fn smoke_push_element_delete() {
 #[test]
 fn smoke_push_motion_path() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin), 
-        DatabaseUpdate::PushEditLogElementId(0, 1), 
+        DatabaseUpdate::PushEditType(EditLogType::MotionSetOrigin),
+        DatabaseUpdate::PushEditLogElementId(0, 1),
         DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
         DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
         DatabaseUpdate::PushTimePoint(1.0, 2.0, 3.0),
@@ -121,7 +121,7 @@ fn adding_edit_type_increases_log_length() {
     assert!(db.query_edit_log_length().unwrap() == 0);
 
     db.update(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame),
         DatabaseUpdate::Pop
     ]).unwrap();
 
@@ -136,7 +136,7 @@ fn can_query_edit_type() {
     assert!(db.query_edit_log_length().unwrap() == 0);
 
     db.update(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame),
         DatabaseUpdate::PushEditLogLayer(3),
         DatabaseUpdate::Pop,
         DatabaseUpdate::PushEditType(EditLogType::SetSize),
@@ -216,7 +216,7 @@ fn can_query_motion_assigned_elements() {
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
         DatabaseUpdate::Pop,
-        
+
         DatabaseUpdate::PushVectorElementType(VectorElementType::Motion),
         DatabaseUpdate::PushElementAssignId(1),
         DatabaseUpdate::Pop,
@@ -298,7 +298,7 @@ fn can_query_motion_points() {
 #[test]
 fn smoke_pop_edit_log_set_size() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame),
         DatabaseUpdate::PopEditLogSetSize(100.0, 200.0)
     ]);
 }
@@ -306,7 +306,7 @@ fn smoke_pop_edit_log_set_size() {
 #[test]
 fn smoke_push_edit_log_layer() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame),
         DatabaseUpdate::PushEditLogLayer(1),
         DatabaseUpdate::Pop
     ]);
@@ -315,7 +315,7 @@ fn smoke_push_edit_log_layer() {
 #[test]
 fn smoke_push_edit_log_when() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame),
         DatabaseUpdate::PushEditLogWhen(Duration::from_millis(2000)),
         DatabaseUpdate::Pop
     ]);
@@ -324,7 +324,7 @@ fn smoke_push_edit_log_when() {
 #[test]
 fn smoke_push_edit_log_raw_points() {
     test_updates(vec![
-        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame), 
+        DatabaseUpdate::PushEditType(EditLogType::LayerAddKeyFrame),
         DatabaseUpdate::PushRawPoints(Arc::new(vec![RawPoint::from((0.0, 0.0)), RawPoint::from((1.0, 2.0))])),
         DatabaseUpdate::Pop
     ]);

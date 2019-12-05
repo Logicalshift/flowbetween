@@ -10,7 +10,7 @@ use std::ops::Deref;
 
 ///
 /// Represents a data entry for a widget
-/// 
+///
 pub struct WidgetDataEntry<TData> {
     /// Reference to the data in this entry
     data: Rc<RefCell<TData>>,
@@ -26,11 +26,11 @@ impl<TData> Deref for WidgetDataEntry<TData> {
 
 ///
 /// Used to associate Flo data with widgets
-/// 
+///
 /// (An annoying thing with Gtk is that in order to track things like the Flo layout and property
 /// bindings for a widget, we need to either subclass them all or track their data independently.
 /// Here, we track their data manually)
-/// 
+///
 pub struct WidgetData {
     // We store our values in RefCells so that we can retrieve and add values via a 'self' reference
     // rather than a 'mut self' reference (making this convenient to use from a reference that's
@@ -46,7 +46,7 @@ pub struct WidgetData {
 impl WidgetData {
     ///
     /// Creates a new widget data object
-    /// 
+    ///
     pub fn new() -> WidgetData {
         WidgetData {
             widgets:        RefCell::new(HashMap::new()),
@@ -56,7 +56,7 @@ impl WidgetData {
 
     ///
     /// Associates a widget with an ID
-    /// 
+    ///
     pub fn register_widget<TWidget: 'static+GtkUiWidget>(&self, widget_id: WidgetId, widget: TWidget) {
         self.widgets.borrow_mut().insert(widget_id, Rc::new(RefCell::new(widget)));
         self.widget_data.borrow_mut().insert(widget_id, AnyMap::new());
@@ -64,7 +64,7 @@ impl WidgetData {
 
     ///
     /// Substitutes a different widget for the specified widget
-    /// 
+    ///
     pub fn replace_widget<TWidget: 'static+GtkUiWidget>(&self, widget_id: WidgetId, widget: TWidget) {
         self.widgets.borrow_mut()
             .get_mut(&widget_id)
@@ -73,14 +73,14 @@ impl WidgetData {
 
     ///
     /// Attempts to retrieve the widget with the specified ID
-    /// 
+    ///
     pub fn get_widget(&self, widget_id: WidgetId) -> Option<Rc<RefCell<dyn GtkUiWidget>>> {
         self.widgets.borrow().get(&widget_id).cloned()
     }
 
     ///
     /// Removes the widget that has the specified ID
-    /// 
+    ///
     pub fn remove_widget(&self, widget_id: WidgetId) {
         self.widgets.borrow_mut().remove(&widget_id);
         self.widget_data.borrow_mut().remove(&widget_id);
@@ -88,7 +88,7 @@ impl WidgetData {
 
     ///
     /// Sets the data associated with a particular type and widget
-    /// 
+    ///
     pub fn set_widget_data<TData: 'static>(&self, widget_id: WidgetId, new_data: TData) {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
@@ -97,7 +97,7 @@ impl WidgetData {
 
     ///
     /// Retrieves the data of a specific type associated with a widget
-    /// 
+    ///
     pub fn get_widget_data<'a, TData: 'static>(&'a self, widget_id: WidgetId) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
@@ -107,7 +107,7 @@ impl WidgetData {
 
     ///
     /// Retrieves the data of a specific type associated with a widget
-    /// 
+    ///
     pub fn get_widget_data_or_insert<'a, TData: 'static, FnInsert: FnOnce() -> TData>(&'a self, widget_id: WidgetId, or_insert: FnInsert) -> Option<WidgetDataEntry<TData>> {
         self.widget_data.borrow_mut()
             .get_mut(&widget_id)
@@ -124,7 +124,7 @@ mod test {
 
     struct TestWidget { }
 
-    impl GtkUiWidget for TestWidget { 
+    impl GtkUiWidget for TestWidget {
         fn id(&self) -> WidgetId { WidgetId::Assigned(0) }
         fn process(&mut self, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) { }
         fn set_children(&mut self, children: Vec<Rc<RefCell<GtkUiWidget>>>) { }

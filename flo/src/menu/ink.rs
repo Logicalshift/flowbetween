@@ -14,7 +14,7 @@ use std::sync::*;
 
 ///
 /// Controller used for the ink tool
-/// 
+///
 pub struct InkMenuController {
     size:               Binding<f32>,
     opacity:            Binding<f32>,
@@ -63,7 +63,7 @@ impl InkMenuController {
 
     ///
     /// Creates a new ink menu controller
-    /// 
+    ///
     pub fn new(size: &Binding<f32>, opacity: &Binding<f32>, colour: &Binding<Color>, modification_mode: &Binding<BrushModificationMode>, representation: &Binding<BrushRepresentation>) -> InkMenuController {
         // Set up the view model
         let view_model = Arc::new(DynamicViewModel::new());
@@ -170,7 +170,7 @@ impl InkMenuController {
         let colour_preview              = canvases.get_named_resource("ColourPreview");
 
         // Generate the UI control
-        let ui = computed(move || { 
+        let ui = computed(move || {
             let modification_mode   = modification_mode.get();
             let representation      = representation.get();
             let brush_panel_open    = brush_panel_open.get();
@@ -397,7 +397,7 @@ impl InkMenuController {
 
     ///
     /// Creates the size preview canvas
-    /// 
+    ///
     pub fn size_preview(size: &Binding<f32>, control_height: f32) -> BindingCanvas {
         let size            = size.clone();
 
@@ -415,7 +415,7 @@ impl InkMenuController {
 
     ///
     /// Creates the opacity preview canvas
-    /// 
+    ///
     pub fn opacity_preview(opacity: &Binding<f32>, control_height: f32) -> BindingCanvas {
         let opacity         = opacity.clone();
 
@@ -436,7 +436,7 @@ impl InkMenuController {
 
     ///
     /// Creates the colour preview canvas
-    /// 
+    ///
     pub fn colour_preview(colour: &Binding<Color>) -> BindingCanvas {
         let colour          = colour.clone();
         let control_height  = 32.0 - 6.0;
@@ -458,7 +458,7 @@ impl InkMenuController {
 
     ///
     /// Creates the brush preview canvas
-    /// 
+    ///
     pub fn brush_preview(size: &Binding<f32>, opacity: &Binding<f32>, color: &Binding<Color>) -> BindingCanvas {
         let size    = size.clone();
         let opacity = opacity.clone();
@@ -526,7 +526,7 @@ impl Controller for InkMenuController {
         }
     }
 
-    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(Arc::clone(&self.canvases))
     }
 

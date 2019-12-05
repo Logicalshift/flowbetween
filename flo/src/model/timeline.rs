@@ -15,7 +15,7 @@ use std::time::Duration;
 
 ///
 /// ViewModel used for the timeline view
-/// 
+///
 pub struct TimelineModel<Anim: Animation> {
     /// The animation that this view model is for
     animation: Arc<Anim>,
@@ -60,8 +60,8 @@ impl<Anim: Animation> Clone for TimelineModel<Anim> {
 impl<Anim: Animation+'static> TimelineModel<Anim> {
     ///
     /// Creates a new timeline viewmodel
-    /// 
-    pub fn new<EditStream>(animation: Arc<Anim>, edits: EditStream) -> TimelineModel<Anim> 
+    ///
+    pub fn new<EditStream>(animation: Arc<Anim>, edits: EditStream) -> TimelineModel<Anim>
     where EditStream: 'static+Send+Stream<Item=Arc<Vec<AnimationEdit>>, Error=()> {
         let edits = get_timeline_updates(edits);
 
@@ -90,7 +90,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
     ///
     /// Retrieves the layers for an animation
-    /// 
+    ///
     fn get_layers(animation: &Arc<Anim>) -> Vec<LayerModel> {
         // Load the layers from the animation
         let layer_ids   = animation.get_layer_ids();
@@ -102,13 +102,13 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
                 layers.push(LayerModel::new(&*layer));
             }
         }
-        
+
         layers
     }
 
     ///
     /// Returns a binding for the layers in an animation
-    /// 
+    ///
     fn layers_binding<EditStream>(animation: &Arc<Anim>, edits: EditStream) -> BindRef<Vec<LayerModel>>
     where EditStream: 'static+Send+Stream<Item=TimelineModelUpdate, Error=()> {
         // The animation is used to create the initial layer models in the binding
@@ -156,7 +156,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
     ///
     /// Updates all of the existing keyframe bindings
-    /// 
+    ///
     pub fn update_keyframe_bindings(&self) {
         // Iterate through the keyframes
         for (frames, model) in self.keyframes.lock().unwrap().iter_mut() {
@@ -174,7 +174,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
     ///
     /// Causes the canvas to be invalidated
-    /// 
+    ///
     pub fn invalidate_canvas(&self) {
         let old_count = self.canvas_invalidation_count.get();
         self.canvas_invalidation_count.set(old_count+1);
@@ -182,7 +182,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
     ///
     /// Creates a keyframe model from a frame range
-    /// 
+    ///
     fn get_keyframe_model(&self, frames: &Range<u32>) -> Vec<KeyFrameModel> {
         let frame_duration      = self.frame_duration.get();
         let when                = (frame_duration*frames.start)..(frame_duration*frames.end);
@@ -218,7 +218,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
     ///
     /// Retrieves a binding that tracks the keyframes in a particular range of frames
-    /// 
+    ///
     pub fn get_keyframe_binding(&self, frames: Range<u32>) -> Arc<Binding<Vec<KeyFrameModel>>> {
         self.tidy_keyframes();
         let mut keyframes = self.keyframes.lock().unwrap();
@@ -236,7 +236,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
         } else {
             // Create a new binding
             let keyframe_viewmodel = self.get_keyframe_model(&frames);
-            
+
             let new_binding = Arc::new(Binding::new(keyframe_viewmodel));
             keyframes.insert(frames, Arc::downgrade(&new_binding));
 
@@ -246,7 +246,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
 
     ///
     /// Removes any defunct keyframe bindings from the keyframes list
-    /// 
+    ///
     fn tidy_keyframes(&self) {
         let mut keyframes   = self.keyframes.lock().unwrap();
         let mut dead_times  = vec![];

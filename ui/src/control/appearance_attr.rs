@@ -7,7 +7,7 @@ use modifier::*;
 
 ///
 /// Attributes that describe the appearance of a control
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum Appearance {
     /// Specifies the foreground colour of this control

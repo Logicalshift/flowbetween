@@ -12,7 +12,7 @@ use std::sync::*;
 
 ///
 /// Controller used for the eraser tool
-/// 
+///
 pub struct EraserMenuController {
     size:               Binding<f32>,
     opacity:            Binding<f32>,
@@ -25,7 +25,7 @@ pub struct EraserMenuController {
 impl EraserMenuController {
     ///
     /// Creates a new eraser menu controller
-    /// 
+    ///
     pub fn new(size: &Binding<f32>, opacity: &Binding<f32>) -> EraserMenuController {
         // Set up the view model
         let view_model = Arc::new(DynamicViewModel::new());
@@ -154,7 +154,7 @@ impl EraserMenuController {
             size:               size.clone(),
             opacity:            opacity.clone(),
 
-            canvases:           canvases, 
+            canvases:           canvases,
             ui:                 ui,
             view_model:         view_model,
         }
@@ -162,7 +162,7 @@ impl EraserMenuController {
 
     ///
     /// Creates the erasaer preview canvas
-    /// 
+    ///
     pub fn eraser_preview(size: &Binding<f32>, opacity: &Binding<f32>) -> BindingCanvas {
         let size    = size.clone();
         let opacity = opacity.clone();
@@ -228,7 +228,7 @@ impl Controller for EraserMenuController {
         Some(self.view_model.clone())
     }
 
-    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(self.canvases.clone())
     }
 

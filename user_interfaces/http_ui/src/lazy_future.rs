@@ -12,7 +12,7 @@ struct LazyFutureCore<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture
 
 ///
 /// A lazy future creates an 'actual' future when polled but otherwise creates nothing
-/// 
+///
 pub struct LazyFuture<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> {
     core: Mutex<LazyFutureCore<Item, Error, F, MakeFuture>>
 }
@@ -21,7 +21,7 @@ impl<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> 
     ///
     /// Creates a new lazy future. The function will be called when the future
     /// is required.
-    /// 
+    ///
     pub fn new(make_future: MakeFuture) -> LazyFuture<Item, Error, F, MakeFuture> {
         LazyFuture {
             core: Mutex::new(LazyFutureCore {
@@ -43,7 +43,7 @@ impl<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> 
             // Just poll the future if it's set up
             return future.poll();
         }
-       
+
         // Create a new future if it's not
         let make_future = core.make_future.take().unwrap();
         let future      = make_future();

@@ -5,7 +5,7 @@ use modifier::*;
 
 ///
 /// Attributes representing the state of a control
-/// 
+///
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum State {
     /// Whether or not this control is selected

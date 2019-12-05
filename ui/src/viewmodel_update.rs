@@ -38,7 +38,7 @@ impl ViewModelUpdate {
     }
 
     ///
-    /// Adds a new controller name to the start of this path 
+    /// Adds a new controller name to the start of this path
     ///
     pub fn add_to_start_of_path(&mut self, new_controller: String) {
         self.controller_path.insert(0, new_controller);

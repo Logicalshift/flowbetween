@@ -9,7 +9,7 @@ use std::collections::HashSet;
 
 ///
 /// Model representing the item that the user has selected
-/// 
+///
 #[derive(Clone)]
 pub struct SelectionModel {
     /// The list of selected elements
@@ -25,7 +25,7 @@ pub struct SelectionModel {
 impl SelectionModel {
     ///
     /// Creates a new selection model
-    /// 
+    ///
     pub fn new<Anim: Animation>(frame_model: &FrameModel, timeline_model: &TimelineModel<Anim>) -> SelectionModel {
         // Create the binding for the selected element
         let selected_elements_binding   = bind(Arc::new(HashSet::new()));
@@ -75,7 +75,7 @@ impl SelectionModel {
 
     ///
     /// Adds a particular element to the selection
-    /// 
+    ///
     pub fn select(&self, element: ElementId) {
         // Not *ideal* because there's a race condition here
         let existing_selection = self.selected_elements_binding.get();

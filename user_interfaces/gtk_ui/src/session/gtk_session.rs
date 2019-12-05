@@ -22,7 +22,7 @@ use std::collections::{HashMap, HashSet};
 
 ///
 /// Core data structures associated with a Gtk session
-/// 
+///
 struct GtkSessionCore {
     /// The ID to assign to the next widget generated for this session
     next_widget_id: i64,
@@ -45,7 +45,7 @@ struct GtkSessionCore {
 
 ///
 /// The Gtk session object represents a session running with Gtk
-/// 
+///
 pub struct GtkSession<Ui> {
     /// Core data structures for the GTK session
     core:       Arc<Mutex<GtkSessionCore>>,
@@ -57,7 +57,7 @@ pub struct GtkSession<Ui> {
 impl<Ui: CoreUserInterface> GtkSession<Ui> {
     ///
     /// Creates a new session connecting a core UI to a Gtk UI
-    /// 
+    ///
     pub fn new(core_ui: Ui, gtk_ui: GtkUserInterface) -> GtkSession<Ui> {
         // Get the GTK event streams
         let mut gtk_action_sink     = gtk_ui.get_input_sink();
@@ -88,12 +88,12 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
 
     ///
     /// Runs this session until it finishes
-    /// 
+    ///
     pub fn run(self) {
         // Create the processors
         let action_process      = self.create_action_process();
         let event_process       = self.create_event_process();
-        
+
         // Run until the window is closed (or the any of the processing streams are closed)
         let close_window        = self.when_window_closed();
         let run_until_closed    = close_window
@@ -110,7 +110,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
 
     ///
     /// Creates a future that will resolve when all of the windows associated with this session are closed
-    /// 
+    ///
     pub fn when_window_closed(&self) -> Box<dyn Future<Item=(), Error=()>> {
         // There's only window 0 at the moment
         let event_stream = self.core.lock().unwrap().gtk_ui.get_updates();
@@ -128,7 +128,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     ///
     /// Creates a future that will stop when the UI stops producing events, which connects events from the
     /// core UI to the GTK UI.
-    /// 
+    ///
     pub fn create_action_process(&self) -> Box<dyn Future<Item=(), Error=()>> {
         // These are the streams we want to connect
         let gtk_action_sink     = self.core.lock().unwrap().gtk_ui.get_input_sink();
@@ -146,12 +146,12 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
                     .flat_map(|update| core.process_update(update))
                     .filter(|action| !action.is_no_op())
                     .collect();
-                
+
                 // Send as a single block to the GTK thread
                 iter_ok(vec![actions])
             })
             .flatten();
-        
+
         // Connect the updates to the sink to generate our future
         let action_process = gtk_action_sink.send_all(gtk_core_updates.filter(|action_list| action_list.len() > 0));
 
@@ -178,7 +178,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
             })
             .filter(|events| events.len() > 0);
         let core_ui_events  = ConsolidateActionsStream::new(core_ui_events);
-        
+
         // Send the processed events to the core input
         let event_process = core_input.send_all(core_ui_events);
 
@@ -187,10 +187,10 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
 
     ///
     /// Creates the main window (ID 0) to run our session in
-    /// 
+    ///
     fn create_main_window<S: Sink<SinkItem=Vec<GtkAction>, SinkError=()>>(action_sink: &mut S) {
         use self::GtkAction::*;
-        use self::GtkWindowAction::*;    
+        use self::GtkWindowAction::*;
 
         // Create window 0, which will be the main window where the UI will run
         action_sink.start_send(vec![
@@ -208,7 +208,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
 impl<CoreController: Controller+'static> GtkSession<UiSession<CoreController>> {
     ///
     /// Creates a GTK session from a core controller
-    /// 
+    ///
     pub fn from(controller: CoreController, gtk_ui: GtkUserInterface) -> GtkSession<UiSession<CoreController>> {
         let session = UiSession::new(controller);
         Self::new(session, gtk_ui)
@@ -218,7 +218,7 @@ impl<CoreController: Controller+'static> GtkSession<UiSession<CoreController>> {
 impl GtkSessionCore {
     ///
     /// Processes a GTK event into a UI event
-    /// 
+    ///
     pub fn process_event(&mut self, event: GtkEvent) -> Vec<UiEvent> {
         use self::GtkEvent::*;
 
@@ -235,7 +235,7 @@ impl GtkSessionCore {
     ///
     /// Processes an update from the core UI and returns the resulting GtkActions after updating
     /// the state in the core
-    /// 
+    ///
     pub fn process_update(&mut self, update: UiUpdate) -> Vec<GtkAction> {
         use self::UiUpdate::*;
 
@@ -249,7 +249,7 @@ impl GtkSessionCore {
 
     ///
     /// Creates an ID for a widget in this core
-    /// 
+    ///
     fn create_widget_id(&mut self) -> WidgetId {
         let widget_id = self.next_widget_id;
         self.next_widget_id += 1;
@@ -259,14 +259,14 @@ impl GtkSessionCore {
     ///
     /// Given a set of actions with viewmodel dependencies, translates them into standard Gtk action while
     /// binding them into the viewmodel for this control
-    /// 
+    ///
     fn bind_viewmodel(&mut self, control_id: WidgetId, controller_path: Rc<Vec<String>>, actions: Vec<PropertyWidgetAction>) -> Vec<GtkAction> {
         use self::PropertyAction::*;
 
         let viewmodel = &mut self.viewmodel;
-        
+
         vec![
-            GtkAction::Widget(control_id, 
+            GtkAction::Widget(control_id,
                 actions.into_iter()
                     .flat_map(|action| {
                         match action {
@@ -282,7 +282,7 @@ impl GtkSessionCore {
     ///
     /// Generates the actions to create a particular control, and binds it to the viewmodel to keep it up to
     /// date
-    /// 
+    ///
     fn create_control(&mut self, control: &Control, controller_path: Rc<Vec<String>>) -> (GtkControl, Vec<GtkAction>) {
         // Assign an ID for this control
         let control_id      = self.create_widget_id();
@@ -331,7 +331,7 @@ impl GtkSessionCore {
             let canvas_id               = (Rc::clone(&controller_path), canvas_name);
             let mut widgets_for_canvas  = self.widgets_for_canvas.entry(canvas_id)
                 .or_insert_with(|| HashSet::new());
-            
+
             widgets_for_canvas.insert(control_id);
         }
 
@@ -347,7 +347,7 @@ impl GtkSessionCore {
 
     ///
     /// Removes the controller path for a particular control and any child controls it might have
-    /// 
+    ///
     fn remove_controller_path(&mut self, control: &GtkControl) {
         // Remove the child controls too
         control.child_controls.iter().for_each(|control| self.remove_controller_path(control));
@@ -359,7 +359,7 @@ impl GtkSessionCore {
     ///
     /// Removes a control and it's child controls from the session data structures, and generates
     /// the actions needed to remove it from the GTK control hierarchy.
-    /// 
+    ///
     fn delete_control(&mut self, control: &GtkControl) -> Vec<GtkAction> {
         // Remove the controller path for this control
         self.remove_controller_path(control);
@@ -381,7 +381,7 @@ impl GtkSessionCore {
 
     ///
     /// Reads the controller path for a particular address
-    /// 
+    ///
     fn controller_path_for_address(&self, address: &Vec<u32>) -> Vec<String> {
         let mut path            = vec![];
         let mut current_control = self.root_control.as_ref();
@@ -404,7 +404,7 @@ impl GtkSessionCore {
 
     ///
     /// Finds the control at the specified address (if there is one)
-    /// 
+    ///
     fn control_at_address_mut<'a>(&'a mut self, address: &Vec<u32>) -> Option<&'a mut GtkControl> {
         // The control at vec![] is the root control
         let mut current_control = self.root_control.as_mut();
@@ -421,11 +421,11 @@ impl GtkSessionCore {
     ///
     /// Updates the control tree to add the specified control at the given address and returns
     /// the Gtk actions required to update the control children
-    /// 
+    ///
     fn replace_control(&mut self, address: &Vec<u32>, new_control: GtkControl) -> Vec<GtkAction> {
         if address.len() == 0 {
             // We're updating the root control
-            
+
             // Actions to remove the existing root control
             let delete_actions = self.root_control
                 .take()
@@ -486,7 +486,7 @@ impl GtkSessionCore {
 
     ///
     /// Generates the actions to update the UI with a particular diff
-    /// 
+    ///
     fn update_ui_with_diff(&mut self, diff: UiDiff) -> Vec<GtkAction> {
         let controller_path = self.controller_path_for_address(&diff.address);
 
@@ -504,7 +504,7 @@ impl GtkSessionCore {
 
     ///
     /// Updates the user interface with the specified set of differences
-    /// 
+    ///
     fn update_ui(&mut self, ui_differences: Vec<UiDiff>) -> Vec<GtkAction> {
         ui_differences.into_iter()
             .flat_map(|diff| self.update_ui_with_diff(diff))
@@ -513,7 +513,7 @@ impl GtkSessionCore {
 
     ///
     /// Updates the user interface with the specified set of viewmodel changes
-    /// 
+    ///
     fn update_viewmodel(&mut self, viewmodel_differences: Vec<ViewModelUpdate>) -> Vec<GtkAction> {
         // Process the updates in the viewmodel, and return the resulting updates
         self.viewmodel.update(viewmodel_differences)
@@ -521,7 +521,7 @@ impl GtkSessionCore {
 
     ///
     /// Updates a single canvas
-    /// 
+    ///
     fn update_canvas(&mut self, canvas_difference: CanvasDiff) -> Vec<GtkAction> {
         let controller_path = Rc::new(canvas_difference.controller);
         let canvas_name     = canvas_difference.canvas_name;
@@ -549,7 +549,7 @@ impl GtkSessionCore {
 
     ///
     /// Updates some canvases
-    /// 
+    ///
     fn update_canvases(&mut self, canvas_differences: Vec<CanvasDiff>) -> Vec<GtkAction> {
         canvas_differences.into_iter()
             .flat_map(|diff| self.update_canvas(diff))
@@ -558,12 +558,12 @@ impl GtkSessionCore {
 
     ///
     /// Generates the actions required to wire up the events for a control
-    /// 
+    ///
     fn wire_events_for_control(&mut self, control: &Control) -> Vec<GtkWidgetAction> {
         use self::ControlAttribute::Action;
         use self::ActionTrigger::*;
         use self::GtkWidgetAction::RequestEvent;
-        
+
         // Get the action attributes from the control
         let actions = control.attributes()
             .filter(|attribute| match attribute { &&Action(_, _) => true, _ => false })

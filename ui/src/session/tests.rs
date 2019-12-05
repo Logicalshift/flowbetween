@@ -20,7 +20,7 @@ impl Controller for TestController {
         BindRef::new(&self.ui)
     }
 
-    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> { 
+    fn get_viewmodel(&self) -> Option<Arc<dyn ViewModel>> {
         match self.viewmodel {
             Some(ref viewmodel) => Some(viewmodel.clone()),
             None                => None
@@ -73,8 +73,8 @@ fn session_creates_initial_event() {
             address: vec![],
             new_ui: Control::empty()
         }]),
-        
-        UiUpdate::UpdateViewModel(vec![ 
+
+        UiUpdate::UpdateViewModel(vec![
             ViewModelUpdate::new(vec![], vec![
                 ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(42))
             ])

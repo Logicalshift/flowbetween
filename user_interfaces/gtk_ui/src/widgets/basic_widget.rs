@@ -19,13 +19,13 @@ use std::cell::*;
 
 ///
 /// Represents a basic widget
-/// 
+///
 pub struct BasicWidget(pub WidgetId, pub gtk::Widget);
 
 impl BasicWidget {
     ///
     /// Creates a basic widget
-    /// 
+    ///
     pub fn new<Src: Cast+IsA<gtk::Widget>>(id: WidgetId, widget: Src) -> BasicWidget {
         BasicWidget(id, widget.upcast::<gtk::Widget>())
     }
@@ -72,7 +72,7 @@ impl GtkUiWidget for BasicWidget {
 
 ///
 /// Performs the basic processing associated with a widget action (using a generic Gtk widget as the target)
-/// 
+///
 pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut FloGtk, action: &GtkWidgetAction) {
     use self::GtkWidgetAction::*;
 
@@ -95,7 +95,7 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
             previous_parent.map(|previous_parent| previous_parent.remove(widget));
         },
 
-        &SetRoot(window_id)                         => { 
+        &SetRoot(window_id)                         => {
             let widget = widget.get_underlying().clone();
             flo_gtk.get_window(window_id).map(|window| window.borrow_mut().set_root(flo_gtk, &widget));
         },
@@ -106,8 +106,8 @@ pub fn process_basic_widget_action<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut
 
 ///
 /// Processes a layout command for a widget being managed by FlowBetween
-/// 
-pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_gtk: &mut FloGtk, layout: &WidgetLayout) { 
+///
+pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_gtk: &mut FloGtk, layout: &WidgetLayout) {
     // Fetch or create the layout for this widget
     let widget_data     = flo_gtk.widget_data();
     let widget_layout   = widget_data.get_widget_data_or_insert(id, || Layout::new());
@@ -144,7 +144,7 @@ pub fn process_basic_widget_layout<W: WidgetExt>(id: WidgetId, widget: &W, flo_g
 
 ///
 /// Performs the actions required to set a widget's parent
-/// 
+///
 pub fn set_widget_parent<W: GtkUiWidget>(widget: &mut W, children: &Vec<WidgetId>, flo_gtk: &mut FloGtk) {
     // Fetch the widget information
     let widget_data     = flo_gtk.widget_data();
@@ -153,13 +153,13 @@ pub fn set_widget_parent<W: GtkUiWidget>(widget: &mut W, children: &Vec<WidgetId
         .filter(|child| !child.is_none())
         .map(|child| child.unwrap())
         .collect();
-    
+
     widget.set_children(children);
 }
 
 ///
 /// Processes a content command for a widget being managed by FlowBetween
-/// 
+///
 pub fn process_basic_widget_content<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mut FloGtk, content: &WidgetContent) {
     use self::WidgetContent::*;
 
@@ -184,7 +184,7 @@ pub fn process_basic_widget_content<W: GtkUiWidget>(widget: &mut W, flo_gtk: &mu
 
 ///
 /// Generic appearance command for a widget being managed by FlowBetween
-/// 
+///
 pub fn process_basic_widget_appearance<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, appearance: &Appearance) {
     use self::Appearance::*;
 
@@ -205,7 +205,7 @@ pub fn process_basic_widget_appearance<W: GtkUiWidget>(widget: &W, flo_gtk: &mut
 
 ///
 /// Processes a basic state command for a widget being managed by FlowBetween
-/// 
+///
 pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, state: &WidgetState) {
     use self::WidgetState::*;
 
@@ -239,7 +239,7 @@ pub fn process_basic_widget_state<W: GtkUiWidget>(widget: &W, state: &WidgetStat
 
 ///
 /// Processes a font command for a widget being managed by FlowBetween
-/// 
+///
 pub fn process_basic_widget_font<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, font: &Font) {
     use self::Font::*;
 
@@ -258,7 +258,7 @@ pub fn process_basic_widget_font<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGt
 
 ///
 /// Processes a scroll command for a widget
-/// 
+///
 pub fn process_basic_widget_scroll<W: WidgetExt>(_widget: &W, _flo_gtk: &mut FloGtk, scroll: &Scroll) {
     use self::Scroll::*;
 
@@ -272,10 +272,10 @@ pub fn process_basic_widget_scroll<W: WidgetExt>(_widget: &W, _flo_gtk: &mut Flo
 
 ///
 /// Performs the actions associated with basic event registration for a widget
-/// 
+///
 pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut FloGtk, event_type: GtkWidgetEventType, action_name: &String) {
     use self::GtkWidgetEventType::*;
-        
+
     let action_name = action_name.clone();
     let event_sink  = RefCell::new(flo_gtk.get_event_sink());
 
@@ -283,7 +283,7 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
         Click => {
             ClickActions::wire_widget(event_sink, widget, action_name.clone());
         },
-        
+
         Paint(device) => {
             PaintActions::wire_widget(flo_gtk.widget_data(), event_sink, widget, action_name.clone(), device);
         },
@@ -291,7 +291,7 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
         Drag => {
             DragActions::wire_widget(flo_gtk.widget_data(), event_sink.into_inner(), widget, action_name.clone());
         },
-        
+
         VirtualScroll(_, _) | EditValue | SetValue | Dismiss => { }
     }
 }

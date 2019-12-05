@@ -8,7 +8,7 @@ use std::sync::*;
 /// Supply this as a controller for a control that needs a popup.
 /// This will supply the popup container and suppress the popup
 /// UI while the popup is not visible.
-/// 
+///
 pub struct PopupController<ContentController: Controller> {
     /// Controller that provides the main content for the popup
     content_controller: ContentController,
@@ -33,9 +33,9 @@ pub struct PopupController<ContentController: Controller> {
 impl<ContentController: Controller> PopupController<ContentController> {
     ///
     /// Creates a new popup controller.
-    /// 
+    ///
     /// Default settings are a size of 100,100, popup center, offset 8
-    /// 
+    ///
     pub fn new(controller: ContentController, is_open: &Binding<bool>) -> PopupController<ContentController> {
         // Create the initial set of bindings
         let content_controller  = controller;
@@ -61,7 +61,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
 
     ///
     /// Returns a modified controller with a different size
-    /// 
+    ///
     pub fn with_size<T: Into<BindRef<(u32, u32)>>>(mut self, size: T) -> PopupController<ContentController> {
         self.popup_size = size.into();
         self.regenerate_ui()
@@ -69,7 +69,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
 
     ///
     /// Returns a modified controller with a different direction
-    /// 
+    ///
     pub fn with_direction<T: Into<BindRef<PopupDirection>>>(mut self, direction: T) -> PopupController<ContentController> {
         self.popup_direction = direction.into();
         self.regenerate_ui()
@@ -77,7 +77,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
 
     ///
     /// Returns a modified controller with a different offset
-    /// 
+    ///
     pub fn with_offset<T: Into<BindRef<u32>>>(mut self, offset: T) -> PopupController<ContentController> {
         self.offset = offset.into();
         self.regenerate_ui()
@@ -85,7 +85,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
 
     ///
     /// Regenerates the UI field from the current bindings
-    /// 
+    ///
     fn regenerate_ui(mut self) -> PopupController<ContentController> {
         self.ui = Self::create_ui(&self.content_controller.ui(), &self.open, &self.popup_size, &self.popup_direction, &self.offset);
         self
@@ -93,7 +93,7 @@ impl<ContentController: Controller> PopupController<ContentController> {
 
     ///
     /// Creates the UI binding for this controller
-    /// 
+    ///
     fn create_ui(content: &BindRef<Control>, open: &Binding<bool>, size: &BindRef<(u32, u32)>, direction: &BindRef<PopupDirection>, offset: &BindRef<u32>) -> BindRef<Control> {
         // Clone the model bits
         let content     = content.clone();
@@ -147,7 +147,7 @@ impl<ContentController: Controller> Controller for PopupController<ContentContro
         self.content_controller.get_viewmodel()
     }
 
-    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> { 
+    fn get_subcontroller(&self, id: &str) -> Option<Arc<dyn Controller>> {
         self.content_controller.get_subcontroller(id)
     }
 
@@ -161,7 +161,7 @@ impl<ContentController: Controller> Controller for PopupController<ContentContro
         self.content_controller.action(action_id, action_data);
     }
 
-    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { 
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
         self.content_controller.get_image_resources()
     }
 

@@ -87,7 +87,7 @@ mod test {
                     Control::empty().with_controller("Test3")
                 ])
             ]);
-        
+
         let subcontrollers = container.all_controllers();
 
         assert!(subcontrollers.len() == 3);
@@ -106,7 +106,7 @@ mod test {
                     Control::empty().with_controller("Test1")
                 ])
             ]);
-        
+
         let subcontrollers = container.all_controllers();
 
         assert!(subcontrollers.len() == 2);

@@ -5,7 +5,7 @@ use std::f64;
 ///
 /// Given a colour strip (RGBA colours), turns it into a RGBA bitmap of
 /// the specified size, which is both the width and the height.
-/// 
+///
 pub fn rgba_data_for_color_wheel(rgba_color_strip: &[(u8, u8, u8, u8)], size: u32, inner_radius: u32, rotate_degrees: f64) -> Vec<u8> {
     // Some constants
     let pi              = f64::consts::PI;
@@ -19,7 +19,7 @@ pub fn rgba_data_for_color_wheel(rgba_color_strip: &[(u8, u8, u8, u8)], size: u3
     let inner_squared   = inner_radius*inner_radius;
 
     let row_len         = (size*4) as usize;
-    
+
     // Actual image data. Start with all transparent pixls
     let mut pixels      = vec![0; (size*size*4) as usize];
 
@@ -61,7 +61,7 @@ pub fn rgba_data_for_color_wheel(rgba_color_strip: &[(u8, u8, u8, u8)], size: u3
 ///
 /// Given a function that takes a value from 0-1 (representing the distance
 /// around the colour wheel) and returns a pixel, generates a colour wheel.
-/// 
+///
 pub fn rgba_data_for_wheel_fn<PixelFn: Fn(f64) -> (u8, u8, u8, u8)>(pixel: PixelFn, size: u32, inner_radius: u32, rotate_degrees: f64) -> Vec<u8> {
     let colour_strip: Vec<_> = (0..1024)
         .into_iter()
@@ -74,7 +74,7 @@ pub fn rgba_data_for_wheel_fn<PixelFn: Fn(f64) -> (u8, u8, u8, u8)>(pixel: Pixel
 ///
 /// Given a function that takes a value from 0-1 (representing the distance
 /// around the colour wheel) and returns a pixel, generates a colour wheel.
-/// 
+///
 pub fn image_for_wheel_fn<PixelFn: Fn(f64) -> (u8, u8, u8, u8)>(pixel: PixelFn, size: u32, inner_radius: u32, rotate_degrees: f64) -> Image {
     Image::png_from_rgba_data(&rgba_data_for_wheel_fn(pixel, size, inner_radius, rotate_degrees), size, size)
 }

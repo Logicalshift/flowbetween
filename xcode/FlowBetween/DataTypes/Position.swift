@@ -12,11 +12,11 @@ import Foundation
 /// Represents a position in a layot
 ///
 enum Position {
-    case At(Float64);
-    case Offset(Float64);
-    case Floating(Float64, FloProperty);
-    case Stretch(Float64);
-    case Start;
-    case End;
-    case After;
+    case At(Float64)
+    case Offset(Float64)
+    case Floating(Float64, FloProperty)
+    case Stretch(Float64)
+    case Start
+    case End
+    case After
 }

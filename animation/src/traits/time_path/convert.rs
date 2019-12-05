@@ -2,7 +2,7 @@ use std::time::Duration;
 
 ///
 /// Converts a duration to a f64 representing the number of milliseconds it contains
-/// 
+///
 #[inline]
 pub fn to_millis(when: Duration) -> f64 {
     let secs    = when.as_secs() as f64;
@@ -13,7 +13,7 @@ pub fn to_millis(when: Duration) -> f64 {
 
 ///
 /// Converts a f64 representing a number of milliseconds to a duration
-/// 
+///
 #[inline]
 pub fn to_duration(when: f64) -> Duration {
     if when < 0.0 {

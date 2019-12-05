@@ -22,7 +22,7 @@ use std::collections::HashSet;
 
 ///
 /// Provides support for the painting events for a widget
-/// 
+///
 pub struct PaintActions {
     /// The ID of the widget these actions are for
     widget_id: WidgetId,
@@ -50,9 +50,9 @@ pub struct PaintActions {
 }
 
 impl PaintActions {
-    /// 
+    ///
     /// Creates new paint data
-    /// 
+    ///
     fn new(widget_id: WidgetId, event_name: String, event_sink: GtkEventSink) -> PaintActions {
         PaintActions {
             widget_id:      widget_id,
@@ -68,7 +68,7 @@ impl PaintActions {
 
     ///
     /// Wires an existing widget for paint events
-    /// 
+    ///
     pub fn wire_widget<W: GtkUiWidget>(widget_data: Rc<WidgetData>, event_sink: RefCell<GtkEventSink>, widget: &W, event_name: String, device: GtkPaintDevice) {
         let widget_id       = widget.id();
         let existing_wiring = widget_data.get_widget_data::<PaintActions>(widget_id);
@@ -104,7 +104,7 @@ impl PaintActions {
 
     ///
     /// Connects paint events to a GTK widget
-    /// 
+    ///
     fn connect_events(widget_data: Rc<WidgetData>, widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
         // Make sure we're generating the appropriate events on this widget
         widget.add_events(gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK);
@@ -117,7 +117,7 @@ impl PaintActions {
 
     ///
     /// Sets up the button pressed event for a painting action
-    /// 
+    ///
     fn connect_button_pressed(widget_data: Rc<WidgetData>, widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
         widget.connect_button_press_event(move |_widget, event| {
             let mut paint   = paint.borrow_mut();
@@ -172,7 +172,7 @@ impl PaintActions {
 
     ///
     /// Sets up the button released event for a painting action
-    /// 
+    ///
     fn connect_button_released(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
         widget.connect_button_release_event(move |_widget, event| {
             let mut paint   = paint.borrow_mut();
@@ -203,7 +203,7 @@ impl PaintActions {
 
     ///
     /// Sets up the motion event for a painting action
-    /// 
+    ///
     fn connect_motion(widget: &gtk::Widget, paint: Rc<RefCell<PaintActions>>) {
         // Searches the widget hierarchy to find the widget with a window and disables event compression on it
         fn disable_compression(widget: &gtk::Widget) {

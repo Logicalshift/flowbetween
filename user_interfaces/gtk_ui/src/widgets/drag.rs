@@ -15,11 +15,11 @@ use std::cell::*;
 
 ///
 /// Provides the implementation of the 'drag' action for Flo widgets
-/// 
+///
 pub struct DragActions {
     /// Where events for these actions should be sent
     event_sink: GtkEventSink,
-    
+
     /// True if we're dragging the widget
     dragging: bool,
 
@@ -33,7 +33,7 @@ pub struct DragActions {
 impl DragActions {
     ///
     /// Creates a new drag actions object
-    /// 
+    ///
     fn new(event_sink: GtkEventSink) -> DragActions {
         DragActions {
             event_sink:     event_sink,
@@ -45,7 +45,7 @@ impl DragActions {
 
     ///
     /// Wires a widget up for the drag action
-    /// 
+    ///
     pub fn wire_widget<W: GtkUiWidget>(widget_data: Rc<WidgetData>, event_sink: GtkEventSink, widget: &W, event_name: String) {
         let widget_id   = widget.id();
         let drag_wiring = widget_data.get_widget_data::<DragActions>(widget_id);
@@ -72,7 +72,7 @@ impl DragActions {
 
     ///
     /// Returns the drag position (in the main window) for the specified mouse position
-    /// 
+    ///
     fn drag_position_for_position(widget: &gtk::Widget, position: (f64, f64)) -> (f64, f64) {
         let parent      = widget.get_toplevel().unwrap();
 
@@ -84,7 +84,7 @@ impl DragActions {
 
     ///
     /// Connects the events for a drag actions object
-    /// 
+    ///
     fn connect_events(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         // Request the events
         widget.add_events(gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK);
@@ -97,7 +97,7 @@ impl DragActions {
 
     ///
     /// Responds to the user pressing a button over the draggable widget
-    /// 
+    ///
     fn connect_press(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         widget.connect_button_press_event(move |widget, button| {
             let mut drag_actions    = drag_actions.borrow_mut();
@@ -126,7 +126,7 @@ impl DragActions {
 
     ///
     /// Responds to the user dragging the widget
-    /// 
+    ///
     fn connect_motion(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         widget.connect_motion_notify_event(move |widget, button| {
             let mut drag_actions    = drag_actions.borrow_mut();
@@ -153,7 +153,7 @@ impl DragActions {
 
     ///
     /// Responds to the user releasing the button while dragging the widget
-    /// 
+    ///
     fn connect_release(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         widget.connect_button_release_event(move |widget, button| {
             let mut drag_actions    = drag_actions.borrow_mut();

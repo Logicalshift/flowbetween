@@ -28,7 +28,7 @@ struct RotorData {
 
     /// Child widgets (manually drawn)
     child_widgets: Vec<Rc<RefCell<dyn GtkUiWidget>>>,
-    
+
     /// Value the rotor is set to
     value: f64,
 
@@ -53,10 +53,10 @@ struct RotorData {
 
 ///
 /// The rotor widget is essentially a scale widget that shows its value by rotating its contents
-/// 
+///
 /// GTK doesn't support rotation of arbitrary widgets, so this currently fakes it by manually calling the
 /// draw routine (which means that children of this widget are generally supposed to be drawing areas)
-/// 
+///
 pub struct FloRotorWidget {
     id: WidgetId,
 
@@ -70,7 +70,7 @@ pub struct FloRotorWidget {
 impl FloRotorWidget {
     ///
     /// Creates a new rotor control
-    /// 
+    ///
     pub fn new<W: Clone+Cast+IsA<gtk::Widget>+IsA<gtk::DrawingArea>>(id: WidgetId, widget: W) -> FloRotorWidget {
         // Create the data
         let data = RotorData {
@@ -99,7 +99,7 @@ impl FloRotorWidget {
 
     ///
     /// Wires up the signals for this rotor widget
-    /// 
+    ///
     fn connect_signals(widget_id: WidgetId, widget: gtk::Widget, data: Rc<RefCell<RotorData>>) {
         Self::connect_drawing(&widget, Rc::clone(&data));
         Self::connect_size_allocate(&widget, Rc::clone(&data));
@@ -108,9 +108,9 @@ impl FloRotorWidget {
 
     ///
     /// Connects the button press, release and motion events
-    /// 
+    ///
     fn connect_drag(widget_id: WidgetId, widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
-        // Want the events for the various buttons and drags etc 
+        // Want the events for the various buttons and drags etc
         widget.add_events(gdk::EventMask::BUTTON_PRESS_MASK | gdk::EventMask::BUTTON_RELEASE_MASK | gdk::EventMask::BUTTON_MOTION_MASK);
 
         // Start dragging when the user presses the left mouse button
@@ -200,7 +200,7 @@ impl FloRotorWidget {
 
     ///
     /// Handles resizing the widget
-    /// 
+    ///
     fn connect_size_allocate(widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
         widget.connect_size_allocate(move |widget, allocation| {
             let mut allocation = *allocation;
@@ -220,7 +220,7 @@ impl FloRotorWidget {
 
     ///
     /// Connects the drawing event for a rotor widget
-    /// 
+    ///
     fn connect_drawing(widget: &gtk::Widget, data: Rc<RefCell<RotorData>>) {
         widget.connect_draw(move |widget, context| {
             let data        = data.borrow();
@@ -271,7 +271,7 @@ impl FloRotorWidget {
 
     ///
     /// Returns the angle of a point in a rotor widget, in degrees
-    /// 
+    ///
     fn angle_for_point(widget: &gtk::Widget, x: f64, y: f64) -> f64 {
         let allocation  = widget.get_allocation();
         let width       = allocation.width as f64;
@@ -287,8 +287,8 @@ impl FloRotorWidget {
             // If the point is within the main radius, then the angle is just the angle relative to the center
             f64::atan2(y, x) / (2.0*f64::consts::PI) * 360.0
         } else {
-            // Really want to project a line onto the circle, then make the 
-            // extra angle be the distance from the rotor. This has a 
+            // Really want to project a line onto the circle, then make the
+            // extra angle be the distance from the rotor. This has a
             // similar effect but isn't quite as accurate.
             let angle               = f64::atan2(y, x) / (2.0*f64::consts::PI) * 360.0;
             let circumference       = f64::consts::PI*2.0*radius;

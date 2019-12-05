@@ -55,7 +55,7 @@ pub fn canvas_center_transform(viewport_origin: (f64, f64), canvas_size: (f64, f
         // Current X, Y coordinates (centered)
         let cur_x = (current_transform.tx-(pixel_width/2.0))/xscale;
         let cur_y = (current_transform.ty-(pixel_height/2.0))/yscale;
-        
+
         // New center coordinates
         let center_x = (minx+maxx)/2.0;
         let center_y = (miny+maxy)/2.0;

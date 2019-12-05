@@ -1,6 +1,6 @@
 ///
 /// Represents a control point in a vector element
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum ControlPoint {
     /// Represents a point on a bezier curve
@@ -13,7 +13,7 @@ pub enum ControlPoint {
 impl ControlPoint {
     ///
     /// Returns the x, y position of this control point
-    /// 
+    ///
     pub fn position(&self) -> (f32, f32) {
         use self::ControlPoint::*;
 
@@ -25,7 +25,7 @@ impl ControlPoint {
 
     ///
     /// Returns true if this is a control point (vs a point on the curve)
-    /// 
+    ///
     pub fn is_control_point(&self) -> bool {
         use self::ControlPoint::*;
 

@@ -12,7 +12,7 @@ use std::collections::*;
 
 ///
 /// Manages the active sessions
-/// 
+///
 pub struct WebSessions<CoreController: Controller> {
     log: LogPublisher,
 
@@ -23,7 +23,7 @@ pub struct WebSessions<CoreController: Controller> {
 impl<CoreController: Controller+'static> WebSessions<CoreController> {
     ///
     /// Creates a new websessions object
-    /// 
+    ///
     pub fn new() -> WebSessions<CoreController> {
         WebSessions {
             log:        LogPublisher::new(module_path!()),
@@ -33,7 +33,7 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
 
     ///
     /// Creates a new session and returns its ID
-    /// 
+    ///
     pub fn new_session(&self, controller: CoreController, base_path: &str) -> String {
         // Generate a session ID using the UUID library
         let session_id          = Uuid::new_v4().to_simple().to_string();
@@ -57,7 +57,7 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
 
     ///
     /// Retrieves the session with the specified ID form this object
-    /// 
+    ///
     pub fn get_session(&self, session_id: &str) -> Option<Arc<Mutex<HttpSession<UiSession<CoreController>>>>> {
         self.sessions.lock().unwrap().get(session_id).cloned()
     }

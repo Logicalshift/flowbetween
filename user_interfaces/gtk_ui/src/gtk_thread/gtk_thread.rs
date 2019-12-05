@@ -16,7 +16,7 @@ use std::ptr;
 
 ///
 /// Represents a running Gtk thread, providing an interface for other threads to use
-/// 
+///
 pub struct GtkThread {
     /// A clone of the event sink that the Gtk thread will send its events to
     event_sink: GtkEventSink,
@@ -31,7 +31,7 @@ pub struct GtkThread {
 impl GtkThread {
     ///
     /// Creates a new Gtk thread
-    /// 
+    ///
     pub fn new() -> GtkThread {
         // Create the event sink
         let event_sink = GtkEventSink::new();
@@ -52,9 +52,9 @@ impl GtkThread {
 
     ///
     /// Sets up OpenGL on a GTK thread
-    /// 
+    ///
     /// See https://github.com/gtk-rs/examples/pull/44/files
-    /// 
+    ///
     fn initialize_opengl() {
         // Tell epoxy how to load symbols from this process
         epoxy::load_with(|symbol_name| {
@@ -72,7 +72,7 @@ impl GtkThread {
 
     ///
     /// Starts running Gtk in a thread
-    /// 
+    ///
     fn run_thread(&self) -> JoinHandle<()> {
         // Clone the message target so we can use it as the source for the new thread
         let thread_target   = self.message_target.clone();
@@ -104,7 +104,7 @@ impl GtkThread {
 
     ///
     /// Performs a set of actions on the Gtk thread
-    /// 
+    ///
     pub fn perform_actions(&self, actions: Vec<GtkAction>) {
         if actions.len() > 0 {
             self.message_target.desync(|flo_gtk| {
@@ -121,7 +121,7 @@ impl GtkThread {
 
     ///
     /// Retrieves a stream of the events originating from the GTK thread
-    /// 
+    ///
     pub fn get_event_stream(&self) -> GtkEventStream {
         self.event_sink.get_stream()
     }

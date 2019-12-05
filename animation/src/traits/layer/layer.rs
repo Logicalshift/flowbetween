@@ -14,7 +14,7 @@ use std::ops::{Range, Deref};
 pub trait Layer : Send+Sync {
     ///
     /// The ID associated with this layer
-    /// 
+    ///
     fn id(&self) -> u64;
 
     ///
@@ -24,7 +24,7 @@ pub trait Layer : Send+Sync {
 
     ///
     /// The types of edit that are supported by this layer
-    /// 
+    ///
     fn supported_edit_types(&self) -> Vec<LayerEditType>;
 
     ///
@@ -39,19 +39,19 @@ pub trait Layer : Send+Sync {
 
     ///
     /// Retrieves the times where key frames exist during a specified time range
-    /// 
+    ///
     fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<dyn Iterator<Item=Duration>>;
 
     ///
     /// Retrieves the previous and next keyframes from a particular point in time
-    /// 
+    ///
     /// (If there's a keyframe at this point in time, it is not returned)
-    /// 
+    ///
     fn previous_and_next_key_frame(&self, when: Duration) -> (Option<Duration>, Option<Duration>);
 
     ///
     /// Retrieves the definition of this layer as a vector layer
-    /// 
+    ///
     fn as_vector_layer<'a>(&'a self) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+VectorLayer>>>;
 
     ///

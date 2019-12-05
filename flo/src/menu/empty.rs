@@ -3,14 +3,14 @@ use flo_binding::*;
 
 ///
 /// Controller used when no other menu controller is available
-/// 
+///
 pub struct EmptyMenuController {
     ui:         BindRef<Control>
 }
 
 impl EmptyMenuController {
     pub fn new() -> EmptyMenuController {
-        EmptyMenuController { 
+        EmptyMenuController {
             ui:         BindRef::from(bind(Control::empty()))
         }
     }

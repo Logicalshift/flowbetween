@@ -20,7 +20,7 @@ use std::sync::*;
 // type but it's still a lot of work just for a slightly
 // nicer system)
 //
-// Can't use Any as it's not really compatible with cloning 
+// Can't use Any as it's not really compatible with cloning
 // and serialization
 //
 // For this reason, events and subcontrollers are identified
@@ -51,7 +51,7 @@ pub trait Controller : Send+Sync {
     fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { None }
 
     /// Called just before an update is processed
-    /// 
+    ///
     /// This is called for every controller every time after processing any actions
     /// that might have occurred.
     fn tick(&self) { }
@@ -59,7 +59,7 @@ pub trait Controller : Send+Sync {
 
 ///
 /// Returns the full UI tree for the current state of a controller
-/// 
+///
 fn get_full_ui_tree(base_controller: &Arc<dyn Controller>) -> Control {
     let base_ui = base_controller.ui();
 
@@ -87,7 +87,7 @@ fn get_full_ui_tree(base_controller: &Arc<dyn Controller>) -> Control {
 /// Given an address (a list of subcomponent node indices), finds the
 /// path through the controllers that will supply the controller that
 /// owns that node.
-/// 
+///
 pub fn controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>) -> Option<Vec<&'a str>> {
     let mut result          = vec![];
     let mut current_node    = ui_tree;
@@ -114,7 +114,7 @@ pub fn controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>)
 }
 
 ///
-/// Returns a bound control that expands the content of any 
+/// Returns a bound control that expands the content of any
 /// sub-controllers that might be present.
 ///
 /// Note that this only maintains a weak reference to the
@@ -175,8 +175,8 @@ mod test {
 
     impl TestController {
         pub fn new() -> TestController {
-            TestController { 
-                label_controller: Arc::new(LabelController::new()), 
+            TestController {
+                label_controller: Arc::new(LabelController::new()),
                 view_model: Arc::new(NullViewModel::new()),
                 ui: BindRef::from(bind(Control::container().with_controller("Test")))
             }
@@ -188,7 +188,7 @@ mod test {
             let text = bind("Test".to_string());
             let label_text = text.clone();
 
-            LabelController { 
+            LabelController {
                 label_text: label_text,
                 view_model: Arc::new(NullViewModel::new()),
                 ui: BindRef::from(computed(move || {
@@ -318,7 +318,7 @@ mod test {
                             ])
                     ])
             ]);
-        
+
         assert!(controller_path_for_address(&control, &vec![]).unwrap().len() == 0);
     }
 
@@ -340,7 +340,7 @@ mod test {
                             ])
                     ])
             ]);
-        
+
         assert!(controller_path_for_address(&control, &vec![0]) == Some(vec!["Test1"]));
     }
 
@@ -362,7 +362,7 @@ mod test {
                             ])
                     ])
             ]);
-        
+
         assert!(controller_path_for_address(&control, &vec![1, 2]) == Some(vec!["Test1", "Test2"]));
         assert!(controller_path_for_address(&control, &vec![1, 2, 0]) == Some(vec!["Test1", "Test2", "Test3"]));
     }

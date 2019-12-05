@@ -7,7 +7,7 @@ use futures::executor::Spawn;
 
 ///
 /// Represents the context of a publisher
-/// 
+///
 pub struct LogContext {
     /// Where messages for this context should be published
     pub (crate) publisher: Spawn<Publisher<LogMsg>>,
@@ -22,7 +22,7 @@ pub struct LogContext {
 impl LogContext {
     ///
     /// Creates a new LogContext
-    /// 
+    ///
     pub fn new() -> LogContext {
         LogContext {
             publisher:  executor::spawn(Publisher::new(100)),

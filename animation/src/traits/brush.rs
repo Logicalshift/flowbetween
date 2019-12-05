@@ -13,7 +13,7 @@ use std::sync::*;
 
 ///
 /// Represents a segment of a brush stroke
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub struct BrushPoint {
     /// Position of this segment
@@ -31,17 +31,17 @@ pub struct BrushPoint {
 
 ///
 /// Trait implemented by things that can draw brush strokes
-/// 
+///
 pub trait Brush : Send+Sync {
     ///
     /// Returns the brush points for rendering given a particular set of raw points
-    /// 
+    ///
     fn brush_points_for_raw_points(&self, raw_points: &[RawPoint]) -> Vec<BrushPoint>;
 
     ///
     /// One or more brush strokes of this type are about to be rendered.
     /// This brush should set up the graphics context appropriately.
-    /// 
+    ///
     fn prepare_to_render<'a>(&'a self, properties: &'a BrushProperties) -> Box<dyn 'a+Iterator<Item=Draw>>;
 
     ///
@@ -60,7 +60,7 @@ pub trait Brush : Send+Sync {
 
     ///
     /// Retrieves the definition for this brush
-    /// 
+    ///
     fn to_definition(&self) -> (BrushDefinition, BrushDrawingStyle);
 
     ///
@@ -73,7 +73,7 @@ pub trait Brush : Send+Sync {
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
-    fn combine_with(&self, _element: &Vector, _points: Arc<Vec<BrushPoint>>, _brush_properties: &VectorProperties, _element_properties: &VectorProperties, _combined_element: Option<Vector>) -> CombineResult { 
+    fn combine_with(&self, _element: &Vector, _points: Arc<Vec<BrushPoint>>, _brush_properties: &VectorProperties, _element_properties: &VectorProperties, _combined_element: Option<Vector>) -> CombineResult {
         CombineResult::UnableToCombineFurther
     }
 }

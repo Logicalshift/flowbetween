@@ -9,7 +9,7 @@ const HSLUV_SATURATION: f32 = 100.0;
 ///
 /// Generats a pixel on a HSLUV colour wheel
 ///
-#[inline] 
+#[inline]
 fn hsluv_pixel(ratio: f64) -> (u8, u8, u8, u8) {
     // h is in the range 0..360
     let h               = (ratio * 360.0) as f32;

@@ -16,7 +16,7 @@ const PAINT_ACTION: &str    = "Paint";
 
 ///
 /// The core of the canvas
-/// 
+///
 struct CanvasCore<Anim: Animation+EditableAnimation> {
     /// The canvas renderer
     renderer: CanvasRenderer,
@@ -50,7 +50,7 @@ pub struct CanvasController<Anim: Animation+EditableAnimation> {
 impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
     ///
     /// Creates a new canvas controller
-    /// 
+    ///
     pub fn new(view_model: &FloModel<Anim>) -> CanvasController<Anim> {
         // Create the resources
         let canvases            = ResourceManager::new();
@@ -133,7 +133,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
     ///
     /// Creates the ui for the canvas controller
-    /// 
+    ///
     fn ui(main_canvas: Resource<BindingCanvas>, size: BindRef<(f64, f64)>) -> BindRef<Control> {
         let ui = computed(move || {
             let main_canvas     = main_canvas.clone();
@@ -174,7 +174,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
     ///
     /// Computes the frames for all the layers in the animation
-    /// 
+    ///
     fn update_layers_to_frame_at_time(&self, time: Duration) {
         // Retrieve the layers from the animation
         let layers              = self.anim_model.frame().layers.get();
@@ -198,7 +198,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
     ///
     /// Draws the current set of frame layers
-    /// 
+    ///
     fn draw_frame_layers(&self) {
         let canvas  = self.canvases.get_named_resource(MAIN_CANVAS).unwrap();
         let size    = self.anim_model.size();
@@ -212,7 +212,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
     ///
     /// Performs a series of painting actions on the canvas
-    /// 
+    ///
     fn paint(&self, device: &PaintDevice, actions: &Vec<Painting>) {
         let device = *device;
 
@@ -227,7 +227,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         // Convert the actions into tool inputs
         let tool_inputs = actions.iter()
             .map(|painting| ToolInput::Paint(painting.clone()));
-        
+
         // Send to the canvas tools object
         self.core.sync(move |core| {
             let mut extra_inputs = vec![];
@@ -240,7 +240,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
             // Amend the inputs
             let tool_inputs = extra_inputs.into_iter().chain(tool_inputs);
-            
+
             // Send the inputs
             core.canvas_tools.send_input(&canvas, &mut core.renderer, tool_inputs)
         });
@@ -262,7 +262,7 @@ impl<Anim: Animation+EditableAnimation+'static> Controller for CanvasController<
 
                 // Tool has no longer changed
                 *self.tool_changed.lock().unwrap() = false;
-                
+
                 // Refresh the tool (this will update any overlays, for example)
                 core.canvas_tools.refresh_tool(&*canvas, &mut core.renderer);
             });

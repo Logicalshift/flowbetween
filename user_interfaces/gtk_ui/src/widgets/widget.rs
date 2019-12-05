@@ -10,11 +10,11 @@ use std::cell::*;
 
 ///
 /// Trait implemented by objects that can act as widgets
-/// 
+///
 pub trait GtkUiWidget {
     ///
     /// Retrieves the ID assigned to this widget
-    /// 
+    ///
     fn id(&self) -> WidgetId;
 
     ///
@@ -24,19 +24,19 @@ pub trait GtkUiWidget {
 
     ///
     /// Sets the children of this widget
-    /// 
+    ///
     fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>);
 
     ///
     /// Retrieves the underlying widget for this UI widget
-    /// 
+    ///
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget;
 
     ///
     /// Draws the content of this widget to a context
-    /// 
+    ///
     /// (would really like to call .draw() on the underlying widget instead but this doesn't seem to actually work)
-    /// 
+    ///
     fn draw_manual(&self, context: &cairo::Context) { self.get_underlying().draw(context); }
 }
 

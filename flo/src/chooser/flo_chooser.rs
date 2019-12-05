@@ -11,7 +11,7 @@ use std::sync::*;
 
 ///
 /// The default file chooser for FlowBetween
-/// 
+///
 pub struct FloChooser<Anim: 'static+EditableAnimation+FileAnimation> {
     /// The file manager managed by this chooser
     file_manager: Arc<SqliteFileManager>,
@@ -23,7 +23,7 @@ pub struct FloChooser<Anim: 'static+EditableAnimation+FileAnimation> {
 impl<Anim: 'static+EditableAnimation+FileAnimation> FloChooser<Anim> {
     ///
     /// Creates a new chooser
-    /// 
+    ///
     pub fn new() -> FloChooser<Anim> {
         // Create the file manager (we use a single default user by default)
         let file_manager = Arc::new(SqliteFileManager::new(APP_NAME, DEFAULT_USER_FOLDER));
@@ -48,14 +48,14 @@ impl<Anim: 'static+EditableAnimation+FileAnimation> FileChooser for FloChooser<A
 
     ///
     /// Retrieves the file manager for this file chooser
-    /// 
+    ///
     fn get_file_manager(&self) -> Arc<Self::FileManager> {
         Arc::clone(&self.file_manager)
     }
 
     ///
     /// Retrieves the shared file store for this chooser
-    /// 
+    ///
     fn get_file_store(&self) -> Arc<OpenFileStore<FloSharedModel<Anim>>> {
         Arc::clone(&self.file_store)
     }

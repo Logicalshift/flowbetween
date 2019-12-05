@@ -3,7 +3,7 @@ use flo_animation::*;
 
 ///
 /// Viewmodel for a layer
-/// 
+///
 #[derive(Clone)]
 pub struct LayerModel {
     /// The ID for this layer (not a binding as it never changes)

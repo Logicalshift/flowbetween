@@ -15,7 +15,7 @@ use std::sync::*;
 
 ///
 /// Represents a vector path
-/// 
+///
 #[derive(Clone, Debug)]
 pub struct Path {
     pub elements: Arc<Vec<PathComponent>>
@@ -24,14 +24,14 @@ pub struct Path {
 impl Path {
     ///
     /// Creates a new, empty path
-    /// 
+    ///
     pub fn new() -> Path {
         Path { elements: Arc::new(vec![]) }
     }
 
     ///
     /// Creates a path from an elements iterator
-    /// 
+    ///
     pub fn from_elements<Elements: IntoIterator<Item=PathComponent>>(elements: Elements) -> Path {
         Path {
             elements: Arc::new(elements.into_iter().collect())
@@ -71,7 +71,7 @@ impl Path {
 
     ///
     /// Creates a path from a drawing iterator
-    /// 
+    ///
     pub fn from_drawing<Drawing: IntoIterator<Item=Draw>>(drawing: Drawing) -> Path {
         let elements = drawing.into_iter()
             .map(|draw| {
@@ -88,7 +88,7 @@ impl Path {
             })
             .filter(|element| element.is_some())
             .map(|element| element.unwrap());
-        
+
         Path {
             elements: Arc::new(elements.collect())
         }
@@ -160,7 +160,7 @@ impl From<Vec<PathComponent>> for Path {
 ///
 /// Converts a drawing into a path (ignoring all the parts of a drawing
 /// that cannot be simply converted)
-/// 
+///
 impl From<Vec<Draw>> for Path {
     fn from(drawing: Vec<Draw>) -> Path {
         Path::from_drawing(drawing)
@@ -169,7 +169,7 @@ impl From<Vec<Draw>> for Path {
 
 ///
 /// Converts a path into a drawing
-/// 
+///
 impl<'a> Into<Vec<Draw>> for &'a Path {
     fn into(self) -> Vec<Draw> {
         self.to_drawing().collect()
@@ -186,7 +186,7 @@ impl BezierPath for Path {
 
     ///
     /// Retrieves the initial point of this path
-    /// 
+    ///
     fn start_point(&self) -> Self::Point {
         use self::PathComponent::*;
 
@@ -204,11 +204,11 @@ impl BezierPath for Path {
 
     ///
     /// Retrieves an iterator over the points in this path
-    /// 
+    ///
     /// Note that the bezier path trait doesn't support Move or Close operations so these will be ignored.
     /// Operations like `path_contains_point` may be unreliable for 'broken' paths as a result of this limitation.
     /// (Paths with a 'move' in them are really two seperate paths)
-    /// 
+    ///
     fn points(&self) -> Self::PointIter {
         // Points as a set of bezier curves
         let mut points = vec![];
@@ -238,7 +238,7 @@ impl BezierPath for Path {
                     last_point = *target;
                 },
 
-                PathComponent::Close => { 
+                PathComponent::Close => {
                     // Line to the start point
                     let diff = start_point-last_point;
                     let cp1 = diff * 0.3;
@@ -260,7 +260,7 @@ impl BezierPath for Path {
 impl BezierPathFactory for Path {
     ///
     /// Creates a new instance of this path from a set of points
-    /// 
+    ///
     fn from_points<FromIter: IntoIterator<Item=(Self::Point, Self::Point, Self::Point)>>(start_point: Self::Point, points: FromIter) -> Self {
         let elements = points.into_iter()
             .map(|(cp1, cp2, target)| PathComponent::Bezier(target, cp1, cp2));

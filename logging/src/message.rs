@@ -7,26 +7,26 @@ use log;
 
 ///
 /// Trait implemented by items representing a log message
-/// 
+///
 pub trait LogMessage : Send {
     ///
     /// Returns a string representation of this log message
-    /// 
+    ///
     fn message<'a>(&'a self) -> &'a str;
 
     ///
     /// Returns the verbosity/seriousness level of this log message
-    /// 
+    ///
     fn level(&self) -> log::Level { log::Level::Info }
 
     ///
-    /// Returns the privilege level of this log message (who can read it) 
+    /// Returns the privilege level of this log message (who can read it)
     ///
     fn privilege(&self) -> LogPrivilege { LogPrivilege::Application }
 
     ///
     /// Returns this log message formatted into a series of named fields
-    /// 
+    ///
     fn fields(&self) -> Vec<(String, String)> { vec![("message".to_string(), self.message().to_string())] }
 }
 

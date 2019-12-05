@@ -8,7 +8,7 @@ use std::time::Duration;
 
 ///
 /// Describes how an element is translated over time
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub struct TranslateMotion {
     /// The point about which this transformation is taking place
@@ -21,7 +21,7 @@ pub struct TranslateMotion {
 impl TranslateMotion {
     ///
     /// Creates a translate motion that just instantaneously moves something between two points
-    /// 
+    ///
     pub fn move_to(when: Duration, from: (f32, f32), to: (f32, f32)) -> TranslateMotion {
         let to_point = TimePoint::new(to.0-from.0, to.1-from.1, when);
 
@@ -41,7 +41,7 @@ impl TranslateMotion {
 
     ///
     /// Sets the path of this motion
-    /// 
+    ///
     #[inline]
     pub fn set_path(&mut self, new_path: TimeCurve) {
         self.translate = new_path;
@@ -51,7 +51,7 @@ impl TranslateMotion {
 impl Default for TranslateMotion {
     ///
     /// Creates a defualt translate motion
-    /// 
+    ///
     fn default() -> TranslateMotion {
         TranslateMotion {
             origin:     (0.0, 0.0),

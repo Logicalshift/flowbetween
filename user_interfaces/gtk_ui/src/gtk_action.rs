@@ -21,7 +21,7 @@ pub enum WidgetId {
 
 ///
 /// Actions that can be performed on a window
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum GtkWindowAction {
     New(WindowType),
@@ -35,7 +35,7 @@ pub enum GtkWindowAction {
 
 ///
 /// Types of widget that can be created
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum GtkWidgetType {
     Generic,
@@ -58,7 +58,7 @@ pub enum GtkWidgetType {
 
 ///
 /// Actions that can be performed on a widget
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum GtkWidgetAction {
     /// Creates a new widget of the specifed type
@@ -103,7 +103,7 @@ pub enum GtkWidgetAction {
 
 ///
 /// Specifies a change to the content of a widget
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum WidgetContent {
     /// Sets the children of this widget to be a particular set of widgets
@@ -130,7 +130,7 @@ impl From<WidgetContent> for GtkWidgetAction {
 
 ///
 /// Specifies a change to how a widget is laid out
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum WidgetLayout {
     /// Specifies how this widget should be laid out
@@ -154,7 +154,7 @@ impl From<WidgetLayout> for GtkWidgetAction {
 
 ///
 /// Specifies a change to the state of a widget
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum WidgetState {
     /// Sets whether or not this widget is highlighted as being selected
@@ -193,7 +193,7 @@ impl From<WidgetState> for GtkWidgetAction {
 
 ///
 /// Actions for widgets supporting pop-up behaviour
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum WidgetPopup {
     /// Sets the direction this popup will open
@@ -201,7 +201,7 @@ pub enum WidgetPopup {
 
     /// Sets the size of this popup
     SetSize(u32, u32),
-    
+
     /// Sets the offset of this popup from the center of its parent widget
     SetOffset(u32),
 
@@ -235,7 +235,7 @@ impl From<Scroll> for GtkWidgetAction {
 
 ///
 /// GTK actions that can be requested
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum GtkAction {
     /// Shuts down Gtk
@@ -251,7 +251,7 @@ pub enum GtkAction {
 impl GtkAction {
     ///
     /// True if this action is a no-op (can be removed from the actions list)
-    /// 
+    ///
     pub fn is_no_op(&self) -> bool {
         match self {
             &GtkAction::Window(_, ref window_actions)   => window_actions.len() == 0,

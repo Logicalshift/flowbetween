@@ -5,7 +5,7 @@ use flo_animation::*;
 impl FloSqlite {
     ///
     /// Executes a particular database update
-    /// 
+    ///
     fn execute_update(&mut self, update: &DatabaseUpdate) -> Result<(), SqliteAnimationError> {
         use self::DatabaseUpdate::*;
 
@@ -18,7 +18,7 @@ impl FloSqlite {
                     }
                 }
 
-                self.stack.pop(); 
+                self.stack.pop();
             },
 
             Duplicate                                                       => {
@@ -97,7 +97,7 @@ impl FloSqlite {
                 let edit_log_id         = self.stack.last().unwrap();
                 let mut add_element_id  = Self::prepare(&self.sqlite, FloStatement::InsertELElementId)?;
                 let index               = *index as i64;
-                
+
                 add_element_id.insert::<&[&dyn ToSql]>(&[edit_log_id, &index, element_id])?;
             },
 
@@ -114,7 +114,7 @@ impl FloSqlite {
                 let (x, y)          = (*x as f64, *y as f64);
                 let edit_log_id     = self.stack.last().unwrap();
                 let mut add_origin  = Self::prepare(&self.sqlite, FloStatement::InsertELMotionOrigin)?;
-                
+
                 add_origin.insert::<&[&dyn ToSql]>(&[edit_log_id, &x, &y])?;
             },
 
@@ -200,7 +200,7 @@ impl FloSqlite {
                     use self::PathComponent::*;
 
                     match component {
-                        Move(point) => { 
+                        Move(point) => {
                             let (x, y) = point.position;
                             let (x, y) = (x as f64, y as f64);
                             insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &x, &y])?;
@@ -213,13 +213,13 @@ impl FloSqlite {
                             insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &x, &y])?;
                             insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &point_line_to])?;
                         },
-                        
+
                         Bezier(target, cp1, cp2) => {
                             let (tx, ty)        = target.position;
                             let (cp1x, cp1y)    = cp1.position;
                             let (cp2x, cp2y)    = cp2.position;
 
-                            let (tx, ty)        = (tx as f64, ty as f64);    
+                            let (tx, ty)        = (tx as f64, ty as f64);
                             let (cp1x, cp1y)    = (cp1x as f64, cp1y as f64);
                             let (cp2x, cp2y)    = (cp2x as f64, cp2y as f64);
 
@@ -293,7 +293,7 @@ impl FloSqlite {
                     use self::PathComponent::*;
 
                     match component {
-                        Move(point) => { 
+                        Move(point) => {
                             let (x, y) = point.position;
                             let (x, y) = (x as f64, y as f64);
                             insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &x, &y])?;
@@ -306,13 +306,13 @@ impl FloSqlite {
                             insert_point.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &x, &y])?;
                             insert_type.insert::<&[&dyn ToSql]>(&[&path_id, &point_index, &point_line_to])?;
                         },
-                        
+
                         Bezier(target, cp1, cp2) => {
                             let (tx, ty)        = target.position;
                             let (cp1x, cp1y)    = cp1.position;
                             let (cp2x, cp2y)    = cp2.position;
 
-                            let (tx, ty)        = (tx as f64, ty as f64);    
+                            let (tx, ty)        = (tx as f64, ty as f64);
                             let (cp1x, cp1y)    = (cp1x as f64, cp1y as f64);
                             let (cp2x, cp2y)    = (cp2x as f64, cp2y as f64);
 
@@ -625,7 +625,7 @@ impl FloSqlite {
                 // Need to work out the target z-index
                 let target_z_index      = match move_direction {
                     DbElementMove::ToBottom     => { 0 },
-                    DbElementMove::ToTop        => { 
+                    DbElementMove::ToTop        => {
                         let mut select_max_z_index = Self::prepare(&self.sqlite, FloStatement::SelectMaxZIndexForKeyFrame)?;
                         select_max_z_index.query_row(&[&keyframe_id], |row| row.get::<_, i64>(0))? + 1
                     },
@@ -725,7 +725,7 @@ impl FloSqlite {
 
     ///
     /// Performs a set of updates on the database immediately
-    /// 
+    ///
     fn execute_updates_now<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError> {
         for update in updates {
             let result = self.execute_update(&update);
@@ -742,7 +742,7 @@ impl FloSqlite {
 impl FloStore for FloSqlite {
     ///
     /// Performs a set of updates on the database
-    /// 
+    ///
     fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError> {
         if let Some(ref mut pending) = self.pending {
             // Queue the updates into the pending queue if we're not performing them immediately
@@ -757,7 +757,7 @@ impl FloStore for FloSqlite {
 
     ///
     /// Starts queuing up database updates for later execution as a batch
-    /// 
+    ///
     fn begin_queuing(&mut self) {
         if self.pending.is_none() {
             self.pending = Some(vec![]);
@@ -766,7 +766,7 @@ impl FloStore for FloSqlite {
 
     ///
     /// Executes the update queue
-    /// 
+    ///
     fn execute_queue(&mut self) -> Result<(), SqliteAnimationError> {
         // Fetch the pending updates
         let mut pending = None;
@@ -782,7 +782,7 @@ impl FloStore for FloSqlite {
 
     ///
     /// Ensures any pending updates are committed to the database
-    /// 
+    ///
     fn flush_pending(&mut self) -> Result<(), SqliteAnimationError> {
         if self.pending.is_some() {
             // Fetch the pending updates

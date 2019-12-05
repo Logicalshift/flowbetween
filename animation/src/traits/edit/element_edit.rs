@@ -17,7 +17,7 @@ pub enum ElementOrdering {
 
 ///
 /// Represents an edit to an element within a frame
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum ElementEdit {
     /// Adds an attachment to this element

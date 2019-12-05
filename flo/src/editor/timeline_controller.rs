@@ -95,7 +95,7 @@ pub struct TimelineController<Anim: Animation> {
 impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
     ///
     /// Creates a new timeline controller
-    /// 
+    ///
     pub fn new(anim_model: &FloModel<Anim>) -> TimelineController<Anim> {
         let anim_model = anim_model.clone();
 
@@ -190,7 +190,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Creates the user interface for the timeline
-    /// 
+    ///
     fn ui(layers: BindRef<Vec<LayerModel>>, duration: BindRef<Duration>, frame_duration: BindRef<Duration>, virtual_scale_control: BindRef<Control>, virtual_keyframes_control: BindRef<Control>, canvases: Arc<ResourceManager<BindingCanvas>>, onion_skin: &OnionSkinModel<Anim>) -> BindRef<Control> {
         let timescale_indicator         = BindingCanvas::with_drawing(Self::draw_frame_indicator);
         let timescale_indicator         = canvases.register(timescale_indicator);
@@ -360,7 +360,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Creates the function for drawing the keyframes
-    /// 
+    ///
     fn create_draw_keyframes_fn(timeline: &TimelineModel<Anim>) -> impl Fn(f32, f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>+Send+Sync {
         let timeline    = timeline.clone();
 
@@ -456,7 +456,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Draws the timeline scale
-    /// 
+    ///
     fn draw_scale(x: f32, _y: f32) -> Box<dyn Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync> {
         Box::new(move |gc| {
             // Set up the canvas
@@ -519,7 +519,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Draws the frame indicator
-    /// 
+    ///
     fn draw_frame_indicator(gc: &mut dyn GraphicsPrimitives) -> () {
         gc.canvas_height(2.05);
 
@@ -557,7 +557,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Draws the frame indicator
-    /// 
+    ///
     fn draw_onion_indicator(gc: &mut dyn GraphicsPrimitives, side: Onion) -> () {
         gc.canvas_height(2.05);
 
@@ -600,7 +600,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Draws the frame indicator line
-    /// 
+    ///
     fn draw_frame_indicator_line(gc: &mut dyn GraphicsPrimitives) -> () {
         gc.stroke_color(TIMESCALE_INDICATOR2);
         gc.canvas_height(2.0);
@@ -614,17 +614,17 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Converts a duration to ns
-    /// 
+    ///
     fn duration_to_ns(time: Duration) -> i64 {
         (time.as_secs() * 1_000_000_000) as i64 + (time.subsec_nanos() as i64)
     }
 
     ///
     /// Converts a nanosecond time to a duration
-    /// 
+    ///
     /// Durations can't represent negative values, so negative times will be represented
     /// as 0
-    /// 
+    ///
     fn ns_to_duration(ns: i64) -> Duration {
         if ns < 0 {
             Duration::new(0, 0)
@@ -635,9 +635,9 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineController<Anim> {
 
     ///
     /// Converts an x position to a nanosecond value
-    /// 
+    ///
     /// (Nanoseconds rather than a duration so this works for negative times)
-    /// 
+    ///
     fn xpos_to_ns(&self, xpos: f32) -> i64 {
         // Get the frame duration and start time in nanoseconds
         let timeline            = self.anim_model.timeline();
@@ -658,7 +658,7 @@ impl<Anim: EditableAnimation+Animation+'static> Controller for TimelineControlle
         BindRef::clone(&self.ui)
     }
 
-    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(Arc::clone(&self.canvases))
     }
 

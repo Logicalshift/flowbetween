@@ -17,11 +17,11 @@ const MIN_TIME_MILLISECONDS: f32 = 5.0;
 impl TimeCurve {
     ///
     /// Generates a time curve with the point at a particular time moved to a new location
-    /// 
+    ///
     /// If the duration is before the start or after the end of the curve, this will add a
     /// new point instead. If it's close to an existing point, that point will just be moved.
     /// Otherwise, if the point is in the middle of a curve, the curve will be subdivided.
-    /// 
+    ///
     pub fn set_point_at_time(&self, when: Duration, new_location: (f32, f32)) -> TimeCurve {
         let when_millis = to_millis(when) as f32;
         let (x, y)      = new_location;
@@ -54,7 +54,7 @@ impl TimeCurve {
 
             // Add a new point at the end
             let copy_point  = new_points[final_point].clone();
-            let final_point = final_point + 1;  
+            let final_point = final_point + 1;
             new_points.push(copy_point);
 
             // Move the final point to its new location
@@ -97,11 +97,11 @@ impl TimeCurve {
                 // Subdivide the curve if we're somewhere in the middle
                 if !moved_point && previous.point.milliseconds() <= when_millis && next.point.milliseconds() >= when_millis {
                     // Create the section we want to subdivide
-                    let original_section = TimeCurveSection { 
+                    let original_section = TimeCurveSection {
                         start:          previous.point,
                         end:            next.point,
-                        control_point1: previous.future, 
-                        control_point2: next.past 
+                        control_point1: previous.future,
+                        control_point2: next.past
                     };
 
                     // Find where to subdivide

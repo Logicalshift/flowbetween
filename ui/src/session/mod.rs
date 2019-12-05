@@ -24,7 +24,7 @@ use super::user_interface::*;
 use binding::*;
 use std::sync::*;
 
-/// The basic user interface implemented by a UI session 
+/// The basic user interface implemented by a UI session
 pub trait CoreUserInterface : UserInterface<Vec<UiEvent>, Vec<UiUpdate>, (), EventSink=UiEventSink, UpdateStream=UiUpdateStream> {
     type CoreController: Controller;
 

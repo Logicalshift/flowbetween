@@ -13,7 +13,7 @@ use std::sync::*;
 
 ///
 /// Retrieves the base URL for a request
-/// 
+///
 fn base_url(req: &HttpRequest) -> String {
     let full_url    = req.uri().path();
     let tail        = req.match_info().get("tail").unwrap_or("");
@@ -28,7 +28,7 @@ fn base_url(req: &HttpRequest) -> String {
 
 ///
 /// Handles a request with a session that exists
-/// 
+///
 fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session::CoreUi>, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
     // Send the events followed by a tick
     let mut events  = ui_request.events.clone();
@@ -45,9 +45,9 @@ fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session:
 
 ///
 /// Handles a request for a session that doesn't exist
-/// 
+///
 /// (This creates a new session for this user)
-/// 
+///
 fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
     // Convert the events into an iterator
     let ui_request  = ui_request.clone();
@@ -66,14 +66,14 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
 
                     // Return the new session ID
                     updates.push(Update::NewSession(session_id));
-                    
+
                     // Websocket runs on the same port as the main session
                     updates.push(Update::WebsocketSamePort);
 
                     // TODO: With Actix, we run a websocket on the same port, so also send a websocket update
 
                     // Return the updates
-                    stream::iter_ok(updates)             
+                    stream::iter_ok(updates)
                 },
 
                 // For any other event, a session is required, so we indicate that it's missing
@@ -93,7 +93,7 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
 
 ///
 /// Handles a JSON UI request
-/// 
+///
 fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request: &UiHandlerRequest) -> impl Future<Item=HttpResponse, Error=Error> {
     let session_state = req.app_data::<Arc<Session>>().expect("Flowbetween session state");
 
@@ -116,7 +116,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
             }
         }
     };
-    
+
     // Turn the UI response into a JSON response
     response
         .map(move |response| {
@@ -128,7 +128,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
 
 ///
 /// Post request handler for the session URL
-/// 
+///
 pub fn session_post_handler<Session: 'static+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     // Process this UI request
     Box::new(handle_ui_request::<Session>(req, &*ui_request))
@@ -136,7 +136,7 @@ pub fn session_post_handler<Session: 'static+ActixSession>(req: HttpRequest, ui_
 
 ///
 /// Get request handler for the session URL
-/// 
+///
 pub fn session_get_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     // Get requests are handled by the session resource handler
     session_resource_handler::<Session>(req)

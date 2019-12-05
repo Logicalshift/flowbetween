@@ -26,7 +26,7 @@ pub struct FloCanvasLayoutWidget {
 impl FloCanvasLayoutWidget {
     ///
     /// Creates a new drawing widget
-    /// 
+    ///
     pub fn new<W: 'static+Clone+Cast+IsA<gtk::Widget>+IsA<gtk::Container>+FixedWidgetLayout>(widget_id: WidgetId, drawing_area: W, data: Rc<WidgetData>) -> FloCanvasLayoutWidget {
         // This takes on some aspects of the drawing widget and some aspects of the fixed widget
         let drawing = FloDrawingWidget::new(widget_id, drawing_area.clone(), Rc::clone(&data));
@@ -62,7 +62,7 @@ impl GtkUiWidget for FloCanvasLayoutWidget {
         self.as_fixed.get_underlying()
     }
 
-    fn draw_manual(&self, context: &cairo::Context) { 
+    fn draw_manual(&self, context: &cairo::Context) {
         self.as_drawing.draw_manual(context);
     }
 }

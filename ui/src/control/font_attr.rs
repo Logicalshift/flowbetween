@@ -5,7 +5,7 @@ use modifier::*;
 
 ///
 /// Attributes for fonts
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Font {
     /// Font size in pixels
@@ -20,7 +20,7 @@ pub enum Font {
 
 ///
 /// Represents the weight of a font
-/// 
+///
 #[repr(u32)]
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum FontWeight {
@@ -32,7 +32,7 @@ pub enum FontWeight {
 
 ///
 /// Represents the horizontal alignment for text
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum TextAlign {
     Left,

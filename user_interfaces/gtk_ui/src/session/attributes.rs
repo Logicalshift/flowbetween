@@ -9,19 +9,19 @@ pub type PropertyWidgetAction = PropertyAction<GtkWidgetAction>;
 
 ///
 /// Trait implemented by things that can be converted to GTK widget actions
-/// 
+///
 pub trait ToGtkActions {
     ///
     /// Converts this itme to a set of GtkWidgetActions required to render it to a GTK widget
-    /// 
+    ///
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction>;
 }
 
 ///
 /// Determines the GTK control to use for a button control
-/// 
+///
 /// We need to use a toggle button for buttons with a selected attribute, or a normal button for everything else
-/// 
+///
 fn button_type_for_control(control: &Control) -> GtkWidgetType {
     use self::ControlAttribute::*;
 
@@ -37,13 +37,13 @@ fn button_type_for_control(control: &Control) -> GtkWidgetType {
 
 ///
 /// Determines the GTK control to use for a canvas control
-/// 
+///
 /// Normally we want to use drawing areas, but sometimes canvases can have subcontrols, and in that case we need to use a layout
 /// so we can draw a canvas and have other controls on top of it
-/// 
+///
 fn canvas_type_for_control(control: &Control) -> GtkWidgetType {
     let fast_drawing = control.attributes().any(|attr| attr == &ControlAttribute::HintAttr(Hint::FastDrawing));
-    
+
     if fast_drawing {
         // TODO: finish up the nanovg canvas
         GtkWidgetType::CanvasDrawingArea
@@ -60,7 +60,7 @@ fn canvas_type_for_control(control: &Control) -> GtkWidgetType {
 
 ///
 /// Determines if a control needs an event box or not
-/// 
+///
 fn needs_event_box(control: &Control) -> bool {
     use self::ControlAttribute::*;
 
@@ -87,7 +87,7 @@ fn needs_event_box(control: &Control) -> bool {
 
 ///
 /// Creates the actions required to instantiate a control - without its subcomponents
-/// 
+///
 impl ToGtkActions for Control {
     fn to_gtk_actions(&self) -> Vec<PropertyWidgetAction> {
         use self::ControlType::*;
@@ -108,7 +108,7 @@ impl ToGtkActions for Control {
             TextBox             => New(GtkWidgetType::TextBox),
             CheckBox            => New(GtkWidgetType::CheckBox)
         };
-        
+
         // The widget class allows the style sheet to specifically target Flo widgets
         let widget_class = match self.control_type() {
             Empty               => "flo-empty",
@@ -126,8 +126,8 @@ impl ToGtkActions for Control {
         };
 
         // Build into the 'create control' action
-        let mut create_control = vec![ 
-            create_new.into(), 
+        let mut create_control = vec![
+            create_new.into(),
         ];
 
         // Some controls need an event box (eg, to show a custom background or to allow for z-ordering)
@@ -159,7 +159,7 @@ impl ToGtkActions for ControlAttribute {
             &BoundingBox(ref bounds)                => bounds.to_gtk_actions(),
             &ZIndex(zindex)                         => vec![ WidgetLayout::ZIndex(zindex).into() ].into_actions(),
             &Padding((left, top), (right, bottom))  => vec![ WidgetLayout::Padding((left, top), (right, bottom)).into() ].into_actions(),
-            
+
             &Text(ref text)                         => vec![ PropertyAction::from_property(text.clone(), |text| vec![ WidgetContent::SetText(text.to_string()).into() ]) ],
 
             &FontAttr(ref font)                     => font.to_gtk_actions(),
@@ -247,9 +247,9 @@ impl ToGtkActions for State {
             Selected(ref selected)      => vec![ PropertyAction::from_property(selected.clone(), |value| vec![ WidgetState::SetSelected(value.to_bool().unwrap_or(false)).into() ]) ],
             Badged(ref badged)          => vec![ PropertyAction::from_property(badged.clone(), |value| vec![ WidgetState::SetBadged(value.to_bool().unwrap_or(false)).into() ]) ],
             Enabled(ref enabled)        => vec![ PropertyAction::from_property(enabled.clone(), |value| vec![ WidgetState::SetEnabled(value.to_bool().unwrap_or(true)).into() ]) ],
-            Range((ref min, ref max))   => vec![ 
+            Range((ref min, ref max))   => vec![
                 PropertyAction::from_property(min.clone(), |min| vec![ WidgetState::SetRangeMin(min.to_f64().unwrap_or(0.0)).into() ]),
-                PropertyAction::from_property(max.clone(), |max| vec![ WidgetState::SetRangeMax(max.to_f64().unwrap_or(0.0)).into() ]) 
+                PropertyAction::from_property(max.clone(), |max| vec![ WidgetState::SetRangeMax(max.to_f64().unwrap_or(0.0)).into() ])
             ],
             FocusPriority(ref priority) => vec![], /* TODO */
 

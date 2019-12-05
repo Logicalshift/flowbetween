@@ -16,7 +16,7 @@ use std::sync::*;
 
 ///
 /// Converts a core user interface into a HTTP user interface
-/// 
+///
 pub struct HttpUserInterface<CoreUi> {
     /// The core UI is the non-platform specific implementation of the user interface
     core_ui: Arc<CoreUi>,
@@ -31,7 +31,7 @@ pub struct HttpUserInterface<CoreUi> {
 impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     /// Creates a new HTTP UI that will translate requests for the specified core UI
-    /// 
+    ///
     pub fn new(ui: Arc<CoreUi>, base_path: String) -> HttpUserInterface<CoreUi> {
         let ui_tree = ui.ui_tree();
 
@@ -44,14 +44,14 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
     ///
     /// Retrieves the underlying non-platform specific UI object
-    /// 
+    ///
     pub fn core(&self) -> Arc<CoreUi> {
         Arc::clone(&self.core_ui)
     }
 
     ///
     /// Converts an event from the HTTP side of things into a UI event
-    /// 
+    ///
     fn http_event_to_core_event(http_event: Event) -> UiEvent {
         use Event::*;
 
@@ -68,11 +68,11 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
     ///
     /// Generates a new UI update (transforms a set of updates into the 'new HTML' update)
-    /// 
+    ///
     /// The start update should come with an 'UpdateHtml' update that replaces the entire
-    /// tree. We turn this into a NewUserInterfaceHtml update by combining it with the 
+    /// tree. We turn this into a NewUserInterfaceHtml update by combining it with the
     /// contents of the view model updates.
-    /// 
+    ///
     fn new_ui_update(old_updates: Vec<Update>) -> Vec<Update> {
         let mut new_updates = vec![];
 
@@ -111,9 +111,9 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
     ///
     /// Converts a canvas diff into a canvas update
-    /// 
+    ///
     /// Mainly this means encoding the content of the update
-    /// 
+    ///
     fn map_canvas_diff(canvas_diff: CanvasDiff) -> CanvasUpdate {
         // Encode the updates from the diff
         let mut encoded_updates = String::new();
@@ -133,7 +133,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
     ///
     /// Maps a core UI diff into a HTML diff
-    /// 
+    ///
     fn map_core_ui_diff(ui_diff: UiDiff, ui_tree: &Control, base_path: &str) -> HtmlDiff {
         // Fetch the properties of this difference
         let address         = ui_diff.address;
@@ -147,7 +147,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
     ///
     /// Maps a single core update to a HTTP update
-    /// 
+    ///
     fn map_core_update(core_update: UiUpdate, base_path: &str, ui_tree: &Control) -> Vec<Update> {
         use self::UiUpdate::*;
 
@@ -161,7 +161,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
                     .collect()
                 )]
             },
-            
+
             UpdateCanvas(canvas_diffs) => vec![Update::UpdateCanvas(canvas_diffs.into_iter().map(|diff| Self::map_canvas_diff(diff)).collect())],
 
             UpdateViewModel(view_model_diffs) => vec![Update::UpdateViewModel(view_model_diffs)]
@@ -170,7 +170,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
     ///
     /// Converts updates from the core into HTTP updates
-    /// 
+    ///
     fn core_updates_to_http_updates(core_update: Vec<UiUpdate>, base_path: &str, ui_tree: &Control) -> Vec<Update> {
         use self::UiUpdate::*;
 
@@ -181,7 +181,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
         if is_start {
             // Generate the new UI HTML update
-            Self::new_ui_update(base_update)            
+            Self::new_ui_update(base_update)
         } else {
             // Convert each update individually
             base_update
@@ -190,7 +190,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
     ///
     /// Retrieves the controller used for this UI
-    /// 
+    ///
     pub fn controller(&self) -> Arc<CoreUi::CoreController> {
         self.core_ui.controller()
     }

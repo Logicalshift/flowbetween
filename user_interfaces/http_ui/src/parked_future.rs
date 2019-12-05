@@ -7,7 +7,7 @@ use std::sync::*;
 ///
 /// A future that will eventually have a value (this seems to be a feature missing from
 /// the futures library)
-/// 
+///
 pub struct ParkedFuture<TResult> {
     /// Core is shared between our parked future and its setter
     core: Arc<Mutex<ParkedFutureCore<TResult>>>
@@ -15,7 +15,7 @@ pub struct ParkedFuture<TResult> {
 
 ///
 /// Unparks a parked future with a value
-/// 
+///
 pub struct FutureUnparker<TResult> {
     /// Core is shared between our parked future and its setter
     core: Arc<Mutex<ParkedFutureCore<TResult>>>
@@ -23,7 +23,7 @@ pub struct FutureUnparker<TResult> {
 
 ///
 /// Represents a parked future
-/// 
+///
 struct ParkedFutureCore<TResult> {
     wait:       Option<Task>,
     result:     Option<TResult>,
@@ -73,7 +73,7 @@ impl<TResult> Drop for FutureUnparker<TResult> {
 
 ///
 /// Creates a parked future and an unparker that can be used to set its value
-/// 
+///
 pub fn park_future<TResult>() -> (ParkedFuture<TResult>, FutureUnparker<TResult>) {
     // Create the core that we'll share
     let core = Arc::new(Mutex::new(ParkedFutureCore { wait: None, result: None, unparked: false }));

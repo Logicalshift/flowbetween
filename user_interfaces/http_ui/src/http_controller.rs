@@ -7,6 +7,6 @@ use ui::*;
 pub trait HttpController : Controller {
     ///
     /// Creates a new instance of this controller
-    /// 
+    ///
     fn start_new() -> Self;
 }

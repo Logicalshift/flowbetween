@@ -23,11 +23,11 @@ pub enum DbElementMove {
 ///
 /// Possible updates made to the database. We use a simple stack machine for
 /// database updates (so we can re-use IDs).
-/// 
+///
 /// Items starting 'push' always leave at least one element on the stack.
 /// 'Pop' elements remove an element. (Push elements may also remove to use
 /// to generate the element they leave behind)
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum DatabaseUpdate {
     /// Removes the ID from the top of the stack
@@ -231,32 +231,32 @@ pub enum DatabaseUpdate {
 
 ///
 /// Trait implemented by objects that can provide an underlying store for FlowBetween
-/// 
+///
 pub trait FloStore {
     ///
     /// Performs a set of updates on the store
-    /// 
+    ///
     fn update<I: IntoIterator<Item=DatabaseUpdate>>(&mut self, updates: I) -> Result<(), SqliteAnimationError>;
 
     ///
     /// Starts queuing up store updates for later execution as a batch
-    /// 
+    ///
     fn begin_queuing(&mut self);
 
     ///
     /// Executes the queued events (and stops queueing future events)
-    /// 
+    ///
     fn execute_queue(&mut self) -> Result<(), SqliteAnimationError>;
 
     ///
     /// Ensures any pending updates are committed to the database (but continues to queue future events)
-    /// 
+    ///
     fn flush_pending(&mut self) -> Result<(), SqliteAnimationError>;
 }
 
 ///
 /// Trait implemented by objects that can read or write from a Flo data file
-/// 
+///
 pub trait FloFile : FloStore + FloQuery {
 
 }

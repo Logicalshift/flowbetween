@@ -5,7 +5,7 @@ use super::element_edit::*;
 
 ///
 /// Represents an edit to an animation object
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum AnimationEdit {
     /// Edit to an existing layer
@@ -33,7 +33,7 @@ impl AnimationEdit {
     ///
     /// If this edit contains an unassigned element ID, calls the specified function to supply a new
     /// element ID. If the edit already has an ID, leaves it unchanged.
-    /// 
+    ///
     pub fn assign_element_id<AssignFn: FnOnce() -> i64>(self, assign_element_id: AssignFn) -> AnimationEdit {
         use self::AnimationEdit::*;
 

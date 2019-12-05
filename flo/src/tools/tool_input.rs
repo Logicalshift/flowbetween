@@ -27,14 +27,14 @@ impl<ToolData> ToolInput<ToolData> {
     ///
     /// Given a set of toolinput actions, ensures that only the final 'continue' action is
     /// left in for any given paint device.
-    /// 
+    ///
     /// This is useful for actions like dragging a selection around where only the most
     /// recent action needs to be processed.
-    /// 
+    ///
     pub fn last_paint_actions_only<Actions: IntoIterator<Item=ToolInput<ToolData>>>(actions: Actions) -> impl Iterator<Item=ToolInput<ToolData>> {
         // For the moment we just build up a vector of results
         let mut result = vec![];
-        
+
         // Initially there's no last continue action
         let mut last_continue = None;
 

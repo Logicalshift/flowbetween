@@ -3,11 +3,11 @@ use super::super::time_path::*;
 
 ///
 /// Represents an edit that creates a motion description on a layer
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum MotionEdit {
     /// Creates a new motion with this element ID
-    /// 
+    ///
     /// A new motion is created with a type of `None`, an origin at 0,0 and an empty time curve
     Create,
 

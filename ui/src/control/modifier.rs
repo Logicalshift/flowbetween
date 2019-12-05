@@ -4,7 +4,7 @@ use super::attributes::*;
 use modifier::*;
 
 pub trait ControlModifier {
-    fn modify(self, control: &mut Control);    
+    fn modify(self, control: &mut Control);
 }
 
 impl Modifier<Control> for ControlAttribute {

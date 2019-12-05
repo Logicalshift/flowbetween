@@ -5,7 +5,7 @@ use flo_binding::*;
 
 ///
 /// The menu controller for the adjust tool
-/// 
+///
 pub struct AdjustMenuController {
     ui: BindRef<Control>
 }
@@ -13,7 +13,7 @@ pub struct AdjustMenuController {
 impl AdjustMenuController {
     ///
     /// Creates a new adjust menu controller
-    /// 
+    ///
     pub fn new() -> AdjustMenuController {
         let ui = Self::ui();
 
@@ -24,7 +24,7 @@ impl AdjustMenuController {
 
     ///
     /// Creates the UI for the adjust menu controller
-    /// 
+    ///
     fn ui() -> BindRef<Control> {
         let ui = bind(Control::container()
                     .with(Bounds::fill_all())

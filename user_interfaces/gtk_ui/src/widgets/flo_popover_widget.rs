@@ -20,7 +20,7 @@ use std::cell::*;
 
 ///
 /// Data used with a popover widget
-/// 
+///
 struct FloPopoverData {
     /// Direction the popup will open in
     direction: PopupDirection,
@@ -37,7 +37,7 @@ struct FloPopoverData {
 
 ///
 /// The popup widget is used to manage GTK popup widgets
-/// 
+///
 pub struct FloPopoverWidget {
     /// The ID of the widget
     id: WidgetId,
@@ -58,7 +58,7 @@ pub struct FloPopoverWidget {
 impl FloPopoverWidget {
     ///
     /// Creates a basic widget
-    /// 
+    ///
     pub fn new<Src: Clone+Cast+IsA<gtk::Widget>>(id: WidgetId, widget: Src, widget_data: Rc<WidgetData>) -> FloPopoverWidget {
         // Create the various components
         let widget          = widget.upcast::<gtk::Widget>();
@@ -66,8 +66,8 @@ impl FloPopoverWidget {
         let content         = gtk::Fixed::new();
 
         // Create the layout data
-        let data    = Rc::new(RefCell::new(FloPopoverData { 
-            direction:  PopupDirection::Below, 
+        let data    = Rc::new(RefCell::new(FloPopoverData {
+            direction:  PopupDirection::Below,
             offset:     0,
             is_open:    false,
             reopening:  false
@@ -77,7 +77,7 @@ impl FloPopoverWidget {
         popover.set_modal(false);
         popover.add(&content);
         popover.set_transitions_enabled(true);
-        
+
         Self::connect_position_on_size_allocate(&widget, popover.clone(), Rc::clone(&data));
         Self::connect_reopen(&widget, popover.clone(), Rc::clone(&data));
 
@@ -101,7 +101,7 @@ impl FloPopoverWidget {
 
     ///
     /// Re-opens the popover in the event that the base widget changes where it is in the hierarchy
-    /// 
+    ///
     /// GTK gets confused about dismissing modal popups when the hierarchy changes while a popup is open.
     ///
     fn connect_reopen(base_widget: &gtk::Widget, popover: gtk::Popover, popover_data: Rc<RefCell<FloPopoverData>>) {
@@ -125,7 +125,7 @@ impl FloPopoverWidget {
 
     ///
     /// Repositions the popover whenever the base widget's size changes
-    /// 
+    ///
     fn connect_position_on_size_allocate(base_widget: &gtk::Widget, popover: gtk::Popover, popover_data: Rc<RefCell<FloPopoverData>>) {
         base_widget.connect_size_allocate(move |_base_widget, allocation| {
             popover_data.borrow().position(&popover, allocation);
@@ -134,11 +134,11 @@ impl FloPopoverWidget {
 
     ///
     /// Converts a popup position to a GTK position
-    /// 
+    ///
     fn position_for_direction(direction: PopupDirection) -> gtk::PositionType {
         use self::PopupDirection::*;
         use gtk::PositionType;
-        
+
         match direction {
             OnTop           => PositionType::Bottom,
             WindowCentered  => PositionType::Bottom,

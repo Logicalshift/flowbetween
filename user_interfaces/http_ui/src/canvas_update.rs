@@ -14,7 +14,7 @@ pub struct CanvasUpdate {
     canvas_name: String,
 
     ///
-    /// The updates that should be applied for this canvas 
+    /// The updates that should be applied for this canvas
     ///
     updates: String
 }

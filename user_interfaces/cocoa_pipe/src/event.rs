@@ -3,7 +3,7 @@ use super::action::*;
 use flo_ui::*;
 
 ///
-/// Data provided by a point during a painting action 
+/// Data provided by a point during a painting action
 ///
 #[derive(Clone, Copy, PartialEq, Debug)]
 #[repr(C)] pub struct AppPainting {

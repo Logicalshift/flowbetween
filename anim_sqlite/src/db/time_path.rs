@@ -13,8 +13,8 @@ impl TimePointEntry {
 
 ///
 /// Converts a set of TimePointEntries into a TimeCurve
-/// 
-pub fn time_curve_from_time_points<PointIterator: IntoIterator<Item=TimePointEntry>>(points: PointIterator) -> TimeCurve { 
+///
+pub fn time_curve_from_time_points<PointIterator: IntoIterator<Item=TimePointEntry>>(points: PointIterator) -> TimeCurve {
     // The control points should be stored in groups of three, representing the point and the past and future control points
     let points = points.into_iter()
         .tuples::<(_, _, _)>()

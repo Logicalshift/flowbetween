@@ -7,7 +7,7 @@ use futures::*;
 
 ///
 /// Creates the standard static file handler
-/// 
+///
 pub fn flowbetween_static_file_handler() -> impl Fn(HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>>+Send+Sync {
     static_file_handler(flowbetween_static_files())
 }

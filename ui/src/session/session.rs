@@ -14,7 +14,7 @@ use std::sync::*;
 
 ///
 /// UI session provides a raw user interface implementation for a core controller
-/// 
+///
 pub struct UiSession<CoreController: Controller> {
     /// The core controller
     controller: Arc<CoreController>,
@@ -29,7 +29,7 @@ pub struct UiSession<CoreController: Controller> {
 impl<CoreController: Controller+'static> UiSession<CoreController> {
     ///
     /// Cretes a new UI session with the specified core controller
-    /// 
+    ///
     pub fn new(controller: CoreController) -> UiSession<CoreController> {
         let controller          = Arc::new(controller);
         let core                = UiSessionCore::new(controller.clone());
@@ -46,7 +46,7 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
 
     ///
     /// Causes wake_for_updates to be called on a core when its UI changes
-    /// 
+    ///
     fn track_ui_updates(core: Arc<Desync<UiSessionCore>>) -> Box<dyn Releasable> {
         let update_core = Arc::clone(&core);
 

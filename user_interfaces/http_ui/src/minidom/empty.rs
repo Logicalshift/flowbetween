@@ -5,7 +5,7 @@ pub struct DomEmpty;
 impl DomEmpty {
     ///
     /// Creates a new collection node
-    /// 
+    ///
     pub fn new() -> DomNode {
         DomNode::new(DomEmpty)
     }

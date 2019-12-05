@@ -20,7 +20,7 @@ struct Layer {
 
 ///
 /// Performs drawing to layers stored in framebuffers
-/// 
+///
 pub struct NanoVgLayers {
     /// The viewport, which specifes what part of the canvas to draw on the layers
     viewport: NanoVgViewport,
@@ -47,7 +47,7 @@ pub struct NanoVgLayers {
 impl NanoVgLayers {
     ///
     /// Creates a new layers object
-    /// 
+    ///
     pub fn new(viewport: NanoVgViewport, scale_factor: f32) -> NanoVgLayers {
         // Create a new layers object
         NanoVgLayers {
@@ -63,7 +63,7 @@ impl NanoVgLayers {
 
     ///
     /// Renders the current set of layers
-    /// 
+    ///
     pub fn render(&mut self, x: i32, y: i32) {
         // Finish any drawing that was pending
         self.flush();
@@ -79,7 +79,7 @@ impl NanoVgLayers {
 
     ///
     /// Performs a drawing action on this layers object
-    /// 
+    ///
     pub fn draw(&mut self, action: Draw) {
         match action {
             Draw::Layer(layer_id) => {
@@ -99,7 +99,7 @@ impl NanoVgLayers {
 
     ///
     /// Clears all layers and updates the viewport and scaling
-    /// 
+    ///
     pub fn set_viewport(&mut self, new_viewport: NanoVgViewport, scale_factor: f32) {
         self.state_stack    = vec![];
         self.layers         = HashMap::new();
@@ -111,7 +111,7 @@ impl NanoVgLayers {
 
     ///
     /// Clears all layers associated with this object
-    /// 
+    ///
     pub fn clear(&mut self) {
         self.state_stack    = vec![];
         self.layers         = HashMap::new();
@@ -121,9 +121,9 @@ impl NanoVgLayers {
 
     ///
     /// Flush the pending actions (eg, before changing layers)
-    /// 
-    /// We queue up actions to avoid the need to ask nanovg 
-    /// 
+    ///
+    /// We queue up actions to avoid the need to ask nanovg
+    ///
     fn flush(&mut self) {
         // Short-circuit in the event that there are no pending actions
         if self.pending_for_layer.len() == 0 {
@@ -169,7 +169,7 @@ impl NanoVgLayers {
 
     ///
     /// Performs a draw action on the current layer
-    /// 
+    ///
     #[inline]
     fn flush_to_layer<'a>(state: &mut NanoVgDrawingState, action: Draw, frame: &'a nanovg::Frame<'a>) {
         match action {
@@ -182,7 +182,7 @@ impl NanoVgLayers {
 impl Layer {
     ///
     /// Creates a new layer for the specified viewport
-    /// 
+    ///
     pub fn new(viewport: &NanoVgViewport) -> Layer {
         let framebuffer = FrameBuffer::new(viewport.viewport_width, viewport.viewport_height);
         let context     = nanovg::ContextBuilder::new()

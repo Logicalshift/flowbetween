@@ -22,7 +22,7 @@ lazy_static! {
 impl LogPublisher {
     ///
     /// Creates a new 'core' log publisher
-    /// 
+    ///
     fn new_core_publisher() -> LogPublisher {
         // Create a new logger
         let new_logger = LogPublisher::new_empty(vec![("target", "flo_logger::core")]);
@@ -35,7 +35,7 @@ impl LogPublisher {
 
     ///
     /// Performs the specified function with this log publisher registered as the current publisher
-    /// 
+    ///
     pub fn with<Res, ActionFn: FnOnce() -> Res>(&self, action: ActionFn) -> Res {
         // Remember the previous logger and set the current logger to this
         let previous_log = current_log();
@@ -54,7 +54,7 @@ impl LogPublisher {
 
 ///
 /// Retrieves a reference to the log publisher for the current thread
-/// 
+///
 pub (crate) fn current_log() -> LogPublisher {
     THREAD_LOGGER.with(|logger| {
         let mut logger = logger.borrow_mut();
@@ -74,7 +74,7 @@ pub (crate) fn current_log() -> LogPublisher {
 
 ///
 /// Sends flo logs to a standard logger
-/// 
+///
 pub fn send_logs_to(logger: Box<Log+Send+'static>) {
     pipe_in(Arc::clone(&CORE_PROCESSOR), CORE_LOGGER.subscribe(), move |_, message| {
         if let Ok(message) = message {
@@ -83,7 +83,7 @@ pub fn send_logs_to(logger: Box<Log+Send+'static>) {
                 .level(message.level().into())
                 .target(message.field_value("target").unwrap_or("flo_logger"))
                 .build();
-            
+
             // Metadata for the log message itself (we don't actually format a whole lot of arguments)
             logger.log(&RecordBuilder::new()
                 .metadata(metadata)
@@ -128,7 +128,7 @@ impl Log for FloLog {
 ///
 /// Creates a Rust logger that sends any log messages received for the main log crate to the current flo logger
 /// for the thread
-/// 
+///
 pub fn send_rust_logs_to_flo_logs() -> Result<(), SetLoggerError> {
     set_max_level(LevelFilter::Debug);
     set_logger(&FLO_LOG)

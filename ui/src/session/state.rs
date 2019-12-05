@@ -6,7 +6,7 @@ use binding::*;
 
 ///
 /// Represents the most recent state of a UI session
-/// 
+///
 pub struct UiSessionState {
     /// The control state at the last update
     ui: Option<Control>,
@@ -15,7 +15,7 @@ pub struct UiSessionState {
 impl UiSessionState {
     ///
     /// Creates a new UI session state (which initially stores no state)
-    /// 
+    ///
     pub fn new() -> UiSessionState {
         UiSessionState {
             ui:                 None
@@ -24,7 +24,7 @@ impl UiSessionState {
 
     ///
     /// Updates the UI for this element, returning the corresponding update event
-    /// 
+    ///
     pub fn update_ui(&mut self, new_ui: &Control) -> Option<UiUpdate> {
         let update = if let Some(ref old_ui) = self.ui {
             // Find the differences for the UI
@@ -41,7 +41,7 @@ impl UiSessionState {
                         new_ui:     diff.replacement().clone()
                     })
                     .collect();
-                
+
                 Some(UiUpdate::UpdateUi(diffs))
             }
         } else {
@@ -63,7 +63,7 @@ impl UiSessionState {
 
     ///
     /// Retrieves the updates that are pending in this object
-    /// 
+    ///
     pub fn get_updates(&mut self, ui_binding: &BindRef<Control>) -> Vec<UiUpdate> {
         // Fetch the updates for the various categories
         let ui_updates          = self.update_ui(&ui_binding.get());
@@ -103,7 +103,7 @@ mod test {
             .with(vec![
                 Control::label().with("Test1")
             ]));
-        
+
         assert!(state.update_ui(&Control::empty()
             .with(vec![
                 Control::label().with("Test2")

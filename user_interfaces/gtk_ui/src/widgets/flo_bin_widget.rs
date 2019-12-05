@@ -17,10 +17,10 @@ use std::cell::*;
 
 ///
 /// Handles events for 'bin' widgets (which are containers which can only contain a single subcontrol)
-/// 
+///
 /// Flo doesn't have this concept itself. A bin widget can contain a label or an image directly but needs
 /// to delegate to a fixed widget for more complicated tasks.
-/// 
+///
 pub struct FloBinWidget {
     /// The ID of this widget
     id: WidgetId,
@@ -47,7 +47,7 @@ pub struct FloBinWidget {
 impl FloBinWidget {
     ///
     /// Creates a new bin widget
-    /// 
+    ///
     pub fn new<W: Clone+Cast+IsA<gtk::Bin>+IsA<gtk::Widget>>(id: WidgetId, bin_widget: W, widget_data: Rc<WidgetData>) -> FloBinWidget {
         FloBinWidget {
             id:             id,
@@ -62,7 +62,7 @@ impl FloBinWidget {
 
     ///
     /// Creates the fixed widget, if it doesn't already exist
-    /// 
+    ///
     fn make_fixed(&mut self, flo_gtk: &mut FloGtk) {
         if self.fixed.is_none() {
             // Create the fixed widget
@@ -90,7 +90,7 @@ impl FloBinWidget {
 
     ///
     /// Sets the label for this widget
-    /// 
+    ///
     fn set_label(&mut self, new_label: String, flo_gtk: &mut FloGtk) {
         if let Some((ref mut label_text, ref label_widget)) = self.label {
             // If there's already a label control, then update it
@@ -112,7 +112,7 @@ impl FloBinWidget {
 
     ///
     /// Sets the label for this widget
-    /// 
+    ///
     fn set_image(&mut self, new_image: Resource<Image>, flo_gtk: &mut FloGtk) {
         // Remove any existing image control
         if let Some((_old_image, old_image_widget)) = self.image.take() {
@@ -183,7 +183,7 @@ impl GtkUiWidget for FloBinWidget {
             }
         }
     }
-    
+
     fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Child widgets are always added to the fixed widget
         self.fixed.as_mut().map(move |fixed| fixed.set_children(children));

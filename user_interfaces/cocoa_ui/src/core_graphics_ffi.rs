@@ -176,9 +176,9 @@ extern {
     pub fn CGContextClip(ctxt: CGContextRef);
 }
 
-pub trait CFReleasable { 
+pub trait CFReleasable {
     fn retain(&self) -> Self;
-    fn release(&self); 
+    fn release(&self);
 }
 
 impl CFReleasable for CGContextRef {

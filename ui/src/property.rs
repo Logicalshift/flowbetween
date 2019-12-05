@@ -29,7 +29,7 @@ pub enum PropertyValue {
 impl Property {
     ///
     /// Returns a property bound to a value in the view model
-    /// 
+    ///
     #[inline]
     pub fn bound(value_name: &str) -> Property {
         Property::Bind(value_name.to_string())
@@ -61,7 +61,7 @@ impl PropertyValue {
 
     ///
     /// Returns the boolean value of this property, if it is one
-    /// 
+    ///
     pub fn to_bool(&self) -> Option<bool> {
         if let &PropertyValue::Bool(result) = self {
             Some(result)
