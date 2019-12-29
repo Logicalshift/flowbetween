@@ -4,7 +4,7 @@ use super::log_subscriber::*;
 
 use log;
 use log::*;
-use desync::*;
+use desync::{Desync, pipe_in};
 
 use std::sync::*;
 use std::cell::*;
@@ -77,21 +77,19 @@ pub (crate) fn current_log() -> LogPublisher {
 /// 
 pub fn send_logs_to(logger: Box<dyn Log+Send+'static>) {
     pipe_in(Arc::clone(&CORE_PROCESSOR), CORE_LOGGER.subscribe(), move |_, message| {
-        if let Ok(message) = message {
-            // Generate metadata for the level/target
-            let metadata = MetadataBuilder::new()
-                .level(message.level().into())
-                .target(message.field_value("target").unwrap_or("flo_logger"))
-                .build();
-            
-            // Metadata for the log message itself (we don't actually format a whole lot of arguments)
-            logger.log(&RecordBuilder::new()
-                .metadata(metadata)
-                .file(message.field_value("file"))
-                .line(message.field_value("line").and_then(|line_str| line_str.parse::<u32>().ok()))
-                .args(format_args!("{}", message.message()))
-                .build());
-        }
+        // Generate metadata for the level/target
+        let metadata = MetadataBuilder::new()
+            .level(message.level().into())
+            .target(message.field_value("target").unwrap_or("flo_logger"))
+            .build();
+        
+        // Metadata for the log message itself (we don't actually format a whole lot of arguments)
+        logger.log(&RecordBuilder::new()
+            .metadata(metadata)
+            .file(message.field_value("file"))
+            .line(message.field_value("line").and_then(|line_str| line_str.parse::<u32>().ok()))
+            .args(format_args!("{}", message.message()))
+            .build());
     })
 }
 
