@@ -8,6 +8,7 @@ use flo_stream::*;
 use desync::{Desync, pipe_in};
 use futures::future::{FutureExt};
 use futures::prelude::*;
+use futures::executor;
 
 use std::sync::*;
 
@@ -106,7 +107,7 @@ impl LogPublisher {
         self.context.sync(|context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
             let message = LogMsg::from(message);
-            Self::log_in_context(context, message);
+            executor::block_on(async { Self::log_in_context(context, message).await });
         });
     }
 
@@ -117,7 +118,7 @@ impl LogPublisher {
         // Pipe the stream through to the context
         pipe_in(Arc::clone(&self.context), stream, |context, message| {
             let message = LogMsg::from(message);
-            Self::log_in_context(context, message);
+            executor::block_on(async { Self::log_in_context(context, message).await });
         });
     }
 
