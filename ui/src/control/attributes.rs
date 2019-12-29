@@ -13,7 +13,7 @@ use super::super::property::*;
 use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
-use modifier::*;
+use ::modifier::*;
 
 ///
 /// Attribute attached to a control

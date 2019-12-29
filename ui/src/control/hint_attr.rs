@@ -1,7 +1,7 @@
 use super::control::*;
 use super::attributes::*;
 
-use modifier::*;
+use ::modifier::*;
 
 ///
 /// Hints that can be applied to a control

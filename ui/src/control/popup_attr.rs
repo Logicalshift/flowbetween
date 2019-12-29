@@ -1,7 +1,7 @@
 use super::*;
 use super::super::property::*;
 
-use modifier::*;
+use ::modifier::*;
 
 ///
 /// The direction in which the popup should be shown

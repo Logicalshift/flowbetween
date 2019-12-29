@@ -3,7 +3,7 @@ use super::super::image;
 use super::super::resource_manager::*;
 
 use canvas;
-use modifier::*;
+use ::modifier::*;
 
 ///
 /// Attributes that describe the appearance of a control

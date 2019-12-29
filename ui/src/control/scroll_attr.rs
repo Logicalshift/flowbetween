@@ -1,6 +1,6 @@
 use super::*;
 
-use modifier::*;
+use ::modifier::*;
 
 ///
 /// Possible visibilities for the scrollbars
