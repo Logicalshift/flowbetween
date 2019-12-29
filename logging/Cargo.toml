@@ -8,8 +8,8 @@ description = "Pubsub logging framework"
 
 [dependencies]
 flo_stream      = "0.3"
-desync          = "0.4"
+desync          = "0.5"
 
-futures         = "0.1"
+futures         = "0.3"
 lazy_static     = "1.0"
 log             = "0.4"
