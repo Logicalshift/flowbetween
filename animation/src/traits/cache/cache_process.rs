@@ -1,9 +1,10 @@
 use futures::*;
+use futures::task::{Poll, Context};
 
 ///
 /// Represents an item that is in the cache, or is in the process of being generated
 ///
-pub enum CacheProcess<Result, Process: Future<Item=Result>+Send> {
+pub enum CacheProcess<Result, Process: Future<Output=Result>+Send> {
     /// The item was already cached and is retrieved
     Cached(Result),
 
@@ -11,21 +12,20 @@ pub enum CacheProcess<Result, Process: Future<Item=Result>+Send> {
     Process(Process),
 }
 
-impl<Result: Clone, Process: Future<Item=Result>+Send> Future for CacheProcess<Result, Process> {
-    type Item   = Result;
-    type Error  = Process::Error;
+impl<Result: Clone, Process: Future<Output=Result>+Send> Future for CacheProcess<Result, Process> {
+    type Output = Result;
 
-    fn poll(&mut self) -> Poll<Result, Process::Error> {
+    fn poll(&mut self, context: &mut Context) -> Poll<Result> {
         match self {
-            CacheProcess::Cached(result)    => Ok(Async::Ready(result.clone())),
+            CacheProcess::Cached(result)    => Poll::Ready(result.clone()),
             CacheProcess::Process(process)  => {
                 // Cache value will become available in the future: poll for it
-                let poll_result = process.poll();
+                let poll_result = process.poll(context);
 
-                if let Ok(Async::Ready(poll_result)) = poll_result {
+                if let Poll::Ready(poll_result) = poll_result {
                     // Cache value is now available. Update the state to be just 'Cached' so we don't need to poll again
                     *self = CacheProcess::Cached(poll_result.clone());
-                    Ok(Async::Ready(poll_result))
+                    Poll::Ready(poll_result)
                 } else {
                     // Pass on the poll result in all other circumstances
                     poll_result
