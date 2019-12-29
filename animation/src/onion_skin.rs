@@ -5,6 +5,7 @@ use flo_curves::debug::*;
 use flo_curves::bezier::path::*;
 
 use futures::*;
+use futures::future::{BoxFuture};
 
 use std::iter;
 use std::sync::*;
@@ -16,7 +17,7 @@ use std::time::Duration;
 /// This is the set of Move/Line/Bezier curve elements forming the path for this onion skin. The `NewPath` and any actual
 /// drawing instructions are left out of the list generated here, so the onion skin can be rendered any way that is needed.
 ///
-pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>+Send>> {
+pub fn onion_skin_for_layer(layer: Arc<dyn Layer>, when: Duration) -> CacheProcess<Arc<Vec<Draw>>, BoxFuture<'static, Arc<Vec<Draw>>>> {
     layer.get_canvas_cache_at_time(when)
         .retrieve_or_generate(CacheType::OnionSkinLayer, Box::new(move || {
             // Fetch the elements for the frame
