@@ -2,7 +2,7 @@ use super::core::*;
 use super::event::*;
 use super::super::controller::*;
 
-use desync::*;
+use ::desync::*;
 use futures::*;
 use futures::task;
 

@@ -1,4 +1,4 @@
-use desync::*;
+use ::desync::*;
 use canvas::*;
 use binding::*;
 use binding::binding_context::*;

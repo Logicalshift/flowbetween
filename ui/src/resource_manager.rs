@@ -1,4 +1,4 @@
-use desync::*;
+use ::desync::*;
 
 use std::fmt;
 use std::ops::*;
