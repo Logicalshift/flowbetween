@@ -1,5 +1,6 @@
 use super::*;
 
+use flo_stream::*;
 use flo_canvas::*;
 use flo_animation::*;
 
@@ -249,12 +250,12 @@ fn add_keyframe_with_layer_editor() {
         AnimationEdit::AddNewLayer(2),
     ]);
 
-    {
-        let mut sink = executor::spawn(anim.edit());
+    executor::block_on(async {
+        let mut sink = anim.edit();
 
-        sink.wait_send(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))]).unwrap();
-        sink.wait_flush().unwrap();
-    }
+        sink.publish(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))]).await;
+        sink.when_empty().await;
+    });
 
     anim.panic_on_error();
 
@@ -495,8 +496,7 @@ fn read_brush_strokes_from_edit_log() {
 
     let edit_log        = anim.read_edit_log(0..7);
     let edit_log        = edit_log.collect();
-    let mut edit_log    = executor::spawn(edit_log);
-    let edits           = edit_log.wait_future().unwrap();
+    let edits: Vec<_>   = executor::block_on(edit_log);
 
     assert!(edits.len() == 7);
     assert!(edits[0] == AnimationEdit::AddNewLayer(2));
@@ -528,7 +528,7 @@ fn read_brush_strokes_from_edit_log() {
 
 #[test]
 fn will_assign_element_ids() {
-    let animation = SqliteAnimation::new_in_memory();;
+    let animation = SqliteAnimation::new_in_memory();
 
     // Perform some edits on the animation with an unassigned element ID
     animation.perform_edits(vec![
@@ -548,11 +548,10 @@ fn will_assign_element_ids() {
     ]);
 
     // Element ID should be assigned if we read the log back
-    let edit_log        = animation.read_edit_log(4..5);
-    let edit_log        = edit_log.collect();
-    let mut edit_log    = executor::spawn(edit_log);
+    let edit_log            = animation.read_edit_log(4..5);
+    let edit_log            = edit_log.collect();
 
-    let paint_edit = edit_log.wait_future().unwrap();
+    let paint_edit: Vec<_>  = executor::block_on(edit_log);
 
     // Should be able to find the paint edit here
     assert!(match &paint_edit[0] { &AnimationEdit::Layer(0, LayerEdit::Paint(_, _)) => true, _ => false });
@@ -995,8 +994,7 @@ fn retrieve_or_generate_cached_onionskin() {
     assert!(match cached_drawing { CacheProcess::Process(_) => true, _ => false });
 
     // ... and eventually evaluate to the drawing we specified in the generate function
-    let mut cached_drawing = executor::spawn(cached_drawing);
-    let cached_drawing = cached_drawing.wait_future().unwrap();
+    let cached_drawing = executor::block_on(cached_drawing);
 
     assert!(cached_drawing == Arc::new(vec![Draw::NewPath, Draw::Fill]));
 
