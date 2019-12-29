@@ -75,7 +75,7 @@ pub (crate) fn current_log() -> LogPublisher {
 ///
 /// Sends flo logs to a standard logger
 /// 
-pub fn send_logs_to(logger: Box<Log+Send+'static>) {
+pub fn send_logs_to(logger: Box<dyn Log+Send+'static>) {
     pipe_in(Arc::clone(&CORE_PROCESSOR), CORE_LOGGER.subscribe(), move |_, message| {
         if let Ok(message) = message {
             // Generate metadata for the level/target
