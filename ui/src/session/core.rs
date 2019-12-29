@@ -3,10 +3,10 @@ use super::super::control::*;
 use super::super::controller::*;
 
 use flo_stream::*;
-
 use flo_binding::*;
+
 use itertools::*;
-use futures::executor::*;
+use futures::executor;
 
 use std::mem;
 use std::sync::*;
@@ -20,10 +20,10 @@ pub struct UiSessionCore {
     last_update_id: u64,
 
     /// Used to publish tick events
-    tick: Spawn<ExpiringPublisher<()>>,
+    tick: ExpiringPublisher<()>,
 
     /// Used to temporarily suspend event processing
-    suspend_updates: Spawn<ExpiringPublisher<bool>>,
+    suspend_updates: ExpiringPublisher<bool>,
 
     /// Number of times this has been suspended
     suspension_count: i32,
@@ -49,8 +49,8 @@ impl UiSessionCore {
         UiSessionCore {
             last_update_id:     0,
             ui_tree:            ui_tree,
-            tick:               spawn(ExpiringPublisher::new(1)),
-            suspend_updates:    spawn(ExpiringPublisher::new(1)),
+            tick:               ExpiringPublisher::new(1),
+            suspend_updates:    ExpiringPublisher::new(1),
             suspension_count:   0,
             tick_on_resume:     false,
             update_callbacks:   vec![]
@@ -140,7 +140,7 @@ impl UiSessionCore {
 
                 UiEvent::SuspendUpdates => {
                     self.suspension_count += 1;
-                    self.suspend_updates.wait_send(self.suspension_count > 0).ok();
+                    executor::block_on(async { self.suspend_updates.publish(self.suspension_count > 0).await; });
                 },
 
                 UiEvent::ResumeUpdates => {
@@ -151,7 +151,7 @@ impl UiSessionCore {
                     }
 
                     self.suspension_count -= 1;
-                    self.suspend_updates.wait_send(self.suspension_count > 0).ok();
+                    executor::block_on(async { self.suspend_updates.publish(self.suspension_count > 0).await; });
                 },
 
                 UiEvent::Tick => {
@@ -243,6 +243,6 @@ impl UiSessionCore {
         // Send the tick to the controller
         controller.tick();
 
-        self.tick.wait_send(()).ok();
+        executor::block_on(async { self.tick.publish(()).await });
     }
 }
