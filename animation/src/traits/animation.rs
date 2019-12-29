@@ -3,6 +3,7 @@ use super::layer::*;
 use super::animation_motion::*;
 
 use futures::*;
+use futures::stream::{BoxStream};
 
 use std::time::Duration;
 use std::sync::*;
@@ -45,7 +46,7 @@ pub trait Animation : Send+Sync {
     ///
     /// Reads from the edit log for this animation
     /// 
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit>>;
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> BoxStream<'a, AnimationEdit>;
 
     ///
     /// Supplies a reference which can be used to find the motions associated with this animation
