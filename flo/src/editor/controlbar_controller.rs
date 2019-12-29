@@ -9,7 +9,7 @@ use std::sync::*;
 
 ///
 /// The control bar provides a home for the basic animation editing and playback controls
-/// 
+///
 pub struct ControlBarController<Anim: 'static+Animation+EditableAnimation> {
     /// The UI for this control bar
     ui: BindRef<Control>,
@@ -21,7 +21,7 @@ pub struct ControlBarController<Anim: 'static+Animation+EditableAnimation> {
 impl<Anim: 'static+Animation+EditableAnimation> ControlBarController<Anim> {
     ///
     /// Creates a new control bar controller
-    /// 
+    ///
     pub fn new(model: &FloModel<Anim>) -> ControlBarController<Anim> {
         // Create the UI
         let ui                  = Self::ui();
@@ -39,7 +39,7 @@ impl<Anim: 'static+Animation+EditableAnimation> ControlBarController<Anim> {
 
     ///
     /// Creates the UI for this controller
-    /// 
+    ///
     fn ui() -> BindRef<Control> {
         // Create the UI itself
         let ui = Control::container()

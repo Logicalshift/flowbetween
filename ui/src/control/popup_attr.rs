@@ -5,7 +5,7 @@ use modifier::*;
 
 ///
 /// The direction in which the popup should be shown
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum PopupDirection {
     /// Popup appears directly over the top of the parent control
@@ -32,7 +32,7 @@ pub enum PopupDirection {
 
 ///
 /// Attributes associated with controlling a popup
-/// 
+///
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub enum Popup {
     /// Whether or not this popup is open (popups are closed by default)

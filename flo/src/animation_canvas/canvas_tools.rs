@@ -17,7 +17,7 @@ use std::time::Duration;
 
 ///
 /// Converts tool actions into actions for a canvas
-/// 
+///
 pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     /// The animation that actions should be committed to
     animation: Arc<FloModel<Anim>>,
@@ -56,7 +56,7 @@ pub struct CanvasTools<Anim: Animation+EditableAnimation> {
 impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     ///
     /// Creates a new canvas tools structure
-    /// 
+    ///
     pub fn from_model(view_model: &FloModel<Anim>) -> CanvasTools<Anim> {
         let animation       = Arc::new(view_model.clone());
         let effective_tool  = BindRef::from(view_model.tools().effective_tool.clone());
@@ -82,7 +82,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Deselects the active tool
-    /// 
+    ///
     fn deselect_active_tool(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // Send and process the deselect actions to whatever tool is active
         let deselect_actions = self.tool_runner.actions_for_input(iter::once(ToolInput::Deselect));
@@ -94,7 +94,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Sends the selection action to the current tool
-    /// 
+    ///
     fn select_active_tool(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // Send and process the select action to whatever tool is active
         let select_actions = self.tool_runner.actions_for_input(iter::once(ToolInput::Select));
@@ -103,7 +103,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// If the effective tool is different, changes the tool that's being used by the tool runner
-    /// 
+    ///
     pub fn refresh_tool(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         let effective_tool = self.effective_tool.get();
 
@@ -134,7 +134,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Polls for any pending actions (for example, because the model was updated)
-    /// 
+    ///
     pub fn poll_for_pending_actions(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // Get any pending tool actions
         let actions = self.tool_runner.model_actions();
@@ -156,7 +156,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Sends input to the current tool
-    /// 
+    ///
     pub fn send_input<InputIter: Iterator<Item=ToolInput<GenericToolData>>>(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, input: InputIter) {
         // Ensure that the tool is ready to run
         self.refresh_tool(canvas, renderer);
@@ -170,10 +170,10 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Processes a set of actions with whatever tool is selected, rendering them if necessary
-    /// 
+    ///
     /// Call `refresh_tool` before calling this to make sure that the effective tool
     /// is active.
-    /// 
+    ///
     pub fn process_actions<ActionIter: Iterator<Item=ToolAction<GenericToolData>>>(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, actions: ActionIter) {
         // Process the actions in sequence
         let mut animation_edits = vec![];
@@ -208,7 +208,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// True if we need to update the brush definition before drawing
-    /// 
+    ///
     fn need_brush_definition(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
         let (brush, _properties) = renderer.get_layer_brush(layer_id);
 
@@ -217,7 +217,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// True if we need to update the brush properties before drawing
-    /// 
+    ///
     fn need_brush_properties(&self, layer_id: u64, renderer: &CanvasRenderer) -> bool {
         let (_brush, properties) = renderer.get_layer_brush(layer_id);
 
@@ -226,7 +226,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Processes a brush preview action
-    /// 
+    ///
     fn process_brush_preview(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, preview: BrushPreviewAction) {
         match preview {
             BrushPreviewAction::Clear                           => {
@@ -250,7 +250,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Process an overlay action
-    /// 
+    ///
     fn process_overlay(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer, overlay: OverlayAction) {
         // Overlay 0 is used for tool overlays
 
@@ -262,7 +262,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Returns true if the current time in the preview layer isn't currently on a keyframe
-    /// 
+    ///
     fn need_new_keyframe(&self) -> bool {
         if let Some(preview_layer) = self.preview_layer {
             // Look for a frame around the current time
@@ -284,7 +284,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Creates a new keyframe if there is no current keyframe and the 'create keyframe on draw' option is set.is
-    /// 
+    ///
     /// Returns true if the keyframe was created
     ///
     fn create_new_keyframe_if_required(&mut self) -> bool {
@@ -316,7 +316,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
     ///
     /// Commits the current brush preview to the animation
-    /// 
+    ///
     fn commit_brush_preview(&mut self, canvas: &BindingCanvas, renderer: &mut CanvasRenderer) {
         // We take the preview here (so there's no preview after this)
         if let (Some(mut preview), Some(preview_layer)) = (self.preview.take(), self.preview_layer) {

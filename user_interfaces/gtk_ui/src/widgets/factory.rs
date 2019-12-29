@@ -21,7 +21,7 @@ use std::rc::*;
 
 ///
 /// Constructs a new widget of the specified type
-/// 
+///
 pub fn create_widget(id: WidgetId, widget_type: GtkWidgetType, widget_data: Rc<WidgetData>) -> Box<dyn GtkUiWidget> {
     use self::GtkWidgetType::*;
 

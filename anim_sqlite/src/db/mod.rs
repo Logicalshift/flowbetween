@@ -48,7 +48,7 @@ use self::edit_stream::*;
 
 ///
 /// Database used to store an animation
-/// 
+///
 pub struct AnimationDb {
     /// The core contains details of the database
     core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
@@ -60,14 +60,14 @@ pub struct AnimationDb {
 impl AnimationDb {
     ///
     /// Creates a new animation database with an in-memory database
-    /// 
+    ///
     pub fn new() -> AnimationDb {
         Self::new_from_connection(Connection::open_in_memory().unwrap())
     }
 
     ///
     /// Creates a new animation database using the specified SQLite connection
-    /// 
+    ///
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
         FloSqlite::setup(&connection).unwrap();
 
@@ -84,7 +84,7 @@ impl AnimationDb {
 
     ///
     /// Creates an animation database that uses an existing database already set up in a SQLite connection
-    /// 
+    ///
     pub fn from_connection(connection: Connection) -> AnimationDb {
         let core        = Arc::new(Desync::new(AnimationDbCore::new(connection)));
         let publisher   = create_edit_publisher(&core);
@@ -99,7 +99,7 @@ impl AnimationDb {
 
     ///
     /// If there has been an error, retrieves what it is and clears the condition
-    /// 
+    ///
     pub fn retrieve_and_clear_error(&self) -> Option<SqliteAnimationError> {
         // We have to clear the error as rusqlite::Error does not implement clone or copy
         self.core.sync(|core| {
@@ -134,7 +134,7 @@ impl AnimationDb {
 impl AnimationDbCore<FloSqlite> {
     ///
     /// Creates a new database core with a sqlite connection
-    /// 
+    ///
     fn new(connection: Connection) -> AnimationDbCore<FloSqlite> {
         // Query the database to warm up our cached values
         let mut db = FloSqlite::new(connection);
@@ -162,7 +162,7 @@ impl AnimationDbCore<FloSqlite> {
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
-    /// 
+    ///
     fn retrieve_and_clear_error(&mut self) -> Option<SqliteAnimationError> {
         // We have to clear the error as rusqlite::Error does not implement clone or copy
         let mut failure = None;

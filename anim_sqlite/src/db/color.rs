@@ -7,7 +7,7 @@ use flo_canvas::*;
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts a colour definition, leaving the ID on the database stack
-    /// 
+    ///
     pub fn insert_color(db: &mut TFile, color: &Color) -> Result<()> {
         use self::DatabaseUpdate::*;
 
@@ -30,7 +30,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Decodes the colour with the specified ID from the database
-    /// 
+    ///
     pub fn get_color(db: &mut TFile, color_id: i64) -> Result<Color> {
         use self::ColorType::*;
 

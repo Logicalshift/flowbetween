@@ -14,7 +14,7 @@ use std::cell::*;
 
 ///
 /// Executes a Gtk action
-/// 
+///
 pub fn run_action(flo_gtk: &mut FloGtk, action: &GtkAction) {
     match action {
         &GtkAction::Stop                                    => gtk::main_quit(),
@@ -25,7 +25,7 @@ pub fn run_action(flo_gtk: &mut FloGtk, action: &GtkAction) {
 
 ///
 /// Wires up the events for a window
-/// 
+///
 fn wire_up_window(new_window: &gtk::Window, window_id: WindowId, flo_gtk: &mut FloGtk) {
     // Retrieve a sink where we can send our events to
     let event_sink = flo_gtk.get_event_sink();
@@ -39,7 +39,7 @@ fn wire_up_window(new_window: &gtk::Window, window_id: WindowId, flo_gtk: &mut F
 
 ///
 /// Executes a Gtk window action
-/// 
+///
 fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<GtkWindowAction>) {
     // Fetch the window with this ID
     let mut window = flo_gtk.get_window(window_id);
@@ -60,7 +60,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
 
                 // Wire up events
                 wire_up_window(&new_window, window_id, flo_gtk);
-                
+
                 // Register the window
                 flo_gtk.register_window(window_id, new_window);
 
@@ -87,7 +87,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
 
 ///
 /// Executes a Gtk widget action
-/// 
+///
 fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<GtkWidgetAction>) {
     // Fetch the widget for which we will be dispatching actions
     let widget_data = flo_gtk.widget_data();
@@ -109,7 +109,7 @@ fn run_widget_action(flo_gtk: &mut FloGtk, widget_id: WidgetId, actions: &Vec<Gt
 
                 // Register with the widget data
                 widget_data.register_widget(widget_id, new_widget);
-                
+
                 // Update the widget that actions are sent to
                 widget = widget_data.get_widget(widget_id);
 

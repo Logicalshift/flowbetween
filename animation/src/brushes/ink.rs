@@ -18,7 +18,7 @@ const INK_PRESSURE_SCALE: f64 = 50.0;
 
 ///
 /// The ink brush draws a solid line with width based on pressure
-/// 
+///
 pub struct InkBrush {
     /// The blend mode that this brush will use
     blend_mode: BlendMode,
@@ -36,8 +36,8 @@ pub struct InkBrush {
 impl InkBrush {
     ///
     /// Creates a new ink brush with the default settings
-    /// 
-    pub fn new(definition: &InkDefinition, drawing_style: BrushDrawingStyle) -> InkBrush {
+    ///
+    pub fn new(definition: &InkDefinition, drawing_style: BrushDrawingStyle) -> Self {
         use BrushDrawingStyle::*;
 
         let blend_mode = match drawing_style {
@@ -45,8 +45,8 @@ impl InkBrush {
             Erase   => BlendMode::DestinationOut
         };
 
-        InkBrush {
-            blend_mode:         blend_mode,
+        Self {
+            blend_mode,
             min_width:          definition.min_width,
             max_width:          definition.max_width,
             scale_up_distance:  definition.scale_up_distance
@@ -56,7 +56,7 @@ impl InkBrush {
 
 ///
 /// Ink brush coordinate (used for curve fitting)
-/// 
+///
 #[derive(Clone, Copy, PartialEq)]
 struct InkCoord {
     x: f64,
@@ -76,8 +76,8 @@ impl InkCoord {
 }
 
 impl<'a> From<&'a RawPoint> for InkCoord {
-    fn from(src: &'a RawPoint) -> InkCoord {
-        InkCoord {
+    fn from(src: &'a RawPoint) -> Self {
+        Self {
             x: src.position.0 as f64,
             y: src.position.1 as f64,
             pressure: (src.pressure as f64)*INK_PRESSURE_SCALE
@@ -86,8 +86,8 @@ impl<'a> From<&'a RawPoint> for InkCoord {
 }
 
 impl<'a> From<&'a BrushPoint> for InkCoord {
-    fn from(src: &'a BrushPoint) -> InkCoord {
-        InkCoord {
+    fn from(src: &'a BrushPoint) -> Self {
+        Self {
             x: src.position.0 as f64,
             y: src.position.1 as f64,
             pressure: (src.width as f64)*INK_PRESSURE_SCALE
@@ -96,11 +96,11 @@ impl<'a> From<&'a BrushPoint> for InkCoord {
 }
 
 impl Add<InkCoord> for InkCoord {
-    type Output=InkCoord;
+    type Output = Self;
 
     #[inline]
-    fn add(self, rhs: InkCoord) -> InkCoord {
-        InkCoord {
+    fn add(self, rhs: Self) -> Self {
+        Self {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
             pressure: self.pressure + rhs.pressure
@@ -109,11 +109,11 @@ impl Add<InkCoord> for InkCoord {
 }
 
 impl Sub<InkCoord> for InkCoord {
-    type Output=InkCoord;
+    type Output = Self;
 
     #[inline]
-    fn sub(self, rhs: InkCoord) -> InkCoord {
-        InkCoord {
+    fn sub(self, rhs: Self) -> Self {
+        Self {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
             pressure: self.pressure - rhs.pressure
@@ -122,11 +122,11 @@ impl Sub<InkCoord> for InkCoord {
 }
 
 impl Mul<f64> for InkCoord {
-    type Output=InkCoord;
+    type Output = Self;
 
     #[inline]
-    fn mul(self, rhs: f64) -> InkCoord {
-        InkCoord {
+    fn mul(self, rhs: f64) -> Self {
+        Self {
             x: self.x * rhs,
             y: self.y * rhs,
             pressure: self.pressure * rhs
@@ -136,20 +136,20 @@ impl Mul<f64> for InkCoord {
 
 impl Coordinate for InkCoord {
     #[inline]
-    fn from_components(components: &[f64]) -> InkCoord {
-        InkCoord { x: components[0], y: components[1], pressure: components[2] }
+    fn from_components(components: &[f64]) -> Self {
+        Self { x: components[0], y: components[1], pressure: components[2] }
     }
 
     #[inline]
-    fn origin() -> InkCoord {
-        InkCoord { x: 0.0, y: 0.0, pressure: 0.0 }
+    fn origin() -> Self {
+        Self { x: 0.0, y: 0.0, pressure: 0.0 }
     }
 
     #[inline]
     fn len() -> usize { 3 }
 
     #[inline]
-    fn get(&self, index: usize) -> f64 { 
+    fn get(&self, index: usize) -> f64 {
         match index {
             0 => self.x,
             1 => self.y,
@@ -158,16 +158,16 @@ impl Coordinate for InkCoord {
         }
     }
 
-    fn from_biggest_components(p1: InkCoord, p2: InkCoord) -> InkCoord {
-        InkCoord {
+    fn from_biggest_components(p1: Self, p2: Self) -> Self {
+        Self {
             x: f64::from_biggest_components(p1.x, p2.x),
             y: f64::from_biggest_components(p1.y, p2.y),
             pressure: f64::from_biggest_components(p1.pressure, p2.pressure)
         }
     }
 
-    fn from_smallest_components(p1: InkCoord, p2: InkCoord) -> InkCoord {
-        InkCoord {
+    fn from_smallest_components(p1: Self, p2: Self) -> Self {
+        Self {
             x: f64::from_smallest_components(p1.x, p2.x),
             y: f64::from_smallest_components(p1.y, p2.y),
             pressure: f64::from_smallest_components(p1.pressure, p2.pressure)
@@ -175,7 +175,7 @@ impl Coordinate for InkCoord {
     }
 
     #[inline]
-    fn distance_to(&self, target: &InkCoord) -> f64 {
+    fn distance_to(&self, target: &Self) -> f64 {
         let dist_x = target.x-self.x;
         let dist_y = target.y-self.y;
         let dist_p = target.pressure-self.pressure;
@@ -191,7 +191,7 @@ impl Coordinate for InkCoord {
 
 ///
 /// Bezier curve using InkCoords
-/// 
+///
 #[derive(Clone, Copy)]
 struct InkCurve {
     pub start_point:    InkCoord,
@@ -202,9 +202,9 @@ struct InkCurve {
 impl InkCurve {
     ///
     /// Creates an ink curve from brush points
-    /// 
-    pub fn from_brush_points(last_point: &BrushPoint, next_point: &BrushPoint) -> InkCurve {
-        InkCurve {
+    ///
+    pub fn from_brush_points(last_point: &BrushPoint, next_point: &BrushPoint) -> Self {
+        Self {
             start_point:    InkCoord { x: last_point.position.0 as f64, y: last_point.position.1 as f64, pressure: last_point.width as f64 },
             end_point:      InkCoord { x: next_point.position.0 as f64, y: next_point.position.1 as f64, pressure: next_point.width as f64 },
             control_points: (
@@ -216,7 +216,7 @@ impl InkCurve {
 
     ///
     /// Converts to a pair of offset curves
-    /// 
+    ///
     pub fn to_offset_curves(&self, min_width: f64, max_width: f64) -> (Vec<bezier::Curve<Coord2>>, Vec<bezier::Curve<Coord2>>) {
         // Fetch the coordinates for the offset curve
         let (start, start_pressure) = self.start_point().to_coord2();
@@ -241,8 +241,8 @@ impl Geo for InkCurve {
 }
 
 impl BezierCurveFactory for InkCurve {
-    fn from_points(start: InkCoord, control_points: (InkCoord, InkCoord), end: InkCoord) -> InkCurve {
-        InkCurve {
+    fn from_points(start: InkCoord, control_points: (InkCoord, InkCoord), end: InkCoord) -> Self {
+        Self {
             start_point:    start,
             end_point:      end,
             control_points: control_points
@@ -277,26 +277,26 @@ impl Brush for InkBrush {
         // Convert points to ink points
         let ink_points: Vec<_> = points.iter().map(|point| InkCoord::from(point)).collect();
 
-        // Average points that are very close together so we don't overdo 
+        // Average points that are very close together so we don't overdo
         // the curve fitting
         let mut averaged_points = vec![];
         let mut last_point      = ink_points[0];
         averaged_points.push(last_point);
 
         for point in ink_points.iter().skip(1) {
-            // If the distance between this point and the last one is below a 
+            // If the distance between this point and the last one is below a
             // threshold, average them together
             let distance = last_point.distance_to(point);
 
             if distance < MIN_DISTANCE {
                 // Average this point with the previous average
-                // TODO: (We should really total up the number of points we're 
+                // TODO: (We should really total up the number of points we're
                 // averaging over)
                 let num_averaged    = averaged_points.len();
                 let current_average = averaged_points[num_averaged-1];
                 let averaged_point  = (current_average + last_point) * 0.5;
 
-                // Update the earlier point (and don't update last_point: we'll 
+                // Update the earlier point (and don't update last_point: we'll
                 // keep averaging until we find a new point far enough away)
                 averaged_points[num_averaged-1] = averaged_point;
             } else {
@@ -389,7 +389,7 @@ impl Brush for InkBrush {
 
     fn render_brush<'a>(&'a self, properties: &'a BrushProperties, points: &'a Vec<BrushPoint>) -> Box<dyn 'a+Iterator<Item=Draw>> {
         let size_ratio = properties.size / self.max_width;
-        
+
         // Nothing to do if there are too few points
         if points.len() < 2 {
             return Box::new(iter::empty());
@@ -403,7 +403,7 @@ impl Brush for InkBrush {
             curve.push(InkCurve::from_brush_points(last_point, brush_point));
             last_point = brush_point;
         }
-        
+
         // Draw a variable width line for this curve
         let (upper_curves, lower_curves): (Vec<_>, Vec<_>) = curve.into_iter()
             .map(|ink_curve| ink_curve.to_offset_curves((self.min_width*size_ratio) as f64, (self.max_width*size_ratio) as f64))
@@ -443,20 +443,20 @@ impl Brush for InkBrush {
             .chain(iter::once(end_cap))
             .chain(lower_curves)
             .chain(iter::once(finish));
-        
+
         Box::new(draw_brush)
     }
 
     ///
     /// Retrieves the definition for this brush
-    /// 
+    ///
     fn to_definition(&self) -> (BrushDefinition, BrushDrawingStyle) {
         let definition = BrushDefinition::Ink(InkDefinition {
             min_width:          self.min_width,
             max_width:          self.max_width,
             scale_up_distance:  self.scale_up_distance
         });
-        
+
         let drawing_style = match self.blend_mode {
             BlendMode::DestinationOut   => BrushDrawingStyle::Erase,
             _                           => BrushDrawingStyle::Draw
@@ -468,7 +468,7 @@ impl Brush for InkBrush {
     ///
     /// Attempts to combine this brush stroke with the specified vector element. Returns the combined element if successful
     ///
-    fn combine_with(&self, element: &Vector, points: Arc<Vec<BrushPoint>>, brush_properties: &VectorProperties, element_properties: &VectorProperties, combined_element: Option<Vector>) -> CombineResult { 
+    fn combine_with(&self, element: &Vector, points: Arc<Vec<BrushPoint>>, brush_properties: &VectorProperties, element_properties: &VectorProperties, combined_element: Option<Vector>) -> CombineResult {
         // The ink brush always combines into a group: retrieve that as the combined element here
         let combined_element = match combined_element {
             Some(Vector::Group(group_element))  => Some(group_element),
@@ -520,7 +520,7 @@ impl Brush for InkBrush {
                     CombineResult::UnableToCombineFurther
                 },
 
-                // Ignore 
+                // Ignore
                 _ => { CombineResult::NoOverlap }
             }
         } else {

@@ -9,7 +9,7 @@ use std::sync::*;
 
 ///
 /// Controller that provides a colour picker using the HSLUV format
-/// 
+///
 pub struct HsluvPickerController {
     ui:         BindRef<Control>,
     images:     Arc<ResourceManager<Image>>,
@@ -22,7 +22,7 @@ pub struct HsluvPickerController {
 impl HsluvPickerController {
     ///
     /// Creates a new HSLUV colour picker controller
-    /// 
+    ///
     pub fn new(color: &Binding<Color>) -> HsluvPickerController {
         let images      = ResourceManager::new();
         let canvases    = ResourceManager::new();
@@ -56,7 +56,7 @@ impl HsluvPickerController {
 
         // Set up the UI
         let ui          = Self::create_ui(&hsluv_wheel, &color_preview, &checkmarks);
-        
+
         // Controller is ready to go
         HsluvPickerController {
             ui:         ui,
@@ -69,7 +69,7 @@ impl HsluvPickerController {
 
     ///
     /// Creates the preview canvas
-    /// 
+    ///
     fn create_color_preview_canvas(color: &Binding<Color>) -> BindingCanvas {
         let color = color.clone();
 
@@ -137,7 +137,7 @@ impl HsluvPickerController {
 
     ///
     /// Creates the UI for this controller
-    /// 
+    ///
     fn create_ui(hsluv_wheel: &Resource<Image>, preview: &Resource<BindingCanvas>, checkmarks: &Resource<BindingCanvas>) -> BindRef<Control> {
         // Constants
         let wheel_size      = 200.0;
@@ -151,10 +151,10 @@ impl HsluvPickerController {
         BindRef::from(computed(move || {
             // The hue selector is designed to be cropped at the top of the screen
             let hue_selector = Control::rotor()
-                .with(Bounds { 
-                    x1: Position::At(0.0), 
-                    y1: Position::At(-wheel_size/2.0), 
-                    x2: Position::At(wheel_size), 
+                .with(Bounds {
+                    x1: Position::At(0.0),
+                    y1: Position::At(-wheel_size/2.0),
+                    x2: Position::At(wheel_size),
                     y2: Position::At(wheel_size/2.0)
                 })
                 .with(vec![
@@ -167,7 +167,7 @@ impl HsluvPickerController {
                 .with(State::Value(Property::Bind("H".to_string())))
                 .with((ActionTrigger::EditValue, "SetHue"))
                 .with((ActionTrigger::SetValue, "SetHue"));
-            
+
             // The preview control is in the same container as the hue selector
             let preview_control = Control::canvas()
                 .with(preview.clone())
@@ -177,7 +177,7 @@ impl HsluvPickerController {
                     x2: Position::At((wheel_size+preview_size)/2.0),
                     y2: Position::At(preview_size/2.0)
                 });
-            
+
             // LHS is the luminance control
             let lhs = vec![
                 Control::slider()
@@ -217,7 +217,7 @@ impl HsluvPickerController {
                         .with(Bounds::stretch_horiz(1.0))
                         .with(ControlAttribute::Padding((0, 0), (8, 0)))
                         .with(lhs),
-                    
+
                     // Main colour wheel
                     Control::cropping_container()
                         .with(Bounds::next_horiz(wheel_size))
@@ -278,11 +278,11 @@ impl Controller for HsluvPickerController {
         }
     }
 
-    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> { 
+    fn get_image_resources(&self) -> Option<Arc<ResourceManager<Image>>> {
         Some(Arc::clone(&self.images))
     }
 
-    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> { 
+    fn get_canvas_resources(&self) -> Option<Arc<ResourceManager<BindingCanvas>>> {
         Some(Arc::clone(&self.canvases))
     }
 }

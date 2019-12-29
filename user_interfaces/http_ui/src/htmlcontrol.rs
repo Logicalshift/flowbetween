@@ -13,7 +13,7 @@ use percent_encoding::*;
 pub trait ToHtml {
     ///
     /// Converts this object to HTML. The base path specifies where resources can be found.
-    /// 
+    ///
     fn to_html(&self, base_path: &str) -> DomNode {
         self.to_html_subcomponent(base_path, "")
     }
@@ -21,20 +21,20 @@ pub trait ToHtml {
     ///
     /// Converts this object to HTML, when it's a subcomponent. The controller path is a
     /// string indicating where the controller for this item can be found.
-    /// 
+    ///
     fn to_html_subcomponent(&self, base_path: &str, controller_path: &str) -> DomNode;
 }
 
 ///
 /// Appends a sub-controller to a controller path, returning the new controller path
-/// 
+///
 pub fn append_component_to_controller_path<'a>(controller_path: &str, subcontroller_name: &str) -> String {
     format!("{}/{}", controller_path, utf8_percent_encode(subcontroller_name, DEFAULT_ENCODE_SET))
 }
 
 ///
 /// Given a UI tree and an address, returns the controller path for that component
-/// 
+///
 pub fn html_controller_path_for_address<'a>(ui_tree: &'a Control, address: &Vec<u32>) -> String {
     if let Some(controller_path) = controller_path_for_address(ui_tree, address) {
         controller_path.iter().fold(String::new(), |path, &component| append_component_to_controller_path(&path, component))
@@ -78,7 +78,7 @@ fn add_subcomponents(ctrl: &Control, dom_element: &mut DomNode, base_path: &str,
                 // Subcomponents get the subcomponent controller path
                 dom_element.append_child_node(attribute.to_html_subcomponent(base_path, subcomponent_path));
             },
-            
+
             _ => {
                 // Other attributes are for the current control so they keep the current controller path
                 dom_element.append_child_node(attribute.to_html_subcomponent(base_path, controller_path));
@@ -112,7 +112,7 @@ fn add_textbox_subcomponents(ctrl: &Control, dom_element: &mut DomNode, base_pat
             FontAttr(Font::Align(TextAlign::Left))      => { dom_element.append_child_node(DomAttribute::new("flo-text-align", "left")); }
             FontAttr(Font::Align(TextAlign::Right))     => { dom_element.append_child_node(DomAttribute::new("flo-text-align", "right")); }
             FontAttr(Font::Align(TextAlign::Center))    => { dom_element.append_child_node(DomAttribute::new("flo-text-align", "center")); }
-            
+
             _ => {
                 // Other attributes are for the current control so they keep the current controller path
                 dom_element.append_child_node(attribute.to_html_subcomponent(base_path, controller_path));
@@ -158,8 +158,8 @@ impl ToHtml for ControlAttribute {
                 // Subcomponents go inside the div
                 let subcomponent_nodes = subcomponents.iter()
                     .map(|control| control.to_html_subcomponent(base_path, controller_path));
-                
-                for node in subcomponent_nodes { 
+
+                for node in subcomponent_nodes {
                     result.append_child_node(node);
                 }
 

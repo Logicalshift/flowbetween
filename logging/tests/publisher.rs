@@ -130,7 +130,7 @@ fn no_messages_to_default_with_subscriber() {
     thread::sleep(Duration::from_millis(10));
 
     let messages_nondefault = messages_nondefault.sync(|messages_nondefault| messages_nondefault.clone());
-    let messages_default    = messages_default.sync(|messages_default| messages_default.clone());    
+    let messages_default    = messages_default.sync(|messages_default| messages_default.clone());
 
     assert!(messages_nondefault.len() != 0);
     assert!(messages_nondefault[0].message() == "Hello, world");

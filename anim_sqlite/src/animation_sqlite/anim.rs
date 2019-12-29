@@ -14,7 +14,7 @@ use std::path::Path;
 impl SqliteAnimation {
     ///
     /// If there has been an error, retrieves what it is and clears the condition
-    /// 
+    ///
     pub fn retrieve_and_clear_error(&self) -> Option<SqliteAnimationError> {
         self.db.retrieve_and_clear_error()
     }

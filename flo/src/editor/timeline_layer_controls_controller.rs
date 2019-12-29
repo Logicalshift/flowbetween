@@ -12,7 +12,7 @@ use futures::executor::Spawn;
 
 ///
 /// Controller that provides controls for adding/deleting/editing layers (generally displayed above the main layer list)
-/// 
+///
 pub struct TimelineLayerControlsController<Anim: Animation> {
     /// The UI for this controller
     ui: BindRef<Control>,
@@ -30,7 +30,7 @@ pub struct TimelineLayerControlsController<Anim: Animation> {
 impl<Anim: 'static+Animation+EditableAnimation> TimelineLayerControlsController<Anim> {
     ///
     /// Creates a new timeline layer controls controller
-    /// 
+    ///
     pub fn new(model: &FloModel<Anim>) -> TimelineLayerControlsController<Anim> {
         let ui          = Self::ui();
         let edit        = executor::spawn(model.edit());
@@ -47,7 +47,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineLayerControlsController<
 
     ///
     /// Creates the UI for the layer controls controller
-    /// 
+    ///
     fn ui() -> BindRef<Control> {
         // Create the UI
         let ui = computed(move || {
@@ -148,7 +148,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                         .enumerate()
                         .filter(|(_, layer_id)| **layer_id == layer_to_remove)
                         .nth(0);
-                    
+
                     let new_selected_layer = if let Some((old_layer_index, _)) = old_layer_index {
                         if layer_ids.len() == 1 {
                             // No layers left after the deletion

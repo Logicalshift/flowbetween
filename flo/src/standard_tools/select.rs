@@ -16,7 +16,7 @@ use std::collections::{HashSet};
 
 ///
 /// The actions that the tool can take
-/// 
+///
 #[derive(Copy, Clone, Debug)]
 enum SelectAction {
     /// No action (or the current action has been cancelled)
@@ -37,7 +37,7 @@ enum SelectAction {
 
 ///
 /// The select data provides feedback for the action being taken by the select tool
-/// 
+///
 #[derive(Clone)]
 pub struct SelectData {
     /// The current frame
@@ -64,12 +64,12 @@ pub struct SelectData {
 
 ///
 /// The Select tool (Selects control points of existing objects)
-/// 
+///
 pub struct Select { }
 
 impl SelectData {
     ///
-    /// Creates a copy of this object with a different actions 
+    /// Creates a copy of this object with a different actions
     ///
     fn with_action(&self, new_action: SelectAction) -> SelectData {
         SelectData {
@@ -82,7 +82,7 @@ impl SelectData {
             drag_position:          self.drag_position.clone()
         }
     }
-    
+
     ///
     /// Creates a copy of this object with a new initial position
     ///
@@ -100,7 +100,7 @@ impl SelectData {
 
     ///
     /// Creates a copy of this object with a new drag position
-    /// 
+    ///
     fn with_drag_position(&self, new_drag_position: RawPoint) -> SelectData {
         SelectData {
             frame:                  self.frame.clone(),
@@ -117,14 +117,14 @@ impl SelectData {
 impl Select {
     ///
     /// Creates a new instance of the Select tool
-    /// 
+    ///
     pub fn new() -> Select {
         Select {}
     }
 
     ///
     /// Returns the list of commands to set up for drawing some selections
-    /// 
+    ///
     fn selection_drawing_settings() -> Vec<Draw> {
         vec![
             Draw::Layer(0),
@@ -138,7 +138,7 @@ impl Select {
 
     ///
     /// Returns the drawing instructions for drawing a rubber band around the specified points
-    /// 
+    ///
     fn draw_rubber_band(initial_point: (f32, f32), final_point: (f32, f32)) -> Vec<Draw> {
         // Create a bounding rectangle
         let bounds                  = Rect::with_points(initial_point.0, initial_point.1, final_point.0, final_point.1);
@@ -182,10 +182,10 @@ impl Select {
 
     ///
     /// Returns how the specified selected elements should be rendered (as a selection)
-    /// 
+    ///
     /// This can be used to cache the standard rendering for a set of selected elements so that we don't
     /// have to constantly recalculate it (which can be quite slow for a large set of brush elements)
-    /// 
+    ///
     fn rendering_for_elements(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>) -> Vec<Draw> {
         let mut drawing = vec![];
         // let mut paths   = vec![];
@@ -255,7 +255,7 @@ impl Select {
 
     ///
     /// Draws a set of dragged elements
-    /// 
+    ///
     fn draw_drag(data: &SelectData, selected_elements: Vec<(ElementId, Arc<VectorProperties>, Rect)>, initial_point: (f32, f32), drag_point: (f32, f32)) -> Vec<Draw> {
         let mut drawing = vec![];
 
@@ -282,7 +282,7 @@ impl Select {
 
     ///
     /// Returns the drawing actions to highlight the specified element
-    /// 
+    ///
     fn highlight_for_selection(element: &Vector, properties: &VectorProperties) -> (Vec<Draw>, Rect) {
         // Get the paths for this element
         let paths = element.to_path(properties);
@@ -294,7 +294,7 @@ impl Select {
             let mut path_draw: Vec<_> = paths.into_iter()
                 .flat_map(|path| { let path: Vec<Draw> = (&path).into(); path })
                 .collect();
-            
+
             path_draw.insert(0, Draw::NewPath);
 
             path_draw.push(Draw::FillColor(SELECTION_FILL));
@@ -317,14 +317,14 @@ impl Select {
 
     ///
     /// Returns true if the specified element ID is currently selected
-    /// 
+    ///
     fn is_selected(&self, data: &SelectData, item: ElementId) -> bool {
         data.selected_elements.contains(&item)
     }
 
     ///
     /// Returns the ID of the element at the position represented by the specified painting action
-    /// 
+    ///
     fn element_at_point<IsSelected: Fn(ElementId) -> bool>(model: &FrameModel, element_is_selected: IsSelected, point: (f32, f32)) -> Option<ElementId> {
         // Find all of the elements at this point
         let elements = model.elements_at_point(point);
@@ -355,7 +355,7 @@ impl Select {
 
     ///
     /// Returns all of the elements that are contained within a particular area
-    /// 
+    ///
     fn elements_in_area(&self, data: &SelectData, point1: (f32, f32), point2: (f32, f32)) -> Vec<ElementId> {
         // Get the target rect
         let target = Rect::with_points(point1.0, point1.1, point2.0, point2.1).normalize();
@@ -369,7 +369,7 @@ impl Select {
 
     ///
     /// Processes a paint action (at the top level)
-    /// 
+    ///
     fn paint<Anim: 'static+Animation>(&self, paint: Painting, actions: Vec<ToolAction<SelectData>>, animation: Arc<FloModel<Anim>>, data: Arc<SelectData>) -> (Vec<ToolAction<SelectData>>, Arc<SelectData>) {
         let mut actions     = actions;
         let mut data        = data;
@@ -560,21 +560,21 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
 
     ///
     /// Creates the model for the Select tool
-    /// 
-    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> SelectToolModel { 
+    ///
+    fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> SelectToolModel {
         SelectToolModel::new(flo_model.selection())
     }
 
     ///
     /// Creates the menu bar controller for the select tool
-    /// 
+    ///
     fn create_menu_controller(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &SelectToolModel) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(SelectMenuController::new(&*flo_model, tool_model)))
     }
 
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
-    /// 
+    ///
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
         // The set of currently selected elements
         let selected_elements   = flo_model.selection().selected_elements.clone();
@@ -623,7 +623,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                         selection.stroke_color(SELECTION_BBOX);
                         selection.stroke();
                     }
-                    
+
                     // Create the overlay drawing
                     let overlay = Self::selection_drawing_settings().into_iter()
                         .chain(selection);
@@ -634,14 +634,14 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                     ToolAction::Overlay(OverlayAction::Clear)
                 }
             });
-        
+
         // Combine the elements and the bounding boxes into a single vector
         let elements                = flo_model.frame().elements.clone();
         let bounding_boxes          = flo_model.frame().bounding_boxes.clone();
         let combined_bounding_boxes = computed(move || {
             let elements            = elements.get();
             let bounding_boxes      = bounding_boxes.get();
-            
+
             Arc::new(elements.iter().map(|(element, properties)| {
                 let properties  = Arc::clone(properties);
                 let element_id  = element.id();
@@ -667,7 +667,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
                     drag_position:          None
                 })
             });
-        
+
         // Generate the final stream
         let select_stream = data_for_model.select(draw_selection_overlay);
         Box::new(select_stream)
@@ -675,7 +675,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
 
     ///
     /// Returns the actions that result from a particular inpiut
-    /// 
+    ///
     fn actions_for_input<'a>(&self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<SelectData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<SelectData>>>) -> Box<dyn Iterator<Item=ToolAction<SelectData>>> {
         if let Some(mut data) = data {
             // We build up a vector of actions to perform as we go

@@ -51,12 +51,12 @@ pub trait DomNodeData {
 
     ///
     /// The type of this node
-    /// 
+    ///
     fn node_type(&self) -> DomNodeType;
 
     ///
     /// The name of the element represented by this node
-    /// 
+    ///
     fn element_name(&self) -> Option<String> { None }
 
     ///
@@ -65,7 +65,7 @@ pub trait DomNodeData {
     fn value(&self) -> Option<String> { None }
 
     ///
-    /// The content of this node 
+    /// The content of this node
     ///
     fn content(&self) -> Vec<DomNode> { vec![] }
 
@@ -80,7 +80,7 @@ pub trait DomNodeData {
     fn get_attribute(&self, _name: &str) -> Option<String> { None }
 
     ///
-    /// Sets an attribute in this node 
+    /// Sets an attribute in this node
     ///
     fn set_attribute(&mut self, _name: &str, _value: &str) { }
 
@@ -133,7 +133,7 @@ pub trait DomNodeData {
 
                 // Remove it from this object
                 self.remove_child_node(*index);
-                
+
                 match original.node_type() {
                     // Just remove empty nodes
                     DomNodeType::Empty      => (),
@@ -164,7 +164,7 @@ impl DomNode {
 
     ///
     /// Creates a new DOM node with the specified child nodes appended
-    /// 
+    ///
     pub fn with(mut self, new_child_nodes: Vec<DomNode>) -> DomNode {
         for node in new_child_nodes {
             self.append_child_node(node)
@@ -210,7 +210,7 @@ impl DomNodeData for DomNode {
         self.0.write().unwrap().insert_child_node(new_node, before)
     }
 
-    fn remove_child_node(&mut self, index: usize) { 
+    fn remove_child_node(&mut self, index: usize) {
         self.0.write().unwrap().remove_child_node(index);
     }
 

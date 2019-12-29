@@ -13,7 +13,7 @@ use std::sync::*;
 use std::time::Duration;
 
 ///
-/// Canvas cache associated with a point in time 
+/// Canvas cache associated with a point in time
 ///
 pub struct LayerCanvasCache<TFile: FloFile+Unpin+Send> {
     /// Database core

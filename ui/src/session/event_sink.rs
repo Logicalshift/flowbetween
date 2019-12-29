@@ -12,7 +12,7 @@ use std::sync::*;
 ///
 /// The event sink works with a UI session. When events arrive, they can be sent
 /// to one of these
-/// 
+///
 pub struct UiEventSink {
     /// The core controller that will be the target for these events
     controller: Arc<dyn Controller>,
@@ -30,7 +30,7 @@ pub struct UiEventSink {
 impl UiEventSink {
     ///
     /// Creates a new event sink
-    /// 
+    ///
     pub fn new<CoreController: 'static+Controller>(controller: Arc<CoreController>, core: Arc<Desync<UiSessionCore>>) -> UiEventSink {
         UiEventSink {
             controller:             controller,

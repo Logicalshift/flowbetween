@@ -50,7 +50,7 @@ impl FloTextBoxWidget {
 impl GtkUiWidget for FloTextBoxWidget {
     ///
     /// Retrieves the ID assigned to this widget
-    /// 
+    ///
     fn id(&self) -> WidgetId {
         self.id
     }
@@ -73,7 +73,7 @@ impl GtkUiWidget for FloTextBoxWidget {
             },
 
             // Generate entry editing events
-            RequestEvent(GtkWidgetEventType::EditValue, event_name) => { 
+            RequestEvent(GtkWidgetEventType::EditValue, event_name) => {
                 // Every text change generates an 'edit' event
                 let id          = self.id;
                 let sink        = RefCell::new(flo_gtk.get_event_sink());
@@ -124,20 +124,20 @@ impl GtkUiWidget for FloTextBoxWidget {
             },
 
             // Standard behaviour for all other actions
-            other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            
+            other_action => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
     }
 
     ///
     /// Sets the children of this widget
-    /// 
+    ///
     fn set_children(&mut self, _children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // TextBox widgets cannot have child controls
     }
 
     ///
     /// Retrieves the underlying widget for this UI widget
-    /// 
+    ///
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
         &self.as_widget
     }

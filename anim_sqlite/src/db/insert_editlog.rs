@@ -9,7 +9,7 @@ use self::DatabaseUpdate::*;
 impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
     ///
     /// Inserts a set of edits into the database
-    /// 
+    ///
     pub fn insert_edits(&mut self, edits: &[AnimationEdit]) -> Result<()> {
         // Insert all of the edits in turn
         self.db.begin_queuing();
@@ -23,7 +23,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts an element ID into the edit log
-    /// 
+    ///
     fn insert_element_id(db: &mut TFile, element_id: &ElementId) -> Result<()> {
         use self::ElementId::*;
 
@@ -37,7 +37,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts an element ID into the edit log
-    /// 
+    ///
     fn insert_element_id_list(db: &mut TFile, element_ids: &Vec<ElementId>) -> Result<()> {
         use self::ElementId::*;
 
@@ -56,7 +56,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts a single AnimationEdit into the edit log
-    /// 
+    ///
     fn insert_edit_log<'a>(&mut self, edit: &AnimationEdit) -> Result<()> {
         // Create the edit type and push the ID
         self.db.update(vec![PushEditType(EditLogType::from(edit))])?;
@@ -69,17 +69,17 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts the values for an AnimationEdit into the edit log (db must have an edit ID pushed. This will be popped when this returns)
-    /// 
+    ///
     fn insert_animation_edit<'a>(&mut self, edit: &AnimationEdit) -> Result<()> {
         use self::AnimationEdit::*;
 
         match edit {
-            &Layer(layer_id, ref layer_edit)                => { 
+            &Layer(layer_id, ref layer_edit)                => {
                 self.db.update(vec![PushEditLogLayer(layer_id)])?;
                 self.insert_layer_edit(layer_edit)?;
             },
 
-            &SetSize(width, height)                         => { 
+            &SetSize(width, height)                         => {
                 self.db.update(vec![PopEditLogSetSize(width as f32, height as f32)])?;
             },
 
@@ -119,9 +119,9 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts the parameters for an element edit into the edit log
-    /// 
+    ///
     /// The stack contains the edit log ID when this is called
-    /// 
+    ///
     fn insert_element_edit(&mut self, edit: &ElementEdit) -> Result<()> {
         use self::ElementEdit::*;
 
@@ -141,13 +141,13 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
             SetPath(components) => {
                 self.db.update(vec![
-                    PushPathComponents(Arc::clone(components)), 
-                    PushEditLogPath, 
+                    PushPathComponents(Arc::clone(components)),
+                    PushEditLogPath,
                     Pop
                 ])?;
             },
 
-            Order(ElementOrdering::Before(element_id))  => { 
+            Order(ElementOrdering::Before(element_id))  => {
                 match element_id {
                     ElementId::Assigned(element_id)     => { self.db.update(vec![PushEditLogInt(0, *element_id as i64), Pop])?; }
                     ElementId::Unassigned               => { self.db.update(vec![Pop])?; }
@@ -163,23 +163,23 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts the parameters for a motion edit into the edit log
-    /// 
+    ///
     fn insert_motion_edit(&mut self, edit: &MotionEdit) -> Result<()> {
         use self::MotionEdit::*;
 
         match edit {
-            Create                  => { 
+            Create                  => {
                 self.db.update(vec![Pop])?;
             },
 
-            Delete                  => { 
+            Delete                  => {
                 self.db.update(vec![Pop])?;
             },
 
             SetType(motion_type)    => {
                 self.db.update(vec![PushEditLogMotionType(*motion_type), Pop])?;
             },
-            
+
             SetOrigin(x, y)         => {
                 self.db.update(vec![PushEditLogMotionOrigin(*x, *y), Pop])?;
             },
@@ -201,7 +201,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts the values for a LayerEdit into the edit log (db must have an edit ID pushed. This will be popped when this returns)
-    /// 
+    ///
     fn insert_layer_edit(&mut self, edit: &LayerEdit) -> Result<()> {
         use self::LayerEdit::*;
 
@@ -238,7 +238,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Inserts the values for a PaintEdit into the edit log (db must have an edit ID + a when value pushed. This will be popped when this returns)
-    /// 
+    ///
     fn insert_paint_edit<'a>(&mut self, edit: &PaintEdit) -> Result<()> {
         use self::PaintEdit::*;
 
@@ -286,8 +286,8 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
             CreatePath(id, points)                      => {
                 Self::insert_element_id(&mut self.db, id)?;
                 self.db.update(vec![
-                    PushPathComponents(Arc::clone(points)), 
-                    PushEditLogPath, 
+                    PushPathComponents(Arc::clone(points)),
+                    PushEditLogPath,
                     Pop
                 ])?;
             }

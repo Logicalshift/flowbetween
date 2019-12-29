@@ -43,7 +43,7 @@ pub struct EditorController<Anim: Animation> {
 impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
     ///
     /// Creates a new editor controller from an animation
-    /// 
+    ///
     pub fn new(animation: Anim) -> EditorController<Anim> {
         let animation   = FloModel::new(animation);
 
@@ -52,7 +52,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
 
     ///
     /// Creates a new editor controller from a model
-    /// 
+    ///
     pub fn from_model(animation: FloModel<Anim>) -> EditorController<Anim> {
         let canvas      = Arc::new(CanvasController::new(&animation));
         let menu        = Arc::new(MenuController::new(&animation));
@@ -119,7 +119,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
                 x1: Start,
                 y1: After,
                 x2: Offset(48.0),
-                y2: End                    
+                y2: End
             })
             .with_controller(&serde_json::to_string(&SubController::Toolbox).unwrap())
     }
@@ -142,7 +142,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditorController<Anim> {
 
     ///
     /// Creates the control bar control
-    /// 
+    ///
     pub fn control_bar() -> Control {
         Control::container()
             .with(Bounds::next_vert(28.0))
@@ -204,7 +204,7 @@ impl<Anim: FileAnimation+EditableAnimation+'static> FileController for EditorCon
 
     ///
     /// Creates this controller with the specified instance model
-    /// 
+    ///
     fn open(model: FloModel<Anim>) -> Self {
         Self::from_model(model)
     }

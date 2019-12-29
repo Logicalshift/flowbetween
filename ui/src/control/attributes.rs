@@ -14,7 +14,7 @@ use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
 use modifier::*;
- 
+
 ///
 /// Attribute attached to a control
 ///
@@ -60,7 +60,7 @@ pub enum ControlAttribute {
     /// Specifies the controller that manages the subcomponents of this control
     Controller(String),
 
-    /// When the specified action occurs for this item, send the event 
+    /// When the specified action occurs for this item, send the event
     /// denoted by the string to the controller
     Action(ActionTrigger, String),
 
@@ -82,7 +82,7 @@ impl ControlAttribute {
 
     ///
     /// The Z-Index represented by this attribute
-    /// 
+    ///
     pub fn z_index(&self) -> Option<u32> {
         match self {
             &ZIndex(zindex) => Some(zindex),
@@ -92,7 +92,7 @@ impl ControlAttribute {
 
     ///
     /// The padding represented by this attribute
-    /// 
+    ///
     pub fn padding(&self) -> Option<((u32, u32), (u32, u32))> {
         match self {
             &Padding(left_top, right_bottom)    => Some((left_top, right_bottom)),
@@ -112,7 +112,7 @@ impl ControlAttribute {
 
     ///
     /// The font atrributes represented by this attribute
-    /// 
+    ///
     pub fn font<'a>(&'a self) -> Option<&'a Font> {
         match self {
             &FontAttr(ref attr) => Some(attr),
@@ -162,7 +162,7 @@ impl ControlAttribute {
 
     ///
     /// The control state represented by this attribute
-    /// 
+    ///
     pub fn state<'a>(&'a self) -> Option<&'a State> {
         match self {
             &StateAttr(ref state)   => Some(state),
@@ -172,7 +172,7 @@ impl ControlAttribute {
 
     ///
     /// The popup attribute represented by this attribute
-    /// 
+    ///
     pub fn popup<'a>(&'a self) -> Option<&'a Popup> {
         match self {
             &PopupAttr(ref popup)   => Some(popup),
@@ -199,20 +199,20 @@ impl ControlAttribute {
             _                                           => None
         }
     }
-    
+
     ///
     /// The appearance assigned by this attribute, if there is one
-    /// 
+    ///
     pub fn appearance<'a>(&'a self) -> Option<&'a Appearance> {
         match self {
             &AppearanceAttr(ref appearance) => Some(appearance),
             _                               => None
         }
     }
-    
+
     ///
     /// The appearance assigned by this attribute, if there is one
-    /// 
+    ///
     pub fn scroll<'a>(&'a self) -> Option<&'a Scroll> {
         match self {
             &ScrollAttr(ref scroll) => Some(scroll),
@@ -222,14 +222,14 @@ impl ControlAttribute {
 
     ///
     /// If this is a hint attribute, returns the hint, otherwise returns nothing
-    /// 
+    ///
     pub fn hint<'a>(&'a self) -> Option<&'a Hint> {
         match self {
             &HintAttr(ref hint) => Some(hint),
             _                   => None
         }
     }
-     
+
     ///
     /// Returns true if this attribute is different from another one
     /// (non-recursively, so this won't check subcomoponents)

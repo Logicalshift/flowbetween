@@ -12,7 +12,7 @@ use std::time::Duration;
 
 ///
 /// Represents a match against a vector element
-/// 
+///
 #[derive(Clone, Copy, PartialEq)]
 pub enum ElementMatch {
     /// The point is inside the path for the specified element
@@ -33,7 +33,7 @@ impl From<ElementMatch> for ElementId {
 
 ///
 /// Provides the model for a layer in the current frame
-/// 
+///
 #[derive(Clone)]
 pub struct FrameLayerModel {
     /// The ID of this layer
@@ -45,7 +45,7 @@ pub struct FrameLayerModel {
 
 ///
 /// The frame model provides bindings for the content of the current frame
-/// 
+///
 #[derive(Clone)]
 pub struct FrameModel {
     /// Set to true if we should create a new keyframe when drawing (and there is no current keyframe)
@@ -73,11 +73,11 @@ pub struct FrameModel {
 impl FrameModel {
     ///
     /// Creates a new frame model that tracks the specified animation
-    /// 
+    ///
     /// The animation update binding can be updated whenever the frames become
     /// invalidated; the value has no meaning, so any value (for example, the
     /// length of the edit log)
-    /// 
+    ///
     pub fn new<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, animation_update: BindRef<u64>, selected_layer: BindRef<Option<u64>>) -> FrameModel {
         // Create the bindings for the current frame state
         let keyframe_selected           = Self::keyframe_selected(Arc::clone(&animation), edits.resubscribe(), when.clone(), selected_layer.clone());
@@ -97,14 +97,14 @@ impl FrameModel {
 
             // Refresh the frames from the animation
             let layer_ids = animation.get_layer_ids();
-            
+
             // Remove layers that aren't in use any more
             let deleted_layers: Vec<_> = layer_ids
                 .iter()
                 .filter(|layer_id|  !frames.contains_key(layer_id))
                 .map(|layer_id_ref| *layer_id_ref)
                 .collect();
-            
+
             deleted_layers.into_iter().for_each(|deleted_layer_id| { frames.remove(&deleted_layer_id); });
 
             // Update or generate the frame layer model (something bound to a single layer will get updates for that layer)
@@ -170,7 +170,7 @@ impl FrameModel {
 
     ///
     /// Returns a binding for the selected frame
-    /// 
+    ///
     fn current_frame<SelectedLayer: 'static+Bound<Option<u64>>, LayerModel: 'static+Bound<Vec<FrameLayerModel>>>(selected_layer: SelectedLayer, layers: LayerModel) -> BindRef<Option<Arc<dyn Frame>>> {
         BindRef::new(&computed(move || {
             let selected_layer_id = selected_layer.get();
@@ -185,7 +185,7 @@ impl FrameModel {
 
     ///
     /// True if the animation edit affects the keyframes on the specified layer
-    /// 
+    ///
     fn is_key_frame_update(layer_id: u64, edit: &AnimationEdit) -> bool {
         match edit {
             AnimationEdit::Layer(edit_layer_id, LayerEdit::AddKeyFrame(_)) |
@@ -196,7 +196,7 @@ impl FrameModel {
 
     ///
     /// Stream of notifications that the current frame has updated
-    /// 
+    ///
     fn frame_update_stream(edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> Box<dyn Stream<Item=(), Error=()>+Send> {
         // Events indicating a new key frame
         let selected_layer_2    = selected_layer.clone();
@@ -217,7 +217,7 @@ impl FrameModel {
                     None
                 }
             });
-        
+
         // Events indicating the selection has changed
         let when_changed            = follow(when).map(|_| ());
         let selected_layer_changed  = follow(selected_layer).map(|_| ());
@@ -228,7 +228,7 @@ impl FrameModel {
 
     ///
     /// Returns a binding indicating if a keyframe is currently selected
-    /// 
+    ///
     fn keyframe_selected<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> BindRef<bool> {
         // Get a stream of frame update events
         let frame_updates = Self::frame_update_stream(edits, when.clone(), selected_layer.clone());
@@ -259,7 +259,7 @@ impl FrameModel {
 
     ///
     /// Returns a binding of the previous and next keyframes
-    /// 
+    ///
     fn previous_next_keyframes<Anim: Animation+'static>(animation: Arc<Anim>, edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> BindRef<(Option<Duration>, Option<Duration>)> {
         // Get a stream of frame update events
         let frame_updates = Self::frame_update_stream(edits, when.clone(), selected_layer.clone());
@@ -286,7 +286,7 @@ impl FrameModel {
     }
     ///
     /// Returns a binding mapping between the elements in a frame and their properties
-    /// 
+    ///
     fn element_properties<CurrentFrame: 'static+Bound<Option<Arc<dyn Frame>>>>(current_frame: CurrentFrame) -> BindRef<Arc<Vec<(Vector, Arc<VectorProperties>)>>> {
         BindRef::new(&computed(move || {
             let mut result      = vec![];
@@ -317,7 +317,7 @@ impl FrameModel {
 
     ///
     /// Returns a binding that finds the bounding boxes of all of the vectors in the current frame
-    /// 
+    ///
     fn bounding_boxes<Elements:'static+Bound<Arc<Vec<(Vector, Arc<VectorProperties>)>>>>(elements: Elements) -> BindRef<Arc<HashMap<ElementId, Rect>>> {
         BindRef::new(&computed(move || {
             let elements = elements.get();
@@ -336,7 +336,7 @@ impl FrameModel {
 
     ///
     /// Returns the elements at the specified point
-    /// 
+    ///
     pub fn elements_at_point(&self, point: (f32, f32)) -> impl Iterator<Item=ElementMatch> {
         // Fetch the elements and their bounding boxes
         let elements        = self.elements.get();

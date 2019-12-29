@@ -14,7 +14,7 @@ use std::sync::*;
 
 ///
 /// A log publisher provides a way to publish log messages to subscribers
-/// 
+///
 pub struct LogPublisher {
     /// The context for this log
     context: Arc<Desync<LogContext>>,
@@ -23,10 +23,10 @@ pub struct LogPublisher {
 impl LogPublisher {
     ///
     /// Creates a new log publisher
-    /// 
+    ///
     /// Log publishers will republish to the current thread logger by default. Messages that originate from
     /// this publisher will have the target field added to it
-    /// 
+    ///
     pub fn new(target: &str) -> LogPublisher {
         // Create an empty publisher
         let log_default = Self::new_empty(vec![("target", target)]);
@@ -40,9 +40,9 @@ impl LogPublisher {
 
     ///
     /// Cretes a new log publisher that will set some field values on messages before publishing them
-    /// 
-    /// Field values set this way are only specified 
-    /// 
+    ///
+    /// Field values set this way are only specified
+    ///
     pub fn new_with_fields<'a, FieldIter: 'a+IntoIterator<Item=(&'a str, &'a str)>>(target: &str, fields: FieldIter) -> LogPublisher {
         // Create a new logger with this target
         let logger = Self::new(target);
@@ -58,7 +58,7 @@ impl LogPublisher {
 
     ///
     /// Creates a new log publisher with no default behaviour
-    /// 
+    ///
     pub (crate) fn new_empty<'a, FieldIter: 'a+IntoIterator<Item=(&'a str, &'a str)>>(fields: FieldIter) -> LogPublisher {
         let logger = LogPublisher {
             context: Arc::new(Desync::new(LogContext::new()))
@@ -75,7 +75,7 @@ impl LogPublisher {
 
     ///
     /// Sends a log message to the context
-    /// 
+    ///
     fn log_in_context(context: &mut LogContext, mut message: LogMsg) -> impl Future<Output=()> {
         let num_subscribers = context.publisher.count_subscribers();
 
@@ -102,7 +102,7 @@ impl LogPublisher {
 
     ///
     /// Sends a message to the subscribers for this log
-    /// 
+    ///
     pub fn log<Msg: LogMessage>(&self, message: Msg) {
         self.context.sync(|context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
@@ -113,7 +113,7 @@ impl LogPublisher {
 
     ///
     /// Sends a stream of log messages to this log
-    /// 
+    ///
     pub fn stream<Msg: LogMessage, LogStream: 'static+Unpin+Send+Stream<Item=Msg>>(&self, stream: LogStream) {
         // Pipe the stream through to the context
         pipe_in(Arc::clone(&self.context), stream, |context, message| {
@@ -124,14 +124,14 @@ impl LogPublisher {
 
     ///
     /// Subscribes to this log stream
-    /// 
+    ///
     pub fn subscribe(&self) -> impl Stream<Item=LogMsg> {
         self.context.sync(|context| context.publisher.subscribe())
     }
 
     ///
     /// Creates a 'default' subscriber for this log stream (messages will be sent here only if there are no other subscribers to this log)
-    /// 
+    ///
     pub fn subscribe_default(&self) -> impl Stream<Item=LogMsg> {
         self.context.sync(|context| {
             if context.default.is_none() {
@@ -145,7 +145,7 @@ impl LogPublisher {
 
 ///
 /// Creates a new log publisher that tracks the same set of subscribers as the original
-/// 
+///
 impl Clone for LogPublisher {
     fn clone(&self) -> LogPublisher {
         LogPublisher {

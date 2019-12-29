@@ -22,7 +22,7 @@ pub struct ToolboxController<Anim: Animation> {
 impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     ///
     /// Creates a new toolbox controller
-    /// 
+    ///
     pub fn new(anim_model: &FloModel<Anim>) -> ToolboxController<Anim> {
         // Create the viewmodel
         let viewmodel = Arc::new(DynamicViewModel::new());
@@ -32,7 +32,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
 
         // Update the viewmodel whenever the effective tool changes
         let effective_tool = anim_model.tools().effective_tool.clone();
-        viewmodel.set_computed("EffectiveTool", move || 
+        viewmodel.set_computed("EffectiveTool", move ||
             PropertyValue::String(effective_tool.get().map(|tool| tool.tool_name()).unwrap_or("".to_string())));
 
         // Make sure that the tool selected in this controller matches the one in the main view model
@@ -57,7 +57,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
 
     ///
     /// Creates the UI binding
-    /// 
+    ///
     fn create_ui(tool_sets: Binding<Vec<Arc<dyn ToolSet<Anim>>>>, viewmodel: Arc<DynamicViewModel>, images: Arc<ResourceManager<Image>>) -> BindRef<Control> {
         BindRef::from(computed(move || {
             // Convert the tool sets into tools (with separators between each individual set)
@@ -66,7 +66,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
                     let tools: Vec<_> = toolset.tools().iter()
                         .map(|tool| Self::make_tool(&tool.tool_name(), &viewmodel, images.get_named_resource(&tool.image_name())))
                         .collect();
-                    
+
                     tools
                 }).fold(vec![], |mut result, new_items| {
                     // Separator between toolsets after the first set
@@ -87,7 +87,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
     }
 
     ///
-    /// Creates the image resources for this controller 
+    /// Creates the image resources for this controller
     ///
     fn create_images() -> ResourceManager<Image> {
         let images  = ResourceManager::new();
@@ -117,7 +117,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
 
     ///
     /// Creates a separator between controls
-    /// 
+    ///
     fn make_separator() -> Control {
         Control::empty()
             .with(Bounds::next_vert(12.0))
@@ -153,7 +153,7 @@ impl<Anim: 'static+EditableAnimation+Animation> ToolboxController<Anim> {
             let effective_tool  = effective_tool.get().string().unwrap_or(String::from(""));
 
             PropertyValue::Bool(selected_tool != effective_tool && effective_tool == compare_name)
-        });        
+        });
 
         // The control is just a button
         Control::button()

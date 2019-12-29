@@ -267,7 +267,7 @@ impl ViewState {
 
     ///
     /// Sets up this state from a control, and returns the action steps needed to initialise it
-    /// 
+    ///
     /// The 'container_has_class' flag is used to signal whether or not the container for this particular control
     /// has been assigned a class (this generally indicates that we shouldn't use the built-in OS X controls as
     /// they don't support many styles)

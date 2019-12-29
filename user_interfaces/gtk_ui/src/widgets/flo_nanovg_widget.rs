@@ -16,7 +16,7 @@ use std::cell::*;
 
 ///
 /// NanoVG core data, shared with event handlers
-/// 
+///
 struct NanoVgCore {
     /// Canvas, used for queuing up redraw instructions
     canvas: Canvas,
@@ -36,7 +36,7 @@ struct NanoVgCore {
 
 ///
 /// Uses NanoVG to draw using OpenGL on a widget
-/// 
+///
 pub struct FloNanoVgWidget {
     /// The ID of this widget
     id: WidgetId,
@@ -54,7 +54,7 @@ pub struct FloNanoVgWidget {
 impl FloNanoVgWidget {
     ///
     /// Creates a new NanoVG widget with a particular GL area as the target
-    /// 
+    ///
     pub fn new<W: Clone+Cast+IsA<gtk::GLArea>>(widget_id: WidgetId, widget: W) -> FloNanoVgWidget {
         // Fetch the GL widget and its widget representation
         let gl_widget = widget.upcast::<gtk::GLArea>();
@@ -124,7 +124,7 @@ impl FloNanoVgWidget {
         // Simple rendering to test out our widget
         {
             let core = Rc::clone(&core);
-            gl_widget.connect_render(move |gl_widget, _ctxt| { 
+            gl_widget.connect_render(move |gl_widget, _ctxt| {
                 let mut core        = core.borrow_mut();
                 let allocation      = gl_widget.get_allocation();
                 let scale           = gl_widget.get_scale_factor();
@@ -163,7 +163,7 @@ impl FloNanoVgWidget {
 
     ///
     /// Resets the viewport of a core
-    /// 
+    ///
     fn resize<W: gtk::WidgetExt+Clone+Cast+IsA<gtk::Widget>>(core: &mut NanoVgCore, widget: &W) {
         // Fetch the viewport for the widget
         let allocation      = widget.get_allocation();
@@ -177,7 +177,7 @@ impl FloNanoVgWidget {
 
     ///
     /// Redraws the layers in a core
-    /// 
+    ///
     fn redraw(core: &mut NanoVgCore) {
         // Get the drawing actions from the canvas
         let drawing = core.canvas.get_drawing();
@@ -195,7 +195,7 @@ impl FloNanoVgWidget {
 
     ///
     /// Retrieves the viewport for a canvas
-    /// 
+    ///
     fn get_viewport<W: gtk::WidgetExt+Clone+Cast+IsA<gtk::Widget>>(drawing_area: &W, allocation: &gtk::Allocation) -> NanoVgViewport {
         // The scale factor is used to ensure we get a 1:1 pixel ratio for our drawing area
         let scale_factor = drawing_area.get_scale_factor();
@@ -269,7 +269,7 @@ impl FloNanoVgWidget {
 
     ///
     /// Performs some drawing actions on this canvas
-    /// 
+    ///
     fn draw<DrawIter: Send+IntoIterator<Item=Draw>>(&mut self, actions: DrawIter) {
         // Get the core to do drawing on
         let mut core = self.core.borrow_mut();

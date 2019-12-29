@@ -58,7 +58,7 @@ impl ViewModelUpdateStream {
         let mut new_sub_controllers = HashMap::new();
         let all_controllers         = control.all_controllers();
 
-        // For each subcontroller, either keep the existing stream or 
+        // For each subcontroller, either keep the existing stream or
         for subcontroller_name in all_controllers {
             if !new_sub_controllers.contains_key(&subcontroller_name) {
                 if let Some(existing_controller) = self.sub_controllers.remove(&subcontroller_name) {
@@ -209,7 +209,7 @@ mod test {
 
     impl DynamicController {
         pub fn new() -> DynamicController {
-            DynamicController { 
+            DynamicController {
                 controls:       Arc::new(bind(Control::empty())),
                 view_model:     Arc::new(DynamicViewModel::new()),
                 subcontrollers: Mutex::new(HashMap::new())
@@ -367,16 +367,16 @@ mod test {
         model_controler: Arc<ModelController>,
         view_model: Arc<NullViewModel>
     }
-    
+
     struct ModelController {
         view_model: Arc<TestViewModel>
     }
 
     impl TestController {
         pub fn new() -> TestController {
-            TestController { 
-                model_controler: Arc::new(ModelController::new()), 
-                view_model: Arc::new(NullViewModel::new()) 
+            TestController {
+                model_controler: Arc::new(ModelController::new()),
+                view_model: Arc::new(NullViewModel::new())
             }
         }
     }
@@ -423,7 +423,7 @@ mod test {
             BindRef::from(bind(PropertyValue::String(property_name.to_string())))
         }
 
-        fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
+        fn set_property(&self, _property_name: &str, _new_value: PropertyValue) {
         }
 
         fn get_property_names(&self) -> Vec<String> {

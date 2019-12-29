@@ -11,7 +11,7 @@ use std::collections::VecDeque;
 
 ///
 /// Core data for a Gtk event sink or stream
-/// 
+///
 struct GtkEventSinkCore {
     /// Number of event sinks referencing this core
     sink_count: usize,
@@ -25,7 +25,7 @@ struct GtkEventSinkCore {
 
 ///
 /// Core data for a Gtk event stream
-/// 
+///
 struct GtkEventStreamCore {
     /// Set to true if this stream has been dropped and is not in use any more
     dropped: bool,
@@ -39,9 +39,9 @@ struct GtkEventStreamCore {
 
 ///
 /// Cloneable event sink for Gtk events
-/// 
+///
 /// Gtk events are dispatched with a multiple sender/multiple receiver system
-/// 
+///
 pub struct GtkEventSink {
     /// Core of this sink
     core: Arc<Mutex<GtkEventSinkCore>>
@@ -49,7 +49,7 @@ pub struct GtkEventSink {
 
 ///
 /// Stream that receives future events from an event sink
-/// 
+///
 pub struct GtkEventStream {
     /// Core of this stream
     core: Arc<Mutex<GtkEventStreamCore>>,
@@ -61,7 +61,7 @@ pub struct GtkEventStream {
 impl GtkEventSink {
     ///
     /// Creates a new event sink
-    /// 
+    ///
     pub fn new() -> GtkEventSink {
         let core = GtkEventSinkCore {
             sink_count:     1,
@@ -73,10 +73,10 @@ impl GtkEventSink {
             core: Arc::new(Mutex::new(core))
         }
     }
-    
+
     ///
     /// Retrieves a stream for reading from this sink
-    /// 
+    ///
     pub fn get_stream(&self) -> GtkEventStream {
         let mut core = self.core.lock().unwrap();
 
@@ -190,7 +190,7 @@ impl Clone for GtkEventSink {
         // Generate a new event sink with the same core as this one
         GtkEventSink {
             core: Arc::clone(&self.core)
-        }        
+        }
     }
 }
 

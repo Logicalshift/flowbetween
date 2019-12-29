@@ -4,7 +4,7 @@ use super::bytes_iterator::*;
 use std::io::Read;
 
 ///
-/// Represents an image whose data is stored in memory 
+/// Represents an image whose data is stored in memory
 ///
 pub struct InMemoryImageData {
     /// The bytes making up this stream
@@ -14,7 +14,7 @@ pub struct InMemoryImageData {
 impl InMemoryImageData {
     ///
     /// Creates a new image data object from a set of bytes
-    /// 
+    ///
     pub fn new(bytes: Bytes) -> InMemoryImageData {
         InMemoryImageData {
             bytes: Arc::new(bytes)

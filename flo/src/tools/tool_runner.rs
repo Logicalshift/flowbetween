@@ -12,7 +12,7 @@ use std::sync::*;
 
 ///
 /// Runs the actions for a particular tool
-/// 
+///
 pub struct ToolRunner<Anim: Animation> {
     /// The view model that is passed to the tools
     view_model: Arc<FloModel<Anim>>,
@@ -33,7 +33,7 @@ pub struct ToolRunner<Anim: Animation> {
 impl<Anim: Animation> ToolRunner<Anim> {
     ///
     /// Creates a new tool runner
-    /// 
+    ///
     pub fn new(view_model: &FloModel<Anim>) -> ToolRunner<Anim> {
         let view_model = Arc::new(view_model.clone());
 
@@ -48,7 +48,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
     ///
     /// Sets the tool that this will use to run its actions on
-    /// 
+    ///
     pub fn set_tool(&mut self, new_tool: &Arc<FloTool<Anim>>, tool_model: &GenericToolModel) {
         // Free the data for the current tool
         self.tool_data          = None;
@@ -65,7 +65,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
     ///
     /// Updates the data that will be used for the tool
-    /// 
+    ///
     pub fn set_tool_data(&mut self, new_data: GenericToolData) {
         self.tool_data          = Some(Arc::new(new_data));
         self.tool_data_updated  = true;
@@ -73,7 +73,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
     ///
     /// Returns the pending model actions for this object
-    /// 
+    ///
     pub fn model_actions(&mut self) -> Box<dyn Iterator<Item=ToolAction<GenericToolData>>> {
         // Flush any pending actions from the model actions stream
         let mut flushed_actions = vec![];
@@ -91,9 +91,9 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
     ///
     /// Given a set of tool inputs, returns an iterator that specifies the resulting tool actions
-    /// 
+    ///
     /// If there are any actions resulting from a change in model state, these are also returned here
-    /// 
+    ///
     pub fn actions_for_input<Iter: Iterator<Item=ToolInput<GenericToolData>>>(&mut self, input: Iter) -> Box<dyn Iterator<Item=ToolAction<GenericToolData>>> {
         // Create a place to store the updated tool data for this request
         let mut new_tool_data = None;
@@ -152,7 +152,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
 
 ///
 /// Notification object that doesn't actually notify anything
-/// 
+///
 #[derive(Clone)]
 struct NotifyNothing;
 

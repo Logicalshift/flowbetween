@@ -8,17 +8,17 @@ use flo_curves::*;
 
 ///
 /// Trait implemented by graphical elements with a bounding box
-/// 
+///
 pub trait HasBoundingBox {
     ///
     /// Retrieves the bounding box for this element
-    /// 
+    ///
     fn bounding_box(&self) -> Rect;
 }
 
 ///
 /// An element and its starting point can be converted into a bounding rectangle
-/// 
+///
 impl From<(PathPoint, PathComponent)> for Rect {
     fn from((start_point, element): (PathPoint, PathComponent)) -> Rect {
         use self::PathComponent::*;
@@ -40,7 +40,7 @@ impl From<(PathPoint, PathComponent)> for Rect {
 
 ///
 /// Pairs of path elements can also be turned into bounding rectangles
-/// 
+///
 impl From<(PathComponent, PathComponent)> for Rect {
     fn from((previous, next): (PathComponent, PathComponent)) -> Rect {
         use self::PathComponent::*;
@@ -72,7 +72,7 @@ impl From<(PathComponent, PathComponent)> for Rect {
 
 ///
 /// Paths can be converted into bounding boxes
-/// 
+///
 impl<'a> From<&'a Path> for Rect {
     fn from(p: &'a Path) -> Rect {
         if p.elements.len() == 0 {
@@ -118,7 +118,7 @@ mod test {
         assert!(bounds.x1 == 30.0);
         assert!(bounds.y1 == 20.0);
         assert!(bounds.x2 == 60.0);
-        assert!(bounds.y2 == 30.0);        
+        assert!(bounds.y2 == 30.0);
     }
 
     #[test]
@@ -128,7 +128,7 @@ mod test {
         assert!(bounds.x1 == 30.0);
         assert!(bounds.y1 == 20.0);
         assert!(bounds.x2 == 60.0);
-        assert!(bounds.y2 == 30.0);        
+        assert!(bounds.y2 == 30.0);
     }
 
     #[test]
@@ -145,7 +145,7 @@ mod test {
         assert!(bounds.x1 == 30.0);
         assert!(bounds.y1 == 20.0);
         assert!(bounds.x2 == 60.0);
-        assert!(bounds.y2 == 30.0);        
+        assert!(bounds.y2 == 30.0);
     }
 
     #[test]
@@ -163,7 +163,7 @@ mod test {
         assert!(bounds.x1 == 30.0);
         assert!(bounds.y1 == 20.0);
         assert!(bounds.x2 == 120.0);
-        assert!(bounds.y2 == 50.0);        
+        assert!(bounds.y2 == 50.0);
     }
 
     #[test]
@@ -180,7 +180,7 @@ mod test {
         assert!(bounds.x1 == 30.0);
         assert!(bounds.y1 == 30.0);
         assert!(bounds.x2 == 60.0);
-        assert!(bounds.y2 == 60.0);        
+        assert!(bounds.y2 == 60.0);
     }
 
     #[test]

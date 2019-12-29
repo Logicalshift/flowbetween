@@ -9,7 +9,7 @@ use rusqlite;
 impl FloSqlite {
     ///
     /// Queries a single row in the database
-    /// 
+    ///
     fn query_row<T, F: FnOnce(&Row) -> rusqlite::Result<T>>(&mut self, statement: FloStatement, params: &[&dyn ToSql], f: F) -> Result<T, SqliteAnimationError> {
         self.flush_pending()?;
 
@@ -19,7 +19,7 @@ impl FloSqlite {
 
     ///
     /// Queries and maps some rows
-    /// 
+    ///
     fn query_map<'a, T: 'a, F: FnMut(&Row) -> rusqlite::Result<T>>(&mut self, statement: FloStatement, params: &[&dyn ToSql], f: F) -> Result<Box<dyn 'a+Iterator<Item=Result<T, SqliteAnimationError>>>, SqliteAnimationError> {
         self.flush_pending()?;
 
@@ -37,7 +37,7 @@ impl FloSqlite {
 impl FloQuery for FloSqlite {
     ///
     /// Finds the real layer ID for the specified assigned ID
-    /// 
+    ///
     fn query_layer_id_for_assigned_id(&mut self, assigned_id: u64) -> Result<(i64, Option<String>), SqliteAnimationError> {
         let animation_id = self.animation_id;
         self.query_row(FloStatement::SelectLayerIdAndName, &[&animation_id, &(assigned_id as i64)], |row| Ok((row.get(0)?, row.get(2)?)))
@@ -45,7 +45,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Returns an iterator over the key frame times for a particular layer ID
-    /// 
+    ///
     fn query_key_frame_times_for_layer_id(&mut self, layer_id: i64, from: Duration, until: Duration) -> Result<Vec<Duration>, SqliteAnimationError> {
         let from    = Self::get_micros(&from);
         let until   = Self::get_micros(&until);
@@ -58,7 +58,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the nearest keyframe to the specified time in the specified layer
-    /// 
+    ///
     fn query_nearest_key_frame<'a>(&'a mut self, layer_id: i64, when: Duration) -> Result<Option<(i64, Duration)>, SqliteAnimationError> {
         let res = self.query_row(FloStatement::SelectNearestKeyFrame, &[&layer_id, &Self::get_micros(&when)], |row| Ok((row.get(0)?, Self::from_micros(row.get(1)?))));
 
@@ -70,7 +70,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Similar to query_nearest_key_frame except finds the previous and next keyframes instead
-    /// 
+    ///
     fn query_previous_and_next_key_frame(&mut self, layer_id: i64, when: Duration) -> Result<(Option<(i64, Duration)>, Option<(i64, Duration)>), SqliteAnimationError> {
         let when            = Self::get_micros(&when);
 
@@ -99,7 +99,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Returns the size of the animation
-    /// 
+    ///
     fn query_size(&mut self) -> Result<(f64, f64), SqliteAnimationError> {
         let animation_id = self.animation_id;
         self.query_row(FloStatement::SelectAnimationSize, &[&animation_id], |row| Ok((row.get(0)?, row.get(1)?)))
@@ -107,7 +107,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Returns the total length of the animation
-    /// 
+    ///
     fn query_duration(&mut self) -> Result<Duration, SqliteAnimationError> {
         let animation_id = self.animation_id;
         self.query_row(FloStatement::SelectAnimationDuration, &[&animation_id], |row| Ok(Self::from_micros(row.get(0)?)))
@@ -115,7 +115,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Returns the length of a frame in the animation
-    /// 
+    ///
     fn query_frame_length(&mut self) -> Result<Duration, SqliteAnimationError> {
         let animation_id = self.animation_id;
         self.query_row(FloStatement::SelectAnimationFrameLength, &[&animation_id], |row| Ok(Self::from_nanos(row.get(0)?)))
@@ -123,11 +123,11 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Returns the assigned layer IDs
-    /// 
+    ///
     fn query_assigned_layer_ids(&mut self) -> Result<Vec<u64>, SqliteAnimationError> {
         let animation_id = self.animation_id;
         let rows = self.query_map(
-            FloStatement::SelectAssignedLayerIds, 
+            FloStatement::SelectAssignedLayerIds,
             &[&animation_id],
             |row| {
                 let layer_id: i64 = row.get(0)?;
@@ -139,14 +139,14 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Retrieves the total number of entries in the edit log
-    /// 
+    ///
     fn query_edit_log_length(&mut self) -> Result<i64, SqliteAnimationError> {
         self.query_row(FloStatement::SelectEditLogLength, &[], |row| row.get(0))
     }
 
     ///
     /// Retrieves a set of values from the edit log
-    /// 
+    ///
     fn query_edit_log_values(&mut self, from_index: i64, to_index: i64) -> Result<Vec<EditLogEntry>, SqliteAnimationError> {
         // Converts an i64 from the DB to an u64 as we use those for IDs
         #[inline]
@@ -196,7 +196,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the size associated with an edit log entry
-    /// 
+    ///
     fn query_edit_log_size(&mut self, edit_id: i64) -> Result<(f64, f64), SqliteAnimationError> {
         self.query_row(FloStatement::SelectEditLogSize, &[&edit_id], |row| {
             Ok((row.get(0)?, row.get(1)?))
@@ -205,7 +205,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Retrieves the raw points associated with a particular edit ID
-    /// 
+    ///
     fn query_edit_log_raw_points(&mut self, edit_id: i64) -> Result<Vec<RawPoint>, SqliteAnimationError> {
         let point_bytes = self.query_row(FloStatement::SelectEditLogRawPoints, &[&edit_id], |row| {
             let point_bytes: Vec<_> = row.get(0)?;
@@ -215,7 +215,7 @@ impl FloQuery for FloSqlite {
         let mut point_bytes: &[u8]  = &point_bytes;
         Ok(read_raw_points(&mut point_bytes).unwrap())
     }
-    
+
     ///
     /// Retrieves the ID of the path associated with the specified edit ID
     ///
@@ -237,7 +237,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Retrieves a colour with the specified ID
-    /// 
+    ///
     fn query_color(&mut self, color_id: i64) -> Result<ColorEntry, SqliteAnimationError> {
         self.query_row(FloStatement::SelectColor, &[&color_id], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?, row.get(6)?)))
             .map(|(color_type, r, g, b, h, s, l)| {
@@ -260,7 +260,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Retrieves the brush with the specified ID
-    /// 
+    ///
     fn query_brush(&mut self, brush_id: i64) -> Result<BrushEntry, SqliteAnimationError> {
         self.query_row(FloStatement::SelectBrushDefinition, &[&brush_id], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)))
             .map(|(brush_type, min_width, max_width, scale_up_distance)| {
@@ -278,7 +278,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Retrieves the brush properties with the specified ID
-    /// 
+    ///
     fn query_brush_properties(&mut self, brush_properties_id: i64) -> Result<BrushPropertiesEntry, SqliteAnimationError> {
         self.query_row(FloStatement::SelectBrushProperties, &[&brush_properties_id], |row| {
             Ok(BrushPropertiesEntry {
@@ -318,7 +318,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the vector elements that appear before a certain time in the specified keyframe
-    /// 
+    ///
     fn query_vector_keyframe_elements_before(&mut self, keyframe_id: i64, before: Duration) -> Result<Vec<VectorElementEntry>, SqliteAnimationError> {
         self.query_map(FloStatement::SelectVectorElementsBefore, &[&keyframe_id, &Self::get_micros(&before)], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?, row.get(6)?)))
             .map(|rows_with_errors|
@@ -386,7 +386,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the single most recent element of the specified type in the specified keyframe
-    /// 
+    ///
     fn query_most_recent_element_of_type(&mut self, keyframe_id: i64, before: Duration, element_type: VectorElementType) -> Result<Option<VectorElementEntry>, SqliteAnimationError> {
         let element_type = self.enum_value(DbEnum::VectorElement(element_type));
 
@@ -432,7 +432,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the type of a single vector element given its assigned ID
-    /// 
+    ///
     fn query_vector_element_type_from_assigned_id(&mut self, assigned_id: i64) -> Result<Option<VectorElementType>, SqliteAnimationError> {
         self.query_row(FloStatement::SelectVectorElementTypeAssigned, &[&assigned_id], |row| row.get(0))
             .map(|element_type| {
@@ -444,7 +444,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the type of a single vector element given its element id
-    /// 
+    ///
     fn query_vector_element_type_from_element_id(&mut self, element_id: i64) -> Result<Option<VectorElementType>, SqliteAnimationError> {
         self.query_row(FloStatement::SelectVectorElementTypeElementId, &[&element_id], |row| row.get(0))
             .map(|element_type| {
@@ -456,7 +456,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the brush points associated with a vector element
-    /// 
+    ///
     fn query_vector_element_brush_points(&mut self, element_id: i64) -> Result<Vec<BrushPoint>, SqliteAnimationError> {
         self.query_map(FloStatement::SelectBrushPoints, &[&element_id],
             |row| {
@@ -513,7 +513,7 @@ impl FloQuery for FloSqlite {
     ///
     fn query_path_element(&mut self, element_id: i64) -> Result<Option<PathElementEntry>, SqliteAnimationError> {
         // The path ID is retrieved via the path element
-        let path_id = self.query_row(FloStatement::SelectPathElement, &[&element_id], 
+        let path_id = self.query_row(FloStatement::SelectPathElement, &[&element_id],
             |element| element.get(0))?;
 
         // Look for the brush ID and brush properties ID in the attached elements
@@ -552,7 +552,7 @@ impl FloQuery for FloSqlite {
     ///
     fn query_path_components(&mut self, path_id: i64) -> Result<Vec<PathComponent>, SqliteAnimationError> {
         // Request the points and types. 'Close' types have no coordinates associated with them, so they can have null x, y coordinates
-        let mut points = self.query_map(FloStatement::SelectPathPointsWithTypes, &[&path_id], 
+        let mut points = self.query_map(FloStatement::SelectPathPointsWithTypes, &[&path_id],
             |row| { Ok((row.get::<_, Option<f64>>(0)?, row.get::<_, Option<f64>>(1)?, row.get(2)?)) })?
             .map(|row| row.unwrap())
             .map(|(x, y, point_type)| (x.and_then(|x| y.map(|y| PathPoint::new(x as f32, y as f32))), point_type))
@@ -563,15 +563,15 @@ impl FloQuery for FloSqlite {
 
         while let Some((point, point_type)) = points.next() {
             match point_type {
-                DbEnum::PathPoint(PathPointType::MoveTo) => { 
+                DbEnum::PathPoint(PathPointType::MoveTo) => {
                     components.push(PathComponent::Move(point.unwrap()));
                 },
 
-                DbEnum::PathPoint(PathPointType::LineTo) => { 
+                DbEnum::PathPoint(PathPointType::LineTo) => {
                     components.push(PathComponent::Line(point.unwrap()));
                 },
 
-                DbEnum::PathPoint(PathPointType::ControlPoint) => { 
+                DbEnum::PathPoint(PathPointType::ControlPoint) => {
                     let cp1                 = point;
                     let (cp2, _cp2_type)    = points.next().unwrap();
                     let (tgt, _tgt_type)    = points.next().unwrap();
@@ -594,7 +594,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the motion associated with a particular motion ID
-    /// 
+    ///
     fn query_motion(&mut self, motion_id: i64) -> Result<Option<MotionEntry>, SqliteAnimationError> {
         let result = self.query_map(FloStatement::SelectMotion, &[&motion_id], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
             .map(|row| row.unwrap())
@@ -612,7 +612,7 @@ impl FloQuery for FloSqlite {
 
     ///
     /// Queries the time points attached to a motion
-    /// 
+    ///
     fn query_motion_timepoints(&mut self, motion_id: i64, path_type: MotionPathType) -> Result<Vec<TimePointEntry>, SqliteAnimationError> {
         let path_type = self.enum_value(DbEnum::MotionPathType(path_type));
 
@@ -621,14 +621,14 @@ impl FloQuery for FloSqlite {
             .map(|row_with_error| row_with_error.unwrap())
             .map(|(x, y, millis): (f64, f64, f64)| {
                 let (x, y, millis) = (x as f32, y as f32, millis as f32);
-                TimePointEntry { 
-                    x:              x, 
-                    y:              y, 
-                    milliseconds:   millis 
+                TimePointEntry {
+                    x:              x,
+                    y:              y,
+                    milliseconds:   millis
                 }
             })
             .collect();
-        
+
         Ok(result)
     }
 

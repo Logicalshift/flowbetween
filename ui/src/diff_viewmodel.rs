@@ -22,7 +22,7 @@ lazy_static! {
 
 ///
 /// Tracks differences in the viewmodel attached to a controller and its subtree
-/// 
+///
 pub struct DiffViewModel {
     /// The controller that owns the viewmodel (if it's still live)
     controller: Weak<dyn Controller>,
@@ -129,7 +129,7 @@ impl WatchViewModel {
             changed_properties:     changed_properties,
             watcher_lifetimes:      watcher_lifetimes,
 
-            controller:             controller.clone() 
+            controller:             controller.clone()
         }
     }
 
@@ -172,8 +172,8 @@ impl WatchViewModel {
     }
 
     ///
-    /// Retrieves any updates caused by new subcontrollers being added to the UI 
-    /// 
+    /// Retrieves any updates caused by new subcontrollers being added to the UI
+    ///
     pub fn get_new_controller_updates(&self) -> Vec<ViewModelUpdate> {
         if let Some(controller) = self.controller.upgrade() {
             // Get the current set of subcontrollers
@@ -313,7 +313,7 @@ mod test {
 
     impl DynamicController {
         pub fn new() -> DynamicController {
-            DynamicController { 
+            DynamicController {
                 controls:       Arc::new(bind(Control::empty())),
                 view_model:     Arc::new(DynamicViewModel::new()),
                 subcontrollers: Mutex::new(HashMap::new())
@@ -484,16 +484,16 @@ mod test {
         model_controler: Arc<ModelController>,
         view_model: Arc<NullViewModel>
     }
-    
+
     struct ModelController {
         view_model: Arc<TestViewModel>
     }
 
     impl TestController {
         pub fn new() -> TestController {
-            TestController { 
-                model_controler: Arc::new(ModelController::new()), 
-                view_model: Arc::new(NullViewModel::new()) 
+            TestController {
+                model_controler: Arc::new(ModelController::new()),
+                view_model: Arc::new(NullViewModel::new())
             }
         }
     }
@@ -540,7 +540,7 @@ mod test {
             BindRef::from(bind(PropertyValue::String(property_name.to_string())))
         }
 
-        fn set_property(&self, _property_name: &str, _new_value: PropertyValue) { 
+        fn set_property(&self, _property_name: &str, _new_value: PropertyValue) {
         }
 
         fn get_property_names(&self) -> Vec<String> {
@@ -551,7 +551,7 @@ mod test {
             unimplemented!()
         }
     }
-    
+
     #[test]
     pub fn can_generate_viewmodel_update_all() {
         let viewmodel   = TestViewModel;
@@ -564,7 +564,7 @@ mod test {
             ViewModelChange::PropertyChanged("Test3".to_string(), PropertyValue::String("Test3".to_string())),
         ]);
     }
-    
+
     #[test]
     pub fn can_generate_controller_update_all() {
         let controller  = Arc::new(TestController::new());

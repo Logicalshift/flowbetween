@@ -27,7 +27,7 @@ fn make_app_bounds<BindProperty: FnMut(Property) -> AppProperty>(ui_bounds: &Bou
 }
 
 impl ActionsFrom<ViewAction> for ControlAttribute {
-    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> { 
+    fn actions_from<BindProperty: FnMut(Property) -> AppProperty>(&self, bind_property: &mut BindProperty) -> Vec<ViewAction> {
         use self::ControlAttribute::*;
 
         match self {
@@ -63,7 +63,7 @@ fn event_actions(trigger: &ActionTrigger, name: &String) -> Vec<ViewAction> {
     match trigger {
         Click                           => vec![ViewAction::RequestEvent(ViewEvent::Click, name.clone())],
         Dismiss                         => vec![ViewAction::RequestEvent(ViewEvent::Dismiss, name.clone())],
-        
+
         Paint(Mouse(Left))              => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseLeft), name.clone())],
         Paint(Mouse(Middle))            => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseMiddle), name.clone())],
         Paint(Mouse(Right))             => vec![ViewAction::RequestEvent(ViewEvent::Paint(AppPaintDevice::MouseRight), name.clone())],

@@ -13,7 +13,7 @@ use std::cell::*;
 
 ///
 /// The label widget is used to manage GTK labels
-/// 
+///
 pub struct FloLabelWidget {
     /// The ID of the widget
     id: WidgetId,
@@ -28,7 +28,7 @@ pub struct FloLabelWidget {
 impl FloLabelWidget {
     ///
     /// Creates a basic widget
-    /// 
+    ///
     pub fn new<Src: Cast+Clone+IsA<gtk::Widget>+IsA<gtk::Label>>(id: WidgetId, widget: Src) -> FloLabelWidget {
         // Fetch the object references
         let label   = widget.clone().upcast::<gtk::Label>();

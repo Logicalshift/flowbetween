@@ -18,7 +18,7 @@ const ROOT_ENTITY: i64      = -1;
 
 ///
 /// Manages a file list database
-/// 
+///
 pub struct FileList {
     log: LogPublisher,
     connection: Connection
@@ -27,7 +27,7 @@ pub struct FileList {
 impl FileList {
     ///
     /// Creates a new file list from a Sqlite connection
-    /// 
+    ///
     pub fn new(database_connection: Connection) -> result::Result<FileList, FileListError> {
         let log                 = LogPublisher::new(module_path!());
         let connection_version  = Self::version_number(&database_connection);
@@ -47,7 +47,7 @@ impl FileList {
         // Create the result
         let mut result = FileList {
             log:        log,
-            connection: database_connection 
+            connection: database_connection
         };
 
         // Upgrade the contents if necessary
@@ -58,7 +58,7 @@ impl FileList {
 
     ///
     /// Initializes this file list
-    /// 
+    ///
     fn initialize(&self) -> Result<()> {
         self.log.log((Level::Info, "Initializing file list database"));
 
@@ -116,7 +116,7 @@ impl FileList {
 
     ///
     /// Returns the database representation of a path
-    /// 
+    ///
     fn string_for_path(path: &Path) -> String {
         // As a safety measure, we don't allow any directories so only the last path component is used
         let final_component = path.components()
@@ -168,7 +168,7 @@ impl FileList {
 
     ///
     /// Adds a path to the database
-    /// 
+    ///
     pub fn add_path(&mut self, path: &Path) -> result::Result<(), FileListError> {
         let transaction = self.connection.transaction()?;
 
@@ -191,7 +191,7 @@ impl FileList {
 
     ///
     /// Deletes a path from the database
-    /// 
+    ///
     pub fn remove_path(&mut self, path: &Path) -> result::Result<(), FileListError> {
         let transaction = self.connection.transaction()?;
 
@@ -213,16 +213,16 @@ impl FileList {
 
     ///
     /// Lists the paths in the database
-    /// 
+    ///
     pub fn list_paths(&self) -> result::Result<Vec<PathBuf>, FileListError> {
         let mut select_paths    = self.connection.prepare("
             WITH RECURSIVE RootEntities AS (
-                SELECT 0 AS idx, EntityId, NextEntity 
-                    FROM    Flo_Entity_Ordering 
+                SELECT 0 AS idx, EntityId, NextEntity
+                    FROM    Flo_Entity_Ordering
                     WHERE   ParentEntityId = ? AND EntityId NOT IN (SELECT NextEntity FROM Flo_Entity_Ordering)
-                UNION 
-                SELECT RootEntities.idx+1, Flo_Entity_Ordering.EntityId, Flo_Entity_Ordering.NextEntity 
-                    FROM    Flo_Entity_Ordering, RootEntities 
+                UNION
+                SELECT RootEntities.idx+1, Flo_Entity_Ordering.EntityId, Flo_Entity_Ordering.NextEntity
+                    FROM    Flo_Entity_Ordering, RootEntities
                     WHERE   Flo_Entity_Ordering.EntityId = RootEntities.NextEntity
                     AND     Flo_Entity_Ordering.EntityId != -1
             )
@@ -240,7 +240,7 @@ impl FileList {
             })?
             .filter_map(|row| row.ok())
             .collect();
-        
+
         Ok(paths)
     }
 
@@ -370,7 +370,7 @@ impl FileList {
 
     ///
     /// Updates the display name for a path
-    /// 
+    ///
     pub fn set_display_name_for_path(&self, path: &Path, display_name: &str) -> result::Result<(), FileListError> {
         let path_string = Self::string_for_path(path);
 
@@ -381,7 +381,7 @@ impl FileList {
 
     ///
     /// Retrieves the display name for a particular path
-    /// 
+    ///
     pub fn display_name_for_path(&self, path: &Path) -> Option<String> {
         let path_string = Self::string_for_path(path);
 
@@ -460,7 +460,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
-        
+
         file_list.order_path_after(&PathBuf::from("test3").as_path(), Some(&PathBuf::from("test2").as_path())).unwrap();
 
         let paths = file_list.list_paths().unwrap();
@@ -483,7 +483,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
-        
+
         file_list.order_path_after(&PathBuf::from("test3").as_path(), None).unwrap();
 
         let paths = file_list.list_paths().unwrap();
@@ -506,7 +506,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
-        
+
         file_list.order_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test1").as_path())).unwrap();
 
         let paths = file_list.list_paths().unwrap();
@@ -529,7 +529,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
-        
+
         file_list.order_path_after(&PathBuf::from("test4").as_path(), None).unwrap();
 
         let paths = file_list.list_paths().unwrap();
@@ -552,7 +552,7 @@ mod test {
         file_list.add_path(&PathBuf::from("test2").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test3").as_path()).unwrap();
         file_list.add_path(&PathBuf::from("test4").as_path()).unwrap();
-        
+
         file_list.order_path_after(&PathBuf::from("test4").as_path(), Some(&PathBuf::from("test4").as_path())).unwrap();
 
         let paths = file_list.list_paths().unwrap();

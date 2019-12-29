@@ -15,7 +15,7 @@ use std::rc::*;
 
 ///
 /// Provides support for the scale widget
-/// 
+///
 pub struct FloScaleWidget {
     /// The currently set min value
     min: f64,
@@ -39,7 +39,7 @@ pub struct FloScaleWidget {
 impl FloScaleWidget {
     ///
     /// Creates a new scale widget
-    /// 
+    ///
     pub fn new(id: WidgetId, scale: gtk::Scale) -> FloScaleWidget {
         let button_pressed = Rc::new(RefCell::new(false));
 
@@ -57,7 +57,7 @@ impl FloScaleWidget {
 
     ///
     /// Hooks up the button pressed event
-    /// 
+    ///
     fn connect_button_events(scale: &gtk::Scale, button_pressed: Rc<RefCell<bool>>) {
         {
             // Set the button pressed flag when the user clicks the mouse over the scale
@@ -107,7 +107,7 @@ impl GtkUiWidget for FloScaleWidget {
                 let sink            = RefCell::new(flo_gtk.get_event_sink());
                 let event_name      = event_name_ref.clone();
                 let button_pressed  = Rc::clone(&self.button_pressed);
-                
+
                 self.scale.connect_value_changed(move |widget| {
                     // Generate when the value is changed and the button is not held down
                     if *button_pressed.borrow() == false {
@@ -133,7 +133,7 @@ impl GtkUiWidget for FloScaleWidget {
                 let sink            = RefCell::new(flo_gtk.get_event_sink());
                 let event_name      = event_name.clone();
                 let button_pressed  = Rc::clone(&self.button_pressed);
-                
+
                 self.scale.connect_value_changed(move |widget| {
                     if *button_pressed.borrow() == true {
                         let new_value       = widget.get_value();

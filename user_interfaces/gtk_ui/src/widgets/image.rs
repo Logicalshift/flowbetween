@@ -8,12 +8,12 @@ use gtk::prelude::*;
 
 ///
 /// Creates an image widget from an image resource
-/// 
+///
 pub fn image_from_image(image: Resource<Image>) -> gtk::Image {
     // Create a new image widget
     let pixbuf          = pixbuf_from_image(image);
     let image_widget    = gtk::Image::new();
-    
+
     // GTK can't auto-scale images, so we'll do that ourselves
     image_widget.connect_size_allocate(move |image, allocation| {
         let image = image.clone();
@@ -39,7 +39,7 @@ pub fn image_from_image(image: Resource<Image>) -> gtk::Image {
 
 ///
 /// Creates a pixbuf from a FlowBetween image resource
-/// 
+///
 pub fn pixbuf_from_image(image: Resource<Image>) -> gdk_pixbuf::Pixbuf {
     use self::Image::*;
 
@@ -51,7 +51,7 @@ pub fn pixbuf_from_image(image: Resource<Image>) -> gdk_pixbuf::Pixbuf {
 
 ///
 /// Creates some glib bytes from an image data object
-/// 
+///
 fn bytes_from_data(image_data: &dyn ImageData) -> glib::Bytes {
     // Read the image data out into a byte buffer
     let mut data = vec![];
@@ -65,7 +65,7 @@ fn bytes_from_data(image_data: &dyn ImageData) -> glib::Bytes {
 
 ///
 /// Creates a pixbuf from PNG data
-/// 
+///
 fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
     let input_stream    = gio::MemoryInputStream::new_from_bytes(&bytes);
@@ -76,7 +76,7 @@ fn pixbuf_from_png(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
 
 ///
 /// Creates a pixbuf from SVG data
-/// 
+///
 fn pixbuf_from_svg(image_data: &dyn ImageData) -> gdk_pixbuf::Pixbuf {
     let bytes           = bytes_from_data(image_data);
     let input_stream    = gio::MemoryInputStream::new_from_bytes(&bytes);

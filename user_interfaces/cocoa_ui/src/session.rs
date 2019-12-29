@@ -189,7 +189,7 @@ impl CocoaSession {
         match action {
             CreateWindow(window_id)             => { self.create_window(window_id); }
             Window(window_id, window_action)    => { self.windows.get(&window_id).cloned().map(|window| self.dispatch_window_action(window, window_action)); }
-            
+
             CreateView(view_id, view_type)      => { self.create_view(view_id, view_type); },
             DeleteView(view_id)                 => { self.delete_view(view_id); }
             View(view_id, view_action)          => { self.dispatch_view_action(view_id, view_action); }
@@ -338,9 +338,9 @@ impl CocoaSession {
                     SetHorizontalScrollBar(visibility)      => { let _: () = msg_send!(**view, viewSetHorizontalScrollVisibility: Self::scroll_visibility_value(visibility)); },
                     SetVerticalScrollBar(visibility)        => { let _: () = msg_send!(**view, viewSetVerticalScrollVisibility: Self::scroll_visibility_value(visibility)); },
 
-                    Draw(canvas_actions)                    => { 
+                    Draw(canvas_actions)                    => {
                         let view = view.clone();
-                        self.draw(view_id, &view, canvas_actions); 
+                        self.draw(view_id, &view, canvas_actions);
                     }
                 }
             }
@@ -422,12 +422,12 @@ impl CocoaSession {
         let view            = view_src.clone();
         let clear_canvas    = move || { unsafe { let _: () = msg_send!(*view, viewClearCanvas); } };
         let view            = view_src.clone();
-        let copy_layer      = move |layer_id| { 
-            unsafe { 
+        let copy_layer      = move |layer_id| {
+            unsafe {
                 let layer_copy: *mut Object = msg_send!(*view, viewCopyLayerWithId: layer_id);
                 let layer_copy = StrongPtr::retain(layer_copy);
                 layer_copy
-            } 
+            }
         };
         let view            = view_src.clone();
         let update_layer    = move |layer_id, layer_obj: StrongPtr| { unsafe { let _: () = msg_send!(*view, viewUpdateCache: *layer_obj fromLayerWithId: layer_id); } };
@@ -538,7 +538,7 @@ impl CocoaSession {
 
     ///
     /// Creates some glib bytes from an image data object
-    /// 
+    ///
     fn bytes_from_image_data(image_data: &dyn ImageData) -> id {
         unsafe {
             // Read the image data out into a byte buffer
@@ -632,7 +632,7 @@ impl CocoaSession {
                 At(pos)                     => { let _: () = msg_send!(**view, viewSetSide: side at: pos); },
                 Floating(prop, offset)      => {
                     let floating_property = self.flo_property(prop);
-                    msg_send!(**view, viewSetSide: side offset: offset floating: floating_property) 
+                    msg_send!(**view, viewSetSide: side offset: offset floating: floating_property)
                 },
                 Offset(offset)              => { let _: () = msg_send!(**view, viewSetSide: side offset: offset); },
                 Stretch(amount)             => { let _: () = msg_send!(**view, viewSetSide: side stretch: amount); },

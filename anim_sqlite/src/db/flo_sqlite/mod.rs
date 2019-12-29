@@ -33,7 +33,7 @@ lazy_static! {
 
 ///
 /// Provides an interface for updating and accessing the animation SQLite database
-/// 
+///
 /// This takes a series of updates (see `DatabaseUpdate` for the list) and turns them
 /// into database commands. We do things this way for a few reasons: it creates
 /// an isolation layer between the implementation of the interfaces and the design
@@ -41,7 +41,7 @@ lazy_static! {
 /// instantiate a database, it ensures that all of the database code is in one
 /// place (making it easier to change) and it eliminates a hard dependency on
 /// SQLite. (It also reduces the amount of boilerplate code needed in a lot of places)
-/// 
+///
 pub struct FloSqlite {
     /// This type's logger
     log: Arc<LogPublisher>,
@@ -180,7 +180,7 @@ enum FloStatement {
 impl FloSqlite {
     ///
     /// Creates a new animation database. The connection must already have been initialized via `setup`.
-    /// 
+    ///
     pub fn new(sqlite: Connection) -> FloSqlite {
         let mut sqlite = sqlite;
         Self::upgrade(&mut sqlite).unwrap();
@@ -274,7 +274,7 @@ impl FloSqlite {
 
     ///
     /// True if there are no items on the stack for this item
-    /// 
+    ///
     #[cfg(test)]
     pub fn stack_is_empty(&self) -> bool {
         self.stack.len() == 0
@@ -282,7 +282,7 @@ impl FloSqlite {
 
     ///
     /// Initialises the database as new
-    /// 
+    ///
     pub fn setup(sqlite: &Connection) -> Result<(), SqliteAnimationError> {
         // Create the definition string
         let definition      = String::from_utf8_lossy(V3_DEFINITION);
@@ -300,21 +300,21 @@ impl FloSqlite {
 
     ///
     /// Turns a microsecond count into a duration
-    /// 
+    ///
     fn from_micros(when: i64) -> Duration {
         Duration::new((when / 1_000_000) as u64, ((when % 1_000_000) * 1000) as u32)
     }
 
     ///
     /// Turns a nanosecond count into a duration
-    /// 
+    ///
     fn from_nanos(when: i64) -> Duration {
         Duration::new((when / 1_000_000_000) as u64, (when % 1_000_000_000) as u32)
     }
 
     ///
     /// Retrieves microseconds from a duration
-    /// 
+    ///
     fn get_micros(when: &Duration) -> i64 {
         let secs:i64    = when.as_secs() as i64;
         let nanos:i64   = when.subsec_nanos() as i64;
@@ -324,7 +324,7 @@ impl FloSqlite {
 
     ///
     /// Returns the text of the query for a particular statements
-    /// 
+    ///
     fn query_for_statement(statement: FloStatement) -> &'static str {
         use self::FloStatement::*;
 
@@ -375,7 +375,7 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_AssignedElementId   AS Assgn    ON Elem.ElementId = Assgn.ElementId \
                                                         WHERE Attch.AttachedElementId = ?;",
             SelectBrushProperties               => "SELECT Size, Opacity, Color FROM Flo_BrushProperties WHERE BrushProperties = ?",
-            SelectVectorElementWithId           => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
+            SelectVectorElementWithId           => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId
                                                         FROM Flo_VectorElement                      AS Elem \
                                                         LEFT OUTER JOIN Flo_VectorElementTime       AS Time  ON Elem.ElementId = Time.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
@@ -387,7 +387,7 @@ impl FloSqlite {
                                                         WHERE Assgn.AssignedId = ?",
             SelectVectorElementTypeElementId    => "SELECT Elem.VectorElementType FROM Flo_VectorElement    AS Elem \
                                                         WHERE Elem.ElementId = ?",
-            SelectVectorElementsBefore          => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId 
+            SelectVectorElementsBefore          => "SELECT Elem.ElementId, Elem.VectorElementType, Time.AtTime, Brush.Brush, Brush.DrawingStyle, Props.BrushProperties, Assgn.AssignedId
                                                         FROM Flo_VectorElement                      AS Elem \
                                                         INNER JOIN Flo_VectorElementTime            AS Time  ON Elem.ElementId = Time.ElementId \
                                                         LEFT OUTER JOIN Flo_BrushElement            AS Brush ON Elem.ElementId = Brush.ElementId \
@@ -430,7 +430,7 @@ impl FloSqlite {
             SelectMotion                        => "SELECT Mot.MotionType, Origin.X, Origin.Y \
                                                         FROM Flo_Motion                     AS Mot
                                                         LEFT OUTER JOIN Flo_MotionOrigin    AS Origin ON Mot.MotionId = Origin.MotionId
-                                                        WHERE Mot.MotionId = ?", 
+                                                        WHERE Mot.MotionId = ?",
             SelectMotionTimePoints              => "SELECT Point.X, Point.Y, Point.Milliseconds \
                                                         FROM Flo_MotionPath         AS Path \
                                                         INNER JOIN Flo_TimePoint    AS Point ON Path.PointId = Point.PointId \
@@ -523,7 +523,7 @@ impl FloSqlite {
 
     ///
     /// Prepares a statement from the database
-    /// 
+    ///
     #[inline]
     fn prepare<'conn>(sqlite: &'conn Connection, statement: FloStatement) -> Result<CachedStatement<'conn>, SqliteAnimationError> {
         Ok(sqlite.prepare_cached(Self::query_for_statement(statement))?)
@@ -531,7 +531,7 @@ impl FloSqlite {
 
     ///
     /// Retrieves an enum value
-    /// 
+    ///
     fn enum_value(&mut self, val: DbEnum) -> i64 {
         let sqlite = &self.sqlite;
 
@@ -549,7 +549,7 @@ impl FloSqlite {
                     .unwrap()
                     .insert::<&[&dyn ToSql]>(&[&field, &field, &name, &String::from("")])
                     .unwrap();
-                
+
                 // Try again to fetch the row
                 Self::prepare(sqlite, FloStatement::SelectEnumValue)
                     .unwrap()
@@ -564,7 +564,7 @@ impl FloSqlite {
 
     ///
     /// Finds the DbEnum value for a particular value
-    /// 
+    ///
     fn value_for_enum(&mut self, enum_type: DbEnumType, convert_value: Option<i64>) -> Option<DbEnum> {
         match convert_value {
             Some(convert_value)     => {
@@ -586,7 +586,7 @@ impl FloSqlite {
                     // Final result is the value we just cached
                     self.value_for_enum.get(&enum_type).unwrap()
                 };
-                
+
                 // Attempt to fetch the dbenum for the value of this type
                 enum_values.get(&convert_value).map(|val| *val)
             },

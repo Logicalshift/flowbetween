@@ -7,7 +7,7 @@ pub struct DbEnumName(pub &'static str, pub &'static str);
 
 ///
 /// Type of edit log item
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum EditLogType {
     SetSize,
@@ -48,7 +48,7 @@ pub enum EditLogType {
 
 ///
 /// Types of drawing style
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum DrawingStyleType {
     Draw,
@@ -57,7 +57,7 @@ pub enum DrawingStyleType {
 
 ///
 /// Types of brush definition
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum BrushDefinitionType {
     Simple,
@@ -66,7 +66,7 @@ pub enum BrushDefinitionType {
 
 ///
 /// Types of colour definition
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum ColorType {
     Rgb,
@@ -75,7 +75,7 @@ pub enum ColorType {
 
 ///
 /// Types of player
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum LayerType {
     Vector
@@ -83,7 +83,7 @@ pub enum LayerType {
 
 ///
 /// Types of vector element
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum VectorElementType {
     BrushDefinition,
@@ -119,7 +119,7 @@ pub enum PathPointType {
 
 ///
 /// All of the DB enums in one place
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum DbEnum {
     EditLog(EditLogType),
@@ -201,7 +201,7 @@ impl DbEnum {
 
 ///
 /// The types of enumeration that are in the database
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum DbEnumType {
     EditLog,
@@ -348,7 +348,7 @@ impl<'a> From<&'a AnimationEdit> for EditLogType {
             SetSize(_, _)                                       => EditLogType::SetSize,
             AddNewLayer(_)                                      => EditLogType::AddNewLayer,
             RemoveLayer(_)                                      => EditLogType::RemoveLayer,
-            
+
             Layer(_, AddKeyFrame(_))                            => EditLogType::LayerAddKeyFrame,
             Layer(_, RemoveKeyFrame(_))                         => EditLogType::LayerRemoveKeyFrame,
             Layer(_, SetName(_))                                => EditLogType::LayerSetName,

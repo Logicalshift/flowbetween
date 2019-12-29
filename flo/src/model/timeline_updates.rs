@@ -8,7 +8,7 @@ use std::time::Duration;
 
 ///
 /// Model update actions for the timeline model
-/// 
+///
 pub enum TimelineModelUpdate {
     AddNewLayer(u64),
     RemoveLayer(u64),
@@ -19,7 +19,7 @@ pub enum TimelineModelUpdate {
 impl TimelineModelUpdate {
     ///
     /// Returns true if this operation is one affecting layers as a whole (eg, adding or removing a layer)
-    /// 
+    ///
     pub fn is_layer_operation(&self) -> bool {
         use self::TimelineModelUpdate::*;
 
@@ -34,7 +34,7 @@ impl TimelineModelUpdate {
 
 ///
 /// Converts a stream of animation edits to a stream of timeline model updates
-/// 
+///
 pub fn get_timeline_updates<EditStream: Stream<Item=Arc<Vec<AnimationEdit>>, Error=()>>(edit_stream: EditStream) -> impl Stream<Item=TimelineModelUpdate, Error=()> {
     edit_stream
         .map(|animation_edits| {

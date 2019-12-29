@@ -7,7 +7,7 @@ use std::sync::*;
 
 ///
 /// Sink used to send GTK actions to a thread
-/// 
+///
 pub struct ActionSink {
     /// The thread that this sink will send its actions to
     thread: Arc<GtkThread>
@@ -31,7 +31,7 @@ impl Sink for ActionSink {
     fn start_send(&mut self, item: Vec<GtkAction>) -> StartSend<Vec<GtkAction>, ()> {
         // Items can always be sent directly to the thread
         self.thread.perform_actions(item);
- 
+
         // Item went to the sink
         Ok(AsyncSink::Ready)
     }

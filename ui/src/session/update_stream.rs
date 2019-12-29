@@ -17,10 +17,10 @@ use std::sync::*;
 /// the core. It's possible to retrieve empty updates in the event the core processed
 /// events that produced no changes (ie, sending an event to the sink will cause this
 /// stream to eventually return at least one update set)
-/// 
+///
 /// Every update stream begins with an update that sets the initial state of the
 /// UI.
-/// 
+///
 pub struct UiUpdateStream {
     /// The UI tree for the core controller
     _ui_tree: BindRef<Control>,
@@ -56,7 +56,7 @@ pub struct UiUpdateStream {
 impl UiUpdateStream {
     ///
     /// Creates a new UI update stream
-    /// 
+    ///
     pub fn new(controller: Arc<dyn Controller>, tick: Subscriber<()>, update_suspend: Subscriber<bool>) -> UiUpdateStream {
         // Create the values that will go into the core
         let pending             = Arc::new(Mutex::new(None));
@@ -71,7 +71,7 @@ impl UiUpdateStream {
 
         // Stream from the canvases
         let canvas_updates      = CanvasUpdateStream::new(Arc::clone(&controller));
-        
+
         // Generate the stream
         let new_stream = UiUpdateStream {
             _ui_tree:           ui_tree,
@@ -110,7 +110,7 @@ impl UiUpdateStream {
                             new_ui:     diff.replacement().clone()
                         })
                         .collect::<Vec<_>>();
-                    
+
                     ui_updates.extend(diffs);
                 }
 
@@ -212,7 +212,7 @@ impl Stream for UiUpdateStream {
                 pending_result_ui.extend(pending_result.take().unwrap_or(vec![]));
                 pending_result = Some(pending_result_ui);
             }
-            
+
             // Result is OK if we found a pending update
             if let Some(pending) = pending_result {
                 // There is a pending update

@@ -3,7 +3,7 @@ use futures::stream::*;
 
 ///
 /// Trait that can be implemented by items that represent a user interface
-/// 
+///
 pub trait UserInterface<InputEvent, OutputUpdate, Error> {
     /// The type of the event sink for this UI
     type EventSink: Sink<SinkItem = InputEvent, SinkError = ()>;

@@ -45,7 +45,7 @@ impl FloCheckBoxWidget {
 impl GtkUiWidget for FloCheckBoxWidget {
     ///
     /// Retrieves the ID assigned to this widget
-    /// 
+    ///
     fn id(&self) -> WidgetId {
         self.id
     }
@@ -64,7 +64,7 @@ impl GtkUiWidget for FloCheckBoxWidget {
             },
 
             // EditValue events are ignored (there isn't a sensible way to define an 'ongoing' edit of a checkbox)
-            RequestEvent(GtkWidgetEventType::EditValue, _) => { 
+            RequestEvent(GtkWidgetEventType::EditValue, _) => {
             },
 
             // Toggling the button causes a set value event
@@ -85,13 +85,13 @@ impl GtkUiWidget for FloCheckBoxWidget {
             },
 
             // Standard behaviour for all other actions
-            other_action => { process_basic_widget_action(self, flo_gtk, other_action); }            
+            other_action => { process_basic_widget_action(self, flo_gtk, other_action); }
         }
     }
 
     ///
     /// Sets the children of this widget
-    /// 
+    ///
     fn set_children(&mut self, _children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         // Checkbox widgets in other ports of the UI can't have child controls, although Gtk+ checkboxes can
         // For the moment we won't support them here either
@@ -99,7 +99,7 @@ impl GtkUiWidget for FloCheckBoxWidget {
 
     ///
     /// Retrieves the underlying widget for this UI widget
-    /// 
+    ///
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
         &self.as_widget
     }

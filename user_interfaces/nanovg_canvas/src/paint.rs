@@ -18,7 +18,7 @@ impl From<flo_canvas::Color> for NanoVgPaint {
 }
 
 impl Paint for NanoVgPaint {
-    #[inline] 
+    #[inline]
     fn fill(&self, context: &Context) {
         use self::NanoVgPaint::*;
         match self {
@@ -27,7 +27,7 @@ impl Paint for NanoVgPaint {
         }
     }
 
-    #[inline] 
+    #[inline]
     fn stroke(&self, context: &Context) {
         use self::NanoVgPaint::*;
         match self {
@@ -39,7 +39,7 @@ impl Paint for NanoVgPaint {
 
 
 impl<'a> Paint for &'a NanoVgPaint {
-    #[inline] 
+    #[inline]
     fn fill(&self, context: &Context) {
         use self::NanoVgPaint::*;
         match *self {
@@ -48,7 +48,7 @@ impl<'a> Paint for &'a NanoVgPaint {
         }
     }
 
-    #[inline] 
+    #[inline]
     fn stroke(&self, context: &Context) {
         use self::NanoVgPaint::*;
         match *self {

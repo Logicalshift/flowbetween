@@ -6,7 +6,7 @@ use super::motion_path_type::*;
 impl AnimationDb {
     ///
     /// Retrieves a particular time path for a motion
-    /// 
+    ///
     fn get_motion_path<TFile: FloFile>(core: &mut TFile, motion_id: i64, path_type: MotionPathType) -> Result<TimeCurve> {
         // Retrieve the entries for this path
         let entries = core.query_motion_timepoints(motion_id, path_type)?;
@@ -17,7 +17,7 @@ impl AnimationDb {
 
     ///
     /// Interprets a motion entry as a translate motion
-    /// 
+    ///
     fn get_translate_motion<TFile: FloFile>(core: &mut TFile, motion_id: i64, entry: MotionEntry) -> Result<Motion> {
         // Translations should always have an origin: we use 0,0 as a default if none is supplied
         let origin      = entry.origin.unwrap_or((0.0, 0.0));
@@ -34,7 +34,7 @@ impl AnimationDb {
 
     ///
     /// Turns a motion entry into a motion
-    /// 
+    ///
     pub fn motion_for_entry<TFile: FloFile>(core: &mut TFile, motion_id: i64, motion_entry: MotionEntry) -> Result<Motion> {
         match motion_entry.motion_type {
             MotionType::None        => Ok(Motion::None),
@@ -43,10 +43,10 @@ impl AnimationDb {
             MotionType::Translate   => Ok(Self::get_translate_motion(core, motion_id, motion_entry)?)
         }
     }
-    
+
     ///
     /// Retrieves the motion with the specified ID
-    /// 
+    ///
     pub fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
         if let ElementId::Assigned(motion_id) = motion_id {
             // Query and generate the motion
@@ -70,7 +70,7 @@ impl AnimationDb {
 
     ///
     /// Retrieves all of the motion IDs attached to the specified element
-    /// 
+    ///
     pub fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
         if let ElementId::Assigned(assigned_id) = element_id {
             // Assigned element IDs have attached motions
@@ -103,7 +103,7 @@ impl AnimationDb {
 
     ///
     /// Retrieves all of the element IDs attached to the specified motion
-    /// 
+    ///
     pub fn get_elements_for_motion(&self, motion_id: ElementId) -> Vec<ElementId> {
         if let ElementId::Assigned(motion_id) = motion_id {
             // Assigned motion IDs have attached elements

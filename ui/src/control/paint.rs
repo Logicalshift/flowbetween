@@ -2,7 +2,7 @@ use super::mouse::*;
 
 ///
 /// The device that caused a painting event
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Debug)]
 pub enum PaintDevice {
     /// Unknown paint device
@@ -46,10 +46,10 @@ pub enum PaintAction {
 pub struct Painting {
     /// Action for this painting event
     pub action: PaintAction,
-    
+
     /// In the event the user has multiple pointers (eg, multiple styluses on a tablet), this is the ID of the stylus that the user is using
     pub pointer_id: i32,
-    
+
     /// Coordinates relative to the control that was painted upon
     pub location: (f32, f32),
 

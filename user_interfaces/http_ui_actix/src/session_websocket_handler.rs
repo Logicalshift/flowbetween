@@ -17,7 +17,7 @@ use std::sync::*;
 
 ///
 /// Struct used to represent a websocket session
-/// 
+///
 struct FloWsSession<Session: ActixSession+'static> {
     /// The session that belongs to this websocket
     session: Arc<Mutex<HttpSession<Session::CoreUi>>>,
@@ -29,7 +29,7 @@ struct FloWsSession<Session: ActixSession+'static> {
 impl<Session: ActixSession+'static> FloWsSession<Session> {
     ///
     /// Creates a new websocket session
-    /// 
+    ///
     pub fn new(session: Arc<Mutex<HttpSession<Session::CoreUi>>>) -> FloWsSession<Session> {
         let event_sink = future::ok(session.lock().unwrap().http_ui().get_input_sink());
 
@@ -41,7 +41,7 @@ impl<Session: ActixSession+'static> FloWsSession<Session> {
 
     ///
     /// Starts sending updates to this actor (once a context is available)
-    /// 
+    ///
     pub fn start_sending_updates(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
         // Retrieve the stream of updates we need to send to the websocket
         let update_stream = self.session.lock().unwrap().http_ui().get_updates();
@@ -51,7 +51,7 @@ impl<Session: ActixSession+'static> FloWsSession<Session> {
         let update_stream = update_stream
             .map(|update, _actor, _ctx| serde_json::to_string(&update).unwrap())
             .map(|update, _actor, ctx| ctx.text(update));
-        
+
         // Spawn the updates on the context
         ctx.spawn(update_stream.finish());
     }
@@ -74,12 +74,12 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
                     let (send_sink, next_sink)  = oneshot::channel();
                     let mut next_sink: Box<dyn Future<Item=HttpEventSink, Error=()>> = Box::new(next_sink.map_err(|_| ()));
                     mem::swap(&mut self.event_sink, &mut next_sink);
-                    
+
                     // Send to the sink
                     let send_future = next_sink
                         .and_then(|event_sink| event_sink.send(request))
                         .map(move |event_sink| { send_sink.send(event_sink).ok(); });
-                    
+
                     // Spawn the future in this actor
                     ctx.spawn(fut::wrap_future(send_future));
                 }
@@ -97,7 +97,7 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
 
 ///
 /// Creates a handler for requests that should spawn a websocket for a session
-/// 
+///
 pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest, payload: web::Payload) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
     // The tail indicates the session ID
     let tail = req.match_info().get("tail").map(|s| String::from(s));

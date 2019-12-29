@@ -15,8 +15,8 @@ const INVALID_LAYER: u64 = 0xffffffffffffffff;
 
 ///
 /// Provides the editlog trait for the animation DB
-/// 
-pub struct EditStream<TFile: Unpin+FloFile+Send> {
+///
+pub struct EditStream<TFile: FloFile+Unpin+Send> {
     /// The database core
     core: Arc<Desync<AnimationDbCore<TFile>>>,
 
@@ -41,7 +41,7 @@ struct EditStreamBuffer {
 impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     ///
     /// Creates a new edit log for an animation database
-    /// 
+    ///
     pub fn new(core: &Arc<Desync<AnimationDbCore<TFile>>>, range: Range<usize>) -> EditStream<TFile> {
         // Create an empty buffer at the start of the range
         let buffer = EditStreamBuffer {
@@ -60,7 +60,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
 
     ///
     /// Generates a set_size entry
-    /// 
+    ///
     fn set_size_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
         let (width, height) = core.db.query_edit_log_size(entry.edit_id).unwrap_or((0.0, 0.0));
         AnimationEdit::SetSize(width, height)
@@ -68,14 +68,14 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
 
     ///
     /// Generates a SelectBrush entry
-    /// 
+    ///
     fn select_brush_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
         // Fetch the definition from the database
         let (brush, drawing_style) = entry.brush
             .map(|(brush_id, drawing_style)|        (AnimationDbCore::get_brush_definition(&mut core.db, brush_id), drawing_style))
             .map(|(brush_or_error, drawing_style)|  (brush_or_error.unwrap_or(BrushDefinition::Simple), drawing_style))
             .unwrap_or((BrushDefinition::Simple, DrawingStyleType::Draw));
-        
+
         // This is a paint edit, so we need the 'when' too
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
@@ -91,13 +91,13 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
 
     ///
     /// Generates a BrushProperties entry
-    /// 
+    ///
     fn brush_properties_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
         // Fetch the brush properties from the database
         let brush_properties = entry.brush_properties_id
             .map(|brush_properties_id| AnimationDbCore::get_brush_properties(&mut core.db, brush_properties_id).unwrap_or(BrushProperties::new()))
             .unwrap_or(BrushProperties::new());
-        
+
         // This is a paint edit, so we need the 'when' too
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
@@ -109,8 +109,8 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     }
 
     ///
-    /// Retrieves the raw points associated with an entry 
-    /// 
+    /// Retrieves the raw points associated with an entry
+    ///
     fn raw_points_for_entry(core: &mut AnimationDbCore<TFile>, edit_id: i64) -> Arc<Vec<RawPoint>> {
         let points = core.db.query_edit_log_raw_points(edit_id).unwrap_or_else(|_err| vec![]);
 
@@ -129,11 +129,11 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
 
     ///
     /// Decodes a brush stroke entry
-    /// 
+    ///
     fn brush_stroke_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> LayerEdit {
         // Fetch the points for this entry
         let points = Self::raw_points_for_entry(core, entry.edit_id);
-        
+
         // This is a paint edit, so we need the 'when' too
         let when = entry.when.unwrap_or(Duration::from_millis(0));
 
@@ -188,7 +188,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
 
     ///
     /// Turns an edit log entry into an animation edit
-    /// 
+    ///
     fn animation_edit_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
         use self::EditLogType::*;
 
@@ -232,7 +232,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
 
     ///
     /// Reads a range of edits from the SQLite edit log
-    /// 
+    ///
     fn read(core: &mut AnimationDbCore<TFile>, indices: &mut dyn Iterator<Item=usize>) -> Result<Vec<AnimationEdit>> {
         // Turn the indices into ranges (so we can fetch from the database)
         let current_range   = indices.next().map(|pos| pos..(pos+1));
@@ -294,7 +294,7 @@ where Self: Unpin {
             // Trigger filling the buffer (if a filling operation is not already queued)
             if !buffer.filling {
                 let range = range.clone();
-                
+
                 buffer.filling = true;
                 self.core.desync(move |core| {
                     EditStreamBuffer::fill(&*buffer_ref, core, range, None);

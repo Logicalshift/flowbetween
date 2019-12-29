@@ -11,7 +11,7 @@ use std::time::Duration;
 
 ///
 /// The brush preview structure is used to create and render a brush preview
-/// 
+///
 pub struct BrushPreview {
     current_brush:          Arc<dyn Brush>,
     brush_properties:       BrushProperties,
@@ -20,8 +20,8 @@ pub struct BrushPreview {
 }
 
 impl BrushPreview {
-    pub fn new() -> BrushPreview {
-        BrushPreview {
+    pub fn new() -> Self {
+        Self {
             current_brush:      create_brush_from_definition(&BrushDefinition::Simple, BrushDrawingStyle::Draw),
             brush_properties:   BrushProperties::new(),
             points:             vec![],
@@ -31,7 +31,7 @@ impl BrushPreview {
 
     ///
     /// Chooses the brush that we should draw with
-    /// 
+    ///
     pub fn select_brush(&mut self, brush: &BrushDefinition, drawing_style: BrushDrawingStyle) {
         // TODO: store brush definitions in the animation
         self.current_brush = create_brush_from_definition(brush, drawing_style);
@@ -39,16 +39,16 @@ impl BrushPreview {
 
     ///
     /// Sets the properties for the current brush
-    /// 
+    ///
     /// (Always sets the 'changed' flag)
-    /// 
+    ///
     pub fn set_brush_properties(&mut self, properties: &BrushProperties) {
         self.brush_properties = *properties;
     }
 
     ///
     /// Continues the current brush stroke
-    /// 
+    ///
     pub fn continue_brush_stroke(&mut self, point: RawPoint) {
         // Add points to the active brush stroke
         self.points.push(point);
@@ -56,7 +56,7 @@ impl BrushPreview {
 
     ///
     /// Clears the preview
-    /// 
+    ///
     pub fn cancel_brush_stroke(&mut self) {
         self.points             = vec![];
         self.combined_element   = None;
@@ -64,7 +64,7 @@ impl BrushPreview {
 
     ///
     /// Creates the definition element for the current brush stroke
-    /// 
+    ///
     pub fn brush_definition_element(&self) -> BrushDefinitionElement {
         let (defn, drawing_style) = self.current_brush.to_definition();
         BrushDefinitionElement::new(ElementId::Unassigned, defn, drawing_style)
@@ -72,14 +72,14 @@ impl BrushPreview {
 
     ///
     /// Creates the properties element for the current brush stroke
-    /// 
+    ///
     pub fn brush_properties_element(&self) -> BrushPropertiesElement {
         BrushPropertiesElement::new(ElementId::Unassigned, self.brush_properties)
     }
 
     ///
     /// Creates the brush element for the current brush stroke
-    /// 
+    ///
     pub fn brush_element(&self) -> BrushElement {
         let brush_points = self.current_brush.brush_points_for_raw_points(&self.points);
 
@@ -88,7 +88,7 @@ impl BrushPreview {
 
     ///
     /// Draws this preview brush stroke to the specified graphics object
-    /// 
+    ///
     pub fn draw_current_brush_stroke(&self, gc: &mut dyn GraphicsPrimitives, update_brush_definition: bool, update_properties: bool) {
         if self.points.len() < 2 {
             // Do nothing if there are no points in this brush preview
@@ -180,7 +180,7 @@ impl BrushPreview {
 
     ///
     /// Commits this preview to an animation
-    /// 
+    ///
     pub fn commit_to_animation(&mut self, update_brush_definition: bool, update_properties: bool, when: Duration, layer_id: u64, animation: &dyn EditableAnimation) {
         use LayerEdit::*;
         use PaintEdit::*;

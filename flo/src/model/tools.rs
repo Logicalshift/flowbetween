@@ -11,7 +11,7 @@ use std::collections::HashMap;
 
 ///
 /// View model representing the currently selected and available tools
-/// 
+///
 pub struct ToolModel<Anim: Animation> {
     /// The currently selected tool
     pub selected_tool: Binding<Option<Arc<FloTool<Anim>>>>,
@@ -32,7 +32,7 @@ pub struct ToolModel<Anim: Animation> {
 impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
     ///
     /// Creates a new view model
-    /// 
+    ///
     pub fn new() -> ToolModel<Anim> {
         // Create the initial set of tools
         let default_tool_sets: Vec<Arc<dyn ToolSet<Anim>>> = vec![
@@ -59,7 +59,7 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
 
     ///
     /// Returns the model for the specified tool
-    /// 
+    ///
     pub fn model_for_tool(&self, tool: &FloTool<Anim>, model: Arc<FloModel<Anim>>) -> Arc<GenericToolModel> {
         self.tool_models.lock().unwrap()
             .entry(tool.tool_name())
@@ -69,7 +69,7 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
 
     ///
     /// Returns a binding for the 'effective tool'
-    /// 
+    ///
     fn effective_tool(selected_tool: Binding<Option<Arc<FloTool<Anim>>>>, current_pointer: Binding<(PaintDevice, i32)>, tool_sets: Binding<Vec<Arc<dyn ToolSet<Anim>>>>) -> BindRef<Option<Arc<FloTool<Anim>>>> {
         let effective_tool = computed(move || {
             let (device, _pointer_id) = current_pointer.get();
@@ -107,7 +107,7 @@ impl<Anim: EditableAnimation+Animation+'static> ToolModel<Anim> {
 
     ///
     /// Finds the tool with the specified name and marks it as active
-    /// 
+    ///
     pub fn choose_tool_with_name(&self, name: &str) {
         let mut tool_with_name = None;
 

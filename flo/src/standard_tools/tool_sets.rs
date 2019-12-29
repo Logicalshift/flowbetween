@@ -7,7 +7,7 @@ use std::sync::*;
 
 ///
 /// The selection toolset
-/// 
+///
 pub struct SelectionTools<Anim: 'static+Animation> {
     select: Arc<FloTool<Anim>>,
     adjust: Arc<FloTool<Anim>>,
@@ -16,7 +16,7 @@ pub struct SelectionTools<Anim: 'static+Animation> {
 
 ///
 /// The paint toolset
-/// 
+///
 pub struct PaintTools<Anim: 'static+Animation> {
     ink:        Arc<FloTool<Anim>>,
     eraser:     Arc<FloTool<Anim>>,

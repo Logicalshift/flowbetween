@@ -12,7 +12,7 @@ use std::sync::*;
 
 ///
 /// Data for the ink brush
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub struct InkData {
     pub brush:              BrushDefinition,
@@ -24,7 +24,7 @@ pub struct InkData {
 
 ///
 /// The ink UI model
-/// 
+///
 pub struct InkModel {
     /// The size of the brush (pixels)
     pub size: Binding<f32>,
@@ -47,13 +47,13 @@ pub struct InkModel {
 
 ///
 /// The Ink tool (Inks control points of existing objects)
-/// 
+///
 pub struct Ink { }
 
 impl Ink {
     ///
     /// Creates a new instance of the Ink tool
-    /// 
+    ///
     pub fn new() -> Ink {
         Ink {}
     }
@@ -62,7 +62,7 @@ impl Ink {
 impl InkModel {
     ///
     /// Creates a new ink model with the default settings
-    /// 
+    ///
     pub fn new() -> InkModel {
         let size                = bind(5.0);
         let opacity             = bind(1.0);
@@ -84,7 +84,7 @@ impl InkModel {
 
     ///
     /// Creates brush properties from the model bindings
-    /// 
+    ///
     fn brush_properties(size: Binding<f32>, opacity: Binding<f32>, color: Binding<Color>) -> BindRef<BrushProperties> {
         let brush_properties = computed(move || {
             BrushProperties {
@@ -104,31 +104,31 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
 
     ///
     /// Retrieves the name of this tool
-    /// 
+    ///
     fn tool_name(&self) -> String { "Ink".to_string() }
 
     ///
     /// Retrieves the name of the image that is associated with this tool
-    /// 
+    ///
     fn image_name(&self) -> String { "ink".to_string() }
 
     ///
     /// Creates a new instance of the UI model for this tool
-    /// 
-    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> InkModel { 
+    ///
+    fn create_model(&self, _flo_model: Arc<FloModel<Anim>>) -> InkModel {
         InkModel::new()
     }
 
     ///
     /// Creates the menu controller for this tool (or None if this tool has no menu controller)
-    /// 
+    ///
     fn create_menu_controller(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Option<Arc<dyn Controller>> {
         Some(Arc::new(InkMenuController::new(&tool_model.size, &tool_model.opacity, &tool_model.color, &tool_model.modification_mode, &tool_model.representation)))
     }
 
     ///
     /// Returns a stream of tool actions that result from changes to the model
-    /// 
+    ///
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<dyn Stream<Item=ToolAction<InkData>, Error=()>+Send> {
         // Fetch the brush properties
         let brush_properties    = tool_model.brush_properties.clone();
@@ -153,7 +153,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
 
     ///
     /// Converts a set of tool inputs into the corresponding actions that should be performed
-    /// 
+    ///
     fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<Anim>>, data: Option<Arc<InkData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<InkData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<InkData>>> {
         use self::BrushPreviewAction::*;
         use self::ToolAction::*;
@@ -184,12 +184,12 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
                             BrushPreview(Clear),
                             BrushPreview(AddPoint(raw_point_from_painting(&painting)))
                         ],
-                        
+
                         PaintAction::Continue   => vec![
                             // Adds another point to the current brush stroke
                             BrushPreview(AddPoint(raw_point_from_painting(&painting)))
                         ],
-                        
+
                         PaintAction::Finish     => {
                             let representation      = data.as_ref().map(|data| data.representation).unwrap_or(BrushRepresentation::BrushStroke);
                             let modification_mode   = data.as_ref().map(|data| data.modification_mode).unwrap_or(BrushModificationMode::Individual);

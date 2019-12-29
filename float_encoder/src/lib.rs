@@ -25,7 +25,7 @@ mod test {
     #[test]
     pub fn can_decode_zero() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, 0.0).unwrap();
 
         let mut src: &[u8] = &target;
@@ -37,7 +37,7 @@ mod test {
     #[test]
     pub fn can_decode_one_point_five() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, 1.5).unwrap();
 
         let mut src: &[u8] = &target;
@@ -49,7 +49,7 @@ mod test {
     #[test]
     pub fn can_decode_big_value() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, 700_000.25).unwrap();
 
         let mut src: &[u8] = &target;
@@ -61,7 +61,7 @@ mod test {
     #[test]
     pub fn can_decode_minus_one_point_five() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, -1.5).unwrap();
 
         let mut src: &[u8] = &target;
@@ -73,7 +73,7 @@ mod test {
     #[test]
     pub fn can_decode_127() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, 127.0).unwrap();
 
         let mut src: &[u8] = &target;
@@ -85,7 +85,7 @@ mod test {
     #[test]
     pub fn can_decode_minus_127() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, -127.0).unwrap();
 
         let mut src: &[u8] = &target;
@@ -97,7 +97,7 @@ mod test {
     #[test]
     pub fn can_decode_126() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, 126.0).unwrap();
 
         let mut src: &[u8] = &target;
@@ -109,7 +109,7 @@ mod test {
     #[test]
     pub fn can_decode_minus_126() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, -126.0).unwrap();
 
         let mut src: &[u8] = &target;
@@ -121,7 +121,7 @@ mod test {
     #[test]
     pub fn can_decode_sequence() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, 1.5).unwrap();
         squish_float(&mut target, 1.5, 0.3).unwrap();
         squish_float(&mut target, 0.3, 4093.2).unwrap();
@@ -142,7 +142,7 @@ mod test {
     #[test]
     pub fn can_decode_nan() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, f64::NAN).unwrap();
 
         let mut src: &[u8] = &target;
@@ -154,7 +154,7 @@ mod test {
     #[test]
     pub fn can_decode_infinity() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, 0.0, f64::INFINITY).unwrap();
 
         let mut src: &[u8] = &target;
@@ -166,7 +166,7 @@ mod test {
     #[test]
     pub fn can_recover_from_nan() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, f64::NAN, 42.0).unwrap();
 
         let mut src: &[u8] = &target;
@@ -178,7 +178,7 @@ mod test {
     #[test]
     pub fn can_recover_from_infinity() {
         let mut target = vec![];
-        
+
         squish_float(&mut target, f64::INFINITY, 42.0).unwrap();
 
         let mut src: &[u8] = &target;

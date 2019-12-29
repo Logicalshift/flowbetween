@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 ///
 /// Structure that stores the data from a log message
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 struct LogCore {
     message:    String,
@@ -19,9 +19,9 @@ struct LogCore {
 
 ///
 /// Structure that stores a copy of the data from a log message
-/// 
+///
 /// This stores the message data as a reference which makes it convenient for passing around via the publisher.
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub struct LogMsg {
     core: Arc<LogCore>
@@ -40,7 +40,7 @@ impl LogMessage for LogMsg {
 impl LogMsg {
     ///
     /// Creates a new Log from a log message
-    /// 
+    ///
     pub fn from<Msg: LogMessage>(msg: Msg) -> LogMsg {
         let core = LogCore {
             message:    msg.message().to_string(),
@@ -56,9 +56,9 @@ impl LogMsg {
 
     ///
     /// Merges a set of fields into this log message
-    /// 
+    ///
     /// If any fields in the new fields list are already set to a value, the original value is left in place
-    /// 
+    ///
     pub fn merge_fields(&mut self, new_fields: &Vec<(String, String)>) {
         if new_fields.len() > 0 {
             // Create a replacement core

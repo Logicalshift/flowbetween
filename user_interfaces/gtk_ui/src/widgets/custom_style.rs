@@ -12,11 +12,11 @@ use std::collections::HashMap;
 
 ///
 /// The custom style manages custom widget style information
-/// 
+///
 /// This is used so that we can things like font formatting and colour information for Flo Widgets to be things
-/// other than their defaults (which Flo allows directly but GTK does via a style sheet... well, partly via a 
+/// other than their defaults (which Flo allows directly but GTK does via a style sheet... well, partly via a
 /// style sheet)
-/// 
+///
 pub struct CustomStyle {
     /// The widget ID that this custom style is for
     widget_id: WidgetId,
@@ -34,7 +34,7 @@ pub struct CustomStyle {
 impl CustomStyle {
     ///
     /// Creates a new custom style
-    /// 
+    ///
     pub fn new(widget_id: WidgetId) -> CustomStyle {
         CustomStyle {
             widget_id:      widget_id,
@@ -46,7 +46,7 @@ impl CustomStyle {
 
     ///
     /// Retrieves the class name this style will use within the style provider
-    /// 
+    ///
     fn class_name(&self) -> String {
         match self.widget_id {
             WidgetId::Unassigned    => "unassigned".to_string(),
@@ -66,7 +66,7 @@ impl CustomStyle {
 
     ///
     /// Reloads the styles so that the attached widget will show the changes
-    /// 
+    ///
     pub fn reload_if_needed(&mut self) {
         if self.need_refresh {
             // Refresh the stylesheet
@@ -80,7 +80,7 @@ impl CustomStyle {
 
     ///
     /// Applies this custom style to a widget
-    /// 
+    ///
     pub fn apply(&self, widget: &gtk::Widget) {
         let class_name      = self.class_name();
         let style_context   = widget.get_style_context();
@@ -92,7 +92,7 @@ impl CustomStyle {
 
     ///
     /// Sets the value of a style property
-    /// 
+    ///
     pub fn set_style(&mut self, key_name: &str, style: &str) {
         // Update the style and mark this as needing an update
         self.styles.insert(key_name.to_string(), style.to_string());
@@ -101,7 +101,7 @@ impl CustomStyle {
 
     ///
     /// Returns the CSS for a color
-    /// 
+    ///
     fn value_for_color(color: &Color) -> String {
         let (r, g, b, a)    = color.to_rgba_components();
         let (r, g, b)       = ((r*255.0).floor() as i32, (g*255.0).floor() as i32, (b*255.0).floor() as i32);
@@ -111,28 +111,28 @@ impl CustomStyle {
 
     ///
     /// Updates the foreground colour of the style
-    /// 
+    ///
     pub fn set_foreground(&mut self, foreground_color: &Color) {
         self.set_style("color", &Self::value_for_color(foreground_color));
     }
 
     ///
     /// Updates the background colour of the style
-    /// 
+    ///
     pub fn set_background(&mut self, background_color: &Color) {
         self.set_style("background-color", &Self::value_for_color(background_color));
     }
 
     ///
     /// Sets the font size of this widget
-    /// 
+    ///
     pub fn set_font_size(&mut self, pixels: f32) {
         self.set_style("font-size", &format!("{}px", pixels));
     }
 
     ///
     /// Sets the font weight of the widget
-    /// 
+    ///
     pub fn set_font_weight(&mut self, weight: u32) {
         self.set_style("font-weight", &format!("{}", weight));
     }
@@ -140,16 +140,16 @@ impl CustomStyle {
 
 ///
 /// Trait used to provide a custom style for a particular widget
-/// 
+///
 pub trait CustomStyleForWidget {
     ///
     /// Retrieves the custom style for a widget
-    /// 
+    ///
     fn get_custom_style(&self, widget: &dyn GtkUiWidget) -> WidgetDataEntry<CustomStyle>;
 
     ///
     /// Causes the custom style for a particular widget to be updated
-    /// 
+    ///
     fn update_custom_style(&self, widget: &dyn GtkUiWidget);
 }
 

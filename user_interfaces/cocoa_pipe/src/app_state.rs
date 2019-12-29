@@ -32,7 +32,7 @@ pub struct AppState {
     address_for_view: HashMap<usize, Vec<Arc<String>>>,
 
     /// Maps view IDs to addresses for 'active' views
-    /// 
+    ///
     /// Active views are ones that have an ongoing operation (such as dragging): in the event they are removed
     /// while the operation is going on, we still track the controller path so we can send all of the events
     /// to the controller.
@@ -176,7 +176,7 @@ impl AppState {
         let view                    = root_view.as_ref().and_then(|root_view| root_view.get_state_at_address(address));
 
         let mut views_to_process    = vec![(Arc::new(controller_path), view)];
-        
+
         // Recursively remove canvases from the model
         while let Some((controller_path, view)) = views_to_process.pop() {
             if let Some(view) = view {
@@ -259,7 +259,7 @@ impl AppState {
 
     ///
     /// Converts a UI property into an AppProperty binding
-    /// 
+    ///
     /// This returns the property binding and any AppActions that might be required to ensure that it's valid.
     /// This means that if there is no viewmodel for the specified controller path and the property requires one,
     /// the actions will be amended to create one.

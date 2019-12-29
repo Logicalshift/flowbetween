@@ -4,7 +4,7 @@ use flo_ui::*;
 
 ///
 /// Data associated with a widget used for describing how it will be laid out
-/// 
+///
 #[derive(Clone, Debug)]
 pub struct Layout {
     /// The bounding box of this widget
@@ -20,7 +20,7 @@ pub struct Layout {
 impl Layout {
     ///
     /// Creates a new widgetlayout object
-    /// 
+    ///
     pub fn new() -> Layout {
         Layout {
             bounds:     None,
@@ -31,7 +31,7 @@ impl Layout {
 
     ///
     /// Updates this layout by interpreting a WidgetLayout action
-    /// 
+    ///
     pub fn update(&mut self, layout: &WidgetLayout) {
         use self::WidgetLayout::*;
 

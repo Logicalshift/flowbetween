@@ -4,7 +4,7 @@ use gdk;
 
 ///
 /// Device used for painting
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum GtkPaintDevice {
     None,
@@ -24,13 +24,13 @@ impl From<GtkPaintDevice> for Vec<gdk::InputSource> {
             Touch       => vec![gdk::InputSource::Touchscreen],
             Stylus      => vec![gdk::InputSource::Pen, gdk::InputSource::TabletPad],
             Eraser      => vec![gdk::InputSource::Eraser]
-        }        
+        }
     }
 }
 
 impl GtkPaintDevice {
     ///
-    /// Returns a list of mouse buttons that a particular GTK device should respond to (the empty list indicates all buttons for this input source) 
+    /// Returns a list of mouse buttons that a particular GTK device should respond to (the empty list indicates all buttons for this input source)
     ///
     pub fn buttons(&self) -> Vec<u32> {
         use self::GtkPaintDevice::*;
@@ -44,7 +44,7 @@ impl GtkPaintDevice {
 
 ///
 /// Types of widget event that can be registered
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum GtkWidgetEventType {
     /// User pressed and released the mouse over a particular widget (or any of its children, if they do not generate their own event for this situation)

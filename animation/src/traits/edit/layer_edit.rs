@@ -4,10 +4,10 @@ use std::time::Duration;
 
 ///
 /// Represents a type of layer edit
-/// 
+///
 /// Layers may have different types, so this can be used to check what
 /// types of action a particular layer might support.
-/// 
+///
 
 #[derive(Clone, PartialEq, Debug)]
 pub enum LayerEditType {
@@ -26,7 +26,7 @@ pub enum LayerEdit {
     Path(Duration, PathEdit),
 
     /// Adds a keyframe at a particular point in time
-    /// 
+    ///
     /// Edits don't have to correspond to a keyframe - instead, keyframes
     /// indicate where the layer is cleared.
     AddKeyFrame(Duration),
@@ -38,8 +38,8 @@ pub enum LayerEdit {
     SetName(String),
 
     /// Sets this layer so that it is at a particular index in the ordering (moving the existing layers out of the way)
-    /// 
-    /// If the ordering is greater than the number of layers, 
+    ///
+    /// If the ordering is greater than the number of layers,
     SetOrdering(u32)
 }
 
@@ -47,7 +47,7 @@ impl LayerEdit {
     ///
     /// If this edit contains an unassigned element ID, calls the specified function to supply a new
     /// element ID. If the edit already has an ID, leaves it unchanged.
-    /// 
+    ///
     pub fn assign_element_id<AssignFn: FnOnce() -> i64>(self, assign_element_id: AssignFn) -> LayerEdit {
         use self::LayerEdit::*;
 

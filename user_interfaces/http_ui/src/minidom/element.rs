@@ -14,7 +14,7 @@ pub struct DomElement {
 impl DomElement {
     ///
     /// Creates a new DOM element with the specified name
-    /// 
+    ///
     pub fn new(name: &str) -> DomNode {
         DomNode::new(DomElement {
             name:       String::from(name),
@@ -126,7 +126,7 @@ impl DomNodeData for DomElement {
         self.content.insert(before, new_node)
     }
 
-    fn remove_child_node(&mut self, index: usize) { 
+    fn remove_child_node(&mut self, index: usize) {
         self.content.remove(index);
     }
 }
@@ -150,7 +150,7 @@ mod test {
 
         element.append_child_node(DomElement::new("test2"));
         element.append_child_node(DomElement::new("test3"));
-        
+
         assert!(element.content().len() == 2);
     }
 
@@ -159,7 +159,7 @@ mod test {
         let mut element = DomElement::new("test");
 
         element.set_attribute("foo", "bar");
-        
+
         assert!(element.content().len() > 0);
         assert!(element.get_attribute("foo").is_some());
         assert!(element.get_attribute("foo") == Some(String::from("bar")));

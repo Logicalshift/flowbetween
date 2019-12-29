@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 ///
 /// Represents a vector layer in a SQLite database
-/// 
+///
 #[derive(Clone)]
 pub struct SqliteVectorLayer<TFile: Unpin+FloFile+Send> {
     /// The ID that was assigned to this layer

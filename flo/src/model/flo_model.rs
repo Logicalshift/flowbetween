@@ -18,7 +18,7 @@ use std::sync::*;
 
 ///
 /// The model for the animation editor
-/// 
+///
 pub struct FloModel<Anim: Animation> {
     /// The animation that is being edited
     animation: Arc<Anim>,
@@ -54,7 +54,7 @@ pub struct FloModel<Anim: Animation> {
 impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
     ///
     /// Creates a new model
-    /// 
+    ///
     pub fn new(animation: Anim) -> FloModel<Anim> {
         let mut edit_publisher  = executor::spawn(Publisher::new(10));
         let animation           = Arc::new(animation);
@@ -88,28 +88,28 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
 impl<Anim: Animation+'static> FloModel<Anim> {
     ///
     /// Retrieves the model for the drawing tools for this animation
-    /// 
+    ///
     pub fn tools(&self) -> &ToolModel<Anim> {
         &self.tools
     }
 
     ///
     /// Retrieves the model of the timeline for this animation
-    /// 
+    ///
     pub fn timeline(&self) -> &TimelineModel<Anim> {
         &self.timeline
     }
 
     ///
     /// Retrieves the frame model for this animation
-    /// 
+    ///
     pub fn frame(&self) -> &FrameModel {
         &self.frame
     }
 
     ///
     /// Retrieves the selection model for this animation
-    /// 
+    ///
     pub fn selection(&self) -> &SelectionModel {
         &self.selection
     }
@@ -123,14 +123,14 @@ impl<Anim: Animation+'static> FloModel<Anim> {
 
     ///
     /// Retrieves the frame update binding for this animation
-    /// 
+    ///
     pub fn frame_update_count(&self) -> BindRef<u64> {
         BindRef::from(self.frame_edit_counter.clone())
     }
 
     ///
     /// Returns a stream containing any edits that have occurred on this stream
-    /// 
+    ///
     pub fn subscribe_edits(&self) -> impl Stream<Item=Arc<Vec<AnimationEdit>>, Error=()>+Clone+Send {
         self.edit_publisher.sync(|publisher| publisher.subscribe())
     }
@@ -159,56 +159,56 @@ impl<Anim: Animation> Clone for FloModel<Anim> {
 impl<Anim: Animation> Animation for FloModel<Anim> {
     ///
     /// Retrieves the frame size of this animation
-    /// 
+    ///
     fn size(&self) -> (f64, f64) {
         self.animation.size()
     }
 
     ///
     /// Retrieves the length of this animation
-    /// 
+    ///
     fn duration(&self) -> Duration {
         self.animation.duration()
     }
 
     ///
     /// Retrieves the duration of a single frame
-    /// 
+    ///
     fn frame_length(&self) -> Duration {
         self.animation.frame_length()
     }
 
     ///
     /// Retrieves the IDs of the layers in this object
-    /// 
+    ///
     fn get_layer_ids(&self) -> Vec<u64> {
         self.animation.get_layer_ids()
     }
 
     ///
     /// Retrieves the layer with the specified ID from this animation
-    /// 
+    ///
     fn get_layer_with_id<'a>(&'a self, layer_id: u64) -> Option<Arc<dyn Layer>> {
         self.animation.get_layer_with_id(layer_id)
     }
 
     ///
     /// Retrieves the total number of items that have been performed on this animation
-    /// 
+    ///
     fn get_num_edits(&self) -> usize {
         self.animation.get_num_edits()
     }
 
     ///
     /// Reads from the edit log for this animation
-    /// 
+    ///
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> {
         self.animation.read_edit_log(range)
     }
 
     ///
     /// Supplies a reference which can be used to find the motions associated with this animation
-    /// 
+    ///
     fn motion<'a>(&'a self) -> &'a dyn AnimationMotion {
         self
     }
@@ -217,30 +217,30 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
 impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     ///
     /// Assigns a new unique ID for creating a new motion
-    /// 
+    ///
     /// This ID will not have been used so far and will not be used again, and can be used as the ID for the MotionElement vector element.
-    /// 
+    ///
     fn assign_element_id(&self) -> ElementId {
         self.animation.motion().assign_element_id()
     }
 
     ///
     /// Retrieves the IDs of the motions attached to a particular element
-    /// 
+    ///
     fn get_motions_for_element(&self, element_id: ElementId) -> Vec<ElementId> {
         self.animation.motion().get_motions_for_element(element_id)
     }
 
     ///
     /// Retrieves the IDs of the elements attached to a particular motion
-    /// 
+    ///
     fn get_elements_for_motion(&self, motion_id: ElementId) -> Vec<ElementId> {
         self.animation.motion().get_elements_for_motion(motion_id)
     }
 
     ///
     /// Retrieves the motion with the specified ID
-    /// 
+    ///
     fn get_motion(&self, motion_id: ElementId) -> Option<Motion> {
         self.animation.motion().get_motion(motion_id)
     }
@@ -248,19 +248,19 @@ impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
 
 ///
 /// Sink used to send data to the animation
-/// 
+///
 struct FloModelSink<TargetSink, ProcessingFn> {
     /// Function called on every start send
     processing_fn: ProcessingFn,
 
-    /// Sink where requests should be forwarded to 
+    /// Sink where requests should be forwarded to
     target_sink: TargetSink
 }
 
 impl<TargetSink, ProcessingFn> FloModelSink<TargetSink, ProcessingFn> {
     ///
     /// Creates a new model sink
-    /// 
+    ///
     pub fn new(target_sink: TargetSink, processing_fn: ProcessingFn) -> FloModelSink<TargetSink, ProcessingFn> {
         FloModelSink {
             processing_fn:  processing_fn,
@@ -295,10 +295,10 @@ impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: 
 impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     ///
     /// Retrieves a sink that can be used to send edits for this animation
-    /// 
+    ///
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
-    /// 
+    ///
     fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
         // Edit the underlying animation
         let animation_edit  = self.animation.edit();

@@ -12,8 +12,8 @@ use std::rc::*;
 use std::collections::HashSet;
 
 ///
-/// Indicates the floating position of a widget (used when laying it out again) 
-/// 
+/// Indicates the floating position of a widget (used when laying it out again)
+///
 pub struct FloatingPosition {
     pub x: f64,
     pub y: f64
@@ -21,7 +21,7 @@ pub struct FloatingPosition {
 
 ///
 /// Provides the computed layout position for a widget
-/// 
+///
 #[derive(Clone, Copy, Debug)]
 pub struct WidgetPosition {
     pub id: WidgetId,
@@ -36,7 +36,7 @@ pub struct WidgetPosition {
 
 ///
 /// Manages layout of a set of child widgets according to the standard flo layout rules
-/// 
+///
 pub struct FloWidgetLayout {
     /// The ID of the parent widget
     parent_widget_id: WidgetId,
@@ -51,7 +51,7 @@ pub struct FloWidgetLayout {
 impl FloWidgetLayout {
     ///
     /// Creates a new Gtk widget layout object
-    /// 
+    ///
     pub fn new(parent_widget_id: WidgetId, widget_data: Rc<WidgetData>) -> FloWidgetLayout {
         FloWidgetLayout {
             parent_widget_id:   parent_widget_id,
@@ -62,14 +62,14 @@ impl FloWidgetLayout {
 
     ///
     /// Sets the ID of the child widgets that this will lay out
-    /// 
+    ///
     pub fn set_children<W: IntoIterator<Item=WidgetId>>(&mut self, widgets: W) {
         self.child_widget_ids = widgets.into_iter().collect();
     }
 
     ///
     /// Turns a Position into an absolute position
-    /// 
+    ///
     pub fn layout_position(&self, last_pos: f64, next_pos: &Position, max_pos: f64, stretch_area: f64, total_stretch: f64) -> f64 {
         use self::Position::*;
 
@@ -86,7 +86,7 @@ impl FloWidgetLayout {
 
     ///
     /// Returns the amount of stretch in a position
-    /// 
+    ///
     fn get_stretch(&self, pos: &Position) -> f64 {
         if let &Position::Stretch(portion) = pos {
             portion as f64
@@ -97,7 +97,7 @@ impl FloWidgetLayout {
 
     ///
     /// Performs layout of the widgets in this item
-    /// 
+    ///
     pub fn get_layout(&self, width: f64, height: f64) -> Vec<WidgetPosition> {
         // Where we are in the current layout
         let mut xpos    = 0.0;
@@ -180,9 +180,9 @@ impl FloWidgetLayout {
 
     ///
     /// Given a set of pairs of widget IDs and indexes, orders the corresponding widgets by Z-Index
-    /// 
+    ///
     /// Widgets that do not have a window will not be ordered.
-    /// 
+    ///
     pub fn order_zindex<ZIndexes: IntoIterator<Item=(WidgetId, u32)>>(&self, indexes: ZIndexes) {
         // Order the widgets by z-index
         let mut ordered_zindexes:Vec<_> = indexes.into_iter().collect();
@@ -203,7 +203,7 @@ impl FloWidgetLayout {
 
     ///
     /// Retrieves the padding to use for the layout
-    /// 
+    ///
     fn get_padding(&self) -> ((i32, i32), (i32, i32)) {
         let layout                      = self.widget_data.get_widget_data::<Layout>(self.parent_widget_id);
         let padding                     = layout.map(|layout| layout.borrow().padding.unwrap_or((0,0,0,0))).unwrap_or((0,0,0,0));
@@ -214,7 +214,7 @@ impl FloWidgetLayout {
 
     ///
     /// Lays out the widgets in a particular container (with 'Fixed' semantics - ie, GtkFixed or GtkLayout)
-    /// 
+    ///
     pub fn layout_fixed(&self, target: &gtk::Container) {
         let ((left, top), (right, bottom))  = self.get_padding();
         let allocation                      = target.get_allocation();
@@ -224,7 +224,7 @@ impl FloWidgetLayout {
 
     ///
     /// Lays out the widgets in a gtk::Layout continue
-    /// 
+    ///
     pub fn layout_in_layout(&self, target: &gtk::Layout) {
         let ((left, top), (right, bottom))  = self.get_padding();
         let (width, height)                 = target.get_size();
@@ -234,7 +234,7 @@ impl FloWidgetLayout {
 
     ///
     /// Performs container layout with a particular width and height
-    /// 
+    ///
     fn layout_in_container<T: Cast+Clone+IsA<gtk::Container>+IsA<gtk::Widget>>(&self, target: &T, min_x: i32, min_y: i32, width: i32, height: i32) {
         // Get the layout for this widget
         let layout      = self.get_layout(width as f64, height as f64);
@@ -278,7 +278,7 @@ impl FloWidgetLayout {
                 let (new_x, new_y)          = (x.floor() as i32, y.floor() as i32);
                 let (new_x, new_y)          = (new_x + min_x, new_y + min_y);
                 let (new_width, new_height) = (width.floor().max(0.0) as i32, height.floor().max(0.0) as i32);
-                
+
                 // Resize the widget
                 let existing_allocation = underlying.get_allocation();
                 let mut new_allocation  = gtk::Rectangle { x: new_x, y: new_y, width: new_width, height: new_height };
@@ -351,7 +351,7 @@ mod test {
             x2: End,    y2: Offset(32.0)
         };
         let middle_bounds = Bounds {
-           x1: Start,   y1: After, 
+           x1: Start,   y1: After,
            x2: End,     y2: Stretch(1.0)
         };
         let bottom_bounds = Bounds {

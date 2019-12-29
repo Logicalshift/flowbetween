@@ -12,7 +12,7 @@ use std::time::Duration;
 pub trait Frame : Send+Sync {
     ///
     /// Time index of this frame relative to its keyframe
-    /// 
+    ///
     fn time_index(&self) -> Duration;
 
     ///
@@ -27,17 +27,17 @@ pub trait Frame : Send+Sync {
 
     ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
-    /// 
+    ///
     fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>>;
 
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
-    /// 
+    ///
     fn element_with_id(&self, id: ElementId) -> Option<Vector>;
 
     ///
     /// Retrieves the IDs and types of the elements attached to the element with a particular ID
-    /// 
+    ///
     /// (Element data can be retrieved via element_with_id)
     ///
     fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)>;
@@ -46,7 +46,7 @@ pub trait Frame : Send+Sync {
 impl Frame for Arc<dyn Frame> {
     ///
     /// Time index of this frame relative to its keyframe
-    /// 
+    ///
     #[inline] fn time_index(&self) -> Duration { (**self).time_index() }
 
     ///
@@ -61,17 +61,17 @@ impl Frame for Arc<dyn Frame> {
 
     ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
-    /// 
+    ///
     #[inline] fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>> { (**self).vector_elements() }
 
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
-    /// 
+    ///
     #[inline] fn element_with_id(&self, id: ElementId) -> Option<Vector> { (**self).element_with_id(id) }
 
     ///
     /// Retrieves the IDs and types of the elements attached to the element with a particular ID
-    /// 
+    ///
     /// (Element data can be retrieved via element_with_id)
     ///
     fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> { (**self).attached_elements(id) }

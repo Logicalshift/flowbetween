@@ -13,7 +13,7 @@ use std::ops::Deref;
 /// The binding canvas is a canvas that can have an attached rendering
 /// function. It will invalidate itself if any bindings used in that
 /// rendering function are changed.
-/// 
+///
 pub struct BindingCanvas {
     /// The canvas that this is bound to (we use an Arc<> so the same canvas can be re-used elsewhere)
     canvas: Arc<Canvas>,
@@ -24,7 +24,7 @@ pub struct BindingCanvas {
 
 ///
 /// Core data for the binding canvas
-/// 
+///
 struct BindingCanvasCore {
     /// True if the canvas has been invalidated
     invalidated: bool,
@@ -41,13 +41,13 @@ struct BindingCanvasCore {
 
 ///
 /// Just a wrapper for a weak ref to the binding canvas core
-/// 
+///
 struct CoreNotifiable(Weak<Desync<BindingCanvasCore>>);
 
 impl BindingCanvasCore {
     ///
     /// Marks the notifications associated with this object as done
-    /// 
+    ///
     fn done_with_notifications(&mut self) {
         // Swap out the notifications
         let notifications = self.active_notifications.take();
@@ -60,7 +60,7 @@ impl BindingCanvasCore {
 
     ///
     /// Redraws a canvas core and rebinds the notifications
-    /// 
+    ///
     fn redraw_and_notify_if_invalid(core_ref: &Arc<Desync<BindingCanvasCore>>, canvas: &Canvas) {
         // Create a weak reference to the core (which is what we'll notify)
         let weak_core = CoreNotifiable(Arc::downgrade(core_ref));
@@ -79,7 +79,7 @@ impl BindingCanvasCore {
 
     ///
     /// Redraws the content of this core on a canvas and sets the bindings to notify the specified object
-    /// 
+    ///
     fn redraw(&mut self, canvas: &Canvas, to_notify: Arc<dyn Notifiable>) -> Box<dyn Releasable> {
         let mut release_notifications: Box<dyn Releasable> = Box::new(vec![]);
         let draw_fn = &self.draw_fn;
@@ -131,14 +131,14 @@ impl Notifiable for CoreNotifiable {
 impl BindingCanvas {
     ///
     /// Creates a new BindingCanvas
-    /// 
+    ///
     pub fn new() -> BindingCanvas {
         Self::from(Arc::new(Canvas::new()))
     }
 
     ///
     /// Creates a new binding canvas from a canvas
-    /// 
+    ///
     pub fn from(canvas: Arc<Canvas>) -> BindingCanvas {
         let core = BindingCanvasCore {
             invalidated:            false,
@@ -155,7 +155,7 @@ impl BindingCanvas {
 
     ///
     /// Creates a new BindingCanvas with a drawing function
-    /// 
+    ///
     pub fn with_drawing<DrawingFn: 'static+Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>(draw: DrawingFn) -> BindingCanvas {
         let canvas = Self::new();
         canvas.on_redraw(draw);
@@ -165,13 +165,13 @@ impl BindingCanvas {
 
     ///
     /// Sets the drawing function for the canvas
-    /// 
+    ///
     /// Canvases don't have a drawing function by default, so it's safe
     /// to draw directly on them as they'll never become invalidated.
     /// Once a drawing function is set, any bindings it may have will
     /// cause it to become invalidated if they change. Additionally,
     /// setting a drawing function will invalidate the canvas.
-    /// 
+    ///
     pub fn on_redraw<DrawingFn: 'static+Fn(&mut dyn GraphicsPrimitives) -> ()+Send+Sync>(&self, draw: DrawingFn) {
         self.core.desync(move |core| {
             core.done_with_notifications();
@@ -186,7 +186,7 @@ impl BindingCanvas {
 
     ///
     /// Redraws the canvas if it is marked as invalid
-    /// 
+    ///
     pub fn redraw_if_invalid(&self) {
         let canvas = &*self.canvas;
         BindingCanvasCore::redraw_and_notify_if_invalid(&self.core, canvas);
@@ -194,7 +194,7 @@ impl BindingCanvas {
 
     ///
     /// Marks this canvas as invalidated (will be redrawn on the next request)
-    /// 
+    ///
     pub fn invalidate(&self) {
         self.core.desync(|core| {
             core.invalidated = true;
@@ -288,7 +288,7 @@ mod test {
     fn binding_canvas_works_like_canvas() {
         let canvas      = BindingCanvas::new();
         let mut stream  = executor::spawn(canvas.stream());
-        
+
         // Draw using a graphics context
         canvas.draw(|gc| {
             gc.new_path();
@@ -303,7 +303,7 @@ mod test {
     fn will_invalidate_and_redraw_when_function_assigned() {
         let canvas      = BindingCanvas::new();
         let mut stream  = executor::spawn(canvas.stream());
-        
+
         // Set a bound function
         canvas.on_redraw(|gc| {
             gc.new_path();
@@ -322,7 +322,7 @@ mod test {
         let binding     = bind((1.0, 2.0));
         let canvas      = BindingCanvas::new();
         let mut stream  = executor::spawn(canvas.stream());
-        
+
         // Set a bound function
         let draw_binding = binding.clone();
         canvas.on_redraw(move |gc| {

@@ -29,7 +29,7 @@ impl StaticService {
 
     ///
     /// Returns the file located at the specified path
-    /// 
+    ///
     pub fn file_for_path(&self, path: &str) -> Option<Arc<StaticFile>> {
         if path.len() == 0 {
             self.file_for_path("/index.html")

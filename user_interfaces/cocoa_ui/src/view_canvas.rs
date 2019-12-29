@@ -28,7 +28,7 @@ pub struct ViewCanvas {
     /// Callback function to create a copy of the layer with the specified ID
     copy_layer: Box<dyn FnMut(u32) -> StrongPtr>,
 
-    /// Callback function to update the contents of a cached layer 
+    /// Callback function to update the contents of a cached layer
     update_layer: Box<dyn FnMut(u32, StrongPtr) -> ()>,
 
     /// Callback function to restore the state of a layer from a copy created previously with copy_layer

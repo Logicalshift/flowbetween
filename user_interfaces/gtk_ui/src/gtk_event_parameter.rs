@@ -10,7 +10,7 @@ use std::slice;
 
 ///
 /// Parameters that are available for a GTK event
-/// 
+///
 #[derive(Clone, PartialEq, Debug)]
 pub enum GtkEventParameter {
     /// Event has no extra data
@@ -33,7 +33,7 @@ pub enum GtkEventParameter {
 
     /// Painting finished
     PaintFinish(GtkPainting),
-    
+
     /// Painting cancelled
     PaintCancel(PaintDevice),
 
@@ -52,7 +52,7 @@ pub enum GtkEventParameter {
 
 ///
 /// Parameters for a painting event
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct GtkPainting {
     pub position:   (f64, f64),
@@ -83,7 +83,7 @@ impl From<GtkEventParameter> for ActionParameter {
 impl GtkPainting {
     ///
     /// Updates this structure from the axes in an event
-    /// 
+    ///
     unsafe fn update_from_axes(&mut self, axes: *const f64, device: *mut gdk_sys::GdkDevice) {
         // Turn device into a rust object
         let device: gdk::Device = gdk::Device::from_glib_borrow(device);
@@ -116,14 +116,14 @@ impl GtkPainting {
 
     ///
     /// Transforms this painting event using a matrix
-    /// 
+    ///
     pub fn transform(&mut self, matrix: &cairo::Matrix) {
         self.position = matrix.transform_point(self.position.0, self.position.1);
     }
 
     ///
     /// Creates a painting action from a motion event
-    /// 
+    ///
     pub fn from_button(button: &gdk::EventButton) -> GtkPainting {
         // Create a neutral painting
         let mut painting = GtkPainting {
@@ -145,7 +145,7 @@ impl GtkPainting {
 
     ///
     /// Creates a painting action from a motion event
-    /// 
+    ///
     pub fn from_motion(motion: &gdk::EventMotion) -> GtkPainting {
         // Create a neutral painting
         let mut painting = GtkPainting {
@@ -167,7 +167,7 @@ impl GtkPainting {
 
     ///
     /// Turns this into an indicator of the device that performed the painting action
-    /// 
+    ///
     pub fn get_device(&self) -> PaintDevice {
         // TODO: actually determine the device that's in use
         PaintDevice::Mouse(MouseButton::Left)
@@ -175,7 +175,7 @@ impl GtkPainting {
 
     ///
     /// Turns this into a UI Painting object with a particular action
-    /// 
+    ///
     pub fn to_painting(&self, action: PaintAction) -> Painting {
         let (x, y) = self.position;
 

@@ -19,7 +19,7 @@ use std::cell::*;
 
 ///
 /// Represents the current virtual scroll state of a widget
-/// 
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 struct VirtualScrollState {
     top_left:   (u32, u32),
@@ -28,7 +28,7 @@ struct VirtualScrollState {
 
 ///
 /// The scroll widget manages a layout widget in order to provide a scrollable region
-/// 
+///
 pub struct FloScrollWidget {
     /// The ID of this widget
     id:             WidgetId,
@@ -107,7 +107,7 @@ impl FloScrollWidget {
 
     ///
     /// Generates the scrollbar visibility for a particular policy
-    /// 
+    ///
     fn policy_for_visibility(visibility: ScrollBarVisibility) -> gtk::PolicyType {
         use self::ScrollBarVisibility::*;
 
@@ -120,14 +120,14 @@ impl FloScrollWidget {
 
     ///
     /// Updates the policy for this scroll widget (which is what GTK calls the rules for showing the scroll bars)
-    /// 
+    ///
     fn update_policy(&self) {
         self.scroll_window.set_policy(self.h_policy, self.v_policy);
     }
 
     ///
     /// Sends a virtual scroll event based on the current state of the widget to the specified event sink
-    /// 
+    ///
     fn generate_virtual_scroll_event(widget_id: WidgetId, state: Rc<RefCell<VirtualScrollState>>, sink: &mut GtkEventSink, action_name: &str, layout: &gtk::Layout, width: f32, height: f32) {
         let width       = width as f64;
         let height      = height as f64;
@@ -170,7 +170,7 @@ impl FloScrollWidget {
 
     ///
     /// Generates a virtual scroll event when the size allocation changes
-    /// 
+    ///
     fn connect_virtual_scroll_on_resize(&self, state: Rc<RefCell<VirtualScrollState>>, sink: GtkEventSink, action_name: String, width: f32, height: f32) {
         let weak_layout = self.layout.clone().downgrade();
         let sink        = RefCell::new(sink);
@@ -233,7 +233,7 @@ impl FloScrollWidget {
 
     ///
     /// Generates a virtual scroll event when an adjustment changes
-    /// 
+    ///
     fn connect_virtual_scroll_on_adjust(&self, adjustment: gtk::Adjustment, state: Rc<RefCell<VirtualScrollState>>, sink: GtkEventSink, action_name: String, width: f32, height: f32) {
         let weak_layout = self.layout.clone().downgrade();
         let sink        = RefCell::new(sink);
@@ -249,7 +249,7 @@ impl FloScrollWidget {
 
     ///
     /// Begins responding to virtual scrolling events
-    /// 
+    ///
     fn start_virtual_scrolling(&self, sink: GtkEventSink, action_name: String, width: f32, height: f32) {
         let mut sink = sink;
 

@@ -5,7 +5,7 @@ use std::ops::{Mul, Add, Sub};
 
 ///
 /// A point in a path
-/// 
+///
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct PathPoint {
     /// X, Y coordinates of this point
@@ -15,7 +15,7 @@ pub struct PathPoint {
 impl PathPoint {
     ///
     /// Creates a new path point
-    /// 
+    ///
     pub fn new(x: f32, y: f32) -> PathPoint {
         PathPoint {
             position: (x as f64, y as f64)
@@ -67,7 +67,7 @@ impl Mul<f64> for PathPoint {
 impl Coordinate for PathPoint {
     ///
     /// Creates a new coordinate from the specified set of components
-    /// 
+    ///
     #[inline]
     fn from_components(components: &[f64]) -> Self {
         PathPoint {
@@ -77,7 +77,7 @@ impl Coordinate for PathPoint {
 
     ///
     /// Returns the origin coordinate
-    /// 
+    ///
     #[inline]
     fn origin() -> Self {
         PathPoint {
@@ -87,14 +87,14 @@ impl Coordinate for PathPoint {
 
     ///
     /// The number of components in this coordinate
-    /// 
+    ///
     fn len() -> usize {
         2
     }
 
     ///
     /// Retrieves the component at the specified index
-    /// 
+    ///
     #[inline]
     fn get(&self, index: usize) -> f64 {
         match index {
@@ -107,7 +107,7 @@ impl Coordinate for PathPoint {
 
     ///
     /// Returns a point made up of the biggest components of the two points
-    /// 
+    ///
     #[inline]
     fn from_biggest_components(p1: Self, p2: Self) -> Self {
         PathPoint {

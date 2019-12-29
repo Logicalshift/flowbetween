@@ -18,7 +18,7 @@ enum ColorTarget {
 
 ///
 /// A saved state in a Cario drawing surface
-/// 
+///
 struct SavedState {
     dash_pattern:   Vec<f64>,
     stroke_color:   Color,
@@ -28,7 +28,7 @@ struct SavedState {
 impl SavedState {
     ///
     /// Creates a new saved state from a current drawing state
-    /// 
+    ///
     pub fn from_current(drawing: &CairoDraw) -> SavedState {
         SavedState {
             dash_pattern:   drawing.dash_pattern.clone(),
@@ -39,7 +39,7 @@ impl SavedState {
 
     ///
     /// Restores this saved state into a drawing
-    /// 
+    ///
     pub fn restore(self, drawing: &mut CairoDraw) {
         drawing.dash_pattern    = self.dash_pattern;
         drawing.stroke_color    = self.stroke_color;
@@ -50,7 +50,7 @@ impl SavedState {
 
 ///
 /// Represents the current state of a CarioDraw object (used for moving state between layers usually)
-/// 
+///
 pub struct CairoState {
     transform:      Matrix,
     line_width:     f64,
@@ -63,7 +63,7 @@ pub struct CairoState {
 
 ///
 /// Performs Flo drawing actions in a Cairo context
-/// 
+///
 pub struct CairoDraw {
     /// The context to draw in
     ctxt: Context,
@@ -105,7 +105,7 @@ impl CairoState {
 impl CairoDraw {
     ///
     /// Creates a new Cairo drawing target
-    /// 
+    ///
     pub fn new(ctxt: Context, viewport: CanvasViewport, pixel_scale: f64) -> CairoDraw {
         ctxt.set_matrix(Matrix::from(&viewport));
 
@@ -135,7 +135,7 @@ impl CairoDraw {
 
     ///
     /// Converts a flo line cap style into a Cairo LineCap
-    /// 
+    ///
     fn get_cap(our_cap: flo::LineCap) -> cairo::LineCap {
         match our_cap {
             flo::LineCap::Butt      => cairo::LineCap::Butt,
@@ -146,7 +146,7 @@ impl CairoDraw {
 
     ///
     /// Sets the source colour for the specified colour target
-    /// 
+    ///
     #[inline]
     fn set_color(&mut self, target: ColorTarget) {
         // Only change the colour if it's not already set
@@ -170,7 +170,7 @@ impl CairoDraw {
 
     ///
     /// Converts a blend mode into an operator
-    /// 
+    ///
     fn get_operator(blend: flo::BlendMode) -> cairo::Operator {
         match blend {
             flo::BlendMode::SourceOver      => cairo::Operator::Over,
@@ -190,7 +190,7 @@ impl CairoDraw {
 
     ///
     /// Converts a Flo Transform2D to a Cairo matrix
-    /// 
+    ///
     fn get_transform(transform: Transform2D) -> Matrix {
         let Transform2D(a, b, _c) = transform;
 
@@ -199,7 +199,7 @@ impl CairoDraw {
 
     ///
     /// Sets the line width in pixels
-    /// 
+    ///
     fn set_line_width_pixels(&self, pixels: f32) {
         let pixels      = pixels as f64;
         let pixels      = pixels * self.pixel_scale;
@@ -216,7 +216,7 @@ impl CairoDraw {
 
     ///
     /// Computes the transformation to apply for a particular canvas height
-    /// 
+    ///
     fn height_matrix(height: f32) -> Matrix {
         let height      = height as f64;
         let mut ratio_x = 2.0/height;
@@ -234,7 +234,7 @@ impl CairoDraw {
 
     ///
     /// Computes a matrix to make a particular region centered in the viewport
-    /// 
+    ///
     fn center_matrix(current_matrix: &Matrix, viewport: &CanvasViewport, minx: f32, miny: f32, maxx: f32, maxy: f32) -> Matrix {
         let minx            = minx as f64;
         let miny            = miny as f64;
@@ -253,7 +253,7 @@ impl CairoDraw {
         // Current X, Y coordinates (centered)
         let cur_x = (current_matrix.x0-(pixel_width/2.0))/xscale;
         let cur_y = (current_matrix.y0-(pixel_height/2.0))/yscale;
-        
+
         // New center coordinates
         let center_x = (minx+maxx)/2.0;
         let center_y = (miny+maxy)/2.0;
@@ -273,14 +273,14 @@ impl CairoDraw {
 
     ///
     /// Retrieves the transformation matrix for this context
-    /// 
+    ///
     pub fn get_matrix(&self) -> cairo::Matrix {
         self.ctxt.get_matrix()
     }
 
     ///
     /// Copies the drawing state from another CairoDraw object
-    /// 
+    ///
     pub fn get_state(&self) -> CairoState {
         let transform       = self.ctxt.get_matrix();
         let line_width      = self.ctxt.get_line_width();
@@ -317,7 +317,7 @@ impl CairoDraw {
 
     ///
     /// Perform a canvas drawing operation in the Cairo context associated with this object
-    /// 
+    ///
     pub fn draw(&mut self, drawing: Draw) {
         use self::Draw::*;
 

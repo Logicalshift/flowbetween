@@ -19,7 +19,7 @@ use std::collections::HashMap;
 ///
 #[derive(Clone, Copy, Debug)]
 pub struct PathPropertiesIds {
-    /// The ID of the element defining the path brush 
+    /// The ID of the element defining the path brush
     pub brush_id: ElementId,
 
     /// The ID of the element defining the path brush properties
@@ -37,7 +37,7 @@ pub struct AttachProperties {
 
 ///
 /// Core data structure used by the animation database
-/// 
+///
 pub struct AnimationDbCore<TFile: FloFile+Send> {
     /// The logger for the core
     pub log: Arc<LogPublisher>,
@@ -48,7 +48,7 @@ pub struct AnimationDbCore<TFile: FloFile+Send> {
     /// Pending work for generating cached data
     pub cache_work: Arc<Desync<()>>,
 
-    /// If there has been a failure with the database, this is it. No future operations 
+    /// If there has been a failure with the database, this is it. No future operations
     /// will work while there's an error that hasn't been cleared
     pub failure: Option<SqliteAnimationError>,
 
@@ -250,7 +250,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Adds a new vector element to a vector layer
-    /// 
+    ///
     fn paint_vector_layer(&mut self, layer_id: i64, when: Duration, new_element: PaintEdit) -> Result<()> {
         use self::PaintEdit::*;
 
@@ -379,7 +379,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Performs an editing action on a motion
-    /// 
+    ///
     fn edit_motion(&mut self, motion_id: ElementId, edit: MotionEdit) -> Result<()> {
         use self::MotionEdit::*;
 
@@ -433,7 +433,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Edits the element with the specified ID
-    /// 
+    ///
     fn edit_element(&mut self, element_id: ElementId, element_edit: ElementEdit) -> Result<()> {
         if let ElementId::Assigned(assigned_id) = element_id {
             // Get the type of the element so we can use the appropriate editing method
@@ -450,7 +450,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                         // Convert to tuples. Ordering is cp1, cp2, pos.
                         let points = points.tuples()
                             .collect();
-                        
+
                         // Perform the update
                         self.db.update(vec![
                             DatabaseUpdate::PushElementIdForAssignedId(assigned_id),
@@ -566,7 +566,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Performs a layer edit to a vector layer
-    /// 
+    ///
     pub fn edit_vector_layer(&mut self, layer_id: i64, edit: LayerEdit) -> Result<()> {
         use self::LayerEdit::*;
 
@@ -578,7 +578,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
                     DatabaseUpdate::PushLayerId(layer_id),
                     DatabaseUpdate::PopAddKeyFrame(when)
                 ])?;
-                
+
                 self.db.update(vec![
                     DatabaseUpdate::PushLayerId(layer_id),
                     DatabaseUpdate::PopDeleteLayerCache(when, CacheType::OnionSkinLayer)
@@ -630,7 +630,7 @@ impl<TFile: FloFile+Send> AnimationDbCore<TFile> {
 
     ///
     /// Performs an edit on this core
-    /// 
+    ///
     pub fn perform_edit(&mut self, edit: AnimationEdit) -> Result<()> {
         use self::AnimationEdit::*;
 

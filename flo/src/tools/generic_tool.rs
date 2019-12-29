@@ -16,7 +16,7 @@ use std::marker::PhantomData;
 
 ///
 /// Trait implemented by FlowBetween tools
-/// 
+///
 /// FloTools eliminate the need to know what the tool data structure stores.
 ///
 pub type FloTool<Anim> = dyn Tool<Anim, ToolData=GenericToolData, Model=GenericToolModel>;
@@ -25,10 +25,10 @@ pub type FloTool<Anim> = dyn Tool<Anim, ToolData=GenericToolData, Model=GenericT
 /// The generic tool is used to convert a tool that uses a specific data type
 /// to one that uses a standard data type. This makes it possible to use tools
 /// without needing to know their underlying implementation.
-/// 
+///
 /// A generic tool is typically used as its underlying Tool trait, for example
 /// in an `Arc` reference.
-/// 
+///
 pub struct GenericTool<ToolData: Send+'static, Model: Send+Sync+'static, Anim: Animation, UnderlyingTool: Tool<Anim, ToolData=ToolData, Model=Model>> {
     /// The tool that this makes generic
     tool: UnderlyingTool,
@@ -41,12 +41,12 @@ pub struct GenericTool<ToolData: Send+'static, Model: Send+Sync+'static, Anim: A
 
 ///
 /// The data structure storing the generic tool data
-/// 
+///
 pub struct GenericToolData(Mutex<Box<dyn Any+Send>>);
 
 ///
 /// The data structure storing the generic tool model
-/// 
+///
 pub struct GenericToolModel(Mutex<Box<dyn Any+Send>>);
 
 impl fmt::Debug for GenericToolData {
@@ -57,18 +57,18 @@ impl fmt::Debug for GenericToolData {
 
 ///
 /// Converts a tool to a generic tool
-/// 
+///
 pub trait ToFloTool<Anim: Animation, ToolData: Send+'static> {
     ///
     /// Converts this object to a generic tool reference
-    /// 
+    ///
     fn to_flo_tool(self) -> Arc<FloTool<Anim>>;
 }
 
 impl GenericToolData {
     ///
     /// Converts an action to generic tool data
-    /// 
+    ///
     fn convert_action_to_generic<ToolData: 'static+Send+Sync>(action: ToolAction<ToolData>) -> ToolAction<GenericToolData> {
         use self::ToolAction::*;
 
@@ -85,14 +85,14 @@ impl GenericToolData {
 
     ///
     /// Converts to a refernece of the specified type if possible
-    /// 
+    ///
     fn convert_ref<ToolData: 'static+Send>(&self) -> Option<Arc<ToolData>> {
         self.0.lock().unwrap().downcast_ref().cloned()
     }
 
     ///
     /// Converts an input value from generic tool data  to specific tool data
-    /// 
+    ///
     fn convert_input_from_generic<ToolData: 'static+Send>(input: ToolInput<GenericToolData>) -> Option<ToolInput<ToolData>> {
         use self::ToolInput::*;
 
@@ -135,7 +135,7 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
     }
 
     fn image_name(&self) -> String {
-        self.tool.image_name()        
+        self.tool.image_name()
     }
 
     fn create_model(&self, flo_model: Arc<FloModel<Anim>>) -> GenericToolModel {
@@ -174,7 +174,7 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
 
 ///
 /// Converts any tool to its generic 'FloTool' equivalent
-/// 
+///
 impl<Anim: 'static+Animation, ToolData: 'static+Send+Sync, T: 'static+Tool<Anim, ToolData=ToolData>> ToFloTool<Anim, ToolData> for T {
     fn to_flo_tool(self) -> Arc<FloTool<Anim>> {
         Arc::new(GenericTool::from(self))
@@ -203,7 +203,7 @@ mod test {
 
         fn actions_for_input<'a>(&'a self, _flo_model: Arc<FloModel<SqliteAnimation>>, _data: Option<Arc<i32>>, input: Box<dyn 'a+Iterator<Item=ToolInput<i32>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<i32>>> {
             let input: Vec<_> = input.collect();
-            
+
             if input.len() == 1 {
                 match &input[0] {
                     &ToolInput::Data(ref data) => {

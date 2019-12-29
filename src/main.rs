@@ -115,7 +115,7 @@ fn main() {
         .filter_module("tokio_reactor", LevelFilter::Warn)
         .filter_module("actix_web", LevelFilter::Info)
         .build()));
-    send_rust_logs_to_flo_logs().unwrap(); 
+    send_rust_logs_to_flo_logs().unwrap();
 
     // TODO: be a bit more sensible about this (right now this is just the GTK version shoved onto the start of the HTTP version)
 
@@ -125,8 +125,8 @@ fn main() {
     if let Some(gtk_thread) = gtk_thread {
         // If there's a GTK thread, then we stop when it stops
         gtk_thread.join().unwrap();
-    } 
-    
+    }
+
     if let Some(actix_thread) = actix_thread {
         // Otherwise we monitor the HTTP thread, if it exists
         actix_thread.join().unwrap()

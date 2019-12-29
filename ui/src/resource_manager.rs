@@ -8,7 +8,7 @@ use std::collections::*;
 
 ///
 /// Core data storage for the resource manager
-/// 
+///
 struct ResourceManagerCore<T: Send+Sync> {
     /// Resources being managed by this object
     resources: Vec<WeakResource<T>>,
@@ -28,7 +28,7 @@ struct ResourceManagerCore<T: Send+Sync> {
 
 ///
 /// The resource manager is used to track resources of a particular type
-/// 
+///
 pub struct ResourceManager<T: Send+Sync> {
     /// Core of the resource manager
     core: Desync<ResourceManagerCore<T>>,
@@ -59,9 +59,9 @@ pub struct Resource<T> {
 
 impl<T> Clone for Resource<T> {
     fn clone(&self) -> Resource<T> {
-        Resource { 
+        Resource {
             id:         self.id,
-            resource:   self.resource.clone(), 
+            resource:   self.resource.clone(),
             name:       self.name.clone()
         }
     }
@@ -70,20 +70,20 @@ impl<T> Clone for Resource<T> {
 impl<T> Resource<T> {
     ///
     /// Retrieves the ID for this resource
-    /// 
-    pub fn id(&self) -> u32 { 
+    ///
+    pub fn id(&self) -> u32 {
         self.id
     }
 
     ///
     /// Retrieves the name for this resource, if it has one.
-    /// 
+    ///
     /// Note that if another resource has been assigned the same name, this might return
     /// the old name for a while (use the version in the resource manager if this matters)
     ///
     pub fn name(&self) -> Option<String> {
         let name = self.name.lock().unwrap();
-        
+
         if let Some(ref name) = *name {
             Some(name.clone())
         } else {
@@ -128,11 +128,11 @@ impl<T> Debug for Resource<T> {
 impl<T: Send+Sync> ResourceManagerCore<T> {
     ///
     /// Registers a resource with this core
-    /// 
+    ///
     fn register(&mut self, resource: T) -> Resource<T> {
         // Pick an ID for the resource
         let id = self.free_slots.pop().unwrap_or(self.resources.len());
-        
+
         // Create the resource object
         let resource = Resource {
             id:         id as u32,
@@ -179,7 +179,7 @@ impl<T: Send+Sync> ResourceManagerCore<T> {
 
     ///
     /// Detects any resource slots that are free and marks them as ready
-    /// 
+    ///
     fn clean_resources(&mut self) {
         let mut new_free_slots = vec![];
 
@@ -245,8 +245,8 @@ impl<T: 'static+Send+Sync> ResourceManager<T> {
                 let weak = &core.resources[id as usize];
                 if let Some(data_ref) = weak.resource.upgrade() {
                     // Generate a Resource<T> fro this
-                    Some(Resource { 
-                        id:         id, 
+                    Some(Resource {
+                        id:         id,
                         resource:   data_ref,
                         name:       name
                     })

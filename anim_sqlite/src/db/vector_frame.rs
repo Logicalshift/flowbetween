@@ -10,7 +10,7 @@ use std::collections::HashMap;
 
 ///
 /// Represents a frame calculated from a vector layer
-/// 
+///
 pub struct VectorFrame {
     /// The time of the keyframe
     keyframe_time: Duration,
@@ -34,7 +34,7 @@ pub struct VectorFrame {
 impl VectorFrame {
     ///
     /// Decodes the brush for a particular entry
-    /// 
+    ///
     fn brush_definition_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushDefinitionElement> {
         // Try to load the brush with the ID
         let brush: Result<(BrushDefinition, DrawingStyleType)> = entry.brush
@@ -54,7 +54,7 @@ impl VectorFrame {
 
     ///
     /// Decodes the brush properties for a particular entry
-    /// 
+    ///
     fn properties_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushPropertiesElement> {
         // Decode the brush properties
         let brush_properties = entry.brush_properties_id
@@ -67,7 +67,7 @@ impl VectorFrame {
 
     ///
     /// Decodes a brush stroke element for a particular element
-    /// 
+    ///
     fn brush_stroke_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<BrushElement> {
         let points = db.query_vector_element_brush_points(entry.element_id)?;
         Ok(BrushElement::new(entry.assigned_id, Arc::new(points)))
@@ -111,7 +111,7 @@ impl VectorFrame {
 
     ///
     /// Tries to turn a vector element entry into a Vector object
-    /// 
+    ///
     fn vector_for_entry<TFile: FloFile+Send>(db: &mut TFile, entry: VectorElementEntry) -> Result<Vector> {
         match entry.element_type {
             VectorElementType::BrushDefinition      => Ok(Vector::BrushDefinition(Self::brush_definition_for_entry(db, entry)?)),
@@ -124,7 +124,7 @@ impl VectorFrame {
 
     ///
     /// Creates a vector frame by querying the file for the frame at the specified time
-    /// 
+    ///
     pub fn frame_at_time<TFile: FloFile+Send>(db: &mut TFile, layer_id: i64, when: Duration) -> Result<VectorFrame> {
         // Fetch the keyframe times
         if let Some((keyframe_id, keyframe_time))   = db.query_nearest_key_frame(layer_id, when)? {
@@ -204,7 +204,7 @@ impl VectorFrame {
 impl Frame for VectorFrame {
     ///
     /// Time index of this frame
-    /// 
+    ///
     fn time_index(&self) -> Duration {
         self.keyframe_time + self.keyframe_offset
     }
@@ -266,14 +266,14 @@ impl Frame for VectorFrame {
 
     ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
-    /// 
+    ///
     fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>> {
         Some(Box::new(self.elements.iter().cloned()))
     }
 
     ///
     /// Searches for an element with the specified ID and returns it if found within this frame
-    /// 
+    ///
     fn element_with_id(&self, id: ElementId) -> Option<Vector> {
         self.element_id_for_assigned_id.get(&id)
             .and_then(|id| self.all_elements.get(id))
@@ -282,7 +282,7 @@ impl Frame for VectorFrame {
 
     ///
     /// Retrieves the IDs and types of the elements attached to the element with a particular ID
-    /// 
+    ///
     /// (Element data can be retrieved via element_with_id)
     ///
     fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {

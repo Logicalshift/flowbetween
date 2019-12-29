@@ -3,13 +3,13 @@ use super::quote::*;
 
 ///
 /// Represents a text element in the DOM
-/// 
+///
 pub struct DomText(String);
 
 impl DomText {
     ///
     /// Creates a new text node
-    /// 
+    ///
     pub fn new(text: &str) -> DomNode {
         DomNode::new(DomText(String::from(text)))
     }
@@ -24,7 +24,7 @@ impl DomNodeData for DomText {
         DomNodeType::Text
     }
 
-    fn value(&self) -> Option<String> { 
+    fn value(&self) -> Option<String> {
         Some(self.0.clone())
     }
 }

@@ -2,14 +2,14 @@ use std::time::Duration;
 
 ///
 /// Represents a point in time
-/// 
+///
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct TimePoint(pub f32, pub f32, pub f32);
 
 impl TimePoint {
     ///
     /// Creates a point with a location at a particular time
-    /// 
+    ///
     pub fn new(x: f32, y: f32, time: Duration) -> TimePoint {
         let secs    = time.as_secs() as f32;
         let nanos   = time.subsec_nanos() as f32;
@@ -21,7 +21,7 @@ impl TimePoint {
 
     ///
     /// Retrieves the x and y coordinates of this point
-    /// 
+    ///
     pub fn coords(&self) -> (f32, f32) {
         let TimePoint(x, y, _) = self;
 
@@ -30,7 +30,7 @@ impl TimePoint {
 
     ///
     /// The time in milliseconds represented by this point
-    /// 
+    ///
     #[inline]
     pub fn milliseconds(&self) -> f32 {
         self.2
@@ -38,7 +38,7 @@ impl TimePoint {
 
     ///
     /// Retrieves the time for this point as a duration
-    /// 
+    ///
     pub fn time(&self) -> Duration {
         let TimePoint(_, _, millis) = self;
 

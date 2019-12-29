@@ -9,7 +9,7 @@ use nanovg;
 
 ///
 /// Represents state associated with sending canvas drawing commands to a nanovg frame
-/// 
+///
 pub struct NanoVgDrawingState {
     /// The size of the framebuffer in pixels
     viewport: NanoVgViewport,
@@ -36,7 +36,7 @@ pub struct NanoVgDrawingState {
 impl NanoVgDrawingState {
     ///
     /// Creates a new NanoVgDrawing state
-    /// 
+    ///
     pub fn new(viewport: NanoVgViewport) -> NanoVgDrawingState {
         NanoVgDrawingState {
             viewport:           viewport,
@@ -51,23 +51,23 @@ impl NanoVgDrawingState {
 
     ///
     /// If there are any uncommitted drawing actions from a previous draw() call, ensures that they are committed to the specified frame
-    /// 
+    ///
     /// (Useful when changing layers, for example)
-    /// 
+    ///
     pub fn commit<'a>(&mut self, frame: &Frame<'a>) {
 
     }
 
     ///
     /// Renders the current path to a NanoVG path
-    /// 
+    ///
     fn render_path(&self, path: &Path) {
         self.path.iter().for_each(|item| item.add_to_path(path));
     }
 
     ///
     /// Fills a path on the current frame
-    /// 
+    ///
     fn fill_path<'a>(&self, frame: &Frame<'a>) {
         frame.path(|path| {
             self.render_path(&path);
@@ -78,7 +78,7 @@ impl NanoVgDrawingState {
 
     ///
     /// Draws an outline for a path on the current frame
-    /// 
+    ///
     fn stroke_path<'a>(&self, frame: &Frame<'a>) {
         frame.path(|path| {
             let opt = &self.stroke_options;
@@ -91,7 +91,7 @@ impl NanoVgDrawingState {
 
     ///
     /// Converts a canvas blending mode into a nanovg blending mdoe
-    /// 
+    ///
     fn blend_mode(canvas_mode: flo_canvas::BlendMode) -> CompositeOperation {
         use flo_canvas::BlendMode::*;
 
@@ -114,7 +114,7 @@ impl NanoVgDrawingState {
 
     ///
     /// Computes the transformation to apply for a particular canvas height
-    /// 
+    ///
     fn height_transform(height: f32) -> Transform {
         let mut ratio_x = 2.0/height;
         let ratio_y     = ratio_x;
@@ -131,7 +131,7 @@ impl NanoVgDrawingState {
 
     ///
     /// Computes a transform to make a particular region centered in the viewport
-    /// 
+    ///
     fn center_transform(current_matrix: &Transform, viewport: &NanoVgViewport, minx: f32, miny: f32, maxx: f32, maxy: f32) -> Transform {
         let pixel_width     = viewport.width as f32;
         let pixel_height    = viewport.height as f32;
@@ -152,7 +152,7 @@ impl NanoVgDrawingState {
         // Current X, Y coordinates (centered)
         let cur_x = (x0-(pixel_width/2.0))/xscale;
         let cur_y = (y0-(pixel_height/2.0))/yscale;
-        
+
         // New center coordinates
         let center_x = (minx+maxx)/2.0;
         let center_y = (miny+maxy)/2.0;
@@ -171,7 +171,7 @@ impl NanoVgDrawingState {
 
     ///
     /// Performs the canvas height operation
-    /// 
+    ///
     fn canvas_height(&mut self, height: f32) {
         let height = Self::height_transform(height);
         self.path_options.transform = self.path_options.transform.clone()
@@ -180,7 +180,7 @@ impl NanoVgDrawingState {
 
     ///
     /// Performs the center region operation
-    /// 
+    ///
     fn center_region(&mut self, minx: f32, miny: f32, maxx: f32, maxy: f32) {
         let transform = self.path_options.transform.take().unwrap_or(self.viewport.to_transform());
 
@@ -191,7 +191,7 @@ impl NanoVgDrawingState {
 
     ///
     /// Performs a drawing action on the specified frame
-    /// 
+    ///
     pub fn draw<'a>(&mut self, drawing: Draw, frame: &Frame<'a>) {
         use self::Draw::*;
 

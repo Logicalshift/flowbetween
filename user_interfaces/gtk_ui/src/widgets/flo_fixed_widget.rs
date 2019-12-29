@@ -16,7 +16,7 @@ use std::cell::*;
 
 ///
 /// Represents the behaviour of a widget that can contain Flo content (such as labels, etc)
-/// 
+///
 pub struct FloFixedWidget {
     /// The ID assigned to this widget
     id: WidgetId,
@@ -38,7 +38,7 @@ pub struct FloFixedWidget {
 
     /// The widget used to display the text for this item
     text: Option<gtk::Label>,
-    
+
     /// The widget used to display the image for this item
     image: Option<gtk::Image>,
 
@@ -48,7 +48,7 @@ pub struct FloFixedWidget {
 
 ///
 /// Trait used to describe how to perform layout in a fixed widget
-/// 
+///
 pub trait FixedWidgetLayout {
     fn force_layout(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>);
     fn attach_layout_signal(widget: Self, layout: Rc<RefCell<FloWidgetLayout>>);
@@ -57,7 +57,7 @@ pub trait FixedWidgetLayout {
 impl FloFixedWidget {
     ///
     /// Creates a new FloWidget that can contain generic controls using the fixed layout style
-    /// 
+    ///
     pub fn new<Container: 'static+Cast+Clone+IsA<gtk::Container>+FixedWidgetLayout>(id: WidgetId, container_widget: Container, widget_data: Rc<WidgetData>) -> FloFixedWidget {
         // Cast the container to a gtk container
         let container = container_widget.clone().upcast::<gtk::Container>();
@@ -77,7 +77,7 @@ impl FloFixedWidget {
 
         // Attach events to it
         Container::attach_layout_signal(container_widget, Rc::clone(&layout));
-            
+
         // Build the final structure
         FloFixedWidget {
             id:                 id,
@@ -102,7 +102,7 @@ impl FloFixedWidget {
 
     ///
     /// Sets the text label for this widget
-    /// 
+    ///
     pub fn set_text(&mut self, new_text: &str) {
         // Get the label for this widget
         let container   = &mut self.container;
@@ -119,7 +119,7 @@ impl FloFixedWidget {
 
     ///
     /// Sets or removes the image for this widget
-    /// 
+    ///
     pub fn set_image(&mut self, new_image: Option<Resource<Image>>) {
         // We entirely replace the image widget every time
         let mut new_image_widget = None;
@@ -135,7 +135,7 @@ impl FloFixedWidget {
         // Remove the previous image widget if there is one
         let container = &mut self.container;
         self.image.take().map(|old_image| container.remove(&old_image));
-        
+
         // Add the new image widget if we created one
         self.image = new_image_widget;
         self.image.as_ref().map(|new_image| {
@@ -176,7 +176,7 @@ impl FixedWidgetLayout for gtk::Layout {
 impl GtkUiWidget for FloFixedWidget {
     ///
     /// Retrieves the ID assigned to this widget
-    /// 
+    ///
     fn id(&self) -> WidgetId {
         self.id
     }
@@ -201,7 +201,7 @@ impl GtkUiWidget for FloFixedWidget {
 
     ///
     /// Sets the children of this widget
-    /// 
+    ///
     fn set_children(&mut self, children: Vec<Rc<RefCell<dyn GtkUiWidget>>>) {
         {
             let widget_data = &self.widget_data;
@@ -228,7 +228,7 @@ impl GtkUiWidget for FloFixedWidget {
 
     ///
     /// Retrieves the underlying widget for this UI widget
-    /// 
+    ///
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
         &self.as_widget
     }

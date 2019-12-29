@@ -8,7 +8,7 @@ use std::iter;
 
 ///
 /// Simple brush, which renders a brush stroke as a straight series of line segments
-/// 
+///
 pub struct SimpleBrush {
 
 }
@@ -29,14 +29,14 @@ impl Brush for SimpleBrush {
 
     ///
     /// Retrieves the definition for this brush
-    /// 
+    ///
     fn to_definition(&self) -> (BrushDefinition, BrushDrawingStyle) {
         (BrushDefinition::Simple, BrushDrawingStyle::Draw)
     }
 
     ///
     /// Returns the brush points for rendering given a particular set of raw points
-    /// 
+    ///
     fn brush_points_for_raw_points(&self, points: &[RawPoint]) -> Vec<BrushPoint> {
         // Map to coordinates
         let coords: Vec<_> = points.iter().map(|point| Coord2(point.position.0 as f64, point.position.1 as f64)).collect();
@@ -91,7 +91,7 @@ impl Brush for SimpleBrush {
         if points.len() <= 1 {
             return Box::new(iter::empty());
         }
-        
+
         // Draw a simple line for this brush
         let preamble = vec![
             Draw::NewPath,
