@@ -7,8 +7,8 @@ use serde_json::*;
 impl ToJsonValue for ControlAttribute {
     fn to_json(&self) -> Value {
         use ControlAttribute::*;
-        use Appearance::*;
-        use State::*;
+        use crate::Appearance::*;
+        use crate::State::*;
 
         match self {
             BoundingBox(bounds)                     => json!({ "BoundingBox": bounds }),
