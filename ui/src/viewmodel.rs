@@ -2,8 +2,8 @@ use super::property::*;
 
 use binding::*;
 
-use futures::*;
 use futures::stream;
+use futures::stream::{BoxStream};
 
 ///
 /// Specifies a change to a viewmodel
@@ -33,7 +33,7 @@ pub trait ViewModel {
     fn get_property_names(&self) -> Vec<String>;
 
     /// Retrieves a stream of updates from this viewmodel
-    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send>;
+    fn get_updates(&self) -> BoxStream<'static, ViewModelChange>;
 }
 
 pub struct NullViewModel {
@@ -58,7 +58,7 @@ impl ViewModel for NullViewModel {
         vec![]
     }
 
-    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
-        Box::new(stream::empty())
+    fn get_updates(&self) -> BoxStream<'static, ViewModelChange> {
+        Box::pin(stream::empty())
     }
 }
