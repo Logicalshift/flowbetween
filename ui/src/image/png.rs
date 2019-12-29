@@ -1,7 +1,6 @@
 use super::*;
 
-use png;
-use png::HasParameters;
+use ::png;
 
 ///
 /// Creates a PNG image in memory for an RGBA buffer
