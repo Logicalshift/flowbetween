@@ -5,7 +5,9 @@ use flo_binding::binding_context::*;
 
 use futures::*;
 use futures::task;
+use futures::task::{Poll, Context};
 
+use std::pin::*;
 use std::sync::*;
 use std::ops::Deref;
 
@@ -36,7 +38,7 @@ struct BindingCanvasCore {
     active_notifications: Option<Box<dyn Releasable>>,
 
     /// Task to wake on the next change
-    notify_task: Option<task::Task>
+    notify_task: Option<task::Waker>
 }
 
 ///
@@ -122,7 +124,7 @@ impl Notifiable for CoreNotifiable {
                 core.invalidated = true;
                 core.notify_task
                     .take()
-                    .map(|task| task.notify());
+                    .map(|task| task.wake());
             });
         }
     }
@@ -180,7 +182,7 @@ impl BindingCanvas {
             core.draw_fn        = Some(Box::new(draw));
             core.notify_task
                 .take()
-                .map(|task| task.notify());
+                .map(|task| task.wake());
         });
     }
 
@@ -200,7 +202,7 @@ impl BindingCanvas {
             core.invalidated = true;
             core.notify_task
                 .take()
-                .map(|task| task.notify());
+                .map(|task| task.wake());
         });
     }
 
@@ -238,11 +240,10 @@ struct BindingCanvasStream<CanvasStream> {
     binding_core: Weak<Desync<BindingCanvasCore>>
 }
 
-impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStream<CanvasStream> {
+impl<CanvasStream: Stream<Item=Draw>+Send> Stream for BindingCanvasStream<CanvasStream> {
     type Item=Draw;
-    type Error=();
 
-    fn poll(&mut self) -> Poll<Option<Draw>, ()> {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Draw>> {
         // Fetch the canvas
         let canvas          = self.canvas.upgrade();
         let binding_core    = self.binding_core.upgrade();
@@ -251,7 +252,7 @@ impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStr
         // Redraw the main canvas if it's invalidated
         if let Some((binding_core, canvas)) = canvas_core {
             // Variables needed to do the redraw
-            let task        = task::current();
+            let task        = context.waker().clone();
             let canvas      = Arc::clone(&canvas);
             let change_core = Arc::downgrade(&binding_core);
 
