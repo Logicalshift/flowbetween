@@ -1,7 +1,10 @@
 use std::io::{Read, Result};
+use std::pin::*;
 use std::sync::*;
+
 use bytes::Bytes;
 use futures::*;
+use futures::task::{Poll, Context};
 
 #[derive(Clone)]
 pub struct ImageStreamIterator {
@@ -29,11 +32,8 @@ impl Iterator for ImageStreamIterator {
 
 impl Stream for ImageStreamIterator {
     type Item = Bytes;
-    type Error = ();
 
-    fn poll(&mut self) -> Poll<Option<Bytes>, ()> {
-        use self::Async::*;
-
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Bytes>> {
         let max_to_read     = 100000;
         let pos             = self.pos;
         let len             = self.bytes.len();
@@ -41,9 +41,9 @@ impl Stream for ImageStreamIterator {
 
         if num_to_read > 0 {
             self.pos += num_to_read;
-            Ok(Ready(Some(self.bytes.slice(pos, pos+num_to_read))))
+            Poll::Ready(Some(self.bytes.slice(pos, pos+num_to_read)))
         } else {
-            Ok(Ready(None))
+            Poll::Ready(None)
         }
     }
 }
