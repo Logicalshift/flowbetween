@@ -6,10 +6,13 @@ use super::super::control::*;
 use super::super::controller::*;
 
 use flo_binding::*;
-use futures::*;
 use flo_stream::*;
 
+use futures::*;
+use futures::task::{Poll, Context};
+
 use std::mem;
+use std::pin::*;
 use std::sync::*;
 
 ///
@@ -92,12 +95,12 @@ impl UiUpdateStream {
     ///
     /// Pulls any UI events into the pending stream
     ///
-    fn pull_ui_events(&mut self) {
+    fn pull_ui_events(&mut self, context: &Context) {
         // Pending UI updates
         let mut ui_updates = vec![];
 
         // Poll for as many updates as there are
-        while let Ok(Async::Ready(Some(new_ui))) = self.ui_updates.poll() {
+        while let Poll::Ready(Some(new_ui)) = self.ui_updates.poll_next(context) {
             if let Some(last_ui) = self.last_ui.take() {
                 // Find the differences in the UI
                 let differences = diff_tree(&last_ui, &new_ui);
@@ -138,12 +141,12 @@ impl UiUpdateStream {
     ///
     /// Pulls any viewmodel events into the pending stream
     ///
-    fn pull_viewmodel_events(&mut self) {
+    fn pull_viewmodel_events(&mut self, context: &Context) {
         // Pending viewmodel updates
         let mut viewmodel_updates = vec![];
 
         // For as long as the viewmodel stream has updates, add them to the viewmodel update list
-        while let Ok(Async::Ready(Some(update))) = self.viewmodel_updates.poll() {
+        while let Poll::Ready(Some(update)) = self.viewmodel_updates.poll_next(context) {
             viewmodel_updates.push(update);
         }
 
@@ -158,12 +161,12 @@ impl UiUpdateStream {
     ///
     /// Pulls any viewmodel events into the pending stream
     ///
-    fn pull_canvas_events(&mut self) {
+    fn pull_canvas_events(&mut self, context: &Context) {
         // Pending canvas updates
         let mut canvas_updates = vec![];
 
         // For as long as the canvas stream has updates, add them to the viewmodel update list
-        while let Ok(Async::Ready(Some(update))) = self.canvas_updates.poll() {
+        while let Poll::Ready(Some(update)) = self.canvas_updates.poll(context) {
             canvas_updates.push(update);
         }
 
@@ -178,18 +181,17 @@ impl UiUpdateStream {
 
 impl Stream for UiUpdateStream {
     type Item   = Vec<UiUpdate>;
-    type Error  = ();
 
-    fn poll(&mut self) -> Poll<Option<Vec<UiUpdate>>, Self::Error> {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<UiUpdate>>> {
         // Check for suspensions
-        let suspend_poll = self.update_suspend.poll();
-        if let Ok(Async::Ready(Some(is_suspended))) = suspend_poll {
+        let suspend_poll = self.update_suspend.poll_next(context);
+        if let Poll::Ready(Some(is_suspended)) = suspend_poll {
             self.is_suspended = is_suspended;
         }
 
         if self.is_suspended {
             // Stay 'not ready' for as long as we're suspended for
-            Ok(Async::NotReady)
+            Poll::Pending
         } else {
             // Pull any pending events into the pending list
             self.pull_canvas_events();
@@ -216,13 +218,13 @@ impl Stream for UiUpdateStream {
             // Result is OK if we found a pending update
             if let Some(pending) = pending_result {
                 // There is a pending update
-                Ok(Async::Ready(Some(pending)))
-            } else if let Ok(Async::Ready(Some(()))) = self.tick.poll() {
+                Poll::Ready(Some(pending))
+            } else if let Poll::Ready(Some(())) = self.tick.poll() {
                 // There is a pending tick
-                Ok(Async::Ready(Some(vec![])))
+                Poll::Ready(Some(vec![]))
             } else {
                 // Not ready yet
-                Ok(Async::NotReady)
+                Poll::Pending
             }
         }
     }
