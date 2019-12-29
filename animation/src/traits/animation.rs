@@ -45,7 +45,7 @@ pub trait Animation : Send+Sync {
     ///
     /// Reads from the edit log for this animation
     /// 
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>>;
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit>>;
 
     ///
     /// Supplies a reference which can be used to find the motions associated with this animation
@@ -63,5 +63,5 @@ pub trait EditableAnimation {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     /// 
-    fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>;
+    fn edit(&self) -> Box<dyn Sink<Vec<AnimationEdit>, Error=()>+Send>;
 }
