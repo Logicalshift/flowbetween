@@ -2,6 +2,8 @@ use super::edit::*;
 use super::layer::*;
 use super::animation_motion::*;
 
+use flo_stream::*;
+
 use futures::*;
 use futures::stream::{BoxStream};
 
@@ -64,5 +66,5 @@ pub trait EditableAnimation {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     /// 
-    fn edit(&self) -> Box<dyn Sink<Vec<AnimationEdit>, Error=()>+Send>;
+    fn edit(&self) -> Publisher<Vec<AnimationEdit>>;
 }

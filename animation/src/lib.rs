@@ -3,10 +3,6 @@
 //!
 #![warn(bare_trait_objects)]
 
-extern crate flo_curves;
-extern crate flo_canvas;
-extern crate flo_float_encoder;
-
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
