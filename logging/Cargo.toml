@@ -1,13 +1,14 @@
 [package]
 name        = "flo_logging"
-version     = "0.1.1"
+version     = "0.2.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
+edition     = "2018"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Pubsub logging framework"
 
 [dependencies]
-flo_stream      = "0.3"
+flo_stream      = "0.4"
 desync          = "0.5"
 
 futures         = "0.3"
