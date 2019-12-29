@@ -1,11 +1,13 @@
 use super::error::*;
 use super::result::Result;
 
+use flo_stream::*;
 use flo_logging::*;
 use flo_animation::*;
 
-use desync::*;
+use desync::{Desync};
 use futures::*;
+use futures::stream::{BoxStream};
 use rusqlite::*;
 
 use std::mem;
@@ -42,7 +44,6 @@ use self::flo_sqlite::*;
 use self::flo_store::*;
 use self::flo_query::*;
 use self::edit_stream::*;
-use self::edit_sink::*;
 
 ///
 /// Database used to store an animation
@@ -108,17 +109,18 @@ impl AnimationDb {
     ///
     /// Creates a stream for reading the specified range of elements from this animation
     ///
-    pub fn read_edit_log(&self, range: Range<usize>) -> Box<dyn Stream<Item=AnimationEdit, Error=()>> {
+    pub fn read_edit_log(&self, range: Range<usize>) -> BoxStream<AnimationEdit> {
         let edit_stream = EditStream::new(&self.core, range);
 
-        Box::new(edit_stream)
+        Box::pin(edit_stream)
     }
 
     ///
     /// Creates a sink for writing to the animation
     ///
-    pub fn create_edit_sink(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
-        Box::new(EditSink::new(&self.core))
+    pub fn create_edit_sink(&self) -> Publisher<Vec<AnimationEdit>> {
+        unimplemented!()
+        /* Box::new(EditSink::new(&self.core)) */
     }
 }
 
