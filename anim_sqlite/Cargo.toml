@@ -3,18 +3,20 @@ name        = "flo_anim_sqlite"
 version     = "0.2.0"
 authors     = ["Andrew Hunter <andrew@logicalshift.co.uk>"]
 license     = "Apache-2.0"
+edition     = "2018"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "SQLite storage for FlowBetween animations"
 
 include     = [ "Cargo.toml", "src/**/*", "sql/**/*" ]
 
 [dependencies]
-flo_canvas          = { path = "../canvas", version = "^0.1.0" }
-flo_animation       = { path = "../animation", version = "^0.1.0" }
-flo_logging         = { path = "../logging", version = "^0.1.0" }
+flo_canvas          = { path = "../canvas", version = "0.2" }
+flo_animation       = { path = "../animation", version = "0.2" }
+flo_logging         = { path = "../logging", version = "0.2" }
+flo_stream          = "0.4"
 
 itertools           = "0.8"
 rusqlite            = { version = "0.18", features = ["bundled"] }
-futures             = "^0.1.17"
-desync              = "0.4"
+futures             = "0.3"
+desync              = "0.5"
 lazy_static         = "1.0"
