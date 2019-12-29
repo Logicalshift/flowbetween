@@ -271,7 +271,7 @@ mod test {
     fn model_survives_round_trip() {
         let flo_model       = Arc::new(FloModel::new(SqliteAnimation::new_in_memory()));
         let generic_tool    = TestTool.to_flo_tool();
-        let model           = generic_tool.create_model(Arc::clone(&flo_model));;
+        let model           = generic_tool.create_model(Arc::clone(&flo_model));
 
         assert!(model.get_ref() == Some(Arc::new(94)));
     }
