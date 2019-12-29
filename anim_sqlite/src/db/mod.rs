@@ -43,6 +43,7 @@ use self::animation_core::*;
 use self::flo_sqlite::*;
 use self::flo_store::*;
 use self::flo_query::*;
+use self::edit_sink::*;
 use self::edit_stream::*;
 
 ///
@@ -51,6 +52,9 @@ use self::edit_stream::*;
 pub struct AnimationDb {
     /// The core contains details of the database
     core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
+
+    /// Publishes edits to the core
+    core_publisher: Publisher<Vec<AnimationEdit>>
 }
 
 impl AnimationDb {
@@ -67,10 +71,12 @@ impl AnimationDb {
     pub fn new_from_connection(connection: Connection) -> AnimationDb {
         FloSqlite::setup(&connection).unwrap();
 
-        let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
+        let core        = Arc::new(Desync::new(AnimationDbCore::new(connection)));
+        let publisher   = create_edit_publisher(&core);
 
         let db      = AnimationDb {
-            core:   core
+            core:           core,
+            core_publisher: publisher
         };
 
         db
@@ -80,10 +86,12 @@ impl AnimationDb {
     /// Creates an animation database that uses an existing database already set up in a SQLite connection
     /// 
     pub fn from_connection(connection: Connection) -> AnimationDb {
-        let core    = Arc::new(Desync::new(AnimationDbCore::new(connection)));
+        let core        = Arc::new(Desync::new(AnimationDbCore::new(connection)));
+        let publisher   = create_edit_publisher(&core);
 
         let db = AnimationDb {
-            core:   core,
+            core:           core,
+            core_publisher: publisher
         };
 
         db
@@ -119,8 +127,7 @@ impl AnimationDb {
     /// Creates a sink for writing to the animation
     ///
     pub fn create_edit_sink(&self) -> Publisher<Vec<AnimationEdit>> {
-        unimplemented!()
-        /* Box::new(EditSink::new(&self.core)) */
+        self.core_publisher.republish()
     }
 }
 
