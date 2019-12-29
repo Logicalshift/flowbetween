@@ -16,7 +16,7 @@ const INVALID_LAYER: u64 = 0xffffffffffffffff;
 ///
 /// Provides the editlog trait for the animation DB
 /// 
-pub struct EditStream<TFile: FloFile+Send> {
+pub struct EditStream<TFile: Unpin+FloFile+Send> {
     /// The database core
     core: Arc<Desync<AnimationDbCore<TFile>>>,
 
@@ -38,7 +38,7 @@ struct EditStreamBuffer {
     filling: bool
 }
 
-impl<TFile: FloFile+Send> EditStream<TFile> {
+impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     ///
     /// Creates a new edit log for an animation database
     /// 
@@ -281,7 +281,7 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
     }
 }
 
-impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile>
+impl<TFile: Unpin+FloFile+Send+'static> Stream for EditStream<TFile>
 where Self: Unpin {
     type Item = AnimationEdit;
 
@@ -326,7 +326,7 @@ impl EditStreamBuffer {
     ///
     /// Fills a buffer stored in a mutex
     ///
-    fn fill<TFile: FloFile+Send>(buffer: &Mutex<EditStreamBuffer>, core: &mut AnimationDbCore<TFile>, range: Range<usize>, notify: Option<task::Waker>) {
+    fn fill<TFile: FloFile+Unpin+Send>(buffer: &Mutex<EditStreamBuffer>, core: &mut AnimationDbCore<TFile>, range: Range<usize>, notify: Option<task::Waker>) {
         // Note that the locking behaviour here assumes we're only running one fill in parallel (possibly with a stream reader)
         // This allows us to do the DB read while the buffer is unlocked
 
