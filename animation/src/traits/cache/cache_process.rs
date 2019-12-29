@@ -1,6 +1,8 @@
 use futures::*;
 use futures::task::{Poll, Context};
 
+use std::pin::*;
+
 ///
 /// Represents an item that is in the cache, or is in the process of being generated
 ///
@@ -15,7 +17,7 @@ pub enum CacheProcess<Result, Process: Future<Output=Result>+Send> {
 impl<Result: Clone, Process: Future<Output=Result>+Send> Future for CacheProcess<Result, Process> {
     type Output = Result;
 
-    fn poll(&mut self, context: &mut Context) -> Poll<Result> {
+    fn poll(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Result> {
         match self {
             CacheProcess::Cached(result)    => Poll::Ready(result.clone()),
             CacheProcess::Process(process)  => {
