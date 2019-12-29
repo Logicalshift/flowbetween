@@ -4,7 +4,6 @@ use flo_canvas::*;
 use flo_curves::debug::*;
 use flo_curves::bezier::path::*;
 
-use futures::*;
 use futures::future::{BoxFuture};
 
 use std::iter;
