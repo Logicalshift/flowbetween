@@ -1,23 +1,24 @@
 [package]
 name        = "flo_ui"
-version     = "0.1.1"
+version     = "0.2.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
+edition     = "2018"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Implementation-free user interface description library"
 
 [dependencies]
-flo_binding     = { git = "https://github.com/Logicalshift/flo_binding", version = "1.0" }
-flo_canvas      = { path = "../canvas", version = "^0.1.0" }
-flo_stream      = "0.3"
-desync          = "0.4"
+flo_binding     = { git = "https://github.com/Logicalshift/flo_binding", version = "1.1" }
+flo_canvas      = { path = "../canvas", version = "0.2" }
+flo_stream      = "0.4"
+desync          = "0.5"
 
-serde           = "^1.0.0"
-serde_derive    = "^1.0.0"
-serde_json      = "^1.0.0"
-modifier        = "^0.1.0"
-futures         = "^0.1.17"
+serde           = "1.0"
+serde_derive    = "1.0"
+serde_json      = "1.0"
+modifier        = "0.1"
+futures         = "0.3"
 png             = "0.14"
-lazy_static     = "^1.0.0"
+lazy_static     = "1.0"
 bytes           = "0.4"
 itertools       = "0.8"
