@@ -4,8 +4,8 @@ use super::super::controller::*;
 use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
-use canvas::*;
-use binding::*;
+use flo_canvas::*;
+use flo_binding::*;
 
 use futures::*;
 use futures::task::{Poll, Context};

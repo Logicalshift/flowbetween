@@ -2,8 +2,8 @@ use super::super::control::*;
 use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
-use canvas::*;
-use binding::*;
+use flo_canvas::*;
+use flo_binding::*;
 
 use std::sync::*;
 

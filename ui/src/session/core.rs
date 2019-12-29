@@ -4,7 +4,7 @@ use super::super::controller::*;
 
 use flo_stream::*;
 
-use binding::*;
+use flo_binding::*;
 use itertools::*;
 use futures::executor::*;
 

@@ -1,7 +1,7 @@
 use super::super::control::*;
 use super::super::viewmodel_update::*;
 
-use canvas::*;
+use flo_canvas::*;
 
 ///
 /// Represents a differnce to the UI

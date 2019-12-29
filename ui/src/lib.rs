@@ -1,7 +1,7 @@
 #![warn(bare_trait_objects)]
 
-extern crate flo_canvas as canvas;
-extern crate flo_binding as binding;
+extern crate flo_canvas;
+extern crate flo_binding;
 extern crate flo_stream;
 
 #[macro_use]

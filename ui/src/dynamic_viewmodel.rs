@@ -4,8 +4,8 @@ use super::viewmodel::*;
 use desync::{Desync};
 use flo_stream::*;
 
-use binding::*;
-use binding::binding_context::*;
+use flo_binding::*;
+use flo_binding::binding_context::*;
 
 use futures::*;
 use futures::stream;

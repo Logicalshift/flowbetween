@@ -1,7 +1,7 @@
 use ::desync::*;
-use canvas::*;
-use binding::*;
-use binding::binding_context::*;
+use flo_canvas::*;
+use flo_binding::*;
+use flo_binding::binding_context::*;
 
 use futures::*;
 use futures::task;

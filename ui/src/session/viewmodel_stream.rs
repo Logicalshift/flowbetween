@@ -3,7 +3,7 @@ use super::super::viewmodel::*;
 use super::super::controller::*;
 use super::super::viewmodel_update::*;
 
-use binding::*;
+use flo_binding::*;
 
 use futures::*;
 use futures::stream;

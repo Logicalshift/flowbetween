@@ -5,7 +5,7 @@ use super::super::diff::*;
 use super::super::control::*;
 use super::super::controller::*;
 
-use binding::*;
+use flo_binding::*;
 use futures::*;
 use flo_stream::*;
 

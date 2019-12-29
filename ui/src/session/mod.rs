@@ -21,7 +21,7 @@ pub use self::update_stream::*;
 use super::control::*;
 use super::controller::*;
 use super::user_interface::*;
-use binding::*;
+use flo_binding::*;
 use std::sync::*;
 
 /// The basic user interface implemented by a UI session

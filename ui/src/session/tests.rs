@@ -1,10 +1,10 @@
 use super::*;
 use super::super::*;
 
-use binding::*;
+use flo_binding::*;
 use futures::*;
 use futures::executor;
-use futures::sync::oneshot;
+use futures::channel::oneshot;
 
 use std::time::*;
 use std::sync::*;

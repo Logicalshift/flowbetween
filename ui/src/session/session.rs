@@ -8,7 +8,7 @@ use super::super::controller::*;
 use super::super::user_interface::*;
 
 use ::desync::*;
-use binding::*;
+use flo_binding::*;
 
 use std::sync::*;
 

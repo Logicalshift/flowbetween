@@ -1,6 +1,6 @@
 use super::property::*;
 
-use binding::*;
+use flo_binding::*;
 
 use futures::stream;
 use futures::stream::{BoxStream};

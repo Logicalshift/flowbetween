@@ -2,7 +2,7 @@ use super::*;
 use super::super::image;
 use super::super::resource_manager::*;
 
-use canvas;
+use flo_canvas;
 use ::modifier::*;
 
 ///

@@ -1,6 +1,6 @@
 use super::super::*;
 
-use binding::*;
+use flo_binding::*;
 use std::sync::*;
 
 ///
