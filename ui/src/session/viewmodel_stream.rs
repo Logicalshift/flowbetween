@@ -461,7 +461,7 @@ mod test {
         executor::block_on(async {
             for _pass in 0..10 {
                 let controller          = Arc::new(TestController::new());
-                let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
+                let update_stream       = ViewModelUpdateStream::new(controller.clone());
                 let mut update_stream   = update_stream;
 
                 let update1 = update_stream.next().await;

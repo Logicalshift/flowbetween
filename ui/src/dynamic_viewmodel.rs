@@ -388,13 +388,15 @@ mod test {
         let viewmodel = DynamicViewModel::new();
         viewmodel.set_property("Test", PropertyValue::Int(2));
 
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
 
-        viewmodel.set_property("Test", PropertyValue::Int(3));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3)))));
+        executor::block_on(async {
+            viewmodel.set_property("Test", PropertyValue::Int(3));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3))));
 
-        viewmodel.set_property("Test", PropertyValue::Int(4));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(4)))));
+            viewmodel.set_property("Test", PropertyValue::Int(4));
+            assert!(updates.next().await == Some(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(4))));
+        });
     }
 
     #[test]
@@ -402,12 +404,14 @@ mod test {
         let viewmodel = DynamicViewModel::new();
         viewmodel.set_property("Test", PropertyValue::Int(2));
 
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
         viewmodel.set_property("Test", PropertyValue::Int(3));
         viewmodel.set_property("Test", PropertyValue::Int(4));
         viewmodel.set_property("Test", PropertyValue::Int(5));
 
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(5)))));
+        executor::block_on(async {
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(5))));
+        });
     }
 
     #[test]
@@ -415,49 +419,53 @@ mod test {
         let viewmodel = DynamicViewModel::new();
         viewmodel.set_property("Test", PropertyValue::Int(2));
 
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
 
-        viewmodel.set_property("Test", PropertyValue::Int(3));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3)))));
+        executor::block_on(async {
+            viewmodel.set_property("Test", PropertyValue::Int(3));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3))));
 
-        viewmodel.set_property("Test2", PropertyValue::Int(4));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test2"), PropertyValue::Int(4)))));
+            viewmodel.set_property("Test2", PropertyValue::Int(4));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test2"), PropertyValue::Int(4))));
 
-        viewmodel.set_property("Test2", PropertyValue::Int(5));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test2"), PropertyValue::Int(5)))));
+            viewmodel.set_property("Test2", PropertyValue::Int(5));
+            assert!(updates.next().await == Some(ViewModelChange::PropertyChanged(String::from("Test2"), PropertyValue::Int(5))));
+        });
     }
 
     #[test]
     fn stream_computed_values() {
         let viewmodel = DynamicViewModel::new();
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
 
-        viewmodel.set_property("TestSource", PropertyValue::Int(1));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("TestSource"), PropertyValue::Int(1)))));
+        executor::block_on(async {
+            viewmodel.set_property("TestSource", PropertyValue::Int(1));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("TestSource"), PropertyValue::Int(1))));
 
-        let test_source = viewmodel.get_property("TestSource");
-        viewmodel.set_computed("Test", move || test_source.get());
+            let test_source = viewmodel.get_property("TestSource");
+            viewmodel.set_computed("Test", move || test_source.get());
 
-        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(1)))));
+            assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(1))));
 
-        viewmodel.set_property("TestSource", PropertyValue::Int(2));
-        let update1 = updates.wait_stream();
-        let update2 = updates.wait_stream();
+            viewmodel.set_property("TestSource", PropertyValue::Int(2));
+            let update1 = updates.next().await;
+            let update2 = updates.next().await;
 
-        // Order of updates is indeterminate
-        println!("{:?}", update1);
-        println!("{:?}", update2);
+            // Order of updates is indeterminate
+            println!("{:?}", update1);
+            println!("{:?}", update2);
 
-        if update1 == Some(Ok(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2)))) {
-            assert!(update2 == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2)))));
+            if update1 == Some(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2))) {
+                assert!(update2 == Some(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2))));
 
-        } else if update1 == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2)))) {
-            assert!(update2 == Some(Ok(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2)))));
+            } else if update1 == Some(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2))) {
+                assert!(update2 == Some(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2))));
 
-        } else {
-            assert!(false);
-        }
+            } else {
+                assert!(false);
+            }
+        });
     }
 
     #[test]

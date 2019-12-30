@@ -288,7 +288,7 @@ mod test {
     #[test]
     fn binding_canvas_works_like_canvas() {
         let canvas      = BindingCanvas::new();
-        let mut stream  = executor::spawn(canvas.stream());
+        let mut stream  = canvas.stream();
 
         // Draw using a graphics context
         canvas.draw(|gc| {
@@ -296,14 +296,16 @@ mod test {
         });
 
         // Check we can get the results via the stream
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+        });
     }
 
     #[test]
     fn will_invalidate_and_redraw_when_function_assigned() {
         let canvas      = BindingCanvas::new();
-        let mut stream  = executor::spawn(canvas.stream());
+        let mut stream  = canvas.stream();
 
         // Set a bound function
         canvas.on_redraw(|gc| {
@@ -314,15 +316,17 @@ mod test {
         canvas.redraw_if_invalid();
 
         // Check we can get the results via the stream
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+        });
     }
 
     #[test]
     fn redraws_when_binding_changes() {
         let binding     = bind((1.0, 2.0));
         let canvas      = BindingCanvas::new();
-        let mut stream  = executor::spawn(canvas.stream());
+        let mut stream  = canvas.stream();
 
         // Set a bound function
         let draw_binding = binding.clone();
@@ -337,19 +341,21 @@ mod test {
         canvas.redraw_if_invalid();
 
         // Should draw the first set of functions
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::Move(1.0, 2.0))));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+            assert!(stream.next().await == Some(Draw::Move(1.0, 2.0)));
 
-        // Update the binding
-        binding.set((4.0, 5.0));
+            // Update the binding
+            binding.set((4.0, 5.0));
 
-        // Redraw with the updated binding
-        canvas.redraw_if_invalid();
+            // Redraw with the updated binding
+            canvas.redraw_if_invalid();
 
-        // Should redraw the canvas now
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::Move(4.0, 5.0))));
+            // Should redraw the canvas now
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+            assert!(stream.next().await == Some(Draw::Move(4.0, 5.0)));
+        });
     }
 }
