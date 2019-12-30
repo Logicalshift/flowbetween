@@ -180,7 +180,7 @@ impl UiUpdateStream {
 }
 
 impl Stream for UiUpdateStream {
-    type Item   = Vec<UiUpdate>;
+    type Item   = Result<Vec<UiUpdate>, ()>;
 
     fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<UiUpdate>>> {
         // Check for suspensions
@@ -218,10 +218,10 @@ impl Stream for UiUpdateStream {
             // Result is OK if we found a pending update
             if let Some(pending) = pending_result {
                 // There is a pending update
-                Poll::Ready(Some(pending))
+                Poll::Ready(Some(Ok(pending)))
             } else if let Poll::Ready(Some(())) = self.tick.poll() {
                 // There is a pending tick
-                Poll::Ready(Some(vec![]))
+                Poll::Ready(Some(Ok(vec![])))
             } else {
                 // Not ready yet
                 Poll::Pending
