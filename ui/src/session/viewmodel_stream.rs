@@ -86,13 +86,15 @@ impl ViewModelUpdateStream {
 impl Stream for ViewModelUpdateStream {
     type Item = ViewModelUpdate;
 
-    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelUpdate>> {
-        if let Some(update) = self.pending.pop_front() {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelUpdate>> {
+        let self_ref = self.get_mut();
+
+        if let Some(update) = self_ref.pending.pop_front() {
             // Return pending items before anything else
             Poll::Ready(Some(update))
-        } else if let Some(root_controller) = self.root_controller.upgrade() {
+        } else if let Some(root_controller) = self_ref.root_controller.upgrade() {
             // Try the updates from the main controller first
-            if let Some(controller_viewmodel_updates) = self.controller_viewmodel_updates.as_mut() {
+            if let Some(controller_viewmodel_updates) = self_ref.controller_viewmodel_updates.as_mut() {
                 let mut all_updates = vec![];
 
                 // Drain the controller updates
@@ -116,23 +118,23 @@ impl Stream for ViewModelUpdateStream {
                 // Unset the controller updates if we reach the end of the stream (the controller and its subcontrollers presumably still exist, so the stream does not end)
                 if update_poll == Poll::Ready(None) {
                     // TODO: remove the viewmodel updates from self (borrowed, so doesn't work)
-                    // self.controller_viewmodel_updates = None;
+                    // self_ref.controller_viewmodel_updates = None;
                 }
 
                 // Return the updates if there were any
                 if all_updates.len() > 0 {
-                    self.pending.push_back(ViewModelUpdate::new(vec![], all_updates));
+                    self_ref.pending.push_back(ViewModelUpdate::new(vec![], all_updates));
                 }
             }
 
             // Check for updates to the controller UI
-            let mut next_ui_poll = self.controller_stream.poll_next_unpin(context);
+            let mut next_ui_poll = self_ref.controller_stream.poll_next_unpin(context);
             while let Poll::Ready(Some(next_ui)) = next_ui_poll {
                 // Refresh the subcontrollers from the UI
-                self.update_subcontrollers(&*root_controller, &next_ui);
+                self_ref.update_subcontrollers(&*root_controller, &next_ui);
 
                 // Keep polling
-                next_ui_poll = self.controller_stream.poll_next_unpin(context);
+                next_ui_poll = self_ref.controller_stream.poll_next_unpin(context);
             }
 
             if let Poll::Ready(None) = next_ui_poll {
@@ -142,7 +144,7 @@ impl Stream for ViewModelUpdateStream {
 
             // Poll the subcontrollers
             let mut removed_subcontrollers = vec![];
-            for (name, stream) in self.sub_controllers.iter_mut() {
+            for (name, stream) in self_ref.sub_controllers.iter_mut() {
                 let mut subcontroller_poll = stream.poll_next_unpin(context);
 
                 while let Poll::Ready(Some(mut update)) = subcontroller_poll {
@@ -150,7 +152,7 @@ impl Stream for ViewModelUpdateStream {
                     update.add_to_start_of_path(name.clone());
 
                     // Add the update to the pending list
-                    self.pending.push_back(update);
+                    self_ref.pending.push_back(update);
 
                     // Fetch as many updates as we can from the subcontroller
                     subcontroller_poll = stream.poll_next_unpin(context);
@@ -165,14 +167,14 @@ impl Stream for ViewModelUpdateStream {
             // Remove and try to recreate any subcontrollers that have stopped responding
             for removed_name in removed_subcontrollers {
                 // Stop checking this subcontroller for updates
-                self.sub_controllers.remove(&removed_name);
+                self_ref.sub_controllers.remove(&removed_name);
 
                 // Try to get it back from the root controller
                 let new_subcontroller = root_controller.get_subcontroller(&removed_name);
                 if let Some(new_subcontroller) = new_subcontroller {
                     // Got a replacement
                     let new_viewmodel_stream = ViewModelUpdateStream::new(new_subcontroller);
-                    self.sub_controllers.insert(removed_name, new_viewmodel_stream);
+                    self_ref.sub_controllers.insert(removed_name, new_viewmodel_stream);
 
                     // Make sure the task is notified to re-poll for the changes from the replacement subcontroller
                     context.waker().clone().wake();
@@ -180,7 +182,7 @@ impl Stream for ViewModelUpdateStream {
             }
 
             // If any updates were found, return the first from the pending list
-            if let Some(update) = self.pending.pop_front() {
+            if let Some(update) = self_ref.pending.pop_front() {
                 Poll::Ready(Some(update))
             } else {
                 Poll::Pending
