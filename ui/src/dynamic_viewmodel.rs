@@ -245,10 +245,14 @@ impl DynamicViewModel {
     /// Follows a binding and publishes updates to the update stream
     ///
     fn follow_binding<TBinding: 'static+Bound<PropertyValue>>(&self, property_name: &str, binding: TBinding) {
+        // Use a future to publish the property
         let property_name   = String::from(property_name);
         let _future         = self.new_properties.future(move |new_properties| {
             new_properties.publish((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
         });
+
+        // Synchronise with where the future completes, so the property is ready by the time this call returns
+        self.new_properties.sync(|_| { });
     }
 }
 
@@ -437,7 +441,10 @@ mod test {
 
         executor::block_on(async {
             let mut stream  = viewmodel.get_updates();
-            assert!(stream.next().await == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
 
             viewmodel.set_property("NewValue", PropertyValue::Int(3));
             viewmodel.set_property("Test", PropertyValue::Int(2));
