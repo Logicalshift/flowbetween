@@ -448,6 +448,31 @@ mod test {
         })
     }
 
+    #[test]
+    fn notifications_are_posted() {
+        use std::thread;
+        use std::time::{Duration};
+
+        let viewmodel   = DynamicViewModel::new();
+        let mut stream  = viewmodel.get_updates();
+        viewmodel.set_property("Test", PropertyValue::Int(1));
+
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            thread::spawn(move || {
+                thread::sleep(Duration::from_millis(100));
+                viewmodel.set_property("Test", PropertyValue::Int(2));
+
+                // Timeout before destroying the viewmodel (will end the stream, failing the test)
+                thread::sleep(Duration::from_millis(100));
+            });
+
+            let event = stream.next().await;
+            println!("{:?}", event);
+            assert!(event == Some(ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))));
+        })
+    }
 
     #[test]
     fn new_values_are_picked_up_alongside_changes() {
