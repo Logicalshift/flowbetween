@@ -271,6 +271,22 @@ mod test {
     }
 
     #[test]
+    fn changes_are_picked_up_as_changes() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
+
+        let mut stream  = ViewModelUpdateStream::new(controller.clone());
+
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))])));
+
+            controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))])));
+        });
+    }
+
+    #[test]
     fn new_values_are_picked_up() {
         let controller  = Arc::new(DynamicController::new());
         let mut stream  = ViewModelUpdateStream::new(controller.clone());
