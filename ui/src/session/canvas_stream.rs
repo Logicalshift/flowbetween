@@ -194,7 +194,7 @@ impl Stream for CanvasUpdateStream {
                 let mut updates = vec![];
 
                 let mut canvas_poll = tracker.stream.poll_next_unpin(context);
-                while let Poll::Ready(Some(mut canvas_command)) = canvas_poll {
+                while let Poll::Ready(Some(canvas_command)) = canvas_poll {
                     updates.push(canvas_command);
 
                     canvas_poll = tracker.stream.poll_next_unpin(context);

@@ -1,4 +1,3 @@
-use futures::stream::*;
 use futures::stream::{BoxStream};
 use bytes::Bytes;
 

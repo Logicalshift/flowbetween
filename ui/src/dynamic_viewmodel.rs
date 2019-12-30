@@ -10,7 +10,6 @@ use flo_binding::binding_context::*;
 use futures::*;
 use futures::stream;
 use futures::stream::{BoxStream};
-use futures::executor;
 use futures::task;
 use futures::task::{Poll, Context, Waker};
 use std::pin::*;

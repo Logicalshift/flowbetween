@@ -71,7 +71,7 @@ impl ViewModelUpdateStream {
 
                 } else if let Some(subcontroller) = root_controller.get_subcontroller(&subcontroller_name) {
                     // Need to track with a new subcontroller
-                    let mut subcontroller_stream = ViewModelUpdateStream::new(subcontroller);
+                    let subcontroller_stream = ViewModelUpdateStream::new(subcontroller);
 
                     new_sub_controllers.insert(subcontroller_name.clone(), subcontroller_stream);
                 }
