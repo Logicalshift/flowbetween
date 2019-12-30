@@ -182,27 +182,29 @@ impl UiUpdateStream {
 impl Stream for UiUpdateStream {
     type Item   = Result<Vec<UiUpdate>, ()>;
 
-    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Self::Item>> {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Self::Item>> {
+        let self_ref = self.get_mut();
+
         // Check for suspensions
-        let suspend_poll = self.update_suspend.poll_next_unpin(context);
+        let suspend_poll = self_ref.update_suspend.poll_next_unpin(context);
         if let Poll::Ready(Some(is_suspended)) = suspend_poll {
-            self.is_suspended = is_suspended;
+            self_ref.is_suspended = is_suspended;
         }
 
-        if self.is_suspended {
+        if self_ref.is_suspended {
             // Stay 'not ready' for as long as we're suspended for
             Poll::Pending
         } else {
             // Pull any pending events into the pending list
-            self.pull_canvas_events(context);
-            self.pull_viewmodel_events(context);
+            self_ref.pull_canvas_events(context);
+            self_ref.pull_viewmodel_events(context);
 
             // UI events are polled last but we return them first (this way the viewmodel and canvas updates apply to the current UI)
-            self.pull_ui_events(context);
+            self_ref.pull_ui_events(context);
 
             // Try to read the pending update, if there is one
-            let mut pending_ui          = self.pending_ui.lock().unwrap();
-            let mut pending             = self.pending.lock().unwrap();
+            let mut pending_ui          = self_ref.pending_ui.lock().unwrap();
+            let mut pending             = self_ref.pending.lock().unwrap();
             let mut pending_result_ui   = None;
             let mut pending_result      = None;
 
@@ -219,7 +221,7 @@ impl Stream for UiUpdateStream {
             if let Some(pending) = pending_result {
                 // There is a pending update
                 Poll::Ready(Some(Ok(pending)))
-            } else if let Poll::Ready(Some(())) = self.tick.poll_next_unpin(context) {
+            } else if let Poll::Ready(Some(())) = self_ref.tick.poll_next_unpin(context) {
                 // There is a pending tick
                 Poll::Ready(Some(Ok(vec![])))
             } else {
