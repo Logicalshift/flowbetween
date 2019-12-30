@@ -184,7 +184,7 @@ impl Stream for CanvasUpdateStream {
                     self.sub_controllers.insert(removed_subcontroller_name, new_stream);
 
                     // Notify the task immediately to check the new controller for updates
-                    context.waker().wake();
+                    context.waker().clone().wake();
                 }
             }
 
@@ -229,7 +229,7 @@ impl Stream for CanvasUpdateStream {
                     self.canvas_trackers.insert(removed_canvas_name, new_tracker);
 
                     // Notify the task immediately to check the new canvas for updates
-                    context.waker().wake();
+                    context.waker().clone().wake();
                 }
             }
 
