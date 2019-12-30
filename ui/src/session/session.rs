@@ -78,7 +78,7 @@ impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdat
     fn get_input_sink(&self) -> Publisher<Vec<UiEvent>> {
         // TODO: the 'republished' version we generate here should be a weak reference so the stream ends when the session object is freed
         // (or we need a modification to flo_stream that allows for closing existing publishers)
-        self.publisher.republish()
+        self.event_publisher.republish()
     }
 
     /// Retrieves a view onto the update stream for this user interface
