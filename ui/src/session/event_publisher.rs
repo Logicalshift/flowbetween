@@ -16,6 +16,9 @@ pub fn ui_event_publisher<CoreController: 'static+Controller>(controller: Arc<Co
     // Create the publisher
     let mut publisher = Publisher::new(100);
 
+    // TODO: the pipe might read ahead of the events and queue several processing sessions which would be better handled as a single
+    // session that evaluates when all of the events are available
+
     // Pipe events to the session core
     pipe_in(core, gather(publisher.subscribe()), move |core, events| {
         if events.len() > 0 {
