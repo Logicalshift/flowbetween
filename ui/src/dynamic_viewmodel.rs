@@ -455,7 +455,34 @@ mod test {
 
             let events = stream.next().await;
             println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))));
+        });
+    }
+
+    #[test]
+    fn new_values_are_picked_up_alongside_changes_no_buffering() {
+        // Equivalent test is in the viewmodel_stream
+        let viewmodel = DynamicViewModel::new();
+        viewmodel.set_property("Test", PropertyValue::Int(1));
+
+        executor::block_on(async {
+            let mut stream  = viewmodel.get_updates();
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            viewmodel.set_property("NewValue", PropertyValue::Int(3));
+
+            let events = stream.next().await;
+            println!("{:?}", events);
             assert!(events == Some(ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3))));
+
+            viewmodel.set_property("Test", PropertyValue::Int(2));
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))));
         });
     }
 
