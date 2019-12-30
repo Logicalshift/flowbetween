@@ -140,7 +140,9 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>+Unpin> Stream 
             if *property.notify.was_notified.lock().unwrap() {
                 // Try polling this item
                 loop {
-                    let notify_poll = property.value_stream.poll_next_unpin(context);
+                    let notify_waker        = task::waker(Arc::clone(&property.notify));
+                    let mut notify_context  = Context::from_waker(&notify_waker);
+                    let notify_poll         = property.value_stream.poll_next_unpin(&mut notify_context);
 
                     match notify_poll {
                         Poll::Ready(Some(new_value)) => {
