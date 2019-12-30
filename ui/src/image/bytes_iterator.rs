@@ -41,7 +41,7 @@ impl Stream for ImageStreamIterator {
 
         if num_to_read > 0 {
             self.pos += num_to_read;
-            Poll::Ready(Some(self.bytes.slice(pos, pos+num_to_read)))
+            Poll::Ready(Some(self.bytes.slice(pos..(pos+num_to_read))))
         } else {
             Poll::Ready(None)
         }
