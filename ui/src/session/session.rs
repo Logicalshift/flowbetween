@@ -2,13 +2,14 @@ use super::*;
 use super::core::*;
 use super::event::*;
 use super::update::*;
-use super::event_sink::*;
+use super::event_publisher::*;
 use super::update_stream::*;
 use super::super::controller::*;
 use super::super::user_interface::*;
 
 use ::desync::*;
 use flo_binding::*;
+use flo_stream::*;
 
 use std::sync::*;
 
@@ -21,6 +22,9 @@ pub struct UiSession<CoreController: Controller> {
 
     /// The core of the UI session
     core: Arc<Desync<UiSessionCore>>,
+
+    /// The event publisher for this session
+    event_publisher: Publisher<Vec<UiEvent>>,
 
     /// A releasable that tracks UI updates
     ui_update_lifetime: Mutex<Box<dyn Releasable>>
@@ -36,10 +40,12 @@ impl<CoreController: Controller+'static> UiSession<CoreController> {
         let core                = Arc::new(Desync::new(core));
 
         let ui_update_lifetime  = Self::track_ui_updates(Arc::clone(&core));
+        let publisher           = ui_event_publisher(Arc::clone(&controller), Arc::clone(&core));
 
         UiSession {
             controller:         controller,
             core:               core,
+            event_publisher:    publisher,
             ui_update_lifetime: Mutex::new(ui_update_lifetime)
         }
     }
@@ -65,15 +71,14 @@ impl<CoreController: Controller> Drop for UiSession<CoreController> {
 }
 
 impl<CoreController: 'static+Controller> UserInterface<Vec<UiEvent>, Vec<UiUpdate>, ()> for UiSession<CoreController> {
-    /// The type of the event sink for this UI
-    type EventSink = UiEventSink;
-
     /// The type of the update stream for this UI
     type UpdateStream = UiUpdateStream;
 
     /// Retrieves an input event sink for this user interface
-    fn get_input_sink(&self) -> UiEventSink {
-        UiEventSink::new(Arc::clone(&self.controller), Arc::clone(&self.core))
+    fn get_input_sink(&self) -> Publisher<Vec<UiEvent>> {
+        // TODO: the 'republished' version we generate here should be a weak reference so the stream ends when the session object is freed
+        // (or we need a modification to flo_stream that allows for closing existing publishers)
+        self.publisher.republish()
     }
 
     /// Retrieves a view onto the update stream for this user interface

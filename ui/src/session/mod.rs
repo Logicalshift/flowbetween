@@ -25,7 +25,7 @@ use flo_binding::*;
 use std::sync::*;
 
 /// The basic user interface implemented by a UI session
-pub trait CoreUserInterface : UserInterface<Vec<UiEvent>, Vec<UiUpdate>, (), EventSink=UiEventSink, UpdateStream=UiUpdateStream> {
+pub trait CoreUserInterface : UserInterface<Vec<UiEvent>, Vec<UiUpdate>, (), UpdateStream=UiUpdateStream> {
     type CoreController: Controller;
 
     /// Retrieves the control tree for this UI
