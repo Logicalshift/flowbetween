@@ -33,7 +33,7 @@ impl Iterator for ImageStreamIterator {
 impl Stream for ImageStreamIterator {
     type Item = Bytes;
 
-    fn poll_next(self: Pin<&mut Self>, _context: &mut Context) -> Poll<Option<Bytes>> {
+    fn poll_next(mut self: Pin<&mut Self>, _context: &mut Context) -> Poll<Option<Bytes>> {
         let max_to_read     = 100000;
         let pos             = self.pos;
         let len             = self.bytes.len();
