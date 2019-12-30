@@ -41,7 +41,7 @@ pub struct DynamicViewModel {
 ///
 struct DynamicStreamNotify {
     /// Task to notify
-    waker: Mutex<Waker>,
+    waker: Mutex<Option<Waker>>,
 
     /// True if this stream has notified
     was_notified: Mutex<bool>
@@ -80,15 +80,15 @@ struct DynamicViewModelUpdateStream<NewProperties: Stream<Item=(String, BindRef<
 }
 
 impl task::ArcWake for DynamicStreamNotify {
-    /*
-    fn notify(&self, _id: usize) {
+    fn wake_by_ref(arc_self: &Arc<Self>) {
         // Set the flag
-        *self.was_notified.lock().unwrap() = true;
+        *arc_self.was_notified.lock().unwrap() = true;
 
-        // Notify the task
-        self.task.lock().unwrap().notify();
+        // Wake the task
+        arc_self.waker.lock().unwrap()
+            .take()
+            .map(|waker| waker.wake());
     }
-    */
 }
 
 impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>> Stream for DynamicViewModelUpdateStream<NewProperties> {
@@ -100,7 +100,7 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>> Stream for Dy
         while let Poll::Ready(Some((name, binding))) = new_property_poll {
             // Create a new property with its notify flag set
             let notified = DynamicStreamNotify {
-                task:           Mutex::new(context.waker().clone()),
+                waker:          Mutex::new(Some(context.waker().clone())),
                 was_notified:   Mutex::new(true)
             };
 
