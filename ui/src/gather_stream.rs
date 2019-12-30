@@ -54,7 +54,7 @@ where   SourceStream: Stream<Item=Vec<SourceItem>>+Unpin {
                     }
                     
                     // Result is the items we gathered
-                    Poll::Ready(items)
+                    Poll::Ready(Some(items))
                 }
 
                 Poll::Ready(None) => {

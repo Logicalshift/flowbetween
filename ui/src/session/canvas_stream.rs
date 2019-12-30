@@ -26,7 +26,7 @@ struct CanvasStreamTracker {
 impl CanvasStreamTracker {
     pub fn new(canvas_resource: &Resource<BindingCanvas>) -> CanvasStreamTracker {
         CanvasStreamTracker {
-            stream: Box::new(canvas_resource.stream())
+            stream: Box::pin(canvas_resource.stream())
         }
     }
 }
@@ -139,14 +139,14 @@ impl Stream for CanvasUpdateStream {
     fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<CanvasDiff>> {
         if let Some(root_controller) = self.root_controller.upgrade() {
             // Poll for control updates
-            let mut control_update_poll = self.controller_updates.poll();
+            let mut control_update_poll = self.controller_updates.poll_next_unpin(context);
 
             while let Poll::Ready(Some(control)) = control_update_poll {
                 // Update with the new control
                 self.update_controller_content(&root_controller, &control);
 
                 // Poll again
-                control_update_poll = self.controller_updates.poll();
+                control_update_poll = self.controller_updates.poll_next_unpin(context);
             }
 
             if let Poll::Ready(None) = control_update_poll {
@@ -157,7 +157,7 @@ impl Stream for CanvasUpdateStream {
             // Poll each of the subcontrollers to see if they produce a diff
             let mut removed_subcontrollers = vec![];
             for (name, stream) in self.sub_controllers.iter_mut() {
-                let subcontroller_poll = stream.poll();
+                let subcontroller_poll = stream.poll_next_unpin(context);
 
                 if let Poll::Ready(Some(mut subcontroller_update)) = subcontroller_poll {
                     // Insert the controller name at the start of the path
@@ -193,11 +193,11 @@ impl Stream for CanvasUpdateStream {
             for (canvas_name, tracker) in self.canvas_trackers.iter_mut() {
                 let mut updates = vec![];
 
-                let mut canvas_poll = tracker.stream.poll();
+                let mut canvas_poll = tracker.stream.poll_next_unpin(context);
                 while let Poll::Ready(Some(mut canvas_command)) = canvas_poll {
                     updates.push(canvas_command);
 
-                    canvas_poll = tracker.stream.poll();
+                    canvas_poll = tracker.stream.poll_next_unpin(context);
                 }
 
                 if let Poll::Ready(None) = canvas_poll {

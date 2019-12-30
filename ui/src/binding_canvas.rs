@@ -209,7 +209,7 @@ impl BindingCanvas {
     ///
     /// Creates a stream from this canvas that will track updates as they occur
     ///
-    pub fn stream(&self) -> impl Stream<Item=Draw, Error=()>+Send {
+    pub fn stream(&self) -> impl Stream<Item=Draw>+Send {
         BindingCanvasStream {
             canvas:         Arc::downgrade(&self.canvas),
             canvas_stream:  self.canvas.stream(),
@@ -240,7 +240,7 @@ struct BindingCanvasStream<CanvasStream> {
     binding_core: Weak<Desync<BindingCanvasCore>>
 }
 
-impl<CanvasStream: Stream<Item=Draw>+Send> Stream for BindingCanvasStream<CanvasStream> {
+impl<CanvasStream: Stream<Item=Draw>+Unpin+Send> Stream for BindingCanvasStream<CanvasStream> {
     type Item=Draw;
 
     fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Draw>> {
@@ -276,7 +276,7 @@ impl<CanvasStream: Stream<Item=Draw>+Send> Stream for BindingCanvasStream<Canvas
         }
 
         // Defer to the main canvas stream
-        self.canvas_stream.poll()
+        self.canvas_stream.poll_next_unpin(context)
     }
 }
 

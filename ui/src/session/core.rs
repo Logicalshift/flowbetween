@@ -210,14 +210,14 @@ impl UiSessionCore {
     /// Returns a subscriber for tick events
     ///
     pub fn subscribe_ticks(&mut self) -> Subscriber<()> {
-        self.tick.get_mut().subscribe()
+        self.tick.subscribe()
     }
 
     ///
     /// Returns a subscriber for update suspension events
     ///
     pub fn subscribe_update_suspend(&mut self) -> Subscriber<bool> {
-        self.suspend_updates.get_mut().subscribe()
+        self.suspend_updates.subscribe()
     }
 
     ///

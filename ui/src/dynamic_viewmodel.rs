@@ -68,7 +68,7 @@ struct DynamicStreamProperty {
 /// 'pull' changes in on the current thread rather than generate them asynchronously on a
 /// different thread, which is useful when trying to drain all updates from the publisher.
 ///
-struct DynamicViewModelUpdateStream<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>> {
+struct DynamicViewModelUpdateStream<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>+Unpin> {
     /// Stream of new property bindings
     new_properties: NewProperties,
 
@@ -91,12 +91,12 @@ impl task::ArcWake for DynamicStreamNotify {
     }
 }
 
-impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>> Stream for DynamicViewModelUpdateStream<NewProperties> {
+impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>+Unpin> Stream for DynamicViewModelUpdateStream<NewProperties> {
     type Item = ViewModelChange;
 
     fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelChange>> {
         // Set up any new properties
-        let mut new_property_poll = self.new_properties.poll();
+        let mut new_property_poll = self.new_properties.poll_next_unpin(context);
         while let Poll::Ready(Some((name, binding))) = new_property_poll {
             // Create a new property with its notify flag set
             let notified = DynamicStreamNotify {
@@ -119,7 +119,7 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>> Stream for Dy
             self.any_property.insert(name, property);
 
             // Get the next new property
-            new_property_poll = self.new_properties.poll();
+            new_property_poll = self.new_properties.poll_next_unpin(context);
         }
 
         // Return pending changes first
@@ -135,13 +135,13 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>> Stream for Dy
         // Poll for values from any properties with their flag set
         for (name, property) in self.any_property.iter_mut() {
             // Update the task to notify
-            *property.notify.task.lock().unwrap() = context.waker().clone();
+            *property.notify.waker.lock().unwrap() = Some(context.waker().clone());
 
             // If the flag is set...
             if *property.notify.was_notified.lock().unwrap() {
                 // Try polling this item
                 loop {
-                    let notify_poll = property.value_stream.poll_stream_notify(&Arc::clone(&property.notify), 0);
+                    let notify_poll = property.value_stream.poll_next_unpin(context);
 
                     match notify_poll {
                         Poll::Ready(Some(new_value)) => {
@@ -163,11 +163,6 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>> Stream for Dy
                             *property.notify.was_notified.lock().unwrap() = false;
 
                             // Need to keep polling this item
-                            break;
-                        },
-
-                        Err(_) => {
-                            // Just skip errors for now (we shouldn't produce any)
                             break;
                         },
 
@@ -251,11 +246,9 @@ impl DynamicViewModel {
     /// Follows a binding and publishes updates to the update stream
     ///
     fn follow_binding<TBinding: 'static+Bound<PropertyValue>>(&self, property_name: &str, binding: TBinding) {
-        let property_name = String::from(property_name);
-        self.new_properties.sync(move |new_properties| {
-            new_properties
-                .wait_send((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
-                .ok();
+        let property_name   = String::from(property_name);
+        let _future         = self.new_properties.future(move |new_properties| {
+            new_properties.publish((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
         });
     }
 }
@@ -342,7 +335,7 @@ impl ViewModel for DynamicViewModel {
             any_property:       HashMap::new()
         };
 
-        Box::new(stream)
+        Box::pin(stream)
     }
 }
 
