@@ -1,7 +1,7 @@
 mod event;
 mod update;
 mod core;
-mod event_sink;
+mod event_publisher;
 mod update_stream;
 pub mod state;
 pub mod session;
@@ -11,7 +11,7 @@ mod viewmodel_stream;
 pub use self::event::*;
 pub use self::update::*;
 pub use self::session::*;
-pub use self::event_sink::*;
+pub use self::event_publisher::*;
 pub use self::canvas_stream::*;
 pub use self::viewmodel_stream::*;
 pub use self::update_stream::*;
