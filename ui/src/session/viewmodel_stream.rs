@@ -252,8 +252,8 @@ mod test {
 
     #[derive(Clone)]
     struct NotifyNothing;
-    impl executor::Notify for NotifyNothing {
-        fn notify(&self, _: usize) { }
+    impl task::ArcWake for NotifyNothing {
+        fn wake_by_ref(_arc_self: &Arc<Self>) { }
     }
 
     #[test]
@@ -261,24 +261,28 @@ mod test {
         let controller = Arc::new(DynamicController::new());
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+        let mut stream  = ViewModelUpdateStream::new(controller.clone());
 
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]))));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))])));
+        });
     }
 
     #[test]
     fn new_values_are_picked_up() {
         let controller  = Arc::new(DynamicController::new());
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+        let mut stream  = ViewModelUpdateStream::new(controller.clone());
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))]))));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))])));
 
-        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
+            controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(2))]))));
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(2))])));
+        })
     }
 
     #[test]
@@ -286,15 +290,17 @@ mod test {
         let controller = Arc::new(DynamicController::new());
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))]))));
+        executor::block_on(async {
+            let mut stream  = ViewModelUpdateStream::new(controller.clone());
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))])));
 
-        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
-        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+            controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
+            controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let events = stream.wait_stream();
-        println!("{:?}", events);
-        assert!(events == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]))));
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))])));
+        });
     }
 
     #[test]
@@ -309,14 +315,16 @@ mod test {
         let controller = Arc::new(controller);
 
         let update_stream       = ViewModelUpdateStream::new(controller.clone());
-        let mut update_stream   = executor::spawn(update_stream);
+        let mut update_stream   = update_stream;
 
         subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let update = update_stream.wait_stream().unwrap().unwrap();
+        executor::block_on(async {
+            let update = update_stream.next().await.unwrap();
 
-        assert!(update.controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(update.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+            assert!(update.controller_path() == &vec!["Subcontroller".to_string()]);
+            assert!(update.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+        });
     }
 
     #[test]
@@ -327,7 +335,7 @@ mod test {
         let controller = Arc::new(controller);
 
         let update_stream       = ViewModelUpdateStream::new(controller.clone());
-        let mut update_stream   = executor::spawn(update_stream);
+        let mut update_stream   = update_stream;
 
         controller.set_controls(Control::container().with_controller("Subcontroller"));
         controller.add_subcontroller("Subcontroller".to_string());
@@ -335,10 +343,12 @@ mod test {
 
         subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let updates = update_stream.wait_stream().unwrap().unwrap();
+        executor::block_on(async {
+            let updates = update_stream.next().await.unwrap();
 
-        assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(updates.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+            assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
+            assert!(updates.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+        });
     }
 
     #[test]
@@ -349,7 +359,7 @@ mod test {
         let controller = Arc::new(controller);
 
         let update_stream       = ViewModelUpdateStream::new(controller.clone());
-        let mut update_stream   = executor::spawn(update_stream);
+        let mut update_stream   = update_stream;
 
         controller.set_controls(Control::container().with_controller("Subcontroller"));
         controller.add_subcontroller("Subcontroller".to_string());
@@ -357,13 +367,15 @@ mod test {
 
         subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let _updates = update_stream.wait_stream().unwrap().unwrap();
+        executor::block_on(async {
+            let _updates = update_stream.next().await.unwrap();
 
-        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(3));
-        let updates = update_stream.wait_stream().unwrap().unwrap();
+            subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(3));
+            let updates = update_stream.next().await.unwrap();
 
-        assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(updates.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(3))]);
+            assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
+            assert!(updates.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(3))]);
+        });
     }
 
     struct TestViewModel;
@@ -435,50 +447,52 @@ mod test {
             vec![ "Test1".to_string(), "Test2".to_string(), "Test3".to_string() ]
         }
 
-        fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
-            Box::new(stream::iter_ok(vec![
+        fn get_updates(&self) -> BoxStream<'static, ViewModelChange> {
+            Box::pin(stream::iter(vec![
                 ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
                 ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
                 ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string()))
-            ]).chain(stream::poll_fn(|| Ok(Async::NotReady))) )
+            ]).chain(stream::poll_fn(|_context| Poll::Pending)))
         }
     }
 
     #[test]
     pub fn generate_initial_controller_events() {
-        for _pass in 0..10 {
-            let controller          = Arc::new(TestController::new());
-            let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
-            let mut update_stream   = executor::spawn(update_stream);
+        executor::block_on(async {
+            for _pass in 0..10 {
+                let controller          = Arc::new(TestController::new());
+                let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
+                let mut update_stream   = update_stream;
 
-            let update1 = update_stream.wait_stream();
-            println!("{:?}", update1);
-            let update2 = update_stream.wait_stream();
-            println!("{:?}", update2);
+                let update1 = update_stream.next().await;
+                println!("{:?}", update1);
+                let update2 = update_stream.next().await;
+                println!("{:?}", update2);
 
-            let update1 = update1.unwrap().unwrap();
-            let update2 = update2.unwrap().unwrap();
+                let update1 = update1.unwrap();
+                let update2 = update2.unwrap();
 
-            let (update1, update2) = if update2.controller_path() == &vec!["Model1".to_string()] {
-                (update2, update1)
-            } else {
-                (update1, update2)
-            };
+                let (update1, update2) = if update2.controller_path() == &vec!["Model1".to_string()] {
+                    (update2, update1)
+                } else {
+                    (update1, update2)
+                };
 
-            assert!(update1.controller_path() == &vec!["Model1".to_string()]);
-            assert!(update1.updates() == &vec![
-                ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-                ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-                ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-            ]);
+                assert!(update1.controller_path() == &vec!["Model1".to_string()]);
+                assert!(update1.updates() == &vec![
+                    ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+                    ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+                    ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+                ]);
 
-            assert!(update2.controller_path() == &vec!["Model2".to_string()]);
-            assert!(update2.updates() == &vec![
-                ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-                ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-                ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-            ]);
-        }
+                assert!(update2.controller_path() == &vec!["Model2".to_string()]);
+                assert!(update2.updates() == &vec![
+                    ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+                    ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+                    ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+                ]);
+            }
+        });
     }
 
     // TODO: detects removed controller
