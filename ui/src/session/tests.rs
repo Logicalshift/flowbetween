@@ -1,6 +1,7 @@
 use super::*;
 use super::super::*;
 
+use flo_stream::*;
 use flo_binding::*;
 use futures::*;
 use futures::executor;
@@ -60,26 +61,29 @@ fn session_creates_initial_event() {
 
     // Get an update stream for it and attach a timeout
     let update_stream   = session.get_updates();
-    let next_or_timeout = update_stream.map(|updates| TestItem::Updates(updates)).select(timeout(2000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
+    let next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))),
+        timeout(2000).into_stream().map(|_| Ok(TestItem::Timeout)));
 
     // Fetch the first item from the stream
-    let mut next_or_timeout = executor::spawn(next_or_timeout);
-    let first_item          = next_or_timeout.wait_stream().unwrap();
+    executor::block_on(async {
+        let mut next_or_timeout = next_or_timeout;
+        let first_item          = next_or_timeout.next().await;
 
-    assert!(first_item == Ok(TestItem::Updates(vec![
-        UiUpdate::Start,
+        assert!(first_item == Some(Ok(TestItem::Updates(vec![
+            UiUpdate::Start,
 
-        UiUpdate::UpdateUi(vec![UiDiff {
-            address: vec![],
-            new_ui: Control::empty()
-        }]),
+            UiUpdate::UpdateUi(vec![UiDiff {
+                address: vec![],
+                new_ui: Control::empty()
+            }]),
 
-        UiUpdate::UpdateViewModel(vec![
-            ViewModelUpdate::new(vec![], vec![
-                ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(42))
+            UiUpdate::UpdateViewModel(vec![
+                ViewModelUpdate::new(vec![], vec![
+                    ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(42))
+                ])
             ])
-        ])
-    ])));
+        ]))));
+    });
 }
 
 #[test]
@@ -93,20 +97,23 @@ fn ticks_generate_empty_event() {
     // Get an update stream for it and attach a timeout
     let mut event_sink  = session.get_input_sink();
     let update_stream   = session.get_updates();
-    let next_or_timeout = update_stream.map(|updates| TestItem::Updates(updates)).select(timeout(2000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
+    let next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))),
+        timeout(2000).into_stream().map(|_| Ok(TestItem::Timeout)));
 
-    let mut next_or_timeout = executor::spawn(next_or_timeout);
+    let mut next_or_timeout = next_or_timeout;
 
-    // Fetch the first item from the stream
-    let first_item = next_or_timeout.wait_stream().unwrap();
-    assert!(first_item != Ok(TestItem::Timeout));
+    executor::block_on(async {
+        // Fetch the first item from the stream
+        let first_item = next_or_timeout.next().await;
+        assert!(first_item != Some(Ok(TestItem::Timeout)));
 
-    // Send a tick
-    event_sink.start_send(vec![UiEvent::Tick]).unwrap();
+        // Send a tick
+        event_sink.publish(vec![UiEvent::Tick]).await;
 
-    // Nothing has changed, but the tick should still cause an event
-    let tick_update = next_or_timeout.wait_stream().unwrap();
-    assert!(tick_update == Ok(TestItem::Updates(vec![])));
+        // Nothing has changed, but the tick should still cause an event
+        let tick_update = next_or_timeout.next().await;
+        assert!(tick_update == Some(Ok(TestItem::Updates(vec![]))));
+    });
 }
 
 #[test]
@@ -119,17 +126,20 @@ fn timeout_after_first_event() {
 
     // Get an update stream for it and attach a timeout
     let update_stream   = session.get_updates();
-    let next_or_timeout = update_stream.map(|updates| TestItem::Updates(updates)).select(timeout(250).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
+    let next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))),
+        timeout(250).into_stream().map(|_| Ok(TestItem::Timeout)));
 
-    let mut next_or_timeout = executor::spawn(next_or_timeout);
+    let mut next_or_timeout = next_or_timeout;
 
-    // Fetch the first item from the stream
-    let first_item = next_or_timeout.wait_stream().unwrap();
-    assert!(first_item != Ok(TestItem::Timeout));
+    executor::block_on(async {
+        // Fetch the first item from the stream
+        let first_item = next_or_timeout.next().await;
+        assert!(first_item != Some(Ok(TestItem::Timeout)));
 
-    // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
-    let should_timeout = next_or_timeout.wait_stream().unwrap();
-    assert!(should_timeout == Ok(TestItem::Timeout));
+        // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
+        let should_timeout = next_or_timeout.next().await;
+        assert!(should_timeout == Some(Ok(TestItem::Timeout)));
+    });
 }
 
 #[test]
@@ -145,29 +155,32 @@ fn ui_update_triggers_update() {
 
     // Get an update stream for it and attach a timeout
     let update_stream   = session.get_updates();
-    let next_or_timeout = update_stream.map(|updates| TestItem::Updates(updates)).select(timeout(1000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
+    let next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))),
+        timeout(1000).into_stream().map(|_| Ok(TestItem::Timeout)));
 
-    let mut next_or_timeout = executor::spawn(next_or_timeout);
+    let mut next_or_timeout = next_or_timeout;
 
-    // Fetch the first item from the stream
-    let first_item = next_or_timeout.wait_stream().unwrap();
-    assert!(first_item != Ok(TestItem::Timeout));
+    executor::block_on(async {
+        // Fetch the first item from the stream
+        let first_item = next_or_timeout.next().await;
+        assert!(first_item != Some(Ok(TestItem::Timeout)));
 
-    // Update the UI after a short delay (enough time that it'll happen after we start waiting for an update)
-    spawn(move || {
-        sleep(Duration::from_millis(50));
-        ui.set(Control::label().with("Updated"));
+        // Update the UI after a short delay (enough time that it'll happen after we start waiting for an update)
+        spawn(move || {
+            sleep(Duration::from_millis(50));
+            ui.set(Control::label().with("Updated"));
+        });
+
+        // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
+        let updated_ui = next_or_timeout.next().await;
+        assert!(updated_ui != Some(Ok(TestItem::Timeout)));
+        assert!(updated_ui == Some(Ok(TestItem::Updates(vec![
+            UiUpdate::UpdateUi(vec![UiDiff {
+                address: vec![],
+                new_ui: Control::label().with("Updated")
+            }])
+        ]))));
     });
-
-    // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
-    let updated_ui = next_or_timeout.wait_stream().unwrap();
-    assert!(updated_ui != Ok(TestItem::Timeout));
-    assert!(updated_ui == Ok(TestItem::Updates(vec![
-        UiUpdate::UpdateUi(vec![UiDiff {
-            address: vec![],
-            new_ui: Control::label().with("Updated")
-        }])
-    ])));
 }
 
 /*
@@ -198,7 +211,7 @@ fn viewmodel_update_triggers_update() {
     let mut next_or_timeout = executor::spawn(next_or_timeout);
 
     // Fetch the first item from the stream
-    let first_item = next_or_timeout.wait_stream().unwrap();
+    let first_item = next_or_timeout.next().await;
     assert!(first_item != Ok(TestItem::Timeout));
 
     // Update the viewmodel after a short delay
@@ -208,7 +221,7 @@ fn viewmodel_update_triggers_update() {
     });
 
     // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
-    let updated_ui = next_or_timeout.wait_stream().unwrap();
+    let updated_ui = next_or_timeout.next().await;
     assert!(updated_ui != Ok(TestItem::Timeout));
     assert!(updated_ui == Ok(TestItem::Updates(vec![
         UiUpdate::UpdateViewModel(vec![
