@@ -10,6 +10,7 @@ use futures::stream;
 use futures::stream::{BoxStream};
 use futures::task::{Poll, Context};
 
+use std::iter;
 use std::pin::*;
 use std::sync::*;
 use std::collections::{HashMap, VecDeque};
@@ -40,13 +41,13 @@ impl ViewModelUpdateStream {
     ///
     pub fn new(root_controller: Arc<dyn Controller>) -> ViewModelUpdateStream {
         let ui                              = root_controller.ui();
-        let controller_stream               = stream::once(Ok(ui.get())).chain(follow(ui));
+        let controller_stream               = stream::iter(iter::once(ui.get())).chain(follow(ui));
         let controller_viewmodel_updates    = root_controller.get_viewmodel().map(|viewmodel| viewmodel.get_updates());
         let root_controller                 = Arc::downgrade(&root_controller);
 
         ViewModelUpdateStream {
             root_controller:                root_controller,
-            controller_stream:              Box::new(controller_stream),
+            controller_stream:              Box::pin(controller_stream),
             controller_viewmodel_updates:   controller_viewmodel_updates,
             sub_controllers:                HashMap::new(),
             pending:                        VecDeque::new()
@@ -95,7 +96,7 @@ impl Stream for ViewModelUpdateStream {
                 let mut all_updates = vec![];
 
                 // Drain the controller updates
-                let mut update_poll = controller_viewmodel_updates.poll();
+                let mut update_poll = controller_viewmodel_updates.poll_next_unpin(context);
 
                 while let Poll::Ready(Some(update)) = update_poll {
                     match update {
@@ -109,7 +110,7 @@ impl Stream for ViewModelUpdateStream {
                     }
 
                     // Poll for the next update
-                    update_poll = controller_viewmodel_updates.poll();
+                    update_poll = controller_viewmodel_updates.poll_next_unpin(context);
                 }
 
                 // Unset the controller updates if we reach the end of the stream (the controller and its subcontrollers presumably still exist, so the stream does not end)
@@ -125,13 +126,13 @@ impl Stream for ViewModelUpdateStream {
             }
 
             // Check for updates to the controller UI
-            let mut next_ui_poll = self.controller_stream.poll();
+            let mut next_ui_poll = self.controller_stream.poll_next_unpin(context);
             while let Poll::Ready(Some(next_ui)) = next_ui_poll {
                 // Refresh the subcontrollers from the UI
                 self.update_subcontrollers(&*root_controller, &next_ui);
 
                 // Keep polling
-                next_ui_poll = self.controller_stream.poll();
+                next_ui_poll = self.controller_stream.poll_next_unpin(context);
             }
 
             if let Poll::Ready(None) = next_ui_poll {
@@ -142,7 +143,7 @@ impl Stream for ViewModelUpdateStream {
             // Poll the subcontrollers
             let mut removed_subcontrollers = vec![];
             for (name, stream) in self.sub_controllers.iter_mut() {
-                let mut subcontroller_poll = stream.poll();
+                let mut subcontroller_poll = stream.poll_next_unpin(context);
 
                 while let Poll::Ready(Some(mut update)) = subcontroller_poll {
                     // Add the name of this subcontroller
@@ -152,7 +153,7 @@ impl Stream for ViewModelUpdateStream {
                     self.pending.push_back(update);
 
                     // Fetch as many updates as we can from the subcontroller
-                    subcontroller_poll = stream.poll();
+                    subcontroller_poll = stream.poll_next_unpin(context);
                 }
 
                 if let Poll::Ready(None) = subcontroller_poll {
