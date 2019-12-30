@@ -20,7 +20,7 @@ pub fn ui_event_publisher<CoreController: 'static+Controller>(controller: Arc<Co
     // session that evaluates when all of the events are available
 
     // Pipe events to the session core
-    pipe_in(core, gather(publisher.subscribe()), move |core, events| {
+    pipe_in(core, gather(publisher.subscribe()), move |core, mut events| {
         if events.len() > 0 {
             // Fetch the pending events (only hold the lock long enough to swap them out)
             // Suspend and resume updates before and after the pending list

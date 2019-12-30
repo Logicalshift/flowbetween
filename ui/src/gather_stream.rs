@@ -30,7 +30,7 @@ impl<SourceStream, SourceItem> Stream for GatherStream<SourceStream>
 where   SourceStream: Stream<Item=Vec<SourceItem>>+Unpin {
     type Item = SourceStream::Item;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<SourceItem>>> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<SourceItem>>> {
         if let Some(source_stream) = self.source_stream.as_mut() {
             // Attempt to gather items from the source stream
             let poll_result     = source_stream.poll_next_unpin(context);

@@ -182,7 +182,7 @@ impl UiUpdateStream {
 impl Stream for UiUpdateStream {
     type Item   = Result<Vec<UiUpdate>, ()>;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Self::Item>> {
         // Check for suspensions
         let suspend_poll = self.update_suspend.poll_next_unpin(context);
         if let Poll::Ready(Some(is_suspended)) = suspend_poll {

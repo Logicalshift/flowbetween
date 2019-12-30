@@ -86,7 +86,7 @@ impl ViewModelUpdateStream {
 impl Stream for ViewModelUpdateStream {
     type Item = ViewModelUpdate;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelUpdate>> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelUpdate>> {
         if let Some(update) = self.pending.pop_front() {
             // Return pending items before anything else
             Poll::Ready(Some(update))
@@ -175,7 +175,7 @@ impl Stream for ViewModelUpdateStream {
                     self.sub_controllers.insert(removed_name, new_viewmodel_stream);
 
                     // Make sure the task is notified to re-poll for the changes from the replacement subcontroller
-                    context.waker().wake();
+                    context.waker().clone().wake();
                 }
             }
 

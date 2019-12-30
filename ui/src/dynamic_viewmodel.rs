@@ -94,7 +94,7 @@ impl task::ArcWake for DynamicStreamNotify {
 impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>+Unpin> Stream for DynamicViewModelUpdateStream<NewProperties> {
     type Item = ViewModelChange;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelChange>> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelChange>> {
         // Set up any new properties
         let mut new_property_poll = self.new_properties.poll_next_unpin(context);
         while let Poll::Ready(Some((name, binding))) = new_property_poll {

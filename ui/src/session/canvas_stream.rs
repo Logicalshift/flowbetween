@@ -136,7 +136,7 @@ impl CanvasUpdateStream {
 impl Stream for CanvasUpdateStream {
     type Item = CanvasDiff;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<CanvasDiff>> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<CanvasDiff>> {
         if let Some(root_controller) = self.root_controller.upgrade() {
             // Poll for control updates
             let mut control_update_poll = self.controller_updates.poll_next_unpin(context);

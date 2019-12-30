@@ -243,7 +243,7 @@ struct BindingCanvasStream<CanvasStream> {
 impl<CanvasStream: Stream<Item=Draw>+Unpin+Send> Stream for BindingCanvasStream<CanvasStream> {
     type Item=Draw;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Draw>> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Draw>> {
         // Fetch the canvas
         let canvas          = self.canvas.upgrade();
         let binding_core    = self.binding_core.upgrade();
