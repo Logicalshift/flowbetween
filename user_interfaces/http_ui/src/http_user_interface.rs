@@ -35,7 +35,7 @@ pub struct HttpUserInterface<CoreUi> {
     event_publisher: Publisher<Vec<Event>>,
 
     /// Processes events from the publisher onto the main UI task
-    event_processor: Arc<Desync<WeakPublisher<Vec<UiEvent>>>>
+    _event_processor: Arc<Desync<WeakPublisher<Vec<UiEvent>>>>
 }
 
 impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
@@ -69,7 +69,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
             ui_tree:            ui_tree,
             base_path:          base_path,
             event_publisher:    event_publisher,
-            event_processor:    event_processor
+            _event_processor:   event_processor
         }
     }
 

@@ -135,7 +135,7 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
 
         // Once the update is available, return ownership and supply the result to the caller
         let finish_update = wait_for_update.map(|(updates, result)| {
-            future_updates.send(updates);
+            future_updates.send(updates).ok();
             result
         });
 
@@ -222,10 +222,10 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
         // Once the update is ready, return the input and updates so we can send the next set of events and produce the result
         let finish_update = wait_for_update.map(move |(input, updates, result)| {
             // Return ownership of the input
-            future_input.send(input);
+            future_input.send(input).ok();
 
             // Return ownership of the updates
-            future_updates.send(updates);
+            future_updates.send(updates).ok();
 
             // Only return the result
             result
@@ -250,7 +250,7 @@ mod test {
         let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
         let mut http_session    = HttpSession::new(Arc::new(http_ui));
 
-        let mut send_an_event   = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
+        let send_an_event       = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
         let updates             = executor::block_on(send_an_event);
 
         // Update should contain the new user interface message
@@ -264,11 +264,11 @@ mod test {
         let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
         let mut http_session    = HttpSession::new(Arc::new(http_ui));
 
-        let mut send_an_event   = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
+        let send_an_event       = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
         executor::block_on(send_an_event);
 
-        let mut send_another_event  = http_session.send_events(vec![Event::Tick]);
-        let updates                 = executor::block_on(send_another_event);
+        let send_another_event  = http_session.send_events(vec![Event::Tick]);
+        let updates             = executor::block_on(send_another_event);
 
         // Second update will return but as it's a tick and nothing happens there will be no events
         assert!(updates.len() == 0);
