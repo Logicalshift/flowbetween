@@ -10,6 +10,7 @@ use flo_binding::*;
 use flo_animation::*;
 
 use futures::*;
+use futures::stream::{BoxStream};
 use std::sync::*;
 use std::time::Duration;
 use std::collections::{HashSet};
@@ -575,7 +576,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     ///
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> BoxStream<'static, ToolAction<SelectData>> {
         // The set of currently selected elements
         let selected_elements   = flo_model.selection().selected_elements.clone();
 
@@ -670,7 +671,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
 
         // Generate the final stream
         let select_stream = data_for_model.select(draw_selection_overlay);
-        Box::new(select_stream)
+        Box::pin(select_stream)
     }
 
     ///

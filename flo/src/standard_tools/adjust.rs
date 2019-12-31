@@ -10,6 +10,7 @@ use flo_animation::*;
 
 use futures::*;
 use futures::stream;
+use futures::stream::{BoxStream};
 use itertools::*;
 
 use std::f32;
@@ -546,7 +547,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     ///
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<dyn Stream<Item=ToolAction<AdjustData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> BoxStream<'static, ToolAction<AdjustData>> {
         // Create a binding that works out the frame for the currently selected layer
         let current_frame   = flo_model.frame().frame.clone();
 
@@ -579,7 +580,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
             });
 
         // Actions are to update the data or draw the control points
-        Box::new(update_adjust_data.select(draw_control_points).select(draw_drag_result))
+        Box::pin(update_adjust_data.select(draw_control_points).select(draw_drag_result))
     }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {

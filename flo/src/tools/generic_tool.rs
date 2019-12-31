@@ -8,6 +8,7 @@ use flo_animation::*;
 
 use futures::*;
 use futures::stream;
+use futures::stream::{BoxStream};
 
 use std::fmt;
 use std::any::*;
@@ -148,7 +149,7 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
             .and_then(move |specific_model| self.tool.create_menu_controller(flo_model, &*specific_model))
     }
 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> BoxStream<'static, ToolAction<GenericToolData>> {
         // Map the underlying actions to generic actions. There are no actions if we're passed an invalid tool model
         tool_model.get_ref()
             .map(move |tool_model| -> Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
@@ -167,7 +168,7 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
             .map(|definitely_data|  definitely_data.unwrap()));
 
         // Map the actions back to generic actions
-        Box::new(self.tool.actions_for_input(flo_model, data, input)
+        Box::pin(self.tool.actions_for_input(flo_model, data, input)
             .map(|action| GenericToolData::convert_action_to_generic(action)))
     }
 }

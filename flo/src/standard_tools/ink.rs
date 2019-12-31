@@ -8,6 +8,7 @@ use flo_binding::*;
 use flo_animation::*;
 
 use futures::*;
+use futures::stream::{BoxStream};
 use std::sync::*;
 
 ///
@@ -129,7 +130,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
     ///
     /// Returns a stream of tool actions that result from changes to the model
     ///
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> Box<dyn Stream<Item=ToolAction<InkData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &InkModel) -> BoxStream<'static, ToolAction<InkData>> {
         // Fetch the brush properties
         let brush_properties    = tool_model.brush_properties.clone();
         let selected_layer      = flo_model.timeline().selected_layer.clone();
@@ -148,7 +149,7 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
         });
 
         // Turn the computed values into a stream and update the brush whenever the values change
-        Box::new(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
+        Box::pin(follow(ink_data).map(|ink_data| ToolAction::Data(ink_data)))
     }
 
     ///
