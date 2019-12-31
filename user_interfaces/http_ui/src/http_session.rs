@@ -217,18 +217,6 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
                     .unwrap();
                 (input, updates, result)
             }
-            /*
-            future::poll_fn(move |context| {
-                // Fetch the next update
-                // We rely on the fact the update stream is lazy: there's no update waiting until we start polling, so this is the update for the events we just sent
-                let next_update = updates.as_mut().unwrap().poll();
-
-                match next_update {
-                    Poll::Ready(result) => Poll::Ready((updates.take().unwrap(), result.unwrap_or(vec![]))),
-                    Poll::Pending       => Poll::Pending
-                }
-            }).map(move |(updates, result)| (input, updates, result))
-            */
         });
 
         // Once the update is ready, return the input and updates so we can send the next set of events and produce the result
