@@ -192,7 +192,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
         // Commit any animation edits that the tool produced
         if animation_edits.len() > 0 {
-            self.edit_sink.wait_send(animation_edits).unwrap();
+            executor::block_on(self.edit_sink.publish(Arc::new(animation_edits)));
         }
 
         // If there's a brush preview, draw it as the renderer annotation
@@ -294,9 +294,9 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                     let current_time    = self.current_time.get();
 
                     // Create a keyframe at this time
-                    self.edit_sink.wait_send(vec![
+                    executor::block_on(self.edit_sink.publish(Arc::new(vec![
                         AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))
-                    ]).unwrap();
+                    ])));
 
                     // Canvas should be invalidated
                     self.animation.timeline().invalidate_canvas();
