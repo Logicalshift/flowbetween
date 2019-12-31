@@ -14,7 +14,7 @@ pub (crate) fn create_edit_publisher<TFile: 'static+FloFile+Unpin+Send>(db: &Arc
     let mut publisher = Publisher::new(1);
 
     // Pipe edits from a subscriber into the core
-    pipe_in(db, publisher.subscribe(), |db, edits| process_edits(db, edits));
+    pipe_in(db, publisher.subscribe(), |db, edits| { process_edits(db, edits); Box::pin(future::ready(())) });
 
     // Return the publisher
     publisher

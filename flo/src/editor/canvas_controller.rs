@@ -7,6 +7,7 @@ use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
 use ::desync::*;
+use futures::future;
 
 use std::sync::*;
 use std::time::Duration;
@@ -123,6 +124,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         pipe_in(core, onion_skin_stream, move |core, (past_color, future_color, onion_skins)| {
             renderer.render(&*canvas, &mut core.renderer, onion_skins, past_color, future_color);
+            Box::pin(future::ready(()))
         })
     }
 

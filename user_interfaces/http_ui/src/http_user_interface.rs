@@ -12,7 +12,6 @@ use ::desync::*;
 
 use futures::*;
 use futures::stream::{BoxStream};
-use futures::executor;
 use itertools::join;
 use percent_encoding::*;
 
@@ -60,8 +59,7 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
         let event_processor = Arc::new(Desync::new(core_events));
 
         pipe_in(Arc::clone(&event_processor), mapped_events, |publisher, event| {
-            // TODO: pipe_in should really return a future... (future::executor can randomly panic)
-            executor::block_on(publisher.publish(event))
+            Box::pin(publisher.publish(event))
         });
 
         HttpUserInterface {

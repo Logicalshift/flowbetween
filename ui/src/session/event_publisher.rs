@@ -6,6 +6,7 @@ use super::super::gather_stream::*;
 use flo_stream::*;
 
 use ::desync::*;
+use futures::future;
 
 use std::sync::*;
 
@@ -31,6 +32,8 @@ pub fn ui_event_publisher<CoreController: 'static+Controller>(controller: Arc<Co
             let events = core.reduce_events(events);
             core.dispatch_event(events, &*controller);
         }
+
+        Box::pin(future::ready(()))
     });
 
     publisher

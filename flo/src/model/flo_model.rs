@@ -145,6 +145,8 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
             if advance_edit_counter {
                 frame_edit_counter.set(frame_edit_counter.get()+1);
             }
+
+            Box::pin(future::ready(()))
         });
     }
 
