@@ -43,8 +43,8 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     /// Creates a new HTTP UI that will translate requests for the specified core UI
     ///
     pub fn new(ui: Arc<CoreUi>, base_path: String) -> HttpUserInterface<CoreUi> {
-        let ui_tree         = ui.ui_tree();
-        let event_publisher = Publisher::new(10);
+        let ui_tree             = ui.ui_tree();
+        let mut event_publisher = Publisher::new(100);
 
         // Subscribe to the events and map them
         let subscription    = event_publisher.subscribe();
