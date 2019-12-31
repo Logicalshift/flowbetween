@@ -19,7 +19,7 @@ pub struct LazyFuture<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> {
     core: Mutex<LazyFutureCore<Item, F, MakeFuture>>
 }
 
-impl<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> LazyFuture<Item, F, MakeFuture> {
+impl<Item, F: Unpin+Future<Output=Item>, MakeFuture: FnOnce() -> F> LazyFuture<Item, F, MakeFuture> {
     ///
     /// Creates a new lazy future. The function will be called when the future
     /// is required.
@@ -34,7 +34,7 @@ impl<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> LazyFuture<Item, F
     }
 }
 
-impl<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> Future for LazyFuture<Item, F, MakeFuture> {
+impl<Item, F: Unpin+Future<Output=Item>, MakeFuture: FnOnce() -> F> Future for LazyFuture<Item, F, MakeFuture> {
     type Output = Item;
 
     fn poll(self: Pin<&mut Self>, context: &mut Context) -> Poll<Item> {
@@ -42,7 +42,7 @@ impl<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> Future for LazyFut
 
         if let Some(ref mut future) = core.the_future.as_mut() {
             // Just poll the future if it's set up
-            return future.poll(context);
+            return future.poll_unpin(context);
         }
 
         // Create a new future if it's not
@@ -50,6 +50,6 @@ impl<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> Future for LazyFut
         let future      = make_future();
 
         core.the_future = Some(future);
-        core.the_future.as_mut().unwrap().poll()
+        core.the_future.as_mut().unwrap().poll_unpin(context)
    }
 }
