@@ -1,8 +1,10 @@
 use futures::*;
+use futures::task::{Poll, Context};
 
+use std::pin::*;
 use std::sync::*;
 
-struct LazyFutureCore<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> {
+struct LazyFutureCore<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> {
     /// Function to create a future
     make_future: Option<MakeFuture>,
 
@@ -13,16 +15,16 @@ struct LazyFutureCore<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture
 ///
 /// A lazy future creates an 'actual' future when polled but otherwise creates nothing
 ///
-pub struct LazyFuture<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> {
-    core: Mutex<LazyFutureCore<Item, Error, F, MakeFuture>>
+pub struct LazyFuture<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> {
+    core: Mutex<LazyFutureCore<Item, F, MakeFuture>>
 }
 
-impl<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> LazyFuture<Item, Error, F, MakeFuture> {
+impl<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> LazyFuture<Item, F, MakeFuture> {
     ///
     /// Creates a new lazy future. The function will be called when the future
     /// is required.
     ///
-    pub fn new(make_future: MakeFuture) -> LazyFuture<Item, Error, F, MakeFuture> {
+    pub fn new(make_future: MakeFuture) -> LazyFuture<Item, F, MakeFuture> {
         LazyFuture {
             core: Mutex::new(LazyFutureCore {
                 make_future:    Some(make_future),
@@ -32,16 +34,15 @@ impl<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> 
     }
 }
 
-impl<Item, Error, F: Future<Item=Item, Error=Error>, MakeFuture: FnOnce() -> F> Future for LazyFuture<Item, Error, F, MakeFuture> {
-    type Item = Item;
-    type Error = Error;
+impl<Item, F: Future<Output=Item>, MakeFuture: FnOnce() -> F> Future for LazyFuture<Item, F, MakeFuture> {
+    type Output = Item;
 
-    fn poll(&mut self) -> Poll<Item, Error> {
+    fn poll(self: Pin<&mut Self>, context: &mut Context) -> Poll<Item> {
         let mut core = self.core.lock().unwrap();
 
         if let Some(ref mut future) = core.the_future.as_mut() {
             // Just poll the future if it's set up
-            return future.poll();
+            return future.poll(context);
         }
 
         // Create a new future if it's not
