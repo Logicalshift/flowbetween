@@ -10,7 +10,7 @@ include     = [ "Cargo.toml", "src/**/*", "js/**/*" ]
 
 [dependencies]
 flo_ui              = { path = "../../ui", version = "0.1" }
-flo_binding         = { git = "https://github.com/Logicalshift/flo_binding", version = "1.0" }
+flo_binding         = { git = "https://github.com/Logicalshift/flo_binding", version = "1.2" }
 flo_canvas          = { path = "../../canvas", version = "0.1" }
 flo_http_ui         = { path = "../http_ui", version = "0.1" }
 flo_static_files    = { path = "../../static_files", version= "0.1" }
