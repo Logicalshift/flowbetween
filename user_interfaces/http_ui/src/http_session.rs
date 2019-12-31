@@ -1,15 +1,16 @@
 use super::event::*;
 use super::update::*;
 use super::lazy_future::*;
-use super::parked_future::*;
 use super::http_user_interface::*;
 
 use ui::*;
 use ui::session::*;
+use flo_stream::*;
 use flo_logging::*;
 
 use futures::*;
 use futures::future;
+use futures::channel::oneshot;
 use futures::task::{Poll};
 use futures::future::{BoxFuture};
 
@@ -27,7 +28,7 @@ pub struct HttpSession<CoreUi> {
     http_ui: Arc<HttpUserInterface<CoreUi>>,
 
     /// The event sink for the UI
-    input: BoxFuture<'static, HttpEventSink>,
+    input: BoxFuture<'static, WeakPublisher<Vec<Event>>>,
 
     /// The stream of events for the session (or None if it has been reset or not started yet)
     updates: BoxFuture<'static, HttpUpdateStream>
@@ -38,8 +39,8 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     /// Creates a new session from a HTTP user interface
     ///
     pub fn new(http_ui: Arc<HttpUserInterface<CoreUi>>) -> HttpSession<CoreUi> {
-        let input   = Box::pin(future::ok(http_ui.get_input_sink()));
-        let updates = Box::pin(future::ok(http_ui.get_updates()));
+        let input   = Box::pin(future::ready(http_ui.get_input_sink()));
+        let updates = Box::pin(future::ready(http_ui.get_updates()));
         let log     = LogPublisher::new(module_path!());
 
         HttpSession {
@@ -78,13 +79,13 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
         // Suspend the updates
         let http_ui = self.http_ui.clone();
         self.updates = Box::pin(LazyFuture::new(move || {
-            future::ok(http_ui.get_updates())
+            future::ready(http_ui.get_updates())
         }));
 
         // Suspend the input
         let http_ui = self.http_ui.clone();
         self.input = Box::pin(LazyFuture::new(move || {
-            future::ok(http_ui.get_input_sink())
+            future::ready(http_ui.get_input_sink())
         }));
 
         // TODO: way to signal to the caller that they should call 'restart_updates' here
@@ -106,33 +107,35 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     ///
     pub fn restart_updates(&mut self) -> BoxFuture<'static, Vec<Update>> {
         // Replace the update stream with a new one (the 'new session' even will start here)
-        self.updates = Box::pin(future::ok(self.http_ui.get_updates()));
+        self.updates = Box::pin(future::ready(self.http_ui.get_updates()));
 
         // Result is a future event from the updates
-        let (updates, future_updates) = park_future();
+        let (future_updates, updates) = oneshot::channel();
 
         // We'll own the updates while we wait for this event
-        let mut updates: BoxFuture<'static, HttpUpdateStream> = Box::pin(updates);
+        let mut updates: BoxFuture<'static, HttpUpdateStream> = Box::pin(updates.map(|res| res.unwrap()));
         mem::swap(&mut updates, &mut self.updates);
 
         let wait_for_update = updates.then(|updates| {
             // Poll for the next update
-            let updates     = updates.unwrap();
+            let updates     = updates;
             let mut updates = Some(updates);
 
-            future::poll_fn(move || {
-                let next_update = updates.as_mut().unwrap().poll();
+            future::poll_fn(move |context| {
+                let next_update = updates.as_mut().unwrap().poll_next_unpin(context);
 
                 match next_update {
-                    Poll::Ready(result) => Poll::Ready((updates.take().unwrap(), result.unwrap_or(vec![]))),
-                    Poll::Pending       => Poll::Pending,
+                    Poll::Ready(Some(Ok(result)))   => Poll::Ready((updates.take().unwrap(), result)),
+                    Poll::Ready(Some(Err(_)))       => Poll::Ready((updates.take().unwrap(), vec![])),
+                    Poll::Ready(None)               => Poll::Ready((updates.take().unwrap(), vec![])),
+                    Poll::Pending                   => Poll::Pending,
                 }
             })
         });
 
         // Once the update is available, return ownership and supply the result to the caller
         let finish_update = wait_for_update.map(|(updates, result)| {
-            future_updates.unpark(updates);
+            future_updates.send(updates);
             result
         });
 
@@ -153,18 +156,18 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
         let http_ui = Arc::clone(&self.http_ui);
 
         // Park our future input and updates
-        let (input, future_input)       = park_future();
-        let (updates, future_updates)   = park_future();
+        let (future_input, input)       = oneshot::channel();
+        let (future_updates, updates)   = oneshot::channel();
 
         // Take ownership of the future input and updates by replacing them with our parked values
-        let mut input: BoxFuture<'static, HttpEventSink>        = Box::pin(input);
-        let mut updates: BoxFuture<'static, HttpUpdateStream>   = Box::pin(updates);
+        let mut input: BoxFuture<'static, WeakPublisher<Vec<Event>>>    = Box::pin(input.map(|input| input.unwrap()));
+        let mut updates: BoxFuture<'static, HttpUpdateStream>           = Box::pin(updates.map(|updates| updates.unwrap()));
 
         mem::swap(&mut input, &mut self.input);
         mem::swap(&mut updates, &mut self.updates);
 
         // Wait for the input and updates to be ready
-        let input_and_updates = input.join(updates);
+        let input_and_updates = future::join(input, updates);
 
         // Once they are both ready, load the events into the input sink
         let load_events = input_and_updates.map(move |(mut input, mut updates)| {
@@ -186,7 +189,7 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
                 };
             }
 
-            input.start_send(to_send).unwrap();
+            let wait_for_publish = input.publish(to_send);
 
             // Restart the update queue if there's a refresh event
             if refresh {
@@ -195,24 +198,27 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
             }
 
             // Pass the input and updates forwards
-            (input, updates)
+            (input, wait_for_publish, updates)
         });
 
         // Wait for the events to complete once this is done
-        let wait_for_events = load_events.then(|events| {
-            // Going to assume no errors here
-            let (input, updates) = events.unwrap();
-
-            input.flush().map(move |input| (input, updates))
+        let wait_for_events = load_events.then(|(input, wait_for_publish, updates): (_, _, HttpUpdateStream)| {
+            wait_for_publish.then(|_| future::ready((input, updates)))
         });
 
         // Once the events are flushed, we need to wait for the stream to send us an update
         let wait_for_update = wait_for_events.then(|events| {
-            // Still assuming we get no errors
-            let (input, updates) = events.unwrap();
+            let (input, updates) = events;
 
-            let mut updates = Some(updates);
-            future::poll_fn(move || {
+            let mut updates = updates;
+            async move {
+                let result = updates.next().await
+                    .unwrap_or_else(|| Ok(vec![]))
+                    .unwrap();
+                (input, updates, result)
+            }
+            /*
+            future::poll_fn(move |context| {
                 // Fetch the next update
                 // We rely on the fact the update stream is lazy: there's no update waiting until we start polling, so this is the update for the events we just sent
                 let next_update = updates.as_mut().unwrap().poll();
@@ -222,15 +228,16 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
                     Poll::Pending       => Poll::Pending
                 }
             }).map(move |(updates, result)| (input, updates, result))
+            */
         });
 
         // Once the update is ready, return the input and updates so we can send the next set of events and produce the result
         let finish_update = wait_for_update.map(move |(input, updates, result)| {
             // Return ownership of the input
-            future_input.unpark(input);
+            future_input.send(input);
 
             // Return ownership of the updates
-            future_updates.unpark(updates);
+            future_updates.send(updates);
 
             // Only return the result
             result
