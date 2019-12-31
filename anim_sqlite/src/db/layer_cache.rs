@@ -122,7 +122,7 @@ impl<TFile: 'static+FloFile+Unpin+Send> CanvasCache for LayerCanvasCache<TFile> 
 
                 if let Some(existing) = existing {
                     // Re-use the existing cached element if one has been generated in the meantime
-                    future::ready(existing)
+                    Box::pin(future::ready(existing))
                 } else {
                     // Call the generation function to create a new cache
                     let new_drawing = generate();
@@ -145,7 +145,7 @@ impl<TFile: 'static+FloFile+Unpin+Send> CanvasCache for LayerCanvasCache<TFile> 
                     });
 
                     // The generated drawing is the cache result
-                    future::ready(new_drawing)
+                    Box::pin(future::ready(new_drawing))
                 }
             }).map(|result| {
                 match result {
