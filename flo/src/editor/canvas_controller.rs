@@ -123,7 +123,7 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
 
         pipe_in(core, onion_skin_stream, move |core, next_item| {
             match next_item {
-                Ok((past_color, future_color, onion_skins)) => {
+                (past_color, future_color, onion_skins) => {
                     renderer.render(&*canvas, &mut core.renderer, onion_skins, past_color, future_color);
                 }
                 _ => { }

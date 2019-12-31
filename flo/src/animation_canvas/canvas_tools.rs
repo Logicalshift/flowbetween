@@ -23,7 +23,7 @@ pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     animation: Arc<FloModel<Anim>>,
 
     /// The edit sink for the animation
-    edit_sink: Publisher<Vec<AnimationEdit>>,
+    edit_sink: Publisher<Arc<Vec<AnimationEdit>>>,
 
     /// The effective tool for the animation
     effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,

@@ -10,6 +10,8 @@ use flo_animation::*;
 use ::desync::*;
 use futures::*;
 
+use std::sync::*;
+
 ///
 /// Controller class that displays and edits the layer names
 ///
@@ -18,7 +20,7 @@ pub struct TimelineLayerListController {
     ui: BindRef<Control>,
 
     /// Where the edits are sent
-    edit_sink: Desync<Publisher<Vec<AnimationEdit>>>,
+    edit_sink: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
     /// The currently selected layer
     selected_layer_id: Binding<Option<u64>>,
@@ -142,9 +144,9 @@ impl Controller for TimelineLayerListController {
                     // Send the 'rename layer' command to the edit sink
                     let new_name = new_name.clone();
                     let _ = self.edit_sink.future(move |edit_sink| {
-                        edit_sink.publish(vec![
+                        edit_sink.publish(Arc::new(vec![
                             AnimationEdit::Layer(layer_id, LayerEdit::SetName(new_name))
-                        ])
+                        ]))
                     });
                 }
 

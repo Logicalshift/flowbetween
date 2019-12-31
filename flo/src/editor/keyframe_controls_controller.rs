@@ -41,7 +41,7 @@ pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation>
     selected_layer: Binding<Option<u64>>,
 
     /// The edit sink for the animation
-    edit_sink: Desync<Publisher<Vec<AnimationEdit>>>,
+    edit_sink: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
     debug_model: FloModel<Anim>
 }
@@ -256,9 +256,9 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
                 if let Some(selected_layer) = selected_layer {
                     if !keyframe_selected {
                         // Send a new keyframe edit request at the current time
-                        let _ = self.edit_sink.future(|edit_sink| edit_sink.publish(vec![
+                        let _ = self.edit_sink.future(|edit_sink| edit_sink.publish(Arc::new(vec![
                             AnimationEdit::Layer(selected_layer, LayerEdit::AddKeyFrame(current_time))
-                        ]));
+                        ])));
                         self.edit_sink.sync(|_| { });
 
                         // Invalidate the canvas

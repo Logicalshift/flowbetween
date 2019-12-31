@@ -9,6 +9,8 @@ use flo_animation::*;
 use ::desync::*;
 use futures::*;
 
+use std::sync::*;
+
 ///
 /// Controller that provides controls for adding/deleting/editing layers (generally displayed above the main layer list)
 ///
@@ -17,7 +19,7 @@ pub struct TimelineLayerControlsController<Anim: Animation> {
     ui: BindRef<Control>,
 
     /// The animation editing stream where this will send updates
-    edit: Desync<Publisher<Vec<AnimationEdit>>>,
+    edit: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
     /// The animation that this will edit
     animation: Box<dyn Animation>,
@@ -109,11 +111,11 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
 
                 // Send to the animation
                 let _ = self.edit.future(|animation| {
-                    animation.publish(vec![
+                    animation.publish(Arc::new(vec![
                         AnimationEdit::AddNewLayer(new_layer_id),
-                    ])
+                    ]))
                 });
-                self.edit.sync(|| {});
+                self.edit.sync(|_| {});
 
                 // Select the new layer
                 self.timeline.selected_layer.set(Some(new_layer_id));
@@ -134,11 +136,11 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
 
                     // Remove the layer
                     let _ = self.edit.future(|animation| {
-                        animation.publish(vec![
+                        animation.publish(Arc::new(vec![
                             AnimationEdit::RemoveLayer(layer_to_remove)
-                        ])
+                        ]))
                     });
-                    self.edit.sync(|| {});
+                    self.edit.sync(|_| {});
 
                     // Update the model
                     self.timeline.update_keyframe_bindings();

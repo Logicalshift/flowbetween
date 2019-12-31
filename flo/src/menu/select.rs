@@ -24,7 +24,7 @@ pub struct SelectMenuController<Anim: Animation> {
     selection_in_order: BindRef<Arc<Vec<ElementId>>>,
 
     /// The animation editing stream where this will send updates
-    edit: Desync<WeakPublisher<Vec<AnimationEdit>>>,
+    edit: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
     /// The timeline model for the animation
     timeline: TimelineModel<Anim>,
