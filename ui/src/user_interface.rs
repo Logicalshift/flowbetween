@@ -10,7 +10,7 @@ pub trait UserInterface<InputEvent, OutputUpdate, Error> {
     type UpdateStream: Stream<Item = Result<OutputUpdate, Error>>;
 
     /// Retrieves an input event sink for this user interface
-    fn get_input_sink(&self) -> Publisher<InputEvent>;
+    fn get_input_sink(&self) -> WeakPublisher<InputEvent>;
 
     /// Retrieves a view onto the update stream for this user interface
     fn get_updates(&self) -> Self::UpdateStream;
