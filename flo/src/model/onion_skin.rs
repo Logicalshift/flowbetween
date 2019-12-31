@@ -7,6 +7,7 @@ use flo_animation::*;
 
 use futures::*;
 use futures::stream;
+use futures::task::{Poll};
 
 use std::sync::*;
 use std::time::Duration;
@@ -175,20 +176,19 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
         // version of 'select' that polls the 'fetching' vec in order to populate the list of valid onion skins. We abandon
         // fetching onion skins as soon as a new set of times arrive.
         let mut polling_onion_skins = vec![];
-        let onion_skin_stream       = stream::poll_fn(move || {
+        let onion_skin_stream       = stream::poll_fn(move |context| {
             let mut found_new_values;
 
             // Test for a new set of onion skins
-            match fetching_onion_skins.poll() {
-                Ok(Async::Ready(None))              => { return Ok(Async::Ready(None)); }
-                Err(err)                            => { return Err(err); }
+            match fetching_onion_skins.poll_unpin(context) {
+                Poll::Ready(None)               => { return Poll::Ready(None); }
 
-                Ok(Async::NotReady)                 => {
+                Poll::Pending                   => {
                     // Check existing futures for updates
                     found_new_values = false;
                 },
 
-                Ok(Async::Ready(Some(new_futures))) => {
+                Poll::Ready(Some(new_futures))  => {
                     // Throw away the existing futures and poll the new ones instead
                     // We've always found new values in this case (they might all already be available from the cache, in which case
                     // this won't get set via the polling routine)
@@ -207,7 +207,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
                     // If a processed element finishes, it will move to the 'Cached' state. At this point we should generate a 'ready' event as the value has updated
                     CacheProcess::Process(_)        => {
                         // TODO: only poll one 'process' item at a time, and change 'onion_skin_for_layer' so that it doesn't actually try to generate the cache until it has been polled at least once
-                        if let Ok(Async::Ready(new_drawing)) = cache_process.poll() {
+                        if let Poll::Ready(new_drawing) = cache_process.poll_unpin(context) {
                             // Next time through, this will be CacheProcess::Cached so we won't re-poll it or generate an extra stream entry
                             result.push((*time, new_drawing));
                             found_new_values = true;
@@ -221,9 +221,9 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
 
             if found_new_values {
                 // Some new values were discovered to return
-                Ok(Async::Ready(Some(result)))
+                Poll::Ready(Some(result))
             } else {
-                Ok(Async::NotReady)
+                Poll::Pending
             }
         });
 
