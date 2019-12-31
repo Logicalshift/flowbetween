@@ -6,7 +6,7 @@ use flo_ui::*;
 use flo_binding::*;
 use flo_animation::*;
 
-use desync::*;
+use ::desync::*;
 use futures::*;
 use futures::executor;
 use futures::executor::Spawn;

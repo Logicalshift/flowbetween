@@ -10,7 +10,7 @@ use flo_animation::*;
 use futures::*;
 use futures::executor;
 use futures::executor::Spawn;
-use desync::*;
+use ::desync::*;
 
 use std::ops::Range;
 use std::time::Duration;

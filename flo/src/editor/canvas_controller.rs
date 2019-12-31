@@ -6,7 +6,7 @@ use flo_ui::*;
 use flo_canvas::*;
 use flo_binding::*;
 use flo_animation::*;
-use desync::*;
+use ::desync::*;
 
 use std::sync::*;
 use std::time::Duration;
