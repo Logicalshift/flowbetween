@@ -580,7 +580,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
             });
 
         // Actions are to update the data or draw the control points
-        Box::pin(update_adjust_data.select(draw_control_points).select(draw_drag_result))
+        Box::pin(stream::select(stream::select(update_adjust_data, draw_control_points), draw_drag_result))
     }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {

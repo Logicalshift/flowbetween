@@ -10,6 +10,7 @@ use flo_binding::*;
 use flo_animation::*;
 
 use futures::*;
+use futures::stream;
 use futures::stream::{BoxStream};
 use std::sync::*;
 use std::time::Duration;
@@ -670,7 +671,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
             });
 
         // Generate the final stream
-        let select_stream = data_for_model.select(draw_selection_overlay);
+        let select_stream = stream::select(data_for_model, draw_selection_overlay);
         Box::pin(select_stream)
     }
 

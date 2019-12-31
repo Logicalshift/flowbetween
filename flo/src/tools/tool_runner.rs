@@ -84,7 +84,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
             let mut context = Context::from_waker(&waker);
 
             // TODO: close the stream if this returns None (existing tools generate infinite streams so this doesn't happen)
-            while let Poll::Ready(Some(action)) = model_actions.poll_unpin(&mut context) {
+            while let Poll::Ready(Some(action)) = model_actions.poll_next_unpin(&mut context) {
                 flushed_actions.push(action);
             }
         }
