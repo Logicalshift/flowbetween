@@ -48,7 +48,7 @@ pub struct FloModel<Anim: Animation> {
     frame_edit_counter: Binding<u64>,
 
     /// Publisher where we send edits to this stream
-    edit_publisher: Arc<Desync<WeakPublisher<Arc<Vec<AnimationEdit>>>>>
+    edit_publisher: Arc<Desync<Publisher<Arc<Vec<AnimationEdit>>>>>
 }
 
 impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
@@ -213,7 +213,7 @@ impl<Anim: Animation+'static> FloModel<Anim> {
     ///
     /// Returns a stream containing any edits that have occurred on this stream
     ///
-    pub fn subscribe_edits(&self) -> impl Stream<Item=Arc<Vec<AnimationEdit>>, Error=()>+Clone+Send {
+    pub fn subscribe_edits(&self) -> impl Stream<Item=Arc<Vec<AnimationEdit>>>+Unpin+Clone+Send {
         self.edit_publisher.sync(|publisher| publisher.subscribe())
     }
 }
@@ -383,7 +383,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     ///
-    fn edit(&self) -> WeakPublisher<Vec<AnimationEdit>> {
+    fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
         self.edit_publisher.sync(|publisher| publisher.republish())
 
         /*

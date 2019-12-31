@@ -54,6 +54,6 @@ pub fn get_timeline_updates<EditStream: Stream<Item=Arc<Vec<AnimationEdit>>>>(ed
                 })
                 .collect::<Vec<_>>()
         })
-        .map(|edit_vec| stream::iter::<_, ()>(edit_vec))
+        .map(|edit_vec| stream::iter(edit_vec))
         .flatten()
 }
