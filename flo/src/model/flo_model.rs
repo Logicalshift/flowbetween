@@ -155,7 +155,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
         let edit_publisher  = self.edit_publisher.clone();
         let when_empty      = self.animation.edit().when_empty();
 
-        async {
+        async move {
             // Wait for all of the pending edits to be published
             when_empty.await;
 
