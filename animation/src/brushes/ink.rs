@@ -355,7 +355,7 @@ impl Brush for InkBrush {
 
         if let Some(curve) = curve {
             // First point is the start point, the control points don't matter for this
-            let start = curve[0].start_point();;
+            let start = curve[0].start_point();
             brush_points.push(BrushPoint {
                 position:   (start.x as f32, start.y as f32),
                 cp1:        (0.0, 0.0),

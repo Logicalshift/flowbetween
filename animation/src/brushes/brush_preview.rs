@@ -214,7 +214,7 @@ impl BrushPreview {
         let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
         let mut edit_sink   = animation.edit();
 
-        executor::block_on(async { edit_sink.publish(actions.collect()).await });
+        executor::block_on(async { edit_sink.publish(Arc::new(actions.collect())).await });
     }
 
     ///
@@ -293,7 +293,7 @@ impl BrushPreview {
         let mut edit_sink   = animation.edit();
 
         executor::block_on(async {
-            edit_sink.publish(actions).await
+            edit_sink.publish(Arc::new(actions)).await
         });
 
         self.points             = vec![];

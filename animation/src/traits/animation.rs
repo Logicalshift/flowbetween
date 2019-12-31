@@ -4,7 +4,6 @@ use super::animation_motion::*;
 
 use flo_stream::*;
 
-use futures::*;
 use futures::stream::{BoxStream};
 
 use std::time::Duration;
@@ -66,5 +65,5 @@ pub trait EditableAnimation {
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     ///
-    fn edit(&self) -> Publisher<Vec<AnimationEdit>>;
+    fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>>;
 }
