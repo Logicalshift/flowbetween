@@ -470,7 +470,7 @@ mod test {
         // Change to 800x600
         executor::block_on(async {
             let mut edit_log = model.edit();
-            edit_log.publish(vec![AnimationEdit::SetSize(800.0, 600.0)]).await;
+            edit_log.publish(Arc::new(vec![AnimationEdit::SetSize(800.0, 600.0)])).await;
             model.when_complete().await;
         });
 
