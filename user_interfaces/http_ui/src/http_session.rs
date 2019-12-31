@@ -262,11 +262,11 @@ mod test {
         let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
         let mut http_session    = HttpSession::new(Arc::new(http_ui));
 
-        let mut send_an_event   = executor::spawn(http_session.send_events(vec![Event::NewSession, Event::UiRefresh]));
-        let updates             = send_an_event.wait_future();
+        let mut send_an_event   = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
+        let updates             = executor::block_on(send_an_event);
 
         // Update should contain the new user interface message
-        assert!(updates.unwrap().len() > 0);
+        assert!(updates.len() > 0);
     }
 
     #[test]
@@ -276,13 +276,13 @@ mod test {
         let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
         let mut http_session    = HttpSession::new(Arc::new(http_ui));
 
-        let mut send_an_event   = executor::spawn(http_session.send_events(vec![Event::NewSession, Event::UiRefresh]));
-        send_an_event.wait_future().unwrap();
+        let mut send_an_event   = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
+        executor::block_on(send_an_event);
 
-        let mut send_another_event  = executor::spawn(http_session.send_events(vec![Event::Tick]));
-        let updates                 = send_another_event.wait_future();
+        let mut send_another_event  = http_session.send_events(vec![Event::Tick]);
+        let updates                 = executor::block_on(send_another_event);
 
         // Second update will return but as it's a tick and nothing happens there will be no events
-        assert!(updates.unwrap().len() == 0);
+        assert!(updates.len() == 0);
     }
 }

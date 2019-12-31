@@ -263,7 +263,7 @@ mod test {
     use super::*;
 
     use serde_json::*;
-    use futures::sync::oneshot;
+    use futures::channel::oneshot;
 
     use std::time::Duration;
     use std::thread::*;
@@ -304,14 +304,17 @@ mod test {
 
         let http_stream     = http_session.get_updates();
 
-        let next_or_timeout     = http_stream.map(|updates| TestItem::Updates(updates)).select(timeout(2000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
-        let mut next_or_timeout = executor::spawn(next_or_timeout);
+        //let next_or_timeout = stream::select(http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(2000).into_stream().map(|_| TestItem::Timeout));
+        let next_or_timeout = http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates)));
+        let mut next_or_timeout = next_or_timeout;
 
         // First update should be munged into a NewUserInterfaceHtml update
-        let first_update = next_or_timeout.wait_stream().unwrap();
-        assert!(first_update != Ok(TestItem::Timeout));
-        assert!(first_update == Ok(TestItem::Updates(vec![
-            Update::NewUserInterfaceHtml("<flo-empty></flo-empty>".to_string(), json![{ "attributes": Vec::<String>::new(), "control_type": "Empty" }], vec![])
-        ])));
+        executor::block_on(async {
+            let first_update = next_or_timeout.next().await.unwrap();
+            assert!(first_update != Ok(TestItem::Timeout));
+            assert!(first_update == Ok(TestItem::Updates(vec![
+                Update::NewUserInterfaceHtml("<flo-empty></flo-empty>".to_string(), json![{ "attributes": Vec::<String>::new(), "control_type": "Empty" }], vec![])
+            ])));
+        });
     }
 }
