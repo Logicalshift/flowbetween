@@ -8,7 +8,6 @@ use flo_binding::*;
 use flo_animation::*;
 
 use ::desync::*;
-use futures::*;
 
 use std::sync::*;
 

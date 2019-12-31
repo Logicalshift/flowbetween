@@ -121,13 +121,8 @@ impl<Anim: Animation+EditableAnimation+'static> CanvasController<Anim> {
         let onion_skin_stream   = follow(binding);
         let renderer            = OnionSkinRenderer::new();
 
-        pipe_in(core, onion_skin_stream, move |core, next_item| {
-            match next_item {
-                (past_color, future_color, onion_skins) => {
-                    renderer.render(&*canvas, &mut core.renderer, onion_skins, past_color, future_color);
-                }
-                _ => { }
-            }
+        pipe_in(core, onion_skin_stream, move |core, (past_color, future_color, onion_skins)| {
+            renderer.render(&*canvas, &mut core.renderer, onion_skins, past_color, future_color);
         })
     }
 

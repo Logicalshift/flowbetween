@@ -7,7 +7,6 @@ use super::onion_skin::*;
 use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
-use flo_ui::gather_stream::*;
 use futures::*;
 use futures::stream::{BoxStream};
 use ::desync::*;
