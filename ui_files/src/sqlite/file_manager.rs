@@ -225,7 +225,7 @@ impl FileManager for SqliteFileManager {
             core.log.log((Level::Info, format!("Created new file at `{}`", log_path.to_str().unwrap_or("<Missing path>"))));
 
             core.file_list.add_path(filename_buf.as_path()).unwrap();
-            core.send_update(update)
+            Box::pin(core.send_update(update))
         });
 
         // Result is the full path
@@ -254,7 +254,7 @@ impl FileManager for SqliteFileManager {
             let after = after.map(|after| after.as_path());
             core.file_list.order_path_after(path.as_path(), after).unwrap();
 
-            core.send_update(update)
+            Box::pin(core.send_update(update))
         });
     }
 
@@ -271,7 +271,7 @@ impl FileManager for SqliteFileManager {
 
             let _ = self.core.future(move |core| {
                 core.file_list.set_display_name_for_path(path.as_path(), &display_name).unwrap();
-                core.send_update(update)
+                Box::pin(core.send_update(update))
             });
         }
     }
@@ -318,7 +318,7 @@ impl FileManager for SqliteFileManager {
                 }
 
                 // Notify that the file is gone
-                core.send_update(update)
+                Box::pin(core.send_update(update))
             });
         }
     }
