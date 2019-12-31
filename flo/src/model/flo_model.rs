@@ -160,7 +160,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
             when_empty.await;
 
             // Wait for the edit publisher to finish processing them
-            edit_publisher.future(|_| future::ready(())).await;
+            edit_publisher.future(|_| Box::pin(future::ready(()))).await;
         }
     }
 }

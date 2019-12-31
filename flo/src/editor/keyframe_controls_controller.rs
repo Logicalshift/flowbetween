@@ -255,7 +255,7 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
                 if let Some(selected_layer) = selected_layer {
                     if !keyframe_selected {
                         // Send a new keyframe edit request at the current time
-                        let _ = self.edit_sink.future(|edit_sink| edit_sink.publish(Arc::new(vec![
+                        let _ = self.edit_sink.future(move |edit_sink| edit_sink.publish(Arc::new(vec![
                             AnimationEdit::Layer(selected_layer, LayerEdit::AddKeyFrame(current_time))
                         ])));
                         self.edit_sink.sync(|_| { });
