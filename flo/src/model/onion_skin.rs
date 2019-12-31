@@ -180,7 +180,7 @@ impl<Anim: 'static+Animation> OnionSkinModel<Anim> {
             let mut found_new_values;
 
             // Test for a new set of onion skins
-            match fetching_onion_skins.poll_unpin(context) {
+            match fetching_onion_skins.poll_next_unpin(context) {
                 Poll::Ready(None)               => { return Poll::Ready(None); }
 
                 Poll::Pending                   => {
