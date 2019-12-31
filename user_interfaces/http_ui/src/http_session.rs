@@ -10,6 +10,7 @@ use flo_logging::*;
 
 use futures::*;
 use futures::future;
+use futures::future::{BoxFuture};
 
 use std::mem;
 use std::sync::*;
@@ -25,10 +26,10 @@ pub struct HttpSession<CoreUi> {
     http_ui: Arc<HttpUserInterface<CoreUi>>,
 
     /// The event sink for the UI
-    input: Box<dyn Future<Item=HttpEventSink, Error=()>+Send>,
+    input: BoxFuture<'static, HttpEventSink>,
 
     /// The stream of events for the session (or None if it has been reset or not started yet)
-    updates: Box<dyn Future<Item=HttpUpdateStream, Error=()>+Send>
+    updates: BoxFuture<'static, HttpUpdateStream>
 }
 
 impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
@@ -36,8 +37,8 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     /// Creates a new session from a HTTP user interface
     ///
     pub fn new(http_ui: Arc<HttpUserInterface<CoreUi>>) -> HttpSession<CoreUi> {
-        let input   = Box::new(future::ok(http_ui.get_input_sink()));
-        let updates = Box::new(future::ok(http_ui.get_updates()));
+        let input   = Box::pin(future::ok(http_ui.get_input_sink()));
+        let updates = Box::pin(future::ok(http_ui.get_updates()));
         let log     = LogPublisher::new(module_path!());
 
         HttpSession {
@@ -75,13 +76,13 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     pub fn fall_asleep(&mut self) {
         // Suspend the updates
         let http_ui = self.http_ui.clone();
-        self.updates = Box::new(LazyFuture::new(move || {
+        self.updates = Box::pin(LazyFuture::new(move || {
             future::ok(http_ui.get_updates())
         }));
 
         // Suspend the input
         let http_ui = self.http_ui.clone();
-        self.input = Box::new(LazyFuture::new(move || {
+        self.input = Box::pin(LazyFuture::new(move || {
             future::ok(http_ui.get_input_sink())
         }));
 
@@ -102,15 +103,15 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
     /// Restarts the update stream (will regenerate the 'new UI' event, which is
     /// returned in the future return value).
     ///
-    pub fn restart_updates(&mut self) -> Box<dyn Future<Item=Vec<Update>, Error=()>> {
+    pub fn restart_updates(&mut self) -> BoxFuture<'static, Vec<Update>> {
         // Replace the update stream with a new one (the 'new session' even will start here)
-        self.updates = Box::new(future::ok(self.http_ui.get_updates()));
+        self.updates = Box::pin(future::ok(self.http_ui.get_updates()));
 
         // Result is a future event from the updates
         let (updates, future_updates) = park_future();
 
         // We'll own the updates while we wait for this event
-        let mut updates: Box<dyn Future<Item=HttpUpdateStream, Error=()>+Send> = Box::new(updates);
+        let mut updates: BoxFuture<'static, HttpUpdateStream> = Box::pin(updates);
         mem::swap(&mut updates, &mut self.updates);
 
         let wait_for_update = updates.then(|updates| {
@@ -135,13 +136,13 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
             result
         });
 
-        Box::new(finish_update.fuse())
+        Box::pin(finish_update.fuse())
     }
 
     ///
     /// Sends some updates to this object and returns the resulting update
     ///
-    pub fn send_events(&mut self, events: Vec<Event>) -> Box<dyn Future<Item=Vec<Update>, Error=()>> {
+    pub fn send_events(&mut self, events: Vec<Event>) -> BoxFuture<'static, Vec<Update>> {
         // TODO: if the update stream is newly generated, we should wait for the initial 'new UI' event before polling for other events
 
         // We rely on the core UI only generating updates when we're polling
@@ -156,8 +157,8 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
         let (updates, future_updates)   = park_future();
 
         // Take ownership of the future input and updates by replacing them with our parked values
-        let mut input: Box<dyn Future<Item=HttpEventSink, Error=()>+Send>       = Box::new(input);
-        let mut updates: Box<dyn Future<Item=HttpUpdateStream, Error=()>+Send>  = Box::new(updates);
+        let mut input: BoxFuture<'static, HttpEventSink>        = Box::pin(input);
+        let mut updates: BoxFuture<'static, HttpUpdateStream>   = Box::pin(updates);
 
         mem::swap(&mut input, &mut self.input);
         mem::swap(&mut updates, &mut self.updates);
@@ -237,7 +238,7 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
         });
 
         // finish_update is the result
-        Box::new(finish_update.fuse())
+        Box::pin(finish_update.fuse())
     }
 }
 
