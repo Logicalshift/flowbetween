@@ -168,15 +168,15 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
 
                 if apply_in_reverse {
                     let _ = self.edit.future(move |animation| {
-                        animation.publish(vec![
+                        animation.publish(Arc::new(vec![
                                 AnimationEdit::Element(selection.iter().rev().cloned().collect(), ElementEdit::Order(ordering))
-                            ])
+                            ]))
                         });
                 } else {
                     let _ = self.edit.future(move |animation| {
-                        animation.publish(vec![
+                        animation.publish(Arc::new(vec![
                                 AnimationEdit::Element(selection.iter().cloned().collect(), ElementEdit::Order(ordering))
-                            ])
+                            ]))
                         });
                 }
                 self.edit.sync(|_| { });
