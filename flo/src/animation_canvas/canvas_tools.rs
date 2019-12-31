@@ -5,12 +5,12 @@ use super::super::model::*;
 
 use flo_ui::*;
 use flo_canvas::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_animation::brushes::*;
 
 use futures::*;
-use futures::executor::Spawn;
 use std::iter;
 use std::sync::*;
 use std::time::Duration;
@@ -23,7 +23,7 @@ pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     animation: Arc<FloModel<Anim>>,
 
     /// The edit sink for the animation
-    edit_sink: Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>,
+    edit_sink: Publisher<Vec<AnimationEdit>>,
 
     /// The effective tool for the animation
     effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,
@@ -63,7 +63,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         let current_time    = BindRef::from(view_model.timeline().current_time.clone());
         let tool_runner     = ToolRunner::new(view_model);
         let create_keyframe = BindRef::from(view_model.frame().create_keyframe_on_draw.clone());
-        let edit_sink       = executor::spawn(animation.edit());
+        let edit_sink       = animation.edit();
 
         CanvasTools {
             animation:          animation,
@@ -283,7 +283,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     }
 
     ///
-    /// Creates a new keyframe if there is no current keyframe and the 'create keyframe on draw' option is set.is
+    /// Creates a new keyframe if there is no current keyframe and the 'create keyframe on draw' option is set.
     ///
     /// Returns true if the keyframe was created
     ///
