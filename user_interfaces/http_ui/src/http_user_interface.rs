@@ -7,8 +7,12 @@ use ui::*;
 use ui::session::*;
 use canvas::*;
 use binding::*;
+use flo_stream::*;
+use ::desync::*;
+
 use futures::*;
-use futures::stream;
+use futures::stream::{BoxStream};
+use futures::executor;
 use itertools::join;
 use percent_encoding::*;
 
@@ -25,7 +29,13 @@ pub struct HttpUserInterface<CoreUi> {
     ui_tree: BindRef<Control>,
 
     /// The base path of the instance (where URIs are generated relative to)
-    base_path: String
+    base_path: String,
+
+    /// Publishes events to the core UI
+    event_publisher: Publisher<Vec<Event>>,
+
+    /// Processes events from the publisher onto the main UI task
+    event_processor: Arc<Desync<WeakPublisher<Vec<UiEvent>>>>
 }
 
 impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
@@ -33,12 +43,33 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     /// Creates a new HTTP UI that will translate requests for the specified core UI
     ///
     pub fn new(ui: Arc<CoreUi>, base_path: String) -> HttpUserInterface<CoreUi> {
-        let ui_tree = ui.ui_tree();
+        let ui_tree         = ui.ui_tree();
+        let event_publisher = Publisher::new(10);
+
+        // Subscribe to the events and map them
+        let subscription    = event_publisher.subscribe();
+        let mapped_events   = subscription.map(move |http_events: Vec<_>| {
+            let core_events = http_events.into_iter()
+                .map(|evt| Self::http_event_to_core_event(evt))
+                .collect::<Vec<_>>();
+            core_events
+        });
+
+        // Process via the event processor
+        let core_events     = ui.get_input_sink();
+        let event_processor = Arc::new(Desync::new(core_events));
+
+        pipe_in(Arc::clone(&event_processor), mapped_events, |publisher, event| {
+            // TODO: pipe_in should really return a future... (future::executor can randomly panic)
+            executor::block_on(publisher.publish(event))
+        });
 
         HttpUserInterface {
-            core_ui:    ui,
-            ui_tree:    ui_tree,
-            base_path:  base_path
+            core_ui:            ui,
+            ui_tree:            ui_tree,
+            base_path:          base_path,
+            event_publisher:    event_publisher,
+            event_processor:    event_processor
         }
     }
 
@@ -196,27 +227,13 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     }
 }
 
-pub type HttpEventSink      = Box<dyn Sink<SinkItem=Vec<Event>, SinkError=()>+Send>;
-pub type HttpUpdateStream   = Box<dyn Stream<Item=Vec<Update>, Error=()>+Send>;
+pub type HttpUpdateStream   = BoxStream<'static, Result<Vec<Update>, ()>>;
 
 impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
-    type EventSink      = HttpEventSink;
     type UpdateStream   = HttpUpdateStream;
 
-    fn get_input_sink(&self) -> Self::EventSink {
-        // Get the core event sink
-        let core_sink   = self.core_ui.get_input_sink();
-
-        // Create a sink that turns HTTP events into core events
-        let mapped_sink = core_sink.with_flat_map(|http_events: Vec<_>| {
-            let core_events = http_events.into_iter()
-                .map(|evt| Self::http_event_to_core_event(evt))
-                .collect();
-            stream::once(Ok(core_events))
-        });
-
-        // This new sink is our result
-        Box::new(mapped_sink)
+    fn get_input_sink(&self) -> WeakPublisher<Vec<Event>> {
+        self.event_publisher.republish_weak()
     }
 
     fn get_updates(&self) -> Self::UpdateStream {
@@ -229,13 +246,15 @@ impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for H
 
         // Turn into HTTP updates
         let mapped_updates = core_updates.map(move |core_updates| {
-            let ui_tree = ui_tree.get();
+            core_updates.map(|core_updates| {
+                let ui_tree = ui_tree.get();
 
-            Self::core_updates_to_http_updates(core_updates, &base_path, &ui_tree)
+                Self::core_updates_to_http_updates(core_updates, &base_path, &ui_tree)
+            })
         });
 
         // These are the results
-        Box::new(mapped_updates)
+        Box::pin(mapped_updates)
     }
 }
 
