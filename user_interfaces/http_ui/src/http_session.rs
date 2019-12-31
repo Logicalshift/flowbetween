@@ -10,6 +10,7 @@ use flo_logging::*;
 
 use futures::*;
 use futures::future;
+use futures::task::{Poll};
 use futures::future::{BoxFuture};
 
 use std::mem;
@@ -123,9 +124,8 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
                 let next_update = updates.as_mut().unwrap().poll();
 
                 match next_update {
-                    Ok(Async::Ready(result))    => Ok(Async::Ready((updates.take().unwrap(), result.unwrap_or(vec![])))),
-                    Ok(Async::NotReady)         => Ok(Async::NotReady),
-                    Err(derp)                   => Err(derp)
+                    Poll::Ready(result) => Poll::Ready((updates.take().unwrap(), result.unwrap_or(vec![]))),
+                    Poll::Pending       => Poll::Pending,
                 }
             })
         });
@@ -218,9 +218,8 @@ impl<CoreUi: 'static+CoreUserInterface+Send+Sync> HttpSession<CoreUi> {
                 let next_update = updates.as_mut().unwrap().poll();
 
                 match next_update {
-                    Ok(Async::Ready(result))    => Ok(Async::Ready((updates.take().unwrap(), result.unwrap_or(vec![])))),
-                    Ok(Async::NotReady)         => Ok(Async::NotReady),
-                    Err(derp)                   => Err(derp)
+                    Poll::Ready(result) => Poll::Ready((updates.take().unwrap(), result.unwrap_or(vec![]))),
+                    Poll::Pending       => Poll::Pending
                 }
             }).map(move |(updates, result)| (input, updates, result))
         });
