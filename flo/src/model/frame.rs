@@ -114,7 +114,7 @@ impl FrameModel {
                 match frames.entry(*layer_id) {
                     Entry::Occupied(_occupied) => (),
 
-                    Entry::Vacant(mut vacant) => {
+                    Entry::Vacant(vacant) => {
                         // Create a new bindnig
                         let layer_id            = *layer_id;
                         let when                = BindRef::clone(&when);

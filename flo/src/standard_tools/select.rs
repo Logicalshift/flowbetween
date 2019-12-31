@@ -415,7 +415,7 @@ impl Select {
                 // TODO: only start rubber-banding once the mouse has moved a certain distance
 
                 // Dragging after making a new selection moves us to rubber-band mode
-                let mut new_data = data.with_action(SelectAction::RubberBand);
+                let new_data = data.with_action(SelectAction::RubberBand);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
             },
@@ -428,7 +428,7 @@ impl Select {
                 }
 
                 // Reset the action
-                let mut new_data = data.with_action(SelectAction::NoAction);
+                let new_data = data.with_action(SelectAction::NoAction);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
             },
@@ -467,7 +467,7 @@ impl Select {
 
             (SelectAction::Reselect, PaintAction::Continue) => {
                 // This begins a dragging operation
-                let mut new_data = data.with_action(SelectAction::Drag);
+                let mut new_data        = data.with_action(SelectAction::Drag);
 
                 // Pre-render the elements so we can draw the drag faster
                 let selected_elements   = Arc::clone(&data.selected_elements);

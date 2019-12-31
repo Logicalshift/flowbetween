@@ -163,10 +163,10 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
             // Only update the model items that are still in use
             if let Some(model) = model.upgrade() {
                 // Recreate the keyframes in this range
-                let keyframes = self.get_keyframe_model(frames);
+                let keyframes   = self.get_keyframe_model(frames);
 
                 // Update the model with the new keyframes
-                let mut model = Binding::clone(&*model);
+                let model       = Binding::clone(&*model);
                 model.set(keyframes);
             }
         }

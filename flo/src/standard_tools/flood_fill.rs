@@ -89,7 +89,7 @@ impl FloodFill {
                 let fill_path: Path = fill_path;
 
                 let brush_defn      = BrushDefinition::Ink(InkDefinition::default());
-                let mut brush_props = data.brush_properties.clone();
+                let brush_props     = data.brush_properties.clone();
 
                 // Generate the editing actions to create this fill path
                 let actions         = vec![
