@@ -231,7 +231,7 @@ impl Adjust {
     ///
     /// Creates an action stream that draws control points for the selection in the specified models
     ///
-    fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
+    fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>> {
         // Collect the selected elements into a HashSet
         let selected_elements   = flo_model.selection().selected_elements.clone();
         let selected_elements   = computed(move || selected_elements.get());
@@ -267,7 +267,7 @@ impl Adjust {
                 // Generate the actions
                 vec![ToolAction::Overlay(OverlayAction::Draw(draw_control_points))]
             })
-            .map(|actions| stream::iter_ok(actions.into_iter()))
+            .map(|actions| stream::iter(actions.into_iter()))
             .flatten()
     }
 
@@ -356,7 +356,7 @@ impl Adjust {
     ///
     /// Returns the actions required to draw the editing overlay
     ///
-    fn draw_edit_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
+    fn draw_edit_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>> {
         // Get the set of elements from the frame
         let elements    = flo_model.frame().elements.clone();
 
@@ -417,7 +417,7 @@ impl Adjust {
                     }
                 }
             })
-            .map(|actions| stream::iter_ok(actions.into_iter()))
+            .map(|actions| stream::iter(actions.into_iter()))
             .flatten()
     }
 

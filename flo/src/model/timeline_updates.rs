@@ -35,7 +35,7 @@ impl TimelineModelUpdate {
 ///
 /// Converts a stream of animation edits to a stream of timeline model updates
 ///
-pub fn get_timeline_updates<EditStream: Stream<Item=Arc<Vec<AnimationEdit>>, Error=()>>(edit_stream: EditStream) -> impl Stream<Item=TimelineModelUpdate, Error=()> {
+pub fn get_timeline_updates<EditStream: Stream<Item=Arc<Vec<AnimationEdit>>>>(edit_stream: EditStream) -> impl Stream<Item=TimelineModelUpdate> {
     edit_stream
         .map(|animation_edits| {
             use self::LayerEdit::*;
@@ -54,6 +54,6 @@ pub fn get_timeline_updates<EditStream: Stream<Item=Arc<Vec<AnimationEdit>>, Err
                 })
                 .collect::<Vec<_>>()
         })
-        .map(|edit_vec| stream::iter_ok::<_, ()>(edit_vec))
+        .map(|edit_vec| stream::iter::<_, ()>(edit_vec))
         .flatten()
 }

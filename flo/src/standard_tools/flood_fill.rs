@@ -10,6 +10,7 @@ use flo_animation::raycast::*;
 use flo_curves::bezier::path::algorithms::*;
 
 use futures::*;
+use futures::stream::{BoxStream};
 use itertools::*;
 
 use std::iter;
@@ -135,7 +136,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
         Some(Arc::new(FloodFillMenuController::new(color, opacity)))
     }
 
-    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &FloodFillModel) -> Box<dyn Stream<Item=ToolAction<FloodFillData>, Error=()>+Send> {
+    fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, tool_model: &FloodFillModel) -> BoxStream<'static, ToolAction<FloodFillData>> {
         // Compute brush properties from the model
         let color               = tool_model.color.clone();
         let opacity             = tool_model.opacity.clone();
@@ -155,7 +156,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for FloodFill {
         });
 
         // Turn the computed values into a stream and update the brush whenever the values change
-        Box::new(follow(fill_data).map(|fill_data| ToolAction::Data(fill_data)))
+        Box::pin(follow(fill_data).map(|fill_data| ToolAction::Data(fill_data)))
     }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<FloodFillData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<FloodFillData>>>) -> Box<dyn Iterator<Item=ToolAction<FloodFillData>>> {
