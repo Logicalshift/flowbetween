@@ -4,6 +4,7 @@ use super::log_subscriber::*;
 
 use log;
 use log::*;
+use futures::future;
 use desync::{Desync, pipe_in};
 
 use std::sync::*;
@@ -90,6 +91,8 @@ pub fn send_logs_to(logger: Box<dyn Log+Send+'static>) {
             .line(message.field_value("line").and_then(|line_str| line_str.parse::<u32>().ok()))
             .args(format_args!("{}", message.message()))
             .build());
+
+        Box::pin(future::ready(()))
     })
 }
 

@@ -29,5 +29,7 @@ pub fn send_to_stderr<LogStream: 'static+Unpin+Send+Stream<Item=LogMsg>>(stream:
             log::Level::Warn    => { eprintln!("WARNING {}: {}", target, message); },
             log::Level::Error   => { eprintln!("ERROR   {}: {}", target, message); }
         }
+
+        Box::pin(future::ready(()))
     });
 }

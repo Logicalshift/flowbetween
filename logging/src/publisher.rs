@@ -118,7 +118,7 @@ impl LogPublisher {
         // Pipe the stream through to the context
         pipe_in(Arc::clone(&self.context), stream, |context, message| {
             let message = LogMsg::from(message);
-            executor::block_on(async { Self::log_in_context(context, message).await });
+            Box::pin(async move { Self::log_in_context(context, message).await })
         });
     }
 
