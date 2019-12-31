@@ -27,7 +27,7 @@ mod dynamic_viewmodel;
 mod viewmodel_update;
 mod resource_manager;
 mod binding_canvas;
-mod gather_stream;
+pub mod gather_stream;
 pub mod control;
 pub mod image;
 pub mod controllers;

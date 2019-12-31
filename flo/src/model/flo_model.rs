@@ -7,9 +7,9 @@ use super::onion_skin::*;
 use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
+use flo_ui::gather_stream::*;
 use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
+use futures::stream::{BoxStream};
 use ::desync::*;
 
 use std::ops::Range;
@@ -48,7 +48,7 @@ pub struct FloModel<Anim: Animation> {
     frame_edit_counter: Binding<u64>,
 
     /// Publisher where we send edits to this stream
-    edit_publisher: Arc<Desync<Spawn<Publisher<Arc<Vec<AnimationEdit>>>>>>
+    edit_publisher: Arc<Desync<WeakPublisher<Arc<Vec<AnimationEdit>>>>>
 }
 
 impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
@@ -56,7 +56,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
     /// Creates a new model
     ///
     pub fn new(animation: Anim) -> FloModel<Anim> {
-        let mut edit_publisher  = executor::spawn(Publisher::new(10));
+        let mut edit_publisher  = animation.edit();
         let animation           = Arc::new(animation);
         let tools               = ToolModel::new();
         let timeline            = TimelineModel::new(Arc::clone(&animation), edit_publisher.subscribe());
@@ -68,7 +68,7 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
         let size_binding        = bind(animation.size());
         let edit_publisher      = Arc::new(Desync::new(edit_publisher));
 
-        FloModel {
+        let mut model           = FloModel {
             animation:          animation,
             tools:              tools,
             timeline:           timeline,
@@ -81,6 +81,88 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
             size_binding:       size_binding,
 
             edit_publisher:     edit_publisher
+        };
+
+        model.subscribe_to_animation_edits();
+
+        model
+    }
+
+    ///
+    /// Updates the model based on edits made to the animation
+    ///
+    fn subscribe_to_animation_edits(&mut self) {
+        // Subscribe to the edits posted to the model and gather them together
+        let subscription            = self.edit_publisher.sync(|publisher| publisher.subscribe());
+        let subscription            = gather(subscription);
+
+        // Gather together the properties we're going to update
+        let size_binding            = self.size_binding.clone();
+        let timeline                = self.timeline.clone();
+        let frame_edit_counter      = self.frame_edit_counter.clone();
+
+        // Process edits for this subscription
+        pipe_in(Arc::clone(&self.edit_publisher), subscription, move |_, edits| {
+            use self::AnimationEdit::*;
+            use self::LayerEdit::*;
+
+            // Update the viewmodel based on the edits that are about to go through
+            let mut advance_edit_counter = false;
+
+            for edit in edits.iter() {
+                match edit {
+                    SetSize(width, height) => {
+                        size_binding.set((*width, *height));
+                        advance_edit_counter = true;
+                    },
+
+                    AddNewLayer(_)              |
+                    RemoveLayer(_)              |
+                    Element(_, _)               |
+                    Motion(_, _)                |
+                    Layer(_, Path(_, _))        |
+                    Layer(_, Paint(_, _))       => {
+                        advance_edit_counter = true;
+                    }
+
+                    Layer(_, AddKeyFrame(_))    |
+                    Layer(_, RemoveKeyFrame(_)) => {
+                        advance_edit_counter = true;
+                    },
+
+                    Layer(layer_id, SetName(new_name)) => {
+                        timeline.layers.get()
+                            .iter()
+                            .for_each(|layer| if &layer.id == layer_id { layer.name.set(new_name.clone())} );
+                        advance_edit_counter = true;
+                    },
+
+                    Layer(layer_id, SetOrdering(at_index)) => {
+                        unimplemented!("Cannot update model with layer ordering")
+                    }
+                }
+            }
+
+            // Advancing the frame edit counter causes any animation frames to be regenerated
+            if advance_edit_counter {
+                frame_edit_counter.set(frame_edit_counter.get()+1);
+            }
+        });
+    }
+
+    ///
+    /// Returns a future that indicates when all of the pending edits have been processed
+    ///
+    pub fn when_complete(&self) -> impl Future<Output=()> {
+        let edit_publisher  = self.edit_publisher.clone();
+        let when_empty      = self.animation.edit().when_empty();
+
+        async {
+            // Wait for all of the pending edits to be published
+            when_empty.await;
+
+            // Wait for the edit publisher to finish processing them
+            edit_publisher.future(|_| future::ready(())).await;
         }
     }
 }
@@ -202,7 +284,7 @@ impl<Anim: Animation> Animation for FloModel<Anim> {
     ///
     /// Reads from the edit log for this animation
     ///
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> {
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> BoxStream<'a, AnimationEdit> {
         self.animation.read_edit_log(range)
     }
 
@@ -246,6 +328,7 @@ impl<Anim: Animation> AnimationMotion for FloModel<Anim> {
     }
 }
 
+/*
 ///
 /// Sink used to send data to the animation
 ///
@@ -291,6 +374,7 @@ impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: 
         self.target_sink.poll_complete()
     }
 }
+*/
 
 impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
     ///
@@ -299,7 +383,10 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
     /// Edits are supplied as groups (stored in a vec) so that it's possible to ensure that
     /// a set of related edits are performed atomically
     ///
-    fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
+    fn edit(&self) -> WeakPublisher<Vec<AnimationEdit>> {
+        self.edit_publisher.sync(|publisher| publisher.republish())
+
+        /*
         // Edit the underlying animation
         let animation_edit  = self.animation.edit();
         let edit_publisher  = Arc::clone(&self.edit_publisher);
@@ -362,6 +449,7 @@ impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<A
         });
 
         Box::new(model_edit)
+        */
     }
 }
 
@@ -382,10 +470,11 @@ mod test {
         assert!(model.size.get()    == (1980.0, 1080.0));
 
         // Change to 800x600
-        {
-            let mut edit_log = executor::spawn(model.edit());
-            edit_log.wait_send(vec![AnimationEdit::SetSize(800.0, 600.0)]).unwrap();
-        }
+        executor::block_on(async {
+            let mut edit_log = model.edit();
+            edit_log.publish(vec![AnimationEdit::SetSize(800.0, 600.0)]).await;
+            model.when_complete().await;
+        });
 
         // Binding should get changed by this edit
         assert!(model.size()        == (800.0, 600.0));
