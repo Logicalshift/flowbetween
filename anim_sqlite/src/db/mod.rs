@@ -54,7 +54,7 @@ pub struct AnimationDb {
     core: Arc<Desync<AnimationDbCore<FloSqlite>>>,
 
     /// Publishes edits to the core
-    core_publisher: Publisher<Vec<AnimationEdit>>
+    core_publisher: Publisher<Arc<Vec<AnimationEdit>>>
 }
 
 impl AnimationDb {
@@ -126,7 +126,7 @@ impl AnimationDb {
     ///
     /// Creates a sink for writing to the animation
     ///
-    pub fn create_edit_sink(&self) -> Publisher<Vec<AnimationEdit>> {
+    pub fn create_edit_sink(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
         self.core_publisher.republish()
     }
 }

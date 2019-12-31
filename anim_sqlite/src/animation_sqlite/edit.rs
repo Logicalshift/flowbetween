@@ -5,6 +5,8 @@ use flo_animation::*;
 
 use futures::executor;
 
+use std::sync::*;
+
 impl SqliteAnimation {
     ///
     /// Performs a particular set of edits immediately to this animation
@@ -13,14 +15,14 @@ impl SqliteAnimation {
         let mut publisher = self.db.create_edit_sink();
 
         executor::block_on(async {
-            publisher.publish(edits).await;
+            publisher.publish(Arc::new(edits)).await;
             publisher.when_empty().await;
         })
     }
 }
 
 impl EditableAnimation for SqliteAnimation {
-    fn edit(&self) -> Publisher<Vec<AnimationEdit>> {
+    fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
         self.db.create_edit_sink()
     }
 }

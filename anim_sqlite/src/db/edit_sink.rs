@@ -6,7 +6,7 @@ use desync::{Desync, pipe_in};
 ///
 /// Creates a publisher that writes edits to the a database
 ///
-pub (crate) fn create_edit_publisher<TFile: 'static+FloFile+Unpin+Send>(db: &Arc<Desync<AnimationDbCore<TFile>>>) -> Publisher<Vec<AnimationEdit>> {
+pub (crate) fn create_edit_publisher<TFile: 'static+FloFile+Unpin+Send>(db: &Arc<Desync<AnimationDbCore<TFile>>>) -> Publisher<Arc<Vec<AnimationEdit>>> {
     // Create our own copy of the database
     let db = Arc::clone(db);
 
@@ -23,7 +23,10 @@ pub (crate) fn create_edit_publisher<TFile: 'static+FloFile+Unpin+Send>(db: &Arc
 ///
 /// Processes a series of edits on a database core
 ///
-fn process_edits<TFile: FloFile+Unpin+Send>(db: &mut AnimationDbCore<TFile>, edits: Vec<AnimationEdit>) {
+fn process_edits<TFile: FloFile+Unpin+Send>(db: &mut AnimationDbCore<TFile>, edits: Arc<Vec<AnimationEdit>>) {
+    // Clone the edits so we can modify them
+    let edits = Vec::clone(&*edits);
+
     // Apply element IDs to the edits
     let edits = db.assign_element_ids(edits);
 

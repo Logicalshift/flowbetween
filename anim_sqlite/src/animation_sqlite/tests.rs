@@ -253,7 +253,7 @@ fn add_keyframe_with_layer_editor() {
     executor::block_on(async {
         let mut sink = anim.edit();
 
-        sink.publish(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))]).await;
+        sink.publish(Arc::new(vec![AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))])).await;
         sink.when_empty().await;
     });
 

@@ -3,7 +3,6 @@ use super::super::error::*;
 
 use flo_animation::*;
 
-use futures::*;
 use futures::stream::{BoxStream};
 
 use std::sync::*;
