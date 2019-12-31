@@ -56,7 +56,7 @@ pub trait Tool<Anim: Animation> : Send+Sync {
     /// Returns a stream of tool actions that result from changes to the model
     ///
     fn actions_for_model(&self, _flo_model: Arc<FloModel<Anim>>, _tool_model: &Self::Model) -> BoxStream<'static, ToolAction<Self::ToolData>> {
-        Box::new(stream::empty())
+        Box::pin(stream::empty())
     }
 
     ///

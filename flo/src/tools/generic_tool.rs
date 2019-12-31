@@ -152,11 +152,11 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
     fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> BoxStream<'static, ToolAction<GenericToolData>> {
         // Map the underlying actions to generic actions. There are no actions if we're passed an invalid tool model
         tool_model.get_ref()
-            .map(move |tool_model| -> Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
-                Box::new(self.tool.actions_for_model(flo_model, &*tool_model)
+            .map(move |tool_model| -> BoxStream<'static, ToolAction<GenericToolData>> {
+                Box::pin(self.tool.actions_for_model(flo_model, &*tool_model)
                     .map(|action| GenericToolData::convert_action_to_generic(action)))
             })
-            .unwrap_or_else(|| Box::new(stream::empty()))
+            .unwrap_or_else(|| Box::pin(stream::empty()))
     }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<GenericToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<GenericToolData>>> {
@@ -168,7 +168,7 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
             .map(|definitely_data|  definitely_data.unwrap()));
 
         // Map the actions back to generic actions
-        Box::pin(self.tool.actions_for_input(flo_model, data, input)
+        Box::new(self.tool.actions_for_input(flo_model, data, input)
             .map(|action| GenericToolData::convert_action_to_generic(action)))
     }
 }
