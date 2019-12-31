@@ -2,13 +2,12 @@ use super::super::model::*;
 use super::super::style::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 
 use ::desync::*;
 use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
 
 use std::sync::*;
 use std::time::Duration;
@@ -42,7 +41,7 @@ pub struct KeyFrameControlsController<Anim: 'static+Animation+EditableAnimation>
     selected_layer: Binding<Option<u64>>,
 
     /// The edit sink for the animation
-    edit_sink: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
+    edit_sink: Desync<Publisher<Vec<AnimationEdit>>>,
 
     debug_model: FloModel<Anim>
 }
@@ -72,7 +71,7 @@ impl<Anim: 'static+Animation+EditableAnimation> KeyFrameControlsController<Anim>
         view_model.set_computed("CanMoveToNextKeyFrame",        move || PropertyValue::Bool(prev_next_2.get().1.is_some()));
 
         // The edit sink lets us send edits to the animation (in particular, the 'new keyframe' edits)
-        let edit_sink       = executor::spawn(model.edit());
+        let edit_sink       = model.edit();
 
         // Create the images and the UI
         let images          = Arc::new(Self::images());
@@ -257,9 +256,10 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for KeyFrameControlsC
                 if let Some(selected_layer) = selected_layer {
                     if !keyframe_selected {
                         // Send a new keyframe edit request at the current time
-                        self.edit_sink.sync(|edit_sink| edit_sink.wait_send(vec![
+                        let _ = self.edit_sink.future(|edit_sink| edit_sink.publish(vec![
                             AnimationEdit::Layer(selected_layer, LayerEdit::AddKeyFrame(current_time))
-                        ])).unwrap();
+                        ]));
+                        self.edit_sink.sync(|_| { });
 
                         // Invalidate the canvas
                         self.timeline.invalidate_canvas();
