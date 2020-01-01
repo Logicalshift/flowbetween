@@ -11,14 +11,12 @@ use actix_web::Error;
 use futures::*;
 use futures::future;
 use futures::stream;
-use futures::future::{BoxFuture};
+use futures::future::{LocalBoxFuture};
 use bytes::Bytes;
 use percent_encoding::*;
 
 use std::str::*;
 use std::sync::*;
-use std::io;
-use std::io::ErrorKind;
 
 lazy_static! {
     /// The standard log for the resource handler
@@ -145,14 +143,14 @@ fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &Http
                     // PNG data
                     future::ok(HttpResponse::Ok()
                         .header(http::header::CONTENT_TYPE, "image/png")
-                        .streaming(data.read_future().map_err(|_| io::Error::new(ErrorKind::Other, "Unknown error"))))
+                        .streaming(data.read_future().map(|bytes| -> Result<_, Error> { Ok(bytes) })))
                 },
 
                 Image::Svg(data) => {
                     // SVG data
                     future::ok(HttpResponse::Ok()
                         .header(http::header::CONTENT_TYPE, "image/svg+xml; charset=utf-8")
-                        .streaming(data.read_future().map_err(|_| io::Error::new(ErrorKind::Other, "Unknown error"))))
+                        .streaming(data.read_future().map(|bytes| -> Result<_, Error> { Ok(bytes) })))
                 },
             }
         } else {
@@ -172,7 +170,7 @@ fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &Http
 ///
 /// Produces a HTTP response for a canvas request
 ///
-fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Output=Result<HttpResponse, Error=Error>> {
+fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Output=Result<HttpResponse, Error>> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
 
@@ -201,8 +199,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
                 })
                 .map(|encoded| Bytes::from(encoded.as_bytes()));
 
-            let encoded_drawing = stream::iter(encoded_drawing)
-                .map_err(|_: ()| io::Error::new(ErrorKind::Other, "Unknown error"));
+            let encoded_drawing = stream::iter(encoded_drawing).map(|s| -> Result<_, Error> { Ok(s) });
 
             // Turn into a response
             future::ok(HttpResponse::Ok()
@@ -225,7 +222,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
 ///
 /// Handler for get requests for a session
 ///
-pub fn session_resource_handler<Session: 'static+ActixSession>(req: HttpRequest) -> BoxFuture<'static, Result<HttpResponse, Error>> {
+pub fn session_resource_handler<Session: 'static+ActixSession>(req: HttpRequest) -> LocalBoxFuture<'static, Result<HttpResponse, Error>> {
     // The path is the tail of the request
     let path    = req.match_info().get("tail").map(|s| String::from(s));
     let state   = req.app_data::<Arc<Session>>().cloned();
@@ -242,26 +239,26 @@ pub fn session_resource_handler<Session: 'static+ActixSession>(req: HttpRequest)
             if let Some(session) = session {
                 // URL is in a valid format and the session could be found
                 match resource.resource_type {
-                    ResourceType::Image     => Box::new(handle_image_request::<Session>(req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)),
-                    ResourceType::Canvas    => Box::new(handle_canvas_request::<Session>(req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))
+                    ResourceType::Image     => Box::pin(handle_image_request::<Session>(req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name)),
+                    ResourceType::Canvas    => Box::pin(handle_canvas_request::<Session>(req, &*session.lock().unwrap(), resource.controller_path, resource.resource_name))
                 }
             } else {
                 // URL is in a valid format but the session could not be found
                 RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Session `{}` not found", resource.session_id)));
 
-                Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
+                Box::pin(future::ok(HttpResponse::NotFound().body("Not found")))
             }
         } else {
             // Resource URL was not in the expected format
             RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Path `{}` was not in the expected format", path)));
 
-            Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
+            Box::pin(future::ok(HttpResponse::NotFound().body("Not found")))
         }
     } else {
         // No tail path was supplied (likely this handler is being called from the wrong place)
         RESOURCE_HANDLER_LOG.log((Level::Warn, format!("Missing tail path")));
 
-        Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
+        Box::pin(future::ok(HttpResponse::NotFound().body("Not found")))
     }
 }
 
