@@ -76,27 +76,20 @@ impl LogPublisher {
     ///
     /// Sends a log message to the context
     ///
-    fn log_in_context(context: &mut LogContext, mut message: LogMsg) -> impl Future<Output=()> {
+    async fn log_in_context(context: &mut LogContext, mut message: LogMsg) {
         let num_subscribers = context.publisher.count_subscribers();
 
         // Make sure that all the log fields are set properly
         message.merge_fields(&context.fields);
 
         // Send to the subscribers of this log
-        let publish = context.publisher.publish(message.clone());
+        context.publisher.publish(message.clone()).await;
 
         // Send to the parent or the default log
         if num_subscribers == 0 {
             if let Some(default) = context.default.as_mut() {
-                let default_publish = default.publish(message);
-
-                publish.then(move |()| default_publish)
-                    .right_future()
-            } else {
-                publish.left_future()
+                default.publish(message).await;
             }
-        } else {
-            publish.left_future()
         }
     }
 
