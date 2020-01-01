@@ -8,7 +8,6 @@ use flo_stream::*;
 use desync::{Desync, pipe_in};
 use futures::future::{FutureExt};
 use futures::prelude::*;
-use futures::executor;
 
 use std::sync::*;
 
@@ -97,11 +96,16 @@ impl LogPublisher {
     /// Sends a message to the subscribers for this log
     ///
     pub fn log<Msg: LogMessage>(&self, message: Msg) {
-        self.context.sync(|context| {
+        let message = LogMsg::from(message);
+
+        // Desync will run the future regardless of whether or not we await the return value, so we can throw it away
+        let _ = self.context.future(move |context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
-            let message = LogMsg::from(message);
-            executor::block_on(async { Self::log_in_context(context, message).await });
+            async move { Self::log_in_context(context, message).await }.boxed()
         });
+
+        // Wait for the log message to complete anyway
+        self.context.sync(|_| { });
     }
 
     ///
