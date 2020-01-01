@@ -67,7 +67,7 @@ fn main_actix() -> Option<JoinHandle<()>> {
                     let static_file_handler = Arc::new(flo_actix::flowbetween_static_file_handler());
 
                     aw::App::new()
-                        .data(sessions.clone())
+                        .app_data(sessions.clone())
                         .service(web::resource("/flowbetween/session")
                             .route(web::get().to(flo_actix::session_get_handler::<WebSessions<FlowBetweenSession>>))
                             .route(web::post().to(flo_actix::session_post_handler::<WebSessions<FlowBetweenSession>>)))
