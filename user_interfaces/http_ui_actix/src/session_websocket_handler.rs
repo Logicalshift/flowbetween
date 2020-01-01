@@ -80,7 +80,7 @@ impl<Session: ActixSession+'static> StreamHandler<Result<ws::Message, ws::Protoc
                     // Spawn the future in this actor
                     ctx.spawn(fut::wrap_future(async move {
                         // Send to the sink
-                        let event_sink = next_sink.await;
+                        let mut event_sink = next_sink.await;
                         event_sink.publish(request).await;
                         send_sink.send(event_sink).ok();
                     }));
@@ -89,7 +89,7 @@ impl<Session: ActixSession+'static> StreamHandler<Result<ws::Message, ws::Protoc
 
             Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
 
-            Err(protocol_error) => { }
+            Err(_protocol_error) => { }
             _ => (),
         }
     }
