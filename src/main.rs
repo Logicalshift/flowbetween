@@ -35,10 +35,10 @@ use std::thread::JoinHandle;
 
 use log::*;
 use flo_logging::*;
-use futures::executor;
 
 #[cfg(feature="http")]  use flo_http_ui::*;
 #[cfg(feature="http")]  use flo_http_ui_actix as flo_actix;
+#[cfg(feature="http")]  use actix_rt;
 #[cfg(feature="gtk")]   use flo_gtk_ui::*;
 
 use self::flo_session::*;
@@ -51,7 +51,7 @@ use self::flo_session::*;
 #[cfg(feature="http")]
 fn main_actix() -> Option<JoinHandle<()>> {
     Some(thread::spawn(|| {
-        executor::block_on(async {
+        actix_rt::System::new("FlowBetween").block_on(async {
             let log = LogPublisher::new("main_actix");
 
             // Create the web session structure

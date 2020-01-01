@@ -893,6 +893,7 @@ dependencies = [
 name = "flow_between"
 version = "0.2.0"
 dependencies = [
+ "actix-rt 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-web 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "flo 0.2.0",
