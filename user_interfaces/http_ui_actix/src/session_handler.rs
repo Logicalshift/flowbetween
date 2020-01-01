@@ -30,7 +30,7 @@ fn base_url(req: &HttpRequest) -> String {
 ///
 /// Handles a request with a session that exists
 ///
-fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session::CoreUi>, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse> {
+fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session::CoreUi>, ui_request: &UiHandlerRequest) -> impl Future<Output=Result<UiHandlerResponse, Error>> {
     // Send the events followed by a tick
     let mut events  = ui_request.events.clone();
     events.push(Event::Tick);
@@ -40,8 +40,7 @@ fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session:
 
     // Turn the updates into a response
     updates
-        .map(|updates| UiHandlerResponse { updates })
-        .map_err(|_| unimplemented!())
+        .map(|updates| Ok(UiHandlerResponse { updates }))
 }
 
 ///
@@ -49,7 +48,7 @@ fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session:
 ///
 /// (This creates a new session for this user)
 ///
-fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse> {
+fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Output=Result<UiHandlerResponse, Error>> {
     // Convert the events into an iterator
     let ui_request  = ui_request.clone();
     let events      = stream::iter::<_>(ui_request.events.into_iter());
@@ -86,7 +85,7 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
     // Turn the stream into a response
     let response = updates
         .collect()
-        .map(|updates| UiHandlerResponse { updates });
+        .map(|updates| Ok(UiHandlerResponse { updates }));
 
     // This is the future we return
     response
@@ -95,7 +94,7 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
 ///
 /// Handles a JSON UI request
 ///
-fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request: &UiHandlerRequest) -> impl Future<Item=HttpResponse, Error=Error> {
+fn handle_ui_request<Session: ActixSession+Sync+Send+'static>(req: HttpRequest, ui_request: &UiHandlerRequest) -> impl Future<Output=Result<HttpResponse, Error>> {
     let session_state = req.app_data::<Arc<Session>>().expect("Flowbetween session state");
 
     let session_state = Arc::clone(&session_state);
@@ -104,16 +103,16 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
     let session_id  = ui_request.session_id.clone();
 
     // Generate the response
-    let response: Box<dyn Future<Item=UiHandlerResponse, Error=Error>> = match session_id {
-        None                => Box::new(handle_no_session(session_state, base_url(&req), ui_request)),
+    let response: BoxFuture<'static, Result<UiHandlerResponse, Error>> = match session_id {
+        None                => Box::pin(handle_no_session(session_state, base_url(&req), ui_request)),
         Some(session_id)    => {
             // Try to fetch the session corresponding to this ID
             let session = session_state.get_session(&session_id);
 
             // Send the events to the appropriate session if we find one
             match session {
-                Some(session)   => Box::new(handle_with_session::<Session>(&mut *session.lock().unwrap(), ui_request)),
-                None            => Box::new(handle_no_session(session_state, base_url(&req), ui_request))
+                Some(session)   => Box::pin(handle_with_session::<Session>(&mut *session.lock().unwrap(), ui_request)),
+                None            => Box::pin(handle_no_session(session_state, base_url(&req), ui_request))
             }
         }
     };
@@ -121,18 +120,20 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
     // Turn the UI response into a JSON response
     response
         .map(move |response| {
-            HttpResponse::Ok()
-                .header(http::header::CONTENT_TYPE, "application/json; charset=utf-8")
-                .json(response)
+            response.map(|response| {
+                HttpResponse::Ok()
+                    .header(http::header::CONTENT_TYPE, "application/json; charset=utf-8")
+                    .json(response)
+                })
         })
 }
 
 ///
 /// Post request handler for the session URL
 ///
-pub fn session_post_handler<Session: 'static+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> BoxFuture<'static, Result<HttpResponse, Error>> {
+pub fn session_post_handler<Session: 'static+Send+Sync+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> BoxFuture<'static, Result<HttpResponse, Error>> {
     // Process this UI request
-    Box::new(handle_ui_request::<Session>(req, &*ui_request))
+    Box::pin(handle_ui_request::<Session>(req, &*ui_request))
 }
 
 ///
