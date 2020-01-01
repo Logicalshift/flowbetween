@@ -51,8 +51,8 @@ impl<Session: ActixSession+'static> FloWsSession<Session> {
 
         // Updates are sent to the websocket
         let update_stream = update_stream
-            .map(|update, _actor, _ctx| serde_json::to_string(&update).unwrap())
-            .map(|update, _actor, ctx| ctx.text(update));
+            .map(|update, _actor, _ctx| update.map(|update| serde_json::to_string(&update).unwrap()))
+            .map(|update, _actor, ctx| update.map(|update| ctx.text(update)));
 
         // Spawn the updates on the context
         ctx.spawn(update_stream.finish());
