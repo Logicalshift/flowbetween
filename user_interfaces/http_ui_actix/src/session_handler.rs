@@ -8,7 +8,7 @@ use actix_web::web::Json;
 use actix_web::Error;
 use futures::*;
 use futures::stream;
-use futures::future::{BoxFuture};
+use futures::future::{BoxFuture, LocalBoxFuture};
 
 use std::sync::*;
 
@@ -131,7 +131,7 @@ fn handle_ui_request<Session: ActixSession+Sync+Send+'static>(req: HttpRequest, 
 ///
 /// Post request handler for the session URL
 ///
-pub fn session_post_handler<Session: 'static+Send+Sync+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> BoxFuture<'static, Result<HttpResponse, Error>> {
+pub fn session_post_handler<Session: 'static+Send+Sync+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> LocalBoxFuture<'static, Result<HttpResponse, Error>> {
     // Process this UI request
     Box::pin(handle_ui_request::<Session>(req, &*ui_request))
 }
@@ -139,7 +139,7 @@ pub fn session_post_handler<Session: 'static+Send+Sync+ActixSession>(req: HttpRe
 ///
 /// Get request handler for the session URL
 ///
-pub fn session_get_handler<Session: 'static+ActixSession>(req: HttpRequest) -> BoxFuture<'static, Result<HttpResponse, Error>> {
+pub fn session_get_handler<Session: 'static+ActixSession>(req: HttpRequest) -> LocalBoxFuture<'static, Result<HttpResponse, Error>> {
     // Get requests are handled by the session resource handler
     session_resource_handler::<Session>(req)
 }
