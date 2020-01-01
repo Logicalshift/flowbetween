@@ -1,6 +1,7 @@
 use super::actix_session::*;
 
 use flo_http_ui::*;
+use flo_stream::*;
 use flo_ui::*;
 
 use actix::*;
@@ -9,7 +10,8 @@ use actix_web::web;
 use actix_web_actors::ws;
 use futures::*;
 use futures::future;
-use futures::sync::oneshot;
+use futures::future::{BoxFuture};
+use futures::channel::oneshot;
 use serde_json;
 
 use std::mem;
@@ -23,7 +25,7 @@ struct FloWsSession<Session: ActixSession+'static> {
     session: Arc<Mutex<HttpSession<Session::CoreUi>>>,
 
     /// The event sink for this session
-    event_sink: Box<dyn Future<Item=HttpEventSink, Error=()>>
+    event_sink: BoxFuture<'static, WeakPublisher<Event>>
 }
 
 impl<Session: ActixSession+'static> FloWsSession<Session> {
@@ -61,7 +63,7 @@ impl<Session: ActixSession+'static> Actor for FloWsSession<Session> {
     type Context = ws::WebsocketContext<Self>;
 }
 
-impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError> for FloWsSession<Session> {
+impl<Session: ActixSession+'static> StreamHandler<Result<ws::Message, ws::ProtocolError>> for FloWsSession<Session> {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         // Text messages are decoded as arrays of HTTP events and sent to the event sink
         match msg {
@@ -72,7 +74,7 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
                 if let Ok(request) = json {
                     // Create a one-shot future for when the event sink is available again
                     let (send_sink, next_sink)  = oneshot::channel();
-                    let mut next_sink: Box<dyn Future<Item=HttpEventSink, Error=()>> = Box::new(next_sink.map_err(|_| ()));
+                    let mut next_sink: BoxFuture<'static, WeakPublisher<Event>> = Box::new(next_sink.map_err(|_| ()));
                     mem::swap(&mut self.event_sink, &mut next_sink);
 
                     // Send to the sink
@@ -98,7 +100,7 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
 ///
 /// Creates a handler for requests that should spawn a websocket for a session
 ///
-pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest, payload: web::Payload) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest, payload: web::Payload) -> BoxFuture<'static, Result<HttpResponse, Error>> {
     // The tail indicates the session ID
     let tail = req.match_info().get("tail").map(|s| String::from(s));
 

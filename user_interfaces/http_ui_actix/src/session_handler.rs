@@ -8,6 +8,7 @@ use actix_web::web::Json;
 use actix_web::Error;
 use futures::*;
 use futures::stream;
+use futures::future::{BoxFuture};
 
 use std::sync::*;
 
@@ -29,7 +30,7 @@ fn base_url(req: &HttpRequest) -> String {
 ///
 /// Handles a request with a session that exists
 ///
-fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session::CoreUi>, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
+fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session::CoreUi>, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse> {
     // Send the events followed by a tick
     let mut events  = ui_request.events.clone();
     events.push(Event::Tick);
@@ -48,10 +49,10 @@ fn handle_with_session<Session: ActixSession>(session: &mut HttpSession<Session:
 ///
 /// (This creates a new session for this user)
 ///
-fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse, Error=Error> {
+fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: String, ui_request: &UiHandlerRequest) -> impl Future<Item=UiHandlerResponse> {
     // Convert the events into an iterator
     let ui_request  = ui_request.clone();
-    let events      = stream::iter_ok::<_, Error>(ui_request.events.into_iter());
+    let events      = stream::iter::<_>(ui_request.events.into_iter());
 
     // Map each event onto the corresponding update
     let updates     = events
@@ -73,11 +74,11 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
                     // TODO: With Actix, we run a websocket on the same port, so also send a websocket update
 
                     // Return the updates
-                    stream::iter_ok(updates)
+                    stream::iter(updates)
                 },
 
                 // For any other event, a session is required, so we indicate that it's missing
-                _ => stream::iter_ok(vec![Update::MissingSession])
+                _ => stream::iter(vec![Update::MissingSession])
             }
         })
         .flatten();
@@ -129,7 +130,7 @@ fn handle_ui_request<Session: ActixSession+'static>(req: HttpRequest, ui_request
 ///
 /// Post request handler for the session URL
 ///
-pub fn session_post_handler<Session: 'static+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_post_handler<Session: 'static+ActixSession>(req: HttpRequest, ui_request: Json<UiHandlerRequest>) -> BoxFuture<'static, Result<HttpResponse, Error>> {
     // Process this UI request
     Box::new(handle_ui_request::<Session>(req, &*ui_request))
 }
@@ -137,7 +138,7 @@ pub fn session_post_handler<Session: 'static+ActixSession>(req: HttpRequest, ui_
 ///
 /// Get request handler for the session URL
 ///
-pub fn session_get_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_get_handler<Session: 'static+ActixSession>(req: HttpRequest) -> BoxFuture<'static, Result<HttpResponse, Error>> {
     // Get requests are handled by the session resource handler
     session_resource_handler::<Session>(req)
 }

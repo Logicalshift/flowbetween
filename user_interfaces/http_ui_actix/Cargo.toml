@@ -16,6 +16,7 @@ flo_canvas          = { path = "../../canvas", version = "0.2" }
 flo_http_ui         = { path = "../http_ui", version = "0.2" }
 flo_static_files    = { path = "../../static_files", version= "0.1" }
 flo_logging         = { path = "../../logging", version = "0.2" }
+flo_stream          = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
 
 actix-web           = "2.0"
 actix-web-actors    = "2.0"

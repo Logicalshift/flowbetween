@@ -11,6 +11,7 @@ use actix_web::Error;
 use futures::*;
 use futures::future;
 use futures::stream;
+use futures::future::{BoxFuture};
 use bytes::Bytes;
 use percent_encoding::*;
 
@@ -122,7 +123,7 @@ where CoreUi: 'static+CoreUserInterface+Send+Sync {
 ///
 /// Produces a HTTP response for an image request
 ///
-fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, image_name: String) -> impl Future<Output=Result<HttpResponse, Error>> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
 
@@ -171,7 +172,7 @@ fn handle_image_request<Session: ActixSession>(_req: HttpRequest, session: &Http
 ///
 /// Produces a HTTP response for a canvas request
 ///
-fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Item=HttpResponse, Error=Error> {
+fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &HttpSession<Session::CoreUi>, controller_path: Vec<String>, canvas_name: String) -> impl Future<Output=Result<HttpResponse, Error=Error>> {
     // Try to fetch the controller at this path
     let controller = get_controller(session, controller_path.clone());
 
@@ -200,7 +201,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
                 })
                 .map(|encoded| Bytes::from(encoded.as_bytes()));
 
-            let encoded_drawing = stream::iter_ok(encoded_drawing)
+            let encoded_drawing = stream::iter(encoded_drawing)
                 .map_err(|_: ()| io::Error::new(ErrorKind::Other, "Unknown error"));
 
             // Turn into a response
@@ -224,7 +225,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
 ///
 /// Handler for get requests for a session
 ///
-pub fn session_resource_handler<Session: 'static+ActixSession>(req: HttpRequest) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_resource_handler<Session: 'static+ActixSession>(req: HttpRequest) -> BoxFuture<'static, Result<HttpResponse, Error>> {
     // The path is the tail of the request
     let path    = req.match_info().get("tail").map(|s| String::from(s));
     let state   = req.app_data::<Arc<Session>>().cloned();
