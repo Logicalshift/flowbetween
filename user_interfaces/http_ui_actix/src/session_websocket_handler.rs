@@ -25,7 +25,7 @@ struct FloWsSession<Session: ActixSession+'static> {
     session: Arc<Mutex<HttpSession<Session::CoreUi>>>,
 
     /// The event sink for this session
-    event_sink: BoxFuture<'static, WeakPublisher<Event>>
+    event_sink: BoxFuture<'static, WeakPublisher<Vec<Event>>>
 }
 
 impl<Session: ActixSession+'static> FloWsSession<Session> {
@@ -64,30 +64,32 @@ impl<Session: ActixSession+'static> Actor for FloWsSession<Session> {
 }
 
 impl<Session: ActixSession+'static> StreamHandler<Result<ws::Message, ws::ProtocolError>> for FloWsSession<Session> {
-    fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         // Text messages are decoded as arrays of HTTP events and sent to the event sink
         match msg {
-            ws::Message::Text(message) => {
+            Ok(ws::Message::Text(message)) => {
                 // Parse the JSON message
                 let json = serde_json::from_str::<Vec<Event>>(&message);
 
                 if let Ok(request) = json {
                     // Create a one-shot future for when the event sink is available again
                     let (send_sink, next_sink)  = oneshot::channel();
-                    let mut next_sink: BoxFuture<'static, WeakPublisher<Event>> = Box::new(next_sink.map_err(|_| ()));
+                    let mut next_sink: BoxFuture<'static, WeakPublisher<Vec<Event>>> = Box::pin(next_sink.map(|result| result.unwrap()));
                     mem::swap(&mut self.event_sink, &mut next_sink);
 
-                    // Send to the sink
-                    let send_future = next_sink
-                        .and_then(|event_sink| event_sink.send(request))
-                        .map(move |event_sink| { send_sink.send(event_sink).ok(); });
-
                     // Spawn the future in this actor
-                    ctx.spawn(fut::wrap_future(send_future));
+                    ctx.spawn(fut::wrap_future(async move {
+                        // Send to the sink
+                        let event_sink = next_sink.await;
+                        event_sink.publish(request).await;
+                        send_sink.send(event_sink).ok();
+                    }));
                 }
             },
 
-            ws::Message::Ping(msg) => ctx.pong(&msg),
+            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
+
+            Err(protocol_error) => { }
             _ => (),
         }
     }
@@ -134,14 +136,14 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest
             });
 
             // Generate the websocket response
-            Box::new(response.map(|response| future::ok(response))
+            Box::pin(response.map(|response| future::ok(response))
                 .unwrap_or_else(|err| future::err(err)))
         } else {
             // Session not found
-            Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
+            Box::pin(future::ok(HttpResponse::NotFound().body("Not found")))
         }
     } else {
         // Handler not properly installed, probably
-        Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
+        Box::pin(future::ok(HttpResponse::NotFound().body("Not found")))
     }
 }
