@@ -3,6 +3,7 @@ name        = "flow_between"
 version     = "0.2.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
+edition     = "2018"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "Vector animation editor"
 include     = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
