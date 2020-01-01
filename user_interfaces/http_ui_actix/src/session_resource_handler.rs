@@ -197,7 +197,7 @@ fn handle_canvas_request<Session: ActixSession>(_req: HttpRequest, session: &Htt
 
                     encoded
                 })
-                .map(|encoded| Bytes::from(encoded.as_bytes()));
+                .map(|encoded| Bytes::copy_from_slice(encoded.as_bytes()));
 
             let encoded_drawing = stream::iter(encoded_drawing).map(|s| -> Result<_, Error> { Ok(s) });
 
