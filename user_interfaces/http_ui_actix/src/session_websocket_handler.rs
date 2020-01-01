@@ -82,6 +82,7 @@ impl<Session: ActixSession+'static> StreamHandler<Result<ws::Message, ws::Protoc
                         // Send to the sink
                         let mut event_sink = next_sink.await;
                         event_sink.publish(request).await;
+                        event_sink.when_empty().await;
                         send_sink.send(event_sink).ok();
                     }));
                 }
