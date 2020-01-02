@@ -10,8 +10,8 @@ use flo_canvas::*;
 use flo_cocoa_pipe::*;
 
 use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
+use futures::task;
+use futures::task::{Poll, Context};
 
 use cocoa::base::{id, nil};
 use cocoa::foundation::NSString;
@@ -57,7 +57,7 @@ pub struct CocoaSession {
     action_publisher: Publisher<Vec<AppAction>>,
 
     /// The stream of actions for this session (or None if we aren't monitoring for actions)
-    actions: Option<Spawn<Subscriber<Vec<AppAction>>>>,
+    actions: Option<Subscriber<Vec<AppAction>>>,
 
     /// The event publisher for this session
     events: Publisher<Vec<AppEvent>>
@@ -102,7 +102,7 @@ impl CocoaSession {
     pub fn create_user_interface(&mut self) -> impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> {
         // Start listening for actions if we aren't already, by spawning a subscriber to our publisher
         if self.actions.is_none() {
-            self.actions = Some(executor::spawn(self.action_publisher.subscribe()));
+            self.actions = Some(self.action_publisher.subscribe());
             self.start_listening();
         }
 
@@ -147,30 +147,32 @@ impl CocoaSession {
         if let Some(target) = self.get_target_object() {
             autoreleasepool(move || {
                 // Create the object to notify when there's an update
-                let notify = Arc::new(CocoaSessionNotify::new(&target));
+                let waker   = Arc::new(CocoaSessionNotify::new(&target));
+                let waker   = task::waker(&waker);
+                let context = Context::from_waker(&waker);
 
                 // Drain the stream until it's empty or it blocks
                 loop {
                     let next = self.actions
                         .as_mut()
-                        .map(|actions| actions.poll_stream_notify(&notify, 0))
-                        .unwrap_or_else(|| Ok(Async::NotReady));
+                        .map(|actions| actions.poll_next_unpin(&mut context))
+                        .unwrap_or_else(|| Poll::Pending);
 
                     match next {
-                        Ok(Async::NotReady)     => { break; }
-                        Ok(Async::Ready(None))  => {
+                        Poll::Pending     => { break; }
+                        Poll::Ready(None)  => {
                             // Session has finished
                             break;
                         }
 
-                        Ok(Async::Ready(Some(actions))) => {
+                        Poll::Ready(Some(Ok(actions))) => {
                             for action in actions {
                                 // Perform the action
                                 self.dispatch_app_action(action);
                             }
                         }
 
-                        Err(_) => {
+                        Poll::Ready(Some(Err(_))) => {
                             // Action stream should never produce any errors
                             unimplemented!("Action stream should never produce any errors")
                         }
@@ -500,12 +502,12 @@ impl CocoaSession {
     ///
     /// Sends a tick event
     ///
-    pub fn tick(&mut self) {
+    pub async fn tick(&mut self) {
         // Create a place to send the tick to
-        let mut events = executor::spawn(self.events.republish());
+        let mut events = self.events.republish();
 
         // Send a tick event
-        events.wait_send(vec![AppEvent::Tick]).ok();
+        events.publish(vec![AppEvent::Tick]).await;
     }
 
     ///
@@ -720,10 +722,10 @@ impl CocoaSessionNotify {
     }
 }
 
-impl executor::Notify for CocoaSessionNotify {
-    fn notify(&self, _: usize) {
+impl task::ArcWake for CocoaSessionNotify {
+    fn wake_by_ref(arc_self: &Arc<Self>) {
         // Load the target object
-        let target_object = self.notify_object.lock().unwrap();
+        let target_object = arc_self.notify_object.lock().unwrap();
 
         // If it still exists, send the message to the object on the main thread
         unsafe {
