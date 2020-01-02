@@ -294,9 +294,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                     let current_time    = self.current_time.get();
 
                     // Create a keyframe at this time
-                    executor::block_on(self.edit_sink.publish(Arc::new(vec![
-                        AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))
-                    ])));
+                    self.animation.perform_edits(vec![AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))]);
 
                     // Canvas should be invalidated
                     self.animation.timeline().invalidate_canvas();
