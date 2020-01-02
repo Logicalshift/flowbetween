@@ -1,11 +1,12 @@
 [package]
 name        = "flo_nanovg_canvas"
-version     = "0.1.1"
+version     = "0.2.0"
 authors     = ["Andrew Hunter"]
+edition     = "2018"
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
 
 [dependencies]
-flo_canvas  = { version = "^0.1.0", path="../../canvas" }
+flo_canvas  = { version = "0.2", path="../../canvas" }
 nanovg      = { version = "1.0", features = ["gl3"] }
 gl          = "0.11"
