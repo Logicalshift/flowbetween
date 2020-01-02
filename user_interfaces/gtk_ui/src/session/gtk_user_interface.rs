@@ -4,8 +4,9 @@ use super::super::gtk_action::*;
 use super::super::gtk_event::*;
 
 use flo_ui::*;
+use flo_stream::*;
 
-use futures::*;
+use futures::stream::{BoxStream};
 use std::sync::*;
 
 ///
@@ -13,7 +14,10 @@ use std::sync::*;
 ///
 pub struct GtkUserInterface {
     /// The running thread used for this user interface
-    thread: Arc<GtkThread>
+    thread: Arc<GtkThread>,
+
+    /// The action input publisher
+    input: Publisher<Vec<GtkAction>>
 }
 
 impl GtkUserInterface {
@@ -24,19 +28,17 @@ impl GtkUserInterface {
         // TODO: there should probably only be one thread, onto which we map the widget and window IDs used by this user interface
         // TODO: drop all of the widgets created by this user interface when this structure is dropped
         GtkUserInterface {
-            thread: Arc::new(GtkThread::new())
+            thread: Arc::new(GtkThread::new()),
+            input:  Publisher::new(100)
         }
     }
 }
 
 impl UserInterface<Vec<GtkAction>, GtkEvent, ()> for GtkUserInterface {
-    type EventSink      = Box<dyn Sink<SinkItem=Vec<GtkAction>, SinkError=()>>;
-    type UpdateStream   = Box<dyn Stream<Item=GtkEvent, Error=()>>;
+    type UpdateStream   = BoxStream<'static, GtkEvent>;
 
-    fn get_input_sink(&self) -> Self::EventSink {
-        let sink = ActionSink::new(Arc::clone(&self.thread));
-
-        Box::new(sink)
+    fn get_input_sink(&self) -> WeakPublisher<Vec<GtkAction>> {
+        self.input.republish_weak()
     }
 
     fn get_updates(&self) -> Self::UpdateStream {
