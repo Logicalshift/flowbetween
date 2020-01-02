@@ -8,7 +8,6 @@ use ui::session::*;
 use canvas::*;
 use binding::*;
 use flo_stream::*;
-use ::desync::*;
 
 use futures::*;
 use futures::task::{Poll};
@@ -34,43 +33,27 @@ pub struct HttpUserInterface<CoreUi> {
 
     /// Publishes events to the core UI
     event_publisher: Publisher<Vec<Event>>,
-
-    /// Processes events from the publisher onto the main UI task
-    _event_processor: Arc<Desync<WeakPublisher<Vec<UiEvent>>>>
 }
 
 impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     /// Creates a new HTTP UI that will translate requests for the specified core UI
     ///
-    pub fn new(ui: Arc<CoreUi>, base_path: String) -> HttpUserInterface<CoreUi> {
+    pub fn new(ui: Arc<CoreUi>, base_path: String) -> (HttpUserInterface<CoreUi>, impl Future<Output=()>) {
         let ui_tree             = ui.ui_tree();
-        let mut event_publisher = Publisher::new(100);
+        let event_publisher     = Publisher::new(100);
 
-        // Subscribe to the events and map them
-        let subscription    = event_publisher.subscribe();
-        let mapped_events   = subscription.map(move |http_events: Vec<_>| {
-            let core_events = http_events.into_iter()
-                .map(|evt| Self::http_event_to_core_event(evt))
-                .collect::<Vec<_>>();
-            core_events
-        });
+        // Create the run loop
+        let run_loop        = Self::run(event_publisher.republish_weak(), ui.get_input_sink());
 
-        // Process via the event processor
-        let core_events     = ui.get_input_sink();
-        let event_processor = Arc::new(Desync::new(core_events));
-
-        pipe_in(Arc::clone(&event_processor), mapped_events, |publisher, event| {
-            Box::pin(publisher.publish(event))
-        });
-
-        HttpUserInterface {
+        let user_interface  = HttpUserInterface {
             core_ui:            ui,
             ui_tree:            ui_tree,
             base_path:          base_path,
-            event_publisher:    event_publisher,
-            _event_processor:   event_processor
-        }
+            event_publisher:    event_publisher
+        };
+
+        (user_interface, run_loop)
     }
 
     ///
@@ -315,6 +298,7 @@ mod test {
     use super::*;
 
     use serde_json::*;
+    use futures::executor;
     use futures::channel::oneshot;
 
     use std::time::Duration;
@@ -350,15 +334,17 @@ mod test {
 
     #[test]
     fn generates_initial_update() {
-        let controller      = TestController { ui: bind(Control::empty()) };
-        let core_session    = Arc::new(UiSession::new(controller));
-        let http_session    = HttpUserInterface::new(core_session, "test/session".to_string());
+        let thread_pool                 = executor::ThreadPool::new().unwrap();
+        let controller                  = TestController { ui: bind(Control::empty()) };
+        let core_session                = Arc::new(UiSession::new(controller));
+        let (http_session, run_loop)    = HttpUserInterface::new(core_session, "test/session".to_string());
 
-        let http_stream     = http_session.get_updates();
+        thread_pool.spawn_ok(run_loop);
+        let http_stream                 = http_session.get_updates();
 
         //let next_or_timeout = stream::select(http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(2000).into_stream().map(|_| TestItem::Timeout));
-        let next_or_timeout = http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates)));
-        let mut next_or_timeout = next_or_timeout;
+        let next_or_timeout             = http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates)));
+        let mut next_or_timeout         = next_or_timeout;
 
         // First update should be munged into a NewUserInterfaceHtml update
         executor::block_on(async {

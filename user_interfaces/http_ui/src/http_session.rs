@@ -245,10 +245,12 @@ mod test {
 
     #[test]
     fn will_return_update_for_event() {
+        let thread_pool         = executor::ThreadPool::new().unwrap();
         let null_session        = NullSession::new();
         let ui                  = UiSession::new(null_session);
-        let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
+        let (http_ui, run_loop) = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
         let mut http_session    = HttpSession::new(Arc::new(http_ui));
+        thread_pool.spawn_ok(run_loop);
 
         let send_an_event       = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
         let updates             = executor::block_on(send_an_event);
@@ -259,10 +261,12 @@ mod test {
 
     #[test]
     fn will_return_update_for_next_event() {
+        let thread_pool         = executor::ThreadPool::new().unwrap();
         let null_session        = NullSession::new();
         let ui                  = UiSession::new(null_session);
-        let http_ui             = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
+        let (http_ui, run_loop) = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
         let mut http_session    = HttpSession::new(Arc::new(http_ui));
+        thread_pool.spawn_ok(run_loop);
 
         let send_an_event       = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
         executor::block_on(send_an_event);
