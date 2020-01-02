@@ -129,6 +129,15 @@ impl AnimationDb {
     pub fn create_edit_sink(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
         self.core_publisher.republish()
     }
+
+    ///
+    /// Performs some edits on this database
+    ///
+    pub fn perform_edits(&self, edits: Vec<AnimationEdit>) {
+        self.core.desync(move |db| {
+            process_edits(db, Arc::new(edits));
+        })
+    }
 }
 
 impl AnimationDbCore<FloSqlite> {

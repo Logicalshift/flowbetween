@@ -14,7 +14,7 @@ pub (crate) fn create_edit_publisher<TFile: 'static+FloFile+Unpin+Send>(db: &Arc
     let mut publisher = Publisher::new(1);
 
     // Pipe edits from a subscriber into the core
-    pipe_in(db, publisher.subscribe(), |db, edits| { process_edits(db, edits); Box::pin(future::ready(())) });
+    pipe_in(db, publisher.subscribe(), |db, edits| { process_edits(db, edits); future::ready(()).boxed() });
 
     // Return the publisher
     publisher
@@ -23,7 +23,7 @@ pub (crate) fn create_edit_publisher<TFile: 'static+FloFile+Unpin+Send>(db: &Arc
 ///
 /// Processes a series of edits on a database core
 ///
-fn process_edits<TFile: FloFile+Unpin+Send>(db: &mut AnimationDbCore<TFile>, edits: Arc<Vec<AnimationEdit>>) {
+pub (crate) fn process_edits<TFile: FloFile+Unpin+Send>(db: &mut AnimationDbCore<TFile>, edits: Arc<Vec<AnimationEdit>>) {
     // Clone the edits so we can modify them
     let edits = Vec::clone(&*edits);
 
