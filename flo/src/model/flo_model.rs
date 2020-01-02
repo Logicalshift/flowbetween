@@ -101,53 +101,59 @@ impl<Anim: EditableAnimation+Animation+'static> FloModel<Anim> {
 
         // Process edits for this subscription
         pipe_in(Arc::clone(&self.edit_publisher), subscription, move |_, edits| {
-            use self::AnimationEdit::*;
-            use self::LayerEdit::*;
+            Self::process_edits(&*edits, &size_binding, &timeline, &frame_edit_counter);
+            future::ready(()).boxed()
+        });
+    }
 
-            // Update the viewmodel based on the edits that are about to go through
-            let mut advance_edit_counter = false;
+    ///
+    /// Updates the model based on edits to the animation
+    ///
+    fn process_edits(edits: &Vec<AnimationEdit>, size_binding: &Binding<(f64, f64)>, timeline: &TimelineModel<Anim>, frame_edit_counter: &Binding<u64>) {
+        use self::AnimationEdit::*;
+        use self::LayerEdit::*;
 
-            for edit in edits.iter() {
-                match edit {
-                    SetSize(width, height) => {
-                        size_binding.set((*width, *height));
-                        advance_edit_counter = true;
-                    },
+        // Update the viewmodel based on the edits that are about to go through
+        let mut advance_edit_counter = false;
 
-                    AddNewLayer(_)              |
-                    RemoveLayer(_)              |
-                    Element(_, _)               |
-                    Motion(_, _)                |
-                    Layer(_, Path(_, _))        |
-                    Layer(_, Paint(_, _))       => {
-                        advance_edit_counter = true;
-                    }
+        for edit in edits.iter() {
+            match edit {
+                SetSize(width, height) => {
+                    size_binding.set((*width, *height));
+                    advance_edit_counter = true;
+                },
 
-                    Layer(_, AddKeyFrame(_))    |
-                    Layer(_, RemoveKeyFrame(_)) => {
-                        advance_edit_counter = true;
-                    },
+                AddNewLayer(_)              |
+                RemoveLayer(_)              |
+                Element(_, _)               |
+                Motion(_, _)                |
+                Layer(_, Path(_, _))        |
+                Layer(_, Paint(_, _))       => {
+                    advance_edit_counter = true;
+                }
 
-                    Layer(layer_id, SetName(new_name)) => {
-                        timeline.layers.get()
-                            .iter()
-                            .for_each(|layer| if &layer.id == layer_id { layer.name.set(new_name.clone())} );
-                        advance_edit_counter = true;
-                    },
+                Layer(_, AddKeyFrame(_))    |
+                Layer(_, RemoveKeyFrame(_)) => {
+                    advance_edit_counter = true;
+                },
 
-                    Layer(layer_id, SetOrdering(at_index)) => {
-                        unimplemented!("Cannot update model with layer ordering")
-                    }
+                Layer(layer_id, SetName(new_name)) => {
+                    timeline.layers.get()
+                        .iter()
+                        .for_each(|layer| if &layer.id == layer_id { layer.name.set(new_name.clone())} );
+                    advance_edit_counter = true;
+                },
+
+                Layer(layer_id, SetOrdering(at_index)) => {
+                    unimplemented!("Cannot update model with layer ordering")
                 }
             }
+        }
 
-            // Advancing the frame edit counter causes any animation frames to be regenerated
-            if advance_edit_counter {
-                frame_edit_counter.set(frame_edit_counter.get()+1);
-            }
-
-            Box::pin(future::ready(()))
-        });
+        // Advancing the frame edit counter causes any animation frames to be regenerated
+        if advance_edit_counter {
+            frame_edit_counter.set(frame_edit_counter.get()+1);
+        }
     }
 
     ///
@@ -377,6 +383,11 @@ impl<TargetSink: Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>, ProcessingFn: 
 */
 
 impl<Anim: 'static+Animation+EditableAnimation> EditableAnimation for FloModel<Anim> {
+    fn perform_edits(&self, edits: Vec<AnimationEdit>) {
+        Self::process_edits(&edits, &self.size_binding, &self.timeline, &self.frame_edit_counter);
+        self.animation.perform_edits(edits);
+    }
+
     ///
     /// Retrieves a sink that can be used to send edits for this animation
     ///

@@ -192,7 +192,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
         // Commit any animation edits that the tool produced
         if animation_edits.len() > 0 {
-            executor::block_on(self.edit_sink.publish(Arc::new(animation_edits)));
+            self.animation.perform_edits(animation_edits);
         }
 
         // If there's a brush preview, draw it as the renderer annotation
