@@ -10,7 +10,6 @@ use flo_binding::*;
 use flo_animation::*;
 use flo_animation::brushes::*;
 
-use futures::*;
 use std::iter;
 use std::sync::*;
 use std::time::Duration;
