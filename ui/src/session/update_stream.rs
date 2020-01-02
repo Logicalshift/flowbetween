@@ -185,9 +185,8 @@ impl Stream for UiUpdateStream {
     fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Self::Item>> {
         let self_ref = self.get_mut();
 
-        // Check for suspensions
-        let suspend_poll = self_ref.update_suspend.poll_next_unpin(context);
-        if let Poll::Ready(Some(is_suspended)) = suspend_poll {
+        // Check for suspensions (poll until the update queue goes to pending as we want to return 'pending')
+        while let Poll::Ready(Some(is_suspended)) = self_ref.update_suspend.poll_next_unpin(context) {
             self_ref.is_suspended = is_suspended;
         }
 
