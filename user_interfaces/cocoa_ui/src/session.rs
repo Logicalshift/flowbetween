@@ -148,7 +148,7 @@ impl CocoaSession {
             autoreleasepool(move || {
                 // Create the object to notify when there's an update
                 let waker   = Arc::new(CocoaSessionNotify::new(&target));
-                let waker   = task::waker(&waker);
+                let waker   = task::waker(waker);
                 let context = Context::from_waker(&waker);
 
                 // Drain the stream until it's empty or it blocks
@@ -159,22 +159,17 @@ impl CocoaSession {
                         .unwrap_or_else(|| Poll::Pending);
 
                     match next {
-                        Poll::Pending     => { break; }
-                        Poll::Ready(None)  => {
+                        Poll::Pending       => { break; }
+                        Poll::Ready(None)   => {
                             // Session has finished
                             break;
                         }
 
-                        Poll::Ready(Some(Ok(actions))) => {
+                        Poll::Ready(Some(actions)) => {
                             for action in actions {
                                 // Perform the action
                                 self.dispatch_app_action(action);
                             }
-                        }
-
-                        Poll::Ready(Some(Err(_))) => {
-                            // Action stream should never produce any errors
-                            unimplemented!("Action stream should never produce any errors")
                         }
                     }
                 }
