@@ -12,9 +12,6 @@ use objc::rc::*;
 use objc::declare::*;
 use objc::runtime::*;
 
-use futures::executor;
-use futures::executor::Spawn;
-
 use num_traits::cast::*;
 
 use std::mem;
@@ -50,7 +47,7 @@ pub struct FloEvents {
     view_id: usize,
 
     /// Where events are published
-    events_publisher: Spawn<Publisher<Vec<AppEvent>>>,
+    events_publisher: Publisher<Vec<AppEvent>>,
 
     /// Set to true if we are going to receive a callback to send the events
     queued_update: bool,
@@ -67,7 +64,7 @@ impl FloEvents {
         FloEvents {
             view_id:            view_id,
             session_id:         session_id,
-            events_publisher:   executor::spawn(publisher),
+            events_publisher:   publisher,
             queued_update:      false,
             pending_events:     vec![]
         }
