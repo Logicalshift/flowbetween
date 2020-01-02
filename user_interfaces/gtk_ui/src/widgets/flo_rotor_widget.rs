@@ -8,6 +8,7 @@ use super::super::gtk_widget_event_type::*;
 use super::super::gtk_event_parameter::*;
 
 use flo_ui::*;
+use flo_stream::*;
 
 use glib::prelude::*;
 use gtk;
@@ -45,10 +46,10 @@ struct RotorData {
     initial_value: f64,
 
     /// Event names and sinks for set events
-    set_events: Vec<(String, GtkEventSink)>,
+    set_events: Vec<(String, WeakPublisher<GtkEvent>)>,
 
     /// Event names and sinks for edit events
-    edit_events: Vec<(String, GtkEventSink)>
+    edit_events: Vec<(String, WeakPublisher<GtkEvent>)>
 }
 
 ///
