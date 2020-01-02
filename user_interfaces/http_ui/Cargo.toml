@@ -26,3 +26,6 @@ futures             = "0.3"
 desync              = { git = "https://github.com/Logicalshift/desync", branch = "develop", version = "0.6" }
 itertools           = "0.8"
 bytes               = "0.5"
+
+[dev-dependencies]
+futures             = { version = "0.3", features = [ "thread-pool" ] }
