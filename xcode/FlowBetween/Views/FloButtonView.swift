@@ -30,9 +30,7 @@ class FloButtonView : FloControlView {
             toProperty.trackValue { value in
                 switch (value) {
                 case .Bool(let isSelected):
-                    let state = isSelected ? .on : .off
-
-                    (this?._control as? NSButton)?.state = state
+                    (this?._control as? NSButton)?.state = isSelected ? .on : .off
                     break
 
                 case .Float(let floatVal):      this?._control.doubleValue = Double(floatVal)
@@ -48,13 +46,10 @@ class FloButtonView : FloControlView {
             toProperty.trackValue { value in
                 switch (value) {
                 case .Bool(let isSelected):
+                    (this?._control as? NSButton)?.state = isSelected ? .on : .off
 
-                    let state =  isSelected ? .on : .off
-
-                    (this?._control as? NSButton)?.state = state
-
-                    default:
-                        break
+                default:
+                    break
                 }
             }
             break

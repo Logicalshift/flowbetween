@@ -373,7 +373,7 @@ class FloEmptyView : NSView, FloContainerView {
     func tryDrag(onDrag: (DragAction, CGPoint, CGPoint) -> (), initialEvent: NSEvent) {
         // The initial pos is used for the 'from' coordinates for the drag
         // We use an origin point so if the view moves (or is removed) during the drag we continue to generate points consistent with the original drag origin
-        var origin              = self.convert(.zero, to: nil)
+        var origin              = self.convert(CGPoint(x: 0, y: 0), to: nil)
         let size                = self.bounds.size
         origin.y                -= size.height
         let initialPosInWindow  = initialEvent.locationInWindow

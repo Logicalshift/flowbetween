@@ -29,7 +29,7 @@ import Cocoa
 
     deinit {
         // Return this layer to the backing pool of the canvas
-        canvas?.returnUnusedLayer(_layer, _clearCount)
+        _canvas?.returnUnusedLayer(_layer, _clearCount)
     }
 
     ///

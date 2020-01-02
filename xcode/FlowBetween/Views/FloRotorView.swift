@@ -139,7 +139,7 @@ class FloRotorView : FloEmptyView {
     override func mouseDown(with event: NSEvent) {
         // Store the initial drag parameters
         let initialEvent    = event
-        let origin          = convert(.zero, to: nil)
+        let origin          = convert(CGPoint(x: 0, y: 0), to: nil)
         let initialPos      = initialEvent.locationInWindow
         let initialAngle    = angleForPoint(CGPoint(x: initialPos.x-origin.x, y: initialPos.y-origin.y))
         let initialValue    = _value

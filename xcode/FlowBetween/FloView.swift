@@ -77,7 +77,7 @@ public class FloView : NSObject, FloViewDelegate {
         weak var this = self
 
         _view.performLayout = { size in this?.performLayout(size) }
-        _view.onClick       = { if let onClick = this?._onClick { onClick() return true } else { return false } }
+        _view.onClick       = { if let onClick = this?._onClick { onClick(); return true } else { return false } }
     }
 
     ///
@@ -200,7 +200,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     @objc public func requestClick(_ events: FloEvents!, withName: String?) {
         weak var this = self
-        _view.onClick = { if let onClick = this?._onClick { onClick() return true } else { return false } }
+        _view.onClick = { if let onClick = this?._onClick { onClick(); return true } else { return false } }
         _onClick = { events.sendClick(withName) }
     }
 
@@ -356,7 +356,7 @@ public class FloView : NSObject, FloViewDelegate {
     ///
     @objc public func requestPaint(withDeviceId deviceId: UInt32, events: FloEvents!, withName: String?) {
         // Convert the device ID into the device enum
-        let device = FloPaintDevicenit(rawValue: deviceId)
+        let device = FloPaintDevice.init(rawValue: deviceId)
 
         if let device = device {
             // Ask the underlying view to relay paint events to us
