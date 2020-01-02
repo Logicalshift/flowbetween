@@ -148,7 +148,7 @@ impl UiSessionCore {
                     if self.suspension_count == 1 && self.tick_on_resume {
                         // If a tick occurred while updates were suspended, send it now as we're just about to release the suspension
                         self.tick_on_resume = false;
-                        self.dispatch_tick(controller);
+                        self.dispatch_tick(controller).await;
                     }
 
                     self.suspension_count -= 1;
@@ -158,7 +158,7 @@ impl UiSessionCore {
                 UiEvent::Tick => {
                     if self.suspension_count <= 0 {
                         // Send a tick to this controller
-                        self.dispatch_tick(controller);
+                        self.dispatch_tick(controller).await;
                     } else {
                         // Send a tick when updates resume
                         self.tick_on_resume = true;
@@ -231,6 +231,7 @@ impl UiSessionCore {
     ///
     /// Sends ticks to the specified controller and all its subcontrollers
     ///
+    #[must_use]
     fn dispatch_tick<'a>(&'a mut self, controller: &'a dyn Controller) -> BoxFuture<'a, ()> {
         async move {
             // Send ticks to the subcontrollers first
