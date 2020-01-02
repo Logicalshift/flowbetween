@@ -6,7 +6,8 @@ use flo_stream::*;
 use flo_binding::*;
 
 use itertools::*;
-use futures::executor;
+use futures::*;
+use futures::future::{BoxFuture};
 
 use std::mem;
 use std::sync::*;
@@ -114,7 +115,7 @@ impl UiSessionCore {
     ///
     /// Dispatches an event to the specified controller
     ///
-    pub fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &dyn Controller) {
+    pub async fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &dyn Controller) {
         for event in events {
             // Send the event to the controllers
             match event {
@@ -140,7 +141,7 @@ impl UiSessionCore {
 
                 UiEvent::SuspendUpdates => {
                     self.suspension_count += 1;
-                    executor::block_on(async { self.suspend_updates.publish(self.suspension_count > 0).await; });
+                    self.suspend_updates.publish(self.suspension_count > 0).await;
                 },
 
                 UiEvent::ResumeUpdates => {
@@ -151,7 +152,7 @@ impl UiSessionCore {
                     }
 
                     self.suspension_count -= 1;
-                    executor::block_on(async { self.suspend_updates.publish(self.suspension_count > 0).await; });
+                    self.suspend_updates.publish(self.suspension_count > 0).await;
                 },
 
                 UiEvent::Tick => {
@@ -230,19 +231,21 @@ impl UiSessionCore {
     ///
     /// Sends ticks to the specified controller and all its subcontrollers
     ///
-    fn dispatch_tick(&mut self, controller: &dyn Controller) {
-        // Send ticks to the subcontrollers first
-        let ui              = controller.ui().get();
-        let subcontrollers  = ui.all_controllers();
-        for subcontroller_name in subcontrollers {
-            if let Some(subcontroller) = controller.get_subcontroller(&subcontroller_name) {
-                self.dispatch_tick(&*subcontroller);
+    fn dispatch_tick<'a>(&'a mut self, controller: &'a dyn Controller) -> BoxFuture<'a, ()> {
+        async move {
+            // Send ticks to the subcontrollers first
+            let ui              = controller.ui().get();
+            let subcontrollers  = ui.all_controllers();
+            for subcontroller_name in subcontrollers {
+                if let Some(subcontroller) = controller.get_subcontroller(&subcontroller_name) {
+                    self.dispatch_tick(&*subcontroller).await;
+                }
             }
-        }
 
-        // Send the tick to the controller
-        controller.tick();
+            // Send the tick to the controller
+            controller.tick();
 
-        executor::block_on(async { self.tick.publish(()).await });
+            self.tick.publish(()).await;
+        }.boxed()
     }
 }

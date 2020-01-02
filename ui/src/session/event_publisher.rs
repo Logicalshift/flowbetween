@@ -11,37 +11,6 @@ use futures::prelude::*;
 
 use std::sync::*;
 
-/*
-///
-/// Returns a publisher for sending events to a UI session
-///
-pub fn ui_event_publisher<CoreController: 'static+Controller>(controller: Arc<CoreController>, core: Arc<Desync<UiSessionCore>>) -> Publisher<Vec<UiEvent>> {
-    // Create the publisher
-    let mut publisher = Publisher::new(100);
-
-    // TODO: the pipe might read ahead of the events and queue several processing sessions which would be better handled as a single
-    // session that evaluates when all of the events are available
-
-    // Pipe events to the session core
-    pipe_in(core, gather(publisher.subscribe()), move |core, mut events| {
-        if events.len() > 0 {
-            // Fetch the pending events (only hold the lock long enough to swap them out)
-            // Suspend and resume updates before and after the pending list
-            events.insert(0, UiEvent::SuspendUpdates);
-            events.push(UiEvent::ResumeUpdates);
-
-            // Dispatch the events
-            let events = core.reduce_events(events);
-            core.dispatch_event(events, &*controller);
-        }
-
-        Box::pin(future::ready(()))
-    });
-
-    publisher
-}
-*/
-
 ///
 /// The main UI event loop
 ///
@@ -108,9 +77,7 @@ pub async fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<
 
                 core.future(move |core| {
                     let core_events = core.reduce_events(core_events);
-                    core.dispatch_event(core_events, &*core_controller);
-
-                    future::ready(()).boxed()
+                    async move { core.dispatch_event(core_events, &*core_controller).await }.boxed()
                 }).await.ok();
             } else {
                 // Ran out of events to process
@@ -123,8 +90,7 @@ pub async fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<
         // Resume updates after the events we just received
         let core_controller = Arc::clone(&controller);
         core.future(move |core| {
-            core.dispatch_event(vec![UiEvent::ResumeUpdates], &*core_controller);
-            future::ready(()).boxed()
+            async move { core.dispatch_event(vec![UiEvent::ResumeUpdates], &*core_controller).await }.boxed()
         }).await.ok();
     }
 }
