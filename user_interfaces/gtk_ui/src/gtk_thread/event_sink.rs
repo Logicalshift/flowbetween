@@ -1,14 +1,58 @@
 use super::super::gtk_event::*;
 
+use flo_stream::*;
+
 use futures::prelude::*;
-use futures::stream::Stream;
-use futures::sink::Sink;
-use futures::task;
-use futures::task::Task;
+use futures::task::{Poll};
 
 use std::sync::*;
 use std::collections::VecDeque;
 
+/*
+///
+/// Runs the main gtk event loop
+///
+pub (crate) async fn gtk_run_loop(gtk_events: WeakPublisher<Vec<GtkEvent>>) {
+    // Subscribe to the events
+    let gtk_events = gtk_events.subscribe();
+
+    loop {
+        // Read as many events as we can before we start to process them
+        let events = read_events(&mut gtk_events);
+    }
+}
+
+///
+/// Waits for an event and then reads as many as possible from the queue
+///
+async fn read_events(subscriber: &mut Subscriber<Vec<GtkEvent>>) -> Option<Vec<GtkEvent>> {
+    // Await the first event
+    let events = subscriber.next().await;
+    if events.is_none() {
+        return None;
+    }
+
+    // Read any other waiting events from the subscriber
+    let mut poll_events     = events;
+    let mut poll_subscriber = Some(subscriber);
+
+    let (events, returned_subscriber) = future::poll_fn(move |context| {
+        // Add as many extra events as we can retrieve
+        while let Poll::Ready(Some(more_events)) = poll_subscriber.as_mut().unwrap().poll_next_unpin(context) {
+            poll_events.as_mut().unwrap().extend(more_events)
+        }
+
+        // Return the events (and the subscriber) to the sender
+        Poll::Ready((poll_events.take(), poll_subscriber.take()))
+    }).await;
+
+    // Return the events that we retrieved
+    subscriber = returned_subscriber.unwrap();
+    events
+}
+*/
+
+/*
 ///
 /// Core data for a Gtk event sink or stream
 ///
@@ -322,3 +366,4 @@ mod test {
         assert!(last_event == None);
     }
 }
+*/
