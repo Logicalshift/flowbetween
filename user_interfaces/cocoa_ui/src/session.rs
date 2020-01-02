@@ -5,6 +5,7 @@ use super::view_canvas::*;
 use super::core_graphics_ffi::*;
 
 use flo_ui::*;
+use ::desync::*;
 use flo_stream::*;
 use flo_canvas::*;
 use flo_cocoa_pipe::*;
@@ -60,7 +61,7 @@ pub struct CocoaSession {
     actions: Option<Subscriber<Vec<AppAction>>>,
 
     /// The event publisher for this session
-    events: Publisher<Vec<AppEvent>>
+    events: Desync<Publisher<Vec<AppEvent>>>
 }
 
 ///
@@ -92,7 +93,7 @@ impl CocoaSession {
             canvases:           HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
-            events:             Publisher::new(20)
+            events:             Desync::new(Publisher::new(20))
         }
     }
 
@@ -108,7 +109,7 @@ impl CocoaSession {
 
         // Create the subscriber to receive events sent from the user interface
         let action_publisher    = self.action_publisher.republish();
-        let events              = self.events.republish();
+        let events              = self.events.sync(|events| events.republish());
 
         // Generate a cocoa user interface
         CocoaUserInterface::new(action_publisher, events)
@@ -147,9 +148,9 @@ impl CocoaSession {
         if let Some(target) = self.get_target_object() {
             autoreleasepool(move || {
                 // Create the object to notify when there's an update
-                let waker   = Arc::new(CocoaSessionNotify::new(&target));
-                let waker   = task::waker(waker);
-                let context = Context::from_waker(&waker);
+                let waker       = Arc::new(CocoaSessionNotify::new(&target));
+                let waker       = task::waker(waker);
+                let mut context = Context::from_waker(&waker);
 
                 // Drain the stream until it's empty or it blocks
                 loop {
@@ -289,7 +290,7 @@ impl CocoaSession {
             events
         } else {
             // Create a new events object
-            let events = FloEvents::create_object(self.events.republish(), self.session_id, view_id);
+            let events = FloEvents::create_object(self.events.sync(|events| events.republish()), self.session_id, view_id);
 
             // Associate it with the view
             self.view_events.insert(view_id, events.clone());
@@ -497,12 +498,10 @@ impl CocoaSession {
     ///
     /// Sends a tick event
     ///
-    pub async fn tick(&mut self) {
-        // Create a place to send the tick to
-        let mut events = self.events.republish();
-
-        // Send a tick event
-        events.publish(vec![AppEvent::Tick]).await;
+    pub fn tick(&mut self) {
+        let _ = self.events.future(|events| {
+            events.publish(vec![AppEvent::Tick])
+        });
     }
 
     ///
