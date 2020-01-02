@@ -100,7 +100,7 @@ impl CocoaSession {
     ///
     /// Creates a user interface implementation for this session
     ///
-    pub fn create_user_interface(&mut self) -> impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> {
+    pub fn create_user_interface(&mut self) -> impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()>+Unpin {
         // Start listening for actions if we aren't already, by spawning a subscriber to our publisher
         if self.actions.is_none() {
             self.actions = Some(self.action_publisher.subscribe());

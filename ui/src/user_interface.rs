@@ -7,7 +7,7 @@ use futures::stream::*;
 ///
 pub trait UserInterface<InputEvent, OutputUpdate, Error> {
     /// The type of the update stream for this UI
-    type UpdateStream: Stream<Item = Result<OutputUpdate, Error>>;
+    type UpdateStream: Stream<Item = Result<OutputUpdate, Error>>+Unpin;
 
     /// Retrieves an input event sink for this user interface
     fn get_input_sink(&self) -> WeakPublisher<InputEvent>;
