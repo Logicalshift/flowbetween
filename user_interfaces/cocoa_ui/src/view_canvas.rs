@@ -78,7 +78,7 @@ impl ViewCanvas {
     ///
     /// Performs a series of drawing actions on a graphics context
     ///
-    fn perform_drawing_on_context<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>), ActionIter: IntoIterator<Item=Draw>>(&mut self, actions: ActionIter, context_for_layer: ContextForLayer) {
+    fn perform_drawing_on_context<ContextForLayer: FnMut(u32) -> Option<CFRef<CGContextRef>>, ActionIter: IntoIterator<Item=Draw>>(&mut self, actions: ActionIter, context_for_layer: ContextForLayer) {
         // Get the initial context
         let mut context_for_layer   = context_for_layer;
         let layer_context           = context_for_layer(0);
@@ -206,7 +206,7 @@ impl ViewCanvas {
     ///
     /// Redraws the entire canvas
     ///
-    pub fn redraw<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>)>(&mut self, context_for_layer: ContextForLayer) {
+    pub fn redraw<ContextForLayer: FnMut(u32) -> Option<CFRef<CGContextRef>>>(&mut self, context_for_layer: ContextForLayer) {
         // Fetch the current set of drawing instructions
         let mut actions = self.canvas.get_drawing();
 
@@ -224,7 +224,7 @@ impl ViewCanvas {
     ///
     /// Draws some actions to this view canvas
     ///
-    pub fn draw<ContextForLayer: FnMut(u32) -> (Option<CFRef<CGContextRef>>)>(&mut self, actions: Vec<Draw>, context_for_layer: ContextForLayer) {
+    pub fn draw<ContextForLayer: FnMut(u32) -> Option<CFRef<CGContextRef>>>(&mut self, actions: Vec<Draw>, context_for_layer: ContextForLayer) {
         // Write the actions to the canvas so we can redraw them later on
         self.canvas.write(actions.clone());
 
