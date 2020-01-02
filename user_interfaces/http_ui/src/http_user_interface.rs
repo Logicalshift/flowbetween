@@ -85,7 +85,6 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
 
             // Publish the events we retrieved to the UI queue, and wait for the queue to flush
             ui_events.publish(http_events).await;
-            ui_events.when_empty().await;
         }
     }
 
