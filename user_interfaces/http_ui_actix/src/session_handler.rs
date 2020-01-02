@@ -9,8 +9,14 @@ use actix_web::Error;
 use futures::*;
 use futures::stream;
 use futures::future::{BoxFuture, LocalBoxFuture};
+use futures::executor::{ThreadPool};
 
 use std::sync::*;
+
+lazy_static! {
+    /// The thread pool where the sessions will run
+    static ref THREAD_POOL: ThreadPool = ThreadPool::new().unwrap();
+}
 
 ///
 /// Retrieves the base URL for a request
@@ -61,8 +67,11 @@ fn handle_no_session<Session: ActixSession>(session: Arc<Session>, base_url: Str
                     let mut updates = vec![];
 
                     // Start a new session
-                    let session_controller  = Session::Controller::start_new();
-                    let session_id          = session.new_session(session_controller, &base_url);
+                    let session_controller      = Session::Controller::start_new();
+                    let (session_id, run_loop)  = session.new_session(session_controller, &base_url);
+
+                    // Spawn the session run loop
+                    THREAD_POOL.spawn_ok(run_loop);
 
                     // Return the new session ID
                     updates.push(Update::NewSession(session_id));
