@@ -49,6 +49,8 @@ enum TestItem {
 
 #[test]
 fn session_creates_initial_event() {
+    let thread_pool = executor::ThreadPool::new().unwrap();
+
     // Initial viewmodel
     let viewmodel = Arc::new(DynamicViewModel::new());
     viewmodel.set_property("Test", PropertyValue::Int(42));
@@ -57,7 +59,8 @@ fn session_creates_initial_event() {
     let controller = TestController { ui: bind(Control::empty()), viewmodel: Some(viewmodel) };
 
     // Start a UI session for this controller
-    let session = UiSession::new(controller);
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
 
     // Get an update stream for it and attach a timeout
     let update_stream   = session.get_updates();
@@ -88,11 +91,14 @@ fn session_creates_initial_event() {
 
 #[test]
 fn ticks_generate_empty_event() {
+    let thread_pool = executor::ThreadPool::new().unwrap();
+
     // Controller is initially empty
     let controller = TestController { ui: bind(Control::empty()), viewmodel: None };
 
     // Start a UI session for this controller
-    let session = UiSession::new(controller);
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
 
     // Get an update stream for it and attach a timeout
     let mut event_sink  = session.get_input_sink();
@@ -118,11 +124,14 @@ fn ticks_generate_empty_event() {
 
 #[test]
 fn timeout_after_first_event() {
+    let thread_pool = executor::ThreadPool::new().unwrap();
+
     // Controller is initially empty
     let controller = TestController { ui: bind(Control::empty()), viewmodel: None };
 
     // Start a UI session for this controller
-    let session = UiSession::new(controller);
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
 
     // Get an update stream for it and attach a timeout
     let update_stream   = session.get_updates();
@@ -144,6 +153,8 @@ fn timeout_after_first_event() {
 
 #[test]
 fn ui_update_triggers_update() {
+    let thread_pool = executor::ThreadPool::new().unwrap();
+
     // Create a UI for us to update later on
     let ui = bind(Control::empty());
 
@@ -151,7 +162,8 @@ fn ui_update_triggers_update() {
     let controller = TestController { ui: ui.clone(), viewmodel: None };
 
     // Start a UI session for this controller
-    let session = UiSession::new(controller);
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
 
     // Get an update stream for it and attach a timeout
     let update_stream   = session.get_updates();

@@ -22,3 +22,6 @@ png             = "0.15"
 lazy_static     = "1.0"
 bytes           = "0.5"
 itertools       = "0.8"
+
+[dev-dependencies]
+futures         = { version = "0.3", features = ["thread-pool"] }
