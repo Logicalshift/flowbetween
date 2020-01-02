@@ -37,7 +37,7 @@ class FloAppDelegate: NSObject, NSApplicationDelegate {
 
         // Monitor events to generate the 'dismiss' action
         NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .otherMouseDown, .rightMouseDown, .tabletProximity, .tabletPoint],
-                                         handler: { event in this?.monitorEvent(event) return event })
+         handler: { event in this?.monitorEvent(event); return event })
 
         // Create the Flo session
         let session             = create_flo_session(FloWindowDelegate.self, FloViewFactory.self, FloViewModel.self)

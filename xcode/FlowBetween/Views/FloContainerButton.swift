@@ -19,6 +19,8 @@ class FloContainerButton : NSView, FloContainerView {
     fileprivate var _badgeLayer: CALayer?
 
     override init(frame frameRect: NSRect) {
+        self.viewState = ViewState();
+        
         super.init(frame: frameRect)
 
         weak var this           = self
@@ -33,6 +35,8 @@ class FloContainerButton : NSView, FloContainerView {
     }
 
     required init?(coder decoder: NSCoder) {
+        self.viewState = ViewState();
+
         super.init(coder: decoder)
 
         weak var this           = self
@@ -112,7 +116,7 @@ class FloContainerButton : NSView, FloContainerView {
         didSet {
             weak var this = self
             viewState.isFirst.trackValue({ isFirst in this?._backingLayer.isFirst = isFirst.toBool(default: false) })
-            viewState..isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false) })
+            viewState.isLast.trackValue({ isLast in this?._backingLayer.isLast = isLast.toBool(default: false) })
         }
     }
 

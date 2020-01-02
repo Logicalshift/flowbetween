@@ -104,7 +104,7 @@ public class FloScrollingView : NSScrollView, FloContainerView {
             case .None:         break
             case .Horizontal:   newFrame.origin.x += visible.origin.x
             case .Vertical:     newFrame.origin.y += visible.origin.y
-            case .Both:         newFrame.origin.x += visible.origin.x newFrame.origin.y += visible.origin.y
+            case .Both:         newFrame.origin.x += visible.origin.x; newFrame.origin.y += visible.origin.y
             }
 
             // Reposition the view
