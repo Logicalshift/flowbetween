@@ -195,52 +195,46 @@ fn ui_update_triggers_update() {
     });
 }
 
-/*
-
--- TODO: viewmodel changes should also result in the update stream returning
--- Viewmodels don't implement Changeable yet which makes this hard to achieve in practice
--- This is not a huge issue because any events will trigger an update, so viewmodel
-   changes caused by an event will always be picked up (it's just 'out of band'
-   changes that will be missed)
-
 #[test]
 fn viewmodel_update_triggers_update() {
+    let thread_pool         = executor::ThreadPool::new().unwrap();
+
     // Create a viewmodel for us to update later on
-    let viewmodel = Arc::new(DynamicViewModel::new());
+    let viewmodel           = Arc::new(DynamicViewModel::new());
 
     viewmodel.set_property("Test", PropertyValue::Int(0));
 
     // Controller is initially empty
-    let controller = TestController { ui: bind(Control::empty()), viewmodel: Some(viewmodel.clone()) };
+    let controller          = TestController { ui: bind(Control::empty()), viewmodel: Some(viewmodel.clone()) };
 
     // Start a UI session for this controller
-    let session = UiSession::new(controller);
+    let (session, run_loop) = UiSession::new(controller);
+    thread_pool.spawn_ok(run_loop);
 
     // Get an update stream for it and attach a timeout
-    let update_stream   = session.get_updates();
-    let next_or_timeout = update_stream.map(|updates| TestItem::Updates(updates)).select(timeout(1000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
+    let update_stream       = session.get_updates();
+    let mut next_or_timeout = stream::select(update_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(1000).into_stream().map(|_| Ok(TestItem::Timeout)));
 
-    let mut next_or_timeout = executor::spawn(next_or_timeout);
+    executor::block_on(async {
+        // Fetch the first item from the stream
+        let first_item = next_or_timeout.next().await;
+        assert!(first_item != Some(Ok(TestItem::Timeout)));
 
-    // Fetch the first item from the stream
-    let first_item = next_or_timeout.next().await;
-    assert!(first_item != Ok(TestItem::Timeout));
+        // Update the viewmodel after a short delay
+        spawn(move || {
+            sleep(Duration::from_millis(50));
+            viewmodel.set_property("Test", PropertyValue::Int(1));
+        });
 
-    // Update the viewmodel after a short delay
-    spawn(move || {
-        sleep(Duration::from_millis(50));
-        viewmodel.set_property("Test", PropertyValue::Int(1));
-    });
-
-    // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
-    let updated_ui = next_or_timeout.next().await;
-    assert!(updated_ui != Ok(TestItem::Timeout));
-    assert!(updated_ui == Ok(TestItem::Updates(vec![
-        UiUpdate::UpdateViewModel(vec![
-            ViewModelUpdate::new(vec![], vec![("Test".to_string(), PropertyValue::Int(1))])
-        ])
-    ])));
+        // After the initial event that informs us of the state of the stream, we should block (which will result in the timeout firing here)
+        let updated_ui = next_or_timeout.next().await;
+        assert!(updated_ui != Some(Ok(TestItem::Timeout)));
+        assert!(updated_ui == Some(Ok(TestItem::Updates(vec![
+            UiUpdate::UpdateViewModel(vec![
+                ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(1))])
+            ])
+        ]))));
+    })
 }
-*/
 
 // TODO: also check we trigger an update if a canvas that's in the UI changes
