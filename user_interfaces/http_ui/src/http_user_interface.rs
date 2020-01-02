@@ -11,10 +11,12 @@ use flo_stream::*;
 use ::desync::*;
 
 use futures::*;
+use futures::task::{Poll};
 use futures::stream::{BoxStream};
 use itertools::join;
 use percent_encoding::*;
 
+use std::mem;
 use std::sync::*;
 
 ///
@@ -76,6 +78,58 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     pub fn core(&self) -> Arc<CoreUi> {
         Arc::clone(&self.core_ui)
+    }
+
+    ///
+    /// Runs the HTTP UI
+    ///
+    async fn run(mut http_events: WeakPublisher<Vec<Event>>, mut ui_events: WeakPublisher<Vec<UiEvent>>) {
+        // Subscribe to the events
+        let mut http_subscriber = http_events.subscribe();
+
+        // Main UI loop
+        loop {
+            // Retrieve the next set of events
+            let next_events = Self::retrieve_next_events(&mut http_subscriber).await;
+
+            // Finish the UI loop if there are no more events
+            if next_events.is_none() { break; }
+
+            // Process the events into HTTP events
+            let http_events = next_events.unwrap().into_iter()
+                .map(|event| Self::http_event_to_core_event(event))
+                .collect::<Vec<_>>();
+
+            // Publish the events we retrieved to the UI queue, and wait for the queue to flush
+            ui_events.publish(http_events).await;
+            ui_events.when_empty().await;
+        }
+    }
+
+    ///
+    /// Retrieves the next set of events from a HTTP event subscriber
+    ///
+    async fn retrieve_next_events(http_events: &mut Subscriber<Vec<Event>>) -> Option<Vec<Event>> {
+        // Result will contain the list of events that we've retrieved
+        let result = http_events.next().await;
+
+        if let Some(mut result) = result {
+            // Read as many events as we can to process at once
+            future::poll_fn(move |context| {
+                while let Poll::Ready(Some(more_events)) = http_events.poll_next_unpin(context) {
+                    result.extend(more_events)
+                }
+
+                // Return the events that we retrieved
+                let mut actual_result = vec![];
+                mem::swap(&mut result, &mut actual_result);
+
+                Poll::Ready(Some(actual_result))
+            }).await
+        } else {
+            // No further events
+            None
+        }
     }
 
     ///
