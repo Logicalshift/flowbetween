@@ -66,4 +66,11 @@ pub trait EditableAnimation {
     /// a set of related edits are performed atomically
     ///
     fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>>;
+
+    ///
+    /// Sends a set of edits straight to this animation
+    /// 
+    /// (Note that these are not always published to the publisher)
+    ///
+    fn perform_edits(&self, edits: Vec<AnimationEdit>);
 }
