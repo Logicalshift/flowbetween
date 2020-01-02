@@ -10,6 +10,7 @@ use super::super::user_interface::*;
 use ::desync::*;
 use flo_binding::*;
 use flo_stream::*;
+use futures::prelude::*;
 
 use std::sync::*;
 
@@ -32,22 +33,26 @@ pub struct UiSession<CoreController: Controller> {
 
 impl<CoreController: Controller+'static> UiSession<CoreController> {
     ///
-    /// Cretes a new UI session with the specified core controller
+    /// Cretes a new UI session with the specified core controller, and returns a future that will run the session
+    /// (and complete once the session has completed)
     ///
-    pub fn new(controller: CoreController) -> UiSession<CoreController> {
+    pub fn new(controller: CoreController) -> (UiSession<CoreController>, impl Future<Output=()>) {
         let controller          = Arc::new(controller);
         let core                = UiSessionCore::new(controller.clone());
         let core                = Arc::new(Desync::new(core));
 
         let ui_update_lifetime  = Self::track_ui_updates(Arc::clone(&core));
-        let publisher           = ui_event_publisher(Arc::clone(&controller), Arc::clone(&core));
+        let publisher           = Publisher::new(100);
+        let run_loop            = ui_event_loop(Arc::downgrade(&controller), publisher.republish_weak(), Arc::downgrade(&core));
 
-        UiSession {
+        let session             = UiSession {
             controller:         controller,
             core:               core,
             event_publisher:    publisher,
             ui_update_lifetime: Mutex::new(ui_update_lifetime)
-        }
+        };
+
+        (session, run_loop)
     }
 
     ///

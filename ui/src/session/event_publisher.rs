@@ -1,7 +1,6 @@
 use super::core::*;
 use super::event::*;
 use super::super::controller::*;
-use super::super::gather_stream::*;
 
 use flo_stream::*;
 
@@ -12,6 +11,7 @@ use futures::prelude::*;
 
 use std::sync::*;
 
+/*
 ///
 /// Returns a publisher for sending events to a UI session
 ///
@@ -40,14 +40,13 @@ pub fn ui_event_publisher<CoreController: 'static+Controller>(controller: Arc<Co
 
     publisher
 }
+*/
 
 ///
 /// The main UI event loop
 ///
-pub async fn ui_event_loop<CoreController: 'static+Controller>(controller: &Arc<CoreController>, mut ui_events: WeakPublisher<Vec<UiEvent>>, core: &Arc<Desync<UiSessionCore>>) {
+pub async fn ui_event_loop<CoreController: 'static+Controller>(controller: Weak<CoreController>, mut ui_events: WeakPublisher<Vec<UiEvent>>, core: Weak<Desync<UiSessionCore>>) {
     // Subscribe to the UI events
-    let core                    = Arc::downgrade(core);
-    let controller              = Arc::downgrade(controller);
     let mut ui_event_subscriber = ui_events.subscribe();
 
     // Start the main UI loop
