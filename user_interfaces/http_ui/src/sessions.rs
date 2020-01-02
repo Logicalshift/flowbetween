@@ -6,6 +6,7 @@ use ui::session::*;
 use flo_logging::*;
 
 use futures::*;
+use futures::future;
 use uuid::*;
 
 use std::sync::*;
@@ -45,12 +46,15 @@ impl<CoreController: Controller+'static> WebSessions<CoreController> {
         let session_uri     = format!("{}/{}", base_path, session_id);
 
         // Generate the varioud components of the session
-        let ui_session          = UiSession::new(controller);
-        let (http_ui, run_loop) = HttpUserInterface::new(Arc::new(ui_session), session_uri);
-        let http_session        = HttpSession::new(Arc::new(http_ui));
+        let (ui_session, ui_run_loop)   = UiSession::new(controller);
+        let (http_ui, http_run_loop)    = HttpUserInterface::new(Arc::new(ui_session), session_uri);
+        let http_session                = HttpSession::new(Arc::new(http_ui));
 
         // Store the new session and associate it with this ID
         self.sessions.lock().unwrap().insert(session_id.clone(), Arc::new(Mutex::new(http_session)));
+
+        // Session ends when either the HTTP events or the UI events stop
+        let run_loop                    = future::select(ui_run_loop.boxed(), http_run_loop.boxed()).map(|_| ());
 
         // Return the session
         (session_id, run_loop)
