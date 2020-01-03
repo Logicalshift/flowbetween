@@ -7,7 +7,7 @@ use futures::prelude::*;
 
 use std::sync::*;
 
-type GtkEventSink = Arc<Desync<WeakPublisher<GtkEvent>>>;
+pub type GtkEventSink = Arc<Desync<WeakPublisher<GtkEvent>>>;
 
 ///
 /// Sends an event immediately to an event sink

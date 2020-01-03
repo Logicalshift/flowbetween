@@ -164,7 +164,7 @@ impl FloScrollWidget {
 
             // Send the event
             let scroll_parameter = GtkEventParameter::VirtualScroll((grid_x, grid_y), (grid_w, grid_h));
-            sink.start_send(GtkEvent::Event(widget_id, action_name.to_string(), scroll_parameter)).unwrap();
+            publish_event(sink, GtkEvent::Event(widget_id, action_name.to_string(), scroll_parameter));
         }
     }
 

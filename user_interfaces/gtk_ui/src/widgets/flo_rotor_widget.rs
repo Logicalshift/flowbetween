@@ -8,7 +8,6 @@ use super::super::gtk_widget_event_type::*;
 use super::super::gtk_event_parameter::*;
 
 use flo_ui::*;
-use flo_stream::*;
 
 use glib::prelude::*;
 use gtk;
@@ -46,10 +45,10 @@ struct RotorData {
     initial_value: f64,
 
     /// Event names and sinks for set events
-    set_events: Vec<(String, WeakPublisher<GtkEvent>)>,
+    set_events: Vec<(String, GtkEventSink)>,
 
     /// Event names and sinks for edit events
-    edit_events: Vec<(String, WeakPublisher<GtkEvent>)>
+    edit_events: Vec<(String, GtkEventSink)>
 }
 
 ///
@@ -149,7 +148,7 @@ impl FloRotorWidget {
                     // Send set events
                     let value = data.value as f64;
                     data.set_events.iter_mut().for_each(|&mut (ref event_name, ref mut sink)| {
-                        sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value))).unwrap();
+                        publish_event(sink, GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value)));
                     });
 
                     Inhibit(true)
@@ -185,7 +184,7 @@ impl FloRotorWidget {
                     // Send edit events
                     let value = data.value as f64;
                     data.edit_events.iter_mut().for_each(|&mut (ref event_name, ref mut sink)| {
-                        sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value))).unwrap();
+                        publish_event(sink, GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value)));
                     });
 
                     // Redraw the widget with the new value
