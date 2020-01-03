@@ -3,10 +3,22 @@ use super::super::gtk_action::*;
 
 use flo_stream::*;
 
+use ::desync::*;
 use futures::*;
 use futures::task::{Poll};
 
 use std::sync::*;
+
+pub type GtkActionSink = Arc<Desync<WeakPublisher<Vec<GtkAction>>>>;
+
+///
+/// Publishes a list of actions to the specified action sink
+///
+pub fn publish_actions(sink: &GtkActionSink, actions: Vec<GtkAction>) {
+    let _ = sink.future(move |sink| async move {
+        sink.publish(actions).await
+    }.boxed());
+}
 
 ///
 /// Returns a future that runs actions published to a publisher on a thread
