@@ -333,12 +333,13 @@ mod test {
 
     #[test]
     fn generates_initial_update() {
-        let thread_pool                 = executor::ThreadPool::new().unwrap();
-        let controller                  = TestController { ui: bind(Control::empty()) };
-        let core_session                = Arc::new(UiSession::new(controller));
-        let (http_session, run_loop)    = HttpUserInterface::new(core_session, "test/session".to_string());
+        let thread_pool                     = executor::ThreadPool::new().unwrap();
+        let controller                      = TestController { ui: bind(Control::empty()) };
+        let (core_session, core_run_loop)   = UiSession::new(controller);
+        let (http_session, http_run_loop)   = HttpUserInterface::new(Arc::new(core_session), "test/session".to_string());
 
-        thread_pool.spawn_ok(run_loop);
+        thread_pool.spawn_ok(core_run_loop);
+        thread_pool.spawn_ok(http_run_loop);
         let http_stream                 = http_session.get_updates();
 
         //let next_or_timeout = stream::select(http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(2000).into_stream().map(|_| TestItem::Timeout));

@@ -245,15 +245,17 @@ mod test {
 
     #[test]
     fn will_return_update_for_event() {
-        let thread_pool         = executor::ThreadPool::new().unwrap();
-        let null_session        = NullSession::new();
-        let ui                  = UiSession::new(null_session);
-        let (http_ui, run_loop) = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
-        let mut http_session    = HttpSession::new(Arc::new(http_ui));
-        thread_pool.spawn_ok(run_loop);
+        let thread_pool                 = executor::ThreadPool::new().unwrap();
+        let null_session                = NullSession::new();
+        let (ui, ui_run_loop)           = UiSession::new(null_session);
+        let (http_ui, http_run_loop)    = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
+        let mut http_session            = HttpSession::new(Arc::new(http_ui));
 
-        let send_an_event       = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
-        let updates             = executor::block_on(send_an_event);
+        thread_pool.spawn_ok(ui_run_loop);
+        thread_pool.spawn_ok(http_run_loop);
+
+        let send_an_event               = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
+        let updates                     = executor::block_on(send_an_event);
 
         // Update should contain the new user interface message
         assert!(updates.len() > 0);
@@ -261,18 +263,20 @@ mod test {
 
     #[test]
     fn will_return_update_for_next_event() {
-        let thread_pool         = executor::ThreadPool::new().unwrap();
-        let null_session        = NullSession::new();
-        let ui                  = UiSession::new(null_session);
-        let (http_ui, run_loop) = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
-        let mut http_session    = HttpSession::new(Arc::new(http_ui));
-        thread_pool.spawn_ok(run_loop);
+        let thread_pool                 = executor::ThreadPool::new().unwrap();
+        let null_session                = NullSession::new();
+        let (ui, ui_run_loop)           = UiSession::new(null_session);
+        let (http_ui, http_run_loop)    = HttpUserInterface::new(Arc::new(ui), "base/path".to_string());
+        let mut http_session            = HttpSession::new(Arc::new(http_ui));
 
-        let send_an_event       = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
+        thread_pool.spawn_ok(ui_run_loop);
+        thread_pool.spawn_ok(http_run_loop);
+
+        let send_an_event               = http_session.send_events(vec![Event::NewSession, Event::UiRefresh]);
         executor::block_on(send_an_event);
 
-        let send_another_event  = http_session.send_events(vec![Event::Tick]);
-        let updates             = executor::block_on(send_another_event);
+        let send_another_event          = http_session.send_events(vec![Event::Tick]);
+        let updates                     = executor::block_on(send_another_event);
 
         // Second update will return but as it's a tick and nothing happens there will be no events
         assert!(updates.len() == 0);
