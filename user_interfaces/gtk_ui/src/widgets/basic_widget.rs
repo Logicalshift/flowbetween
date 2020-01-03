@@ -277,7 +277,7 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
     use self::GtkWidgetEventType::*;
 
     let action_name = action_name.clone();
-    let event_sink  = RefCell::new(flo_gtk.get_event_sink());
+    let event_sink  = flo_gtk.get_event_sink();
 
     match event_type {
         Click => {
@@ -289,7 +289,7 @@ pub fn process_basic_event_request<W: GtkUiWidget>(widget: &W, flo_gtk: &mut Flo
         },
 
         Drag => {
-            DragActions::wire_widget(flo_gtk.widget_data(), event_sink.into_inner(), widget, action_name.clone());
+            DragActions::wire_widget(flo_gtk.widget_data(), event_sink, widget, action_name.clone());
         },
 
         VirtualScroll(_, _) | EditValue | SetValue | Dismiss => { }

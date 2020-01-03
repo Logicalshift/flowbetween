@@ -68,7 +68,7 @@ impl PaintActions {
     ///
     /// Wires an existing widget for paint events
     ///
-    pub fn wire_widget<W: GtkUiWidget>(widget_data: Rc<WidgetData>, event_sink: RefCell<GtkEventSink>, widget: &W, event_name: String, device: GtkPaintDevice) {
+    pub fn wire_widget<W: GtkUiWidget>(widget_data: Rc<WidgetData>, event_sink: GtkEventSink, widget: &W, event_name: String, device: GtkPaintDevice) {
         let widget_id       = widget.id();
         let existing_wiring = widget_data.get_widget_data::<PaintActions>(widget_id);
 
@@ -85,7 +85,7 @@ impl PaintActions {
 
             None => {
                 // Create some new wiring
-                widget_data.set_widget_data(widget_id, PaintActions::new(widget_id, event_name, event_sink.into_inner()));
+                widget_data.set_widget_data(widget_id, PaintActions::new(widget_id, event_name, event_sink));
 
                 // Fetch the wiring
                 let new_wiring = widget_data.get_widget_data::<PaintActions>(widget_id).unwrap();

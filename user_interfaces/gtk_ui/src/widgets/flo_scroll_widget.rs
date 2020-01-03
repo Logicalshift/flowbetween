@@ -12,7 +12,6 @@ use flo_ui::*;
 
 use gtk;
 use gtk::prelude::*;
-use futures::*;
 
 use std::rc::*;
 use std::cell::*;
