@@ -1,5 +1,6 @@
 use super::message::*;
 use super::super::gtk_action::*;
+use super::super::gtk_thread::*;
 use super::super::gtk_event::*;
 use super::super::widgets::*;
 
@@ -51,7 +52,7 @@ pub struct FloGtk {
     widget_data: Rc<WidgetData>,
 
     /// The event sink for this object
-    event_sink: Publisher<GtkEvent>,
+    event_sink: GtkEventSink,
 
     /// The style provider for the widgets and windows created for this Gtk instance
     style_provider: gtk::CssProvider
@@ -151,7 +152,7 @@ impl FloGtk {
     ///
     /// Creates a new FloGtk instance
     ///
-    pub fn new(event_sink: Publisher<GtkEvent>) -> FloGtk {
+    pub fn new(event_sink: GtkEventSink) -> FloGtk {
         FloGtk {
             pending_messages:   MessageQueue::new(),
             windows:            HashMap::new(),
@@ -217,14 +218,14 @@ impl FloGtk {
     ///
     pub fn get_event_stream(&mut self) -> BoxStream<'static, GtkEvent> {
         // Generate a stream from our event sink
-        self.event_sink.subscribe().boxed()
+        self.event_sink.sync(|sink| sink.subscribe()).boxed()
     }
 
     ///
     /// Retrieves a sink that can be used to send events to any attached streams
     ///
-    pub fn get_event_sink(&mut self) -> WeakPublisher<GtkEvent> {
-        self.event_sink.republish_weak()
+    pub fn get_event_sink(&mut self) -> GtkEventSink {
+        Arc::clone(&self.event_sink)
     }
 
     ///

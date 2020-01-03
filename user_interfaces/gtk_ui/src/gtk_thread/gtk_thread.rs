@@ -1,8 +1,10 @@
 use super::flo_gtk::*;
+use super::event_sink::*;
 use super::super::gtk_action::*;
 use super::super::gtk_event::*;
 use super::super::widgets::*;
 
+use ::desync::*;
 use flo_stream::*;
 
 use gl;
@@ -12,6 +14,7 @@ use futures::*;
 use futures::stream::{BoxStream};
 use shared_library::dynamic_library::DynamicLibrary;
 
+use std::sync::*;
 use std::thread;
 use std::thread::JoinHandle;
 use std::ptr;
@@ -78,7 +81,7 @@ impl GtkThread {
     fn run_thread(&self) -> JoinHandle<()> {
         // Clone the message target so we can use it as the source for the new thread
         let thread_target   = self.message_target.clone();
-        let event_sink      = self.event_sink.clone();
+        let event_sink      = Arc::new(Desync::new(self.event_sink.republish_weak()));
 
         // Start the Gtk thread
         let thread = thread::spawn(move || {
@@ -116,7 +119,7 @@ impl GtkThread {
                 }
 
                 // Generate a tick event when they're complete
-                flo_gtk.get_event_sink().start_send(GtkEvent::Tick).unwrap();
+                publish_event(&flo_gtk.get_event_sink(), GtkEvent::Tick);
             });
         }
     }
