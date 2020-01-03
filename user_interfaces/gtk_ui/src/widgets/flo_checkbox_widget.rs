@@ -8,7 +8,6 @@ use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
-use futures::Sink;
 
 use std::rc::*;
 use std::cell::*;
@@ -70,12 +69,12 @@ impl GtkUiWidget for FloCheckBoxWidget {
             // Toggling the button causes a set value event
             RequestEvent(GtkWidgetEventType::SetValue, event_name) => {
                 let id              = self.id;
-                let sink            = RefCell::new(flo_gtk.get_event_sink());
+                let sink            = flo_gtk.get_event_sink();
                 let event_name      = event_name.clone();
 
                 self.widget.connect_toggled(move |widget| {
                     let is_selected = widget.get_active();
-                    sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::SelectedValue(is_selected))).unwrap();
+                    publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::SelectedValue(is_selected)));
                 });
             },
 

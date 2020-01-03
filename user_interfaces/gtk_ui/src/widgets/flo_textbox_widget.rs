@@ -8,7 +8,6 @@ use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
-use futures::Sink;
 
 use std::rc::*;
 use std::cell::*;
@@ -76,13 +75,13 @@ impl GtkUiWidget for FloTextBoxWidget {
             RequestEvent(GtkWidgetEventType::EditValue, event_name) => {
                 // Every text change generates an 'edit' event
                 let id          = self.id;
-                let sink        = RefCell::new(flo_gtk.get_event_sink());
+                let sink        = flo_gtk.get_event_sink();
                 let event_name  = event_name.clone();
 
                 self.widget.connect_property_text_notify(move |widget| {
                     if let Some(new_text) = widget.get_text() {
                         let new_text = String::from(new_text);
-                        sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text))).unwrap();
+                        publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
                     }
                 });
             }
@@ -93,13 +92,13 @@ impl GtkUiWidget for FloTextBoxWidget {
 
                 // Focus lost
                 let id          = self.id;
-                let sink        = RefCell::new(flo_gtk.get_event_sink());
+                let sink        = flo_gtk.get_event_sink();
                 let event_name  = name.clone();
 
                 self.widget.connect_focus_out_event(move |widget, _focus| {
                     if let Some(new_text) = widget.get_text() {
                         let new_text = String::from(new_text);
-                        sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text))).unwrap();
+                        publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
                     }
 
                     Inhibit(false)
@@ -107,13 +106,13 @@ impl GtkUiWidget for FloTextBoxWidget {
 
                 // Hitting the enter key (which Gtk+ considers as activation)
                 let id          = self.id;
-                let sink        = RefCell::new(flo_gtk.get_event_sink());
+                let sink        = flo_gtk.get_event_sink();
                 let event_name  = name.clone();
 
                 self.widget.connect_activate(move |widget| {
                     if let Some(new_text) = widget.get_text() {
                         let new_text = String::from(new_text);
-                        sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text))).unwrap();
+                        publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::NewText(new_text)));
                     }
                 });
             }

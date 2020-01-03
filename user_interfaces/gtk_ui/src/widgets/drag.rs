@@ -8,7 +8,6 @@ use super::super::gtk_event_parameter::*;
 use gtk;
 use gtk::prelude::*;
 use gdk;
-use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -111,10 +110,10 @@ impl DragActions {
 
                 // Send the start event
                 let event_names = drag_actions.event_names.clone();
-                let event_sink  = &mut drag_actions.event_sink;
+                let event_sink  = &drag_actions.event_sink;
 
                 event_names.into_iter().for_each(|name| {
-                    event_sink.start_send(GtkEvent::Event(widget_id, name, GtkEventParameter::DragStart(position.0, position.1))).unwrap();
+                    publish_event(event_sink, GtkEvent::Event(widget_id, name, GtkEventParameter::DragStart(position.0, position.1)));
                 });
 
                 Inhibit(true)
@@ -138,10 +137,10 @@ impl DragActions {
                 // Send the start event
                 let start_point = drag_actions.start_point;
                 let event_names = drag_actions.event_names.clone();
-                let event_sink  = &mut drag_actions.event_sink;
+                let event_sink  = &drag_actions.event_sink;
 
                 event_names.into_iter().for_each(|name| {
-                    event_sink.start_send(GtkEvent::Event(widget_id, name, GtkEventParameter::DragContinue(start_point, position))).unwrap();
+                    publish_event(event_sink, GtkEvent::Event(widget_id, name, GtkEventParameter::DragContinue(start_point, position)));
                 });
 
                 Inhibit(true)
@@ -167,10 +166,10 @@ impl DragActions {
                 // Send the start event
                 let start_point = drag_actions.start_point;
                 let event_names = drag_actions.event_names.clone();
-                let event_sink  = &mut drag_actions.event_sink;
+                let event_sink  = &drag_actions.event_sink;
 
                 event_names.into_iter().for_each(|name| {
-                    event_sink.start_send(GtkEvent::Event(widget_id, name, GtkEventParameter::DragContinue(start_point, position))).unwrap();
+                    publish_event(&event_sink, GtkEvent::Event(widget_id, name, GtkEventParameter::DragContinue(start_point, position)));
                 });
 
                 Inhibit(true)

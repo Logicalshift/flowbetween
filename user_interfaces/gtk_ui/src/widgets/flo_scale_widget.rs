@@ -8,7 +8,6 @@ use super::super::gtk_widget_event_type::*;
 
 use gtk;
 use gtk::prelude::*;
-use futures::*;
 
 use std::cell::*;
 use std::rc::*;
@@ -104,7 +103,7 @@ impl GtkUiWidget for FloScaleWidget {
             &RequestEvent(SetValue, ref event_name_ref)     => {
                 // Set events are value changes that occur while the mouse button has been released
                 let id              = self.id;
-                let sink            = RefCell::new(flo_gtk.get_event_sink());
+                let sink            = flo_gtk.get_event_sink();
                 let event_name      = event_name_ref.clone();
                 let button_pressed  = Rc::clone(&self.button_pressed);
 
@@ -112,16 +111,17 @@ impl GtkUiWidget for FloScaleWidget {
                     // Generate when the value is changed and the button is not held down
                     if *button_pressed.borrow() == false {
                         let new_value       = widget.get_value();
-                        sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value))).unwrap();
+
+                        publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value)));
                     }
                 });
 
-                let sink            = RefCell::new(flo_gtk.get_event_sink());
+                let sink            = flo_gtk.get_event_sink();
                 let event_name      = event_name_ref.clone();
                 self.scale.connect_button_release_event(move |widget, _| {
                     // Also generate if the button is released
                     let new_value       = widget.get_value();
-                    sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value))).unwrap();
+                    publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value)));
                     Inhibit(false)
                 });
             },
@@ -130,7 +130,7 @@ impl GtkUiWidget for FloScaleWidget {
                 // Edit events are value changes that occur while the mouse button is held down
                 let last_value      = RefCell::new(self.scale.get_value());
                 let id              = self.id;
-                let sink            = RefCell::new(flo_gtk.get_event_sink());
+                let sink            = flo_gtk.get_event_sink();
                 let event_name      = event_name.clone();
                 let button_pressed  = Rc::clone(&self.button_pressed);
 
@@ -141,7 +141,7 @@ impl GtkUiWidget for FloScaleWidget {
 
                         if new_value != *last_value {
                             *last_value = new_value;
-                            sink.borrow_mut().start_send(GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value))).unwrap();
+                            publish_event(&sink, GtkEvent::Event(id, event_name.clone(), GtkEventParameter::ScaleValue(new_value)));
                         }
                     }
                 });
@@ -158,5 +158,4 @@ impl GtkUiWidget for FloScaleWidget {
     fn get_underlying<'a>(&'a self) -> &'a gtk::Widget {
         &self.widget
     }
-
 }
