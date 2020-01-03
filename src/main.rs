@@ -39,7 +39,10 @@ use flo_logging::*;
 #[cfg(feature="http")]  use flo_http_ui::*;
 #[cfg(feature="http")]  use flo_http_ui_actix as flo_actix;
 #[cfg(feature="http")]  use actix_rt;
+#[cfg(feature="gtk")]   use flo_ui::session::*;
 #[cfg(feature="gtk")]   use flo_gtk_ui::*;
+#[cfg(feature="gtk")]   use futures::executor;
+#[cfg(feature="gtk")]   use futures::prelude::*;
 
 use self::flo_session::*;
 
@@ -96,10 +99,14 @@ fn main_actix() -> Option<JoinHandle<()>> {
 fn main_gtk() -> Option<JoinHandle<()>> {
     Some(thread::spawn(|| {
         // Create a GTK session
-        let gtk_ui      = GtkUserInterface::new();
-        let gtk_session = GtkSession::from(FlowBetweenSession::new(), gtk_ui);
+        let gtk_ui              = GtkUserInterface::new();
+        let (session, run_loop) = UiSession::new(FlowBetweenSession::new());
+        let gtk_session         = GtkSession::new(session, gtk_ui);
 
-        gtk_session.run();
+        // Run on this thread
+        executor::block_on(async {
+            future::select(run_loop.boxed(), gtk_session.run().boxed_local()).await;
+        })
     }))
 }
 

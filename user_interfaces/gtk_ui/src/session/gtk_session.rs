@@ -16,7 +16,6 @@ use ::desync::*;
 
 use gtk;
 use futures::*;
-use futures::executor;
 use futures::future::{BoxFuture, LocalBoxFuture};
 use std::mem;
 use std::rc::*;
@@ -92,7 +91,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     ///
     /// Runs this session until it finishes
     ///
-    pub fn run(self) {
+    pub async fn run(self) {
         // Create the processors
         let action_process      = self.create_action_process();
         let event_process       = self.create_event_process();
@@ -103,7 +102,7 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
         let run_until_closed    = future::select(run_until_closed, event_process);
 
         // Spawn the executor
-        executor::block_on(run_until_closed);
+        run_until_closed.await;
     }
 
     ///
@@ -212,16 +211,6 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
                 ShowAll
             ])
         ]);
-    }
-}
-
-impl<CoreController: Controller+'static> GtkSession<UiSession<CoreController>> {
-    ///
-    /// Creates a GTK session from a core controller
-    ///
-    pub fn from(controller: CoreController, gtk_ui: GtkUserInterface) -> (GtkSession<UiSession<CoreController>>, impl Future<Output=()>) {
-        let (session, run_loop) = UiSession::new(controller);
-        (Self::new(session, gtk_ui), run_loop)
     }
 }
 
