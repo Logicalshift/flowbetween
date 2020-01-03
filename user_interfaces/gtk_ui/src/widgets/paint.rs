@@ -14,7 +14,6 @@ use gdk::prelude::*;
 use gdk_sys;
 use cairo;
 use cairo::prelude::*;
-use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -69,7 +68,7 @@ impl PaintActions {
     ///
     /// Wires an existing widget for paint events
     ///
-    pub fn wire_widget<W: GtkUiWidget>(widget_data: Rc<WidgetData>, event_sink: RefCell<GtkEventSink>, widget: &W, event_name: String, device: GtkPaintDevice) {
+    pub fn wire_widget<W: GtkUiWidget>(widget_data: Rc<WidgetData>, event_sink: GtkEventSink, widget: &W, event_name: String, device: GtkPaintDevice) {
         let widget_id       = widget.id();
         let existing_wiring = widget_data.get_widget_data::<PaintActions>(widget_id);
 
@@ -86,7 +85,7 @@ impl PaintActions {
 
             None => {
                 // Create some new wiring
-                widget_data.set_widget_data(widget_id, PaintActions::new(widget_id, event_name, event_sink.into_inner()));
+                widget_data.set_widget_data(widget_id, PaintActions::new(widget_id, event_name, event_sink));
 
                 // Fetch the wiring
                 let new_wiring = widget_data.get_widget_data::<PaintActions>(widget_id).unwrap();
@@ -147,7 +146,7 @@ impl PaintActions {
                 // Cancel any on-going paint operation (so we replace it with the current device)
                 if let Some(current_device) = paint.active_device {
                     let current_device = paint_device_for_source(current_device);
-                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::PaintCancel(current_device))).unwrap();
+                    publish_event(&paint.event_sink, GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::PaintCancel(current_device)));
                 }
 
                 // Note that we're painting
@@ -156,7 +155,7 @@ impl PaintActions {
                 // Generate the start event on the sink
                 if source != gdk::InputSource::Pen && source != gdk::InputSource::Eraser {
                     paint.need_start = false;
-                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
+                    publish_event(&paint.event_sink, GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting)));
                 } else {
                     // For some reason, the button press event for styluses on Linux is often in the wrong place, so we skip the initial event (making it the motion event instead)
                     paint.need_start = true;
@@ -190,7 +189,7 @@ impl PaintActions {
                 painting.transform(&paint.transform);
 
                 // Generate the start event on the sink
-                paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintFinish(painting))).unwrap();
+                publish_event(&paint.event_sink, GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintFinish(painting)));
 
                 // Painting: inhibit the usual behaviour
                 Inhibit(true)
@@ -237,9 +236,9 @@ impl PaintActions {
                 // Generate the start event on the sink
                 if paint.need_start {
                     paint.need_start = false;
-                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting))).unwrap();
+                    publish_event(&paint.event_sink, GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintStart(painting)));
                 } else {
-                    paint.event_sink.start_send(GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting))).unwrap();
+                    publish_event(&paint.event_sink, GtkEvent::Event(widget_id, event_name, GtkEventParameter::PaintContinue(painting)));
                 }
 
                 // Request more motions

@@ -4,6 +4,9 @@ use flo_cocoa_pipe::*;
 
 use std::sync::*;
 
+use futures::*;
+use futures::stream::{BoxStream};
+
 ///
 /// Basic Cocoa user interface
 ///
@@ -25,14 +28,13 @@ impl CocoaUserInterface {
 }
 
 impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> for CocoaUserInterface {
-    type EventSink      = Publisher<Vec<AppAction>>;
-    type UpdateStream   = Subscriber<Vec<AppEvent>>;
+    type UpdateStream   = BoxStream<'static, Result<Vec<AppEvent>, ()>>;
 
-    fn get_input_sink(&self) -> Self::EventSink {
-        self.actions.republish()
+    fn get_input_sink(&self) -> WeakPublisher<Vec<AppAction>> {
+        self.actions.republish_weak()
     }
 
     fn get_updates(&self) -> Self::UpdateStream {
-        self.events.lock().unwrap().subscribe()
+        self.events.lock().unwrap().subscribe().map(|msg| Ok(msg)).boxed()
     }
 }

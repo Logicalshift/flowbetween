@@ -4,11 +4,14 @@ use super::super::controller::*;
 use super::super::binding_canvas::*;
 use super::super::resource_manager::*;
 
-use canvas::*;
-use binding::*;
+use flo_canvas::*;
+use flo_binding::*;
 
 use futures::*;
+use futures::task::{Poll, Context};
+use futures::stream::{BoxStream};
 
+use std::pin::*;
 use std::sync::*;
 use std::collections::HashMap;
 
@@ -17,13 +20,13 @@ use std::collections::HashMap;
 ///
 struct CanvasStreamTracker {
     /// The stream for the current canvas
-    stream: Box<dyn Stream<Item=Draw,Error=()>+Send>
+    stream: BoxStream<'static, Draw>
 }
 
 impl CanvasStreamTracker {
     pub fn new(canvas_resource: &Resource<BindingCanvas>) -> CanvasStreamTracker {
         CanvasStreamTracker {
-            stream: Box::new(canvas_resource.stream())
+            stream: Box::pin(canvas_resource.stream())
         }
     }
 }
@@ -132,40 +135,39 @@ impl CanvasUpdateStream {
 
 impl Stream for CanvasUpdateStream {
     type Item = CanvasDiff;
-    type Error = ();
 
-    fn poll(&mut self) -> Poll<Option<CanvasDiff>, ()> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<CanvasDiff>> {
         if let Some(root_controller) = self.root_controller.upgrade() {
             // Poll for control updates
-            let mut control_update_poll = self.controller_updates.poll();
+            let mut control_update_poll = self.controller_updates.poll_next_unpin(context);
 
-            while let Ok(Async::Ready(Some(control))) = control_update_poll {
+            while let Poll::Ready(Some(control)) = control_update_poll {
                 // Update with the new control
                 self.update_controller_content(&root_controller, &control);
 
                 // Poll again
-                control_update_poll = self.controller_updates.poll();
+                control_update_poll = self.controller_updates.poll_next_unpin(context);
             }
 
-            if let Ok(Async::Ready(None)) = control_update_poll {
+            if let Poll::Ready(None) = control_update_poll {
                 // Subcontroller was deleted, so there are no more updates to process for this subcontroller
-                return Ok(Async::Ready(None));
+                return Poll::Ready(None);
             }
 
             // Poll each of the subcontrollers to see if they produce a diff
             let mut removed_subcontrollers = vec![];
             for (name, stream) in self.sub_controllers.iter_mut() {
-                let subcontroller_poll = stream.poll();
+                let subcontroller_poll = stream.poll_next_unpin(context);
 
-                if let Ok(Async::Ready(Some(mut subcontroller_update))) = subcontroller_poll {
+                if let Poll::Ready(Some(mut subcontroller_update)) = subcontroller_poll {
                     // Insert the controller name at the start of the path
                     subcontroller_update.controller.insert(0, name.clone());
 
                     // This is the result of this poll
-                    return Ok(Async::Ready(Some(subcontroller_update)));
+                    return Poll::Ready(Some(subcontroller_update));
                 }
 
-                if let Ok(Async::Ready(None)) = subcontroller_poll {
+                if let Poll::Ready(None) = subcontroller_poll {
                     removed_subcontrollers.push(name.clone());
                 }
             }
@@ -182,7 +184,7 @@ impl Stream for CanvasUpdateStream {
                     self.sub_controllers.insert(removed_subcontroller_name, new_stream);
 
                     // Notify the task immediately to check the new controller for updates
-                    task::current().notify();
+                    context.waker().clone().wake();
                 }
             }
 
@@ -191,14 +193,14 @@ impl Stream for CanvasUpdateStream {
             for (canvas_name, tracker) in self.canvas_trackers.iter_mut() {
                 let mut updates = vec![];
 
-                let mut canvas_poll = tracker.stream.poll();
-                while let Ok(Async::Ready(Some(mut canvas_command))) = canvas_poll {
+                let mut canvas_poll = tracker.stream.poll_next_unpin(context);
+                while let Poll::Ready(Some(canvas_command)) = canvas_poll {
                     updates.push(canvas_command);
 
-                    canvas_poll = tracker.stream.poll();
+                    canvas_poll = tracker.stream.poll_next_unpin(context);
                 }
 
-                if let Ok(Async::Ready(None)) = canvas_poll {
+                if let Poll::Ready(None) = canvas_poll {
                     // Canvas stream has ended
                     removed_canvases.push(canvas_name.clone());
                 }
@@ -211,7 +213,7 @@ impl Stream for CanvasUpdateStream {
                         updates:        updates
                     };
 
-                    return Ok(Async::Ready(Some(canvas_diff)));
+                    return Poll::Ready(Some(canvas_diff));
                 }
             }
 
@@ -227,15 +229,15 @@ impl Stream for CanvasUpdateStream {
                     self.canvas_trackers.insert(removed_canvas_name, new_tracker);
 
                     // Notify the task immediately to check the new canvas for updates
-                    task::current().notify();
+                    context.waker().clone().wake();
                 }
             }
 
             // Polled everything and no updates were available
-            Ok(Async::NotReady)
+            Poll::Pending
         } else {
             // Root controller has gone, so this stream has no more updates
-            Ok(Async::Ready(None))
+            Poll::Ready(None)
         }
     }
 }

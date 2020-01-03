@@ -160,7 +160,7 @@ impl<Chooser: 'static+FileChooser> FileChooserModel<Chooser> {
 
                     if let Some(file_idx) = file_idx {
                         // Remove the file from the list
-                        let moving_file = files.remove(file_idx);;
+                        let moving_file = files.remove(file_idx);
 
                         // Find the 'after' index
                         let after_idx = after.and_then(|after| files.iter().enumerate()

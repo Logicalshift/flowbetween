@@ -4,6 +4,8 @@ use flo_animation::*;
 use flo_curves::bezier::path::path_contains_point;
 
 use futures::*;
+use futures::future;
+use futures::stream::{BoxStream};
 
 use std::sync::*;
 use std::collections::HashMap;
@@ -112,7 +114,7 @@ impl FrameModel {
                 match frames.entry(*layer_id) {
                     Entry::Occupied(_occupied) => (),
 
-                    Entry::Vacant(mut vacant) => {
+                    Entry::Vacant(vacant) => {
                         // Create a new bindnig
                         let layer_id            = *layer_id;
                         let when                = BindRef::clone(&when);
@@ -197,7 +199,7 @@ impl FrameModel {
     ///
     /// Stream of notifications that the current frame has updated
     ///
-    fn frame_update_stream(edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> Box<dyn Stream<Item=(), Error=()>+Send> {
+    fn frame_update_stream(edits: Subscriber<Arc<Vec<AnimationEdit>>>, when: BindRef<Duration>, selected_layer: BindRef<Option<u64>>) -> BoxStream<'static, ()> {
         // Events indicating a new key frame
         let selected_layer_2    = selected_layer.clone();
         let new_key_frame       = edits
@@ -208,13 +210,13 @@ impl FrameModel {
                 if let Some(layer_id) = layer_id {
                     // Generate an event if the edits contain a Add or Remove for the current layer
                     if edits.iter().any(|edit| Self::is_key_frame_update(layer_id, edit)) {
-                        Some(())
+                        future::ready(Some(()))
                     } else {
-                        None
+                        future::ready(None)
                     }
                 } else {
                     // No events if there is no layer
-                    None
+                    future::ready(None)
                 }
             });
 
@@ -223,7 +225,7 @@ impl FrameModel {
         let selected_layer_changed  = follow(selected_layer).map(|_| ());
 
         // If any of these events occur, then the keyframe may have changed
-        Box::new(new_key_frame.select(when_changed).select(selected_layer_changed))
+        Box::pin(stream::select(stream::select(new_key_frame, when_changed), selected_layer_changed))
     }
 
     ///

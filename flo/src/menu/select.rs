@@ -3,13 +3,11 @@ use super::super::model::*;
 use super::super::standard_tools::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 
-use desync::*;
-use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
+use ::desync::*;
 
 use std::sync::*;
 use std::collections::HashSet;
@@ -25,7 +23,7 @@ pub struct SelectMenuController<Anim: Animation> {
     selection_in_order: BindRef<Arc<Vec<ElementId>>>,
 
     /// The animation editing stream where this will send updates
-    edit: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
+    edit: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
     /// The timeline model for the animation
     timeline: TimelineModel<Anim>,
@@ -40,7 +38,7 @@ impl<Anim: 'static+EditableAnimation+Animation> SelectMenuController<Anim> {
     ///
     pub fn new(flo_model: &FloModel<Anim>, tool_model: &SelectToolModel) -> SelectMenuController<Anim> {
         let ui                  = Self::ui(tool_model);
-        let edit                = Desync::new(executor::spawn(flo_model.edit()));
+        let edit                = Desync::new(flo_model.edit());
         let selected            = flo_model.selection().selected_elements.clone();
         let selection_in_order  = flo_model.selection().selection_in_order.clone();
         let timeline            = flo_model.timeline().clone();
@@ -168,18 +166,19 @@ impl<Anim: 'static+EditableAnimation+Animation> Controller for SelectMenuControl
                 // TODO: brush elements have styles implied by the order that the elements are in the keyframe, so we need a way of editing the brush styles of the elements after re-ordering them here
 
                 if apply_in_reverse {
-                    self.edit.sync(move |animation| {
-                        animation.wait_send(vec![
+                    let _ = self.edit.future(move |animation| {
+                        animation.publish(Arc::new(vec![
                                 AnimationEdit::Element(selection.iter().rev().cloned().collect(), ElementEdit::Order(ordering))
-                            ]).ok();
+                            ]))
                         });
                 } else {
-                    self.edit.sync(move |animation| {
-                        animation.wait_send(vec![
+                    let _ = self.edit.future(move |animation| {
+                        animation.publish(Arc::new(vec![
                                 AnimationEdit::Element(selection.iter().cloned().collect(), ElementEdit::Order(ordering))
-                            ]).ok();
+                            ]))
                         });
                 }
+                self.edit.sync(|_| { });
                 self.timeline.invalidate_canvas();
             },
 

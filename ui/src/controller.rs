@@ -1,5 +1,5 @@
-use binding::*;
-use binding::binding_context::*;
+use flo_binding::*;
+use flo_binding::binding_context::*;
 
 use super::image::*;
 use super::control::*;

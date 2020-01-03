@@ -3,6 +3,7 @@ use super::session::*;
 use super::core_graphics_ffi::*;
 
 use flo_ui::*;
+use ::desync::*;
 use flo_stream::*;
 use flo_cocoa_pipe::*;
 
@@ -11,9 +12,6 @@ use objc::*;
 use objc::rc::*;
 use objc::declare::*;
 use objc::runtime::*;
-
-use futures::executor;
-use futures::executor::Spawn;
 
 use num_traits::cast::*;
 
@@ -50,7 +48,7 @@ pub struct FloEvents {
     view_id: usize,
 
     /// Where events are published
-    events_publisher: Spawn<Publisher<Vec<AppEvent>>>,
+    events_publisher: Desync<Publisher<Vec<AppEvent>>>,
 
     /// Set to true if we are going to receive a callback to send the events
     queued_update: bool,
@@ -67,7 +65,7 @@ impl FloEvents {
         FloEvents {
             view_id:            view_id,
             session_id:         session_id,
-            events_publisher:   executor::spawn(publisher),
+            events_publisher:   Desync::new(publisher),
             queued_update:      false,
             pending_events:     vec![]
         }
@@ -361,14 +359,17 @@ pub fn declare_flo_events_class() -> &'static Class {
 
                 flo_events.map(|flo_events| {
                     let mut flo_events  = flo_events.lock().unwrap();
-                    let mut pending     = vec![];
 
                     // Fetch and clear the list of pending events
+                    let mut pending     = vec![];
                     mem::swap(&mut pending, &mut flo_events.pending_events);
                     flo_events.queued_update = false;
 
-                    // Send to the publisher
-                    flo_events.events_publisher.wait_send(pending).ok();
+                    let _               = flo_events.events_publisher.future(move |events_publisher| {
+                        // Send to the publisher
+                        events_publisher.publish(pending)
+                    });
+                    flo_events.events_publisher.sync(|_| { });
                 });
             }
         }

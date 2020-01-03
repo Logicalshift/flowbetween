@@ -3,7 +3,8 @@ use super::super::error::*;
 
 use flo_animation::*;
 
-use futures::*;
+use futures::stream::{BoxStream};
+
 use std::sync::*;
 use std::time::Duration;
 use std::ops::Range;
@@ -61,7 +62,7 @@ impl Animation for SqliteAnimation {
         self.db.get_num_edits().unwrap_or(0)
     }
 
-    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> Box<dyn 'a+Stream<Item=AnimationEdit, Error=()>> {
+    fn read_edit_log<'a>(&'a self, range: Range<usize>) -> BoxStream<'a, AnimationEdit> {
         self.db.read_edit_log(range)
     }
 

@@ -1,6 +1,6 @@
 use super::file_update::*;
 
-use futures::*;
+use futures::stream::{BoxStream};
 
 use std::path::{Path, PathBuf};
 
@@ -44,5 +44,5 @@ pub trait FileManager : Send+Sync {
     ///
     /// Returns a stream of updates indicating changes made to the file manager
     ///
-    fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>+Send>;
+    fn update_stream(&self) -> BoxStream<'static, FileUpdate>;
 }

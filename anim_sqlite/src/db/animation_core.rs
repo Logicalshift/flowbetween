@@ -4,7 +4,7 @@ use super::motion_path_type::*;
 use super::super::error::*;
 use super::super::result::Result;
 
-use desync::*;
+use desync::{Desync};
 use flo_logging::*;
 use flo_animation::*;
 use flo_animation::brushes::*;

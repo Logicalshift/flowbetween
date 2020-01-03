@@ -7,11 +7,10 @@ use flo_logging::*;
 
 use dirs;
 use uuid::*;
-use desync::*;
+use ::desync::*;
 use rusqlite::*;
 use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
+use futures::stream::{BoxStream};
 
 use std::fs;
 use std::sync::*;
@@ -37,7 +36,7 @@ struct SqliteFileManagerCore {
     file_list: FileList,
 
     /// The senders for updates to this file manager
-    updates: Spawn<Publisher<FileUpdate>>
+    updates: Publisher<FileUpdate>
 }
 
 ///
@@ -55,9 +54,10 @@ impl SqliteFileManagerCore {
     ///
     /// Sends an update to everything that's listening for them
     ///
-    pub fn send_update(&mut self, update: FileUpdate) {
+    pub fn send_update(&mut self, update: FileUpdate) -> impl Future<Output=()> {
         // Send to the update publisher
-        self.updates.wait_send(update).unwrap();
+        let update = self.updates.publish(update);
+        update
     }
 }
 
@@ -97,7 +97,6 @@ impl SqliteFileManager {
 
         // Create the update publisher
         let update_publisher = Publisher::new(100);
-        let update_publisher = executor::spawn(update_publisher);
 
         Arc::new(Desync::new(SqliteFileManagerCore {
             file_list:  file_list,
@@ -222,11 +221,11 @@ impl FileManager for SqliteFileManager {
         let log_path         = full_path.clone();
         let mut filename_buf = PathBuf::new();
         filename_buf.push(filename);
-        self.core.desync(move |core| {
+        let _ = self.core.future(move |core| {
             core.log.log((Level::Info, format!("Created new file at `{}`", log_path.to_str().unwrap_or("<Missing path>"))));
 
             core.file_list.add_path(filename_buf.as_path()).unwrap();
-            core.send_update(update);
+            Box::pin(core.send_update(update))
         });
 
         // Result is the full path
@@ -250,12 +249,12 @@ impl FileManager for SqliteFileManager {
         let update  = FileUpdate::ChangedOrder(path.clone(), after.clone());
 
         // Update the file list
-        self.core.desync(move |core| {
+        let _ = self.core.future(move |core| {
             let after = after.as_ref();
             let after = after.map(|after| after.as_path());
             core.file_list.order_path_after(path.as_path(), after).unwrap();
 
-            core.send_update(update);
+            Box::pin(core.send_update(update))
         });
     }
 
@@ -270,9 +269,9 @@ impl FileManager for SqliteFileManager {
         if let Some(path) = path {
             let update = FileUpdate::SetDisplayName(PathBuf::from(full_path), display_name.clone());
 
-            self.core.desync(move |core| {
+            let _ = self.core.future(move |core| {
                 core.file_list.set_display_name_for_path(path.as_path(), &display_name).unwrap();
-                core.send_update(update);
+                Box::pin(core.send_update(update))
             });
         }
     }
@@ -280,12 +279,12 @@ impl FileManager for SqliteFileManager {
     ///
     /// Returns a stream of updates indicating changes made to the file manager
     ///
-    fn update_stream(&self) -> Box<dyn Stream<Item=FileUpdate, Error=()>+Send> {
+    fn update_stream(&self) -> BoxStream<'static, FileUpdate> {
         // Get a subscription from the core
         let subscription = self.core.sync(|core| core.updates.subscribe());
 
         // Return to the caller
-        Box::new(subscription)
+        Box::pin(subscription)
     }
 
 
@@ -301,7 +300,7 @@ impl FileManager for SqliteFileManager {
             // Start deleting it if we find it
             let update = FileUpdate::RemovedFile(full_path.clone());
 
-            self.core.desync(move |core| {
+            let _ = self.core.future(move |core| {
                 core.log.log((Level::Info, format!("Deleting file at path `{}`", full_path.to_str().unwrap_or("<Missing path>"))));
 
                 // Delete from the file list
@@ -319,7 +318,7 @@ impl FileManager for SqliteFileManager {
                 }
 
                 // Notify that the file is gone
-                core.send_update(update);
+                Box::pin(core.send_update(update))
             });
         }
     }
@@ -328,6 +327,7 @@ impl FileManager for SqliteFileManager {
 #[cfg(test)]
 mod test {
     use super::*;
+    use futures::executor;
 
     #[test]
     fn create_new_path() {
@@ -407,12 +407,14 @@ mod test {
     #[test]
     fn will_send_updates_to_stream() {
         let test_files          = SqliteFileManager::new("app.flowbetween.test", "will_send_updates_to_stream");
-        let mut update_stream   = executor::spawn(test_files.update_stream());
+        let mut update_stream   = test_files.update_stream();
 
         let new_path            = test_files.create_new_path();
         test_files.set_display_name_for_path(new_path.as_path(), "Another display name".to_string());
 
-        assert!(update_stream.wait_stream() == Some(Ok(FileUpdate::NewFile(new_path.clone()))));
-        assert!(update_stream.wait_stream() == Some(Ok(FileUpdate::SetDisplayName(new_path.clone(), "Another display name".to_string()))));
+        executor::block_on(async {
+            assert!(update_stream.next().await == Some(FileUpdate::NewFile(new_path.clone())));
+            assert!(update_stream.next().await == Some(FileUpdate::SetDisplayName(new_path.clone(), "Another display name".to_string())));
+        })
     }
 }

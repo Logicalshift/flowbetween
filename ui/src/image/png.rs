@@ -1,7 +1,6 @@
 use super::*;
 
-use png;
-use png::HasParameters;
+use ::png;
 
 ///
 /// Creates a PNG image in memory for an RGBA buffer
@@ -13,9 +12,8 @@ pub fn png_data_for_rgba(rgba: &[u8], width: u32, height: u32) -> InMemoryImageD
     {
         // Create an encoder that will write to this buffer
         let mut png_encoder = png::Encoder::new(&mut png_data, width, height);
-        png_encoder
-            .set(png::ColorType::RGBA)
-            .set(png::BitDepth::Eight);
+        png_encoder.set_color(png::ColorType::RGBA);
+        png_encoder.set_depth(png::BitDepth::Eight);
 
         // Write the header
         let mut png_writer = png_encoder.write_header().unwrap();

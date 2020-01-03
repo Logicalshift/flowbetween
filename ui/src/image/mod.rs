@@ -1,7 +1,8 @@
+use futures::stream::{BoxStream};
+use bytes::Bytes;
+
 use std::sync::*;
 use std::io::Read;
-use futures::stream::*;
-use bytes::Bytes;
 
 ///
 /// Represents a static image
@@ -23,7 +24,7 @@ pub trait ImageData : Send+Sync {
     fn read(&self) -> Box<dyn Read+Send>;
 
     /// Reads the raw data for this image
-    fn read_future(&self) -> Box<dyn Stream<Item=Bytes, Error=()>>;
+    fn read_future(&self) -> BoxStream<'static, Bytes>;
 }
 
 impl Image {

@@ -10,6 +10,8 @@ use flo_cocoa_pipe::*;
 
 use objc::*;
 use objc::runtime::*;
+use futures::*;
+use futures::future;
 use futures::executor;
 
 use std::thread;
@@ -35,16 +37,18 @@ pub unsafe extern fn create_flo_session(window_class: *mut Class, view_class: *m
         .name("FlowBetween session".to_string())
         .spawn(move || {
             // Create a new flo session
-            let flo                 = FlowBetweenSession::new();
-            let flo_session         = UiSession::new(flo);
+            let flo                     = FlowBetweenSession::new();
+            let (flo_session, run_loop) = UiSession::new(flo);
 
             // Pipe into the UI
             let update_future       = pipe_ui_updates(&flo_session, &user_interface);
 
-            // Wait for the future to complete
-            let mut update_future   = executor::spawn(update_future);
+            // UI finishes when the run loop or the updates end
+            let update_future       = future::select(update_future, run_loop.boxed());
 
-            update_future.wait_future().ok();
+            // Wait for the future to complete
+            executor::block_on(update_future);
+
             println!("Session finished");
         })
         .unwrap();

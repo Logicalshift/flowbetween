@@ -5,13 +5,14 @@ use super::view_canvas::*;
 use super::core_graphics_ffi::*;
 
 use flo_ui::*;
+use ::desync::*;
 use flo_stream::*;
 use flo_canvas::*;
 use flo_cocoa_pipe::*;
 
 use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
+use futures::task;
+use futures::task::{Poll, Context};
 
 use cocoa::base::{id, nil};
 use cocoa::foundation::NSString;
@@ -57,10 +58,10 @@ pub struct CocoaSession {
     action_publisher: Publisher<Vec<AppAction>>,
 
     /// The stream of actions for this session (or None if we aren't monitoring for actions)
-    actions: Option<Spawn<Subscriber<Vec<AppAction>>>>,
+    actions: Option<Subscriber<Vec<AppAction>>>,
 
     /// The event publisher for this session
-    events: Publisher<Vec<AppEvent>>
+    events: Desync<Publisher<Vec<AppEvent>>>
 }
 
 ///
@@ -92,23 +93,23 @@ impl CocoaSession {
             canvases:           HashMap::new(),
             actions:            None,
             action_publisher:   Publisher::new(1),
-            events:             Publisher::new(20)
+            events:             Desync::new(Publisher::new(20))
         }
     }
 
     ///
     /// Creates a user interface implementation for this session
     ///
-    pub fn create_user_interface(&mut self) -> impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()> {
+    pub fn create_user_interface(&mut self) -> impl UserInterface<Vec<AppAction>, Vec<AppEvent>, ()>+Unpin {
         // Start listening for actions if we aren't already, by spawning a subscriber to our publisher
         if self.actions.is_none() {
-            self.actions = Some(executor::spawn(self.action_publisher.subscribe()));
+            self.actions = Some(self.action_publisher.subscribe());
             self.start_listening();
         }
 
         // Create the subscriber to receive events sent from the user interface
         let action_publisher    = self.action_publisher.republish();
-        let events              = self.events.republish();
+        let events              = self.events.sync(|events| events.republish());
 
         // Generate a cocoa user interface
         CocoaUserInterface::new(action_publisher, events)
@@ -147,32 +148,29 @@ impl CocoaSession {
         if let Some(target) = self.get_target_object() {
             autoreleasepool(move || {
                 // Create the object to notify when there's an update
-                let notify = Arc::new(CocoaSessionNotify::new(&target));
+                let waker       = Arc::new(CocoaSessionNotify::new(&target));
+                let waker       = task::waker(waker);
+                let mut context = Context::from_waker(&waker);
 
                 // Drain the stream until it's empty or it blocks
                 loop {
                     let next = self.actions
                         .as_mut()
-                        .map(|actions| actions.poll_stream_notify(&notify, 0))
-                        .unwrap_or_else(|| Ok(Async::NotReady));
+                        .map(|actions| actions.poll_next_unpin(&mut context))
+                        .unwrap_or_else(|| Poll::Pending);
 
                     match next {
-                        Ok(Async::NotReady)     => { break; }
-                        Ok(Async::Ready(None))  => {
+                        Poll::Pending       => { break; }
+                        Poll::Ready(None)   => {
                             // Session has finished
                             break;
                         }
 
-                        Ok(Async::Ready(Some(actions))) => {
+                        Poll::Ready(Some(actions)) => {
                             for action in actions {
                                 // Perform the action
                                 self.dispatch_app_action(action);
                             }
-                        }
-
-                        Err(_) => {
-                            // Action stream should never produce any errors
-                            unimplemented!("Action stream should never produce any errors")
                         }
                     }
                 }
@@ -292,7 +290,7 @@ impl CocoaSession {
             events
         } else {
             // Create a new events object
-            let events = FloEvents::create_object(self.events.republish(), self.session_id, view_id);
+            let events = FloEvents::create_object(self.events.sync(|events| events.republish()), self.session_id, view_id);
 
             // Associate it with the view
             self.view_events.insert(view_id, events.clone());
@@ -501,11 +499,9 @@ impl CocoaSession {
     /// Sends a tick event
     ///
     pub fn tick(&mut self) {
-        // Create a place to send the tick to
-        let mut events = executor::spawn(self.events.republish());
-
-        // Send a tick event
-        events.wait_send(vec![AppEvent::Tick]).ok();
+        let _ = self.events.future(|events| {
+            events.publish(vec![AppEvent::Tick])
+        });
     }
 
     ///
@@ -720,10 +716,10 @@ impl CocoaSessionNotify {
     }
 }
 
-impl executor::Notify for CocoaSessionNotify {
-    fn notify(&self, _: usize) {
+impl task::ArcWake for CocoaSessionNotify {
+    fn wake_by_ref(arc_self: &Arc<Self>) {
         // Load the target object
-        let target_object = self.notify_object.lock().unwrap();
+        let target_object = arc_self.notify_object.lock().unwrap();
 
         // If it still exists, send the message to the object on the main thread
         unsafe {

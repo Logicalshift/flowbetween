@@ -38,7 +38,11 @@ use flo_logging::*;
 
 #[cfg(feature="http")]  use flo_http_ui::*;
 #[cfg(feature="http")]  use flo_http_ui_actix as flo_actix;
+#[cfg(feature="http")]  use actix_rt;
+#[cfg(feature="gtk")]   use flo_ui::session::*;
 #[cfg(feature="gtk")]   use flo_gtk_ui::*;
+#[cfg(feature="gtk")]   use futures::executor;
+#[cfg(feature="gtk")]   use futures::prelude::*;
 
 use self::flo_session::*;
 
@@ -50,36 +54,39 @@ use self::flo_session::*;
 #[cfg(feature="http")]
 fn main_actix() -> Option<JoinHandle<()>> {
     Some(thread::spawn(|| {
-        let log = LogPublisher::new("main_actix");
+        actix_rt::System::new("FlowBetween").block_on(async {
+            let log = LogPublisher::new("main_actix");
 
-        // Create the web session structure
-        let sessions: Arc<WebSessions<FlowBetweenSession>> = Arc::new(WebSessions::new());
+            // Create the web session structure
+            let sessions: Arc<WebSessions<FlowBetweenSession>> = Arc::new(WebSessions::new());
 
-        // Log that we're getting ready
-        log.log(format!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT)));
+            // Log that we're getting ready
+            log.log(format!("{} v{} preparing to serve requests at {}", PACKAGE_NAME, PACKAGE_VERSION, &format!("{}:{}", BIND_ADDRESS, SERVER_PORT)));
 
-        // Start the actix server
-        aw::HttpServer::new(move || {
-                // Something in Actix's type system involving the private Factory type is unhappy with using the static file handler function directlyh
-                // (Error is unhelpful but I think it's to do with if the function can be cloned or not)
-                let static_file_handler = Arc::new(flo_actix::flowbetween_static_file_handler());
+            // Start the actix server
+            aw::HttpServer::new(move || {
+                    // Something in Actix's type system involving the private Factory type is unhappy with using the static file handler function directlyh
+                    // (Error is unhelpful but I think it's to do with if the function can be cloned or not)
+                    let static_file_handler = Arc::new(flo_actix::flowbetween_static_file_handler());
 
-                aw::App::new()
-                    .data(sessions.clone())
-                    .service(web::resource("/flowbetween/session")
-                        .route(web::get().to(flo_actix::session_get_handler::<WebSessions<FlowBetweenSession>>))
-                        .route(web::post().to(flo_actix::session_post_handler::<WebSessions<FlowBetweenSession>>)))
-                    .service(web::resource("/flowbetween/session/{tail:.*}")
-                        .route(web::get().to(flo_actix::session_get_handler::<WebSessions<FlowBetweenSession>>))
-                        .route(web::post().to(flo_actix::session_post_handler::<WebSessions<FlowBetweenSession>>)))
-                    .service(web::resource("/ws").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
-                    .service(web::resource("/ws/{tail:.*}").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
-                    .service(web::resource("/{tail:.*}").route(web::to(move |r| static_file_handler(r))))
-            })
-            .bind(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT))
-            .expect("Failed to bind HTTP server to port")
-            .run()
-            .expect("Http server failed while running");
+                    aw::App::new()
+                        .app_data(sessions.clone())
+                        .service(web::resource("/flowbetween/session")
+                            .route(web::get().to(flo_actix::session_get_handler::<WebSessions<FlowBetweenSession>>))
+                            .route(web::post().to(flo_actix::session_post_handler::<WebSessions<FlowBetweenSession>>)))
+                        .service(web::resource("/flowbetween/session/{tail:.*}")
+                            .route(web::get().to(flo_actix::session_get_handler::<WebSessions<FlowBetweenSession>>))
+                            .route(web::post().to(flo_actix::session_post_handler::<WebSessions<FlowBetweenSession>>)))
+                        .service(web::resource("/ws").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
+                        .service(web::resource("/ws/{tail:.*}").route(web::to(flo_actix::session_websocket_handler::<WebSessions<FlowBetweenSession>>)))
+                        .service(web::resource("/{tail:.*}").route(web::to(move |r| static_file_handler(r))))
+                })
+                .bind(&format!("{}:{}", BIND_ADDRESS, SERVER_PORT))
+                .expect("Failed to bind HTTP server to port")
+                .run()
+                .await
+                .expect("Http server failed while running");
+        });
     }))
 }
 
@@ -92,10 +99,18 @@ fn main_actix() -> Option<JoinHandle<()>> {
 fn main_gtk() -> Option<JoinHandle<()>> {
     Some(thread::spawn(|| {
         // Create a GTK session
-        let gtk_ui      = GtkUserInterface::new();
-        let gtk_session = GtkSession::from(FlowBetweenSession::new(), gtk_ui);
+        let (gtk_ui, gtk_run_loop)  = GtkUserInterface::new();
+        let (session, ui_run_loop)  = UiSession::new(FlowBetweenSession::new());
+        let gtk_session             = GtkSession::new(session, gtk_ui);
 
-        gtk_session.run();
+        let run_session             = gtk_session.run();
+        let run_loop                = future::select(gtk_run_loop.boxed(), ui_run_loop.boxed());
+        let run_loop                = future::select(run_session.boxed_local(), run_loop);
+
+        // Run on this thread
+        executor::block_on(async {
+            run_loop.await;
+        })
     }))
 }
 

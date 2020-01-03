@@ -24,7 +24,7 @@ impl ImageData for StaticImageData {
         Box::new(ImageStreamIterator::from(&self.bytes))
     }
 
-    fn read_future(&self) -> Box<dyn Stream<Item=Bytes, Error=()>> {
-        Box::new(ImageStreamIterator::from(&self.bytes))
+    fn read_future(&self) -> BoxStream<'static, Bytes> {
+        Box::pin(ImageStreamIterator::from(&self.bytes))
     }
 }

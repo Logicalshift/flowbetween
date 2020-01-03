@@ -3,10 +3,11 @@ use super::super::control::*;
 use super::super::controller::*;
 
 use flo_stream::*;
+use flo_binding::*;
 
-use binding::*;
 use itertools::*;
-use futures::executor::*;
+use futures::*;
+use futures::future::{BoxFuture};
 
 use std::mem;
 use std::sync::*;
@@ -20,10 +21,10 @@ pub struct UiSessionCore {
     last_update_id: u64,
 
     /// Used to publish tick events
-    tick: Spawn<ExpiringPublisher<()>>,
+    tick: ExpiringPublisher<()>,
 
     /// Used to temporarily suspend event processing
-    suspend_updates: Spawn<ExpiringPublisher<bool>>,
+    suspend_updates: ExpiringPublisher<bool>,
 
     /// Number of times this has been suspended
     suspension_count: i32,
@@ -49,8 +50,8 @@ impl UiSessionCore {
         UiSessionCore {
             last_update_id:     0,
             ui_tree:            ui_tree,
-            tick:               spawn(ExpiringPublisher::new(1)),
-            suspend_updates:    spawn(ExpiringPublisher::new(1)),
+            tick:               ExpiringPublisher::new(1),
+            suspend_updates:    ExpiringPublisher::new(1),
             suspension_count:   0,
             tick_on_resume:     false,
             update_callbacks:   vec![]
@@ -114,7 +115,7 @@ impl UiSessionCore {
     ///
     /// Dispatches an event to the specified controller
     ///
-    pub fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &dyn Controller) {
+    pub async fn dispatch_event(&mut self, events: Vec<UiEvent>, controller: &dyn Controller) {
         for event in events {
             // Send the event to the controllers
             match event {
@@ -140,24 +141,24 @@ impl UiSessionCore {
 
                 UiEvent::SuspendUpdates => {
                     self.suspension_count += 1;
-                    self.suspend_updates.wait_send(self.suspension_count > 0).ok();
+                    self.suspend_updates.publish(self.suspension_count > 0).await;
                 },
 
                 UiEvent::ResumeUpdates => {
                     if self.suspension_count == 1 && self.tick_on_resume {
                         // If a tick occurred while updates were suspended, send it now as we're just about to release the suspension
                         self.tick_on_resume = false;
-                        self.dispatch_tick(controller);
+                        self.dispatch_tick(controller).await;
                     }
 
                     self.suspension_count -= 1;
-                    self.suspend_updates.wait_send(self.suspension_count > 0).ok();
+                    self.suspend_updates.publish(self.suspension_count > 0).await;
                 },
 
                 UiEvent::Tick => {
                     if self.suspension_count <= 0 {
                         // Send a tick to this controller
-                        self.dispatch_tick(controller);
+                        self.dispatch_tick(controller).await;
                     } else {
                         // Send a tick when updates resume
                         self.tick_on_resume = true;
@@ -210,14 +211,14 @@ impl UiSessionCore {
     /// Returns a subscriber for tick events
     ///
     pub fn subscribe_ticks(&mut self) -> Subscriber<()> {
-        self.tick.get_mut().subscribe()
+        self.tick.subscribe()
     }
 
     ///
     /// Returns a subscriber for update suspension events
     ///
     pub fn subscribe_update_suspend(&mut self) -> Subscriber<bool> {
-        self.suspend_updates.get_mut().subscribe()
+        self.suspend_updates.subscribe()
     }
 
     ///
@@ -230,19 +231,22 @@ impl UiSessionCore {
     ///
     /// Sends ticks to the specified controller and all its subcontrollers
     ///
-    fn dispatch_tick(&mut self, controller: &dyn Controller) {
-        // Send ticks to the subcontrollers first
-        let ui              = controller.ui().get();
-        let subcontrollers  = ui.all_controllers();
-        for subcontroller_name in subcontrollers {
-            if let Some(subcontroller) = controller.get_subcontroller(&subcontroller_name) {
-                self.dispatch_tick(&*subcontroller);
+    #[must_use]
+    fn dispatch_tick<'a>(&'a mut self, controller: &'a dyn Controller) -> BoxFuture<'a, ()> {
+        async move {
+            // Send ticks to the subcontrollers first
+            let ui              = controller.ui().get();
+            let subcontrollers  = ui.all_controllers();
+            for subcontroller_name in subcontrollers {
+                if let Some(subcontroller) = controller.get_subcontroller(&subcontroller_name) {
+                    self.dispatch_tick(&*subcontroller).await;
+                }
             }
-        }
 
-        // Send the tick to the controller
-        controller.tick();
+            // Send the tick to the controller
+            controller.tick();
 
-        self.tick.wait_send(()).ok();
+            self.tick.publish(()).await;
+        }.boxed()
     }
 }

@@ -4,12 +4,17 @@ use super::super::gtk_action::*;
 use super::super::gtk_event::*;
 use super::super::widgets::*;
 
+use ::desync::*;
+use flo_stream::*;
+
 use gl;
 use gtk;
 use epoxy;
 use futures::*;
+use futures::stream::{BoxStream};
 use shared_library::dynamic_library::DynamicLibrary;
 
+use std::sync::*;
 use std::thread;
 use std::thread::JoinHandle;
 use std::ptr;
@@ -19,7 +24,7 @@ use std::ptr;
 ///
 pub struct GtkThread {
     /// A clone of the event sink that the Gtk thread will send its events to
-    event_sink: GtkEventSink,
+    event_sink: Arc<Desync<Publisher<GtkEvent>>>,
 
     /// Used to send messages and actions to the Gtk thread
     message_target: GtkMessageTarget,
@@ -34,11 +39,11 @@ impl GtkThread {
     ///
     pub fn new() -> GtkThread {
         // Create the event sink
-        let event_sink = GtkEventSink::new();
+        let event_sink = Publisher::new(100);
 
         // Create a new thread
         let mut thread = GtkThread {
-            event_sink:     event_sink,
+            event_sink:     Arc::new(Desync::new(event_sink)),
             message_target: GtkMessageTarget::new(),
             running_thread: None
         };
@@ -76,7 +81,7 @@ impl GtkThread {
     fn run_thread(&self) -> JoinHandle<()> {
         // Clone the message target so we can use it as the source for the new thread
         let thread_target   = self.message_target.clone();
-        let event_sink      = self.event_sink.clone();
+        let event_sink      = Arc::new(Desync::new(self.event_sink.sync(|sink| sink.republish_weak())));
 
         // Start the Gtk thread
         let thread = thread::spawn(move || {
@@ -114,7 +119,7 @@ impl GtkThread {
                 }
 
                 // Generate a tick event when they're complete
-                flo_gtk.get_event_sink().start_send(GtkEvent::Tick).unwrap();
+                publish_event(&flo_gtk.get_event_sink(), GtkEvent::Tick);
             });
         }
     }
@@ -122,8 +127,8 @@ impl GtkThread {
     ///
     /// Retrieves a stream of the events originating from the GTK thread
     ///
-    pub fn get_event_stream(&self) -> GtkEventStream {
-        self.event_sink.get_stream()
+    pub fn get_event_stream(&self) -> BoxStream<'static, GtkEvent> {
+        self.event_sink.sync(|sink| sink.subscribe()).boxed()
     }
 }
 

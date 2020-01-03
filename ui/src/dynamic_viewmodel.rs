@@ -1,17 +1,18 @@
 use super::property::*;
 use super::viewmodel::*;
 
-use desync::*;
+use desync::{Desync};
 use flo_stream::*;
 
-use binding::*;
-use binding::binding_context::*;
+use flo_binding::*;
+use flo_binding::binding_context::*;
 
 use futures::*;
 use futures::stream;
-use futures::executor;
-use futures::executor::Spawn;
+use futures::stream::{BoxStream};
 use futures::task;
+use futures::task::{Poll, Context, Waker};
+use std::pin::*;
 use std::sync::*;
 use std::collections::{HashMap, VecDeque};
 
@@ -22,7 +23,7 @@ use std::collections::{HashMap, VecDeque};
 ///
 pub struct DynamicViewModel {
     /// Stream of new properties being created for this viewmodel
-    new_properties: Desync<Spawn<Publisher<(String, BindRef<PropertyValue>)>>>,
+    new_properties: Desync<Publisher<(String, BindRef<PropertyValue>)>>,
 
     /// Maps bindings in this viewmodel to their values
     bindings: Mutex<HashMap<String, Arc<Binding<PropertyValue>>>>,
@@ -39,7 +40,7 @@ pub struct DynamicViewModel {
 ///
 struct DynamicStreamNotify {
     /// Task to notify
-    task: Mutex<task::Task>,
+    waker: Mutex<Option<Waker>>,
 
     /// True if this stream has notified
     was_notified: Mutex<bool>
@@ -53,7 +54,7 @@ struct DynamicStreamProperty {
     last_value: Option<PropertyValue>,
 
     /// Stream of values for this item
-    value_stream: executor::Spawn<Box<dyn Stream<Item=PropertyValue, Error=()>+Send>>,
+    value_stream: BoxStream<'static, PropertyValue>,
 
     /// Most recent notifier for this stream
     notify: Arc<DynamicStreamNotify>
@@ -66,7 +67,7 @@ struct DynamicStreamProperty {
 /// 'pull' changes in on the current thread rather than generate them asynchronously on a
 /// different thread, which is useful when trying to drain all updates from the publisher.
 ///
-struct DynamicViewModelUpdateStream<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> {
+struct DynamicViewModelUpdateStream<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>+Unpin> {
     /// Stream of new property bindings
     new_properties: NewProperties,
 
@@ -77,27 +78,28 @@ struct DynamicViewModelUpdateStream<NewProperties: Stream<Item=(String, BindRef<
     any_property: HashMap<String, DynamicStreamProperty>
 }
 
-impl executor::Notify for DynamicStreamNotify {
-    fn notify(&self, _id: usize) {
+impl task::ArcWake for DynamicStreamNotify {
+    fn wake_by_ref(arc_self: &Arc<Self>) {
         // Set the flag
-        *self.was_notified.lock().unwrap() = true;
+        *arc_self.was_notified.lock().unwrap() = true;
 
-        // Notify the task
-        self.task.lock().unwrap().notify();
+        // Wake the task
+        arc_self.waker.lock().unwrap()
+            .take()
+            .map(|waker| waker.wake());
     }
 }
 
-impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Stream for DynamicViewModelUpdateStream<NewProperties> {
+impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>)>+Unpin> Stream for DynamicViewModelUpdateStream<NewProperties> {
     type Item = ViewModelChange;
-    type Error = ();
 
-    fn poll(&mut self) -> Poll<Option<ViewModelChange>, ()> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelChange>> {
         // Set up any new properties
-        let mut new_property_poll = self.new_properties.poll();
-        while let Ok(Async::Ready(Some((name, binding)))) = new_property_poll {
+        let mut new_property_poll = self.new_properties.poll_next_unpin(context);
+        while let Poll::Ready(Some((name, binding))) = new_property_poll {
             // Create a new property with its notify flag set
             let notified = DynamicStreamNotify {
-                task:           Mutex::new(task::current()),
+                waker:          Mutex::new(Some(context.waker().clone())),
                 was_notified:   Mutex::new(true)
             };
 
@@ -105,7 +107,7 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Str
 
             let property = DynamicStreamProperty {
                 last_value:     Some(value.clone()),
-                value_stream:   executor::spawn(Box::new(follow(binding))),
+                value_stream:   Box::pin(follow(binding)),
                 notify:         Arc::new(notified)
             };
 
@@ -116,32 +118,34 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Str
             self.any_property.insert(name, property);
 
             // Get the next new property
-            new_property_poll = self.new_properties.poll();
+            new_property_poll = self.new_properties.poll_next_unpin(context);
         }
 
         // Return pending changes first
         if let Some(next_change) = self.pending_changes.pop_front() {
-            return Ok(Async::Ready(Some(next_change)));
+            return Poll::Ready(Some(next_change));
         }
 
         // If the new properties stream comes to an end, this stream has come to an end
-        if let Ok(Async::Ready(None)) = new_property_poll {
-            return Ok(Async::Ready(None));
+        if let Poll::Ready(None) = new_property_poll {
+            return Poll::Ready(None);
         }
 
         // Poll for values from any properties with their flag set
         for (name, property) in self.any_property.iter_mut() {
             // Update the task to notify
-            *property.notify.task.lock().unwrap() = task::current();
+            *property.notify.waker.lock().unwrap() = Some(context.waker().clone());
 
             // If the flag is set...
             if *property.notify.was_notified.lock().unwrap() {
                 // Try polling this item
                 loop {
-                    let notify_poll = property.value_stream.poll_stream_notify(&Arc::clone(&property.notify), 0);
+                    let notify_waker        = task::waker(Arc::clone(&property.notify));
+                    let mut notify_context  = Context::from_waker(&notify_waker);
+                    let notify_poll         = property.value_stream.poll_next_unpin(&mut notify_context);
 
                     match notify_poll {
-                        Ok(Async::Ready(Some(new_value))) => {
+                        Poll::Ready(Some(new_value)) => {
                             // Got an update for this property
                             if Some(&new_value) != property.last_value.as_ref() {
                                 // Store the last value so we don't create duplicate updates
@@ -149,13 +153,13 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Str
 
                                 // Value changed: send it on
                                 let update = ViewModelChange::PropertyChanged(name.clone(), new_value);
-                                return Ok(Async::Ready(Some(update)));
+                                return Poll::Ready(Some(update));
                             } else {
                                 // Poll again in case there is an actual new value (or to start waiting for updates on this property)
                             }
                         },
 
-                        Ok(Async::Ready(None)) => {
+                        Poll::Ready(None) => {
                             // Property was deleted
                             *property.notify.was_notified.lock().unwrap() = false;
 
@@ -163,12 +167,7 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Str
                             break;
                         },
 
-                        Err(_) => {
-                            // Just skip errors for now (we shouldn't produce any)
-                            break;
-                        },
-
-                        Ok(Async::NotReady) => {
+                        Poll::Pending => {
                             // Not notified any more
                             *property.notify.was_notified.lock().unwrap() = false;
 
@@ -181,7 +180,7 @@ impl<NewProperties: Stream<Item=(String, BindRef<PropertyValue>), Error=()>> Str
         }
 
         // No updates available
-        Ok(Async::NotReady)
+        Poll::Pending
     }
 }
 
@@ -191,7 +190,7 @@ impl DynamicViewModel {
     ///
     pub fn new() -> DynamicViewModel {
         DynamicViewModel {
-            new_properties:     Desync::new(executor::spawn(Publisher::new(100))),
+            new_properties:     Desync::new(Publisher::new(100)),
             bindings:           Mutex::new(HashMap::new()),
             computed:           Mutex::new(HashMap::new()),
             nothing:            BindRef::from(bind(PropertyValue::Nothing)) }
@@ -248,12 +247,14 @@ impl DynamicViewModel {
     /// Follows a binding and publishes updates to the update stream
     ///
     fn follow_binding<TBinding: 'static+Bound<PropertyValue>>(&self, property_name: &str, binding: TBinding) {
-        let property_name = String::from(property_name);
-        self.new_properties.sync(move |new_properties| {
-            new_properties
-                .wait_send((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
-                .ok();
+        // Use a future to publish the property
+        let property_name   = String::from(property_name);
+        let _future         = self.new_properties.future(move |new_properties| {
+            new_properties.publish((String::from(property_name), BindRef::from_arc(Arc::new(binding))))
         });
+
+        // Synchronise with where the future completes, so the property is ready by the time this call returns
+        self.new_properties.sync(|_| { });
     }
 }
 
@@ -315,7 +316,7 @@ impl ViewModel for DynamicViewModel {
         binding_keys
     }
 
-    fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
+    fn get_updates(&self) -> BoxStream<'static, ViewModelChange> {
         // Gather the existing bindings
         let existing_properties = self.bindings.lock().unwrap().iter()
             .map(|(name, binding)| (name.clone(), BindRef::from_arc(Arc::clone(binding))))
@@ -328,8 +329,8 @@ impl ViewModel for DynamicViewModel {
         let new_properties      = self.new_properties.sync(|new_properties| new_properties.subscribe());
 
         // Initially all properties are new
-        let existing_properties = stream::iter_ok(existing_properties);
-        let existing_computed   = stream::iter_ok(existing_computed);
+        let existing_properties = stream::iter(existing_properties);
+        let existing_computed   = stream::iter(existing_computed);
         let new_properties      = existing_properties.chain(existing_computed).chain(new_properties);
 
         // Create the new stream
@@ -339,7 +340,7 @@ impl ViewModel for DynamicViewModel {
             any_property:       HashMap::new()
         };
 
-        Box::new(stream)
+        Box::pin(stream)
     }
 }
 
@@ -393,13 +394,15 @@ mod test {
         let viewmodel = DynamicViewModel::new();
         viewmodel.set_property("Test", PropertyValue::Int(2));
 
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
 
-        viewmodel.set_property("Test", PropertyValue::Int(3));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3)))));
+        executor::block_on(async {
+            viewmodel.set_property("Test", PropertyValue::Int(3));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3))));
 
-        viewmodel.set_property("Test", PropertyValue::Int(4));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(4)))));
+            viewmodel.set_property("Test", PropertyValue::Int(4));
+            assert!(updates.next().await == Some(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(4))));
+        });
     }
 
     #[test]
@@ -407,12 +410,123 @@ mod test {
         let viewmodel = DynamicViewModel::new();
         viewmodel.set_property("Test", PropertyValue::Int(2));
 
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
         viewmodel.set_property("Test", PropertyValue::Int(3));
         viewmodel.set_property("Test", PropertyValue::Int(4));
         viewmodel.set_property("Test", PropertyValue::Int(5));
 
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(5)))));
+        executor::block_on(async {
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(5))));
+        });
+    }
+
+    #[test]
+    fn new_values_are_picked_up() {
+        let viewmodel   = DynamicViewModel::new();
+        let mut stream  = viewmodel.get_updates();
+        viewmodel.set_property("Test", PropertyValue::Int(1));
+
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            viewmodel.set_property("NewValue", PropertyValue::Int(2));
+
+            assert!(stream.next().await == Some(ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(2))));
+        })
+    }
+
+    #[test]
+    fn changes_are_picked_up() {
+        let viewmodel   = DynamicViewModel::new();
+        let mut stream  = viewmodel.get_updates();
+        viewmodel.set_property("Test", PropertyValue::Int(1));
+
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            viewmodel.set_property("Test", PropertyValue::Int(2));
+
+            assert!(stream.next().await == Some(ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))));
+        })
+    }
+
+    #[test]
+    fn notifications_are_posted() {
+        use std::thread;
+        use std::time::{Duration};
+
+        let viewmodel   = DynamicViewModel::new();
+        let mut stream  = viewmodel.get_updates();
+        viewmodel.set_property("Test", PropertyValue::Int(1));
+
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            thread::spawn(move || {
+                thread::sleep(Duration::from_millis(100));
+                viewmodel.set_property("Test", PropertyValue::Int(2));
+
+                // Timeout before destroying the viewmodel (will end the stream, failing the test)
+                thread::sleep(Duration::from_millis(100));
+            });
+
+            let event = stream.next().await;
+            println!("{:?}", event);
+            assert!(event == Some(ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))));
+        })
+    }
+
+    #[test]
+    fn new_values_are_picked_up_alongside_changes() {
+        // Equivalent test is in the viewmodel_stream
+        let viewmodel = DynamicViewModel::new();
+        viewmodel.set_property("Test", PropertyValue::Int(1));
+
+        executor::block_on(async {
+            let mut stream  = viewmodel.get_updates();
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            viewmodel.set_property("NewValue", PropertyValue::Int(3));
+            viewmodel.set_property("Test", PropertyValue::Int(2));
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3))));
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))));
+        });
+    }
+
+    #[test]
+    fn new_values_are_picked_up_alongside_changes_no_buffering() {
+        // Equivalent test is in the viewmodel_stream
+        let viewmodel = DynamicViewModel::new();
+        viewmodel.set_property("Test", PropertyValue::Int(1));
+
+        executor::block_on(async {
+            let mut stream  = viewmodel.get_updates();
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))));
+
+            viewmodel.set_property("NewValue", PropertyValue::Int(3));
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3))));
+
+            viewmodel.set_property("Test", PropertyValue::Int(2));
+
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))));
+        });
     }
 
     #[test]
@@ -420,49 +534,53 @@ mod test {
         let viewmodel = DynamicViewModel::new();
         viewmodel.set_property("Test", PropertyValue::Int(2));
 
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
 
-        viewmodel.set_property("Test", PropertyValue::Int(3));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3)))));
+        executor::block_on(async {
+            viewmodel.set_property("Test", PropertyValue::Int(3));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(3))));
 
-        viewmodel.set_property("Test2", PropertyValue::Int(4));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test2"), PropertyValue::Int(4)))));
+            viewmodel.set_property("Test2", PropertyValue::Int(4));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test2"), PropertyValue::Int(4))));
 
-        viewmodel.set_property("Test2", PropertyValue::Int(5));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test2"), PropertyValue::Int(5)))));
+            viewmodel.set_property("Test2", PropertyValue::Int(5));
+            assert!(updates.next().await == Some(ViewModelChange::PropertyChanged(String::from("Test2"), PropertyValue::Int(5))));
+        });
     }
 
     #[test]
     fn stream_computed_values() {
         let viewmodel = DynamicViewModel::new();
-        let mut updates = executor::spawn(viewmodel.get_updates());
+        let mut updates = viewmodel.get_updates();
 
-        viewmodel.set_property("TestSource", PropertyValue::Int(1));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("TestSource"), PropertyValue::Int(1)))));
+        executor::block_on(async {
+            viewmodel.set_property("TestSource", PropertyValue::Int(1));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("TestSource"), PropertyValue::Int(1))));
 
-        let test_source = viewmodel.get_property("TestSource");
-        viewmodel.set_computed("Test", move || test_source.get());
+            let test_source = viewmodel.get_property("TestSource");
+            viewmodel.set_computed("Test", move || test_source.get());
 
-        assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
-        assert!(updates.wait_stream() == Some(Ok(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(1)))));
+            assert!(viewmodel.get_property("Test").get() == PropertyValue::Int(1));
+            assert!(updates.next().await == Some(ViewModelChange::NewProperty(String::from("Test"), PropertyValue::Int(1))));
 
-        viewmodel.set_property("TestSource", PropertyValue::Int(2));
-        let update1 = updates.wait_stream();
-        let update2 = updates.wait_stream();
+            viewmodel.set_property("TestSource", PropertyValue::Int(2));
+            let update1 = updates.next().await;
+            let update2 = updates.next().await;
 
-        // Order of updates is indeterminate
-        println!("{:?}", update1);
-        println!("{:?}", update2);
+            // Order of updates is indeterminate
+            println!("{:?}", update1);
+            println!("{:?}", update2);
 
-        if update1 == Some(Ok(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2)))) {
-            assert!(update2 == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2)))));
+            if update1 == Some(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2))) {
+                assert!(update2 == Some(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2))));
 
-        } else if update1 == Some(Ok(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2)))) {
-            assert!(update2 == Some(Ok(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2)))));
+            } else if update1 == Some(ViewModelChange::PropertyChanged(String::from("Test"), PropertyValue::Int(2))) {
+                assert!(update2 == Some(ViewModelChange::PropertyChanged(String::from("TestSource"), PropertyValue::Int(2))));
 
-        } else {
-            assert!(false);
-        }
+            } else {
+                assert!(false);
+            }
+        });
     }
 
     #[test]

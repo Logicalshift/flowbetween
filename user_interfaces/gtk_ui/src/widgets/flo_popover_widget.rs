@@ -13,7 +13,6 @@ use flo_ui::*;
 use gtk;
 use gtk::prelude::*;
 use gdk;
-use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -221,12 +220,11 @@ impl GtkUiWidget for FloPopoverWidget {
                 self.popover.show_all();
 
                 // The hide event causes the popup to dismiss
-                let sink = RefCell::new(sink);
                 self.popover.connect_hide(move |_widget| {
                     let reopening = data.borrow().reopening;
 
                     if !reopening {
-                        sink.borrow_mut().start_send(GtkEvent::Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
+                        publish_event(&sink, GtkEvent::Event(widget_id, action_name.clone(), GtkEventParameter::None));
                     }
                 });
             },

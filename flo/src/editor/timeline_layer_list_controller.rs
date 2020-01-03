@@ -3,13 +3,13 @@ use super::super::model::*;
 use super::super::style::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 
-use desync::*;
-use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
+use ::desync::*;
+
+use std::sync::*;
 
 ///
 /// Controller class that displays and edits the layer names
@@ -19,7 +19,7 @@ pub struct TimelineLayerListController {
     ui: BindRef<Control>,
 
     /// Where the edits are sent
-    edit_sink: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
+    edit_sink: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
     /// The currently selected layer
     selected_layer_id: Binding<Option<u64>>,
@@ -38,7 +38,7 @@ impl TimelineLayerListController {
         let editing_layer_id    = bind(None);
         let ui                  = Self::ui(model, BindRef::from(editing_layer_id.clone()));
 
-        let edit_sink           = executor::spawn(model.edit());
+        let edit_sink           = model.edit();
 
         TimelineLayerListController {
             ui:                 ui,
@@ -142,11 +142,11 @@ impl Controller for TimelineLayerListController {
                 if let (ActionParameter::Value(PropertyValue::String(new_name)), Some(layer_id)) = (action_parameter, self.selected_layer_id.get()) {
                     // Send the 'rename layer' command to the edit sink
                     let new_name = new_name.clone();
-                    self.edit_sink.desync(move |edit_sink| {
-                        edit_sink.wait_send(vec![
+                    let _ = self.edit_sink.future(move |edit_sink| {
+                        edit_sink.publish(Arc::new(vec![
                             AnimationEdit::Layer(layer_id, LayerEdit::SetName(new_name))
-                        ]).ok();
-                    })
+                        ]))
+                    });
                 }
 
                 // Stop editing the layer

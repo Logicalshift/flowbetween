@@ -262,7 +262,7 @@ fn can_query_motion_assigned_elements() {
     let element_1           = db.query_vector_element_id(&ElementId::Assigned(1)).unwrap().unwrap();
     let motions_for_element = db.query_elements_with_attachments(element_1).unwrap().into_iter()
         .filter_map(|(_, id, _)| id.id())
-        .collect::<Vec<_>>();;
+        .collect::<Vec<_>>();
 
     assert!(motions_for_element.len() == 2);
     assert!(motions_for_element.iter().any(|item| item == &42));

@@ -1,7 +1,7 @@
 use super::*;
 use super::super::property::*;
 
-use modifier::*;
+use ::modifier::*;
 
 ///
 /// Attributes representing the state of a control

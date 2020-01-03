@@ -7,11 +7,15 @@ use ui::*;
 use ui::session::*;
 use canvas::*;
 use binding::*;
+use flo_stream::*;
+
 use futures::*;
-use futures::stream;
+use futures::task::{Poll};
+use futures::stream::{BoxStream};
 use itertools::join;
 use percent_encoding::*;
 
+use std::mem;
 use std::sync::*;
 
 ///
@@ -25,21 +29,31 @@ pub struct HttpUserInterface<CoreUi> {
     ui_tree: BindRef<Control>,
 
     /// The base path of the instance (where URIs are generated relative to)
-    base_path: String
+    base_path: String,
+
+    /// Publishes events to the core UI
+    event_publisher: Publisher<Vec<Event>>,
 }
 
 impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     /// Creates a new HTTP UI that will translate requests for the specified core UI
     ///
-    pub fn new(ui: Arc<CoreUi>, base_path: String) -> HttpUserInterface<CoreUi> {
-        let ui_tree = ui.ui_tree();
+    pub fn new(ui: Arc<CoreUi>, base_path: String) -> (HttpUserInterface<CoreUi>, impl Future<Output=()>) {
+        let ui_tree             = ui.ui_tree();
+        let event_publisher     = Publisher::new(100);
 
-        HttpUserInterface {
-            core_ui:    ui,
-            ui_tree:    ui_tree,
-            base_path:  base_path
-        }
+        // Create the run loop
+        let run_loop        = Self::run(event_publisher.republish_weak(), ui.get_input_sink());
+
+        let user_interface  = HttpUserInterface {
+            core_ui:            ui,
+            ui_tree:            ui_tree,
+            base_path:          base_path,
+            event_publisher:    event_publisher
+        };
+
+        (user_interface, run_loop)
     }
 
     ///
@@ -47,6 +61,57 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     ///
     pub fn core(&self) -> Arc<CoreUi> {
         Arc::clone(&self.core_ui)
+    }
+
+    ///
+    /// Runs the HTTP UI
+    ///
+    async fn run(mut http_events: WeakPublisher<Vec<Event>>, mut ui_events: WeakPublisher<Vec<UiEvent>>) {
+        // Subscribe to the events
+        let mut http_subscriber = http_events.subscribe();
+
+        // Main UI loop
+        loop {
+            // Retrieve the next set of events
+            let next_events = Self::retrieve_next_events(&mut http_subscriber).await;
+
+            // Finish the UI loop if there are no more events
+            if next_events.is_none() { break; }
+
+            // Process the events into HTTP events
+            let http_events = next_events.unwrap().into_iter()
+                .map(|event| Self::http_event_to_core_event(event))
+                .collect::<Vec<_>>();
+
+            // Publish the events we retrieved to the UI queue, and wait for the queue to flush
+            ui_events.publish(http_events).await;
+        }
+    }
+
+    ///
+    /// Retrieves the next set of events from a HTTP event subscriber
+    ///
+    async fn retrieve_next_events(http_events: &mut Subscriber<Vec<Event>>) -> Option<Vec<Event>> {
+        // Result will contain the list of events that we've retrieved
+        let result = http_events.next().await;
+
+        if let Some(mut result) = result {
+            // Read as many events as we can to process at once
+            future::poll_fn(move |context| {
+                while let Poll::Ready(Some(more_events)) = http_events.poll_next_unpin(context) {
+                    result.extend(more_events)
+                }
+
+                // Return the events that we retrieved
+                let mut actual_result = vec![];
+                mem::swap(&mut result, &mut actual_result);
+
+                Poll::Ready(Some(actual_result))
+            }).await
+        } else {
+            // No further events
+            None
+        }
     }
 
     ///
@@ -196,27 +261,13 @@ impl<CoreUi: CoreUserInterface> HttpUserInterface<CoreUi> {
     }
 }
 
-pub type HttpEventSink      = Box<dyn Sink<SinkItem=Vec<Event>, SinkError=()>+Send>;
-pub type HttpUpdateStream   = Box<dyn Stream<Item=Vec<Update>, Error=()>+Send>;
+pub type HttpUpdateStream   = BoxStream<'static, Result<Vec<Update>, ()>>;
 
 impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for HttpUserInterface<CoreUi> {
-    type EventSink      = HttpEventSink;
     type UpdateStream   = HttpUpdateStream;
 
-    fn get_input_sink(&self) -> Self::EventSink {
-        // Get the core event sink
-        let core_sink   = self.core_ui.get_input_sink();
-
-        // Create a sink that turns HTTP events into core events
-        let mapped_sink = core_sink.with_flat_map(|http_events: Vec<_>| {
-            let core_events = http_events.into_iter()
-                .map(|evt| Self::http_event_to_core_event(evt))
-                .collect();
-            stream::once(Ok(core_events))
-        });
-
-        // This new sink is our result
-        Box::new(mapped_sink)
+    fn get_input_sink(&self) -> WeakPublisher<Vec<Event>> {
+        self.event_publisher.republish_weak()
     }
 
     fn get_updates(&self) -> Self::UpdateStream {
@@ -229,13 +280,15 @@ impl<CoreUi: CoreUserInterface> UserInterface<Vec<Event>, Vec<Update>, ()> for H
 
         // Turn into HTTP updates
         let mapped_updates = core_updates.map(move |core_updates| {
-            let ui_tree = ui_tree.get();
+            core_updates.map(|core_updates| {
+                let ui_tree = ui_tree.get();
 
-            Self::core_updates_to_http_updates(core_updates, &base_path, &ui_tree)
+                Self::core_updates_to_http_updates(core_updates, &base_path, &ui_tree)
+            })
         });
 
         // These are the results
-        Box::new(mapped_updates)
+        Box::pin(mapped_updates)
     }
 }
 
@@ -244,7 +297,8 @@ mod test {
     use super::*;
 
     use serde_json::*;
-    use futures::sync::oneshot;
+    use futures::executor;
+    use futures::channel::oneshot;
 
     use std::time::Duration;
     use std::thread::*;
@@ -279,20 +333,25 @@ mod test {
 
     #[test]
     fn generates_initial_update() {
-        let controller      = TestController { ui: bind(Control::empty()) };
-        let core_session    = Arc::new(UiSession::new(controller));
-        let http_session    = HttpUserInterface::new(core_session, "test/session".to_string());
+        let thread_pool                 = executor::ThreadPool::new().unwrap();
+        let controller                  = TestController { ui: bind(Control::empty()) };
+        let core_session                = Arc::new(UiSession::new(controller));
+        let (http_session, run_loop)    = HttpUserInterface::new(core_session, "test/session".to_string());
 
-        let http_stream     = http_session.get_updates();
+        thread_pool.spawn_ok(run_loop);
+        let http_stream                 = http_session.get_updates();
 
-        let next_or_timeout     = http_stream.map(|updates| TestItem::Updates(updates)).select(timeout(2000).into_stream().map(|_| TestItem::Timeout).map_err(|_| ()));
-        let mut next_or_timeout = executor::spawn(next_or_timeout);
+        //let next_or_timeout = stream::select(http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates))), timeout(2000).into_stream().map(|_| TestItem::Timeout));
+        let next_or_timeout             = http_stream.map(|updates| updates.map(|updates| TestItem::Updates(updates)));
+        let mut next_or_timeout         = next_or_timeout;
 
         // First update should be munged into a NewUserInterfaceHtml update
-        let first_update = next_or_timeout.wait_stream().unwrap();
-        assert!(first_update != Ok(TestItem::Timeout));
-        assert!(first_update == Ok(TestItem::Updates(vec![
-            Update::NewUserInterfaceHtml("<flo-empty></flo-empty>".to_string(), json![{ "attributes": Vec::<String>::new(), "control_type": "Empty" }], vec![])
-        ])));
+        executor::block_on(async {
+            let first_update = next_or_timeout.next().await.unwrap();
+            assert!(first_update != Ok(TestItem::Timeout));
+            assert!(first_update == Ok(TestItem::Updates(vec![
+                Update::NewUserInterfaceHtml("<flo-empty></flo-empty>".to_string(), json![{ "attributes": Vec::<String>::new(), "control_type": "Empty" }], vec![])
+            ])));
+        });
     }
 }

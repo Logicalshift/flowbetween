@@ -15,7 +15,6 @@ use gtk::prelude::*;
 use gdk;
 use gdk::prelude::*;
 use gdk_pixbuf;
-use futures::*;
 
 use std::ops::Range;
 use std::rc::*;
@@ -148,7 +147,7 @@ impl FloRotorWidget {
                     // Send set events
                     let value = data.value as f64;
                     data.set_events.iter_mut().for_each(|&mut (ref event_name, ref mut sink)| {
-                        sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value))).unwrap();
+                        publish_event(sink, GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value)));
                     });
 
                     Inhibit(true)
@@ -184,7 +183,7 @@ impl FloRotorWidget {
                     // Send edit events
                     let value = data.value as f64;
                     data.edit_events.iter_mut().for_each(|&mut (ref event_name, ref mut sink)| {
-                        sink.start_send(GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value))).unwrap();
+                        publish_event(sink, GtkEvent::Event(widget_id, event_name.clone(), GtkEventParameter::ScaleValue(value)));
                     });
 
                     // Redraw the widget with the new value

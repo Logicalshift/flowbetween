@@ -1,4 +1,4 @@
-use binding::*;
+use flo_binding::*;
 
 use super::viewmodel::*;
 use super::controller::*;

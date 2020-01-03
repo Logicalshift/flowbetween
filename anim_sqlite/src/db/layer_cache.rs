@@ -1,11 +1,13 @@
 use super::flo_store::*;
 use super::animation_core::*;
 
-use desync::*;
+use desync::{Desync};
 use flo_canvas::*;
 use flo_animation::*;
 
 use futures::*;
+use futures::future;
+use futures::future::{BoxFuture};
 
 use std::sync::*;
 use std::time::Duration;
@@ -13,7 +15,7 @@ use std::time::Duration;
 ///
 /// Canvas cache associated with a point in time
 ///
-pub struct LayerCanvasCache<TFile: FloFile+Send> {
+pub struct LayerCanvasCache<TFile: FloFile+Unpin+Send> {
     /// Database core
     core: Arc<Desync<AnimationDbCore<TFile>>>,
 
@@ -24,7 +26,7 @@ pub struct LayerCanvasCache<TFile: FloFile+Send> {
     layer_id: i64
 }
 
-impl<TFile: FloFile+Send> LayerCanvasCache<TFile> {
+impl<TFile: FloFile+Unpin+Send> LayerCanvasCache<TFile> {
     ///
     /// Creates a layer cache at the specified time on a particular layer
     ///
@@ -37,7 +39,7 @@ impl<TFile: FloFile+Send> LayerCanvasCache<TFile> {
     }
 }
 
-impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
+impl<TFile: 'static+FloFile+Unpin+Send> CanvasCache for LayerCanvasCache<TFile> {
     ///
     /// Invalidates any stored canvas with the specified type
     ///
@@ -100,7 +102,7 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
     ///
     /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
     ///
-    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Arc<Vec<Draw>> + Send>) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>+Send>> {
+    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Arc<Vec<Draw>> + Send>) -> CacheProcess<Arc<Vec<Draw>>, BoxFuture<'static, Arc<Vec<Draw>>>> {
         if let Some(result) = self.retrieve(cache_type) {
             // Cached data is already available
             CacheProcess::Cached(result)
@@ -120,7 +122,7 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
 
                 if let Some(existing) = existing {
                     // Re-use the existing cached element if one has been generated in the meantime
-                    existing
+                    Box::pin(future::ready(existing))
                 } else {
                     // Call the generation function to create a new cache
                     let new_drawing = generate();
@@ -143,11 +145,16 @@ impl<TFile: 'static+FloFile+Send> CanvasCache for LayerCanvasCache<TFile> {
                     });
 
                     // The generated drawing is the cache result
-                    new_drawing
+                    Box::pin(future::ready(new_drawing))
+                }
+            }).map(|result| {
+                match result {
+                    Ok(result)      => result,
+                    Err(_canceled)  => Arc::new(vec![])
                 }
             });
 
-            CacheProcess::Process(Box::new(future_result))
+            CacheProcess::Process(Box::pin(future_result))
         }
     }
 }

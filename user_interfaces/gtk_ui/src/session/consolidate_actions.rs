@@ -1,7 +1,10 @@
 use flo_ui::*;
 use flo_ui::session::*;
 
-use futures::*;
+use futures::prelude::*;
+use futures::task::{Poll, Context};
+
+use std::pin::*;
 
 ///
 /// Stream that takes a stream of UiEvents destined for the core UI and consolidates any buffered actions that can be considered as a single
@@ -15,7 +18,7 @@ pub struct ConsolidateActionsStream<ActionStream> {
     pending_event: Option<Vec<UiEvent>>
 }
 
-impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream<ActionStream> {
+impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> ConsolidateActionsStream<ActionStream> {
     ///
     /// Creates a new consolidating stream
     ///
@@ -29,14 +32,12 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream
     ///
     /// Attempts to consolidate an event with a future event
     ///
-    fn consolidate(&mut self, next_event: Vec<UiEvent>, future_event: Poll<Option<Vec<UiEvent>>, ()>) -> (Vec<UiEvent>, Poll<Option<Vec<UiEvent>>, ()>) {
-        use self::Async::*;
-
-        if let Ok(Ready(Some(future_event))) = future_event {
+    fn consolidate(&mut self, next_event: Vec<UiEvent>, future_event: Poll<Option<Vec<UiEvent>>>, context: &mut Context) -> (Vec<UiEvent>, Poll<Option<Vec<UiEvent>>>) {
+        if let Poll::Ready(Some(future_event)) = future_event {
             let mut next_event = next_event;
             next_event.extend(future_event);
 
-            (next_event, self.source_stream.poll())
+            (next_event, self.source_stream.poll_next_unpin(context))
         } else {
             (next_event, future_event)
         }
@@ -87,40 +88,39 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> ConsolidateActionsStream
     }
 }
 
-impl<ActionStream: Stream<Item=Vec<UiEvent>, Error=()>> Stream for ConsolidateActionsStream<ActionStream> {
+impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> Stream for ConsolidateActionsStream<ActionStream> {
     type Item=Vec<UiEvent>;
-    type Error=();
 
-    fn poll(&mut self) -> Poll<Option<Vec<UiEvent>>, ()> {
-        use self::Async::*;
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<UiEvent>>> {
+        let mut self_ref = self.as_mut();
 
-        if let Some(pending_event) = self.pending_event.take() {
+        if let Some(pending_event) = self_ref.pending_event.take() {
             // If there's already a pending event, this is what we return
-            Ok(Ready(Some(pending_event)))
+            Poll::Ready(Some(pending_event))
         } else {
             // Try to fetch the next event from the source stream
-            let mut next_event = self.source_stream.poll();
+            let next_event = self_ref.source_stream.poll_next_unpin(context);
 
-            if let Ok(Ready(Some(mut next_event))) = next_event {
+            if let Poll::Ready(Some(mut next_event)) = next_event {
                 // An event is ready: see if another event is immediately available
-                let mut future_event = self.source_stream.poll();
+                let mut future_event = self_ref.source_stream.poll_next_unpin(context);
 
                 // Loop until there are no more future events to consolidate
                 loop {
                     match future_event {
-                        Ok(Ready(Some(_)))      => { let (new_next_event, new_future_event) = self.consolidate(next_event, future_event); next_event = new_next_event; future_event = new_future_event; },
+                        Poll::Ready(Some(_))    => { let (new_next_event, new_future_event) = self_ref.consolidate(next_event, future_event, context); next_event = new_next_event; future_event = new_future_event; },
                         _                       => { break; }
                     }
                 }
 
                 // Reduce the consolidated events
-                self.reduce(&mut next_event);
+                self_ref.reduce(&mut next_event);
 
                 // Suspend updates while the consolidated events are processed
                 next_event.insert(0, UiEvent::SuspendUpdates);
                 next_event.push(UiEvent::ResumeUpdates);
 
-                Ok(Ready(Some(next_event)))
+                Poll::Ready(Some(next_event))
             } else {
                 // Result is just the next event
                 next_event

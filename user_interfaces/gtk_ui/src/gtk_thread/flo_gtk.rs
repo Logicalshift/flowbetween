@@ -1,12 +1,15 @@
 use super::message::*;
-use super::event_sink::*;
 use super::super::gtk_action::*;
+use super::super::gtk_thread::*;
 use super::super::gtk_event::*;
 use super::super::widgets::*;
 
+use flo_stream::*;
+
 use gtk;
 use glib;
-use futures::stream::Stream;
+use futures::prelude::*;
+use futures::stream::{BoxStream};
 
 use std::collections::{HashMap, VecDeque};
 use std::cell::RefCell;
@@ -14,7 +17,7 @@ use std::sync::*;
 use std::rc::Rc;
 use std::thread;
 
-/// Contains the FloGtk instance running on the current thread
+// Contains the FloGtk instance running on the current thread
 thread_local!(static GTK_INSTANCES: RefCell<Vec<FloGtk>> = RefCell::new(vec![]));
 
 /// Queue of messages waiting to be sent to the GTK thread
@@ -213,17 +216,16 @@ impl FloGtk {
     ///
     /// Retrieves a stream that will return all future events generated for this object
     ///
-    pub fn get_event_stream(&mut self) -> Box<dyn Stream<Item=GtkEvent, Error=()>> {
+    pub fn get_event_stream(&mut self) -> BoxStream<'static, GtkEvent> {
         // Generate a stream from our event sink
-        Box::new(self.event_sink.get_stream())
+        self.event_sink.sync(|sink| sink.subscribe()).boxed()
     }
 
     ///
     /// Retrieves a sink that can be used to send events to any attached streams
     ///
     pub fn get_event_sink(&mut self) -> GtkEventSink {
-        // Result is a clone of our 'core' event sink
-        self.event_sink.clone()
+        Arc::clone(&self.event_sink)
     }
 
     ///

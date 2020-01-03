@@ -1,7 +1,7 @@
 use super::cache_type::*;
 use super::cache_process::*;
 
-use futures::*;
+use futures::future::{BoxFuture};
 
 use flo_canvas::*;
 
@@ -34,5 +34,5 @@ pub trait CanvasCache {
     ///
     /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
     ///
-    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Arc<Vec<Draw>> + Send>) -> CacheProcess<Arc<Vec<Draw>>, Box<dyn Future<Item=Arc<Vec<Draw>>, Error=Canceled>+Send>>;
+    fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Arc<Vec<Draw>> + Send>) -> CacheProcess<Arc<Vec<Draw>>, BoxFuture<'static, Arc<Vec<Draw>>>>;
 }

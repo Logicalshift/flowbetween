@@ -89,7 +89,7 @@ impl GtkPainting {
         let device: gdk::Device = gdk::Device::from_glib_borrow(device);
 
         // Fetch the number of axes in the device
-        let num_axes = device.get_n_axes() as usize;
+        let num_axes = if axes.is_null() { return; } else { device.get_n_axes() as usize };
 
         // Turn our axes pointer into a slice
         let axes = slice::from_raw_parts(axes, num_axes);

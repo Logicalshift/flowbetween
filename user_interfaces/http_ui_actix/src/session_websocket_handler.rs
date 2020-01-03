@@ -1,6 +1,7 @@
 use super::actix_session::*;
 
 use flo_http_ui::*;
+use flo_stream::*;
 use flo_ui::*;
 
 use actix::*;
@@ -9,7 +10,8 @@ use actix_web::web;
 use actix_web_actors::ws;
 use futures::*;
 use futures::future;
-use futures::sync::oneshot;
+use futures::future::{BoxFuture, LocalBoxFuture};
+use futures::channel::oneshot;
 use serde_json;
 
 use std::mem;
@@ -23,7 +25,7 @@ struct FloWsSession<Session: ActixSession+'static> {
     session: Arc<Mutex<HttpSession<Session::CoreUi>>>,
 
     /// The event sink for this session
-    event_sink: Box<dyn Future<Item=HttpEventSink, Error=()>>
+    event_sink: BoxFuture<'static, WeakPublisher<Vec<Event>>>
 }
 
 impl<Session: ActixSession+'static> FloWsSession<Session> {
@@ -31,11 +33,11 @@ impl<Session: ActixSession+'static> FloWsSession<Session> {
     /// Creates a new websocket session
     ///
     pub fn new(session: Arc<Mutex<HttpSession<Session::CoreUi>>>) -> FloWsSession<Session> {
-        let event_sink = future::ok(session.lock().unwrap().http_ui().get_input_sink());
+        let event_sink = future::ready(session.lock().unwrap().http_ui().get_input_sink());
 
         FloWsSession {
             session:    session,
-            event_sink: Box::new(event_sink)
+            event_sink: Box::pin(event_sink)
         }
     }
 
@@ -49,8 +51,8 @@ impl<Session: ActixSession+'static> FloWsSession<Session> {
 
         // Updates are sent to the websocket
         let update_stream = update_stream
-            .map(|update, _actor, _ctx| serde_json::to_string(&update).unwrap())
-            .map(|update, _actor, ctx| ctx.text(update));
+            .map(|update, _actor, _ctx| update.map(|update| serde_json::to_string(&update).unwrap()))
+            .map(|update, _actor, ctx| update.map(|update| ctx.text(update)));
 
         // Spawn the updates on the context
         ctx.spawn(update_stream.finish());
@@ -61,31 +63,33 @@ impl<Session: ActixSession+'static> Actor for FloWsSession<Session> {
     type Context = ws::WebsocketContext<Self>;
 }
 
-impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError> for FloWsSession<Session> {
-    fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
+impl<Session: ActixSession+'static> StreamHandler<Result<ws::Message, ws::ProtocolError>> for FloWsSession<Session> {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         // Text messages are decoded as arrays of HTTP events and sent to the event sink
         match msg {
-            ws::Message::Text(message) => {
+            Ok(ws::Message::Text(message)) => {
                 // Parse the JSON message
                 let json = serde_json::from_str::<Vec<Event>>(&message);
 
                 if let Ok(request) = json {
                     // Create a one-shot future for when the event sink is available again
                     let (send_sink, next_sink)  = oneshot::channel();
-                    let mut next_sink: Box<dyn Future<Item=HttpEventSink, Error=()>> = Box::new(next_sink.map_err(|_| ()));
+                    let mut next_sink: BoxFuture<'static, WeakPublisher<Vec<Event>>> = Box::pin(next_sink.map(|result| result.unwrap()));
                     mem::swap(&mut self.event_sink, &mut next_sink);
 
-                    // Send to the sink
-                    let send_future = next_sink
-                        .and_then(|event_sink| event_sink.send(request))
-                        .map(move |event_sink| { send_sink.send(event_sink).ok(); });
-
                     // Spawn the future in this actor
-                    ctx.spawn(fut::wrap_future(send_future));
+                    ctx.spawn(fut::wrap_future(async move {
+                        // Send to the sink
+                        let mut event_sink = next_sink.await;
+                        event_sink.publish(request).await;
+                        send_sink.send(event_sink).ok();
+                    }));
                 }
             },
 
-            ws::Message::Ping(msg) => ctx.pong(&msg),
+            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
+
+            Err(_protocol_error) => { }
             _ => (),
         }
     }
@@ -98,7 +102,7 @@ impl<Session: ActixSession+'static> StreamHandler<ws::Message, ws::ProtocolError
 ///
 /// Creates a handler for requests that should spawn a websocket for a session
 ///
-pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest, payload: web::Payload) -> Box<dyn Future<Item=HttpResponse, Error=Error>> {
+pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest, payload: web::Payload) -> LocalBoxFuture<'static, Result<HttpResponse, Error>> {
     // The tail indicates the session ID
     let tail = req.match_info().get("tail").map(|s| String::from(s));
 
@@ -114,32 +118,33 @@ pub fn session_websocket_handler<Session: 'static+ActixSession>(req: HttpRequest
         let session_state   = req.app_data::<Arc<Session>>().cloned().expect("Flowbetween session state");
         let session         = session_state.get_session(&session_id).clone();
 
-        if let Some(session) = session {
-            // Start a new websocket for this session
-            let session = FloWsSession::<Session>::new(session);
+        Box::pin(async move {
+            if let Some(session) = session {
+                // Start a new websocket for this session
+                let session = FloWsSession::<Session>::new(session);
 
-            // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
-            let response = ws::handshake(&req).map_err(|e| Error::from(e));
-            let response = response.and_then(move |mut response| {
-                // Create the stream
-                let stream = payload;
+                // Need to perform the handshake manually due to the need to set up the sending stream (actix's model assumes a strict request/response format which is not what we do)
+                let response = ws::handshake(&req).map_err(|e| Error::from(e));
+                let response = response.map(move |mut response| {
+                    // Create the stream
+                    let stream = payload;
 
-                // Apply to the context
-                let ctx = ws::WebsocketContext::create(session, stream);
+                    // Apply to the context
+                    let ctx = ws::WebsocketContext::create(session, stream);
 
-                // Generate the response
-                Ok(response.streaming(ctx))
-            });
+                    // Generate the response
+                    response.streaming(ctx)
+                });
 
-            // Generate the websocket response
-            Box::new(response.map(|response| future::ok(response))
-                .unwrap_or_else(|err| future::err(err)))
-        } else {
-            // Session not found
-            Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
-        }
+                // Generate the websocket response
+                response
+            } else {
+                // Session not found
+                Ok(HttpResponse::NotFound().body("Not found"))
+            }
+        })
     } else {
         // Handler not properly installed, probably
-        Box::new(future::ok(HttpResponse::NotFound().body("Not found")))
+        Box::pin(future::ok(HttpResponse::NotFound().body("Not found")))
     }
 }

@@ -2,6 +2,7 @@ extern crate flo_logging;
 extern crate desync;
 
 use flo_logging::*;
+use futures::future;
 use desync::*;
 
 use std::sync::*;
@@ -13,7 +14,7 @@ fn publish_log_messages_to_static_log() {
     let tgt         = LogPublisher::new("Test");
     let messages    = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages), subscribe_to_logs(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages), subscribe_to_logs(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     tgt.log("Hello, world");
     tgt.log("... goodbye, world :-(");

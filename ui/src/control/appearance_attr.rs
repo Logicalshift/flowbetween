@@ -2,8 +2,8 @@ use super::*;
 use super::super::image;
 use super::super::resource_manager::*;
 
-use canvas;
-use modifier::*;
+use flo_canvas;
+use ::modifier::*;
 
 ///
 /// Attributes that describe the appearance of a control
@@ -11,10 +11,10 @@ use modifier::*;
 #[derive(Clone, PartialEq, Debug)]
 pub enum Appearance {
     /// Specifies the foreground colour of this control
-    Foreground(canvas::Color),
+    Foreground(flo_canvas::Color),
 
     /// Specifies the background colour of this control
-    Background(canvas::Color),
+    Background(flo_canvas::Color),
 
     /// Specifies the background image for this control
     Image(Resource<image::Image>)

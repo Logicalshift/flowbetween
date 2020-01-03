@@ -8,6 +8,7 @@ use flo_animation::*;
 
 use futures::*;
 use futures::stream;
+use futures::stream::{BoxStream};
 
 use std::fmt;
 use std::any::*;
@@ -148,14 +149,14 @@ impl<ToolData: Send+Sync+'static, Model: Send+Sync+'static, Anim: Animation, Und
             .and_then(move |specific_model| self.tool.create_menu_controller(flo_model, &*specific_model))
     }
 
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, tool_model: &GenericToolModel) -> BoxStream<'static, ToolAction<GenericToolData>> {
         // Map the underlying actions to generic actions. There are no actions if we're passed an invalid tool model
         tool_model.get_ref()
-            .map(move |tool_model| -> Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send> {
-                Box::new(self.tool.actions_for_model(flo_model, &*tool_model)
+            .map(move |tool_model| -> BoxStream<'static, ToolAction<GenericToolData>> {
+                Box::pin(self.tool.actions_for_model(flo_model, &*tool_model)
                     .map(|action| GenericToolData::convert_action_to_generic(action)))
             })
-            .unwrap_or_else(|| Box::new(stream::empty()))
+            .unwrap_or_else(|| Box::pin(stream::empty()))
     }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<GenericToolData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<GenericToolData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<GenericToolData>>> {
@@ -271,7 +272,7 @@ mod test {
     fn model_survives_round_trip() {
         let flo_model       = Arc::new(FloModel::new(SqliteAnimation::new_in_memory()));
         let generic_tool    = TestTool.to_flo_tool();
-        let model           = generic_tool.create_model(Arc::clone(&flo_model));;
+        let model           = generic_tool.create_model(Arc::clone(&flo_model));
 
         assert!(model.get_ref() == Some(Arc::new(94)));
     }

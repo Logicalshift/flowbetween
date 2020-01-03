@@ -1,7 +1,7 @@
 use super::control::*;
 use super::attributes::*;
 
-use modifier::*;
+use ::modifier::*;
 
 pub trait ControlModifier {
     fn modify(self, control: &mut Control);

@@ -2,6 +2,7 @@ extern crate flo_logging;
 extern crate desync;
 
 use flo_logging::*;
+use futures::future;
 use desync::*;
 
 use std::sync::*;
@@ -13,7 +14,7 @@ fn publish_log_messages_to_subscriber() {
     let log         = LogPublisher::new("test");
     let messages    = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
@@ -34,8 +35,8 @@ fn publish_log_messages_to_two_subscribers() {
     let messages1   = Arc::new(Desync::new(vec![]));
     let messages2   = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages1), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
-    pipe_in(Arc::clone(&messages2), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages1), log.subscribe(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
+    pipe_in(Arc::clone(&messages2), log.subscribe(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
@@ -62,7 +63,7 @@ fn log_message_message_set_properly() {
     let log         = LogPublisher::new("test");
     let messages    = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
@@ -81,7 +82,7 @@ fn log_message_target_set_properly() {
     let log         = LogPublisher::new("test");
     let messages    = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages), log.subscribe(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
@@ -100,7 +101,7 @@ fn publish_log_messages_to_default() {
     let log         = LogPublisher::new("test");
     let messages    = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages), log.subscribe_default(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages), log.subscribe_default(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
@@ -121,8 +122,8 @@ fn no_messages_to_default_with_subscriber() {
     let messages_default    = Arc::new(Desync::new(vec![]));
     let messages_nondefault = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages_default), log.subscribe_default(), |messages, new_message| messages.push(new_message.unwrap()));
-    pipe_in(Arc::clone(&messages_nondefault), log.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages_default), log.subscribe_default(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
+    pipe_in(Arc::clone(&messages_nondefault), log.subscribe(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     log.log("Hello, world");
     log.log("... goodbye, world :-(");
@@ -147,7 +148,7 @@ fn stream_between_logs() {
     let messages    = Arc::new(Desync::new(vec![]));
 
     // Result is messages from target
-    pipe_in(Arc::clone(&messages), tgt.subscribe(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages), tgt.subscribe(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     // Target relays logs from src
     tgt.stream(src.subscribe());

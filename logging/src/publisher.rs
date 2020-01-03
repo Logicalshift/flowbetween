@@ -5,8 +5,9 @@ use super::static_log::*;
 
 use flo_stream::*;
 
-use desync::*;
-use futures::*;
+use desync::{Desync, pipe_in};
+use futures::future::{FutureExt};
+use futures::prelude::*;
 
 use std::sync::*;
 
@@ -74,18 +75,20 @@ impl LogPublisher {
     ///
     /// Sends a log message to the context
     ///
-    fn log_in_context(context: &mut LogContext, mut message: LogMsg) {
-        let num_subscribers = context.publisher.get_ref().count_subscribers();
+    async fn log_in_context(context: &mut LogContext, mut message: LogMsg) {
+        let num_subscribers = context.publisher.count_subscribers();
 
         // Make sure that all the log fields are set properly
         message.merge_fields(&context.fields);
 
         // Send to the subscribers of this log
-        context.publisher.wait_send(message.clone()).unwrap();
+        context.publisher.publish(message.clone()).await;
 
         // Send to the parent or the default log
         if num_subscribers == 0 {
-            context.default.as_mut().map(|default| default.wait_send(message).unwrap());
+            if let Some(default) = context.default.as_mut() {
+                default.publish(message).await;
+            }
         }
     }
 
@@ -93,40 +96,43 @@ impl LogPublisher {
     /// Sends a message to the subscribers for this log
     ///
     pub fn log<Msg: LogMessage>(&self, message: Msg) {
-        self.context.sync(|context| {
+        let message = LogMsg::from(message);
+
+        // Desync will run the future regardless of whether or not we await the return value, so we can throw it away
+        let _ = self.context.future(move |context| {
             // Messages are delivered as Arc<Log>s to prevent them being copied around when there's a complicated hierarchy
-            let message = LogMsg::from(message);
-            Self::log_in_context(context, message);
+            async move { Self::log_in_context(context, message).await }.boxed()
         });
+
+        // Wait for the log message to complete anyway
+        self.context.sync(|_| { });
     }
 
     ///
     /// Sends a stream of log messages to this log
     ///
-    pub fn stream<Msg: LogMessage, LogStream: 'static+Send+Stream<Item=Msg, Error=()>>(&self, stream: LogStream) {
+    pub fn stream<Msg: LogMessage, LogStream: 'static+Unpin+Send+Stream<Item=Msg>>(&self, stream: LogStream) {
         // Pipe the stream through to the context
         pipe_in(Arc::clone(&self.context), stream, |context, message| {
-            if let Ok(message) = message {
-                let message = LogMsg::from(message);
-                Self::log_in_context(context, message);
-            }
+            let message = LogMsg::from(message);
+            Box::pin(async move { Self::log_in_context(context, message).await })
         });
     }
 
     ///
     /// Subscribes to this log stream
     ///
-    pub fn subscribe(&self) -> impl Stream<Item=LogMsg, Error=()> {
+    pub fn subscribe(&self) -> impl Stream<Item=LogMsg> {
         self.context.sync(|context| context.publisher.subscribe())
     }
 
     ///
     /// Creates a 'default' subscriber for this log stream (messages will be sent here only if there are no other subscribers to this log)
     ///
-    pub fn subscribe_default(&self) -> impl Stream<Item=LogMsg, Error=()> {
+    pub fn subscribe_default(&self) -> impl Stream<Item=LogMsg> {
         self.context.sync(|context| {
             if context.default.is_none() {
-                context.default = Some(executor::spawn(Publisher::new(100)));
+                context.default = Some(Publisher::new(100));
             }
 
             context.default.as_mut().unwrap().subscribe()

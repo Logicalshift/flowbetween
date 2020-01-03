@@ -10,6 +10,8 @@ use flo_binding::*;
 use flo_animation::*;
 
 use futures::*;
+use futures::stream;
+use futures::stream::{BoxStream};
 use std::sync::*;
 use std::time::Duration;
 use std::collections::{HashSet};
@@ -413,7 +415,7 @@ impl Select {
                 // TODO: only start rubber-banding once the mouse has moved a certain distance
 
                 // Dragging after making a new selection moves us to rubber-band mode
-                let mut new_data = data.with_action(SelectAction::RubberBand);
+                let new_data = data.with_action(SelectAction::RubberBand);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
             },
@@ -426,7 +428,7 @@ impl Select {
                 }
 
                 // Reset the action
-                let mut new_data = data.with_action(SelectAction::NoAction);
+                let new_data = data.with_action(SelectAction::NoAction);
                 actions.push(ToolAction::Data(new_data.clone()));
                 data = Arc::new(new_data);
             },
@@ -465,7 +467,7 @@ impl Select {
 
             (SelectAction::Reselect, PaintAction::Continue) => {
                 // This begins a dragging operation
-                let mut new_data = data.with_action(SelectAction::Drag);
+                let mut new_data        = data.with_action(SelectAction::Drag);
 
                 // Pre-render the elements so we can draw the drag faster
                 let selected_elements   = Arc::clone(&data.selected_elements);
@@ -575,7 +577,7 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     ///
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> Box<dyn Stream<Item=ToolAction<SelectData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &SelectToolModel) -> BoxStream<'static, ToolAction<SelectData>> {
         // The set of currently selected elements
         let selected_elements   = flo_model.selection().selected_elements.clone();
 
@@ -669,8 +671,8 @@ impl<Anim: 'static+EditableAnimation+Animation> Tool<Anim> for Select {
             });
 
         // Generate the final stream
-        let select_stream = data_for_model.select(draw_selection_overlay);
-        Box::new(select_stream)
+        let select_stream = stream::select(data_for_model, draw_selection_overlay);
+        Box::pin(select_stream)
     }
 
     ///

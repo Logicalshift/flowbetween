@@ -3,6 +3,9 @@ use flo_ui::session::*;
 use flo_http_ui::*;
 use flo_logging::*;
 
+use futures::prelude::*;
+use futures::future::{BoxFuture};
+
 use std::sync::*;
 
 ///
@@ -18,7 +21,7 @@ pub trait ActixSession {
     ///
     /// Creates a new session and returns its ID
     ///
-    fn new_session(&self, controller: Self::Controller, base_path: &str) -> String;
+    fn new_session(&self, controller: Self::Controller, base_path: &str) -> (String, BoxFuture<'static, ()>);
 
     ///
     /// Retrieves the session with the specified ID, if present
@@ -39,8 +42,9 @@ impl<CoreController: HttpController+Controller+'static> ActixSession for WebSess
     /// Creates a new session and returns its ID
     ///
     #[inline]
-    fn new_session(&self, controller: Self::Controller, base_path: &str) -> String {
-        WebSessions::<CoreController>::new_session(self, controller, base_path)
+    fn new_session(&self, controller: Self::Controller, base_path: &str) -> (String, BoxFuture<'static, ()>) {
+        let (id, run_loop) = WebSessions::<CoreController>::new_session(self, controller, base_path);
+        (id, run_loop.boxed())
     }
 
     ///

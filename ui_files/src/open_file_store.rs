@@ -1,6 +1,6 @@
 use super::file_model::*;
 
-use desync::*;
+use ::desync::*;
 
 use std::sync::*;
 use std::path::{Path, PathBuf};

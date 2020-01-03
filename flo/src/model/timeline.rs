@@ -62,7 +62,7 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
     /// Creates a new timeline viewmodel
     ///
     pub fn new<EditStream>(animation: Arc<Anim>, edits: EditStream) -> TimelineModel<Anim>
-    where EditStream: 'static+Send+Stream<Item=Arc<Vec<AnimationEdit>>, Error=()> {
+    where EditStream: 'static+Send+Unpin+Stream<Item=Arc<Vec<AnimationEdit>>> {
         let edits = get_timeline_updates(edits);
 
         // Create the layers binding
@@ -110,12 +110,12 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
     /// Returns a binding for the layers in an animation
     ///
     fn layers_binding<EditStream>(animation: &Arc<Anim>, edits: EditStream) -> BindRef<Vec<LayerModel>>
-    where EditStream: 'static+Send+Stream<Item=TimelineModelUpdate, Error=()> {
+    where EditStream: 'static+Send+Unpin+Stream<Item=TimelineModelUpdate> {
         // The animation is used to create the initial layer models in the binding
         let animation = Arc::clone(animation);
 
         // Create a stream filtered to only layer edits
-        let layer_edits = edits.filter(|edit| edit.is_layer_operation());
+        let layer_edits = edits.filter(|edit| future::ready(edit.is_layer_operation()));
 
         // Get the initial set of layers
         let layers = Self::get_layers(&animation);
@@ -163,10 +163,10 @@ impl<Anim: Animation+'static> TimelineModel<Anim> {
             // Only update the model items that are still in use
             if let Some(model) = model.upgrade() {
                 // Recreate the keyframes in this range
-                let keyframes = self.get_keyframe_model(frames);
+                let keyframes   = self.get_keyframe_model(frames);
 
                 // Update the model with the new keyframes
-                let mut model = Binding::clone(&*model);
+                let model       = Binding::clone(&*model);
                 model.set(keyframes);
             }
         }

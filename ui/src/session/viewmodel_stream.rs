@@ -3,11 +3,15 @@ use super::super::viewmodel::*;
 use super::super::controller::*;
 use super::super::viewmodel_update::*;
 
-use binding::*;
+use flo_binding::*;
 
 use futures::*;
 use futures::stream;
+use futures::stream::{BoxStream};
+use futures::task::{Poll, Context};
 
+use std::iter;
+use std::pin::*;
 use std::sync::*;
 use std::collections::{HashMap, VecDeque};
 
@@ -19,10 +23,10 @@ pub struct ViewModelUpdateStream {
     root_controller: Weak<dyn Controller>,
 
     /// Stream of updates from the root controller
-    controller_stream: Box<dyn Stream<Item=Control, Error=()>+Send>,
+    controller_stream: BoxStream<'static, Control>,
 
     /// Updates for the controller viewmodel
-    controller_viewmodel_updates: Option<Box<dyn Stream<Item=ViewModelChange, Error=()>+Send>>,
+    controller_viewmodel_updates: Option<BoxStream<'static, ViewModelChange>>,
 
     /// The streams for the subcontrollers
     sub_controllers: HashMap<String, ViewModelUpdateStream>,
@@ -37,13 +41,13 @@ impl ViewModelUpdateStream {
     ///
     pub fn new(root_controller: Arc<dyn Controller>) -> ViewModelUpdateStream {
         let ui                              = root_controller.ui();
-        let controller_stream               = stream::once(Ok(ui.get())).chain(follow(ui));
+        let controller_stream               = stream::iter(iter::once(ui.get())).chain(follow(ui));
         let controller_viewmodel_updates    = root_controller.get_viewmodel().map(|viewmodel| viewmodel.get_updates());
         let root_controller                 = Arc::downgrade(&root_controller);
 
         ViewModelUpdateStream {
             root_controller:                root_controller,
-            controller_stream:              Box::new(controller_stream),
+            controller_stream:              Box::pin(controller_stream),
             controller_viewmodel_updates:   controller_viewmodel_updates,
             sub_controllers:                HashMap::new(),
             pending:                        VecDeque::new()
@@ -67,7 +71,7 @@ impl ViewModelUpdateStream {
 
                 } else if let Some(subcontroller) = root_controller.get_subcontroller(&subcontroller_name) {
                     // Need to track with a new subcontroller
-                    let mut subcontroller_stream = ViewModelUpdateStream::new(subcontroller);
+                    let subcontroller_stream = ViewModelUpdateStream::new(subcontroller);
 
                     new_sub_controllers.insert(subcontroller_name.clone(), subcontroller_stream);
                 }
@@ -81,21 +85,22 @@ impl ViewModelUpdateStream {
 
 impl Stream for ViewModelUpdateStream {
     type Item = ViewModelUpdate;
-    type Error = ();
 
-    fn poll(&mut self) -> Poll<Option<ViewModelUpdate>, ()> {
-        if let Some(update) = self.pending.pop_front() {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<ViewModelUpdate>> {
+        let self_ref = self.get_mut();
+
+        if let Some(update) = self_ref.pending.pop_front() {
             // Return pending items before anything else
-            Ok(Async::Ready(Some(update)))
-        } else if let Some(root_controller) = self.root_controller.upgrade() {
+            Poll::Ready(Some(update))
+        } else if let Some(root_controller) = self_ref.root_controller.upgrade() {
             // Try the updates from the main controller first
-            if let Some(controller_viewmodel_updates) = self.controller_viewmodel_updates.as_mut() {
+            if let Some(controller_viewmodel_updates) = self_ref.controller_viewmodel_updates.as_mut() {
                 let mut all_updates = vec![];
 
                 // Drain the controller updates
-                let mut update_poll = controller_viewmodel_updates.poll();
+                let mut update_poll = controller_viewmodel_updates.poll_next_unpin(context);
 
-                while let Ok(Async::Ready(Some(update))) = update_poll {
+                while let Poll::Ready(Some(update)) = update_poll {
                     match update {
                         ViewModelChange::NewProperty(name, value) => {
                             all_updates.push(ViewModelChange::NewProperty(name, value));
@@ -107,53 +112,53 @@ impl Stream for ViewModelUpdateStream {
                     }
 
                     // Poll for the next update
-                    update_poll = controller_viewmodel_updates.poll();
+                    update_poll = controller_viewmodel_updates.poll_next_unpin(context);
                 }
 
                 // Unset the controller updates if we reach the end of the stream (the controller and its subcontrollers presumably still exist, so the stream does not end)
-                if update_poll == Ok(Async::Ready(None)) {
+                if update_poll == Poll::Ready(None) {
                     // TODO: remove the viewmodel updates from self (borrowed, so doesn't work)
-                    // self.controller_viewmodel_updates = None;
+                    // self_ref.controller_viewmodel_updates = None;
                 }
 
                 // Return the updates if there were any
                 if all_updates.len() > 0 {
-                    self.pending.push_back(ViewModelUpdate::new(vec![], all_updates));
+                    self_ref.pending.push_back(ViewModelUpdate::new(vec![], all_updates));
                 }
             }
 
             // Check for updates to the controller UI
-            let mut next_ui_poll = self.controller_stream.poll();
-            while let Ok(Async::Ready(Some(next_ui))) = next_ui_poll {
+            let mut next_ui_poll = self_ref.controller_stream.poll_next_unpin(context);
+            while let Poll::Ready(Some(next_ui)) = next_ui_poll {
                 // Refresh the subcontrollers from the UI
-                self.update_subcontrollers(&*root_controller, &next_ui);
+                self_ref.update_subcontrollers(&*root_controller, &next_ui);
 
                 // Keep polling
-                next_ui_poll = self.controller_stream.poll();
+                next_ui_poll = self_ref.controller_stream.poll_next_unpin(context);
             }
 
-            if let Ok(Async::Ready(None)) = next_ui_poll {
+            if let Poll::Ready(None) = next_ui_poll {
                 // If the controller's UI stream ends, then the viewmodel updates also end (presumably the controller has been disposed of)
-                return Ok(Async::Ready(None));
+                return Poll::Ready(None);
             }
 
             // Poll the subcontrollers
             let mut removed_subcontrollers = vec![];
-            for (name, stream) in self.sub_controllers.iter_mut() {
-                let mut subcontroller_poll = stream.poll();
+            for (name, stream) in self_ref.sub_controllers.iter_mut() {
+                let mut subcontroller_poll = stream.poll_next_unpin(context);
 
-                while let Ok(Async::Ready(Some(mut update))) = subcontroller_poll {
+                while let Poll::Ready(Some(mut update)) = subcontroller_poll {
                     // Add the name of this subcontroller
                     update.add_to_start_of_path(name.clone());
 
                     // Add the update to the pending list
-                    self.pending.push_back(update);
+                    self_ref.pending.push_back(update);
 
                     // Fetch as many updates as we can from the subcontroller
-                    subcontroller_poll = stream.poll();
+                    subcontroller_poll = stream.poll_next_unpin(context);
                 }
 
-                if let Ok(Async::Ready(None)) = subcontroller_poll {
+                if let Poll::Ready(None) = subcontroller_poll {
                     // This subcontroller has gone away and is no longer producing updates
                     removed_subcontrollers.push(name.clone());
                 }
@@ -162,29 +167,29 @@ impl Stream for ViewModelUpdateStream {
             // Remove and try to recreate any subcontrollers that have stopped responding
             for removed_name in removed_subcontrollers {
                 // Stop checking this subcontroller for updates
-                self.sub_controllers.remove(&removed_name);
+                self_ref.sub_controllers.remove(&removed_name);
 
                 // Try to get it back from the root controller
                 let new_subcontroller = root_controller.get_subcontroller(&removed_name);
                 if let Some(new_subcontroller) = new_subcontroller {
                     // Got a replacement
                     let new_viewmodel_stream = ViewModelUpdateStream::new(new_subcontroller);
-                    self.sub_controllers.insert(removed_name, new_viewmodel_stream);
+                    self_ref.sub_controllers.insert(removed_name, new_viewmodel_stream);
 
                     // Make sure the task is notified to re-poll for the changes from the replacement subcontroller
-                    task::current().notify();
+                    context.waker().clone().wake();
                 }
             }
 
             // If any updates were found, return the first from the pending list
-            if let Some(update) = self.pending.pop_front() {
-                Ok(Async::Ready(Some(update)))
+            if let Some(update) = self_ref.pending.pop_front() {
+                Poll::Ready(Some(update))
             } else {
-                Ok(Async::NotReady)
+                Poll::Pending
             }
         } else {
             // Stream has ended when the root controller no longer exists
-            Ok(Async::Ready(None))
+            Poll::Ready(None)
         }
     }
 }
@@ -247,8 +252,8 @@ mod test {
 
     #[derive(Clone)]
     struct NotifyNothing;
-    impl executor::Notify for NotifyNothing {
-        fn notify(&self, _: usize) { }
+    impl task::ArcWake for NotifyNothing {
+        fn wake_by_ref(_arc_self: &Arc<Self>) { }
     }
 
     #[test]
@@ -256,24 +261,44 @@ mod test {
         let controller = Arc::new(DynamicController::new());
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+        let mut stream  = ViewModelUpdateStream::new(controller.clone());
 
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]))));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))])));
+        });
+    }
+
+    #[test]
+    fn changes_are_picked_up_as_changes() {
+        let controller = Arc::new(DynamicController::new());
+        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
+
+        let mut stream  = ViewModelUpdateStream::new(controller.clone());
+
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))])));
+
+            controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))])));
+        });
     }
 
     #[test]
     fn new_values_are_picked_up() {
         let controller  = Arc::new(DynamicController::new());
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
+        let mut stream  = ViewModelUpdateStream::new(controller.clone());
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))]))));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))])));
 
-        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
+            controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(2));
 
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(2))]))));
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(2))])));
+        })
     }
 
     #[test]
@@ -281,15 +306,17 @@ mod test {
         let controller = Arc::new(DynamicController::new());
         controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(1));
 
-        let mut stream  = executor::spawn(ViewModelUpdateStream::new(controller.clone()));
-        assert!(stream.wait_stream() == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))]))));
+        executor::block_on(async {
+            let mut stream  = ViewModelUpdateStream::new(controller.clone());
+            assert!(stream.next().await == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(1))])));
 
-        controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
-        controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
+            controller.get_viewmodel().unwrap().set_property("NewValue", PropertyValue::Int(3));
+            controller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let events = stream.wait_stream();
-        println!("{:?}", events);
-        assert!(events == Some(Ok(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))]))));
+            let events = stream.next().await;
+            println!("{:?}", events);
+            assert!(events == Some(ViewModelUpdate::new(vec![], vec![ViewModelChange::NewProperty("NewValue".to_string(), PropertyValue::Int(3)), ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(2))])));
+        });
     }
 
     #[test]
@@ -304,14 +331,16 @@ mod test {
         let controller = Arc::new(controller);
 
         let update_stream       = ViewModelUpdateStream::new(controller.clone());
-        let mut update_stream   = executor::spawn(update_stream);
+        let mut update_stream   = update_stream;
 
         subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let update = update_stream.wait_stream().unwrap().unwrap();
+        executor::block_on(async {
+            let update = update_stream.next().await.unwrap();
 
-        assert!(update.controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(update.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+            assert!(update.controller_path() == &vec!["Subcontroller".to_string()]);
+            assert!(update.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+        });
     }
 
     #[test]
@@ -322,7 +351,7 @@ mod test {
         let controller = Arc::new(controller);
 
         let update_stream       = ViewModelUpdateStream::new(controller.clone());
-        let mut update_stream   = executor::spawn(update_stream);
+        let mut update_stream   = update_stream;
 
         controller.set_controls(Control::container().with_controller("Subcontroller"));
         controller.add_subcontroller("Subcontroller".to_string());
@@ -330,10 +359,12 @@ mod test {
 
         subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let updates = update_stream.wait_stream().unwrap().unwrap();
+        executor::block_on(async {
+            let updates = update_stream.next().await.unwrap();
 
-        assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(updates.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+            assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
+            assert!(updates.updates() == &vec![ViewModelChange::NewProperty("Test".to_string(), PropertyValue::Int(2))]);
+        });
     }
 
     #[test]
@@ -344,7 +375,7 @@ mod test {
         let controller = Arc::new(controller);
 
         let update_stream       = ViewModelUpdateStream::new(controller.clone());
-        let mut update_stream   = executor::spawn(update_stream);
+        let mut update_stream   = update_stream;
 
         controller.set_controls(Control::container().with_controller("Subcontroller"));
         controller.add_subcontroller("Subcontroller".to_string());
@@ -352,13 +383,15 @@ mod test {
 
         subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(2));
 
-        let _updates = update_stream.wait_stream().unwrap().unwrap();
+        executor::block_on(async {
+            let _updates = update_stream.next().await.unwrap();
 
-        subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(3));
-        let updates = update_stream.wait_stream().unwrap().unwrap();
+            subcontroller.get_viewmodel().unwrap().set_property("Test", PropertyValue::Int(3));
+            let updates = update_stream.next().await.unwrap();
 
-        assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
-        assert!(updates.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(3))]);
+            assert!(updates.controller_path() == &vec!["Subcontroller".to_string()]);
+            assert!(updates.updates() == &vec![ViewModelChange::PropertyChanged("Test".to_string(), PropertyValue::Int(3))]);
+        });
     }
 
     struct TestViewModel;
@@ -430,50 +463,52 @@ mod test {
             vec![ "Test1".to_string(), "Test2".to_string(), "Test3".to_string() ]
         }
 
-        fn get_updates(&self) -> Box<dyn Stream<Item=ViewModelChange, Error=()>+Send> {
-            Box::new(stream::iter_ok(vec![
+        fn get_updates(&self) -> BoxStream<'static, ViewModelChange> {
+            Box::pin(stream::iter(vec![
                 ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
                 ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
                 ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string()))
-            ]).chain(stream::poll_fn(|| Ok(Async::NotReady))) )
+            ]).chain(stream::poll_fn(|_context| Poll::Pending)))
         }
     }
 
     #[test]
     pub fn generate_initial_controller_events() {
-        for _pass in 0..10 {
-            let controller          = Arc::new(TestController::new());
-            let mut update_stream   = ViewModelUpdateStream::new(controller.clone());
-            let mut update_stream   = executor::spawn(update_stream);
+        executor::block_on(async {
+            for _pass in 0..10 {
+                let controller          = Arc::new(TestController::new());
+                let update_stream       = ViewModelUpdateStream::new(controller.clone());
+                let mut update_stream   = update_stream;
 
-            let update1 = update_stream.wait_stream();
-            println!("{:?}", update1);
-            let update2 = update_stream.wait_stream();
-            println!("{:?}", update2);
+                let update1 = update_stream.next().await;
+                println!("{:?}", update1);
+                let update2 = update_stream.next().await;
+                println!("{:?}", update2);
 
-            let update1 = update1.unwrap().unwrap();
-            let update2 = update2.unwrap().unwrap();
+                let update1 = update1.unwrap();
+                let update2 = update2.unwrap();
 
-            let (update1, update2) = if update2.controller_path() == &vec!["Model1".to_string()] {
-                (update2, update1)
-            } else {
-                (update1, update2)
-            };
+                let (update1, update2) = if update2.controller_path() == &vec!["Model1".to_string()] {
+                    (update2, update1)
+                } else {
+                    (update1, update2)
+                };
 
-            assert!(update1.controller_path() == &vec!["Model1".to_string()]);
-            assert!(update1.updates() == &vec![
-                ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-                ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-                ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-            ]);
+                assert!(update1.controller_path() == &vec!["Model1".to_string()]);
+                assert!(update1.updates() == &vec![
+                    ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+                    ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+                    ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+                ]);
 
-            assert!(update2.controller_path() == &vec!["Model2".to_string()]);
-            assert!(update2.updates() == &vec![
-                ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
-                ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
-                ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
-            ]);
-        }
+                assert!(update2.controller_path() == &vec!["Model2".to_string()]);
+                assert!(update2.updates() == &vec![
+                    ViewModelChange::NewProperty("Test1".to_string(), PropertyValue::String("Test1".to_string())),
+                    ViewModelChange::NewProperty("Test2".to_string(), PropertyValue::String("Test2".to_string())),
+                    ViewModelChange::NewProperty("Test3".to_string(), PropertyValue::String("Test3".to_string())),
+                ]);
+            }
+        });
     }
 
     // TODO: detects removed controller

@@ -3,7 +3,9 @@ use super::db_enum::*;
 use super::flo_query::*;
 
 use futures::task;
+use futures::task::{Poll, Context};
 
+use std::pin::*;
 use std::ops::Range;
 use std::time::Duration;
 use std::collections::VecDeque;
@@ -14,7 +16,7 @@ const INVALID_LAYER: u64 = 0xffffffffffffffff;
 ///
 /// Provides the editlog trait for the animation DB
 ///
-pub struct EditStream<TFile: FloFile+Send> {
+pub struct EditStream<TFile: FloFile+Unpin+Send> {
     /// The database core
     core: Arc<Desync<AnimationDbCore<TFile>>>,
 
@@ -36,7 +38,7 @@ struct EditStreamBuffer {
     filling: bool
 }
 
-impl<TFile: FloFile+Send> EditStream<TFile> {
+impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     ///
     /// Creates a new edit log for an animation database
     ///
@@ -279,11 +281,11 @@ impl<TFile: FloFile+Send> EditStream<TFile> {
     }
 }
 
-impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
+impl<TFile: Unpin+FloFile+Send+'static> Stream for EditStream<TFile>
+where Self: Unpin {
     type Item = AnimationEdit;
-    type Error = ();
 
-    fn poll(&mut self) -> Poll<Option<AnimationEdit>, ()> {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<AnimationEdit>> {
         let range       = &self.range;
         let buffer_ref  = Arc::clone(&self.buffer);
         let mut buffer  = self.buffer.lock().unwrap();
@@ -300,22 +302,22 @@ impl<TFile: FloFile+Send+'static> Stream for EditStream<TFile> {
             }
 
             // If there is already an entry in the buffer, return it
-            Ok(Async::Ready(Some(next_item)))
+            Poll::Ready(Some(next_item))
         } else if buffer.next >= self.range.end {
             // Stop if we've reached then end of the stream
-            Ok(Async::Ready(None))
+            Poll::Ready(None)
         } else {
             // Trigger filling the buffer
             let range   = range.clone();
-            let task    = task::current();
+            let waker   = context.waker().clone();
 
             buffer.filling = true;
             self.core.desync(move |core| {
-                EditStreamBuffer::fill(&*buffer_ref, core, range, Some(task));
+                EditStreamBuffer::fill(&*buffer_ref, core, range, Some(waker));
             });
 
             // Buffer is not ready yet
-            Ok(Async::NotReady)
+            Poll::Pending
         }
     }
 }
@@ -324,7 +326,7 @@ impl EditStreamBuffer {
     ///
     /// Fills a buffer stored in a mutex
     ///
-    fn fill<TFile: FloFile+Send>(buffer: &Mutex<EditStreamBuffer>, core: &mut AnimationDbCore<TFile>, range: Range<usize>, notify: Option<task::Task>) {
+    fn fill<TFile: FloFile+Unpin+Send>(buffer: &Mutex<EditStreamBuffer>, core: &mut AnimationDbCore<TFile>, range: Range<usize>, notify: Option<task::Waker>) {
         // Note that the locking behaviour here assumes we're only running one fill in parallel (possibly with a stream reader)
         // This allows us to do the DB read while the buffer is unlocked
 
@@ -363,6 +365,6 @@ impl EditStreamBuffer {
         buffer.lock().unwrap().filling = false;
 
         // Notify the task, if there is one
-        notify.map(|task| task.notify());
+        notify.map(|task| task.wake());
     }
 }

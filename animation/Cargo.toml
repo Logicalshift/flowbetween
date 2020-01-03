@@ -1,6 +1,6 @@
 [package]
 name        = "flo_animation"
-version     = "0.1.1"
+version     = "0.2.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
 repository  = "https://github.com/Logicalshift/flowbetween"
@@ -8,13 +8,14 @@ description = "Describes a FlowBetween animation"
 edition     = "2018"
 
 [dependencies]
-flo_canvas          = { path = "../canvas", version = "0.1" }
+flo_canvas          = { path = "../canvas", version = "0.2" }
 flo_curves          = { git = "https://github.com/Logicalshift/flo_curves", version = "0.3" }
 flo_float_encoder   = { path = "../float_encoder", version = "0.1" }
+flo_stream          = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
 
-futures             = "^0.1.17"
+futures             = "0.3"
 itertools           = "0.8"
-typemap             = "^0.3.3"
-modifier            = "^0.1.0"
-serde               = "^1.0.0"
-serde_derive        = "^1.0.0"
+typemap             = "0.3"
+modifier            = "0.1"
+serde               = "1.0"
+serde_derive        = "1.0"

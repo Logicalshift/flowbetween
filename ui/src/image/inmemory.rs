@@ -57,23 +57,24 @@ impl ImageData for InMemoryImageData {
         Box::new(ImageStreamIterator::from(&self.bytes))
     }
 
-    fn read_future(&self) -> Box<dyn Stream<Item=Bytes, Error=()>> {
-        Box::new(ImageStreamIterator::from(&self.bytes))
+    fn read_future(&self) -> BoxStream<'static, Bytes> {
+        Box::pin(ImageStreamIterator::from(&self.bytes))
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use futures::prelude::*;
     use futures::executor;
 
     #[test]
     fn can_read_all_image_data() {
         let data_test       = InMemoryImageData::new(Bytes::from(vec![1,2,3,4,5,6]));
         let read_data       = data_test.read_future();
-        let read_collect    = read_data.collect();
+        let read_collect    = read_data.collect::<Vec<_>>();
 
-        let bytes_back      = executor::spawn(read_collect).wait_future().unwrap();
+        let bytes_back      = executor::block_on(read_collect);
 
         assert!(bytes_back == vec![Bytes::from(vec![1,2,3,4,5,6])]);
     }

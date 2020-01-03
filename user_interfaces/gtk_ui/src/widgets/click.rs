@@ -5,7 +5,6 @@ use super::super::gtk_event_parameter::*;
 
 use gtk::prelude::*;
 use gdk;
-use futures::*;
 
 use std::rc::*;
 use std::cell::*;
@@ -25,7 +24,7 @@ pub struct ClickActions {
 }
 
 impl ClickActions {
-    pub fn wire_widget<W: GtkUiWidget>(event_sink: RefCell<GtkEventSink>, widget: &W, action_name: String) {
+    pub fn wire_widget<W: GtkUiWidget>(event_sink: GtkEventSink, widget: &W, action_name: String) {
         use self::GtkEvent::Event;
 
         let widget_id   = widget.id();
@@ -81,7 +80,7 @@ impl ClickActions {
                     if button.get_button() == 1 {
                         // Left mouse button released with no modifiers = click
                         if was_pressed && distance_sq <= MAX_DISTANCE * MAX_DISTANCE {
-                            event_sink.borrow_mut().start_send(Event(widget_id, action_name.clone(), GtkEventParameter::None)).unwrap();
+                            publish_event(&event_sink, Event(widget_id, action_name.clone(), GtkEventParameter::None));
                         }
                         Inhibit(true)
                     } else {

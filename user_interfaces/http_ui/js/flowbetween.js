@@ -2138,14 +2138,19 @@ function flowbetween(root_node) {
                     sending_events = true;
 
                     // Promise that will complete after the next animation frame
-                    var animation_frame = new Promise((resolve) => {
-                        requestAnimationFrame(() => resolve());
-                    });
+                    var animation_frame;
 
                     if (previous_update != null) {
-                        // Also wait for the last update to process
+                        // Wait for the previous update, then request the animation frame
                         let wait_for_update = previous_update;
-                        animation_frame = animation_frame.then(() => wait_for_update);
+                        animation_frame = wait_for_update.then(() => new Promise((resolve) => {
+                            requestAnimationFrame(() => resolve());
+                        }));
+                    } else {
+                        // Just wait for the animation frame
+                        animation_frame = new Promise((resolve) => {
+                            requestAnimationFrame(() => resolve());
+                        });
                     }
 
                     // The update that will follow this one is what's current set as the next update

@@ -12,7 +12,7 @@ use std::collections::HashMap;
 /// Represents a vector layer in a SQLite database
 ///
 #[derive(Clone)]
-pub struct SqliteVectorLayer<TFile: FloFile+Send> {
+pub struct SqliteVectorLayer<TFile: Unpin+FloFile+Send> {
     /// The ID that was assigned to this layer
     assigned_id: u64,
 
@@ -42,7 +42,7 @@ impl AnimationDb {
     }
 }
 
-impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
+impl<TFile: FloFile+Unpin+Send+'static> SqliteVectorLayer<TFile> {
     ///
     /// Retrieves a layer for a particular ID
     ///
@@ -68,7 +68,7 @@ impl<TFile: FloFile+Send+'static> SqliteVectorLayer<TFile> {
     }
 }
 
-impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
+impl<TFile: FloFile+Unpin+Send+'static> Layer for SqliteVectorLayer<TFile> {
     fn id(&self) -> u64 {
         self.assigned_id
     }
@@ -138,7 +138,7 @@ impl<TFile: FloFile+Send+'static> Layer for SqliteVectorLayer<TFile> {
     }
 }
 
-impl<TFile: FloFile+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {
+impl<TFile: FloFile+Unpin+Send+'static> VectorLayer for SqliteVectorLayer<TFile> {
     fn active_brush(&self, when: Duration) -> Option<Arc<dyn Brush>> {
         let layer_id = self.layer_id;
         self.core.sync(|core| core.get_active_brush_for_layer(layer_id, when))

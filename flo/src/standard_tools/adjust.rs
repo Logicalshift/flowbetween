@@ -10,6 +10,7 @@ use flo_animation::*;
 
 use futures::*;
 use futures::stream;
+use futures::stream::{BoxStream};
 use itertools::*;
 
 use std::f32;
@@ -230,7 +231,7 @@ impl Adjust {
     ///
     /// Creates an action stream that draws control points for the selection in the specified models
     ///
-    fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
+    fn draw_control_point_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>> {
         // Collect the selected elements into a HashSet
         let selected_elements   = flo_model.selection().selected_elements.clone();
         let selected_elements   = computed(move || selected_elements.get());
@@ -266,7 +267,7 @@ impl Adjust {
                 // Generate the actions
                 vec![ToolAction::Overlay(OverlayAction::Draw(draw_control_points))]
             })
-            .map(|actions| stream::iter_ok(actions.into_iter()))
+            .map(|actions| stream::iter(actions.into_iter()))
             .flatten()
     }
 
@@ -355,7 +356,7 @@ impl Adjust {
     ///
     /// Returns the actions required to draw the editing overlay
     ///
-    fn draw_edit_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>, Error=()> {
+    fn draw_edit_overlay<Anim: 'static+Animation>(flo_model: Arc<FloModel<Anim>>, tool_state: BindRef<AdjustAction>) -> impl Stream<Item=ToolAction<AdjustData>> {
         // Get the set of elements from the frame
         let elements    = flo_model.frame().elements.clone();
 
@@ -416,7 +417,7 @@ impl Adjust {
                     }
                 }
             })
-            .map(|actions| stream::iter_ok(actions.into_iter()))
+            .map(|actions| stream::iter(actions.into_iter()))
             .flatten()
     }
 
@@ -546,7 +547,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
     ///
     /// Returns a stream containing the actions for the view and tool model for the select tool
     ///
-    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> Box<dyn Stream<Item=ToolAction<AdjustData>, Error=()>+Send> {
+    fn actions_for_model(&self, flo_model: Arc<FloModel<Anim>>, _tool_model: &()) -> BoxStream<'static, ToolAction<AdjustData>> {
         // Create a binding that works out the frame for the currently selected layer
         let current_frame   = flo_model.frame().frame.clone();
 
@@ -579,7 +580,7 @@ impl<Anim: 'static+Animation> Tool<Anim> for Adjust {
             });
 
         // Actions are to update the data or draw the control points
-        Box::new(update_adjust_data.select(draw_control_points).select(draw_drag_result))
+        Box::pin(stream::select(stream::select(update_adjust_data, draw_control_points), draw_drag_result))
     }
 
     fn actions_for_input<'a>(&'a self, flo_model: Arc<FloModel<Anim>>, data: Option<Arc<AdjustData>>, input: Box<dyn 'a+Iterator<Item=ToolInput<AdjustData>>>) -> Box<dyn 'a+Iterator<Item=ToolAction<AdjustData>>> {

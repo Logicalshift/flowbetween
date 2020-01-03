@@ -1,14 +1,12 @@
 #![warn(bare_trait_objects)]
 
-extern crate flo_canvas as canvas;
-extern crate flo_binding as binding;
+extern crate flo_canvas;
+extern crate flo_binding;
 extern crate flo_stream;
 
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
-#[macro_use]
 extern crate lazy_static;
 extern crate serde;
 extern crate modifier;
@@ -29,6 +27,7 @@ mod dynamic_viewmodel;
 mod viewmodel_update;
 mod resource_manager;
 mod binding_canvas;
+pub mod gather_stream;
 pub mod control;
 pub mod image;
 pub mod controllers;

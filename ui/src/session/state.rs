@@ -2,7 +2,7 @@ use super::update::*;
 use super::super::diff::*;
 use super::super::control::*;
 
-use binding::*;
+use flo_binding::*;
 
 ///
 /// Represents the most recent state of a UI session

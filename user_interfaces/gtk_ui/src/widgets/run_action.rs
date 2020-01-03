@@ -7,10 +7,8 @@ use super::super::widgets::proxy_widget::*;
 
 use gtk;
 use gtk::prelude::*;
-use futures::*;
 
 use std::rc::*;
-use std::cell::*;
 
 ///
 /// Executes a Gtk action
@@ -30,11 +28,8 @@ fn wire_up_window(new_window: &gtk::Window, window_id: WindowId, flo_gtk: &mut F
     // Retrieve a sink where we can send our events to
     let event_sink = flo_gtk.get_event_sink();
 
-    // GTK events are Fn() and not FnMut() :-/ Use a cell so we can actually send events.
-    let event_sink = RefCell::new(event_sink);
-
     // Send the close event when the window is closed
-    new_window.connect_hide(move |_window| { event_sink.borrow_mut().start_send(GtkEvent::CloseWindow(window_id)).unwrap(); });
+    new_window.connect_hide(move |_window| { publish_event(&event_sink, GtkEvent::CloseWindow(window_id)); });
 }
 
 ///
@@ -49,7 +44,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
         match action {
             &GtkWindowAction::New(ref window_type) => {
                 // For new window actions, we need to create the window before we can send actions to it
-                let mut new_window = gtk::Window::new(window_type.clone());
+                let new_window = gtk::Window::new(window_type.clone());
 
                 // Add our style context
                 new_window.get_style_context()

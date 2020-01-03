@@ -1,11 +1,13 @@
-use desync::*;
-use canvas::*;
-use binding::*;
-use binding::binding_context::*;
+use ::desync::*;
+use flo_canvas::*;
+use flo_binding::*;
+use flo_binding::binding_context::*;
 
 use futures::*;
 use futures::task;
+use futures::task::{Poll, Context};
 
+use std::pin::*;
 use std::sync::*;
 use std::ops::Deref;
 
@@ -36,7 +38,7 @@ struct BindingCanvasCore {
     active_notifications: Option<Box<dyn Releasable>>,
 
     /// Task to wake on the next change
-    notify_task: Option<task::Task>
+    notify_task: Option<task::Waker>
 }
 
 ///
@@ -122,7 +124,7 @@ impl Notifiable for CoreNotifiable {
                 core.invalidated = true;
                 core.notify_task
                     .take()
-                    .map(|task| task.notify());
+                    .map(|task| task.wake());
             });
         }
     }
@@ -180,7 +182,7 @@ impl BindingCanvas {
             core.draw_fn        = Some(Box::new(draw));
             core.notify_task
                 .take()
-                .map(|task| task.notify());
+                .map(|task| task.wake());
         });
     }
 
@@ -200,14 +202,14 @@ impl BindingCanvas {
             core.invalidated = true;
             core.notify_task
                 .take()
-                .map(|task| task.notify());
+                .map(|task| task.wake());
         });
     }
 
     ///
     /// Creates a stream from this canvas that will track updates as they occur
     ///
-    pub fn stream(&self) -> impl Stream<Item=Draw, Error=()>+Send {
+    pub fn stream(&self) -> impl Stream<Item=Draw>+Send {
         BindingCanvasStream {
             canvas:         Arc::downgrade(&self.canvas),
             canvas_stream:  self.canvas.stream(),
@@ -238,11 +240,10 @@ struct BindingCanvasStream<CanvasStream> {
     binding_core: Weak<Desync<BindingCanvasCore>>
 }
 
-impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStream<CanvasStream> {
+impl<CanvasStream: Stream<Item=Draw>+Unpin+Send> Stream for BindingCanvasStream<CanvasStream> {
     type Item=Draw;
-    type Error=();
 
-    fn poll(&mut self) -> Poll<Option<Draw>, ()> {
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Draw>> {
         // Fetch the canvas
         let canvas          = self.canvas.upgrade();
         let binding_core    = self.binding_core.upgrade();
@@ -251,7 +252,7 @@ impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStr
         // Redraw the main canvas if it's invalidated
         if let Some((binding_core, canvas)) = canvas_core {
             // Variables needed to do the redraw
-            let task        = task::current();
+            let task        = context.waker().clone();
             let canvas      = Arc::clone(&canvas);
             let change_core = Arc::downgrade(&binding_core);
 
@@ -275,7 +276,7 @@ impl<CanvasStream: Stream<Item=Draw, Error=()>+Send> Stream for BindingCanvasStr
         }
 
         // Defer to the main canvas stream
-        self.canvas_stream.poll()
+        self.canvas_stream.poll_next_unpin(context)
     }
 }
 
@@ -287,7 +288,7 @@ mod test {
     #[test]
     fn binding_canvas_works_like_canvas() {
         let canvas      = BindingCanvas::new();
-        let mut stream  = executor::spawn(canvas.stream());
+        let mut stream  = canvas.stream();
 
         // Draw using a graphics context
         canvas.draw(|gc| {
@@ -295,14 +296,16 @@ mod test {
         });
 
         // Check we can get the results via the stream
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+        });
     }
 
     #[test]
     fn will_invalidate_and_redraw_when_function_assigned() {
         let canvas      = BindingCanvas::new();
-        let mut stream  = executor::spawn(canvas.stream());
+        let mut stream  = canvas.stream();
 
         // Set a bound function
         canvas.on_redraw(|gc| {
@@ -313,15 +316,17 @@ mod test {
         canvas.redraw_if_invalid();
 
         // Check we can get the results via the stream
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+        });
     }
 
     #[test]
     fn redraws_when_binding_changes() {
         let binding     = bind((1.0, 2.0));
         let canvas      = BindingCanvas::new();
-        let mut stream  = executor::spawn(canvas.stream());
+        let mut stream  = canvas.stream();
 
         // Set a bound function
         let draw_binding = binding.clone();
@@ -336,19 +341,21 @@ mod test {
         canvas.redraw_if_invalid();
 
         // Should draw the first set of functions
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::Move(1.0, 2.0))));
+        executor::block_on(async {
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+            assert!(stream.next().await == Some(Draw::Move(1.0, 2.0)));
 
-        // Update the binding
-        binding.set((4.0, 5.0));
+            // Update the binding
+            binding.set((4.0, 5.0));
 
-        // Redraw with the updated binding
-        canvas.redraw_if_invalid();
+            // Redraw with the updated binding
+            canvas.redraw_if_invalid();
 
-        // Should redraw the canvas now
-        assert!(stream.wait_stream() == Some(Ok(Draw::ClearCanvas)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::NewPath)));
-        assert!(stream.wait_stream() == Some(Ok(Draw::Move(4.0, 5.0))));
+            // Should redraw the canvas now
+            assert!(stream.next().await == Some(Draw::ClearCanvas));
+            assert!(stream.next().await == Some(Draw::NewPath));
+            assert!(stream.next().await == Some(Draw::Move(4.0, 5.0)));
+        });
     }
 }

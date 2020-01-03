@@ -5,12 +5,11 @@ use super::super::model::*;
 
 use flo_ui::*;
 use flo_canvas::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 use flo_animation::brushes::*;
 
-use futures::*;
-use futures::executor::Spawn;
 use std::iter;
 use std::sync::*;
 use std::time::Duration;
@@ -23,7 +22,7 @@ pub struct CanvasTools<Anim: Animation+EditableAnimation> {
     animation: Arc<FloModel<Anim>>,
 
     /// The edit sink for the animation
-    edit_sink: Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>,
+    edit_sink: Publisher<Arc<Vec<AnimationEdit>>>,
 
     /// The effective tool for the animation
     effective_tool: BindRef<Option<Arc<FloTool<Anim>>>>,
@@ -63,7 +62,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
         let current_time    = BindRef::from(view_model.timeline().current_time.clone());
         let tool_runner     = ToolRunner::new(view_model);
         let create_keyframe = BindRef::from(view_model.frame().create_keyframe_on_draw.clone());
-        let edit_sink       = executor::spawn(animation.edit());
+        let edit_sink       = animation.edit();
 
         CanvasTools {
             animation:          animation,
@@ -192,7 +191,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
 
         // Commit any animation edits that the tool produced
         if animation_edits.len() > 0 {
-            self.edit_sink.wait_send(animation_edits).unwrap();
+            self.animation.perform_edits(animation_edits);
         }
 
         // If there's a brush preview, draw it as the renderer annotation
@@ -283,7 +282,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
     }
 
     ///
-    /// Creates a new keyframe if there is no current keyframe and the 'create keyframe on draw' option is set.is
+    /// Creates a new keyframe if there is no current keyframe and the 'create keyframe on draw' option is set.
     ///
     /// Returns true if the keyframe was created
     ///
@@ -294,9 +293,7 @@ impl<Anim: 'static+Animation+EditableAnimation> CanvasTools<Anim> {
                     let current_time    = self.current_time.get();
 
                     // Create a keyframe at this time
-                    self.edit_sink.wait_send(vec![
-                        AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))
-                    ]).unwrap();
+                    self.animation.perform_edits(vec![AnimationEdit::Layer(preview_layer, LayerEdit::AddKeyFrame(current_time))]);
 
                     // Canvas should be invalidated
                     self.animation.timeline().invalidate_canvas();

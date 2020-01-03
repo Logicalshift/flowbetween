@@ -28,7 +28,6 @@ mod ui_handler;
 mod null_session;
 pub mod minidom;
 mod canvas_update;
-mod parked_future;
 mod lazy_future;
 
 pub use self::http_user_interface::*;

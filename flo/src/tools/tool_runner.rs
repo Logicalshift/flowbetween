@@ -6,8 +6,9 @@ use super::super::model::*;
 use flo_animation::*;
 
 use futures::*;
-use futures::executor;
-use futures::executor::{Spawn, Notify, NotifyHandle};
+use futures::task;
+use futures::stream::{BoxStream};
+use futures::task::{Poll, Context, ArcWake};
 use std::sync::*;
 
 ///
@@ -27,7 +28,7 @@ pub struct ToolRunner<Anim: Animation> {
     tool_data_updated: bool,
 
     /// The model actions specified by the current tool
-    model_actions: Option<Spawn<Box<dyn Stream<Item=ToolAction<GenericToolData>, Error=()>+Send>>>
+    model_actions: Option<BoxStream<'static, ToolAction<GenericToolData>>>
 }
 
 impl<Anim: Animation> ToolRunner<Anim> {
@@ -60,7 +61,7 @@ impl<Anim: Animation> ToolRunner<Anim> {
         self.current_tool   = Some(Arc::clone(&new_tool));
 
         // Start the actions running for the new tool
-        self.model_actions  = Some(executor::spawn(model_actions));
+        self.model_actions  = Some(model_actions);
     }
 
     ///
@@ -79,8 +80,11 @@ impl<Anim: Animation> ToolRunner<Anim> {
         let mut flushed_actions = vec![];
 
         if let Some(ref mut model_actions) = self.model_actions {
+            let waker       = task::waker(Arc::new(NotifyNothing));
+            let mut context = Context::from_waker(&waker);
+
             // TODO: close the stream if this returns None (existing tools generate infinite streams so this doesn't happen)
-            while let Ok(Async::Ready(Some(action))) = model_actions.poll_stream_notify(&NotifyHandle::from(&NotifyNothing), 0) {
+            while let Poll::Ready(Some(action)) = model_actions.poll_next_unpin(&mut context) {
                 flushed_actions.push(action);
             }
         }
@@ -156,6 +160,6 @@ impl<Anim: Animation> ToolRunner<Anim> {
 #[derive(Clone)]
 struct NotifyNothing;
 
-impl Notify for NotifyNothing {
-    fn notify(&self, _id: usize) { }
+impl ArcWake for NotifyNothing {
+    fn wake_by_ref(_arc_self: &Arc<Self>) { }
 }

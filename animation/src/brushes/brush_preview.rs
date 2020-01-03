@@ -4,7 +4,6 @@ use super::super::traits::*;
 use flo_canvas::*;
 use flo_curves::bezier::path::*;
 
-use futures::executor;
 use std::mem;
 use std::time::Duration;
 
@@ -211,9 +210,7 @@ impl BrushPreview {
 
         // Perform the edit
         let actions         = actions.into_iter().map(|action| AnimationEdit::Layer(layer_id, action));
-        let mut edit_sink   = executor::spawn(animation.edit());
-
-        edit_sink.wait_send(actions.collect()).ok();
+        animation.perform_edits(actions.collect());
     }
 
     ///
@@ -289,9 +286,7 @@ impl BrushPreview {
         actions.push(AnimationEdit::Layer(layer_id, LayerEdit::Path(when, CreatePath(ElementId::Unassigned, Arc::new(path)))));
 
         // Perform the edit
-        let mut edit_sink   = executor::spawn(animation.edit());
-
-        edit_sink.wait_send(actions).ok();
+        animation.perform_edits(actions);
 
         self.points             = vec![];
         self.combined_element   = None;

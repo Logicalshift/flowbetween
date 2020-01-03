@@ -3,6 +3,7 @@ extern crate desync;
 #[macro_use] extern crate log;
 
 use flo_logging::*;
+use futures::future;
 use desync::*;
 
 use std::sync::*;
@@ -15,7 +16,7 @@ fn rust_log_to_flo_log() {
 
     let messages    = Arc::new(Desync::new(vec![]));
 
-    pipe_in(Arc::clone(&messages), subscribe_to_logs(), |messages, new_message| messages.push(new_message.unwrap()));
+    pipe_in(Arc::clone(&messages), subscribe_to_logs(), |messages, new_message| { messages.push(new_message); Box::pin(future::ready(())) });
 
     info!("Hello, world");
 

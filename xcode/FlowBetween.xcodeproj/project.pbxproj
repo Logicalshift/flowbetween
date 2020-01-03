@@ -323,6 +323,7 @@
 		4B58D90621DFAB8F00BDAE7B /* FloViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloViewModel.swift; sourceTree = "<group>"; };
 		4B58D90821DFB16F00BDAE7B /* FloProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloProperty.swift; sourceTree = "<group>"; };
 		4B5C498421F131BC00B39B68 /* CocoaLumberjack.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CocoaLumberjack.framework; path = "SVGKit/3rd-party-frameworks/CocoaLumberjack-2.2.0/Mac/CocoaLumberjack.framework"; sourceTree = "<group>"; };
+		4B61009A23931F310070E406 /* FlowForever.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FlowForever.h; path = ../../../../FlowForever/xcode/FlowForever/FlowForever.h; sourceTree = "<group>"; };
 		4B6832A122182F73000ABC18 /* FloRotorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloRotorView.swift; sourceTree = "<group>"; };
 		4B795F2E223176D3006D9CD5 /* FloBadgeLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloBadgeLayer.swift; sourceTree = "<group>"; };
 		4B79EAC6220EE6470019D660 /* ViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewState.swift; sourceTree = "<group>"; };
@@ -410,6 +411,7 @@
 			children = (
 				4B1E8C2421DD1668006861A8 /* flo_cocoa.h */,
 				4B1E8C2521DD16DC006861A8 /* FlowBetween.h */,
+				4B61009A23931F310070E406 /* FlowForever.h */,
 			);
 			path = CInterop;
 			sourceTree = "<group>";

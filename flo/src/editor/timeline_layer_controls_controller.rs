@@ -2,13 +2,13 @@ use super::super::style::*;
 use super::super::model::*;
 
 use flo_ui::*;
+use flo_stream::*;
 use flo_binding::*;
 use flo_animation::*;
 
-use desync::*;
-use futures::*;
-use futures::executor;
-use futures::executor::Spawn;
+use ::desync::*;
+
+use std::sync::*;
 
 ///
 /// Controller that provides controls for adding/deleting/editing layers (generally displayed above the main layer list)
@@ -18,7 +18,7 @@ pub struct TimelineLayerControlsController<Anim: Animation> {
     ui: BindRef<Control>,
 
     /// The animation editing stream where this will send updates
-    edit: Desync<Spawn<Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send>>>,
+    edit: Desync<Publisher<Arc<Vec<AnimationEdit>>>>,
 
     /// The animation that this will edit
     animation: Box<dyn Animation>,
@@ -33,7 +33,7 @@ impl<Anim: 'static+Animation+EditableAnimation> TimelineLayerControlsController<
     ///
     pub fn new(model: &FloModel<Anim>) -> TimelineLayerControlsController<Anim> {
         let ui          = Self::ui();
-        let edit        = executor::spawn(model.edit());
+        let edit        = model.edit();
         let animation   = Box::new(model.clone());
         let timeline    = model.timeline().clone();
 
@@ -109,11 +109,12 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                 let new_layer_id = self.animation.get_layer_ids().into_iter().max().unwrap_or(0) + 1;
 
                 // Send to the animation
-                self.edit.sync(|animation| {
-                    animation.wait_send(vec![
+                let _ = self.edit.future(move |animation| {
+                    animation.publish(Arc::new(vec![
                         AnimationEdit::AddNewLayer(new_layer_id),
-                    ])
-                }).unwrap();
+                    ]))
+                });
+                self.edit.sync(|_| {});
 
                 // Select the new layer
                 self.timeline.selected_layer.set(Some(new_layer_id));
@@ -133,11 +134,12 @@ impl<Anim: 'static+Animation+EditableAnimation> Controller for TimelineLayerCont
                     let layer_to_remove = layer_to_remove.unwrap();
 
                     // Remove the layer
-                    self.edit.sync(|animation| {
-                        animation.wait_send(vec![
+                    let _ = self.edit.future(move |animation| {
+                        animation.publish(Arc::new(vec![
                             AnimationEdit::RemoveLayer(layer_to_remove)
-                        ])
-                    }).unwrap();
+                        ]))
+                    });
+                    self.edit.sync(|_| {});
 
                     // Update the model
                     self.timeline.update_keyframe_bindings();

@@ -1,26 +1,28 @@
 [package]
 name        = "flo_http_ui_actix"
-version     = "0.1.1"
+version     = "0.2.0"
 authors     = ["Andrew Hunter"]
 license     = "Apache-2.0"
+edition     = "2018"
 repository  = "https://github.com/Logicalshift/flowbetween"
 description = "HTTP+HTML implementation pipe for flo_ui built on the Actix web framework"
 
 include     = [ "Cargo.toml", "src/**/*", "js/**/*" ]
 
 [dependencies]
-flo_ui              = { path = "../../ui", version = "0.1" }
-flo_binding         = { git = "https://github.com/Logicalshift/flo_binding", version = "1.0" }
-flo_canvas          = { path = "../../canvas", version = "0.1" }
-flo_http_ui         = { path = "../http_ui", version = "0.1" }
+flo_ui              = { path = "../../ui", version = "0.2" }
+flo_binding         = { git = "https://github.com/Logicalshift/flo_binding", version = "1.2" }
+flo_canvas          = { path = "../../canvas", version = "0.2" }
+flo_http_ui         = { path = "../http_ui", version = "0.2" }
 flo_static_files    = { path = "../../static_files", version= "0.1" }
-flo_logging         = { path = "../../logging", version = "0.1" }
+flo_logging         = { path = "../../logging", version = "0.2" }
+flo_stream          = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
 
-actix-web           = "1.0"
-actix-web-actors    = "1.0"
-actix               = "0.8"
-bytes               = "0.4"
-futures             = "0.1"
+actix-web           = "2.0"
+actix-web-actors    = "2.0"
+actix               = "0.9"
+bytes               = "0.5"
+futures             = { version = "0.3", features = [ "thread-pool" ] }
 serde_json          = "1.0"
 lazy_static         = "1.2"
 percent-encoding    = "1.0"

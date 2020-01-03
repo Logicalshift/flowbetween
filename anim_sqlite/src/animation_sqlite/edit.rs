@@ -1,23 +1,19 @@
 use super::*;
 
-use futures::*;
-use futures::executor;
+use flo_stream::*;
 use flo_animation::*;
 
-impl SqliteAnimation {
+use std::sync::*;
+
+impl EditableAnimation for SqliteAnimation {
+    fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
+        self.db.create_edit_sink()
+    }
+
     ///
     /// Performs a particular set of edits immediately to this animation
     ///
-    pub fn perform_edits(&self, edits: Vec<AnimationEdit>) {
-        let mut sink = executor::spawn(self.db.create_edit_sink());
-
-        sink.wait_send(edits).unwrap();
-        sink.wait_flush().unwrap();
-    }
-}
-
-impl EditableAnimation for SqliteAnimation {
-    fn edit(&self) -> Box<dyn Sink<SinkItem=Vec<AnimationEdit>, SinkError=()>+Send> {
-        self.db.create_edit_sink()
+    fn perform_edits(&self, edits: Vec<AnimationEdit>) {
+        self.db.perform_edits(edits);
     }
 }
