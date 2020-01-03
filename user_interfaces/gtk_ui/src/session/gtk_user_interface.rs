@@ -1,4 +1,3 @@
-use super::action_sink::*;
 use super::super::gtk_thread::*;
 use super::super::gtk_action::*;
 use super::super::gtk_event::*;
@@ -6,6 +5,7 @@ use super::super::gtk_event::*;
 use flo_ui::*;
 use flo_stream::*;
 
+use futures::prelude::*;
 use futures::stream::{BoxStream};
 use std::sync::*;
 
@@ -42,6 +42,6 @@ impl UserInterface<Vec<GtkAction>, GtkEvent, ()> for GtkUserInterface {
     }
 
     fn get_updates(&self) -> Self::UpdateStream {
-        Box::new(self.thread.get_event_stream())
+        self.thread.get_event_stream().map(|update| Ok(update)).boxed()
     }
 }
