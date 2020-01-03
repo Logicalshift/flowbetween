@@ -35,7 +35,7 @@ impl GtkUserInterface {
 }
 
 impl UserInterface<Vec<GtkAction>, GtkEvent, ()> for GtkUserInterface {
-    type UpdateStream   = BoxStream<'static, GtkEvent>;
+    type UpdateStream   = BoxStream<'static, Result<GtkEvent, ()>>;
 
     fn get_input_sink(&self) -> WeakPublisher<Vec<GtkAction>> {
         self.input.republish_weak()
