@@ -82,10 +82,12 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
         let core = Arc::new(Mutex::new(core));
 
         // Finish up by creating the new session
-        GtkSession {
+        let session     = GtkSession {
             core:       core,
             core_ui:    core_ui
-        }
+        };
+
+        session
     }
 
     ///

@@ -99,13 +99,17 @@ fn main_actix() -> Option<JoinHandle<()>> {
 fn main_gtk() -> Option<JoinHandle<()>> {
     Some(thread::spawn(|| {
         // Create a GTK session
-        let gtk_ui              = GtkUserInterface::new();
-        let (session, run_loop) = UiSession::new(FlowBetweenSession::new());
-        let gtk_session         = GtkSession::new(session, gtk_ui);
+        let (gtk_ui, gtk_run_loop)  = GtkUserInterface::new();
+        let (session, ui_run_loop)  = UiSession::new(FlowBetweenSession::new());
+        let gtk_session             = GtkSession::new(session, gtk_ui);
+
+        let run_session             = gtk_session.run();
+        let run_loop                = future::select(gtk_run_loop.boxed(), ui_run_loop.boxed());
+        let run_loop                = future::select(run_session.boxed_local(), run_loop);
 
         // Run on this thread
         executor::block_on(async {
-            future::select(run_loop.boxed(), gtk_session.run().boxed_local()).await;
+            run_loop.await;
         })
     }))
 }
