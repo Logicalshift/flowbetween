@@ -7,6 +7,7 @@ use flo_stream::*;
 
 use gtk;
 use glib;
+use futures::prelude::*;
 use futures::stream::{BoxStream};
 
 use std::collections::{HashMap, VecDeque};
@@ -150,7 +151,7 @@ impl FloGtk {
     ///
     /// Creates a new FloGtk instance
     ///
-    pub fn new(event_sink: Publisher<Vec<GtkEvent>>) -> FloGtk {
+    pub fn new(event_sink: Publisher<GtkEvent>) -> FloGtk {
         FloGtk {
             pending_messages:   MessageQueue::new(),
             windows:            HashMap::new(),
@@ -223,7 +224,7 @@ impl FloGtk {
     /// Retrieves a sink that can be used to send events to any attached streams
     ///
     pub fn get_event_sink(&mut self) -> WeakPublisher<GtkEvent> {
-        self.event_sink.republish_weak();
+        self.event_sink.republish_weak()
     }
 
     ///

@@ -1,7 +1,7 @@
 use flo_ui::*;
 use flo_ui::session::*;
 
-use futures::*;
+use futures::prelude::*;
 use futures::task::{Poll, Context};
 
 use std::pin::*;
@@ -32,12 +32,12 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> ConsolidateActionsStream<Act
     ///
     /// Attempts to consolidate an event with a future event
     ///
-    fn consolidate(&mut self, next_event: Vec<UiEvent>, future_event: Poll<Option<Vec<UiEvent>>>, context: &Context) -> (Vec<UiEvent>, Poll<Option<Vec<UiEvent>>>) {
+    fn consolidate(&mut self, next_event: Vec<UiEvent>, future_event: Poll<Option<Vec<UiEvent>>>, context: &mut Context) -> (Vec<UiEvent>, Poll<Option<Vec<UiEvent>>>) {
         if let Poll::Ready(Some(future_event)) = future_event {
             let mut next_event = next_event;
             next_event.extend(future_event);
 
-            (next_event, self.source_stream.poll_unpin(context))
+            (next_event, self.source_stream.poll_next_unpin(context))
         } else {
             (next_event, future_event)
         }
@@ -91,7 +91,7 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> ConsolidateActionsStream<Act
 impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> Stream for ConsolidateActionsStream<ActionStream> {
     type Item=Vec<UiEvent>;
 
-    fn poll_next(self: Pin<&mut Self>) -> Poll<Option<Vec<UiEvent>>> {
+    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<UiEvent>>> {
         let self_ref = self.as_mut();
 
         if let Some(pending_event) = self_ref.pending_event.take() {
@@ -99,16 +99,16 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> Stream for ConsolidateAction
             Poll::Ready(Some(pending_event))
         } else {
             // Try to fetch the next event from the source stream
-            let mut next_event = self.source_stream.poll();
+            let mut next_event = self.source_stream.poll_next_unpin(context);
 
             if let Poll::Ready(Some(mut next_event)) = next_event {
                 // An event is ready: see if another event is immediately available
-                let mut future_event = self.source_stream.poll();
+                let mut future_event = self.source_stream.poll_next_unpin(context);
 
                 // Loop until there are no more future events to consolidate
                 loop {
                     match future_event {
-                        Poll::Ready(Some(_))    => { let (new_next_event, new_future_event) = self.consolidate(next_event, future_event); next_event = new_next_event; future_event = new_future_event; },
+                        Poll::Ready(Some(_))    => { let (new_next_event, new_future_event) = self.consolidate(next_event, future_event, context); next_event = new_next_event; future_event = new_future_event; },
                         _                       => { break; }
                     }
                 }
