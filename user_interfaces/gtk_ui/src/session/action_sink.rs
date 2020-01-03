@@ -23,17 +23,19 @@ pub fn publish_actions(sink: &GtkActionSink, actions: Vec<GtkAction>) {
 ///
 /// Returns a future that runs actions published to a publisher on a thread
 ///
-pub async fn run_gtk_actions_for_thread(thread: Arc<GtkThread>, mut actions: WeakPublisher<Vec<GtkAction>>) {
+pub fn run_gtk_actions_for_thread(thread: Arc<GtkThread>, mut actions: WeakPublisher<Vec<GtkAction>>) -> impl Future<Output=()> {
     // Subscribe to the actions that are being published
     let mut actions = actions.subscribe();
 
     // Dispatch them to the thread as they arrive
-    loop {
-        let actions = read_actions(&mut actions).await;
+    async move {
+        loop {
+            let actions = read_actions(&mut actions).await;
 
-        match actions {
-            None            => { return; }
-            Some(actions)   => { thread.perform_actions(actions) }
+            match actions {
+                None            => { return; }
+                Some(actions)   => { thread.perform_actions(actions) }
+            }
         }
     }
 }
