@@ -57,8 +57,8 @@ impl GtkSessionViewModel {
                 };
 
                 // Store the bindings
-                let mut controller_bindings = self.bindings.entry(controller_path.clone()).or_insert_with(|| HashMap::new());
-                let mut property_bindings   = controller_bindings.entry(binding.clone()).or_insert_with(|| vec![]);
+                let controller_bindings = self.bindings.entry(controller_path.clone()).or_insert_with(|| HashMap::new());
+                let property_bindings   = controller_bindings.entry(binding.clone()).or_insert_with(|| vec![]);
 
                 property_bindings.push((widget_id, action_fn));
 
@@ -84,7 +84,7 @@ impl GtkSessionViewModel {
 
         for controller_update in updates {
             // Each update is a set of changes to a particular controller
-            let mut property_values = self.values.entry(controller_update.controller_path().clone()).or_insert_with(|| HashMap::new());
+            let property_values = self.values.entry(controller_update.controller_path().clone()).or_insert_with(|| HashMap::new());
             let controller_bindings = self.bindings.get(controller_update.controller_path());
 
             // Process each update in turn

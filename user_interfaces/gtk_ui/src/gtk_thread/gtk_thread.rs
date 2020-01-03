@@ -24,7 +24,7 @@ use std::ptr;
 ///
 pub struct GtkThread {
     /// A clone of the event sink that the Gtk thread will send its events to
-    event_sink: Publisher<GtkEvent>,
+    event_sink: Arc<Desync<Publisher<GtkEvent>>>,
 
     /// Used to send messages and actions to the Gtk thread
     message_target: GtkMessageTarget,
@@ -43,7 +43,7 @@ impl GtkThread {
 
         // Create a new thread
         let mut thread = GtkThread {
-            event_sink:     event_sink,
+            event_sink:     Arc::new(Desync::new(event_sink)),
             message_target: GtkMessageTarget::new(),
             running_thread: None
         };
@@ -81,7 +81,7 @@ impl GtkThread {
     fn run_thread(&self) -> JoinHandle<()> {
         // Clone the message target so we can use it as the source for the new thread
         let thread_target   = self.message_target.clone();
-        let event_sink      = Arc::new(Desync::new(self.event_sink.republish_weak()));
+        let event_sink      = Arc::new(Desync::new(self.event_sink.sync(|sink| sink.republish_weak())));
 
         // Start the Gtk thread
         let thread = thread::spawn(move || {
@@ -128,7 +128,7 @@ impl GtkThread {
     /// Retrieves a stream of the events originating from the GTK thread
     ///
     pub fn get_event_stream(&self) -> BoxStream<'static, GtkEvent> {
-        self.event_sink.subscribe().boxed()
+        self.event_sink.sync(|sink| sink.subscribe()).boxed()
     }
 }
 

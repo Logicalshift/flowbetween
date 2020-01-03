@@ -129,12 +129,12 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     ///
     pub fn create_action_process(&self) -> LocalBoxFuture<'static, ()> {
         // These are the streams we want to connect
-        let gtk_action_sink     = self.core.lock().unwrap().gtk_ui.get_input_sink();
-        let core_updates        = self.core_ui.get_updates();
+        let mut gtk_action_sink     = self.core.lock().unwrap().gtk_ui.get_input_sink();
+        let core_updates            = self.core_ui.get_updates();
 
         // Map the core updates to GTK updates
-        let core                = self.core.clone();
-        let gtk_core_updates    = core_updates
+        let core                    = self.core.clone();
+        let mut gtk_core_updates    = core_updates
             .map(move |updates| {
                 // Lock the core while we process these updates
                 let mut core    = core.lock().unwrap();
@@ -152,7 +152,13 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
             .flatten();
 
         // Connect the updates to the sink to generate our future
-        let action_process = gtk_action_sink.send_all(gtk_core_updates.filter(|action_list| future::ready(action_list.len() > 0)));
+        let action_process = async move {
+            while let Some(action_list) = gtk_core_updates.next().await {
+                if action_list.len() > 0 {
+                    gtk_action_sink.publish(action_list).await
+                }
+            }
+        };
 
         action_process.map(|_stream_sink| ()).boxed_local()
     }
@@ -163,12 +169,12 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
     ///
     pub fn create_event_process(&self) -> LocalBoxFuture<'static, ()> {
         // GTK events become input events on the core side
-        let gtk_events  = self.core.lock().unwrap().gtk_ui.get_updates();
-        let core_input  = self.core_ui.get_input_sink();
+        let gtk_events          = self.core.lock().unwrap().gtk_ui.get_updates();
+        let mut core_input      = self.core_ui.get_input_sink();
 
         // Connect the streams
-        let core            = self.core.clone();
-        let core_ui_events  = gtk_events
+        let core                = self.core.clone();
+        let core_ui_events      = gtk_events
             .map(move |event| {
                 let mut core = core.lock().unwrap();
 
@@ -177,10 +183,14 @@ impl<Ui: CoreUserInterface> GtkSession<Ui> {
                     .unwrap_or_else(|_| vec![])
             })
             .filter(|events| future::ready(events.len() > 0));
-        let core_ui_events  = ConsolidateActionsStream::new(core_ui_events);
+        let mut core_ui_events  = ConsolidateActionsStream::new(core_ui_events);
 
         // Send the processed events to the core input
-        let event_process = core_input.send_all(core_ui_events);
+        let event_process = async move {
+            while let Some(input) = core_ui_events.next().await {
+                core_input.publish(input).await
+            }
+        };
 
         event_process.map(|_stream_sink| ()).boxed_local()
     }
@@ -329,7 +339,7 @@ impl GtkSessionCore {
         if let Some(canvas) = control.canvas_resource() {
             let canvas_name             = canvas.name().unwrap_or_else(|| canvas.id().to_string());
             let canvas_id               = (Rc::clone(&controller_path), canvas_name);
-            let mut widgets_for_canvas  = self.widgets_for_canvas.entry(canvas_id)
+            let widgets_for_canvas      = self.widgets_for_canvas.entry(canvas_id)
                 .or_insert_with(|| HashSet::new());
 
             widgets_for_canvas.insert(control_id);

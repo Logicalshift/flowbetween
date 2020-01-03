@@ -23,7 +23,7 @@ pub fn publish_actions(sink: &GtkActionSink, actions: Vec<GtkAction>) {
 ///
 /// Returns a future that runs actions published to a publisher on a thread
 ///
-pub async fn run_gtk_actions_for_thread(thread: Arc<GtkThread>, actions: WeakPublisher<Vec<GtkAction>>) {
+pub async fn run_gtk_actions_for_thread(thread: Arc<GtkThread>, mut actions: WeakPublisher<Vec<GtkAction>>) {
     // Subscribe to the actions that are being published
     let mut actions = actions.subscribe();
 
@@ -52,7 +52,7 @@ async fn read_actions(subscriber: &mut Subscriber<Vec<GtkAction>>) -> Option<Vec
     let mut poll_events     = events;
     let mut poll_subscriber = Some(subscriber);
 
-    let (events, returned_subscriber) = future::poll_fn(move |context| {
+    let (events, _returned_subscriber) = future::poll_fn(move |context| {
         // Add as many extra events as we can retrieve
         while let Poll::Ready(Some(more_events)) = poll_subscriber.as_mut().unwrap().poll_next_unpin(context) {
             poll_events.as_mut().unwrap().extend(more_events)
@@ -63,7 +63,6 @@ async fn read_actions(subscriber: &mut Subscriber<Vec<GtkAction>>) -> Option<Vec
     }).await;
 
     // Return the events that we retrieved
-    subscriber = returned_subscriber.unwrap();
     events
 }
 

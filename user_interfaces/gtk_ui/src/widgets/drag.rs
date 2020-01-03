@@ -128,7 +128,7 @@ impl DragActions {
     ///
     fn connect_motion(widget: &gtk::Widget, widget_id: WidgetId, drag_actions: Rc<RefCell<Self>>) {
         widget.connect_motion_notify_event(move |widget, button| {
-            let mut drag_actions    = drag_actions.borrow_mut();
+            let drag_actions    = drag_actions.borrow_mut();
 
             if drag_actions.dragging {
                 // Continue dragging

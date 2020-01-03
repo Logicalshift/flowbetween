@@ -91,30 +91,30 @@ impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> ConsolidateActionsStream<Act
 impl<ActionStream: Stream<Item=Vec<UiEvent>>+Unpin> Stream for ConsolidateActionsStream<ActionStream> {
     type Item=Vec<UiEvent>;
 
-    fn poll_next(self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<UiEvent>>> {
-        let self_ref = self.as_mut();
+    fn poll_next(mut self: Pin<&mut Self>, context: &mut Context) -> Poll<Option<Vec<UiEvent>>> {
+        let mut self_ref = self.as_mut();
 
         if let Some(pending_event) = self_ref.pending_event.take() {
             // If there's already a pending event, this is what we return
             Poll::Ready(Some(pending_event))
         } else {
             // Try to fetch the next event from the source stream
-            let mut next_event = self.source_stream.poll_next_unpin(context);
+            let next_event = self_ref.source_stream.poll_next_unpin(context);
 
             if let Poll::Ready(Some(mut next_event)) = next_event {
                 // An event is ready: see if another event is immediately available
-                let mut future_event = self.source_stream.poll_next_unpin(context);
+                let mut future_event = self_ref.source_stream.poll_next_unpin(context);
 
                 // Loop until there are no more future events to consolidate
                 loop {
                     match future_event {
-                        Poll::Ready(Some(_))    => { let (new_next_event, new_future_event) = self.consolidate(next_event, future_event, context); next_event = new_next_event; future_event = new_future_event; },
+                        Poll::Ready(Some(_))    => { let (new_next_event, new_future_event) = self_ref.consolidate(next_event, future_event, context); next_event = new_next_event; future_event = new_future_event; },
                         _                       => { break; }
                     }
                 }
 
                 // Reduce the consolidated events
-                self.reduce(&mut next_event);
+                self_ref.reduce(&mut next_event);
 
                 // Suspend updates while the consolidated events are processed
                 next_event.insert(0, UiEvent::SuspendUpdates);

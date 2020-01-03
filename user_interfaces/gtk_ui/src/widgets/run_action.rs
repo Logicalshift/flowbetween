@@ -44,7 +44,7 @@ fn run_window_action(flo_gtk: &mut FloGtk, window_id: WindowId, actions: &Vec<Gt
         match action {
             &GtkWindowAction::New(ref window_type) => {
                 // For new window actions, we need to create the window before we can send actions to it
-                let mut new_window = gtk::Window::new(window_type.clone());
+                let new_window = gtk::Window::new(window_type.clone());
 
                 // Add our style context
                 new_window.get_style_context()
