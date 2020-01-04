@@ -981,7 +981,7 @@ let flo_canvas = (function() {
         ///
         let resize_canvas = () => {
             // Resize if the canvas's size has changed
-            var ratio           = window.devicePixelRatio || 1;
+            var ratio           = 1; //window.devicePixelRatio || 1; -- TODO, 4k canvases cause the pointer events to lag on Chrome...
             let target_width    = canvas.clientWidth * ratio;
             let target_height   = canvas.clientHeight * ratio;
 
