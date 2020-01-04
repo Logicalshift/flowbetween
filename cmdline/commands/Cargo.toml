@@ -13,5 +13,6 @@ flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version 
 flo_animation   = { path = "../../animation", version = "0.2" }
 flo_anim_sqlite = { path = "../../anim_sqlite", version = "0.2" }
 flo_canvas      = { path = "../../canvas", version = "0.2" }
+flo_ui_files    = { path = "../../ui_files", version = "0.2" }
 
 futures         = "0.3"

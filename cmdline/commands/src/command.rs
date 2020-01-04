@@ -4,5 +4,8 @@
 #[derive(Clone)]
 pub enum FloCommand {
     /// Write out a message describing the version of FlowBetween that this is
-    Version
+    Version,
+
+    /// Lists the files in the main index
+    ListAnimations
 }

@@ -3,7 +3,7 @@ use flo_commands::*;
 use tokio::prelude::*;
 use tokio::io::{stdout};
 use futures::prelude::*;
-use clap::{App, Arg};
+use clap::{App, Arg, SubCommand};
 
 #[tokio::main]
 async fn main() {
@@ -22,6 +22,8 @@ async fn main() {
         .arg(Arg::with_name("version")
             .long("version")
             .help("Displays version information"))
+        .subcommand(SubCommand::with_name("ls")
+            .about("lists animations in the main index"))
         .get_matches();
 
     tokio::spawn(async move {
@@ -30,6 +32,10 @@ async fn main() {
 
         if params.is_present("version") {
             input.push(FloCommand::Version)
+        }
+
+        if let Some(ls_params) = params.subcommand_matches("ls") {
+            input.push(FloCommand::ListAnimations);
         }
 
         // Prepare as a stream as input to the command line

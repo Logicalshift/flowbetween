@@ -1,10 +1,17 @@
 use super::output::*;
 use super::command::*;
+use super::subcommands::*;
 
 use flo_stream::*;
 use futures::prelude::*;
 use futures::stream;
 use futures::task::{Poll};
+
+/// The name of the app (after our domain: flowbetween.app)
+pub const APP_NAME: &str = "app.flowbetween";
+
+/// Where we store the default user data
+pub const DEFAULT_USER_FOLDER: &str = "default";
 
 ///
 /// Runs a series of commands provided by a stream and returns a stream of the resulting output
@@ -42,11 +49,13 @@ where InputStream: 'static+Stream<Item=FloCommand>+Send+Unpin {
             output.publish(FloCommandOutput::BeginCommand(command.clone())).await;
 
             match command {
-                FloCommand::Version     =>  { 
+                FloCommand::Version         =>  { 
                     let msg = format!("{} ({}) v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_DESCRIPTION"), env!("CARGO_PKG_VERSION"));
 
                     output.publish(FloCommandOutput::Message(msg)).await;
                 }
+
+                FloCommand::ListAnimations  => { list_files(&mut output, APP_NAME.to_string(), DEFAULT_USER_FOLDER.to_string()).await }
             }
 
             // Finish the command

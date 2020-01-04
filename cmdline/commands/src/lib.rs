@@ -9,6 +9,7 @@ mod command;
 mod command_runner;
 mod output;
 mod char_output;
+mod subcommands;
 
 pub use self::command::*;
 pub use self::command_runner::*;
