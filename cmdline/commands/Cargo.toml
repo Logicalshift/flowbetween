@@ -10,5 +10,8 @@ include         = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 
 [dependencies]
 flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
+flo_animation   = { path = "../../animation", version = "0.2" }
+flo_anim_sqlite = { path = "../../anim_sqlite", version = "0.2" }
+flo_canvas      = { path = "../../canvas", version = "0.2" }
 
 futures         = "0.3"
