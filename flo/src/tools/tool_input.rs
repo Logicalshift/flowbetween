@@ -60,6 +60,11 @@ impl<ToolData> ToolInput<ToolData> {
                             last_continue = Some(action);
                         },
 
+                        PaintAction::Prediction => {
+                            // Treat predictions as if they were a continue
+                            last_continue = Some(action);
+                        },
+
                         PaintAction::Cancel => {
                             // Continues are all removed: only the cancel action is pushed
                             last_continue = None;

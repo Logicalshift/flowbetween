@@ -32,6 +32,9 @@ pub enum PaintAction {
     /// Continuation of a paint stroke previously started (drag)
     Continue,
 
+    /// Predicted continuation of a paint stroke (points added by this method should be removed at the next Continue, which provides the 'real' events)
+    Prediction,
+
     /// End of a paint stroke (mouse/stylus/touch up)
     Finish,
 

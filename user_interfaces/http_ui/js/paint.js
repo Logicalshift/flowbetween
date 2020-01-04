@@ -411,6 +411,10 @@ let flo_paint = (function() {
                     waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Continue', node));
                 }
 
+                if (pointer_event.getPredictedEvents) {
+                    pointer_event.getCoalescedEvents().forEach(pointer_event => waiting_events.push(pointer_event_to_paint_event(pointer_event, 'Prediction', node)));
+                }
+
                 // Send the move event as soon as the in-flight events have finished processing
                 in_flight_event = in_flight_event.then(() => {
                     if (waiting_events.length > 0) {

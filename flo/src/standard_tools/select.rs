@@ -411,7 +411,8 @@ impl Select {
 
             // -- Rubber-banding selection behaviour
 
-            (SelectAction::Select, PaintAction::Continue) => {
+            (SelectAction::Select, PaintAction::Continue)   |
+            (SelectAction::Select, PaintAction::Prediction) => {
                 // TODO: only start rubber-banding once the mouse has moved a certain distance
 
                 // Dragging after making a new selection moves us to rubber-band mode
@@ -433,7 +434,8 @@ impl Select {
                 data = Arc::new(new_data);
             },
 
-            (SelectAction::RubberBand, PaintAction::Continue) => {
+            (SelectAction::RubberBand, PaintAction::Continue)   |
+            (SelectAction::RubberBand, PaintAction::Prediction) => {
                 // Draw a rubber band around the selection
                 let new_data = data.with_drag_position(RawPoint::from(paint.location));
 
@@ -465,7 +467,8 @@ impl Select {
 
             // -- Dragging behaviour
 
-            (SelectAction::Reselect, PaintAction::Continue) => {
+            (SelectAction::Reselect, PaintAction::Continue)   |
+            (SelectAction::Reselect, PaintAction::Prediction) => {
                 // This begins a dragging operation
                 let mut new_data        = data.with_action(SelectAction::Drag);
 
@@ -482,7 +485,8 @@ impl Select {
                 data = Arc::new(new_data);
             },
 
-            (SelectAction::Drag, PaintAction::Continue) => {
+            (SelectAction::Drag, PaintAction::Continue)   |
+            (SelectAction::Drag, PaintAction::Prediction) => {
                 // Update the drag position
                 let new_data = data.with_drag_position(RawPoint::from(paint.location));
                 actions.push(ToolAction::Data(new_data.clone()));

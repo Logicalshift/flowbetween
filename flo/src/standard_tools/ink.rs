@@ -191,6 +191,9 @@ impl<Anim: Animation+'static> Tool<Anim> for Ink {
                             BrushPreview(AddPoint(raw_point_from_painting(&painting)))
                         ],
 
+                        // TODO: add predicted points to the brush preview
+                        PaintAction::Prediction => vec![],
+
                         PaintAction::Finish     => {
                             let representation      = data.as_ref().map(|data| data.representation).unwrap_or(BrushRepresentation::BrushStroke);
                             let modification_mode   = data.as_ref().map(|data| data.modification_mode).unwrap_or(BrushModificationMode::Individual);

@@ -482,7 +482,8 @@ impl Adjust {
                 actions
             },
 
-            (AdjustAction::DragControlPoint(element_id, index, from, _to), PaintAction::Continue) => {
+            (AdjustAction::DragControlPoint(element_id, index, from, _to), PaintAction::Continue)   |
+            (AdjustAction::DragControlPoint(element_id, index, from, _to), PaintAction::Prediction) => {
                 // Continue the control point drag by updating the 'to' location
                 data.state.set(AdjustAction::DragControlPoint(element_id, index, from, painting.location));
 
