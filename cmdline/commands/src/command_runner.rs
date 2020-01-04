@@ -9,12 +9,12 @@ use futures::task::{Poll};
 ///
 /// Runs a series of commands provided by a stream and returns a stream of the resulting output
 ///
-pub fn flo_run_commands<InputStream>(commands: InputStream) -> impl Stream<Item=FloCommandOutput>+Unpin
+pub fn flo_run_commands<InputStream>(commands: InputStream) -> impl Stream<Item=FloCommandOutput>+Send+Unpin
 where InputStream: 'static+Stream<Item=FloCommand>+Unpin+Send {
     // Create the output
     let mut output_publisher    = Publisher::new(1);
     let mut output              = output_publisher.subscribe();
-    let mut runner              = Some(run_commands(commands, output_publisher).boxed_local());
+    let mut runner              = Some(run_commands(commands, output_publisher).boxed());
 
     // Reading from the output stream causes commands to be run
     stream::poll_fn(move |context| {
@@ -34,17 +34,23 @@ where InputStream: 'static+Stream<Item=FloCommand>+Unpin+Send {
 ///
 /// Runs the specified series of commands and writes the output to the given publisher
 ///
-async fn run_commands<InputStream>(mut commands: InputStream, mut output: Publisher<FloCommandOutput>)
-where InputStream: 'static+Stream<Item=FloCommand>+Unpin {
-    while let Some(command) = commands.next().await {
-        // Commands begin and end with a 'begin/finish' output
-        output.publish(FloCommandOutput::BeginCommand(command.clone()));
+fn run_commands<InputStream>(mut commands: InputStream, mut output: Publisher<FloCommandOutput>) -> impl Future<Output=()>+Send
+where InputStream: 'static+Stream<Item=FloCommand>+Send+Unpin {
+    async move {
+        while let Some(command) = commands.next().await {
+            // Commands begin and end with a 'begin/finish' output
+            output.publish(FloCommandOutput::BeginCommand(command.clone())).await;
 
-        match command {
-            FloCommand::Version     =>  { output.publish(FloCommandOutput::Message(format!("{} ({}) v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_DESCRIPTION"), env!("CARGO_PKG_VERSION")))).await; }
+            match command {
+                FloCommand::Version     =>  { 
+                    let msg = format!("{} ({}) v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_DESCRIPTION"), env!("CARGO_PKG_VERSION"));
+
+                    output.publish(FloCommandOutput::Message(msg)).await;
+                }
+            }
+
+            // Finish the command
+            output.publish(FloCommandOutput::FinishCommand(command.clone())).await;
         }
-
-        // Finish the command
-        output.publish(FloCommandOutput::FinishCommand(command.clone()));
     }
 }

@@ -5,7 +5,7 @@ authors         = ["Andrew Hunter"]
 license         = "Apache-2.0"
 edition         = "2018"
 repository      = "https://github.com/Logicalshift/flowbetween"
-description     = "Library providing scripting control of FlowBetween"
+description     = "Scripting control of FlowBetween"
 include         = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 
 [dependencies]
