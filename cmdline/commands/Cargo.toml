@@ -1,9 +1,14 @@
 [package]
-name        = "flo_commands"
-version     = "0.2.0"
-authors     = ["Andrew Hunter"]
-license     = "Apache-2.0"
-edition     = "2018"
-repository  = "https://github.com/Logicalshift/flowbetween"
-description = "Library providing scripting control of FlowBetween"
-include     = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
+name            = "flo_commands"
+version         = "0.2.0"
+authors         = ["Andrew Hunter"]
+license         = "Apache-2.0"
+edition         = "2018"
+repository      = "https://github.com/Logicalshift/flowbetween"
+description     = "Library providing scripting control of FlowBetween"
+include         = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
+
+[dependencies]
+flo_stream      = { git = "https://github.com/Logicalshift/flo_stream", version = "0.5" }
+
+futures         = "0.3"

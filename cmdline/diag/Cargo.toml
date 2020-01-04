@@ -1,12 +1,12 @@
 [package]
-name        = "flo_diag"
-version     = "0.2.0"
-authors     = ["Andrew Hunter"]
-license     = "Apache-2.0"
-edition     = "2018"
-repository  = "https://github.com/Logicalshift/flowbetween"
-description = "Diagnostic command line tool for FlowBetween"
-include     = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
+name            = "flo_diag"
+version         = "0.2.0"
+authors         = ["Andrew Hunter"]
+license         = "Apache-2.0"
+edition         = "2018"
+repository      = "https://github.com/Logicalshift/flowbetween"
+description     = "Diagnostic command line tool for FlowBetween"
+include         = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 
 [dependencies]
 flo_commands    = { path = "../commands", version = "0.2.0" }
