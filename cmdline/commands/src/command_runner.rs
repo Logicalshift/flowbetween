@@ -49,13 +49,17 @@ where InputStream: 'static+Stream<Item=FloCommand>+Send+Unpin {
             output.publish(FloCommandOutput::BeginCommand(command.clone())).await;
 
             match command {
-                FloCommand::Version         =>  { 
+                FloCommand::Version                     =>  { 
                     let msg = format!("{} ({}) v{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_DESCRIPTION"), env!("CARGO_PKG_VERSION"));
 
                     output.publish(FloCommandOutput::Message(msg)).await;
                 }
 
-                FloCommand::ListAnimations  => { list_files(&mut output, APP_NAME.to_string(), DEFAULT_USER_FOLDER.to_string()).await }
+                FloCommand::ListAnimations              => { list_files(&mut output, APP_NAME.to_string(), DEFAULT_USER_FOLDER.to_string()).await }
+                FloCommand::ReadFrom(ref read_location) => { unimplemented!() }
+                FloCommand::WriteTo(ref write_location) => { unimplemented!() }
+                FloCommand::ReadAllEdits                => { unimplemented!() }
+                FloCommand::SummarizeEdits              => { unimplemented!() }
             }
 
             // Finish the command
