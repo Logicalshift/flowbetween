@@ -58,7 +58,7 @@ pub trait Animation : Send+Sync {
 ///
 /// Represents something that can edit an animation
 ///
-pub trait EditableAnimation {
+pub trait EditableAnimation : Animation+Send+Sync {
     ///
     /// Retrieves a sink that can be used to send edits for this animation
     ///

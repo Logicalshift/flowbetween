@@ -23,7 +23,7 @@ pub struct CommandState(Arc<StateValue>);
 /// How an animation is stored within the command state
 ///
 #[derive(Clone)]
-struct AnimationState(StorageDescriptor, Arc<dyn Animation>);
+struct AnimationState(StorageDescriptor, Arc<dyn Animation>, Arc<dyn EditableAnimation>);
 
 ///
 /// The internal value of a command state
