@@ -49,7 +49,7 @@ async fn main() {
             input.push(FloCommand::ReadFrom(StorageDescriptor::parse_catalog_string(catalog_name)));
         }
 
-        if let Some(file_name) = params.value_of("input-from-catalog") {
+        if let Some(file_name) = params.value_of("input-from-file") {
             input.push(FloCommand::ReadFrom(StorageDescriptor::File(file_name.to_string())));
         }
 

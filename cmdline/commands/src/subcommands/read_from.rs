@@ -13,7 +13,7 @@ use futures::prelude::*;
 pub fn read_from<'a>(location: StorageDescriptor, output: &'a mut Publisher<FloCommandOutput>, state: &'a mut CommandState) -> impl Future<Output=Result<(), CommandError>>+Send+'a {
     async move {
         // Generate a message we'll use when the file opens
-        let msg = format!("Reading input from '{}'", location);
+        let msg = format!("Opening '{}' for input", location);
 
         // Load the file using the current state (and update to a new state)
         *state = state.load_input_file(location.clone())
