@@ -1,7 +1,14 @@
+use flo_animation::*;
+use flo_anim_sqlite::*;
+use flo_ui_files::*;
+
+use std::sync::*;
+use std::path::{PathBuf};
+
 ///
 /// Describes where an animation is stored
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum StorageDescriptor {
     /// A temporary version of an animation in memory
     InMemory,
@@ -14,4 +21,78 @@ pub enum StorageDescriptor {
 
     /// A file with the specified path
     File(String)
+}
+
+impl StorageDescriptor {
+    ///
+    /// Opens the animation that this storage descriptor references, using the specified file manager
+    ///
+    pub fn open_animation(&self, file_manager: &Arc<dyn FileManager>) -> Option<Arc<dyn Animation>> {
+        match self {
+            StorageDescriptor::InMemory                 => Some(Arc::new(SqliteAnimation::new_in_memory())),
+            StorageDescriptor::File(filename)           => Some(Arc::new(SqliteAnimation::open_file(PathBuf::from(filename)).ok()?)),
+
+            StorageDescriptor::CatalogNumber(num)       => {
+                let all_files       = file_manager.get_all_files();
+                let requested_file  = all_files.into_iter().nth(*num)?;
+                Some(Arc::new(SqliteAnimation::open_file(requested_file.as_path()).ok()?))
+            }
+
+            StorageDescriptor::CatalogName(filename)    => {
+                let all_files       = file_manager.get_all_files();
+                let filename        = filename.to_lowercase();
+
+                for file in all_files {
+                    let full_name = file_manager.display_name_for_path(file.as_path()).unwrap_or("<untitled>".to_string());
+                    if full_name.to_lowercase() == filename {
+                        return Some(Arc::new(SqliteAnimation::open_file(file.as_path()).ok()?));
+                    }
+                }
+
+                None
+            }
+        }
+    }
+
+    ///
+    /// Parses a string that's intended to be a reference to the catalog into a storage descriptor
+    ///
+    pub fn parse_catalog_string(val: &str) -> Option<StorageDescriptor> {
+        // The value 'inmemory' just means to use an in-memory file
+        if val.to_lowercase() == ":inmemory:" { 
+            return Some(StorageDescriptor::InMemory);
+        }
+
+        // #n# indicates a catalog number from a file manager
+        if val.len() > 2 && val.chars().nth(0) == Some('#') && val.chars().last() == Some('#') {
+            // Try to parse as a catalog number
+            let number = val.chars().skip(1).take(val.len()-2).collect::<String>();
+            if let Ok(number) = number.parse::<usize>() {
+                return Some(StorageDescriptor::CatalogNumber(number));
+            }
+        }
+
+        // Other values are catalog names
+        return Some(StorageDescriptor::CatalogName(val.to_string()));
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn parse_inmemory() {
+        assert!(StorageDescriptor::parse_catalog_string(":inmemory:") == Some(StorageDescriptor::InMemory));
+    }
+
+    #[test]
+    fn parse_number() {
+        assert!(StorageDescriptor::parse_catalog_string("#42#") == Some(StorageDescriptor::CatalogNumber(42)));
+    }
+
+    #[test]
+    fn parse_name() {
+        assert!(StorageDescriptor::parse_catalog_string("Some name") == Some(StorageDescriptor::CatalogName("Some name".to_string())));
+    }
 }
