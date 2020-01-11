@@ -6,6 +6,7 @@
 //!
 
 mod command;
+mod error;
 mod state;
 mod storage_descriptor;
 mod command_runner;
@@ -14,6 +15,7 @@ mod char_output;
 mod subcommands;
 
 pub use self::command::*;
+pub use self::error::*;
 pub use self::state::*;
 pub use self::storage_descriptor::*;
 pub use self::command_runner::*;

@@ -1,4 +1,5 @@
 use super::state::*;
+use super::error::*;
 use super::command::*;
 
 ///
@@ -19,5 +20,8 @@ pub enum FloCommandOutput {
     State(CommandState),
 
     /// A command has finished running
-    FinishCommand(FloCommand)
+    FinishCommand(FloCommand),
+
+    /// A command generated an error (this is generally the last item in the stream)
+    Failure(CommandError)
 }
