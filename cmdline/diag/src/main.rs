@@ -22,6 +22,16 @@ async fn main() {
         .arg(Arg::with_name("version")
             .long("version")
             .help("Displays version information"))
+        .arg(Arg::with_name("input-from-catalog")
+            .long("input-from-catalog")
+            .short("i")
+            .takes_value(true)
+            .help("Specifies a catalog file to use as the input animation (use the 'ls' command to see the catalog)"))
+        .arg(Arg::with_name("input-from-file")
+            .long("input-from-file")
+            .short("I")
+            .takes_value(true)
+            .help("Specifies the path of a file to load as the input file"))
         .subcommand(SubCommand::with_name("ls")
             .about("lists animations in the main index"))
         .get_matches();
@@ -32,6 +42,15 @@ async fn main() {
 
         if params.is_present("version") {
             input.push(FloCommand::Version)
+        }
+
+        // Read the input animation if one is specified
+        if let Some(catalog_name) = params.value_of("input-from-catalog") {
+            input.push(FloCommand::ReadFrom(StorageDescriptor::parse_catalog_string(catalog_name)));
+        }
+
+        if let Some(file_name) = params.value_of("input-from-catalog") {
+            input.push(FloCommand::ReadFrom(StorageDescriptor::File(file_name.to_string())));
         }
 
         if let Some(ls_params) = params.subcommand_matches("ls") {

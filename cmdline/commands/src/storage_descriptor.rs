@@ -57,10 +57,10 @@ impl StorageDescriptor {
     ///
     /// Parses a string that's intended to be a reference to the catalog into a storage descriptor
     ///
-    pub fn parse_catalog_string(val: &str) -> Option<StorageDescriptor> {
+    pub fn parse_catalog_string(val: &str) -> StorageDescriptor {
         // The value 'inmemory' just means to use an in-memory file
         if val.to_lowercase() == ":inmemory:" { 
-            return Some(StorageDescriptor::InMemory);
+            return StorageDescriptor::InMemory;
         }
 
         // #n# indicates a catalog number from a file manager
@@ -68,12 +68,12 @@ impl StorageDescriptor {
             // Try to parse as a catalog number
             let number = val.chars().skip(1).take(val.len()-2).collect::<String>();
             if let Ok(number) = number.parse::<usize>() {
-                return Some(StorageDescriptor::CatalogNumber(number));
+                return StorageDescriptor::CatalogNumber(number);
             }
         }
 
         // Other values are catalog names
-        return Some(StorageDescriptor::CatalogName(val.to_string()));
+        return StorageDescriptor::CatalogName(val.to_string());
     }
 }
 
@@ -83,16 +83,16 @@ mod test {
 
     #[test]
     fn parse_inmemory() {
-        assert!(StorageDescriptor::parse_catalog_string(":inmemory:") == Some(StorageDescriptor::InMemory));
+        assert!(StorageDescriptor::parse_catalog_string(":inmemory:") == StorageDescriptor::InMemory);
     }
 
     #[test]
     fn parse_number() {
-        assert!(StorageDescriptor::parse_catalog_string("#42#") == Some(StorageDescriptor::CatalogNumber(42)));
+        assert!(StorageDescriptor::parse_catalog_string("#42#") == StorageDescriptor::CatalogNumber(42));
     }
 
     #[test]
     fn parse_name() {
-        assert!(StorageDescriptor::parse_catalog_string("Some name") == Some(StorageDescriptor::CatalogName("Some name".to_string())));
+        assert!(StorageDescriptor::parse_catalog_string("Some name") == StorageDescriptor::CatalogName("Some name".to_string()));
     }
 }
