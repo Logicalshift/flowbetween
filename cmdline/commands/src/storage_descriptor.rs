@@ -42,7 +42,7 @@ impl StorageDescriptor {
     ///
     /// Opens the animation that this storage descriptor references, using the specified file manager
     ///
-    pub fn open_animation(&self, file_manager: &Arc<dyn FileManager>) -> Option<Arc<dyn Animation>> {
+    pub fn open_animation(&self, file_manager: &Arc<dyn FileManager>) -> Option<Arc<SqliteAnimation>> {
         match self {
             StorageDescriptor::InMemory                 => Some(Arc::new(SqliteAnimation::new_in_memory())),
             StorageDescriptor::File(filename)           => Some(Arc::new(SqliteAnimation::open_file(PathBuf::from(filename)).ok()?)),

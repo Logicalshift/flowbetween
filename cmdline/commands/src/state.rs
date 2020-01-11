@@ -1,5 +1,6 @@
 use super::storage_descriptor::*;
 
+use flo_animation;
 use flo_animation::*;
 use flo_anim_sqlite::*;
 use flo_ui_files::*;
@@ -49,10 +50,10 @@ impl CommandState {
         let file_manager        = Arc::new(file_manager);
 
         // Create the input and output animation in memory
-        let input_animation     = SqliteAnimation::new_in_memory();
-        let output_animation    = SqliteAnimation::new_in_memory();
-        let input_animation     = AnimationState(StorageDescriptor::InMemory, Arc::new(input_animation));
-        let output_animation    = AnimationState(StorageDescriptor::InMemory, Arc::new(output_animation));
+        let input_animation     = Arc::new(SqliteAnimation::new_in_memory());
+        let output_animation    = Arc::new(SqliteAnimation::new_in_memory());
+        let input_animation     = AnimationState(StorageDescriptor::InMemory, input_animation.clone(), input_animation);
+        let output_animation    = AnimationState(StorageDescriptor::InMemory, output_animation.clone(), output_animation);
 
         // Generate the initial command state
         CommandState(Arc::new(StateValue {
@@ -70,6 +71,20 @@ impl CommandState {
     }
 
     ///
+    /// Retrieves the current input animation for this state
+    ///
+    pub fn input_animation(&self) -> Arc<dyn Animation> {
+        Arc::clone(&self.0.input_animation.1)
+    }
+
+    ///
+    /// Retrieves the current output animation for this state
+    ///
+    pub fn output_animation(&self) -> Arc<dyn EditableAnimation> {
+        Arc::clone(&self.0.output_animation.2)
+    }
+
+    ///
     /// Returns this state modified to have a new input file loaded from the specified storage descriptor (None if the file cannot be loaded)
     ///
     pub fn load_input_file(&self, input: StorageDescriptor) -> Option<CommandState> {
@@ -81,7 +96,7 @@ impl CommandState {
             file_manager:       self.0.file_manager.clone(),
             output_animation:   self.0.output_animation.clone(),
 
-            input_animation:    AnimationState(input, new_input),
+            input_animation:    AnimationState(input, new_input.clone(), new_input.clone()),
         })))
     }
 }
