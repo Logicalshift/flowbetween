@@ -37,7 +37,10 @@ struct StateValue {
     input_animation: AnimationState,
 
     /// The animation that this will write to
-    output_animation: AnimationState
+    output_animation: AnimationState,
+
+    /// A list of edits (read from an animation, or waiting to be written to one)
+    edit_buffer: Arc<Vec<AnimationEdit>>
 }
 
 impl CommandState {
@@ -59,7 +62,8 @@ impl CommandState {
         CommandState(Arc::new(StateValue {
             file_manager:       file_manager,
             input_animation:    input_animation,
-            output_animation:   output_animation
+            output_animation:   output_animation,
+            edit_buffer:        Arc::new(vec![])
         }))
     }
 
@@ -85,6 +89,13 @@ impl CommandState {
     }
 
     ///
+    /// Retrieves the edit buffer set in this state
+    ///
+    pub fn edit_buffer(&self) -> &Vec<AnimationEdit> {
+        &*self.0.edit_buffer
+    }
+
+    ///
     /// Returns this state modified to have a new input file loaded from the specified storage descriptor (None if the file cannot be loaded)
     ///
     pub fn load_input_file(&self, input: StorageDescriptor) -> Option<CommandState> {
@@ -95,8 +106,22 @@ impl CommandState {
         Some(CommandState(Arc::new(StateValue {
             file_manager:       self.0.file_manager.clone(),
             output_animation:   self.0.output_animation.clone(),
+            edit_buffer:        self.0.edit_buffer.clone(),
 
             input_animation:    AnimationState(input, new_input.clone(), new_input.clone()),
         })))
+    }
+
+    ///
+    /// Sets the edit buffer to a new value
+    ///
+    pub fn set_edit_buffer(&self, new_buffer: Vec<AnimationEdit>) -> CommandState {
+        CommandState(Arc::new(StateValue {
+            file_manager:       self.0.file_manager.clone(),
+            input_animation:    self.0.input_animation.clone(),
+            output_animation:   self.0.output_animation.clone(),
+
+            edit_buffer:        Arc::new(new_buffer)
+        }))
     }
 }
