@@ -33,7 +33,9 @@ async fn main() {
             .takes_value(true)
             .help("Specifies the path of a file to load as the input file"))
         .subcommand(SubCommand::with_name("ls")
-            .about("lists animations in the main index"))
+            .about("Lists animations in the main index"))
+        .subcommand(SubCommand::with_name("summarize-edits"))
+            .about("Reads all of the edits in the input animation and shows a summary of them")
         .get_matches();
 
     tokio::spawn(async move {
@@ -53,10 +55,17 @@ async fn main() {
             input.push(FloCommand::ReadFrom(StorageDescriptor::File(file_name.to_string())));
         }
 
+        // Ls command
         if let Some(ls_params) = params.subcommand_matches("ls") {
             input.push(FloCommand::ListAnimations);
         }
 
+        // Summarize edits command
+        if let Some(_) = params.subcommand_matches("summarize-edits") {
+            input.push(FloCommand::ReadAllEdits);
+            input.push(FloCommand::SummarizeEdits);
+        }
+        
         // Prepare as a stream as input to the command line
         let input       = stream::iter(input);
 
