@@ -1,19 +1,18 @@
+use super::super::state::*;
 use super::super::output::*;
 
 use futures::prelude::*;
 
 use flo_stream::*;
-use flo_ui_files::*;
-use flo_ui_files::sqlite::*;
 
 ///
 /// Implementations of the list_files command
 ///
-pub fn list_files<'a>(output: &'a mut Publisher<FloCommandOutput>, app_name: String, default_user_folder: String) -> impl 'a+Future<Output=()>+Send {
+pub fn list_files<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'a mut CommandState) -> impl 'a+Future<Output=()>+Send {
     async move {
         use self::FloCommandOutput::*;
 
-        let file_manager = SqliteFileManager::new(&app_name, &default_user_folder);
+        let file_manager = state.file_manager();
 
         // Get all the files in the current folder
         let all_files   = file_manager.get_all_files();

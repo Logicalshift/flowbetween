@@ -2,8 +2,16 @@ use super::storage_descriptor::*;
 
 use flo_animation::*;
 use flo_anim_sqlite::*;
+use flo_ui_files::*;
+use flo_ui_files::sqlite::*;
 
 use std::sync::*;
+
+/// The name of the app (after our domain: flowbetween.app)
+pub const APP_NAME: &str = "app.flowbetween";
+
+/// Where we store the default user data
+pub const DEFAULT_USER_FOLDER: &str = "default";
 
 ///
 /// Represents the state of a command stream
@@ -21,6 +29,9 @@ struct AnimationState(StorageDescriptor, Arc<dyn Animation>);
 /// The internal value of a command state
 ///
 struct StateValue { 
+    /// The file manager that this state will use
+    file_manager: Arc<dyn FileManager>,
+
     /// The animation that this will read from
     input_animation: AnimationState,
 
@@ -33,6 +44,10 @@ impl CommandState {
     /// Creates a new command state with the default settings
     ///
     pub fn new() -> CommandState {
+        // Use the default file manager
+        let file_manager        = SqliteFileManager::new(APP_NAME, DEFAULT_USER_FOLDER);
+        let file_manager        = Arc::new(file_manager);
+
         // Create the input and output animation in memory
         let input_animation     = SqliteAnimation::new_in_memory();
         let output_animation    = SqliteAnimation::new_in_memory();
@@ -41,8 +56,16 @@ impl CommandState {
 
         // Generate the initial command state
         CommandState(Arc::new(StateValue {
+            file_manager:       file_manager,
             input_animation:    input_animation,
             output_animation:   output_animation
         }))
+    }
+
+    ///
+    /// Returns the file manager currently set for this command state
+    ///
+    pub fn file_manager(&self) -> Arc<dyn FileManager> {
+        Arc::clone(&self.0.file_manager)
     }
 }

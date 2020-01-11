@@ -8,12 +8,6 @@ use futures::prelude::*;
 use futures::stream;
 use futures::task::{Poll};
 
-/// The name of the app (after our domain: flowbetween.app)
-pub const APP_NAME: &str = "app.flowbetween";
-
-/// Where we store the default user data
-pub const DEFAULT_USER_FOLDER: &str = "default";
-
 ///
 /// Runs a series of commands provided by a stream and returns a stream of the resulting output
 ///
@@ -45,7 +39,7 @@ where InputStream: 'static+Stream<Item=FloCommand>+Unpin+Send {
 fn run_commands<InputStream>(mut commands: InputStream, mut output: Publisher<FloCommandOutput>) -> impl Future<Output=()>+Send
 where InputStream: 'static+Stream<Item=FloCommand>+Send+Unpin {
     // Create the initial state of the command
-    let mut current_state = CommandState::new();
+    let mut state = CommandState::new();
 
     async move {
         while let Some(command) = commands.next().await {
@@ -59,10 +53,10 @@ where InputStream: 'static+Stream<Item=FloCommand>+Send+Unpin {
                     output.publish(FloCommandOutput::Message(msg)).await;
                 }
 
-                FloCommand::ReadState                   => { output.publish(FloCommandOutput::State(current_state.clone())).await; }
-                FloCommand::SetState(ref new_state)     => { current_state = new_state.clone(); }
-                
-                FloCommand::ListAnimations              => { list_files(&mut output, APP_NAME.to_string(), DEFAULT_USER_FOLDER.to_string()).await }
+                FloCommand::ReadState                   => { output.publish(FloCommandOutput::State(state.clone())).await; }
+                FloCommand::SetState(ref new_state)     => { state = new_state.clone(); }
+
+                FloCommand::ListAnimations              => { list_files(&mut output, &mut state).await }
                 FloCommand::ReadFrom(ref read_location) => { unimplemented!() }
                 FloCommand::WriteTo(ref write_location) => { unimplemented!() }
                 FloCommand::ReadAllEdits                => { unimplemented!() }
