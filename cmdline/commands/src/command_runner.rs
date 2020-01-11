@@ -53,8 +53,8 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::ReadState                   => { output.publish(FloCommandOutput::State(state.clone())).await; }
             FloCommand::SetState(ref new_state)     => { *state = new_state.clone(); }
 
-            FloCommand::ListAnimations              => { list_files(output, state).await }
-            FloCommand::ReadFrom(ref read_location) => { unimplemented!() }
+            FloCommand::ListAnimations              => { list_files(output, state).await; }
+            FloCommand::ReadFrom(ref read_location) => { read_from(read_location.clone(), output, state).await?; }
             FloCommand::WriteTo(ref write_location) => { unimplemented!() }
             FloCommand::ReadAllEdits                => { unimplemented!() }
             FloCommand::SummarizeEdits              => { unimplemented!() }

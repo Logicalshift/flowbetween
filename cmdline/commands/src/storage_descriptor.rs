@@ -4,6 +4,8 @@ use flo_ui_files::*;
 
 use std::sync::*;
 use std::path::{PathBuf};
+use std::fmt;
+use std::fmt::{Display, Formatter};
 
 ///
 /// Describes where an animation is stored
@@ -21,6 +23,19 @@ pub enum StorageDescriptor {
 
     /// A file with the specified path
     File(String)
+}
+
+impl Display for StorageDescriptor {
+    fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
+        use self::StorageDescriptor::*;
+
+        match self {
+            InMemory            => write!(fmt, ":inmemory:"),
+            CatalogNumber(num)  => write!(fmt, "#{}#", num),
+            CatalogName(name)   => write!(fmt, "{}", name),
+            File(name)          => write!(fmt, "{}", name)
+        }
+    }
 }
 
 impl StorageDescriptor {

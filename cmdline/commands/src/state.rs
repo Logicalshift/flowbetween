@@ -68,4 +68,20 @@ impl CommandState {
     pub fn file_manager(&self) -> Arc<dyn FileManager> {
         Arc::clone(&self.0.file_manager)
     }
+
+    ///
+    /// Returns this state modified to have a new input file loaded from the specified storage descriptor (None if the file cannot be loaded)
+    ///
+    pub fn load_input_file(&self, input: StorageDescriptor) -> Option<CommandState> {
+        // Ask the descriptor to open the animation it's referencing
+        let new_input = input.open_animation(&self.file_manager())?;
+
+        // Return a state with the new animation as the input
+        Some(CommandState(Arc::new(StateValue {
+            file_manager:       self.0.file_manager.clone(),
+            output_animation:   self.0.output_animation.clone(),
+
+            input_animation:    AnimationState(input, new_input),
+        })))
+    }
 }
