@@ -15,7 +15,8 @@ where InputStream: Stream<Item=FloCommandOutput>+Send+Unpin {
                 BeginCommand(_cmd)      => stream::iter(vec![]).boxed(),
                 Message(msg)            => stream::iter((msg + "\n").chars().collect::<Vec<_>>()).boxed(),
                 Error(err)              => stream::iter((err + "\n").chars().collect::<Vec<_>>()).boxed(),
-                FinishCommand(_cmd)     => stream::iter(vec![]).boxed()
+                FinishCommand(_cmd)     => stream::iter(vec![]).boxed(),
+                State(_new_state)       => stream::iter(vec![]).boxed()
             }
         })
         .flatten()

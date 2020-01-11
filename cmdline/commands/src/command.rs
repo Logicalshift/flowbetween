@@ -1,3 +1,4 @@
+use super::state::*;
 use super::storage_descriptor::*;
 
 ///
@@ -7,6 +8,12 @@ use super::storage_descriptor::*;
 pub enum FloCommand {
     /// Write out a message describing the version of FlowBetween that this is
     Version,
+
+    /// Requests the current command state
+    ReadState,
+
+    /// Sets the state for future commands
+    SetState(CommandState),
 
     /// Sets the input animation
     ReadFrom(StorageDescriptor),

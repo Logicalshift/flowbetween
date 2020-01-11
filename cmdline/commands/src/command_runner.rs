@@ -1,3 +1,4 @@
+use super::state::*;
 use super::output::*;
 use super::command::*;
 use super::subcommands::*;
@@ -43,6 +44,9 @@ where InputStream: 'static+Stream<Item=FloCommand>+Unpin+Send {
 ///
 fn run_commands<InputStream>(mut commands: InputStream, mut output: Publisher<FloCommandOutput>) -> impl Future<Output=()>+Send
 where InputStream: 'static+Stream<Item=FloCommand>+Send+Unpin {
+    // Create the initial state of the command
+    let mut current_state = CommandState::new();
+
     async move {
         while let Some(command) = commands.next().await {
             // Commands begin and end with a 'begin/finish' output
@@ -55,6 +59,9 @@ where InputStream: 'static+Stream<Item=FloCommand>+Send+Unpin {
                     output.publish(FloCommandOutput::Message(msg)).await;
                 }
 
+                FloCommand::ReadState                   => { output.publish(FloCommandOutput::State(current_state.clone())).await; }
+                FloCommand::SetState(ref new_state)     => { current_state = new_state.clone(); }
+                
                 FloCommand::ListAnimations              => { list_files(&mut output, APP_NAME.to_string(), DEFAULT_USER_FOLDER.to_string()).await }
                 FloCommand::ReadFrom(ref read_location) => { unimplemented!() }
                 FloCommand::WriteTo(ref write_location) => { unimplemented!() }

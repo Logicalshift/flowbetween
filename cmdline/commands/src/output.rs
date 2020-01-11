@@ -1,3 +1,4 @@
+use super::state::*;
 use super::command::*;
 
 ///
@@ -13,6 +14,9 @@ pub enum FloCommandOutput {
 
     /// Display an error message to the user
     Error(String),
+
+    /// Retrieved the current state of the command line tool
+    State(CommandState),
 
     /// A command has finished running
     FinishCommand(FloCommand)

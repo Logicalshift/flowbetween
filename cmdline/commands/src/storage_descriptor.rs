@@ -3,6 +3,9 @@
 ///
 #[derive(Clone, Debug)]
 pub enum StorageDescriptor {
+    /// A temporary version of an animation in memory
+    InMemory,
+
     /// A numbered item from the catalog
     CatalogNumber(usize),
 
