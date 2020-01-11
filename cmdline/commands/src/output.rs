@@ -22,6 +22,15 @@ pub enum FloCommandOutput {
     /// A command has finished running
     FinishCommand(FloCommand),
 
+    /// We're starting a task
+    StartTask(String),
+
+    /// We've made x/y progress on a command
+    TaskProgress(f64, f64),
+
+    /// The last task started with StartTask has finished
+    FinishTask,
+
     /// A command generated an error (this is generally the last item in the stream)
     Failure(CommandError)
 }
