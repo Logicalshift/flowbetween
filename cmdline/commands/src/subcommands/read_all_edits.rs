@@ -17,6 +17,7 @@ pub fn read_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
 
         // Read the edits from it
         let mut edit_output = output.republish();
+        let mut edits       = state.edit_buffer().clone();
         let edits           = input.future(move |input| {
             // Read all of the edits from the input stream
             let num_edits       = input.get_num_edits();
@@ -24,9 +25,6 @@ pub fn read_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
 
             async move {
                 edit_output.publish(FloCommandOutput::StartTask("Read edit log".to_string())).await;
-
-                // Prepare the result
-                let mut edits = vec![];
 
                 // Read the edits as they arrive from teh stream
                 while let Some(edit) = edit_stream.next().await {
