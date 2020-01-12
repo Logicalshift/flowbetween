@@ -527,6 +527,44 @@ fn read_brush_strokes_from_edit_log() {
 }
 
 #[test]
+fn read_element_delete_from_edit_log() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(50))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()),
+                BrushDrawingStyle::Draw
+            )
+        )),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushProperties(ElementId::Unassigned, BrushProperties { color: Color::Rgba(0.5, 0.2, 0.7, 1.0), opacity: 1.0, size: 32.0 }))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(126), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(127), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(128), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+        AnimationEdit::Element(vec![ElementId::Assigned(127), ElementId::Assigned(128), ElementId::Assigned(126)], ElementEdit::Delete)
+    ]);
+    anim.panic_on_error();
+
+    let edit_log        = anim.read_edit_log(7..8);
+    let edit_log        = edit_log.collect();
+    let edits: Vec<_>   = executor::block_on(edit_log);
+
+    assert!(edits.len() == 1);
+    assert!(edits[0] == AnimationEdit::Element(vec![ElementId::Assigned(127), ElementId::Assigned(128), ElementId::Assigned(126)], ElementEdit::Delete));
+}
+
+#[test]
 fn will_assign_element_ids() {
     let animation = SqliteAnimation::new_in_memory();
 

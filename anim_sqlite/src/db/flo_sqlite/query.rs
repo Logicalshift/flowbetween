@@ -236,6 +236,16 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Retrieves the element IDs associated with a specific edit ID
+    ///
+    fn query_edit_log_elements(&mut self, edit_id: i64) -> Result<Vec<i64>, SqliteAnimationError> {
+        self.query_map(FloStatement::SelectEditLogElementIds, &[&edit_id], |row| Ok(row.get(0)?))
+            .and_then(|element_ids| {
+                element_ids.collect::<Result<Vec<i64>, _>>()
+            })
+    }
+
+    ///
     /// Retrieves a colour with the specified ID
     ///
     fn query_color(&mut self, color_id: i64) -> Result<ColorEntry, SqliteAnimationError> {

@@ -187,6 +187,17 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     }
 
     ///
+    /// Reads the elements for an entry
+    ///
+    fn elements_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> Vec<ElementId> {
+        core.db.query_edit_log_elements(entry.edit_id)
+            .unwrap()
+            .into_iter()
+            .map(|element_id| ElementId::from(Some(element_id)))
+            .collect()
+    }
+
+    ///
     /// Turns an edit log entry into an animation edit
     ///
     fn animation_edit_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
@@ -225,7 +236,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
             ElementOrderToTop           => unimplemented!(),
             ElementOrderToBottom        => unimplemented!(),
             ElementOrderBefore          => unimplemented!(),
-            ElementDelete               => unimplemented!(),
+            ElementDelete               => AnimationEdit::Element(Self::elements_for_entry(core, entry), ElementEdit::Delete),
             ElementDetachFromFrame      => unimplemented!()
         }
     }

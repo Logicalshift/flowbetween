@@ -82,6 +82,7 @@ enum FloStatement {
     SelectAssignedLayerIds,
     SelectEditLogLength,
     SelectEditLogValues,
+    SelectEditLogElementIds,
     SelectEditLogSize,
     SelectEditLogRawPoints,
     SelectEditLogPathId,
@@ -355,6 +356,7 @@ impl FloSqlite {
                                                         LEFT OUTER JOIN Flo_EL_ElementIds      AS ElementId     ON EL.Id = ElementId.EditId \
                                                         WHERE ElementId.ElementIndex = 0 OR ElementId.ElementIndex IS NULL \
                                                         LIMIT ? OFFSET ?",
+            SelectEditLogElementIds             => "SELECT ElementId.ElementId FROM Flo_EL_ElementIds AS ElementId WHERE ElementId.EditId = ? ORDER BY ElementId.ElementIndex",
             SelectEditLogSize                   => "SELECT X, Y FROM Flo_EL_Size WHERE EditId = ?",
             SelectEditLogRawPoints              => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
             SelectEditLogPathId                 => "SELECT PathId FROM Flo_EL_Path WHERE EditId = ?",
