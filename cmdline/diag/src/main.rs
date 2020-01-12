@@ -27,6 +27,11 @@ async fn main() {
             .short("i")
             .takes_value(true)
             .help("Specifies a catalog file to use as the input animation (use the 'ls' command to see the catalog)"))
+        .arg(Arg::with_name("output-to-catalog")
+            .long("output-to-catalog")
+            .short("W")
+            .takes_value(true)
+            .help("Creates a new animation in the catalog to use as the output target for this command"))
         .arg(Arg::with_name("input-from-file")
             .long("input-from-file")
             .short("I")
@@ -53,6 +58,11 @@ async fn main() {
 
         if let Some(file_name) = params.value_of("input-from-file") {
             input.push(FloCommand::ReadFrom(StorageDescriptor::File(file_name.to_string())));
+        }
+
+        // Generate the output animation if there is one
+        if let Some(name) = params.value_of("output-to-catalog") {
+            input.push(FloCommand::WriteToCatalog(name.to_string()));
         }
 
         // Ls command

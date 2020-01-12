@@ -18,8 +18,8 @@ pub enum FloCommand {
     /// Sets the input animation
     ReadFrom(StorageDescriptor),
 
-    /// Sets the output animation
-    WriteTo(StorageDescriptor),
+    /// Writes a new animation to the catalog with the specified name
+    WriteToCatalog(String),
 
     /// Lists the files in the main index
     ListAnimations,

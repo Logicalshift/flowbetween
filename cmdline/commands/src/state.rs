@@ -96,6 +96,19 @@ impl CommandState {
     }
 
     ///
+    /// Updates the output animation for this state
+    ///
+    pub fn set_output_animation(&self, description: StorageDescriptor, animation: Arc<SqliteAnimation>) -> CommandState {
+        CommandState(Arc::new(StateValue {
+            file_manager:       self.0.file_manager.clone(),
+            input_animation:    self.0.input_animation.clone(),
+            edit_buffer:        self.0.edit_buffer.clone(),
+
+            output_animation:   AnimationState(description, animation.clone(), animation.clone()),
+        }))
+    }
+
+    ///
     /// Returns this state modified to have a new input file loaded from the specified storage descriptor (None if the file cannot be loaded)
     ///
     pub fn load_input_file(&self, input: StorageDescriptor) -> Option<CommandState> {

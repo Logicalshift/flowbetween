@@ -55,7 +55,7 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
 
             FloCommand::ListAnimations              => { list_files(output, state).await; }
             FloCommand::ReadFrom(ref read_location) => { read_from(read_location.clone(), output, state).await?; }
-            FloCommand::WriteTo(ref write_location) => { unimplemented!("WriteTo not implemented") }
+            FloCommand::WriteToCatalog(ref name)    => { write_to_catalog(name.clone(), output, state).await?; }
             FloCommand::ReadAllEdits                => { read_all_edits(output, state).await?; }
             FloCommand::SummarizeEdits              => { summarize_edit_log(output, state).await?; }
         }

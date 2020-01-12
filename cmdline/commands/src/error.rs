@@ -7,7 +7,10 @@ use std::fmt::{Display, Formatter};
 #[derive(Clone, Debug, PartialEq)]
 pub enum CommandError {
     /// An animation could not be opened
-    CouldNotOpenAnimation(String)
+    CouldNotOpenAnimation(String),
+
+    /// An animation could not be created
+    CouldNotCreateAnimation(String)
 }
 
 impl Display for CommandError {
@@ -15,7 +18,8 @@ impl Display for CommandError {
         use self::CommandError::*;
 
         match self {
-            CouldNotOpenAnimation(name)   => write!(fmt, "Could not open animation '{}'", name)
+            CouldNotOpenAnimation(name)     => write!(fmt, "Could not open animation '{}'", name),
+            CouldNotCreateAnimation(name)   => write!(fmt, "Coult not create animation '{}'", name)
         }
     }
 }
