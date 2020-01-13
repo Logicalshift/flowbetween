@@ -26,7 +26,7 @@ pub fn read_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'
             async move {
                 edit_output.publish(FloCommandOutput::StartTask("Read edit log".to_string())).await;
 
-                // Read the edits as they arrive from teh stream
+                // Read the edits as they arrive from the stream
                 while let Some(edit) = edit_stream.next().await {
                     edits.push(edit);
 

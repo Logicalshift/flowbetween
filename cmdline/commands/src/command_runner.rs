@@ -58,6 +58,7 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::WriteToCatalog(ref name)    => { write_to_catalog(name.clone(), output, state).await?; }
             FloCommand::ReadAllEdits                => { read_all_edits(output, state).await?; }
             FloCommand::SummarizeEdits              => { summarize_edit_log(output, state).await?; }
+            FloCommand::WriteAllEdits               => { write_all_edits(output, state).await?; }
         }
 
         // Finish the command

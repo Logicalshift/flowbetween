@@ -28,5 +28,8 @@ pub enum FloCommand {
     ReadAllEdits,
 
     /// Writes out a summary of the edits in the edit buffer
-    SummarizeEdits
+    SummarizeEdits,
+
+    /// Writes all of the edits currently in the edit buffer to the output animation
+    WriteAllEdits
 }
