@@ -96,6 +96,13 @@ impl CommandState {
     }
 
     ///
+    /// Removes all of the edits from the current state
+    ///
+    pub fn clear_edit_buffer(&self) -> CommandState {
+        self.set_edit_buffer(vec![])
+    }
+
+    ///
     /// Updates the output animation for this state
     ///
     pub fn set_output_animation(&self, description: StorageDescriptor, animation: Arc<SqliteAnimation>) -> CommandState {
@@ -123,6 +130,19 @@ impl CommandState {
 
             input_animation:    AnimationState(input, new_input.clone(), new_input.clone()),
         })))
+    }
+
+    ///
+    /// Puts the current 'write' animation into the 'read' side of the state
+    ///
+    pub fn read_from_write_side(&self) -> CommandState {
+        CommandState(Arc::new(StateValue {
+            file_manager:       self.0.file_manager.clone(),
+            output_animation:   self.0.output_animation.clone(),
+            edit_buffer:        self.0.edit_buffer.clone(),
+
+            input_animation:    self.0.output_animation.clone()
+        }))
     }
 
     ///

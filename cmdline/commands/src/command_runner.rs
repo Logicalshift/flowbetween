@@ -56,9 +56,11 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::ListAnimations              => { list_files(output, state).await; }
             FloCommand::ReadFrom(ref read_location) => { read_from(read_location.clone(), output, state).await?; }
             FloCommand::WriteToCatalog(ref name)    => { write_to_catalog(name.clone(), output, state).await?; }
+            FloCommand::ReadFromWriteAnimation      => { *state = state.read_from_write_side(); }
             FloCommand::ReadAllEdits                => { read_all_edits(output, state).await?; }
             FloCommand::SummarizeEdits              => { summarize_edit_log(output, state).await?; }
             FloCommand::WriteAllEdits               => { write_all_edits(output, state).await?; }
+            FloCommand::ClearEdits                  => { *state = state.clear_edit_buffer(); }
         }
 
         // Finish the command

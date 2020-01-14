@@ -21,8 +21,14 @@ pub enum FloCommand {
     /// Writes a new animation to the catalog with the specified name
     WriteToCatalog(String),
 
+    /// Moves the current 'write' animation into the 'read' position
+    ReadFromWriteAnimation,
+
     /// Lists the files in the main index
     ListAnimations,
+
+    /// Clears the current set of edits
+    ClearEdits,
 
     /// Reads in all of the edits from the input animation to the edit buffer
     ReadAllEdits,

@@ -82,6 +82,11 @@ async fn main() {
         if let Some(_) = params.subcommand_matches("rewrite-edits") {
             input.push(FloCommand::ReadAllEdits);
             input.push(FloCommand::WriteAllEdits);
+
+            input.push(FloCommand::ClearEdits);
+            input.push(FloCommand::ReadFromWriteAnimation);
+            input.push(FloCommand::ReadAllEdits);
+            input.push(FloCommand::SummarizeEdits);
         }
         
         // Prepare as a stream as input to the command line
