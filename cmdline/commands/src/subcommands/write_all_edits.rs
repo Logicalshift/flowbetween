@@ -33,8 +33,8 @@ pub fn write_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &
 
                     edit_output.publish(FloCommandOutput::TaskProgress(edit_index as f64, edits.len() as f64)).await;
                 }
+                edit_sink.when_empty().await;
                 edit_output.publish(FloCommandOutput::FinishTask).await;
-                edit_output.when_ready().await;
 
                 let finish_message = format!("Wrote {} edits to the output animation", edits.len());
                 edit_output.publish(FloCommandOutput::Message(finish_message)).await;
