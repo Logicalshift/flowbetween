@@ -14,6 +14,7 @@ mod traits;
 mod onion_skin;
 pub mod brushes;
 pub mod raycast;
+pub mod serializer;
 
 pub use self::traits::*;
 pub use self::onion_skin::*;
