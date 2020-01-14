@@ -43,27 +43,6 @@ pub fn write_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &
             }.boxed()
         }).await;
 
-        // Try reading the edits back again (this seems to give enough time for the edits to commit, though it often shows a missing edit)
-        let input_edits         = state.edit_buffer().clone();
-        output_anim.future(move |output_anim| {
-            let num_edits       = output_anim.get_num_edits();
-            let output_edits    = output_anim.read_edit_log(0..num_edits);
-
-            async move {
-                let output_edits = output_edits.collect::<Vec<_>>().await;
-
-                println!("In: {} edits, out: {} edits", input_edits.len(), output_edits.len());
-
-                for index in 0..input_edits.len() {
-                    if index >= output_edits.len() { break; }
-                    if output_edits[index] != input_edits[index] {
-                        println!("Edit #{} different ({:?} vs {:?})", index, output_edits[index], input_edits[index]);
-                        break;
-                    }
-                }
-            }.boxed()
-        }).await.unwrap();
-
         // Update the edit buffer
         *state = state.set_edit_buffer(edits.unwrap());
 
