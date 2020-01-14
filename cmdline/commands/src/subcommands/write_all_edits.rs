@@ -26,16 +26,13 @@ pub fn write_all_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &
 
                 // Write the edits one at a time and update on progress
                 let mut edit_sink = output_anim.edit();
-                edit_sink.publish(Arc::new(edits.clone())).await;       // For the test we're running the edits can't be sent one at a time for some reason
 
-                /*
                 for edit_index in 0..edits.len() {
                     let next_edit = edits[edit_index].clone();
                     edit_sink.publish(Arc::new(vec![next_edit])).await;
 
                     edit_output.publish(FloCommandOutput::TaskProgress(edit_index as f64, edits.len() as f64)).await;
                 }
-                */
                 edit_output.publish(FloCommandOutput::FinishTask).await;
 
                 let finish_message = format!("Wrote {} edits to the output animation", edits.len());
