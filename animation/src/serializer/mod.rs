@@ -15,6 +15,7 @@ mod edit;
 mod color;
 mod element_id;
 mod drawing_style;
+mod path_component;
 mod brush_definition;
 mod brush_properties;
 
@@ -25,5 +26,6 @@ pub use self::edit::*;
 pub use self::color::*;
 pub use self::element_id::*;
 pub use self::drawing_style::*;
+pub use self::path_component::*;
 pub use self::brush_definition::*;
 pub use self::brush_properties::*;

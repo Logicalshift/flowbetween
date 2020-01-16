@@ -11,8 +11,8 @@ impl ElementEdit {
         match self {
             AddAttachment(elem)         => { data.write_chr('+'); elem.serialize(data); }
             RemoveAttachment(elem)      => { data.write_chr('-'); elem.serialize(data); }
-            SetPath(path_components)    => { data.write_chr('P'); unimplemented!("SetPath"); }
-            Order(ordering)             => { data.write_chr('O'); unimplemented!("Order"); }
+            SetPath(path_components)    => { data.write_chr('P'); data.write_usize(path_components.len()); path_components.iter().for_each(|component| component.serialize(data)); }
+            Order(ordering)             => { data.write_chr('O'); ordering.serialize(data); }
             Delete                      => { data.write_chr('X'); }
             DetachFromFrame             => { data.write_chr('D'); }
 
