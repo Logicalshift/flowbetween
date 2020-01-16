@@ -1,5 +1,7 @@
 use flo_float_encoder::*;
 
+use std::time::{Duration};
+
 ///
 /// Character encoding for a 6-bit value
 ///
@@ -78,6 +80,23 @@ pub trait AnimationDataTarget {
     }
 
     ///
+    /// Writes a u64 that's expected to have a small value
+    ///
+    fn write_small_u64(&mut self, data: u64) {
+        // These have a UTF-8 like format where we write them 6 bits at a time and the top bit indicates if there are more
+        // bits to come: this is much more efficient for small sizes
+        let mut remaining = data;
+        loop {
+            let lower_bits  = remaining & 0x1f;
+            remaining       = remaining >> 5;
+            let to_write    = if remaining > 0 { lower_bits | 0x20 } else { lower_bits };
+
+            self.write_chr(ENCODING_CHAR_SET[to_write as usize]);
+            if remaining == 0 { break; }
+        }
+    }
+
+    ///
     /// Writes a u32 value to this target
     ///
     fn write_u32(&mut self, data: u32) {
@@ -126,6 +145,23 @@ pub trait AnimationDataTarget {
         let mut bytes  = vec![];
         squish_float(&mut bytes, last, data).ok();
         self.write_bytes(&bytes);
+    }
+
+    ///
+    /// Writes a time to the target
+    ///
+    fn write_duration(&mut self, duration: Duration) {
+        // Time in microseconds
+        let micros = duration.as_micros() as u64;
+
+        // Can fit up to around 4000s (66 minutes) in a u32
+        if micros <= 0xffffffff {
+            self.write_chr('t');
+            self.write_u32(micros as u32);
+        } else {
+            self.write_chr('T');
+            self.write_u64(micros);
+        }
     }
 }
 
@@ -219,9 +255,32 @@ mod test {
     }
 
     #[test]
+    fn encode_small_u64() {
+        let mut res = String::new();
+        res.write_small_u64(5);
+        assert!(&res == "F");
+    }
+
+    #[test]
     fn encode_larger_usize() {
         let mut res = String::new();
         res.write_usize(32768);
         assert!(&res == "gggB");
+    }
+
+    #[test]
+    fn encode_short_duration() {
+        let mut res = String::new();
+        res.write_duration(Duration::from_millis(2000));
+        println!("{}", res);
+        assert!(&res == "tASoHAA");
+    }
+
+    #[test]
+    fn encode_long_duration() {
+        let mut res = String::new();
+        res.write_duration(Duration::from_secs(8000));
+        println!("{}", res);
+        assert!(&res == "TAAl1cHAAAAA");
     }
 }

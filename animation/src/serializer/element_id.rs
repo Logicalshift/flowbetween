@@ -9,8 +9,14 @@ impl ElementId {
         use self::ElementId::*;
 
         match self {
-            Assigned(val)   => { data.write_chr('e'); data.write_i64(*val); }
             Unassigned      => { data.write_chr('?'); }
+            Assigned(val)   => { 
+                if val >= &0 {
+                    data.write_chr('+'); data.write_small_u64((*val) as u64); 
+                } else {
+                    data.write_chr('-'); data.write_i64(*val);
+                }
+            }
         }
     }
 }

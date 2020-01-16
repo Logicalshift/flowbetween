@@ -9,10 +9,10 @@ impl LayerEdit {
         use self::LayerEdit::*;
 
         match self {
-            Paint(when, edit)       => { data.write_chr('P'); unimplemented!("Paint"); },
-            Path(when, edit)        => { data.write_chr('p'); unimplemented!("Path"); },
-            AddKeyFrame(when)       => { data.write_chr('+'); unimplemented!("AddKeyFrame"); },
-            RemoveKeyFrame(when)    => { data.write_chr('-'); unimplemented!("RemoveKeyFrame"); },
+            Paint(when, edit)       => { data.write_chr('P'); data.write_duration(*when); unimplemented!("Paint"); },
+            Path(when, edit)        => { data.write_chr('p'); data.write_duration(*when); unimplemented!("Path"); },
+            AddKeyFrame(when)       => { data.write_chr('+'); data.write_duration(*when); },
+            RemoveKeyFrame(when)    => { data.write_chr('-'); data.write_duration(*when); },
             SetName(name)           => { data.write_chr('N'); unimplemented!("SetName"); },
             SetOrdering(ordering)   => { data.write_chr('O'); data.write_u32(*ordering); }
         }
