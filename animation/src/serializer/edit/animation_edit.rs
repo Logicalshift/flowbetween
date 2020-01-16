@@ -9,7 +9,7 @@ impl AnimationEdit {
         use self::AnimationEdit::*;
 
         match self {
-            Layer(layer_id, edit)       => { data.write_chr('L'); data.write_u64(*layer_id); unimplemented!("Layer edit") },
+            Layer(layer_id, edit)       => { data.write_chr('L'); data.write_u64(*layer_id); edit.serialize(data); },
             Element(elements, edit)     => { data.write_chr('E'); data.write_usize(elements.len()); elements.iter().for_each(|elem| elem.serialize(data)); unimplemented!("Element") },
             Motion(element, edit)       => { data.write_chr('M'); element.serialize(data); unimplemented!("Motion") },
             SetSize(width, height)      => { data.write_chr('S'); data.write_f64(*width); data.write_f64(*height); },
