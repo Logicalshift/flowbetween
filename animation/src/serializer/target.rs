@@ -21,13 +21,6 @@ pub trait AnimationDataTarget {
     fn write_chr(&mut self, chr: char);
 
     ///
-    /// Writes a string of data to this target
-    ///
-    fn write_str(&mut self, data: &str) {
-        data.chars().for_each(|chr| self.write_chr(chr));
-    }
-
-    ///
     /// Encodes a byte array to this target
     ///
     fn write_bytes(&mut self, bytes: &[u8]) {
@@ -94,6 +87,16 @@ pub trait AnimationDataTarget {
             self.write_chr(ENCODING_CHAR_SET[to_write as usize]);
             if remaining == 0 { break; }
         }
+    }
+
+    ///
+    /// Writes a string value to this target
+    ///
+    fn write_str(&mut self, data: &str) {
+        let utf8 = data.as_bytes();
+
+        self.write_usize(utf8.len());
+        self.write_bytes(utf8);
     }
 
     ///
@@ -272,7 +275,6 @@ mod test {
     fn encode_short_duration() {
         let mut res = String::new();
         res.write_duration(Duration::from_millis(2000));
-        println!("{}", res);
         assert!(&res == "tASoHAA");
     }
 
@@ -280,7 +282,13 @@ mod test {
     fn encode_long_duration() {
         let mut res = String::new();
         res.write_duration(Duration::from_secs(8000));
-        println!("{}", res);
         assert!(&res == "TAAl1cHAAAAA");
+    }
+
+    #[test]
+    fn encode_string() {
+        let mut res = String::new();
+        res.write_str("Test");
+        assert!(&res == "EUV2c0B");
     }
 }

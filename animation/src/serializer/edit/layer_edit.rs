@@ -13,7 +13,7 @@ impl LayerEdit {
             Path(when, edit)        => { data.write_chr('p'); data.write_duration(*when); unimplemented!("Path"); },
             AddKeyFrame(when)       => { data.write_chr('+'); data.write_duration(*when); },
             RemoveKeyFrame(when)    => { data.write_chr('-'); data.write_duration(*when); },
-            SetName(name)           => { data.write_chr('N'); unimplemented!("SetName"); },
+            SetName(name)           => { data.write_chr('N'); data.write_str(name); },
             SetOrdering(ordering)   => { data.write_chr('O'); data.write_u32(*ordering); }
         }
     }
