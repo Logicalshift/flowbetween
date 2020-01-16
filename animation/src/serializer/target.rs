@@ -61,6 +61,23 @@ pub trait AnimationDataTarget {
     }
 
     ///
+    /// Writes a usize
+    ///
+    fn write_usize(&mut self, data: usize) {
+        // These have a UTF-8 like format where we write them 6 bits at a time and the top bit indicates if there are more
+        // bits to come: this is much more efficient for small sizes
+        let mut remaining = data;
+        loop {
+            let lower_bits  = remaining & 0x1f;
+            remaining       = remaining >> 5;
+            let to_write    = if remaining > 0 { lower_bits | 0x20 } else { lower_bits };
+
+            self.write_chr(ENCODING_CHAR_SET[to_write as usize]);
+            if remaining == 0 { break; }
+        }
+    }
+
+    ///
     /// Writes a u32 value to this target
     ///
     fn write_u32(&mut self, data: u32) {
@@ -71,6 +88,20 @@ pub trait AnimationDataTarget {
     /// Writes a i32 value to this target
     ///
     fn write_i32(&mut self, data: i32) {
+        self.write_bytes(&data.to_le_bytes());
+    }
+
+    ///
+    /// Writes a u64 value to this target
+    ///
+    fn write_u64(&mut self, data: u64) {
+        self.write_bytes(&data.to_le_bytes());
+    }
+
+    ///
+    /// Writes a u64 value to this target
+    ///
+    fn write_i64(&mut self, data: i64) {
         self.write_bytes(&data.to_le_bytes());
     }
 
@@ -178,5 +209,19 @@ mod test {
         let mut res = String::new();
         res.write_next_f64(f64::consts::PI, f64::consts::PI);
         assert!(&res == "AAA");
+    }
+
+    #[test]
+    fn encode_small_usize() {
+        let mut res = String::new();
+        res.write_usize(5);
+        assert!(&res == "F");
+    }
+
+    #[test]
+    fn encode_larger_usize() {
+        let mut res = String::new();
+        res.write_usize(32768);
+        assert!(&res == "gggB");
     }
 }
