@@ -9,7 +9,7 @@ impl PaintEdit {
         use self::PaintEdit::*;
 
         match self {
-            SelectBrush(elem, brush_defn, drawing_style)    => { data.write_chr('*'); elem.serialize(data); unimplemented!("SelectBrush") }
+            SelectBrush(elem, brush_defn, drawing_style)    => { data.write_chr('*'); elem.serialize(data); brush_defn.serialize(data); drawing_style.serialize(data); }
             BrushProperties(elem, props)                    => { data.write_chr('P'); elem.serialize(data); unimplemented!("BrushProperties") }
             BrushStroke(elem, points)                       => { data.write_chr('S'); elem.serialize(data); unimplemented!("BrushStroke") }
         }
