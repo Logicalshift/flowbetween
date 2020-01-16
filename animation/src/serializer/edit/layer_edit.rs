@@ -9,7 +9,7 @@ impl LayerEdit {
         use self::LayerEdit::*;
 
         match self {
-            Paint(when, edit)       => { data.write_chr('P'); data.write_duration(*when); unimplemented!("Paint"); },
+            Paint(when, edit)       => { data.write_chr('P'); data.write_duration(*when); edit.serialize(data); },
             Path(when, edit)        => { data.write_chr('p'); data.write_duration(*when); unimplemented!("Path"); },
             AddKeyFrame(when)       => { data.write_chr('+'); data.write_duration(*when); },
             RemoveKeyFrame(when)    => { data.write_chr('-'); data.write_duration(*when); },
