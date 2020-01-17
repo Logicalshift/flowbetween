@@ -57,6 +57,13 @@ impl PathElement {
     pub fn brush(&self) -> Arc<BrushDefinitionElement> {
         Arc::clone(&self.brush)
     }
+
+    ///
+    /// Returns the properties for this path element
+    ///
+    pub fn properties(&self) -> Arc<BrushPropertiesElement> {
+        Arc::clone(&self.brush_properties)
+    }
 }
 
 impl VectorElement for PathElement {
