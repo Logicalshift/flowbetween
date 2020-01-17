@@ -36,6 +36,9 @@ pub enum FloCommand {
     /// Writes out a summary of the edits in the edit buffer
     SummarizeEdits,
 
+    /// Serializes the edits to the output
+    SerializeEdits,
+
     /// Writes all of the edits currently in the edit buffer to the output animation
     WriteAllEdits
 }

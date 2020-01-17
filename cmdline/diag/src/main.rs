@@ -43,6 +43,8 @@ async fn main() {
             .about("Reads all of the edits in the input animation and shows a summary of them"))
         .subcommand(SubCommand::with_name("rewrite-edits")
             .about("Reads all of the edits in the input animation and writes them to the output animation"))
+        .subcommand(SubCommand::with_name("serialize-edits")
+            .about("Reads all of the edits in the input animation and writes their serialized equivalent to the output"))
         .get_matches();
 
     tokio::spawn(async move {
@@ -87,6 +89,12 @@ async fn main() {
             input.push(FloCommand::ReadFromWriteAnimation);
             input.push(FloCommand::ReadAllEdits);
             input.push(FloCommand::SummarizeEdits);
+        }
+
+        // Serialize edits command
+        if let Some(_) = params.subcommand_matches("serialize-edits") {
+            input.push(FloCommand::ReadAllEdits);
+            input.push(FloCommand::SerializeEdits);
         }
         
         // Prepare as a stream as input to the command line

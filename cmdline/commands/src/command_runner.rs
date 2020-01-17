@@ -60,6 +60,7 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::ReadAllEdits                => { read_all_edits(output, state).await?; }
             FloCommand::SummarizeEdits              => { summarize_edit_log(output, state).await?; }
             FloCommand::WriteAllEdits               => { write_all_edits(output, state).await?; }
+            FloCommand::SerializeEdits              => { serialize_edits(output, state).await?; }
             FloCommand::ClearEdits                  => { *state = state.clear_edit_buffer(); }
         }
 
