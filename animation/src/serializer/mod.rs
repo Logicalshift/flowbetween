@@ -13,6 +13,7 @@ mod target;
 
 mod edit;
 mod color;
+mod vector;
 mod time_path;
 mod element_id;
 mod drawing_style;
@@ -25,6 +26,7 @@ pub use self::target::*;
 
 pub use self::edit::*;
 pub use self::color::*;
+pub use self::vector::*;
 pub use self::time_path::*;
 pub use self::element_id::*;
 pub use self::drawing_style::*;
