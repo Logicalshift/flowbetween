@@ -30,6 +30,13 @@ impl MotionElement {
             motion:     Arc::new(motion)
         }
     }
+
+    ///
+    /// Retrieves the motion represented by this element
+    ///
+    pub fn motion(&self) -> Arc<Motion> {
+        Arc::clone(&self.motion)
+    }
 }
 
 impl VectorElement for MotionElement {

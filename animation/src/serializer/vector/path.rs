@@ -3,7 +3,7 @@ use super::super::super::traits::*;
 
 impl PathElement {
     ///
-    /// Generates a serialized version of this brush point on the specified data target
+    /// Generates a serialized version of this path element on the specified data target
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
         // v0

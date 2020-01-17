@@ -16,7 +16,7 @@ impl Vector {
             BrushProperties(props)      => { data.write_chr('P'); props.serialize(data); }
             BrushStroke(brush)          => { data.write_chr('s'); brush.serialize(data); }
             Path(path)                  => { data.write_chr('p'); path.serialize(data); }
-            Motion(motion)              => { data.write_chr('m'); unimplemented!() }
+            Motion(motion)              => { data.write_chr('m'); motion.serialize(data); }
             Group(group)                => { data.write_chr('g'); unimplemented!() }
         }
     }
