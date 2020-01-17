@@ -47,6 +47,18 @@ mod test {
     }
 
     #[test]
+    pub fn can_decode_128() {
+        let mut target = vec![];
+
+        squish_float(&mut target, 0.0, 128.0).unwrap();
+
+        let mut src: &[u8] = &target;
+        let res = unsquish_float(&mut src, 0.0).unwrap();
+
+        assert!((res-128.0).abs() < 0.01);
+    }
+
+    #[test]
     pub fn can_decode_big_value() {
         let mut target = vec![];
 
