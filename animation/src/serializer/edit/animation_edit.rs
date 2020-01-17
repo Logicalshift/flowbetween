@@ -18,3 +18,44 @@ impl AnimationEdit {
         }
     }
 }
+
+///
+/// Generates an animation as a serialized set of edits
+///
+pub fn serialize_animation_as_edits<'a, Tgt: AnimationDataTarget, Edits: IntoIterator<Item=&'a AnimationEdit>>(data: &mut Tgt, animation: Edits, title: &str) {
+    // Write out a header including a readable version of the title
+    data.write_chr('\n');
+
+    data.write_chr(';');
+    data.write_chr(' ');
+    data.write_chr('-');
+    data.write_chr(' ');
+
+    for c in title.chars() {
+        if c != '\n' {
+            data.write_chr(c);
+        }
+    }
+
+    data.write_chr(' ');
+    data.write_chr('-');
+    data.write_chr(' ');
+    data.write_chr('\n');
+
+    data.write_chr('\n');
+
+    // Write out the actual animation edits
+    animation.into_iter().for_each(|edit| {
+        edit.serialize(data);
+        data.write_chr('\n');
+    });
+
+    data.write_chr('\n');
+
+    // Simple footer to finish the file
+    data.write_chr(';');
+    data.write_chr(' ');
+    data.write_chr('-');
+    data.write_chr('-');
+    data.write_chr(' ');
+}
