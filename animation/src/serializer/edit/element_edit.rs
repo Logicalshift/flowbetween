@@ -11,7 +11,6 @@ impl ElementEdit {
         match self {
             AddAttachment(elem)         => { data.write_chr('+'); elem.serialize(data); }
             RemoveAttachment(elem)      => { data.write_chr('-'); elem.serialize(data); }
-            SetPath(path_components)    => { data.write_chr('P'); data.write_usize(path_components.len()); path_components.iter().for_each(|component| component.serialize(data)); }
             Order(ordering)             => { data.write_chr('O'); ordering.serialize(data); }
             Delete                      => { data.write_chr('X'); }
             DetachFromFrame             => { data.write_chr('D'); }
@@ -26,6 +25,16 @@ impl ElementEdit {
                     data.write_next_f64(last_point.1 as f64, *y as f64);
 
                     last_point = (*x, *y);
+                }
+            }
+
+            SetPath(path_components)    => { 
+                data.write_chr('P'); 
+                data.write_usize(path_components.len()); 
+
+                let mut last_point = PathPoint::new(0.0, 0.0);
+                for component in path_components.iter() {
+                    last_point = component.serialize_next(&last_point, data);
                 }
             }
         }

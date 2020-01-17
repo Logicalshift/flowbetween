@@ -9,9 +9,19 @@ impl PathEdit {
         use self::PathEdit::*;
 
         match self {
-            CreatePath(elem, components)    => { data.write_chr('+'); elem.serialize(data); data.write_usize(components.len()); components.iter().for_each(|component| component.serialize(data)); },
             SelectBrush(elem, defn, style)  => { data.write_chr('S'); elem.serialize(data); defn.serialize(data); style.serialize(data); }
             BrushProperties(elem, props)    => { data.write_chr('P'); elem.serialize(data); props.serialize(data); }
+
+            CreatePath(elem, components)    => { 
+                data.write_chr('+'); 
+                elem.serialize(data); 
+                data.write_usize(components.len()); 
+
+                let mut last_point = PathPoint::new(0.0, 0.0);
+                for component in components.iter() {
+                    last_point = component.serialize_next(&last_point, data);
+                }
+            },
         }
     }
 }
