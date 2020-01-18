@@ -17,7 +17,7 @@ pub fn serialize_edits<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &
         serialize_animation_as_edits(&mut result, state.edit_buffer(), "FlowBetween Animation");
 
         // Send to the output
-        output.publish(FloCommandOutput::Message(result)).await;
+        output.publish(FloCommandOutput::Output(result)).await;
 
         Ok(())
     }

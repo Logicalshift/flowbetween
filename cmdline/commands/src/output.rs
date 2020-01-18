@@ -13,6 +13,12 @@ pub enum FloCommandOutput {
     /// Display a message to the user
     Message(String),
 
+    /// Starts writing output to a particular file
+    BeginOutput(String),
+
+    /// Generates output for saving
+    Output(String),
+
     /// Display an error message to the user
     Error(String),
 

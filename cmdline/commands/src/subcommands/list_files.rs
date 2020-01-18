@@ -24,7 +24,7 @@ pub fn list_files<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'a mu
         for file in all_files {
             let full_name = file_manager.display_name_for_path(file.as_path()).unwrap_or("<untitled>".to_string());
             let file_name = format!("#{}#: {}", index, full_name);
-            output.publish(Message(file_name)).await;
+            output.publish(Output(file_name)).await;
 
             index += 1;
         }
