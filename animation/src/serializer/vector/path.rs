@@ -22,7 +22,17 @@ impl PathElement {
         }
 
         // Write out the path components
-        let components = &self.path().elements;
+        self.path().serialize(data);
+    }
+}
+
+impl Path {
+    ///
+    /// Generates a serialized version of this path element on the specified data target
+    ///
+    pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {
+        // Write out the path components
+        let components = &self.elements;
         data.write_usize(components.len()); 
 
         let mut last_point = PathPoint::new(0.0, 0.0);

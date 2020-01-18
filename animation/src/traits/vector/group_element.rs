@@ -28,7 +28,7 @@ pub struct GroupElement {
     grouped_elements: Arc<Vec<Vector>>,
 
     /// The hint path if one is set
-    hint_path: Option<Vec<Path>>
+    hint_path: Option<Arc<Vec<Path>>>
 }
 
 impl GroupElement {
@@ -45,13 +45,27 @@ impl GroupElement {
     }
 
     ///
+    /// Retrieves the type of this group
+    ///
+    pub fn group_type(&self) -> GroupType {
+        self.group_type
+    }
+
+    ///
     /// Sets a hint path for this element
     ///
     /// For certain group types that generate an output path with a single property (eg, GroupType::Added), this path will be
     /// used instead of recomputing the path arithmetic operation represented by this group
     ///
     pub fn set_hint_path(&mut self, hint_path: Vec<Path>) {
-        self.hint_path = Some(hint_path);
+        self.hint_path = Some(Arc::new(hint_path));
+    }
+
+    ///
+    /// Retrieves the hint path if one is set
+    ///
+    pub fn hint_path(&self) -> Option<Arc<Vec<Path>>> {
+        self.hint_path.as_ref().map(|path| Arc::clone(path))
     }
 
     ///
@@ -73,7 +87,7 @@ impl GroupElement {
     fn added_path(&self, properties: &VectorProperties) -> Vec<Path> {
         if let Some(hint_path) = self.hint_path.as_ref() {
             // If a hint path has been set we can use this as the short-circuit for this path
-            hint_path.clone()
+            (**hint_path).clone()
         } else {
             // Get the paths for this rendering
             let paths = self.grouped_elements.iter()
@@ -101,6 +115,13 @@ impl GroupElement {
         gc.draw_list(properties.brush.prepare_to_render(&properties.brush_properties));
         paths.into_iter()
             .for_each(|path| gc.draw_list(properties.brush.render_path(&properties.brush_properties, &path)));
+    }
+
+    ///
+    /// The number of elements in this group
+    ///
+    pub fn num_elements(&self) -> usize {
+        self.grouped_elements.len()
     }
 
     ///
@@ -171,7 +192,7 @@ impl VectorElement for GroupElement {
     ///
     /// The vector here specifies the updated position for each control point in control_points
     ///
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
         Vector::Group(self.clone())
     }
 }
