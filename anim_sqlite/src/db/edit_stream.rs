@@ -224,7 +224,12 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
             MotionCreate                => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::Create),
             MotionDelete                => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::Delete),
             MotionSetType               => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::SetType(core.db.query_edit_log_motion_type(entry.edit_id).unwrap())),
-            MotionSetOrigin             => unimplemented!(),
+            MotionSetOrigin             => {
+                let (x, y)  = core.db.query_edit_log_motion_origin(entry.edit_id).unwrap();
+                let x       = x as f32;
+                let y       = y as f32;
+                AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::SetOrigin(x, y))
+            }
             MotionSetPath               => unimplemented!(),
 
             ElementAddAttachment        => unimplemented!(),

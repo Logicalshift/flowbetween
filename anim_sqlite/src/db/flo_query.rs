@@ -180,6 +180,11 @@ pub trait FloQuery {
     fn query_edit_log_motion_type(&mut self, edit_id: i64) -> Result<MotionType, SqliteAnimationError>;
 
     ///
+    /// Retrieves the motion origin associated with a specific edit ID
+    ///
+    fn query_edit_log_motion_origin(&mut self, edit_id: i64) -> Result<(f64, f64), SqliteAnimationError>;
+
+    ///
     /// Retrieves a colour with the specified ID
     ///
     fn query_color(&mut self, color_id: i64) -> Result<ColorEntry, SqliteAnimationError>;

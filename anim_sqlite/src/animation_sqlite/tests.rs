@@ -826,7 +826,7 @@ fn read_motion_edit_items() {
     ]);
     anim.panic_on_error();
 
-    let edit_log        = anim.read_edit_log(5..7);
+    let edit_log        = anim.read_edit_log(5..8);
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
 
@@ -836,6 +836,10 @@ fn read_motion_edit_items() {
     });
     assert!(match edits[1] {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetType(MotionType::Translate)) => true,
+        _ => false
+    });
+    assert!(match edits[2] {
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(x, y)) => (x-50.0).abs() < 0.01 && (y-60.0).abs() < 0.01,
         _ => false
     });
 }
