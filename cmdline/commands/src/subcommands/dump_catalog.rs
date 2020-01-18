@@ -6,7 +6,6 @@ use futures::prelude::*;
 
 use flo_stream::*;
 use flo_animation::*;
-use flo_animation::serializer::*;
 
 ///
 /// Implementation of the list_files command

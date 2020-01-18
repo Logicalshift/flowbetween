@@ -221,8 +221,8 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
             LayerPathSelectBrush        => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::path_brush_for_entry(core, entry)),
             LayerPathBrushProperties    => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::path_properties_for_entry(core, entry)),
 
-            MotionCreate                => unimplemented!(),
-            MotionDelete                => unimplemented!(),
+            MotionCreate                => AnimationEdit::Motion(Self::elements_for_entry(core, entry)[0], MotionEdit::Create),
+            MotionDelete                => AnimationEdit::Motion(Self::elements_for_entry(core, entry)[0], MotionEdit::Delete),
             MotionSetType               => unimplemented!(),
             MotionSetOrigin             => unimplemented!(),
             MotionSetPath               => unimplemented!(),
