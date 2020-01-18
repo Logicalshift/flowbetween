@@ -5,7 +5,7 @@ use futures::prelude::*;
 ///
 /// Converts a stream of command outputs into characters for display on a terminal
 ///
-pub fn to_char_output<InputStream>(input: InputStream, format_width: u32) -> impl Stream<Item=char>+Send+Unpin
+pub fn to_char_output<InputStream>(input: InputStream, _format_width: u32) -> impl Stream<Item=char>+Send+Unpin
 where InputStream: Stream<Item=FloCommandOutput>+Send+Unpin {
     input
         .map(|output| {
