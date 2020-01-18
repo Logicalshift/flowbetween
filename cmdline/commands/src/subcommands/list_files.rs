@@ -6,7 +6,7 @@ use futures::prelude::*;
 use flo_stream::*;
 
 ///
-/// Implementations of the list_files command
+/// Implementation of the list_files command
 ///
 pub fn list_files<'a>(output: &'a mut Publisher<FloCommandOutput>, state: &'a mut CommandState) -> impl 'a+Future<Output=()>+Send {
     async move {

@@ -40,5 +40,8 @@ pub enum FloCommand {
     SerializeEdits,
 
     /// Writes all of the edits currently in the edit buffer to the output animation
-    WriteAllEdits
+    WriteAllEdits,
+
+    /// Goes through the entire catalog and dumps it out as a set of files containing the serialized edit logs
+    DumpCatalogAsEdits
 }

@@ -62,6 +62,7 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
             FloCommand::WriteAllEdits               => { write_all_edits(output, state).await?; }
             FloCommand::SerializeEdits              => { serialize_edits(output, state).await?; }
             FloCommand::ClearEdits                  => { *state = state.clear_edit_buffer(); }
+            FloCommand::DumpCatalogAsEdits          => { dump_catalog_as_edits(output, state).await; }
         }
 
         // Finish the command

@@ -48,6 +48,8 @@ async fn main() {
             .about("Reads all of the edits in the input animation and writes them to the output animation"))
         .subcommand(SubCommand::with_name("serialize-edits")
             .about("Reads all of the edits in the input animation and writes their serialized equivalent to the output"))
+        .subcommand(SubCommand::with_name("dump-all-catalog-edits")
+            .about("Writes out the entire catalog as a set of edit logs"))
         .get_matches();
 
     tokio::spawn(async move {
@@ -94,6 +96,11 @@ async fn main() {
             input.push(FloCommand::SummarizeEdits);
         }
 
+        // Dump catalog command
+        if let Some(_) = params.subcommand_matches("dump-all-catalog-edits") {
+            input.push(FloCommand::DumpCatalogAsEdits);
+        }
+
         // Serialize edits command
         if let Some(_) = params.subcommand_matches("serialize-edits") {
             input.push(FloCommand::ReadAllEdits);
@@ -104,13 +111,12 @@ async fn main() {
         let input       = stream::iter(input);
 
         // Basic loop with a character output
-        let mut stdout  = stdout();
         let mut stderr  = stderr();
 
         // Write the output to the stream
         run_console(flo_run_commands(input)).await;
 
         // Always finish with a newline
-        stdout.write(&[10u8]).await.unwrap();
+        stderr.write(&[10u8]).await.unwrap();
     }).await.unwrap();
 }
