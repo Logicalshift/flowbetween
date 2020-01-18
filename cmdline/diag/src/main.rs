@@ -5,6 +5,9 @@ use tokio::io::{stdout, stderr};
 use futures::prelude::*;
 use clap::{App, Arg, SubCommand};
 
+mod console;
+use self::console::*;
+
 #[tokio::main]
 async fn main() {
     // Fetch the parameters
@@ -104,15 +107,8 @@ async fn main() {
         let mut stdout  = stdout();
         let mut stderr  = stderr();
 
-        // Get the output stream
-        let mut output  = to_char_output(flo_run_commands(input), 80);
-
         // Write the output to the stream
-        while let Some(output_chr) = output.next().await {
-            let mut bytes   = [0u8; 4];
-            let byte_slice  = output_chr.encode_utf8(&mut bytes);
-            stderr.write(byte_slice.as_bytes()).await.unwrap();
-        }
+        run_console(flo_run_commands(input)).await;
 
         // Always finish with a newline
         stdout.write(&[10u8]).await.unwrap();

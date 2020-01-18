@@ -12,5 +12,5 @@ include         = [ "Cargo.toml", "LICENSE", "src/**/*", "png/**/*" ]
 flo_commands    = { path = "../commands", version = "0.2.0" }
 
 futures         = "0.3"
-tokio           = { version = "0.2", features = [ "io-std", "io-util", "rt-core", "rt-threaded", "macros" ] }
+tokio           = { version = "0.2", features = [ "fs", "io-std", "io-util", "rt-core", "rt-threaded", "macros" ] }
 clap            = "2.0"
