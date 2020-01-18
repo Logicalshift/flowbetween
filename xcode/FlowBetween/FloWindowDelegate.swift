@@ -138,11 +138,13 @@ public class FloWindowDelegate : NSObject, NSWindowDelegate {
     ///
     @objc public func requestTick() {
         // Cocoa doesn't really have a way to request an animation frame other than by delaying. We'll use a delay indicating 120fps here
-        RunLoop.main.perform {
-            self.perform(#selector(self.tick),
-                         with: nil,
-                         afterDelay: TimeInterval(1.0 / 120.0),
-                         inModes: [.default, .eventTracking, .modalPanel])
-        }
+        RunLoop.main.perform(inModes: [.default, .eventTracking, .modalPanel],
+            block: {
+                    self.perform(#selector(self.tick),
+                                 with: nil,
+                                 afterDelay: TimeInterval(1.0 / 120.0),
+                                 inModes: [.default, .eventTracking, .modalPanel])
+                }
+            )
     }
 }
