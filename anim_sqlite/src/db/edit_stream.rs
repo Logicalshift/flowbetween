@@ -276,13 +276,13 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
             },
             ElementSetControlPoints     => AnimationEdit::Element(Self::elements_for_entry(core, &entry), Self::element_control_points_for_entry(core, entry)),
             ElementSetPath              => AnimationEdit::Element(Self::elements_for_entry(core, &entry), Self::element_path_for_entry(core, entry)),
-            ElementOrderInFront         => unimplemented!(),
-            ElementOrderBehind          => unimplemented!(),
-            ElementOrderToTop           => unimplemented!(),
-            ElementOrderToBottom        => unimplemented!(),
+            ElementOrderInFront         => AnimationEdit::Element(Self::elements_for_entry(core, &entry), ElementEdit::Order(ElementOrdering::InFront)),
+            ElementOrderBehind          => AnimationEdit::Element(Self::elements_for_entry(core, &entry), ElementEdit::Order(ElementOrdering::Behind)),
+            ElementOrderToTop           => AnimationEdit::Element(Self::elements_for_entry(core, &entry), ElementEdit::Order(ElementOrdering::ToTop)),
+            ElementOrderToBottom        => AnimationEdit::Element(Self::elements_for_entry(core, &entry), ElementEdit::Order(ElementOrdering::ToBottom)),
             ElementOrderBefore          => unimplemented!(),
             ElementDelete               => AnimationEdit::Element(Self::elements_for_entry(core, &entry), ElementEdit::Delete),
-            ElementDetachFromFrame      => unimplemented!()
+            ElementDetachFromFrame      => AnimationEdit::Element(Self::elements_for_entry(core, &entry), ElementEdit::DetachFromFrame)
         }
     }
 

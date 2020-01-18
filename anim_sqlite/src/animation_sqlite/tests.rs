@@ -1087,6 +1087,16 @@ fn create_path_and_re_order() {
         assert!(elements[0].id() == ElementId::Assigned(101));
         assert!(elements[1].id() == ElementId::Assigned(100));
     }
+
+    let edit_log        = anim.read_edit_log(6..7);
+    let edit_log        = edit_log.collect();
+    let edits: Vec<_>   = executor::block_on(edit_log);
+
+    if let AnimationEdit::Element(ref elems, ElementEdit::Order(ElementOrdering::Behind)) = edits[0] {
+        assert!(elems == &vec![ElementId::Assigned(101)]);
+    } else {
+        assert!(false);
+    }
 }
 
 #[test]
