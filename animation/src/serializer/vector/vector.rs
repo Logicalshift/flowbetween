@@ -11,7 +11,7 @@ impl Vector {
         use self::Vector::*;
 
         match self {
-            Transformed(transformed)    => { data.write_chr('T'); unimplemented!() }
+            Transformed(transform)      => { data.write_chr('T'); transform.serialize(data); }
             BrushDefinition(defn)       => { data.write_chr('D'); defn.serialize(data); }
             BrushProperties(props)      => { data.write_chr('P'); props.serialize(data); }
             BrushStroke(brush)          => { data.write_chr('s'); brush.serialize(data); }

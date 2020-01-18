@@ -31,7 +31,6 @@ impl PaintEdit {
 
                     last_pos = *point;
                 }
-                unimplemented!("BrushStroke");
             }
         }
     }
