@@ -578,6 +578,17 @@ impl FloQuery for FloSqlite {
     ///
     /// Queries the path components associated with a vector element
     ///
+    fn query_path_points(&mut self, path_id: i64) -> Result<Vec<(f64, f64)>, SqliteAnimationError> {
+        Ok(self.query_map(FloStatement::SelectPathPoints, &[&path_id],
+            |row| { Ok((row.get::<_, f64>(0)?, row.get::<_, f64>(1)?)) })?
+            .map(|row| row.unwrap())
+            .map(|(x, y)| (x, y))
+            .collect())
+    }
+
+    ///
+    /// Queries the path components associated with a vector element
+    ///
     fn query_path_components(&mut self, path_id: i64) -> Result<Vec<PathComponent>, SqliteAnimationError> {
         // Request the points and types. 'Close' types have no coordinates associated with them, so they can have null x, y coordinates
         let mut points = self.query_map(FloStatement::SelectPathPointsWithTypes, &[&path_id],

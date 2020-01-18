@@ -209,6 +209,17 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     }
 
     ///
+    /// Reads the motion path for an entry
+    ///
+    fn element_control_points_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> ElementEdit {
+        let path_id     = core.db.query_edit_log_path_id(entry.edit_id).unwrap();
+        let path_points = core.db.query_path_points(path_id).unwrap();
+        let path_points = path_points.into_iter().map(|(x, y)| (x as f32, y as f32)).collect();
+
+        ElementEdit::SetControlPoints(path_points)
+    }
+
+    ///
     /// Turns an edit log entry into an animation edit
     ///
     fn animation_edit_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
@@ -253,7 +264,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
                 let attachment  = elements[0];
                 AnimationEdit::Element(elements.into_iter().skip(1).collect(), ElementEdit::RemoveAttachment(attachment))
             },
-            ElementSetControlPoints     => unimplemented!(),
+            ElementSetControlPoints     => AnimationEdit::Element(Self::elements_for_entry(core, &entry), Self::element_control_points_for_entry(core, entry)),
             ElementSetPath              => unimplemented!(),
             ElementOrderInFront         => unimplemented!(),
             ElementOrderBehind          => unimplemented!(),

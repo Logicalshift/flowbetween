@@ -110,6 +110,7 @@ enum FloStatement {
     SelectZIndexAfterZIndexForKeyFrame,
     SelectMaxZIndexForKeyFrame,
     SelectPathElement,
+    SelectPathPoints,
     SelectPathPointsWithTypes,
     SelectLayerCacheDrawing,
 
@@ -457,6 +458,9 @@ impl FloSqlite {
             SelectPathElement                   => "SELECT Elem.PathId \
                                                         FROM Flo_PathElement    AS Elem \
                                                         WHERE Elem.ElementId = ?",
+            SelectPathPoints                    => "SELECT Path.X, Path.Y FROM Flo_PathPoints AS Path \
+                                                        WHERE Path.PathId = ? \
+                                                        ORDER BY Path.PointIndex ASC",
             SelectPathPointsWithTypes           => "SELECT Path.X, Path.Y, Types.Type FROM Flo_PathPointType AS Types \
                                                         LEFT OUTER JOIN Flo_PathPoints AS Path ON (Path.PathId = Types.PathId AND Types.PointIndex = Path.PointIndex) \
                                                         WHERE Types.PathId = ? \

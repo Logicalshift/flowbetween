@@ -262,6 +262,11 @@ pub trait FloQuery {
     ///
     /// Queries the path components associated with a vector element
     ///
+    fn query_path_points(&mut self, path_id: i64) -> Result<Vec<(f64, f64)>, SqliteAnimationError>;
+
+    ///
+    /// Queries the path components associated with a vector element
+    ///
     fn query_path_components(&mut self, path_id: i64) -> Result<Vec<PathComponent>, SqliteAnimationError>;
 
     ///
