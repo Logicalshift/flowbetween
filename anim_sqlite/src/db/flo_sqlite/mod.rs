@@ -87,6 +87,7 @@ enum FloStatement {
     SelectEditLogRawPoints,
     SelectEditLogPathId,
     SelectEditLogString,
+    SelectEditLogMotionType,
     SelectColor,
     SelectBrushDefinition,
     SelectBrushProperties,
@@ -361,6 +362,8 @@ impl FloSqlite {
             SelectEditLogRawPoints              => "SELECT Points FROM Flo_EL_RawPoints WHERE EditId = ?",
             SelectEditLogPathId                 => "SELECT PathId FROM Flo_EL_Path WHERE EditId = ?",
             SelectEditLogString                 => "SELECT String FROM Flo_EL_StringParameters WHERE EditId = ? AND StringIndex = ?",
+            SelectEditLogMotionType             => "SELECT MotionType FROM Flo_EL_MotionType WHERE EditId = ?",
+
             SelectColor                         => "SELECT Col.ColorType, Rgb.R, Rgb.G, Rgb.B, Hsluv.H, Hsluv.S, Hsluv.L FROM Flo_Color_Type AS Col \
                                                         LEFT OUTER JOIN Flo_Color_Rgb   AS Rgb      ON Col.Color = Rgb.Color \
                                                         LEFT OUTER JOIN Flo_Color_Hsluv AS Hsluv    ON Col.Color = Hsluv.Color \

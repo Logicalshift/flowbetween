@@ -189,7 +189,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     ///
     /// Reads the elements for an entry
     ///
-    fn elements_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> Vec<ElementId> {
+    fn elements_for_entry(core: &mut AnimationDbCore<TFile>, entry: &EditLogEntry) -> Vec<ElementId> {
         core.db.query_edit_log_elements(entry.edit_id)
             .unwrap()
             .into_iter()
@@ -221,9 +221,9 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
             LayerPathSelectBrush        => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::path_brush_for_entry(core, entry)),
             LayerPathBrushProperties    => AnimationEdit::Layer(entry.layer_id.unwrap_or(INVALID_LAYER), Self::path_properties_for_entry(core, entry)),
 
-            MotionCreate                => AnimationEdit::Motion(Self::elements_for_entry(core, entry)[0], MotionEdit::Create),
-            MotionDelete                => AnimationEdit::Motion(Self::elements_for_entry(core, entry)[0], MotionEdit::Delete),
-            MotionSetType               => unimplemented!(),
+            MotionCreate                => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::Create),
+            MotionDelete                => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::Delete),
+            MotionSetType               => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::SetType(core.db.query_edit_log_motion_type(entry.edit_id).unwrap())),
             MotionSetOrigin             => unimplemented!(),
             MotionSetPath               => unimplemented!(),
 
@@ -236,7 +236,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
             ElementOrderToTop           => unimplemented!(),
             ElementOrderToBottom        => unimplemented!(),
             ElementOrderBefore          => unimplemented!(),
-            ElementDelete               => AnimationEdit::Element(Self::elements_for_entry(core, entry), ElementEdit::Delete),
+            ElementDelete               => AnimationEdit::Element(Self::elements_for_entry(core, &entry), ElementEdit::Delete),
             ElementDetachFromFrame      => unimplemented!()
         }
     }

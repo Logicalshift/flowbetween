@@ -236,6 +236,17 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Retrieves the motion type associated with a specific edit ID
+    ///
+    fn query_edit_log_motion_type(&mut self, edit_id: i64) -> Result<MotionType, SqliteAnimationError> {
+        self.query_row(FloStatement::SelectEditLogMotionType, &[&edit_id], |row| {
+            row.get(0)
+        })
+        .map(|motion_type| self.value_for_enum(DbEnumType::MotionType, motion_type)
+            .and_then(|motion_type| motion_type.motion_type()).unwrap())
+    }
+
+    ///
     /// Retrieves the element IDs associated with a specific edit ID
     ///
     fn query_edit_log_elements(&mut self, edit_id: i64) -> Result<Vec<i64>, SqliteAnimationError> {

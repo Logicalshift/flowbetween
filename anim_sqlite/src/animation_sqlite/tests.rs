@@ -799,6 +799,48 @@ fn delete_layer_after_drawing_brush_stroke() {
 }
 
 #[test]
+fn read_motion_edit_items() {
+    let anim = SqliteAnimation::new_in_memory();
+
+    anim.perform_edits(vec![
+        AnimationEdit::AddNewLayer(2),
+        AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
+                ElementId::Unassigned,
+                BrushDefinition::Ink(InkDefinition::default()),
+                BrushDrawingStyle::Draw
+            )
+        )),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
+            BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
+        AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(50), Arc::new(vec![
+                    RawPoint::from((10.0, 10.0)),
+                    RawPoint::from((20.0, 5.0))
+                ])))),
+
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Create),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetType(MotionType::Translate)),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(50.0, 60.0)),
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
+        AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
+    ]);
+    anim.panic_on_error();
+
+    let edit_log        = anim.read_edit_log(5..7);
+    let edit_log        = edit_log.collect();
+    let edits: Vec<_>   = executor::block_on(edit_log);
+
+    assert!(match edits[0] {
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::Create) => true,
+        _ => false
+    });
+    assert!(match edits[1] {
+        AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetType(MotionType::Translate)) => true,
+        _ => false
+    });
+}
+
+#[test]
 fn move_existing_element() {
     let anim = SqliteAnimation::new_in_memory();
 
