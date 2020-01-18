@@ -661,6 +661,26 @@ impl FloQuery for FloSqlite {
     }
 
     ///
+    /// Queries the time points attached to a motion
+    ///
+    fn query_edit_log_motion_timepoints(&mut self, edit_id: i64) -> Result<Vec<TimePointEntry>, SqliteAnimationError> {
+        let result = self.query_map(FloStatement::SelectEditLogMotionTimePoints, &[&edit_id],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?
+            .map(|row_with_error| row_with_error.unwrap())
+            .map(|(x, y, millis): (f64, f64, f64)| {
+                let (x, y, millis) = (x as f32, y as f32, millis as f32);
+                TimePointEntry {
+                    x:              x,
+                    y:              y,
+                    milliseconds:   millis
+                }
+            })
+            .collect();
+
+        Ok(result)
+    }
+
+    ///
     /// Queries the cached drawing of the specified type in a particular layer
     ///
     fn query_layer_cached_drawing(&mut self, layer_id: i64, cache_type: CacheType, when: Duration) -> Result<Option<Vec<Draw>>, SqliteAnimationError> {

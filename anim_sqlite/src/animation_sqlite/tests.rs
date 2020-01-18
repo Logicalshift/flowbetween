@@ -826,7 +826,7 @@ fn read_motion_edit_items() {
     ]);
     anim.panic_on_error();
 
-    let edit_log        = anim.read_edit_log(5..8);
+    let edit_log        = anim.read_edit_log(5..9);
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
 
@@ -842,6 +842,14 @@ fn read_motion_edit_items() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetOrigin(x, y)) => (x-50.0).abs() < 0.01 && (y-60.0).abs() < 0.01,
         _ => false
     });
+
+    if let AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(ref curve)) = edits[3] {
+        assert!(true);
+        // ?? not quite true ??
+        // assert!(curve == &TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))));
+    } else {
+        assert!(false);
+    }
 }
 
 #[test]

@@ -1,6 +1,7 @@
 use super::*;
 use super::db_enum::*;
 use super::flo_query::*;
+use super::time_path::*;
 
 use futures::task;
 use futures::task::{Poll, Context};
@@ -198,6 +199,16 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
     }
 
     ///
+    /// Reads the motion path for an entry
+    ///
+    fn motion_path_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> MotionEdit {
+        let time_points = core.db.query_edit_log_motion_timepoints(entry.edit_id).unwrap();
+        let time_curve  = time_curve_from_time_points(time_points);
+
+        MotionEdit::SetPath(time_curve)
+    }
+
+    ///
     /// Turns an edit log entry into an animation edit
     ///
     fn animation_edit_for_entry(core: &mut AnimationDbCore<TFile>, entry: EditLogEntry) -> AnimationEdit {
@@ -230,7 +241,7 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
                 let y       = y as f32;
                 AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], MotionEdit::SetOrigin(x, y))
             }
-            MotionSetPath               => unimplemented!(),
+            MotionSetPath               => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], Self::motion_path_for_entry(core, entry)),
 
             ElementAddAttachment        => unimplemented!(),
             ElementRemoveAttachment     => unimplemented!(),

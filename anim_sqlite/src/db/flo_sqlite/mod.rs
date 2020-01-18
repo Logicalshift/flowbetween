@@ -103,6 +103,7 @@ enum FloStatement {
     SelectBrushPoints,
     SelectMotion,
     SelectMotionTimePoints,
+    SelectEditLogMotionTimePoints,
     SelectElementIdForAssignedId,
     SelectZIndexForElement,
     SelectZIndexBeforeZIndexForKeyFrame,
@@ -442,6 +443,11 @@ impl FloSqlite {
                                                         FROM Flo_MotionPath         AS Path \
                                                         INNER JOIN Flo_TimePoint    AS Point ON Path.PointId = Point.PointId \
                                                         WHERE Path.MotionId = ? AND Path.PathType = ? \
+                                                        ORDER BY Path.PointIndex ASC",
+            SelectEditLogMotionTimePoints       => "SELECT Point.X, Point.Y, Point.Milliseconds \
+                                                        FROM Flo_EL_MotionPath      AS Path \
+                                                        INNER JOIN Flo_TimePoint    AS Point ON Path.PointIndex = Point.PointId \
+                                                        WHERE Path.EditId = ? \
                                                         ORDER BY Path.PointIndex ASC",
             SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
             SelectZIndexForElement              => "SELECT ZIndex FROM Flo_VectorElementOrdering WHERE ElementId = ?",

@@ -185,6 +185,11 @@ pub trait FloQuery {
     fn query_edit_log_motion_origin(&mut self, edit_id: i64) -> Result<(f64, f64), SqliteAnimationError>;
 
     ///
+    /// Queries the time points attached to a motion
+    ///
+    fn query_edit_log_motion_timepoints(&mut self, edit_id: i64) -> Result<Vec<TimePointEntry>, SqliteAnimationError>;
+
+    ///
     /// Retrieves a colour with the specified ID
     ///
     fn query_color(&mut self, color_id: i64) -> Result<ColorEntry, SqliteAnimationError>;
