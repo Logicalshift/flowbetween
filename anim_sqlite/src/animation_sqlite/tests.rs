@@ -826,7 +826,7 @@ fn read_motion_edit_items() {
     ]);
     anim.panic_on_error();
 
-    let edit_log        = anim.read_edit_log(5..9);
+    let edit_log        = anim.read_edit_log(5..10);
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
 
@@ -844,8 +844,13 @@ fn read_motion_edit_items() {
     });
 
     if let AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(ref curve)) = edits[3] {
-        println!("{:?}", curve);
         assert!(curve == &TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))));
+    } else {
+        assert!(false);
+    }
+
+    if let AnimationEdit::Element(ref elem_ids, ElementEdit::AddAttachment(ElementId::Assigned(100))) = edits[4] {
+        assert!(elem_ids == &vec![ElementId::Assigned(50)]);
     } else {
         assert!(false);
     }

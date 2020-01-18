@@ -243,8 +243,16 @@ impl<TFile: Unpin+FloFile+Send> EditStream<TFile> {
             }
             MotionSetPath               => AnimationEdit::Motion(Self::elements_for_entry(core, &entry)[0], Self::motion_path_for_entry(core, entry)),
 
-            ElementAddAttachment        => unimplemented!(),
-            ElementRemoveAttachment     => unimplemented!(),
+            ElementAddAttachment        => {
+                let elements    = Self::elements_for_entry(core, &entry);
+                let attachment  = elements[0];
+                AnimationEdit::Element(elements.into_iter().skip(1).collect(), ElementEdit::AddAttachment(attachment))
+            },
+            ElementRemoveAttachment     => {
+                let elements    = Self::elements_for_entry(core, &entry);
+                let attachment  = elements[0];
+                AnimationEdit::Element(elements.into_iter().skip(1).collect(), ElementEdit::RemoveAttachment(attachment))
+            },
             ElementSetControlPoints     => unimplemented!(),
             ElementSetPath              => unimplemented!(),
             ElementOrderInFront         => unimplemented!(),
