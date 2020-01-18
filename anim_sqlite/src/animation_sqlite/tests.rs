@@ -844,9 +844,8 @@ fn read_motion_edit_items() {
     });
 
     if let AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(ref curve)) = edits[3] {
-        assert!(true);
-        // ?? not quite true ??
-        // assert!(curve == &TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))));
+        println!("{:?}", curve);
+        assert!(curve == &TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))));
     } else {
         assert!(false);
     }

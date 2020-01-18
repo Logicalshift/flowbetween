@@ -446,7 +446,7 @@ impl FloSqlite {
                                                         ORDER BY Path.PointIndex ASC",
             SelectEditLogMotionTimePoints       => "SELECT Point.X, Point.Y, Point.Milliseconds \
                                                         FROM Flo_EL_MotionPath      AS Path \
-                                                        INNER JOIN Flo_TimePoint    AS Point ON Path.PointIndex = Point.PointId \
+                                                        INNER JOIN Flo_TimePoint    AS Point ON Path.TimePointId = Point.PointId \
                                                         WHERE Path.EditId = ? \
                                                         ORDER BY Path.PointIndex ASC",
             SelectElementIdForAssignedId        => "SELECT ElementId FROM Flo_AssignedElementId WHERE AssignedId = ?",
