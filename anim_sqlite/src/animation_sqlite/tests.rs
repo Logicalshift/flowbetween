@@ -1017,6 +1017,22 @@ fn replace_path_components() {
     ]);
 
     anim.panic_on_error();
+
+    let edit_log        = anim.read_edit_log(5..6);
+    let edit_log        = edit_log.collect();
+    let edits: Vec<_>   = executor::block_on(edit_log);
+
+    if let AnimationEdit::Element(ref elem_ids, ElementEdit::SetPath(ref new_path)) = edits[0] {
+        assert!(elem_ids == &vec![ElementId::Assigned(100)]);
+        assert!(new_path == &Arc::new(vec![
+            PathComponent::Move(PathPoint::new(50.0, 100.0)),
+            PathComponent::Line(PathPoint::new(60.0, 110.0)),
+            PathComponent::Line(PathPoint::new(70.0, 120.0)),
+            PathComponent::Close
+        ]));
+    } else {
+        assert!(false);
+    }
 }
 
 #[test]
