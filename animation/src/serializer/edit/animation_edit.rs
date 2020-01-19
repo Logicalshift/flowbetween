@@ -1,3 +1,4 @@
+use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
 
@@ -15,6 +16,23 @@ impl AnimationEdit {
             SetSize(width, height)      => { data.write_chr('S'); data.write_f64(*width); data.write_f64(*height); },
             AddNewLayer(layer_id)       => { data.write_chr('+'); data.write_small_u64(*layer_id); },
             RemoveLayer(layer_id)       => { data.write_chr('-'); data.write_small_u64(*layer_id); }
+        }
+    }
+
+    ///
+    /// Deserializes an animation edit
+    ///
+    pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<AnimationEdit> {
+        match data.next_chr() {
+            'L' => { unimplemented!("LayerEdit") }
+            'E' => { unimplemented!("ElementEdit") }
+            'M' => { unimplemented!("MotionEdit") }
+            'S' => { Some(AnimationEdit::SetSize(data.next_f64(), data.next_f64())) }
+            '+' => { Some(AnimationEdit::AddNewLayer(data.next_small_u64())) }
+            '-' => { Some(AnimationEdit::RemoveLayer(data.next_small_u64())) }
+
+            // Unknown character
+            _   => None
         }
     }
 }
@@ -58,4 +76,33 @@ pub fn serialize_animation_as_edits<'a, Tgt: AnimationDataTarget, Edits: IntoIte
     data.write_chr('-');
     data.write_chr('-');
     data.write_chr(' ');
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn set_size() {
+        let mut encoded = String::new();
+        AnimationEdit::SetSize(1024.0, 768.0).serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(AnimationEdit::SetSize(1024.0, 768.0)));
+    }
+
+    #[test]
+    fn add_new_layer() {
+        let mut encoded = String::new();
+        AnimationEdit::AddNewLayer(1).serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(AnimationEdit::AddNewLayer(1)));
+    }
+
+    #[test]
+    fn remove_layer() {
+        let mut encoded = String::new();
+        AnimationEdit::RemoveLayer(42).serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(AnimationEdit::RemoveLayer(42)));
+    }
 }
