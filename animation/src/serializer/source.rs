@@ -1,8 +1,11 @@
 use smallvec::*;
+use flo_float_encoder::*;
 
+use std::io;
+use std::io::{Read};
 use std::str::{Chars};
-use std::convert::{TryInto};
 use std::time::{Duration};
+use std::convert::{TryInto};
 
 ///
 /// Decodes a character to a 6-bit value (ie, from ENCODING_CHAR_SET)
@@ -24,9 +27,54 @@ fn decode_chr(c: char) -> u8 {
 }
 
 ///
+/// Reader implementation that can read bytes from an animation data source
+///
+struct ByteReader<'a, Src: AnimationDataSource> {
+    /// The data source (this will call next_chr only so this is suitable for implementing next_bytes)
+    src: &'a mut Src,
+
+    /// The current byte
+    current: u8,
+
+    /// The current bit pos
+    bit_pos: usize
+}
+
+impl<'a, Src: AnimationDataSource> Read for ByteReader<'a, Src> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, io::Error> {
+        let mut pos = 0;
+
+        // Iterate until we've read enough bytes from the source
+        while pos < buf.len() {
+            // Process a character from the input
+            let byte    = decode_chr(self.src.next_chr());
+
+            if self.bit_pos + 6 >= 8 {
+                // Add the remaining bits the current value
+                let mask        = (1<<(8-self.bit_pos))-1;
+                self.current    |= (byte&mask)<<self.bit_pos;
+
+                buf[pos] = self.current;
+                pos += 1;
+
+                // Remaining bits go in 'current'
+                self.current    = byte >> (8-self.bit_pos);
+                self.bit_pos    = 6-(8-self.bit_pos);
+            } else {
+                // Just add the bits to 'current' and carry on
+                self.current    |= byte << self.bit_pos;
+                self.bit_pos    += 6;
+            }
+        }
+
+        Ok(pos)
+    }
+}
+
+///
 /// Represents a source for serialized animation data
 ///
-pub trait AnimationDataSource {
+pub trait AnimationDataSource : Sized {
     ///
     /// Reads the next character from this data source
     ///
@@ -37,33 +85,11 @@ pub trait AnimationDataSource {
     ///
     fn next_bytes(&mut self, len: usize) -> SmallVec<[u8;8]> {
         // Build the result into a smallvec
-        let mut res     = smallvec![];
+        let mut res     = smallvec![0; len];
 
-        // Current value and bit pos
-        let mut current = 0u8;
-        let mut bit_pos = 0;
-
-        // Iterate until we've read enough bytes from the source
-        while res.len() < len {
-            // Process a character from the input
-            let byte    = decode_chr(self.next_chr());
-
-            if bit_pos + 6 >= 8 {
-                // Add the remaining bits the current value
-                let mask    = (1<<(8-bit_pos))-1;
-                current     |= (byte&mask)<<bit_pos;
-
-                res.push(current);
-
-                // Remaining bits go in 'current'
-                current = byte >> (8-bit_pos);
-                bit_pos = 6-(8-bit_pos);
-            } else {
-                // Just add the bits to 'current' and carry on
-                current |= byte << bit_pos;
-                bit_pos += 6;
-            }
-        }
+        // Read using a ByteReader (defined above)
+        let mut reader  = ByteReader { src: self, current: 0, bit_pos: 0 };
+        reader.read(&mut res[0..len]).ok();
 
         res
     }
@@ -150,6 +176,16 @@ pub trait AnimationDataSource {
 
     fn next_f64(&mut self) -> f64 {
         f64::from_le_bytes(*&self.next_bytes(8)[0..8].try_into().unwrap())
+    }
+
+    ///
+    /// Writes a f64 value to this target that's relative to a previous value (this uses a more compact format to save space)
+    ///
+    fn next_f64_offset(&mut self, last: f64) -> f64 {
+        // Read using a ByteReader (defined above)
+        let mut reader  = ByteReader { src: self, current: 0, bit_pos: 0 };
+
+        unsquish_float(&mut reader, last).unwrap()
     }
 
     ///
@@ -274,5 +310,21 @@ mod test {
 
         encoded.write_duration(Duration::from_secs(1000000));
         assert!(encoded.chars().next_duration() == Duration::from_secs(1000000));
+    }
+
+    #[test]
+    fn decode_f64_small_offset() {
+        let mut encoded = String::new();
+
+        encoded.write_next_f64(14.0, 64.0);;
+        assert!(encoded.chars().next_f64_offset(14.0) == 64.0);
+    }
+
+    #[test]
+    fn decode_f64_large_offset() {
+        let mut encoded = String::new();
+
+        encoded.write_next_f64(14.0, 64000.0);;
+        assert!(encoded.chars().next_f64_offset(14.0) == 64000.0);
     }
 }
