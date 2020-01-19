@@ -102,7 +102,6 @@ where P::Point: Coordinate2D {
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::super::super::traits::*;
     use flo_curves::arc::*;
 
     #[test]

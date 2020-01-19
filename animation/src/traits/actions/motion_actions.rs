@@ -181,7 +181,6 @@ mod test {
     use super::*;
     use super::super::super::*;
 
-    use futures::*;
     use futures::stream::{BoxStream};
     use std::sync::*;
     use std::ops::Range;
