@@ -65,6 +65,56 @@ pub trait AnimationDataSource {
 
         res
     }
+
+    ///
+    /// Reads a usize from this source
+    ///
+    fn next_usize(&mut self) -> usize {
+        let mut result  = 0usize;
+        let mut shift   = 0;
+
+        loop {
+            // Decode the next character
+            let byte    = decode_chr(self.next_chr());
+
+            // Lower 5 bits contain the value
+            let lower   = byte & 0x1f;
+            result      |= (lower as usize) << shift;
+            shift       += 5;
+
+            // If the upper bit is set there are more bytes
+            if (byte & 0x20) == 0 {
+                break;
+            }
+        }
+
+        result
+    }
+
+    ///
+    /// Reads a u64 (in the format where it's expected to have a small value) from this source
+    ///
+    fn next_small_u64(&mut self) -> u64 {
+        let mut result  = 0u64;
+        let mut shift   = 0;
+
+        loop {
+            // Decode the next character
+            let byte    = decode_chr(self.next_chr());
+
+            // Lower 5 bits contain the value
+            let lower   = byte & 0x1f;
+            result      |= (lower as u64) << shift;
+            shift       += 5;
+
+            // If the upper bit is set there are more bytes
+            if (byte & 0x20) == 0 {
+                break;
+            }
+        }
+
+        result
+    }
 }
 
 impl AnimationDataSource for Chars<'_> {
@@ -89,5 +139,21 @@ mod test {
             let decoded     = encoded.chars().next_bytes((end as usize)+1);
             assert!(decoded == (0u8..=end).into_iter().collect::<SmallVec<[u8; 8]>>());
         }
+    }
+
+    #[test]
+    fn decode_usize() {
+        let mut encoded = String::new();
+
+        encoded.write_usize(1234);
+        assert!(encoded.chars().next_usize() == 1234);
+    }
+
+    #[test]
+    fn decode_small_u64() {
+        let mut encoded = String::new();
+
+        encoded.write_small_u64(1234);
+        assert!(encoded.chars().next_small_u64() == 1234);
     }
 }
