@@ -3,8 +3,6 @@ use super::source::*;
 use super::target::*;
 use super::super::traits::*;
 
-use flo_canvas::*;
-
 impl BrushProperties {
     ///
     /// Generates a serialized version of these brush properties on the specified data target
@@ -41,6 +39,7 @@ impl BrushProperties {
 #[cfg(test)]
 mod test {
     use super::*;
+    use flo_canvas::*;
 
     #[test]
     fn brush_properties_1() {
