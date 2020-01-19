@@ -1,6 +1,7 @@
 use smallvec::*;
 
 use std::str::{Chars};
+use std::convert::{TryInto};
 
 ///
 /// Decodes a character to a 6-bit value (ie, from ENCODING_CHAR_SET)
@@ -125,6 +126,30 @@ pub trait AnimationDataSource {
 
         String::from_utf8_lossy(&utf8).to_string()
     }
+
+    fn next_u32(&mut self) -> u32 {
+        u32::from_le_bytes(*&self.next_bytes(4)[0..4].try_into().unwrap())
+    }
+
+    fn next_i32(&mut self) -> i32 {
+        i32::from_le_bytes(*&self.next_bytes(4)[0..4].try_into().unwrap())
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        u64::from_le_bytes(*&self.next_bytes(8)[0..8].try_into().unwrap())
+    }
+
+    fn next_i64(&mut self) -> i64 {
+        i64::from_le_bytes(*&self.next_bytes(8)[0..8].try_into().unwrap())
+    }
+
+    fn next_f32(&mut self) -> f32 {
+        f32::from_le_bytes(*&self.next_bytes(4)[0..4].try_into().unwrap())
+    }
+
+    fn next_f64(&mut self) -> f64 {
+        f64::from_le_bytes(*&self.next_bytes(8)[0..8].try_into().unwrap())
+    }
 }
 
 impl AnimationDataSource for Chars<'_> {
@@ -173,5 +198,53 @@ mod test {
 
         encoded.write_str("Hello, world");
         assert!(encoded.chars().next_string() == "Hello, world".to_string());
+    }
+
+    #[test]
+    fn decode_u32() {
+        let mut encoded = String::new();
+
+        encoded.write_u32(1234);
+        assert!(encoded.chars().next_u32() == 1234);
+    }
+
+    #[test]
+    fn decode_i32() {
+        let mut encoded = String::new();
+
+        encoded.write_i32(-1234);
+        assert!(encoded.chars().next_i32() == -1234);
+    }
+
+    #[test]
+    fn decode_u64() {
+        let mut encoded = String::new();
+
+        encoded.write_u64(1234);
+        assert!(encoded.chars().next_u64() == 1234);
+    }
+
+    #[test]
+    fn decode_i64() {
+        let mut encoded = String::new();
+
+        encoded.write_i64(-1234);
+        assert!(encoded.chars().next_i64() == -1234);
+    }
+
+    #[test]
+    fn decode_f32() {
+        let mut encoded = String::new();
+
+        encoded.write_f32(1234.1234);
+        assert!(encoded.chars().next_f32() == 1234.1234);
+    }
+
+    #[test]
+    fn decode_f64() {
+        let mut encoded = String::new();
+
+        encoded.write_f64(1234.1234);
+        assert!(encoded.chars().next_f64() == 1234.1234);
     }
 }
