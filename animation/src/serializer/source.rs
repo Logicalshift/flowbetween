@@ -316,7 +316,7 @@ mod test {
     fn decode_f64_small_offset() {
         let mut encoded = String::new();
 
-        encoded.write_next_f64(14.0, 64.0);;
+        encoded.write_next_f64(14.0, 64.0);
         assert!(encoded.chars().next_f64_offset(14.0) == 64.0);
     }
 
@@ -324,7 +324,71 @@ mod test {
     fn decode_f64_large_offset() {
         let mut encoded = String::new();
 
-        encoded.write_next_f64(14.0, 64000.0);;
+        encoded.write_next_f64(14.0, 64000.0);
         assert!(encoded.chars().next_f64_offset(14.0) == 64000.0);
+    }
+
+    #[test]
+    fn decode_all() {
+        // Encodes everything next to each other so we know the decoder is always left in a valid state afterwards (doesn't read an extra character)
+        let mut encoded = String::new();
+
+        encoded.write_usize(1234);
+        encoded.write_small_u64(1234);
+        encoded.write_str("Hello, world");
+        encoded.write_u32(1234);
+        encoded.write_i32(-1234);
+        encoded.write_u64(1234);
+        encoded.write_i64(-1234);
+        encoded.write_f32(1234.1234);
+        encoded.write_f64(1234.1234);
+        encoded.write_duration(Duration::from_millis(1234));
+        encoded.write_duration(Duration::from_secs(1000000));
+        encoded.write_next_f64(14.0, 64.0);
+        encoded.write_next_f64(14.0, 64000.0);
+
+        encoded.write_usize(1234);
+        encoded.write_small_u64(1234);
+        encoded.write_str("Hello, world");
+        encoded.write_u32(1234);
+        encoded.write_i32(-1234);
+        encoded.write_u64(1234);
+        encoded.write_i64(-1234);
+        encoded.write_f32(1234.1234);
+        encoded.write_f64(1234.1234);
+        encoded.write_duration(Duration::from_millis(1234));
+        encoded.write_duration(Duration::from_secs(1000000));
+        encoded.write_next_f64(14.0, 64.0);
+        encoded.write_next_f64(14.0, 64000.0);
+
+        let mut src = encoded.chars();
+
+        assert!(src.next_usize() == 1234);
+        assert!(src.next_small_u64() == 1234);
+        assert!(src.next_string() == "Hello, world".to_string());
+        assert!(src.next_u32() == 1234);
+        assert!(src.next_i32() == -1234);
+        assert!(src.next_u64() == 1234);
+        assert!(src.next_i64() == -1234);
+        assert!(src.next_f32() == 1234.1234);
+        assert!(src.next_f64() == 1234.1234);
+        assert!(src.next_duration() == Duration::from_millis(1234));
+        assert!(src.next_duration() == Duration::from_secs(1000000));
+        assert!(src.next_f64_offset(14.0) == 64.0);
+        assert!(src.next_f64_offset(14.0) == 64000.0);
+
+        assert!(src.next_usize() == 1234);
+        assert!(src.next_small_u64() == 1234);
+        assert!(src.next_string() == "Hello, world".to_string());
+        assert!(src.next_u32() == 1234);
+        assert!(src.next_i32() == -1234);
+        assert!(src.next_u64() == 1234);
+        assert!(src.next_i64() == -1234);
+        assert!(src.next_f32() == 1234.1234);
+        assert!(src.next_f64() == 1234.1234);
+        assert!(src.next_duration() == Duration::from_millis(1234));
+        assert!(src.next_duration() == Duration::from_secs(1000000));
+        assert!(src.next_f64_offset(14.0) == 64.0);
+        assert!(src.next_f64_offset(14.0) == 64000.0);
     }
 }
