@@ -2,6 +2,7 @@ use smallvec::*;
 
 use std::str::{Chars};
 use std::convert::{TryInto};
+use std::time::{Duration};
 
 ///
 /// Decodes a character to a 6-bit value (ie, from ENCODING_CHAR_SET)
@@ -150,6 +151,17 @@ pub trait AnimationDataSource {
     fn next_f64(&mut self) -> f64 {
         f64::from_le_bytes(*&self.next_bytes(8)[0..8].try_into().unwrap())
     }
+
+    ///
+    /// Writes a time to the target
+    ///
+    fn next_duration(&mut self) -> Duration {
+        match self.next_chr() {
+            't'     => Duration::from_micros(self.next_u32() as u64),
+            'T'     => Duration::from_micros(self.next_u64()),
+            _       => Duration::from_millis(0)
+        }
+    }
 }
 
 impl AnimationDataSource for Chars<'_> {
@@ -246,5 +258,21 @@ mod test {
 
         encoded.write_f64(1234.1234);
         assert!(encoded.chars().next_f64() == 1234.1234);
+    }
+
+    #[test]
+    fn decode_short_duration() {
+        let mut encoded = String::new();
+
+        encoded.write_duration(Duration::from_millis(1234));
+        assert!(encoded.chars().next_duration() == Duration::from_millis(1234));
+    }
+
+    #[test]
+    fn decode_long_duration() {
+        let mut encoded = String::new();
+
+        encoded.write_duration(Duration::from_secs(1000000));
+        assert!(encoded.chars().next_duration() == Duration::from_secs(1000000));
     }
 }
