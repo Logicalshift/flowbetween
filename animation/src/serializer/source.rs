@@ -115,6 +115,16 @@ pub trait AnimationDataSource {
 
         result
     }
+
+    ///
+    /// Reads a string from the source
+    ///
+    fn next_string(&mut self) -> String {
+        let num_bytes   = self.next_usize();
+        let utf8        = self.next_bytes(num_bytes);
+
+        String::from_utf8_lossy(&utf8).to_string()
+    }
 }
 
 impl AnimationDataSource for Chars<'_> {
@@ -155,5 +165,13 @@ mod test {
 
         encoded.write_small_u64(1234);
         assert!(encoded.chars().next_small_u64() == 1234);
+    }
+
+    #[test]
+    fn decode_string() {
+        let mut encoded = String::new();
+
+        encoded.write_str("Hello, world");
+        assert!(encoded.chars().next_string() == "Hello, world".to_string());
     }
 }
