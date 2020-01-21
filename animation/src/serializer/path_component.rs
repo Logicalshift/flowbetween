@@ -101,7 +101,7 @@ mod test {
         let last        = PathPoint::new(50.0, 60.0);
         PathComponent::Move(PathPoint::new(10.0, 15.0)).serialize_next(&last, &mut encoded);
 
-        assert!(PathComponent::deserialize_next(&last, &mut encoded.chars()) == Some(PathComponent::Move(PathPoint::new(10.0, 15.0))));
+        assert!(PathComponent::deserialize_next(&last, &mut encoded.chars()) == Some((PathComponent::Move(PathPoint::new(10.0, 15.0)), PathPoint::new(10.0, 15.0))));
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod test {
         let last        = PathPoint::new(50.0, 60.0);
         PathComponent::Line(PathPoint::new(10.0, 15.0)).serialize_next(&last, &mut encoded);
 
-        assert!(PathComponent::deserialize_next(&last, &mut encoded.chars()) == Some(PathComponent::Line(PathPoint::new(10.0, 15.0))));
+        assert!(PathComponent::deserialize_next(&last, &mut encoded.chars()) == Some((PathComponent::Line(PathPoint::new(10.0, 15.0)), PathPoint::new(10.0, 15.0))));
     }
 
     #[test]
@@ -135,6 +135,6 @@ mod test {
         let last        = PathPoint::new(50.0, 60.0);
         PathComponent::Bezier(PathPoint::new(10.0, 15.0), PathPoint::new(11.0, 16.0), PathPoint::new(12.0, 17.0)).serialize_next(&last, &mut encoded);
 
-        assert!(PathComponent::deserialize_next(&last, &mut encoded.chars()) == Some(PathComponent::Bezier(PathPoint::new(10.0, 15.0), PathPoint::new(11.0, 16.0), PathPoint::new(12.0, 17.0))));
+        assert!(PathComponent::deserialize_next(&last, &mut encoded.chars()) == Some((PathComponent::Bezier(PathPoint::new(10.0, 15.0), PathPoint::new(11.0, 16.0), PathPoint::new(12.0, 17.0)), PathPoint::new(12.0, 17.0))));
     }
 }
