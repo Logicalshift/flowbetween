@@ -1,3 +1,4 @@
+use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
 
@@ -14,6 +15,22 @@ impl ElementOrdering {
             ToTop           => { data.write_chr('^'); }
             ToBottom        => { data.write_chr('v'); }
             Before(elem)    => { data.write_chr('B'); elem.serialize(data); }
+        }
+    }
+
+    ///
+    /// Deserializes an ElementOrdering from the specified source stream
+    ///
+    pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<ElementOrdering> {
+        use self::ElementOrdering::*;
+
+        match data.next_chr() {
+            '+' => Some(InFront),
+            '-' => Some(Behind),
+            '^' => Some(ToTop),
+            'v' => Some(ToBottom),
+            'B' => ElementId::deserialize(data).map(|elem| Before(elem)),
+            _   => None
         }
     }
 }

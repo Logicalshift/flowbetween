@@ -25,11 +25,21 @@ impl AnimationEdit {
     pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<AnimationEdit> {
         match data.next_chr() {
             'L' => { let layer_id = data.next_small_u64(); LayerEdit::deserialize(data).map(move |edit| AnimationEdit::Layer(layer_id, edit)) }
-            'E' => { unimplemented!("ElementEdit") }
             'M' => { unimplemented!("MotionEdit") }
             'S' => { Some(AnimationEdit::SetSize(data.next_f64(), data.next_f64())) }
             '+' => { Some(AnimationEdit::AddNewLayer(data.next_small_u64())) }
             '-' => { Some(AnimationEdit::RemoveLayer(data.next_small_u64())) }
+
+            'E' => { 
+                let num_elements    = data.next_usize();
+                let elements        = (0..num_elements).into_iter()
+                    .map(|_| ElementId::deserialize(data))
+                    .collect::<Option<Vec<_>>>();
+
+                elements.and_then(|elements|
+                    ElementEdit::deserialize(data)
+                        .map(move |edit| AnimationEdit::Element(elements, edit)))
+            }
 
             // Unknown character
             _   => None

@@ -58,18 +58,18 @@ impl PathComponent {
     ///
     /// Deserializes this path component from a source stream
     ///
-    pub fn deserialize_next<Src: AnimationDataSource>(last: &PathPoint, data: &mut Src) -> Option<PathComponent> {
+    pub fn deserialize_next<Src: AnimationDataSource>(last: &PathPoint, data: &mut Src) -> Option<(PathComponent, PathPoint)> {
         match data.next_chr() {
-            'M' => { Some(PathComponent::Move(PathPoint { position: (data.next_f64_offset(last.position.0), data.next_f64_offset(last.position.1)) })) }
-            'L' => { Some(PathComponent::Line(PathPoint { position: (data.next_f64_offset(last.position.0), data.next_f64_offset(last.position.1)) })) }
+            'M' => { let p = PathPoint { position: (data.next_f64_offset(last.position.0), data.next_f64_offset(last.position.1)) }; Some((PathComponent::Move(p), p)) }
+            'L' => { let p = PathPoint { position: (data.next_f64_offset(last.position.0), data.next_f64_offset(last.position.1)) }; Some((PathComponent::Line(p), p)) }
             'C' => { 
                 let p1 = PathPoint { position: (data.next_f64_offset(last.position.0), data.next_f64_offset(last.position.1)) };
                 let p2 = PathPoint { position: (data.next_f64_offset(p1.position.0), data.next_f64_offset(p1.position.1)) };
                 let p3 = PathPoint { position: (data.next_f64_offset(p2.position.0), data.next_f64_offset(p2.position.1)) };
 
-                Some(PathComponent::Bezier(p1, p2, p3)) 
+                Some((PathComponent::Bezier(p1, p2, p3), p3)) 
             }
-            'X' => { Some(PathComponent::Close) }
+            'X' => { Some((PathComponent::Close, *last)) }
             _   => { None }
         }
     }
