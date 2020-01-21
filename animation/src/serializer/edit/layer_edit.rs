@@ -1,3 +1,4 @@
+use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
 
@@ -15,6 +16,30 @@ impl LayerEdit {
             RemoveKeyFrame(when)    => { data.write_chr('-'); data.write_duration(*when); },
             SetName(name)           => { data.write_chr('N'); data.write_str(name); },
             SetOrdering(ordering)   => { data.write_chr('O'); data.write_u32(*ordering); }
+        }
+    }
+
+    ///
+    /// Deserializes a layer edit from the supplied data source
+    ///
+    pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<LayerEdit> {
+        match data.next_chr() {
+            'P' => {
+                let when = data.next_duration();
+                PaintEdit::deserialize(data)
+                    .map(move |edit| LayerEdit::Paint(when, edit))
+            }
+            'p' => { 
+                let when = data.next_duration();
+                PathEdit::deserialize(data)
+                    .map(move |edit| LayerEdit::Path(when, edit))
+            }
+            '+' => { Some(LayerEdit::AddKeyFrame(data.next_duration())) }
+            '-' => { Some(LayerEdit::RemoveKeyFrame(data.next_duration())) }
+            'N' => { Some(LayerEdit::SetName(data.next_string())) }
+            'O' => { Some(LayerEdit::SetOrdering(data.next_u32())) }
+
+            _   => None
         }
     }
 }
