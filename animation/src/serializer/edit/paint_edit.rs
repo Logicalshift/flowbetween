@@ -87,3 +87,31 @@ impl PaintEdit {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn select_brush() {
+        let mut encoded = String::new();
+        PaintEdit::SelectBrush(ElementId::Assigned(42), BrushDefinition::Simple, BrushDrawingStyle::Erase).serialize(&mut encoded);
+
+        assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::SelectBrush(ElementId::Assigned(42), BrushDefinition::Simple, BrushDrawingStyle::Erase)));
+    }
+
+    #[test]
+    fn brush_properties() {
+        let mut encoded = String::new();
+        PaintEdit::BrushProperties(ElementId::Assigned(42), BrushProperties::new()).serialize(&mut encoded);
+
+        assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::BrushProperties(ElementId::Assigned(42), BrushProperties::new())));
+    }
+
+    #[test]
+    fn brush_stroke() {
+        let mut encoded = String::new();
+        PaintEdit::BrushStroke(ElementId::Assigned(42), Arc::new(vec![RawPoint::from((1.0, 2.0)), RawPoint::from((2.0, 3.0)), RawPoint::from((4.0, 5.0))])).serialize(&mut encoded);
+
+        assert!(PaintEdit::deserialize(&mut encoded.chars()) == Some(PaintEdit::BrushStroke(ElementId::Assigned(42), Arc::new(vec![RawPoint::from((1.0, 2.0)), RawPoint::from((2.0, 3.0)), RawPoint::from((4.0, 5.0))]))));
+    }
+}

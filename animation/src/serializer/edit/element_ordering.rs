@@ -34,3 +34,48 @@ impl ElementOrdering {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn in_front() {
+        let mut encoded = String::new();
+        ElementOrdering::InFront.serialize(&mut encoded);
+
+        assert!(ElementOrdering::deserialize(&mut encoded.chars()) == Some(ElementOrdering::InFront));
+    }
+
+    #[test]
+    fn behind() {
+        let mut encoded = String::new();
+        ElementOrdering::Behind.serialize(&mut encoded);
+
+        assert!(ElementOrdering::deserialize(&mut encoded.chars()) == Some(ElementOrdering::Behind));
+    }
+
+    #[test]
+    fn to_top() {
+        let mut encoded = String::new();
+        ElementOrdering::ToTop.serialize(&mut encoded);
+
+        assert!(ElementOrdering::deserialize(&mut encoded.chars()) == Some(ElementOrdering::ToTop));
+    }
+
+    #[test]
+    fn to_bottom() {
+        let mut encoded = String::new();
+        ElementOrdering::ToBottom.serialize(&mut encoded);
+
+        assert!(ElementOrdering::deserialize(&mut encoded.chars()) == Some(ElementOrdering::ToBottom));
+    }
+
+    #[test]
+    fn before() {
+        let mut encoded = String::new();
+        ElementOrdering::Before(ElementId::Assigned(42)).serialize(&mut encoded);
+
+        assert!(ElementOrdering::deserialize(&mut encoded.chars()) == Some(ElementOrdering::Before(ElementId::Assigned(42))));
+    }
+}

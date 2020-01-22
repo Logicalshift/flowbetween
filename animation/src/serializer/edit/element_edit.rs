@@ -109,3 +109,64 @@ impl ElementEdit {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn add_attachment() {
+        let mut encoded = String::new();
+        ElementEdit::AddAttachment(ElementId::Assigned(42)).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::AddAttachment(ElementId::Assigned(42))));
+    }
+
+    #[test]
+    fn remove_attachment() {
+        let mut encoded = String::new();
+        ElementEdit::RemoveAttachment(ElementId::Assigned(42)).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::RemoveAttachment(ElementId::Assigned(42))));
+    }
+
+    #[test]
+    fn ordering() {
+        let mut encoded = String::new();
+        ElementEdit::Order(ElementOrdering::InFront).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Order(ElementOrdering::InFront)));
+    }
+
+    #[test]
+    fn delete() {
+        let mut encoded = String::new();
+        ElementEdit::Delete.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::Delete));
+    }
+
+    #[test]
+    fn detach_from_frame() {
+        let mut encoded = String::new();
+        ElementEdit::DetachFromFrame.serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::DetachFromFrame));
+    }
+
+    #[test]
+    fn set_control_points() {
+        let mut encoded = String::new();
+        ElementEdit::SetControlPoints(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0)]).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::SetControlPoints(vec![(1.0, 2.0), (3.0, 4.0), (5.0, 6.0)])));
+    }
+
+    #[test]
+    fn set_path() {
+        let mut encoded = String::new();
+        ElementEdit::SetPath(Arc::new(vec![PathComponent::Move(PathPoint::new(1.0, 2.0)), PathComponent::Line(PathPoint::new(2.0, 3.0)), PathComponent::Bezier(PathPoint::new(4.0, 5.0), PathPoint::new(6.0, 7.0), PathPoint::new(8.0, 9.0)), PathComponent::Close])).serialize(&mut encoded);
+
+        assert!(ElementEdit::deserialize(&mut encoded.chars()) == Some(ElementEdit::SetPath(Arc::new(vec![PathComponent::Move(PathPoint::new(1.0, 2.0)), PathComponent::Line(PathPoint::new(2.0, 3.0)), PathComponent::Bezier(PathPoint::new(4.0, 5.0), PathPoint::new(6.0, 7.0), PathPoint::new(8.0, 9.0)), PathComponent::Close]))));
+    }
+}

@@ -76,6 +76,25 @@ impl TimeCurve {
             .nth(0)
             .unwrap_or(None)
     }
+
+    ///
+    /// Returns true if this curve is a close match to another (mainly useful for testing)
+    ///
+    pub fn is_close_to(&self, other_curve: &TimeCurve) -> bool {
+        if other_curve.points.len() != self.points.len() {
+            // Both curves must have the same number of points
+            false
+        } else {
+            // Each control point must be near the corresponding point in the other curve
+            self.points.iter()
+                .zip(other_curve.points.iter())
+                .all(|(p1, p2)| {
+                    (p1.past).is_close_to(&p2.past) &&
+                    (p1.point).is_close_to(&p2.point) &&
+                    (p1.future).is_close_to(&p2.future)
+                })
+        }
+    }
 }
 
 impl TimeCurveSection {

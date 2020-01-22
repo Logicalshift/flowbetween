@@ -52,6 +52,36 @@ impl TimePoint {
             Duration::new(secs as u64, nanos as u32)
         }
     }
+
+    ///
+    /// Returns the distance to another time point
+    ///
+    pub fn distance_to(&self, point: &TimePoint) -> f64 {
+        let TimePoint(x1, y1, _)    = self;
+        let TimePoint(x2, y2, _)    = point;
+        let x1                      = *x1 as f64;
+        let y1                      = *y1 as f64;
+        let x2                      = *x2 as f64;
+        let y2                      = *y2 as f64;
+
+        f64::sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2))
+    }
+
+    ///
+    /// Returns true if this point is close to another
+    ///
+    pub fn is_close_to(&self, point: &TimePoint) -> bool {
+        let TimePoint(x1, y1, t1)   = self;
+        let TimePoint(x2, y2, t2)   = point;
+        let x1                      = *x1 as f64;
+        let y1                      = *y1 as f64;
+        let t1                      = *t1 as f64;
+        let x2                      = *x2 as f64;
+        let y2                      = *y2 as f64;
+        let t2                      = *t2 as f64;
+
+        ((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (t1-t2)*(t1-t2)) < (0.1*0.1)
+    }
 }
 
 #[cfg(test)]

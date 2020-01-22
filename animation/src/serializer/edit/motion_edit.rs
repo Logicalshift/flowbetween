@@ -41,3 +41,70 @@ impl MotionEdit {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::time::{Duration};
+
+    #[test]
+    fn create() {
+        let mut encoded = String::new();
+        MotionEdit::Create.serialize(&mut encoded);
+
+        assert!(MotionEdit::deserialize(&mut encoded.chars()) == Some(MotionEdit::Create));
+    }
+
+    #[test]
+    fn delete() {
+        let mut encoded = String::new();
+        MotionEdit::Delete.serialize(&mut encoded);
+
+        assert!(MotionEdit::deserialize(&mut encoded.chars()) == Some(MotionEdit::Delete));
+    }
+
+    #[test]
+    fn set_type_none() {
+        let mut encoded = String::new();
+        MotionEdit::SetType(MotionType::None).serialize(&mut encoded);
+
+        assert!(MotionEdit::deserialize(&mut encoded.chars()) == Some(MotionEdit::SetType(MotionType::None)));
+    }
+
+    #[test]
+    fn set_type_reverse() {
+        let mut encoded = String::new();
+        MotionEdit::SetType(MotionType::Reverse).serialize(&mut encoded);
+
+        assert!(MotionEdit::deserialize(&mut encoded.chars()) == Some(MotionEdit::SetType(MotionType::Reverse)));
+    }
+
+    #[test]
+    fn set_type_translate() {
+        let mut encoded = String::new();
+        MotionEdit::SetType(MotionType::Translate).serialize(&mut encoded);
+
+        assert!(MotionEdit::deserialize(&mut encoded.chars()) == Some(MotionEdit::SetType(MotionType::Translate)));
+    }
+
+    #[test]
+    fn set_origin() {
+        let mut encoded = String::new();
+        MotionEdit::SetOrigin(10.0, 11.0).serialize(&mut encoded);
+
+        assert!(MotionEdit::deserialize(&mut encoded.chars()) == Some(MotionEdit::SetOrigin(10.0, 11.0)));
+    }
+
+    #[test]
+    fn set_path() {
+        let mut encoded = String::new();
+        let curve1      = TimeCurve::new(TimePoint::new(1.0, 2.0, Duration::from_millis(1000)), TimePoint::new(3.0, 4.0, Duration::from_millis(2000)));
+        MotionEdit::SetPath(curve1.clone()).serialize(&mut encoded);
+
+        if let Some(MotionEdit::SetPath(curve2)) = MotionEdit::deserialize(&mut encoded.chars()) {
+            assert!(curve1.is_close_to(&curve2))
+        } else {
+            assert!(false);
+        }
+    }
+}
