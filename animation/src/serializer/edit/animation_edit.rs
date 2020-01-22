@@ -91,6 +91,7 @@ pub fn serialize_animation_as_edits<'a, Tgt: AnimationDataTarget, Edits: IntoIte
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::time::{Duration};
 
     #[test]
     fn set_size() {
@@ -114,5 +115,32 @@ mod test {
         AnimationEdit::RemoveLayer(42).serialize(&mut encoded);
 
         assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(AnimationEdit::RemoveLayer(42)));
+    }
+
+    #[test]
+    fn layer_edit() {
+        let mut encoded = String::new();
+        let edit        = AnimationEdit::Layer(1, LayerEdit::AddKeyFrame(Duration::from_millis(1000)));
+        edit.serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn element_edit() {
+        let mut encoded = String::new();
+        let edit        = AnimationEdit::Element(vec![ElementId::Assigned(42), ElementId::Assigned(43), ElementId::Assigned(44)], ElementEdit::Delete);
+        edit.serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn motion_edit() {
+        let mut encoded = String::new();
+        let edit        = AnimationEdit::Motion(ElementId::Assigned(42), MotionEdit::Create);
+        edit.serialize(&mut encoded);
+
+        assert!(AnimationEdit::deserialize(&mut encoded.chars()) == Some(edit));
     }
 }

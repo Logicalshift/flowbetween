@@ -43,3 +43,63 @@ impl LayerEdit {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::time::{Duration};
+
+    #[test]
+    fn paint() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::Paint(Duration::from_millis(1234), PaintEdit::SelectBrush(ElementId::Assigned(42), BrushDefinition::Simple, BrushDrawingStyle::Erase));
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn path() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::Path(Duration::from_millis(1234), PathEdit::SelectBrush(ElementId::Assigned(42), BrushDefinition::Simple, BrushDrawingStyle::Erase));
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn add_key_frame() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::AddKeyFrame(Duration::from_millis(1234));
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn remove_key_frame() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::RemoveKeyFrame(Duration::from_millis(1234));
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn set_name() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::SetName("Test".to_string());
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+
+    #[test]
+    fn set_ordering() {
+        let mut encoded = String::new();
+        let edit        = LayerEdit::SetOrdering(42);
+        edit.serialize(&mut encoded);
+
+        assert!(LayerEdit::deserialize(&mut encoded.chars()) == Some(edit));
+    }
+}
