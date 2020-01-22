@@ -25,7 +25,7 @@ impl AnimationEdit {
     pub fn deserialize<Src: AnimationDataSource>(data: &mut Src) -> Option<AnimationEdit> {
         match data.next_chr() {
             'L' => { let layer_id = data.next_small_u64(); LayerEdit::deserialize(data).map(move |edit| AnimationEdit::Layer(layer_id, edit)) }
-            'M' => { unimplemented!("MotionEdit") }
+            'M' => { ElementId::deserialize(data).and_then(|elem| MotionEdit::deserialize(data).map(move |edit| AnimationEdit::Motion(elem, edit))) }
             'S' => { Some(AnimationEdit::SetSize(data.next_f64(), data.next_f64())) }
             '+' => { Some(AnimationEdit::AddNewLayer(data.next_small_u64())) }
             '-' => { Some(AnimationEdit::RemoveLayer(data.next_small_u64())) }
