@@ -5,6 +5,7 @@ mod motion;
 mod transformed;
 mod brush_point;
 mod brush_stroke;
+mod resolve_element;
 mod brush_definition;
 mod brush_properties;
 
@@ -15,5 +16,6 @@ pub use self::motion::*;
 pub use self::transformed::*;
 pub use self::brush_point::*;
 pub use self::brush_stroke::*;
+pub use self::resolve_element::*;
 pub use self::brush_definition::*;
 pub use self::brush_properties::*;
