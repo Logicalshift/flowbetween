@@ -1,7 +1,5 @@
 use super::super::super::traits::*;
 
-use std::sync::*;
-
 ///
 /// Trait implemented by structures that need to have external elements resolved
 ///

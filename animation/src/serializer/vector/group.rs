@@ -45,7 +45,7 @@ impl GroupElement {
     ///
     /// Deserializes a group from a data source
     ///
-    pub fn deserialize<Src: 'static+AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<GroupElement>> {
+    pub fn deserialize<Src: AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<GroupElement>> {
         match data.next_small_u64() {
             0 => {
                 // Type of this group
@@ -112,5 +112,43 @@ impl GroupElement {
 
             _ => None
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn group() {
+        let element1    = Vector::BrushDefinition(BrushDefinitionElement::new(ElementId::Assigned(1), BrushDefinition::Simple, BrushDrawingStyle::Erase));
+        let element2    = Vector::BrushProperties(BrushPropertiesElement::new(ElementId::Assigned(2), BrushProperties::new()));
+        let element3    = Vector::BrushDefinition(BrushDefinitionElement::new(ElementId::Assigned(3), BrushDefinition::Simple, BrushDrawingStyle::Erase));
+        let element4    = Vector::BrushDefinition(BrushDefinitionElement::new(ElementId::Unassigned, BrushDefinition::Simple, BrushDrawingStyle::Erase));
+        let group       = GroupElement::new(ElementId::Assigned(5), GroupType::Normal, Arc::new(vec![element1.clone(), element2.clone(), element3.clone(), element4.clone()]));
+
+        let mut encoded = String::new();
+        group.serialize(&mut encoded);
+
+        let decoded     = GroupElement::deserialize(ElementId::Assigned(5), &mut encoded.chars());
+        let decoded     = decoded.unwrap();
+        let decoded     = decoded.resolve(&|element_id| {
+            match element_id {
+                ElementId::Assigned(1)  => Some(element1.clone()),
+                ElementId::Assigned(2)  => Some(element2.clone()),
+                ElementId::Assigned(3)  => Some(element3.clone()),
+                _                       => None
+            }
+        });
+        let decoded     = decoded.unwrap();
+
+        assert!(decoded.group_type() == GroupType::Normal);
+        assert!(decoded.num_elements() == 4);
+
+        let elements = decoded.elements().collect::<Vec<_>>();
+        assert!(elements[0].id() == ElementId::Assigned(1));
+        assert!(elements[1].id() == ElementId::Assigned(2));
+        assert!(elements[2].id() == ElementId::Assigned(3));
+        assert!(elements[3].id() == ElementId::Unassigned);
     }
 }
