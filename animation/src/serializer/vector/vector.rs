@@ -1,5 +1,9 @@
+use super::resolve_element::*;
+use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
+
+use std::sync::*;
 
 impl Vector {
     ///
@@ -19,5 +23,42 @@ impl Vector {
             Motion(motion)              => { data.write_chr('m'); motion.serialize(data); }
             Group(group)                => { data.write_chr('g'); group.serialize(data); }
         }
+    }
+
+    ///
+    /// Deserializes a vector element from a data source
+    ///
+    pub fn deserialize<Src: AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<Vector>> {
+        // Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
+        fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Arc<Vector>>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Arc<Vector>>) -> Option<Vector>> {
+            Box::new(func)
+        }
+
+        // Deserialize the element
+        let resolve = match data.next_chr() {
+            'T' => { unimplemented!("Transformed") }
+            'D' => { 
+                BrushDefinitionElement::deserialize(element_id, data)
+                    .map(|defn| box_fn(move |_| Some(Vector::BrushDefinition(defn))))
+            }
+            'P' =>  { 
+                BrushPropertiesElement::deserialize(element_id, data)
+                    .map(|properties| box_fn(move |_| Some(Vector::BrushProperties(properties))))
+            }
+            's' => {
+                BrushElement::deserialize(element_id, data)
+                    .map(|brush_stroke| box_fn(move |_| Some(Vector::BrushStroke(brush_stroke))))
+            }
+            'p' => { unimplemented!("Path") }
+            'm' => { unimplemented!("Motion") }
+            'g' => { unimplemented!("Group"); }
+
+            _ => None
+        }?;
+
+        // Return a resolver based on the deserialized data
+        Some(ElementResolver(move |mapper| {
+            (resolve)(mapper)
+        }))
     }
 }
