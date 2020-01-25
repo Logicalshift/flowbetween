@@ -502,7 +502,7 @@ impl Brush for InkBrush {
                             // In checking for an overlap we will have calculated most of the combined path: finish the job and set it as the hint
                             combined.set_exterior_by_adding();
                             combined.heal_exterior_gaps();
-                            grouped.set_hint_path(combined.exterior_paths());
+                            grouped.set_hint_path(Arc::new(combined.exterior_paths()));
 
                             CombineResult::NewElement(Vector::Group(grouped))
                         } else {

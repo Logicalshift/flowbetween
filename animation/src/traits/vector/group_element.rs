@@ -57,8 +57,8 @@ impl GroupElement {
     /// For certain group types that generate an output path with a single property (eg, GroupType::Added), this path will be
     /// used instead of recomputing the path arithmetic operation represented by this group
     ///
-    pub fn set_hint_path(&mut self, hint_path: Vec<Path>) {
-        self.hint_path = Some(Arc::new(hint_path));
+    pub fn set_hint_path(&mut self, hint_path: Arc<Vec<Path>>) {
+        self.hint_path = Some(hint_path);
     }
 
     ///
