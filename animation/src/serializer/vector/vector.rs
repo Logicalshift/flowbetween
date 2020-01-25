@@ -30,7 +30,7 @@ impl Vector {
     ///
     pub fn deserialize<Src: 'static+AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<Vector>> {
         // Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
-        fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Arc<Vector>>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Arc<Vector>>) -> Option<Vector>> {
+        fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>> {
             Box::new(func)
         }
 

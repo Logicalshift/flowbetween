@@ -95,12 +95,9 @@ impl GroupElement {
                     let elements = elements.into_iter()
                         .map(|elem_ref| {
                             match elem_ref {
-                                Elem::Literal(resolver)     => resolver.resolve(mapper).map(|vec| Arc::new(vec)),
+                                Elem::Literal(resolver)     => resolver.resolve(mapper),
                                 Elem::Reference(element_id) => mapper(element_id)
                             }
-                        })
-                        .map(|elem| {
-                            elem.map(|elem| (*elem).clone())
                         })
                         .collect::<Option<Vec<_>>>()?;
 
