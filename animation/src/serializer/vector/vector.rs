@@ -28,7 +28,7 @@ impl Vector {
     ///
     /// Deserializes a vector element from a data source
     ///
-    pub fn deserialize<Src: AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<Vector>> {
+    pub fn deserialize<Src: 'static+AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<Vector>> {
         // Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
         fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Arc<Vector>>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Arc<Vector>>) -> Option<Vector>> {
             Box::new(func)
@@ -51,7 +51,11 @@ impl Vector {
             }
             'p' => { unimplemented!("Path") }
             'm' => { unimplemented!("Motion") }
-            'g' => { unimplemented!("Group"); }
+            'g' => { 
+                GroupElement::deserialize(element_id, data)
+                    .map(|group_resolver| box_fn(move |mapper| group_resolver.resolve(mapper)
+                        .map(|group| Vector::Group(group))))
+            }
 
             _ => None
         }?;

@@ -45,7 +45,7 @@ impl GroupElement {
     ///
     /// Deserializes a group from a data source
     ///
-    pub fn deserialize<Src: AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<GroupElement>> {
+    pub fn deserialize<Src: 'static+AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<GroupElement>> {
         match data.next_small_u64() {
             0 => {
                 // Type of this group
