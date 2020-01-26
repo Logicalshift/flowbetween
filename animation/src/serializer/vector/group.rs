@@ -4,6 +4,7 @@ use super::super::target::*;
 use super::super::super::traits::*;
 
 use std::sync::*;
+use std::str::{Chars};
 
 impl GroupElement {
     ///
@@ -45,7 +46,7 @@ impl GroupElement {
     ///
     /// Deserializes a group from a data source
     ///
-    pub fn deserialize<Src: AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<GroupElement>> {
+    pub fn deserialize(element_id: ElementId, data: &mut Chars) -> Option<impl ResolveElements<GroupElement>> {
         match data.next_small_u64() {
             0 => {
                 // Type of this group

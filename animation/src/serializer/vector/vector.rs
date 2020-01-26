@@ -3,6 +3,13 @@ use super::super::source::*;
 use super::super::target::*;
 use super::super::super::traits::*;
 
+use std::str::{Chars};
+
+// Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
+fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>> {
+    Box::new(func)
+}
+
 impl Vector {
     ///
     /// Generates a serialized version of this vector element on the specified data target
@@ -25,13 +32,13 @@ impl Vector {
 
     ///
     /// Deserializes a vector element from a data source
+    /// 
+    /// We use a concrete type 'Chars' for the data source here and can't use generic types using the AnimationDataSource
+    /// trait: this is because Rust's lifetime checker seems to have a bug and borrows the `data` element for as long
+    /// as the trait exists if we use the generic form due to some kind of interaction with the box_fn function
+    /// (data is only required as long as say `GroupElement::deserialize()` is running but Rust can't see that?)
     ///
-    pub fn deserialize<Src: AnimationDataSource>(element_id: ElementId, data: &mut Src) -> Option<impl ResolveElements<Vector>> {
-        // Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
-        fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>> {
-            Box::new(func)
-        }
-
+    pub fn deserialize(element_id: ElementId, data: &mut Chars) -> Option<impl ResolveElements<Vector>> {
         // Deserialize the element
         let resolve = match data.next_chr() {
             'T' => { unimplemented!("Transformed") }
@@ -49,13 +56,13 @@ impl Vector {
             }
             'p' => { unimplemented!("Path") }
             'm' => { unimplemented!("Motion") }
-            /*
             'g' => { 
-                GroupElement::deserialize(element_id, data)
-                    .map(|group_resolver| box_fn(move |mapper| group_resolver.resolve(mapper)
-                        .map(|group| Vector::Group(group))))
+                let group_resolver = GroupElement::deserialize(element_id, data)?;
+                Some(box_fn(move |mapper| {
+                    let group = group_resolver.resolve(mapper)?;
+                    Some(Vector::Group(group))
+                }))
             }
-            */
 
             _ => None
         }?;
