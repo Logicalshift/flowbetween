@@ -55,7 +55,10 @@ impl Vector {
                     .map(|brush_stroke| box_fn(move |_| Some(Vector::BrushStroke(brush_stroke))))
             }
             'p' => { unimplemented!("Path") }
-            'm' => { unimplemented!("Motion") }
+            'm' => { 
+                MotionElement::deserialize(element_id, data)
+                    .map(|motion| box_fn(move |_| Some(Vector::Motion(motion))))
+            }
             'g' => { 
                 let group_resolver = GroupElement::deserialize(element_id, data)?;
                 Some(box_fn(move |mapper| {
