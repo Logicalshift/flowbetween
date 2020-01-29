@@ -14,7 +14,7 @@ pub trait ResolveElements<T> {
 ///
 /// Basic implementation of the resolve elements trait that resolves via a callback to a closure
 ///
-pub (crate) struct ElementResolver<TFn, T>(pub TFn)
+pub (crate) struct ElementResolver<TFn: Sized, T>(pub TFn)
 where TFn: FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<T>;
 
 impl<TFn, T> ResolveElements<T> for ElementResolver<TFn, T>

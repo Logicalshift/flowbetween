@@ -54,7 +54,13 @@ impl Vector {
                 BrushElement::deserialize(element_id, data)
                     .map(|brush_stroke| box_fn(move |_| Some(Vector::BrushStroke(brush_stroke))))
             }
-            'p' => { unimplemented!("Path") }
+            'p' => {
+                let path_resolver = PathElement::deserialize(element_id, data)?;
+                Some(box_fn(move |mapper| {
+                    let path = path_resolver.resolve(mapper)?;
+                    Some(Vector::Path(path))
+                }))
+            }
             'm' => { 
                 MotionElement::deserialize(element_id, data)
                     .map(|motion| box_fn(move |_| Some(Vector::Motion(motion))))

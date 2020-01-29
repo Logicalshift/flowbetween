@@ -65,6 +65,26 @@ impl Vector {
             not_transformed             => not_transformed.clone()
         }
     }
+
+    ///
+    /// If this is a brush definition element, returns that element (otherwise drops the vector)
+    ///
+    pub fn extract_brush_definition(self) -> Option<BrushDefinitionElement> {
+        match self {
+            Vector::BrushDefinition(elem)   => Some(elem),
+            _                               => None
+        }
+    }
+
+    ///
+    /// If this is a brush properties element, returns that element (otherwise drops the vector)
+    ///
+    pub fn extract_brush_properties(self) -> Option<BrushPropertiesElement> {
+        match self {
+            Vector::BrushProperties(elem)   => Some(elem),
+            _                               => None
+        }
+    }
 }
 
 impl Deref for Vector {
