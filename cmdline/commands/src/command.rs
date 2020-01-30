@@ -9,6 +9,9 @@ pub enum FloCommand {
     /// Write out a message describing the version of FlowBetween that this is
     Version,
 
+    /// Sets the directory to use for the catalog
+    SetCatalogFolder(String),
+
     /// Requests the current command state
     ReadState,
 

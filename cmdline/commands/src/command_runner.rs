@@ -50,19 +50,21 @@ fn run_command<'a>(command: FloCommand, output: &'a mut Publisher<FloCommandOutp
                 output.publish(FloCommandOutput::Message(msg)).await;
             }
 
-            FloCommand::ReadState                   => { output.publish(FloCommandOutput::State(state.clone())).await; }
-            FloCommand::SetState(ref new_state)     => { *state = new_state.clone(); }
+            FloCommand::ReadState                       => { output.publish(FloCommandOutput::State(state.clone())).await; }
+            FloCommand::SetState(ref new_state)         => { *state = new_state.clone(); }
 
-            FloCommand::ListAnimations              => { list_files(output, state).await; }
-            FloCommand::ReadFrom(ref read_location) => { read_from(read_location.clone(), output, state).await?; }
-            FloCommand::WriteToCatalog(ref name)    => { write_to_catalog(name.clone(), output, state).await?; }
-            FloCommand::ReadFromWriteAnimation      => { *state = state.read_from_write_side(); }
-            FloCommand::ReadAllEdits                => { read_all_edits(output, state).await?; }
-            FloCommand::SummarizeEdits              => { summarize_edit_log(output, state).await?; }
-            FloCommand::WriteAllEdits               => { write_all_edits(output, state).await?; }
-            FloCommand::SerializeEdits              => { serialize_edits(output, state).await?; }
-            FloCommand::ClearEdits                  => { *state = state.clear_edit_buffer(); }
-            FloCommand::DumpCatalogAsEdits          => { dump_catalog_as_edits(output, state).await; }
+            FloCommand::SetCatalogFolder(ref folder)    => { set_catalog_folder(folder, output, state).await?; }
+
+            FloCommand::ListAnimations                  => { list_files(output, state).await; }
+            FloCommand::ReadFrom(ref read_location)     => { read_from(read_location.clone(), output, state).await?; }
+            FloCommand::WriteToCatalog(ref name)        => { write_to_catalog(name.clone(), output, state).await?; }
+            FloCommand::ReadFromWriteAnimation          => { *state = state.read_from_write_side(); }
+            FloCommand::ReadAllEdits                    => { read_all_edits(output, state).await?; }
+            FloCommand::SummarizeEdits                  => { summarize_edit_log(output, state).await?; }
+            FloCommand::WriteAllEdits                   => { write_all_edits(output, state).await?; }
+            FloCommand::SerializeEdits                  => { serialize_edits(output, state).await?; }
+            FloCommand::ClearEdits                      => { *state = state.clear_edit_buffer(); }
+            FloCommand::DumpCatalogAsEdits              => { dump_catalog_as_edits(output, state).await; }
         }
 
         // Finish the command

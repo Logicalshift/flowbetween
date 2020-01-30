@@ -1,7 +1,7 @@
 use flo_commands::*;
 
 use tokio::prelude::*;
-use tokio::io::{stdout, stderr};
+use tokio::io::{stderr};
 use futures::prelude::*;
 use clap::{App, Arg, SubCommand};
 
@@ -30,6 +30,11 @@ async fn main() {
             .short("i")
             .takes_value(true)
             .help("Specifies a catalog file to use as the input animation (use the 'ls' command to see the catalog)"))
+        .arg(Arg::with_name("catalog")
+            .long("catalog")
+            .short("C")
+            .takes_value(true)
+            .help("Specifies the directory where the catalog can be found"))
         .arg(Arg::with_name("output-to-catalog")
             .long("output-to-catalog")
             .short("W")
@@ -60,6 +65,11 @@ async fn main() {
             input.push(FloCommand::Version)
         }
 
+        // Set the catalog folder if one is specified
+        if let Some(catalog_folder) = params.value_of("catalog") {
+            input.push(FloCommand::SetCatalogFolder(catalog_folder.to_string()));
+        }
+
         // Read the input animation if one is specified
         if let Some(catalog_name) = params.value_of("input-from-catalog") {
             input.push(FloCommand::ReadFrom(StorageDescriptor::parse_catalog_string(catalog_name)));
@@ -75,7 +85,7 @@ async fn main() {
         }
 
         // Ls command
-        if let Some(ls_params) = params.subcommand_matches("ls") {
+        if let Some(_ls_params) = params.subcommand_matches("ls") {
             input.push(FloCommand::ListAnimations);
         }
 

@@ -103,6 +103,19 @@ impl CommandState {
     }
 
     ///
+    /// Updates the file manager for this state
+    ///
+    pub fn set_file_manager(&self, new_file_manager: Arc<dyn FileManager>) -> CommandState {
+        CommandState(Arc::new(StateValue {
+            input_animation:    self.0.input_animation.clone(),
+            output_animation:   self.0.output_animation.clone(),
+            edit_buffer:        self.0.edit_buffer.clone(),
+
+            file_manager:       new_file_manager
+        }))
+    }
+
+    ///
     /// Updates the output animation for this state
     ///
     pub fn set_output_animation(&self, description: StorageDescriptor, animation: Arc<SqliteAnimation>) -> CommandState {
