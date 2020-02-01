@@ -4,5 +4,7 @@
 //!
 
 mod storage_api;
+mod editor;
 
 pub use self::storage_api::*;
+pub use self::editor::*;
