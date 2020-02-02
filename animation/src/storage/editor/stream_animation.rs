@@ -7,6 +7,8 @@ use ::desync::*;
 use flo_stream::*;
 
 use futures::prelude::*;
+use futures::task::{Poll};
+use futures::stream;
 use futures::stream::{BoxStream};
 
 use std::sync::*;
@@ -61,6 +63,20 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
 
         // Result is the animation and the command stream
         (animation, commands)
+    }
+
+    ///
+    /// Performs an asynchronous request on a storage layer for this animation
+    ///
+    fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
+        self.core.future(move |core| {
+            async move {
+                core.storage_requests.publish(request).await;
+                core.storage_responses.next().await
+            }.boxed()
+        }).map(|res| {
+            res.unwrap_or(None)
+        })
     }
 
     ///
@@ -201,7 +217,65 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
     /// Reads from the edit log for this animation
     ///
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> BoxStream<'a, AnimationEdit> {
-        unimplemented!()
+        // Clamp the range of edits to the maximum number of edits
+        let max_edit    = self.get_num_edits();
+        let range       = if range.end > max_edit {
+            range.start..max_edit
+        } else {
+            range
+        };
+
+        // Generate a stream to read from the edit log as we go
+        let per_request         = 100;
+        let mut remaining       = range;
+        let mut fetched         = vec![];
+        let mut next_response   = None;
+
+        stream::poll_fn(move |context| {
+            loop {
+                if remaining.len() == 0 && next_response.is_none() {
+                    // Start polling for the next batch
+                    // TODO: trim from the start of the remaining range instead of trying to fetch everything
+                    next_response   = Some(self.request_async(vec![StorageCommand::ReadEdits(remaining.clone())]));
+                    remaining       = 0..0;
+                }
+
+                if let Some(next) = fetched.pop() {
+                    // Just returning the batch we've already fetched
+                    return Poll::Ready(Some(next));
+                } else if let Some(mut waiting) = next_response.take() {
+                    // Try to retrieve the next item from the batch
+                    let poll_response = waiting.poll_unpin(context);
+
+                    match poll_response {
+                        Poll::Pending           => {
+                            // Keep waiting for the response
+                            next_response = Some(waiting);
+                            return Poll::Pending
+                        },
+
+                        Poll::Ready(response)   => {
+                            // Load the edits into the fetched array
+                            let mut response = response.unwrap_or(vec![]);
+
+                            while let Some(response) = response.pop() {
+                                // Ignore everything that's not an edit (we have no way to do error handling here)
+                                if let StorageResponse::Edit(_num, serialized_edit) = response {
+                                    // Store edits that deserialize successfully on the fetched list
+                                    if let Some(edit) = AnimationEdit::deserialize(&mut serialized_edit.chars()) {
+                                        fetched.push(edit)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                } else if remaining.len() == 0 {
+                    // Reached the end of the stream
+                    return Poll::Ready(None);
+                }
+            }
+        }).fuse().boxed()
     }
 
     ///
