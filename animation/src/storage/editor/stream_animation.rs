@@ -68,7 +68,7 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
     ///
     /// Performs an asynchronous request on a storage layer for this animation
     ///
-    fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
+    pub fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
         self.core.future(move |core| {
             async move {
                 core.storage_requests.publish(request).await;
@@ -84,7 +84,7 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
     /// 
     /// Synchronous requests are fairly slow, so should be avoided in inner loops
     ///
-    fn request_sync(&self, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
+    pub fn request_sync(&self, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
         // Fetch a copy of the core
         let core = Arc::clone(&self.core);
 
