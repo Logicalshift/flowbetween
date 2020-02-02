@@ -5,6 +5,7 @@ use std::time::{Duration};
 ///
 /// Storage/serialization structure used to represent the properties of a file
 ///
+#[derive(Clone)]
 pub struct FileProperties {
     /// The name of the animation
     pub name: String,
