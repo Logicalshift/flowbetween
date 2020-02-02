@@ -2,6 +2,9 @@
 //! The editor provides the EditableAnimation interface for anything that implements the storage API
 //!
 
+mod stream_animation;
+
+use self::stream_animation::*;
 use super::storage_api::*;
 use super::super::traits::*;
 
