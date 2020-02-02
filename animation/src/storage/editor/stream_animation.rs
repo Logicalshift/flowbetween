@@ -1,4 +1,6 @@
 use super::super::storage_api::*;
+use super::super::file_properties::*;
+use super::super::layer_properties::*;
 use super::super::super::traits::*;
 
 use ::desync::*;
