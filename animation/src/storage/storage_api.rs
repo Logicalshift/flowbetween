@@ -6,6 +6,12 @@ use std::time::{Duration};
 ///
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum StorageCommand {
+    /// Writes a serialized version of the file settings
+    WriteAnimationProperties(String),
+
+    /// Reads the file settings string
+    ReadAnimationProperties,
+
     /// Appends a serialized edit to the edit log
     WriteEdit(String),
 
@@ -36,6 +42,12 @@ pub enum StorageCommand {
     /// Adds a new layer with the specified ID to the storage
     AddLayer(usize),
 
+    /// Sets the properties for a particular layer
+    WriteLayerProperties(usize, String),
+
+    /// Reads the properties for a layer
+    ReadLayerProperties(usize),
+
     /// Deletes the layer with a specified ID
     DeleteLayer(usize),
 
@@ -65,6 +77,12 @@ pub enum StorageResponse {
 
     /// The requested item could not be found
     NotFound,
+
+    /// The serialized version of the file properites
+    AnimationProperties(String),
+
+    /// The serialized version of the layer properties
+    LayerPropeties(usize, String),
 
     /// The highest unused element ID (0 if there are no elements stored yet)
     HighestUnusedElementId(usize),
