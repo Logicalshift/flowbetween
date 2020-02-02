@@ -3,6 +3,7 @@
 //!
 
 mod stream_animation;
+#[cfg(test)] mod tests;
 
 use self::stream_animation::*;
 use super::storage_api::*;
