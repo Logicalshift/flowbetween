@@ -51,6 +51,9 @@ pub enum StorageCommand {
     /// Deletes the layer with a specified ID
     DeleteLayer(usize),
 
+    /// Sets the order in which a layer appears
+    OrderLayer(usize, usize),
+
     /// Adds a key frame to a layer
     AddKeyFrame(usize, Duration),
 

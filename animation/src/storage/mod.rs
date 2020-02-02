@@ -18,6 +18,8 @@
 //! relatively simple
 //!
 
+mod file_properties;
+mod layer_properties;
 mod storage_api;
 mod editor;
 
