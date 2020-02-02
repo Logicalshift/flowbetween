@@ -160,14 +160,14 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
     /// Retrieves the length of this animation
     ///
     fn duration(&self) -> Duration {
-        unimplemented!()
+        self.file_properties().duration
     }
 
     ///
     /// Retrieves the duration of a single frame
     ///
     fn frame_length(&self) -> Duration {
-        unimplemented!()
+        self.file_properties().frame_length
     }
 
     ///

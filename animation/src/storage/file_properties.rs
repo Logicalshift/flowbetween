@@ -17,7 +17,7 @@ pub struct FileProperties {
     pub duration: Duration,
 
     /// The length of a frame in the animation
-    pub frame_duration: Duration
+    pub frame_length: Duration
 }
 
 impl Default for FileProperties {
@@ -27,7 +27,7 @@ impl Default for FileProperties {
             name:           "".to_string(),
             size:           (1920.0, 1080.0),
             duration:       Duration::from_millis(1000 * 60 * 2),
-            frame_duration: Duration::from_micros(1000000 / 30)
+            frame_length:   Duration::from_micros(1000000 / 30)
         }
     }
 }
@@ -44,7 +44,7 @@ impl FileProperties {
         data.write_f64(self.size.0);
         data.write_f64(self.size.1);
         data.write_duration(self.duration);
-        data.write_duration(self.frame_duration);
+        data.write_duration(self.frame_length);
     }
 
     ///
@@ -58,7 +58,7 @@ impl FileProperties {
                 result.name             = data.next_string();
                 result.size             = (data.next_f64(), data.next_f64());
                 result.duration         = data.next_duration();
-                result.frame_duration   = data.next_duration();
+                result.frame_length     = data.next_duration();
 
                 Some(result)
             }
