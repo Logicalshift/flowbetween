@@ -185,10 +185,16 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
     }
 
     ///
-    /// Retrieves the total number of items that have been performed on this animation
+    /// Retrieves the total number of edits that have been performed on this animation
     ///
     fn get_num_edits(&self) -> usize {
-        unimplemented!()
+        let mut response = self.request_sync(vec![StorageCommand::ReadEditLogLength]).unwrap_or_else(|| vec![]);
+
+        match response.pop() {
+            Some(StorageResponse::NumberOfEdits(num_edits)) => num_edits,
+
+            _ => panic!("Unexpected response while reading number of edits")
+        }
     }
 
     ///

@@ -81,6 +81,9 @@ pub enum StorageResponse {
     /// The requested item could not be found
     NotFound,
 
+    /// The number of edits
+    NumberOfEdits(usize),
+
     /// The serialized version of the file properites
     AnimationProperties(String),
 
@@ -89,6 +92,9 @@ pub enum StorageResponse {
 
     /// The highest unused element ID (0 if there are no elements stored yet)
     HighestUnusedElementId(usize),
+
+    /// An edit requested when reading the edit log
+    Edit(usize, String),
 
     /// The serialized version of the element that was requested
     Element(usize, String)
