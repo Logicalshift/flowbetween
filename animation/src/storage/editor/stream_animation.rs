@@ -15,9 +15,9 @@ use std::sync::*;
 use std::ops::{Range};
 use std::time::{Duration};
 
-struct StreamAnimationCore<StorageResponseStream> {
+struct StreamAnimationCore {
     /// Stream where responses to the storage requests are sent
-    storage_responses: StorageResponseStream,
+    storage_responses: BoxStream<'static, Vec<StorageResponse>>,
 
     /// Publisher where we can send requests for storage actions
     storage_requests: Publisher<Vec<StorageCommand>>
@@ -26,9 +26,9 @@ struct StreamAnimationCore<StorageResponseStream> {
 ///
 /// Animation that sends its updates to a storage stream
 ///
-pub struct StreamAnimation<StorageResponseStream: Send+Unpin> {
+pub struct StreamAnimation {
     /// The core, where the actual work is done
-    core: Arc<Desync<StreamAnimationCore<StorageResponseStream>>>,
+    core: Arc<Desync<StreamAnimationCore>>,
 
     /// Available synchronous requests
     idle_sync_requests: Desync<Vec<Desync<Option<Vec<StorageResponse>>>>>,
@@ -37,16 +37,16 @@ pub struct StreamAnimation<StorageResponseStream: Send+Unpin> {
     file_properties: Desync<Option<FileProperties>>
 }
 
-impl<StorageResponseStream> StreamAnimation<StorageResponseStream>
-where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>> {
+impl StreamAnimation {
     ///
     /// Creates a new stream animation. The result is the animation implementation and the
     /// stream of requests to be sent to the storage layer
     ///
-    pub fn new(storage_responses: StorageResponseStream) -> (StreamAnimation<StorageResponseStream>, impl Stream<Item=Vec<StorageCommand>>+Unpin) {
+    pub fn new<ConnectStream: FnOnce(BoxStream<'static, Vec<StorageCommand>>) -> BoxStream<'static, Vec<StorageResponse>>>(connect_stream: ConnectStream) -> StreamAnimation {
         // Create the storage requests. When the storage layer is running behind, we'll buffer up to 10 of these
-        let mut requests    = Publisher::new(10);
-        let commands        = requests.subscribe();
+        let mut requests        = Publisher::new(10);
+        let commands            = requests.subscribe().boxed();
+        let storage_responses   = connect_stream(commands);
 
         // The core is used to actually execute the requests
         let core            = StreamAnimationCore {
@@ -55,14 +55,11 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
         };
 
         // Build the animation
-        let animation       = StreamAnimation {
+        StreamAnimation {
             core:               Arc::new(Desync::new(core)),
             idle_sync_requests: Desync::new(vec![]),
             file_properties:    Desync::new(None)
-        };
-
-        // Result is the animation and the command stream
-        (animation, commands)
+        }
     }
 
     ///
@@ -163,8 +160,7 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
     }
 }
 
-impl<StorageResponseStream> Animation for StreamAnimation<StorageResponseStream>
-where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>> {
+impl Animation for StreamAnimation {
     ///
     /// Retrieves the frame size of this animation
     ///
@@ -286,8 +282,7 @@ where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>
     }
 }
 
-impl<StorageResponseStream> EditableAnimation for StreamAnimation<StorageResponseStream>
-where StorageResponseStream: 'static+Send+Unpin+Stream<Item=Vec<StorageResponse>> {
+impl EditableAnimation for StreamAnimation {
     ///
     /// Retrieves a sink that can be used to send edits for this animation
     ///
