@@ -20,7 +20,7 @@ struct StreamAnimationCore {
     storage_responses: BoxStream<'static, Vec<StorageResponse>>,
 
     /// Publisher where we can send requests for storage actions
-    storage_requests: Publisher<Vec<StorageCommand>>
+    storage_requests: Publisher<Vec<StorageCommand>>,
 }
 
 ///
@@ -29,6 +29,9 @@ struct StreamAnimationCore {
 pub struct StreamAnimation {
     /// The core, where the actual work is done
     core: Arc<Desync<StreamAnimationCore>>,
+
+    /// The publisher for the edits to this animation
+    edit_publisher: Publisher<Arc<Vec<AnimationEdit>>>,
 
     /// Available synchronous requests
     idle_sync_requests: Desync<Vec<Desync<Option<Vec<StorageResponse>>>>>,
@@ -47,18 +50,28 @@ impl StreamAnimation {
         let mut requests        = Publisher::new(10);
         let commands            = requests.subscribe().boxed();
         let storage_responses   = connect_stream(commands);
+        let mut edit_publisher  = Publisher::new(10);
 
         // The core is used to actually execute the requests
         let core            = StreamAnimationCore {
             storage_responses:  storage_responses,
             storage_requests:   requests
         };
+        let core            = Arc::new(Desync::new(core));
+
+        // Anything published to the editor is piped into the core
+        pipe_in(Arc::clone(&core), edit_publisher.subscribe(), |core, edits| {
+            async move {
+                core.perform_edits(edits).await;
+            }.boxed()
+        });
 
         // Build the animation
         StreamAnimation {
-            core:               Arc::new(Desync::new(core)),
+            core:               core,
             idle_sync_requests: Desync::new(vec![]),
-            file_properties:    Desync::new(None)
+            file_properties:    Desync::new(None),
+            edit_publisher:     edit_publisher
         }
     }
 
@@ -290,7 +303,7 @@ impl EditableAnimation for StreamAnimation {
     /// a set of related edits are performed atomically
     ///
     fn edit(&self) -> Publisher<Arc<Vec<AnimationEdit>>> {
-        unimplemented!()
+        self.edit_publisher.republish()
     }
 
     ///
@@ -299,6 +312,41 @@ impl EditableAnimation for StreamAnimation {
     /// (Note that these are not always published to the publisher)
     ///
     fn perform_edits(&self, edits: Vec<AnimationEdit>) {
-        unimplemented!()
+        // Get a publisher to send the edits to (this editor does send its edits to the publisher)
+        let mut publisher = self.edit_publisher.republish();
+
+        // Get an idle sync request desync
+        //   We use desync instead of the futures executor as the executor will panic if we are called from within another future
+        //   (desync provides a way around this problem)
+        let sync_request = self.idle_sync_requests.sync(|reqs| {
+            let next_request = reqs.pop();
+            if let Some(next_request) = next_request {
+                next_request
+            } else {
+                let req = Desync::new(None);
+                req
+            }
+        });
+
+        // Queue a request
+        let _ = sync_request.future(move |_| {
+            async move {
+                publisher.publish(Arc::new(edits)).await
+            }.boxed()
+        });
+
+        // Return the sync_request to the pool
+        self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
+    }
+}
+
+impl StreamAnimationCore {
+    ///
+    /// Performs a set of edits on the core
+    ///
+    pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=()> {
+        async move {
+            // TODO
+        }
     }
 }
