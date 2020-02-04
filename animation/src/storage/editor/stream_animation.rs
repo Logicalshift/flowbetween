@@ -1,3 +1,4 @@
+use super::core::*;
 use super::super::storage_api::*;
 use super::super::file_properties::*;
 use super::super::layer_properties::*;
@@ -14,14 +15,6 @@ use futures::stream::{BoxStream};
 use std::sync::*;
 use std::ops::{Range};
 use std::time::{Duration};
-
-struct StreamAnimationCore {
-    /// Stream where responses to the storage requests are sent
-    storage_responses: BoxStream<'static, Vec<StorageResponse>>,
-
-    /// Publisher where we can send requests for storage actions
-    storage_requests: Publisher<Vec<StorageCommand>>,
-}
 
 ///
 /// Animation that sends its updates to a storage stream
@@ -337,16 +330,5 @@ impl EditableAnimation for StreamAnimation {
 
         // Return the sync_request to the pool
         self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
-    }
-}
-
-impl StreamAnimationCore {
-    ///
-    /// Performs a set of edits on the core
-    ///
-    pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=()> {
-        async move {
-            // TODO
-        }
     }
 }

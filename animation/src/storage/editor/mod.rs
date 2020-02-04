@@ -2,7 +2,9 @@
 //! The editor provides the EditableAnimation interface for anything that implements the storage API
 //!
 
+mod core;
 mod stream_animation;
+
 #[cfg(test)] mod tests;
 
 use self::stream_animation::*;
