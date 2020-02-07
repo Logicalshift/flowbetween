@@ -39,7 +39,7 @@ pub enum LayerEdit {
 
     /// Sets this layer so that it is at a particular index in the ordering (moving the existing layers out of the way)
     ///
-    /// If the ordering is greater than the number of layers,
+    /// If the ordering is greater than the number of layers, the layer is moved to the top
     SetOrdering(u32)
 }
 

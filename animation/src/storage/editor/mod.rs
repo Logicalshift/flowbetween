@@ -4,6 +4,7 @@
 
 mod core;
 mod stream_animation;
+mod element_wrapper;
 
 #[cfg(test)] mod tests;
 
