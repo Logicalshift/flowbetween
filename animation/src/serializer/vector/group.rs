@@ -133,7 +133,7 @@ mod test {
 
         let decoded     = GroupElement::deserialize(ElementId::Assigned(5), &mut encoded.chars());
         let decoded     = decoded.unwrap();
-        let decoded     = decoded.resolve(&|element_id| {
+        let decoded     = decoded.resolve(&mut |element_id| {
             match element_id {
                 ElementId::Assigned(1)  => Some(element1.clone()),
                 ElementId::Assigned(2)  => Some(element2.clone()),

@@ -6,7 +6,7 @@ use super::super::super::traits::*;
 use std::str::{Chars};
 
 // Function to turn a resolve function into a boxed resolve function (to get around limitations in Rust's type inference)
-fn box_fn<TFn: 'static+FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&dyn Fn(ElementId) -> Option<Vector>) -> Option<Vector>> {
+fn box_fn<TFn: 'static+FnOnce(&mut dyn FnMut(ElementId) -> Option<Vector>) -> Option<Vector>>(func: TFn) -> Box<dyn FnOnce(&mut dyn FnMut(ElementId) -> Option<Vector>) -> Option<Vector>> {
     Box::new(func)
 }
 
