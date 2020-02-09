@@ -100,5 +100,5 @@ pub enum StorageResponse {
     KeyFrame(Duration, Duration),
 
     /// The serialized version of the element that was requested
-    Element(usize, String)
+    Element(i64, String)
 }

@@ -27,6 +27,7 @@ impl Vector {
             Path(path)                  => { data.write_chr('p'); path.serialize(data); }
             Motion(motion)              => { data.write_chr('m'); motion.serialize(data); }
             Group(group)                => { data.write_chr('g'); group.serialize(data); }
+            Error                       => { data.write_chr('?'); }
         }
     }
 
@@ -70,6 +71,11 @@ impl Vector {
                 Some(box_fn(move |mapper| {
                     let group = group_resolver.resolve(mapper)?;
                     Some(Vector::Group(group))
+                }))
+            }
+            '?' => {
+                Some(box_fn(move |_mapper| {
+                    Some(Vector::Error)
                 }))
             }
 

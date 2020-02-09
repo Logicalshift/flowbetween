@@ -3,6 +3,7 @@
 //!
 
 mod core;
+mod keyframe_core;
 mod stream_animation;
 mod element_wrapper;
 

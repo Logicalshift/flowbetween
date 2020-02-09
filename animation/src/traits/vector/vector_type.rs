@@ -21,7 +21,10 @@ pub enum VectorType {
     Motion,
 
     /// Group of other vector elements
-    Group
+    Group,
+
+    /// Element that exists but could not be loaded
+    Error
 }
 
 impl From<&Vector> for VectorType {
@@ -35,7 +38,8 @@ impl From<&Vector> for VectorType {
             BrushStroke(_)                  => VectorType::BrushStroke,
             Path(_)                         => VectorType::Path,
             Motion(_)                       => VectorType::Motion,
-            Group(_)                        => VectorType::Group
+            Group(_)                        => VectorType::Group,
+            Error                           => VectorType::Error
         }
     }
 }

@@ -2,6 +2,7 @@ use super::element::*;
 use super::path_element::*;
 use super::brush_element::*;
 use super::group_element::*;
+use super::error_element::*;
 use super::motion_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
@@ -34,7 +35,10 @@ pub enum Vector {
     Motion(MotionElement),
 
     /// Element describing a group (with optional cache and path combining operation)
-    Group(GroupElement)
+    Group(GroupElement),
+
+    /// Element exists but could not be loaded from the file
+    Error
 }
 
 impl Vector {
@@ -103,7 +107,8 @@ impl Deref for Vector {
 
             Path(elem)                      => elem,
             Motion(elem)                    => elem,
-            Group(elem)                     => elem
+            Group(elem)                     => elem,
+            Error                           => &*ERROR_ELEMENT
         }
     }
 }
