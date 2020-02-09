@@ -64,8 +64,6 @@ impl InMemoryStorageCore {
                 WriteElement(element_id, value)                     => { }
                 ReadElement(element_id)                             => { }
                 DeleteElement(element_id)                           => { }
-                AttachElementToElement(target_id, attachment_id)    => { }
-                DetachElementFromElement(target_id, attachment_id)  => { }
                 AddLayer(layer_id)                                  => { }
                 WriteLayerProperties(layer_id, properties)          => { }
                 ReadLayerProperties(layer_id)                       => { }
@@ -73,6 +71,7 @@ impl InMemoryStorageCore {
                 OrderLayer(layer_id, ordering)                      => { }
                 AddKeyFrame(layer_id, when)                         => { }
                 DeleteKeyFrame(layer_id, when)                      => { }
+                ReadKeyFrames(layer_id, period)                     => { }
                 AttachElementToLayer(layer_id, element_id, when)    => { }
                 DetachElementFromLayer(element_id)                  => { }
                 ReadElementsForKeyFrame(layer_id, when)             => { }
