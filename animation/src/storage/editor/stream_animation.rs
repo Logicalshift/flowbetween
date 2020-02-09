@@ -48,7 +48,8 @@ impl StreamAnimation {
         // The core is used to actually execute the requests
         let core            = StreamAnimationCore {
             storage_responses:  storage_responses,
-            storage_requests:   requests
+            storage_requests:   requests,
+            next_element_id:    None
         };
         let core            = Arc::new(Desync::new(core));
 

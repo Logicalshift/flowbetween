@@ -8,6 +8,7 @@ use futures::prelude::*;
 use futures::stream::{BoxStream};
 
 use std::sync::*;
+use std::time::{Duration};
 
 pub (super) struct StreamAnimationCore {
     /// Stream where responses to the storage requests are sent
@@ -15,6 +16,9 @@ pub (super) struct StreamAnimationCore {
 
     /// Publisher where we can send requests for storage actions
     pub (super) storage_requests: Publisher<Vec<StorageCommand>>,
+
+    /// The next element ID to assign (None if we haven't retrieved the element ID yet)
+    pub (super) next_element_id: Option<i64>    
 }
 
 impl StreamAnimationCore {
@@ -39,14 +43,104 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Ensures that an element ID has an assigned value
+    ///
+    pub fn assign_element_id<'a>(&'a mut self, element_id: ElementId) -> impl 'a+Future<Output=ElementId> {
+        async move {
+            if let ElementId::Assigned(_) = element_id {
+                // Nothing to do if the element ID is already assigned
+                element_id
+            } else {
+                let next_element_id = if let Some(element_id) = self.next_element_id.as_mut() {
+                    // Add one to the existing ID
+                    let next_id = *element_id;
+                    *element_id += 1;
+
+                    next_id
+                } else {
+                    // Fetch the element ID from the storage
+                    let next_id = match self.request_one(StorageCommand::ReadHighestUnusedElementId).await {
+                        Some(StorageResponse::HighestUnusedElementId(next_id))  => next_id,
+                        _                                                       => { return ElementId::Unassigned; }
+                    };
+
+                    // Next ID to return is the one after this
+                    self.next_element_id = Some(next_id+1);
+
+                    // Use this ID
+                    next_id
+                };
+
+                // Assign the element to the next available ID
+                ElementId::Assigned(next_element_id)
+            }
+        }
+    }
+
+    ///
+    /// Updates any edit log entries so they don't use an unassigned element ID
+    /// 
+    /// (We want to do this before writing to the log so that IDs will be consistent over time)
+    ///
+    pub fn assign_element_id_to_edit_log<'a>(&'a mut self, edit: &'a AnimationEdit) -> impl 'a+Future<Output=AnimationEdit> {
+        async move {
+            use self::AnimationEdit::*;
+            use self::LayerEdit::*;
+            use self::PaintEdit::*;
+
+            match edit {
+                Layer(layer_id, Paint(when, BrushProperties(element, props))) =>
+                    Layer(*layer_id, Paint(*when, BrushProperties(self.assign_element_id(*element).await, props.clone()))),
+
+                Layer(layer_id, Paint(when, SelectBrush(element, defn, drawing_style))) =>
+                    Layer(*layer_id, Paint(*when, SelectBrush(self.assign_element_id(*element).await, defn.clone(), *drawing_style))),
+
+                Layer(layer_id, Paint(when, BrushStroke(element, points))) =>
+                    Layer(*layer_id, Paint(*when, BrushStroke(self.assign_element_id(*element).await, points.clone()))),
+
+                Layer(layer_id, Path(when, PathEdit::CreatePath(element, points))) =>
+                    Layer(*layer_id, Path(*when, PathEdit::CreatePath(self.assign_element_id(*element).await, points.clone()))),
+
+                Layer(layer_id, Path(when, PathEdit::SelectBrush(element, definition, style))) =>
+                    Layer(*layer_id, Path(*when, PathEdit::SelectBrush(self.assign_element_id(*element).await, definition.clone(), *style))),
+
+                Layer(layer_id, Path(when, PathEdit::BrushProperties(element, properties))) =>
+                    Layer(*layer_id, Path(*when, PathEdit::BrushProperties(self.assign_element_id(*element).await, properties.clone()))),
+
+                other => other.clone()
+            }
+        }
+    }
+
+    ///
     /// Performs a set of edits on the core
     ///
     pub fn perform_edits<'a>(&'a mut self, edits: Arc<Vec<AnimationEdit>>) -> impl 'a+Future<Output=()> {
         async move {
+            // Assign IDs to the edits
+            let mut mapped_edits    = Vec::with_capacity(edits.len());
+            for edit in edits.iter() {
+                mapped_edits.push(self.assign_element_id_to_edit_log(edit).await);
+            }
+            let edits               = mapped_edits;
+
+            // Send the edits to the edit log by serializing them
+            let edit_log = edits.iter()
+                .map(|edit| {
+                    let mut serialized = String::new();
+                    edit.serialize(&mut serialized);
+                    serialized
+                })
+                .map(|edit| StorageCommand::WriteEdit(edit))
+                .collect();
+
+            self.request(edit_log).await;
+
             // Process the edits in the order that they arrive
             for edit in edits.iter() {
                 use self::AnimationEdit::*;
 
+                // Edit the elements
                 match edit {
                     Layer(layer_id, layer_edit)             => { self.layer_edit(*layer_id, layer_edit).await; }
                     Element(element_ids, element_edit)      => { self.element_edit(element_ids, element_edit).await; }
@@ -86,25 +180,96 @@ impl StreamAnimationCore {
     ///
     /// Performs a layer edit on this animation
     ///
-    pub fn layer_edit<'a>(&'a mut self, layer_id: u64, layer_edit: &LayerEdit) -> impl 'a+Future<Output=()> {
-        async move {
+    pub fn layer_edit<'a>(&'a mut self, layer_id: u64, layer_edit: &'a LayerEdit) -> impl 'a+Future<Output=()> {
+        use self::LayerEdit::*;
 
+        async move {
+            match layer_edit {
+                Paint(when, paint_edit)     => { self.paint_edit(layer_id, *when, paint_edit).await }
+                Path(when, path_edit)       => { self.path_edit(layer_id, *when, path_edit).await }
+                AddKeyFrame(when)           => { self.add_key_frame(layer_id, *when).await }
+                RemoveKeyFrame(when)        => { self.remove_key_frame(layer_id, *when).await }
+                SetName(new_name)           => { self.set_layer_name(layer_id, new_name).await }
+                SetOrdering(ordering)       => { self.set_layer_ordering(layer_id, *ordering).await }
+            }
         }
+    }
+
+    ///
+    /// Performs a paint edit on a layer
+    ///
+    pub fn paint_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PaintEdit) -> impl 'a+Future<Output=()> { 
+        async move { 
+            use self::PaintEdit::*;
+
+            match edit {
+                SelectBrush(element, defn, style)       => {
+
+                }
+
+                BrushProperties(element, properties)    => {
+
+                }
+
+                BrushStroke(element, points)            => {
+
+                }
+            }
+        }
+    }
+
+    ///
+    /// Performs a path edit on a layer
+    ///
+    pub fn path_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PathEdit) -> impl 'a+Future<Output=()> {
+        async move { 
+        } 
+    }
+
+    ///
+    /// Adds a key frame to a layer
+    ///
+    pub fn add_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
+        async move {
+        } 
+    }
+
+    ///
+    /// Removes a key frame from a layer
+    ///
+    pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
+        async move {
+        } 
+    }
+
+    ///
+    /// Sets the name of a layer
+    ///
+    pub fn set_layer_name<'a>(&'a mut self, layer_id: u64, name: &str) -> impl 'a+Future<Output=()> { 
+        async move { 
+        } 
+    }
+
+    ///
+    /// Sets the order of a layer (which is effectively the ID of the layer this layer should appear behind)
+    ///
+    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, ordering: u32) -> impl 'a+Future<Output=()> {
+        async move { 
+        } 
     }
 
     ///
     /// Performs an element edit on this animation
     ///
-    pub fn element_edit<'a>(&'a mut self, element_ids: &Vec<ElementId>, layer_edit: &ElementEdit) -> impl 'a+Future<Output=()> {
+    pub fn element_edit<'a>(&'a mut self, element_ids: &Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Future<Output=()> {
         async move {
-
         }
     }
 
     ///
     /// Performs a motion edit on this animation
     ///
-    pub fn motion_edit<'a>(&'a mut self, motion_id: ElementId, motion_edit: &MotionEdit) -> impl 'a+Future<Output=()> {
+    pub fn motion_edit<'a>(&'a mut self, motion_id: ElementId, motion_edit: &'a MotionEdit) -> impl 'a+Future<Output=()> {
         async move {
 
         }

@@ -25,19 +25,19 @@ pub enum StorageCommand {
     ReadEdits(Range<usize>),
 
     /// Writes the serialized value of an element
-    WriteElement(usize, String),
+    WriteElement(i64, String),
 
     /// Reads the previously serialized value of an element
-    ReadElement(usize),
+    ReadElement(i64),
 
     /// Removes an element from the storage
-    DeleteElement(usize),
+    DeleteElement(i64),
 
     /// Attaches the second element to the first
-    AttachElementToElement(usize, usize),
+    AttachElementToElement(i64, i64),
 
     /// Reverses the effects of attach element
-    DetachElementFromElement(usize, usize),
+    DetachElementFromElement(i64, i64),
 
     /// Adds a new layer with the specified ID to the storage
     AddLayer(usize),
@@ -61,7 +61,7 @@ pub enum StorageCommand {
     DeleteKeyFrame(usize, Duration),
 
     /// Given a layer ID and an element ID, sets where a particular element appears in that layer
-    AttachElementToLayer(usize, usize, Duration),
+    AttachElementToLayer(usize, i64, Duration),
 
     /// Removes an element from a layer
     DetachElementFromLayer(usize),
@@ -91,7 +91,7 @@ pub enum StorageResponse {
     LayerPropeties(usize, String),
 
     /// The highest unused element ID (0 if there are no elements stored yet)
-    HighestUnusedElementId(usize),
+    HighestUnusedElementId(i64),
 
     /// An edit requested when reading the edit log
     Edit(usize, String),
