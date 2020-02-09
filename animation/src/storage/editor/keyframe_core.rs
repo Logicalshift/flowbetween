@@ -1,18 +1,13 @@
 use super::core::*;
 use super::element_wrapper::*;
 use super::super::storage_api::*;
-use super::super::file_properties::*;
 use super::super::super::traits::*;
 use super::super::super::serializer::*;
 
-use flo_stream::*;
-
 use futures::prelude::*;
-use futures::stream::{BoxStream};
 
-use std::sync::*;
 use std::time::{Duration};
-use std::collections::{HashMap};
+use std::collections::{HashSet, HashMap};
 
 ///
 /// The keyframe core represents the elements in a keyframe in a particular layer
@@ -34,20 +29,46 @@ pub (super) struct KeyFrameCore {
     end: Duration
 }
 
+///
+/// Resolves an element from a partially resolved list of elements
+///
+fn resolve_element<'a, Resolver>(unresolved: &mut HashMap<ElementId, Option<Resolver>>, resolved: &'a mut HashMap<ElementId, ElementWrapper>, element_id: ElementId) -> Option<ElementWrapper> 
+where Resolver: ResolveElements<ElementWrapper> {
+    if let Some(resolved_element) = resolved.get(&element_id) {
+        // Already resolved
+        Some(resolved_element.clone())
+    } else if let Some(Some(unresolved_element)) = unresolved.remove(&element_id) {
+        // Exists but is not yet resolved (need to resolve recursively)
+        let resolved_element = unresolved_element.resolve(&mut |element_id| { 
+            resolve_element(unresolved, resolved, element_id)
+                .map(|resolved| resolved.element.clone())
+            });
+
+        if let Some(resolved_element) = resolved_element {
+            // Resolved the element: add to the resolved list, and return a reference
+            resolved.insert(element_id, resolved_element);
+            resolved.get(&element_id).cloned()
+        } else {
+            // Failed to resolve this element
+            resolved.insert(element_id, ElementWrapper::error());
+            resolved.get(&element_id).cloned()
+        }
+    } else {
+        // Not found
+        None
+    }
+}
+
 impl KeyFrameCore {
     ///
     /// Generates a keyframe by querying the animation core
     ///
-    pub fn from_keyframe<'a>(core: &'a mut StreamAnimationCore, layer_id: usize, frame: Duration) -> impl 'a+Future<Output=KeyFrameCore> {
+    pub fn from_keyframe<'a>(core: &'a mut StreamAnimationCore, layer_id: usize, frame: Duration) -> impl 'a+Future<Output=Option<KeyFrameCore>> {
         async move {
             // Request the keyframe from the core
             let responses = core.request(vec![StorageCommand::ReadElementsForKeyFrame(layer_id, frame)]).await.unwrap_or_else(|| vec![]);
 
             // Deserialize the elements for the keyframe
-            enum ElementSlot<T> {
-                Unresolved(T),
-                Resolved(ElementWrapper)
-            }
             let mut element_ids = vec![];
             let mut elements    = HashMap::new();
             let mut start_time  = frame;
@@ -57,6 +78,7 @@ impl KeyFrameCore {
                 use self::StorageResponse::*;
 
                 match response {
+                    NotFound                            => { return None; }
                     KeyFrame(start, end)                => { start_time = start; end_time = end; }
                     Element(element_id, serialized)     => {
                         // Add the element to the list we know about for this keyframe
@@ -74,33 +96,85 @@ impl KeyFrameCore {
             // Attempt to resolve the elements (missing elements will be changed to error elements)
             let mut resolved = HashMap::<ElementId, ElementWrapper>::new();
 
-            for element_id in element_ids {
-                if let Some(resolver) = elements.remove(&element_id) {
+            for element_id in element_ids.iter() {
+                if let Some(resolver) = elements.remove(element_id) {
                     // Element needs to be resolved
                     if let Some(resolver) = resolver {
                         // Attempt to resolve this element using the others that are attached to this keyframe
                         let resolved_element = resolver.resolve(&mut |element_id| {
-                            if let Some(element) = resolved.get(&element_id) {
-                                // Already resolved
-                                Some(element.element.clone())
-                            } else if let Some(unresolved) = elements.remove(&element_id) {
-                                // Exists but is not yet resolved (need to resolve recursively)
-                                unimplemented!()
-                            } else {
-                                // Not found
-                                unimplemented!()
-                            }
+                            resolve_element(&mut elements, &mut resolved, element_id)
+                                .map(|resolved| resolved.element.clone())
                         });
+
+                        // Store the resolved element
+                        if let Some(resolved_element) = resolved_element {
+                            resolved.insert(*element_id, resolved_element);
+                        }
                     } else {
                         // Element cannot be resolved
-                        resolved.insert(element_id, ElementWrapper::error());
+                        resolved.insert(*element_id, ElementWrapper::error());
                     }
                 } else {
-                    // Already resolved this element
+                    // Already resolved this element so there's nothing more to do
+                }
+            }
+            
+            // The initial element is the first element we can find with no parent and not ordered after any element
+            // There may be more than one of these: we pick the first in the order that the elements are found
+            let mut initial_element = None;
+
+            for element_id in element_ids.iter() {
+                if let Some(element_wrapper) = resolved.get(element_id) {
+                    if element_wrapper.parent.is_none() && element_wrapper.order_after.is_none() {
+                        initial_element = Some(*element_id);
+                        break;
+                    }
                 }
             }
 
-            unimplemented!()
+            // The final element is found by following the links of 'after' elements from the 'before' element
+            let last_element = if let Some(initial_element) = initial_element {
+                // Hash set to prevent a bad file from causing us to ente an infinite loop
+                let mut visited         = HashSet::new();
+                let mut last_element    = initial_element;
+
+                loop {
+                    // Stop if we've already seen this element
+                    if visited.contains(&last_element) {
+                        break;
+                    }
+                    visited.insert(last_element);
+
+                    // Look up the last element
+                    if let Some(element) = resolved.get(&last_element) {
+                        // See if it's ordered before another element
+                        if let Some(next_element) = element.order_before {
+                            // The current 'last' element is ordered before next_element: it becomes the next candidate 'last element'
+                            last_element = next_element;
+                        } else {
+                            // There is no element following this one
+                            break;
+                        }
+                    } else {
+                        // Element was not found (treat it as the last element)
+                        break;
+                    }
+                }
+
+                Some(last_element)
+            } else {
+                // No initial element means no last element
+                None
+            };
+
+            // Create the keyframe
+            Some(KeyFrameCore {
+                elements:           resolved,
+                initial_element:    initial_element,
+                last_element:       last_element,
+                start:              start_time,
+                end:                end_time
+            })
         }
     }
 }
