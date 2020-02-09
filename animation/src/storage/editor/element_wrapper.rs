@@ -27,6 +27,19 @@ pub struct ElementWrapper {
 
 impl ElementWrapper {
     ///
+    /// Creates an 'error' element wrapper
+    ///
+    pub fn error() -> ElementWrapper {
+        ElementWrapper {
+            element:        Vector::Error,
+            start_time:     Duration::from_micros(0),
+            attachments:    vec![],
+            order_before:   None,
+            order_after:    None
+        }
+    }
+
+    ///
     /// Writes this element to a data target
     ///
     pub fn serialize<Tgt: AnimationDataTarget>(&self, data: &mut Tgt) {

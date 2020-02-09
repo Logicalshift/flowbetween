@@ -47,7 +47,7 @@ impl KeyFrameCore {
                 Unresolved(T),
                 Resolved(ElementWrapper)
             }
-            //let mut unresolved  = HashMap::new();
+            let mut elements    = HashMap::new();
             let mut start_time  = frame;
             let mut end_time    = frame;
 
@@ -56,7 +56,13 @@ impl KeyFrameCore {
 
                 match response {
                     KeyFrame(start, end)                => { start_time = start; end_time = end; }
-                    Element(element_id, serialized)     => { }
+                    Element(element_id, serialized)     => {
+                        // Add the element to the list we know about for this keyframe
+                        let element_id  = ElementId::Assigned(element_id);
+                        let element     = ElementWrapper::deserialize(element_id, &mut serialized.chars());
+
+                        elements.insert(element_id, ElementSlot::Unresolved(element));
+                    }
 
                     _                                   => { }
                 }
