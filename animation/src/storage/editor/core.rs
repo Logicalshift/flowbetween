@@ -268,7 +268,13 @@ impl StreamAnimationCore {
 
                 BrushStroke(element_id, points)         => {
                     // Create a brush stroke element, using the current brush for the layer
-                    unimplemented!()
+                    let active_brush    = current_keyframe.future(|keyframe| async move { keyframe.get_active_brush() }.boxed()).await.unwrap();
+                    let points          = active_brush.brush_points_for_raw_points(points);
+                    let brush_element   = BrushElement::new(*element_id, Arc::new(points));
+                    let element         = Vector::BrushStroke(brush_element);
+                    let element_id      = element_id.id().unwrap_or(0);
+
+                    (element_id, element)
                 }
             };
 
@@ -299,8 +305,8 @@ impl StreamAnimationCore {
     /// Performs a path edit on a layer
     ///
     pub fn path_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PathEdit) -> impl 'a+Future<Output=()> {
-        async move { 
-        } 
+        async move {
+        }
     }
 
     ///
