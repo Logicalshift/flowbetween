@@ -31,7 +31,10 @@ pub (super) struct KeyFrameCore {
     pub (super) start: Duration,
 
     /// The end time of this keyframe
-    pub (super) end: Duration
+    pub (super) end: Duration,
+
+    /// The brush that's active on the last_element, or none if this has not been calculated yet
+    pub (super) active_brush: Option<Arc<dyn Brush>>
 }
 
 ///
@@ -179,8 +182,90 @@ impl KeyFrameCore {
                 initial_element:    initial_element,
                 last_element:       last_element,
                 start:              start_time,
-                end:                end_time
+                end:                end_time,
+                active_brush:       None
             })
+        }
+    }
+
+    ///
+    /// Retrieves the currently active brush for this keyframe
+    ///
+    pub fn get_active_brush(&mut self) -> Arc<dyn Brush> {
+        if let Some(ref brush) = self.active_brush {
+            // Return the cached brush
+            return Arc::clone(brush);
+        }
+
+        // Calculate a new active brush
+        let elements            = self.elements.lock().unwrap();
+        let mut properties      = Arc::new(VectorProperties::default());
+        let mut next_element    = self.initial_element;
+
+        while let Some(element_id) = next_element {
+            if let Some(element) = elements.get(&element_id) {
+                properties      = element.element.update_properties(properties);
+                next_element    = element.order_before;
+            } else {
+                break;
+            }
+        }
+
+        let active_brush        = Arc::clone(&properties.brush);
+        self.active_brush       = Some(Arc::clone(&active_brush));
+
+        active_brush
+    }
+
+    ///
+    /// Adds an element to the end of this keyframe (as the new last element)
+    /// 
+    /// Returns the list of storage commands required to update the storage with the new element
+    ///
+    pub fn add_element_to_end(&mut self, new_element_id: ElementId, mut new_element: ElementWrapper) -> Vec<StorageCommand> {
+        let last_element        = self.last_element;
+        let new_id              = new_element_id.id().unwrap_or(0);
+
+        new_element.order_after = last_element;
+
+        // Some elements cause other effects to the status of the keyframe
+        match new_element.element {
+            Vector::BrushProperties(_) | Vector::BrushDefinition(_) => { self.active_brush = None; }
+
+            _ => { }
+        }
+
+        // Serialize it
+        let mut serialized  = String::new();
+        new_element.serialize(&mut serialized);
+
+        // Add to the current keyframe as the new last element
+        let mut keyframe_elements = self.elements.lock().unwrap();
+        keyframe_elements.insert(ElementId::Assigned(new_id), new_element.clone());
+
+        let previous_element = last_element.and_then(|last_element| keyframe_elements.get_mut(&last_element));
+        let previous_element = if let Some(previous_element) = previous_element {
+            previous_element.order_before = Some(ElementId::Assigned(new_id));
+            Some(previous_element.clone())
+        } else {
+            None
+        };
+
+        // Update the last element
+        self.last_element = Some(ElementId::Assigned(new_id));
+        
+        // Generate the storage commands
+        if let Some(previous_element) = previous_element {
+            // Need to update the previous element as well as the current one
+            let previous_element_id             = last_element.and_then(|elem| elem.id()).unwrap_or(0);
+            let mut previous_elem_serialized    = String::new();
+            
+            previous_element.serialize(&mut previous_elem_serialized);
+
+            vec![StorageCommand::WriteElement(previous_element_id, previous_elem_serialized), StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
+        } else {
+            // Just creating a new element
+            vec![StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
         }
     }
 }

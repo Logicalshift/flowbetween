@@ -275,8 +275,6 @@ impl StreamAnimationCore {
             // Edit the keyframe
             let storage_updates = current_keyframe.future(move |current_keyframe| {
                 async move {
-                    let last_element = current_keyframe.last_element;
-
                     // Add to a wrapper
                     let wrapper         = ElementWrapper {
                         element:        element,
@@ -284,41 +282,11 @@ impl StreamAnimationCore {
                         attachments:    vec![],
                         parent:         None,
                         order_before:   None,
-                        order_after:    last_element
+                        order_after:    None
                     };
 
-                    // Serialize it
-                    let mut serialized  = String::new();
-                    wrapper.serialize(&mut serialized);
-
-                    // Add to the current keyframe as the new last element
-                    let mut keyframe_elements = current_keyframe.elements.lock().unwrap();
-                    keyframe_elements.insert(ElementId::Assigned(id), wrapper.clone());
-
-                    let previous_element = last_element.and_then(|last_element| keyframe_elements.get_mut(&last_element));
-                    let previous_element = if let Some(previous_element) = previous_element {
-                        previous_element.order_before = Some(ElementId::Assigned(id));
-                        Some(previous_element.clone())
-                    } else {
-                        None
-                    };
-
-                    // Update the last element
-                    current_keyframe.last_element = Some(ElementId::Assigned(id));
-                    
-                    // Generate the storage commands
-                    if let Some(previous_element) = previous_element {
-                        // Need to update the previous element as well as the current one
-                        let previous_element_id             = last_element.and_then(|elem| elem.id()).unwrap_or(0);
-                        let mut previous_elem_serialized    = String::new();
-                        
-                        previous_element.serialize(&mut previous_elem_serialized);
-
-                        vec![StorageCommand::WriteElement(previous_element_id, previous_elem_serialized), StorageCommand::WriteElement(id, serialized)]
-                    } else {
-                        // Just creating a new element
-                        vec![StorageCommand::WriteElement(id, serialized)]
-                    }
+                    // Append to the current keyframe and return the list of storage commands
+                    current_keyframe.add_element_to_end(ElementId::Assigned(id), wrapper)
                 }.boxed()
             }).await;
 
