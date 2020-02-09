@@ -34,37 +34,37 @@ pub enum StorageCommand {
     DeleteElement(i64),
 
     /// Adds a new layer with the specified ID to the storage
-    AddLayer(usize),
+    AddLayer(u64),
 
     /// Sets the properties for a particular layer
-    WriteLayerProperties(usize, String),
+    WriteLayerProperties(u64, String),
 
     /// Reads the properties for a layer
-    ReadLayerProperties(usize),
+    ReadLayerProperties(u64),
 
     /// Deletes the layer with a specified ID
-    DeleteLayer(usize),
+    DeleteLayer(u64),
 
     /// Sets the order in which a layer appears
-    OrderLayer(usize, usize),
+    OrderLayer(u64, u64),
 
     /// Adds a key frame to a layer
-    AddKeyFrame(usize, Duration),
+    AddKeyFrame(u64, Duration),
 
     /// Removes a key frame from a layer
-    DeleteKeyFrame(usize, Duration),
+    DeleteKeyFrame(u64, Duration),
 
     /// Reads the keyframes that appear in a particular time range for a layer
-    ReadKeyFrames(usize, Range<Duration>),
+    ReadKeyFrames(u64, Range<Duration>),
 
     /// Given a layer ID and an element ID, sets where a particular element appears in that layer
-    AttachElementToLayer(usize, i64, Duration),
+    AttachElementToLayer(u64, i64, Duration),
 
     /// Removes an element from a layer
-    DetachElementFromLayer(usize),
+    DetachElementFromLayer(u64),
 
     /// Returns the elements attached to a particular key frame
-    ReadElementsForKeyFrame(usize, Duration)
+    ReadElementsForKeyFrame(u64, Duration)
 }
 
 ///
@@ -88,7 +88,7 @@ pub enum StorageResponse {
     AnimationProperties(String),
 
     /// The serialized version of the layer properties
-    LayerPropeties(usize, String),
+    LayerPropeties(u64, String),
 
     /// The highest unused element ID (0 if there are no elements stored yet)
     HighestUnusedElementId(i64),

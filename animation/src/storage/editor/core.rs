@@ -1,10 +1,13 @@
+use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::super::storage_api::*;
 use super::super::file_properties::*;
 use super::super::super::traits::*;
 
+use ::desync::*;
 use flo_stream::*;
 
+use futures::future;
 use futures::prelude::*;
 use futures::stream::{BoxStream};
 
@@ -19,7 +22,10 @@ pub (super) struct StreamAnimationCore {
     pub (super) storage_requests: Publisher<Vec<StorageCommand>>,
 
     /// The next element ID to assign (None if we haven't retrieved the element ID yet)
-    pub (super) next_element_id: Option<i64>    
+    pub (super) next_element_id: Option<i64>,
+
+    /// The keyframe that is currently being edited, if there is one
+    pub (super) cached_keyframe: Option<Arc<Desync<KeyFrameCore>>>
 }
 
 impl StreamAnimationCore {
@@ -155,6 +161,38 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Loads the keyframe containing the specified moment
+    ///
+    pub fn load_keyframe<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a + Future<Output=Option<KeyFrameCore>> {
+        async move {
+            KeyFrameCore::from_keyframe(self, layer_id, when).await
+        }
+    }
+
+    ///
+    /// Updates the cached keyframe to be at the specific time/layer if it's not already
+    ///
+    pub fn edit_keyframe<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a + Future<Output=Option<Arc<Desync<KeyFrameCore>>>> {
+        async move {
+            // Return the cached keyframe if it matches the layer and time
+            if let Some(keyframe) = self.cached_keyframe.as_ref() {
+                let (layer_id, start, end) = keyframe.future(|keyframe| future::ready((keyframe.layer_id, keyframe.start, keyframe.end)).boxed()).await.unwrap();
+
+                if layer_id == layer_id && start <= when && end > when {
+                    return Some(Arc::clone(keyframe));
+                }
+            }
+
+            // Update the cached keyframe if it doesn't
+            self.cached_keyframe = self.load_keyframe(layer_id, when).await
+                .map(|keyframe| Arc::new(Desync::new(keyframe)));
+            
+            // This is the result of the operation
+            self.cached_keyframe.clone()
+        }
+    }
+
+    ///
     /// Sets the size of the animation
     ///
     pub fn set_size<'a>(&'a mut self, width: f64, height: f64) -> impl 'a+Future<Output=()> {
@@ -203,6 +241,12 @@ impl StreamAnimationCore {
         async move { 
             use self::PaintEdit::*;
 
+            // Ensure that the appropriate keyframe is in the cache. No edit can take place if the
+            let current_keyframe = match self.edit_keyframe(layer_id, when).await {
+                None            => { return; }
+                Some(keyframe)  => keyframe
+            };
+
             let (id, element) = match edit {
                 SelectBrush(element_id, defn, style)    => {
                     // Create a brush definition element
@@ -228,24 +272,34 @@ impl StreamAnimationCore {
                 }
             };
 
-            // Add to a wrapper
-            let wrapper         = ElementWrapper {
-                element:        element,
-                start_time:     when,
-                attachments:    vec![],
-                parent:         None,
-                order_before:   None,
-                order_after:    None
-            };
+            // Edit the keyframe
+            let storage_updates = current_keyframe.future(move |current_keyframe| {
+                async move {
+                    // Add to a wrapper
+                    let wrapper         = ElementWrapper {
+                        element:        element,
+                        start_time:     when,
+                        attachments:    vec![],
+                        parent:         None,
+                        order_before:   None,
+                        order_after:    current_keyframe.last_element.clone()
+                    };
 
-            // TODO: set the standard frame ordering
+                    // TODO: set the standard frame ordering
 
-            // Serialize it
-            let mut serialized  = String::new();
-            wrapper.serialize(&mut serialized);
+                    // Serialize it
+                    let mut serialized  = String::new();
+                    wrapper.serialize(&mut serialized);
+
+                    // TODO: add to the current keyframe as the new last element
+                    
+                    // Generate the storage commands
+                    vec![StorageCommand::WriteElement(id, serialized)]
+                }.boxed()
+            }).await;
 
             // Send to the storage
-            self.request_one(StorageCommand::WriteElement(id, serialized)).await;
+            self.request(storage_updates.unwrap()).await;
         }
     }
 

@@ -6,27 +6,32 @@ use super::super::super::serializer::*;
 
 use futures::prelude::*;
 
+use std::sync::*;
 use std::time::{Duration};
 use std::collections::{HashSet, HashMap};
 
 ///
 /// The keyframe core represents the elements in a keyframe in a particular layer
 ///
+#[derive(Clone)]
 pub (super) struct KeyFrameCore {
+    /// The ID of the layer that this keyframe is for
+    pub (super) layer_id: u64,
+
     /// The elements in this keyframe
-    elements: HashMap<ElementId, ElementWrapper>,
+    elements: Arc<Mutex<HashMap<ElementId, ElementWrapper>>>,
 
     /// The first element in the keyframe
-    initial_element: Option<ElementId>,
+    pub (super) initial_element: Option<ElementId>,
 
     /// The last element in the keyframe
-    last_element: Option<ElementId>,
+    pub (super) last_element: Option<ElementId>,
 
     /// The start time of this keyframe
-    start: Duration,
+    pub (super) start: Duration,
 
     /// The end time of this keyframe
-    end: Duration
+    pub (super) end: Duration
 }
 
 ///
@@ -63,7 +68,7 @@ impl KeyFrameCore {
     ///
     /// Generates a keyframe by querying the animation core
     ///
-    pub fn from_keyframe<'a>(core: &'a mut StreamAnimationCore, layer_id: usize, frame: Duration) -> impl 'a+Future<Output=Option<KeyFrameCore>> {
+    pub fn from_keyframe<'a>(core: &'a mut StreamAnimationCore, layer_id: u64, frame: Duration) -> impl 'a+Future<Output=Option<KeyFrameCore>> {
         async move {
             // Request the keyframe from the core
             let responses = core.request(vec![StorageCommand::ReadElementsForKeyFrame(layer_id, frame)]).await.unwrap_or_else(|| vec![]);
@@ -169,7 +174,8 @@ impl KeyFrameCore {
 
             // Create the keyframe
             Some(KeyFrameCore {
-                elements:           resolved,
+                layer_id:           layer_id,
+                elements:           Arc::new(Mutex::new(resolved)),
                 initial_element:    initial_element,
                 last_element:       last_element,
                 start:              start_time,
