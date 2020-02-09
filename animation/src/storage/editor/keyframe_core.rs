@@ -19,7 +19,7 @@ pub (super) struct KeyFrameCore {
     pub (super) layer_id: u64,
 
     /// The elements in this keyframe
-    elements: Arc<Mutex<HashMap<ElementId, ElementWrapper>>>,
+    pub (super) elements: Arc<Mutex<HashMap<ElementId, ElementWrapper>>>,
 
     /// The first element in the keyframe
     pub (super) initial_element: Option<ElementId>,
