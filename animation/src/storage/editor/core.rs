@@ -1,3 +1,4 @@
+use super::element_wrapper::*;
 use super::super::storage_api::*;
 use super::super::file_properties::*;
 use super::super::super::traits::*;
@@ -202,19 +203,48 @@ impl StreamAnimationCore {
         async move { 
             use self::PaintEdit::*;
 
-            match edit {
-                SelectBrush(element, defn, style)       => {
+            let (id, element) = match edit {
+                SelectBrush(element_id, defn, style)    => {
+                    // Create a brush definition element
+                    let defn            = BrushDefinitionElement::new(*element_id, defn.clone(), *style);
+                    let element         = Vector::BrushDefinition(defn);
+                    let element_id      = element_id.id().unwrap_or(0);
 
+                    (element_id, element)
                 }
 
-                BrushProperties(element, properties)    => {
+                BrushProperties(element_id, properties) => {
+                    // Create a brush properties element
+                    let defn            = BrushPropertiesElement::new(*element_id, properties.clone());
+                    let element         = Vector::BrushProperties(defn);
+                    let element_id      = element_id.id().unwrap_or(0);
 
+                    (element_id, element)
                 }
 
-                BrushStroke(element, points)            => {
-
+                BrushStroke(element_id, points)         => {
+                    // Create a brush stroke element, using the current brush for the layer
+                    unimplemented!()
                 }
-            }
+            };
+
+            // Add to a wrapper
+            let wrapper         = ElementWrapper {
+                element:        element,
+                start_time:     when,
+                attachments:    vec![],
+                order_before:   None,
+                order_after:    None
+            };
+
+            // TODO: set the standard frame ordering
+
+            // Serialize it
+            let mut serialized  = String::new();
+            wrapper.serialize(&mut serialized);
+
+            // Send to the storage
+            self.request_one(StorageCommand::WriteElement(id, serialized)).await;
         }
     }
 
