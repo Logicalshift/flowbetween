@@ -18,6 +18,9 @@ pub struct ElementWrapper {
     /// The elements that are attached to this element
     pub attachments: Vec<ElementId>,
 
+    /// The 'parent' element for this one (eg, if it's part of a group)
+    pub parent: Option<ElementId>,
+
     /// The element that this is ordered before (none = ordered by element ID)
     pub order_before: Option<ElementId>,
 
@@ -34,6 +37,7 @@ impl ElementWrapper {
             element:        Vector::Error,
             start_time:     Duration::from_micros(0),
             attachments:    vec![],
+            parent:         None,
             order_before:   None,
             order_after:    None
         }
@@ -55,7 +59,14 @@ impl ElementWrapper {
         data.write_usize(self.attachments.len());
         self.attachments.iter().for_each(|attachment| attachment.serialize(data));
 
-        // Order before/after
+        // Parent, and order before/after
+        if let Some(parent) = self.parent.as_ref() {
+            data.write_chr('+');
+            parent.serialize(data);
+        } else {
+            data.write_chr('-');
+        }
+
         if let Some(order_before) = self.order_before.as_ref() {
             data.write_chr('+');
             order_before.serialize(data);
@@ -86,6 +97,12 @@ impl ElementWrapper {
                     .map(|_| ElementId::deserialize(data))
                     .collect::<Option<Vec<_>>>()?;
 
+                let parent          = match data.next_chr() {
+                    '+' => { ElementId::deserialize(data).map(|id| Some(id)) }
+                    '-' => { Some(None) }
+                    _   => None
+                }?;
+
                 let order_before    = match data.next_chr() {
                     '+' => { ElementId::deserialize(data).map(|id| Some(id)) }
                     '-' => { Some(None) }
@@ -106,6 +123,7 @@ impl ElementWrapper {
                         element,
                         start_time,
                         attachments,
+                        parent,
                         order_before,
                         order_after
                     })
