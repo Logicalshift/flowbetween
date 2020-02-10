@@ -18,6 +18,9 @@ pub struct ElementWrapper {
     /// The elements that are attached to this element
     pub attachments: Vec<ElementId>,
 
+    /// True if this element is used by the keyframe it's attached to but is not part of the render path
+    pub unattached: bool,
+
     /// The 'parent' element for this one (eg, if it's part of a group)
     pub parent: Option<ElementId>,
 
@@ -37,6 +40,7 @@ impl ElementWrapper {
             element:        Vector::Error,
             start_time:     Duration::from_micros(0),
             attachments:    vec![],
+            unattached:     false,
             parent:         None,
             order_before:   None,
             order_after:    None
@@ -58,6 +62,12 @@ impl ElementWrapper {
         // Attachments, if any
         data.write_usize(self.attachments.len());
         self.attachments.iter().for_each(|attachment| attachment.serialize(data));
+
+        if self.unattached {
+            data.write_chr('U');
+        } else {
+            data.write_chr('A');
+        }
 
         // Parent, and order before/after
         if let Some(parent) = self.parent.as_ref() {
@@ -97,6 +107,8 @@ impl ElementWrapper {
                     .map(|_| ElementId::deserialize(data))
                     .collect::<Option<Vec<_>>>()?;
 
+                let unattached      = data.next_chr() == 'U';
+
                 let parent          = match data.next_chr() {
                     '+' => { ElementId::deserialize(data).map(|id| Some(id)) }
                     '-' => { Some(None) }
@@ -123,6 +135,7 @@ impl ElementWrapper {
                         element,
                         start_time,
                         attachments,
+                        unattached,
                         parent,
                         order_before,
                         order_after

@@ -133,7 +133,7 @@ impl KeyFrameCore {
 
             for element_id in element_ids.iter() {
                 if let Some(element_wrapper) = resolved.get(element_id) {
-                    if element_wrapper.parent.is_none() && element_wrapper.order_after.is_none() {
+                    if element_wrapper.parent.is_none() && element_wrapper.order_after.is_none() && !element_wrapper.unattached {
                         initial_element = Some(*element_id);
                         break;
                     }

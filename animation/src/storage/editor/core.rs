@@ -286,6 +286,7 @@ impl StreamAnimationCore {
                         element:        element,
                         start_time:     when,
                         attachments:    vec![],
+                        unattached:     false,
                         parent:         None,
                         order_before:   None,
                         order_after:    None
