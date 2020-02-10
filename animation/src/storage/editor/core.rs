@@ -306,6 +306,13 @@ impl StreamAnimationCore {
     ///
     pub fn path_edit<'a>(&'a mut self, layer_id: u64, when: Duration, edit: &'a PathEdit) -> impl 'a+Future<Output=()> {
         async move {
+            use self::PathEdit::*;
+
+            match edit {
+                CreatePath(element_id, components)      => { }
+                SelectBrush(element_id, defn, style)    => { }
+                BrushProperties(element_id, props)      => { }
+            }
         }
     }
 
