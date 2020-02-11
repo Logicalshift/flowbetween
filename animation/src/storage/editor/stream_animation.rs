@@ -50,7 +50,9 @@ impl StreamAnimation {
             storage_responses:  storage_responses,
             storage_requests:   requests,
             next_element_id:    None,
-            cached_keyframe:    None
+            cached_keyframe:    None,
+            path_brush_defn:    None,
+            path_brush_props:   None
         };
         let core            = Arc::new(Desync::new(core));
 

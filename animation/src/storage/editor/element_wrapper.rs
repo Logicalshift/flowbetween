@@ -33,6 +33,21 @@ pub struct ElementWrapper {
 
 impl ElementWrapper {
     ///
+    /// Creates an element wrapper containing a particular element with its other properties sert to the default values
+    ///
+    pub fn with_element(element: Vector, when: Duration) -> ElementWrapper {
+        ElementWrapper {
+            element:        element,
+            start_time:     when,
+            attachments:    vec![],
+            unattached:     false,
+            parent:         None,
+            order_before:   None,
+            order_after:    None
+        }
+    }
+
+    ///
     /// Creates an 'error' element wrapper
     ///
     pub fn error() -> ElementWrapper {
