@@ -2,9 +2,9 @@
 //! The editor provides the EditableAnimation interface for anything that implements the storage API
 //!
 
-mod core;
-mod keyframe_core;
 mod stream_animation;
+mod stream_animation_core;
+mod keyframe_core;
 mod element_wrapper;
 
 #[cfg(test)] mod tests;

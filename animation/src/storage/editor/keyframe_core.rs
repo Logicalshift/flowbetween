@@ -1,4 +1,4 @@
-use super::core::*;
+use super::stream_animation_core::*;
 use super::element_wrapper::*;
 use super::super::storage_api::*;
 use super::super::super::traits::*;
