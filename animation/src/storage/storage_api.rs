@@ -63,6 +63,9 @@ pub enum StorageCommand {
     /// Given a layer ID and an element ID, sets where a particular element appears in that layer
     AttachElementToLayer(u64, i64, Duration),
 
+    /// Given an element ID, returns all of the layers and keyframes it's attached to
+    ReadElementAttachments(i64),
+
     /// Removes an element from a layer
     DetachElementFromLayer(u64),
 
@@ -103,5 +106,8 @@ pub enum StorageResponse {
     KeyFrame(Duration, Duration),
 
     /// The serialized version of the element that was requested
-    Element(i64, String)
+    Element(i64, String),
+
+    /// Returns the (layer, keyframe) pairs that a particular element is attached to
+    ElementAttachments(i64, Vec<(u64, Duration)>)
 }

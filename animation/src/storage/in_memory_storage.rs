@@ -74,6 +74,7 @@ impl InMemoryStorageCore {
                 DeleteKeyFrame(layer_id, when)                      => { }
                 ReadKeyFrames(layer_id, period)                     => { }
                 AttachElementToLayer(layer_id, element_id, when)    => { }
+                ReadElementAttachments(element_id)                  => { }
                 DetachElementFromLayer(element_id)                  => { }
                 ReadElementsForKeyFrame(layer_id, when)             => { }
             }

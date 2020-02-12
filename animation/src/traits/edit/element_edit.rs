@@ -39,6 +39,6 @@ pub enum ElementEdit {
     /// Removes elements entirely from the frame
     Delete,
 
-    /// Detaches elements from the frame
+    /// Detaches elements from any keyframe it's a part of
     DetachFromFrame
 }
