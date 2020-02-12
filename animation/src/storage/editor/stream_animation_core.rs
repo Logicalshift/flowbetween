@@ -387,10 +387,52 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Updates a one or more elements via an update function
+    ///
+    pub fn update_element<'a, UpdateFn>(&'a mut self, element_ids: Vec<i64>, update_fn: UpdateFn) -> impl 'a+Future<Output=()>
+    where UpdateFn: Fn(ElementWrapper) -> ElementWrapper {
+        async move {
+            // Read the elements from the storage
+            let read_elements = self.request(element_ids.into_iter().map(|id| StorageCommand::ReadElement(id)).collect()).await;
+
+            // Update the elements that are returned
+            let updates = vec![];
+
+            for read_response in read_elements.unwrap_or_else(|| vec![]) {
+                // Edit every element that was returned
+                if let StorageResponse::Element(element_id, element_data) = read_response {
+                    // Deserialize the element
+                    if let Some(element_resolver) = ElementWrapper::deserialize(ElementId::Assigned(element_id), &mut element_data.chars()) {
+                        // TODO: resolve the element in the keyframe...
+
+                        // TODO: call the update function
+
+                        // TODO: add to the update list
+                    }
+                }
+            }
+
+            // Update all of the elements
+            self.request(updates).await;
+        }
+    }
+
+    ///
     /// Performs an element edit on this animation
     ///
     pub fn element_edit<'a>(&'a mut self, element_ids: &Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Future<Output=()> {
         async move {
+            use self::ElementEdit::*;
+
+            match element_edit {
+                AddAttachment(element_id)       => { }
+                RemoveAttachment(element_id)    => { }
+                SetControlPoints(new_points)    => { }
+                SetPath(new_path)               => { }
+                Order(ordering)                 => { }
+                Delete                          => { }
+                DetachFromFrame                 => { }
+            }
         }
     }
 
