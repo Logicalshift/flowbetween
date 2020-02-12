@@ -460,7 +460,7 @@ impl StreamAnimationCore {
 
             match element_edit {
                 AddAttachment(attach_id)        => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.push(*attach_id); wrapper }).await; }
-                RemoveAttachment(element_id)    => { }
+                RemoveAttachment(attach_id)     => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.retain(|id| id != attach_id); wrapper }).await; }
                 SetControlPoints(new_points)    => { }
                 SetPath(new_path)               => { }
                 Order(ordering)                 => { }
