@@ -36,14 +36,17 @@ pub enum StorageCommand {
     /// Adds a new layer with the specified ID to the storage
     AddLayer(u64),
 
+    /// Deletes the layer with a specified ID
+    DeleteLayer(u64),
+
+    /// Reads all of the layers stored in this API (as LayerProperties)
+    ReadLayers,
+
     /// Sets the properties for a particular layer
     WriteLayerProperties(u64, String),
 
     /// Reads the properties for a layer
     ReadLayerProperties(u64),
-
-    /// Deletes the layer with a specified ID
-    DeleteLayer(u64),
 
     /// Sets the order in which a layer appears
     OrderLayer(u64, u64),
@@ -88,7 +91,7 @@ pub enum StorageResponse {
     AnimationProperties(String),
 
     /// The serialized version of the layer properties
-    LayerPropeties(u64, String),
+    LayerProperties(u64, String),
 
     /// The highest unused element ID (0 if there are no elements stored yet)
     HighestUnusedElementId(i64),

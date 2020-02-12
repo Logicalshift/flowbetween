@@ -2,6 +2,7 @@ use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::super::storage_api::*;
 use super::super::file_properties::*;
+use super::super::layer_properties::*;
 use super::super::super::traits::*;
 
 use ::desync::*;
@@ -386,38 +387,6 @@ impl StreamAnimationCore {
     }
 
     ///
-    /// Adds a key frame to a layer
-    ///
-    pub fn add_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
-        async move {
-        } 
-    }
-
-    ///
-    /// Removes a key frame from a layer
-    ///
-    pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
-        async move {
-        } 
-    }
-
-    ///
-    /// Sets the name of a layer
-    ///
-    pub fn set_layer_name<'a>(&'a mut self, layer_id: u64, name: &str) -> impl 'a+Future<Output=()> { 
-        async move { 
-        } 
-    }
-
-    ///
-    /// Sets the order of a layer (which is effectively the ID of the layer this layer should appear behind)
-    ///
-    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, ordering: u32) -> impl 'a+Future<Output=()> {
-        async move { 
-        } 
-    }
-
-    ///
     /// Performs an element edit on this animation
     ///
     pub fn element_edit<'a>(&'a mut self, element_ids: &Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Future<Output=()> {
@@ -435,11 +404,63 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Adds a key frame to a layer
+    ///
+    pub fn add_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
+        async move {
+            self.request_one(StorageCommand::AddKeyFrame(layer_id, when)).await;
+        } 
+    }
+
+    ///
+    /// Removes a key frame from a layer
+    ///
+    pub fn remove_key_frame<'a>(&'a mut self, layer_id: u64, when: Duration) -> impl 'a+Future<Output=()> { 
+        async move {
+            self.request_one(StorageCommand::DeleteKeyFrame(layer_id, when)).await;
+        } 
+    }
+
+    ///
+    /// Sets the name of a layer
+    ///
+    pub fn set_layer_name<'a>(&'a mut self, layer_id: u64, name: &'a str) -> impl 'a+Future<Output=()> { 
+        async move {
+            // Read the current properties for this layer
+            let mut properties = match self.request_one(StorageCommand::ReadLayerProperties(layer_id)).await {
+                Some(StorageResponse::LayerProperties(_, properties)) => {
+                    LayerProperties::deserialize(&mut properties.chars())
+                        .unwrap_or_else(|| LayerProperties::default())
+                }
+
+                _ => LayerProperties::default()
+            };
+
+            // Update the name
+            properties.name = name.to_string();
+
+            // Save back to the storage
+            let mut serialized = String::new();
+            properties.serialize(&mut serialized);
+            self.request_one(StorageCommand::WriteLayerProperties(layer_id, serialized)).await;
+        } 
+    }
+
+    ///
+    /// Sets the order of a layer (which is effectively the ID of the layer this layer should appear behind)
+    ///
+    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, ordering: u32) -> impl 'a+Future<Output=()> {
+        async move { 
+            self.request_one(StorageCommand::OrderLayer(layer_id, ordering as u64)).await;
+        } 
+    }
+
+    ///
     /// Adds a new layer with a particular ID to this animation
     ///
     pub fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=()> {
         async move {
-
+            self.request_one(StorageCommand::AddLayer(layer_id)).await;
         }
     }
 
@@ -448,7 +469,7 @@ impl StreamAnimationCore {
     ///
     pub fn remove_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=()> {
         async move {
-
+            self.request_one(StorageCommand::DeleteLayer(layer_id)).await;
         }
     }
 }
