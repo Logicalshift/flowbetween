@@ -14,6 +14,7 @@ use futures::stream::{BoxStream};
 
 use std::sync::*;
 use std::time::{Duration};
+use std::collections::{HashSet};
 
 pub (super) struct StreamAnimationCore {
     /// Stream where responses to the storage requests are sent
@@ -389,27 +390,58 @@ impl StreamAnimationCore {
     ///
     /// Updates a one or more elements via an update function
     ///
-    pub fn update_element<'a, UpdateFn>(&'a mut self, element_ids: Vec<i64>, update_fn: UpdateFn) -> impl 'a+Future<Output=()>
-    where UpdateFn: Fn(ElementWrapper) -> ElementWrapper {
+    pub fn update_elements<'a, UpdateFn>(&'a mut self, element_ids: Vec<i64>, update_fn: UpdateFn) -> impl 'a+Future<Output=()>
+    where UpdateFn: 'a+Fn(ElementWrapper) -> ElementWrapper {
         async move {
-            // Read the elements from the storage
-            let read_elements = self.request(element_ids.into_iter().map(|id| StorageCommand::ReadElement(id)).collect()).await;
-
             // Update the elements that are returned
-            let updates = vec![];
+            let mut updates = vec![];
 
-            for read_response in read_elements.unwrap_or_else(|| vec![]) {
-                // Edit every element that was returned
-                if let StorageResponse::Element(element_id, element_data) = read_response {
-                    // Deserialize the element
-                    if let Some(element_resolver) = ElementWrapper::deserialize(ElementId::Assigned(element_id), &mut element_data.chars()) {
-                        // TODO: resolve the element in the keyframe...
+            // Build a hashset of the remaining elements
+            let mut remaining = element_ids.iter().cloned().collect::<HashSet<_>>();
 
-                        // TODO: call the update function
+            // ... until we've removed all the remaining elements...
+            while let Some(root_element) = remaining.iter().nth(0).cloned() {
+                // Fetch the keyframe that the root element is in
+                let keyframe_response = self.request_one(StorageCommand::ReadElementAttachments(root_element)).await;
 
-                        // TODO: add to the update list
+                if let Some(StorageResponse::ElementAttachments(_elem, mut keyframes)) = keyframe_response  {
+                    if let Some((layer_id, keyframe_time)) = keyframes.pop() {
+                        // Need to retrieve the keyframe (some elements depend on others, so we need the whole keyframe)
+                        // Most of the time we'll be editing a single frame so this won't be too expensive
+                        if let Some(keyframe) = self.edit_keyframe(layer_id, keyframe_time).await {
+                            // ... the element is in a keyframe, and we retrieved that keyframe
+                            let to_process = remaining.iter().cloned().collect::<Vec<_>>();
+
+                            for element_id in to_process {
+                                // Try to retrieve the element from the keyframe
+                                let existing_element = keyframe.future(move |keyframe| {
+                                    async move {
+                                        let elements = keyframe.elements.lock().unwrap();
+                                        elements.get(&ElementId::Assigned(element_id)).cloned()
+                                    }.boxed()
+                                }).await;
+
+                                // Update the existing element if we managed to retrieve it
+                                if let Ok(Some(existing_element)) = existing_element {
+                                    // Process via the update function
+                                    let updated_element = update_fn(existing_element);
+
+                                    // Generate the update of the serialized element
+                                    let mut serialized  = String::new();
+                                    updated_element.serialize(&mut serialized);
+
+                                    updates.push(StorageCommand::WriteElement(element_id, serialized));
+
+                                    // Remove the element from the remaining list so we don't try to update it again
+                                    remaining.remove(&element_id);
+                                }
+                            }
+                        }
                     }
                 }
+
+                // The root element is always removed from the remaining list even if we couldn't get its keyframe
+                remaining.remove(&root_element);
             }
 
             // Update all of the elements
@@ -420,12 +452,14 @@ impl StreamAnimationCore {
     ///
     /// Performs an element edit on this animation
     ///
-    pub fn element_edit<'a>(&'a mut self, element_ids: &Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Future<Output=()> {
+    pub fn element_edit<'a>(&'a mut self, element_ids: &'a Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Future<Output=()> {
         async move {
             use self::ElementEdit::*;
 
+            let element_ids = element_ids.iter().map(|elem| elem.id()).flatten().collect();
+
             match element_edit {
-                AddAttachment(element_id)       => { }
+                AddAttachment(attach_id)        => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.push(*attach_id); wrapper }).await; }
                 RemoveAttachment(element_id)    => { }
                 SetControlPoints(new_points)    => { }
                 SetPath(new_path)               => { }
