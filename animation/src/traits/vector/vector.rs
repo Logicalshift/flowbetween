@@ -7,6 +7,7 @@ use super::motion_element::*;
 use super::transformed_vector::*;
 use super::brush_properties_element::*;
 use super::brush_definition_element::*;
+use super::super::path::*;
 use super::super::edit::ElementId;
 
 use std::ops::Deref;
@@ -87,6 +88,24 @@ impl Vector {
         match self {
             Vector::BrushProperties(elem)   => Some(elem),
             _                               => None
+        }
+    }
+
+    ///
+    /// Creates an updated vector element with updated path components
+    ///
+    pub fn with_path_components<ComponentList: IntoIterator<Item=PathComponent>>(&self, path_components: ComponentList) -> Vector {
+        match self {
+            Vector::Path(path_element) => {
+                // Create a clone of the path element with the new properties
+                let new_path            = Path::from_elements(path_components);
+                let new_path_element    = PathElement::new(path_element.id(), new_path, path_element.brush(), path_element.properties());
+
+                Vector::new(new_path_element)
+            },
+
+            // Element is unchanged if it's not a path
+            _ => self.clone()
         }
     }
 }
