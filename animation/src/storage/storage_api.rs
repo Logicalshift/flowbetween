@@ -67,7 +67,7 @@ pub enum StorageCommand {
     ReadElementAttachments(i64),
 
     /// Removes an element from a layer
-    DetachElementFromLayer(u64),
+    DetachElementFromLayer(i64),
 
     /// Returns the elements attached to a particular key frame
     ReadElementsForKeyFrame(u64, Duration)
