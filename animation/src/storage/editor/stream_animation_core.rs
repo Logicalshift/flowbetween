@@ -432,6 +432,12 @@ impl StreamAnimationCore {
 
                                     updates.push(StorageCommand::WriteElement(element_id, serialized));
 
+                                    // Replace the element in the keyframe
+                                    keyframe.desync(move |keyframe| {
+                                        keyframe.elements.lock().unwrap()
+                                            .insert(ElementId::Assigned(element_id), updated_element);
+                                    });
+
                                     // Remove the element from the remaining list so we don't try to update it again
                                     remaining.remove(&element_id);
                                 }
