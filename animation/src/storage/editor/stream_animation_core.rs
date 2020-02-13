@@ -4,6 +4,7 @@ use super::super::storage_api::*;
 use super::super::file_properties::*;
 use super::super::layer_properties::*;
 use super::super::super::traits::*;
+use super::super::super::serializer::*;
 
 use ::desync::*;
 use flo_stream::*;
@@ -441,6 +442,24 @@ impl StreamAnimationCore {
                                     // Remove the element from the remaining list so we don't try to update it again
                                     remaining.remove(&element_id);
                                 }
+                            }
+                        }
+                    } else {
+                        // The element is independent of a keyframe. These elements cannot be edited if they depend on others (at the moment)
+                        if let Some(StorageResponse::Element(_, element)) = self.request_one(StorageCommand::ReadElement(root_element)).await {
+                            // Decode the element (without looking up any dependencies)
+                            let element = ElementWrapper::deserialize(ElementId::Assigned(root_element), &mut element.chars())
+                                .and_then(|element| element.resolve(&mut |_| None));
+
+                            if let Some(element) = element {
+                                // Update the element
+                                let updated_element = update_fn(element);
+
+                                // Write back
+                                let mut serialized  = String::new();
+                                updated_element.serialize(&mut serialized);
+
+                                updates.push(StorageCommand::WriteElement(root_element, serialized));
                             }
                         }
                     }
