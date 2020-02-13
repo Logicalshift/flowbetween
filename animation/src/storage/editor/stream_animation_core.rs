@@ -461,7 +461,7 @@ impl StreamAnimationCore {
             match element_edit {
                 AddAttachment(attach_id)        => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.push(*attach_id); wrapper }).await; }
                 RemoveAttachment(attach_id)     => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.retain(|id| id != attach_id); wrapper }).await; }
-                SetControlPoints(new_points)    => { }
+                SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); wrapper }).await; }
                 SetPath(new_path)               => { }
                 Order(ordering)                 => { }
                 Delete                          => { }
