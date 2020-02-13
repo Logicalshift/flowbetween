@@ -481,7 +481,15 @@ impl StreamAnimationCore {
     ///
     pub fn motion_edit<'a>(&'a mut self, motion_id: ElementId, motion_edit: &'a MotionEdit) -> impl 'a+Future<Output=()> {
         async move {
+            use self::MotionEdit::*;
 
+            match motion_edit {
+                Create                  => { }
+                Delete                  => { }
+                SetType(motion_type)    => { }
+                SetOrigin(x, y)         => { }
+                SetPath(time_curve)     => { }
+            }
         }
     }
 
