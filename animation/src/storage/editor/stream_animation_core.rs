@@ -502,9 +502,16 @@ impl StreamAnimationCore {
         async move {
             use self::MotionEdit::*;
 
+            // Convert the motion ID to an assigned element
+            let motion_id = match motion_id.id() {
+                Some(id)    => id,
+                None        => { return; }
+            };
+
             match motion_edit {
                 Create                  => { }
-                Delete                  => { }
+                Delete                  => { self.request_one(StorageCommand::DeleteElement(motion_id)).await; }
+
                 SetType(motion_type)    => { }
                 SetOrigin(x, y)         => { }
                 SetPath(time_curve)     => { }
