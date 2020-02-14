@@ -3,6 +3,7 @@ use super::storage_api::*;
 use ::desync::*;
 
 use futures::prelude::*;
+use futures::future;
 
 use std::sync::*;
 
@@ -39,7 +40,7 @@ impl InMemoryStorage {
     ///
     pub fn get_responses<CommandStream: 'static+Send+Unpin+Stream<Item=Vec<StorageCommand>>>(&self, commands: CommandStream) -> impl Send+Unpin+Stream<Item=Vec<StorageResponse>> {
         pipe(Arc::clone(&self.storage), commands, |storage, commands| {
-            storage.run_commands(commands)
+            future::ready(storage.run_commands(commands)).boxed()
         })
     }
 }
