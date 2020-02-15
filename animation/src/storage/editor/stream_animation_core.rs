@@ -202,6 +202,28 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Attempts to load the keyframe for the specified element for editing 
+    ///
+    pub fn edit_keyframe_for_element<'a>(&'a mut self, element_id: i64) -> impl 'a + Future<Output=Option<Arc<Desync<KeyFrameCore>>>> {
+        async move {
+            // Fetch the keyframe that the root element is in
+            let keyframe_response = self.request_one(StorageCommand::ReadElementAttachments(element_id)).await;
+
+            if let Some(StorageResponse::ElementAttachments(_elem, mut keyframes)) = keyframe_response  {
+                if let Some((layer_id, keyframe_time)) = keyframes.pop() {
+                    // Need to retrieve the keyframe (some elements depend on others, so we need the whole keyframe)
+                    // Most of the time we'll be editing a single frame so this won't be too expensive
+                    self.edit_keyframe(layer_id, keyframe_time).await
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        }
+    }
+
+    ///
     /// Sets the size of the animation
     ///
     pub fn set_size<'a>(&'a mut self, width: f64, height: f64) -> impl 'a+Future<Output=()> {
@@ -403,64 +425,56 @@ impl StreamAnimationCore {
             // ... until we've removed all the remaining elements...
             while let Some(root_element) = remaining.iter().nth(0).cloned() {
                 // Fetch the keyframe that the root element is in
-                let keyframe_response = self.request_one(StorageCommand::ReadElementAttachments(root_element)).await;
+                if let Some(keyframe) = self.edit_keyframe_for_element(root_element).await {
+                    // ... the element is in a keyframe, and we retrieved that keyframe
+                    let to_process = remaining.iter().cloned().collect::<Vec<_>>();
 
-                if let Some(StorageResponse::ElementAttachments(_elem, mut keyframes)) = keyframe_response  {
-                    if let Some((layer_id, keyframe_time)) = keyframes.pop() {
-                        // Need to retrieve the keyframe (some elements depend on others, so we need the whole keyframe)
-                        // Most of the time we'll be editing a single frame so this won't be too expensive
-                        if let Some(keyframe) = self.edit_keyframe(layer_id, keyframe_time).await {
-                            // ... the element is in a keyframe, and we retrieved that keyframe
-                            let to_process = remaining.iter().cloned().collect::<Vec<_>>();
+                    for element_id in to_process {
+                        // Try to retrieve the element from the keyframe
+                        let existing_element = keyframe.future(move |keyframe| {
+                            async move {
+                                let elements = keyframe.elements.lock().unwrap();
+                                elements.get(&ElementId::Assigned(element_id)).cloned()
+                            }.boxed()
+                        }).await;
 
-                            for element_id in to_process {
-                                // Try to retrieve the element from the keyframe
-                                let existing_element = keyframe.future(move |keyframe| {
-                                    async move {
-                                        let elements = keyframe.elements.lock().unwrap();
-                                        elements.get(&ElementId::Assigned(element_id)).cloned()
-                                    }.boxed()
-                                }).await;
+                        // Update the existing element if we managed to retrieve it
+                        if let Ok(Some(existing_element)) = existing_element {
+                            // Process via the update function
+                            let updated_element = update_fn(existing_element);
 
-                                // Update the existing element if we managed to retrieve it
-                                if let Ok(Some(existing_element)) = existing_element {
-                                    // Process via the update function
-                                    let updated_element = update_fn(existing_element);
+                            // Generate the update of the serialized element
+                            let mut serialized  = String::new();
+                            updated_element.serialize(&mut serialized);
 
-                                    // Generate the update of the serialized element
-                                    let mut serialized  = String::new();
-                                    updated_element.serialize(&mut serialized);
+                            updates.push(StorageCommand::WriteElement(element_id, serialized));
 
-                                    updates.push(StorageCommand::WriteElement(element_id, serialized));
+                            // Replace the element in the keyframe
+                            keyframe.desync(move |keyframe| {
+                                keyframe.elements.lock().unwrap()
+                                    .insert(ElementId::Assigned(element_id), updated_element);
+                            });
 
-                                    // Replace the element in the keyframe
-                                    keyframe.desync(move |keyframe| {
-                                        keyframe.elements.lock().unwrap()
-                                            .insert(ElementId::Assigned(element_id), updated_element);
-                                    });
-
-                                    // Remove the element from the remaining list so we don't try to update it again
-                                    remaining.remove(&element_id);
-                                }
-                            }
+                            // Remove the element from the remaining list so we don't try to update it again
+                            remaining.remove(&element_id);
                         }
-                    } else {
-                        // The element is independent of a keyframe. These elements cannot be edited if they depend on others (at the moment)
-                        if let Some(StorageResponse::Element(_, element)) = self.request_one(StorageCommand::ReadElement(root_element)).await {
-                            // Decode the element (without looking up any dependencies)
-                            let element = ElementWrapper::deserialize(ElementId::Assigned(root_element), &mut element.chars())
-                                .and_then(|element| element.resolve(&mut |_| None));
+                    }
+                } else {
+                    // The element is independent of a keyframe. These elements cannot be edited if they depend on others (at the moment)
+                    if let Some(StorageResponse::Element(_, element)) = self.request_one(StorageCommand::ReadElement(root_element)).await {
+                        // Decode the element (without looking up any dependencies)
+                        let element = ElementWrapper::deserialize(ElementId::Assigned(root_element), &mut element.chars())
+                            .and_then(|element| element.resolve(&mut |_| None));
 
-                            if let Some(element) = element {
-                                // Update the element
-                                let updated_element = update_fn(element);
+                        if let Some(element) = element {
+                            // Update the element
+                            let updated_element = update_fn(element);
 
-                                // Write back
-                                let mut serialized  = String::new();
-                                updated_element.serialize(&mut serialized);
+                            // Write back
+                            let mut serialized  = String::new();
+                            updated_element.serialize(&mut serialized);
 
-                                updates.push(StorageCommand::WriteElement(root_element, serialized));
-                            }
+                            updates.push(StorageCommand::WriteElement(root_element, serialized));
                         }
                     }
                 }
