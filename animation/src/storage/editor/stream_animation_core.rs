@@ -599,7 +599,7 @@ impl StreamAnimationCore {
     ///
     pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, ordering: u32) -> impl 'a+Future<Output=()> {
         async move { 
-            self.request_one(StorageCommand::OrderLayer(layer_id, ordering as u64)).await;
+            // TODO
         } 
     }
 

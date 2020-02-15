@@ -70,7 +70,6 @@ impl InMemoryStorageCore {
                 ReadLayers                                          => { }
                 WriteLayerProperties(layer_id, properties)          => { }
                 ReadLayerProperties(layer_id)                       => { }
-                OrderLayer(layer_id, ordering)                      => { }
                 AddKeyFrame(layer_id, when)                         => { }
                 DeleteKeyFrame(layer_id, when)                      => { }
                 ReadKeyFrames(layer_id, period)                     => { }

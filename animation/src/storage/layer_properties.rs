@@ -5,14 +5,18 @@ use super::super::serializer::*;
 ///
 pub struct LayerProperties {
     /// The name of this layer
-    pub name: String
+    pub name: String,
+
+    /// The ordering of this layer, relative to other layers
+    pub ordering: i64
 }
 
 
 impl Default for LayerProperties {
     fn default() -> LayerProperties {
         LayerProperties {
-            name: "".to_string()
+            name:       "".to_string(),
+            ordering:   0
         }
     }
 }
@@ -26,6 +30,7 @@ impl LayerProperties {
         data.write_small_u64(0);
 
         data.write_str(&self.name);
+        data.write_i64(self.ordering);
     }
 
     ///
@@ -36,7 +41,8 @@ impl LayerProperties {
 
         match data.next_small_u64() {
             0 => {
-                result.name             = data.next_string();
+                result.name     = data.next_string();
+                result.ordering = data.next_i64();
 
                 Some(result)
             }

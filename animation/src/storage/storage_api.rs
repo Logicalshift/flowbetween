@@ -48,9 +48,6 @@ pub enum StorageCommand {
     /// Reads the properties for a layer
     ReadLayerProperties(u64),
 
-    /// Sets the order in which a layer appears
-    OrderLayer(u64, u64),
-
     /// Adds a key frame to a layer
     AddKeyFrame(u64, Duration),
 
