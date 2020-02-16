@@ -268,4 +268,83 @@ impl KeyFrameCore {
             vec![StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
         }
     }
+
+    ///
+    /// Attempts to re-order an element relative to the others in the keyframe, returning the storage commands needed to update the underlying storage
+    /// 
+    /// Returns none if the element is not in the current keyframe
+    ///
+    pub fn order_element(&mut self, element_id: ElementId, ordering: ElementOrdering) -> Option<Vec<StorageCommand>> {
+        let mut elements = self.elements.lock().unwrap();
+
+        if elements.contains_key(&element_id) {
+            // Update the element
+            let mut updates         = vec![];
+            let mut edit_elements   = vec![];
+
+            // Fetch the element (we know it exists at this point)
+            let mut element         = elements.get(&element_id).unwrap().clone();
+
+            // Order the element
+            use self::ElementOrdering::*;
+            match ordering {
+                InFront         => {
+                    // Fetch the element that's in front of the current element
+                    let element_id_in_front     = element.order_before;
+                    let element_id_behind       = element.order_after;
+                    let element_in_front        = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
+                    let mut element_behind      = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
+
+                    if let Some(mut element_in_front) = element_in_front {
+                        // Swap the in-front element and the before element
+                        element.order_before                                        = element_in_front.order_before;
+                        element_in_front.order_before                               = Some(element_id);
+                        element_behind.as_mut().map(|behind| behind.order_before    = element_id_in_front);
+
+                        // These are the two elements that need updating
+                        edit_elements.push((element_id, element));
+                        edit_elements.push((element_id_in_front.unwrap(), element_in_front));
+                        element_behind.map(|behind| edit_elements.push((element_id_behind.unwrap(), behind)));
+                    }
+                }
+
+                Behind          => {
+                    // Fetch the element that's in front of the current element
+                    let element_id_in_front     = element.order_before;
+                    let element_id_behind       = element.order_after;
+                    let mut element_in_front    = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
+                    let element_behind          = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
+
+                    if let Some(mut element_behind) = element_behind {
+                        // Swap the in-front element and the before element
+                        element.order_after                                             = element_behind.order_after;
+                        element_behind.order_after                                      = Some(element_id);
+                        element_in_front.as_mut().map(|in_front| in_front.order_after   = element_id_behind);
+
+                        // These are the two elements that need updating
+                        edit_elements.push((element_id, element));
+                        edit_elements.push((element_id_behind.unwrap(), element_behind));
+                        element_in_front.map(|in_front| edit_elements.push((element_id_in_front.unwrap(), in_front)));
+                    }
+                }
+
+                ToTop           => {
+
+                }
+
+                ToBottom        => {
+
+                }
+
+                Before(elem)    => {
+
+                }
+            }
+
+            Some(updates)
+        } else {
+            // Element not found
+            None
+        }
+    }
 }

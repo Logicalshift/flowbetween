@@ -489,6 +489,33 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Re-orders a set of elements in their keyframes
+    ///
+    pub fn order_elements<'a>(&'a mut self, element_ids: Vec<i64>, ordering: ElementOrdering) -> impl 'a + Future<Output=()>  {
+        async move {
+            // List of updates to perform as a result of this ordering operation
+            let mut updates = vec![];
+
+            // Order each element in turn
+            for element_id in element_ids {
+                // Load the keyframe for this element if none is currently loaded
+                let current_keyframe = self.edit_keyframe_for_element(element_id).await;
+
+                // Order the element in the keyframe
+                let maybe_updates = current_keyframe.and_then(|keyframe| 
+                    keyframe.sync(|keyframe| 
+                        keyframe.order_element(ElementId::Assigned(element_id), ordering)));
+
+                // Add the updates
+                maybe_updates.map(|keyframe_updates| updates.extend(keyframe_updates));
+            }
+
+            // Perform the updates
+            self.request(updates).await;
+        }
+    }
+
+    ///
     /// Performs an element edit on this animation
     ///
     pub fn element_edit<'a>(&'a mut self, element_ids: &'a Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Future<Output=()> {
@@ -502,7 +529,7 @@ impl StreamAnimationCore {
                 RemoveAttachment(attach_id)     => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.retain(|id| id != attach_id); wrapper }).await; }
                 SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); wrapper }).await; }
                 SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); wrapper }).await; }
-                Order(ordering)                 => { }
+                Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
                 Delete                          => { self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id)).collect()).await; }
                 DetachFromFrame                 => { self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id)).collect()).await; }
             }
