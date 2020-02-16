@@ -296,6 +296,11 @@ impl KeyFrameCore {
                     let mut element_behind      = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
 
                     if let Some(mut element_in_front) = element_in_front {
+                        // This element becomes the 'in front' element if it's ahead of all the others
+                        if element_id_in_front == self.last_element {
+                            self.last_element = Some(element_id);
+                        }
+
                         // Swap the in-front element and the before element
                         element.order_before                                        = element_in_front.order_before;
                         element_in_front.order_before                               = Some(element_id);
@@ -316,6 +321,11 @@ impl KeyFrameCore {
                     let element_behind          = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
 
                     if let Some(mut element_behind) = element_behind {
+                        // This element becomes the lowermost element if it's replacing the current lower-most element
+                        if element_id_behind == self.initial_element {
+                            self.initial_element = Some(element_id);
+                        }
+
                         // Swap the in-front element and the before element
                         element.order_after                                             = element_behind.order_after;
                         element_behind.order_after                                      = Some(element_id);
