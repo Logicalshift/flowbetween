@@ -351,6 +351,19 @@ impl KeyFrameCore {
                 }
             }
 
+            // Convert the element edits to updates
+            for (changed_element_id, changed_element_wrapper) in edit_elements {
+                // Serialize it
+                let mut serialized = String::new();
+                changed_element_wrapper.serialize(&mut serialized);
+
+                // Add to the elements
+                elements.insert(changed_element_id, changed_element_wrapper);
+
+                // Update in the storage
+                updates.push(StorageCommand::WriteElement(changed_element_id.id().unwrap(), serialized));
+            }
+
             Some(updates)
         } else {
             // Element not found
