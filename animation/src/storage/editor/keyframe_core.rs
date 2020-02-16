@@ -339,7 +339,44 @@ impl KeyFrameCore {
                 }
 
                 ToTop           => {
+                    // Nothing to do if the element is alreadhy on top
+                    if element.order_before.is_some() {
+                        // Remove the element from the list
+                        let element_id_in_front = element.order_before;
+                        let element_id_behind   = element.order_after;
+                        let element_in_front    = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
+                        let element_behind      = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
 
+                        if let Some(mut element_behind) = element_behind {
+                            element_behind.order_before = element_id_in_front;
+                            edit_elements.push((element_id_behind.unwrap(), element_behind));
+                        }
+
+                        if let Some(mut element_in_front) = element_in_front {
+                            element_in_front.order_after = element_id_behind;
+                            edit_elements.push((element_id_in_front.unwrap(), element_in_front));
+                        }
+
+                        // Find the element that's on top (has an empty 'order_before' element, starting at our existing element)
+                        let mut on_top_id = element.order_before.unwrap();
+                        while let Some(on_top_element) = elements.get(&on_top_id) {
+                            if let Some(order_before) = on_top_element.order_before {
+                                // Move to the next element along
+                                on_top_id = order_before;
+                            } else {
+                                // Stop when we reach the top-most element
+                                break;
+                            }
+                        }
+
+                        // Edit the element to be the one on top
+                        element.order_before    = None;
+                        element.order_after     = Some(on_top_id);
+                        elements.get_mut(&on_top_id).unwrap().order_before = Some(element_id);
+
+                        if self.last_element == Some(on_top_id) { self.last_element = Some(element_id); }
+                        edit_elements.push((element_id, element));
+                    }
                 }
 
                 ToBottom        => {
