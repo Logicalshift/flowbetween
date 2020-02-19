@@ -703,7 +703,10 @@ impl StreamAnimationCore {
     ///
     pub fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=()> {
         async move {
+            // Add the layer
             self.request_one(StorageCommand::AddLayer(layer_id)).await;
+
+            // TODO: Set the ordering
         }
     }
 
@@ -712,7 +715,10 @@ impl StreamAnimationCore {
     ///
     pub fn remove_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=()> {
         async move {
+            // Remove the layer
             self.request_one(StorageCommand::DeleteLayer(layer_id)).await;
+
+            // TODO: update the ordering
         }
     }
 }

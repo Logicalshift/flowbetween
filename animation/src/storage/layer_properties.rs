@@ -16,7 +16,7 @@ impl Default for LayerProperties {
     fn default() -> LayerProperties {
         LayerProperties {
             name:       "".to_string(),
-            ordering:   0
+            ordering:   -1
         }
     }
 }
