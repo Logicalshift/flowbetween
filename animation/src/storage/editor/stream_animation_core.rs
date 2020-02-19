@@ -638,9 +638,63 @@ impl StreamAnimationCore {
     ///
     /// Sets the order of a layer (which is effectively the ID of the layer this layer should appear behind)
     ///
-    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, ordering: u32) -> impl 'a+Future<Output=()> {
-        async move { 
-            // TODO
+    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, new_ordering: u32) -> impl 'a+Future<Output=()> {
+        async move {
+            let new_ordering    = new_ordering as i64;
+
+            // Read all of the layers from storage
+            let layers          = self.request(vec![StorageCommand::ReadLayers]).await;
+            let mut layers      = layers.unwrap_or_else(|| vec![]).into_iter().map(|response| {
+                    if let StorageResponse::LayerProperties(layer_id, properties) = response {
+                        let properties = LayerProperties::deserialize(&mut properties.chars()).unwrap_or_else(|| LayerProperties::default());
+                        Some((layer_id, properties))
+                    } else {
+                        None
+                    }
+                })
+                .flatten()
+                .collect::<Vec<_>>();
+
+            // Get the current ordering for the specified layer
+            let old_ordering    = layers.iter()
+                .filter(|(id, _)| *id == layer_id)
+                .map(|(_, props)| props.ordering)
+                .nth(0);
+
+            let old_ordering    = match old_ordering {
+                Some(ordering)  => ordering,
+                None            => { return; }
+            };
+
+            // Update the layer ordering
+            for (edit_layer_id, edit_layer_properties) in layers.iter_mut() {
+                // If the layer is after the new ordering, then move it forward to make room
+                if edit_layer_properties.ordering >= new_ordering {
+                    edit_layer_properties.ordering += 1;
+                }
+
+                // Layers between the old and new ordering need to move down to make room for the new layer position
+                if edit_layer_properties.ordering > old_ordering && edit_layer_properties.ordering < new_ordering {
+                    edit_layer_properties.ordering -= 1;
+                }
+
+                // Set the ordering of the layer that we're editing
+                if *edit_layer_id == layer_id {
+                    edit_layer_properties.ordering = new_ordering;
+                }
+            }
+
+            // Save all of the layers
+            self.request(layers.into_iter()
+                    .map(|(layer_id, layer_properties)| {
+                        let mut serialized = String::new();
+                        layer_properties.serialize(&mut serialized);
+
+                        (layer_id, serialized)
+                    })
+                    .map(|(layer_id, serialized)| StorageCommand::WriteLayerProperties(layer_id, serialized))
+                .collect())
+                .await;
         } 
     }
 
