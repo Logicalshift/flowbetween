@@ -638,9 +638,12 @@ impl StreamAnimationCore {
     ///
     /// Sets the order of a layer (which is effectively the ID of the layer this layer should appear behind)
     ///
-    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, new_ordering: u32) -> impl 'a+Future<Output=()> {
+    pub fn set_layer_ordering<'a>(&'a mut self, layer_id: u64, order_behind: u64) -> impl 'a+Future<Output=()> {
         async move {
-            let new_ordering    = new_ordering as i64;
+            // A layer is always ordered behind itself
+            if order_behind == layer_id {
+                return;
+            }
 
             // Read all of the layers from storage
             let layers          = self.request(vec![StorageCommand::ReadLayers]).await;
@@ -655,33 +658,39 @@ impl StreamAnimationCore {
                 .flatten()
                 .collect::<Vec<_>>();
 
-            // Get the current ordering for the specified layer
-            let old_ordering    = layers.iter()
-                .filter(|(id, _)| *id == layer_id)
-                .map(|(_, props)| props.ordering)
+            // Sort the layers into order
+            layers.sort_by(|(_, layer_a), (_, layer_b)| {
+                layer_a.ordering.cmp(&layer_b.ordering)
+            });
+
+            // Find the layer and the layer we need to order behind
+            let layer_index         = layers.iter().enumerate().filter(|(_, (id, _))| {
+                    *id == layer_id
+                })
+                .map(|(index, _)| index)
+                .nth(0);
+            let order_behind_index  = layers.iter().enumerate().filter(|(_, (id, _))| {
+                    *id == order_behind
+                })
+                .map(|(index, _)| index)
                 .nth(0);
 
-            let old_ordering    = match old_ordering {
-                Some(ordering)  => ordering,
-                None            => { return; }
+            let (layer_index, order_behind_index) = match (layer_index, order_behind_index) {
+                (Some(layer_index), Some(order_behind_index))   => (layer_index, order_behind_index),
+                _                                               => { return; }
             };
 
+            // Move the layer behind the 'order-behind' index
+            let (_, layer_props) = layers.remove(layer_index);
+            if order_behind_index > layer_index {
+                layers.insert(order_behind_index-1, (layer_id, layer_props));
+            } else {
+                layers.insert(order_behind_index, (layer_id, layer_props));
+            }
+
             // Update the layer ordering
-            for (edit_layer_id, edit_layer_properties) in layers.iter_mut() {
-                // If the layer is after the new ordering, then move it forward to make room
-                if edit_layer_properties.ordering >= new_ordering {
-                    edit_layer_properties.ordering += 1;
-                }
-
-                // Layers between the old and new ordering need to move down to make room for the new layer position
-                if edit_layer_properties.ordering > old_ordering && edit_layer_properties.ordering < new_ordering {
-                    edit_layer_properties.ordering -= 1;
-                }
-
-                // Set the ordering of the layer that we're editing
-                if *edit_layer_id == layer_id {
-                    edit_layer_properties.ordering = new_ordering;
-                }
+            for layer_num in 0..layers.len() {
+                layers[layer_num].1.ordering = layer_num as i64;
             }
 
             // Save all of the layers
@@ -705,8 +714,6 @@ impl StreamAnimationCore {
         async move {
             // Add the layer
             self.request_one(StorageCommand::AddLayer(layer_id)).await;
-
-            // TODO: Set the ordering
         }
     }
 
@@ -717,8 +724,6 @@ impl StreamAnimationCore {
         async move {
             // Remove the layer
             self.request_one(StorageCommand::DeleteLayer(layer_id)).await;
-
-            // TODO: update the ordering
         }
     }
 }

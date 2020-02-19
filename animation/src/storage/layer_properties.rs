@@ -1,5 +1,7 @@
 use super::super::serializer::*;
 
+use std::i64;
+
 ///
 /// Storage/serialization structure used to represent the properties of a layer
 ///
@@ -16,7 +18,7 @@ impl Default for LayerProperties {
     fn default() -> LayerProperties {
         LayerProperties {
             name:       "".to_string(),
-            ordering:   -1
+            ordering:   i64::max_value()
         }
     }
 }
