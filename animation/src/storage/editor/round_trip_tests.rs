@@ -308,7 +308,7 @@ fn retrieve_keyframe() {
 }
 
 #[test]
-fn find_previus_and_next_keyframe() {
+fn find_previous_and_next_keyframe() {
     let anim = create_animation();
 
     anim.perform_edits(vec![

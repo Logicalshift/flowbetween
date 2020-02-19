@@ -6,9 +6,17 @@ use futures::prelude::*;
 use futures::future;
 
 use std::sync::*;
+use std::collections::{HashMap};
 
 struct InMemoryStorageCore {
-    animation_properties: Option<String>
+    /// The properties for the animation
+    animation_properties: Option<String>,
+
+    /// The edit log
+    edit_log: Vec<String>,
+
+    /// The definitions for each element
+    elements: HashMap<i64, String>
 }
 
 ///
@@ -26,7 +34,9 @@ impl InMemoryStorage {
     pub fn new() -> InMemoryStorage {
         // Create the core
         let core = InMemoryStorageCore {
-            animation_properties: None
+            animation_properties:   None,
+            edit_log:               vec![],
+            elements:               HashMap::new()
         };
 
         // And the storage
@@ -58,13 +68,13 @@ impl InMemoryStorageCore {
             match command {
                 WriteAnimationProperties(props)                     => { self.animation_properties = Some(props); response.push(StorageResponse::Updated); }
                 ReadAnimationProperties                             => { response.push(self.animation_properties.as_ref().map(|props| StorageResponse::AnimationProperties(props.clone())).unwrap_or(StorageResponse::NotFound)); }
-                WriteEdit(edit)                                     => { }
-                ReadHighestUnusedElementId                          => { }
-                ReadEditLogLength                                   => { }
-                ReadEdits(edit_range)                               => { }
-                WriteElement(element_id, value)                     => { }
-                ReadElement(element_id)                             => { }
-                DeleteElement(element_id)                           => { }
+                WriteEdit(edit)                                     => { self.edit_log.push(edit); response.push(StorageResponse::Updated); }
+                ReadHighestUnusedElementId                          => { response.push(StorageResponse::HighestUnusedElementId(self.elements.keys().cloned().max().unwrap_or(-1)+1)); }
+                ReadEditLogLength                                   => { response.push(StorageResponse::NumberOfEdits(self.edit_log.len())); }
+                ReadEdits(edit_range)                               => { response.extend(edit_range.into_iter().map(|index| StorageResponse::Edit(index, self.edit_log[index].clone()))); }
+                WriteElement(element_id, value)                     => { self.elements.insert(element_id, value); response.push(StorageResponse::Updated); }
+                ReadElement(element_id)                             => { response.push(self.elements.get(&element_id).map(|element| StorageResponse::Element(element_id, element.clone())).unwrap_or(StorageResponse::NotFound)); }
+                DeleteElement(element_id)                           => { self.elements.remove(&element_id); response.push(StorageResponse::Updated); }
                 AddLayer(layer_id)                                  => { }
                 DeleteLayer(layer_id)                               => { }
                 ReadLayers                                          => { }
