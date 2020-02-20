@@ -8,6 +8,16 @@ use futures::future;
 use std::sync::*;
 use std::collections::{HashMap};
 
+///
+/// Representation of a layer in memory
+///
+struct InMemoryLayerStorage {
+
+}
+
+///
+/// Representation of an animation in-memory
+///
 struct InMemoryStorageCore {
     /// The properties for the animation
     animation_properties: Option<String>,
@@ -16,7 +26,10 @@ struct InMemoryStorageCore {
     edit_log: Vec<String>,
 
     /// The definitions for each element
-    elements: HashMap<i64, String>
+    elements: HashMap<i64, String>,
+
+    /// The layers
+    layers: HashMap<u64, InMemoryLayerStorage>
 }
 
 ///
@@ -36,7 +49,8 @@ impl InMemoryStorage {
         let core = InMemoryStorageCore {
             animation_properties:   None,
             edit_log:               vec![],
-            elements:               HashMap::new()
+            elements:               HashMap::new(),
+            layers:                 HashMap::new()
         };
 
         // And the storage
