@@ -239,7 +239,7 @@ impl Animation for StreamAnimation {
         };
 
         // Generate a stream to read from the edit log as we go
-        let per_request         = 100;
+        let per_request         = 20;
         let mut remaining       = range;
         let mut fetched         = vec![];
         let mut next_response   = None;
@@ -247,10 +247,14 @@ impl Animation for StreamAnimation {
         stream::poll_fn(move |context| {
             loop {
                 if remaining.len() != 0 && fetched.len() == 0 && next_response.is_none() {
+                    // Fetch up to per_request items for each request
+                    let num_to_fetch    = remaining.len();
+                    let num_to_fetch    = if num_to_fetch > per_request { per_request } else { num_to_fetch };
+                    let fetch_range     = (remaining.start)..(remaining.start + num_to_fetch);
+
                     // Start polling for the next batch
-                    // TODO: trim from the start of the remaining range instead of trying to fetch everything
-                    next_response   = Some(self.request_async(vec![StorageCommand::ReadEdits(remaining.clone())]));
-                    remaining       = 0..0;
+                    next_response       = Some(self.request_async(vec![StorageCommand::ReadEdits(fetch_range)]));
+                    remaining           = (remaining.start+num_to_fetch)..(remaining.end);
                 }
 
                 if let Some(next) = fetched.pop() {
