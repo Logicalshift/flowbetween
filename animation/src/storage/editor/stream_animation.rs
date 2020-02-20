@@ -203,7 +203,18 @@ impl Animation for StreamAnimation {
     /// Retrieves the IDs of the layers in this object
     ///
     fn get_layer_ids(&self) -> Vec<u64> {
-        unimplemented!()
+        let layer_responses = self.request_sync(vec![StorageCommand::ReadLayers]).unwrap_or_else(|| vec![]);
+
+        layer_responses
+            .into_iter()
+            .map(|response| {
+                match response {
+                    StorageResponse::LayerProperties(id, _) => Some(id),
+                    _                                       => None
+                }
+            })
+            .flatten()
+            .collect()
     }
 
     ///
