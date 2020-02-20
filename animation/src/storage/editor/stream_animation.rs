@@ -246,7 +246,7 @@ impl Animation for StreamAnimation {
 
         stream::poll_fn(move |context| {
             loop {
-                if remaining.len() == 0 && next_response.is_none() {
+                if remaining.len() != 0 && fetched.len() == 0 && next_response.is_none() {
                     // Start polling for the next batch
                     // TODO: trim from the start of the remaining range instead of trying to fetch everything
                     next_response   = Some(self.request_async(vec![StorageCommand::ReadEdits(remaining.clone())]));
