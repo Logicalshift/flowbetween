@@ -712,8 +712,13 @@ impl StreamAnimationCore {
     ///
     pub fn add_new_layer<'a>(&'a mut self, layer_id: u64) -> impl 'a+Future<Output=()> {
         async move {
+            // Create the default properties for this layer
+            let properties      = LayerProperties::default();
+            let mut serialized  = String::new();
+            properties.serialize(&mut serialized);
+
             // Add the layer
-            self.request_one(StorageCommand::AddLayer(layer_id)).await;
+            self.request_one(StorageCommand::AddLayer(layer_id, serialized)).await;
         }
     }
 

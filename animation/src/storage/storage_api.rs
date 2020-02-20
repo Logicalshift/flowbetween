@@ -33,8 +33,8 @@ pub enum StorageCommand {
     /// Removes an element from the storage
     DeleteElement(i64),
 
-    /// Adds a new layer with the specified ID to the storage
-    AddLayer(u64),
+    /// Adds a new layer with the specified ID and properties to the storage
+    AddLayer(u64, String),
 
     /// Deletes the layer with a specified ID
     DeleteLayer(u64),

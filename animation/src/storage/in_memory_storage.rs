@@ -12,7 +12,8 @@ use std::collections::{HashMap};
 /// Representation of a layer in memory
 ///
 struct InMemoryLayerStorage {
-
+    /// The properties for this layer
+    properties: String
 }
 
 ///
@@ -89,11 +90,24 @@ impl InMemoryStorageCore {
                 WriteElement(element_id, value)                     => { self.elements.insert(element_id, value); response.push(StorageResponse::Updated); }
                 ReadElement(element_id)                             => { response.push(self.elements.get(&element_id).map(|element| StorageResponse::Element(element_id, element.clone())).unwrap_or(StorageResponse::NotFound)); }
                 DeleteElement(element_id)                           => { self.elements.remove(&element_id); response.push(StorageResponse::Updated); }
-                AddLayer(layer_id)                                  => { }
-                DeleteLayer(layer_id)                               => { }
+                AddLayer(layer_id, properties)                      => { self.layers.insert(layer_id, InMemoryLayerStorage::new(properties)); response.push(StorageResponse::Updated); }
+                DeleteLayer(layer_id)                               => { if self.layers.remove(&layer_id).is_some() { response.push(StorageResponse::Updated); } else { response.push(StorageResponse::NotFound); } }
                 ReadLayers                                          => { }
-                WriteLayerProperties(layer_id, properties)          => { }
-                ReadLayerProperties(layer_id)                       => { }
+                WriteLayerProperties(layer_id, properties)          => { 
+                    if let Some(layer) = self.layers.get_mut(&layer_id) {
+                        layer.properties = properties;
+                        response.push(StorageResponse::Updated);
+                    } else {
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+                ReadLayerProperties(layer_id)                       => {
+                    if let Some(layer) = self.layers.get(&layer_id) {
+                        response.push(StorageResponse::LayerProperties(layer_id, layer.properties.clone()));
+                    } else {
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
                 AddKeyFrame(layer_id, when)                         => { }
                 DeleteKeyFrame(layer_id, when)                      => { }
                 ReadKeyFrames(layer_id, period)                     => { }
@@ -105,5 +119,16 @@ impl InMemoryStorageCore {
         }
 
         response
+    }
+}
+
+impl InMemoryLayerStorage {
+    ///
+    /// Creates a new in-memory layer storage object
+    ///
+    pub fn new(properties: String) -> InMemoryLayerStorage {
+        InMemoryLayerStorage {
+            properties
+        }
     }
 }
