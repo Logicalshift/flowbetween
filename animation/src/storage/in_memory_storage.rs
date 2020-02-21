@@ -5,15 +5,31 @@ use ::desync::*;
 use futures::prelude::*;
 use futures::future;
 
+use std::u64;
 use std::sync::*;
+use std::time::{Duration};
 use std::collections::{HashMap};
+
+///
+/// Represents a key frame
+///
+struct InMemoryKeyFrameStorage {
+    /// The time when this frame appears
+    when: Duration,
+
+    /// The IDs of the elements attached to this keyframe
+    attached_elements: HashMap<i64, Duration>
+}
 
 ///
 /// Representation of a layer in memory
 ///
 struct InMemoryLayerStorage {
     /// The properties for this layer
-    properties: String
+    properties: String,
+
+    /// The keyframes of this layer
+    keyframes: Vec<InMemoryKeyFrameStorage>
 }
 
 ///
@@ -116,12 +132,89 @@ impl InMemoryStorageCore {
                     }
                 }
 
-                AddKeyFrame(layer_id, when)                         => { }
-                DeleteKeyFrame(layer_id, when)                      => { }
-                ReadKeyFrames(layer_id, period)                     => { }
+                AddKeyFrame(layer_id, when)                         => { 
+                    if let Some(layer) = self.layers.get_mut(&layer_id) {
+                        // Search for the location where the keyframe can be added
+                        match layer.keyframes.binary_search_by(|frame| frame.when.cmp(&when)) {
+                            Ok(_)           => {
+                                // This keyframe already exists
+                                response.push(StorageResponse::NotReplacingExisting)
+                            }
+
+                            Err(location)   => {
+                                // Need to add a new keyframe
+                                let keyframe = InMemoryKeyFrameStorage::new(when);
+                                layer.keyframes.insert(location, keyframe);
+
+                                response.push(StorageResponse::Updated);
+                            }
+                        }
+                    } else {
+                        // Layer not found
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
+                DeleteKeyFrame(layer_id, when)                      => { 
+                    if let Some(layer) = self.layers.get_mut(&layer_id) {
+                        // Search for the location where the keyframe needs to be removed
+                        match layer.keyframes.binary_search_by(|frame| frame.when.cmp(&when)) {
+                            Ok(location)    => {
+                                // Exact match of a keyframe
+                                layer.keyframes.remove(location);
+
+                                response.push(StorageResponse::Updated)
+                            }
+
+                            Err(_)          => {
+                                // No keyframe at this location
+                                response.push(StorageResponse::NotFound);
+                            }
+                        }
+                    } else {
+                        // Layer not found
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
+                ReadKeyFrames(layer_id, period)                     => {
+                    if let Some(layer) = self.layers.get(&layer_id) {
+                        // Search for the initial keyframe
+                        let initial_keyframe_index = match layer.keyframes.binary_search_by(|frame| frame.when.cmp(&period.start)) {
+                            // Period starts at an exact keyframe
+                            Ok(location)    => location,
+
+                            // Period covers the keyframe before the specified location if we get a partial match
+                            Err(location)   => if location > 0 { location - 1 } else { location }
+                        };
+
+                        // Return keyframes until we reach the end of the period
+                        let mut keyframe_index = initial_keyframe_index;
+                        while keyframe_index < layer.keyframes.len() && layer.keyframes[keyframe_index].when < period.end {
+                            // Work out when this keyframe starts and ends
+                            let start   = layer.keyframes[keyframe_index].when;
+                            let end     = if keyframe_index+1 < layer.keyframes.len() {
+                                layer.keyframes[keyframe_index+1].when
+                            } else {
+                                Duration::new(u64::max_value(), 0)
+                            };
+
+                            // Add to the response
+                            response.push(StorageResponse::KeyFrame(start, end));
+
+                            // Move on to the next keyframe
+                            keyframe_index += 1;
+                        }
+
+                    } else {
+                        // Layer not found
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
                 AttachElementToLayer(layer_id, element_id, when)    => { }
-                ReadElementAttachments(element_id)                  => { }
                 DetachElementFromLayer(element_id)                  => { }
+                ReadElementAttachments(element_id)                  => { }
                 ReadElementsForKeyFrame(layer_id, when)             => { }
             }
         }
@@ -136,7 +229,20 @@ impl InMemoryLayerStorage {
     ///
     pub fn new(properties: String) -> InMemoryLayerStorage {
         InMemoryLayerStorage {
-            properties
+            properties: properties,
+            keyframes:  vec![]
+        }
+    }
+}
+
+impl InMemoryKeyFrameStorage {
+    ///
+    /// Creates a new in-memory keyframe storage object
+    ///
+    pub fn new(when: Duration) -> InMemoryKeyFrameStorage {
+        InMemoryKeyFrameStorage {
+            when:               when,
+            attached_elements:  HashMap::new()
         }
     }
 }

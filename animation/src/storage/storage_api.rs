@@ -60,11 +60,11 @@ pub enum StorageCommand {
     /// Given a layer ID and an element ID, sets where a particular element appears in that layer
     AttachElementToLayer(u64, i64, Duration),
 
-    /// Given an element ID, returns all of the layers and keyframes it's attached to
-    ReadElementAttachments(i64),
-
     /// Removes an element from a layer
     DetachElementFromLayer(i64),
+
+    /// Given an element ID, returns all of the layers and keyframes it's attached to
+    ReadElementAttachments(i64),
 
     /// Returns the elements attached to a particular key frame
     ReadElementsForKeyFrame(u64, Duration)
@@ -77,6 +77,9 @@ pub enum StorageCommand {
 pub enum StorageResponse {
     /// The storage was updated
     Updated,
+
+    /// Tried to add an element that already exists
+    NotReplacingExisting,
 
     /// The requested item could not be found
     NotFound,
