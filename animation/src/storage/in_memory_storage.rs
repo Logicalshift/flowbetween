@@ -92,7 +92,13 @@ impl InMemoryStorageCore {
                 DeleteElement(element_id)                           => { self.elements.remove(&element_id); response.push(StorageResponse::Updated); }
                 AddLayer(layer_id, properties)                      => { self.layers.insert(layer_id, InMemoryLayerStorage::new(properties)); response.push(StorageResponse::Updated); }
                 DeleteLayer(layer_id)                               => { if self.layers.remove(&layer_id).is_some() { response.push(StorageResponse::Updated); } else { response.push(StorageResponse::NotFound); } }
-                ReadLayers                                          => { }
+
+                ReadLayers                                          => { 
+                    for (layer_id, storage) in self.layers.iter() {
+                        response.push(StorageResponse::LayerProperties(*layer_id, storage.properties.clone()));
+                    }
+                }
+                
                 WriteLayerProperties(layer_id, properties)          => { 
                     if let Some(layer) = self.layers.get_mut(&layer_id) {
                         layer.properties = properties;
@@ -101,6 +107,7 @@ impl InMemoryStorageCore {
                         response.push(StorageResponse::NotFound);
                     }
                 }
+
                 ReadLayerProperties(layer_id)                       => {
                     if let Some(layer) = self.layers.get(&layer_id) {
                         response.push(StorageResponse::LayerProperties(layer_id, layer.properties.clone()));
@@ -108,6 +115,7 @@ impl InMemoryStorageCore {
                         response.push(StorageResponse::NotFound);
                     }
                 }
+
                 AddKeyFrame(layer_id, when)                         => { }
                 DeleteKeyFrame(layer_id, when)                      => { }
                 ReadKeyFrames(layer_id, period)                     => { }
