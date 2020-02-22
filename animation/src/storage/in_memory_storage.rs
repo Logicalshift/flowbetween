@@ -33,6 +33,14 @@ struct InMemoryLayerStorage {
 }
 
 ///
+/// Indicates where an element is attached
+///
+struct ElementAttachment {
+    layer_id:       u64,
+    keyframe_time:  Duration
+}
+
+///
 /// Representation of an animation in-memory
 ///
 struct InMemoryStorageCore {
@@ -44,6 +52,9 @@ struct InMemoryStorageCore {
 
     /// The definitions for each element
     elements: HashMap<i64, String>,
+
+    /// The keyframes that an element is attached to
+    element_attachments: HashMap<i64, Vec<ElementAttachment>>,
 
     /// The layers
     layers: HashMap<u64, InMemoryLayerStorage>
@@ -67,7 +78,8 @@ impl InMemoryStorage {
             animation_properties:   None,
             edit_log:               vec![],
             elements:               HashMap::new(),
-            layers:                 HashMap::new()
+            layers:                 HashMap::new(),
+            element_attachments:    HashMap::new()
         };
 
         // And the storage
@@ -107,7 +119,15 @@ impl InMemoryStorageCore {
                 ReadElement(element_id)                             => { response.push(self.elements.get(&element_id).map(|element| StorageResponse::Element(element_id, element.clone())).unwrap_or(StorageResponse::NotFound)); }
                 DeleteElement(element_id)                           => { self.elements.remove(&element_id); response.push(StorageResponse::Updated); }
                 AddLayer(layer_id, properties)                      => { self.layers.insert(layer_id, InMemoryLayerStorage::new(properties)); response.push(StorageResponse::Updated); }
-                DeleteLayer(layer_id)                               => { if self.layers.remove(&layer_id).is_some() { response.push(StorageResponse::Updated); } else { response.push(StorageResponse::NotFound); } }
+                
+                DeleteLayer(layer_id)                               => { 
+                    if self.layers.remove(&layer_id).is_some() { 
+                        // TODO: remove element attachments from all of the keyframes
+                        response.push(StorageResponse::Updated); 
+                    } else { 
+                        response.push(StorageResponse::NotFound); 
+                    } 
+                }
 
                 ReadLayers                                          => { 
                     for (layer_id, storage) in self.layers.iter() {
@@ -161,6 +181,7 @@ impl InMemoryStorageCore {
                         match layer.keyframes.binary_search_by(|frame| frame.when.cmp(&when)) {
                             Ok(location)    => {
                                 // Exact match of a keyframe
+                                //  TODO: remove the attachments for the elements
                                 layer.keyframes.remove(location);
 
                                 response.push(StorageResponse::Updated)
@@ -212,7 +233,37 @@ impl InMemoryStorageCore {
                     }
                 }
 
-                AttachElementToLayer(layer_id, element_id, when)    => { }
+                AttachElementToLayer(layer_id, element_id, when)    => {
+                    if let Some(layer) = self.layers.get_mut(&layer_id) {
+                        // Search for the keyframe containing this time
+                        let keyframe_index = match layer.keyframes.binary_search_by(|frame| frame.when.cmp(&when)) {
+                            // Period starts at an exact keyframe
+                            Ok(location)    => Some(location),
+
+                            // Period covers the keyframe before the specified location if we get a partial match
+                            Err(location)   => if location > 0 { Some(location - 1) } else { None }
+                        };
+
+                        if let Some(keyframe_index) = keyframe_index {
+                            // Attach to this keyframe
+                            layer.keyframes[keyframe_index].attached_elements.insert(element_id, when);
+
+                            self.element_attachments.entry(element_id)
+                                .or_insert_with(|| vec![])
+                                .push(ElementAttachment {
+                                    layer_id:       layer_id, 
+                                    keyframe_time:  layer.keyframes[keyframe_index].when
+                                });
+                        } else {
+                            // Keyframe not found
+                            response.push(StorageResponse::NotFound);
+                        }
+                    } else {
+                        // Layer not found
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
                 DetachElementFromLayer(element_id)                  => { }
                 ReadElementAttachments(element_id)                  => { }
                 ReadElementsForKeyFrame(layer_id, when)             => { }
