@@ -27,7 +27,7 @@ impl Default for FileProperties {
             name:           "".to_string(),
             size:           (1920.0, 1080.0),
             duration:       Duration::from_millis(1000 * 60 * 2),
-            frame_length:   Duration::from_micros(1000000 / 30)
+            frame_length:   Duration::new(0, 33_333_333)
         }
     }
 }
