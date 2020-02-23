@@ -135,50 +135,47 @@ impl Layer for StreamLayer {
         let mut highest_before  = None;
         let mut lowest_after    = None;
 
-        for frame in key_frames.unwrap_or_else(|| vec![]) {
-            if let StorageResponse::KeyFrame(start, end) = frame {
-                // Try to populate with this frame if the 'before' time is not set yet
-                if highest_before.is_none() {
-                    if end < when {
-                        highest_before = Some(end);
-                    } else if start < when {
-                        highest_before = Some(start);
-                    }
-                }
+        let times               = key_frames.unwrap_or_else(|| vec![])
+            .into_iter()
+            .map(|response| match response {
+                StorageResponse::KeyFrame(start, end)       => vec![start, end],
+                StorageResponse::NotInAFrame(next_frame)    => vec![next_frame],
+                _                                           => vec![]
+            })
+            .flatten();
 
-                // Use this frame as the 'before' frame if it's closer to the 'when' time
-                highest_before = highest_before
-                    .map(|before| {
-                        if end < when && end > before {
-                            end
-                        } else if start < when && start > before { 
-                            start
-                        } else {
-                            before
-                        }
-                    });
-
-                // Try to populate with this frame if the 'after' time is not set yet
-                if lowest_after.is_none() {
-                    if start > when {
-                        lowest_after = Some(start);
-                    } else if end > when {
-                        lowest_after = Some(end);
-                    }
-                }
-
-                // Use this frame as the 'after' frame if it's closer to the 'when' time
-                lowest_after = lowest_after
-                    .map(|after| {
-                        if start > when && start < after {
-                            start
-                        } else if end > when && end < after { 
-                            end
-                        } else {
-                            after
-                        }
-                    });
+        for frame_time in times {
+            // Try to populate with this frame if the 'before' time is not set yet
+            if highest_before.is_none() && frame_time < when {
+                highest_before = Some(frame_time);
             }
+
+            // Use this frame as the 'before' frame if it's closer to the 'when' time
+            highest_before = highest_before
+                .map(|before| {
+                    if frame_time < when && frame_time > before {
+                        frame_time
+                    } else {
+                        before
+                    }
+                });
+
+            // Try to populate with this frame if the 'after' time is not set yet
+            if lowest_after.is_none() {
+                if frame_time > when {
+                    lowest_after = Some(frame_time);
+                }
+            }
+
+            // Use this frame as the 'after' frame if it's closer to the 'when' time
+            lowest_after = lowest_after
+                .map(|after| {
+                    if frame_time > when && frame_time < after {
+                        frame_time
+                    } else {
+                        after
+                    }
+                });
         }
 
         // End of the range indi

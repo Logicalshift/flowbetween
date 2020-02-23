@@ -105,6 +105,9 @@ pub enum StorageResponse {
     /// Start of a read from a keyframe. The two times here are the start and end time of the keyframe from the start of the animation
     KeyFrame(Duration, Duration),
 
+    /// A request was made for a location that is not in a keyframe, but where a keyframe is available at the specified later point
+    NotInAFrame(Duration),
+
     /// The serialized version of the element that was requested
     Element(i64, String),
 

@@ -307,7 +307,8 @@ impl InMemoryStorageCore {
                         };
 
                         // Return keyframes until we reach the end of the period
-                        let mut keyframe_index = initial_keyframe_index;
+                        let mut keyframe_index  = initial_keyframe_index;
+                        let mut num_keyframes   = 0;
                         while keyframe_index < layer.keyframes.len() && layer.keyframes[keyframe_index].when < period.end {
                             // Work out when this keyframe starts and ends
                             let start   = layer.keyframes[keyframe_index].when;
@@ -319,11 +320,16 @@ impl InMemoryStorageCore {
 
                             // Add to the response
                             response.push(StorageResponse::KeyFrame(start, end));
+                            num_keyframes += 1;
 
                             // Move on to the next keyframe
                             keyframe_index += 1;
                         }
 
+                        if num_keyframes == 0 && keyframe_index < layer.keyframes.len() {
+                            // If no keyframes were returned but there's a valid keyframe, indicate where the following keyframe is
+                            response.push(StorageResponse::NotInAFrame(layer.keyframes[keyframe_index].when));
+                        }
                     } else {
                         // Layer not found
                         response.push(StorageResponse::NotFound);
