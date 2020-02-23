@@ -127,7 +127,8 @@ impl Layer for StreamLayer {
     ///
     fn previous_and_next_key_frame(&self, when: Duration) -> (Option<Duration>, Option<Duration>) {
         // Request the keyframe locations from the storage
-        let range               = (when - Duration::from_nanos(1))..(when + Duration::from_nanos(1));
+        let start_time          = if when > Duration::from_nanos(0) { when - Duration::from_nanos(1) } else { when };
+        let range               = (start_time)..(when + Duration::from_nanos(1));
         let key_frames          = self.request_sync(vec![StorageCommand::ReadKeyFrames(self.layer_id, range)]);
 
         // We need to get the highest key frame before the 'when' time and the lowest after the 'when' time
