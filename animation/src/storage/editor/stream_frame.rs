@@ -136,7 +136,9 @@ impl Frame for StreamFrame {
                 };
 
                 // Store the element in the result
-                result.push(wrapper.element.clone());
+                if wrapper.start_time <= self.frame_time {
+                    result.push(wrapper.element.clone());
+                }
 
                 // Move on to the next element in the list
                 next_element = wrapper.order_before;
