@@ -54,18 +54,18 @@ impl Frame for StreamFrame {
 
             while let Some(current_element) = next_element {
                 // Fetch the element definition
-                let element = elements.get(&current_element);
-                let element = match element {
-                    Some(element)   => element,
+                let wrapper = elements.get(&current_element);
+                let wrapper = match wrapper {
+                    Some(wrapper)   => wrapper,
                     None            => { break; }
                 };
 
                 // Render the element if it is displayed on this frame
-                if element.start_time <= self.frame_time {
+                if wrapper.start_time <= self.frame_time {
                     // Check the attachments
-                    if active_attachments != element.attachments {
+                    if active_attachments != wrapper.attachments {
                         // Update the properties based on the new attachments
-                        active_attachments = element.attachments.clone();
+                        active_attachments = wrapper.attachments.clone();
 
                         // Apply the properties from each of the attachments in turn
                         properties = Arc::new(VectorProperties::default());
@@ -78,11 +78,11 @@ impl Frame for StreamFrame {
                     }
 
                     // Render the element
-                    properties.render(gc, element.element.clone(), when);
+                    properties.render(gc, wrapper.element.clone(), when);
                 }
 
                 // Move on to the next element in the list
-                next_element = element.order_before;
+                next_element = wrapper.order_before;
             }
         }
     }
@@ -91,21 +91,76 @@ impl Frame for StreamFrame {
     /// Applies all of the properties for the specified element (including those added by attached elements)
     ///
     fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
-        unimplemented!()
+        if let Some(core) = self.keyframe_core.as_ref() {
+            // Try to fetch the element from the core
+            let elements    = core.elements.lock().unwrap();
+            let wrapper     = elements.get(&element.id());
+
+            if let Some(wrapper) = wrapper {
+                // Apply the attachments from the wrapper
+                let mut properties = properties;
+                for attachment_id in wrapper.attachments.iter() {
+                    if let Some(attach_element) = elements.get(&attachment_id) {
+                        properties = attach_element.element.update_properties(Arc::clone(&properties));
+                    }
+                }
+
+                properties
+            } else {
+                // Element not from this keyframe?
+                properties
+            }
+        } else {
+            // Properties are unaltered
+            properties
+        }
     }
 
     ///
     /// Attempts to retrieve the vector elements associated with this frame, if there are any
     ///
     fn vector_elements<'a>(&'a self) -> Option<Box<dyn 'a+Iterator<Item=Vector>>> {
-        unimplemented!()
+        if let Some(core) = self.keyframe_core.as_ref() {
+            let mut result      = vec![];
+
+            // Start at the initial element
+            let elements            = core.elements.lock().unwrap();
+            let mut next_element    = core.initial_element;
+
+            while let Some(current_element) = next_element {
+                // Fetch the element definition
+                let wrapper = elements.get(&current_element);
+                let wrapper = match wrapper {
+                    Some(wrapper)   => wrapper,
+                    None            => { break; }
+                };
+
+                // Store the element in the result
+                result.push(wrapper.element.clone());
+
+                // Move on to the next element in the list
+                next_element = wrapper.order_before;
+            }
+
+            Some(Box::new(result.into_iter()))
+        } else {
+            // No elements
+            None
+        }
     }
 
     ///
     /// Retrieves a copy of the element with the specifed ID from this frame, if it exists
     ///
     fn element_with_id(&self, id: ElementId) -> Option<Vector> {
-        unimplemented!()
+        if let Some(core) = self.keyframe_core.as_ref() {
+            // Start at the initial element
+            let elements            = core.elements.lock().unwrap();
+            elements.get(&id).map(|wrapper| wrapper.element.clone())
+        } else {
+            // No elements
+            None
+        }
     }
 
     ///
@@ -114,6 +169,29 @@ impl Frame for StreamFrame {
     /// (Element data can be retrieved via element_with_id)
     ///
     fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {
-        unimplemented!()
+        if let Some(core) = self.keyframe_core.as_ref() {
+            // Start at the initial element
+            let elements            = core.elements.lock().unwrap();
+
+            if let Some(wrapper) = elements.get(&id) {
+                // Fetch the types of the attachments to the element
+                wrapper.attachments
+                    .iter()
+                    .map(|attachment_id| {
+                        elements.get(attachment_id)
+                            .map(|attachment_wrapper| {
+                                (*attachment_id, VectorType::from(&attachment_wrapper.element))
+                            })
+                    })
+                    .flatten()
+                    .collect()
+            } else {
+                // Element not found
+                vec![]
+            }
+        } else {
+            // No elements
+            vec![]
+        }
     }
 }
