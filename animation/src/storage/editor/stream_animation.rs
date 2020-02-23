@@ -1,3 +1,4 @@
+use super::stream_layer::*;
 use super::stream_animation_core::*;
 use super::super::storage_api::*;
 use super::super::file_properties::*;
@@ -221,7 +222,21 @@ impl Animation for StreamAnimation {
     /// Retrieves the layer with the specified ID from this animation
     ///
     fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<dyn Layer>> {
-        unimplemented!()
+        // Read the properties for the specified layer
+        let layer_properties = self.request_sync(vec![StorageCommand::ReadLayerProperties(layer_id)]);
+
+        if let Some(StorageResponse::LayerProperties(_, serialized)) = layer_properties.and_then(|mut props| props.pop()) {
+            if let Some(layer_properties) = LayerProperties::deserialize(&mut serialized.chars()) {
+                // Found the layer
+                Some(Arc::new(StreamLayer::new(Arc::clone(&self.core), layer_id, layer_properties)))
+            } else {
+                // Can't deserialize the layer properties
+                None
+            }
+        } else {
+            // Layer does not exist
+            None
+        }
     }
 
     ///

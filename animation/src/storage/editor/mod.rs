@@ -11,11 +11,12 @@ mod core_motion;
 mod core_element;
 mod keyframe_core;
 mod element_wrapper;
+mod stream_layer;
 
 #[cfg(test)] mod tests;
 #[cfg(test)] mod round_trip_tests;
 
-pub use self::stream_animation::*;
+use self::stream_animation::*;
 use super::storage_api::*;
 use super::super::traits::*;
 
