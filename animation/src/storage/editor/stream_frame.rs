@@ -1,3 +1,4 @@
+use super::keyframe_core::*;
 use super::super::super::traits::*;
 
 use flo_canvas::*;
@@ -11,15 +12,19 @@ use std::time::{Duration};
 pub struct StreamFrame {
     /// When this frame exists
     frame_time: Duration,
+
+    /// The keyframe that was retrieved for this frame (or none if no keyframe was retrieved)
+    keyframe_core: Option<KeyFrameCore>
 }
 
 impl StreamFrame {
     ///
     /// Creates a new stream frame
     ///
-    pub fn new(frame_time: Duration) -> StreamFrame {
+    pub (super) fn new(frame_time: Duration, keyframe_core: Option<KeyFrameCore>) -> StreamFrame {
         StreamFrame {
-            frame_time: frame_time
+            frame_time:     frame_time,
+            keyframe_core:  keyframe_core
         }
     }
 }

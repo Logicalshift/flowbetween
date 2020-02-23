@@ -79,7 +79,27 @@ impl Layer for StreamLayer {
     /// Retrieves a frame from this layer with the specified parameters
     ///
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame> {
-        Arc::new(StreamFrame::new(time_index))
+        // Retrieve the keyframe from the core
+        let core            = Arc::clone(&self.core);
+        let layer_id        = self.layer_id;
+        let keyframe_core   = Desync::new(None);
+
+        // Load into the keyframe_core desync
+        let _               = keyframe_core.future(move |frame| {
+            async move {
+                *frame = core.future(move |core| {
+                    async move {
+                        core.load_keyframe(layer_id, time_index).await
+                    }.boxed()
+                }).await.unwrap_or(None);
+            }.boxed()
+        });
+
+        // Retrieve the result when the future completes
+        let keyframe_core   = keyframe_core.sync(|frame| frame.take());
+
+        // Create a frame with the keyframe core
+        Arc::new(StreamFrame::new(time_index, keyframe_core))
     }
 
     ///
