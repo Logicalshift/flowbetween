@@ -100,6 +100,60 @@ impl InMemoryStorage {
 
 impl InMemoryStorageCore {
     ///
+    /// Removes all the attached elements from the specified keyframe
+    ///
+    fn detach_elements_from_keyframe(layer_id: u64, keyframe: &mut InMemoryKeyFrameStorage, element_attachments: &mut HashMap<i64, Vec<ElementAttachment>>) {
+        // The attached elements are identified by layer ID and the keyframe time
+        let keyframe_time = keyframe.when;
+
+        // Remove all the elements from the element_attachments list
+        for (elem_id, _) in keyframe.attached_elements.iter() {
+            if let Some(attachments) = element_attachments.get_mut(elem_id) {
+                attachments.retain(|attachment| attachment.layer_id != layer_id || attachment.keyframe_time != keyframe_time);
+            }
+        }
+
+        // Clear out the elements from the keyframe itself
+        keyframe.attached_elements.clear();
+    }
+
+    ///
+    /// Removes all of the references to an element in a particular layer
+    ///
+    fn detach_all_elements_in_layer(&mut self, layer_id: u64) {
+        if let Some(layer) = self.layers.get_mut(&layer_id) {
+            for keyframe in layer.keyframes.iter_mut() {
+                Self::detach_elements_from_keyframe(layer_id, keyframe, &mut self.element_attachments);
+            }
+        }
+    }
+
+    ///
+    /// Removes an element from all of its attachments
+    ///
+    fn detach_element(&mut self, element_id: i64) -> bool {
+        // Remove the attachments from the storage
+        if let Some(attachments) = self.element_attachments.remove(&element_id) {
+            // Remove the elements from each of the keyframes it's attached to
+            for attachment in attachments.into_iter() {
+                // Fetch the layer
+                if let Some(layer) = self.layers.get_mut(&attachment.layer_id) {
+                    // Search for the keyframe
+                    if let Ok(keyframe_index) = layer.keyframes.binary_search_by(|frame| frame.when.cmp(&attachment.keyframe_time)) {
+                        // Remove the element from the keyframe
+                        layer.keyframes[keyframe_index].attached_elements.remove(&element_id);
+                    }
+                }
+            }
+
+            true
+        } else {
+            // Element not found
+            false
+        }
+    }
+
+    ///
     /// Runs a series of storage commands on this store
     ///
     pub fn run_commands(&mut self, commands: Vec<StorageCommand>) -> Vec<StorageResponse> {
@@ -117,16 +171,24 @@ impl InMemoryStorageCore {
                 ReadEdits(edit_range)                               => { response.extend(edit_range.into_iter().map(|index| StorageResponse::Edit(index, self.edit_log[index].clone()))); }
                 WriteElement(element_id, value)                     => { self.elements.insert(element_id, value); response.push(StorageResponse::Updated); }
                 ReadElement(element_id)                             => { response.push(self.elements.get(&element_id).map(|element| StorageResponse::Element(element_id, element.clone())).unwrap_or(StorageResponse::NotFound)); }
-                DeleteElement(element_id)                           => { self.elements.remove(&element_id); response.push(StorageResponse::Updated); }
                 AddLayer(layer_id, properties)                      => { self.layers.insert(layer_id, InMemoryLayerStorage::new(properties)); response.push(StorageResponse::Updated); }
+
+                DeleteElement(element_id)                           => { 
+                    if let Some(element) = self.elements.remove(&element_id) {
+                        self.detach_element(element_id);
+                        response.push(StorageResponse::Updated); 
+                    } else {
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
                 
                 DeleteLayer(layer_id)                               => { 
                     if self.layers.remove(&layer_id).is_some() { 
-                        // TODO: remove element attachments from all of the keyframes
+                        self.detach_all_elements_in_layer(layer_id);
                         response.push(StorageResponse::Updated); 
                     } else { 
                         response.push(StorageResponse::NotFound); 
-                    } 
+                    }
                 }
 
                 ReadLayers                                          => { 
@@ -181,7 +243,7 @@ impl InMemoryStorageCore {
                         match layer.keyframes.binary_search_by(|frame| frame.when.cmp(&when)) {
                             Ok(location)    => {
                                 // Exact match of a keyframe
-                                //  TODO: remove the attachments for the elements
+                                Self::detach_elements_from_keyframe(layer_id, &mut layer.keyframes[location], &mut self.element_attachments);
                                 layer.keyframes.remove(location);
 
                                 response.push(StorageResponse::Updated)
@@ -264,7 +326,14 @@ impl InMemoryStorageCore {
                     }
                 }
 
-                DetachElementFromLayer(element_id)                  => { }
+                DetachElementFromLayer(element_id)                  => { 
+                    if self.detach_element(element_id) {
+                        response.push(StorageResponse::Updated);
+                    } else {
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
                 ReadElementAttachments(element_id)                  => { }
                 ReadElementsForKeyFrame(layer_id, when)             => { }
             }
