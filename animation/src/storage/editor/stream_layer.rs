@@ -1,8 +1,11 @@
+use super::stream_frame::*;
 use super::stream_animation_core::*;
+use super::super::storage_api::*;
 use super::super::layer_properties::*;
 use super::super::super::traits::*;
 
 use ::desync::*;
+use futures::prelude::*;
 
 use std::sync::*;
 use std::time::{Duration};
@@ -19,7 +22,10 @@ pub struct StreamLayer {
     layer_id: u64,
 
     /// The properties for this layer
-    properties: LayerProperties
+    properties: LayerProperties,
+
+    /// Available synchronous requests
+    idle_sync_requests: Desync<Vec<Desync<Option<Vec<StorageResponse>>>>>,
 }
 
 impl StreamLayer {
@@ -28,10 +34,27 @@ impl StreamLayer {
     ///
     pub (super) fn new(core: Arc<Desync<StreamAnimationCore>>, layer_id: u64, properties: LayerProperties) -> StreamLayer {
         StreamLayer {
-            core:           core,
-            layer_id:       layer_id,
-            properties:     properties
+            core:               core,
+            layer_id:           layer_id,
+            properties:         properties,
+            idle_sync_requests: Desync::new(vec![])
         }
+    }
+
+    ///
+    /// Performs an asynchronous request on a storage layer for this animation
+    ///
+    fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
+        request_core_async(&self.core, request)
+    }
+
+    ///
+    /// Performs a synchronous request on the storage layer for this animation
+    /// 
+    /// Synchronous requests are fairly slow, so should be avoided in inner loops
+    ///
+    fn request_sync(&self, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
+        request_core_sync(Arc::clone(&self.core), &self.idle_sync_requests, request)
     }
 }
 
@@ -63,14 +86,25 @@ impl Layer for StreamLayer {
     /// Retrieves a frame from this layer with the specified parameters
     ///
     fn get_frame_at_time(&self, time_index: Duration) -> Arc<dyn Frame> {
-        unimplemented!("get_frame_at_time")
+        Arc::new(StreamFrame::new(time_index))
     }
 
     ///
     /// Retrieves the times where key frames exist during a specified time range
     ///
     fn get_key_frames_during_time(&self, when: Range<Duration>) -> Box<dyn Iterator<Item=Duration>> {
-        unimplemented!("get_key_frames_during_time")
+        // Request the keyframe locations from the storage
+        let key_frames = self.request_sync(vec![StorageCommand::ReadKeyFrames(self.layer_id, when.clone())]);
+
+        // Return the keyframes that start within the specified range
+        Box::new(key_frames.unwrap_or_else(|| vec![])
+            .into_iter()
+            .filter_map(move |response| {
+                match response {
+                    StorageResponse::KeyFrame(start, _end)  => if start >= when.start && start < when.end { Some(start) } else { None },
+                    _                                       => None
+                }
+            }))
     }
 
     ///
@@ -79,7 +113,67 @@ impl Layer for StreamLayer {
     /// (If there's a keyframe at this point in time, it is not returned)
     ///
     fn previous_and_next_key_frame(&self, when: Duration) -> (Option<Duration>, Option<Duration>) {
-        unimplemented!("previous_and_next_key_frame")
+        // Request the keyframe locations from the storage
+        let range               = (when - Duration::from_nanos(1))..(when + Duration::from_nanos(1));
+        let key_frames          = self.request_sync(vec![StorageCommand::ReadKeyFrames(self.layer_id, range)]);
+
+        // We need to get the highest key frame before the 'when' time and the lowest after the 'when' time
+        let mut highest_before  = None;
+        let mut lowest_after    = None;
+
+        for frame in key_frames.unwrap_or_else(|| vec![]) {
+            if let StorageResponse::KeyFrame(start, end) = frame {
+                // Try to populate with this frame if the 'before' time is not set yet
+                if highest_before.is_none() {
+                    if end < when {
+                        highest_before = Some(end);
+                    } else if start < when {
+                        highest_before = Some(start);
+                    }
+                }
+
+                // Use this frame as the 'before' frame if it's closer to the 'when' time
+                highest_before = highest_before
+                    .map(|before| {
+                        if end < when && end > before {
+                            end
+                        } else if start < when && start > before { 
+                            start
+                        } else {
+                            before
+                        }
+                    });
+
+                // Try to populate with this frame if the 'after' time is not set yet
+                if lowest_after.is_none() {
+                    if start > when {
+                        lowest_after = Some(start);
+                    } else if end > when {
+                        lowest_after = Some(end);
+                    }
+                }
+
+                // Use this frame as the 'after' frame if it's closer to the 'when' time
+                lowest_after = lowest_after
+                    .map(|after| {
+                        if start > when && start < after {
+                            start
+                        } else if end > when && end < after { 
+                            end
+                        } else {
+                            after
+                        }
+                    });
+            }
+        }
+
+        // End of the range indi
+        if lowest_after == Some(Duration::new(u64::max_value(), 0)) { 
+            lowest_after = None;
+        }
+
+        // Keyframes are at the highest time we got before the 'when' time and the lowest time after
+        (highest_before, lowest_after)
     }
 
     ///

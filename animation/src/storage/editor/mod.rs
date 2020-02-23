@@ -12,6 +12,7 @@ mod core_element;
 mod keyframe_core;
 mod element_wrapper;
 mod stream_layer;
+mod stream_frame;
 
 #[cfg(test)] mod tests;
 #[cfg(test)] mod round_trip_tests;
