@@ -340,7 +340,7 @@ impl InMemoryStorageCore {
                         let attachments = attachments.iter()
                             .map(|attachment| (attachment.layer_id, attachment.keyframe_time))
                             .collect();
-                            
+
                         response.push(StorageResponse::ElementAttachments(element_id, attachments));
                     } else if !self.elements.contains_key(&element_id) {
                         // Element not found
@@ -348,7 +348,30 @@ impl InMemoryStorageCore {
                     }
                 }
 
-                ReadElementsForKeyFrame(layer_id, when)             => { }
+                ReadElementsForKeyFrame(layer_id, when)             => { 
+                    if let Some(layer) = self.layers.get(&layer_id) {
+                        // Search for the keyframe
+                        let keyframe_index = match layer.keyframes.binary_search_by(|frame| frame.when.cmp(&when)) {
+                            Ok(index)   => Some(index),
+                            Err(index)  => if index > 0 { Some(index-1) } else { None }
+                        };
+
+                        if let Some(keyframe_index) = keyframe_index {
+                            // Found the keyframe: fetch the element IDs and definitions that are attached to it
+                            let element_ids     = layer.keyframes[keyframe_index].attached_elements.iter().map(|(element_id, _when)| element_id);
+                            let element_defns   = element_ids.map(|id| self.elements.get(&id).map(move |defn| (id, defn.clone()))).flatten();
+
+                            response.extend(element_defns
+                                .map(|(element_id, defn)| StorageResponse::Element(*element_id, defn.clone())));
+                        } else {
+                            // Keyframe not present
+                            response.push(StorageResponse::NotFound);
+                        }
+                    } else {
+                        // Layer not present
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
             }
         }
 
