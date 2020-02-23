@@ -41,7 +41,50 @@ impl Frame for StreamFrame {
     /// Renders this frame to a particular graphics context
     ///
     fn render_to(&self, gc: &mut dyn GraphicsPrimitives) {
-        unimplemented!()
+        // Set up the properties
+        let mut properties          = Arc::new(VectorProperties::default());
+        let mut active_attachments  = vec![];
+        let when                    = self.time_index();
+
+        // Render the elements
+        if let Some(core) = self.keyframe_core.as_ref() {
+            // Start at the initial element
+            let elements            = core.elements.lock().unwrap();
+            let mut next_element    = core.initial_element;
+
+            while let Some(current_element) = next_element {
+                // Fetch the element definition
+                let element = elements.get(&current_element);
+                let element = match element {
+                    Some(element)   => element,
+                    None            => { break; }
+                };
+
+                // Render the element if it is displayed on this frame
+                if element.start_time <= self.frame_time {
+                    // Check the attachments
+                    if active_attachments != element.attachments {
+                        // Update the properties based on the new attachments
+                        active_attachments = element.attachments.clone();
+
+                        // Apply the properties from each of the attachments in turn
+                        properties = Arc::new(VectorProperties::default());
+                        for attachment_id in active_attachments.iter() {
+                            if let Some(attach_element) = elements.get(&attachment_id) {
+                                properties = attach_element.element.update_properties(Arc::clone(&properties));
+                                properties.render(gc, attach_element.element.clone(), when);
+                            }
+                        }
+                    }
+
+                    // Render the element
+                    properties.render(gc, element.element.clone(), when);
+                }
+
+                // Move on to the next element in the list
+                next_element = element.order_before;
+            }
+        }
     }
 
     ///
