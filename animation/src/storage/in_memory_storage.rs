@@ -163,15 +163,50 @@ impl InMemoryStorageCore {
             use self::StorageCommand::*;
 
             match command {
-                WriteAnimationProperties(props)                     => { self.animation_properties = Some(props); response.push(StorageResponse::Updated); }
-                ReadAnimationProperties                             => { response.push(self.animation_properties.as_ref().map(|props| StorageResponse::AnimationProperties(props.clone())).unwrap_or(StorageResponse::NotFound)); }
-                WriteEdit(edit)                                     => { self.edit_log.push(edit); response.push(StorageResponse::Updated); }
-                ReadHighestUnusedElementId                          => { response.push(StorageResponse::HighestUnusedElementId(self.elements.keys().cloned().max().unwrap_or(-1)+1)); }
-                ReadEditLogLength                                   => { response.push(StorageResponse::NumberOfEdits(self.edit_log.len())); }
-                ReadEdits(edit_range)                               => { response.extend(edit_range.into_iter().map(|index| StorageResponse::Edit(index, self.edit_log[index].clone()))); }
-                WriteElement(element_id, value)                     => { self.elements.insert(element_id, value); response.push(StorageResponse::Updated); }
-                ReadElement(element_id)                             => { response.push(self.elements.get(&element_id).map(|element| StorageResponse::Element(element_id, element.clone())).unwrap_or(StorageResponse::NotFound)); }
-                AddLayer(layer_id, properties)                      => { self.layers.insert(layer_id, InMemoryLayerStorage::new(properties)); response.push(StorageResponse::Updated); }
+                WriteAnimationProperties(props)                     => { 
+                    self.animation_properties = Some(props); 
+                    response.push(StorageResponse::Updated); 
+                }
+
+                ReadAnimationProperties                             => { 
+                    response.push(self.animation_properties.as_ref()
+                        .map(|props| StorageResponse::AnimationProperties(props.clone()))
+                        .unwrap_or(StorageResponse::NotFound)); 
+                }
+
+                WriteEdit(edit)                                     => { 
+                    self.edit_log.push(edit); 
+                    response.push(StorageResponse::Updated); 
+                }
+
+                ReadHighestUnusedElementId                          => { 
+                    response.push(StorageResponse::HighestUnusedElementId(self.elements.keys().cloned().max().unwrap_or(-1)+1)); 
+                }
+
+                ReadEditLogLength                                   => { 
+                    response.push(StorageResponse::NumberOfEdits(self.edit_log.len())); 
+                }
+
+                ReadEdits(edit_range)                               => { 
+                    response.extend(edit_range.into_iter()
+                        .map(|index| StorageResponse::Edit(index, self.edit_log[index].clone()))); 
+                }
+
+                WriteElement(element_id, value)                     => { 
+                    self.elements.insert(element_id, value); 
+                    response.push(StorageResponse::Updated);
+                }
+
+                ReadElement(element_id)                             => { 
+                    response.push(self.elements.get(&element_id)
+                        .map(|element| StorageResponse::Element(element_id, element.clone()))
+                        .unwrap_or(StorageResponse::NotFound)); 
+                }
+
+                AddLayer(layer_id, properties)                      => { 
+                    self.layers.insert(layer_id, InMemoryLayerStorage::new(properties)); 
+                    response.push(StorageResponse::Updated); 
+                }
 
                 DeleteElement(element_id)                           => { 
                     if let Some(_element) = self.elements.remove(&element_id) {
