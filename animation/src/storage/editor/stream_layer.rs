@@ -42,13 +42,6 @@ impl StreamLayer {
     }
 
     ///
-    /// Performs an asynchronous request on a storage layer for this animation
-    ///
-    fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
-        request_core_async(&self.core, request)
-    }
-
-    ///
     /// Performs a synchronous request on the storage layer for this animation
     /// 
     /// Synchronous requests are fairly slow, so should be avoided in inner loops
