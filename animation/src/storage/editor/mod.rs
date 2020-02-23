@@ -4,6 +4,11 @@
 
 mod stream_animation;
 mod stream_animation_core;
+mod core_path;
+mod core_paint;
+mod core_layer;
+mod core_motion;
+mod core_element;
 mod keyframe_core;
 mod element_wrapper;
 
