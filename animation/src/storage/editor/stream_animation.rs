@@ -83,15 +83,8 @@ impl StreamAnimation {
     ///
     /// Performs an asynchronous request on a storage layer for this animation
     ///
-    pub fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
-        self.core.future(move |core| {
-            async move {
-                core.storage_requests.publish(request).await;
-                core.storage_responses.next().await
-            }.boxed()
-        }).map(|res| {
-            res.unwrap_or(None)
-        })
+    pub (super) fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
+        request_core_async(&self.core, request)
     }
 
     ///
@@ -99,45 +92,8 @@ impl StreamAnimation {
     /// 
     /// Synchronous requests are fairly slow, so should be avoided in inner loops
     ///
-    pub fn request_sync(&self, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
-        // Fetch a copy of the core
-        let core = Arc::clone(&self.core);
-
-        // Get an idle sync request desync
-        //   We use desync instead of the futures executor as the executor will panic if we are called from within another future
-        //   (desync provides a way around this problem)
-        let sync_request = self.idle_sync_requests.sync(|reqs| {
-            let next_request = reqs.pop();
-            if let Some(next_request) = next_request {
-                next_request
-            } else {
-                let req = Desync::new(None);
-                req
-            }
-        });
-
-        // Queue a request
-        let _ = sync_request.future(move |data| {
-            async move {
-                let result = core.future(|core| {
-                    async move {
-                        core.storage_requests.publish(request).await;
-                        core.storage_responses.next().await
-                    }.boxed()
-                }).await;
-
-                *data = result.unwrap_or(None);
-            }.boxed()
-        });
-
-        // Retrieve the result
-        let result = sync_request.sync(|req| req.take());
-
-        // Return the sync_request to the pool
-        self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
-
-        // Return the result of the request
-        result
+    pub (super) fn request_sync(&self, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
+        request_core_sync(Arc::clone(&self.core), &self.idle_sync_requests, request)
     }
 
     ///

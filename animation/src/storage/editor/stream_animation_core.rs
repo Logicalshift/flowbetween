@@ -13,6 +13,63 @@ use futures::stream::{BoxStream};
 use std::sync::*;
 use std::time::{Duration};
 
+///
+/// Performs an asynchronous request on a storage layer for this animation
+///
+pub (super) fn request_core_async(core: &Arc<Desync<StreamAnimationCore>>, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {
+    core.future(move |core| {
+        async move {
+            core.storage_requests.publish(request).await;
+            core.storage_responses.next().await
+        }.boxed()
+    }).map(|res| {
+        res.unwrap_or(None)
+    })
+}
+
+///
+/// Performs a synchronous request on the storage layer for this animation
+/// 
+/// Synchronous requests are fairly slow, so should be avoided in inner loops
+///
+pub (super) fn request_core_sync(core: Arc<Desync<StreamAnimationCore>>, idle_sync_requests: &Desync<Vec<Desync<Option<Vec<StorageResponse>>>>>, request: Vec<StorageCommand>) -> Option<Vec<StorageResponse>> {
+    // Get an idle sync request desync
+    //   We use desync instead of the futures executor as the executor will panic if we are called from within another future
+    //   (desync provides a way around this problem)
+    let sync_request = idle_sync_requests.sync(|reqs| {
+        let next_request = reqs.pop();
+        if let Some(next_request) = next_request {
+            next_request
+        } else {
+            let req = Desync::new(None);
+            req
+        }
+    });
+
+    // Queue a request
+    let _ = sync_request.future(move |data| {
+        async move {
+            let result = core.future(|core| {
+                async move {
+                    core.storage_requests.publish(request).await;
+                    core.storage_responses.next().await
+                }.boxed()
+            }).await;
+
+            *data = result.unwrap_or(None);
+        }.boxed()
+    });
+
+    // Retrieve the result
+    let result = sync_request.sync(|req| req.take());
+
+    // Return the sync_request to the pool
+    idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
+
+    // Return the result of the request
+    result
+}
+
 pub (super) struct StreamAnimationCore {
     /// Stream where responses to the storage requests are sent
     pub (super) storage_responses: BoxStream<'static, Vec<StorageResponse>>,
