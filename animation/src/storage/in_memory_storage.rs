@@ -174,7 +174,7 @@ impl InMemoryStorageCore {
                 AddLayer(layer_id, properties)                      => { self.layers.insert(layer_id, InMemoryLayerStorage::new(properties)); response.push(StorageResponse::Updated); }
 
                 DeleteElement(element_id)                           => { 
-                    if let Some(element) = self.elements.remove(&element_id) {
+                    if let Some(_element) = self.elements.remove(&element_id) {
                         self.detach_element(element_id);
                         response.push(StorageResponse::Updated); 
                     } else {
@@ -334,7 +334,20 @@ impl InMemoryStorageCore {
                     }
                 }
 
-                ReadElementAttachments(element_id)                  => { }
+                ReadElementAttachments(element_id)                  => {
+                    if let Some(attachments) = self.element_attachments.get(&element_id) {
+                        // Attachments found for this element
+                        let attachments = attachments.iter()
+                            .map(|attachment| (attachment.layer_id, attachment.keyframe_time))
+                            .collect();
+                            
+                        response.push(StorageResponse::ElementAttachments(element_id, attachments));
+                    } else if !self.elements.contains_key(&element_id) {
+                        // Element not found
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
                 ReadElementsForKeyFrame(layer_id, when)             => { }
             }
         }
