@@ -86,7 +86,9 @@ impl Layer for StreamLayer {
     /// Retrieves the definition of this layer as a vector layer
     ///
     fn as_vector_layer<'a>(&'a self) -> Option<Box<dyn 'a+Deref<Target=dyn 'a+VectorLayer>>> {
-        unimplemented!("as_vector_layer")
+        let as_vector_layer: &dyn VectorLayer = self;
+
+        Some(Box::new(as_vector_layer))
     }
 
     ///
@@ -94,5 +96,14 @@ impl Layer for StreamLayer {
     ///
     fn get_canvas_cache_at_time(&self, time_index: Duration) -> Arc<dyn CanvasCache> {
         unimplemented!("get_canvas_cache_at_time")
+    }
+}
+
+impl VectorLayer for StreamLayer {
+    ///
+    /// The brush that will be active for the next element that's added to this layer (if one is set)
+    ///
+    fn active_brush(&self, when: Duration) -> Option<Arc<dyn Brush>> {
+        None
     }
 }
