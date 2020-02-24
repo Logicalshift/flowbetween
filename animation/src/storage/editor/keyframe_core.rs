@@ -239,32 +239,37 @@ impl KeyFrameCore {
         let mut serialized  = String::new();
         new_element.serialize(&mut serialized);
 
-        // Add to the current keyframe as the new last element
-        let mut keyframe_elements = self.elements.lock().unwrap();
-        keyframe_elements.insert(ElementId::Assigned(new_id), new_element.clone());
+        if !new_element.unattached {
+            // Add to the current keyframe as the new last element
+            let mut keyframe_elements = self.elements.lock().unwrap();
+            keyframe_elements.insert(ElementId::Assigned(new_id), new_element.clone());
 
-        let previous_element = last_element.and_then(|last_element| keyframe_elements.get_mut(&last_element));
-        let previous_element = if let Some(previous_element) = previous_element {
-            previous_element.order_before = Some(ElementId::Assigned(new_id));
-            Some(previous_element.clone())
+            let previous_element = last_element.and_then(|last_element| keyframe_elements.get_mut(&last_element));
+            let previous_element = if let Some(previous_element) = previous_element {
+                previous_element.order_before = Some(ElementId::Assigned(new_id));
+                Some(previous_element.clone())
+            } else {
+                None
+            };
+
+            // Update the last element
+            self.last_element = Some(ElementId::Assigned(new_id));
+
+            // Generate the storage commands
+            if let Some(previous_element) = previous_element {
+                // Need to update the previous element as well as the current one
+                let previous_element_id             = last_element.and_then(|elem| elem.id()).unwrap_or(0);
+                let mut previous_elem_serialized    = String::new();
+                
+                previous_element.serialize(&mut previous_elem_serialized);
+
+                vec![StorageCommand::WriteElement(previous_element_id, previous_elem_serialized), StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
+            } else {
+                // Just creating a new element
+                vec![StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
+            }
         } else {
-            None
-        };
-
-        // Update the last element
-        self.last_element = Some(ElementId::Assigned(new_id));
-        
-        // Generate the storage commands
-        if let Some(previous_element) = previous_element {
-            // Need to update the previous element as well as the current one
-            let previous_element_id             = last_element.and_then(|elem| elem.id()).unwrap_or(0);
-            let mut previous_elem_serialized    = String::new();
-            
-            previous_element.serialize(&mut previous_elem_serialized);
-
-            vec![StorageCommand::WriteElement(previous_element_id, previous_elem_serialized), StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
-        } else {
-            // Just creating a new element
+            // Unattached elements are just attached to the layer without updating the position
             vec![StorageCommand::WriteElement(new_id, serialized), StorageCommand::AttachElementToLayer(self.layer_id, new_id, new_element.start_time)]
         }
     }
