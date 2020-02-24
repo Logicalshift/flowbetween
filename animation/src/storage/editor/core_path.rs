@@ -61,13 +61,14 @@ impl StreamAnimationCore {
 
                 SelectBrush(element_id, defn, style)    => {
                     // Create a brush definition element
-                    let defn                = BrushDefinitionElement::new(*element_id, defn.clone(), *style);
-                    self.path_brush_defn    = Some(Arc::new(defn.clone()));
+                    let defn                    = BrushDefinitionElement::new(*element_id, defn.clone(), *style);
+                    self.path_brush_defn        = Some(Arc::new(defn.clone()));
 
                     // Save as an element (it gets attached to a frame when used in a path)
-                    let element             = Vector::BrushDefinition(defn);
-                    let element_id          = element_id.id().unwrap_or(0);
-                    let element_wrapper     = ElementWrapper::with_element(element, when);
+                    let element                 = Vector::BrushDefinition(defn);
+                    let element_id              = element_id.id().unwrap_or(0);
+                    let mut element_wrapper     = ElementWrapper::with_element(element, when);
+                    element_wrapper.unattached  = true;
 
                     let mut element_string  = String::new();
                     element_wrapper.serialize(&mut element_string);
@@ -77,13 +78,14 @@ impl StreamAnimationCore {
 
                 BrushProperties(element_id, properties) => {
                     // Create a brush properties element
-                    let defn                = BrushPropertiesElement::new(*element_id, properties.clone());
-                    self.path_brush_props    = Some(Arc::new(defn.clone()));
+                    let defn                    = BrushPropertiesElement::new(*element_id, properties.clone());
+                    self.path_brush_props       = Some(Arc::new(defn.clone()));
 
                     // Save as an element
-                    let element             = Vector::BrushProperties(defn);
-                    let element_id          = element_id.id().unwrap_or(0);
-                    let element_wrapper     = ElementWrapper::with_element(element, when);
+                    let element                 = Vector::BrushProperties(defn);
+                    let element_id              = element_id.id().unwrap_or(0);
+                    let mut element_wrapper     = ElementWrapper::with_element(element, when);
+                    element_wrapper.unattached  = true;
 
                     let mut element_string  = String::new();
                     element_wrapper.serialize(&mut element_string);
