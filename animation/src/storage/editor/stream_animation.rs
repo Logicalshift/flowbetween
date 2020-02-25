@@ -323,7 +323,11 @@ impl EditableAnimation for StreamAnimation {
         // Queue a request
         let _ = sync_request.future(move |_| {
             async move {
-                publisher.publish(Arc::new(edits)).await
+                // Publish the edits
+                publisher.publish(Arc::new(edits)).await;
+
+                // Wait for them to be processed
+                publisher.when_empty().await;
             }.boxed()
         });
 
