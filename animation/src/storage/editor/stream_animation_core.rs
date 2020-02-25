@@ -83,6 +83,12 @@ pub (super) struct StreamAnimationCore {
     /// The keyframe that is currently being edited, if there is one
     pub (super) cached_keyframe: Option<Arc<Desync<KeyFrameCore>>>,
 
+    /// The brush definition to attach to brush strokes
+    pub (super) brush_defn: Option<ElementId>,
+
+    /// The properties to attach to brush strokes
+    pub (super) brush_props: Option<ElementId>,
+
     /// The element that should be used as the brush definition for the current path (unassigned if there is none)
     pub (super) path_brush_defn: Option<Arc<BrushDefinitionElement>>,
 

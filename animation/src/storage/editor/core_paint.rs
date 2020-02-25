@@ -21,14 +21,18 @@ impl StreamAnimationCore {
                 Some(keyframe)  => keyframe
             };
 
-            let (id, element) = match edit {
+            let (id, wrapper) = match edit {
                 SelectBrush(element_id, defn, style)    => {
                     // Create a brush definition element
                     let defn            = BrushDefinitionElement::new(*element_id, defn.clone(), *style);
                     let element         = Vector::BrushDefinition(defn);
                     let element_id      = element_id.id().unwrap_or(0);
+                    let mut wrapper     = ElementWrapper::with_element(element, when);
 
-                    (element_id, element)
+                    wrapper.unattached  = true;
+                    self.brush_defn     = Some(ElementId::Assigned(element_id));
+
+                    (element_id, wrapper)
                 }
 
                 BrushProperties(element_id, properties) => {
@@ -36,8 +40,12 @@ impl StreamAnimationCore {
                     let defn            = BrushPropertiesElement::new(*element_id, properties.clone());
                     let element         = Vector::BrushProperties(defn);
                     let element_id      = element_id.id().unwrap_or(0);
+                    let mut wrapper     = ElementWrapper::with_element(element, when);
 
-                    (element_id, element)
+                    wrapper.unattached  = true;
+                    self.brush_props    = Some(ElementId::Assigned(element_id));
+
+                    (element_id, wrapper)
                 }
 
                 BrushStroke(element_id, points)         => {
@@ -47,17 +55,17 @@ impl StreamAnimationCore {
                     let brush_element   = BrushElement::new(*element_id, Arc::new(points));
                     let element         = Vector::BrushStroke(brush_element);
                     let element_id      = element_id.id().unwrap_or(0);
+                    let mut wrapper     = ElementWrapper::with_element(element, when);
 
-                    (element_id, element)
+                    wrapper.attachments = vec![self.brush_defn, self.brush_props].into_iter().flatten().collect();
+
+                    (element_id, wrapper)
                 }
             };
 
             // Edit the keyframe
             let storage_updates = current_keyframe.future(move |current_keyframe| {
                 async move {
-                    // Add to a wrapper
-                    let wrapper         = ElementWrapper::with_element(element, when);
-
                     // Append to the current keyframe and return the list of storage commands
                     current_keyframe.add_element_to_end(ElementId::Assigned(id), wrapper)
                 }.boxed()

@@ -52,6 +52,8 @@ impl StreamAnimation {
             storage_requests:   requests,
             next_element_id:    None,
             cached_keyframe:    None,
+            brush_defn:         None,
+            brush_props:        None,
             path_brush_defn:    None,
             path_brush_props:   None
         };
