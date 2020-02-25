@@ -1041,6 +1041,8 @@ fn replace_path_components() {
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
 
+    assert!(edits.len() > 0);
+
     if let AnimationEdit::Element(ref elem_ids, ElementEdit::SetPath(ref new_path)) = edits[0] {
         assert!(elem_ids == &vec![ElementId::Assigned(100)]);
         assert!(new_path == &Arc::new(vec![
