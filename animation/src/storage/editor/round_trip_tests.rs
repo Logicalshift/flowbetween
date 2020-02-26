@@ -873,9 +873,6 @@ fn read_motion_edit_items() {
 
 #[test]
 fn move_existing_element() {
-    assert!(false);
-
-    /*
     let anim = create_animation();
 
     anim.perform_edits(vec![
@@ -902,10 +899,10 @@ fn move_existing_element() {
     ]);
     anim.panic_on_error();
 
-    let attached = anim.get_motions_for_element(ElementId::Assigned(50));
+    let attached = anim.motion().get_motions_for_element(ElementId::Assigned(50));
     assert!(attached == vec![ElementId::Assigned(100)]);
 
-    let motion = anim.get_motion(ElementId::Assigned(100));
+    let motion = anim.motion().get_motion(ElementId::Assigned(100));
     assert!(motion.is_some());
     assert!(motion.as_ref().unwrap().motion_type() == MotionType::Translate);
 
@@ -915,7 +912,6 @@ fn move_existing_element() {
     } else {
         assert!(false)
     }
-    */
 }
 
 #[test]
