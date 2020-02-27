@@ -8,6 +8,23 @@ use futures::prelude::*;
 
 use std::collections::{HashSet};
 
+///
+/// Possible updates that can be made by the 
+///
+pub (super) enum ElementUpdate {
+    /// Update the element wrapper
+    ChangeWrapper(ElementWrapper),
+
+    /// Add the specified attachments and attach them to the keyframe if they're not already present
+    AddAttachments(Vec<ElementId>),
+
+    /// Remove the specified attachments (attachments are left on the keyframe)
+    RemoveAttachments(Vec<ElementId>),
+
+    /// Perform other updates, according to the specified storage command
+    Other(Vec<StorageCommand>)
+}
+
 impl StreamAnimationCore {
     ///
     /// Performs an element edit on this animation
