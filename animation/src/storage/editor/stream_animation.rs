@@ -332,6 +332,9 @@ impl EditableAnimation for StreamAnimation {
             }.boxed()
         });
 
+        // Wait for the edits to complete
+        sync_request.sync(|_| { });
+
         // Return the sync_request to the pool
         self.idle_sync_requests.desync(move |reqs| { reqs.push(sync_request) });
     }
