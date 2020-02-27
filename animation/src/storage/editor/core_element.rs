@@ -1,3 +1,4 @@
+use super::keyframe_core::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::super::storage_api::*;
@@ -5,7 +6,9 @@ use super::super::super::traits::*;
 use super::super::super::serializer::*;
 
 use futures::prelude::*;
+use ::desync::*;
 
+use std::sync::*;
 use std::collections::{HashSet};
 
 ///
@@ -32,14 +35,15 @@ impl StreamAnimationCore {
     pub fn element_edit<'a>(&'a mut self, element_ids: &'a Vec<ElementId>, element_edit: &'a ElementEdit) -> impl 'a+Future<Output=()> {
         async move {
             use self::ElementEdit::*;
+            use self::ElementUpdate::*;
 
             let element_ids = element_ids.iter().map(|elem| elem.id()).flatten().collect();
 
             match element_edit {
-                AddAttachment(attach_id)        => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.push(*attach_id); wrapper }).await; }
-                RemoveAttachment(attach_id)     => { self.update_elements(element_ids, |mut wrapper| { wrapper.attachments.retain(|id| id != attach_id); wrapper }).await; }
-                SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); wrapper }).await; }
-                SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); wrapper }).await; }
+                AddAttachment(attach_id)        => { self.update_elements(element_ids, |mut wrapper| { AddAttachments(vec![*attach_id]) }).await; }
+                RemoveAttachment(attach_id)     => { self.update_elements(element_ids, |mut wrapper| { RemoveAttachments(vec![*attach_id]) }).await; }
+                SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); ChangeWrapper(wrapper) }).await; }
+                SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
                 Delete                          => { self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id)).collect()).await; }
                 DetachFromFrame                 => { self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id)).collect()).await; }
@@ -48,10 +52,31 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Performs an update on an element in a keyframe
+    ///
+    fn perform_update(&self, element_id: i64, update: ElementUpdate, keyframe: Option<&Arc<Desync<KeyFrameCore>>>) -> Vec<StorageCommand> {
+
+        /*
+                            // Generate the update of the serialized element
+                            let mut serialized  = String::new();
+                            updated_element.serialize(&mut serialized);
+
+                            updates.push(StorageCommand::WriteElement(element_id, serialized));
+
+                            // Replace the element in the keyframe
+                            keyframe.desync(move |keyframe| {
+                                keyframe.elements.lock().unwrap()
+                                    .insert(ElementId::Assigned(element_id), updated_element);
+                            });
+                            */
+        vec![]
+    }
+
+    ///
     /// Updates a one or more elements via an update function
     ///
     pub fn update_elements<'a, UpdateFn>(&'a mut self, element_ids: Vec<i64>, update_fn: UpdateFn) -> impl 'a+Future<Output=()>
-    where UpdateFn: 'a+Fn(ElementWrapper) -> ElementWrapper {
+    where UpdateFn: 'a+Fn(ElementWrapper) -> ElementUpdate {
         async move {
             // Update the elements that are returned
             let mut updates = vec![];
@@ -79,18 +104,7 @@ impl StreamAnimationCore {
                         if let Ok(Some(existing_element)) = existing_element {
                             // Process via the update function
                             let updated_element = update_fn(existing_element);
-
-                            // Generate the update of the serialized element
-                            let mut serialized  = String::new();
-                            updated_element.serialize(&mut serialized);
-
-                            updates.push(StorageCommand::WriteElement(element_id, serialized));
-
-                            // Replace the element in the keyframe
-                            keyframe.desync(move |keyframe| {
-                                keyframe.elements.lock().unwrap()
-                                    .insert(ElementId::Assigned(element_id), updated_element);
-                            });
+                            updates.extend(self.perform_update(element_id, updated_element, Some(&keyframe)));
 
                             // Remove the element from the remaining list so we don't try to update it again
                             remaining.remove(&element_id);
@@ -106,12 +120,7 @@ impl StreamAnimationCore {
                         if let Some(element) = element {
                             // Update the element
                             let updated_element = update_fn(element);
-
-                            // Write back
-                            let mut serialized  = String::new();
-                            updated_element.serialize(&mut serialized);
-
-                            updates.push(StorageCommand::WriteElement(root_element, serialized));
+                            updates.extend(self.perform_update(root_element, updated_element, None));
                         }
                     }
                 }

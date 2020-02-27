@@ -1,3 +1,4 @@
+use super::core_element::*;
 use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::super::storage_api::*;
@@ -59,7 +60,7 @@ impl StreamAnimationCore {
                     element_wrapper.element = new_motion;
                 }
 
-                element_wrapper
+                ElementUpdate::ChangeWrapper(element_wrapper)
             }).await;
         }
     }
