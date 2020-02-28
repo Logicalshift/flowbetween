@@ -79,7 +79,7 @@ impl StreamAnimation {
     /// Raises a panic if this animation has reached an error state
     ///
     pub fn panic_on_error(&self) {
-
+        // Here only for the tests right now
     }
 
     ///
