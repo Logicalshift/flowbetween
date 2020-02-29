@@ -1,4 +1,5 @@
 use super::stream_frame::*;
+use super::stream_layer_cache::*;
 use super::stream_animation_core::*;
 use super::super::storage_api::*;
 use super::super::layer_properties::*;
@@ -200,7 +201,7 @@ impl Layer for StreamLayer {
     /// Retrieves the canvas cache at the specified time
     ///
     fn get_canvas_cache_at_time(&self, time_index: Duration) -> Arc<dyn CanvasCache> {
-        unimplemented!("get_canvas_cache_at_time")
+        Arc::new(StreamLayerCache::new(Arc::clone(&self.core), self.layer_id, time_index))
     }
 }
 

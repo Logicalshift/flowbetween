@@ -13,6 +13,7 @@ mod keyframe_core;
 mod element_wrapper;
 mod stream_layer;
 mod stream_frame;
+mod stream_layer_cache;
 
 #[cfg(test)] mod tests;
 #[cfg(test)] mod round_trip_tests;
