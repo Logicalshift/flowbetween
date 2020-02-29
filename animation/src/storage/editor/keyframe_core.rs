@@ -308,7 +308,9 @@ impl KeyFrameCore {
 
                         // Swap the in-front element and the before element
                         element.order_before                                        = element_in_front.order_before;
+                        element.order_after                                         = element_id_in_front;
                         element_in_front.order_before                               = Some(element_id);
+                        element_in_front.order_after                                = element_id_behind;
                         element_behind.as_mut().map(|behind| behind.order_before    = element_id_in_front);
 
                         // These are the two elements that need updating
