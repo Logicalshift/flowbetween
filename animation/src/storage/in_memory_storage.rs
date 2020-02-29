@@ -447,6 +447,22 @@ impl InMemoryStorageCore {
                     }
                 }
 
+                DeleteLayerCache(layer_id, when, key)                 => {
+                    if let Some(layer) = self.layers.get_mut(&layer_id) {
+                        // Search for this cache item
+                        match layer.cache.binary_search_by(|cache_item| cache_item.key.cmp(&key).then(cache_item.when.cmp(&when))) {
+                            Ok(index)   => {
+                                layer.cache.remove(index);
+                                response.push(StorageResponse::Updated)
+                            },
+                            Err(index)  => response.push(StorageResponse::NotFound)
+                        }
+                    } else {
+                        // Layer not present
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
                 ReadLayerCache(layer_id, when, key)                 => {
                     if let Some(layer) = self.layers.get(&layer_id) {
                         // Search for this cache item

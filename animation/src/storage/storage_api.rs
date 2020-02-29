@@ -72,6 +72,9 @@ pub enum StorageCommand {
     /// Writes to the layer cache (parameters are layer id, cache time, key and cache value)
     WriteLayerCache(u64, Duration, String, String),
 
+    /// Removes an entry from the layer cache
+    DeleteLayerCache(u64, Duration, String),
+
     /// Reads from the layer cache (parameters are layer id, cache time and key)
     ReadLayerCache(u64, Duration, String)
 }
