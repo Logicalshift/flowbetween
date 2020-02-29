@@ -366,6 +366,8 @@ impl KeyFrameCore {
                             edit_elements.push((element_id_in_front.unwrap(), element_in_front));
                         }
 
+                        if self.initial_element == Some(element_id) { self.initial_element = element_id_in_front; }
+
                         // Find the element that's on top (has an empty 'order_before' element, starting at our existing element)
                         let mut on_top_id = element.order_before.unwrap();
                         while let Some(on_top_element) = elements.get(&on_top_id) {
@@ -406,6 +408,8 @@ impl KeyFrameCore {
                             element_in_front.order_after = element_id_behind;
                             edit_elements.push((element_id_in_front.unwrap(), element_in_front));
                         }
+
+                        if self.last_element == Some(element_id) { self.last_element = element_id_behind; }
 
                         // Find the element that's on bottom (has an empty 'order_after' element, starting at our existing element)
                         let mut on_bottom_id = element.order_after.unwrap();
