@@ -1196,7 +1196,7 @@ fn create_path_and_re_order_in_front() {
     let edits: Vec<_>   = executor::block_on(edit_log);
 
     if let AnimationEdit::Element(ref elems, ElementEdit::Order(ElementOrdering::InFront)) = edits[0] {
-        assert!(elems == &vec![ElementId::Assigned(101)]);
+        assert!(elems == &vec![ElementId::Assigned(100)]);
     } else {
         assert!(false);
     }
