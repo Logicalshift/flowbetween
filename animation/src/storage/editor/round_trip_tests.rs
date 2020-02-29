@@ -1078,6 +1078,13 @@ fn create_path_and_re_order_behind() {
                 PathComponent::Line(PathPoint::new(20.0, 30.0)),
                 PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
                 PathComponent::Close
+            ])))),
+        AnimationEdit::Layer(24, Path(Duration::from_millis(300),
+            PathEdit::CreatePath(ElementId::Assigned(102), Arc::new(vec![
+                PathComponent::Move(PathPoint::new(10.0, 20.0)),
+                PathComponent::Line(PathPoint::new(20.0, 30.0)),
+                PathComponent::Bezier(PathPoint::new(40.0, 40.0), PathPoint::new(30.0, 30.0), PathPoint::new(20.0, 20.0)),
+                PathComponent::Close
             ]))))
     ]);
 
@@ -1086,9 +1093,10 @@ fn create_path_and_re_order_behind() {
         let frame               = layer.get_frame_at_time(Duration::from_millis(300));
         let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
-        assert!(elements.len() == 2);
+        assert!(elements.len() == 3);
         assert!(elements[0].id() == ElementId::Assigned(100));
         assert!(elements[1].id() == ElementId::Assigned(101));
+        assert!(elements[2].id() == ElementId::Assigned(102));
     }
 
     anim.perform_edits(vec![
@@ -1101,13 +1109,14 @@ fn create_path_and_re_order_behind() {
         let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
         assert!(elements.len() != 1);
-        assert!(elements.len() <= 2);
-        assert!(elements.len() == 2);
+        assert!(elements.len() <= 3);
+        assert!(elements.len() == 3);
         assert!(elements[0].id() == ElementId::Assigned(101));
         assert!(elements[1].id() == ElementId::Assigned(100));
+        assert!(elements[2].id() == ElementId::Assigned(102));
     }
 
-    let edit_log        = anim.read_edit_log(6..7);
+    let edit_log        = anim.read_edit_log(7..8);
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
 
