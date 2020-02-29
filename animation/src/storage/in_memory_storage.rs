@@ -22,6 +22,20 @@ struct InMemoryKeyFrameStorage {
 }
 
 ///
+/// Represents a layer cache item
+///
+struct InMemoryLayerCache {
+    /// The key for this cache item
+    key: String,
+
+    /// When this item is stored
+    when: Duration,
+
+    /// The value of this cache item
+    cache_value: String
+}
+
+///
 /// Representation of a layer in memory
 ///
 struct InMemoryLayerStorage {
@@ -29,7 +43,10 @@ struct InMemoryLayerStorage {
     properties: String,
 
     /// The keyframes of this layer
-    keyframes: Vec<InMemoryKeyFrameStorage>
+    keyframes: Vec<InMemoryKeyFrameStorage>,
+
+    /// The cached items for this layer
+    cache: Vec<InMemoryLayerCache>
 }
 
 ///
@@ -413,6 +430,35 @@ impl InMemoryStorageCore {
                         response.push(StorageResponse::NotFound);
                     }
                 }
+
+                WriteLayerCache(layer_id, when, key, cache_value)   => {
+                    if let Some(layer) = self.layers.get_mut(&layer_id) {
+                        // Search for this cache item
+                        match layer.cache.binary_search_by(|cache_item| cache_item.key.cmp(&key).then(cache_item.when.cmp(&when))) {
+                            Ok(index)   => layer.cache[index].cache_value = cache_value,
+                            Err(index)  => layer.cache.insert(index, InMemoryLayerCache { key, when, cache_value })
+                        }
+
+                        // Indicate we added the cache value
+                        response.push(StorageResponse::Updated);
+                    } else {
+                        // Layer not present
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
+
+                ReadLayerCache(layer_id, when, key)                 => {
+                    if let Some(layer) = self.layers.get(&layer_id) {
+                        // Search for this cache item
+                        match layer.cache.binary_search_by(|cache_item| cache_item.key.cmp(&key).then(cache_item.when.cmp(&when))) {
+                            Ok(index)   => response.push(StorageResponse::LayerCache(layer.cache[index].cache_value.clone())),
+                            Err(index)  => response.push(StorageResponse::NotFound)
+                        }
+                    } else {
+                        // Layer not present
+                        response.push(StorageResponse::NotFound);
+                    }
+                }
             }
         }
 
@@ -427,7 +473,8 @@ impl InMemoryLayerStorage {
     pub fn new(properties: String) -> InMemoryLayerStorage {
         InMemoryLayerStorage {
             properties: properties,
-            keyframes:  vec![]
+            keyframes:  vec![],
+            cache:      vec![]
         }
     }
 }

@@ -67,7 +67,13 @@ pub enum StorageCommand {
     ReadElementAttachments(i64),
 
     /// Returns the elements attached to a particular key frame
-    ReadElementsForKeyFrame(u64, Duration)
+    ReadElementsForKeyFrame(u64, Duration),
+
+    /// Writes to the layer cache (parameters are layer id, cache time, key and cache value)
+    WriteLayerCache(u64, Duration, String, String),
+
+    /// Reads from the layer cache (parameters are layer id, cache time and key)
+    ReadLayerCache(u64, Duration, String)
 }
 
 ///
@@ -112,5 +118,8 @@ pub enum StorageResponse {
     Element(i64, String),
 
     /// Returns the (layer, keyframe) pairs that a particular element is attached to
-    ElementAttachments(i64, Vec<(u64, Duration)>)
+    ElementAttachments(i64, Vec<(u64, Duration)>),
+
+    /// Returns the contents of the requested layer cache
+    LayerCache(String)
 }
