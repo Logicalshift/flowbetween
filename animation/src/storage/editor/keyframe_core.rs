@@ -396,7 +396,7 @@ impl KeyFrameCore {
 
                 ToBottom        => {
                     // Nothing to do if the element is already on bottom
-                    if element.order_before.is_some() {
+                    if element.order_after.is_some() {
                         // Remove the element from the list
                         let element_id_in_front     = element.order_before;
                         let element_id_behind       = element.order_after;
