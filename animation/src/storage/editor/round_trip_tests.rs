@@ -67,7 +67,7 @@ fn set_size() {
 fn size_changes_after_being_set() {
     let anim = create_animation();
 
-    assert!(anim.size() == (1980.0, 1080.0));
+    assert!(anim.size() == (1920.0, 1080.0));
 
     anim.perform_edits(vec![
         AnimationEdit::SetSize(100.0, 200.0)
