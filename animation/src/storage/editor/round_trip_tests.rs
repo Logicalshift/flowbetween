@@ -1053,7 +1053,7 @@ fn replace_path_components() {
 }
 
 #[test]
-fn create_path_and_re_order() {
+fn create_path_and_re_order_behind() {
     use self::LayerEdit::*;
 
     let anim = create_animation();
