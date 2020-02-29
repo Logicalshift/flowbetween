@@ -99,6 +99,17 @@ impl StreamAnimation {
     }
 
     ///
+    /// Waits for any pending edits on this animation to complete
+    ///
+    pub (super) fn wait_for_edits(&self) {
+        // Force a desync to wait for the when_empty future to complete
+        let when_empty = self.edit_publisher.republish().when_empty();
+
+        // The desync will need to wait for this future when it is dropped here
+        let _ = Desync::new(()).future(move |_| when_empty.boxed());
+    }
+
+    ///
     /// Retrieves the current file properties for the animation
     ///
     fn file_properties(&self) -> FileProperties {
@@ -141,6 +152,7 @@ impl Animation for StreamAnimation {
     /// Retrieves the frame size of this animation
     ///
     fn size(&self) -> (f64, f64) {
+        self.wait_for_edits();
         self.file_properties().size
     }
 
@@ -148,6 +160,7 @@ impl Animation for StreamAnimation {
     /// Retrieves the length of this animation
     ///
     fn duration(&self) -> Duration {
+        self.wait_for_edits();
         self.file_properties().duration
     }
 
@@ -155,6 +168,7 @@ impl Animation for StreamAnimation {
     /// Retrieves the duration of a single frame
     ///
     fn frame_length(&self) -> Duration {
+        self.wait_for_edits();
         self.file_properties().frame_length
     }
 
@@ -162,6 +176,8 @@ impl Animation for StreamAnimation {
     /// Retrieves the IDs of the layers in this object
     ///
     fn get_layer_ids(&self) -> Vec<u64> {
+        self.wait_for_edits();
+
         let layer_responses = self.request_sync(vec![StorageCommand::ReadLayers]).unwrap_or_else(|| vec![]);
 
         layer_responses
@@ -180,6 +196,8 @@ impl Animation for StreamAnimation {
     /// Retrieves the layer with the specified ID from this animation
     ///
     fn get_layer_with_id(&self, layer_id: u64) -> Option<Arc<dyn Layer>> {
+        self.wait_for_edits();
+
         // Read the properties for the specified layer
         let layer_properties = self.request_sync(vec![StorageCommand::ReadLayerProperties(layer_id)]);
 
@@ -201,6 +219,8 @@ impl Animation for StreamAnimation {
     /// Retrieves the total number of edits that have been performed on this animation
     ///
     fn get_num_edits(&self) -> usize {
+        self.wait_for_edits();
+
         let mut response = self.request_sync(vec![StorageCommand::ReadEditLogLength]).unwrap_or_else(|| vec![]);
 
         match response.pop() {
@@ -214,6 +234,8 @@ impl Animation for StreamAnimation {
     /// Reads from the edit log for this animation
     ///
     fn read_edit_log<'a>(&'a self, range: Range<usize>) -> BoxStream<'a, AnimationEdit> {
+        self.wait_for_edits();
+
         // Clamp the range of edits to the maximum number of edits
         let max_edit    = self.get_num_edits();
         let range       = if range.end > max_edit {
