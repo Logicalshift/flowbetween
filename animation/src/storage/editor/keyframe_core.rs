@@ -381,7 +381,7 @@ impl KeyFrameCore {
                         }
 
                         // Edit the element to be the one on top
-                        let mut element_on_top      = if Some(on_top_id) == element_id_in_front { element_in_front.unwrap() } else { elements.get_mut(&on_top_id).unwrap().clone() };
+                        let mut element_on_top      = if Some(on_top_id) == element_id_in_front { element_in_front.unwrap() } else { elements.get(&on_top_id).unwrap().clone() };
 
                         element.order_before        = None;
                         element.order_after         = Some(on_top_id);
@@ -403,12 +403,12 @@ impl KeyFrameCore {
                         let element_in_front    = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
                         let element_behind      = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
 
-                        if let Some(mut element_behind) = element_behind {
+                        if let Some(mut element_behind) = element_behind.clone() {
                             element_behind.order_before = element_id_in_front;
                             edit_elements.push((element_id_behind.unwrap(), element_behind));
                         }
 
-                        if let Some(mut element_in_front) = element_in_front {
+                        if let Some(mut element_in_front) = element_in_front.clone() {
                             element_in_front.order_after = element_id_behind;
                             edit_elements.push((element_id_in_front.unwrap(), element_in_front));
                         }
@@ -428,9 +428,13 @@ impl KeyFrameCore {
                         }
 
                         // Edit the element to be the one on bottom
-                        element.order_before   = Some(on_bottom_id);
-                        element.order_after    = None;
-                        elements.get_mut(&on_bottom_id).unwrap().order_after = Some(element_id);
+                        let mut element_on_bottom       = if Some(on_bottom_id) == element_id_behind { element_behind.unwrap() } else { elements.get(&on_bottom_id).unwrap().clone() };
+
+                        element.order_before            = Some(on_bottom_id);
+                        element.order_after             = None;
+                        element_on_bottom.order_after   = Some(element_id);
+
+                        edit_elements.push((on_bottom_id, element_on_bottom));
 
                         if self.initial_element == Some(on_bottom_id) { self.initial_element = Some(element_id); }
                         edit_elements.push((element_id, element));
