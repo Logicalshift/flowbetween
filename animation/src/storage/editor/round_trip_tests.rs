@@ -1116,6 +1116,23 @@ fn create_path_and_re_order_behind() {
         assert!(elements[2].id() == ElementId::Assigned(102));
     }
 
+    anim.perform_edits(vec![
+        AnimationEdit::Element(vec![ElementId::Assigned(101)], ElementEdit::Order(ElementOrdering::InFront))
+    ]);
+
+    {
+        let layer               = anim.get_layer_with_id(24).unwrap();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(300));
+        let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() != 1);
+        assert!(elements.len() <= 3);
+        assert!(elements.len() == 3);
+        assert!(elements[0].id() == ElementId::Assigned(100));
+        assert!(elements[1].id() == ElementId::Assigned(101));
+        assert!(elements[2].id() == ElementId::Assigned(102));
+    }
+
     let edit_log        = anim.read_edit_log(7..8);
     let edit_log        = edit_log.collect();
     let edits: Vec<_>   = executor::block_on(edit_log);
@@ -1188,6 +1205,23 @@ fn create_path_and_re_order_in_front() {
         assert!(elements.len() == 3);
         assert!(elements[0].id() == ElementId::Assigned(101));
         assert!(elements[1].id() == ElementId::Assigned(100));
+        assert!(elements[2].id() == ElementId::Assigned(102));
+    }
+
+    anim.perform_edits(vec![
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::Order(ElementOrdering::Behind))
+    ]);
+
+    {
+        let layer               = anim.get_layer_with_id(24).unwrap();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(300));
+        let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() != 1);
+        assert!(elements.len() <= 3);
+        assert!(elements.len() == 3);
+        assert!(elements[0].id() == ElementId::Assigned(100));
+        assert!(elements[1].id() == ElementId::Assigned(101));
         assert!(elements[2].id() == ElementId::Assigned(102));
     }
 
@@ -1317,24 +1351,7 @@ fn create_path_and_re_order_to_top_and_bottom() {
     }
 
     anim.perform_edits(vec![
-        AnimationEdit::Element(vec![ElementId::Assigned(101)], ElementEdit::Order(ElementOrdering::ToTop))
-    ]);
-
-    {
-        let layer               = anim.get_layer_with_id(24).unwrap();
-        let frame               = layer.get_frame_at_time(Duration::from_millis(300));
-        let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
-
-        assert!(elements.len() != 1);
-        assert!(elements.len() <= 3);
-        assert!(elements.len() == 3);
-        assert!(elements[0].id() == ElementId::Assigned(100));
-        assert!(elements[1].id() == ElementId::Assigned(102));
-        assert!(elements[2].id() == ElementId::Assigned(101));
-    }
-
-    anim.perform_edits(vec![
-        AnimationEdit::Element(vec![ElementId::Assigned(101)], ElementEdit::Order(ElementOrdering::ToBottom))
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::Order(ElementOrdering::ToTop))
     ]);
 
     {
@@ -1346,7 +1363,24 @@ fn create_path_and_re_order_to_top_and_bottom() {
         assert!(elements.len() <= 3);
         assert!(elements.len() == 3);
         assert!(elements[0].id() == ElementId::Assigned(101));
-        assert!(elements[1].id() == ElementId::Assigned(100));
+        assert!(elements[1].id() == ElementId::Assigned(102));
+        assert!(elements[2].id() == ElementId::Assigned(100));
+    }
+
+    anim.perform_edits(vec![
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::Order(ElementOrdering::ToBottom))
+    ]);
+
+    {
+        let layer               = anim.get_layer_with_id(24).unwrap();
+        let frame               = layer.get_frame_at_time(Duration::from_millis(300));
+        let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
+
+        assert!(elements.len() != 1);
+        assert!(elements.len() <= 3);
+        assert!(elements.len() == 3);
+        assert!(elements[0].id() == ElementId::Assigned(100));
+        assert!(elements[1].id() == ElementId::Assigned(101));
         assert!(elements[2].id() == ElementId::Assigned(102));
     }
 }
