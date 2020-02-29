@@ -24,6 +24,9 @@ pub struct StreamLayerCache {
 
     /// The time that this cache is for
     when: Duration,
+
+    /// Used for scheduling generation operations
+    generator: Arc<Desync<()>>
 }
 
 impl StreamLayerCache {
@@ -34,7 +37,8 @@ impl StreamLayerCache {
         StreamLayerCache {
             core:       core,
             layer_id:   layer_id,
-            when:       when
+            when:       when,
+            generator:  Arc::new(Desync::new(()))
         }
     }
 }
@@ -133,6 +137,39 @@ impl CanvasCache for StreamLayerCache {
     /// Retrieves the cached item, or calls the supplied function to generate it if it's not already in the cache
     ///
     fn retrieve_or_generate(&self, cache_type: CacheType, generate: Box<dyn Fn() -> Arc<Vec<Draw>> + Send>) -> CacheProcess<Arc<Vec<Draw>>, BoxFuture<'static, Arc<Vec<Draw>>>> {
-        unimplemented!()
+        if let Some(result) = self.retrieve(cache_type) {
+            // Already exists in the cache
+            CacheProcess::Cached(result)
+        } else {
+            // Gather information
+            let when        = self.when;
+            let layer_id    = self.layer_id;
+            let mut key     = String::new();
+            cache_type.serialize(&mut key);
+
+            // Generate on the core
+            let core        = Arc::clone(&self.core);
+            let generator   = Arc::clone(&self.generator);
+
+            CacheProcess::Process(async move {
+                // Generate the drawing
+                let drawing         = generator.future(move |_| async move { generate() }.boxed()).await.unwrap();
+
+                // Serialize the drawing
+                let mut serialized  = String::new();
+                drawing.encode_canvas(&mut serialized);
+
+                // Store using the core
+                let _ = core.future(move |core| {
+                    async move {
+                        core.storage_requests.publish(vec![StorageCommand::WriteLayerCache(layer_id, when, key, serialized)]).await;
+                        core.storage_responses.next().await;
+                    }.boxed()
+                });
+
+                // Return the drawing as the result
+                drawing
+            }.boxed())
+        }
     }
 }
