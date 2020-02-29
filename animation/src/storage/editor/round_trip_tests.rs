@@ -1100,6 +1100,8 @@ fn create_path_and_re_order() {
         let frame               = layer.get_frame_at_time(Duration::from_millis(300));
         let elements            = frame.vector_elements().unwrap().collect::<Vec<_>>();
 
+        assert!(elements.len() != 1);
+        assert!(elements.len() <= 2);
         assert!(elements.len() == 2);
         assert!(elements[0].id() == ElementId::Assigned(101));
         assert!(elements[1].id() == ElementId::Assigned(100));
