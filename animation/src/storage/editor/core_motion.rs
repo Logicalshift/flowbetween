@@ -50,7 +50,7 @@ impl StreamAnimationCore {
     /// Updates an existing motion element
     ///
     fn update_motion<'a, UpdateFn>(&'a mut self, motion_id: i64, update_fn: UpdateFn) -> impl 'a+Future<Output=()>
-    where UpdateFn: 'a+Fn(Motion) -> Motion {
+    where UpdateFn: 'a+Send+Sync+Fn(Motion) -> Motion {
         async move {
             self.update_elements(vec![motion_id], |mut element_wrapper| {
                 if let Vector::Motion(motion_element) = &element_wrapper.element {
