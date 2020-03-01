@@ -18,6 +18,9 @@ pub struct ElementWrapper {
     /// The elements that are attached to this element
     pub attachments: Vec<ElementId>,
 
+    /// The elements that this is attached to
+    pub attached_to: Vec<ElementId>,
+
     /// True if this element is used by the keyframe it's attached to but is not part of the render path
     pub unattached: bool,
 
@@ -40,6 +43,7 @@ impl ElementWrapper {
             element:        element,
             start_time:     when,
             attachments:    vec![],
+            attached_to:    vec![],
             unattached:     false,
             parent:         None,
             order_before:   None,
@@ -55,6 +59,7 @@ impl ElementWrapper {
             element:        Vector::Error,
             start_time:     Duration::from_micros(0),
             attachments:    vec![],
+            attached_to:    vec![],
             unattached:     false,
             parent:         None,
             order_before:   None,
@@ -77,6 +82,9 @@ impl ElementWrapper {
         // Attachments, if any
         data.write_usize(self.attachments.len());
         self.attachments.iter().for_each(|attachment| attachment.serialize(data));
+
+        data.write_usize(self.attached_to.len());
+        self.attached_to.iter().for_each(|attached_to| attached_to.serialize(data));
 
         if self.unattached {
             data.write_chr('U');
@@ -122,6 +130,11 @@ impl ElementWrapper {
                     .map(|_| ElementId::deserialize(data))
                     .collect::<Option<Vec<_>>>()?;
 
+                let num_attached_to = data.next_usize();
+                let attached_to     = (0..num_attached_to).into_iter()
+                    .map(|_| ElementId::deserialize(data))
+                    .collect::<Option<Vec<_>>>()?;
+
                 let unattached      = data.next_chr() == 'U';
 
                 let parent          = match data.next_chr() {
@@ -150,6 +163,7 @@ impl ElementWrapper {
                         element,
                         start_time,
                         attachments,
+                        attached_to,
                         unattached,
                         parent,
                         order_before,
