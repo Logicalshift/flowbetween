@@ -8,7 +8,6 @@ use super::super::super::serializer::*;
 use futures::prelude::*;
 use ::desync::*;
 
-use std::mem;
 use std::sync::*;
 use std::collections::{HashSet};
 
@@ -84,7 +83,7 @@ impl StreamAnimationCore {
                     // Replace the element in the keyframe
                     keyframe.map(|keyframe| {
                         keyframe.desync(move |keyframe| {
-                            keyframe.elements.lock().unwrap()
+                            keyframe.elements
                                 .insert(ElementId::Assigned(element_id), updated_element);
                         });
                     });
@@ -93,13 +92,10 @@ impl StreamAnimationCore {
                 ElementUpdate::AddAttachments(attachments) => {
                     // Update the attachments in the keyframe (elements outside of keyframes must not have attachments)
                     if let Some(keyframe) = keyframe {
-                        keyframe.future(|keyframe| async move {
-                            // Fetch the keyframe elements
-                            let mut elements = keyframe.elements.lock().unwrap();
-
+                        updates = keyframe.future(move |keyframe| async move {
                             // Add the attachments to the keyframe (this finds the attachment IDs tha are not already in the keyframe)
                             let attachment_ids = attachments.iter()
-                                .filter(|attachment_id| !elements.contains_key(attachment_id))
+                                .filter(|attachment_id| !keyframe.elements.contains_key(attachment_id))
                                 .filter_map(|attachment_id| attachment_id.id())
                                 .collect::<Vec<_>>();
 
@@ -109,7 +105,7 @@ impl StreamAnimationCore {
                             // let missing_attachments = self.read_elements(&attachment_ids, keyframe).await;
 
                             // Add an attachment to the element
-                            elements.get_mut(&ElementId::Assigned(element_id))
+                            keyframe.elements.get_mut(&ElementId::Assigned(element_id))
                                 .map(|element_wrapper| {
                                     // Add the attachment
                                     element_wrapper.attachments.extend(attachments.clone());
@@ -120,7 +116,9 @@ impl StreamAnimationCore {
 
                                     updates.push(StorageCommand::WriteElement(element_id, serialized));
                                 });
-                        }.boxed()).await;
+
+                            updates
+                        }.boxed()).await.unwrap();
                     }
                 }
 
@@ -130,11 +128,8 @@ impl StreamAnimationCore {
 
                     // Update the attachments in the keyframe (elements outside of keyframes must not have attachments)
                     keyframe.map(|keyframe| keyframe.sync(|keyframe| {
-                        // Fetch the keyframe elements
-                        let mut elements = keyframe.elements.lock().unwrap();
-
                         // Remove the attachments from the element
-                        elements.get_mut(&ElementId::Assigned(element_id))
+                        keyframe.elements.get_mut(&ElementId::Assigned(element_id))
                             .map(|element_wrapper| {
                                 // Add the attachment
                                 element_wrapper.attachments.retain(|attachment_id| !attachments.contains(attachment_id));
@@ -180,8 +175,7 @@ impl StreamAnimationCore {
                         // Try to retrieve the element from the keyframe
                         let existing_element = keyframe.future(move |keyframe| {
                             async move {
-                                let elements = keyframe.elements.lock().unwrap();
-                                elements.get(&ElementId::Assigned(element_id)).cloned()
+                                keyframe.elements.get(&ElementId::Assigned(element_id)).cloned()
                             }.boxed()
                         }).await;
 

@@ -49,12 +49,11 @@ impl Frame for StreamFrame {
         // Render the elements
         if let Some(core) = self.keyframe_core.as_ref() {
             // Start at the initial element
-            let elements            = core.elements.lock().unwrap();
             let mut next_element    = core.initial_element;
 
             while let Some(current_element) = next_element {
                 // Fetch the element definition
-                let wrapper = elements.get(&current_element);
+                let wrapper = core.elements.get(&current_element);
                 let wrapper = match wrapper {
                     Some(wrapper)   => wrapper,
                     None            => { break; }
@@ -70,7 +69,7 @@ impl Frame for StreamFrame {
                         // Apply the properties from each of the attachments in turn
                         properties = Arc::new(VectorProperties::default());
                         for attachment_id in active_attachments.iter() {
-                            if let Some(attach_element) = elements.get(&attachment_id) {
+                            if let Some(attach_element) = core.elements.get(&attachment_id) {
                                 properties = attach_element.element.update_properties(Arc::clone(&properties));
                                 properties.render(gc, attach_element.element.clone(), when);
                             }
@@ -93,14 +92,13 @@ impl Frame for StreamFrame {
     fn apply_properties_for_element(&self, element: &Vector, properties: Arc<VectorProperties>) -> Arc<VectorProperties> {
         if let Some(core) = self.keyframe_core.as_ref() {
             // Try to fetch the element from the core
-            let elements    = core.elements.lock().unwrap();
-            let wrapper     = elements.get(&element.id());
+            let wrapper     = core.elements.get(&element.id());
 
             if let Some(wrapper) = wrapper {
                 // Apply the attachments from the wrapper
                 let mut properties = properties;
                 for attachment_id in wrapper.attachments.iter() {
-                    if let Some(attach_element) = elements.get(&attachment_id) {
+                    if let Some(attach_element) = core.elements.get(&attachment_id) {
                         properties = attach_element.element.update_properties(Arc::clone(&properties));
                     }
                 }
@@ -124,12 +122,11 @@ impl Frame for StreamFrame {
             let mut result      = vec![];
 
             // Start at the initial element
-            let elements            = core.elements.lock().unwrap();
             let mut next_element    = core.initial_element;
 
             while let Some(current_element) = next_element {
                 // Fetch the element definition
-                let wrapper = elements.get(&current_element);
+                let wrapper = core.elements.get(&current_element);
                 let wrapper = match wrapper {
                     Some(wrapper)   => wrapper,
                     None            => { break; }
@@ -157,8 +154,7 @@ impl Frame for StreamFrame {
     fn element_with_id(&self, id: ElementId) -> Option<Vector> {
         if let Some(core) = self.keyframe_core.as_ref() {
             // Start at the initial element
-            let elements            = core.elements.lock().unwrap();
-            elements.get(&id).map(|wrapper| wrapper.element.clone())
+            core.elements.get(&id).map(|wrapper| wrapper.element.clone())
         } else {
             // No elements
             None
@@ -173,14 +169,12 @@ impl Frame for StreamFrame {
     fn attached_elements(&self, id: ElementId) -> Vec<(ElementId, VectorType)> {
         if let Some(core) = self.keyframe_core.as_ref() {
             // Start at the initial element
-            let elements            = core.elements.lock().unwrap();
-
-            if let Some(wrapper) = elements.get(&id) {
+            if let Some(wrapper) = core.elements.get(&id) {
                 // Fetch the types of the attachments to the element
                 wrapper.attachments
                     .iter()
                     .map(|attachment_id| {
-                        elements.get(attachment_id)
+                        core.elements.get(attachment_id)
                             .map(|attachment_wrapper| {
                                 (*attachment_id, VectorType::from(&attachment_wrapper.element))
                             })

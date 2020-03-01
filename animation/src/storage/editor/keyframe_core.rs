@@ -19,7 +19,7 @@ pub (super) struct KeyFrameCore {
     pub (super) layer_id: u64,
 
     /// The elements in this keyframe
-    pub (super) elements: Arc<Mutex<HashMap<ElementId, ElementWrapper>>>,
+    pub (super) elements: HashMap<ElementId, ElementWrapper>,
 
     /// The first element in the keyframe
     pub (super) initial_element: Option<ElementId>,
@@ -178,7 +178,7 @@ impl KeyFrameCore {
             // Create the keyframe
             Some(KeyFrameCore {
                 layer_id:           layer_id,
-                elements:           Arc::new(Mutex::new(resolved)),
+                elements:           resolved,
                 initial_element:    initial_element,
                 last_element:       last_element,
                 start:              start_time,
@@ -198,12 +198,11 @@ impl KeyFrameCore {
         }
 
         // Calculate a new active brush
-        let elements            = self.elements.lock().unwrap();
         let mut properties      = Arc::new(VectorProperties::default());
         let mut next_element    = self.initial_element;
 
         while let Some(element_id) = next_element {
-            if let Some(element) = elements.get(&element_id) {
+            if let Some(element) = self.elements.get(&element_id) {
                 properties      = element.element.update_properties(properties);
                 next_element    = element.order_before;
             } else {
@@ -241,10 +240,9 @@ impl KeyFrameCore {
 
         if !new_element.unattached {
             // Add to the current keyframe as the new last element
-            let mut keyframe_elements = self.elements.lock().unwrap();
-            keyframe_elements.insert(ElementId::Assigned(new_id), new_element.clone());
+            self.elements.insert(ElementId::Assigned(new_id), new_element.clone());
 
-            let previous_element = last_element.and_then(|last_element| keyframe_elements.get_mut(&last_element));
+            let previous_element = last_element.and_then(|last_element| self.elements.get_mut(&last_element));
             let previous_element = if let Some(previous_element) = previous_element {
                 previous_element.order_before = Some(ElementId::Assigned(new_id));
                 Some(previous_element.clone())
@@ -280,15 +278,13 @@ impl KeyFrameCore {
     /// Returns none if the element is not in the current keyframe
     ///
     pub fn order_element(&mut self, element_id: ElementId, ordering: ElementOrdering) -> Option<Vec<StorageCommand>> {
-        let mut elements = self.elements.lock().unwrap();
-
-        if elements.contains_key(&element_id) {
+        if self.elements.contains_key(&element_id) {
             // Update the element
             let mut updates         = vec![];
             let mut edit_elements   = vec![];
 
             // Fetch the element (we know it exists at this point)
-            let mut element         = elements.get(&element_id).unwrap().clone();
+            let mut element         = self.elements.get(&element_id).unwrap().clone();
 
             // Order the element
             use self::ElementOrdering::*;
@@ -297,8 +293,8 @@ impl KeyFrameCore {
                     // Fetch the element that's in front of the current element
                     let element_id_in_front     = element.order_before;
                     let element_id_behind       = element.order_after;
-                    let element_in_front        = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
-                    let mut element_behind      = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
+                    let element_in_front        = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
+                    let mut element_behind      = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
 
                     if let Some(mut element_in_front) = element_in_front {
                         // This element becomes the 'in front' element if it's ahead of all the others
@@ -324,8 +320,8 @@ impl KeyFrameCore {
                     // Fetch the element that's in front of the current element
                     let element_id_in_front     = element.order_before;
                     let element_id_behind       = element.order_after;
-                    let mut element_in_front    = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
-                    let element_behind          = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
+                    let mut element_in_front    = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
+                    let element_behind          = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
 
                     if let Some(mut element_behind) = element_behind {
                         // This element becomes the lowermost element if it's replacing the current lower-most element
@@ -353,8 +349,8 @@ impl KeyFrameCore {
                         // Remove the element from the list
                         let element_id_in_front     = element.order_before;
                         let element_id_behind       = element.order_after;
-                        let mut element_in_front    = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
-                        let mut element_behind      = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
+                        let mut element_in_front    = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
+                        let mut element_behind      = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
 
                         if let Some(mut element_behind) = element_behind.as_mut() {
                             element_behind.order_before = element_id_in_front;
@@ -370,7 +366,7 @@ impl KeyFrameCore {
 
                         // Find the element that's on top (has an empty 'order_before' element, starting at our existing element)
                         let mut on_top_id = element.order_before.unwrap();
-                        while let Some(on_top_element) = elements.get(&on_top_id) {
+                        while let Some(on_top_element) = self.elements.get(&on_top_id) {
                             if let Some(order_before) = on_top_element.order_before {
                                 // Move to the next element along
                                 on_top_id = order_before;
@@ -381,7 +377,7 @@ impl KeyFrameCore {
                         }
 
                         // Edit the element to be the one on top
-                        let mut element_on_top      = if Some(on_top_id) == element_id_in_front { element_in_front.unwrap() } else { elements.get(&on_top_id).unwrap().clone() };
+                        let mut element_on_top      = if Some(on_top_id) == element_id_in_front { element_in_front.unwrap() } else { self.elements.get(&on_top_id).unwrap().clone() };
 
                         element.order_before        = None;
                         element.order_after         = Some(on_top_id);
@@ -400,8 +396,8 @@ impl KeyFrameCore {
                         // Remove the element from the list
                         let element_id_in_front     = element.order_before;
                         let element_id_behind       = element.order_after;
-                        let mut element_in_front    = element.order_before.and_then(|order_before| elements.get(&order_before).cloned());
-                        let mut element_behind      = element.order_after.and_then(|order_after| elements.get(&order_after).cloned());
+                        let mut element_in_front    = element.order_before.and_then(|order_before| self.elements.get(&order_before).cloned());
+                        let mut element_behind      = element.order_after.and_then(|order_after| self.elements.get(&order_after).cloned());
 
                         if let Some(mut element_behind) = element_behind.as_mut() {
                             element_behind.order_before = element_id_in_front;
@@ -417,7 +413,7 @@ impl KeyFrameCore {
 
                         // Find the element that's on bottom (has an empty 'order_after' element, starting at our existing element)
                         let mut on_bottom_id = element.order_after.unwrap();
-                        while let Some(on_bottom_element) = elements.get(&on_bottom_id) {
+                        while let Some(on_bottom_element) = self.elements.get(&on_bottom_id) {
                             if let Some(order_after) = on_bottom_element.order_after {
                                 // Move to the next element along
                                 on_bottom_id = order_after;
@@ -428,7 +424,7 @@ impl KeyFrameCore {
                         }
 
                         // Edit the element to be the one on bottom
-                        let mut element_on_bottom       = if Some(on_bottom_id) == element_id_behind { element_behind.unwrap() } else { elements.get(&on_bottom_id).unwrap().clone() };
+                        let mut element_on_bottom       = if Some(on_bottom_id) == element_id_behind { element_behind.unwrap() } else { self.elements.get(&on_bottom_id).unwrap().clone() };
 
                         element.order_before            = Some(on_bottom_id);
                         element.order_after             = None;
@@ -453,7 +449,7 @@ impl KeyFrameCore {
                 changed_element_wrapper.serialize(&mut serialized);
 
                 // Add to the elements
-                elements.insert(changed_element_id, changed_element_wrapper);
+                self.elements.insert(changed_element_id, changed_element_wrapper);
 
                 // Update in the storage
                 updates.push(StorageCommand::WriteElement(changed_element_id.id().unwrap(), serialized));

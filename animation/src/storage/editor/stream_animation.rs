@@ -394,8 +394,7 @@ impl AnimationMotion for StreamAnimation {
         // Read the attachments for the element
         keyframe.sync(move |keyframe| {
             // Read the main element
-            let elements    = keyframe.elements.lock().unwrap();
-            let element     = elements.get(&ElementId::Assigned(element_id));
+            let element     = keyframe.elements.get(&ElementId::Assigned(element_id));
             let element     = match element {
                 Some(wrapper)   => wrapper,
                 None            => { return vec![]; }
@@ -403,7 +402,7 @@ impl AnimationMotion for StreamAnimation {
 
             // Try to read all the attachments
             let motion_attachments = element.attachments.iter()
-                .filter_map(|attachment_id| elements.get(attachment_id))
+                .filter_map(|attachment_id| keyframe.elements.get(attachment_id))
                 .filter_map(|attachment_wrapper| {
                     if VectorType::from(&attachment_wrapper.element) == VectorType::Motion {
                         Some(attachment_wrapper.element.id())
@@ -450,8 +449,7 @@ impl AnimationMotion for StreamAnimation {
         // Try to retrieve the element
         keyframe.sync(move |keyframe| {
             // Read the main element
-            let elements    = keyframe.elements.lock().unwrap();
-            let element     = match elements.get(&ElementId::Assigned(element_id)) {
+            let element     = match keyframe.elements.get(&ElementId::Assigned(element_id)) {
                 Some(element)   => element,
                 None            => { return None; }
             };
