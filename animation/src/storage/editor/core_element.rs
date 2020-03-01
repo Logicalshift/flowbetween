@@ -54,7 +54,7 @@ impl StreamAnimationCore {
     ///
     /// Reads a set of elements (invalid elements or elements with references not in the keyframe will not be returned)
     ///
-    fn read_elements<'a>(&'a mut self, element_ids: &'a Vec<i64>, keyframe: &'a KeyFrameCore) -> impl 'a+Send+Future<Output=Vec<ElementWrapper>> {
+    fn read_elements<'a>(&'a mut self, element_ids: &'a Vec<i64>, keyframe: Option<Arc<Desync<KeyFrameCore>>>) -> impl 'a+Send+Future<Output=Vec<ElementWrapper>> {
         async move {
             // No elements are return
             if element_ids.len() == 0 {
@@ -92,19 +92,25 @@ impl StreamAnimationCore {
                 ElementUpdate::AddAttachments(attachments) => {
                     // Update the attachments in the keyframe (elements outside of keyframes must not have attachments)
                     if let Some(keyframe) = keyframe {
-                        updates = keyframe.future(move |keyframe| async move {
+                        // Get the missing elements
+                        let missing_attachment_ids = keyframe.sync(|keyframe| {
                             // Add the attachments to the keyframe (this finds the attachment IDs tha are not already in the keyframe)
                             let attachment_ids = attachments.iter()
                                 .filter(|attachment_id| !keyframe.elements.contains_key(attachment_id))
                                 .filter_map(|attachment_id| attachment_id.id())
                                 .collect::<Vec<_>>();
 
-                            updates.extend(attachment_ids.iter().map(|attachment_id| StorageCommand::AttachElementToLayer(keyframe.layer_id, *attachment_id, keyframe.start)));
+                            attachment_ids
+                        });
 
-                            // Read the attachments that are missing from the keyframe
-                            // let missing_attachments = self.read_elements(&attachment_ids, keyframe).await;
+                        // Read the attachments that are missing from the keyframe
+                        let missing_attachments = self.read_elements(&missing_attachment_ids, Some(keyframe.clone())).await;
 
-                            // Add an attachment to the element
+                        keyframe.sync(|keyframe| {
+                            // Attach the elements to the layer
+                            updates.extend(missing_attachment_ids.iter().map(|attachment_id| StorageCommand::AttachElementToLayer(keyframe.layer_id, *attachment_id, keyframe.start)));
+
+                            // Add the attachments to element
                             keyframe.elements.get_mut(&ElementId::Assigned(element_id))
                                 .map(|element_wrapper| {
                                     // Add the attachment
@@ -116,9 +122,7 @@ impl StreamAnimationCore {
 
                                     updates.push(StorageCommand::WriteElement(element_id, serialized));
                                 });
-
-                            updates
-                        }.boxed()).await.unwrap();
+                        });
                     }
                 }
 
