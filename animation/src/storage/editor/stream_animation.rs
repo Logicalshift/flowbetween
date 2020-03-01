@@ -29,9 +29,6 @@ pub struct StreamAnimation {
 
     /// Available synchronous requests
     idle_sync_requests: Desync<Vec<Desync<Option<Vec<StorageResponse>>>>>,
-
-    /// The properties of the animation
-    file_properties: Desync<Option<FileProperties>>
 }
 
 impl StreamAnimation {
@@ -70,7 +67,6 @@ impl StreamAnimation {
         StreamAnimation {
             core:               core,
             idle_sync_requests: Desync::new(vec![]),
-            file_properties:    Desync::new(None),
             edit_publisher:     edit_publisher
         }
     }
@@ -113,36 +109,24 @@ impl StreamAnimation {
     /// Retrieves the current file properties for the animation
     ///
     fn file_properties(&self) -> FileProperties {
-        let properties = self.file_properties.sync(|props| props.clone());
+        // Retrieve the properties from storage (and update the version we have stored if there is one)
+        let mut response = self.request_sync(vec![StorageCommand::ReadAnimationProperties]).unwrap_or_else(|| vec![]);
+        let properties;
 
-        let properties = if let Some(properties) = properties {
-            // Already got the properties
-            properties
-        } else {
-            // Retrieve the properties from storage (and update the version we have stored if there is one)
-            let mut response = self.request_sync(vec![StorageCommand::ReadAnimationProperties]).unwrap_or_else(|| vec![]);
-            let properties;
-
-            match response.pop() {
-                Some(StorageResponse::NotFound) => {
-                    // File properties are not set
-                    properties = FileProperties::default();
-                    self.file_properties.sync(|props| { *props = Some(properties.clone()); })
-                }
-
-                Some(StorageResponse::AnimationProperties(props)) => {
-                    // Deserialize the file properties
-                    properties = FileProperties::deserialize(&mut props.chars()).expect("Could not parse file properties");
-                    self.file_properties.sync(|props| { *props = Some(properties.clone()); })
-                }
-
-                _ => panic!("Unexpected response while reading file properties")
+        match response.pop() {
+            Some(StorageResponse::NotFound) => {
+                // File properties are not set
+                properties = FileProperties::default();
             }
 
-            properties
-        };
+            Some(StorageResponse::AnimationProperties(props)) => {
+                // Deserialize the file properties
+                properties = FileProperties::deserialize(&mut props.chars()).expect("Could not parse file properties");
+            }
 
-        // Return the file properties
+            _ => panic!("Unexpected response while reading file properties")
+        }
+
         properties
     }
 }
