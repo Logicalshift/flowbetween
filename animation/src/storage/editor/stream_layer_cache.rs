@@ -55,7 +55,6 @@ impl CanvasCache for StreamLayerCache {
         cache_type.serialize(&mut key);
 
         // Ask the core to delete the cached value
-        let core    = Arc::clone(&self.core);
         let _       = self.core.future(move |core| {
             async move {
                 core.storage_requests.publish(vec![StorageCommand::DeleteLayerCache(layer_id, when, key)]).await;
@@ -79,7 +78,6 @@ impl CanvasCache for StreamLayerCache {
         items.encode_canvas(&mut drawing);
 
         // Ask the core to store the cached value
-        let core            = Arc::clone(&self.core);
         let _               = self.core.future(move |core| {
             async move {
                 core.storage_requests.publish(vec![StorageCommand::WriteLayerCache(layer_id, when, key, drawing)]).await;
