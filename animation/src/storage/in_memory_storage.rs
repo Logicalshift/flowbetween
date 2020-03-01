@@ -455,7 +455,7 @@ impl InMemoryStorageCore {
                                 layer.cache.remove(index);
                                 response.push(StorageResponse::Updated)
                             },
-                            Err(index)  => response.push(StorageResponse::NotFound)
+                            Err(_index) => response.push(StorageResponse::NotFound)
                         }
                     } else {
                         // Layer not present
@@ -468,7 +468,7 @@ impl InMemoryStorageCore {
                         // Search for this cache item
                         match layer.cache.binary_search_by(|cache_item| cache_item.key.cmp(&key).then(cache_item.when.cmp(&when))) {
                             Ok(index)   => response.push(StorageResponse::LayerCache(layer.cache[index].cache_value.clone())),
-                            Err(index)  => response.push(StorageResponse::NotFound)
+                            Err(_index) => response.push(StorageResponse::NotFound)
                         }
                     } else {
                         // Layer not present
