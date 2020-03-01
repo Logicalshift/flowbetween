@@ -8,6 +8,7 @@ use super::super::super::serializer::*;
 use futures::prelude::*;
 use ::desync::*;
 
+use std::mem;
 use std::sync::*;
 use std::collections::{HashSet};
 
@@ -52,6 +53,20 @@ impl StreamAnimationCore {
     }
 
     ///
+    /// Reads a set of elements (invalid elements or elements with references not in the keyframe will not be returned)
+    ///
+    fn read_elements<'a>(&'a mut self, element_ids: &'a Vec<i64>, keyframe: &'a KeyFrameCore) -> impl 'a+Send+Future<Output=Vec<ElementWrapper>> {
+        async move {
+            // No elements are return
+            if element_ids.len() == 0 {
+                return vec![];
+            }
+
+            vec![]
+        }
+    }
+
+    ///
     /// Performs an update on an element in a keyframe
     ///
     fn perform_update<'a>(&'a mut self, element_id: i64, update: ElementUpdate, keyframe: Option<Arc<Desync<KeyFrameCore>>>) -> impl 'a+Send+Future<Output=Vec<StorageCommand>>+Send {
@@ -77,30 +92,36 @@ impl StreamAnimationCore {
 
                 ElementUpdate::AddAttachments(attachments) => {
                     // Update the attachments in the keyframe (elements outside of keyframes must not have attachments)
-                    keyframe.map(|keyframe| keyframe.sync(|keyframe| {
-                        // Fetch the keyframe elements
-                        let mut elements = keyframe.elements.lock().unwrap();
+                    if let Some(keyframe) = keyframe {
+                        keyframe.future(|keyframe| async move {
+                            // Fetch the keyframe elements
+                            let mut elements = keyframe.elements.lock().unwrap();
 
-                        // Add the attachments to the keyframe
-                        let attachment_ids = attachments.iter()
-                            .filter(|attachment_id| !elements.contains_key(attachment_id))
-                            .filter_map(|attachment_id| attachment_id.id());
+                            // Add the attachments to the keyframe (this finds the attachment IDs tha are not already in the keyframe)
+                            let attachment_ids = attachments.iter()
+                                .filter(|attachment_id| !elements.contains_key(attachment_id))
+                                .filter_map(|attachment_id| attachment_id.id())
+                                .collect::<Vec<_>>();
 
-                        updates.extend(attachment_ids.map(|attachment_id| StorageCommand::AttachElementToLayer(keyframe.layer_id, attachment_id, keyframe.start)));
+                            updates.extend(attachment_ids.iter().map(|attachment_id| StorageCommand::AttachElementToLayer(keyframe.layer_id, *attachment_id, keyframe.start)));
 
-                        // Add an attachment to the element
-                        elements.get_mut(&ElementId::Assigned(element_id))
-                            .map(|element_wrapper| {
-                                // Add the attachment
-                                element_wrapper.attachments.extend(attachments.clone());
+                            // Read the attachments that are missing from the keyframe
+                            // let missing_attachments = self.read_elements(&attachment_ids, keyframe).await;
 
-                                // Generate the update of the serialized element
-                                let mut serialized  = String::new();
-                                element_wrapper.serialize(&mut serialized);
+                            // Add an attachment to the element
+                            elements.get_mut(&ElementId::Assigned(element_id))
+                                .map(|element_wrapper| {
+                                    // Add the attachment
+                                    element_wrapper.attachments.extend(attachments.clone());
 
-                                updates.push(StorageCommand::WriteElement(element_id, serialized));
-                            });
-                    }));
+                                    // Generate the update of the serialized element
+                                    let mut serialized  = String::new();
+                                    element_wrapper.serialize(&mut serialized);
+
+                                    updates.push(StorageCommand::WriteElement(element_id, serialized));
+                                });
+                        }.boxed()).await;
+                    }
                 }
 
                 ElementUpdate::RemoveAttachments(attachments) => {
