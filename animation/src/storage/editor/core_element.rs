@@ -106,7 +106,27 @@ impl StreamAnimationCore {
                         // Read the attachments that are missing from the keyframe
                         let missing_attachments = self.read_elements(&missing_attachment_ids, Some(keyframe.clone())).await;
 
-                        keyframe.sync(|keyframe| {
+                        keyframe.sync(move |keyframe| {
+                            // Add the element to the attachments
+                            for attachment in missing_attachments.iter_mut() {
+                                if let Some(attachment_id) = attachment.element.id().id() {
+                                    // Add the element to this attachment
+                                    attachment.attached_to.push(ElementId::Assigned(element_id));
+
+                                    // Generate the update of the serialized element
+                                    let mut serialized  = String::new();
+                                    attachment.serialize(&mut serialized);
+
+                                    updates.push(StorageCommand::WriteElement(attachment_id, serialized));
+                                }
+                            }
+
+                            // Add the missing attachments to the keyframe
+                            for attachment in missing_attachments {
+                                let id = attachment.element.id();
+                                keyframe.elements.insert(id, attachment);
+                            }
+
                             // Attach the elements to the layer
                             updates.extend(missing_attachment_ids.iter().map(|attachment_id| StorageCommand::AttachElementToLayer(keyframe.layer_id, *attachment_id, keyframe.start)));
 
