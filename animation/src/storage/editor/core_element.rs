@@ -56,12 +56,44 @@ impl StreamAnimationCore {
     ///
     fn read_elements<'a>(&'a mut self, element_ids: &'a Vec<i64>, keyframe: Option<Arc<Desync<KeyFrameCore>>>) -> impl 'a+Send+Future<Output=Vec<ElementWrapper>> {
         async move {
-            // No elements are return
+            // No elements are returned if no IDs are passed in
             if element_ids.len() == 0 {
                 return vec![];
             }
 
-            vec![]
+            // Request the serialized elements from storage
+            let response = self.request(element_ids.iter().map(|id| StorageCommand::ReadElement(*id)).collect()).await;
+
+            // Deserialize each element in the response (assume they don't refer to each other)
+            let mut elements = vec![];
+
+            for elem_response in response.unwrap_or_else(|| vec![]) {
+                match elem_response {
+                    StorageResponse::Element(id, serialized) => { 
+                        // Deserialize this element
+                        let resolver    = ElementWrapper::deserialize(ElementId::Assigned(id), &mut serialized.chars());
+                        let element     = if let Some(keyframe) = keyframe.as_ref() {
+                            // Resolve with the existing elements in the keyframe
+                            resolver.and_then(|resolver| resolver.resolve(&mut |id| {
+                                keyframe.sync(move |keyframe| keyframe.elements.get(&id)
+                                    .map(|wrapper| wrapper.element.clone()))
+                            }))
+                        } else {
+                            // Resolve with no extra elements
+                            resolver.and_then(|resolver| resolver.resolve(&mut |_| None))
+                        };
+
+                        // Add the deserialized element to the results list
+                        element.map(|element| elements.push(element));
+                    },
+
+                    _   => { 
+                        // Other responses are ignored
+                    }
+                }
+            }
+
+            elements
         }
     }
 
@@ -104,9 +136,9 @@ impl StreamAnimationCore {
                         });
 
                         // Read the attachments that are missing from the keyframe
-                        let missing_attachments = self.read_elements(&missing_attachment_ids, Some(keyframe.clone())).await;
+                        let mut missing_attachments = self.read_elements(&missing_attachment_ids, Some(keyframe.clone())).await;
 
-                        keyframe.sync(move |keyframe| {
+                        keyframe.sync(|keyframe| {
                             // Add the element to the attachments
                             for attachment in missing_attachments.iter_mut() {
                                 if let Some(attachment_id) = attachment.element.id().id() {
