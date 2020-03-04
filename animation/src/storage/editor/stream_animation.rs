@@ -1,9 +1,11 @@
 use super::stream_layer::*;
+use super::element_wrapper::*;
 use super::stream_animation_core::*;
 use super::super::storage_api::*;
 use super::super::file_properties::*;
 use super::super::layer_properties::*;
 use super::super::super::traits::*;
+use super::super::super::serializer::*;
 
 use ::desync::*;
 use flo_stream::*;
@@ -419,7 +421,28 @@ impl AnimationMotion for StreamAnimation {
     /// Retrieves the IDs of the elements attached to a particular motion
     ///
     fn get_elements_for_motion(&self, motion_id: ElementId) -> Vec<ElementId> {
-        unimplemented!("get_elements_for_motion")
+        if let Some(motion_id) = motion_id.id() {
+            // Read the wrapper for the motion
+            let response = self.request_sync(vec![StorageCommand::ReadElement(motion_id)]);
+
+            // Read the attachments from the response (resolve the elements with no dependent elements)
+            response.into_iter()
+                .flatten()
+                .map(|response| match response {
+                    StorageResponse::Element(id, data) => {
+                        // Deserialize the element to get its attachments
+                        let resolver = ElementWrapper::deserialize(ElementId::Assigned(id), &mut data.chars());
+                        resolver.and_then(|resolver| resolver.resolve(&mut |_| None))
+                    },
+                    _ => None
+                }).flatten()
+                .map(|wrapper| wrapper.attached_to.iter().cloned().collect::<Vec<_>>())
+                .flatten()
+                .collect()
+        } else {
+            // No elements if the ID is unassigned
+            vec![]
+        }
     }
 
     ///
