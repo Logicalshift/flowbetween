@@ -184,6 +184,27 @@ impl StreamAnimationCore {
 
                     // Update the attachments in the keyframe (elements outside of keyframes must not have attachments)
                     keyframe.map(|keyframe| keyframe.sync(|keyframe| {
+                        // Removes the element from the attachments
+                        attachments.iter()
+                            .for_each(|attachment_id| {
+                                // Remove the element
+                                keyframe.elements.get_mut(&attachment_id)
+                                    .map(|attachment_wrapper| {
+                                        // Remove the element from the wrapper
+                                        attachment_wrapper.attached_to.retain(|existing_id| existing_id != &ElementId::Assigned(element_id));
+
+                                        // Send back to the storage with the attachment removed
+                                        // TODO: if there are no attachments left, consider removing the element from the keyframe
+                                        // (presently doesn't work as brush properties don't have their references reversed this way)
+                                        attachment_id.id().map(|attachment_id| {
+                                            let mut serialized  = String::new();
+                                            attachment_wrapper.serialize(&mut serialized);
+
+                                            updates.push(StorageCommand::WriteElement(attachment_id, serialized));
+                                        });
+                                    });
+                            });
+
                         // Remove the attachments from the element
                         keyframe.elements.get_mut(&ElementId::Assigned(element_id))
                             .map(|element_wrapper| {
