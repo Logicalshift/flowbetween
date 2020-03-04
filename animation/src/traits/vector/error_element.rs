@@ -52,7 +52,7 @@ impl VectorElement for ErrorElement {
     /// Returns a new element that is this element transformed along a motion at a particular moment
     /// in time.
     ///
-    fn motion_transform(&self, motion: &Motion, when: Duration) -> Vector {
+    fn motion_transform(&self, _motion: &Motion, _when: Duration) -> Vector {
         Vector::Error
     }
 
@@ -68,7 +68,7 @@ impl VectorElement for ErrorElement {
     ///
     /// The vector here specifies the updated position for each control point in control_points
     ///
-    fn with_adjusted_control_points(&self, new_positions: Vec<(f32, f32)>) -> Vector {
+    fn with_adjusted_control_points(&self, _new_positions: Vec<(f32, f32)>) -> Vector {
         Vector::Error
     }
 }
