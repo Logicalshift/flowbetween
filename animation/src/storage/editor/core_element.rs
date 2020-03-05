@@ -40,14 +40,62 @@ impl StreamAnimationCore {
             let element_ids = element_ids.iter().map(|elem| elem.id()).flatten().collect();
 
             match element_edit {
-                AddAttachment(attach_id)        => { self.update_elements(element_ids, |wrapper| { AddAttachments(vec![*attach_id]) }).await; }
-                RemoveAttachment(attach_id)     => { self.update_elements(element_ids, |wrapper| { RemoveAttachments(vec![*attach_id]) }).await; }
+                AddAttachment(attach_id)        => { self.update_elements(element_ids, |_wrapper| { AddAttachments(vec![*attach_id]) }).await; }
+                RemoveAttachment(attach_id)     => { self.update_elements(element_ids, |_wrapper| { RemoveAttachments(vec![*attach_id]) }).await; }
                 SetControlPoints(new_points)    => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_adjusted_control_points(new_points.clone()); ChangeWrapper(wrapper) }).await; }
                 SetPath(new_path)               => { self.update_elements(element_ids, |mut wrapper| { wrapper.element = wrapper.element.with_path_components(new_path.iter().cloned()); ChangeWrapper(wrapper) }).await; }
                 Order(ordering)                 => { self.order_elements(element_ids, *ordering).await; }
-                Delete                          => { self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id)).collect()).await; }
                 DetachFromFrame                 => { self.request(element_ids.into_iter().map(|id| StorageCommand::DetachElementFromLayer(id)).collect()).await; }
+
+                Delete                          => {
+                    let mut attachments         = vec![];
+                    let mut attached_to         = vec![];
+
+                    // Use update_elements to read the attachments/attached_to values for the elements that are being deleted
+                    self.update_elements(element_ids.clone(), |wrapper| {
+                        attachments.extend(wrapper.attachments.into_iter().map(|id| id.id()).flatten());
+                        attached_to.extend(wrapper.attached_to.into_iter().map(|id| id.id()).flatten());
+
+                        ElementUpdate::Other(vec![])
+                    }).await;
+
+                    // Remove the element from anything it's attached to or is attached to it
+                    if attachments.len() > 0 || attached_to.len() > 0 {
+                        // Hash set of the elements that are being deleted
+                        let attachments_to_remove   = element_ids.iter().map(|id| ElementId::Assigned(*id)).collect::<HashSet<_>>();
+
+                        // Remove the deleted elements from anything they're attached to
+                        self.update_elements(attachments, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
+                        self.update_elements(attached_to, |wrapper| Self::remove_attachments(wrapper, &attachments_to_remove)).await;
+                    }
+
+                    // Delete the elements
+                    self.request(element_ids.into_iter().map(|id| StorageCommand::DeleteElement(id)).collect()).await; 
+                }
             }
+        }
+    }
+
+    ///
+    /// Given an attachment ID, removes it from the attachments (and attached_to) items for an element
+    ///
+    fn remove_attachments(wrapper: ElementWrapper, attachments_to_remove: &HashSet<ElementId>) -> ElementUpdate {
+        let mut wrapper     = wrapper;
+
+        // Count the attachments so we know if we've removed any
+        let num_attachments = wrapper.attachments.len();
+        let num_attached_to = wrapper.attached_to.len();
+
+        // Remove any instances of the specified attachments
+        wrapper.attachments.retain(|id| !attachments_to_remove.contains(id));
+        wrapper.attached_to.retain(|id| !attachments_to_remove.contains(id));
+
+        if num_attachments != wrapper.attachments.len() || num_attached_to != wrapper.attached_to.len() {
+            // Update the wrapper
+            ElementUpdate::ChangeWrapper(wrapper)
+        } else {
+            // Do nothing as the attachment wasn't in the list
+            ElementUpdate::Other(vec![])
         }
     }
 
@@ -232,8 +280,8 @@ impl StreamAnimationCore {
     ///
     /// Updates a one or more elements via an update function
     ///
-    pub fn update_elements<'a, UpdateFn>(&'a mut self, element_ids: Vec<i64>, update_fn: UpdateFn) -> impl 'a+Future<Output=()>
-    where UpdateFn: 'a+Send+Sync+Fn(ElementWrapper) -> ElementUpdate {
+    pub fn update_elements<'a, UpdateFn>(&'a mut self, element_ids: Vec<i64>, mut update_fn: UpdateFn) -> impl 'a+Future<Output=()>
+    where UpdateFn: 'a+Send+Sync+FnMut(ElementWrapper) -> ElementUpdate {
         async move {
             // Update the elements that are returned
             let mut updates = vec![];
