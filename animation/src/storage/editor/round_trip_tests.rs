@@ -1023,10 +1023,10 @@ fn delete_motion() {
     assert!(attached == vec![ElementId::Assigned(50)]);
 
     let attached = anim.motion().get_motions_for_element(ElementId::Assigned(50));
-    assert!(attached == vec![ElementId::Assigned(50)]);
+    assert!(attached == vec![ElementId::Assigned(100)]);
 
     anim.perform_edits(vec![
-        AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::Delete)
+        AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::Delete)
     ]);
 
     let attached = anim.motion().get_elements_for_motion(ElementId::Assigned(100));
@@ -1075,9 +1075,6 @@ fn delete_motion_element() {
     ]);
 
     let attached = anim.motion().get_elements_for_motion(ElementId::Assigned(100));
-    assert!(attached == vec![]);
-
-    let attached = anim.motion().get_motions_for_element(ElementId::Assigned(50));
     assert!(attached == vec![]);
 }
 
