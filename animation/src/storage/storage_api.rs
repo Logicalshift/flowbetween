@@ -96,9 +96,6 @@ pub enum StorageResponse {
     /// The number of edits
     NumberOfEdits(usize),
 
-    /// The times where key frames appear in a particular frame
-    KeyFrames(Vec<Duration>),
-
     /// The serialized version of the file properites
     AnimationProperties(String),
 
