@@ -95,7 +95,7 @@ impl SqliteCore {
             ReadLayers                                          => { self.read_layers() },
             WriteLayerProperties(layer_id, properties)          => { self.add_layer(layer_id, properties) },
             ReadLayerProperties(layer_id)                       => { self.read_layer_properties(layer_id) },
-            AddKeyFrame(layer_id, when)                         => { unimplemented!() },
+            AddKeyFrame(layer_id, when)                         => { self.add_key_frame(layer_id, when) },
             DeleteKeyFrame(layer_id, when)                      => { unimplemented!() },
             ReadKeyFrames(layer_id, time_range)                 => { unimplemented!() },
             AttachElementToLayer(layer_id, element_id, when)    => { unimplemented!() },
@@ -301,5 +301,15 @@ impl SqliteCore {
             Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
             Err(other)                  => Err(other)
         }
+    }
+
+    ///
+    /// Adds a new layer or updates its properties
+    ///
+    fn add_key_frame(&mut self, layer_id: u64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO Keyframe (LayerId, TimeMicroseconds) VALUES (?, ?);")?;
+        write.execute(params![layer_id as i64, Self::time_to_int(when)])?;
+
+        Ok(vec![StorageResponse::Updated])
     }
 }

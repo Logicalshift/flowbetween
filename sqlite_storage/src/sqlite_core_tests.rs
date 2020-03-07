@@ -3,6 +3,8 @@ use flo_animation::storage::*;
 use rusqlite;
 use super::sqlite_core::*;
 
+use std::time::{Duration};
+
 #[test]
 fn initialize_database() {
     let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
@@ -189,4 +191,15 @@ fn read_missing_layer_properties() {
 
     assert!(core.run_commands(vec![StorageCommand::ReadLayerProperties(3)]) == 
         vec![StorageResponse::NotFound]);
+}
+
+#[test]
+fn add_keyframe() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(420))
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
 }
