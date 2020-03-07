@@ -114,3 +114,64 @@ fn write_and_delete_elements() {
     assert!(core.run_commands(vec![StorageCommand::ReadElement(1), StorageCommand::ReadElement(3)]) == 
         vec![StorageResponse::Element(1, "Test1".to_string()), StorageResponse::NotFound]);
 }
+
+#[test]
+fn read_no_layers() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayers]) == 
+        vec![]);
+}
+
+#[test]
+fn add_and_read_layers() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddLayer(3, "Test2".to_string()),
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayers]) == 
+        vec![StorageResponse::LayerProperties(1, "Test1".to_string()), StorageResponse::LayerProperties(3, "Test2".to_string())]);
+}
+
+#[test]
+fn add_and_delete_layers() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddLayer(3, "Test2".to_string()),
+            StorageCommand::DeleteLayer(3)
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayers]) == 
+        vec![StorageResponse::LayerProperties(1, "Test1".to_string())]);
+}
+
+#[test]
+fn read_layer_properties() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddLayer(3, "Test2".to_string()),
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerProperties(3)]) == 
+        vec![StorageResponse::LayerProperties(3, "Test2".to_string())]);
+}
+
+#[test]
+fn read_missing_layer_properties() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![StorageCommand::ReadLayerProperties(3)]) == 
+        vec![StorageResponse::NotFound]);
+}

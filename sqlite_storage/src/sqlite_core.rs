@@ -89,11 +89,11 @@ impl SqliteCore {
             WriteElement(element_id, value)                     => { self.write_element(element_id, value) },
             ReadElement(element_id)                             => { self.read_element(element_id) },
             DeleteElement(element_id)                           => { self.delete_element(element_id) },
-            AddLayer(layer_id, properties)                      => { unimplemented!() },
-            DeleteLayer(layer_id)                               => { unimplemented!() },
-            ReadLayers                                          => { unimplemented!() },
-            WriteLayerProperties(layer_id, properties)          => { unimplemented!() },
-            ReadLayerProperties(layer_id)                       => { unimplemented!() },
+            AddLayer(layer_id, properties)                      => { self.add_layer(layer_id, properties) },
+            DeleteLayer(layer_id)                               => { self.delete_layer(layer_id) },
+            ReadLayers                                          => { self.read_layers() },
+            WriteLayerProperties(layer_id, properties)          => { self.add_layer(layer_id, properties) },
+            ReadLayerProperties(layer_id)                       => { self.read_layer_properties(layer_id) },
             AddKeyFrame(layer_id, when)                         => { unimplemented!() },
             DeleteKeyFrame(layer_id, when)                      => { unimplemented!() },
             ReadKeyFrames(layer_id, time_range)                 => { unimplemented!() },
@@ -224,5 +224,63 @@ impl SqliteCore {
         transaction.commit()?;
 
         Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Adds a new layer or updates its properties
+    ///
+    fn add_layer(&mut self, layer_id: u64, properties: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO Layers (LayerId, Layer) VALUES (?, ?);")?;
+        write.execute(params![layer_id as i64, properties])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Deletes a layer from the database
+    ///
+    fn delete_layer(&mut self, layer_id: u64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let transaction = self.connection.transaction()?;
+
+        {
+            let mut delete  = transaction.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE LayerId = ?;")?;
+            delete.execute(&[layer_id as i64])?;
+
+            let mut delete  = transaction.prepare_cached("DELETE FROM LayerCache WHERE LayerId = ?;")?;
+            delete.execute(&[layer_id as i64])?;
+
+            let mut delete  = transaction.prepare_cached("DELETE FROM Layers WHERE LayerId = ?;")?;
+            delete.execute(&[layer_id as i64])?;
+        }
+
+        transaction.commit()?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Reads data for an element
+    ///
+    fn read_layers(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut read    = self.connection.prepare_cached("SELECT LayerId, Layer FROM Layers;")?;
+        let layers      = read.query_map(NO_PARAMS, |row| Ok((row.get::<_, i64>(0)?, row.get(1)?)))?;
+        let layers      = layers.map(|layer| layer.map(|(layer_id, layer)| StorageResponse::LayerProperties(layer_id as u64, layer)));
+
+        Ok(layers.collect::<Result<_, _>>()?)
+    }
+
+    ///
+    /// Reads data for an element
+    ///
+    fn read_layer_properties(&mut self, layer_id: u64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        use rusqlite::Error::QueryReturnedNoRows;
+
+        let mut read            = self.connection.prepare_cached("SELECT LayerId, Layer FROM Layers WHERE LayerId = ?;")?;
+
+        match read.query_row(&[layer_id as i64], |row| Ok((row.get::<_, i64>(0)?, row.get(1)?))) {
+            Ok((layer_id, layer))       => Ok(vec![StorageResponse::LayerProperties(layer_id as u64, layer)]),
+            Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
+            Err(other)                  => Err(other)
+        }
     }
 }
