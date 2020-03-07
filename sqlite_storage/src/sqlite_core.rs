@@ -99,10 +99,10 @@ impl SqliteCore {
             AddKeyFrame(layer_id, when)                         => { self.add_key_frame(layer_id, when) },
             DeleteKeyFrame(layer_id, when)                      => { self.delete_key_frame(layer_id, when) },
             ReadKeyFrames(layer_id, time_range)                 => { self.read_keyframes(layer_id, time_range) },
-            AttachElementToLayer(layer_id, element_id, when)    => { unimplemented!() },
-            DetachElementFromLayer(element_id)                  => { unimplemented!() },
-            ReadElementAttachments(element_id)                  => { unimplemented!() },
-            ReadElementsForKeyFrame(layer_id, when)             => { unimplemented!() },
+            AttachElementToLayer(layer_id, element_id, when)    => { self.attach_element_to_layer(layer_id, element_id, when) },
+            DetachElementFromLayer(element_id)                  => { self.detach_element_from_layer(element_id) },
+            ReadElementAttachments(element_id)                  => { self.read_element_attachments(element_id) },
+            ReadElementsForKeyFrame(layer_id, when)             => { self.read_elements_for_key_frame(layer_id, when) },
             WriteLayerCache(layer_id, when, cache_type, value)  => { unimplemented!() },
             DeleteLayerCache(layer_id, when, cache_type)        => { unimplemented!() },
             ReadLayerCache(layer_id, when, cache_type)          => { unimplemented!() },
@@ -420,5 +420,69 @@ impl SqliteCore {
         }
 
         Ok(result)
+    }
+
+    ///
+    /// Attempts to attach an element to the keyframe nearest the specified time
+    ///
+    pub fn attach_element_to_layer(&mut self, layer_id: u64, element_id: i64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        // Find the nearest keyframe to the requested time
+        let when        = Self::time_to_int(when);
+        let when        = self.read_previous_key_frame(layer_id, when)?;
+        let when        = match when {
+            Some(when)  => when,
+            None        => { return Ok(vec![StorageResponse::NotFound]); }
+        };
+
+        // Write out the attachment
+        let mut write   = self.connection.prepare_cached("INSERT INTO ElementKeyframeAttachment (ElementId, LayerId, TimeMicroseconds) VALUES (?, ?, ?);")?;
+        write.execute(&[element_id, layer_id as i64, when])?;
+
+        return Ok(vec![StorageResponse::Updated]);
+    }
+
+    ///
+    /// Removes an element from any layer it's attached to
+    ///
+    pub fn detach_element_from_layer(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        // Remove the attachment
+        let mut delete   = self.connection.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
+        delete.execute(&[element_id])?;
+
+        return Ok(vec![StorageResponse::Updated]);
+    }
+
+    ///
+    /// Retrieves the layers and keyframes a particular element is currently attached to
+    ///
+    pub fn read_element_attachments(&mut self, element_id: i64) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut read    = self.connection.prepare_cached("SELECT LayerId, TimeMicroseconds FROM ElementKeyframeAttachment WHERE ElementId = ?;")?;
+        let attachments = read.query_map(&[element_id], |row| Ok((row.get::<_, i64>(0)? as u64, Self::int_to_time(row.get(1)?))))?;
+
+        Ok(vec![StorageResponse::ElementAttachments(element_id, attachments.collect::<Result<Vec<_>, _>>()?)])
+    }
+
+    ///
+    /// Retrieves the elements attached to a particular key frame
+    ///
+    pub fn read_elements_for_key_frame(&mut self, layer_id: u64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        // Find the nearest keyframe to the requested time
+        let when        = Self::time_to_int(when);
+        let when        = self.read_previous_key_frame(layer_id, when)?;
+        let when        = match when {
+            Some(when)  => when,
+            None        => { return Ok(vec![]); }
+        };
+
+        // Try to read the elements for this keyframe
+        let mut read    = self.connection.prepare_cached("
+            SELECT Elements.ElementId, Elements.Element FROM Elements
+            INNER JOIN ElementKeyframeAttachment ON ElementKeyframeAttachment.ElementId = Elements.ElementId
+            WHERE ElementKeyframeAttachment.LayerId = ? AND ElementKeyFrameAttachment.TimeMicroseconds = ?;")?;
+
+        let elements    = read.query_map(&[layer_id as i64, when], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        let elements    = elements.map(|element| element.map(|(element_id, element)| StorageResponse::Element(element_id, element)));
+
+        elements.collect()
     }
 }
