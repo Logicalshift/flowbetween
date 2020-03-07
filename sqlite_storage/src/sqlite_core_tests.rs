@@ -44,6 +44,18 @@ fn write_two_edits() {
             StorageCommand::WriteEdit("Test2".to_string())
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
 
-    let props       = core.run_commands(vec![StorageCommand::ReadEditLogLength]);
-    assert!(props == vec![StorageResponse::NumberOfEdits(2)]);
+    assert!(core.run_commands(vec![StorageCommand::ReadEditLogLength]) == vec![StorageResponse::NumberOfEdits(2)]);
+}
+
+#[test]
+fn read_all_edits() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::WriteEdit("Test1".to_string()), 
+            StorageCommand::WriteEdit("Test2".to_string())
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadEdits(0..2)]) == vec![StorageResponse::Edit(0, "Test1".to_string()), StorageResponse::Edit(1, "Test2".to_string())]);
 }

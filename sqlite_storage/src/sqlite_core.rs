@@ -3,6 +3,8 @@ use flo_animation::storage::*;
 use rusqlite;
 use rusqlite::{NO_PARAMS};
 
+use std::ops::{Range};
+
 const BASE_DATA_DEFN: &[u8]          = include_bytes!["../sql/flo_storage.sql"];
 
 ///
@@ -83,7 +85,7 @@ impl SqliteCore {
             WriteEdit(edit)                                     => { self.write_edit(edit) },
             ReadHighestUnusedElementId                          => { unimplemented!() },
             ReadEditLogLength                                   => { self.read_edit_log_length() },
-            ReadEdits(edit_range)                               => { unimplemented!() },
+            ReadEdits(edit_range)                               => { self.read_edits(edit_range) },
             WriteElement(element_id, value)                     => { unimplemented!() },
             ReadElement(element_id)                             => { unimplemented!() },
             DeleteElement(element_id)                           => { unimplemented!() },
@@ -146,9 +148,20 @@ impl SqliteCore {
     /// Updates the animation properties for this animation
     ///
     fn read_edit_log_length(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
-        let mut read    = self.connection.prepare_cached("SELECT COUNT(EditId) FROM EditLog;")?;
+        let mut read    = self.connection.prepare_cached("SELECT MAX(EditId) FROM EditLog;")?;
         let count       = read.query_row(NO_PARAMS, |row| row.get::<_, i64>(0))?;
 
         Ok(vec![StorageResponse::NumberOfEdits(count as usize)])
+    }
+
+    ///
+    /// Updates the animation properties for this animation
+    ///
+    fn read_edits(&mut self, range: Range<usize>) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut read    = self.connection.prepare_cached("SELECT EditId, Edit FROM EditLog WHERE EditId >= ? AND EditId < ? ORDER BY EditId ASC;")?;
+        let edits       = read.query_map(&[(range.start as i64)+1, (range.end as i64)+1], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)))?;
+        let edits       = edits.map(|row| row.map(|(edit_id, edit)| StorageResponse::Edit((edit_id-1) as usize, edit)));
+
+        Ok(edits.collect::<Result<_, _>>()?)
     }
 }
