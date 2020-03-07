@@ -74,13 +74,6 @@ impl StreamAnimation {
     }
 
     ///
-    /// Raises a panic if this animation has reached an error state
-    ///
-    pub fn panic_on_error(&self) {
-        // Here only for the tests right now
-    }
-
-    ///
     /// Performs an asynchronous request on a storage layer for this animation
     ///
     pub (super) fn request_async(&self, request: Vec<StorageCommand>) -> impl Future<Output=Option<Vec<StorageResponse>>> {

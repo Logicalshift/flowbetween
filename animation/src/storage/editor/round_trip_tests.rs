@@ -23,7 +23,6 @@ fn create_animation() -> StreamAnimation {
 #[test]
 fn default_size_is_1920_1080() {
     let anim = create_animation();
-    anim.panic_on_error();
 
     assert!(anim.size() == (1920.0, 1080.0));
 }
@@ -31,7 +30,6 @@ fn default_size_is_1920_1080() {
 #[test]
 fn default_duration_is_two_minutes() {
     let anim = create_animation();
-    anim.panic_on_error();
 
     assert!(anim.duration() == Duration::from_secs(120));
 }
@@ -39,7 +37,6 @@ fn default_duration_is_two_minutes() {
 #[test]
 fn default_framerate_is_30_fps() {
     let anim = create_animation();
-    anim.panic_on_error();
 
     assert!(anim.frame_length() == Duration::new(0, 33_333_333));
 }
@@ -47,7 +44,6 @@ fn default_framerate_is_30_fps() {
 #[test]
 fn no_layers_by_default() {
     let anim = create_animation();
-    anim.panic_on_error();
 
     assert!(anim.get_layer_ids().len() == 0);
 }
@@ -60,7 +56,6 @@ fn set_size() {
         AnimationEdit::SetSize(100.0, 200.0)
     ]);
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -76,13 +71,11 @@ fn size_changes_after_being_set() {
     assert!((anim.size().0-100.0).abs() < 0.01);
     assert!((anim.size().1-200.0).abs() < 0.01);
 
-    anim.panic_on_error();
 }
 
 #[test]
 fn add_layer() {
     let anim = create_animation();
-    anim.panic_on_error();
 
     anim.perform_edits(vec![
         AnimationEdit::AddNewLayer(2)
@@ -90,46 +83,38 @@ fn add_layer() {
 
     assert!(anim.get_layer_ids().len() == 1);
 
-    anim.panic_on_error();
 }
 
 #[test]
 fn add_multiple_layers() {
     let anim = create_animation();
-    anim.panic_on_error();
 
     anim.perform_edits(vec![
         AnimationEdit::AddNewLayer(2),
         AnimationEdit::AddNewLayer(3),
         AnimationEdit::AddNewLayer(4)
     ]);
-    anim.panic_on_error();
 
     assert!(anim.get_layer_ids().len() == 3);
 
-    anim.panic_on_error();
 }
 
 #[test]
 fn remove_layer() {
     let anim = create_animation();
-    anim.panic_on_error();
 
     anim.perform_edits(vec![
         AnimationEdit::AddNewLayer(2)
     ]);
-    anim.panic_on_error();
 
     assert!(anim.get_layer_ids().len() == 1);
 
     anim.perform_edits(vec![
         AnimationEdit::RemoveLayer(2)
     ]);
-    anim.panic_on_error();
 
     assert!(anim.get_layer_ids().len() == 0);
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -138,7 +123,6 @@ fn cannot_add_same_layer_again() {
     assert!(false); // TODO
 
     let anim = create_animation();
-    anim.panic_on_error();
 
     anim.perform_edits(vec![
         AnimationEdit::AddNewLayer(2)
@@ -167,7 +151,6 @@ fn single_layer_id() {
     assert!(layer_ids.len() == 1);
     assert!(layer_ids == vec![2]);
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -184,7 +167,6 @@ fn retrieve_layer_ids() {
     assert!(layer_ids.len() == 2);
     assert!(layer_ids == vec![2, 42]);
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -199,7 +181,6 @@ fn retrieve_layer() {
     assert!(layer.is_some());
     assert!(layer.unwrap().id() == 2);
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -213,7 +194,6 @@ fn non_existent_layer() {
     let layer = anim.get_layer_with_id(3);
     assert!(layer.is_none());
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -228,7 +208,6 @@ fn add_keyframe() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))
     ]);
 
-    anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
@@ -247,7 +226,6 @@ fn add_keyframe2() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))
     ]);
 
-    anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
@@ -272,7 +250,6 @@ fn add_keyframe_with_layer_editor() {
         sink.when_empty().await;
     });
 
-    anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_some());
@@ -292,7 +269,6 @@ fn remove_keyframe() {
         AnimationEdit::Layer(2, LayerEdit::RemoveKeyFrame(Duration::from_millis(250)))
     ]);
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -304,7 +280,6 @@ fn retrieve_keyframe() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(250)))
     ]);
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -318,7 +293,6 @@ fn find_previous_and_next_keyframe() {
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(750)))
     ]);
 
-    anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2).unwrap();
 
@@ -362,7 +336,6 @@ fn remove_layer_with_keyframe() {
     let layer = anim.get_layer_with_id(2);
     assert!(layer.is_none());
 
-    anim.panic_on_error();
 }
 
 #[test]
@@ -373,7 +346,6 @@ fn draw_brush_strokes() {
         AnimationEdit::AddNewLayer(2),
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
@@ -382,12 +354,10 @@ fn draw_brush_strokes() {
             )
         )),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
             BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
@@ -402,7 +372,6 @@ fn draw_brush_strokes() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
     ]);
-    anim.panic_on_error();
 }
 
 #[test]
@@ -413,7 +382,6 @@ fn draw_brush_strokes_in_future() {
         AnimationEdit::AddNewLayer(2),
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(440), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
@@ -422,12 +390,10 @@ fn draw_brush_strokes_in_future() {
             )
         )),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(440), PaintEdit::
             BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(440), PaintEdit::BrushStroke(ElementId::Unassigned, Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
@@ -442,7 +408,6 @@ fn draw_brush_strokes_in_future() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
     ]);
-    anim.panic_on_error();
 }
 
 #[test]
@@ -453,7 +418,6 @@ fn edit_brush_strokes() {
         AnimationEdit::AddNewLayer(2),
         AnimationEdit::Layer(2, LayerEdit::AddKeyFrame(Duration::from_millis(0))),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::SelectBrush(
                 ElementId::Unassigned,
@@ -462,12 +426,10 @@ fn edit_brush_strokes() {
             )
         )),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::
             BrushProperties(ElementId::Unassigned, BrushProperties::new()))),
     ]);
-    anim.panic_on_error();
     anim.perform_edits(vec![
         AnimationEdit::Layer(2, LayerEdit::Paint(Duration::from_millis(442), PaintEdit::BrushStroke(ElementId::Assigned(100), Arc::new(vec![
                     RawPoint::from((10.0, 10.0)),
@@ -476,7 +438,6 @@ fn edit_brush_strokes() {
 
         AnimationEdit::Element(vec![ElementId::Assigned(100)], ElementEdit::SetControlPoints(vec![(0.0, 1.0), (2.0, 3.0), (4.0, 5.0)]))
     ]);
-    anim.panic_on_error();
 }
 
 #[test]
@@ -507,7 +468,6 @@ fn read_brush_strokes_from_edit_log() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
     ]);
-    anim.panic_on_error();
 
     let edit_log        = anim.read_edit_log(0..7);
     let edit_log        = edit_log.collect();
@@ -569,7 +529,6 @@ fn read_element_delete_from_edit_log() {
                 ])))),
         AnimationEdit::Element(vec![ElementId::Assigned(127), ElementId::Assigned(128), ElementId::Assigned(126)], ElementEdit::Delete)
     ]);
-    anim.panic_on_error();
 
     let edit_log        = anim.read_edit_log(7..8);
     let edit_log        = edit_log.collect();
@@ -641,7 +600,6 @@ fn fetch_element_by_id() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
     ]);
-    anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2).unwrap();
 
@@ -692,7 +650,6 @@ fn read_frame_after_edits() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
     ]);
-    anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2).unwrap();
 
@@ -765,7 +722,6 @@ fn delete_element() {
                 ])))),
         AnimationEdit::Element(vec![ElementId::Assigned(127)], ElementEdit::Delete)
     ]);
-    anim.panic_on_error();
 
     let layer = anim.get_layer_with_id(2).unwrap();
 
@@ -808,7 +764,6 @@ fn delete_layer_after_drawing_brush_stroke() {
                     RawPoint::from((20.0, 5.0))
                 ])))),
     ]);
-    anim.panic_on_error();
 
     anim.perform_edits(vec![AnimationEdit::RemoveLayer(2)]);
 }
@@ -839,7 +794,6 @@ fn read_motion_edit_items() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
         AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
     ]);
-    anim.panic_on_error();
 
     let edit_log        = anim.read_edit_log(5..10);
     let edit_log        = edit_log.collect();
@@ -897,7 +851,6 @@ fn move_existing_element() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
         AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
     ]);
-    anim.panic_on_error();
 
     let attached = anim.motion().get_motions_for_element(ElementId::Assigned(50));
     assert!(attached == vec![ElementId::Assigned(100)]);
@@ -940,7 +893,6 @@ fn read_elements_for_motion() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
         AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
     ]);
-    anim.panic_on_error();
 
     let attached = anim.motion().get_elements_for_motion(ElementId::Assigned(100));
     assert!(attached == vec![ElementId::Assigned(50)]);
@@ -972,7 +924,6 @@ fn detach_motion() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
         AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
     ]);
-    anim.panic_on_error();
 
     let attached = anim.motion().get_elements_for_motion(ElementId::Assigned(100));
     assert!(attached == vec![ElementId::Assigned(50)]);
@@ -1017,7 +968,6 @@ fn delete_motion() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
         AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
     ]);
-    anim.panic_on_error();
 
     let attached = anim.motion().get_elements_for_motion(ElementId::Assigned(100));
     assert!(attached == vec![ElementId::Assigned(50)]);
@@ -1062,7 +1012,6 @@ fn delete_motion_element() {
         AnimationEdit::Motion(ElementId::Assigned(100), MotionEdit::SetPath(TimeCurve::new(TimePoint::new(200.0, 200.0, Duration::from_millis(442)), TimePoint::new(200.0, 200.0, Duration::from_millis(442))))),
         AnimationEdit::Element(vec![ElementId::Assigned(50)], ElementEdit::AddAttachment(ElementId::Assigned(100)))
     ]);
-    anim.panic_on_error();
 
     let attached = anim.motion().get_elements_for_motion(ElementId::Assigned(100));
     assert!(attached == vec![ElementId::Assigned(50)]);
@@ -1146,7 +1095,6 @@ fn update_path_elements() {
         ]))
     ]);
 
-    anim.panic_on_error();
 
     let edit_log        = anim.read_edit_log(5..6);
     let edit_log        = edit_log.collect();
@@ -1195,7 +1143,6 @@ fn replace_path_components() {
         ])))
     ]);
 
-    anim.panic_on_error();
 
     let edit_log        = anim.read_edit_log(5..6);
     let edit_log        = edit_log.collect();
