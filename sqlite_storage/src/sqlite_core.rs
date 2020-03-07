@@ -83,7 +83,7 @@ impl SqliteCore {
             WriteAnimationProperties(properties)                => { self.write_animation_properties(properties) },
             ReadAnimationProperties                             => { self.read_animation_properties() },
             WriteEdit(edit)                                     => { self.write_edit(edit) },
-            ReadHighestUnusedElementId                          => { unimplemented!() },
+            ReadHighestUnusedElementId                          => { self.read_highest_unused_element_id() },
             ReadEditLogLength                                   => { self.read_edit_log_length() },
             ReadEdits(edit_range)                               => { self.read_edits(edit_range) },
             WriteElement(element_id, value)                     => { unimplemented!() },
@@ -148,10 +148,26 @@ impl SqliteCore {
     /// Updates the animation properties for this animation
     ///
     fn read_edit_log_length(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
-        let mut read    = self.connection.prepare_cached("SELECT MAX(EditId) FROM EditLog;")?;
+        let mut read    = self.connection.prepare_cached("SELECT COALESCE(MAX(EditId), 0) FROM EditLog;")?;
         let count       = read.query_row(NO_PARAMS, |row| row.get::<_, i64>(0))?;
 
         Ok(vec![StorageResponse::NumberOfEdits(count as usize)])
+    }
+
+    ///
+    /// Updates the animation properties for this animation
+    ///
+    fn read_highest_unused_element_id(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        use rusqlite::Error::QueryReturnedNoRows;
+
+        let mut read    = self.connection.prepare_cached("SELECT COALESCE(MAX(ElementId)+1, 0) FROM Elements;")?;
+        let count       = read.query_row(NO_PARAMS, |row| row.get::<_, i64>(0));
+
+        match count {
+            Ok(count)                   => Ok(vec![StorageResponse::HighestUnusedElementId(count)]),
+            Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::HighestUnusedElementId(0)]),
+            Err(err)                    => Err(err)
+        }
     }
 
     ///
