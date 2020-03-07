@@ -69,7 +69,7 @@ CREATE INDEX Idx_ElementAttachments ON ElementKeyframeAttachment (ElementId, Lay
 CREATE TABLE LayerCache (
     LayerId INTEGER NOT NULL,
     TimeMicroseconds INTEGER NOT NULL,
-    CacheType INTEGER NOT NULL,
+    CacheType TEXT NOT NULL,
     Cache TEXT NOT NULL
 
     PRIMARY KEY (LayerId, TimeMicroseconds, CacheType)

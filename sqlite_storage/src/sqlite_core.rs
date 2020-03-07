@@ -74,6 +74,35 @@ impl SqliteCore {
     /// Runs an individual command and returns the values to generate in the response
     ///
     pub fn run_command(&mut self, command: StorageCommand) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        use self::StorageCommand::*;
+
+        match command {
+            WriteAnimationProperties(properties)                => { },
+            ReadAnimationProperties                             => { },
+            WriteEdit(edit)                                     => { },
+            ReadHighestUnusedElementId                          => { },
+            ReadEditLogLength                                   => { },
+            ReadEdits(edit_range)                               => { },
+            WriteElement(element_id, value)                     => { },
+            ReadElement(element_id)                             => { },
+            DeleteElement(element_id)                           => { },
+            AddLayer(layer_id, properties)                      => { },
+            DeleteLayer(layer_id)                               => { },
+            ReadLayers                                          => { },
+            WriteLayerProperties(layer_id, properties)          => { },
+            ReadLayerProperties(layer_id)                       => { },
+            AddKeyFrame(layer_id, when)                         => { },
+            DeleteKeyFrame(layer_id, when)                      => { },
+            ReadKeyFrames(layer_id, time_range)                 => { },
+            AttachElementToLayer(layer_id, element_id, when)    => { },
+            DetachElementFromLayer(element_id)                  => { },
+            ReadElementAttachments(element_id)                  => { },
+            ReadElementsForKeyFrame(layer_id, when)             => { },
+            WriteLayerCache(layer_id, when, cache_type, value)  => { },
+            DeleteLayerCache(layer_id, when, cache_type)        => { },
+            ReadLayerCache(layer_id, when, cache_type)          => { },
+        }
+
         Ok(vec![])
     }
 }
