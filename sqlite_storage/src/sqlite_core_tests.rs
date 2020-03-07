@@ -3,6 +3,7 @@ use flo_animation::storage::*;
 use rusqlite;
 use super::sqlite_core::*;
 
+use std::i64;
 use std::time::{Duration};
 
 #[test]
@@ -202,4 +203,52 @@ fn add_keyframe() {
             StorageCommand::AddLayer(1, "Test1".to_string()), 
             StorageCommand::AddKeyFrame(1, Duration::from_millis(420))
         ]) == vec![StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(420)..Duration::from_millis(420))])
+        == vec![StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_micros(i64::MAX as u64))]);
+}
+
+
+#[test]
+fn read_many_keyframes() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(500)..Duration::from_millis(500))]) ==
+        vec![
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600))
+        ]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(502)..Duration::from_millis(502))]) ==
+        vec![
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600))
+        ]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(599))]) ==
+        vec![
+            StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_millis(500)),
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600))
+        ]);
+
+    println!("{:?}", core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(500)..Duration::from_millis(700))]));
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(500)..Duration::from_millis(700))]) ==
+        vec![
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600)),
+            StorageResponse::KeyFrame(Duration::from_millis(600), Duration::from_millis(700))
+        ]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(500)..Duration::from_millis(701))]) ==
+        vec![
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600)),
+            StorageResponse::KeyFrame(Duration::from_millis(600), Duration::from_millis(700)),
+            StorageResponse::KeyFrame(Duration::from_millis(700), Duration::from_micros(i64::MAX as u64))
+        ]);
 }

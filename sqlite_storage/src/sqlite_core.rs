@@ -3,6 +3,7 @@ use flo_animation::storage::*;
 use rusqlite;
 use rusqlite::{NO_PARAMS};
 
+use std::i64;
 use std::ops::{Range};
 use std::time::{Duration};
 
@@ -97,7 +98,7 @@ impl SqliteCore {
             ReadLayerProperties(layer_id)                       => { self.read_layer_properties(layer_id) },
             AddKeyFrame(layer_id, when)                         => { self.add_key_frame(layer_id, when) },
             DeleteKeyFrame(layer_id, when)                      => { unimplemented!() },
-            ReadKeyFrames(layer_id, time_range)                 => { unimplemented!() },
+            ReadKeyFrames(layer_id, time_range)                 => { self.read_keyframes(layer_id, time_range) },
             AttachElementToLayer(layer_id, element_id, when)    => { unimplemented!() },
             DetachElementFromLayer(element_id)                  => { unimplemented!() },
             ReadElementAttachments(element_id)                  => { unimplemented!() },
@@ -343,5 +344,52 @@ impl SqliteCore {
             Err(QueryReturnedNoRows)    => Ok(None),
             Err(other)                  => Err(other)
         }
+    }
+
+    ///
+    /// Reads the keyframes that exist in a particular time range
+    ///
+    fn read_keyframes(&mut self, layer_id: u64, when: Range<Duration>) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        // Align the times to where the actual keyframes exist
+        let start   = self.read_previous_key_frame(layer_id, Self::time_to_int(when.start))?;
+        let end     = self.read_next_key_frame(layer_id, Self::time_to_int(when.end))?;
+        let start   = start.unwrap_or(0);
+        let end     = end.unwrap_or(i64::MAX);
+
+        // Read the keyframes that exist in this time
+        let mut read_keyframes  = self.connection.prepare_cached("SELECT TimeMicroseconds FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds >= ? AND TimeMicroseconds <= ? ORDER BY TimeMicroseconds ASC")?;
+        let keyframes           = read_keyframes.query_map(&[layer_id as i64, start, end], |row| row.get::<_, i64>(0))?;
+
+        let mut result          = vec![];
+        let mut last_time       = None;
+        for frame_time in keyframes {
+            let frame_time = frame_time?;
+
+            if let Some(start_time) = last_time.take() {
+                // This is the end time of a keyframe
+                let start_time  = Self::int_to_time(start_time);
+                let end_time    = Self::int_to_time(frame_time);
+
+                result.push(StorageResponse::KeyFrame(start_time, end_time));
+
+                // Will also be the start of the next frame
+                last_time       = Some(frame_time);
+            } else {
+                // This will be the start time for the next keyframe
+                last_time = Some(frame_time);
+            }
+        }
+
+        // The last keyframe has a maximum time to it
+        if let Some(start_time) = last_time.take() {
+            if start_time != end {
+                let start_time  = Self::int_to_time(start_time);
+                let end_time    = Self::int_to_time(end);
+
+                result.push(StorageResponse::KeyFrame(start_time, end_time))
+            }
+        }
+
+        Ok(result)
     }
 }
