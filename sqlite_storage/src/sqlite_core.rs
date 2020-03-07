@@ -1,6 +1,7 @@
 use flo_animation::storage::*;
 
 use rusqlite;
+use rusqlite::{NO_PARAMS};
 
 const BASE_DATA_DEFN: &[u8]          = include_bytes!["../sql/flo_storage.sql"];
 
@@ -12,7 +13,7 @@ pub (super) struct SqliteCore {
     connection: rusqlite::Connection,
 
     /// If the core has encountered an error it can't recover from, this is what it is
-    error: Option<(StorageError, String)>
+    error: Option<(StorageError, String)>,
 }
 
 impl SqliteCore {
@@ -76,33 +77,58 @@ impl SqliteCore {
     pub fn run_command(&mut self, command: StorageCommand) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         use self::StorageCommand::*;
 
-        match command {
-            WriteAnimationProperties(properties)                => { },
-            ReadAnimationProperties                             => { },
-            WriteEdit(edit)                                     => { },
-            ReadHighestUnusedElementId                          => { },
-            ReadEditLogLength                                   => { },
-            ReadEdits(edit_range)                               => { },
-            WriteElement(element_id, value)                     => { },
-            ReadElement(element_id)                             => { },
-            DeleteElement(element_id)                           => { },
-            AddLayer(layer_id, properties)                      => { },
-            DeleteLayer(layer_id)                               => { },
-            ReadLayers                                          => { },
-            WriteLayerProperties(layer_id, properties)          => { },
-            ReadLayerProperties(layer_id)                       => { },
-            AddKeyFrame(layer_id, when)                         => { },
-            DeleteKeyFrame(layer_id, when)                      => { },
-            ReadKeyFrames(layer_id, time_range)                 => { },
-            AttachElementToLayer(layer_id, element_id, when)    => { },
-            DetachElementFromLayer(element_id)                  => { },
-            ReadElementAttachments(element_id)                  => { },
-            ReadElementsForKeyFrame(layer_id, when)             => { },
-            WriteLayerCache(layer_id, when, cache_type, value)  => { },
-            DeleteLayerCache(layer_id, when, cache_type)        => { },
-            ReadLayerCache(layer_id, when, cache_type)          => { },
-        }
+        let result = match command {
+            WriteAnimationProperties(properties)                => { self.write_animation_properties(properties) },
+            ReadAnimationProperties                             => { self.read_animation_properties() },
+            WriteEdit(edit)                                     => { unimplemented!() },
+            ReadHighestUnusedElementId                          => { unimplemented!() },
+            ReadEditLogLength                                   => { unimplemented!() },
+            ReadEdits(edit_range)                               => { unimplemented!() },
+            WriteElement(element_id, value)                     => { unimplemented!() },
+            ReadElement(element_id)                             => { unimplemented!() },
+            DeleteElement(element_id)                           => { unimplemented!() },
+            AddLayer(layer_id, properties)                      => { unimplemented!() },
+            DeleteLayer(layer_id)                               => { unimplemented!() },
+            ReadLayers                                          => { unimplemented!() },
+            WriteLayerProperties(layer_id, properties)          => { unimplemented!() },
+            ReadLayerProperties(layer_id)                       => { unimplemented!() },
+            AddKeyFrame(layer_id, when)                         => { unimplemented!() },
+            DeleteKeyFrame(layer_id, when)                      => { unimplemented!() },
+            ReadKeyFrames(layer_id, time_range)                 => { unimplemented!() },
+            AttachElementToLayer(layer_id, element_id, when)    => { unimplemented!() },
+            DetachElementFromLayer(element_id)                  => { unimplemented!() },
+            ReadElementAttachments(element_id)                  => { unimplemented!() },
+            ReadElementsForKeyFrame(layer_id, when)             => { unimplemented!() },
+            WriteLayerCache(layer_id, when, cache_type, value)  => { unimplemented!() },
+            DeleteLayerCache(layer_id, when, cache_type)        => { unimplemented!() },
+            ReadLayerCache(layer_id, when, cache_type)          => { unimplemented!() },
+        };
 
-        Ok(vec![])
+        self.check_error(result)
+    }
+
+    ///
+    /// Updates the animation properties for this animation
+    ///
+    fn write_animation_properties(&mut self, properties: String) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO AnimationProperties (PropertyId, Value) VALUES (0, ?);")?;
+        write.execute(&[properties])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Reads the currently set animation properties (if any)
+    ///
+    fn read_animation_properties(&mut self) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        use rusqlite::Error::QueryReturnedNoRows;
+
+        let mut read = self.connection.prepare_cached("SELECT Value FROM AnimationProperties WHERE PropertyId = 0;")?;
+
+        match read.query_row(NO_PARAMS, |row| row.get(0)) {
+            Ok(properties)              => Ok(vec![StorageResponse::AnimationProperties(properties)]),
+            Err(QueryReturnedNoRows)    => Ok(vec![StorageResponse::NotFound]),
+            Err(other)                  => Err(other)
+        }
     }
 }
