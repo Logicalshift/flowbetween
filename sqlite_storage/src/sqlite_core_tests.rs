@@ -42,7 +42,6 @@ fn edit_log_is_initially_empty() {
     let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
     core.initialize().unwrap();
 
-    println!("{:?}", core.run_commands(vec![StorageCommand::ReadEditLogLength]));
     assert!(core.run_commands(vec![StorageCommand::ReadEditLogLength]) == vec![StorageResponse::NumberOfEdits(0)]);
 }
 
@@ -77,7 +76,6 @@ fn highest_unused_element_id_is_0_with_no_elements() {
     let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
     core.initialize().unwrap();
 
-    println!("{:?}", core.run_commands(vec![StorageCommand::ReadHighestUnusedElementId]));
     assert!(core.run_commands(vec![StorageCommand::ReadHighestUnusedElementId]) == vec![StorageResponse::HighestUnusedElementId(0)]);
 }
 
@@ -237,7 +235,6 @@ fn read_many_keyframes() {
             StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600))
         ]);
 
-    println!("{:?}", core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(500)..Duration::from_millis(700))]));
     assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(500)..Duration::from_millis(700))]) ==
         vec![
             StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600)),
@@ -300,5 +297,54 @@ fn read_past_last_keyframe() {
     assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(701)..Duration::from_millis(702))]) ==
         vec![
             StorageResponse::KeyFrame(Duration::from_millis(700), Duration::from_micros(i64::MAX as u64))
+        ]);
+}
+
+#[test]
+fn delete_keyframe() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![
+            StorageCommand::DeleteKeyFrame(1, Duration::from_millis(500))
+        ]) == vec![StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(700))]) ==
+        vec![
+            StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_millis(600)),
+            StorageResponse::KeyFrame(Duration::from_millis(600), Duration::from_millis(700))
+        ]);
+}
+
+#[test]
+fn delete_nonexistent_keyframe() {
+    let mut core    = SqliteCore::new(rusqlite::Connection::open_in_memory().unwrap());
+    core.initialize().unwrap();
+
+    assert!(core.run_commands(vec![
+            StorageCommand::AddLayer(1, "Test1".to_string()), 
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(420)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(500)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(600)),
+            StorageCommand::AddKeyFrame(1, Duration::from_millis(700))
+        ]) == vec![StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated, StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![
+            StorageCommand::DeleteKeyFrame(1, Duration::from_millis(550))
+        ]) == vec![StorageResponse::Updated]);
+
+    assert!(core.run_commands(vec![StorageCommand::ReadKeyFrames(1, Duration::from_millis(0)..Duration::from_millis(700))]) ==
+        vec![
+            StorageResponse::KeyFrame(Duration::from_millis(420), Duration::from_millis(500)),
+            StorageResponse::KeyFrame(Duration::from_millis(500), Duration::from_millis(600)),
+            StorageResponse::KeyFrame(Duration::from_millis(600), Duration::from_millis(700))
         ]);
 }

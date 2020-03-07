@@ -97,7 +97,7 @@ impl SqliteCore {
             WriteLayerProperties(layer_id, properties)          => { self.add_layer(layer_id, properties) },
             ReadLayerProperties(layer_id)                       => { self.read_layer_properties(layer_id) },
             AddKeyFrame(layer_id, when)                         => { self.add_key_frame(layer_id, when) },
-            DeleteKeyFrame(layer_id, when)                      => { unimplemented!() },
+            DeleteKeyFrame(layer_id, when)                      => { self.delete_key_frame(layer_id, when) },
             ReadKeyFrames(layer_id, time_range)                 => { self.read_keyframes(layer_id, time_range) },
             AttachElementToLayer(layer_id, element_id, when)    => { unimplemented!() },
             DetachElementFromLayer(element_id)                  => { unimplemented!() },
@@ -310,6 +310,30 @@ impl SqliteCore {
     fn add_key_frame(&mut self, layer_id: u64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
         let mut write   = self.connection.prepare_cached("INSERT OR REPLACE INTO Keyframe (LayerId, TimeMicroseconds) VALUES (?, ?);")?;
         write.execute(params![layer_id as i64, Self::time_to_int(when)])?;
+
+        Ok(vec![StorageResponse::Updated])
+    }
+
+    ///
+    /// Adds a new layer or updates its properties
+    ///
+    fn delete_key_frame(&mut self, layer_id: u64, when: Duration) -> Result<Vec<StorageResponse>, rusqlite::Error> {
+        let transaction = self.connection.transaction()?;
+
+        {
+            let time_microseconds   = Self::time_to_int(when);
+
+            let mut delete  = transaction.prepare_cached("DELETE FROM ElementKeyframeAttachment WHERE LayerId = ? AND TimeMicroseconds = ?;")?;
+            delete.execute(&[layer_id as i64, time_microseconds])?;
+
+            let mut delete  = transaction.prepare_cached("DELETE FROM LayerCache WHERE LayerId = ? AND TimeMicroseconds = ?;")?;
+            delete.execute(&[layer_id as i64, time_microseconds])?;
+
+            let mut delete  = transaction.prepare_cached("DELETE FROM Keyframe WHERE LayerId = ? AND TimeMicroseconds = ?;")?;
+            delete.execute(&[layer_id as i64, time_microseconds])?;
+        }
+
+        transaction.commit()?;
 
         Ok(vec![StorageResponse::Updated])
     }
