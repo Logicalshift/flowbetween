@@ -179,8 +179,8 @@ impl Layer for StreamLayer {
                 });
         }
 
-        // End of the range indi
-        if lowest_after == Some(Duration::new(u64::max_value(), 0)) { 
+        // End of the range indicated by i64::max_value() microseconds
+        if lowest_after == Some(Duration::from_micros(i64::max_value() as u64)) { 
             lowest_after = None;
         }
 

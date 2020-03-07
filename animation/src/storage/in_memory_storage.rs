@@ -5,7 +5,7 @@ use ::desync::*;
 use futures::prelude::*;
 use futures::future;
 
-use std::u64;
+use std::i64;
 use std::sync::*;
 use std::time::{Duration};
 use std::collections::{HashMap};
@@ -332,7 +332,7 @@ impl InMemoryStorageCore {
                             let end     = if keyframe_index+1 < layer.keyframes.len() {
                                 layer.keyframes[keyframe_index+1].when
                             } else {
-                                Duration::new(u64::max_value(), 0)
+                                Duration::from_micros(i64::max_value() as u64)
                             };
 
                             // Add to the response
