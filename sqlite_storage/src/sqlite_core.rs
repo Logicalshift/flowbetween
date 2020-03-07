@@ -377,7 +377,23 @@ impl SqliteCore {
         // Align the times to where the actual keyframes exist
         let start   = self.read_previous_key_frame(layer_id, Self::time_to_int(when.start))?;
         let end     = self.read_next_key_frame(layer_id, Self::time_to_int(when.end))?;
-        let start   = start.unwrap_or(0);
+
+        // If the start was not found but the end was, then return not found
+        let start = match (start, &end) {
+            (None, Some(end))   => {
+                if Some(*end) == self.read_next_key_frame(layer_id, 0)? {
+                    // Picked a time range before the first keyframe
+                    return Ok(vec![StorageResponse::NotInAFrame(Self::int_to_time(*end))]); 
+                } else {
+                    // Time range covers other frames
+                    0
+                }
+            }
+            (Some(start), _)    => { start },
+            (None, _)           => { 0 }
+        };
+
+        // If no end was found, it's at the maximum possible time
         let mut end = end.unwrap_or(i64::MAX);
 
         // If the start and the end are the same then we need to read to the end of the current keyframe
