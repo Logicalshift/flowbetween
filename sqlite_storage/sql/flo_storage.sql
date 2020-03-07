@@ -70,7 +70,7 @@ CREATE TABLE LayerCache (
     LayerId INTEGER NOT NULL,
     TimeMicroseconds INTEGER NOT NULL,
     CacheType TEXT NOT NULL,
-    Cache TEXT NOT NULL
+    Cache TEXT NOT NULL,
 
     PRIMARY KEY (LayerId, TimeMicroseconds, CacheType)
 ) WITHOUT ROWID;
